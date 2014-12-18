@@ -16,6 +16,7 @@ xdg_app_SOURCES = \
 	xdg-app-builtins.h \
 	xdg-app-builtins-add-repo.c \
 	xdg-app-builtins-install.c \
+	xdg-app-builtins-update.c \
 	xdg-app-dir.c \
 	xdg-app-dir.h \
 	xdg-app-utils.h \
