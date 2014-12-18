@@ -260,7 +260,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   g_ptr_array_add (argv_array, NULL);
 
-  if (!execve (HELPER, (char **)argv_array->pdata, NULL))
+  if (!execv (HELPER, (char **)argv_array->pdata))
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
       goto out;
