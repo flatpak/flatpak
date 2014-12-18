@@ -25,6 +25,7 @@ gboolean xdg_app_option_context_parse (GOptionContext *context,
 #define BUILTINPROTO(name) gboolean xdg_app_builtin_ ## name (int argc, char **argv, GCancellable *cancellable, GError **error)
 
 BUILTINPROTO(add_repo);
+BUILTINPROTO(install_runtime);
 
 #undef BUILTINPROTO
 

@@ -11,6 +11,14 @@ typedef struct XdgAppDir XdgAppDir;
 
 GType xdg_app_dir_get_type (void);
 
+#define XDG_APP_DIR_ERROR xdg_app_dir_error_quark()
+
+typedef enum {
+  XDG_APP_DIR_ERROR_ALREADY_DEPLOYED,
+} XdgAppErrorEnum;
+
+GQuark       xdg_app_dir_error_quark      (void);
+
 GFile *  xdg_app_get_system_base_dir_location (void);
 GFile *  xdg_app_get_user_base_dir_location   (void);
 
@@ -28,6 +36,16 @@ gboolean    xdg_app_dir_ensure_path    (XdgAppDir     *self,
                                         GCancellable  *cancellable,
                                         GError       **error);
 gboolean    xdg_app_dir_ensure_repo    (XdgAppDir     *self,
+                                        GCancellable  *cancellable,
+                                        GError       **error);
+gboolean    xdg_app_dir_pull           (XdgAppDir     *self,
+                                        const char    *repository,
+                                        const char    *ref,
+                                        GCancellable  *cancellable,
+                                        GError       **error);
+gboolean    xdg_app_dir_deploy         (XdgAppDir     *self,
+                                        const char    *ref,
+                                        const char    *hash,
                                         GCancellable  *cancellable,
                                         GError       **error);
 
