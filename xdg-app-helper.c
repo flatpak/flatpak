@@ -1039,10 +1039,10 @@ main (int argc,
   /* /usr now mounted private inside the namespace, tell child process to unmount the tmpfs in the parent namespace. */
   close (pipefd[WRITE_END]);
 
-  if (bind_mount ("etc/passwd", "etc/passwd", BIND_READONLY))
+  if (bind_mount ("/etc/passwd", "etc/passwd", BIND_READONLY))
     die_with_error ("mount passwd");
 
-  if (bind_mount ("etc/group", "etc/group", BIND_READONLY))
+  if (bind_mount ("/etc/group", "etc/group", BIND_READONLY))
     die_with_error ("mount group");
 
   /* Bind mount in X socket
