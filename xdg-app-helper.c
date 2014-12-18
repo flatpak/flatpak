@@ -661,8 +661,8 @@ rtnl_read_reply (int rtnl_fd, int seq_nr)
             return 1;
           if (rheader->nlmsg_type == NLMSG_ERROR)
             {
-              uint32_t err = NLMSG_DATA(rheader);
-              if (err == 0)
+              uint32_t *err = NLMSG_DATA(rheader);
+              if (*err == 0)
                 return 0;
 
               return 1;
