@@ -13,10 +13,12 @@
 
 static char *opt_arch;
 static char *opt_branch;
+static char *opt_command;
 static gchar **opt_rest = NULL;
 
 static GOptionEntry options[] = {
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to install for", NULL },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", NULL },
+  { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to run", NULL },
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to run", NULL },
   { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_rest,
     "Special option that collects any remaining arguments for us" },
@@ -74,6 +76,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gs_unref_object GFile *metadata = NULL;
   gs_free char *metadata_contents = NULL;
   gs_free char *runtime = NULL;
+  gs_free char *default_command = NULL;
   gs_free char *runtime_ref = NULL;
   gs_free char *app_ref = NULL;
   gs_free char *x11_socket = NULL;
@@ -87,16 +90,17 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gsize metadata_size;
   const char *app;
   const char *branch = "master";
+  const char *command = "/bin/sh";
   int i;
 
-  context = g_option_context_new ("APP COMMAND - Run an app");
+  context = g_option_context_new ("APP [args...] - Run an app");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
-  if (g_strv_length (opt_rest) < 2)
+  if (g_strv_length (opt_rest) < 1)
     {
-      usage_error (context, "APP and COMMAND must be specified", error);
+      usage_error (context, "APP must be specified", error);
       goto out;
     }
 
@@ -170,6 +174,12 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   app_files = g_file_get_child (app_deploy, "files");
   runtime_files = g_file_get_child (runtime_deploy, "files");
+
+  default_command = g_key_file_get_string (metakey, "Application", "command", error);
+  if (opt_command)
+    command = opt_command;
+  else if (default_command)
+    command = default_command;
 
   argv_array = g_ptr_array_new ();
   g_ptr_array_add (argv_array, HELPER);
@@ -255,6 +265,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_ptr_array_add (argv_array, (char *)gs_file_get_path_cached (var));
   g_ptr_array_add (argv_array, (char *)gs_file_get_path_cached (runtime_files));
 
+  g_ptr_array_add (argv_array, (char *)command);
   for (i = 1; opt_rest[i] != NULL; i++)
     g_ptr_array_add (argv_array, opt_rest[i]);
 
