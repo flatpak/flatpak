@@ -30,15 +30,14 @@ xdg_app_builtin_add_repo (int argc, char **argv, GCancellable *cancellable, GErr
 {
   GOptionContext *context;
   gboolean ret = FALSE;
-  gs_unref_object OstreeRepo *repo = NULL;
-  gs_unref_object GFile *basedir = NULL;
+  gs_unref_object XdgAppDir *dir = NULL;
   gs_unref_variant_builder GVariantBuilder *optbuilder = NULL;
   const char *remote_name;
   const char *remote_url;
 
   context = g_option_context_new ("NAME URL - Add a remote repository");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &repo, &basedir, cancellable, error))
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     goto out;
 
   if (argc < 3)
@@ -57,8 +56,7 @@ xdg_app_builtin_add_repo (int argc, char **argv, GCancellable *cancellable, GErr
                            "gpg-verify",
                            g_variant_new_variant (g_variant_new_boolean (FALSE)));
 
-
-  if (!ostree_repo_remote_change (repo, NULL,
+  if (!ostree_repo_remote_change (xdg_app_dir_get_repo (dir), NULL,
                                   opt_if_not_exists ? OSTREE_REPO_REMOTE_CHANGE_ADD_IF_NOT_EXISTS :
                                   OSTREE_REPO_REMOTE_CHANGE_ADD,
                                   remote_name, remote_url,

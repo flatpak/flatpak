@@ -99,17 +99,14 @@ xdg_app_option_context_parse (GOptionContext *context,
                               int *argc,
                               char ***argv,
                               XdgAppBuiltinFlags flags,
-                              OstreeRepo **out_repo,
-                              GFile **out_basedir,
+                              XdgAppDir **out_dir,
                               GCancellable *cancellable,
                               GError **error)
 {
   gboolean success = FALSE;
-  gs_unref_object GFile *basedir = NULL;
-  gs_unref_object GFile *repodir = NULL;
-  gs_unref_object OstreeRepo *repo = NULL;
+  gs_unref_object XdgAppDir *dir = NULL;
 
-  if (!(flags & XDG_APP_BUILTIN_FLAG_NO_USER))
+  if (!(flags & XDG_APP_BUILTIN_FLAG_NO_DIR))
     g_option_context_add_main_entries (context, user_entries, NULL);
 
   if (main_entries != NULL)
@@ -126,49 +123,22 @@ xdg_app_option_context_parse (GOptionContext *context,
       exit (EXIT_SUCCESS);
     }
 
-  if (opt_user)
+  if (!(flags & XDG_APP_BUILTIN_FLAG_NO_DIR))
     {
-      gs_free char *base = g_build_filename (g_get_user_data_dir (), "xdg-app", NULL);
-      basedir = g_file_new_for_path (base);
-    }
-  else
-    {
-      basedir = g_file_new_for_path (XDG_APP_BASEDIR);
-    }
+      dir = xdg_app_dir_get (opt_user);
 
-  if (!(flags & XDG_APP_BUILTIN_FLAG_NO_USER))
-    {
-      if (!gs_file_ensure_directory (basedir, TRUE, cancellable, error))
+      if (!xdg_app_dir_ensure_path (dir, cancellable, error))
         goto out;
 
-      if (!(flags & XDG_APP_BUILTIN_FLAG_NO_REPO))
-        {
-          repodir = g_file_get_child (basedir, "repo");
-          repo = ostree_repo_new (repodir);
-
-          if (!g_file_query_exists (repodir, cancellable))
-            {
-              if (!ostree_repo_create (repo,
-                                       opt_user ? OSTREE_REPO_MODE_BARE_USER : OSTREE_REPO_MODE_BARE,
-                                       cancellable, error))
-                {
-                  gs_shutil_rm_rf (repodir, cancellable, NULL);
-                  goto out;
-                }
-            }
-          else
-            {
-              if (!ostree_repo_open (repo, cancellable, error))
-                goto out;
-            }
-        }
+      if (!(flags & XDG_APP_BUILTIN_FLAG_NO_REPO) &&
+          !xdg_app_dir_ensure_repo (dir, cancellable,error))
+        goto out;
     }
 
   if (opt_verbose)
     g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
-  gs_transfer_out_value (out_repo, &repo);
-  gs_transfer_out_value (out_basedir, &basedir);
+  gs_transfer_out_value (out_dir, &dir);
 
   success = TRUE;
  out:
@@ -232,7 +202,7 @@ xdg_app_run (int    argc,
       context = xdg_app_option_context_new_with_commands (commands);
 
       /* This will not return for some options (e.g. --version). */
-      if (xdg_app_option_context_parse (context, NULL, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_USER, NULL, NULL, cancellable, &error))
+      if (xdg_app_option_context_parse (context, NULL, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
         {
           if (command_name == NULL)
             {

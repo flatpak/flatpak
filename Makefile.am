@@ -15,6 +15,10 @@ xdg_app_SOURCES = \
 	xdg-app-main.c \
 	xdg-app-builtins.h \
 	xdg-app-builtins-add-repo.c \
+	xdg-app-dir.c \
+	xdg-app-dir.h \
+	xdg-app-utils.h \
+	xdg-app-utils.c \
 	$(NULL)
 xdg_app_LDADD = $(OSTREE_LIBS)
 xdg_app_CFLAGS = $(OSTREE_CFLAGS)
