@@ -14,12 +14,14 @@
 static char *opt_arch;
 static char *opt_branch;
 static char *opt_command;
-static gchar **opt_rest = NULL;
+static gchar **opt_rest;
+static gboolean opt_devel;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", NULL },
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to run", NULL },
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to run", NULL },
+  { "devel", 0, 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
   { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_rest,
     "Special option that collects any remaining arguments for us" },
   { NULL }
@@ -131,7 +133,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     goto out;
 
-  runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
+  runtime = g_key_file_get_string (metakey, "Application", opt_devel ? "sdk" : "runtime", error);
   if (runtime == NULL)
     goto out;
 
