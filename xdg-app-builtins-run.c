@@ -53,6 +53,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gs_free char *runtime = NULL;
   gs_free char *runtime_ref = NULL;
   gs_free char *app_ref = NULL;
+  gs_free char *x11_socket = NULL;
   _gs_unref_keyfile GKeyFile *metakey = NULL;
   gs_free_error GError *my_error = NULL;
   gs_free_error GError *my_error2 = NULL;
@@ -146,7 +147,42 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   argv_array = g_ptr_array_new ();
   g_ptr_array_add (argv_array, HELPER);
-  g_ptr_array_add (argv_array, "-i");
+
+  if (g_key_file_get_boolean (metakey, "Environment", "ipc", NULL))
+    g_ptr_array_add (argv_array, "-i");
+
+  if (g_key_file_get_boolean (metakey, "Environment", "host-fs", NULL))
+    g_ptr_array_add (argv_array, "-f");
+
+  if (g_key_file_get_boolean (metakey, "Environment", "homedir", NULL))
+    g_ptr_array_add (argv_array, "-H");
+
+  if (g_key_file_get_boolean (metakey, "Environment", "network", NULL))
+    g_ptr_array_add (argv_array, "-n");
+
+  if (g_key_file_get_boolean (metakey, "Environment", "x11", NULL))
+    {
+      const char *display = g_getenv ("DISPLAY");
+
+      if (display && display[0] == ':' && g_ascii_isdigit (display[1]))
+        {
+          const char *display_nr = &display[1];
+          const char *display_nr_end = display_nr;
+          gs_free char *d = NULL;
+
+          while (g_ascii_isdigit (*display_nr_end))
+            display_nr_end++;
+
+          d = g_strndup (display_nr, display_nr_end - display_nr);
+          x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", d);
+
+          g_ptr_array_add (argv_array, "-x");
+          g_ptr_array_add (argv_array, x11_socket);
+        }
+    }
+  else
+    g_unsetenv ("DISPLAY");
+
   g_ptr_array_add (argv_array, "-a");
   g_ptr_array_add (argv_array, (char *)gs_file_get_path_cached (app_files));
   g_ptr_array_add (argv_array, "-v");
