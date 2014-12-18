@@ -24,6 +24,7 @@ static XdgAppCommand commands[] = {
   { "update-runtime", xdg_app_builtin_update_runtime },
   { "install-app", xdg_app_builtin_install_app },
   { "update-app", xdg_app_builtin_update_app },
+  { "run", xdg_app_builtin_run },
   { NULL }
 };
 
@@ -179,10 +180,6 @@ xdg_app_run (int    argc,
               out--;
               continue;
             }
-        }
-      else if (g_str_equal (argv[in], "--"))
-        {
-          break;
         }
 
       argv[out] = argv[in];

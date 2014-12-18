@@ -31,6 +31,10 @@ gboolean    xdg_app_dir_is_user        (XdgAppDir     *self);
 GFile *     xdg_app_dir_get_path       (XdgAppDir     *self);
 GFile *     xdg_app_dir_get_deploy_dir (XdgAppDir     *self,
                                         const char    *ref);
+GFile *     xdg_app_dir_get_if_deployed(XdgAppDir     *self,
+                                        const char    *ref,
+                                        const char    *hash,
+                                        GCancellable  *cancellable);
 GFile *     xdg_app_dir_get_app_data   (XdgAppDir     *self,
                                         const char    *app);
 OstreeRepo *xdg_app_dir_get_repo       (XdgAppDir     *self);

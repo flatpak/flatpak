@@ -29,6 +29,7 @@ BUILTINPROTO(install_runtime);
 BUILTINPROTO(update_runtime);
 BUILTINPROTO(install_app);
 BUILTINPROTO(update_app);
+BUILTINPROTO(run);
 
 #undef BUILTINPROTO
 

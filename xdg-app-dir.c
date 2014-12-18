@@ -388,6 +388,23 @@ xdg_app_dir_deploy (XdgAppDir *self,
   return ret;
 }
 
+GFile *
+xdg_app_dir_get_if_deployed (XdgAppDir     *self,
+                             const char    *ref,
+                             const char    *hash,
+                             GCancellable  *cancellable)
+{
+  gs_unref_object GFile *deploy_base = NULL;
+  gs_unref_object GFile *deploy_dir = NULL;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+  deploy_dir = g_file_get_child (deploy_base, hash ? hash : "latest");
+
+  if (g_file_query_file_type (deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
+    return g_object_ref (deploy_dir);
+  return NULL;
+}
+
 XdgAppDir*
 xdg_app_dir_new (GFile *path, gboolean user)
 {
