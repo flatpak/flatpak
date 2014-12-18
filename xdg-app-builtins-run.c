@@ -2,6 +2,7 @@
 
 #include <locale.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -32,6 +33,28 @@ usage_error (GOptionContext *context, const char *message, GError **error)
 
 #define _gs_unref_keyfile __attribute__ ((cleanup(gs_local_keyfile_unref)))
 
+static char *
+extract_unix_path_from_dbus_addres (const char *address)
+{
+  const char *path, *path_end;
+
+  if (address == NULL)
+    return NULL;
+
+  if (!g_str_has_prefix (address, "unix:"))
+    return NULL;
+
+  path = strstr (address, "path=");
+  if (path == NULL)
+    return NULL;
+  path += strlen ("path=");
+  path_end = path;
+  while (*path_end != 0 && *path_end != ',')
+    path_end++;
+
+  return g_strndup (path, path_end - path);
+}
+
 gboolean
 xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -54,6 +77,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gs_free char *runtime_ref = NULL;
   gs_free char *app_ref = NULL;
   gs_free char *x11_socket = NULL;
+  gs_free char *pulseaudio_socket = NULL;
+  gs_free char *dbus_system_socket = NULL;
+  gs_free char *dbus_session_socket = NULL;
   _gs_unref_keyfile GKeyFile *metakey = NULL;
   gs_free_error GError *my_error = NULL;
   gs_free_error GError *my_error2 = NULL;
@@ -182,6 +208,46 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     }
   else
     g_unsetenv ("DISPLAY");
+
+  if (g_key_file_get_boolean (metakey, "Environment", "pulseaudio", NULL))
+    {
+      pulseaudio_socket = g_build_filename (g_get_user_data_dir(), "pulse/native", NULL);
+      if (g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
+        {
+          g_ptr_array_add (argv_array, "-p");
+          g_ptr_array_add (argv_array, pulseaudio_socket);
+        }
+    }
+
+  if (g_key_file_get_boolean (metakey, "Environment", "system-dbus", NULL))
+    {
+      const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
+
+      dbus_system_socket = extract_unix_path_from_dbus_addres (dbus_address);
+      if (dbus_system_socket == NULL &&
+          g_file_test ("/var/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
+        {
+          dbus_system_socket = g_strdup ("/var/run/dbus/system_bus_socket");
+        }
+
+      if (dbus_system_socket != NULL)
+        {
+          g_ptr_array_add (argv_array, "-D");
+          g_ptr_array_add (argv_array, dbus_system_socket);
+        }
+    }
+
+  if (g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL))
+    {
+      const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
+
+      dbus_session_socket = extract_unix_path_from_dbus_addres (dbus_address);
+      if (dbus_session_socket != NULL)
+        {
+          g_ptr_array_add (argv_array, "-d");
+          g_ptr_array_add (argv_array, dbus_session_socket);
+        }
+    }
 
   g_ptr_array_add (argv_array, "-a");
   g_ptr_array_add (argv_array, (char *)gs_file_get_path_cached (app_files));
