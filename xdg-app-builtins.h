@@ -27,6 +27,8 @@ gboolean xdg_app_option_context_parse (GOptionContext *context,
 BUILTINPROTO(add_repo);
 BUILTINPROTO(install_runtime);
 BUILTINPROTO(update_runtime);
+BUILTINPROTO(install_app);
+BUILTINPROTO(update_app);
 
 #undef BUILTINPROTO
 
