@@ -234,7 +234,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (g_key_file_get_boolean (metakey, "Environment", "pulseaudio", NULL))
     {
-      pulseaudio_socket = g_build_filename (g_get_user_data_dir(), "pulse/native", NULL);
+      pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
       if (g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
         {
           g_ptr_array_add (argv_array, "-p");
