@@ -14,7 +14,6 @@
 static char *opt_arch;
 static char *opt_branch;
 static char *opt_command;
-static gchar **opt_rest;
 static gboolean opt_devel;
 
 static GOptionEntry options[] = {
@@ -22,8 +21,6 @@ static GOptionEntry options[] = {
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to run", NULL },
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to run", NULL },
   { "devel", 0, 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
-  { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_rest,
-    "Special option that collects any remaining arguments for us" },
   { NULL }
 };
 
@@ -94,19 +91,33 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   const char *branch = "master";
   const char *command = "/bin/sh";
   int i;
+  int rest_argv_start, rest_argc;
 
   context = g_option_context_new ("APP [args...] - Run an app");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
+  rest_argc = 0;
+  for (i = 1; i < argc; i++)
+    {
+      /* The non-option is the command, take it out of the arguments */
+      if (argv[i][0] != '-')
+        {
+          rest_argv_start = i;
+          rest_argc = argc - i;
+          argc = i;
+          break;
+        }
+    }
 
-  if (g_strv_length (opt_rest) < 1)
+  if (rest_argc == 0)
     {
       usage_error (context, "APP must be specified", error);
       goto out;
     }
 
-  app = opt_rest[0];
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+    goto out;
+
+  app = argv[rest_argv_start];
 
   if (opt_branch)
     branch = opt_branch;
@@ -268,8 +279,8 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_ptr_array_add (argv_array, (char *)gs_file_get_path_cached (runtime_files));
 
   g_ptr_array_add (argv_array, (char *)command);
-  for (i = 1; opt_rest[i] != NULL; i++)
-    g_ptr_array_add (argv_array, opt_rest[i]);
+  for (i = 1; i < rest_argc; i++)
+    g_ptr_array_add (argv_array, argv[rest_argv_start + i]);
 
   g_ptr_array_add (argv_array, NULL);
 
