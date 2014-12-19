@@ -312,7 +312,7 @@ xdg_app_dir_pull (XdgAppDir *self,
 gboolean
 xdg_app_dir_deploy (XdgAppDir *self,
                     const char *ref,
-                    const char *hash,
+                    const char *checksum,
                     GCancellable *cancellable,
                     GError **error)
 {
@@ -330,26 +330,26 @@ xdg_app_dir_deploy (XdgAppDir *self,
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
 
-  if (hash == NULL)
+  if (checksum == NULL)
     {
       if (!ostree_repo_resolve_rev (self->repo, ref, FALSE, &resolved_ref, error))
         goto out;
 
-      hash = resolved_ref;
+      checksum = resolved_ref;
     }
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
 
-  checkoutdir = g_file_get_child (deploy_base, hash);
+  checkoutdir = g_file_get_child (deploy_base, checksum);
   if (g_file_query_exists (checkoutdir, cancellable))
     {
       g_set_error (error, XDG_APP_DIR_ERROR,
                    XDG_APP_DIR_ERROR_ALREADY_DEPLOYED,
-                   "%s version %s already deployed", ref, hash);
+                   "%s version %s already deployed", ref, checksum);
       goto out;
     }
 
-  if (!ostree_repo_read_commit (self->repo, hash, &root, NULL, cancellable, error))
+  if (!ostree_repo_read_commit (self->repo, checksum, &root, NULL, cancellable, error))
     goto out;
 
   file_info = g_file_query_info (root, OSTREE_GIO_FAST_QUERYINFO,
@@ -374,7 +374,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
 
   tmpname = gs_fileutil_gen_tmp_name (".latest-", NULL);
   latest_tmp_link = g_file_get_child (deploy_base, tmpname);
-  if (!g_file_make_symbolic_link (latest_tmp_link, hash, cancellable, error))
+  if (!g_file_make_symbolic_link (latest_tmp_link, checksum, cancellable, error))
     goto out;
 
   latest_link = g_file_get_child (deploy_base, "latest");
@@ -391,14 +391,14 @@ xdg_app_dir_deploy (XdgAppDir *self,
 GFile *
 xdg_app_dir_get_if_deployed (XdgAppDir     *self,
                              const char    *ref,
-                             const char    *hash,
+                             const char    *checksum,
                              GCancellable  *cancellable)
 {
   gs_unref_object GFile *deploy_base = NULL;
   gs_unref_object GFile *deploy_dir = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
-  deploy_dir = g_file_get_child (deploy_base, hash ? hash : "latest");
+  deploy_dir = g_file_get_child (deploy_base, checksum ? checksum : "latest");
 
   if (g_file_query_file_type (deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
     return g_object_ref (deploy_dir);

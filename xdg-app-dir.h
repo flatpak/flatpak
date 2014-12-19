@@ -33,7 +33,7 @@ GFile *     xdg_app_dir_get_deploy_dir (XdgAppDir     *self,
                                         const char    *ref);
 GFile *     xdg_app_dir_get_if_deployed(XdgAppDir     *self,
                                         const char    *ref,
-                                        const char    *hash,
+                                        const char    *checksum,
                                         GCancellable  *cancellable);
 GFile *     xdg_app_dir_get_app_data   (XdgAppDir     *self,
                                         const char    *app);
@@ -51,7 +51,7 @@ gboolean    xdg_app_dir_pull           (XdgAppDir     *self,
                                         GError       **error);
 gboolean    xdg_app_dir_deploy         (XdgAppDir     *self,
                                         const char    *ref,
-                                        const char    *hash,
+                                        const char    *checksum,
                                         GCancellable  *cancellable,
                                         GError       **error);
 
