@@ -312,18 +312,18 @@ xdg_app_dir_pull (XdgAppDir *self,
 }
 
 char *
-xdg_app_dir_read_latest (XdgAppDir *self,
+xdg_app_dir_read_active (XdgAppDir *self,
                          const char *ref,
                          GCancellable *cancellable)
 {
   gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *latest_link = NULL;
+  gs_unref_object GFile *active_link = NULL;
   gs_unref_object GFileInfo *file_info = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
-  latest_link = g_file_get_child (deploy_base, "latest");
+  active_link = g_file_get_child (deploy_base, "active");
 
-  file_info = g_file_query_info (latest_link, OSTREE_GIO_FAST_QUERYINFO,
+  file_info = g_file_query_info (active_link, OSTREE_GIO_FAST_QUERYINFO,
                                  G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                  cancellable, NULL);
   if (file_info == NULL)
@@ -333,7 +333,7 @@ xdg_app_dir_read_latest (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_set_latest (XdgAppDir *self,
+xdg_app_dir_set_active (XdgAppDir *self,
                         const char *ref,
                         const char *checksum,
                         GCancellable *cancellable,
@@ -342,28 +342,28 @@ xdg_app_dir_set_latest (XdgAppDir *self,
   gboolean ret = FALSE;
   gs_unref_object GFile *deploy_base = NULL;
   gs_free char *tmpname = NULL;
-  gs_unref_object GFile *latest_tmp_link = NULL;
-  gs_unref_object GFile *latest_link = NULL;
+  gs_unref_object GFile *active_tmp_link = NULL;
+  gs_unref_object GFile *active_link = NULL;
   gs_free_error GError *my_error = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
-  latest_link = g_file_get_child (deploy_base, "latest");
+  active_link = g_file_get_child (deploy_base, "active");
 
   if (checksum != NULL)
     {
-      tmpname = gs_fileutil_gen_tmp_name (".latest-", NULL);
-      latest_tmp_link = g_file_get_child (deploy_base, tmpname);
-      if (!g_file_make_symbolic_link (latest_tmp_link, checksum, cancellable, error))
+      tmpname = gs_fileutil_gen_tmp_name (".active-", NULL);
+      active_tmp_link = g_file_get_child (deploy_base, tmpname);
+      if (!g_file_make_symbolic_link (active_tmp_link, checksum, cancellable, error))
         goto out;
 
-      if (!gs_file_rename (latest_tmp_link,
-                           latest_link,
+      if (!gs_file_rename (active_tmp_link,
+                           active_link,
                            cancellable, error))
         goto out;
     }
   else
     {
-      if (!g_file_delete (latest_link, cancellable, &my_error) &&
+      if (!g_file_delete (active_link, cancellable, &my_error) &&
           !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
         {
           g_propagate_error (error, my_error);
@@ -438,7 +438,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
     goto out;
 
 
-  if (!xdg_app_dir_set_latest (self, ref, checksum, cancellable, error))
+  if (!xdg_app_dir_set_active (self, ref, checksum, cancellable, error))
     goto out;
 
   ret = TRUE;
@@ -517,7 +517,7 @@ xdg_app_dir_undeploy (XdgAppDir *self,
   gs_unref_object GFile *checkoutdir = NULL;
   gs_unref_object GFile *removeddir = NULL;
   gs_free char *tmpname = NULL;
-  gs_free char *latest = NULL;
+  gs_free char *active = NULL;
   int i;
 
   g_assert (ref != NULL);
@@ -537,13 +537,13 @@ xdg_app_dir_undeploy (XdgAppDir *self,
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
 
-  latest = xdg_app_dir_read_latest (self, ref, cancellable);
-  if (latest != NULL && strcmp (latest, checksum) == 0)
+  active = xdg_app_dir_read_active (self, ref, cancellable);
+  if (active != NULL && strcmp (active, checksum) == 0)
     {
       gs_strfreev char **deployed_checksums = NULL;
       const char *some_deployment;
 
-      /* We're removing the latest deployment, start by repointing that
+      /* We're removing the active deployment, start by repointing that
          to another deployment if one exists */
 
       if (!xdg_app_dir_list_deployed (self, ref,
@@ -561,7 +561,7 @@ xdg_app_dir_undeploy (XdgAppDir *self,
           break;
         }
 
-      if (!xdg_app_dir_set_latest (self, ref, some_deployment, cancellable, error))
+      if (!xdg_app_dir_set_active (self, ref, some_deployment, cancellable, error))
         goto out;
     }
 
@@ -624,7 +624,7 @@ xdg_app_dir_get_if_deployed (XdgAppDir     *self,
   gs_unref_object GFile *deploy_dir = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
-  deploy_dir = g_file_get_child (deploy_base, checksum ? checksum : "latest");
+  deploy_dir = g_file_get_child (deploy_base, checksum ? checksum : "active");
 
   if (g_file_query_file_type (deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
     return g_object_ref (deploy_dir);

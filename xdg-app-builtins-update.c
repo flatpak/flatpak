@@ -72,7 +72,7 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
                          cancellable, error))
     goto out;
 
-  previous_deployment = xdg_app_dir_read_latest (dir, ref, cancellable);
+  previous_deployment = xdg_app_dir_read_active (dir, ref, cancellable);
 
   my_error = NULL;
   if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, &my_error))
@@ -150,7 +150,7 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
                          cancellable, error))
     goto out;
 
-  previous_deployment = xdg_app_dir_read_latest (dir, ref, cancellable);
+  previous_deployment = xdg_app_dir_read_active (dir, ref, cancellable);
 
   my_error = NULL;
   if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, &my_error))

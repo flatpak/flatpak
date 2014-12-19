@@ -50,10 +50,10 @@ gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          const char     *ref,
                                          GCancellable   *cancellable,
                                          GError        **error);
-char *      xdg_app_dir_read_latest     (XdgAppDir      *self,
+char *      xdg_app_dir_read_active     (XdgAppDir      *self,
                                          const char     *ref,
                                          GCancellable   *cancellable);
-gboolean    xdg_app_dir_set_latest      (XdgAppDir      *self,
+gboolean    xdg_app_dir_set_active      (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,
                                          GCancellable   *cancellable,
