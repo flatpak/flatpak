@@ -1,5 +1,7 @@
 #include "config.h"
 
+#include <string.h>
+
 #include <gio/gio.h>
 #include "libgsystem.h"
 
@@ -309,6 +311,73 @@ xdg_app_dir_pull (XdgAppDir *self,
   return ret;
 }
 
+char *
+xdg_app_dir_read_latest (XdgAppDir *self,
+                         const char *ref,
+                         GCancellable *cancellable)
+{
+  gs_unref_object GFile *deploy_base = NULL;
+  gs_unref_object GFile *latest_link = NULL;
+  gs_unref_object GFileInfo *file_info = NULL;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+  latest_link = g_file_get_child (deploy_base, "latest");
+
+  file_info = g_file_query_info (latest_link, OSTREE_GIO_FAST_QUERYINFO,
+                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                 cancellable, NULL);
+  if (file_info == NULL)
+    return NULL;
+
+  return g_strdup (g_file_info_get_symlink_target (file_info));
+}
+
+gboolean
+xdg_app_dir_set_latest (XdgAppDir *self,
+                        const char *ref,
+                        const char *checksum,
+                        GCancellable *cancellable,
+                        GError **error)
+{
+  gboolean ret = FALSE;
+  gs_unref_object GFile *deploy_base = NULL;
+  gs_free char *tmpname = NULL;
+  gs_unref_object GFile *latest_tmp_link = NULL;
+  gs_unref_object GFile *latest_link = NULL;
+  gs_free_error GError *my_error = NULL;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+  latest_link = g_file_get_child (deploy_base, "latest");
+
+  if (checksum != NULL)
+    {
+      tmpname = gs_fileutil_gen_tmp_name (".latest-", NULL);
+      latest_tmp_link = g_file_get_child (deploy_base, tmpname);
+      if (!g_file_make_symbolic_link (latest_tmp_link, checksum, cancellable, error))
+        goto out;
+
+      if (!gs_file_rename (latest_tmp_link,
+                           latest_link,
+                           cancellable, error))
+        goto out;
+    }
+  else
+    {
+      if (!g_file_delete (latest_link, cancellable, &my_error) &&
+          !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, my_error);
+          my_error = NULL;
+          goto out;
+        }
+    }
+
+  ret = TRUE;
+ out:
+  return ret;
+}
+
+
 gboolean
 xdg_app_dir_deploy (XdgAppDir *self,
                     const char *ref,
@@ -318,10 +387,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
 {
   gboolean ret = FALSE;
   gs_free char *resolved_ref = NULL;
-  gs_free char *tmpname = NULL;
   gs_unref_object GFile *root = NULL;
-  gs_unref_object GFile *latest_tmp_link = NULL;
-  gs_unref_object GFile *latest_link = NULL;
   gs_unref_object GFileInfo *file_info = NULL;
   gs_unref_object GFile *deploy_base = NULL;
   gs_unref_object GFile *checkoutdir = NULL;
@@ -372,20 +438,180 @@ xdg_app_dir_deploy (XdgAppDir *self,
     goto out;
 
 
-  tmpname = gs_fileutil_gen_tmp_name (".latest-", NULL);
-  latest_tmp_link = g_file_get_child (deploy_base, tmpname);
-  if (!g_file_make_symbolic_link (latest_tmp_link, checksum, cancellable, error))
-    goto out;
-
-  latest_link = g_file_get_child (deploy_base, "latest");
-  if (!gs_file_rename (latest_tmp_link,
-                       latest_link,
-                       cancellable, error))
+  if (!xdg_app_dir_set_latest (self, ref, checksum, cancellable, error))
     goto out;
 
   ret = TRUE;
  out:
   return ret;
+}
+
+gboolean
+xdg_app_dir_list_deployed (XdgAppDir *self,
+                           const char *ref,
+                           char ***deployed_checksums,
+                           GCancellable *cancellable,
+                           GError **error)
+{
+  gboolean ret = FALSE;
+  gs_unref_object GFile *deploy_base = NULL;
+  gs_unref_ptrarray GPtrArray *checksums = NULL;
+  GError *temp_error = NULL;
+  gs_unref_object GFileEnumerator *dir_enum = NULL;
+  gs_unref_object GFile *child = NULL;
+  gs_unref_object GFileInfo *child_info = NULL;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+
+  checksums = g_ptr_array_new_with_free_func (g_free);
+
+  dir_enum = g_file_enumerate_children (deploy_base, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable,
+                                        error);
+  if (!dir_enum)
+    goto out;
+
+  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)) != NULL)
+    {
+      const char *name;
+
+      name = g_file_info_get_name (child_info);
+
+      g_clear_object (&child);
+      child = g_file_get_child (deploy_base, name);
+
+      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
+          name[0] != '.' &&
+          strlen (name) == 64)
+        g_ptr_array_add (checksums, g_strdup (name));
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      goto out;
+    }
+
+  g_ptr_array_add (checksums, NULL);
+  *deployed_checksums = (char **)g_ptr_array_free (checksums, FALSE);
+  checksums = NULL;
+
+  ret = TRUE;
+ out:
+  return ret;
+
+}
+
+gboolean
+xdg_app_dir_undeploy (XdgAppDir *self,
+                      const char *ref,
+                      const char *checksum,
+                      GCancellable *cancellable,
+                      GError **error)
+{
+  gboolean ret = FALSE;
+  gs_unref_object GFile *deploy_base = NULL;
+  gs_unref_object GFile *checkoutdir = NULL;
+  gs_unref_object GFile *removeddir = NULL;
+  gs_free char *tmpname = NULL;
+  gs_free char *latest = NULL;
+  int i;
+
+  g_assert (ref != NULL);
+  g_assert (checksum != NULL);
+
+  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+
+  checkoutdir = g_file_get_child (deploy_base, checksum);
+  if (!g_file_query_exists (checkoutdir, cancellable))
+    {
+      g_set_error (error, XDG_APP_DIR_ERROR,
+                   XDG_APP_DIR_ERROR_ALREADY_UNDEPLOYED,
+                   "%s version %s already undeployed", ref, checksum);
+      goto out;
+    }
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    goto out;
+
+  latest = xdg_app_dir_read_latest (self, ref, cancellable);
+  if (latest != NULL && strcmp (latest, checksum) == 0)
+    {
+      gs_strfreev char **deployed_checksums = NULL;
+      const char *some_deployment;
+
+      /* We're removing the latest deployment, start by repointing that
+         to another deployment if one exists */
+
+      if (!xdg_app_dir_list_deployed (self, ref,
+                                      &deployed_checksums,
+                                      cancellable, error))
+        goto out;
+
+      some_deployment = NULL;
+      for (i = 0; deployed_checksums[i] != NULL; i++)
+        {
+          if (strcmp (deployed_checksums[i], checksum) == 0)
+            continue;
+
+          some_deployment = deployed_checksums[i];
+          break;
+        }
+
+      if (!xdg_app_dir_set_latest (self, ref, some_deployment, cancellable, error))
+        goto out;
+    }
+
+  tmpname = gs_fileutil_gen_tmp_name (".removed-", checksum);
+
+  checkoutdir = g_file_get_child (deploy_base, checksum);
+  removeddir = g_file_get_child (deploy_base, tmpname);
+
+  if (!gs_file_rename (checkoutdir,
+                       removeddir,
+                       cancellable, error))
+    goto out;
+
+  if (!gs_shutil_rm_rf (removeddir, cancellable, error))
+    goto out;
+
+  ret = TRUE;
+ out:
+  return ret;
+}
+
+gboolean
+xdg_app_dir_prune (XdgAppDir      *self,
+                   GCancellable   *cancellable,
+                   GError        **error)
+{
+  gboolean ret = FALSE;
+  gint objects_total, objects_pruned;
+  guint64 pruned_object_size_total;
+  gs_free char *formatted_freed_size = NULL;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    goto out;
+
+  if (!ostree_repo_prune (self->repo,
+                          OSTREE_REPO_PRUNE_FLAGS_REFS_ONLY,
+                          0,
+                          &objects_total,
+                          &objects_pruned,
+                          &pruned_object_size_total,
+                          cancellable, error))
+    goto out;
+
+  formatted_freed_size = g_format_size_full (pruned_object_size_total, 0);
+  g_debug ("Pruned %d/%d objects, size %s", objects_total, objects_pruned, formatted_freed_size);
+
+  ret = TRUE;
+ out:
+  return ret;
+
 }
 
 GFile *

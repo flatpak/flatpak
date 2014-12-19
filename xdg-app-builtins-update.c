@@ -35,6 +35,7 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   gs_unref_object GFile *origin = NULL;
   const char *runtime;
   const char *branch = "master";
+  gs_free char *previous_deployment = NULL;
   gs_free char *ref = NULL;
   gs_free char *repository = NULL;
   GError *my_error;
@@ -71,6 +72,8 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
                          cancellable, error))
     goto out;
 
+  previous_deployment = xdg_app_dir_read_latest (dir, ref, cancellable);
+
   my_error = NULL;
   if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, &my_error))
     {
@@ -81,6 +84,16 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
           g_propagate_error (error, my_error);
           goto out;
         }
+    }
+
+  if (previous_deployment != NULL)
+    {
+      if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
+                                 cancellable, error))
+        goto out;
+
+      if (!xdg_app_dir_prune (dir, cancellable, error))
+        goto out;
     }
 
   ret = TRUE;
@@ -102,6 +115,7 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   const char *branch = "master";
   gs_free char *ref = NULL;
   gs_free char *repository = NULL;
+  gs_free char *previous_deployment = NULL;
   GError *my_error;
 
   context = g_option_context_new ("APP [BRANCH] - Update an application");
@@ -136,6 +150,8 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
                          cancellable, error))
     goto out;
 
+  previous_deployment = xdg_app_dir_read_latest (dir, ref, cancellable);
+
   my_error = NULL;
   if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, &my_error))
     {
@@ -146,6 +162,16 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
           g_propagate_error (error, my_error);
           goto out;
         }
+    }
+
+  if (previous_deployment != NULL)
+    {
+      if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
+                                 cancellable, error))
+        goto out;
+
+      if (!xdg_app_dir_prune (dir, cancellable, error))
+        goto out;
     }
 
   ret = TRUE;
