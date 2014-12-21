@@ -2,6 +2,7 @@
 
 #include "xdg-app-utils.h"
 
+#include <glib.h>
 #include <stdlib.h>
 #include <sys/utsname.h>
 
