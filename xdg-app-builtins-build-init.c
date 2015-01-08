@@ -99,14 +99,9 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
       var_ref = xdg_app_build_runtime_ref (opt_var, branch, opt_arch);
 
-      var_deploy_base = xdg_app_dir_get_if_deployed (user_dir, var_ref, NULL, cancellable);
+      var_deploy_base = xdg_app_find_deploy_dir_for_ref (var_ref, cancellable, error);
       if (var_deploy_base == NULL)
-        var_deploy_base = xdg_app_dir_get_if_deployed (system_dir, var_ref, NULL, cancellable);
-      if (var_deploy_base == NULL)
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Var runtime %s branch %s not installed", opt_var, branch);
-          goto out;
-        }
+        goto out;
 
       var_deploy_files = g_file_get_child (var_deploy_base, "files");
     }

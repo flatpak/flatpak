@@ -62,7 +62,6 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   GOptionContext *context;
   gboolean ret = FALSE;
   gs_unref_object XdgAppDir *user_dir = NULL;
-  gs_unref_object XdgAppDir *system_dir = NULL;
   gs_unref_variant_builder GVariantBuilder *optbuilder = NULL;
   gs_unref_object GFile *deploy_base = NULL;
   gs_unref_object GFile *var = NULL;
@@ -125,16 +124,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   app_ref = xdg_app_build_app_ref (app, branch, opt_arch);
 
   user_dir = xdg_app_dir_get_user ();
-  system_dir = xdg_app_dir_get_system ();
 
-  app_deploy = xdg_app_dir_get_if_deployed (user_dir, app_ref, NULL, cancellable);
+  app_deploy = xdg_app_find_deploy_dir_for_ref (app_ref, cancellable, error);
   if (app_deploy == NULL)
-    app_deploy = xdg_app_dir_get_if_deployed (system_dir, app_ref, NULL, cancellable);
-  if (app_deploy == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "App %s branch %s not installed", app, branch);
-      goto out;
-    }
+    goto out;
 
   metadata = g_file_get_child (app_deploy, "metadata");
   if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
@@ -150,14 +143,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
 
-  runtime_deploy = xdg_app_dir_get_if_deployed (user_dir, runtime_ref, NULL, cancellable);
+  runtime_deploy = xdg_app_find_deploy_dir_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
-    runtime_deploy = xdg_app_dir_get_if_deployed (system_dir, runtime_ref, NULL, cancellable);
-  if (runtime_deploy == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Required runtime %s not installed", runtime);
-      goto out;
-    }
+    goto out;
 
   if (!xdg_app_dir_ensure_path (user_dir, cancellable, error))
     goto out;
