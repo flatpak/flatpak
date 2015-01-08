@@ -56,6 +56,80 @@ extract_unix_path_from_dbus_addres (const char *address)
   return g_strndup (path, path_end - path);
 }
 
+static void
+xdg_app_run_add_x11_args (GPtrArray *argv_array)
+{
+  char *x11_socket = NULL;
+  const char *display = g_getenv ("DISPLAY");
+
+  if (display && display[0] == ':' && g_ascii_isdigit (display[1]))
+    {
+      const char *display_nr = &display[1];
+      const char *display_nr_end = display_nr;
+      gs_free char *d = NULL;
+
+      while (g_ascii_isdigit (*display_nr_end))
+        display_nr_end++;
+
+      d = g_strndup (display_nr, display_nr_end - display_nr);
+      x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", d);
+
+      g_ptr_array_add (argv_array, "-x");
+      g_ptr_array_add (argv_array, x11_socket);
+    }
+}
+
+static void
+xdg_app_run_add_no_x11_args (GPtrArray *argv_array)
+{
+  g_unsetenv ("DISPLAY");
+}
+
+static void
+xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array)
+{
+  char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
+  if (g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
+    {
+      g_ptr_array_add (argv_array, g_strdup ("-p"));
+      g_ptr_array_add (argv_array, pulseaudio_socket);
+    }
+}
+
+static void
+xdg_app_run_add_system_dbus_args (GPtrArray *argv_array)
+{
+  const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
+  char *dbus_system_socket = NULL;
+
+  dbus_system_socket = extract_unix_path_from_dbus_addres (dbus_address);
+  if (dbus_system_socket == NULL &&
+      g_file_test ("/var/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
+    {
+      dbus_system_socket = g_strdup ("/var/run/dbus/system_bus_socket");
+    }
+
+  if (dbus_system_socket != NULL)
+    {
+      g_ptr_array_add (argv_array, g_strdup ("-D"));
+      g_ptr_array_add (argv_array, dbus_system_socket);
+    }
+}
+
+static void
+xdg_app_run_add_session_dbus_args (GPtrArray *argv_array)
+{
+  const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
+  char *dbus_session_socket = NULL;
+
+  dbus_session_socket = extract_unix_path_from_dbus_addres (dbus_address);
+  if (dbus_session_socket != NULL)
+    {
+      g_ptr_array_add (argv_array, g_strdup ("-d"));
+      g_ptr_array_add (argv_array, dbus_session_socket);
+    }
+}
+
 gboolean
 xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -77,10 +151,6 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gs_free char *default_command = NULL;
   gs_free char *runtime_ref = NULL;
   gs_free char *app_ref = NULL;
-  gs_free char *x11_socket = NULL;
-  gs_free char *pulseaudio_socket = NULL;
-  gs_free char *dbus_system_socket = NULL;
-  gs_free char *dbus_session_socket = NULL;
   _gs_unref_keyfile GKeyFile *metakey = NULL;
   gs_free_error GError *my_error = NULL;
   gs_free_error GError *my_error2 = NULL;
@@ -182,93 +252,44 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   else if (default_command)
     command = default_command;
 
-  argv_array = g_ptr_array_new ();
-  g_ptr_array_add (argv_array, HELPER);
+  argv_array = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (argv_array, g_strdup (HELPER));
 
   if (g_key_file_get_boolean (metakey, "Environment", "ipc", NULL))
-    g_ptr_array_add (argv_array, "-i");
+    g_ptr_array_add (argv_array, g_strdup ("-i"));
 
   if (g_key_file_get_boolean (metakey, "Environment", "host-fs", NULL))
-    g_ptr_array_add (argv_array, "-f");
+    g_ptr_array_add (argv_array, g_strdup ("-f"));
 
   if (g_key_file_get_boolean (metakey, "Environment", "homedir", NULL))
-    g_ptr_array_add (argv_array, "-H");
+    g_ptr_array_add (argv_array, g_strdup ("-H"));
 
   if (g_key_file_get_boolean (metakey, "Environment", "network", NULL))
-    g_ptr_array_add (argv_array, "-n");
+    g_ptr_array_add (argv_array, g_strdup ("-n"));
 
   if (g_key_file_get_boolean (metakey, "Environment", "x11", NULL))
-    {
-      const char *display = g_getenv ("DISPLAY");
-
-      if (display && display[0] == ':' && g_ascii_isdigit (display[1]))
-        {
-          const char *display_nr = &display[1];
-          const char *display_nr_end = display_nr;
-          gs_free char *d = NULL;
-
-          while (g_ascii_isdigit (*display_nr_end))
-            display_nr_end++;
-
-          d = g_strndup (display_nr, display_nr_end - display_nr);
-          x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", d);
-
-          g_ptr_array_add (argv_array, "-x");
-          g_ptr_array_add (argv_array, x11_socket);
-        }
-    }
+    xdg_app_run_add_x11_args (argv_array);
   else
-    g_unsetenv ("DISPLAY");
+    xdg_app_run_add_no_x11_args (argv_array);
 
   if (g_key_file_get_boolean (metakey, "Environment", "pulseaudio", NULL))
-    {
-      pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
-      if (g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
-        {
-          g_ptr_array_add (argv_array, "-p");
-          g_ptr_array_add (argv_array, pulseaudio_socket);
-        }
-    }
+    xdg_app_run_add_pulseaudio_args (argv_array);
 
   if (g_key_file_get_boolean (metakey, "Environment", "system-dbus", NULL))
-    {
-      const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
-
-      dbus_system_socket = extract_unix_path_from_dbus_addres (dbus_address);
-      if (dbus_system_socket == NULL &&
-          g_file_test ("/var/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
-        {
-          dbus_system_socket = g_strdup ("/var/run/dbus/system_bus_socket");
-        }
-
-      if (dbus_system_socket != NULL)
-        {
-          g_ptr_array_add (argv_array, "-D");
-          g_ptr_array_add (argv_array, dbus_system_socket);
-        }
-    }
+    xdg_app_run_add_system_dbus_args (argv_array);
 
   if (g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL))
-    {
-      const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
+    xdg_app_run_add_session_dbus_args (argv_array);
 
-      dbus_session_socket = extract_unix_path_from_dbus_addres (dbus_address);
-      if (dbus_session_socket != NULL)
-        {
-          g_ptr_array_add (argv_array, "-d");
-          g_ptr_array_add (argv_array, dbus_session_socket);
-        }
-    }
+  g_ptr_array_add (argv_array, g_strdup ("-a"));
+  g_ptr_array_add (argv_array, g_file_get_path (app_files));
+  g_ptr_array_add (argv_array, g_strdup ("-v"));
+  g_ptr_array_add (argv_array, g_file_get_path (var));
+  g_ptr_array_add (argv_array, g_file_get_path (runtime_files));
 
-  g_ptr_array_add (argv_array, "-a");
-  g_ptr_array_add (argv_array, (char *)gs_file_get_path_cached (app_files));
-  g_ptr_array_add (argv_array, "-v");
-  g_ptr_array_add (argv_array, (char *)gs_file_get_path_cached (var));
-  g_ptr_array_add (argv_array, (char *)gs_file_get_path_cached (runtime_files));
-
-  g_ptr_array_add (argv_array, (char *)command);
+  g_ptr_array_add (argv_array, g_strdup (command));
   for (i = 1; i < rest_argc; i++)
-    g_ptr_array_add (argv_array, argv[rest_argv_start + i]);
+    g_ptr_array_add (argv_array, g_strdup (argv[rest_argv_start + i]));
 
   g_ptr_array_add (argv_array, NULL);
 
