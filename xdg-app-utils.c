@@ -25,6 +25,17 @@ xdg_app_get_arch (void)
 }
 
 char *
+xdg_app_build_untyped_ref (const char *runtime,
+                           const char *branch,
+                           const char *arch)
+{
+  if (arch == NULL)
+    arch = xdg_app_get_arch ();
+
+  return g_build_filename (runtime, arch, branch, NULL);
+}
+
+char *
 xdg_app_build_runtime_ref (const char *runtime,
                            const char *branch,
                            const char *arch)

@@ -30,6 +30,7 @@ BUILTINPROTO(update_runtime);
 BUILTINPROTO(install_app);
 BUILTINPROTO(update_app);
 BUILTINPROTO(run);
+BUILTINPROTO(build_init);
 
 #undef BUILTINPROTO
 

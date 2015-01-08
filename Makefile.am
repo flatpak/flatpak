@@ -19,6 +19,7 @@ xdg_app_SOURCES = \
 	xdg-app-builtins-install.c \
 	xdg-app-builtins-update.c \
 	xdg-app-builtins-run.c \
+	xdg-app-builtins-build-init.c \
 	xdg-app-dir.c \
 	xdg-app-dir.h \
 	xdg-app-utils.h \
