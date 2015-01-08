@@ -293,6 +293,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   g_ptr_array_add (argv_array, NULL);
 
+  g_setenv ("XDG_DATA_DIRS", "/self/share:/usr/share", TRUE);
+  g_unsetenv ("LD_LIBRARY_PATH");
+  g_setenv ("PATH", "/self/bin:/usr/bin", TRUE);
+
   if (!execv (HELPER, (char **)argv_array->pdata))
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
