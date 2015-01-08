@@ -31,8 +31,15 @@ BUILTINPROTO(install_app);
 BUILTINPROTO(update_app);
 BUILTINPROTO(run);
 BUILTINPROTO(build_init);
+BUILTINPROTO(build);
 
 #undef BUILTINPROTO
+
+void xdg_app_run_add_x11_args (GPtrArray *argv_array);
+void xdg_app_run_add_no_x11_args (GPtrArray *argv_array);
+void xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array);
+void xdg_app_run_add_system_dbus_args (GPtrArray *argv_array);
+void xdg_app_run_add_session_dbus_args (GPtrArray *argv_array);
 
 G_END_DECLS
 

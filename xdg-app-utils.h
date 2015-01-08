@@ -18,5 +18,4 @@ GFile * xdg_app_find_deploy_dir_for_ref (const char *ref,
                                          GCancellable *cancellable,
                                          GError **error);
 
-
 #endif /* __XDG_APP_UTILS_H__ */

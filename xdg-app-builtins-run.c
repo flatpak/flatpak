@@ -20,7 +20,7 @@ static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", NULL },
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to run", NULL },
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to run", NULL },
-  { "devel", 0, 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
+  { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
   { NULL }
 };
 
@@ -56,7 +56,7 @@ extract_unix_path_from_dbus_addres (const char *address)
   return g_strndup (path, path_end - path);
 }
 
-static void
+void
 xdg_app_run_add_x11_args (GPtrArray *argv_array)
 {
   char *x11_socket = NULL;
@@ -79,13 +79,13 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
     }
 }
 
-static void
+void
 xdg_app_run_add_no_x11_args (GPtrArray *argv_array)
 {
   g_unsetenv ("DISPLAY");
 }
 
-static void
+void
 xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array)
 {
   char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
@@ -96,7 +96,7 @@ xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array)
     }
 }
 
-static void
+void
 xdg_app_run_add_system_dbus_args (GPtrArray *argv_array)
 {
   const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
@@ -116,7 +116,7 @@ xdg_app_run_add_system_dbus_args (GPtrArray *argv_array)
     }
 }
 
-static void
+void
 xdg_app_run_add_session_dbus_args (GPtrArray *argv_array)
 {
   const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
