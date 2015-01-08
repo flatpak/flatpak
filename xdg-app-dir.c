@@ -659,7 +659,7 @@ xdg_app_dir_get_user  (void)
   if (user == NULL)
     {
       gs_unref_object GFile *path = xdg_app_get_user_base_dir_location ();
-      user = xdg_app_dir_new (path, FALSE);
+      user = xdg_app_dir_new (path, TRUE);
     }
 
   return g_object_ref (user);
