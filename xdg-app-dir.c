@@ -6,6 +6,7 @@
 #include "libgsystem.h"
 
 #include "xdg-app-dir.h"
+#include "xdg-app-utils.h"
 
 struct XdgAppDir {
   GObject parent;
@@ -149,6 +150,12 @@ xdg_app_dir_get_deploy_dir (XdgAppDir     *self,
                             const char    *ref)
 {
   return g_file_resolve_relative_path (self->basedir, ref);
+}
+
+GFile *
+xdg_app_dir_get_exports_dir (XdgAppDir     *self)
+{
+  return g_file_resolve_relative_path (self->basedir, "exports");
 }
 
 GFile *
@@ -392,6 +399,8 @@ xdg_app_dir_deploy (XdgAppDir *self,
   gs_unref_object GFile *deploy_base = NULL;
   gs_unref_object GFile *checkoutdir = NULL;
   gs_unref_object GFile *dotref = NULL;
+  gs_unref_object GFile *export = NULL;
+  gs_unref_object GFile *exports = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -437,6 +446,25 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                 G_FILE_CREATE_NONE, NULL, cancellable, error))
     goto out;
 
+  if (g_str_has_prefix (ref, "app"))
+    {
+      export = g_file_get_child (checkoutdir, "export");
+      if (g_file_query_exists (export, cancellable))
+        {
+          gs_free char *relative_path = NULL;
+          gs_free char *symlink_prefix = NULL;
+
+          exports = xdg_app_dir_get_exports_dir (self);
+          relative_path = g_file_get_relative_path (self->basedir, export);
+          symlink_prefix = g_build_filename ("..", relative_path, NULL);
+
+          if (!xdg_app_overlay_symlink_tree (export, exports,
+                                             symlink_prefix,
+                                             cancellable,
+                                             error))
+              goto out;
+        }
+    }
 
   if (!xdg_app_dir_set_active (self, ref, checksum, cancellable, error))
     goto out;

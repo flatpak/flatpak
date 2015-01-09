@@ -32,6 +32,7 @@ gboolean    xdg_app_dir_is_user         (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_path        (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_deploy_dir  (XdgAppDir      *self,
                                          const char     *ref);
+GFile *     xdg_app_dir_get_exports_dir (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_if_deployed (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,
