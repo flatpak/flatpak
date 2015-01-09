@@ -446,6 +446,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                 G_FILE_CREATE_NONE, NULL, cancellable, error))
     goto out;
 
+  exports = xdg_app_dir_get_exports_dir (self);
   if (g_str_has_prefix (ref, "app"))
     {
       export = g_file_get_child (checkoutdir, "export");
@@ -454,7 +455,6 @@ xdg_app_dir_deploy (XdgAppDir *self,
           gs_free char *relative_path = NULL;
           gs_free char *symlink_prefix = NULL;
 
-          exports = xdg_app_dir_get_exports_dir (self);
           relative_path = g_file_get_relative_path (self->basedir, export);
           symlink_prefix = g_build_filename ("..", relative_path, NULL);
 
@@ -468,6 +468,12 @@ xdg_app_dir_deploy (XdgAppDir *self,
 
   if (!xdg_app_dir_set_active (self, ref, checksum, cancellable, error))
     goto out;
+
+  if (g_file_query_exists (exports, cancellable))
+    {
+      if (!xdg_app_remove_dangling_symlinks (exports, cancellable, error))
+        goto out;
+    }
 
   ret = TRUE;
  out:
