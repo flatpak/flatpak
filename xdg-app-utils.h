@@ -23,5 +23,8 @@ gboolean xdg_app_overlay_symlink_tree (GFile    *source,
                                        const char *symlink_prefix,
                                        GCancellable  *cancellable,
                                        GError       **error);
+gboolean xdg_app_remove_dangling_symlinks (GFile    *dir,
+                                           GCancellable  *cancellable,
+                                           GError       **error);
 
 #endif /* __XDG_APP_UTILS_H__ */

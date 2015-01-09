@@ -242,3 +242,97 @@ xdg_app_overlay_symlink_tree (GFile    *source,
  out:
   return ret;
 }
+
+static gboolean
+remove_dangling_symlinks (int            parent_fd,
+                          const char    *name,
+                          GCancellable  *cancellable,
+                          GError       **error)
+{
+  gboolean ret = FALSE;
+  int dfd = -1;
+  DIR *d = NULL;
+  struct dirent *dent;
+
+  if (name == NULL)
+    dfd = parent_fd; /* We take ownership of the passed fd and close it */
+  else
+    {
+      if (!gs_file_open_dir_fd_at (parent_fd, name,
+                                   &dfd,
+                                   cancellable, error))
+        goto out;
+    }
+
+  d = fdopendir (dfd);
+  if (!d)
+    {
+      set_error_from_errno (error, errno);
+      goto out;
+    }
+
+  while ((dent = readdir (d)) != NULL)
+    {
+      const char *name = dent->d_name;
+      struct stat child_stbuf;
+
+      if (strcmp (name, ".") == 0 ||
+          strcmp (name, "..") == 0)
+        continue;
+
+      if (fstatat (dfd, name, &child_stbuf,
+                   AT_SYMLINK_NOFOLLOW) != 0)
+        {
+          set_error_from_errno (error, errno);
+          goto out;
+        }
+
+      if (S_ISDIR (child_stbuf.st_mode))
+        {
+          if (!remove_dangling_symlinks (dfd, name, cancellable, error))
+            goto out;
+        }
+      else if (S_ISLNK (child_stbuf.st_mode))
+        {
+          if (fstatat (dfd, name, &child_stbuf, 0) != 0 && errno == ENOENT)
+            {
+              if (unlinkat (dfd, name, 0) != 0)
+                {
+                  set_error_from_errno (error, errno);
+                  goto out;
+                }
+            }
+        }
+    }
+
+  ret = TRUE;
+ out:
+  if (d != NULL)
+    closedir (d); /* This closes dfd */
+  else if (dfd != -1)
+    close (dfd);
+
+  return ret;
+}
+
+gboolean
+xdg_app_remove_dangling_symlinks (GFile    *dir,
+                                  GCancellable  *cancellable,
+                                  GError       **error)
+{
+  gboolean ret = FALSE;
+  int dfd = -1;
+
+  if (!gs_file_open_dir_fd (dir, &dfd, cancellable, error))
+    goto out;
+
+  /* The fd is closed by this call */
+  if (!remove_dangling_symlinks (dfd, NULL,
+                                 cancellable, error))
+    goto out;
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
