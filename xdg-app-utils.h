@@ -18,4 +18,10 @@ GFile * xdg_app_find_deploy_dir_for_ref (const char *ref,
                                          GCancellable *cancellable,
                                          GError **error);
 
+gboolean xdg_app_overlay_symlink_tree (GFile    *source,
+                                       GFile    *destination,
+                                       const char *symlink_prefix,
+                                       GCancellable  *cancellable,
+                                       GError       **error);
+
 #endif /* __XDG_APP_UTILS_H__ */
