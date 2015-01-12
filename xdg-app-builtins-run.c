@@ -32,8 +32,6 @@ usage_error (GOptionContext *context, const char *message, GError **error)
   g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, message);
 }
 
-#define _gs_unref_keyfile __attribute__ ((cleanup(gs_local_keyfile_unref)))
-
 static char *
 extract_unix_path_from_dbus_addres (const char *address)
 {
@@ -151,7 +149,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gs_free char *default_command = NULL;
   gs_free char *runtime_ref = NULL;
   gs_free char *app_ref = NULL;
-  _gs_unref_keyfile GKeyFile *metakey = NULL;
+  gs_unref_keyfile GKeyFile *metakey = NULL;
   gs_free_error GError *my_error = NULL;
   gs_free_error GError *my_error2 = NULL;
   gs_unref_ptrarray GPtrArray *argv_array = NULL;
