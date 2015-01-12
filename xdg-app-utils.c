@@ -89,18 +89,6 @@ xdg_app_find_deploy_dir_for_ref (const char *ref,
 
 }
 
-
-static void
-set_error_from_errno (GError **error,
-                      gint     saved_errno)
-{
-  g_set_error_literal (error,
-                       G_IO_ERROR,
-                       g_io_error_from_errno (saved_errno),
-                       g_strerror (saved_errno));
-  errno = saved_errno;
-}
-
 static gboolean
 overlay_symlink_tree_dir (int            source_parent_fd,
                           const char    *source_name,
@@ -138,7 +126,7 @@ overlay_symlink_tree_dir (int            source_parent_fd,
         {
           if (errno != EEXIST)
             {
-              set_error_from_errno (error, errno);
+              gs_set_error_from_errno (error, errno);
               goto out;
             }
         }
@@ -152,7 +140,7 @@ overlay_symlink_tree_dir (int            source_parent_fd,
   srcd = fdopendir (source_dfd);
   if (!srcd)
     {
-      set_error_from_errno (error, errno);
+      gs_set_error_from_errno (error, errno);
       goto out;
     }
 
@@ -168,7 +156,7 @@ overlay_symlink_tree_dir (int            source_parent_fd,
       if (fstatat (source_dfd, name, &child_stbuf,
                    AT_SYMLINK_NOFOLLOW) != 0)
         {
-          set_error_from_errno (error, errno);
+          gs_set_error_from_errno (error, errno);
           goto out;
         }
 
@@ -185,13 +173,13 @@ overlay_symlink_tree_dir (int            source_parent_fd,
 
           if (unlinkat (destination_dfd, name, 0) != 0 && errno != ENOENT)
             {
-              set_error_from_errno (error, errno);
+              gs_set_error_from_errno (error, errno);
               goto out;
             }
 
           if (symlinkat (target, destination_dfd, name) != 0)
             {
-              set_error_from_errno (error, errno);
+              gs_set_error_from_errno (error, errno);
               goto out;
             }
         }
@@ -267,7 +255,7 @@ remove_dangling_symlinks (int            parent_fd,
   d = fdopendir (dfd);
   if (!d)
     {
-      set_error_from_errno (error, errno);
+      gs_set_error_from_errno (error, errno);
       goto out;
     }
 
@@ -283,7 +271,7 @@ remove_dangling_symlinks (int            parent_fd,
       if (fstatat (dfd, name, &child_stbuf,
                    AT_SYMLINK_NOFOLLOW) != 0)
         {
-          set_error_from_errno (error, errno);
+          gs_set_error_from_errno (error, errno);
           goto out;
         }
 
@@ -298,7 +286,7 @@ remove_dangling_symlinks (int            parent_fd,
             {
               if (unlinkat (dfd, name, 0) != 0)
                 {
-                  set_error_from_errno (error, errno);
+                  gs_set_error_from_errno (error, errno);
                   goto out;
                 }
             }
