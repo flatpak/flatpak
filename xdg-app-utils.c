@@ -216,53 +216,56 @@ remove_dangling_symlinks (int            parent_fd,
                           GError       **error)
 {
   gboolean ret = FALSE;
-  int dfd = -1;
-  DIR *d = NULL;
   struct dirent *dent;
+  GSDirFdIterator iter;
 
-  if (name == NULL)
-    dfd = parent_fd; /* We take ownership of the passed fd and close it */
-  else
+  if (!gs_dirfd_iterator_init_at (parent_fd, name, FALSE, &iter, error))
+    goto out;
+
+  while (TRUE)
     {
-      if (!gs_file_open_dir_fd_at (parent_fd, name,
-                                   &dfd,
-                                   cancellable, error))
+      gboolean is_dir = FALSE;
+      gboolean is_link = FALSE;
+
+      if (!gs_dirfd_iterator_next_dent (&iter, &dent, cancellable, error))
         goto out;
-    }
 
-  d = fdopendir (dfd);
-  if (!d)
-    {
-      gs_set_error_from_errno (error, errno);
-      goto out;
-    }
+      if (dent == NULL)
+        break;
 
-  while ((dent = readdir (d)) != NULL)
-    {
-      const char *name = dent->d_name;
-      struct stat child_stbuf;
-
-      if (strcmp (name, ".") == 0 ||
-          strcmp (name, "..") == 0)
-        continue;
-
-      if (fstatat (dfd, name, &child_stbuf,
-                   AT_SYMLINK_NOFOLLOW) != 0)
+      if (dent->d_type == DT_DIR)
+        is_dir = TRUE;
+      else if (dent->d_type == DT_LNK)
+        is_link = TRUE;
+      else if (dent->d_type == DT_UNKNOWN)
         {
-          gs_set_error_from_errno (error, errno);
-          goto out;
+          struct stat stbuf;
+          if (fstatat (iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
+            {
+              int errsv = errno;
+              if (errsv == ENOENT)
+                continue;
+              else
+                {
+                  gs_set_error_from_errno (error, errsv);
+                  goto out;
+                }
+            }
+          is_dir = S_ISDIR (stbuf.st_mode);
+          is_link = S_ISLNK (stbuf.st_mode);
         }
 
-      if (S_ISDIR (child_stbuf.st_mode))
+      if (is_dir)
         {
-          if (!remove_dangling_symlinks (dfd, name, cancellable, error))
+          if (!remove_dangling_symlinks (iter.fd, dent->d_name, cancellable, error))
             goto out;
         }
-      else if (S_ISLNK (child_stbuf.st_mode))
+      else if (is_link)
         {
-          if (fstatat (dfd, name, &child_stbuf, 0) != 0 && errno == ENOENT)
+          struct stat stbuf;
+          if (fstatat (iter.fd, dent->d_name, &stbuf, 0) != 0 && errno == ENOENT)
             {
-              if (unlinkat (dfd, name, 0) != 0)
+              if (unlinkat (iter.fd, dent->d_name, 0) != 0)
                 {
                   gs_set_error_from_errno (error, errno);
                   goto out;
@@ -273,10 +276,6 @@ remove_dangling_symlinks (int            parent_fd,
 
   ret = TRUE;
  out:
-  if (d != NULL)
-    closedir (d); /* This closes dfd */
-  else if (dfd != -1)
-    close (dfd);
 
   return ret;
 }
@@ -287,13 +286,9 @@ xdg_app_remove_dangling_symlinks (GFile    *dir,
                                   GError       **error)
 {
   gboolean ret = FALSE;
-  int dfd = -1;
-
-  if (!gs_file_open_dir_fd (dir, &dfd, cancellable, error))
-    goto out;
 
   /* The fd is closed by this call */
-  if (!remove_dangling_symlinks (dfd, NULL,
+  if (!remove_dangling_symlinks (AT_FDCWD, gs_file_get_path_cached (dir),
                                  cancellable, error))
     goto out;
 
