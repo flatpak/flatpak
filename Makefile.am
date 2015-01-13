@@ -30,5 +30,5 @@ xdg_app_LDADD = $(OSTREE_LIBS)
 xdg_app_CFLAGS = $(OSTREE_CFLAGS)
 
 install-exec-hook:
-	sudo chown root $(DESTDIR)$(bindir)/xdg-app-helper
-	sudo chmod u+s $(DESTDIR)$(bindir)/xdg-app-helper
+	$(SUDO_BIN) chown root $(DESTDIR)$(bindir)/xdg-app-helper
+	$(SUDO_BIN) chmod u+s $(DESTDIR)$(bindir)/xdg-app-helper
