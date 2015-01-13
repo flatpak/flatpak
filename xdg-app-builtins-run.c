@@ -72,7 +72,7 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
       d = g_strndup (display_nr, display_nr_end - display_nr);
       x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", d);
 
-      g_ptr_array_add (argv_array, "-x");
+      g_ptr_array_add (argv_array, g_strdup ("-x"));
       g_ptr_array_add (argv_array, x11_socket);
     }
 }
