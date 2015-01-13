@@ -29,6 +29,11 @@ PKG_CHECK_MODULES(OSTREE, [glib-2.0 libgsystem >= 2015.1 gio-2.0 ostree-1 >= 201
 AC_SUBST(OSTREE_CFLAGS)
 AC_SUBST(OSTREE_LIBS)
 
+AC_ARG_ENABLE(sudo,
+              AS_HELP_STRING([--enable-sudo],[Use sudo to set setuid flags on binaries during install]),
+              [SUDO_BIN="sudo"], [SUDO_BIN=""])
+AC_SUBST([SUDO_BIN])
+
 AC_CONFIG_FILES([
 Makefile
 ])
