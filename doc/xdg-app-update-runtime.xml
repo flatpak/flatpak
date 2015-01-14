@@ -1,0 +1,119 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="xdg-app-update-runtime">
+
+    <refentryinfo>
+        <title>dxg-app update-runtime</title>
+        <productname>xdg-app</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>xdg-app update-runtime</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>xdg-app-update-runtime</refname>
+        <refpurpose>Update a runtime</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>xdg-app update-runtime</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">RUNTIME</arg>
+                <arg choice="opt">BRANCH</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Updates a runtime.  <arg choice="plain">RUNTIME</arg> is the
+            name of an installed runtime. Optionally,
+            <arg choice="opt">BRANCH</arg> can be specified to update a
+            specific branch.
+        </para>
+        <para>
+            Note that updating a runtime is different from installing
+            a newer branch, and runtime updates are expected to keep
+            strict compatibility, so that applications can be guaranteed
+            to keep running against an updated version of the runtime
+            they were built against.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Work on the per-user configuration instead of the system-wide
+                    configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    The architecture to update for.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ xdg-app --user update-runtime org.gnome.Platform</command>
+        </para>
+
+    </refsect1>
+
+</refentry>

@@ -1,0 +1,150 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="xdg-app">
+
+    <refentryinfo>
+        <title>dxg-app</title>
+        <productname>xdg-app</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>xdg-app</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>xdg-app</refname>
+        <refpurpose>Build, install and run applications and runtimes</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>xdg-app</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="req">COMMAND</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            xdg-app is a tool for managing applications and the runtimes
+            the use. In the xdg-app model, applications can be built and
+            distributed independently from the host system the are used
+            on, and they are isolated from the host system ('sandboxed')
+            to some degree, at runtime.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Commands</title>
+
+        <para>The following commands are available:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-add-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Add a remote repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-install-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Install a runtime.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-update-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Update a runtime.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-install-app</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Install an application.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-update-app</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Update an application.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-run</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Run an application.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Initialize a build directory.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>build</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Run a build command in a build directory.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+</refentry>

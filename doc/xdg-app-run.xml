@@ -1,0 +1,83 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="xdg-app-install-runtime">
+
+    <refentryinfo>
+        <title>dxg-app run</title>
+        <productname>xdg-app</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>xdg-app run</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>xdg-app-run</refname>
+        <refpurpose>Run an application</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>xdg-app run</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">APP</arg>
+                <arg choice="opt" rep="repeat">ARG</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Runs an application in a sandboxed environment. <arg choice="plain">APP</arg> must
+            name an installed application.
+        </para>
+        <para>
+            xdg-app creates a sandboxed environment for the application to run in
+            by mounting the right runtime at <filename>/usr</filename> and a writable
+            directory at <filename>/var</filename>, whose content is preserved between
+            application runs. The application itself is mounted at <filename>/self</filename>.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ xdg-app run org.gnome.GEdit</command>
+        </para>
+
+    </refsect1>
+
+</refentry>

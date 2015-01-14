@@ -1,0 +1,84 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="xdg-app-build">
+
+    <refentryinfo>
+        <title>dxg-app build</title>
+        <productname>xdg-app</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>xdg-app build</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>xdg-app-build</refname>
+        <refpurpose>Build in a directory</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>xdg-app build</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">DIRECTORY</arg>
+                <arg choice="opt">COMMAND <arg choice="opt" rep="repeat">ARG</arg></arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Runs a build command in a directory. <arg choice="plain">DIRECTORY</arg>
+            must have been initialized with <command>xdg-app build-init</command>.
+        </para>
+        <para>
+            The sdk that is specfied in the <filename>metadata</filename> for the
+            directory is mounted at <filename>/usr</filename> and the
+            <filename>files</filename> and <filename>var</filename> subdirectories
+            are mounted at <filename>/self</filename> and <filename>/var</filename>,
+            respectively. They are writable, and their contents are preserved between
+            build commands, to allow accumulating build artifacts there.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ xdg-app build /build/my-app rpmbuild my-app.src.rpm</command>
+        </para>
+
+    </refsect1>
+
+</refentry>

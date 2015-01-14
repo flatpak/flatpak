@@ -1,5 +1,9 @@
 NULL =
 
+if BUILD_DOCUMENTATION
+SUBDIRS = doc
+endif
+
 AM_CPPFLAGS =						\
 	-DXDG_APP_BASEDIR=\"$(datadir)/xdg-app\"        \
 	-DHELPER=\"$(bindir)/xdg-app-helper\"		\
