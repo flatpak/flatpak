@@ -13,7 +13,7 @@
 static char *opt_arch;
 
 static GOptionEntry options[] = {
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to install for", NULL },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to install for", "ARCH" },
   { NULL }
 };
 
