@@ -15,6 +15,7 @@ XSLTPROC_FLAGS = \
 man_MANS = \
 	xdg-app.1			\
 	xdg-app-add-repo.1 		\
+	xdg-app-delete-repo.1 		\
 	xdg-app-install-runtime.1 	\
 	xdg-app-update-runtime.1 	\
 	xdg-app-install-app.1	 	\

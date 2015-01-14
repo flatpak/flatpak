@@ -96,6 +96,13 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-delete-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Delete a remote repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-install-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
