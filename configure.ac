@@ -34,7 +34,19 @@ AC_ARG_ENABLE(sudo,
               [SUDO_BIN="sudo"], [SUDO_BIN=""])
 AC_SUBST([SUDO_BIN])
 
+AC_ARG_ENABLE(documentation,
+              AC_HELP_STRING([--enable-documentation], [Build documentation]),,
+              enable_documentation=yes)
+if test x$enable_documentation = xyes; then
+   AC_PATH_PROG([XSLTPROC], [xsltproc])
+   if test x$XSLTPROC = x; then
+      AC_MSG_ERROR([xsltproc is required to build documentation])
+   fi
+fi
+AM_CONDITIONAL(BUILD_DOCUMENTATION, test x$enable_documentation = xyes)
+
 AC_CONFIG_FILES([
 Makefile
+doc/Makefile
 ])
 AC_OUTPUT
