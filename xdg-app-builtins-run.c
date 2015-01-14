@@ -175,14 +175,14 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
         }
     }
 
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+    goto out;
+
   if (rest_argc == 0)
     {
       usage_error (context, "APP must be specified", error);
       goto out;
     }
-
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
 
   app = argv[rest_argv_start];
 
