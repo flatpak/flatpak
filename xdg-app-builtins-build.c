@@ -76,15 +76,14 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
         }
     }
 
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+    goto out;
+
   if (rest_argc == 0)
     {
       usage_error (context, "DIRECTORY must be specified", error);
       goto out;
     }
-
-
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
 
   directory = argv[rest_argv_start];
   if (rest_argc >= 2)
