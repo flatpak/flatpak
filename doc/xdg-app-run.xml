@@ -68,6 +68,55 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    The architecture to install for.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--command=COMMAND</option></term>
+
+                <listitem><para>
+                    The command to run instead of the one listed in the application metadata.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--branch=BRANCH</option></term>
+
+                <listitem><para>
+                    The branch to use.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-d</option></term>
+                <term><option>--devel</option></term>
+
+                <listitem><para>
+                    Use the devel runtime that is specified in the application metadata instead of the regular runtime.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
     </refsect1>
 
@@ -76,6 +125,9 @@
 
         <para>
             <command>$ xdg-app run org.gnome.GEdit</command>
+        </para>
+        <para>
+            <command>$ xdg-app run --devel --command=bash org.gnome.Builder</command>
         </para>
 
     </refsect1>
