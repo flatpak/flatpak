@@ -85,7 +85,7 @@
                 <term><option>--no-gpg-verify</option></term>
 
                 <listitem><para>
-                    Disable GPG verification for the added remote..
+                    Disable GPG verification for the added remote.
                 </para></listitem>
             </varlistentry>
 
