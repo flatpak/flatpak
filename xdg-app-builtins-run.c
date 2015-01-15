@@ -237,9 +237,11 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   runtime_files = g_file_get_child (runtime_deploy, "files");
 
   default_command = g_key_file_get_string (metakey, "Application", "command", error);
+  if (*error)
+    goto out;
   if (opt_command)
     command = opt_command;
-  else if (default_command)
+  else
     command = default_command;
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
