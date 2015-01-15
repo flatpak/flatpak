@@ -131,6 +131,13 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-list-apps</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List installed applications.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-run</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
