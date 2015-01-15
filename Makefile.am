@@ -5,8 +5,16 @@ SUBDIRS = doc
 endif
 
 AM_CPPFLAGS =						\
-	-DXDG_APP_BASEDIR=\"$(datadir)/xdg-app\"        \
+	-DXDG_APP_BASEDIR=\"$(pkgdatadir)\"        	\
+	-DXDG_APP_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
 	-DHELPER=\"$(bindir)/xdg-app-helper\"		\
+	$(NULL)
+
+triggersdir = $(pkgdatadir)/triggers
+dist_triggers_SCRIPTS = \
+	triggers/gtk-icon-cache.trigger \
+	triggers/mime-database.trigger \
+	triggers/desktop-database.trigger \
 	$(NULL)
 
 bin_PROGRAMS = \

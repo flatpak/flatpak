@@ -326,6 +326,85 @@ xdg_app_dir_set_active (XdgAppDir *self,
 
 
 gboolean
+xdg_app_dir_run_triggers (XdgAppDir *self,
+			  GCancellable *cancellable,
+			  GError **error)
+{
+  gboolean ret = FALSE;
+  gs_unref_object GFileEnumerator *dir_enum = NULL;
+  gs_unref_object GFileInfo *child_info = NULL;
+  gs_unref_object GFile *triggersdir = NULL;
+  gs_unref_object GFile *exports = NULL;
+  GError *temp_error = NULL;
+
+  g_debug ("running triggers");
+
+  exports = xdg_app_dir_get_exports_dir (self);
+
+  triggersdir = g_file_new_for_path (XDG_APP_TRIGGERDIR);
+
+  dir_enum = g_file_enumerate_children (triggersdir, "standard::type,standard::name",
+                                        0, cancellable, error);
+  if (!dir_enum)
+    goto out;
+
+  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)) != NULL)
+    {
+      gs_unref_object GFile *child = NULL;
+      const char *name;
+      GError *trigger_error = NULL;
+
+      name = g_file_info_get_name (child_info);
+
+      child = g_file_get_child (triggersdir, name);
+
+      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_REGULAR &&
+	  g_str_has_suffix (name, ".trigger"))
+	{
+	  gs_unref_ptrarray GPtrArray *argv_array = NULL;
+
+	  g_debug ("running trigger %s", name);
+
+	  argv_array = g_ptr_array_new_with_free_func (g_free);
+	  g_ptr_array_add (argv_array, g_strdup (HELPER));
+	  g_ptr_array_add (argv_array, g_strdup ("-a"));
+	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
+	  g_ptr_array_add (argv_array, g_strdup ("-e"));
+	  g_ptr_array_add (argv_array, g_strdup ("-F"));
+	  g_ptr_array_add (argv_array, g_strdup ("/usr"));
+	  g_ptr_array_add (argv_array, g_file_get_path (child));
+	  g_ptr_array_add (argv_array, NULL);
+
+	  if (!g_spawn_sync ("/",
+			     (char **)argv_array->pdata,
+			     NULL,
+			     G_SPAWN_DEFAULT,
+			     NULL, NULL,
+			     NULL, NULL,
+			     NULL, &trigger_error))
+	    {
+	      g_warning ("Error running trigger %s: %s", name, trigger_error->message);
+	      g_clear_error (&trigger_error);
+	    }
+	}
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      goto out;
+    }
+
+  ret = TRUE;
+ out:
+  return ret;
+}
+
+
+
+gboolean
 xdg_app_dir_deploy (XdgAppDir *self,
                     const char *ref,
                     const char *checksum,
@@ -333,6 +412,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
                     GError **error)
 {
   gboolean ret = FALSE;
+  gboolean is_app;
   gs_free char *resolved_ref = NULL;
   gs_unref_object GFile *root = NULL;
   gs_unref_object GFileInfo *file_info = NULL;
@@ -386,8 +466,10 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                 G_FILE_CREATE_NONE, NULL, cancellable, error))
     goto out;
 
+  is_app = g_str_has_prefix (ref, "app");
+
   exports = xdg_app_dir_get_exports_dir (self);
-  if (g_str_has_prefix (ref, "app"))
+  if (is_app)
     {
       export = g_file_get_child (checkoutdir, "export");
       if (g_file_query_exists (export, cancellable))
@@ -409,10 +491,13 @@ xdg_app_dir_deploy (XdgAppDir *self,
   if (!xdg_app_dir_set_active (self, ref, checksum, cancellable, error))
     goto out;
 
-  if (g_file_query_exists (exports, cancellable))
+  if (is_app && g_file_query_exists (exports, cancellable))
     {
       if (!xdg_app_remove_dangling_symlinks (exports, cancellable, error))
-        goto out;
+	goto out;
+
+      if (!xdg_app_dir_run_triggers (self, cancellable, error))
+	goto out;
     }
 
   ret = TRUE;
