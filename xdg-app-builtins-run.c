@@ -198,7 +198,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     goto out;
 
   runtime = g_key_file_get_string (metakey, "Application", opt_devel ? "sdk" : "runtime", error);
-  if (runtime == NULL)
+  if (*error)
     goto out;
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
