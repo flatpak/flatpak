@@ -19,7 +19,7 @@ static gboolean opt_devel;
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to run", "COMMAND" },
-  { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to run", "BRANCH" },
+  { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to use", "BRANCH" },
   { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
   { NULL }
 };
