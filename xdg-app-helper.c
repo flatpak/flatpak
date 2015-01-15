@@ -1156,5 +1156,8 @@ main (int argc,
 
   __debug__(("launch executable %s\n", args[0]));
 
-  return execvp (args[0], args);
+  if (execvp (args[0], args) == -1)
+    die_with_error ("execvp %s", args[0]);
+
+  return 0;
 }

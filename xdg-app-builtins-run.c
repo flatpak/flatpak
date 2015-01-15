@@ -25,7 +25,7 @@ static GOptionEntry options[] = {
 };
 
 static char *
-extract_unix_path_from_dbus_addres (const char *address)
+extract_unix_path_from_dbus_address (const char *address)
 {
   const char *path, *path_end;
 
@@ -92,7 +92,7 @@ xdg_app_run_add_system_dbus_args (GPtrArray *argv_array)
   const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
   char *dbus_system_socket = NULL;
 
-  dbus_system_socket = extract_unix_path_from_dbus_addres (dbus_address);
+  dbus_system_socket = extract_unix_path_from_dbus_address (dbus_address);
   if (dbus_system_socket == NULL &&
       g_file_test ("/var/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
     {
@@ -112,7 +112,7 @@ xdg_app_run_add_session_dbus_args (GPtrArray *argv_array)
   const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
   char *dbus_session_socket = NULL;
 
-  dbus_session_socket = extract_unix_path_from_dbus_addres (dbus_address);
+  dbus_session_socket = extract_unix_path_from_dbus_address (dbus_address);
   if (dbus_session_socket != NULL)
     {
       g_ptr_array_add (argv_array, g_strdup ("-d"));
@@ -198,7 +198,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     goto out;
 
   runtime = g_key_file_get_string (metakey, "Application", opt_devel ? "sdk" : "runtime", error);
-  if (runtime == NULL)
+  if (*error)
     goto out;
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
@@ -237,9 +237,11 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   runtime_files = g_file_get_child (runtime_deploy, "files");
 
   default_command = g_key_file_get_string (metakey, "Application", "command", error);
+  if (*error)
+    goto out;
   if (opt_command)
     command = opt_command;
-  else if (default_command)
+  else
     command = default_command;
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
@@ -287,7 +289,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_unsetenv ("LD_LIBRARY_PATH");
   g_setenv ("PATH", "/self/bin:/usr/bin", TRUE);
 
-  if (!execv (HELPER, (char **)argv_array->pdata))
+  if (execv (HELPER, (char **)argv_array->pdata) == -1)
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
       goto out;
