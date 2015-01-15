@@ -17,6 +17,7 @@ man_MANS = \
 	xdg-app-add-repo.1 		\
 	xdg-app-install-runtime.1 	\
 	xdg-app-update-runtime.1 	\
+	xdg-app-list-runtimes.1 	\
 	xdg-app-install-app.1	 	\
 	xdg-app-update-app.1	 	\
 	xdg-app-run.1		 	\
