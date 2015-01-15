@@ -93,6 +93,8 @@ print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
           const char *arch;
 
           arch = g_file_info_get_name (child_info2);
+          if (strcmp (arch, "data") == 0)
+            continue;
 
           g_clear_object (&child2);
           child2 = g_file_get_child (child, arch);
@@ -175,6 +177,47 @@ xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable,
     goto out;
 
   base = g_file_resolve_relative_path (xdg_app_dir_get_path (dir), "runtime");
+  if (!g_file_query_exists (base, cancellable))
+    {
+      ret = TRUE;
+      goto out;
+    }
+
+  if (opt_show_details)
+    {
+      if (!print_three_generations (base, cancellable, error))
+        goto out;
+    }
+  else
+    {
+      if (!print_children (base, cancellable, error))
+        goto out;
+    }
+
+  ret = TRUE;
+
+ out:
+
+  if (context)
+    g_option_context_free (context);
+
+  return ret;
+}
+
+gboolean
+xdg_app_builtin_list_apps (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  gboolean ret = FALSE;
+  GOptionContext *context;
+  gs_unref_object XdgAppDir *dir = NULL;
+  gs_unref_object GFile *base = NULL;
+
+  context = g_option_context_new (" - List applications");
+
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+    goto out;
+
+  base = g_file_resolve_relative_path (xdg_app_dir_get_path (dir), "app");
   if (!g_file_query_exists (base, cancellable))
     {
       ret = TRUE;

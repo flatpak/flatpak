@@ -35,6 +35,7 @@ BUILTINPROTO(update_runtime);
 BUILTINPROTO(list_runtimes);
 BUILTINPROTO(install_app);
 BUILTINPROTO(update_app);
+BUILTINPROTO(list_apps);
 BUILTINPROTO(run);
 BUILTINPROTO(build_init);
 BUILTINPROTO(build);

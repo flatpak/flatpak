@@ -26,6 +26,7 @@ static XdgAppCommand commands[] = {
   { "list-runtimes", xdg_app_builtin_list_runtimes },
   { "install-app", xdg_app_builtin_install_app },
   { "update-app", xdg_app_builtin_update_app },
+  { "list-apps", xdg_app_builtin_list_apps },
   { "run", xdg_app_builtin_run },
   { "build-init", xdg_app_builtin_build_init },
   { "build", xdg_app_builtin_build },
