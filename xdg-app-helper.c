@@ -836,6 +836,7 @@ main (int argc,
   int mount_home = 0;
   int writable = 0;
   int writable_app = 0;
+  int writable_exports = 0;
   char old_cwd[256];
 
   char tmpdir[] = "/tmp/run-app.XXXXXX";
@@ -867,6 +868,12 @@ main (int argc,
 
         case 'w':
           writable_app = 1;
+          args += 1;
+          n_args -= 1;
+          break;
+
+        case 'e':
+          writable_exports = 1;
           args += 1;
           n_args -= 1;
           break;
@@ -1058,6 +1065,17 @@ main (int argc,
     {
       if (bind_mount (app_path, "self", BIND_PRIVATE | (writable_app?0:BIND_READONLY)))
         die_with_error ("mount self");
+
+      if (!writable_app && writable_exports)
+	{
+	  char *exports = strconcat (app_path, "/exports");
+
+	  if (bind_mount (exports, "self/exports", BIND_PRIVATE))
+	    die_with_error ("mount self/exports");
+
+	  free (exports);
+	}
+
     }
 
   if (var_path != NULL)
