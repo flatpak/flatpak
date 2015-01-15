@@ -203,6 +203,7 @@ typedef enum {
   FILE_TYPE_REGULAR,
   FILE_TYPE_DIR,
   FILE_TYPE_SYMLINK,
+  FILE_TYPE_SYSTEM_SYMLINK,
   FILE_TYPE_BIND,
   FILE_TYPE_BIND_RO,
   FILE_TYPE_MOUNT,
@@ -254,10 +255,12 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "var", 0755},
   { FILE_TYPE_SYMLINK, "var/tmp", 0755, "/tmp"},
   { FILE_TYPE_SYMLINK, "var/run", 0755, "/run"},
-  { FILE_TYPE_SYMLINK, "lib", 0755, "usr/lib"},
-  { FILE_TYPE_SYMLINK, "bin", 0755, "usr/bin" },
-  { FILE_TYPE_SYMLINK, "sbin", 0755, "usr/sbin"},
-  { FILE_TYPE_SYMLINK, "etc", 0755, "usr/etc"},
+  { FILE_TYPE_SYSTEM_SYMLINK, "lib32", 0755, NULL},
+  { FILE_TYPE_SYSTEM_SYMLINK, "lib64", 0755, NULL},
+  { FILE_TYPE_SYSTEM_SYMLINK, "lib", 0755, "usr/lib"},
+  { FILE_TYPE_SYSTEM_SYMLINK, "bin", 0755, "usr/bin" },
+  { FILE_TYPE_SYSTEM_SYMLINK, "sbin", 0755, "usr/sbin"},
+  { FILE_TYPE_SYSTEM_SYMLINK, "etc", 0755, "usr/etc"},
   { FILE_TYPE_DIR, "tmp/.X11-unix", 0755 },
   { FILE_TYPE_REGULAR, "tmp/.X11-unix/X99", 0755 },
   { FILE_TYPE_DIR, "proc", 0755},
@@ -295,7 +298,7 @@ static const mount_table_t mount_table[] = {
 };
 
 const char *dont_mount_in_root[] = {
-  ".", "..", "lib", "lib64", "bin", "sbin", "usr", "boot",
+  ".", "..", "lib", "lib32", "lib64", "bin", "sbin", "usr", "boot",
   "tmp", "etc", "self", "run", "proc", "sys", "dev", "var"
 };
 
@@ -430,7 +433,7 @@ create_file (const char *path, mode_t mode, const char *content)
 }
 
 static void
-create_files (const create_table_t *create, int n_create, int ignore_shm)
+create_files (const create_table_t *create, int n_create, int ignore_shm, int system_mode)
 {
   int last_failed = 0;
   int i;
@@ -463,6 +466,31 @@ create_files (const create_table_t *create, int n_create, int ignore_shm)
           if (create_file (name, mode, NULL))
             die_with_error ("creating file %s", name);
           break;
+
+        case FILE_TYPE_SYSTEM_SYMLINK:
+	  if (system_mode)
+	    {
+	      char *in_root = strconcat ("/", name);
+	      struct stat buf;
+
+	      if (stat (in_root, &buf) ==  0)
+		{
+		  if (mkdir (name, mode) != 0)
+		    die_with_error ("creating dir %s", name);
+
+		  if (bind_mount (in_root, name, BIND_PRIVATE | BIND_READONLY))
+		    die_with_error ("mount %s", name);
+		}
+
+	      free (in_root);
+
+	      break;
+	    }
+
+	  if (data == NULL)
+	    break;
+
+	  /* else Fall through */
 
         case FILE_TYPE_SYMLINK:
           if (symlink (data, name) != 0)
@@ -790,6 +818,7 @@ main (int argc,
   int pipefd[2];
   uid_t saved_euid;
   pid_t pid;
+  int system_mode = 0;
   char *runtime_path = NULL;
   char *app_path = NULL;
   char *var_path = NULL;
@@ -926,6 +955,9 @@ main (int argc,
   args++;
   n_args--;
 
+  if (strcmp (runtime_path, "/usr") == 0)
+    system_mode = 1;
+
   /* The initial code is run with a high permission euid
      (at least CAP_SYS_ADMIN), so take lots of care. */
 
@@ -1011,7 +1043,7 @@ main (int argc,
   if (chdir (newroot) != 0)
       die_with_error ("chdir");
 
-  create_files (create, N_ELEMENTS (create), share_shm);
+  create_files (create, N_ELEMENTS (create), share_shm, system_mode);
 
   if (share_shm)
     {
@@ -1034,7 +1066,7 @@ main (int argc,
         die_with_error ("mount var");
     }
 
-  create_files (create_post, N_ELEMENTS (create_post), share_shm);
+  create_files (create_post, N_ELEMENTS (create_post), share_shm, system_mode);
 
   /* /usr now mounted private inside the namespace, tell child process to unmount the tmpfs in the parent namespace. */
   close (pipefd[WRITE_END]);
