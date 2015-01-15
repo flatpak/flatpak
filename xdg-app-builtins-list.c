@@ -62,9 +62,6 @@ print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
   gs_unref_object GFileEnumerator *dir_enum3 = NULL;
   gs_unref_object GFileInfo *child_info3 = NULL;
   gs_unref_object GFile *child3 = NULL;
-  GList *runtimes = NULL;
-  GList *l;
-  gint max_length[2];
   GError *temp_error = NULL;
 
   dir_enum = g_file_enumerate_children (base, G_FILE_ATTRIBUTE_STANDARD_NAME,
@@ -108,16 +105,10 @@ print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
           while ((child_info3 = g_file_enumerator_next_file (dir_enum3, cancellable, &temp_error)))
             {
               const char *branch;
-              char **r;
 
               branch = g_file_info_get_name (child_info3);
 
-              r = g_new (gchar*, 4);
-              r[0] = g_strdup (name);
-              r[1] = g_strdup (arch);
-              r[2] = g_strdup (branch);
-              r[3] = NULL;
-              runtimes = g_list_prepend (runtimes, r);
+              g_print ("%s/%s/%s\n", name, arch, branch);
 
               g_clear_object (&child_info3);
             }
@@ -137,26 +128,9 @@ print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
   if (temp_error != NULL)
     goto out;
 
-  runtimes = g_list_reverse (runtimes);
-
-  max_length[0] = max_length[1] = 0;
-  for (l = runtimes; l; l = l->next)
-    {
-      gchar **r = l->data;
-      max_length[0] = MAX (max_length[0], strlen (r[0]));
-      max_length[1] = MAX (max_length[1], strlen (r[1]));
-    }
-  for (l = runtimes; l; l = l->next)
-    {
-      gchar **r = l->data;
-      g_print ("%-*s  %-*s  %s\n", max_length[0], r[0], max_length[1], r[1], r[2]);
-    }
-
   ret = TRUE;
 
 out:
-  g_list_free_full (runtimes, (GDestroyNotify)g_strfreev);
-
   if (temp_error != NULL)
     g_propagate_error (error, temp_error);
 
