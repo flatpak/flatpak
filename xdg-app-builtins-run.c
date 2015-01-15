@@ -25,7 +25,7 @@ static GOptionEntry options[] = {
 };
 
 static char *
-extract_unix_path_from_dbus_addres (const char *address)
+extract_unix_path_from_dbus_address (const char *address)
 {
   const char *path, *path_end;
 
@@ -92,7 +92,7 @@ xdg_app_run_add_system_dbus_args (GPtrArray *argv_array)
   const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
   char *dbus_system_socket = NULL;
 
-  dbus_system_socket = extract_unix_path_from_dbus_addres (dbus_address);
+  dbus_system_socket = extract_unix_path_from_dbus_address (dbus_address);
   if (dbus_system_socket == NULL &&
       g_file_test ("/var/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
     {
@@ -112,7 +112,7 @@ xdg_app_run_add_session_dbus_args (GPtrArray *argv_array)
   const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
   char *dbus_session_socket = NULL;
 
-  dbus_session_socket = extract_unix_path_from_dbus_addres (dbus_address);
+  dbus_session_socket = extract_unix_path_from_dbus_address (dbus_address);
   if (dbus_session_socket != NULL)
     {
       g_ptr_array_add (argv_array, g_strdup ("-d"));
