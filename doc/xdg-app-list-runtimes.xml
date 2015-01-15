@@ -110,12 +110,12 @@
             <command>$ xdg-app --user list-runtimes --show-details</command>
         </para>
 <programlisting>
-org.gnome.Platform.Var  x86_64  3.16
-org.gnome.Sdk.Var       x86_64  3.16
-org.gnome.Sdk           x86_64  3.14
-org.gnome.Sdk           x86_64  3.16
-org.gnome.Platform      x86_64  3.16
-org.gnome.Platform      x86_64  3.14
+org.gnome.Platform.Var/x86_64/3.16
+org.gnome.Sdk.Var/x86_64/3.16
+org.gnome.Sdk/x86_64/3.14
+org.gnome.Sdk/x86_64/3.16
+org.gnome.Platform/x86_64/3.16
+org.gnome.Platform/x86_64/3.14
 </programlisting>
 
     </refsect1>
