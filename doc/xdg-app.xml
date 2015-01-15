@@ -172,6 +172,13 @@
                     Run a build command in a build directory.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Finalizes a build directory.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
     </refsect1>
 

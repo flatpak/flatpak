@@ -1,0 +1,115 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="xdg-app-build-finish">
+
+    <refentryinfo>
+        <title>dxg-app build-finish</title>
+        <productname>xdg-app</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>xdg-app build-finish</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>xdg-app-build-finish</refname>
+        <refpurpose>Finalize a build directory</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>xdg-app build-finish</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">DIRECTORY</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Finalizes a build directory, to prepare it for bundling.
+            <arg choice="plain">DIRECTORY</arg> is the name of the directory.
+        </para>
+        <para>
+            The result of this command is that desktop files, icons and
+            D-Bus service files from the <filename>files</filename> subdirectory
+            are copied to a new <filename>export</filename> subdirectory,
+            a <literal>command</literal> key and a permissive
+            <literal>[Environment]</literal> group are added to the
+            <filename>metadata</filename> file, and the <filename>var</filename>
+            subdirectory is removed.
+        </para>
+        <para>
+            You should review the exported files and the application metadata
+            before creating and distributing an application bundle.
+        </para>
+        <para>
+            It is an error to run build-finish on a directory that has not
+            been initialized as a build directory.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ xdg-app build-finish /build/my-app</command>
+        </para>
+<programlisting>
+Exporting share/applications/gnome-calculator.desktop
+Exporting share/dbus-1/services/org.gnome.Calculator.SearchProvider.service
+More than one executable
+Using gcalccmd as command
+Adding permissive environment
+Please review the exported files and the metadata
+</programlisting>
+
+    </refsect1>
+
+</refentry>
