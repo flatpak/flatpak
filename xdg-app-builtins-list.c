@@ -55,13 +55,6 @@ print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
   gboolean ret = FALSE;
   gs_unref_object GFileEnumerator *dir_enum = NULL;
   gs_unref_object GFileInfo *child_info = NULL;
-  gs_unref_object GFile *child = NULL;
-  gs_unref_object GFileEnumerator *dir_enum2 = NULL;
-  gs_unref_object GFileInfo *child_info2 = NULL;
-  gs_unref_object GFile *child2 = NULL;
-  gs_unref_object GFileEnumerator *dir_enum3 = NULL;
-  gs_unref_object GFileInfo *child_info3 = NULL;
-  gs_unref_object GFile *child3 = NULL;
   GError *temp_error = NULL;
 
   dir_enum = g_file_enumerate_children (base, G_FILE_ATTRIBUTE_STANDARD_NAME,
@@ -72,11 +65,13 @@ print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
 
   while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
     {
+      gs_unref_object GFile *child = NULL;
+      gs_unref_object GFileEnumerator *dir_enum2 = NULL;
+      gs_unref_object GFileInfo *child_info2 = NULL;
       const char *name;
 
       name = g_file_info_get_name (child_info);
 
-      g_clear_object (&child);
       child = g_file_get_child (base, name);
       g_clear_object (&dir_enum2);
       dir_enum2 = g_file_enumerate_children (child, G_FILE_ATTRIBUTE_STANDARD_NAME,
@@ -87,13 +82,15 @@ print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
 
       while ((child_info2 = g_file_enumerator_next_file (dir_enum2, cancellable, &temp_error)))
         {
+          gs_unref_object GFile *child2 = NULL;
+          gs_unref_object GFileEnumerator *dir_enum3 = NULL;
+          gs_unref_object GFileInfo *child_info3 = NULL;
           const char *arch;
 
           arch = g_file_info_get_name (child_info2);
           if (strcmp (arch, "data") == 0)
             continue;
 
-          g_clear_object (&child2);
           child2 = g_file_get_child (child, arch);
           g_clear_object (&dir_enum3);
           dir_enum3 = g_file_enumerate_children (child2, G_FILE_ATTRIBUTE_STANDARD_NAME,
@@ -150,7 +147,7 @@ xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable,
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     goto out;
 
-  base = g_file_resolve_relative_path (xdg_app_dir_get_path (dir), "runtime");
+  base = g_file_get_child (xdg_app_dir_get_path (dir), "runtime");
   if (!g_file_query_exists (base, cancellable))
     {
       ret = TRUE;
@@ -191,7 +188,7 @@ xdg_app_builtin_list_apps (int argc, char **argv, GCancellable *cancellable, GEr
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     goto out;
 
-  base = g_file_resolve_relative_path (xdg_app_dir_get_path (dir), "app");
+  base = g_file_get_child (xdg_app_dir_get_path (dir), "app");
   if (!g_file_query_exists (base, cancellable))
     {
       ret = TRUE;
