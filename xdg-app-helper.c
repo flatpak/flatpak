@@ -564,7 +564,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
 }
 
 static void
-mount_extra_root_dirs (void)
+mount_extra_root_dirs (int readonly)
 {
   DIR *dir;
   struct dirent *dirent;
@@ -605,7 +605,7 @@ mount_extra_root_dirs (void)
               if (mkdir (dirent->d_name, 0755) != 0)
                 die_with_error (dirent->d_name);
 
-              if (bind_mount (path, dirent->d_name, BIND_RECURSIVE))
+              if (bind_mount (path, dirent->d_name, BIND_RECURSIVE | readonly ? BIND_READONLY : 0))
                 die_with_error ("mount root subdir %s", dirent->d_name);
             }
 
@@ -833,6 +833,7 @@ main (int argc,
   int network = 0;
   int ipc = 0;
   int mount_host_fs = 0;
+  int mount_host_fs_ro = 0;
   int mount_home = 0;
   int writable = 0;
   int writable_app = 0;
@@ -886,6 +887,13 @@ main (int argc,
 
         case 'f':
           mount_host_fs = 1;
+          args += 1;
+          n_args -= 1;
+          break;
+
+        case 'F':
+          mount_host_fs = 1;
+          mount_host_fs_ro = 1;
           args += 1;
           n_args -= 1;
           break;
@@ -1170,7 +1178,7 @@ main (int argc,
    }
 
   if (mount_host_fs)
-    mount_extra_root_dirs ();
+    mount_extra_root_dirs (mount_host_fs_ro);
 
   create_homedir (!mount_host_fs && mount_home);
 
