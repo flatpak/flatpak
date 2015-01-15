@@ -1,0 +1,123 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="xdg-app-list-runtimes">
+
+    <refentryinfo>
+        <title>dxg-app list-runtimes</title>
+        <productname>xdg-app</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>xdg-app list-runtimes</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>xdg-app-list-runtimes</refname>
+        <refpurpose>List installed runtimes</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>xdg-app list-runtimes</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Lists installed runtimes.
+        </para>
+        <para>
+            xdg-app can operate in system-wide or per-user mode. The system-wide
+            runtimes are located in <filename>$prefix/share/xdg-app/runtime</filename>,
+            and the per-user runtimes are in <filename>$HOME/.local/share/xdg-app/runtinme</filename>.
+        </para>
+        <para>
+            xdg-app uses OSTree, and installed runtimes are OSTree checkouts.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Work on the per-user configuration instead of the system-wide
+                    configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--show-details</option></term>
+
+                <listitem><para>
+                    Show arches and branches, in addition to the runtime names.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ xdg-app --user list-runtimes --show-details</command>
+        </para>
+<programlisting>
+org.gnome.Platform.Var/x86_64/3.16
+org.gnome.Sdk.Var/x86_64/3.16
+org.gnome.Sdk/x86_64/3.14
+org.gnome.Sdk/x86_64/3.16
+org.gnome.Platform/x86_64/3.16
+org.gnome.Platform/x86_64/3.14
+</programlisting>
+
+    </refsect1>
+
+</refentry>

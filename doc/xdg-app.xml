@@ -124,6 +124,13 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-list-runtimes</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List installed runtimes.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-install-app</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
@@ -135,6 +142,13 @@
 
                 <listitem><para>
                     Update an application.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-list-apps</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List installed applications.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
