@@ -32,6 +32,7 @@ BUILTINPROTO(add_repo);
 BUILTINPROTO(delete_repo);
 BUILTINPROTO(install_runtime);
 BUILTINPROTO(update_runtime);
+BUILTINPROTO(list_runtimes);
 BUILTINPROTO(install_app);
 BUILTINPROTO(update_app);
 BUILTINPROTO(run);
