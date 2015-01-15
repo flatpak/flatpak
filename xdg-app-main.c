@@ -153,6 +153,14 @@ xdg_app_option_context_parse (GOptionContext *context,
   return success;
 }
 
+void
+usage_error (GOptionContext *context, const char *message, GError **error)
+{
+  gs_free gchar *help = g_option_context_get_help (context, TRUE, NULL);
+  g_printerr ("%s", help);
+  g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, message);
+}
+
 int
 xdg_app_run (int    argc,
              char **argv,

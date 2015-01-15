@@ -24,14 +24,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-static void
-usage_error (GOptionContext *context, const char *message, GError **error)
-{
-  gs_free gchar *help = g_option_context_get_help (context, TRUE, NULL);
-  g_printerr ("%s", help);
-  g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, message);
-}
-
 static char *
 extract_unix_path_from_dbus_addres (const char *address)
 {
