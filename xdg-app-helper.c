@@ -1232,6 +1232,7 @@ main (int argc,
   xsetenv ("LD_LIBRARY_PATH", "/self/lib", 1);
   xsetenv ("XDG_CONFIG_DIRS","/self/etc/xdg:/etc/xdg", 1);
   xsetenv ("XDG_DATA_DIRS", "/self/share:/usr/share", 1);
+  xsetenv ("GI_TYPELIB_PATH", "/self/lib/girepository-1.0", 1);
   xdg_runtime_dir = strdup_printf ("/run/user/%d", getuid());
   xsetenv ("XDG_RUNTIME_DIR", xdg_runtime_dir, 1);
   free (xdg_runtime_dir);
