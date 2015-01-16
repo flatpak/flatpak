@@ -50,7 +50,6 @@
             <filename>metadata</filename> file, the command key is set in the
             [Application] group, and the supported keys in the [Environment]
             group are set according to the options.
-            The <filename>var</filename> subdirectory is removed.
         </para>
         <para>
             You should review the exported files and the application metadata

@@ -199,15 +199,6 @@ out:
   return ret;
 }
 
-static gboolean
-clean_up_var (GFile *base, GCancellable *cancellable, GError **error)
-{
-  gs_unref_object GFile *var = NULL;
-
-  var = g_file_get_child  (base, "var");
-  return gs_shutil_rm_rf (var, cancellable, error);
-}
-
 gboolean
 xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -265,10 +256,6 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   g_debug ("Updating metadata");
   if (!update_metadata (base, cancellable, error))
-    goto out;
-
-  g_debug ("Cleaning up var");
-  if (!clean_up_var (base, cancellable, error))
     goto out;
 
   g_print ("Please review the exported files and the metadata\n");
