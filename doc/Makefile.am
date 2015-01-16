@@ -27,6 +27,7 @@ man_MANS = \
 	xdg-app-build-init.1	 	\
 	xdg-app-build.1		 	\
 	xdg-app-build-finish.1	 	\
+	xdg-app-make-repo.1	 	\
 	$(NULL)
 
 xml_files = $(man_MANS:.1=.xml)
