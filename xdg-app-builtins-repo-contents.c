@@ -31,7 +31,8 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   gs_unref_hashtable GHashTable *refs = NULL;
   GHashTableIter iter;
   gpointer key;
-  gs_unref_hashtable GHashTable *seen = NULL;
+  gs_unref_ptrarray GPtrArray *names = NULL;
+  int i;
   const char *repository;
 
   context = g_option_context_new (" REPOSITORY - Show available runtimes and applications");
@@ -51,7 +52,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   if (!ostree_repo_list_refs (repo, NULL, &refs, cancellable, error))
     goto out;
 
-  seen = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  names = g_ptr_array_new_with_free_func (g_free);
 
   g_hash_table_iter_init (&iter, refs);
   while (g_hash_table_iter_next (&iter, &key, NULL))
@@ -90,12 +91,28 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
             }
         }
 
-      if (name && !g_hash_table_contains (seen, name))
+      if (name)
         {
-          g_hash_table_add (seen, name);
-          g_print ("%s\n", name);
+          for (i = 0; i < names->len; i++)
+            {
+              int cmp;
+
+              cmp = strcmp (name, g_ptr_array_index (names, i));
+              if (cmp > 0)
+                continue;
+              else if (cmp < 0)
+                g_ptr_array_insert (names, i, name);
+              else
+                g_free (name);
+              break;
+            }
+          if (i == names->len)
+            g_ptr_array_insert (names, i, name);
         }
     }
+
+  for (i = 0; i < names->len; i++)
+    g_print ("%s\n", (char *)g_ptr_array_index (names, i));
 
   ret = TRUE;
 
