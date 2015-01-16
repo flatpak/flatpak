@@ -136,6 +136,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (argv_array, NULL);
 
+  g_unsetenv ("ACLOCAL_FLAGS");
   g_setenv ("ACLOCAL_PATH", "/self/share/aclocal", TRUE);
   g_setenv ("C_INCLUDE_PATH", "/self/include", TRUE);
   g_setenv ("CPLUS_INCLUDE_PATH", "/self/include", TRUE);
