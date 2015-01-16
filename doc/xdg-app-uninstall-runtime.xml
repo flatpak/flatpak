@@ -33,7 +33,7 @@
                 <command>xdg-app uninstall-runtime</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">RUNTIME</arg>
-                <arg choice="opt">ARCH <arg choice="opt">BRANCH</arg></arg>
+                <arg choice="plain">BRANCH</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -41,10 +41,16 @@
         <title>Description</title>
 
         <para>
-            Uninstalls a runtime. <arg choice="plain">RUNTIME</arg> must
-            name an existing runtime. If <arg choice="plain">ARCH</arg>
-            or <arg choice="plain">BRANCH</arg> are specified, only the
-            matching branches of the runtime are uninstalled.
+            Uninstalls a runtime. The <arg choice="plain">RUNTIME</arg>,
+            <arg choice="plain">ARCH</arg> and <arg choice="plain">BRANCH</arg>
+            arguments must specify an installed runtime.
+        </para>
+        <para>
+            Normally, this command removes the ref for this runtime from the
+            local OSTree repository and purges and objects that are no longer
+            needed to free up disk space. If the same runtime is later reinstalled,
+            the objects will be pulled from the remote repository again. The
+            --keep-ref option can be used to prevent this.
         </para>
 
     </refsect1>
@@ -65,11 +71,28 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--keep-ref</option></term>
+
+                <listitem><para>
+                    Keep the ref for the runtime and the objects belonging to it
+                    in the local repository.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--user</option></term>
 
                 <listitem><para>
                     Work on the per-user configuration instead of the system-wide
                     configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    The architecture to uninstall.
                 </para></listitem>
             </varlistentry>
 
