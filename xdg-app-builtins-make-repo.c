@@ -65,6 +65,27 @@ is_empty_directory (GFile *file, GCancellable *cancellable)
   return TRUE;
 }
 
+static OstreeRepoCommitFilterResult
+commit_filter (OstreeRepo *repo,
+               const char *path,
+               GFileInfo *file_info,
+               gpointer user_data)
+{
+  if (g_str_equal (path, "/") ||
+      g_str_equal (path, "/metadata") ||
+      g_str_has_prefix (path, "/files") ||
+      g_str_has_prefix (path, "/export"))
+    {
+      g_debug ("commit filter, allow: %s", path);
+      return OSTREE_REPO_COMMIT_FILTER_ALLOW;
+    }
+  else
+    {
+      g_debug ("commit filter, skip: %s", path);
+      return OSTREE_REPO_COMMIT_FILTER_SKIP;
+    }
+}
+
 gboolean
 xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -90,6 +111,7 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
   char *subject = NULL;
   gs_free char *body = NULL;
   OstreeRepoTransactionStats stats;
+  OstreeRepoCommitModifier *modifier = NULL;
 
   context = g_option_context_new ("LOCATION DIRECTORY NAME [BRANCH] - Create a repository from a build directory");
 
@@ -159,7 +181,9 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
 
   mtree = ostree_mutable_tree_new ();
   arg = g_file_new_for_commandline_arg (directory);
-  if (!ostree_repo_write_directory_to_mtree (repo, arg, mtree, NULL, cancellable, error))
+
+  modifier = ostree_repo_commit_modifier_new (0, commit_filter, NULL, NULL);
+  if (!ostree_repo_write_directory_to_mtree (repo, arg, mtree, modifier, cancellable, error))
     goto out;
 
   if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
@@ -189,6 +213,8 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
     ostree_repo_abort_transaction (repo, cancellable, NULL);
   if (context)
     g_option_context_free (context);
+  if (modifier)
+    ostree_repo_commit_modifier_unref (modifier);
 
   return ret;
 }
