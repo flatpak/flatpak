@@ -46,6 +46,25 @@ out:
   return ret;
 }
 
+static gboolean
+is_empty_directory (GFile *file, GCancellable *cancellable)
+{
+  gs_unref_object GFileEnumerator *file_enum = NULL;
+  gs_unref_object GFileInfo *child_info = NULL;
+
+  file_enum = g_file_enumerate_children (file, G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                         G_FILE_QUERY_INFO_NONE,
+                                         cancellable, NULL);
+  if (!file_enum)
+    return FALSE;
+
+  child_info = g_file_enumerator_next_file (file_enum, cancellable, NULL);
+  if (child_info)
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -120,7 +139,8 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
   repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);
 
-  if (g_file_query_exists (repofile, cancellable))
+  if (g_file_query_exists (repofile, cancellable) &&
+      !is_empty_directory (repofile, cancellable))
     {
       if (!ostree_repo_open (repo, cancellable, error))
         goto out;
