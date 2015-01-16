@@ -32,11 +32,20 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   GHashTableIter iter;
   gpointer key;
   gs_unref_hashtable GHashTable *seen = NULL;
+  const char *repository;
 
-  context = g_option_context_new (" - Show available runtimes and applications");
+  context = g_option_context_new (" REPOSITORY - Show available runtimes and applications");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     goto out;
+
+  if (argc < 2)
+    {
+      usage_error (context, "REPOSITORY must be specified", error);
+      goto out;
+    }
+
+  repository = argv[1];
 
   repo = xdg_app_dir_get_repo (dir);
   if (!ostree_repo_list_refs (repo, NULL, &refs, cancellable, error))
@@ -55,6 +64,9 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
 
       if (!ostree_parse_refspec (refspec, &remote, &ref, error))
         goto out;
+
+      if (!g_str_equal (remote, repository))
+        continue;
 
       if (g_str_has_prefix (ref, "runtime/") && !opt_only_apps)
         {
