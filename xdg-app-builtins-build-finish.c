@@ -11,6 +11,13 @@
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
 
+static char *opt_command;
+
+static GOptionEntry options[] = {
+  { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to set", "COMMAND" },
+  { NULL }
+};
+
 static GFile *show_export_base;
 
 static int
@@ -80,37 +87,11 @@ static gboolean
 update_metadata (GFile *base, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *bin_dir = NULL;
   gs_unref_object GFile *metadata = NULL;
-  gs_unref_object GFileEnumerator *bin_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
-  gs_free char *command = NULL;
   gs_free char *path = NULL;
-  GError *temp_error = NULL;
   gs_unref_keyfile GKeyFile *keyfile = NULL;
+  GError *temp_error = NULL;
 
-  bin_dir = g_file_resolve_relative_path (base, "files/bin");
-  if (!g_file_query_exists (bin_dir, cancellable))
-    goto rewrite;
-
-  bin_enum = g_file_enumerate_children (bin_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
-                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                        cancellable, error);
-  if (!bin_enum)
-    goto out;
-
-  while ((child_info = g_file_enumerator_next_file (bin_enum, cancellable, &temp_error)))
-    {
-      if (command != NULL)
-        {
-          g_print ("More than one executable\n");
-          break;
-        }
-
-      command = g_strdup (g_file_info_get_name (child_info));
-    }
-
-rewrite:
   metadata = g_file_get_child (base, "metadata");
   if (!g_file_query_exists (metadata, cancellable))
     goto out;
@@ -120,14 +101,59 @@ rewrite:
   if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
     goto out;
 
-  if (command)
+  if (g_key_file_has_key (keyfile, "Application", "command", NULL))
     {
-      g_print ("Using %s as command\n", command);
-      g_key_file_set_string (keyfile, "Application", "command", command);
+      g_debug ("Command key is present");
+
+      if (opt_command)
+        g_key_file_set_string (keyfile, "Application", "command", opt_command);
+    }
+  else if (opt_command)
+    {
+      g_debug ("Using explicitly provided command %s", opt_command);
+
+      g_key_file_set_string (keyfile, "Application", "command", opt_command);
     }
   else
     {
-      g_print ("No executable found\n");
+      gs_free char *command = NULL;
+      gs_unref_object GFile *bin_dir = NULL;
+      gs_unref_object GFileEnumerator *bin_enum = NULL;
+      gs_unref_object GFileInfo *child_info = NULL;
+
+      g_debug ("Looking for executables");
+
+      bin_dir = g_file_resolve_relative_path (base, "files/bin");
+      if (g_file_query_exists (bin_dir, cancellable))
+        {
+          bin_enum = g_file_enumerate_children (bin_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                                cancellable, error);
+          if (!bin_enum)
+            goto out;
+
+          while ((child_info = g_file_enumerator_next_file (bin_enum, cancellable, &temp_error)))
+            {
+              if (command != NULL)
+                {
+                  g_print ("More than one executable found\n");
+                  break;
+                }
+              command = g_strdup (g_file_info_get_name (child_info));
+            }
+          if (temp_error != NULL)
+            goto out;
+        }
+
+      if (command)
+        {
+          g_print ("Using %s as command\n", command);
+          g_key_file_set_string (keyfile, "Application", "command", command);
+        }
+      else
+        {
+          g_print ("No executable found\n");
+        }
     }
 
   g_print ("Adding permissive environment\n");
@@ -179,7 +205,7 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   context = g_option_context_new ("DIRECTORY - Convert a directory to a bundle");
 
-  if (!xdg_app_option_context_parse (context, NULL, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
   if (argc < 2)

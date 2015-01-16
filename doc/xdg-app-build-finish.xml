@@ -58,7 +58,7 @@
         </para>
         <para>
             It is an error to run build-finish on a directory that has not
-            been initialized as a build directory.
+            been initialized as a build directory, or has already been finalized.
         </para>
     </refsect1>
 
@@ -74,6 +74,14 @@
 
                 <listitem><para>
                     Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--command=COMMAND</option></term>
+
+                <listitem><para>
+                    The command to use.
                 </para></listitem>
             </varlistentry>
 
