@@ -10,13 +10,6 @@
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
 
-static char *opt_arch;
-
-static GOptionEntry options[] = {
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
-  { NULL }
-};
-
 static gboolean
 copy_subdir (GFile *files, GFile *export, const char *path, GCancellable *cancellable, GError **error)
 {
@@ -213,7 +206,7 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   context = g_option_context_new ("DIRECTORY - Convert a directory to a bundle");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!xdg_app_option_context_parse (context, NULL, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
   if (argc < 2)
