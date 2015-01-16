@@ -5,7 +5,7 @@
 <refentry id="xdg-app">
 
     <refentryinfo>
-        <title>dxg-app</title>
+        <title>xdg-app</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -177,6 +177,20 @@
 
                 <listitem><para>
                     Run a build command in a build directory.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Finalizes a build directory.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Create a repository from a build directory.
                 </para></listitem>
             </varlistentry>
         </variablelist>

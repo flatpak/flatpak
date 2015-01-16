@@ -5,7 +5,7 @@
 <refentry id="xdg-app-add-repo">
 
     <refentryinfo>
-        <title>dxg-app delete-repo</title>
+        <title>xdg-app delete-repo</title>
         <productname>xdg-app</productname>
 
         <authorgroup>

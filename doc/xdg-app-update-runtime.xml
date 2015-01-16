@@ -5,7 +5,7 @@
 <refentry id="xdg-app-update-runtime">
 
     <refentryinfo>
-        <title>dxg-app update-runtime</title>
+        <title>xdg-app update-runtime</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
