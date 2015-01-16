@@ -30,6 +30,7 @@ xdg_app_SOURCES = \
 	xdg-app-builtins-add-repo.c \
 	xdg-app-builtins-delete-repo.c \
 	xdg-app-builtins-list-repos.c \
+	xdg-app-builtins-repo-contents.c \
 	xdg-app-builtins-install.c \
 	xdg-app-builtins-update.c \
 	xdg-app-builtins-list.c \
