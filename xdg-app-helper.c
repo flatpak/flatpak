@@ -605,7 +605,7 @@ mount_extra_root_dirs (int readonly)
               if (mkdir (dirent->d_name, 0755) != 0)
                 die_with_error (dirent->d_name);
 
-              if (bind_mount (path, dirent->d_name, BIND_RECURSIVE | readonly ? BIND_READONLY : 0))
+              if (bind_mount (path, dirent->d_name, BIND_RECURSIVE | (readonly ? BIND_READONLY : 0)))
                 die_with_error ("mount root subdir %s", dirent->d_name);
             }
 
