@@ -12,9 +12,11 @@
 #include "xdg-app-utils.h"
 
 static char *opt_command;
+static char **opt_allow;
 
 static GOptionEntry options[] = {
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to set", "COMMAND" },
+  { "allow", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_allow, "Environment options to set to true", "KEY" },
   { NULL }
 };
 
@@ -91,6 +93,12 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
   gs_free char *path = NULL;
   gs_unref_keyfile GKeyFile *keyfile = NULL;
   GError *temp_error = NULL;
+  const char *environment_keys[] = {
+    "x11", "ipc", "pulseaudio", "system-dbus", "session-dbus",
+    "network", "host-fs", "homedir", NULL
+  };
+  const char *key;
+  int i;
 
   metadata = g_file_get_child (base, "metadata");
   if (!g_file_query_exists (metadata, cancellable))
@@ -156,15 +164,28 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
         }
     }
 
-  g_print ("Adding permissive environment\n");
-  g_key_file_set_boolean (keyfile, "Environment", "x11", TRUE);
-  g_key_file_set_boolean (keyfile, "Environment", "ipc", TRUE);
-  g_key_file_set_boolean (keyfile, "Environment", "pulseaudio", TRUE);
-  g_key_file_set_boolean (keyfile, "Environment", "system-dbus", TRUE);
-  g_key_file_set_boolean (keyfile, "Environment", "session-dbus", TRUE);
-  g_key_file_set_boolean (keyfile, "Environment", "network", TRUE);
-  g_key_file_set_boolean (keyfile, "Environment", "host-fs", TRUE);
-  g_key_file_set_boolean (keyfile, "Environment", "homedir", TRUE);
+  g_debug ("Setting environment");
+
+  for (i = 0; environment_keys[i]; i++)
+    {
+      key = environment_keys[i];
+      g_key_file_set_boolean (keyfile, "Environment", key, FALSE);
+    }
+
+  if (opt_allow)
+    {
+      for (i = 0; opt_allow[i]; i++)
+        {
+          key = opt_allow[i];
+          if (!g_strv_contains (environment_keys, key))
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unknown Environment key %s", key);
+              goto out;
+            }
+
+          g_key_file_set_boolean (keyfile, "Environment", key, TRUE);
+        }
+    }
 
   if (!g_key_file_save_to_file (keyfile, path, error))
     goto out;

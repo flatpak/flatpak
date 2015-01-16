@@ -46,11 +46,11 @@
         <para>
             The result of this command is that desktop files, icons and
             D-Bus service files from the <filename>files</filename> subdirectory
-            are copied to a new <filename>export</filename> subdirectory,
-            a <literal>command</literal> key and a permissive
-            <literal>[Environment]</literal> group are added to the
-            <filename>metadata</filename> file, and the <filename>var</filename>
-            subdirectory is removed.
+            are copied to a new <filename>export</filename> subdirectory. In the
+            <filename>metadata</filename> file, the command key is set in the
+            [Application] group, and the supported keys in the [Environment]
+            group are set according to the options.
+            The <filename>var</filename> subdirectory is removed.
         </para>
         <para>
             You should review the exported files and the application metadata
@@ -81,7 +81,19 @@
                 <term><option>--command=COMMAND</option></term>
 
                 <listitem><para>
-                    The command to use.
+                    The command to use. If this option is not specified,
+                    the first executable found in <filename>files/bin</filename>
+                    is used.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--allow=KEY</option></term>
+
+                <listitem><para>
+                    Set the KEY in the [Environment] group to true. KEY must
+                    be one of: x11, ipc, pulseaudio, system-dbus, session-dbus,
+                    network, host-fs, homedir.
                 </para></listitem>
             </varlistentry>
 
@@ -108,14 +120,13 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app build-finish /build/my-app</command>
+            <command>$ xdg-app build-finish /build/my-app --allow=x11 --allow=ipc</command>
         </para>
 <programlisting>
 Exporting share/applications/gnome-calculator.desktop
 Exporting share/dbus-1/services/org.gnome.Calculator.SearchProvider.service
 More than one executable
 Using gcalccmd as command
-Adding permissive environment
 Please review the exported files and the metadata
 </programlisting>
 
