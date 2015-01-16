@@ -32,6 +32,7 @@ static XdgAppCommand commands[] = {
   { "build-init", xdg_app_builtin_build_init },
   { "build", xdg_app_builtin_build },
   { "build-finish", xdg_app_builtin_build_finish },
+  { "make-repo", xdg_app_builtin_make_repo },
   { NULL }
 };
 
