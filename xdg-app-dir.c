@@ -1,12 +1,15 @@
 #include "config.h"
 
 #include <string.h>
+#include <fcntl.h>
 
 #include <gio/gio.h>
 #include "libgsystem.h"
 
 #include "xdg-app-dir.h"
 #include "xdg-app-utils.h"
+
+#include "errno.h"
 
 struct XdgAppDir {
   GObject parent;
@@ -402,6 +405,301 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
   return ret;
 }
 
+static gboolean
+read_fd (int           fd,
+         struct stat  *stat_buf,
+         gchar       **contents,
+         gsize        *length,
+         GError      **error)
+{
+  gchar *buf;
+  gsize bytes_read;
+  gsize size;
+  gsize alloc_size;
+
+  size = stat_buf->st_size;
+
+  alloc_size = size + 1;
+  buf = g_try_malloc (alloc_size);
+
+  if (buf == NULL)
+    {
+      g_set_error (error,
+                   G_FILE_ERROR,
+                   G_FILE_ERROR_NOMEM,
+                   "not enough memory");
+      return FALSE;
+    }
+
+  bytes_read = 0;
+  while (bytes_read < size)
+    {
+      gssize rc;
+
+      rc = read (fd, buf + bytes_read, size - bytes_read);
+
+      if (rc < 0)
+        {
+          if (errno != EINTR)
+            {
+              int save_errno = errno;
+
+              g_free (buf);
+              g_set_error (error,
+                           G_FILE_ERROR,
+                           g_file_error_from_errno (save_errno),
+                           "Failed to read from exported file");
+              return FALSE;
+            }
+        }
+      else if (rc == 0)
+        break;
+      else
+        bytes_read += rc;
+    }
+
+  buf[bytes_read] = '\0';
+
+  if (length)
+    *length = bytes_read;
+
+  *contents = buf;
+
+  return TRUE;
+}
+
+static gboolean
+export_desktop_file (const char    *app,
+                     const char    *branch,
+                     const char    *arch,
+                     int            parent_fd,
+                     const char    *name,
+                     struct stat   *stat_buf,
+                     char         **target,
+                     GCancellable  *cancellable,
+                     GError       **error)
+{
+  gboolean ret = FALSE;
+  gs_fd_close int desktop_fd = -1;
+  gs_free char *tmpfile_name = NULL;
+  gs_unref_object GOutputStream *out_stream = NULL;
+  gs_free gchar *data = NULL;
+  gsize data_len;
+  gs_free gchar *new_data = NULL;
+  gsize new_data_len;
+  gs_unref_keyfile GKeyFile *keyfile = NULL;
+  gs_free gchar *old_exec = NULL;
+  gint old_argc;
+  gs_strfreev gchar **old_argv = NULL;
+  GString *new_exec = NULL;
+  gs_free char *escaped_app = g_shell_quote (app);
+
+  if (!gs_file_openat_noatime (parent_fd, name, &desktop_fd, cancellable, error))
+    goto out;
+
+  if (!read_fd (desktop_fd, stat_buf, &data, &data_len, error))
+    goto out;
+
+  keyfile = g_key_file_new ();
+  if (!g_key_file_load_from_data (keyfile, data, data_len, G_KEY_FILE_KEEP_TRANSLATIONS, error))
+    goto out;
+
+  g_key_file_remove_key (keyfile, G_KEY_FILE_DESKTOP_GROUP, G_KEY_FILE_DESKTOP_KEY_TRY_EXEC, NULL);
+
+  new_exec = g_string_new ("");
+  g_string_append_printf (new_exec, "xdg-app run --branch=%s --arch=%s", branch, arch);
+
+  old_exec = g_key_file_get_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, G_KEY_FILE_DESKTOP_KEY_EXEC, NULL);
+  if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
+    {
+      int i;
+      gs_free char *command = g_shell_quote (old_argv[0]);
+
+      g_string_append_printf (new_exec, " --command=%s", command);
+
+      g_string_append (new_exec, " ");
+      g_string_append (new_exec, escaped_app);
+
+      for (i = 1; i < old_argc; i++)
+        {
+          gs_free char *arg = g_shell_quote (old_argv[i]);
+          g_string_append (new_exec, " ");
+          g_string_append (new_exec, arg);
+        }
+    }
+  else
+    {
+      g_string_append (new_exec, " ");
+      g_string_append (new_exec, escaped_app);
+    }
+
+  g_key_file_set_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, G_KEY_FILE_DESKTOP_KEY_EXEC, new_exec->str);
+
+
+  new_data = g_key_file_to_data (keyfile, &new_data_len, error);
+  if (new_data == NULL)
+    goto out;
+
+  if (!gs_file_open_in_tmpdir_at (parent_fd, 0755, &tmpfile_name, &out_stream, cancellable, error))
+    goto out;
+
+  if (!g_output_stream_write_all (out_stream, new_data, new_data_len, NULL, cancellable, error))
+    goto out;
+
+  if (!g_output_stream_close (out_stream, cancellable, error))
+    goto out;
+
+  gs_transfer_out_value (target, &tmpfile_name);
+
+  ret = TRUE;
+ out:
+
+  if (new_exec != NULL)
+    g_string_free (new_exec, TRUE);
+
+  return ret;
+}
+
+static gboolean
+export_dir (const char    *app,
+            const char    *branch,
+            const char    *arch,
+            int            source_parent_fd,
+            const char    *source_name,
+            const char    *source_symlink_prefix,
+            const char    *source_relpath,
+            int            destination_parent_fd,
+            const char    *destination_name,
+            GCancellable  *cancellable,
+            GError       **error)
+{
+  gboolean ret = FALSE;
+  int res;
+  gs_dirfd_iterator_cleanup GSDirFdIterator source_iter;
+  gs_fd_close int destination_dfd = -1;
+  struct dirent *dent;
+
+  if (!gs_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
+    goto out;
+
+  do
+    res = mkdirat (destination_parent_fd, destination_name, 0777);
+  while (G_UNLIKELY (res == -1 && errno == EINTR));
+  if (res == -1)
+    {
+      if (errno != EEXIST)
+        {
+          gs_set_error_from_errno (error, errno);
+          goto out;
+        }
+    }
+
+  if (!gs_file_open_dir_fd_at (destination_parent_fd, destination_name,
+                               &destination_dfd,
+                               cancellable, error))
+    goto out;
+
+  while (TRUE)
+    {
+      struct stat stbuf;
+
+      if (!gs_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
+        goto out;
+
+      if (dent == NULL)
+        break;
+
+      if (fstatat (source_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
+        {
+          int errsv = errno;
+          if (errsv == ENOENT)
+            continue;
+          else
+            {
+              gs_set_error_from_errno (error, errsv);
+              goto out;
+            }
+        }
+
+      if (S_ISDIR (stbuf.st_mode))
+        {
+          gs_free gchar *child_symlink_prefix = g_build_filename ("..", source_symlink_prefix, dent->d_name, NULL);
+          gs_free gchar *child_relpath = g_strconcat (source_relpath, dent->d_name, "/", NULL);
+
+          if (!export_dir (app, branch, arch,
+                           source_iter.fd, dent->d_name, child_symlink_prefix, child_relpath, destination_dfd, dent->d_name,
+                           cancellable, error))
+            goto out;
+        }
+      else if (S_ISREG (stbuf.st_mode))
+        {
+          gs_free gchar *target = NULL;
+
+          if (g_str_has_suffix (dent->d_name, ".desktop"))
+            {
+              gs_free gchar *new_name = NULL;
+
+              if (!export_desktop_file (app, branch, arch, source_iter.fd, dent->d_name, &stbuf, &new_name, cancellable, error))
+                goto out;
+
+              target = g_build_filename (source_symlink_prefix, new_name, NULL);
+            }
+          else
+            {
+              target = g_build_filename (source_symlink_prefix, dent->d_name, NULL);
+            }
+
+          if (unlinkat (destination_dfd, dent->d_name, 0) != 0 && errno != ENOENT)
+            {
+              gs_set_error_from_errno (error, errno);
+              goto out;
+            }
+
+          if (symlinkat (target, destination_dfd, dent->d_name) != 0)
+            {
+              gs_set_error_from_errno (error, errno);
+              goto out;
+            }
+        }
+      else
+        {
+          g_warning ("Not exporting file %s of unsupported type\n", source_relpath);
+        }
+    }
+
+  ret = TRUE;
+ out:
+
+  return ret;
+}
+
+gboolean
+xdg_app_export_dir (const char *app,
+                    const char *branch,
+                    const char *arch,
+                    GFile    *source,
+                    GFile    *destination,
+                    const char *symlink_prefix,
+                    GCancellable  *cancellable,
+                    GError       **error)
+{
+  gboolean ret = FALSE;
+
+  if (!gs_file_ensure_directory (destination, TRUE, cancellable, error))
+    goto out;
+
+  /* The fds are closed by this call */
+  if (!export_dir (app, branch, arch,
+                   AT_FDCWD, gs_file_get_path_cached (source), symlink_prefix, "",
+                   AT_FDCWD, gs_file_get_path_cached (destination),
+                   cancellable, error))
+    goto out;
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
 
 
 gboolean
@@ -476,15 +774,18 @@ xdg_app_dir_deploy (XdgAppDir *self,
         {
           gs_free char *relative_path = NULL;
           gs_free char *symlink_prefix = NULL;
+          gs_strfreev char **ref_parts = NULL;
 
           relative_path = g_file_get_relative_path (self->basedir, export);
           symlink_prefix = g_build_filename ("..", relative_path, NULL);
 
-          if (!xdg_app_overlay_symlink_tree (export, exports,
-                                             symlink_prefix,
-                                             cancellable,
-                                             error))
-              goto out;
+          ref_parts = g_strsplit (ref, "/", -1);
+
+          if (!xdg_app_export_dir (ref_parts[1], ref_parts[3], ref_parts[2], export, exports,
+                                   symlink_prefix,
+                                   cancellable,
+                                   error))
+            goto out;
         }
     }
 
