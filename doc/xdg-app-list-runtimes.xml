@@ -5,7 +5,7 @@
 <refentry id="xdg-app-list-runtimes">
 
     <refentryinfo>
-        <title>dxg-app list-runtimes</title>
+        <title>xdg-app list-runtimes</title>
         <productname>xdg-app</productname>
 
         <authorgroup>

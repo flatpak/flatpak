@@ -5,7 +5,7 @@
 <refentry id="xdg-app-install-runtime">
 
     <refentryinfo>
-        <title>dxg-app run</title>
+        <title>xdg-app run</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
