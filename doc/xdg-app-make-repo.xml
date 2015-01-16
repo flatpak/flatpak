@@ -58,8 +58,8 @@
         <para>
             The contents of <arg choice="plain">DIRECTORY</arg> are committed
             on the branch with name <literal>app/NAME/ARCH/BRANCH</literal>,
-            where ARCH is the architecture of the host system unless overridden
-            by the <option>--arch</option> option.
+            where ARCH is the architecture of the runtime that the application
+            is using.
         </para>
         <para>
             After this command, <arg choice="plain">REPO</arg> can be
@@ -80,14 +80,6 @@
 
                 <listitem><para>
                     Show help options and exit.
-                </para></listitem>
-            </varlistentry>
-
-           <varlistentry>
-                <term><option>--arch=ARCH</option></term>
-
-                <listitem><para>
-                    The architecture to use.
                 </para></listitem>
             </varlistentry>
 

@@ -10,12 +10,41 @@
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
 
-static char *opt_arch;
-
 static GOptionEntry options[] = {
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
   { NULL }
 };
+
+static gboolean
+metadata_get_arch (GFile *file, char **out_arch, GError **error)
+{
+  gboolean ret = FALSE;
+  gs_free char *path = NULL;
+  gs_unref_keyfile GKeyFile *keyfile = NULL;
+  gs_free char *runtime = NULL;
+  gs_strfreev char **parts = NULL;
+
+  keyfile = g_key_file_new ();
+  path = g_file_get_path (file);
+  if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
+    goto out;
+
+  runtime = g_key_file_get_string (keyfile, "Application", "runtime", error);
+  if (*error)
+    goto out;
+
+  parts = g_strsplit (runtime, "/", 0);
+  if (g_strv_length (parts) != 3)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to determine arch from metadata runtime key: %s", runtime);
+      goto out;
+    }
+
+  *out_arch = g_strdup (parts[1]);
+
+  ret = TRUE;
+out:
+  return ret;
+}
 
 gboolean
 xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GError **error)
@@ -33,8 +62,8 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
   const char *repoarg;
   const char *directory;
   const char *name;
-  const char *arch;
   const char *branch;
+  gs_free char *arch = NULL;
   gs_free char *full_branch = NULL;
   gs_free char *parent = NULL;
   gs_free char *commit_checksum = NULL;
@@ -50,7 +79,7 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
 
   if (argc < 4)
     {
-      usage_error (context, "RUNTIME must be specified", error);
+      usage_error (context, "REPO, DIRECTORY and NAME must be specified", error);
       goto out;
     }
 
@@ -62,15 +91,6 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
     branch = argv[4];
   else
     branch = "master";
-
-  if (opt_arch)
-    arch = opt_arch;
-  else
-    arch = xdg_app_get_arch ();
-
-  subject = "Import an application build";
-  body = g_strconcat ("Name: ", name, "\nArch: ", arch, "\nBranch: ", branch, NULL);
-  full_branch = g_strconcat ("app/", name, "/", arch, "/", branch, NULL);
 
   base = g_file_new_for_commandline_arg (directory);
   files = g_file_get_child (base, "files");
@@ -89,6 +109,13 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s not finalized", directory);
       goto out;
     }
+
+  if (!metadata_get_arch (metadata, &arch, error))
+    goto out;
+
+  subject = "Import an application build";
+  body = g_strconcat ("Name: ", name, "\nArch: ", arch, "\nBranch: ", branch, NULL);
+  full_branch = g_strconcat ("app/", name, "/", arch, "/", branch, NULL);
 
   repofile = g_file_new_for_commandline_arg (repoarg);
   repo = ostree_repo_new (repofile);
