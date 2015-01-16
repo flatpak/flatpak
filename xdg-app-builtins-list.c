@@ -142,7 +142,7 @@ xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable,
   gs_unref_object XdgAppDir *dir = NULL;
   gs_unref_object GFile *base = NULL;
 
-  context = g_option_context_new (" - List runtimes");
+  context = g_option_context_new (" - List installed runtimes");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     goto out;
@@ -183,7 +183,7 @@ xdg_app_builtin_list_apps (int argc, char **argv, GCancellable *cancellable, GEr
   gs_unref_object XdgAppDir *dir = NULL;
   gs_unref_object GFile *base = NULL;
 
-  context = g_option_context_new (" - List applications");
+  context = g_option_context_new (" - List installed applications");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     goto out;
