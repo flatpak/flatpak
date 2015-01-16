@@ -1,0 +1,138 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="xdg-app-repo-contents">
+
+    <refentryinfo>
+        <title>dxg-app repo-contents</title>
+        <productname>xdg-app</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>xdg-app repo-contents</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>xdg-app-repo-contents</refname>
+        <refpurpose>Show available runtimes and applications</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>xdg-app repo-contents</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Shows runtimes and applications that are available in the configured
+            repositories.
+        </para>
+        <para>
+            xdg-app can operate in system-wide or per-user mode. The system-wide
+            applications are located in <filename>$prefix/share/xdg-app/app</filename>,
+            and the per-user runtimes are in <filename>$HOME/.local/share/xdg-app/app</filename>.
+        </para>
+        <para>
+            xdg-app uses OSTree, and installed appications are OSTree checkouts.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Work on the per-user configuration instead of the system-wide
+                    configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--show-details</option></term>
+
+                <listitem><para>
+                    Show arches and branches, in addition to the names.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--only-runtimes</option></term>
+
+                <listitem><para>
+                    Show only runtimes, omit applications.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--only-apps</option></term>
+
+                <listitem><para>
+                    Show only applications, omit runtimes.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ xdg-app --user repo-contents --only-apps</command>
+        </para>
+<programlisting>
+org.gnome.Builder
+org.freedesktop.glxgears
+org.gnome.MyApp
+org.gnome.GEdit
+</programlisting>
+
+    </refsect1>
+
+</refentry>
