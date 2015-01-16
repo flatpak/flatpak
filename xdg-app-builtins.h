@@ -41,7 +41,7 @@ BUILTINPROTO(run);
 BUILTINPROTO(build_init);
 BUILTINPROTO(build);
 BUILTINPROTO(build_finish);
-BUILTINPROTO(make_repo);
+BUILTINPROTO(build_export);
 
 #undef BUILTINPROTO
 

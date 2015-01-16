@@ -87,7 +87,7 @@ commit_filter (OstreeRepo *repo,
 }
 
 gboolean
-xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GError **error)
+xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
   GOptionContext *context;

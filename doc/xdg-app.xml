@@ -180,7 +180,7 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>make-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Create a repository from a build directory.

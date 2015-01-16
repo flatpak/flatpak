@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-make-repo">
+<refentry id="xdg-app-build-export">
 
     <refentryinfo>
-        <title>dxg-app make-repo</title>
+        <title>dxg-app build-export</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,18 +19,18 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app make-repo</refentrytitle>
+        <refentrytitle>xdg-app build-export</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-make-repo</refname>
-        <refpurpose>Finalize a build directory</refpurpose>
+        <refname>xdg-app-build-export</refname>
+        <refpurpose>Create a repository from a build directory</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app make-repo</command>
+                <command>xdg-app build-export</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">LOCATION</arg>
                 <arg choice="plain">DIRECTORY</arg>
@@ -109,7 +109,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app make-repo ~/repos/gnome-calculator/ ~/build/gnome-calculator/ org.gnome.Calculator</command>
+            <command>$ xdg-app build-export ~/repos/gnome-calculator/ ~/build/gnome-calculator/ org.gnome.Calculator</command>
         </para>
 <programlisting>
 Commit: 9d0044ea480297114d03aec85c3d7ae3779438f9d2cb69d717fb54237acacb8c
