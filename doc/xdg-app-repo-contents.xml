@@ -5,7 +5,7 @@
 <refentry id="xdg-app-repo-contents">
 
     <refentryinfo>
-        <title>dxg-app repo-contents</title>
+        <title>xdg-app repo-contents</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -41,7 +41,8 @@
 
         <para>
             Shows runtimes and applications that are available in the
-            repository <arg choice="plain">REPOSITORY</arg>.
+            remote repository with the name <arg choice="plain">REPOSITORY</arg>.
+            You can find all configured remote repositories with xdg-app list-repos.
         </para>
         <para>
             xdg-app can operate in system-wide or per-user mode. The system-wide
@@ -87,7 +88,7 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--only-runtimes</option></term>
+                <term><option>--runtimes</option></term>
 
                 <listitem><para>
                     Show only runtimes, omit applications.
@@ -95,7 +96,7 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--only-apps</option></term>
+                <term><option>--apps</option></term>
 
                 <listitem><para>
                     Show only applications, omit runtimes.
