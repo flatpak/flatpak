@@ -32,7 +32,7 @@
             <cmdsynopsis>
                 <command>xdg-app make-repo</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">REPO</arg>
+                <arg choice="plain">LOCATION</arg>
                 <arg choice="plain">DIRECTORY</arg>
                 <arg choice="plain">NAME</arg>
                 <arg choice="opt">BRANCH</arg>
@@ -44,14 +44,14 @@
 
         <para>
             Creates or updates a repository with an application build.
-            <arg choice="plain">REPO</arg> is the location of the
+            <arg choice="plain">LOCATION</arg> is the location of the
             repository. <arg choice="plain">DIRECTORY</arg> must be a
             finalized build directory. <arg choice="plain">NAME</arg>
             is the name of the application. If <arg choice="plain">BRANCH</arg>
             is not specified, it is assumed to be "master".
         </para>
         <para>
-            If <arg choice="plain">REPO</arg> exists, it is assumed to
+            If <arg choice="plain">LOCATION</arg> exists, it is assumed to
             be an OSTree repository, otherwise a new repository is created
             at this location.
         </para>
@@ -62,7 +62,7 @@
             is using.
         </para>
         <para>
-            After this command, <arg choice="plain">REPO</arg> can be
+            After this command, <arg choice="plain">LOCATION</arg> can be
             used as the repository location for xdg-app add-repo,
             either by exporting it over http, or directly as a file: url.
         </para>

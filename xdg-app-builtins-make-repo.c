@@ -59,7 +59,7 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
   gs_unref_object GFile *arg = NULL;
   gs_unref_object GFile *root = NULL;
   gs_unref_object OstreeRepo *repo = NULL;
-  const char *repoarg;
+  const char *location;
   const char *directory;
   const char *name;
   const char *branch;
@@ -72,18 +72,18 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
   gs_free char *body = NULL;
   OstreeRepoTransactionStats stats;
 
-  context = g_option_context_new ("REPO DIRECTORY NAME [BRANCH] - Create a repository from a build directory");
+  context = g_option_context_new ("LOCATION DIRECTORY NAME [BRANCH] - Create a repository from a build directory");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
   if (argc < 4)
     {
-      usage_error (context, "REPO, DIRECTORY and NAME must be specified", error);
+      usage_error (context, "LOCATION, DIRECTORY and NAME must be specified", error);
       goto out;
     }
 
-  repoarg = argv[1];
+  location = argv[1];
   directory = argv[2];
   name = argv[3];
 
@@ -117,7 +117,7 @@ xdg_app_builtin_make_repo (int argc, char **argv, GCancellable *cancellable, GEr
   body = g_strconcat ("Name: ", name, "\nArch: ", arch, "\nBranch: ", branch, NULL);
   full_branch = g_strconcat ("app/", name, "/", arch, "/", branch, NULL);
 
-  repofile = g_file_new_for_commandline_arg (repoarg);
+  repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);
 
   if (g_file_query_exists (repofile, cancellable))
