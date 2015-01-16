@@ -31,6 +31,7 @@ void usage_error (GOptionContext *context,
 BUILTINPROTO(add_repo);
 BUILTINPROTO(delete_repo);
 BUILTINPROTO(list_repos);
+BUILTINPROTO(repo_contents);
 BUILTINPROTO(install_runtime);
 BUILTINPROTO(update_runtime);
 BUILTINPROTO(list_runtimes);

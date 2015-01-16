@@ -22,6 +22,7 @@ static XdgAppCommand commands[] = {
   { "add-repo", xdg_app_builtin_add_repo },
   { "delete-repo", xdg_app_builtin_delete_repo },
   { "list-repos", xdg_app_builtin_list_repos },
+  { "repo-contents", xdg_app_builtin_repo_contents },
   { "install-runtime", xdg_app_builtin_install_runtime },
   { "update-runtime", xdg_app_builtin_update_runtime },
   { "list-runtimes", xdg_app_builtin_list_runtimes },
