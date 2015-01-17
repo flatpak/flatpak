@@ -41,15 +41,6 @@
         <para>
             Lists the known remote repositories.
         </para>
-        <para>
-            xdg-app can operate in system-wide or per-user mode. The system-wide
-            repository is located in <filename>$prefix/share/xdg-app/repo</filename>,
-            and the per-user repository is in <filename>$HOME/.local/share/xdg-app/repo</filename>.
-        </para>
-        <para>
-            xdg-app uses OSTree, and the repositories it uses are OSTree repositories
-            that can be manipulated with the <command>ostree</command> utility.
-        </para>
 
     </refsect1>
 
@@ -119,9 +110,9 @@ testrepo  http://209.132.179.91/repo/
         <title>See also</title>
 
             <para>
-                <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>ostree.repo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>xdg-app-add-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-add-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-delete-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             </para>
     </refsect1>
 

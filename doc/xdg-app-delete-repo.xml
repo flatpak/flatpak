@@ -40,17 +40,8 @@
         <title>Description</title>
 
         <para>
-            Removes a remote repository configuration.
+            Removes a remote repository from the xdg-app repository configuration.
             <arg choice="plain">NAME</arg> is the name of an existing remote.
-        </para>
-        <para>
-            xdg-app can operate in system-wide or per-user mode. The system-wide
-            repository is located in <filename>$prefix/share/xdg-app/repo</filename>,
-            and the per-user repository is in <filename>$HOME/.local/share/xdg-app/repo</filename>.
-        </para>
-        <para>
-            xdg-app uses OSTree, and the repositories it uses are OSTree repositories
-            that can be manipulated with the <command>ostree</command> utility.
         </para>
 
     </refsect1>
@@ -110,9 +101,9 @@
         <title>See also</title>
 
             <para>
-                <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>, 
-                <citerefentry><refentrytitle>ostree.repo</refentrytitle><manvolnum>5</manvolnum></citerefentry>, 
-                <citerefentry><refentrytitle>xdg-app-add-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-add-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-list-repos</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             </para>
     </refsect1>
 

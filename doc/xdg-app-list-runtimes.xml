@@ -39,15 +39,7 @@
         <title>Description</title>
 
         <para>
-            Lists installed runtimes.
-        </para>
-        <para>
-            xdg-app can operate in system-wide or per-user mode. The system-wide
-            runtimes are located in <filename>$prefix/share/xdg-app/runtime</filename>,
-            and the per-user runtimes are in <filename>$HOME/.local/share/xdg-app/runtinme</filename>.
-        </para>
-        <para>
-            xdg-app uses OSTree, and installed runtimes are OSTree checkouts.
+            Lists the names of the installed runtimes.
         </para>
 
     </refsect1>
@@ -119,5 +111,17 @@ org.gnome.Platform/x86_64/3.14
 </programlisting>
 
     </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-install-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-update-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
 
 </refentry>

@@ -43,15 +43,17 @@
         <para>
             Updates a runtime.  <arg choice="plain">RUNTIME</arg> is the
             name of an installed runtime. Optionally,
-            <arg choice="opt">BRANCH</arg> can be specified to update a
-            specific branch.
+            <arg choice="plain">BRANCH</arg> can be specified to update a
+            branch other than the default "master" branch.
         </para>
         <para>
             Note that updating a runtime is different from installing
             a newer branch, and runtime updates are expected to keep
             strict compatibility, so that applications can be guaranteed
             to keep running against an updated version of the runtime
-            they were built against.
+            they were built against. If a runtime update does cause
+            a problem, it is possible to go back to the previous
+            version, with the --commit option.
         </para>
 
     </refsect1>
@@ -84,7 +86,8 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    The architecture to update for.
+                    The architecture to update, instead of the architecture
+                    of the host system.
                 </para></listitem>
             </varlistentry>
 
@@ -112,6 +115,17 @@
 
         <para>
             <command>$ xdg-app --user update-runtime org.gnome.Platform</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-install-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-list-runtimes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

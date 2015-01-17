@@ -52,8 +52,9 @@
         </para>
         <para>
             If <arg choice="plain">LOCATION</arg> exists, it is assumed to
-            be an OSTree repository, otherwise a new repository is created
-            at this location.
+            be an OSTree repository, otherwise a new OSTree repository is
+            created at this location. The repository can be inspected with
+            the <command>ostree</command> tool.
         </para>
         <para>
             The contents of <arg choice="plain">DIRECTORY</arg> are committed
@@ -66,8 +67,8 @@
         </para>
         <para>
             After this command, <arg choice="plain">LOCATION</arg> can be
-            used as the repository location for xdg-app add-repo,
-            either by exporting it over http, or directly as a file: url.
+            used as the repository location for xdg-app add-repo, either by
+            exporting it over http, or directly with a file: url.
         </para>
     </refsect1>
 
@@ -119,6 +120,19 @@ Content Total: 1174
 Content Written: 1
 Content Bytes Written: 305
 </programlisting>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
 
     </refsect1>
 

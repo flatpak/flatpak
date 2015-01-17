@@ -45,17 +45,10 @@
             Installs an application. <arg choice="plain">REPOSITORY</arg> must
             name an existing remote. <arg choice="plain">APP</arg> is the
             name of the application to install. Optionally,
-            <arg choice="opt">BRANCH</arg> can be specified to install a specific
-            branch. Note that xdg-app allows to have multiple branches of an
-            application installed at the same time.
-        </para>
-        <para>
-            xdg-app can operate in system-wide or per-user mode. The system-wide
-            applications are located in <filename>$prefix/share/xdg-app/app</filename>,
-            and the per-user runtimes are in <filename>$HOME/.local/share/xdg-app/app</filename>.
-        </para>
-        <para>
-            xdg-app uses OSTree, and installed applications are OSTree checkouts.
+            <arg choice="plain">BRANCH</arg> can be specified to install a branch
+            other than the default "master" branch. Note that xdg-app allows to
+            have multiple branches of an application installed and used at the
+            same time.
         </para>
 
     </refsect1>
@@ -116,6 +109,17 @@
 
         <para>
             <command>$ xdg-app --user install-app test-repo org.gnome.GEdit</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-update-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-list-apps</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

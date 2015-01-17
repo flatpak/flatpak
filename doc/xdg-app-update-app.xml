@@ -43,8 +43,15 @@
         <para>
             Updates an application. <arg choice="plain">APP</arg> is the
             name of an installed application. Optionally,
-            <arg choice="opt">BRANCH</arg> can be specified to update a
-            specific branch.
+            <arg choice="plain">BRANCH</arg> can be specified to update a
+            branch other than the default "master" branch.
+        </para>
+        <para>
+            Note that updating a runtime is different from installing
+            a newer branch, and application updates are expected to keep
+            strict compatibility.  If an application update does cause
+            a problem, it is possible to go back to the previous
+            version, with the --commit option.
         </para>
 
     </refsect1>
@@ -105,6 +112,17 @@
 
         <para>
             <command>$ xdg-app --user update-app org.gnome.GEdit</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-install-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-list-apps</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>
