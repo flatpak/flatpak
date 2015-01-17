@@ -723,15 +723,53 @@ xdg_app_dir_deploy (XdgAppDir *self,
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
 
+  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+
   if (checksum == NULL)
     {
+      g_debug ("No checksum specified, getting tip of %s", ref);
       if (!ostree_repo_resolve_rev (self->repo, ref, FALSE, &resolved_ref, error))
         goto out;
 
       checksum = resolved_ref;
     }
+  else
+    {
+      gs_unref_object GFile *root = NULL;
+      gs_free char *commit = NULL;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+      g_debug ("Looking for checksum %s in local repo", checksum);
+      if (!ostree_repo_read_commit (self->repo, checksum, &root, &commit, cancellable, NULL))
+        {
+           GSConsole *console = NULL;
+           gs_unref_object OstreeAsyncProgress *progress = NULL;
+           const char *refs[2];
+           gs_unref_object GFile *origin = NULL;
+           gs_free char *repository = NULL;
+
+           refs[0] = checksum;
+           refs[1] = NULL;
+
+           origin = g_file_get_child (deploy_base, "origin");
+           if (!g_file_load_contents (origin, cancellable, &repository, NULL, NULL, error))
+             goto out;
+
+           g_debug ("Pulling checksum %s from remote %s", checksum, repository);
+
+           console = gs_console_get ();
+           if (console)
+             {
+               gs_console_begin_status_line (console, "", NULL, NULL);
+               progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, console);
+             }
+
+           if (!ostree_repo_pull (self->repo, repository,
+                                  (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
+                                  progress,
+                                  cancellable, error))
+             goto out;
+        }
+    }
 
   checkoutdir = g_file_get_child (deploy_base, checksum);
   if (g_file_query_exists (checkoutdir, cancellable))
