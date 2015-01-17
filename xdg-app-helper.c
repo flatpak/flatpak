@@ -184,7 +184,7 @@ strdup_printf (const char *format,
 void
 usage (char **argv)
 {
-  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-w] [-W] [-a <path to app>] [-v <path to var>] <path to runtime> <command..>\n", argv[0]);
+  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-a <path to app>] [-v <path to var>] <path to runtime> <command..>\n", argv[0]);
   exit (1);
 }
 
@@ -824,6 +824,7 @@ main (int argc,
   char *var_path = NULL;
   char *pulseaudio_socket = NULL;
   char *x11_socket = NULL;
+  char *wayland_socket = NULL;
   char *system_dbus_socket = NULL;
   char *session_dbus_socket = NULL;
   char *xdg_runtime_dir;
@@ -927,6 +928,15 @@ main (int argc,
               usage (argv);
 
           x11_socket = args[1];
+          args += 2;
+          n_args -= 2;
+          break;
+
+        case 'y':
+          if (n_args < 2)
+              usage (argv);
+
+          wayland_socket = args[1];
           args += 2;
           n_args -= 2;
           break;
@@ -1125,6 +1135,16 @@ main (int argc,
         {
           xunsetenv ("DISPLAY");
         }
+    }
+
+  /* Bind mount in the Wayland socket */
+  if (wayland_socket != 0)
+    {
+      char *wayland_path_relative = strdup_printf ("run/user/%d/wayland-0", getuid());
+      if (create_file (wayland_path_relative, 0666, NULL) ||
+          bind_mount (wayland_socket, wayland_path_relative, 0))
+        die ("can't bind Wayland socket %s -> %s: %s", wayland_socket, wayland_path_relative, strerror (errno));
+      free (wayland_path_relative);
     }
 
   if (pulseaudio_socket != NULL)

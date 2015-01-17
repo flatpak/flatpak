@@ -94,7 +94,7 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
   gs_unref_keyfile GKeyFile *keyfile = NULL;
   GError *temp_error = NULL;
   const char *environment_keys[] = {
-    "x11", "ipc", "pulseaudio", "system-dbus", "session-dbus",
+    "x11", "wayland", "ipc", "pulseaudio", "system-dbus", "session-dbus",
     "network", "host-fs", "homedir", NULL
   };
   const char *key;
