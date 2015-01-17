@@ -69,19 +69,22 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   int i;
   GError *temp_error = NULL;
 
-  context = g_option_context_new ("RUNTIME BRANCH - Uninstall a runtime");
+  context = g_option_context_new ("RUNTIME [BRANCH] - Uninstall a runtime");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     goto out;
 
-  if (argc < 3)
+  if (argc < 2)
     {
-      usage_error (context, "RUNTIME and BRANCH must be specified", error);
+      usage_error (context, "RUNTIME must be specified", error);
       goto out;
     }
 
   name = argv[1];
-  branch = argv[2];
+  if (argc > 2)
+    branch = argv[2];
+  else
+    branch = "master";
   if (opt_arch)
     arch = opt_arch;
   else
@@ -182,19 +185,22 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   int i;
   GError *temp_error = NULL;
 
-  context = g_option_context_new ("APP BRANCH - Uninstall an application");
+  context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     goto out;
 
-  if (argc < 3)
+  if (argc < 2)
     {
-      usage_error (context, "APP and BRANCH must be specified", error);
+      usage_error (context, "APP must be specified", error);
       goto out;
     }
 
   name = argv[1];
-  branch = argv[2];
+  if (argc > 2)
+    branch = argv[2];
+  else
+    branch = "master";
   if (opt_arch)
     arch = opt_arch;
   else

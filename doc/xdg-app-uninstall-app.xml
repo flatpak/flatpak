@@ -33,7 +33,7 @@
                 <command>xdg-app uninstall-app</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">APP</arg>
-                <arg choice="plain">BRANCH</arg>
+                <arg choice="opt">BRANCH</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -43,7 +43,9 @@
         <para>
             Uninstalls an application. The <arg choice="plain">APP</arg>,
             <arg choice="plain">ARCH</arg> and <arg choice="plain">BRANCH</arg>
-            arguments must specify an installed application.
+            arguments must identify an installed application.
+            If <arg choice="plain">BRANCH</arg> is not specified, it defaults
+            to "master".
         </para>
         <para>
             Normally, this command removes the ref for this application from the
@@ -96,7 +98,8 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    The architecture to uninstall.
+                    The architecture to uninstall, instead of the architecture of
+                    the host system.
                 </para></listitem>
             </varlistentry>
 
