@@ -38,6 +38,7 @@
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #if 0
@@ -838,6 +839,7 @@ main (int argc,
   int writable = 0;
   int writable_app = 0;
   int writable_exports = 0;
+  int status;
   char old_cwd[256];
 
   char tmpdir[] = "/tmp/run-app.XXXXXX";
@@ -1096,6 +1098,8 @@ main (int argc,
 
   /* /usr now mounted private inside the namespace, tell child process to unmount the tmpfs in the parent namespace. */
   close (pipefd[WRITE_END]);
+
+  waitpid (pid, &status, 0);
 
   if (bind_mount ("/etc/passwd", "etc/passwd", BIND_READONLY))
     die_with_error ("mount passwd");
