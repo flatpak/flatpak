@@ -710,6 +710,30 @@ xdg_app_export_dir (const char *app,
   return ret;
 }
 
+static gboolean
+xdg_app_dir_update_exports (XdgAppDir *self,
+                            GCancellable *cancellable,
+                            GError **error)
+{
+  gboolean ret = FALSE;
+  gs_unref_object GFile *exports = NULL;
+
+  exports = xdg_app_dir_get_exports_dir (self);
+
+  if (g_file_query_exists (exports, cancellable))
+    {
+      if (!xdg_app_remove_dangling_symlinks (exports, cancellable, error))
+        goto out;
+
+      if (!xdg_app_dir_run_triggers (self, cancellable, error))
+        goto out;
+    }
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
 
 gboolean
 xdg_app_dir_deploy (XdgAppDir *self,
@@ -839,14 +863,8 @@ xdg_app_dir_deploy (XdgAppDir *self,
   if (!xdg_app_dir_set_active (self, ref, checksum, cancellable, error))
     goto out;
 
-  if (is_app && g_file_query_exists (exports, cancellable))
-    {
-      if (!xdg_app_remove_dangling_symlinks (exports, cancellable, error))
-	goto out;
-
-      if (!xdg_app_dir_run_triggers (self, cancellable, error))
-	goto out;
-    }
+  if (is_app && !xdg_app_dir_update_exports (self, cancellable, error))
+    goto out;
 
   ret = TRUE;
  out:
@@ -925,6 +943,7 @@ xdg_app_dir_undeploy (XdgAppDir *self,
   gs_unref_object GFile *removeddir = NULL;
   gs_free char *tmpname = NULL;
   gs_free char *active = NULL;
+  gboolean is_app;
   int i;
 
   g_assert (ref != NULL);
@@ -983,6 +1002,11 @@ xdg_app_dir_undeploy (XdgAppDir *self,
     goto out;
 
   if (!gs_shutil_rm_rf (removeddir, cancellable, error))
+    goto out;
+
+  is_app = g_str_has_prefix (ref, "app");
+
+  if (is_app && !xdg_app_dir_update_exports (self, cancellable, error))
     goto out;
 
   ret = TRUE;
