@@ -34,6 +34,7 @@ xdg_app_SOURCES = \
 	xdg-app-builtins-repo-contents.c \
 	xdg-app-builtins-install.c \
 	xdg-app-builtins-update.c \
+	xdg-app-builtins-uninstall.c \
 	xdg-app-builtins-list.c \
 	xdg-app-builtins-run.c \
 	xdg-app-builtins-build-init.c \
