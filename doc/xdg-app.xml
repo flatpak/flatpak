@@ -41,10 +41,28 @@
 
         <para>
             xdg-app is a tool for managing applications and the runtimes
-            the use. In the xdg-app model, applications can be built and
-            distributed independently from the host system the are used
+            they use. In the xdg-app model, applications can be built and
+            distributed independently from the host system they are used
             on, and they are isolated from the host system ('sandboxed')
             to some degree, at runtime.
+        </para>
+
+        <para>
+            xdg-app can operate in system-wide or per-user mode. The system-wide
+            data (runtimes, applications and configuration) is located in
+            <filename>$prefix/share/xdg-app/</filename>, and the per-user
+            data is in <filename>$HOME/.local/share/xdg-app/</filename>.
+            Below these locations, there is a local repository in the
+            <filename>repo/</filename> subdirectory and installed runtimes
+            and applications are in the corresponding <filename>runtime/</filename>
+            and <filename>app/</filename> subdirectories.
+        </para>
+
+        <para>
+            xdg-app uses OSTree to distribute and deploy data. The repositories
+            it uses are OSTree repositories and can be manipulated with the
+            <command>ostree</command> utility. Installed runtimes and
+            applications are OSTree checkouts.
         </para>
     </refsect1>
 
@@ -85,7 +103,7 @@
     <refsect1>
         <title>Commands</title>
 
-        <para>The following commands are available:</para>
+        <para>Commands related to repository configuration:</para>
 
         <variablelist>
             <varlistentry>
@@ -116,6 +134,11 @@
                     Show available runtimes and applications.
                 </para></listitem>
             </varlistentry>
+        </variablelist>
+
+        <para>Commands for handling installed runtimes:</para>
+
+        <variablelist>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-install-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
@@ -137,6 +160,11 @@
                     List installed runtimes.
                 </para></listitem>
             </varlistentry>
+        </variablelist>
+
+        <para>Commands for handling installed applications:</para>
+
+        <variablelist>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-install-app</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
@@ -158,6 +186,11 @@
                     List installed applications.
                 </para></listitem>
             </varlistentry>
+        </variablelist>
+
+        <para>Commands for running applications:</para>
+
+        <variablelist>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-run</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
@@ -165,6 +198,11 @@
                     Run an application.
                 </para></listitem>
             </varlistentry>
+        </variablelist>
+
+        <para>Commands for building applications:</para>
+
+        <variablelist>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
@@ -194,6 +232,16 @@
                 </para></listitem>
             </varlistentry>
         </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+            <para>
+                <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>ostree.repo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+            </para>
+
     </refsect1>
 
 </refentry>

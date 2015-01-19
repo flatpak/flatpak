@@ -41,8 +41,9 @@
         <title>Description</title>
 
         <para>
-            Runs an application in a sandboxed environment. <arg choice="plain">APP</arg> must
-            name an installed application.
+            Runs an application in a sandboxed environment.
+            <arg choice="plain">APP</arg> must name an installed application.
+            Extra arguments are passed on to the application.
         </para>
         <para>
             xdg-app creates a sandboxed environment for the application to run in
@@ -128,6 +129,15 @@
         </para>
         <para>
             <command>$ xdg-app run --devel --command=bash org.gnome.Builder</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

@@ -51,7 +51,7 @@
         </para>
         <para>
             The result of this command is that a <filename>metadata</filename>
-            is created inside the given directory. Additionally, empty
+            file is created inside the given directory. Additionally, empty
             <filename>files</filename> and <filename>var</filename> subdirectories
             are created.
         </para>
@@ -125,6 +125,18 @@
 
         <para>
             <command>$ xdg-app build-init /build/my-app org.gnome.Sdk org.gnome.Platform 3.16</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

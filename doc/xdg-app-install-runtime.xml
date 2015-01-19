@@ -45,17 +45,9 @@
             Installs a runtime. <arg choice="plain">REPOSITORY</arg> must
             name an existing remote. <arg choice="plain">RUNTIME</arg> is the
             name of the runtime to install. Optionally,
-            <arg choice="opt">BRANCH</arg> can be specified to install a specific
-            branch. Note that xdg-app allows having multiple branches of a runtime
-            installed and used at the same time.
-        </para>
-        <para>
-            xdg-app can operate in system-wide or per-user mode. The system-wide
-            runtimes are located in <filename>$prefix/share/xdg-app/runtime</filename>,
-            and the per-user runtimes are in <filename>$HOME/.local/share/xdg-app/runtinme</filename>.
-        </para>
-        <para>
-            xdg-app uses OSTree, and installed runtimes are OSTree checkouts.
+            <arg choice="plain">BRANCH</arg> can be specified to install a branch
+            other than the default "master" branch. Note that xdg-app allows having
+            multiple branches of a runtime installed and used at the same time.
         </para>
 
     </refsect1>
@@ -88,7 +80,8 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    The architecture to install for.
+                    The architecture to install, instead of the architecture
+                    of the host system.
                 </para></listitem>
             </varlistentry>
 
@@ -116,6 +109,17 @@
 
         <para>
             <command>$ xdg-app --user install-runtime test-repo org.gnome.Platform 3.14</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-update-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-list-runtimes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

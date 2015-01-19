@@ -39,15 +39,7 @@
         <title>Description</title>
 
         <para>
-            Lists installed applications.
-        </para>
-        <para>
-            xdg-app can operate in system-wide or per-user mode. The system-wide
-            applications are located in <filename>$prefix/share/xdg-app/app</filename>,
-            and the per-user runtimes are in <filename>$HOME/.local/share/xdg-app/app</filename>.
-        </para>
-        <para>
-            xdg-app uses OSTree, and installed appications are OSTree checkouts.
+            Lists the names of the installed applications.
         </para>
 
     </refsect1>
@@ -115,6 +107,17 @@ org.freedesktop.glxgears
 org.gnome.MyApp
 org.gnome.GEdit
 </programlisting>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-install-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-update-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
 
     </refsect1>
 

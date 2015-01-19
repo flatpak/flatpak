@@ -70,6 +70,19 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
 }
 
 void
+xdg_app_run_add_wayland_args (GPtrArray *argv_array)
+{
+  char *wayland_socket = g_build_filename (g_get_user_runtime_dir (), "wayland-0", NULL);
+  if (g_file_test (wayland_socket, G_FILE_TEST_EXISTS))
+    {
+      g_ptr_array_add (argv_array, g_strdup ("-y"));
+      g_ptr_array_add (argv_array, wayland_socket);
+    }
+  else
+    g_free (wayland_socket);
+}
+
+void
 xdg_app_run_add_no_x11_args (GPtrArray *argv_array)
 {
   g_unsetenv ("DISPLAY");
@@ -263,6 +276,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     xdg_app_run_add_x11_args (argv_array);
   else
     xdg_app_run_add_no_x11_args (argv_array);
+
+  if (g_key_file_get_boolean (metakey, "Environment", "wayland", NULL))
+    xdg_app_run_add_wayland_args (argv_array);
 
   if (g_key_file_get_boolean (metakey, "Environment", "pulseaudio", NULL))
     xdg_app_run_add_pulseaudio_args (argv_array);

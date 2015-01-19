@@ -45,8 +45,8 @@
             must have been initialized with <command>xdg-app build-init</command>.
         </para>
         <para>
-            The sdk that is specfied in the <filename>metadata</filename> for the
-            directory is mounted at <filename>/usr</filename> and the
+            The sdk that is specfied in the <filename>metadata</filename> file
+            in the directory is mounted at <filename>/usr</filename> and the
             <filename>files</filename> and <filename>var</filename> subdirectories
             are mounted at <filename>/self</filename> and <filename>/var</filename>,
             respectively. They are writable, and their contents are preserved between
@@ -77,6 +77,18 @@
 
         <para>
             <command>$ xdg-app build /build/my-app rpmbuild my-app.src.rpm</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>
