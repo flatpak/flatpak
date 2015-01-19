@@ -510,13 +510,15 @@ export_desktop_file (const char    *app,
 
   for (i = 0; groups[i] != NULL; i++)
     {
-      g_key_file_remove_key (keyfile, groups[i], G_KEY_FILE_DESKTOP_KEY_TRY_EXEC, NULL);
+      g_key_file_remove_key (keyfile, groups[i], "TryExec", NULL);
+
+      /* Remove this to make sure nothing tries to execute it outside the sandbox*/
       g_key_file_remove_key (keyfile, groups[i], "X-GNOME-Bugzilla-ExtraInfoScript", NULL);
 
       new_exec = g_string_new ("");
-      g_string_append_printf (new_exec, "xdg-app run --branch=%s --arch=%s", branch, arch);
+      g_string_append_printf (new_exec, XDG_APP_BINDIR"/xdg-app run --branch=%s --arch=%s", branch, arch);
 
-      old_exec = g_key_file_get_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, G_KEY_FILE_DESKTOP_KEY_EXEC, NULL);
+      old_exec = g_key_file_get_string (keyfile, groups[i], "Exec", NULL);
       if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
         {
           int i;
@@ -642,7 +644,7 @@ export_dir (const char    *app,
         {
           gs_free gchar *target = NULL;
 
-          if (g_str_has_suffix (dent->d_name, ".desktop"))
+          if (g_str_has_suffix (dent->d_name, ".desktop") || g_str_has_suffix (dent->d_name, ".service"))
             {
               gs_free gchar *new_name = NULL;
 
