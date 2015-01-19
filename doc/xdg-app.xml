@@ -166,28 +166,28 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Initialize a build directory.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>build</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-build</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Run a build command in a build directory.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Finalizes a build directory.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Create a repository from a build directory.
