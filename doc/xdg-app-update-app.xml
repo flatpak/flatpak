@@ -46,6 +46,11 @@
             <arg choice="opt">BRANCH</arg> can be specified to update a
             specific branch.
         </para>
+        <para>
+            Normally, this command updates the application to the tip
+            of its branch. But it is possible to check out another commit,
+            with the --commit option.
+        </para>
 
     </refsect1>
 
@@ -78,6 +83,14 @@
 
                 <listitem><para>
                     The architecture to update for.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--commit=COMMIT</option></term>
+
+                <listitem><para>
+                    Update to this commit, instead of the tip of the branch.
                 </para></listitem>
             </varlistentry>
 

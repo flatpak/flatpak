@@ -11,9 +11,11 @@
 #include "xdg-app-utils.h"
 
 static char *opt_arch;
+static char *opt_commit;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to update for", "ARCH" },
+  { "commit", 0, 0, G_OPTION_ARG_STRING, &opt_commit, "Commit to deploy", "COMMIT" },
   { NULL }
 };
 
@@ -67,7 +69,7 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   previous_deployment = xdg_app_dir_read_active (dir, ref, cancellable);
 
   my_error = NULL;
-  if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, &my_error))
+  if (!xdg_app_dir_deploy (dir, ref, opt_commit, cancellable, &my_error))
     {
       if (g_error_matches (my_error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_ALREADY_DEPLOYED))
         g_error_free (my_error);
@@ -145,7 +147,7 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   previous_deployment = xdg_app_dir_read_active (dir, ref, cancellable);
 
   my_error = NULL;
-  if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, &my_error))
+  if (!xdg_app_dir_deploy (dir, ref, opt_commit, cancellable, &my_error))
     {
       if (g_error_matches (my_error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_ALREADY_DEPLOYED))
         g_error_free (my_error);
