@@ -338,7 +338,8 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
 static int
 mkdir_with_parents (const char *pathname,
                     int         mode,
-                    int         uid)
+                    int         uid,
+                    int         gid)
 {
   char *fn, *p;
   struct stat buf;
@@ -374,7 +375,7 @@ mkdir_with_parents (const char *pathname,
               errno = errsave;
               return -1;
             }
-          if (chown (fn, uid, -1))
+          if (chown (fn, uid, gid))
             return -1;
         }
       else if (!S_ISDIR (buf.st_mode))
@@ -631,10 +632,11 @@ mount_extra_root_dirs (int readonly)
 }
 
 static void
-create_homedir (int do_mount)
+create_homedir (int mount_real_home)
 {
   const char *home;
   const char *relative_home;
+  const char *writable_home;
 
   home = getenv("HOME");
   if (home == NULL)
@@ -644,14 +646,19 @@ create_homedir (int do_mount)
   while (*relative_home == '/')
     relative_home++;
 
-  if (mkdir_with_parents (relative_home, 0700, getuid()))
+  if (mkdir_with_parents ("var/home", 0700, getuid(), getgid()))
+    die_with_error ("unable to create var/home");
+
+  if (mkdir_with_parents (relative_home, 0755, 0, 0))
     die_with_error ("unable to create %s", relative_home);
 
-  if (do_mount)
-    {
-      if (bind_mount (home, relative_home, BIND_RECURSIVE))
-        die_with_error ("unable to mount %s", home);
-    }
+  if (mount_real_home)
+    writable_home = home;
+  else
+    writable_home = "var/home";
+
+  if (bind_mount (writable_home, relative_home, BIND_RECURSIVE))
+    die_with_error ("unable to mount %s", home);
 }
 
 static void *
@@ -1219,7 +1226,8 @@ main (int argc,
   if (mount_host_fs)
     mount_extra_root_dirs (mount_host_fs_ro);
 
-  create_homedir (!mount_host_fs && mount_home);
+  if (!mount_host_fs)
+    create_homedir (mount_home);
 
   if (!network)
     loopback_setup ();
