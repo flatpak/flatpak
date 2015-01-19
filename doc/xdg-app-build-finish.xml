@@ -91,9 +91,9 @@
 
                 <listitem><para>
                     Set the KEY in the [Environment] group to true. KEY must
-                    be one of: x11, ipc, pulseaudio, system-dbus, session-dbus,
-                    network, host-fs, homedir. This option can be used multiple
-                    times.
+                    be one of: x11, wayland, ipc, pulseaudio, system-dbus,
+                    session-dbus, network, host-fs, homedir.
+                    This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 
