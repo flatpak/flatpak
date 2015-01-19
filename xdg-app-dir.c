@@ -491,8 +491,10 @@ export_desktop_file (const char    *app,
   gs_free gchar *old_exec = NULL;
   gint old_argc;
   gs_strfreev gchar **old_argv = NULL;
+  gs_strfreev gchar **groups = NULL;
   GString *new_exec = NULL;
   gs_free char *escaped_app = g_shell_quote (app);
+  int i;
 
   if (!gs_file_openat_noatime (parent_fd, name, &desktop_fd, cancellable, error))
     goto out;
@@ -504,37 +506,42 @@ export_desktop_file (const char    *app,
   if (!g_key_file_load_from_data (keyfile, data, data_len, G_KEY_FILE_KEEP_TRANSLATIONS, error))
     goto out;
 
-  g_key_file_remove_key (keyfile, G_KEY_FILE_DESKTOP_GROUP, G_KEY_FILE_DESKTOP_KEY_TRY_EXEC, NULL);
+  groups = g_key_file_get_groups (keyfile, NULL);
 
-  new_exec = g_string_new ("");
-  g_string_append_printf (new_exec, "xdg-app run --branch=%s --arch=%s", branch, arch);
-
-  old_exec = g_key_file_get_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, G_KEY_FILE_DESKTOP_KEY_EXEC, NULL);
-  if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
+  for (i = 0; groups[i] != NULL; i++)
     {
-      int i;
-      gs_free char *command = g_shell_quote (old_argv[0]);
+      g_key_file_remove_key (keyfile, groups[i], G_KEY_FILE_DESKTOP_KEY_TRY_EXEC, NULL);
+      g_key_file_remove_key (keyfile, groups[i], "X-GNOME-Bugzilla-ExtraInfoScript", NULL);
 
-      g_string_append_printf (new_exec, " --command=%s", command);
+      new_exec = g_string_new ("");
+      g_string_append_printf (new_exec, "xdg-app run --branch=%s --arch=%s", branch, arch);
 
-      g_string_append (new_exec, " ");
-      g_string_append (new_exec, escaped_app);
-
-      for (i = 1; i < old_argc; i++)
+      old_exec = g_key_file_get_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, G_KEY_FILE_DESKTOP_KEY_EXEC, NULL);
+      if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
         {
-          gs_free char *arg = g_shell_quote (old_argv[i]);
+          int i;
+          gs_free char *command = g_shell_quote (old_argv[0]);
+
+          g_string_append_printf (new_exec, " --command=%s", command);
+
           g_string_append (new_exec, " ");
-          g_string_append (new_exec, arg);
+          g_string_append (new_exec, escaped_app);
+
+          for (i = 1; i < old_argc; i++)
+            {
+              gs_free char *arg = g_shell_quote (old_argv[i]);
+              g_string_append (new_exec, " ");
+              g_string_append (new_exec, arg);
+            }
         }
-    }
-  else
-    {
-      g_string_append (new_exec, " ");
-      g_string_append (new_exec, escaped_app);
-    }
+      else
+        {
+          g_string_append (new_exec, " ");
+          g_string_append (new_exec, escaped_app);
+        }
 
-  g_key_file_set_string (keyfile, G_KEY_FILE_DESKTOP_GROUP, G_KEY_FILE_DESKTOP_KEY_EXEC, new_exec->str);
-
+      g_key_file_set_string (keyfile, groups[i], G_KEY_FILE_DESKTOP_KEY_EXEC, new_exec->str);
+    }
 
   new_data = g_key_file_to_data (keyfile, &new_data_len, error);
   if (new_data == NULL)
