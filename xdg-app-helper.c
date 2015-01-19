@@ -434,6 +434,21 @@ create_file (const char *path, mode_t mode, const char *content)
 }
 
 static void
+set_owner (const char *name, int flags)
+{
+  if (flags & FILE_FLAGS_USER_OWNED)
+    {
+      if (lchown (name, getuid(), getuid()))
+        die_with_error ("chown to user");
+    }
+  else
+    {
+      if (lchown (name, 0, 0))
+        die_with_error ("chown to root");
+    }
+}
+
+static void
 create_files (const create_table_t *create, int n_create, int ignore_shm, int system_mode)
 {
   int last_failed = 0;
@@ -461,11 +476,13 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
         case FILE_TYPE_DIR:
           if (mkdir (name, mode) != 0)
             die_with_error ("creating dir %s", name);
+          set_owner (name, flags);
           break;
 
         case FILE_TYPE_REGULAR:
           if (create_file (name, mode, NULL))
             die_with_error ("creating file %s", name);
+          set_owner (name, flags);
           break;
 
         case FILE_TYPE_SYSTEM_SYMLINK:
@@ -478,6 +495,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
 		{
 		  if (mkdir (name, mode) != 0)
 		    die_with_error ("creating dir %s", name);
+                  set_owner (name, flags);
 
 		  if (bind_mount (in_root, name, BIND_PRIVATE | BIND_READONLY))
 		    die_with_error ("mount %s", name);
@@ -496,6 +514,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
         case FILE_TYPE_SYMLINK:
           if (symlink (data, name) != 0)
             die_with_error ("creating symlink %s", name);
+          set_owner (name, flags);
           break;
 
         case FILE_TYPE_BIND:
@@ -548,16 +567,12 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
           if (mknod (name, mode, st.st_rdev) < 0)
             die_with_error ("mknod %s", name);
 
+          set_owner (name, flags);
+
           break;
 
         default:
           die ("Unknown create type %d\n", create[i].type);
-        }
-
-      if (flags & FILE_FLAGS_USER_OWNED)
-        {
-          if (chown (name, getuid(), -1))
-            die_with_error ("chown to user");
         }
 
       free (name);
