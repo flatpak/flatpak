@@ -87,6 +87,24 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-s</option></term>
+                <term><option>--subject=SUBJECT</option></term>
+
+                <listitem><para>
+                    One line subject for the commit message.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-b</option></term>
+                <term><option>--body=BODY</option></term>
+
+                <listitem><para>
+                    Full description for the commit message.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

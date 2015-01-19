@@ -10,7 +10,13 @@
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
 
+static char *opt_subject;
+static char *opt_body;
+
 static GOptionEntry options[] = {
+  { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, "One line subject", "SUBJECT" },
+  { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description", "BODY" },
+
   { NULL }
 };
 
@@ -154,8 +160,15 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!metadata_get_arch (metadata, &arch, error))
     goto out;
 
-  subject = "Import an application build";
-  body = g_strconcat ("Name: ", name, "\nArch: ", arch, "\nBranch: ", branch, NULL);
+  if (opt_subject)
+    subject = opt_subject;
+  else
+    subject = "Import an application build";
+  if (opt_body)
+    body = g_strdup (opt_body);
+  else
+    body = g_strconcat ("Name: ", name, "\nArch: ", arch, "\nBranch: ", branch, NULL);
+
   full_branch = g_strconcat ("app/", name, "/", arch, "/", branch, NULL);
 
   repofile = g_file_new_for_commandline_arg (location);
