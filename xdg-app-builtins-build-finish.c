@@ -45,9 +45,10 @@ collect_exports (GFile *base, GCancellable *cancellable, GError **error)
   gs_unref_object GFile *files = NULL;
   gs_unref_object GFile *export = NULL;
   const char *paths[] = {
-    "share/applications",    /* Copy desktop files */
-    "share/icons/hicolor",   /* Icons */
-    "share/dbus-1/services", /* D-Bus service files */
+    "share/applications",                 /* Copy desktop files */
+    "share/icons/hicolor",                /* Icons */
+    "share/dbus-1/services",              /* D-Bus service files */
+    "share/gnome-shell/search-providers", /* Search providers */
     NULL,
   };
   int i;
