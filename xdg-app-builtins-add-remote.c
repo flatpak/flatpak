@@ -18,7 +18,7 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_add_repo (int argc, char **argv, GCancellable *cancellable, GError **error)
+xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   GOptionContext *context;
   gboolean ret = FALSE;

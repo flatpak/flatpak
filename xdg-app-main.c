@@ -19,9 +19,9 @@ typedef struct {
 } XdgAppCommand;
 
 static XdgAppCommand commands[] = {
-  { "add-repo", xdg_app_builtin_add_repo },
-  { "delete-repo", xdg_app_builtin_delete_repo },
-  { "list-repos", xdg_app_builtin_list_repos },
+  { "add-remote", xdg_app_builtin_add_remote },
+  { "delete-remote", xdg_app_builtin_delete_remote },
+  { "list-remotes", xdg_app_builtin_list_remotes },
   { "repo-contents", xdg_app_builtin_repo_contents },
   { "install-runtime", xdg_app_builtin_install_runtime },
   { "update-runtime", xdg_app_builtin_update_runtime },

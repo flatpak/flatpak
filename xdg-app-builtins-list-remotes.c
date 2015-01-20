@@ -17,7 +17,7 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_list_repos (int argc, char **argv, GCancellable *cancellable, GError **error)
+xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   GOptionContext *context;
   gboolean ret = FALSE;

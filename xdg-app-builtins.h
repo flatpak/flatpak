@@ -28,9 +28,9 @@ void usage_error (GOptionContext *context,
 
 #define BUILTINPROTO(name) gboolean xdg_app_builtin_ ## name (int argc, char **argv, GCancellable *cancellable, GError **error)
 
-BUILTINPROTO(add_repo);
-BUILTINPROTO(delete_repo);
-BUILTINPROTO(list_repos);
+BUILTINPROTO(add_remote);
+BUILTINPROTO(delete_remote);
+BUILTINPROTO(list_remotes);
 BUILTINPROTO(repo_contents);
 BUILTINPROTO(install_runtime);
 BUILTINPROTO(update_runtime);
