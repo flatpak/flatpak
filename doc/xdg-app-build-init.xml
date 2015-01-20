@@ -85,15 +85,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>-n</option></term>
-                <term><option>--name=NAME</option></term>
-
-                <listitem><para>
-                    The application name.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--var=RUNTIME</option></term>
 
