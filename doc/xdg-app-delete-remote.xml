@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-list-repos">
+<refentry id="xdg-app-delete-remote">
 
     <refentryinfo>
-        <title>xdg-app list-repos</title>
+        <title>xdg-app delete-remote</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,19 +19,20 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app list-repos</refentrytitle>
+        <refentrytitle>xdg-app delete-remote</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-list-repos</refname>
-        <refpurpose>List remote repositories</refpurpose>
+        <refname>xdg-app-delete-remote</refname>
+        <refpurpose>Delete a remote repository</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app list-repos</command>
+                <command>xdg-app delete-remote</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">NAME</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -39,7 +40,8 @@
         <title>Description</title>
 
         <para>
-            Lists the known remote repositories.
+            Removes a remote repository from the xdg-app repository configuration.
+            <arg choice="plain">NAME</arg> is the name of an existing remote.
         </para>
 
     </refsect1>
@@ -69,14 +71,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--show-urls</option></term>
-
-                <listitem><para>
-                    Show the url for each repository in addition to the name.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
@@ -99,11 +93,8 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app list-repos --user --show-urls</command>
+            <command>$ xdg-app --user delete-remote dried-raisins</command>
         </para>
-<programlisting>
-testrepo  http://209.132.179.91/repo/
-</programlisting>
     </refsect1>
 
     <refsect1>
@@ -111,8 +102,8 @@ testrepo  http://209.132.179.91/repo/
 
             <para>
                 <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>xdg-app-add-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>xdg-app-delete-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                <citerefentry><refentrytitle>xdg-app-add-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-list-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             </para>
     </refsect1>
 
