@@ -11,12 +11,10 @@
 #include "xdg-app-utils.h"
 
 static char *opt_arch;
-static char *opt_name;
 static char *opt_var;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
-  { "name", 'n', 0, G_OPTION_ARG_STRING, &opt_name, "App name", "NAME" },
   { "var", 'v', 0, G_OPTION_ARG_STRING, &opt_var, "Initialize var from named runtime", "RUNTIME" },
   { NULL }
 };
