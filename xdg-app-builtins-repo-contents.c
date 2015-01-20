@@ -13,11 +13,13 @@
 static gboolean opt_show_details;
 static gboolean opt_only_runtimes;
 static gboolean opt_only_apps;
+static gboolean opt_only_updates;
 
 static GOptionEntry options[] = {
   { "show-details", 0, 0, G_OPTION_ARG_NONE, &opt_show_details, "Show arches and branches", NULL },
   { "runtimes", 0, 0, G_OPTION_ARG_NONE, &opt_only_runtimes, "Show only runtimes", NULL },
   { "apps", 0, 0, G_OPTION_ARG_NONE, &opt_only_apps, "Show only apps", NULL },
+  { "updates", 0, 0, G_OPTION_ARG_NONE, &opt_only_updates, "Show only those where updates are available", NULL },
   { NULL }
 };
 
@@ -31,6 +33,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   gs_unref_hashtable GHashTable *refs = NULL;
   GHashTableIter iter;
   gpointer key;
+  gpointer value;
   gs_unref_ptrarray GPtrArray *names = NULL;
   int i;
   const char *repository;
@@ -55,9 +58,10 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   names = g_ptr_array_new_with_free_func (g_free);
 
   g_hash_table_iter_init (&iter, refs);
-  while (g_hash_table_iter_next (&iter, &key, NULL))
+  while (g_hash_table_iter_next (&iter, &key, &value))
     {
       const char *refspec = key;
+      const char *checksum = value;
       gs_free char *remote = NULL;
       gs_free char *ref = NULL;
       char *name = NULL;
@@ -68,6 +72,16 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
 
       if (!g_str_equal (remote, repository))
         continue;
+
+      if (opt_only_updates)
+        {
+          gs_free char *deployed = NULL;
+
+          deployed = xdg_app_dir_read_active (dir, ref, cancellable);
+
+          if (g_strcmp0 (deployed, checksum) == 0)
+            continue;
+        }
 
       if (g_str_has_prefix (ref, "runtime/") && !opt_only_apps)
         {
