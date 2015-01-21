@@ -37,7 +37,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   gs_unref_ptrarray GPtrArray *names = NULL;
   int i;
   const char *repository;
-  gs_free char *url;
+  gs_free char *url = NULL;
   gs_unref_object GFile *repo_file = NULL;
   gs_unref_object GFile *summary_file = NULL;
   char *buffer;
