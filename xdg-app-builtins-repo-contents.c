@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "libgsystem.h"
+#include <libsoup/soup.h>
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -24,12 +25,47 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
-load_contents (const char *uri, char **buffer, gsize *length, GCancellable *cancellable, GError **error)
+load_contents (const char *uri, GBytes **contents, GCancellable *cancellable, GError **error)
 {
-  gs_unref_object GFile *file = NULL;
+  gboolean ret = FALSE;
+  gs_free char *scheme = NULL;
 
-  file = g_file_new_for_uri (uri);
-  return g_file_load_contents (file, cancellable, buffer, length, NULL, error);
+  scheme = g_uri_parse_scheme (uri);
+  if (strcmp (scheme, "file") == 0)
+    {
+      char *buffer;
+      gsize length;
+      gs_unref_object GFile *file = NULL;
+
+      g_debug ("Loading summary %s using GIO", uri);
+      file = g_file_new_for_uri (uri);
+      if (!g_file_load_contents (file, cancellable, &buffer, &length, NULL, NULL))
+        goto out;
+
+      *contents = g_bytes_new_take (buffer, length);
+    }
+  else
+    {
+      gs_unref_object SoupSession *session = NULL;
+      gs_unref_object SoupMessage *msg = NULL;
+
+      g_debug ("Loading summary %s using libsoup", uri);
+      session = soup_session_new ();
+      msg = soup_message_new ("GET", uri);
+      soup_session_send_message (session, msg);
+
+      if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
+        goto out;
+
+      *contents = g_bytes_new (msg->response_body->data, msg->response_body->length);
+    }
+
+  ret = TRUE;
+
+  g_debug ("Received %ld bytes", g_bytes_get_size (*contents));
+
+out:
+  return ret;
 }
 
 gboolean
@@ -48,8 +84,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   const char *repository;
   gs_free char *url = NULL;
   gs_free char *summary_url = NULL;
-  char *buffer;
-  gsize length;
+  gs_unref_bytes GBytes *bytes = NULL;
 
   context = g_option_context_new (" REPOSITORY - Show available runtimes and applications");
 
@@ -68,8 +103,8 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   if (!ostree_repo_remote_get_url (repo, repository, &url, error))
     goto out;
 
-  summary_url = g_strconcat (url, "/summary", NULL);
-  if (load_contents (summary_url, &buffer, &length, cancellable, NULL))
+  summary_url = g_build_filename (url, "summary", NULL);
+  if (load_contents (summary_url, &bytes, cancellable, NULL))
     {
       gs_unref_variant GVariant *summary;
       gs_unref_variant GVariant *ref_list;
@@ -77,9 +112,10 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
 
       refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
-      summary = g_variant_new_from_data (OSTREE_SUMMARY_GVARIANT_FORMAT, buffer, length, FALSE, g_free, NULL);
+      summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, FALSE);
       ref_list = g_variant_get_child_value (summary, 0);
       n = g_variant_n_children (ref_list);
+      g_debug ("Summary contains %d refs", n);
       for (i = 0; i < n; i++)
         {
           gs_unref_variant GVariant *ref = NULL;
@@ -90,11 +126,11 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
           ref = g_variant_get_child_value (ref_list, i);
           g_variant_get (ref, "(&s(t@aya{sv}))", &refname, NULL, &csum_v, NULL);
 
+          g_debug ("%s summary: %s -> %s\n", repository, refname, checksum);
           if (!ostree_validate_rev (refname, error))
             goto out;
 
           checksum = ostree_checksum_from_bytes_v (csum_v);
-          g_debug ("%s summary: %s -> %s\n", repository, refname, checksum);
           g_hash_table_insert (refs, g_strdup (refname), checksum);
         }
     }

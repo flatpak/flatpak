@@ -25,6 +25,9 @@ if test "x$GCC" = "xyes"; then
   esac
 fi
 
+PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
+AC_SUBST(SOUP_CFLAGS)
+AC_SUBST(SOUP_LIBS)
 PKG_CHECK_MODULES(OSTREE, [glib-2.0 libgsystem >= 2015.1 gio-2.0 ostree-1 >= 2015.1])
 AC_SUBST(OSTREE_CFLAGS)
 AC_SUBST(OSTREE_LIBS)
