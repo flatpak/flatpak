@@ -256,6 +256,9 @@ xdg_app_dir_pull (XdgAppDir *self,
                          cancellable, error))
     goto out;
 
+  if (console)
+    gs_console_end_status_line (console, NULL, NULL);
+
   ret = TRUE;
  out:
   return ret;
