@@ -18,44 +18,16 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
-print_children (GFile *base, GCancellable *cancellable, GError **error)
+print_installed_refs (GFile *base, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
   gs_unref_object GFileEnumerator *dir_enum = NULL;
   gs_unref_object GFileInfo *child_info = NULL;
   GError *temp_error = NULL;
+  gs_unref_ptrarray GPtrArray *refs = NULL;
+  int i;
 
-  dir_enum = g_file_enumerate_children (base, G_FILE_ATTRIBUTE_STANDARD_NAME,
-                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                        cancellable, error);
-  if (!dir_enum)
-    goto out;
-
-  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
-    {
-      g_print ("%s\n", g_file_info_get_name (child_info));
-      g_clear_object (&child_info);
-    }
-
-  if (temp_error != NULL)
-    goto out;
-
-  ret = TRUE;
-
-out:
-  if (temp_error != NULL)
-    g_propagate_error (error, temp_error);
-
-  return ret;
-}
-
-static gboolean
-print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
-{
-  gboolean ret = FALSE;
-  gs_unref_object GFileEnumerator *dir_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
-  GError *temp_error = NULL;
+  refs = g_ptr_array_new ();
 
   dir_enum = g_file_enumerate_children (base, G_FILE_ATTRIBUTE_STANDARD_NAME,
                                         G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
@@ -102,10 +74,30 @@ print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
           while ((child_info3 = g_file_enumerator_next_file (dir_enum3, cancellable, &temp_error)))
             {
               const char *branch;
+              char *ref;
 
               branch = g_file_info_get_name (child_info3);
 
-              g_print ("%s/%s/%s\n", name, arch, branch);
+              if (opt_show_details)
+                ref = g_strdup_printf ("%s/%s/%s", name, arch, branch);
+              else
+                ref = g_strdup (name);
+
+              for (i = 0; i < refs->len; i++)
+                {
+                  int cmp;
+
+                  cmp = strcmp (ref, g_ptr_array_index (refs, i));
+                  if (cmp > 0)
+                    continue;
+                  else if (cmp < 0)
+                    g_ptr_array_insert (refs, i, ref);
+                  else
+                    g_free (ref);
+                  break;
+                }
+              if (i == refs->len)
+                g_ptr_array_insert (refs, i, ref);
 
               g_clear_object (&child_info3);
             }
@@ -124,6 +116,9 @@ print_three_generations (GFile *base, GCancellable *cancellable, GError **error)
 
   if (temp_error != NULL)
     goto out;
+
+  for (i = 0; i < refs->len; i++)
+    g_print ("%s\n", (char *)g_ptr_array_index (refs, i));
 
   ret = TRUE;
 
@@ -154,16 +149,8 @@ xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable,
       goto out;
     }
 
-  if (opt_show_details)
-    {
-      if (!print_three_generations (base, cancellable, error))
-        goto out;
-    }
-  else
-    {
-      if (!print_children (base, cancellable, error))
-        goto out;
-    }
+  if (!print_installed_refs (base, cancellable, error))
+    goto out;
 
   ret = TRUE;
 
@@ -195,16 +182,8 @@ xdg_app_builtin_list_apps (int argc, char **argv, GCancellable *cancellable, GEr
       goto out;
     }
 
-  if (opt_show_details)
-    {
-      if (!print_three_generations (base, cancellable, error))
-        goto out;
-    }
-  else
-    {
-      if (!print_children (base, cancellable, error))
-        goto out;
-    }
+  if (!print_installed_refs (base, cancellable, error))
+    goto out;
 
   ret = TRUE;
 
