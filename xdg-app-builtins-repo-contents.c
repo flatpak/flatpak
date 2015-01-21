@@ -37,6 +37,11 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   gs_unref_ptrarray GPtrArray *names = NULL;
   int i;
   const char *repository;
+  gs_free char *url;
+  gs_unref_object GFile *repo_file = NULL;
+  gs_unref_object GFile *summary_file = NULL;
+  char *buffer;
+  gsize length;
 
   context = g_option_context_new (" REPOSITORY - Show available runtimes and applications");
 
@@ -52,8 +57,46 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   repository = argv[1];
 
   repo = xdg_app_dir_get_repo (dir);
-  if (!ostree_repo_list_refs (repo, NULL, &refs, cancellable, error))
+  if (!ostree_repo_remote_get_url (repo, repository, &url, error))
     goto out;
+
+  repo_file = g_file_new_for_uri (url);
+  summary_file = g_file_get_child (repo_file, "summary");
+  if (g_file_load_contents (summary_file, cancellable, &buffer, &length, NULL, NULL))
+    {
+      gs_unref_variant GVariant *summary;
+      gs_unref_variant GVariant *ref_list;
+      int n;
+
+      refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+      summary = g_variant_new_from_data (OSTREE_SUMMARY_GVARIANT_FORMAT, buffer, length, FALSE, g_free, NULL);
+      ref_list = g_variant_get_child_value (summary, 0);
+      n = g_variant_n_children (ref_list);
+      for (i = 0; i < n; i++)
+        {
+          gs_unref_variant GVariant *ref = NULL;
+          gs_unref_variant GVariant *csum_v = NULL;
+          char *refname;
+          char *checksum;
+
+          ref = g_variant_get_child_value (ref_list, i);
+          g_variant_get (ref, "(&s(t@aya{sv}))", &refname, NULL, &csum_v, NULL);
+
+          if (!ostree_validate_rev (refname, error))
+            goto out;
+
+          checksum = ostree_checksum_from_bytes_v (csum_v);
+          g_debug ("%s summary: %s -> %s\n", repository, refname, checksum);
+          g_hash_table_insert (refs, g_strdup (refname), checksum);
+        }
+    }
+  else
+    {
+      g_printerr ("Failed to load summary file for remote %s, listing local refs\n", repository);
+      if (!ostree_repo_list_refs (repo, NULL, &refs, cancellable, error))
+        goto out;
+    }
 
   names = g_ptr_array_new_with_free_func (g_free);
 
@@ -70,7 +113,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
       if (!ostree_parse_refspec (refspec, &remote, &ref, error))
         goto out;
 
-      if (!g_str_equal (remote, repository))
+      if (remote != NULL && !g_str_equal (remote, repository))
         continue;
 
       if (opt_only_updates)
@@ -78,6 +121,8 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
           gs_free char *deployed = NULL;
 
           deployed = xdg_app_dir_read_active (dir, ref, cancellable);
+          if (deployed == NULL)
+            continue;
 
           if (g_strcmp0 (deployed, checksum) == 0)
             continue;
