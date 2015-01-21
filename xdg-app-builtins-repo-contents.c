@@ -23,6 +23,15 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+static gboolean
+load_contents (const char *uri, char **buffer, gsize *length, GCancellable *cancellable, GError **error)
+{
+  gs_unref_object GFile *file = NULL;
+
+  file = g_file_new_for_uri (uri);
+  return g_file_load_contents (file, cancellable, buffer, length, NULL, error);
+}
+
 gboolean
 xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -38,8 +47,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   int i;
   const char *repository;
   gs_free char *url = NULL;
-  gs_unref_object GFile *repo_file = NULL;
-  gs_unref_object GFile *summary_file = NULL;
+  gs_free char *summary_url = NULL;
   char *buffer;
   gsize length;
 
@@ -60,9 +68,8 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   if (!ostree_repo_remote_get_url (repo, repository, &url, error))
     goto out;
 
-  repo_file = g_file_new_for_uri (url);
-  summary_file = g_file_get_child (repo_file, "summary");
-  if (g_file_load_contents (summary_file, cancellable, &buffer, &length, NULL, NULL))
+  summary_url = g_strconcat (url, "/summary", NULL);
+  if (load_contents (summary_url, &buffer, &length, cancellable, NULL))
     {
       gs_unref_variant GVariant *summary;
       gs_unref_variant GVariant *ref_list;
