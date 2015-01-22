@@ -875,6 +875,63 @@ xdg_app_dir_deploy (XdgAppDir *self,
 }
 
 gboolean
+xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
+				   const char *type,
+				   const char *name_prefix,
+				   const char *branch,
+				   const char *arch,
+				   GHashTable *hash,
+				   GCancellable *cancellable,
+				   GError **error)
+{
+  gboolean ret = FALSE;
+  gs_unref_object GFile *dir = NULL;
+  gs_unref_object GFileEnumerator *dir_enum = NULL;
+  gs_unref_object GFileInfo *child_info = NULL;
+  GError *temp_error = NULL;
+
+  dir = g_file_get_child (self->basedir, type);
+  if (!g_file_query_exists (dir, cancellable))
+    return TRUE;
+
+  dir_enum = g_file_enumerate_children (dir, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable,
+                                        error);
+  if (!dir_enum)
+    goto out;
+
+  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)) != NULL)
+    {
+      const char *name = g_file_info_get_name (child_info);
+
+      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
+          name[0] != '.' && (name_prefix == NULL || g_str_has_prefix (name, name_prefix)))
+	{
+	  gs_unref_object GFile *child1 = g_file_get_child (dir, name);
+	  gs_unref_object GFile *child2 = g_file_get_child (child1, branch);
+	  gs_unref_object GFile *child3 = g_file_get_child (child2, arch);
+	  gs_unref_object GFile *active = g_file_get_child (child3, "active");
+
+	  if (g_file_query_exists (active, cancellable))
+	    g_hash_table_add (hash, g_strdup (name));
+	}
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      goto out;
+    }
+
+  ret = TRUE;
+ out:
+  return ret;
+}
+
+gboolean
 xdg_app_dir_list_deployed (XdgAppDir *self,
                            const char *ref,
                            char ***deployed_checksums,

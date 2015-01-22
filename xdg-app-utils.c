@@ -64,6 +64,52 @@ xdg_app_build_app_ref (const char *app,
   return g_build_filename ("app", app, arch, branch, NULL);
 }
 
+char **
+xdg_app_list_deployed_refs (const char *type,
+			    const char *name_prefix,
+			    const char *branch,
+			    const char *arch,
+			    GCancellable *cancellable,
+			    GError **error)
+{
+  gchar **ret = NULL;
+  gs_unref_ptrarray GPtrArray *names = NULL;
+  gs_unref_hashtable GHashTable *hash = NULL;
+  gs_unref_object XdgAppDir *user_dir = NULL;
+  gs_unref_object XdgAppDir *system_dir = NULL;
+  const char *key;
+  GHashTableIter iter;
+
+  hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  user_dir = xdg_app_dir_get_user ();
+  system_dir = xdg_app_dir_get_system ();
+
+  if (!xdg_app_dir_collect_deployed_refs (user_dir, type, name_prefix,
+					  branch, arch, hash, cancellable,
+					  error))
+    goto out;
+
+  if (!xdg_app_dir_collect_deployed_refs (system_dir, type, name_prefix,
+					  branch, arch, hash, cancellable,
+					  error))
+    goto out;
+
+  names = g_ptr_array_new ();
+  g_hash_table_iter_init (&iter, hash);
+  while (g_hash_table_iter_next (&iter, (gpointer *)&key, NULL))
+    g_ptr_array_add (names, g_strdup (key));
+
+  g_ptr_array_sort (names, (GCompareFunc)g_strcmp0);
+  g_ptr_array_add (names, NULL);
+
+  ret = (char **)g_ptr_array_free (names, FALSE);
+  names = NULL;
+
+ out:
+  return ret;
+}
+
 GFile *
 xdg_app_find_deploy_dir_for_ref (const char *ref,
                                  GCancellable *cancellable,

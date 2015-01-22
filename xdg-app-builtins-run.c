@@ -133,6 +133,92 @@ xdg_app_run_add_session_dbus_args (GPtrArray *argv_array)
     }
 }
 
+static void
+add_extension_arg (const char *directory,
+		   const char *type, const char *extension, const char *arch, const char *branch,
+		   GPtrArray *argv_array, GCancellable *cancellable)
+{
+  gs_free char *extension_ref;
+  gs_unref_object GFile *deploy = NULL;
+  gs_free char *full_directory = NULL;
+  gboolean is_app;
+
+  is_app = strcmp (type, "app") == 0;
+
+  full_directory = g_build_filename (is_app ? "/self" : "/usr", directory, NULL);
+
+  extension_ref = g_build_filename (type, extension, arch, branch, NULL);
+  deploy = xdg_app_find_deploy_dir_for_ref (extension_ref, cancellable, NULL);
+  if (deploy != NULL)
+    {
+      gs_unref_object GFile *files = g_file_get_child (deploy, "files");
+      g_ptr_array_add (argv_array, g_strdup ("-b"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", full_directory, gs_file_get_path_cached (files)));
+    }
+}
+
+static gboolean
+add_extension_args (GKeyFile *metakey, const char *full_ref,
+		    GPtrArray *argv_array, GCancellable *cancellable, GError **error)
+{
+  gs_strfreev gchar **groups = NULL;
+  gs_strfreev gchar **parts = NULL;
+  gboolean ret = FALSE;
+  int i;
+
+  ret = TRUE;
+
+  parts = g_strsplit (full_ref, "/", 0);
+  if (g_strv_length (parts) != 4)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to determine parts from ref: %s", full_ref);
+      goto out;
+    }
+
+  groups = g_key_file_get_groups (metakey, NULL);
+  for (i = 0; groups[i] != NULL; i++)
+    {
+      char *extension;
+
+      if (g_str_has_prefix (groups[i], "Extension ") &&
+	  *(extension = (groups[i] + strlen ("Extension "))) != 0)
+	{
+	  gs_free char *directory = g_key_file_get_string (metakey, groups[i], "directory", NULL);
+
+	  if (directory == NULL)
+	    continue;
+
+	  if (g_key_file_get_boolean (metakey, groups[i],
+				      "subdirectories", NULL))
+	    {
+	      gs_free char *prefix = g_strconcat (extension, ".", NULL);
+	      gs_strfreev char **refs = NULL;
+	      int i;
+
+	      refs = xdg_app_list_deployed_refs (parts[0], prefix, parts[2], parts[3],
+						 cancellable, error);
+	      if (refs == NULL)
+		goto out;
+
+	      for (i = 0; refs[i] != NULL; i++)
+		{
+		  gs_free char *extended_dir = g_build_filename (directory, refs[i] + strlen (prefix), NULL);
+		  add_extension_arg (extended_dir, parts[0], refs[i], parts[2], parts[3],
+				     argv_array, cancellable);
+		}
+	    }
+	  else
+	    add_extension_arg (directory, parts[0], extension, parts[2], parts[3],
+			       argv_array, cancellable);
+	}
+    }
+
+  ret = TRUE;
+ out:
+  return ret;
+}
+
+
 gboolean
 xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -149,16 +235,19 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gs_unref_object GFile *runtime_deploy = NULL;
   gs_unref_object GFile *runtime_files = NULL;
   gs_unref_object GFile *metadata = NULL;
+  gs_unref_object GFile *runtime_metadata = NULL;
   gs_free char *metadata_contents = NULL;
+  gs_free char *runtime_metadata_contents = NULL;
   gs_free char *runtime = NULL;
   gs_free char *default_command = NULL;
   gs_free char *runtime_ref = NULL;
   gs_free char *app_ref = NULL;
   gs_unref_keyfile GKeyFile *metakey = NULL;
+  gs_unref_keyfile GKeyFile *runtime_metakey = NULL;
   gs_free_error GError *my_error = NULL;
   gs_free_error GError *my_error2 = NULL;
   gs_unref_ptrarray GPtrArray *argv_array = NULL;
-  gsize metadata_size;
+  gsize metadata_size, runtime_metadata_size;
   const char *app;
   const char *branch = "master";
   const char *command = "/bin/sh";
@@ -210,6 +299,12 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     goto out;
 
+  argv_array = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (argv_array, g_strdup (HELPER));
+
+  if (!add_extension_args (metakey, app_ref, argv_array, cancellable, error))
+    goto out;
+
   runtime = g_key_file_get_string (metakey, "Application", opt_devel ? "sdk" : "runtime", error);
   if (*error)
     goto out;
@@ -219,6 +314,18 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   runtime_deploy = xdg_app_find_deploy_dir_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
     goto out;
+
+  runtime_metadata = g_file_get_child (runtime_deploy, "metadata");
+  if (g_file_load_contents (runtime_metadata, cancellable, &runtime_metadata_contents, &runtime_metadata_size, NULL, error))
+    {
+
+      runtime_metakey = g_key_file_new ();
+      if (!g_key_file_load_from_data (runtime_metakey, runtime_metadata_contents, runtime_metadata_size, 0, error))
+	goto out;
+
+      if (!add_extension_args (runtime_metakey, runtime_ref, argv_array, cancellable, error))
+	goto out;
+    }
 
   if (!xdg_app_dir_ensure_path (user_dir, cancellable, error))
     goto out;
@@ -256,9 +363,6 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     command = opt_command;
   else
     command = default_command;
-
-  argv_array = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (argv_array, g_strdup (HELPER));
 
   if (g_key_file_get_boolean (metakey, "Environment", "ipc", NULL))
     g_ptr_array_add (argv_array, g_strdup ("-i"));

@@ -17,6 +17,12 @@ char * xdg_app_build_app_ref (const char *app,
 GFile * xdg_app_find_deploy_dir_for_ref (const char *ref,
                                          GCancellable *cancellable,
                                          GError **error);
+char ** xdg_app_list_deployed_refs (const char *type,
+				    const char *name_prefix,
+				    const char *branch,
+				    const char *arch,
+				    GCancellable *cancellable,
+				    GError **error);
 
 gboolean xdg_app_overlay_symlink_tree (GFile    *source,
                                        GFile    *destination,

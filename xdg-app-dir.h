@@ -77,6 +77,14 @@ gboolean    xdg_app_dir_undeploy        (XdgAppDir      *self,
 gboolean    xdg_app_dir_prune           (XdgAppDir      *self,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
+					       const char *type,
+					       const char *name_prefix,
+					       const char *branch,
+					       const char *arch,
+					       GHashTable *hash,
+					       GCancellable *cancellable,
+					       GError **error);
 
 
 
