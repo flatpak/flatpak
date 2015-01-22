@@ -104,6 +104,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--updates</option></term>
+
+                <listitem><para>
+                    Show only those which have updates available.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

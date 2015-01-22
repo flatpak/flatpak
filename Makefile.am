@@ -46,8 +46,8 @@ xdg_app_SOURCES = \
 	xdg-app-utils.h \
 	xdg-app-utils.c \
 	$(NULL)
-xdg_app_LDADD = $(OSTREE_LIBS)
-xdg_app_CFLAGS = $(OSTREE_CFLAGS)
+xdg_app_LDADD = $(OSTREE_LIBS) $(SOUP_LIBS)
+xdg_app_CFLAGS = $(OSTREE_CFLAGS) $(SOUP_CFLAGS)
 
 install-exec-hook:
 	$(SUDO_BIN) chown root $(DESTDIR)$(bindir)/xdg-app-helper
