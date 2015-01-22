@@ -173,23 +173,31 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
 
       if (g_str_has_prefix (ref, "runtime/") && !opt_only_apps)
         {
-          name = g_strdup (ref + strlen ("runtime/"));
           if (!opt_show_details)
             {
+              name = g_strdup (ref + strlen ("runtime/"));
               p = strchr (name, '/');
               if (p)
                 *p = 0;
+            }
+          else
+            {
+              name = g_strdup (ref);
             }
         }
 
       if (g_str_has_prefix (ref, "app/") && !opt_only_runtimes)
         {
-          name = g_strdup (ref + strlen ("app/"));
           if (!opt_show_details)
             {
+              name = g_strdup (ref + strlen ("app/"));
               p = strchr (name, '/');
               if (p)
                 *p = 0;
+            }
+          else
+            {
+              name = g_strdup (ref);
             }
         }
 
