@@ -185,7 +185,7 @@ strdup_printf (const char *format,
 void
 usage (char **argv)
 {
-  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-a <path to app>] [-v <path to var>] <path to runtime> <command..>\n", argv[0]);
+  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
   exit (1);
 }
 
@@ -285,6 +285,8 @@ static const create_table_t create[] = {
   { FILE_TYPE_BIND, "dev/dri", 0755, "/dev/dri", FILE_FLAGS_NON_FATAL|FILE_FLAGS_DEVICES},
 };
 
+/* warning: Don't create any actual files here, as we could potentially
+   write over bind mounts to the system */
 static const create_table_t create_post[] = {
   { FILE_TYPE_BIND, "usr/etc/machine-id", 0444, "/etc/machine-id", FILE_FLAGS_NON_FATAL},
   { FILE_TYPE_BIND, "usr/etc/machine-id", 0444, "/var/lib/dbus/machine-id", FILE_FLAGS_NON_FATAL | FILE_FLAGS_IF_LAST_FAILED},
@@ -831,6 +833,8 @@ loopback_setup (void)
   return res;
 }
 
+#define MAX_EXTRA_DIRS 32
+
 int
 main (int argc,
       char **argv)
@@ -845,6 +849,9 @@ main (int argc,
   char *runtime_path = NULL;
   char *app_path = NULL;
   char *var_path = NULL;
+  char *extra_dirs_src[MAX_EXTRA_DIRS];
+  char *extra_dirs_dest[MAX_EXTRA_DIRS];
+  int n_extra_dirs = 0;
   char *pulseaudio_socket = NULL;
   char *x11_socket = NULL;
   char *wayland_socket = NULL;
@@ -852,6 +859,7 @@ main (int argc,
   char *session_dbus_socket = NULL;
   char *xdg_runtime_dir;
   char **args;
+  char *tmp;
   int n_args;
   int share_shm = 0;
   int network = 0;
@@ -864,6 +872,7 @@ main (int argc,
   int writable_exports = 0;
   int status;
   char old_cwd[256];
+  int i;
 
   char tmpdir[] = "/tmp/run-app.XXXXXX";
 
@@ -934,6 +943,32 @@ main (int argc,
               usage (argv);
 
           app_path = args[1];
+          args += 2;
+          n_args -= 2;
+          break;
+
+        case 'b':
+          if (n_args < 2)
+              usage (argv);
+
+	  tmp = strchr (args[1], '=');
+	  if (tmp == NULL || tmp[1] == 0)
+	    usage (argv);
+	  *tmp = 0;
+	  tmp = tmp + 1;
+
+	  if (n_extra_dirs == MAX_EXTRA_DIRS)
+	    die ("Too many extra directories");
+
+	  if (strncmp (args[1], "/usr/", strlen ("/usr/")) != 0 &&
+	      strncmp (args[1], "/self/", strlen ("/self/")) != 0)
+	    die ("Extra directories must be in /usr or /self");
+
+	  extra_dirs_dest[n_extra_dirs] = args[1] + 1;
+	  extra_dirs_src[n_extra_dirs] = tmp;
+
+	  n_extra_dirs++;
+
           args += 2;
           n_args -= 2;
           break;
@@ -1117,7 +1152,12 @@ main (int argc,
 
 	  free (exports);
 	}
+    }
 
+  for (i = 0; i < n_extra_dirs; i++)
+    {
+      if (bind_mount (extra_dirs_src[i], extra_dirs_dest[i], BIND_PRIVATE | BIND_READONLY))
+	die_with_error ("mount extra dir %s", extra_dirs_src[i]);
     }
 
   if (var_path != NULL)
