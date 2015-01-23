@@ -49,7 +49,7 @@ xdg_app_SOURCES = \
 xdg_app_LDADD = $(OSTREE_LIBS) $(SOUP_LIBS)
 xdg_app_CFLAGS = $(OSTREE_CFLAGS) $(SOUP_CFLAGS)
 
-install-exeic-hook:
+install-exec-hook:
 	$(SUDO_BIN) chown root $(DESTDIR)$(bindir)/xdg-app-helper
 	$(SUDO_BIN) chmod u+s $(DESTDIR)$(bindir)/xdg-app-helper
 
