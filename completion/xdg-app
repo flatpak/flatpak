@@ -1,0 +1,244 @@
+[ -z "$BASH_VERSION" ] && return
+
+__contains_word () {
+        local w word=$1; shift
+        for w in "$@"; do
+                [[ $w = "$word" ]] && return
+        done
+}
+
+_xdg-app() {
+        local cur=${COMP_WORDS[COMP_CWORD]}
+        local prev=${COMP_WORDS[COMP_CWORD-1]}
+        local i verb comps mode
+        local remote name
+        local dir cmd sdk loc
+
+        local -A VERBS=(
+                [ALL]='add-remote delete-remote list-remotes repo-contents install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps run build-init build build-finish build-export'
+                [MODE]='add-remote delete-remote list-remotes repo-contents install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps'
+                [ARCH]='build-init install-runtime install-app run uninstall-runtime uninstall-app update-runtime update-app'
+        )
+
+        local -A OPTS=(
+                [GENERAL]='--help --verbose --version'
+                [MODE]='--user'
+                [ARCH]='--arch'
+                [LIST_REMOTES]='--show-urls'
+                [REPO_CONTENTS]='--show-details --runtimes --apps --update'
+                [RUN]='--command --branch --devel'
+                [BUILD_INIT]='--arch --var'
+                [BUILD]='--runtime --network --x11'
+                [BUILD_FINISH]='--command --allow'
+                [BUILD_EXPORT]='--subject --body'
+                [ARG]='--arch --command --branch --var --allow --subject --body'
+        )
+
+        if __contains_word "--user" ${COMP_WORDS[*]}; then
+                mode=--user
+        fi
+
+        if __contains_word "$prev" ${OPTS[ARG]}; then
+                case $prev in
+                        --arch)
+                                comps='x86_64 i686'
+                                ;;
+                        --command)
+                                comps=$(compgen -A command)
+                                ;;
+                        --var)
+                                comps=$(./xdg-app $mode list-runtimes)
+                                ;;
+                        --allow)
+                                comps='x11 wayland ipc pulseaudio system-dbus session-dbus network host-fs homedir'
+                                ;;
+                        --branch|--subject|--body)
+                                comps=''
+                                ;;
+                esac
+                COMPREPLY=( $(compgen -W '$comps' -- "$cur") )
+                return 0
+        fi
+
+        for ((i=0; i < COMP_CWORD; i++)); do
+                if [[ "${COMP_WORDS[i]}" = -* ]]; then
+                        continue
+                fi
+                if  __contains_word "${COMP_WORDS[i-1]}" ${OPTS[ARG]}; then
+                        continue
+                fi
+                if __contains_word "${COMP_WORDS[i]}" ${VERBS[*]} &&
+                   test -z $verb; then
+                        verb=${COMP_WORDS[i]}
+                elif [[ $verb = install-* ]]; then
+                        if [[ -z $remote ]]; then
+                                remote=${COMP_WORDS[i]}
+                        elif [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb =~ (update-*|uninstall-*|run) ]]; then
+                        if [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build-init ]]; then
+                        if [[ -z $dir ]]; then
+                                dir=${COMP_WORDS[i]}
+                        elif [[ -z $sdk ]]; then
+                                sdk=${COMP_WORDS[i]}
+                        elif [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build ]]; then
+                        if [[ -z $dir ]]; then
+                                dir=${COMP_WORDS[i]}
+                        elif [[ -z $cmd ]]; then
+                                cmd=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build-finish ]]; then
+                        if [[ -z $dir ]]; then
+                                dir=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build-export ]]; then
+                        if [[ -z $loc ]]; then
+                                loc=${COMP_WORDS[i]}
+                        elif [[ -z $dir ]]; then
+                                dir=${COMP_WORDS[i]}
+                        elif [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                fi
+        done
+
+        if [[ -z $verb ]]; then
+                comps="${VERBS[*]}"
+
+        elif [[ "$cur" = -* ]]; then
+                comps="${OPTS[GENERAL]}"
+                if __contains_word "$verb" ${VERBS[MODE]}; then
+                        comps="$comps ${OPTS[MODE]}"
+                fi
+                if [ "$verb" = "list-remotes" ]; then
+                        comps="$comps ${OPTS[LIST_REMOTES]}"
+                fi
+                if __contains_word "$verb" ${VERBS[ARCH]}; then
+                        comps="$comps ${OPTS[ARCH]}"
+                fi
+                if [ "$verb" = "run" ]; then
+                        comps="$comps ${OPTS[RUN]}"
+                fi
+                if [ "$verb" = "repo-contents" ]; then
+                        comps="$comps ${OPTS[REPO_CONTENTS]}"
+                fi
+                if [ "$verb" = "build-init" ]; then
+                        comps="$comps ${OPTS[BUILD_INIT]}"
+                fi
+                if [ "$verb" = "build" ]; then
+                        comps="$comps ${OPTS[BUILD]}"
+                fi
+                if [ "$verb" = "build-finish" ]; then
+                        comps="$comps ${OPTS[BUILD_FINISH]}"
+                fi
+                if [ "$verb" = "build-export" ]; then
+                        comps="$comps ${OPTS[BUILD_EXPORT]}"
+                fi
+
+        else
+                case "$verb" in
+                add-remote|delete-remote|repo-contents)
+                        comps=$(./xdg-app $mode list-remotes)
+                ;;
+
+                install-runtime)
+                        if [[ -z $remote ]]; then
+                                comps=$(./xdg-app $mode list-remotes)
+                        elif [[ -z $name ]]; then
+                                comps=$(./xdg-app $mode repo-contents $remote --runtimes)
+                        else
+                                comps='' # FIXME: branches
+                        fi
+                ;;
+
+                list-remotes|list-runtimes|list-apps)
+                        comps=''
+                        ;;
+
+                update-runtime|uninstall-runtime)
+                        if [[ -z $name ]]; then
+                                comps=$(./xdg-app $mode list-runtimes)
+                        else
+                                comps='' # FIXME: branches
+                        fi
+                ;;
+
+                install-app)
+                        if [[ -z $remote ]]; then
+                                comps=$(./xdg-app $mode list-remotes)
+                        elif [[ -z $name ]]; then
+                                comps=$(./xdg-app $mode repo-contents $remote --apps)
+                        else
+                                comps='' # FIXME: branches
+                        fi
+                ;;
+
+                update-app|uninstall-app)
+                        if [[ -z $name ]]; then
+                                comps=$(./xdg-app $mode list-apps)
+                        else
+                                comps='' # FIXME: branches
+                        fi
+                        ;;
+
+                run)
+                        if [[ -z $name ]]; then
+                                comps=$(./xdg-app $mode list-apps)
+                        fi
+                        ;;
+
+                build-init)
+                        if [[ -z $dir ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        elif [[ -z $sdk ]]; then
+                                comps="$(./xdg-app list-runtimes) $(./xdg-app --user list-runtimes)"
+                        elif [[ -z $name ]]; then
+                                comps="$(./xdg-app list-runtimes) $(./xdg-app --user list-runtimes)"
+                        else
+                                comps='' # FIXME: branches
+                        fi
+                        ;;
+
+                build)
+                        if [[ -z $dir ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        elif [[ -z $cmd ]]; then
+                                comps=''
+                                compopt -o bashdefault
+                        fi
+                        ;;
+
+                build-finish)
+                        if [[ -z $dir ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        fi
+                        ;;
+
+                build-export)
+                        if [[ -z $loc ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        elif [[ -z $dir ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        fi
+                        ;;
+
+                esac
+        fi
+
+        COMPREPLY=( $(compgen -W '$comps' -- "$cur") )
+        return 0
+}
+
+complete -F _xdg-app xdg-app

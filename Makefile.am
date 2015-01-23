@@ -46,9 +46,13 @@ xdg_app_SOURCES = \
 	xdg-app-utils.h \
 	xdg-app-utils.c \
 	$(NULL)
-xdg_app_LDADD = $(OSTREE_LIBS) $(SOUP_LIBS)
+xdg_app_LDADD = $(OSTREE_LIBS) -$(SOUP_LIBS)
 xdg_app_CFLAGS = $(OSTREE_CFLAGS) $(SOUP_CFLAGS)
 
-install-exec-hook:
+install-exeic-hook:
 	$(SUDO_BIN) chown root $(DESTDIR)$(bindir)/xdg-app-helper
 	$(SUDO_BIN) chmod u+s $(DESTDIR)$(bindir)/xdg-app-helper
+
+completiondir = $(datadir)/bash-completion/completions
+completion_DATA = completion/xdg-app
+EXTRA_DIST = $(completion_DATA)
