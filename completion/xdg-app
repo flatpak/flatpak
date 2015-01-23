@@ -47,7 +47,7 @@ _xdg-app() {
                                 comps=$(compgen -A command)
                                 ;;
                         --var)
-                                comps=$(./xdg-app $mode list-runtimes)
+                                comps=$(xdg-app $mode list-runtimes)
                                 ;;
                         --allow)
                                 comps='x11 wayland ipc pulseaudio system-dbus session-dbus network host-fs homedir'
@@ -145,14 +145,14 @@ _xdg-app() {
         else
                 case "$verb" in
                 add-remote|delete-remote|repo-contents)
-                        comps=$(./xdg-app $mode list-remotes)
+                        comps=$(xdg-app $mode list-remotes)
                 ;;
 
                 install-runtime)
                         if [[ -z $remote ]]; then
-                                comps=$(./xdg-app $mode list-remotes)
+                                comps=$(xdg-app $mode list-remotes)
                         elif [[ -z $name ]]; then
-                                comps=$(./xdg-app $mode repo-contents $remote --runtimes)
+                                comps=$(xdg-app $mode repo-contents $remote --runtimes)
                         else
                                 comps='' # FIXME: branches
                         fi
@@ -164,7 +164,7 @@ _xdg-app() {
 
                 update-runtime|uninstall-runtime)
                         if [[ -z $name ]]; then
-                                comps=$(./xdg-app $mode list-runtimes)
+                                comps=$(xdg-app $mode list-runtimes)
                         else
                                 comps='' # FIXME: branches
                         fi
@@ -172,9 +172,9 @@ _xdg-app() {
 
                 install-app)
                         if [[ -z $remote ]]; then
-                                comps=$(./xdg-app $mode list-remotes)
+                                comps=$(xdg-app $mode list-remotes)
                         elif [[ -z $name ]]; then
-                                comps=$(./xdg-app $mode repo-contents $remote --apps)
+                                comps=$(xdg-app $mode repo-contents $remote --apps)
                         else
                                 comps='' # FIXME: branches
                         fi
@@ -182,7 +182,7 @@ _xdg-app() {
 
                 update-app|uninstall-app)
                         if [[ -z $name ]]; then
-                                comps=$(./xdg-app $mode list-apps)
+                                comps=$(xdg-app $mode list-apps)
                         else
                                 comps='' # FIXME: branches
                         fi
@@ -190,7 +190,7 @@ _xdg-app() {
 
                 run)
                         if [[ -z $name ]]; then
-                                comps=$(./xdg-app $mode list-apps)
+                                comps=$(xdg-app $mode list-apps)
                         fi
                         ;;
 
@@ -199,9 +199,9 @@ _xdg-app() {
                                 comps=''
                                 compopt -o dirnames
                         elif [[ -z $sdk ]]; then
-                                comps="$(./xdg-app list-runtimes) $(./xdg-app --user list-runtimes)"
+                                comps="$(xdg-app list-runtimes) $(xdg-app --user list-runtimes)"
                         elif [[ -z $name ]]; then
-                                comps="$(./xdg-app list-runtimes) $(./xdg-app --user list-runtimes)"
+                                comps="$(xdg-app list-runtimes) $(xdg-app --user list-runtimes)"
                         else
                                 comps='' # FIXME: branches
                         fi
