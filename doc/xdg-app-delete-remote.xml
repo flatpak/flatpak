@@ -43,6 +43,10 @@
             Removes a remote repository from the xdg-app repository configuration.
             <arg choice="plain">NAME</arg> is the name of an existing remote.
         </para>
+        <para>
+            Unless overridden with the --user option, this command changes
+            the system-wide configuration.
+        </para>
 
     </refsect1>
 
@@ -65,8 +69,15 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Work on the per-user configuration instead of the system-wide
-                    configuration.
+                    Modify the per-user configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Modify the system-wide configuration.
                 </para></listitem>
             </varlistentry>
 

@@ -42,12 +42,19 @@
         <title>Description</title>
 
         <para>
-            Installs a runtime. <arg choice="plain">REPOSITORY</arg> must
-            name an existing remote. <arg choice="plain">RUNTIME</arg> is the
-            name of the runtime to install. Optionally,
-            <arg choice="plain">BRANCH</arg> can be specified to install a branch
-            other than the default "master" branch. Note that xdg-app allows having
-            multiple branches of a runtime installed and used at the same time.
+            Installs a runtime. <arg choice="plain">REPOSITORY</arg> must name an
+            existing remote and <arg choice="plain">RUNTIME</arg> is the name of
+            the runtime to install. Optionally, <arg choice="plain">BRANCH</arg>
+            can be specified to install a branch other than the default "master"
+            branch.
+        </para>
+        <para>
+            Note that xdg-app allows having multiple branches of a runtime
+            installed and used at the same time.
+        </para>
+        <para>
+            Unless overridden with the --user option, this command creates a
+            system-wide installation.
         </para>
 
     </refsect1>
@@ -71,8 +78,15 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Work on the per-user configuration instead of the system-wide
-                    configuration.
+                    Create a per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Create a system-wide installation.
                 </para></listitem>
             </varlistentry>
 

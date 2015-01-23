@@ -89,8 +89,15 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Work on the per-user configuration instead of the system-wide
-                    configuration.
+                    Remove a per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Remove a system-wide installation.
                 </para></listitem>
             </varlistentry>
 

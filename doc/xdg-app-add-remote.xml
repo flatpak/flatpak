@@ -45,6 +45,10 @@
             <arg choice="plain">NAME</arg> is the name for the new remote, and
             <arg choice="plain">URL</arg> is the location for the repository.
         </para>
+        <para>
+            Unless overridden with the --user option, this command changes
+            the system-wide configuration.
+        </para>
 
     </refsect1>
 
@@ -67,8 +71,15 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Work on the per-user configuration instead of the system-wide
-                    configuration.
+                    Modify the per-user configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Modify the system-wide configuration.
                 </para></listitem>
             </varlistentry>
 
