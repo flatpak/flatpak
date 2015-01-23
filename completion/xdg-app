@@ -17,15 +17,17 @@ _xdg-app() {
         local -A VERBS=(
                 [ALL]='add-remote delete-remote list-remotes repo-contents install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps run build-init build build-finish build-export'
                 [MODE]='add-remote delete-remote list-remotes repo-contents install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps'
+                [UNINSTALL]='uninstall-runtime uninstall-app'
                 [ARCH]='build-init install-runtime install-app run uninstall-runtime uninstall-app update-runtime update-app'
         )
 
         local -A OPTS=(
                 [GENERAL]='--help --verbose --version'
-                [MODE]='--user'
+                [MODE]='--user --system'
                 [ARCH]='--arch'
                 [LIST_REMOTES]='--show-urls'
                 [REPO_CONTENTS]='--show-details --runtimes --apps --update'
+                [UNINSTALL]='--keep-ref'
                 [RUN]='--command --branch --devel'
                 [BUILD_INIT]='--arch --var'
                 [BUILD]='--runtime --network --x11'
@@ -36,6 +38,8 @@ _xdg-app() {
 
         if __contains_word "--user" ${COMP_WORDS[*]}; then
                 mode=--user
+        else
+                mode=--system
         fi
 
         if __contains_word "$prev" ${OPTS[ARG]}; then
@@ -122,6 +126,9 @@ _xdg-app() {
                 fi
                 if __contains_word "$verb" ${VERBS[ARCH]}; then
                         comps="$comps ${OPTS[ARCH]}"
+                fi
+                if __contains_word "$verb" ${VERBS[UNINSTALL]}; then
+                        comps="$comps ${OPTS[UNINSTALL]}"
                 fi
                 if [ "$verb" = "run" ]; then
                         comps="$comps ${OPTS[RUN]}"
