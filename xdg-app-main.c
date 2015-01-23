@@ -46,7 +46,8 @@ static GOptionEntry global_entries[] = {
 };
 
 static GOptionEntry user_entries[] = {
-  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Work on user installed apps", NULL },
+  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Work on user installations", NULL },
+  { "system", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_user, "Work on system-wide installations", NULL },
   { NULL }
 };
 

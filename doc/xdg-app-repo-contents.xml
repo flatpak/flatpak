@@ -45,12 +45,8 @@
             You can find all configured remote repositories with xdg-app list-repos.
         </para>
         <para>
-            xdg-app can operate in system-wide or per-user mode. The system-wide
-            applications are located in <filename>$prefix/share/xdg-app/app</filename>,
-            and the per-user runtimes are in <filename>$HOME/.local/share/xdg-app/app</filename>.
-        </para>
-        <para>
-            xdg-app uses OSTree, and installed appications are OSTree checkouts.
+            Unless overridden with the --user option, this command uses
+            the system-wide configuration.
         </para>
 
     </refsect1>
@@ -74,8 +70,15 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Work on the per-user configuration instead of the system-wide
-                    configuration.
+                    Use the per-user configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Use the system-wide configuration.
                 </para></listitem>
             </varlistentry>
 
