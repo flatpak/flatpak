@@ -11,21 +11,30 @@
 #include "xdg-app-utils.h"
 
 static gboolean opt_show_details;
+static gboolean opt_user;
+static gboolean opt_system;
 
 static GOptionEntry options[] = {
+  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Show user installations", NULL },
+  { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Show system-wide installations", NULL },
   { "show-details", 0, 0, G_OPTION_ARG_NONE, &opt_show_details, "Show arches and branches", NULL },
   { NULL }
 };
 
 static gboolean
-print_installed_refs (GFile *base, GCancellable *cancellable, GError **error)
+print_installed_refs (XdgAppDir *dir, const char *kind, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
+  gs_unref_object GFile *base;
   gs_unref_object GFileEnumerator *dir_enum = NULL;
   gs_unref_object GFileInfo *child_info = NULL;
   GError *temp_error = NULL;
   gs_unref_ptrarray GPtrArray *refs = NULL;
   int i;
+
+  base = g_file_get_child (xdg_app_dir_get_path (dir), kind);
+  if (!g_file_query_exists (base, cancellable))
+    return TRUE;
 
   refs = g_ptr_array_new ();
 
@@ -134,23 +143,29 @@ xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable,
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_object GFile *base = NULL;
 
   context = g_option_context_new (" - List installed runtimes");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
-  base = g_file_get_child (xdg_app_dir_get_path (dir), "runtime");
-  if (!g_file_query_exists (base, cancellable))
+  if (opt_user || (!opt_user && !opt_system))
     {
-      ret = TRUE;
-      goto out;
+      gs_unref_object XdgAppDir *dir = NULL;
+
+      dir = xdg_app_dir_get (TRUE);
+      if (!print_installed_refs (dir, "runtime", cancellable, error))
+        goto out;
     }
 
-  if (!print_installed_refs (base, cancellable, error))
-    goto out;
+  if (opt_system || (!opt_user && !opt_system))
+    {
+      gs_unref_object XdgAppDir *dir = NULL;
+
+      dir = xdg_app_dir_get (FALSE);
+      if (!print_installed_refs (dir, "runtime", cancellable, error))
+        goto out;
+    }
 
   ret = TRUE;
 
@@ -167,23 +182,29 @@ xdg_app_builtin_list_apps (int argc, char **argv, GCancellable *cancellable, GEr
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_object GFile *base = NULL;
 
   context = g_option_context_new (" - List installed applications");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
-  base = g_file_get_child (xdg_app_dir_get_path (dir), "app");
-  if (!g_file_query_exists (base, cancellable))
+  if (opt_user || (!opt_user && !opt_system))
     {
-      ret = TRUE;
-      goto out;
+      gs_unref_object XdgAppDir *dir = NULL;
+
+      dir = xdg_app_dir_get (TRUE);
+      if (!print_installed_refs (dir, "app", cancellable, error))
+        goto out;
     }
 
-  if (!print_installed_refs (base, cancellable, error))
-    goto out;
+  if (opt_system || (!opt_user && !opt_system))
+    {
+      gs_unref_object XdgAppDir *dir = NULL;
+
+      dir = xdg_app_dir_get (FALSE);
+      if (!print_installed_refs (dir, "app", cancellable, error))
+        goto out;
+    }
 
   ret = TRUE;
 
