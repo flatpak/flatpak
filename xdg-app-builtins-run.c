@@ -324,7 +324,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_debug ("Using runtime in %s", path);
 
   runtime_metadata = g_file_get_child (runtime_deploy, "metadata");
-  if (g_file_load_contents (runtime_metadata, cancellable, &runtime_metadata_contents, &runtime_metadata_size, NULL, error))
+  if (g_file_load_contents (runtime_metadata, cancellable, &runtime_metadata_contents, &runtime_metadata_size, NULL, NULL))
     {
 
       runtime_metakey = g_key_file_new ();
