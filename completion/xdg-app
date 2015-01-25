@@ -15,7 +15,7 @@ _xdg-app() {
         local dir cmd sdk loc
 
         local -A VERBS=(
-                [ALL]='add-remote delete-remote list-remotes repo-contents install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps run build-init build build-finish build-export'
+                [ALL]='add-remote delete-remote list-remotes repo-contents install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps run build-init build build-finish build-export repo-update'
                 [MODE]='add-remote delete-remote list-remotes repo-contents install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps'
                 [UNINSTALL]='uninstall-runtime uninstall-app'
                 [ARCH]='build-init install-runtime install-app run uninstall-runtime uninstall-app update-runtime update-app'
@@ -109,6 +109,10 @@ _xdg-app() {
                                 dir=${COMP_WORDS[i]}
                         elif [[ -z $name ]]; then
                                 name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = repo-update ]]; then
+                        if [[ -z $loc ]]; then
+                                loc=${COMP_WORDS[i]}
                         fi
                 fi
         done
@@ -236,6 +240,13 @@ _xdg-app() {
                                 comps=''
                                 compopt -o dirnames
                         elif [[ -z $dir ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        fi
+                        ;;
+
+                repo-update)
+                        if [[ -z $loc ]]; then
                                 comps=''
                                 compopt -o dirnames
                         fi
