@@ -66,9 +66,8 @@
             in the commit, anything else is ignored.
         </para>
         <para>
-            After this command, <arg choice="plain">LOCATION</arg> can be
-            used as the repository location for xdg-app add-repo, either by
-            exporting it over http, or directly with a file: url.
+            The repo-update command should be used to update repository
+            metadata whenever application builds are added to a repository.
         </para>
     </refsect1>
 
@@ -150,6 +149,7 @@ Content Bytes Written: 305
             <citerefentry><refentrytitle>xdg-app-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>xdg-app-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>xdg-app-repo-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>
