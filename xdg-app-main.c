@@ -36,6 +36,7 @@ static XdgAppCommand commands[] = {
   { "build", xdg_app_builtin_build },
   { "build-finish", xdg_app_builtin_build_finish },
   { "build-export", xdg_app_builtin_build_export },
+  { "repo-update", xdg_app_builtin_repo_update },
   { NULL }
 };
 

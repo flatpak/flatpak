@@ -45,6 +45,7 @@ BUILTINPROTO(build_init);
 BUILTINPROTO(build);
 BUILTINPROTO(build_finish);
 BUILTINPROTO(build_export);
+BUILTINPROTO(repo_update);
 
 #undef BUILTINPROTO
 

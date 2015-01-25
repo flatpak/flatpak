@@ -41,6 +41,7 @@ xdg_app_SOURCES = \
 	xdg-app-builtins-build.c \
 	xdg-app-builtins-build-finish.c \
 	xdg-app-builtins-build-export.c \
+	xdg-app-builtins-repo-update.c \
 	xdg-app-dir.c \
 	xdg-app-dir.h \
 	xdg-app-utils.h \
