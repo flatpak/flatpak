@@ -242,6 +242,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gs_free char *default_command = NULL;
   gs_free char *runtime_ref = NULL;
   gs_free char *app_ref = NULL;
+  gs_free char *path = NULL;
   gs_unref_keyfile GKeyFile *metakey = NULL;
   gs_unref_keyfile GKeyFile *runtime_metakey = NULL;
   gs_free_error GError *my_error = NULL;
@@ -291,6 +292,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (app_deploy == NULL)
     goto out;
 
+  path = g_file_get_path (app_deploy);
+  g_debug ("Running application in %s", path);
+
   metadata = g_file_get_child (app_deploy, "metadata");
   if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
     goto out;
@@ -314,6 +318,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   runtime_deploy = xdg_app_find_deploy_dir_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
     goto out;
+
+  g_free (path);
+  path = g_file_get_path (runtime_deploy);
+  g_debug ("Using runtime in %s", path);
 
   runtime_metadata = g_file_get_child (runtime_deploy, "metadata");
   if (g_file_load_contents (runtime_metadata, cancellable, &runtime_metadata_contents, &runtime_metadata_size, NULL, error))
