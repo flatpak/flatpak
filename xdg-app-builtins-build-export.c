@@ -219,9 +219,6 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_print ("Content Written: %u\n", stats.content_objects_written);
   g_print ("Content Bytes Written: %" G_GUINT64_FORMAT "\n", stats.content_bytes_written);
 
-  if (!ostree_repo_regenerate_summary (repo, NULL, cancellable, error))
-    goto out;
-
   ret = TRUE;
 
  out:

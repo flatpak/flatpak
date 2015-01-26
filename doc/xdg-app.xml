@@ -245,6 +245,13 @@
                     Create a repository from a build directory.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-repo-contents</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Update repository metadata.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
     </refsect1>
 
