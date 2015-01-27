@@ -261,7 +261,11 @@ static const create_table_t create[] = {
   { FILE_TYPE_SYSTEM_SYMLINK, "lib", 0755, "usr/lib"},
   { FILE_TYPE_SYSTEM_SYMLINK, "bin", 0755, "usr/bin" },
   { FILE_TYPE_SYSTEM_SYMLINK, "sbin", 0755, "usr/sbin"},
-  { FILE_TYPE_SYSTEM_SYMLINK, "etc", 0755, "usr/etc"},
+  { FILE_TYPE_DIR, "etc", 0755},
+  { FILE_TYPE_REGULAR, "etc/passwd", 0755},
+  { FILE_TYPE_REGULAR, "etc/group", 0755},
+  { FILE_TYPE_REGULAR, "etc/resolv.conf", 0755},
+  { FILE_TYPE_REGULAR, "etc/machine-id", 0755},
   { FILE_TYPE_DIR, "tmp/.X11-unix", 0755 },
   { FILE_TYPE_REGULAR, "tmp/.X11-unix/X99", 0755 },
   { FILE_TYPE_DIR, "proc", 0755},
@@ -288,8 +292,10 @@ static const create_table_t create[] = {
 /* warning: Don't create any actual files here, as we could potentially
    write over bind mounts to the system */
 static const create_table_t create_post[] = {
-  { FILE_TYPE_BIND, "usr/etc/machine-id", 0444, "/etc/machine-id", FILE_FLAGS_NON_FATAL},
-  { FILE_TYPE_BIND, "usr/etc/machine-id", 0444, "/var/lib/dbus/machine-id", FILE_FLAGS_NON_FATAL | FILE_FLAGS_IF_LAST_FAILED},
+  { FILE_TYPE_BIND_RO, "etc/passwd", 0444, "/etc/passwd", 0},
+  { FILE_TYPE_BIND_RO, "etc/group", 0444, "/etc/group", 0},
+  { FILE_TYPE_BIND_RO, "etc/machine-id", 0444, "/etc/machine-id", FILE_FLAGS_NON_FATAL},
+  { FILE_TYPE_BIND_RO, "etc/machine-id", 0444, "/var/lib/dbus/machine-id", FILE_FLAGS_NON_FATAL | FILE_FLAGS_IF_LAST_FAILED},
 };
 
 static const mount_table_t mount_table[] = {
@@ -579,6 +585,38 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
         }
 
       free (name);
+    }
+}
+
+static void
+link_extra_etc_dirs ()
+{
+  DIR *dir;
+  struct dirent *dirent;
+
+  dir = opendir("usr/etc");
+  if (dir != NULL)
+    {
+      while ((dirent = readdir(dir)))
+        {
+          char *dst_path;
+          char *src_path;
+          struct stat st;
+
+          src_path = strconcat ("etc/", dirent->d_name);
+          if (stat (src_path, &st) == 0)
+            {
+              free (src_path);
+              continue;
+            }
+
+          dst_path = strconcat ("/usr/etc/", dirent->d_name);
+	  if (symlink (dst_path, src_path) != 0)
+	    die ("symlink %s", src_path);
+
+	  free (dst_path);
+	  free (src_path);
+        }
     }
 }
 
@@ -1173,11 +1211,7 @@ main (int argc,
 
   waitpid (pid, &status, 0);
 
-  if (bind_mount ("/etc/passwd", "etc/passwd", BIND_READONLY))
-    die_with_error ("mount passwd");
-
-  if (bind_mount ("/etc/group", "etc/group", BIND_READONLY))
-    die_with_error ("mount group");
+  link_extra_etc_dirs ();
 
   /* Bind mount in X socket
    * This is a bit iffy, as Xlib typically uses abstract unix domain sockets
