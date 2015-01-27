@@ -89,6 +89,7 @@ xdg_app_SOURCES = \
 	xdg-app-dir.h \
 	xdg-app-utils.h \
 	xdg-app-utils.c \
+	$(dbus_built_sources)		\
 	$(NULL)
 
 xdg_app_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS)

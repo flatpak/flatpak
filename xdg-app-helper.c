@@ -185,7 +185,7 @@ strdup_printf (const char *format,
 void
 usage (char **argv)
 {
-  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
+  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-m <path to monitor dir>] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
   exit (1);
 }
 
@@ -252,6 +252,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "run/user", 0755},
   { FILE_TYPE_DIR, "run/user/%1$d", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_DIR, "run/user/%1$d/pulse", 0700, NULL, FILE_FLAGS_USER_OWNED },
+  { FILE_TYPE_DIR, "run/user/%1$d/xdg-app-monitor", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_REGULAR, "run/user/%1$d/pulse/native", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_DIR, "var", 0755},
   { FILE_TYPE_SYMLINK, "var/tmp", 0755, "/tmp"},
@@ -886,6 +887,7 @@ main (int argc,
   int system_mode = 0;
   char *runtime_path = NULL;
   char *app_path = NULL;
+  char *monitor_path = NULL;
   char *var_path = NULL;
   char *extra_dirs_src[MAX_EXTRA_DIRS];
   char *extra_dirs_dest[MAX_EXTRA_DIRS];
@@ -981,6 +983,15 @@ main (int argc,
               usage (argv);
 
           app_path = args[1];
+          args += 2;
+          n_args -= 2;
+          break;
+
+        case 'm':
+          if (n_args < 2)
+              usage (argv);
+
+          monitor_path = args[1];
           args += 2;
           n_args -= 2;
           break;
@@ -1212,6 +1223,16 @@ main (int argc,
   waitpid (pid, &status, 0);
 
   link_extra_etc_dirs ();
+
+  if (monitor_path)
+    {
+      char *monitor_mount_path = strdup_printf ("run/user/%d/xdg-app-monitor", getuid());
+
+      if (bind_mount (monitor_path, monitor_mount_path, BIND_READONLY))
+	die ("can't bind monitor dir");
+
+      free (monitor_mount_path);
+    }
 
   /* Bind mount in X socket
    * This is a bit iffy, as Xlib typically uses abstract unix domain sockets

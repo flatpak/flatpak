@@ -10,6 +10,7 @@
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
+#include "xdg-app-dbus.h"
 
 static char *opt_arch;
 static char *opt_branch;
@@ -236,6 +237,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gs_unref_object GFile *runtime_files = NULL;
   gs_unref_object GFile *metadata = NULL;
   gs_unref_object GFile *runtime_metadata = NULL;
+  gs_unref_object XdgAppSessionHelper *session_helper = NULL;
   gs_free char *metadata_contents = NULL;
   gs_free char *runtime_metadata_contents = NULL;
   gs_free char *runtime = NULL;
@@ -248,6 +250,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gs_free_error GError *my_error = NULL;
   gs_free_error GError *my_error2 = NULL;
   gs_unref_ptrarray GPtrArray *argv_array = NULL;
+  gs_free char *monitor_path = NULL;
   gsize metadata_size, runtime_metadata_size;
   const char *app;
   const char *branch = "master";
@@ -371,6 +374,22 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     command = opt_command;
   else
     command = default_command;
+
+  session_helper = xdg_app_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+								  G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+								  "org.freedesktop.XdgApp.SessionHelper",
+								  "/org/freedesktop/XdgApp/SessionHelper",
+								  NULL, NULL);
+  if (session_helper)
+    {
+      if (xdg_app_session_helper_call_request_monitor_sync (session_helper,
+							    &monitor_path,
+							    NULL, NULL))
+	{
+	  g_ptr_array_add (argv_array, g_strdup ("-m"));
+	  g_ptr_array_add (argv_array, monitor_path);
+	}
+    }
 
   if (g_key_file_get_boolean (metakey, "Environment", "ipc", NULL))
     g_ptr_array_add (argv_array, g_strdup ("-i"));
