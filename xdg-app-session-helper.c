@@ -1,0 +1,174 @@
+#include "config.h"
+
+#include <locale.h>
+#include <stdlib.h>
+#include <string.h>
+#include <gio/gio.h>
+#include "xdg-app-dbus.h"
+
+static GDBusNodeInfo *introspection_data = NULL;
+static char *monitor_dir;
+
+static gboolean
+handle_request_monitor (XdgAppSessionHelper *object,
+			GDBusMethodInvocation *invocation,
+			gpointer user_data)
+{
+  xdg_app_session_helper_complete_request_monitor (object, invocation,
+						   monitor_dir);
+  
+  return TRUE;
+}
+
+static void
+on_bus_acquired (GDBusConnection *connection,
+                 const gchar     *name,
+                 gpointer         user_data)
+{
+  XdgAppSessionHelper *helper;
+  GError *error = NULL;
+
+  helper = xdg_app_session_helper_skeleton_new ();
+
+ g_signal_connect (helper, "handle-request-monitor", G_CALLBACK (handle_request_monitor), NULL);
+
+  if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
+					 connection,
+					 "/org/freedesktop/XdgApp/SessionHelper",
+					 &error))
+    {
+      g_warning ("error: %s\n", error->message);
+      g_error_free (error);
+    }
+}
+
+static void
+on_name_acquired (GDBusConnection *connection,
+                  const gchar     *name,
+                  gpointer         user_data)
+{
+}
+
+static void
+on_name_lost (GDBusConnection *connection,
+              const gchar     *name,
+              gpointer         user_data)
+{
+  exit (1);
+}
+
+static void
+copy_file (const char *source,
+	   const char *target_dir)
+{
+  char *basename = g_path_get_basename (source);
+  char *dest = g_build_filename (target_dir, basename, NULL);
+  gchar *contents = NULL;
+  gsize len;
+
+  if (g_file_test (source, G_FILE_TEST_IS_SYMLINK))
+    {
+      contents = g_file_read_link (source, NULL);
+      if (contents)
+	{
+	  unlink (dest);
+
+	  if (strcmp (source, "/etc/localtime") == 0)
+	    {
+	      char *zoneinfo = g_strrstr (contents, "zoneinfo/");
+	      char *new_contents;
+
+	      if (zoneinfo)
+		{
+		  new_contents = g_build_filename ("/usr/share/zoneinfo", zoneinfo + strlen ("zoneinfo/"), NULL);
+		  g_free (contents);
+		  contents = new_contents;
+		}
+	    }
+
+	  symlink (contents, dest);
+	}
+    }
+  else
+    {
+      if (g_file_get_contents (source, &contents, &len, NULL))
+	{
+	  g_file_set_contents (dest, contents, len, NULL);
+	}
+    }
+
+  g_free (basename);
+  g_free (dest);
+  g_free (contents);
+}
+
+static void
+file_changed (GFileMonitor      *monitor,
+	      GFile             *file,
+	      GFile             *other_file,
+	      GFileMonitorEvent  event_type,
+	      char              *source)
+{
+  if (event_type == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT ||
+      event_type == G_FILE_MONITOR_EVENT_CREATED)
+    copy_file (source, monitor_dir);
+}
+
+static void
+setup_file_monitor (const char *source)
+{
+  GFile *s = g_file_new_for_path (source);
+  GFileMonitor *monitor;
+
+  copy_file (source, monitor_dir);
+
+  monitor = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, NULL);
+  if (monitor)
+    g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), (char *)source);
+}
+
+int
+main (int    argc,
+      char **argv)
+{
+  guint owner_id;
+  GMainLoop *loop;
+  GBytes *introspection_bytes;
+
+  setlocale (LC_ALL, "");
+
+  g_set_prgname (argv[0]);
+
+  monitor_dir = g_build_filename (g_get_user_runtime_dir (), "xdg-app-monitor", NULL);
+  if (g_mkdir_with_parents (monitor_dir, 0755) != 0)
+    {
+      g_print ("Can't create %s\n", monitor_dir);
+      exit (1);
+    }
+
+  setup_file_monitor ("/etc/resolv.conf");
+  setup_file_monitor ("/etc/localtime");
+  
+  introspection_bytes = g_resources_lookup_data ("/org/freedesktop/XdgApp/xdg-app-dbus-interfaces.xml", 0, NULL);
+  g_assert (introspection_bytes != NULL);
+
+  introspection_data = g_dbus_node_info_new_for_xml (g_bytes_get_data (introspection_bytes, NULL), NULL);
+  
+  owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
+                             "org.freedesktop.XdgApp.SessionHelper",
+                             G_BUS_NAME_OWNER_FLAGS_NONE,
+                             on_bus_acquired,
+                             on_name_acquired,
+                             on_name_lost,
+                             NULL,
+                             NULL);
+
+  loop = g_main_loop_new (NULL, FALSE);
+  g_main_loop_run (loop);
+
+  g_bus_unown_name (owner_id);
+
+  g_dbus_node_info_unref (introspection_data);
+
+  return 0;
+}
