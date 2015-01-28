@@ -185,7 +185,7 @@ strdup_printf (const char *format,
 void
 usage (char **argv)
 {
-  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-m <path to monitor dir>] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
+  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-E] [-m <path to monitor dir>] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
   exit (1);
 }
 
@@ -221,19 +221,20 @@ typedef enum {
 } file_flags_t;
 
 typedef struct {
-    file_type_t type;
-    const char *name;
-    mode_t mode;
-    const char *data;
-    file_flags_t flags;
+  file_type_t type;
+  const char *name;
+  mode_t mode;
+  const char *data;
+  file_flags_t flags;
+  int *option;
 } create_table_t;
 
 typedef struct {
-    const char *what;
-    const char *where;
-    const char *type;
-    const char *options;
-    unsigned long flags;
+  const char *what;
+  const char *where;
+  const char *type;
+  const char *options;
+  unsigned long flags;
 } mount_table_t;
 
 int
@@ -241,6 +242,9 @@ ascii_isdigit (char c)
 {
   return c >= '0' && c <= '9';
 }
+
+static int create_etc_symlink = 0;
+static int create_etc_dir = 1;
 
 static const create_table_t create[] = {
   { FILE_TYPE_DIR, ".oldroot", 0755 },
@@ -262,11 +266,12 @@ static const create_table_t create[] = {
   { FILE_TYPE_SYSTEM_SYMLINK, "lib", 0755, "usr/lib"},
   { FILE_TYPE_SYSTEM_SYMLINK, "bin", 0755, "usr/bin" },
   { FILE_TYPE_SYSTEM_SYMLINK, "sbin", 0755, "usr/sbin"},
-  { FILE_TYPE_DIR, "etc", 0755},
-  { FILE_TYPE_REGULAR, "etc/passwd", 0755},
-  { FILE_TYPE_REGULAR, "etc/group", 0755},
-  { FILE_TYPE_REGULAR, "etc/resolv.conf", 0755},
-  { FILE_TYPE_REGULAR, "etc/machine-id", 0755},
+  { FILE_TYPE_SYMLINK, "etc", 0755, "usr/etc", 0, &create_etc_symlink},
+  { FILE_TYPE_DIR, "etc", 0755, NULL, 0, &create_etc_dir},
+  { FILE_TYPE_REGULAR, "etc/passwd", 0755, NULL, 0, &create_etc_dir},
+  { FILE_TYPE_REGULAR, "etc/group", 0755, NULL, 0, &create_etc_dir},
+  { FILE_TYPE_SYMLINK, "etc/resolv.conf", 0755, "/run/user/%1$d/xdg-app-monitor/resolv.conf", 0, &create_etc_dir},
+  { FILE_TYPE_REGULAR, "etc/machine-id", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_DIR, "tmp/.X11-unix", 0755 },
   { FILE_TYPE_REGULAR, "tmp/.X11-unix/X99", 0755 },
   { FILE_TYPE_DIR, "proc", 0755},
@@ -466,10 +471,11 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
 
   for (i = 0; i < n_create; i++)
     {
-      char *name = strdup_printf (create[i].name, getuid());
+      char *name;
+      char *data = NULL;
       mode_t mode = create[i].mode;
-      const char *data = create[i].data;
       file_flags_t flags = create[i].flags;
+      int *option = create[i].option;
       struct stat st;
       int k;
       int found;
@@ -478,6 +484,13 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
       if ((flags & FILE_FLAGS_IF_LAST_FAILED) &&
           !last_failed)
         continue;
+
+      if (option && !*option)
+	continue;
+
+      name = strdup_printf (create[i].name, getuid());
+      if (create[i].data)
+	data = strdup_printf (create[i].data, getuid());
 
       last_failed = 0;
 
@@ -586,6 +599,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
         }
 
       free (name);
+      free (data);
     }
 }
 
@@ -953,6 +967,13 @@ main (int argc,
           n_args -= 1;
           break;
 
+        case 'E':
+          create_etc_symlink = 1;
+          create_etc_dir = 0;
+          args += 1;
+          n_args -= 1;
+          break;
+
         case 's':
           share_shm = 1;
           args += 1;
@@ -1222,7 +1243,8 @@ main (int argc,
 
   waitpid (pid, &status, 0);
 
-  link_extra_etc_dirs ();
+  if (create_etc_dir)
+    link_extra_etc_dirs ();
 
   if (monitor_path)
     {
