@@ -31,7 +31,7 @@ man_MANS = \
 	xdg-app-build.1		 	\
 	xdg-app-build-finish.1	 	\
 	xdg-app-build-export.1	 	\
-	xdg-app-repo-contents.1	 	\
+	xdg-app-repo-update.1	 	\
 	$(NULL)
 
 xml_files = $(man_MANS:.1=.xml)
