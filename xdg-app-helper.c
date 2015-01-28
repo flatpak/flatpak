@@ -912,6 +912,7 @@ main (int argc,
   char *system_dbus_socket = NULL;
   char *session_dbus_socket = NULL;
   char *xdg_runtime_dir;
+  char *tz_val;
   char **args;
   char *tmp;
   int n_args;
@@ -1376,6 +1377,12 @@ main (int argc,
   xdg_runtime_dir = strdup_printf ("/run/user/%d", getuid());
   xsetenv ("XDG_RUNTIME_DIR", xdg_runtime_dir, 1);
   free (xdg_runtime_dir);
+  if (monitor_path)
+    {
+      tz_val = strdup_printf (":/run/user/%d/xdg-app-monitor/localtime", getuid());
+      xsetenv ("TZ", tz_val, 0);
+      free (tz_val);
+    }
 
   __debug__(("launch executable %s\n", args[0]));
 
