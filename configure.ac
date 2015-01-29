@@ -13,6 +13,7 @@ AC_CONFIG_SRCDIR([xdg-app-helper.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.11 no-define no-dist-gzip dist-bzip2 tar-ustar foreign])
+AC_PROG_SED
 
 # Enable silent rules is available
 AM_SILENT_RULES([yes])
@@ -25,10 +26,25 @@ if test "x$GCC" = "xyes"; then
   esac
 fi
 
+PKG_PROG_PKG_CONFIG([0.24])
+
+AC_ARG_WITH(dbus_service_dir,
+		AS_HELP_STRING([--with-dbus-service-dir=PATH],[choose directory for dbus service files, [default=PREFIX/share/dbus-1/services]]),
+            with_dbus_service_dir="$withval", with_dbus_service_dir=$datadir/dbus-1/services)
+DBUS_SERVICE_DIR=$with_dbus_service_dir
+AC_SUBST(DBUS_SERVICE_DIR)
+
+
+AC_SUBST([GLIB_COMPILE_RESOURCES], [`$PKG_CONFIG --variable glib_compile_resources gio-2.0`])
+AC_SUBST([GDBUS_CODEGEN], [`$PKG_CONFIG --variable gdbus_codegen gio-2.0`])
+
+PKG_CHECK_MODULES(BASE, [glib-2.0 gio-2.0 gio-unix-2.0])
+AC_SUBST(BASE_CFLAGS)
+AC_SUBST(BASE_LIBS)
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
 AC_SUBST(SOUP_CFLAGS)
 AC_SUBST(SOUP_LIBS)
-PKG_CHECK_MODULES(OSTREE, [glib-2.0 libgsystem >= 2015.1 gio-2.0 ostree-1 >= 2015.1])
+PKG_CHECK_MODULES(OSTREE, [libgsystem >= 2015.1 ostree-1 >= 2015.1])
 AC_SUBST(OSTREE_CFLAGS)
 AC_SUBST(OSTREE_LIBS)
 

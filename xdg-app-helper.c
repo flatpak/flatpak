@@ -185,7 +185,7 @@ strdup_printf (const char *format,
 void
 usage (char **argv)
 {
-  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
+  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-E] [-m <path to monitor dir>] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
   exit (1);
 }
 
@@ -221,19 +221,20 @@ typedef enum {
 } file_flags_t;
 
 typedef struct {
-    file_type_t type;
-    const char *name;
-    mode_t mode;
-    const char *data;
-    file_flags_t flags;
+  file_type_t type;
+  const char *name;
+  mode_t mode;
+  const char *data;
+  file_flags_t flags;
+  int *option;
 } create_table_t;
 
 typedef struct {
-    const char *what;
-    const char *where;
-    const char *type;
-    const char *options;
-    unsigned long flags;
+  const char *what;
+  const char *where;
+  const char *type;
+  const char *options;
+  unsigned long flags;
 } mount_table_t;
 
 int
@@ -241,6 +242,10 @@ ascii_isdigit (char c)
 {
   return c >= '0' && c <= '9';
 }
+
+static int create_etc_symlink = 0;
+static int create_etc_dir = 1;
+static int create_monitor_links = 0;
 
 static const create_table_t create[] = {
   { FILE_TYPE_DIR, ".oldroot", 0755 },
@@ -252,6 +257,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "run/user", 0755},
   { FILE_TYPE_DIR, "run/user/%1$d", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_DIR, "run/user/%1$d/pulse", 0700, NULL, FILE_FLAGS_USER_OWNED },
+  { FILE_TYPE_DIR, "run/user/%1$d/xdg-app-monitor", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_REGULAR, "run/user/%1$d/pulse/native", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_DIR, "var", 0755},
   { FILE_TYPE_SYMLINK, "var/tmp", 0755, "/tmp"},
@@ -261,7 +267,12 @@ static const create_table_t create[] = {
   { FILE_TYPE_SYSTEM_SYMLINK, "lib", 0755, "usr/lib"},
   { FILE_TYPE_SYSTEM_SYMLINK, "bin", 0755, "usr/bin" },
   { FILE_TYPE_SYSTEM_SYMLINK, "sbin", 0755, "usr/sbin"},
-  { FILE_TYPE_SYSTEM_SYMLINK, "etc", 0755, "usr/etc"},
+  { FILE_TYPE_SYMLINK, "etc", 0755, "usr/etc", 0, &create_etc_symlink},
+  { FILE_TYPE_DIR, "etc", 0755, NULL, 0, &create_etc_dir},
+  { FILE_TYPE_REGULAR, "etc/passwd", 0755, NULL, 0, &create_etc_dir},
+  { FILE_TYPE_REGULAR, "etc/group", 0755, NULL, 0, &create_etc_dir},
+  { FILE_TYPE_SYMLINK, "etc/resolv.conf", 0755, "/run/user/%1$d/xdg-app-monitor/resolv.conf", 0, &create_monitor_links},
+  { FILE_TYPE_REGULAR, "etc/machine-id", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_DIR, "tmp/.X11-unix", 0755 },
   { FILE_TYPE_REGULAR, "tmp/.X11-unix/X99", 0755 },
   { FILE_TYPE_DIR, "proc", 0755},
@@ -288,8 +299,10 @@ static const create_table_t create[] = {
 /* warning: Don't create any actual files here, as we could potentially
    write over bind mounts to the system */
 static const create_table_t create_post[] = {
-  { FILE_TYPE_BIND, "usr/etc/machine-id", 0444, "/etc/machine-id", FILE_FLAGS_NON_FATAL},
-  { FILE_TYPE_BIND, "usr/etc/machine-id", 0444, "/var/lib/dbus/machine-id", FILE_FLAGS_NON_FATAL | FILE_FLAGS_IF_LAST_FAILED},
+  { FILE_TYPE_BIND_RO, "etc/passwd", 0444, "/etc/passwd", 0},
+  { FILE_TYPE_BIND_RO, "etc/group", 0444, "/etc/group", 0},
+  { FILE_TYPE_BIND_RO, "etc/machine-id", 0444, "/etc/machine-id", FILE_FLAGS_NON_FATAL},
+  { FILE_TYPE_BIND_RO, "etc/machine-id", 0444, "/var/lib/dbus/machine-id", FILE_FLAGS_NON_FATAL | FILE_FLAGS_IF_LAST_FAILED},
 };
 
 static const mount_table_t mount_table[] = {
@@ -459,10 +472,11 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
 
   for (i = 0; i < n_create; i++)
     {
-      char *name = strdup_printf (create[i].name, getuid());
+      char *name;
+      char *data = NULL;
       mode_t mode = create[i].mode;
-      const char *data = create[i].data;
       file_flags_t flags = create[i].flags;
+      int *option = create[i].option;
       struct stat st;
       int k;
       int found;
@@ -471,6 +485,13 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
       if ((flags & FILE_FLAGS_IF_LAST_FAILED) &&
           !last_failed)
         continue;
+
+      if (option && !*option)
+	continue;
+
+      name = strdup_printf (create[i].name, getuid());
+      if (create[i].data)
+	data = strdup_printf (create[i].data, getuid());
 
       last_failed = 0;
 
@@ -579,6 +600,39 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
         }
 
       free (name);
+      free (data);
+    }
+}
+
+static void
+link_extra_etc_dirs ()
+{
+  DIR *dir;
+  struct dirent *dirent;
+
+  dir = opendir("usr/etc");
+  if (dir != NULL)
+    {
+      while ((dirent = readdir(dir)))
+        {
+          char *dst_path;
+          char *src_path;
+          struct stat st;
+
+          src_path = strconcat ("etc/", dirent->d_name);
+          if (stat (src_path, &st) == 0)
+            {
+              free (src_path);
+              continue;
+            }
+
+          dst_path = strconcat ("/usr/etc/", dirent->d_name);
+	  if (symlink (dst_path, src_path) != 0)
+	    die_with_error ("symlink %s", src_path);
+
+	  free (dst_path);
+	  free (src_path);
+        }
     }
 }
 
@@ -848,6 +902,7 @@ main (int argc,
   int system_mode = 0;
   char *runtime_path = NULL;
   char *app_path = NULL;
+  char *monitor_path = NULL;
   char *var_path = NULL;
   char *extra_dirs_src[MAX_EXTRA_DIRS];
   char *extra_dirs_dest[MAX_EXTRA_DIRS];
@@ -858,6 +913,7 @@ main (int argc,
   char *system_dbus_socket = NULL;
   char *session_dbus_socket = NULL;
   char *xdg_runtime_dir;
+  char *tz_val;
   char **args;
   char *tmp;
   int n_args;
@@ -913,6 +969,13 @@ main (int argc,
           n_args -= 1;
           break;
 
+        case 'E':
+          create_etc_symlink = 1;
+          create_etc_dir = 0;
+          args += 1;
+          n_args -= 1;
+          break;
+
         case 's':
           share_shm = 1;
           args += 1;
@@ -943,6 +1006,15 @@ main (int argc,
               usage (argv);
 
           app_path = args[1];
+          args += 2;
+          n_args -= 2;
+          break;
+
+        case 'm':
+          if (n_args < 2)
+              usage (argv);
+
+          monitor_path = args[1];
           args += 2;
           n_args -= 2;
           break;
@@ -1031,6 +1103,9 @@ main (int argc,
           usage (argv);
         }
     }
+
+  if (monitor_path != NULL && create_etc_dir)
+    create_monitor_links = 1;
 
   if (n_args < 2)
     usage (argv);
@@ -1173,11 +1248,18 @@ main (int argc,
 
   waitpid (pid, &status, 0);
 
-  if (bind_mount ("/etc/passwd", "etc/passwd", BIND_READONLY))
-    die_with_error ("mount passwd");
+  if (create_etc_dir)
+    link_extra_etc_dirs ();
 
-  if (bind_mount ("/etc/group", "etc/group", BIND_READONLY))
-    die_with_error ("mount group");
+  if (monitor_path)
+    {
+      char *monitor_mount_path = strdup_printf ("run/user/%d/xdg-app-monitor", getuid());
+
+      if (bind_mount (monitor_path, monitor_mount_path, BIND_READONLY))
+	die ("can't bind monitor dir");
+
+      free (monitor_mount_path);
+    }
 
   /* Bind mount in X socket
    * This is a bit iffy, as Xlib typically uses abstract unix domain sockets
@@ -1299,6 +1381,12 @@ main (int argc,
   xdg_runtime_dir = strdup_printf ("/run/user/%d", getuid());
   xsetenv ("XDG_RUNTIME_DIR", xdg_runtime_dir, 1);
   free (xdg_runtime_dir);
+  if (monitor_path)
+    {
+      tz_val = strdup_printf (":/run/user/%d/xdg-app-monitor/localtime", getuid());
+      xsetenv ("TZ", tz_val, 0);
+      free (tz_val);
+    }
 
   __debug__(("launch executable %s\n", args[0]));
 

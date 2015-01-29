@@ -26,4 +26,9 @@ config.h.in
 stamp-*
 xdg-app
 xdg-app-helper
+xdg-app-session-helper
 doc/*.1
+*~
+xdg-app-dbus.[ch]
+xdg-app-resources.c
+*.service
