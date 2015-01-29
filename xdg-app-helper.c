@@ -245,6 +245,7 @@ ascii_isdigit (char c)
 
 static int create_etc_symlink = 0;
 static int create_etc_dir = 1;
+static int create_monitor_links = 0;
 
 static const create_table_t create[] = {
   { FILE_TYPE_DIR, ".oldroot", 0755 },
@@ -270,7 +271,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "etc", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_REGULAR, "etc/passwd", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_REGULAR, "etc/group", 0755, NULL, 0, &create_etc_dir},
-  { FILE_TYPE_SYMLINK, "etc/resolv.conf", 0755, "/run/user/%1$d/xdg-app-monitor/resolv.conf", 0, &create_etc_dir},
+  { FILE_TYPE_SYMLINK, "etc/resolv.conf", 0755, "/run/user/%1$d/xdg-app-monitor/resolv.conf", 0, &create_monitor_links},
   { FILE_TYPE_REGULAR, "etc/machine-id", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_DIR, "tmp/.X11-unix", 0755 },
   { FILE_TYPE_REGULAR, "tmp/.X11-unix/X99", 0755 },
@@ -627,7 +628,7 @@ link_extra_etc_dirs ()
 
           dst_path = strconcat ("/usr/etc/", dirent->d_name);
 	  if (symlink (dst_path, src_path) != 0)
-	    die ("symlink %s", src_path);
+	    die_with_error ("symlink %s", src_path);
 
 	  free (dst_path);
 	  free (src_path);
@@ -1102,6 +1103,9 @@ main (int argc,
           usage (argv);
         }
     }
+
+  if (monitor_path != NULL && create_etc_dir)
+    create_monitor_links = 1;
 
   if (n_args < 2)
     usage (argv);
