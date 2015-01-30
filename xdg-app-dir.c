@@ -752,7 +752,6 @@ xdg_app_dir_deploy (XdgAppDir *self,
   gs_unref_object GFileInfo *file_info = NULL;
   gs_unref_object GFile *deploy_base = NULL;
   gs_unref_object GFile *checkoutdir = NULL;
-  gs_unref_object GFile *dotref = NULL;
   gs_unref_object GFile *export = NULL;
   gs_unref_object GFile *exports = NULL;
 
@@ -831,11 +830,6 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                   checkoutdir,
                                   OSTREE_REPO_FILE (root), file_info,
                                   cancellable, error))
-    goto out;
-
-  dotref = g_file_get_child (checkoutdir, ".ref");
-  if (!g_file_replace_contents (dotref, "", 0, NULL, FALSE,
-                                G_FILE_CREATE_NONE, NULL, cancellable, error))
     goto out;
 
   is_app = g_str_has_prefix (ref, "app");
