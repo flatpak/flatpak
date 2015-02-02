@@ -126,11 +126,11 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
           ref = g_variant_get_child_value (ref_list, i);
           g_variant_get (ref, "(&s(t@aya{sv}))", &refname, NULL, &csum_v, NULL);
 
-          g_debug ("%s summary: %s -> %s\n", repository, refname, checksum);
           if (!ostree_validate_rev (refname, error))
             goto out;
 
           checksum = ostree_checksum_from_bytes_v (csum_v);
+          g_debug ("%s summary: %s -> %s\n", repository, refname, checksum);
           g_hash_table_insert (refs, g_strdup (refname), checksum);
         }
     }
