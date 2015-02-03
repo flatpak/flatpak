@@ -1351,7 +1351,7 @@ main (int argc,
       char *dconf_run_path_relative = strdup_printf ("run/user/%d/dconf", getuid());
       char *dconf_run_path_absolute = strdup_printf ("/run/user/%d/dconf", getuid());
 
-      bind_mount (dconf_run_path_absolute, dconf_run_path_relative, BIND_READONLY);
+      bind_mount (dconf_run_path_absolute, dconf_run_path_relative, 0);
     }
 
   if (mount_host_fs)
