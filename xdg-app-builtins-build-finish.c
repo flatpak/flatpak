@@ -65,9 +65,11 @@ collect_exports (GFile *base, GCancellable *cancellable, GError **error)
         {
           g_debug ("Exporting from %s", paths[i]);
           gs_unref_object GFile *dest = NULL;
+          gs_unref_object GFile *dest_parent = NULL;
           dest = g_file_resolve_relative_path (export, paths[i]);
-          g_debug ("Ensuring export/%s exists", paths[i]);
-          if (!gs_file_ensure_directory (dest, TRUE, cancellable, error))
+          dest_parent = g_file_get_parent (dest);
+          g_debug ("Ensuring export/%s parent exists", paths[i]);
+          if (!gs_file_ensure_directory (dest_parent, TRUE, cancellable, error))
             goto out;
           g_debug ("Copying from files/%s", paths[i]);
           if (!gs_shutil_cp_a (src, dest, cancellable, error))
