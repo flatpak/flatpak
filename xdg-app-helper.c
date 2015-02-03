@@ -257,6 +257,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "run/user", 0755},
   { FILE_TYPE_DIR, "run/user/%1$d", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_DIR, "run/user/%1$d/pulse", 0700, NULL, FILE_FLAGS_USER_OWNED },
+  { FILE_TYPE_DIR, "run/user/%1$d/dconf", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_DIR, "run/user/%1$d/xdg-app-monitor", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_REGULAR, "run/user/%1$d/pulse/native", 0700, NULL, FILE_FLAGS_USER_OWNED },
   { FILE_TYPE_DIR, "var", 0755},
@@ -1344,6 +1345,14 @@ main (int argc,
       free (session_dbus_socket_path_relative);
       free (session_dbus_address);
    }
+
+  if (mount_host_fs || mount_home)
+    {
+      char *dconf_run_path_relative = strdup_printf ("run/user/%d/dconf", getuid());
+      char *dconf_run_path_absolute = strdup_printf ("/run/user/%d/dconf", getuid());
+
+      bind_mount (dconf_run_path_absolute, dconf_run_path_relative, BIND_READONLY);
+    }
 
   if (mount_host_fs)
     mount_extra_root_dirs (mount_host_fs_ro);
