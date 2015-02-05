@@ -159,6 +159,8 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
         goto out;
     }
 
+  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+
   ret = TRUE;
 
  out:
@@ -268,6 +270,8 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
       if (!xdg_app_dir_prune (dir, cancellable, error))
         goto out;
     }
+
+  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
   ret = TRUE;
 
