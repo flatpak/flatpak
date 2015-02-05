@@ -29,6 +29,7 @@
 #include <netinet/in.h>
 #include <sched.h>
 #include <signal.h>
+#include <poll.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +40,8 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/eventfd.h>
+#include <sys/signalfd.h>
 #include <unistd.h>
 
 #if 0
@@ -180,6 +183,16 @@ strdup_printf (const char *format,
     die ("oom");
 
   return buffer;
+}
+
+static inline int raw_clone(unsigned long flags, void *child_stack) {
+#if defined(__s390__) || defined(__CRIS__)
+        /* On s390 and cris the order of the first and second arguments
+         * of the raw clone() system call is reversed. */
+        return (int) syscall(__NR_clone, child_stack, flags);
+#else
+        return (int) syscall(__NR_clone, flags, child_stack);
+#endif
 }
 
 void
@@ -888,13 +901,123 @@ loopback_setup (void)
   return res;
 }
 
+static void
+block_sigchild (void)
+{
+  sigset_t mask;
+
+  sigemptyset (&mask);
+  sigaddset (&mask, SIGCHLD);
+
+  if (sigprocmask (SIG_BLOCK, &mask, NULL) == -1)
+    die_with_error ("sigprocmask");
+}
+
+/* This stays around for as long as the initial process in the app does
+ * and when that exits it exits, propagating the exit status. We do this
+ * by having pid1 in the sandbox detect this exit and tell the monitor
+ * the exit status via a eventfd. We also track the exit of the sandbox
+ * pid1 via a signalfd for SIGCHLD, and exit with an error in this case.
+ * This is to catch e.g. problems during setup. */
+static void
+monitor_child (int event_fd)
+{
+  int res;
+  uint64_t val;
+  ssize_t s;
+  int signal_fd;
+  sigset_t mask;
+  struct pollfd fds[2];
+  struct signalfd_siginfo fdsi;
+
+  /* Drop all extra caps */
+  setuid (getuid ());
+
+  sigemptyset (&mask);
+  sigaddset (&mask, SIGCHLD);
+
+  signal_fd = signalfd (-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK);
+  if (signal_fd == -1)
+    die_with_error ("signalfd");
+
+  fds[0].fd = event_fd;
+  fds[0].events = POLLIN;
+  fds[1].fd = signal_fd;
+  fds[1].events = POLLIN;
+
+  while (1)
+    {
+      fds[0].revents = fds[1].revents = 0;
+      res = poll (fds, 2, -1);
+      if (res == -1 && errno != EINTR)
+	die_with_error ("poll");
+
+      s = read (event_fd, &val, 8);
+      if (s == -1 && errno != EINTR && errno != EAGAIN)
+	die_with_error ("read eventfd");
+      else if (s == 8)
+	exit ((int)val - 1);
+
+      s = read (signal_fd, &fdsi, sizeof (struct signalfd_siginfo));
+      if (s == -1 && errno != EINTR && errno != EAGAIN)
+	die_with_error ("read signalfd");
+      else if (s == sizeof(struct signalfd_siginfo))
+	{
+	  if (fdsi.ssi_signo != SIGCHLD)
+	      die ("Read unexpected signal\n");
+	  exit (1);
+	}
+    }
+
+  exit (0);
+}
+
+/* This is pid1 in the app sandbox. It is needed because we're using
+ * pid namespaces, and someone has to reap zombies in it. We also detect
+ * when the initial process (pid 2) dies and report its exit status to
+ * the monitor so that it can return it to the original spawner.
+ *
+ * When there are no other processes in the sandbox the wait will return
+ *  ECHILD, and we then exit pid1 to clean up the sandbox. */
+static int
+do_init (int event_fd, pid_t initial_pid)
+{
+  int initial_exit_status = 1;
+
+  while (1)
+    {
+      pid_t child;
+      int status;
+
+      child = wait (&status);
+      if (child == initial_pid)
+	{
+	  uint64_t val;
+
+	  if (WIFEXITED (status))
+	    initial_exit_status = WEXITSTATUS(status);
+
+	  val = initial_exit_status + 1;
+	  write (event_fd, &val, 8);
+	}
+
+      if (child == -1 && errno != EINTR)
+	{
+	  if (errno != ECHILD)
+	    die_with_error ("init wait()");
+	  break;
+	}
+    }
+
+  return initial_exit_status;
+}
+
 #define MAX_EXTRA_DIRS 32
 
 int
 main (int argc,
       char **argv)
 {
-  int res;
   mode_t old_umask;
   char *newroot;
   uid_t saved_euid;
@@ -927,6 +1050,8 @@ main (int argc,
   int writable_exports = 0;
   char old_cwd[256];
   int i;
+  pid_t pid;
+  int event_fd;
 
   args = &argv[1];
   n_args = argc - 1;
@@ -1135,11 +1260,20 @@ main (int argc,
     die_with_error ("seteuid to privileged");
 
   __debug__(("creating new namespace\n"));
-  res = unshare (CLONE_NEWNS |
-                 (network ? 0 : CLONE_NEWNET) |
-                 (ipc ? 0 : CLONE_NEWIPC));
-  if (res != 0)
+
+  event_fd = eventfd (0, EFD_CLOEXEC | EFD_NONBLOCK);
+
+  block_sigchild (); /* Block before we clone to avoid races */
+
+  pid = raw_clone (SIGCHLD | CLONE_NEWNS | CLONE_NEWPID |
+		   (network ? 0 : CLONE_NEWNET) |
+		   (ipc ? 0 : CLONE_NEWIPC),
+		   NULL);
+  if (pid == -1)
     die_with_error ("Creating new namespace failed");
+
+  if (pid != 0)
+    monitor_child (event_fd);
 
   old_umask = umask (0);
 
@@ -1347,10 +1481,21 @@ main (int argc,
       free (tz_val);
     }
 
-  __debug__(("launch executable %s\n", args[0]));
+  __debug__(("forking for child\n"));
 
-  if (execvp (args[0], args) == -1)
-    die_with_error ("execvp %s", args[0]);
+  pid = fork ();
+  if (pid == -1)
+    die_with_error("Can't fork for child");
 
-  return 0;
+  if (pid == 0)
+    {
+      __debug__(("launch executable %s\n", args[0]));
+
+      if (execvp (args[0], args) == -1)
+        die_with_error ("execvp %s", args[0]);
+      return 0;
+    }
+
+  strncpy (argv[0], "xdg-app-init\0", strlen (argv[0]));
+  return do_init (event_fd, pid);
 }
