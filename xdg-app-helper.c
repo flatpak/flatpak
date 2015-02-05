@@ -897,9 +897,7 @@ main (int argc,
   int res;
   mode_t old_umask;
   char *newroot;
-  int pipefd[2];
   uid_t saved_euid;
-  pid_t pid;
   int system_mode = 0;
   char *runtime_path = NULL;
   char *app_path = NULL;
@@ -927,11 +925,8 @@ main (int argc,
   int writable = 0;
   int writable_app = 0;
   int writable_exports = 0;
-  int status;
   char old_cwd[256];
   int i;
-
-  char tmpdir[] = "/tmp/run-app.XXXXXX";
 
   args = &argv[1];
   n_args = argc - 1;
@@ -1121,63 +1116,23 @@ main (int argc,
   /* The initial code is run with a high permission euid
      (at least CAP_SYS_ADMIN), so take lots of care. */
 
-  __debug__(("Creating temporary dir\n"));
+  __debug__(("Creating xdg-app-root dir\n"));
 
   saved_euid = geteuid ();
 
   /* First switch to the real user id so we can have the
-     temp directories owned by the user */
+     runtime dir owned by the user */
 
   if (seteuid (getuid ()))
     die_with_error ("seteuid to user");
 
-  if (mkdtemp (tmpdir) == NULL)
-    die_with_error ("Creating %s", tmpdir);
-
-  newroot = strconcat (tmpdir, "/root");
-
-  if (mkdir (newroot, 0755))
-    die_with_error ("Creating new root failed");
+  newroot = strdup_printf ("/run/user/%d/.xdg-app-root", getuid());
+  if (mkdir (newroot, 0755) && errno != EEXIST)
+    die_with_error ("Creating xdg-app-root failed");
 
   /* Now switch back to the root user */
   if (seteuid (saved_euid))
     die_with_error ("seteuid to privileged");
-
-  /* We want to make the temp directory a bind mount so that
-     we can ensure that it is MS_PRIVATE, so mount don't leak out
-     of the namespace, and also so that pivot_root() succeeds. However
-     this means if /tmp is MS_SHARED the bind-mount will be propagated
-     to the parent namespace. In order to handle this we spawn a child
-     in the original namespace and unmount the bind mount from that at
-     the right time. */
-
-  if (pipe (pipefd) != 0)
-    die_with_error ("pipe failed");
-
-  pid = fork();
-  if (pid == -1)
-    die_with_error ("fork failed");
-
-  if (pid == 0)
-    {
-      char c;
-
-      /* In child */
-      close (pipefd[WRITE_END]);
-
-      /* Don't die when the parent closes pipe */
-      signal (SIGPIPE, SIG_IGN);
-
-      /* Wait for parent */
-      read (pipefd[READ_END], &c, 1);
-
-      /* Unmount tmpdir bind mount */
-      umount2 (tmpdir, MNT_DETACH);
-
-      exit (0);
-    }
-
-  close (pipefd[READ_END]);
 
   __debug__(("creating new namespace\n"));
   res = unshare (CLONE_NEWNS |
@@ -1188,11 +1143,11 @@ main (int argc,
 
   old_umask = umask (0);
 
-  /* make it tmpdir rprivate to avoid leaking mounts */
-  if (mount (tmpdir, tmpdir, NULL, MS_BIND, NULL) != 0)
-    die_with_error ("Failed to make bind mount on tmpdir");
-  if (mount (tmpdir, tmpdir, NULL, MS_REC|MS_PRIVATE, NULL) != 0)
-    die_with_error ("Failed to make tmpdir rprivate");
+  /* Mark everything as slave, so that we still
+   * receive mounts from the real root, but don't
+   * propagate mounts to the real root. */
+  if (mount (NULL, "/", NULL, MS_SLAVE|MS_REC, NULL) < 0)
+    die_with_error ("Failed to make / slave");
 
   /* Create a tmpfs which we will use as / in the namespace */
   if (mount ("", newroot, "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID, NULL) != 0)
@@ -1243,11 +1198,6 @@ main (int argc,
     }
 
   create_files (create_post, N_ELEMENTS (create_post), share_shm, system_mode);
-
-  /* /usr now mounted private inside the namespace, tell child process to unmount the tmpfs in the parent namespace. */
-  close (pipefd[WRITE_END]);
-
-  waitpid (pid, &status, 0);
 
   if (create_etc_dir)
     link_extra_etc_dirs ();
