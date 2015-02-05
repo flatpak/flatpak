@@ -308,6 +308,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (argv_array, g_strdup (HELPER));
+  g_ptr_array_add (argv_array, g_strdup ("-l"));
 
   if (!add_extension_args (metakey, app_ref, argv_array, cancellable, error))
     goto out;

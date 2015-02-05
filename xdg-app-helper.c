@@ -146,6 +146,33 @@ strconcat (const char *s1,
 }
 
 char *
+strconcat3 (const char *s1,
+	    const char *s2,
+	    const char *s3)
+{
+  size_t len = 0;
+  char *res;
+
+  if (s1)
+    len += strlen (s1);
+  if (s2)
+    len += strlen (s2);
+  if (s3)
+    len += strlen (s3);
+
+  res = xmalloc (len + 1);
+  *res = 0;
+  if (s1)
+    strcat (res, s1);
+  if (s2)
+    strcat (res, s2);
+  if (s3)
+    strcat (res, s3);
+
+  return res;
+}
+
+char *
 strconcat_len (const char *s1,
                const char *s2,
                size_t s2_len)
@@ -198,7 +225,7 @@ static inline int raw_clone(unsigned long flags, void *child_stack) {
 void
 usage (char **argv)
 {
-  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-E] [-m <path to monitor dir>] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
+  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-E] [-l] [-m <path to monitor dir>] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
   exit (1);
 }
 
@@ -338,6 +365,54 @@ typedef enum {
   BIND_DEVICES = (1<<2),
   BIND_RECURSIVE = (1<<3),
 } bind_option_t;
+
+#define MAX_EXTRA_DIRS 32
+#define MAX_LOCK_DIRS (MAX_EXTRA_DIRS+2)
+
+static int n_lock_dirs = 0;
+static const char *lock_dirs[MAX_LOCK_DIRS];
+
+static void
+lock_dir (const char *dir)
+{
+  char *file = strconcat3 ("/", dir, "/.ref");
+  struct flock lock = {0};
+  int fd;
+
+  fd = open (file, O_RDONLY | O_CLOEXEC);
+  free (file);
+  if (fd != -1)
+    {
+      lock.l_type = F_RDLCK;
+      lock.l_whence = SEEK_SET;
+      lock.l_start = 0;
+      lock.l_len = 0;
+
+      if (fcntl(fd, F_SETLK, &lock) < 0)
+	{
+	  printf ("lock failed\n");
+	  close (fd);
+	}
+    }
+}
+
+static void
+add_lock_dir (const char *dir)
+{
+  /* We need to lock the dirs in pid1 because otherwise the
+     locks are not held by the right process and will not live
+     for the full duration of the sandbox. */
+  if (n_lock_dirs < MAX_LOCK_DIRS)
+    lock_dirs[n_lock_dirs++] = dir;
+}
+
+static void
+lock_all_dirs (void)
+{
+  int i;
+  for (i = 0; i < n_lock_dirs; i++)
+    lock_dir (lock_dirs[i]);
+}
 
 static int
 bind_mount (const char *src, const char *dest, bind_option_t options)
@@ -984,6 +1059,11 @@ do_init (int event_fd, pid_t initial_pid)
 {
   int initial_exit_status = 1;
 
+  /* Grab a read on all .ref files to make it possible to detect that
+     it is in use. This lock will automatically go away when this
+     process dies */
+  lock_all_dirs ();
+
   while (1)
     {
       pid_t child;
@@ -1011,8 +1091,6 @@ do_init (int event_fd, pid_t initial_pid)
 
   return initial_exit_status;
 }
-
-#define MAX_EXTRA_DIRS 32
 
 int
 main (int argc,
@@ -1045,6 +1123,7 @@ main (int argc,
   int mount_host_fs = 0;
   int mount_host_fs_ro = 0;
   int mount_home = 0;
+  int lock_files = 0;
   int writable = 0;
   int writable_app = 0;
   int writable_exports = 0;
@@ -1184,6 +1263,12 @@ main (int argc,
           n_args -= 2;
           break;
 
+        case 'l':
+          lock_files = 1;
+          args += 1;
+          n_args -= 1;
+          break;
+
         case 'y':
           if (n_args < 2)
               usage (argv);
@@ -1303,10 +1388,16 @@ main (int argc,
   if (bind_mount (runtime_path, "usr", BIND_PRIVATE | (writable?0:BIND_READONLY)))
     die_with_error ("mount usr");
 
+  if (lock_files)
+    add_lock_dir ("usr");
+
   if (app_path != NULL)
     {
       if (bind_mount (app_path, "self", BIND_PRIVATE | (writable_app?0:BIND_READONLY)))
         die_with_error ("mount self");
+
+      if (lock_files)
+	add_lock_dir ("self");
 
       if (!writable_app && writable_exports)
 	{
@@ -1323,6 +1414,9 @@ main (int argc,
     {
       if (bind_mount (extra_dirs_src[i], extra_dirs_dest[i], BIND_PRIVATE | BIND_READONLY))
 	die_with_error ("mount extra dir %s", extra_dirs_src[i]);
+
+      if (lock_files)
+	add_lock_dir (extra_dirs_dest[i]);
     }
 
   if (var_path != NULL)
