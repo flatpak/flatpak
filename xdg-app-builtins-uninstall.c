@@ -12,10 +12,12 @@
 
 static char *opt_arch;
 static gboolean opt_keep_ref;
+static gboolean opt_force_remove;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to uninstall", "ARCH" },
   { "keep-ref", 0, 0, G_OPTION_ARG_NONE, &opt_keep_ref, "Keep ref in local repository", NULL },
+  { "force-remove", 0, 0, G_OPTION_ARG_NONE, &opt_force_remove, "Remove files even if running", NULL },
   { NULL }
 };
 
@@ -115,7 +117,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   for (i = 0; deployed[i] != NULL; i++)
     {
       g_debug ("undeploying %s", deployed[i]);
-      if (!xdg_app_dir_undeploy (dir, ref, deployed[i], cancellable, error))
+      if (!xdg_app_dir_undeploy (dir, ref, deployed[i], opt_force_remove, cancellable, error))
         goto out;
     }
 
@@ -229,7 +231,7 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   for (i = 0; deployed[i] != NULL; i++)
     {
       g_debug ("undeploying %s", deployed[i]);
-      if (!xdg_app_dir_undeploy (dir, ref, deployed[i], cancellable, error))
+      if (!xdg_app_dir_undeploy (dir, ref, deployed[i], opt_force_remove, cancellable, error))
         goto out;
     }
 

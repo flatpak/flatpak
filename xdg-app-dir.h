@@ -33,6 +33,7 @@ GFile *     xdg_app_dir_get_path        (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_deploy_dir  (XdgAppDir      *self,
                                          const char     *ref);
 GFile *     xdg_app_dir_get_exports_dir (XdgAppDir      *self);
+GFile *     xdg_app_dir_get_removed_dir (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_if_deployed (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,
@@ -72,6 +73,7 @@ gboolean    xdg_app_dir_deploy          (XdgAppDir      *self,
 gboolean    xdg_app_dir_undeploy        (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,
+					 gboolean        force_remove,
                                          GCancellable   *cancellable,
                                          GError        **error);
 gboolean    xdg_app_dir_prune           (XdgAppDir      *self,

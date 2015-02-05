@@ -158,7 +158,13 @@ xdg_app_dir_get_deploy_dir (XdgAppDir     *self,
 GFile *
 xdg_app_dir_get_exports_dir (XdgAppDir     *self)
 {
-  return g_file_resolve_relative_path (self->basedir, "exports");
+  return g_file_get_child (self->basedir, "exports");
+}
+
+GFile *
+xdg_app_dir_get_removed_dir (XdgAppDir     *self)
+{
+  return g_file_get_child (self->basedir, ".removed");
 }
 
 GFile *
@@ -990,17 +996,43 @@ xdg_app_dir_list_deployed (XdgAppDir *self,
 
 }
 
+static gboolean
+dir_is_locked (GFile *dir)
+{
+  gs_fd_close int ref_fd = -1;
+  struct flock lock = {0};
+  gs_unref_object GFile *reffile = NULL;
+
+  reffile = g_file_resolve_relative_path (dir, "files/.ref");
+
+  ref_fd = open (gs_file_get_path_cached (reffile), O_RDWR | O_CLOEXEC);
+  if (ref_fd != -1)
+    {
+      lock.l_type = F_WRLCK;
+      lock.l_whence = SEEK_SET;
+      lock.l_start = 0;
+      lock.l_len = 0;
+
+      if (fcntl (ref_fd, F_GETLK, &lock) == 0)
+	return lock.l_type != F_UNLCK;
+    }
+
+  return FALSE;
+}
+
 gboolean
 xdg_app_dir_undeploy (XdgAppDir *self,
                       const char *ref,
                       const char *checksum,
+		      gboolean force_remove,
                       GCancellable *cancellable,
                       GError **error)
 {
   gboolean ret = FALSE;
   gs_unref_object GFile *deploy_base = NULL;
   gs_unref_object GFile *checkoutdir = NULL;
-  gs_unref_object GFile *removeddir = NULL;
+  gs_unref_object GFile *removed_subdir = NULL;
+  gs_unref_object GFile *removed_dir = NULL;
   gs_free char *tmpname = NULL;
   gs_free char *active = NULL;
   gboolean is_app;
@@ -1051,18 +1083,23 @@ xdg_app_dir_undeploy (XdgAppDir *self,
         goto out;
     }
 
-  tmpname = gs_fileutil_gen_tmp_name (".removed-", checksum);
+  removed_dir = xdg_app_dir_get_removed_dir (self);
+  if (!gs_file_ensure_directory (removed_dir, TRUE, cancellable, error))
+    goto out;
 
-  checkoutdir = g_file_get_child (deploy_base, checksum);
-  removeddir = g_file_get_child (deploy_base, tmpname);
+  tmpname = gs_fileutil_gen_tmp_name ("", checksum);
+  removed_subdir = g_file_get_child (removed_dir, tmpname);
 
   if (!gs_file_rename (checkoutdir,
-                       removeddir,
+                       removed_subdir,
                        cancellable, error))
     goto out;
 
-  if (!gs_shutil_rm_rf (removeddir, cancellable, error))
-    goto out;
+  if (force_remove || !dir_is_locked (removed_subdir))
+    {
+      if (!gs_shutil_rm_rf (removed_subdir, cancellable, error))
+	goto out;
+    }
 
   is_app = g_str_has_prefix (ref, "app");
 

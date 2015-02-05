@@ -12,10 +12,12 @@
 
 static char *opt_arch;
 static char *opt_commit;
+static gboolean opt_force_remove;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to update for", "ARCH" },
   { "commit", 0, 0, G_OPTION_ARG_STRING, &opt_commit, "Commit to deploy", "COMMIT" },
+  { "force-remove", 0, 0, G_OPTION_ARG_NONE, &opt_force_remove, "Remove old files even if running", NULL },
   { NULL }
 };
 
@@ -83,6 +85,7 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   if (previous_deployment != NULL)
     {
       if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
+				 opt_force_remove,
                                  cancellable, error))
         goto out;
 
@@ -161,6 +164,7 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   if (previous_deployment != NULL)
     {
       if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
+				 opt_force_remove,
                                  cancellable, error))
         goto out;
 
