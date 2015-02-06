@@ -6,6 +6,7 @@ endif
 
 AM_CPPFLAGS =						\
 	-DXDG_APP_BINDIR=\"$(bindir)\"			\
+	-DXDG_APP_SYSTEMDIR=\"$(localstatedir)/xdg-app\"\
 	-DXDG_APP_BASEDIR=\"$(pkgdatadir)\"		\
 	-DXDG_APP_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
 	-DHELPER=\"$(bindir)/xdg-app-helper\"		\

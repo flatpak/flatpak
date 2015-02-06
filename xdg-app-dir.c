@@ -40,7 +40,7 @@ enum {
 GFile *
 xdg_app_get_system_base_dir_location (void)
 {
-  return g_file_new_for_path (XDG_APP_BASEDIR);
+  return g_file_new_for_path (XDG_APP_SYSTEMDIR);
 }
 
 GFile *
