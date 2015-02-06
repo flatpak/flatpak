@@ -17,6 +17,7 @@ static char *opt_branch;
 static char *opt_command;
 static gboolean opt_devel;
 static char *opt_runtime;
+static char **opt_forbid;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
@@ -24,6 +25,7 @@ static GOptionEntry options[] = {
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to use", "BRANCH" },
   { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, "Runtime to use", "RUNTIME" },
+  { "forbid", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_forbid, "Environment options to set to false", "KEY" },
   { NULL }
 };
 
@@ -259,6 +261,12 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   const char *command = "/bin/sh";
   int i;
   int rest_argv_start, rest_argc;
+  const char *environment_keys[] = {
+    "x11", "wayland", "ipc", "pulseaudio", "system-dbus", "session-dbus",
+    "network", "host-fs", "homedir", NULL
+  };
+  const char *no_opts[1] = { NULL };
+  const char **forbid;
 
   context = g_option_context_new ("APP [args...] - Run an app");
 
@@ -399,33 +407,59 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 	}
     }
 
-  if (g_key_file_get_boolean (metakey, "Environment", "ipc", NULL))
+  if (opt_forbid)
+    forbid = (const char **)opt_forbid;
+  else
+    forbid = no_opts;
+
+  for (i = 0; forbid[i]; i++)
+    {
+      const char *key;
+
+      key = forbid[i];
+      if (!g_strv_contains (environment_keys, key))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unknown Environment key %s", key);
+          goto out;
+        }
+    }
+
+  if (g_key_file_get_boolean (metakey, "Environment", "ipc", NULL) &&
+      !g_strv_contains (forbid, "ipc"))
     g_ptr_array_add (argv_array, g_strdup ("-i"));
 
-  if (g_key_file_get_boolean (metakey, "Environment", "host-fs", NULL))
+  if (g_key_file_get_boolean (metakey, "Environment", "host-fs", NULL) &&
+      !g_strv_contains (forbid, "host-fs"))
     g_ptr_array_add (argv_array, g_strdup ("-f"));
 
-  if (g_key_file_get_boolean (metakey, "Environment", "homedir", NULL))
+  if (g_key_file_get_boolean (metakey, "Environment", "homedir", NULL) &&
+      !g_strv_contains (forbid, "homedir"))
     g_ptr_array_add (argv_array, g_strdup ("-H"));
 
-  if (g_key_file_get_boolean (metakey, "Environment", "network", NULL))
+  if (g_key_file_get_boolean (metakey, "Environment", "network", NULL) &&
+      !g_strv_contains (forbid, "network"))
     g_ptr_array_add (argv_array, g_strdup ("-n"));
 
-  if (g_key_file_get_boolean (metakey, "Environment", "x11", NULL))
+  if (g_key_file_get_boolean (metakey, "Environment", "x11", NULL) &&
+      !g_strv_contains (forbid, "x11"))
     xdg_app_run_add_x11_args (argv_array);
   else
     xdg_app_run_add_no_x11_args (argv_array);
 
-  if (g_key_file_get_boolean (metakey, "Environment", "wayland", NULL))
+  if (g_key_file_get_boolean (metakey, "Environment", "wayland", NULL) &&
+      !g_strv_contains (forbid, "wayland"))
     xdg_app_run_add_wayland_args (argv_array);
 
-  if (g_key_file_get_boolean (metakey, "Environment", "pulseaudio", NULL))
+  if (g_key_file_get_boolean (metakey, "Environment", "pulseaudio", NULL) &&
+      !g_strv_contains (forbid, "pulseaudio"))
     xdg_app_run_add_pulseaudio_args (argv_array);
 
-  if (g_key_file_get_boolean (metakey, "Environment", "system-dbus", NULL))
+  if (g_key_file_get_boolean (metakey, "Environment", "system-dbus", NULL) &&
+      !g_strv_contains (forbid, "system-dbus"));
     xdg_app_run_add_system_dbus_args (argv_array);
 
-  if (g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL))
+  if (g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL) &&
+      !g_strv_contains (forbid, "session_dbus"))
     xdg_app_run_add_session_dbus_args (argv_array);
 
   g_ptr_array_add (argv_array, g_strdup ("-a"));
