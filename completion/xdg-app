@@ -28,12 +28,12 @@ _xdg-app() {
                 [LIST_REMOTES]='--show-urls'
                 [REPO_CONTENTS]='--show-details --runtimes --apps --update'
                 [UNINSTALL]='--keep-ref'
-                [RUN]='--command --branch --devel --forbid'
+                [RUN]='--command --branch --devel --forbid --runtime'
                 [BUILD_INIT]='--arch --var'
                 [BUILD]='--runtime --network --x11'
                 [BUILD_FINISH]='--command --allow'
                 [BUILD_EXPORT]='--subject --body'
-                [ARG]='--arch --command --branch --var --allow --forbid --subject --body'
+                [ARG]='--arch --command --branch --var --allow --forbid --subject --body --runtime'
         )
 
         if __contains_word "--user" ${COMP_WORDS[*]}; then
@@ -50,7 +50,7 @@ _xdg-app() {
                         --command)
                                 comps=$(compgen -A command)
                                 ;;
-                        --var)
+                        --var|--runtime)
                                 comps=$(xdg-app $mode list-runtimes)
                                 ;;
                         --allow|--forbid)
