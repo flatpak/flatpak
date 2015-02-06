@@ -103,6 +103,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--runtime=RUNTIME</option></term>
+
+                <listitem><para>
+                    Use this runtime instead of the one that is specified in the application metadata.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
