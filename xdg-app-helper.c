@@ -1341,7 +1341,12 @@ main (int argc,
 
   newroot = strdup_printf ("/run/user/%d/.xdg-app-root", getuid());
   if (mkdir (newroot, 0755) && errno != EEXIST)
-    die_with_error ("Creating xdg-app-root failed");
+    {
+      free (newroot);
+      newroot = strdup_printf ("/tmp/.xdg-app-root", getuid());
+      if (mkdir (newroot, 0755) && errno != EEXIST)
+	die_with_error ("Creating xdg-app-root failed");
+    }
 
   /* Now switch back to the root user */
   if (seteuid (saved_euid))
