@@ -426,41 +426,70 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (g_key_file_get_boolean (metakey, "Environment", "ipc", NULL) &&
       !g_strv_contains (forbid, "ipc"))
-    g_ptr_array_add (argv_array, g_strdup ("-i"));
+    {
+      g_debug ("Allowing ipc access");
+      g_ptr_array_add (argv_array, g_strdup ("-i"));
+    }
 
   if (g_key_file_get_boolean (metakey, "Environment", "host-fs", NULL) &&
       !g_strv_contains (forbid, "host-fs"))
-    g_ptr_array_add (argv_array, g_strdup ("-f"));
+    {
+      g_debug ("Allowing host-fs access");
+      g_ptr_array_add (argv_array, g_strdup ("-f"));
+    }
 
   if (g_key_file_get_boolean (metakey, "Environment", "homedir", NULL) &&
       !g_strv_contains (forbid, "homedir"))
-    g_ptr_array_add (argv_array, g_strdup ("-H"));
+    {
+      g_debug ("Allowing homedir access");
+      g_ptr_array_add (argv_array, g_strdup ("-H"));
+    }
 
   if (g_key_file_get_boolean (metakey, "Environment", "network", NULL) &&
       !g_strv_contains (forbid, "network"))
-    g_ptr_array_add (argv_array, g_strdup ("-n"));
+    {
+      g_debug ("Allowing network access");
+      g_ptr_array_add (argv_array, g_strdup ("-n"));
+    }
 
   if (g_key_file_get_boolean (metakey, "Environment", "x11", NULL) &&
       !g_strv_contains (forbid, "x11"))
-    xdg_app_run_add_x11_args (argv_array);
+    {
+      g_debug ("Allowing x11 access");
+      xdg_app_run_add_x11_args (argv_array);
+    }
   else
-    xdg_app_run_add_no_x11_args (argv_array);
+    {
+      xdg_app_run_add_no_x11_args (argv_array);
+    }
 
   if (g_key_file_get_boolean (metakey, "Environment", "wayland", NULL) &&
       !g_strv_contains (forbid, "wayland"))
-    xdg_app_run_add_wayland_args (argv_array);
+    {
+      g_debug ("Allowing wayland access");
+      xdg_app_run_add_wayland_args (argv_array);
+    }
 
   if (g_key_file_get_boolean (metakey, "Environment", "pulseaudio", NULL) &&
       !g_strv_contains (forbid, "pulseaudio"))
-    xdg_app_run_add_pulseaudio_args (argv_array);
+    {
+      g_debug ("Allowing pulseaudio access");
+      xdg_app_run_add_pulseaudio_args (argv_array);
+    }
 
   if (g_key_file_get_boolean (metakey, "Environment", "system-dbus", NULL) &&
       !g_strv_contains (forbid, "system-dbus"));
-    xdg_app_run_add_system_dbus_args (argv_array);
+    {
+      g_debug ("Allowing system-dbus access");
+      xdg_app_run_add_system_dbus_args (argv_array);
+    }
 
   if (g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL) &&
-      !g_strv_contains (forbid, "session_dbus"))
-    xdg_app_run_add_session_dbus_args (argv_array);
+      !g_strv_contains (forbid, "session-dbus"))
+    {
+      g_debug ("Allowing session-dbus access");
+      xdg_app_run_add_session_dbus_args (argv_array);
+    }
 
   g_ptr_array_add (argv_array, g_strdup ("-a"));
   g_ptr_array_add (argv_array, g_file_get_path (app_files));
