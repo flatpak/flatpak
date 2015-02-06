@@ -16,12 +16,14 @@ static char *opt_arch;
 static char *opt_branch;
 static char *opt_command;
 static gboolean opt_devel;
+static char *opt_runtime;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to run", "COMMAND" },
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to use", "BRANCH" },
   { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
+  { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, "Runtime to use", "RUNTIME" },
   { NULL }
 };
 
@@ -313,9 +315,14 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (!add_extension_args (metakey, app_ref, argv_array, cancellable, error))
     goto out;
 
-  runtime = g_key_file_get_string (metakey, "Application", opt_devel ? "sdk" : "runtime", error);
-  if (*error)
-    goto out;
+  if (opt_runtime)
+    runtime = opt_runtime;
+  else
+    {
+      runtime = g_key_file_get_string (metakey, "Application", opt_devel ? "sdk" : "runtime", error);
+      if (*error)
+        goto out;
+    }
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
 
