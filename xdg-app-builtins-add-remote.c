@@ -51,7 +51,7 @@ xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GE
                            g_variant_new_variant (g_variant_new_boolean (FALSE)));
   if (opt_title)
     g_variant_builder_add (optbuilder, "{s@v}",
-                           "title",
+                           "xa.title",
                            g_variant_new_variant (g_variant_new_string (opt_title)));
 
   if (!ostree_repo_remote_change (xdg_app_dir_get_repo (dir), NULL,
