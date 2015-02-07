@@ -51,6 +51,12 @@
             directory at <filename>/var</filename>, whose content is preserved between
             application runs. The application itself is mounted at <filename>/self</filename>.
         </para>
+        <para>
+            The details of the sandboxed environment are controlled by the application
+            metadata and the --forbid option that are passed to the run command: Access
+            is allowed if the application requested it in its metadata file and the
+            user hasn;t forbidden it.
+        </para>
 
     </refsect1>
 
@@ -107,6 +113,17 @@
 
                 <listitem><para>
                     Use this runtime instead of the one that is specified in the application metadata.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--forbid=KEY</option></term>
+
+                <listitem><para>
+                    Disallow access to the named facility. KEY must
+                    be one of: x11, wayland, ipc, pulseaudio, system-dbus,
+                    session-dbus, network, host-fs, homedir.
+                    This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 

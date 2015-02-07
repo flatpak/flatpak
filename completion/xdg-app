@@ -28,12 +28,12 @@ _xdg-app() {
                 [LIST_REMOTES]='--show-urls'
                 [REPO_CONTENTS]='--show-details --runtimes --apps --update'
                 [UNINSTALL]='--keep-ref'
-                [RUN]='--command --branch --devel'
+                [RUN]='--command --branch --devel --forbid'
                 [BUILD_INIT]='--arch --var'
                 [BUILD]='--runtime --network --x11'
                 [BUILD_FINISH]='--command --allow'
                 [BUILD_EXPORT]='--subject --body'
-                [ARG]='--arch --command --branch --var --allow --subject --body'
+                [ARG]='--arch --command --branch --var --allow --forbid --subject --body'
         )
 
         if __contains_word "--user" ${COMP_WORDS[*]}; then
@@ -53,7 +53,7 @@ _xdg-app() {
                         --var)
                                 comps=$(xdg-app $mode list-runtimes)
                                 ;;
-                        --allow)
+                        --allow|--forbid)
                                 comps='x11 wayland ipc pulseaudio system-dbus session-dbus network host-fs homedir'
                                 ;;
                         --branch|--subject|--body)
