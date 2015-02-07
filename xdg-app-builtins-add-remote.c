@@ -10,10 +10,12 @@
 
 static gboolean opt_no_gpg_verify;
 static gboolean opt_if_not_exists;
+static char *opt_title;
 
 static GOptionEntry options[] = {
   { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, "Disable GPG verification", NULL },
   { "if-not-exists", 0, 0, G_OPTION_ARG_NONE, &opt_if_not_exists, "Do nothing if the provided remote exists", NULL },
+  { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this remote", "TITLE" },
   { NULL }
 };
 
@@ -47,6 +49,10 @@ xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GE
     g_variant_builder_add (optbuilder, "{s@v}",
                            "gpg-verify",
                            g_variant_new_variant (g_variant_new_boolean (FALSE)));
+  if (opt_title)
+    g_variant_builder_add (optbuilder, "{s@v}",
+                           "xa.title",
+                           g_variant_new_variant (g_variant_new_string (opt_title)));
 
   if (!ostree_repo_remote_change (xdg_app_dir_get_repo (dir), NULL,
                                   opt_if_not_exists ? OSTREE_REPO_REMOTE_CHANGE_ADD_IF_NOT_EXISTS :

@@ -100,6 +100,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--title=TITLE</option></term>
+
+                <listitem><para>
+                    A title for the remote, e.g. for display in a UI.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
