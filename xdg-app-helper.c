@@ -42,6 +42,8 @@
 #include <sys/wait.h>
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
+#include <sys/capability.h>
+#include <sys/prctl.h>
 #include <unistd.h>
 
 #if 0
@@ -254,10 +256,9 @@ typedef enum {
 
 typedef enum {
   FILE_FLAGS_NONE = 0,
-  FILE_FLAGS_USER_OWNED = 1 << 0,
-  FILE_FLAGS_NON_FATAL = 1 << 1,
-  FILE_FLAGS_IF_LAST_FAILED = 1 << 2,
-  FILE_FLAGS_DEVICES = 1 << 3,
+  FILE_FLAGS_NON_FATAL = 1 << 0,
+  FILE_FLAGS_IF_LAST_FAILED = 1 << 1,
+  FILE_FLAGS_DEVICES = 1 << 2,
 } file_flags_t;
 
 typedef struct {
@@ -295,11 +296,11 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "run", 0755},
   { FILE_TYPE_DIR, "run/dbus", 0755},
   { FILE_TYPE_DIR, "run/user", 0755},
-  { FILE_TYPE_DIR, "run/user/%1$d", 0700, NULL, FILE_FLAGS_USER_OWNED },
-  { FILE_TYPE_DIR, "run/user/%1$d/pulse", 0700, NULL, FILE_FLAGS_USER_OWNED },
-  { FILE_TYPE_DIR, "run/user/%1$d/dconf", 0700, NULL, FILE_FLAGS_USER_OWNED },
-  { FILE_TYPE_DIR, "run/user/%1$d/xdg-app-monitor", 0700, NULL, FILE_FLAGS_USER_OWNED },
-  { FILE_TYPE_REGULAR, "run/user/%1$d/pulse/native", 0700, NULL, FILE_FLAGS_USER_OWNED },
+  { FILE_TYPE_DIR, "run/user/%1$d", 0700, NULL},
+  { FILE_TYPE_DIR, "run/user/%1$d/pulse", 0700, NULL},
+  { FILE_TYPE_DIR, "run/user/%1$d/dconf", 0700, NULL},
+  { FILE_TYPE_DIR, "run/user/%1$d/xdg-app-monitor", 0700, NULL},
+  { FILE_TYPE_REGULAR, "run/user/%1$d/pulse/native", 0700, NULL},
   { FILE_TYPE_DIR, "var", 0755},
   { FILE_TYPE_SYMLINK, "var/tmp", 0755, "/tmp"},
   { FILE_TYPE_SYMLINK, "var/run", 0755, "/run"},
@@ -444,9 +445,7 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
 
 static int
 mkdir_with_parents (const char *pathname,
-                    int         mode,
-                    int         uid,
-                    int         gid)
+                    int         mode)
 {
   char *fn, *p;
   struct stat buf;
@@ -482,8 +481,6 @@ mkdir_with_parents (const char *pathname,
               errno = errsave;
               return -1;
             }
-          if (chown (fn, uid, gid))
-            return -1;
         }
       else if (!S_ISDIR (buf.st_mode))
         {
@@ -542,21 +539,6 @@ create_file (const char *path, mode_t mode, const char *content)
 }
 
 static void
-set_owner (const char *name, int flags)
-{
-  if (flags & FILE_FLAGS_USER_OWNED)
-    {
-      if (lchown (name, getuid(), getuid()))
-        die_with_error ("chown to user");
-    }
-  else
-    {
-      if (lchown (name, 0, 0))
-        die_with_error ("chown to root");
-    }
-}
-
-static void
 create_files (const create_table_t *create, int n_create, int ignore_shm, int system_mode)
 {
   int last_failed = 0;
@@ -592,13 +574,11 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
         case FILE_TYPE_DIR:
           if (mkdir (name, mode) != 0)
             die_with_error ("creating dir %s", name);
-          set_owner (name, flags);
           break;
 
         case FILE_TYPE_REGULAR:
           if (create_file (name, mode, NULL))
             die_with_error ("creating file %s", name);
-          set_owner (name, flags);
           break;
 
         case FILE_TYPE_SYSTEM_SYMLINK:
@@ -611,7 +591,6 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
 		{
 		  if (mkdir (name, mode) != 0)
 		    die_with_error ("creating dir %s", name);
-                  set_owner (name, flags);
 
 		  if (bind_mount (in_root, name, BIND_PRIVATE | BIND_READONLY))
 		    die_with_error ("mount %s", name);
@@ -630,7 +609,6 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
         case FILE_TYPE_SYMLINK:
           if (symlink (data, name) != 0)
             die_with_error ("creating symlink %s", name);
-          set_owner (name, flags);
           break;
 
         case FILE_TYPE_BIND:
@@ -682,8 +660,6 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
 
           if (mknod (name, mode, st.st_rdev) < 0)
             die_with_error ("mknod %s", name);
-
-          set_owner (name, flags);
 
           break;
 
@@ -794,10 +770,10 @@ create_homedir (int mount_real_home)
   while (*relative_home == '/')
     relative_home++;
 
-  if (mkdir_with_parents ("var/home", 0700, getuid(), getgid()))
+  if (mkdir_with_parents ("var/home", 0700))
     die_with_error ("unable to create var/home");
 
-  if (mkdir_with_parents (relative_home, 0755, 0, 0))
+  if (mkdir_with_parents (relative_home, 0755))
     die_with_error ("unable to create %s", relative_home);
 
   if (mount_real_home)
@@ -1008,9 +984,6 @@ monitor_child (int event_fd)
   struct pollfd fds[2];
   struct signalfd_siginfo fdsi;
 
-  /* Drop all extra caps */
-  setuid (getuid ());
-
   sigemptyset (&mask);
   sigaddset (&mask, SIGCHLD);
 
@@ -1046,8 +1019,6 @@ monitor_child (int event_fd)
 	  exit (1);
 	}
     }
-
-  exit (0);
 }
 
 /* This is pid1 in the app sandbox. It is needed because we're using
@@ -1095,13 +1066,54 @@ do_init (int event_fd, pid_t initial_pid)
   return initial_exit_status;
 }
 
+#define REQUIRED_CAPS (CAP_TO_MASK(CAP_SYS_ADMIN) | CAP_TO_MASK(CAP_MKNOD))
+
+static void
+acquire_caps (void)
+{
+  struct __user_cap_header_struct hdr;
+  struct __user_cap_data_struct data;
+
+  /* Tell kernel not clear capabilities when dropping root */
+  if (prctl (PR_SET_KEEPCAPS, 1) < 0)
+    die_with_error ("prctl(PR_SET_KEEPCAPS) failed");
+
+  /* Drop root uid, but retain the required permitted caps */
+  if (setuid (getuid ()) < 0)
+    die_with_error ("unable to drop privs");
+
+  memset (&hdr, 0, sizeof(hdr));
+  hdr.version = _LINUX_CAPABILITY_VERSION;
+
+  /* Drop all non-require capabilities */
+  data.effective = REQUIRED_CAPS;
+  data.permitted = REQUIRED_CAPS;
+  data.inheritable = 0;
+  if (capset (&hdr, &data) < 0)
+    die_with_error ("capset failed");
+}
+
+static void
+drop_caps (void)
+{
+  struct __user_cap_header_struct hdr;
+  struct __user_cap_data_struct data;
+
+  memset (&hdr, 0, sizeof(hdr));
+  hdr.version = _LINUX_CAPABILITY_VERSION;
+  data.effective = 0;
+  data.permitted = 0;
+  data.inheritable = 0;
+
+  if (capset (&hdr, &data) < 0)
+    die_with_error ("capset failed");
+}
 int
 main (int argc,
       char **argv)
 {
   mode_t old_umask;
   char *newroot;
-  uid_t saved_euid;
   int system_mode = 0;
   char *runtime_path = NULL;
   char *app_path = NULL;
@@ -1134,6 +1146,9 @@ main (int argc,
   int i;
   pid_t pid;
   int event_fd;
+
+  /* Get the capabilities we need, drop root */
+  acquire_caps ();
 
   args = &argv[1];
   n_args = argc - 1;
@@ -1326,18 +1341,10 @@ main (int argc,
   if (strcmp (runtime_path, "/usr") == 0)
     system_mode = 1;
 
-  /* The initial code is run with a high permission euid
+  /* The initial code is run with high permissions
      (at least CAP_SYS_ADMIN), so take lots of care. */
 
   __debug__(("Creating xdg-app-root dir\n"));
-
-  saved_euid = geteuid ();
-
-  /* First switch to the real user id so we can have the
-     runtime dir owned by the user */
-
-  if (seteuid (getuid ()))
-    die_with_error ("seteuid to user");
 
   newroot = strdup_printf ("/run/user/%d/.xdg-app-root", getuid());
   if (mkdir (newroot, 0755) && errno != EEXIST)
@@ -1347,10 +1354,6 @@ main (int argc,
       if (mkdir (newroot, 0755) && errno != EEXIST)
 	die_with_error ("Creating xdg-app-root failed");
     }
-
-  /* Now switch back to the root user */
-  if (seteuid (saved_euid))
-    die_with_error ("seteuid to privileged");
 
   __debug__(("creating new namespace\n"));
 
@@ -1366,7 +1369,12 @@ main (int argc,
     die_with_error ("Creating new namespace failed");
 
   if (pid != 0)
-    monitor_child (event_fd);
+    {
+      /* Drop all extra caps in the monitor child process */
+      drop_caps ();
+      monitor_child (event_fd);
+      exit (0); /* Should not be reached, but better safe... */
+    }
 
   old_umask = umask (0);
 
@@ -1563,8 +1571,8 @@ main (int argc,
 
   umask (old_umask);
 
-  /* Now we have everything we need CAP_SYS_ADMIN for, so drop setuid */
-  setuid (getuid ());
+  /* Now we have everything we need CAP_SYS_ADMIN for, so drop it */
+  drop_caps ();
 
   chdir (old_cwd);
 
