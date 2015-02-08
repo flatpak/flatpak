@@ -33,4 +33,40 @@ gboolean xdg_app_remove_dangling_symlinks (GFile    *dir,
                                            GCancellable  *cancellable,
                                            GError       **error);
 
+#if !GLIB_CHECK_VERSION(2,43,1)
+static inline  gboolean
+g_strv_contains (const gchar * const *strv,
+                 const gchar         *str)
+{
+  g_return_val_if_fail (strv != NULL, FALSE);
+  g_return_val_if_fail (str != NULL, FALSE);
+
+  for (; *strv != NULL; strv++)
+    {
+      if (g_str_equal (str, *strv))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+#endif
+
+#if !GLIB_CHECK_VERSION(2,40,0)
+static inline gboolean
+g_key_file_save_to_file (GKeyFile     *key_file,
+			 const gchar  *filename,
+			 GError      **error)
+{
+  gchar *contents;
+  gboolean success;
+  gsize length;
+
+  contents = g_key_file_to_data (key_file, &length, NULL);
+  success = g_file_set_contents (filename, contents, length, error);
+  g_free (contents);
+
+  return success;
+}
+#endif
+
 #endif /* __XDG_APP_UTILS_H__ */
