@@ -203,23 +203,23 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
 
       if (name)
         {
+	  gboolean found = FALSE;
+
           for (i = 0; i < names->len; i++)
             {
-              int cmp;
-
-              cmp = strcmp (name, g_ptr_array_index (names, i));
-              if (cmp > 0)
-                continue;
-              else if (cmp < 0)
-                g_ptr_array_insert (names, i, name);
-              else
-                g_free (name);
+              if (strcmp (name, g_ptr_array_index (names, i)) == 0)
+		found = TRUE;
               break;
             }
-          if (i == names->len)
-            g_ptr_array_insert (names, i, name);
+
+	  if (found)
+            g_ptr_array_add (names, name);
+	  else
+	    g_free (name);
         }
     }
+
+  g_ptr_array_sort (names, (GCompareFunc)strcmp);
 
   for (i = 0; i < names->len; i++)
     g_print ("%s\n", (char *)g_ptr_array_index (names, i));

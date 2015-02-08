@@ -84,6 +84,7 @@ print_installed_refs (XdgAppDir *dir, const char *kind, GCancellable *cancellabl
             {
               const char *branch;
               char *ref;
+	      gboolean found;
 
               branch = g_file_info_get_name (child_info3);
 
@@ -92,24 +93,24 @@ print_installed_refs (XdgAppDir *dir, const char *kind, GCancellable *cancellabl
               else
                 ref = g_strdup (name);
 
+	      found = FALSE;
               for (i = 0; i < refs->len; i++)
                 {
-                  int cmp;
-
-                  cmp = strcmp (ref, g_ptr_array_index (refs, i));
-                  if (cmp > 0)
-                    continue;
-                  else if (cmp < 0)
-                    g_ptr_array_insert (refs, i, ref);
-                  else
-                    g_free (ref);
-                  break;
+                  if (strcmp (ref, g_ptr_array_index (refs, i)) == 0)
+		    {
+		      found = TRUE;
+		      break;
+		    }
                 }
-              if (i == refs->len)
-                g_ptr_array_insert (refs, i, ref);
+	      if (found)
+		g_free (refs);
+	      else
+                g_ptr_array_add (refs, ref);
 
               g_clear_object (&child_info3);
             }
+
+	  g_ptr_array_sort (refs, (GCompareFunc)strcmp);
 
           if (temp_error != NULL)
             goto out;
