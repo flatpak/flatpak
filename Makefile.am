@@ -97,8 +97,14 @@ xdg_app_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS)
 xdg_app_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS)
 
 install-exec-hook:
+if PRIV_MODE_SETUID
 	$(SUDO_BIN) chown root $(DESTDIR)$(bindir)/xdg-app-helper
 	$(SUDO_BIN) chmod u+s $(DESTDIR)$(bindir)/xdg-app-helper
+else
+if PRIV_MODE_FILECAPS
+	$(SUDO_BIN) setcap cap_sys_admin,cap_mknod+ep /gnome/bin/xdg-app-helper
+endif
+endif
 
 completiondir = $(datadir)/bash-completion/completions
 completion_DATA = completion/xdg-app
