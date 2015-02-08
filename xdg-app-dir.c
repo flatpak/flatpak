@@ -525,7 +525,7 @@ export_desktop_file (const char    *app,
       g_key_file_remove_key (keyfile, groups[i], "X-GNOME-Bugzilla-ExtraInfoScript", NULL);
 
       new_exec = g_string_new ("");
-      g_string_append_printf (new_exec, XDG_APP_BINDIR"/xdg-app run --branch=%s --arch=%s", branch, arch);
+      g_string_append_printf (new_exec, XDG_APP_BINDIR"/xdg-app run --branch='%s' --arch='%s'", branch, arch);
 
       old_exec = g_key_file_get_string (keyfile, groups[i], "Exec", NULL);
       if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
@@ -533,7 +533,7 @@ export_desktop_file (const char    *app,
           int i;
           gs_free char *command = g_shell_quote (old_argv[0]);
 
-          g_string_append_printf (new_exec, " --command=%s", command);
+          g_string_append_printf (new_exec, " --command='%s'", command);
 
           g_string_append (new_exec, " ");
           g_string_append (new_exec, escaped_app);
