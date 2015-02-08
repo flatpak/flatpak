@@ -221,7 +221,13 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
       else
         {
           if (!ostree_repo_open (repo, cancellable, error))
-            goto out;
+            {
+              gs_free char *repopath = NULL;
+
+              repopath = g_file_get_path (repodir);
+              g_prefix_error (error, "While opening repository %s: ", repopath);
+              goto out;
+            }
         }
 
       self->repo = g_object_ref (repo);
@@ -260,7 +266,10 @@ xdg_app_dir_pull (XdgAppDir *self,
                          (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
                          progress,
                          cancellable, error))
-    goto out;
+    {
+      g_prefix_error (error, "While pulling %s from remote %s: ", ref, repository);
+      goto out;
+    }
 
   if (console)
     gs_console_end_status_line (console, NULL, NULL);
@@ -771,7 +780,10 @@ xdg_app_dir_deploy (XdgAppDir *self,
     {
       g_debug ("No checksum specified, getting tip of %s", ref);
       if (!ostree_repo_resolve_rev (self->repo, ref, FALSE, &resolved_ref, error))
-        goto out;
+        {
+          g_prefix_error (error, "While trying to resolve ref %s: ", ref);
+          goto out;
+        }
 
       checksum = resolved_ref;
     }
@@ -809,7 +821,10 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                   (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
                                   progress,
                                   cancellable, error))
-             goto out;
+             {
+               g_prefix_error (error, "Failed to pull %s from remote %s: ", checksum, repository);
+               goto out;
+             }
         }
     }
 
@@ -823,7 +838,10 @@ xdg_app_dir_deploy (XdgAppDir *self,
     }
 
   if (!ostree_repo_read_commit (self->repo, checksum, &root, NULL, cancellable, error))
-    goto out;
+    {
+      g_prefix_error (error, "Failed to read commit %s: ", checksum);
+      goto out;
+    }
 
   file_info = g_file_query_info (root, OSTREE_GIO_FAST_QUERYINFO,
                                  G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
@@ -837,7 +855,15 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                   checkoutdir,
                                   OSTREE_REPO_FILE (root), file_info,
                                   cancellable, error))
-    goto out;
+    {
+      gs_free char *rootpath = NULL;
+      gs_free char *checkoutpath = NULL;
+
+      rootpath = g_file_get_path (root);
+      checkoutpath = g_file_get_path (checkoutdir);
+      g_prefix_error (error, "While trying to checkout %s into %s: ", rootpath, checkoutpath);
+      goto out;
+    }
 
   dotref = g_file_resolve_relative_path (checkoutdir, "files/.ref");
   if (!g_file_replace_contents (dotref, "", 0, NULL, FALSE,
