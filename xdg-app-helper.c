@@ -1075,7 +1075,7 @@ acquire_caps (void)
   struct __user_cap_data_struct data;
 
   /* Tell kernel not clear capabilities when dropping root */
-  if (prctl (PR_SET_KEEPCAPS, 1) < 0)
+  if (prctl (PR_SET_KEEPCAPS, 1, 0, 0, 0) < 0)
     die_with_error ("prctl(PR_SET_KEEPCAPS) failed");
 
   /* Drop root uid, but retain the required permitted caps */
