@@ -28,7 +28,7 @@ _xdg-app() {
                 [LIST_REMOTES]='--show-urls'
                 [REPO_CONTENTS]='--show-details --runtimes --apps --update'
                 [UNINSTALL]='--keep-ref'
-                [RUN]='--command --branch --devel --forbid --runtime'
+                [RUN]='--command --branch --devel --allow --forbid --runtime'
                 [BUILD_INIT]='--arch --var'
                 [BUILD]='--runtime --network --x11'
                 [BUILD_FINISH]='--command --allow'
