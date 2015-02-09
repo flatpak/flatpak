@@ -33,7 +33,8 @@ _xdg-app() {
                 [BUILD]='--runtime --network --x11'
                 [BUILD_FINISH]='--command --allow'
                 [BUILD_EXPORT]='--subject --body'
-                [ARG]='--arch --command --branch --var --allow --forbid --subject --body --runtime'
+                [REPO_UPDATE]='--title'
+                [ARG]='--arch --command --branch --var --allow --forbid --subject --body --title --runtime'
         )
 
         if __contains_word "--user" ${COMP_WORDS[*]}; then
@@ -56,7 +57,7 @@ _xdg-app() {
                         --allow|--forbid)
                                 comps='x11 wayland ipc pulseaudio system-dbus session-dbus network host-fs homedir'
                                 ;;
-                        --branch|--subject|--body)
+                        --branch|--subject|--body|--title)
                                 comps=''
                                 ;;
                 esac
@@ -151,6 +152,9 @@ _xdg-app() {
                 fi
                 if [ "$verb" = "build-export" ]; then
                         comps="$comps ${OPTS[BUILD_EXPORT]}"
+                fi
+                if [ "$verb" = "repo-update" ]; then
+                        comps="$comps ${OPTS[REPO_UPDATE]}"
                 fi
 
         else
