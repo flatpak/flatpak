@@ -34,8 +34,7 @@ gboolean xdg_app_remove_dangling_symlinks (GFile    *dir,
                                            GCancellable  *cancellable,
                                            GError       **error);
 
-gboolean ostree_repo_load_summary (OstreeRepo *repo,
-                                   const char *repository,
+gboolean ostree_repo_load_summary (const char *repository_url,
                                    GHashTable **refs,
                                    gchar **title,
                                    GCancellable *cancellable,

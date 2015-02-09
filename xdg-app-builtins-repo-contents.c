@@ -29,7 +29,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   gboolean ret = FALSE;
   GOptionContext *context;
   gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_object OstreeRepo *repo = NULL;
+  OstreeRepo *repo = NULL;
   gs_unref_hashtable GHashTable *refs = NULL;
   gs_free char *title = NULL;
   GHashTableIter iter;
@@ -39,7 +39,6 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   int i;
   const char *repository;
   gs_free char *url = NULL;
-  gs_free char *summary_url = NULL;
   gs_unref_bytes GBytes *bytes = NULL;
 
   context = g_option_context_new (" REPOSITORY - Show available runtimes and applications");
@@ -56,7 +55,10 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   repository = argv[1];
 
   repo = xdg_app_dir_get_repo (dir);
-  if (!ostree_repo_load_summary (repo, repository, &refs, &title, cancellable, error))
+  if (!ostree_repo_remote_get_url (repo, repository, &url, error))
+    goto out;
+
+  if (!ostree_repo_load_summary (url, &refs, &title, cancellable, error))
     goto out;
 
   names = g_ptr_array_new_with_free_func (g_free);

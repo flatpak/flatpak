@@ -390,24 +390,19 @@ out:
 }
 
 gboolean
-ostree_repo_load_summary (OstreeRepo *repo,
-                          const char *repository,
+ostree_repo_load_summary (const char *repository_url,
                           GHashTable **refs,
                           gchar **title,
                           GCancellable *cancellable,
                           GError **error)
 {
   gboolean ret = FALSE;
-  gs_free char *url = NULL;
   gs_free char *summary_url = NULL;
   gs_unref_bytes GBytes *bytes = NULL;
   gs_unref_hashtable GHashTable *local_refs = NULL;
   gs_free char *local_title = NULL;
 
-  if (!ostree_repo_remote_get_url (repo, repository, &url, error))
-    goto out;
-
-  summary_url = g_build_filename (url, "summary", NULL);
+  summary_url = g_build_filename (repository_url, "summary", NULL);
   if (load_contents (summary_url, &bytes, cancellable, NULL))
     {
       gs_unref_variant GVariant *summary;
@@ -438,13 +433,13 @@ ostree_repo_load_summary (OstreeRepo *repo,
             goto out;
 
           checksum = ostree_checksum_from_bytes_v (csum_v);
-          g_debug ("%s summary: %s -> %s", repository, refname, checksum);
+          g_debug ("\t%s -> %s", refname, checksum);
           g_hash_table_insert (local_refs, g_strdup (refname), checksum);
         }
 
        g_variant_dict_init (&dict, extensions);
        g_variant_dict_lookup (&dict, "xa.title", "s", &local_title);
-       g_debug ("%s summary: title %s", repository, local_title);
+       g_debug ("Summary title: %s", local_title);
        g_variant_dict_end (&dict);
     }
 
