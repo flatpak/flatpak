@@ -69,4 +69,23 @@ g_key_file_save_to_file (GKeyFile     *key_file,
 }
 #endif
 
+/* Returns the first string in subset that is not in strv */
+static inline const gchar *
+g_strv_subset (const gchar * const *strv,
+               const gchar * const *subset)
+{
+  int i;
+
+  for (i = 0; subset[i]; i++)
+    {
+      const char *key;
+
+      key = subset[i];
+      if (!g_strv_contains (strv, key))
+        return key;
+    }
+
+  return NULL;
+}
+
 #endif /* __XDG_APP_UTILS_H__ */
