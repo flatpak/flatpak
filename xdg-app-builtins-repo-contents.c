@@ -130,7 +130,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
               break;
             }
 
-	  if (found)
+	  if (!found)
             g_ptr_array_add (names, name);
 	  else
 	    g_free (name);
