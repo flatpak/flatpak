@@ -25,6 +25,7 @@ _xdg-app() {
                 [GENERAL]='--help --verbose --version'
                 [MODE]='--user --system'
                 [ARCH]='--arch'
+                [ADD_REMOTE]='--no-gpg-verify --if-not-exists --title'
                 [LIST_REMOTES]='--show-urls'
                 [REPO_CONTENTS]='--show-details --runtimes --apps --update'
                 [UNINSTALL]='--keep-ref'
@@ -155,6 +156,9 @@ _xdg-app() {
                 fi
                 if [ "$verb" = "repo-update" ]; then
                         comps="$comps ${OPTS[REPO_UPDATE]}"
+                fi
+                if [ "$verb" = "add-remote" ]; then
+                        comps="$comps ${OPTS[ADD_REMOTE]}"
                 fi
 
         else
