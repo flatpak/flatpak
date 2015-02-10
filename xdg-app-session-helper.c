@@ -66,36 +66,8 @@ copy_file (const char *source,
   gchar *contents = NULL;
   gsize len;
 
-  if (g_file_test (source, G_FILE_TEST_IS_SYMLINK))
-    {
-      contents = g_file_read_link (source, NULL);
-      if (contents)
-	{
-	  unlink (dest);
-
-	  if (strcmp (source, "/etc/localtime") == 0)
-	    {
-	      char *zoneinfo = g_strrstr (contents, "zoneinfo/");
-	      char *new_contents;
-
-	      if (zoneinfo)
-		{
-		  new_contents = g_build_filename ("/usr/share/zoneinfo", zoneinfo + strlen ("zoneinfo/"), NULL);
-		  g_free (contents);
-		  contents = new_contents;
-		}
-	    }
-
-	  symlink (contents, dest);
-	}
-    }
-  else
-    {
-      if (g_file_get_contents (source, &contents, &len, NULL))
-	{
-	  g_file_set_contents (dest, contents, len, NULL);
-	}
-    }
+  if (g_file_get_contents (source, &contents, &len, NULL))
+    g_file_set_contents (dest, contents, len, NULL);
 
   g_free (basename);
   g_free (dest);
