@@ -250,6 +250,7 @@ typedef enum {
   FILE_TYPE_BIND,
   FILE_TYPE_BIND_RO,
   FILE_TYPE_MOUNT,
+  FILE_TYPE_REMOUNT,
   FILE_TYPE_DEVICE,
   FILE_TYPE_SHM,
 } file_type_t;
@@ -338,7 +339,8 @@ static const create_table_t create[] = {
   { FILE_TYPE_DEVICE, "dev/urandom", S_IFCHR|0666, "/dev/urandom"},
   { FILE_TYPE_DEVICE, "dev/tty", S_IFCHR|0666, "/dev/tty"},
   { FILE_TYPE_DIR, "dev/dri", 0755},
-  { FILE_TYPE_BIND, "dev/dri", 0755, "/dev/dri", FILE_FLAGS_NON_FATAL|FILE_FLAGS_DEVICES},
+  { FILE_TYPE_BIND_RO, "dev/dri", 0755, "/dev/dri", FILE_FLAGS_NON_FATAL|FILE_FLAGS_DEVICES},
+  { FILE_TYPE_REMOUNT, "dev", MS_RDONLY|MS_NOSUID|MS_NOEXEC},
 };
 
 /* warning: Don't create any actual files here, as we could potentially
@@ -648,6 +650,13 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
 
           if (!found)
             die ("Unable to find mount %s\n", name);
+
+          break;
+
+        case FILE_TYPE_REMOUNT:
+          if (mount ("none", name,
+                     NULL, MS_MGC_VAL|MS_REMOUNT|mode, NULL) != 0)
+            die_with_error ("Unable to remount %s\n", name);
 
           break;
 
