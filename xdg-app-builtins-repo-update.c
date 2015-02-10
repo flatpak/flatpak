@@ -10,6 +10,13 @@
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
 
+static char *opt_title;
+
+static GOptionEntry options[] = {
+  { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this repository", "TITLE" },
+  { NULL }
+};
+
 
 gboolean
 xdg_app_builtin_repo_update (int argc, char **argv, GCancellable *cancellable, GError **error)
@@ -19,10 +26,11 @@ xdg_app_builtin_repo_update (int argc, char **argv, GCancellable *cancellable, G
   gs_unref_object GFile *repofile = NULL;
   gs_unref_object OstreeRepo *repo = NULL;
   const char *location;
+  GVariant *extra = NULL;
 
   context = g_option_context_new ("LOCATION - Update repository metadata");
 
-  if (!xdg_app_option_context_parse (context, NULL, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
   if (argc < 2)
@@ -39,7 +47,16 @@ xdg_app_builtin_repo_update (int argc, char **argv, GCancellable *cancellable, G
   if (!ostree_repo_open (repo, cancellable, error))
     goto out;
 
-  if (!ostree_repo_regenerate_summary (repo, NULL, cancellable, error))
+  if (opt_title)
+    {
+      GVariantBuilder builder;
+
+      g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
+      g_variant_builder_add (&builder, "{sv}", "xa.title", g_variant_new_string (opt_title));
+      extra = g_variant_builder_end (&builder);
+    }
+
+  if (!ostree_repo_regenerate_summary (repo, extra, cancellable, error))
     goto out;
 
   /* TODO: appstream data */

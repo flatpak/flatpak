@@ -69,6 +69,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--title=TITLE</option></term>
+
+                <listitem><para>
+                    A title for the repository, e.g. for display in a UI.
+                    The title is stored in the repository summary.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

@@ -2,6 +2,7 @@
 #define __XDG_APP_UTILS_H__
 
 #include <gio/gio.h>
+#include <ostree.h>
 
 const char * xdg_app_get_arch (void);
 
@@ -32,6 +33,12 @@ gboolean xdg_app_overlay_symlink_tree (GFile    *source,
 gboolean xdg_app_remove_dangling_symlinks (GFile    *dir,
                                            GCancellable  *cancellable,
                                            GError       **error);
+
+gboolean ostree_repo_load_summary (const char *repository_url,
+                                   GHashTable **refs,
+                                   gchar **title,
+                                   GCancellable *cancellable,
+                                   GError **error);
 
 #if !GLIB_CHECK_VERSION(2,43,1)
 static inline  gboolean

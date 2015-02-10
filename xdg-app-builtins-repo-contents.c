@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "libgsystem.h"
-#include <libsoup/soup.h>
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -24,58 +23,15 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-static gboolean
-load_contents (const char *uri, GBytes **contents, GCancellable *cancellable, GError **error)
-{
-  gboolean ret = FALSE;
-  gs_free char *scheme = NULL;
-
-  scheme = g_uri_parse_scheme (uri);
-  if (strcmp (scheme, "file") == 0)
-    {
-      char *buffer;
-      gsize length;
-      gs_unref_object GFile *file = NULL;
-
-      g_debug ("Loading summary %s using GIO", uri);
-      file = g_file_new_for_uri (uri);
-      if (!g_file_load_contents (file, cancellable, &buffer, &length, NULL, NULL))
-        goto out;
-
-      *contents = g_bytes_new_take (buffer, length);
-    }
-  else
-    {
-      gs_unref_object SoupSession *session = NULL;
-      gs_unref_object SoupMessage *msg = NULL;
-
-      g_debug ("Loading summary %s using libsoup", uri);
-      session = soup_session_new ();
-      msg = soup_message_new ("GET", uri);
-      soup_session_send_message (session, msg);
-
-      if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
-        goto out;
-
-      *contents = g_bytes_new (msg->response_body->data, msg->response_body->length);
-    }
-
-  ret = TRUE;
-
-  g_debug ("Received %ld bytes", g_bytes_get_size (*contents));
-
-out:
-  return ret;
-}
-
 gboolean
 xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
   GOptionContext *context;
   gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_object OstreeRepo *repo = NULL;
+  OstreeRepo *repo = NULL;
   gs_unref_hashtable GHashTable *refs = NULL;
+  gs_free char *title = NULL;
   GHashTableIter iter;
   gpointer key;
   gpointer value;
@@ -83,7 +39,6 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   int i;
   const char *repository;
   gs_free char *url = NULL;
-  gs_free char *summary_url = NULL;
   gs_unref_bytes GBytes *bytes = NULL;
 
   context = g_option_context_new (" REPOSITORY - Show available runtimes and applications");
@@ -103,43 +58,8 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   if (!ostree_repo_remote_get_url (repo, repository, &url, error))
     goto out;
 
-  summary_url = g_build_filename (url, "summary", NULL);
-  if (load_contents (summary_url, &bytes, cancellable, NULL))
-    {
-      gs_unref_variant GVariant *summary;
-      gs_unref_variant GVariant *ref_list;
-      int n;
-
-      refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-
-      summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, FALSE);
-      ref_list = g_variant_get_child_value (summary, 0);
-      n = g_variant_n_children (ref_list);
-      g_debug ("Summary contains %d refs", n);
-      for (i = 0; i < n; i++)
-        {
-          gs_unref_variant GVariant *ref = NULL;
-          gs_unref_variant GVariant *csum_v = NULL;
-          char *refname;
-          char *checksum;
-
-          ref = g_variant_get_child_value (ref_list, i);
-          g_variant_get (ref, "(&s(t@aya{sv}))", &refname, NULL, &csum_v, NULL);
-
-          if (!ostree_validate_rev (refname, error))
-            goto out;
-
-          checksum = ostree_checksum_from_bytes_v (csum_v);
-          g_debug ("%s summary: %s -> %s\n", repository, refname, checksum);
-          g_hash_table_insert (refs, g_strdup (refname), checksum);
-        }
-    }
-  else
-    {
-      g_printerr ("Failed to load summary file for remote %s, listing local refs\n", repository);
-      if (!ostree_repo_list_refs (repo, NULL, &refs, cancellable, error))
-        goto out;
-    }
+  if (!ostree_repo_load_summary (url, &refs, &title, cancellable, error))
+    goto out;
 
   names = g_ptr_array_new_with_free_func (g_free);
 
@@ -212,7 +132,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
               break;
             }
 
-	  if (found)
+	  if (!found)
             g_ptr_array_add (names, name);
 	  else
 	    g_free (name);
