@@ -53,9 +53,9 @@
         </para>
         <para>
             The details of the sandboxed environment are controlled by the application
-            metadata and the --forbid option that are passed to the run command: Access
-            is allowed if the application requested it in its metadata file and the
-            user hasn;t forbidden it.
+            metadata and the --allow and --forbid options that are passed to the run
+            command: Access is allowed if it was requested either in the application
+            metadata file or with an --allow option and the user hasn;t forbidden it.
         </para>
 
     </refsect1>
@@ -117,11 +117,25 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--allow=KEY</option></term>
+
+                <listitem><para>
+                    Allow access to the named facility. This overrides
+                    the Environment section from the application metadata.
+                    KEY must be one of: x11, wayland, ipc, pulseaudio, system-dbus,
+                    session-dbus, network, host-fs, homedir.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--forbid=KEY</option></term>
 
                 <listitem><para>
-                    Disallow access to the named facility. KEY must
-                    be one of: x11, wayland, ipc, pulseaudio, system-dbus,
+                    Disallow access to the named facility. This overrides the
+                    Environment section from the application metadata and
+                    --allow options to this command.
+                    KEY must be one of: x11, wayland, ipc, pulseaudio, system-dbus,
                     session-dbus, network, host-fs, homedir.
                     This option can be used multiple times.
                 </para></listitem>
