@@ -126,6 +126,23 @@ xdg_app_is_valid_name (const char *string)
   return ret;
 }
 
+gboolean
+xdg_app_has_name_prefix (const char *string,
+                         const char *name)
+{
+  const char *rest;
+
+  if (!g_str_has_prefix (string, name))
+    return FALSE;
+
+  rest = string + strlen (name);
+  return
+    *rest == 0 ||
+    *rest == '.' ||
+    !is_valid_name_character (*rest);
+}
+
+
 static gboolean
 is_valid_initial_branch_character (gint c)
 {

@@ -6,6 +6,8 @@
 
 const char * xdg_app_get_arch (void);
 
+gboolean xdg_app_has_name_prefix (const char *string,
+                                  const char *name);
 gboolean xdg_app_is_valid_name (const char *string);
 gboolean xdg_app_is_valid_branch (const char *string);
 

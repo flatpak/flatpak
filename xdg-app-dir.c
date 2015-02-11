@@ -686,6 +686,12 @@ export_dir (const char    *app,
         {
           gs_free gchar *target = NULL;
 
+          if (!xdg_app_has_name_prefix (dent->d_name, app))
+            {
+              g_warning ("Non-prefixed filename %s in app %s, ignoring.\n", dent->d_name, app);
+              continue;
+            }
+
           if (g_str_has_suffix (dent->d_name, ".desktop") || g_str_has_suffix (dent->d_name, ".service"))
             {
               gs_free gchar *new_name = NULL;
