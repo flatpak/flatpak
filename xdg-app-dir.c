@@ -524,6 +524,20 @@ export_desktop_file (const char    *app,
   if (!g_key_file_load_from_data (keyfile, data, data_len, G_KEY_FILE_KEEP_TRANSLATIONS, error))
     goto out;
 
+  if (g_str_has_suffix (name, ".service"))
+    {
+      gs_free gchar *dbus_name = NULL;
+      gs_free gchar *expected_dbus_name = g_strndup (name, strlen (name) - strlen (".service"));
+
+      dbus_name = g_key_file_get_string (keyfile, "D-BUS Service", "Name", NULL);
+
+      if (dbus_name == NULL || strcmp (dbus_name, expected_dbus_name) != 0)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "dbus service file %s has wrong name", name);
+          return FALSE;
+        }
+    }
+
   groups = g_key_file_get_groups (keyfile, NULL);
 
   for (i = 0; groups[i] != NULL; i++)
