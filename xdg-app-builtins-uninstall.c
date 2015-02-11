@@ -92,6 +92,18 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   else
     arch = xdg_app_get_arch ();
 
+  if (!xdg_app_is_valid_name (name))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid runtime name", name);
+      goto out;
+    }
+
+  if (!xdg_app_is_valid_branch (branch))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
+      goto out;
+    }
+
   /* TODO: look for apps, require --force */
 
   ref = g_build_filename ("runtime", name, arch, branch, NULL);
@@ -209,6 +221,18 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
     arch = opt_arch;
   else
     arch = xdg_app_get_arch ();
+
+  if (!xdg_app_is_valid_name (name))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", name);
+      goto out;
+    }
+
+  if (!xdg_app_is_valid_branch (branch))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
+      goto out;
+    }
 
   ref = g_build_filename ("app", name, arch, branch, NULL);
 

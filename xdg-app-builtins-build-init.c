@@ -62,6 +62,24 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (argc >= 5)
     branch = argv[4];
 
+  if (!xdg_app_is_valid_name (runtime))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid runtime name", runtime);
+      goto out;
+    }
+
+  if (!xdg_app_is_valid_name (sdk))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid sdk name", sdk);
+      goto out;
+    }
+
+  if (!xdg_app_is_valid_branch (branch))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
+      goto out;
+    }
+
   runtime_ref = xdg_app_build_untyped_ref (runtime, branch, opt_arch);
   sdk_ref = xdg_app_build_untyped_ref (sdk, branch, opt_arch);
 

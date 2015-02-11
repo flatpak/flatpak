@@ -301,6 +301,18 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (opt_branch)
     branch = opt_branch;
 
+  if (!xdg_app_is_valid_name (app))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app);
+      goto out;
+    }
+
+  if (!xdg_app_is_valid_branch (branch))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
+      goto out;
+    }
+
   app_ref = xdg_app_build_app_ref (app, branch, opt_arch);
 
   user_dir = xdg_app_dir_get_user ();

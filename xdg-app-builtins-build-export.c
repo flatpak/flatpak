@@ -134,10 +134,22 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   directory = argv[2];
   name = argv[3];
 
+  if (!xdg_app_is_valid_name (name))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", name);
+      goto out;
+    }
+
   if (argc >= 5)
     branch = argv[4];
   else
     branch = "master";
+
+  if (!xdg_app_is_valid_branch (branch))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
+      goto out;
+    }
 
   base = g_file_new_for_commandline_arg (directory);
   files = g_file_get_child (base, "files");
