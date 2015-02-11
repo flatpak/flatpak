@@ -32,6 +32,170 @@ xdg_app_get_arch (void)
   return arch;
 }
 
+static gboolean
+is_valid_initial_name_character (gint c)
+{
+  return
+    (c >= 'A' && c <= 'Z') ||
+    (c >= 'a' && c <= 'z') ||
+    (c == '_');
+}
+
+static gboolean
+is_valid_name_character (gint c)
+{
+  return
+    is_valid_initial_name_character (c) ||
+    (c >= '0' && c <= '9');
+}
+
+/** xdg_app_is_name:
+ * @string: The string to check
+ *
+ * Checks if @string is a valid application name.
+ *
+ * App names are composed of 3 or more elements separated by a period
+ * ('.') character. All elements must contain at least one character.
+ *
+ * Each element must only contain the ASCII characters
+ * "[A-Z][a-z][0-9]_". Elements may not begin with a digit.
+ *
+ * App names must not begin with a '.' (period) character.
+ *
+ * App names must not exceed 255 characters in length.
+ *
+ * The above means that any app name is also a valid DBus well known
+ * bus name, but not all DBus names are valid app names. The difference are:
+ * 1) DBus name elements may contain '-'
+ * 2) DBus names require only two elements
+ *
+ * Returns: %TRUE if valid, %FALSE otherwise.
+ *
+ * Since: 2.26
+ */
+gboolean
+xdg_app_is_valid_name (const char *string)
+{
+  guint len;
+  gboolean ret;
+  const gchar *s;
+  const gchar *end;
+  int dot_count;
+
+  g_return_val_if_fail (string != NULL, FALSE);
+
+  ret = FALSE;
+
+  len = strlen (string);
+  if (G_UNLIKELY (len == 0 || len > 255))
+    goto out;
+
+  end = string + len;
+
+  s = string;
+  if (G_UNLIKELY (*s == '.'))
+    {
+      /* can't start with a . */
+      goto out;
+    }
+  else if (G_UNLIKELY (!is_valid_initial_name_character (*s)))
+    goto out;
+
+  s += 1;
+  dot_count = 0;
+  while (s != end)
+    {
+      if (*s == '.')
+        {
+          s += 1;
+          if (G_UNLIKELY (s == end || !is_valid_initial_name_character (*s)))
+            goto out;
+          dot_count++;
+        }
+      else if (G_UNLIKELY (!is_valid_name_character (*s)))
+        goto out;
+      s += 1;
+    }
+
+  if (G_UNLIKELY (dot_count < 2))
+    goto out;
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
+static gboolean
+is_valid_initial_branch_character (gint c)
+{
+  return
+    (c >= '0' && c <= '9') ||
+    (c >= 'A' && c <= 'Z') ||
+    (c >= 'a' && c <= 'z') ||
+    (c == '_') ||
+    (c == '-');
+}
+
+static gboolean
+is_valid_branch_character (gint c)
+{
+  return
+    is_valid_initial_branch_character (c) ||
+    (c == '.');
+}
+
+/** xdg_app_is_valid_branch:
+ * @string: The string to check
+ *
+ * Checks if @string is a valid branch name.
+ *
+ * Branch names must only contain the ASCII characters
+ * "[A-Z][a-z][0-9]_-.".
+ * Branch names may not begin with a digit.
+ * Branch names must contain at least one character.
+ *
+ * Returns: %TRUE if valid, %FALSE otherwise.
+ *
+ * Since: 2.26
+ */
+gboolean
+xdg_app_is_valid_branch (const char *string)
+{
+  guint len;
+  gboolean ret;
+  const gchar *s;
+  const gchar *end;
+
+  g_return_val_if_fail (string != NULL, FALSE);
+
+  ret = FALSE;
+
+  len = strlen (string);
+  if (G_UNLIKELY (len == 0))
+    goto out;
+
+  end = string + len;
+
+  s = string;
+  if (G_UNLIKELY (!is_valid_initial_branch_character (*s)))
+    goto out;
+
+  s += 1;
+  while (s != end)
+    {
+      if (G_UNLIKELY (!is_valid_branch_character (*s)))
+        goto out;
+      s += 1;
+    }
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
+
 char *
 xdg_app_build_untyped_ref (const char *runtime,
                            const char *branch,

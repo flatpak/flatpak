@@ -6,6 +6,9 @@
 
 const char * xdg_app_get_arch (void);
 
+gboolean xdg_app_is_valid_name (const char *string);
+gboolean xdg_app_is_valid_branch (const char *string);
+
 char * xdg_app_build_untyped_ref (const char *runtime,
                                   const char *branch,
                                   const char *arch);
