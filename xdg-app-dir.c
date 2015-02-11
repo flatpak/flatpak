@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 #include <gio/gio.h>
 #include "libgsystem.h"
@@ -618,10 +619,13 @@ export_dir (const char    *app,
   int res;
   gs_dirfd_iterator_cleanup GSDirFdIterator source_iter;
   gs_fd_close int destination_dfd = -1;
+  gs_unref_hashtable GHashTable *visited_children = NULL;
   struct dirent *dent;
 
   if (!gs_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
     goto out;
+
+  visited_children = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   do
     res = mkdirat (destination_parent_fd, destination_name, 0777);
@@ -649,6 +653,12 @@ export_dir (const char    *app,
 
       if (dent == NULL)
         break;
+
+      if (g_hash_table_contains (visited_children, dent->d_name))
+          continue;
+
+      /* Avoid processing the same file again if it was re-created during an export */
+      g_hash_table_insert (visited_children, g_strdup (dent->d_name), GINT_TO_POINTER(1));
 
       if (fstatat (source_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
         {
@@ -683,12 +693,16 @@ export_dir (const char    *app,
               if (!export_desktop_file (app, branch, arch, source_iter.fd, dent->d_name, &stbuf, &new_name, cancellable, error))
                 goto out;
 
-              target = g_build_filename (source_symlink_prefix, new_name, NULL);
+              g_hash_table_insert (visited_children, g_strdup (new_name), GINT_TO_POINTER(1));
+
+              if (renameat (source_iter.fd, new_name, source_iter.fd, dent->d_name) != 0)
+                {
+                  gs_set_error_from_errno (error, errno);
+                  goto out;
+                }
             }
-          else
-            {
-              target = g_build_filename (source_symlink_prefix, dent->d_name, NULL);
-            }
+
+          target = g_build_filename (source_symlink_prefix, dent->d_name, NULL);
 
           if (unlinkat (destination_dfd, dent->d_name, 0) != 0 && errno != ENOENT)
             {
