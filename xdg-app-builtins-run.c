@@ -155,9 +155,6 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   const char *command = "/bin/sh";
   int i;
   int rest_argv_start, rest_argc;
-  const char *no_opts[1] = { NULL };
-  const char **allow;
-  const char **forbid;
 
   context = g_option_context_new ("APP [args...] - Run an app");
 
@@ -310,88 +307,15 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 	}
     }
 
-  if (opt_forbid)
-    forbid = (const char **)opt_forbid;
-  else
-    forbid = no_opts;
-
-  if (!xdg_app_run_verify_environment_keys (forbid, error))
+  if (!xdg_app_run_verify_environment_keys ((const char **)opt_forbid, error))
     goto out;
 
-  if (opt_allow)
-    allow = (const char **)opt_allow;
-  else
-    allow = no_opts;
-
-  if (!xdg_app_run_verify_environment_keys (allow, error))
+  if (!xdg_app_run_verify_environment_keys ((const char **)opt_allow, error))
     goto out;
 
-  if ((g_key_file_get_boolean (metakey, "Environment", "ipc", NULL) || g_strv_contains (allow, "ipc")) &&
-      !g_strv_contains (forbid, "ipc"))
-    {
-      g_debug ("Allowing ipc access");
-      g_ptr_array_add (argv_array, g_strdup ("-i"));
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "host-fs", NULL) || g_strv_contains (allow, "nost-fs")) &&
-      !g_strv_contains (forbid, "host-fs"))
-    {
-      g_debug ("Allowing host-fs access");
-      g_ptr_array_add (argv_array, g_strdup ("-f"));
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "homedir", NULL) || g_strv_contains (allow, "homedir")) &&
-      !g_strv_contains (forbid, "homedir"))
-    {
-      g_debug ("Allowing homedir access");
-      g_ptr_array_add (argv_array, g_strdup ("-H"));
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "network", NULL) || g_strv_contains (allow, "network")) &&
-      !g_strv_contains (forbid, "network"))
-    {
-      g_debug ("Allowing network access");
-      g_ptr_array_add (argv_array, g_strdup ("-n"));
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "x11", NULL) || g_strv_contains (allow, "x11")) &&
-      !g_strv_contains (forbid, "x11"))
-    {
-      g_debug ("Allowing x11 access");
-      xdg_app_run_add_x11_args (argv_array);
-    }
-  else
-    {
-      xdg_app_run_add_no_x11_args (argv_array);
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "wayland", NULL) || g_strv_contains (allow, "wayland")) &&
-      !g_strv_contains (forbid, "wayland"))
-    {
-      g_debug ("Allowing wayland access");
-      xdg_app_run_add_wayland_args (argv_array);
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "pulseaudio", NULL) || g_strv_contains (allow, "pulseaudio")) &&
-      !g_strv_contains (forbid, "pulseaudio"))
-    {
-      g_debug ("Allowing pulseaudio access");
-      xdg_app_run_add_pulseaudio_args (argv_array);
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "system-dbus", NULL) || g_strv_contains (allow, "system-dbus")) &&
-      !g_strv_contains (forbid, "system-dbus"));
-    {
-      g_debug ("Allowing system-dbus access");
-      xdg_app_run_add_system_dbus_args (argv_array);
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL) || g_strv_contains (allow, "session-dbus")) &&
-      !g_strv_contains (forbid, "session-dbus"))
-    {
-      g_debug ("Allowing session-dbus access");
-      xdg_app_run_add_session_dbus_args (argv_array);
-    }
+  xdg_app_run_add_environment_args (argv_array, metakey,
+				    (const char **)opt_allow,
+				    (const char **)opt_forbid);
 
   g_ptr_array_add (argv_array, g_strdup ("-a"));
   g_ptr_array_add (argv_array, g_file_get_path (app_files));
