@@ -47,6 +47,7 @@ collect_exports (GFile *base, GCancellable *cancellable, GError **error)
   const char *paths[] = {
     "share/applications",                 /* Copy desktop files */
     "share/icons/hicolor",                /* Icons */
+    "share/pixmaps",                      /* Icons */
     "share/dbus-1/services",              /* D-Bus service files */
     "share/gnome-shell/search-providers", /* Search providers */
     NULL,
