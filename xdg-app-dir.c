@@ -557,7 +557,7 @@ export_desktop_file (const char    *app,
           int i;
           gs_free char *command = g_shell_quote (old_argv[0]);
 
-          g_string_append_printf (new_exec, " --command='%s'", command);
+          g_string_append_printf (new_exec, " --command=%s", command);
 
           g_string_append (new_exec, " ");
           g_string_append (new_exec, escaped_app);
