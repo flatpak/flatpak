@@ -49,12 +49,6 @@ BUILTINPROTO(repo_update);
 
 #undef BUILTINPROTO
 
-void xdg_app_run_add_x11_args (GPtrArray *argv_array);
-void xdg_app_run_add_no_x11_args (GPtrArray *argv_array);
-void xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array);
-void xdg_app_run_add_system_dbus_args (GPtrArray *argv_array);
-void xdg_app_run_add_session_dbus_args (GPtrArray *argv_array);
-
 G_END_DECLS
 
 #endif /* __XDG_APP_BUILTINS_H__ */

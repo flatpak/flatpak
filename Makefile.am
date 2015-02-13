@@ -88,6 +88,8 @@ xdg_app_SOURCES = \
 	xdg-app-builtins-repo-update.c \
 	xdg-app-dir.c \
 	xdg-app-dir.h \
+	xdg-app-run.c \
+	xdg-app-run.h \
 	xdg-app-utils.h \
 	xdg-app-utils.c \
 	$(dbus_built_sources)		\

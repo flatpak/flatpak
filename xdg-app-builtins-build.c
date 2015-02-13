@@ -10,6 +10,7 @@
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
+#include "xdg-app-run.h"
 
 static gboolean opt_runtime;
 static gboolean opt_network;
