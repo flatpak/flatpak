@@ -13,13 +13,13 @@
 #include "xdg-app-run.h"
 
 static gboolean opt_runtime;
-static gboolean opt_network;
-static gboolean opt_x11;
+static char **opt_allow;
+static char **opt_forbid;
 
 static GOptionEntry options[] = {
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Use non-devel runtime", NULL },
-  { "network", 'n', 0, G_OPTION_ARG_NONE, &opt_network, "Allow network access", NULL },
-  { "x11", 'x', 0, G_OPTION_ARG_NONE, &opt_x11, "Allow x11 access", NULL },
+  { "allow", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_allow, "Environment options to set to true", "KEY" },
+  { "forbid", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_forbid, "Environment options to set to false", "KEY" },
   { NULL }
 };
 
@@ -116,13 +116,15 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_ptr_array_add (argv_array, g_strdup ("-f"));
   g_ptr_array_add (argv_array, g_strdup ("-H"));
 
-  if (opt_network)
-    g_ptr_array_add (argv_array, g_strdup ("-n"));
+  if (!xdg_app_run_verify_environment_keys ((const char **)opt_forbid, error))
+    goto out;
 
-  if (opt_x11)
-    xdg_app_run_add_x11_args (argv_array);
-  else
-    xdg_app_run_add_no_x11_args (argv_array);
+  if (!xdg_app_run_verify_environment_keys ((const char **)opt_allow, error))
+    goto out;
+
+  xdg_app_run_add_environment_args (argv_array, metakey,
+				    (const char **)opt_allow,
+				    (const char **)opt_forbid);
 
   g_ptr_array_add (argv_array, g_strdup ("-w"));
   g_ptr_array_add (argv_array, g_strdup ("-a"));

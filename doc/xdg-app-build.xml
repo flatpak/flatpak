@@ -69,6 +69,40 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>-r</option></term>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    Use the non-devel runtime that is specified in the application metadata instead of the devel runtime.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--allow=KEY</option></term>
+
+                <listitem><para>
+                    Allow access to the named facility. This overrides
+                    the Environment section from the application metadata.
+                    KEY must be one of: x11, wayland, ipc, pulseaudio, system-dbus,
+                    session-dbus, network, host-fs, homedir.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--forbid=KEY</option></term>
+
+                <listitem><para>
+                    Disallow access to the named facility. This overrides the
+                    Environment section from the application metadata and
+                    --allow options to this command.
+                    KEY must be one of: x11, wayland, ipc, pulseaudio, system-dbus,
+                    session-dbus, network, host-fs, homedir.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
     </refsect1>
 

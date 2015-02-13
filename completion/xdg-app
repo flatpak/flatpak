@@ -31,7 +31,7 @@ _xdg-app() {
                 [UNINSTALL]='--keep-ref'
                 [RUN]='--command --branch --devel --allow --forbid --runtime'
                 [BUILD_INIT]='--arch --var'
-                [BUILD]='--runtime --network --x11'
+                [BUILD]='--runtime  --allow --forbid'
                 [BUILD_FINISH]='--command --allow'
                 [BUILD_EXPORT]='--subject --body'
                 [REPO_UPDATE]='--title'
