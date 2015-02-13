@@ -10,6 +10,27 @@
 #include "xdg-app-run.h"
 #include "xdg-app-utils.h"
 
+gboolean
+xdg_app_run_verify_environment_keys (const char **keys,
+				     GError **error)
+{
+  const char *key;
+  const char *environment_keys[] = {
+    "x11", "wayland", "ipc", "pulseaudio", "system-dbus", "session-dbus",
+    "network", "host-fs", "homedir", NULL
+  };
+
+  if ((key = g_strv_subset (environment_keys, keys)) != NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+		   "Unknown Environment key %s", key);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+
 static char *
 extract_unix_path_from_dbus_address (const char *address)
 {

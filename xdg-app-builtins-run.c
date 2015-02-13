@@ -154,12 +154,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   const char *branch = "master";
   const char *command = "/bin/sh";
   int i;
-  const char *key;
   int rest_argv_start, rest_argc;
-  const char *environment_keys[] = {
-    "x11", "wayland", "ipc", "pulseaudio", "system-dbus", "session-dbus",
-    "network", "host-fs", "homedir", NULL
-  };
   const char *no_opts[1] = { NULL };
   const char **allow;
   const char **forbid;
@@ -320,22 +315,16 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   else
     forbid = no_opts;
 
-  if ((key = g_strv_subset (environment_keys, forbid)) != NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unknown Environment key %s", key);
-      goto out;
-    }
+  if (!xdg_app_run_verify_environment_keys (forbid, error))
+    goto out;
 
   if (opt_allow)
     allow = (const char **)opt_allow;
   else
     allow = no_opts;
 
-  if ((key = g_strv_subset (environment_keys, allow)) != NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unknown Environment key %s", key);
-      goto out;
-    }
+  if (!xdg_app_run_verify_environment_keys (allow, error))
+    goto out;
 
   if ((g_key_file_get_boolean (metakey, "Environment", "ipc", NULL) || g_strv_contains (allow, "ipc")) &&
       !g_strv_contains (forbid, "ipc"))
