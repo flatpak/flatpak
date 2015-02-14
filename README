@@ -1,0 +1,10 @@
+libgsystem is intended to be used as a git external for components
+that depend on GLib, but accept a hard dependency on things which are
+difficult to do in GLib itself.  For example, the local-alloc API
+depends on GCC/clang.
+
+It will also be a useful place to evolve new APIs (e.g. logging)
+before their eventual inclusion in GLib (if ever).
+
+There's no bugzilla component currently, please mail
+patches to: walters@verbum.org

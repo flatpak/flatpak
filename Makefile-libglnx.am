@@ -1,0 +1,28 @@
+# Copyright (C) 2015 Colin Walters <walters@verbum.org>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
+
+EXTRA_DIST += $(libglnx_srcpath)/README $(libglnx_srcpath)/COPYING
+
+libglnx_la_SOURCES = \
+	$(libglnx_srcpath)/glnx-backport-autocleanups.h \
+	$(libglnx_srcpath)/glnx-backport-autoptr.h \
+	$(libglnx_srcpath)/libglnx.h \
+	$(NULL)
+
+libglnx_la_CFLAGS = $(AM_CFLAGS) $(libglnx_cflags)
+libglnx_la_LDFLAGS = -avoid-version -Bsymbolic-functions -export-symbols-regex "^glnx_" -no-undefined -export-dynamic
+libglnx_la_LIBADD = $(libglnx_libs)

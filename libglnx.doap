@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/"
+         xmlns:gnome="http://api.gnome.org/doap-extensions#"
+         xmlns="http://usefulinc.com/ns/doap#">
+
+  <name>libglnx</name>
+  <shortname>libglnx</shortname>
+
+  <shortdesc xml:lang="en">"Copylib" for system service modules using GLib with Linux</shortdesc>
+
+  <description xml:lang="en">This module is intended for use by
+  infrastructure code using GLib that is also Linux specific, such as
+  ostree, NetworkManager, and others.
+  </description>
+
+  <license rdf:resource="http://usefulinc.com/doap/licenses/lgpl" />
+  <mailing-list rdf:resource="mailto:desktop-devel-list@gnome.org" />
+
+  <programming-language>C</programming-language>
+
+  <maintainer>
+    <foaf:Person>
+      <foaf:name>Colin Walters</foaf:name>
+      <foaf:mbox rdf:resource="mailto:walters@verbum.org"/>
+      <gnome:userid>walters</gnome:userid>
+    </foaf:Person>
+  </maintainer>
+
+</Project>
