@@ -80,12 +80,22 @@ struct GLnxRealDirfdIterator
 };
 typedef struct GLnxRealDirfdIterator GLnxRealDirfdIterator;
 
+/**
+ * glnx_dirfd_iterator_init_at:
+ * @dfd: File descriptor, may be AT_FDCWD or -1
+ * @path: Path, may be relative to @df
+ * @follow: If %TRUE and the last component of @path is a symlink, follow it
+ * @out_dfd_iter: (out caller-allocates): A directory iterator, will be initialized
+ * @error: Error
+ *
+ * Initialize @out_dfd_iter from @dfd and @path.
+ */
 gboolean
-glnx_dirfd_iterator_init_at (int              dfd,
-                             const char      *path,
-                             gboolean         follow,
-                             GLnxDirFdIterator *dfd_iter,
-                             GError         **error)
+glnx_dirfd_iterator_init_at (int                     dfd,
+                             const char             *path,
+                             gboolean                follow,
+                             GLnxDirFdIterator      *out_dfd_iter,
+                             GError                **error)
 {
   gboolean ret = FALSE;
   glnx_fd_close int fd = -1;
@@ -102,10 +112,19 @@ glnx_dirfd_iterator_init_at (int              dfd,
   return ret;
 }
 
+/**
+ * glnx_dirfd_iterator_init_take_fd:
+ * @dfd: File descriptor - ownership is taken
+ * @dfd_iter: A directory iterator
+ * @error: Error
+ *
+ * Steal ownership of @dfd, using it to initialize @dfd_iter for
+ * iteration.
+ */
 gboolean
-glnx_dirfd_iterator_init_take_fd (int dfd,
+glnx_dirfd_iterator_init_take_fd (int                dfd,
                                   GLnxDirFdIterator *dfd_iter,
-                                  GError **error)
+                                  GError           **error)
 {
   gboolean ret = FALSE;
   GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
@@ -126,11 +145,22 @@ glnx_dirfd_iterator_init_take_fd (int dfd,
   return ret;
 }
 
+/**
+ * glnx_dirfd_iterator_next_dent:
+ * @dfd_iter: A directory iterator
+ * @out_dent: (out) (transfer none): Pointer to dirent; do not free
+ * @cancellable: Cancellable
+ * @error: Error
+ *
+ * Read the next value from @dfd_iter, causing @out_dent to be
+ * updated.  If end of stream is reached, @out_dent will be set
+ * to %NULL, and %TRUE will be returned.
+ */
 gboolean
 glnx_dirfd_iterator_next_dent (GLnxDirFdIterator  *dfd_iter,
-                               struct dirent   **out_dent,
-                               GCancellable     *cancellable,
-                               GError          **error)
+                               struct dirent     **out_dent,
+                               GCancellable       *cancellable,
+                               GError             **error)
 {
   gboolean ret = FALSE;
   GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
@@ -156,10 +186,17 @@ glnx_dirfd_iterator_next_dent (GLnxDirFdIterator  *dfd_iter,
   return ret;
 }
 
+/**
+ * glnx_dirfd_iterator_clear:
+ * @dfd_iter: Iterator, will be de-initialized
+ *
+ * Unset @dfd_iter, freeing any resources.  If @dfd_iter is not
+ * initialized, do nothing.
+ */
 void
 glnx_dirfd_iterator_clear (GLnxDirFdIterator *dfd_iter)
 {
-  GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
+  GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirIterator*) dfd_iter;
   /* fd is owned by dfd_iter */
   (void) closedir (real_dfd_iter->d);
 }
