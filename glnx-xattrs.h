@@ -1,6 +1,6 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
- * Copyright (C) 2012,2013,2015 Colin Walters <walters@verbum.org>.
+ * Copyright (C) 2014,2015 Colin Walters <walters@verbum.org>.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,16 +20,26 @@
 
 #pragma once
 
-#include <gio/gio.h>
+#include <glnx-backport-autoptr.h>
+#include <limits.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <attr/xattr.h>
 
 G_BEGIN_DECLS
 
-#include <glnx-local-alloc.h>
-#include <glnx-backport-autoptr.h>
-#include <glnx-backport-autocleanups.h>
-#include <glnx-errors.h>
-#include <glnx-dirfd.h>
-#include <glnx-shutil.h>
-#include <glnx-xattrs.h>
+gboolean
+glnx_dfd_name_get_all_xattrs (int                    dfd,
+                              const char            *name,
+                              GVariant             **out_xattrs,
+                              GCancellable          *cancellable,
+                              GError               **error);
+
+gboolean
+glnx_fd_get_all_xattrs (int                    fd,
+                        GVariant             **out_xattrs,
+                        GCancellable          *cancellable,
+                        GError               **error);
 
 G_END_DECLS
