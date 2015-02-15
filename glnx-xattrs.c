@@ -281,3 +281,117 @@ glnx_dfd_name_get_all_xattrs (int            dfd,
       return get_xattrs_impl (buf, out_xattrs, cancellable, error);
     }
 }
+
+static gboolean
+set_all_xattrs_for_path (const char    *path,
+                         GVariant      *xattrs,
+                         GCancellable  *cancellable,
+                         GError       **error)
+{
+  gboolean ret = FALSE;
+  int i, n;
+
+  n = g_variant_n_children (xattrs);
+  for (i = 0; i < n; i++)
+    {
+      const guint8* name;
+      g_autoptr(GVariant) value = NULL;
+      const guint8* value_data;
+      gsize value_len;
+
+      g_variant_get_child (xattrs, i, "(^&ay@ay)",
+                           &name, &value);
+      value_data = g_variant_get_fixed_array (value, &value_len, 1);
+      
+      if (lsetxattr (path, (char*)name, (char*)value_data, value_len, 0) < 0)
+        {
+          glnx_set_prefix_error_from_errno (error, "%s", "lsetxattr");
+          goto out;
+        }
+    }
+
+  ret = TRUE;
+ out:
+  return ret;
+}
+
+/**
+ * glnx_dfd_name_set_all_xattrs:
+ * @dfd: Parent directory file descriptor
+ * @name: File name
+ * @xattrs: Extended attribute set
+ * @cancellable: Cancellable
+ * @error: Error
+ *
+ * Set all extended attributes for the file named @name residing in
+ * directory @dfd.
+ */
+gboolean
+glnx_dfd_name_set_all_xattrs (int            dfd,
+                              const char    *name,
+                              GVariant      *xattrs,
+                              GCancellable  *cancellable,
+                              GError       **error)
+{
+  if (dfd == AT_FDCWD || dfd == -1)
+    {
+      return set_all_xattrs_for_path (name, xattrs, cancellable, error);
+    }
+  else
+    {
+      char buf[PATH_MAX];
+      /* A workaround for the lack of lsetxattrat(), thanks to Florian Weimer:
+       * https://mail.gnome.org/archives/ostree-list/2014-February/msg00017.html
+       */
+      snprintf (buf, sizeof (buf), "/proc/self/fd/%d/%s", dfd, name);
+      return set_all_xattrs_for_path (buf, xattrs, cancellable, error);
+    }
+}
+
+/**
+ * glnx_fd_set_all_xattrs:
+ * @fd: File descriptor
+ * @xattrs: Extended attributes
+ * @cancellable: Cancellable
+ * @error: Error
+ *
+ * For each attribute in @xattrs, set its value on the file or
+ * directory referred to by @fd.  This function does not remove any
+ * attributes not in @xattrs.
+ */
+gboolean
+glnx_fd_set_all_xattrs (int            fd,
+                        GVariant      *xattrs,
+                        GCancellable  *cancellable,
+                        GError       **error)
+{
+  gboolean ret = FALSE;
+  int i, n;
+
+  n = g_variant_n_children (xattrs);
+  for (i = 0; i < n; i++)
+    {
+      const guint8* name;
+      const guint8* value_data;
+      g_autoptr(GVariant) value = NULL;
+      gsize value_len;
+      int res;
+
+      g_variant_get_child (xattrs, i, "(^&ay@ay)",
+                           &name, &value);
+      value_data = g_variant_get_fixed_array (value, &value_len, 1);
+      
+      do
+        res = fsetxattr (fd, (char*)name, (char*)value_data, value_len, 0);
+      while (G_UNLIKELY (res == -1 && errno == EINTR));
+      if (G_UNLIKELY (res == -1))
+        {
+          glnx_set_prefix_error_from_errno (error, "%s", "fsetxattr");
+          goto out;
+        }
+    }
+
+  ret = TRUE;
+ out:
+  return ret;
+}

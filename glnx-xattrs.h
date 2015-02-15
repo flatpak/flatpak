@@ -42,4 +42,17 @@ glnx_fd_get_all_xattrs (int                    fd,
                         GCancellable          *cancellable,
                         GError               **error);
 
+gboolean
+glnx_dfd_name_set_all_xattrs (int            dfd,
+                              const char    *name,
+                              GVariant      *xattrs,
+                              GCancellable  *cancellable,
+                              GError       **error);
+
+gboolean
+glnx_fd_set_all_xattrs (int            fd,
+                        GVariant      *xattrs,
+                        GCancellable  *cancellable,
+                        GError       **error);
+
 G_END_DECLS
