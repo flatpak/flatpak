@@ -27,7 +27,7 @@
 
 G_BEGIN_DECLS
 
-#if !GLIB_CHECK_VERSION(2, 44, 0)
+#if !GLIB_CHECK_VERSION(2, 43, 4)
 
 #define _GLIB_AUTOPTR_FUNC_NAME(TypeName) glib_autoptr_cleanup_##TypeName
 #define _GLIB_AUTOPTR_TYPENAME(TypeName)  TypeName##_autoptr
@@ -127,6 +127,6 @@ static inline gpointer
 #define g_steal_pointer(pp) \
   (0 ? (*(pp)) : (g_steal_pointer) (pp))
 
-#endif /* !GLIB_CHECK_VERSION(2, 44, 0) */
+#endif /* !GLIB_CHECK_VERSION(2, 43, 3) */
 
 G_END_DECLS

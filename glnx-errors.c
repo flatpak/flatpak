@@ -1,6 +1,6 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
- * Copyright (C) 2012,2013,2015 Colin Walters <walters@verbum.org>.
+ * Copyright (C) 2014,2015 Colin Walters <walters@verbum.org>.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,17 +18,36 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#pragma once
+#include "config.h"
 
-#include <gio/gio.h>
-
-G_BEGIN_DECLS
-
-#include <glnx-local-alloc.h>
 #include <glnx-backport-autoptr.h>
-#include <glnx-backport-autocleanups.h>
 #include <glnx-errors.h>
-#include <glnx-dirfd.h>
-#include <glnx-shutil.h>
 
-G_END_DECLS
+void
+glnx_real_set_prefix_error_from_errno (GError     **error,
+                                       gint         errsv,
+                                       const char  *format,
+                                       ...)
+{
+  if (!error)
+    return;
+  else
+    {
+      GString *buf = g_string_new ("");
+      va_list args;
+    
+      va_start (args, format);
+      g_string_append_vprintf (buf, format, args);
+      va_end (args);
+
+      g_string_append (buf, ": ");
+      g_string_append (buf, g_strerror (errsv));
+    
+      g_set_error_literal (error,
+                           G_IO_ERROR,
+                           g_io_error_from_errno (errsv),
+                           buf->str);
+      g_string_free (buf, TRUE);
+      errno = errsv;
+    }
+}
