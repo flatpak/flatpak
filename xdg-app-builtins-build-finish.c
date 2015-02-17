@@ -57,6 +57,9 @@ collect_exports (GFile *base, GCancellable *cancellable, GError **error)
   files = g_file_get_child (base, "files");
   export = g_file_get_child (base, "export");
 
+  if (!gs_file_ensure_directory (export, TRUE, cancellable, error))
+    goto out;
+
   for (i = 0; paths[i]; i++)
     {
       gs_unref_object GFile *src = NULL;
