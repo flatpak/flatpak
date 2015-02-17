@@ -103,7 +103,7 @@ glnx_dirfd_iterator_init_at (int                     dfd,
   if (!glnx_opendirat (dfd, path, follow, &fd, error))
     goto out;
 
-  if (!glnx_dirfd_iterator_init_take_fd (fd, dfd_iter, error))
+  if (!glnx_dirfd_iterator_init_take_fd (fd, out_dfd_iter, error))
     goto out;
   fd = -1; /* Transfer ownership */
 
@@ -196,7 +196,7 @@ glnx_dirfd_iterator_next_dent (GLnxDirFdIterator  *dfd_iter,
 void
 glnx_dirfd_iterator_clear (GLnxDirFdIterator *dfd_iter)
 {
-  GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirIterator*) dfd_iter;
+  GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
   /* fd is owned by dfd_iter */
   (void) closedir (real_dfd_iter->d);
 }
