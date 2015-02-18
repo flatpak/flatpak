@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <glnx-backport-autoptr.h>
+#include <glnx-backport-autocleanups.h>
 #include <limits.h>
 #include <dirent.h>
 #include <sys/stat.h>

@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#include <glnx-backport-autoptr.h>
+#include <glnx-backport-autocleanups.h>
 #include <glnx-errors.h>
 
 void

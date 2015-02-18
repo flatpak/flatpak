@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <glnx-backport-autoptr.h>
+#include <glnx-backport-autocleanups.h>
 #include <errno.h>
 
 G_BEGIN_DECLS
