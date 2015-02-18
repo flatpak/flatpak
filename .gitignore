@@ -1,0 +1,16 @@
+# A path ostree writes to work around automake bug with
+# subdir-objects
+Makefile-libglnx.am.inc
+
+# Some standard bits
+.deps
+.libs
+.dirstamp
+*.typelib
+*.la
+*.lo
+*.o
+*.pyc
+*.stamp
+*~
+
