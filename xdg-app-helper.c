@@ -22,6 +22,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <getopt.h>
 #include <linux/loop.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -1161,7 +1162,7 @@ main (int argc,
   int writable_app = 0;
   int writable_exports = 0;
   char old_cwd[256];
-  int i;
+  int c, i;
   pid_t pid;
   int event_fd;
 
@@ -1172,98 +1173,62 @@ main (int argc,
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
     die_with_error ("prctl(PR_SET_NO_NEW_CAPS) failed");
 
-  args = &argv[1];
-  n_args = argc - 1;
-
-  while (n_args > 0 && args[0][0] == '-')
+  while ((c =  getopt (argc, argv, "+inWweEsfFHa:m:b:p:x:ly:d:D:v:")) >= 0)
     {
-      switch (args[0][1])
+      switch (c)
         {
         case 'i':
           ipc = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'n':
           network = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'W':
           writable = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'w':
           writable_app = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'e':
           writable_exports = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'E':
           create_etc_symlink = 1;
           create_etc_dir = 0;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 's':
           share_shm = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'f':
           mount_host_fs = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'F':
           mount_host_fs = 1;
           mount_host_fs_ro = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'H':
           mount_home = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'a':
-          if (n_args < 2)
-              usage (argv);
-
-          app_path = args[1];
-          args += 2;
-          n_args -= 2;
+          app_path = optarg;
           break;
 
         case 'm':
-          if (n_args < 2)
-              usage (argv);
-
-          monitor_path = args[1];
-          args += 2;
-          n_args -= 2;
+          monitor_path = optarg;
           break;
 
         case 'b':
-          if (n_args < 2)
-              usage (argv);
-
-	  tmp = strchr (args[1], '=');
+	  tmp = strchr (optarg, '=');
 	  if (tmp == NULL || tmp[1] == 0)
 	    usage (argv);
 	  *tmp = 0;
@@ -1272,83 +1237,51 @@ main (int argc,
 	  if (n_extra_dirs == MAX_EXTRA_DIRS)
 	    die ("Too many extra directories");
 
-	  if (strncmp (args[1], "/usr/", strlen ("/usr/")) != 0 &&
-	      strncmp (args[1], "/self/", strlen ("/self/")) != 0)
+	  if (strncmp (optarg, "/usr/", strlen ("/usr/")) != 0 &&
+	      strncmp (optarg, "/self/", strlen ("/self/")) != 0)
 	    die ("Extra directories must be in /usr or /self");
 
-	  extra_dirs_dest[n_extra_dirs] = args[1] + 1;
+	  extra_dirs_dest[n_extra_dirs] = optarg + 1;
 	  extra_dirs_src[n_extra_dirs] = tmp;
 
 	  n_extra_dirs++;
-
-          args += 2;
-          n_args -= 2;
           break;
 
         case 'p':
-          if (n_args < 2)
-              usage (argv);
-
-          pulseaudio_socket = args[1];
-          args += 2;
-          n_args -= 2;
+          pulseaudio_socket = optarg;
           break;
 
         case 'x':
-          if (n_args < 2)
-              usage (argv);
-
-          x11_socket = args[1];
-          args += 2;
-          n_args -= 2;
+          x11_socket = optarg;
           break;
 
         case 'l':
           lock_files = 1;
-          args += 1;
-          n_args -= 1;
           break;
 
         case 'y':
-          if (n_args < 2)
-              usage (argv);
-
-          wayland_socket = args[1];
-          args += 2;
-          n_args -= 2;
+          wayland_socket = optarg;
           break;
 
         case 'd':
-          if (n_args < 2)
-              usage (argv);
-
-          session_dbus_socket = args[1];
-          args += 2;
-          n_args -= 2;
+          session_dbus_socket = optarg;
           break;
 
         case 'D':
-          if (n_args < 2)
-              usage (argv);
-
-          system_dbus_socket = args[1];
-          args += 2;
-          n_args -= 2;
+          system_dbus_socket = optarg;
           break;
 
         case 'v':
-          if (n_args < 2)
-              usage (argv);
-
-          var_path = args[1];
-          args += 2;
-          n_args -= 2;
+          var_path = optarg;
           break;
 
-        default:
-          usage (argv);
-        }
+	default: /* '?' */
+	  usage (argv);
+      }
     }
+
+  args = &argv[optind];
+  n_args = argc - optind;
 
   if (monitor_path != NULL && create_etc_dir)
     create_monitor_links = 1;
