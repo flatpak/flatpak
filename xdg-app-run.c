@@ -93,12 +93,6 @@ xdg_app_run_add_wayland_args (GPtrArray *argv_array)
 }
 
 void
-xdg_app_run_add_no_x11_args (GPtrArray *argv_array)
-{
-  g_unsetenv ("DISPLAY");
-}
-
-void
 xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array)
 {
   char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
@@ -191,10 +185,6 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       g_debug ("Allowing x11 access");
       xdg_app_run_add_x11_args (argv_array);
     }
-  else
-    {
-      xdg_app_run_add_no_x11_args (argv_array);
-    }
 
   if ((g_key_file_get_boolean (metakey, "Environment", "wayland", NULL) || g_strv_contains (allow, "wayland")) &&
       !g_strv_contains (forbid, "wayland"))
@@ -222,5 +212,83 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
     {
       g_debug ("Allowing session-dbus access");
       xdg_app_run_add_session_dbus_args (argv_array);
+    }
+}
+
+void
+xdg_app_run_setup_minimal_env (GPtrArray *env_array,
+			       gboolean devel)
+{
+  static const char const *exports[] = {
+    "XDG_DATA_DIRS=/self/share:/usr/share",
+    "PATH=/self/bin:/usr/bin",
+    "SHELL=/bin/sh",
+  };
+  static const char const *exports_devel[] = {
+    "ACLOCAL_PATH=/self/share/aclocal",
+    "C_INCLUDE_PATH=/self/include",
+    "CPLUS_INCLUDE_PATH=/self/include",
+    "GI_TYPELIB_PATH=/self/lib/girepository-1.0",
+    "LDFLAGS=-L/self/lib ",
+    "PKG_CONFIG_PATH=/self/lib/pkgconfig:/self/share/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig",
+    "LC_ALL=en_US.utf8",
+  };
+  static const char const *copy[] = {
+    "GDMSESSION",
+    "XDG_CURRENT_DESKTOP",
+    "XDG_SESSION_DESKTOP",
+    "DESKTOP_SESSION",
+    "EMAIL_ADDRESS",
+    "HOME",
+    "HOSTNAME",
+    "LOGNAME",
+    "REAL_NAME",
+    "TERM",
+    "USER",
+    "USERNAME",
+  };
+  static const char const *copy_nodevel[] = {
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_ADDRESS",
+    "LC_COLLATE",
+    "LC_CTYPE",
+    "LC_IDENTIFICATION",
+    "LC_MEASUREMENT",
+    "LC_MESSAGES",
+    "LC_MONETARY",
+    "LC_NAME",
+    "LC_NUMERIC",
+    "LC_PAPER",
+    "LC_TELEPHONE",
+    "LC_TIME",
+  };
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS(exports); i++)
+    g_ptr_array_add (env_array, g_strdup (exports[i]));
+
+  if (devel)
+    {
+      for (i = 0; i < G_N_ELEMENTS(exports_devel); i++)
+	g_ptr_array_add (env_array, g_strdup (exports_devel[i]));
+    }
+
+  for (i = 0; i < G_N_ELEMENTS(copy); i++)
+    {
+      const char *current = g_getenv(copy[i]);
+      if (current)
+	g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", copy[i], current));
+    }
+
+  if (!devel)
+    {
+      for (i = 0; i < G_N_ELEMENTS(copy_nodevel); i++)
+	{
+	  const char *current = g_getenv(copy_nodevel[i]);
+	  if (current)
+	    g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", copy_nodevel[i], current));
+	}
     }
 }

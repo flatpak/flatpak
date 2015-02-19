@@ -48,6 +48,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   gs_free_error GError *my_error = NULL;
   gs_free_error GError *my_error2 = NULL;
   gs_unref_ptrarray GPtrArray *argv_array = NULL;
+  gs_unref_ptrarray GPtrArray *env_array = NULL;
   gsize metadata_size;
   const char *directory = NULL;
   const char *command = "/bin/sh";
@@ -139,19 +140,11 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (argv_array, NULL);
 
-  g_unsetenv ("ACLOCAL_FLAGS");
-  g_setenv ("ACLOCAL_PATH", "/self/share/aclocal", TRUE);
-  g_setenv ("C_INCLUDE_PATH", "/self/include", TRUE);
-  g_setenv ("CPLUS_INCLUDE_PATH", "/self/include", TRUE);
-  g_setenv ("GI_TYPELIB_PATH", "/self/lib/girepository-1.0", TRUE);
-  g_setenv ("LDFLAGS", "-L/self/lib ", TRUE);
-  g_setenv ("PKG_CONFIG_PATH", "/self/lib/pkgconfig:/self/share/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig", TRUE);
+  env_array = g_ptr_array_new_with_free_func (g_free);
+  xdg_app_run_setup_minimal_env (env_array, TRUE);
+  g_ptr_array_add (env_array, NULL);
 
-  g_setenv ("XDG_DATA_DIRS", "/self/share:/usr/share", TRUE);
-  g_unsetenv ("LD_LIBRARY_PATH");
-  g_setenv ("PATH", "/self/bin:/usr/bin", TRUE);
-
-  if (!execv (HELPER, (char **)argv_array->pdata))
+  if (!execve (HELPER, (char **)argv_array->pdata, (char **)env_array->pdata))
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
       goto out;
