@@ -55,6 +55,10 @@
 
 #define N_ELEMENTS(arr)		(sizeof (arr) / sizeof ((arr)[0]))
 
+#define TRUE 1
+#define FALSE 0
+typedef int bool;
+
 #define READ_END 0
 #define WRITE_END 1
 
@@ -286,9 +290,9 @@ ascii_isdigit (char c)
   return c >= '0' && c <= '9';
 }
 
-static int create_etc_symlink = 0;
-static int create_etc_dir = 1;
-static int create_monitor_links = 0;
+static bool create_etc_symlink = FALSE;
+static bool create_etc_dir = TRUE;
+static bool create_monitor_links = FALSE;
 
 static const create_table_t create[] = {
   { FILE_TYPE_DIR, ".oldroot", 0755 },
@@ -424,10 +428,10 @@ lock_all_dirs (void)
 static int
 bind_mount (const char *src, const char *dest, bind_option_t options)
 {
-  int readonly = (options & BIND_READONLY) != 0;
-  int private = (options & BIND_PRIVATE) != 0;
-  int devices = (options & BIND_DEVICES) != 0;
-  int recursive = (options & BIND_RECURSIVE) != 0;
+  bool readonly = (options & BIND_READONLY) != 0;
+  bool private = (options & BIND_PRIVATE) != 0;
+  bool devices = (options & BIND_DEVICES) != 0;
+  bool recursive = (options & BIND_RECURSIVE) != 0;
 
   if (mount (src, dest, NULL, MS_MGC_VAL|MS_BIND|(recursive?MS_REC:0), NULL) != 0)
     return 1;
@@ -548,7 +552,7 @@ create_file (const char *path, mode_t mode, const char *content)
 static void
 create_files (const create_table_t *create, int n_create, int ignore_shm, int system_mode)
 {
-  int last_failed = 0;
+  bool last_failed = FALSE;
   int i;
 
   for (i = 0; i < n_create; i++)
@@ -560,7 +564,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
       int *option = create[i].option;
       char *in_root;
       int k;
-      int found;
+      bool found;
       int res;
 
       if ((flags & FILE_FLAGS_IF_LAST_FAILED) &&
@@ -574,7 +578,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
       if (create[i].data)
 	data = strdup_printf (create[i].data, getuid());
 
-      last_failed = 0;
+      last_failed = FALSE;
 
       switch (create[i].type)
         {
@@ -626,7 +630,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
             {
               if (res > 1 || (flags & FILE_FLAGS_NON_FATAL) == 0)
                 die_with_error ("mounting bindmount %s", name);
-              last_failed = 1;
+              last_failed = TRUE;
             }
 
           break;
@@ -637,7 +641,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
 
           /* NOTE: Fall through, treat as mount */
         case FILE_TYPE_MOUNT:
-          found = 0;
+          found = FALSE;
           for (k = 0; k < N_ELEMENTS(mount_table); k++)
             {
               if (strcmp (mount_table[k].where, name) == 0)
@@ -648,7 +652,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
                             mount_table[k].flags,
                             mount_table[k].options) < 0)
                     die_with_error ("Mounting %s", name);
-                  found = 1;
+                  found = TRUE;
                 }
             }
 
@@ -733,7 +737,7 @@ mount_extra_root_dirs (int readonly)
     {
       while ((dirent = readdir(dir)))
         {
-          int dont_mount = 0;
+          bool dont_mount = FALSE;
           char *path;
           struct stat st;
 
@@ -741,7 +745,7 @@ mount_extra_root_dirs (int readonly)
             {
               if (strcmp (dirent->d_name, dont_mount_in_root[i]) == 0)
                 {
-                  dont_mount = 1;
+                  dont_mount = TRUE;
                   break;
                 }
             }
@@ -1133,7 +1137,6 @@ main (int argc,
 {
   mode_t old_umask;
   char *newroot;
-  int system_mode = 0;
   char *runtime_path = NULL;
   char *app_path = NULL;
   char *monitor_path = NULL;
@@ -1151,16 +1154,17 @@ main (int argc,
   char **args;
   char *tmp;
   int n_args;
-  int share_shm = 0;
-  int network = 0;
-  int ipc = 0;
-  int mount_host_fs = 0;
-  int mount_host_fs_ro = 0;
-  int mount_home = 0;
-  int lock_files = 0;
-  int writable = 0;
-  int writable_app = 0;
-  int writable_exports = 0;
+  bool system_mode = FALSE;
+  bool share_shm = FALSE;
+  bool network = FALSE;
+  bool ipc = FALSE;
+  bool mount_host_fs = FALSE;
+  bool mount_host_fs_ro = FALSE;
+  bool mount_home = FALSE;
+  bool lock_files = FALSE;
+  bool writable = FALSE;
+  bool writable_app = FALSE;
+  bool writable_exports = FALSE;
   char old_cwd[256];
   int c, i;
   pid_t pid;
@@ -1178,45 +1182,45 @@ main (int argc,
       switch (c)
         {
         case 'i':
-          ipc = 1;
+          ipc = TRUE;
           break;
 
         case 'n':
-          network = 1;
+          network = TRUE;
           break;
 
         case 'W':
-          writable = 1;
+          writable = TRUE;
           break;
 
         case 'w':
-          writable_app = 1;
+          writable_app = TRUE;
           break;
 
         case 'e':
-          writable_exports = 1;
+          writable_exports = TRUE;
           break;
 
         case 'E':
-          create_etc_symlink = 1;
-          create_etc_dir = 0;
+          create_etc_symlink = TRUE;
+          create_etc_dir = FALSE;
           break;
 
         case 's':
-          share_shm = 1;
+          share_shm = TRUE;
           break;
 
         case 'f':
-          mount_host_fs = 1;
+          mount_host_fs = TRUE;
           break;
 
         case 'F':
-          mount_host_fs = 1;
-          mount_host_fs_ro = 1;
+          mount_host_fs = TRUE;
+          mount_host_fs_ro = TRUE;
           break;
 
         case 'H':
-          mount_home = 1;
+          mount_home = TRUE;
           break;
 
         case 'a':
@@ -1256,7 +1260,7 @@ main (int argc,
           break;
 
         case 'l':
-          lock_files = 1;
+          lock_files = TRUE;
           break;
 
         case 'y':
@@ -1284,7 +1288,7 @@ main (int argc,
   n_args = argc - optind;
 
   if (monitor_path != NULL && create_etc_dir)
-    create_monitor_links = 1;
+    create_monitor_links = TRUE;
 
   if (n_args < 2)
     usage (argv);
@@ -1294,7 +1298,7 @@ main (int argc,
   n_args--;
 
   if (strcmp (runtime_path, "/usr") == 0)
-    system_mode = 1;
+    system_mode = TRUE;
 
   /* The initial code is run with high permissions
      (at least CAP_SYS_ADMIN), so take lots of care. */
