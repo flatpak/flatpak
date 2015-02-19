@@ -505,39 +505,43 @@ mkdir_with_parents (const char *pathname,
   return 0;
 }
 
+static int
+write_to_file (int fd, const char *content)
+{
+  ssize_t len = strlen (content);
+  ssize_t res;
+
+  while (len > 0)
+    {
+      res = write (fd, content, len);
+      if (res < 0 && errno == EINTR)
+	continue;
+      if (res <= 0)
+	return -1;
+      len -= res;
+      content += res;
+    }
+
+  return 0;
+}
 
 static int
 create_file (const char *path, mode_t mode, const char *content)
 {
   int fd;
+  int res;
 
   fd = creat (path, mode);
   if (fd == -1)
     return -1;
 
+  res = 0;
   if (content)
-    {
-      ssize_t len = strlen (content);
-      ssize_t res;
-
-      while (len > 0)
-        {
-          res = write (fd, content, len);
-          if (res < 0 && errno == EINTR)
-            continue;
-          if (res <= 0)
-            {
-              close (fd);
-              return -1;
-            }
-          len -= res;
-          content += res;
-        }
-    }
+    res = write_to_file (fd, content);
 
   close (fd);
 
-  return 0;
+  return res;
 }
 
 static void
