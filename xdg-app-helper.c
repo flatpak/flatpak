@@ -332,12 +332,12 @@ static const create_table_t create[] = {
   { FILE_TYPE_MOUNT, "dev/pts"},
   { FILE_TYPE_DIR, "dev/shm", 0755},
   { FILE_TYPE_SHM, "dev/shm"},
-  { FILE_TYPE_DEVICE, "dev/null", S_IFCHR|0666, "/dev/null"},
-  { FILE_TYPE_DEVICE, "dev/zero", S_IFCHR|0666, "/dev/zero"},
-  { FILE_TYPE_DEVICE, "dev/full", S_IFCHR|0666, "/dev/full"},
-  { FILE_TYPE_DEVICE, "dev/random", S_IFCHR|0666, "/dev/random"},
-  { FILE_TYPE_DEVICE, "dev/urandom", S_IFCHR|0666, "/dev/urandom"},
-  { FILE_TYPE_DEVICE, "dev/tty", S_IFCHR|0666, "/dev/tty"},
+  { FILE_TYPE_DEVICE, "dev/null", 0666},
+  { FILE_TYPE_DEVICE, "dev/zero", 0666},
+  { FILE_TYPE_DEVICE, "dev/full", 0666},
+  { FILE_TYPE_DEVICE, "dev/random", 0666},
+  { FILE_TYPE_DEVICE, "dev/urandom", 0666},
+  { FILE_TYPE_DEVICE, "dev/tty", 0666},
   { FILE_TYPE_DIR, "dev/dri", 0755},
   { FILE_TYPE_BIND_RO, "dev/dri", 0755, "/dev/dri", FILE_FLAGS_NON_FATAL|FILE_FLAGS_DEVICES},
   { FILE_TYPE_REMOUNT, "dev", MS_RDONLY|MS_NOSUID|MS_NOEXEC},
@@ -553,7 +553,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
       mode_t mode = create[i].mode;
       file_flags_t flags = create[i].flags;
       int *option = create[i].option;
-      struct stat st;
+      char *in_root;
       int k;
       int found;
       int res;
@@ -586,9 +586,8 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
         case FILE_TYPE_SYSTEM_SYMLINK:
 	  if (system_mode)
 	    {
-	      char *in_root = strconcat ("/", name);
 	      struct stat buf;
-
+	      in_root = strconcat ("/", name);
 	      if (stat (in_root, &buf) ==  0)
 		{
 		  if (mkdir (name, mode) != 0)
@@ -661,14 +660,17 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
           break;
 
         case FILE_TYPE_DEVICE:
-          if (stat (data, &st) < 0)
-            die_with_error ("stat node %s", data);
+          if (create_file (name, mode, NULL))
+            die_with_error ("creating file %s", name);
 
-          if (!S_ISCHR (st.st_mode) && !S_ISBLK (st.st_mode))
-            die_with_error ("node %s is not a device", data);
-
-          if (mknod (name, mode, st.st_rdev) < 0)
-            die_with_error ("mknod %s", name);
+	  in_root = strconcat ("/", name);
+          if ((res = bind_mount (in_root, name,
+                                 BIND_DEVICES)))
+            {
+              if (res > 1 || (flags & FILE_FLAGS_NON_FATAL) == 0)
+                die_with_error ("binding device %s", name);
+            }
+	  free (in_root);
 
           break;
 
@@ -1075,7 +1077,7 @@ do_init (int event_fd, pid_t initial_pid)
   return initial_exit_status;
 }
 
-#define REQUIRED_CAPS (CAP_TO_MASK(CAP_SYS_ADMIN) | CAP_TO_MASK(CAP_MKNOD))
+#define REQUIRED_CAPS (CAP_TO_MASK(CAP_SYS_ADMIN))
 
 static void
 acquire_caps (void)

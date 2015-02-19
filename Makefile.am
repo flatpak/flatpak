@@ -104,7 +104,7 @@ if PRIV_MODE_SETUID
 	$(SUDO_BIN) chmod u+s $(DESTDIR)$(bindir)/xdg-app-helper
 else
 if PRIV_MODE_FILECAPS
-	$(SUDO_BIN) setcap cap_sys_admin,cap_mknod+ep $(DESTDIR)$(bindir)/xdg-app-helper
+	$(SUDO_BIN) setcap cap_sys_admin+ep $(DESTDIR)$(bindir)/xdg-app-helper
 endif
 endif
 
