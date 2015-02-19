@@ -144,6 +144,11 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
 				  const char **forbid)
 {
   const char *no_opts[1] = { NULL };
+  char opts[16];
+  int i;
+
+  i = 0;
+  opts[i++] = '-';
 
   if (allow == NULL)
     allow = no_opts;
@@ -155,28 +160,28 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       !g_strv_contains (forbid, "ipc"))
     {
       g_debug ("Allowing ipc access");
-      g_ptr_array_add (argv_array, g_strdup ("-i"));
+      opts[i++] = 'i';
     }
 
   if ((g_key_file_get_boolean (metakey, "Environment", "host-fs", NULL) || g_strv_contains (allow, "nost-fs")) &&
       !g_strv_contains (forbid, "host-fs"))
     {
       g_debug ("Allowing host-fs access");
-      g_ptr_array_add (argv_array, g_strdup ("-f"));
+      opts[i++] = 'f';
     }
 
   if ((g_key_file_get_boolean (metakey, "Environment", "homedir", NULL) || g_strv_contains (allow, "homedir")) &&
       !g_strv_contains (forbid, "homedir"))
     {
       g_debug ("Allowing homedir access");
-      g_ptr_array_add (argv_array, g_strdup ("-H"));
+      opts[i++] = 'H';
     }
 
   if ((g_key_file_get_boolean (metakey, "Environment", "network", NULL) || g_strv_contains (allow, "network")) &&
       !g_strv_contains (forbid, "network"))
     {
       g_debug ("Allowing network access");
-      g_ptr_array_add (argv_array, g_strdup ("-n"));
+      opts[i++] = 'n';
     }
 
   if ((g_key_file_get_boolean (metakey, "Environment", "x11", NULL) || g_strv_contains (allow, "x11")) &&
@@ -212,6 +217,13 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
     {
       g_debug ("Allowing session-dbus access");
       xdg_app_run_add_session_dbus_args (argv_array);
+    }
+
+  g_assert (sizeof(opts) > i);
+  if (i > 1)
+    {
+      opts[i++] = 0;
+      g_ptr_array_add (argv_array, g_strdup (opts));
     }
 }
 
