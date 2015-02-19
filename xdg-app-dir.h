@@ -38,8 +38,6 @@ GFile *     xdg_app_dir_get_if_deployed (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,
                                          GCancellable   *cancellable);
-GFile *     xdg_app_dir_get_app_data    (XdgAppDir      *self,
-                                         const char     *app);
 OstreeRepo *xdg_app_dir_get_repo        (XdgAppDir      *self);
 gboolean    xdg_app_dir_ensure_path     (XdgAppDir      *self,
                                          GCancellable   *cancellable,

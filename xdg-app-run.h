@@ -17,4 +17,9 @@ void xdg_app_run_add_pulseaudio_args   (GPtrArray *argv_array);
 void xdg_app_run_add_system_dbus_args  (GPtrArray *argv_array);
 void xdg_app_run_add_session_dbus_args (GPtrArray *argv_array);
 
+GFile *xdg_app_get_data_dir (const char *app_id);
+GFile *xdg_app_ensure_data_dir (const char *app_id,
+				GCancellable  *cancellable,
+				GError **error);
+
 #endif /* __XDG_APP_RUN_H__ */

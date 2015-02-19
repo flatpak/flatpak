@@ -168,16 +168,6 @@ xdg_app_dir_get_removed_dir (XdgAppDir     *self)
   return g_file_get_child (self->basedir, ".removed");
 }
 
-GFile *
-xdg_app_dir_get_app_data (XdgAppDir     *self,
-                          const char    *app)
-{
-  gs_free char *partial_ref = NULL;
-
-  partial_ref = g_build_filename ("app", app, "data", NULL);
-  return g_file_resolve_relative_path (self->basedir, partial_ref);
-}
-
 OstreeRepo *
 xdg_app_dir_get_repo (XdgAppDir *self)
 {

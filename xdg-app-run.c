@@ -304,3 +304,34 @@ xdg_app_run_setup_minimal_env (GPtrArray *env_array,
 	}
     }
 }
+
+GFile *
+xdg_app_get_data_dir (const char *app_id)
+{
+  gs_unref_object GFile *home = g_file_new_for_path (g_get_home_dir ());
+  gs_unref_object GFile *var_app = g_file_resolve_relative_path (home, ".var/app");
+
+  return g_file_get_child (var_app, app_id);
+}
+
+GFile *
+xdg_app_ensure_data_dir (const char *app_id,
+			 GCancellable  *cancellable,
+			 GError **error)
+{
+  gs_unref_object GFile *dir = xdg_app_get_data_dir (app_id);
+  gs_unref_object GFile *data_dir = g_file_get_child (dir, "data");
+  gs_unref_object GFile *cache_dir = g_file_get_child (dir, "cache");
+  gs_unref_object GFile *config_dir = g_file_get_child (dir, "config");
+
+  if (!gs_file_ensure_directory (data_dir, TRUE, cancellable, error))
+    return NULL;
+
+  if (!gs_file_ensure_directory (cache_dir, TRUE, cancellable, error))
+    return NULL;
+
+  if (!gs_file_ensure_directory (config_dir, TRUE, cancellable, error))
+    return NULL;
+
+  return g_object_ref (dir);
+}

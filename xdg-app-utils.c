@@ -212,7 +212,6 @@ xdg_app_is_valid_branch (const char *string)
   return ret;
 }
 
-
 char *
 xdg_app_build_untyped_ref (const char *runtime,
                            const char *branch,

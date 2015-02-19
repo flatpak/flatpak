@@ -232,7 +232,7 @@ static inline int raw_clone(unsigned long flags, void *child_stack) {
 void
 usage (char **argv)
 {
-  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-E] [-l] [-m <path to monitor dir>] [-a <path to app>] [-v <path to var>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
+  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-E] [-l] [-m <path to monitor dir>] [-a <path to app>] [-v <path to var>] [-I <app id>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
   exit (1);
 }
 
@@ -776,11 +776,14 @@ mount_extra_root_dirs (int readonly)
 }
 
 static void
-create_homedir (int mount_real_home)
+create_homedir (int mount_real_home, const char *app_id)
 {
   const char *home;
   const char *relative_home;
   const char *writable_home;
+  char *app_id_dir;
+  const char *relative_app_id_dir;
+  struct stat st;
 
   home = getenv("HOME");
   if (home == NULL)
@@ -790,19 +793,32 @@ create_homedir (int mount_real_home)
   while (*relative_home == '/')
     relative_home++;
 
-  if (mkdir_with_parents ("var/home", 0700))
-    die_with_error ("unable to create var/home");
-
   if (mkdir_with_parents (relative_home, 0755))
     die_with_error ("unable to create %s", relative_home);
 
   if (mount_real_home)
-    writable_home = home;
-  else
-    writable_home = "var/home";
+    {
+      writable_home = home;
+      if (bind_mount (writable_home, relative_home, BIND_RECURSIVE))
+	die_with_error ("unable to mount %s", home);
+    }
+  else if (app_id != NULL)
+    {
+      app_id_dir = strconcat3 (home, "/.var/app/", app_id);
+      if (stat (app_id_dir, &st) == 0 && S_ISDIR (st.st_mode))
+	{
+	  relative_app_id_dir = app_id_dir;
+	  while (*relative_app_id_dir == '/')
+	    relative_app_id_dir++;
 
-  if (bind_mount (writable_home, relative_home, BIND_RECURSIVE))
-    die_with_error ("unable to mount %s", home);
+	  if (mkdir_with_parents (relative_app_id_dir, 0755))
+	    die_with_error ("unable to create %s", relative_app_id_dir);
+
+	  if (bind_mount (app_id_dir, relative_app_id_dir, 0))
+	    die_with_error ("unable to mount %s", home);
+	}
+      free (app_id_dir);
+    }
 }
 
 static void *
@@ -1140,6 +1156,7 @@ main (int argc,
   char *runtime_path = NULL;
   char *app_path = NULL;
   char *monitor_path = NULL;
+  char *app_id = NULL;
   char *var_path = NULL;
   char *extra_dirs_src[MAX_EXTRA_DIRS];
   char *extra_dirs_dest[MAX_EXTRA_DIRS];
@@ -1177,7 +1194,7 @@ main (int argc,
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
     die_with_error ("prctl(PR_SET_NO_NEW_CAPS) failed");
 
-  while ((c =  getopt (argc, argv, "+inWweEsfFHa:m:b:p:x:ly:d:D:v:")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWweEsfFHa:m:b:p:x:ly:d:D:v:I:")) >= 0)
     {
       switch (c)
         {
@@ -1277,6 +1294,10 @@ main (int argc,
 
         case 'v':
           var_path = optarg;
+          break;
+
+        case 'I':
+          app_id = optarg;
           break;
 
 	default: /* '?' */
@@ -1511,7 +1532,7 @@ main (int argc,
     mount_extra_root_dirs (mount_host_fs_ro);
 
   if (!mount_host_fs)
-    create_homedir (mount_home);
+    create_homedir (mount_home, app_id);
 
   if (!network)
     loopback_setup ();

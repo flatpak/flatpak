@@ -123,17 +123,17 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 {
   GOptionContext *context;
   gboolean ret = FALSE;
-  gs_unref_object XdgAppDir *user_dir = NULL;
   gs_unref_variant_builder GVariantBuilder *optbuilder = NULL;
   gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *var = NULL;
-  gs_unref_object GFile *var_tmp = NULL;
-  gs_unref_object GFile *var_run = NULL;
   gs_unref_object GFile *app_deploy = NULL;
   gs_unref_object GFile *app_files = NULL;
   gs_unref_object GFile *runtime_deploy = NULL;
   gs_unref_object GFile *runtime_files = NULL;
   gs_unref_object GFile *metadata = NULL;
+  gs_unref_object GFile *app_id_dir = NULL;
+  gs_unref_object GFile *app_id_dir_data = NULL;
+  gs_unref_object GFile *app_id_dir_config = NULL;
+  gs_unref_object GFile *app_id_dir_cache = NULL;
   gs_unref_object GFile *runtime_metadata = NULL;
   gs_unref_object XdgAppSessionHelper *session_helper = NULL;
   gs_free char *metadata_contents = NULL;
@@ -199,8 +199,6 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   app_ref = xdg_app_build_app_ref (app, branch, opt_arch);
 
-  user_dir = xdg_app_dir_get_user ();
-
   app_deploy = xdg_app_find_deploy_dir_for_ref (app_ref, cancellable, error);
   if (app_deploy == NULL)
     goto out;
@@ -254,31 +252,8 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 	goto out;
     }
 
-  if (!xdg_app_dir_ensure_path (user_dir, cancellable, error))
-    goto out;
-
-  var = xdg_app_dir_get_app_data (user_dir, app);
-  if (!gs_file_ensure_directory (var, TRUE, cancellable, error))
-    goto out;
-
-  var_tmp = g_file_get_child (var, "tmp");
-  var_run = g_file_get_child (var, "run");
-
-  if (!g_file_make_symbolic_link (var_tmp, "/tmp", cancellable, &my_error) &&
-      !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
-    {
-      g_propagate_error (error, my_error);
-      my_error = NULL;
+  if ((app_id_dir = xdg_app_ensure_data_dir (app, cancellable, error)) == NULL)
       goto out;
-    }
-
-  if (!g_file_make_symbolic_link (var_run, "/run", cancellable, &my_error2) &&
-      !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
-    {
-      g_propagate_error (error, my_error2);
-      my_error2 = NULL;
-      goto out;
-    }
 
   app_files = g_file_get_child (app_deploy, "files");
   runtime_files = g_file_get_child (runtime_deploy, "files");
@@ -319,8 +294,8 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   g_ptr_array_add (argv_array, g_strdup ("-a"));
   g_ptr_array_add (argv_array, g_file_get_path (app_files));
-  g_ptr_array_add (argv_array, g_strdup ("-v"));
-  g_ptr_array_add (argv_array, g_file_get_path (var));
+  g_ptr_array_add (argv_array, g_strdup ("-I"));
+  g_ptr_array_add (argv_array, g_strdup (app));
   g_ptr_array_add (argv_array, g_file_get_path (runtime_files));
 
   g_ptr_array_add (argv_array, g_strdup (command));
@@ -332,6 +307,13 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_setenv ("XDG_DATA_DIRS", "/self/share:/usr/share", TRUE);
   g_unsetenv ("LD_LIBRARY_PATH");
   g_setenv ("PATH", "/self/bin:/usr/bin", TRUE);
+
+  app_id_dir_data = g_file_get_child (app_id_dir, "data");
+  app_id_dir_config = g_file_get_child (app_id_dir, "config");
+  app_id_dir_cache = g_file_get_child (app_id_dir, "cache");
+  g_setenv ("XDG_DATA_HOME", gs_file_get_path_cached (app_id_dir_data), TRUE);
+  g_setenv ("XDG_CONFIG_HOME", gs_file_get_path_cached (app_id_dir_config), TRUE);
+  g_setenv ("XDG_CACHE_HOME", gs_file_get_path_cached (app_id_dir_cache), TRUE);
 
   if (execv (HELPER, (char **)argv_array->pdata) == -1)
     {
