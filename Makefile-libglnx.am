@@ -28,6 +28,8 @@ libglnx_la_SOURCES = \
 	$(libglnx_srcpath)/glnx-console.c \
 	$(libglnx_srcpath)/glnx-dirfd.h \
 	$(libglnx_srcpath)/glnx-dirfd.c \
+	$(libglnx_srcpath)/glnx-fdio.h \
+	$(libglnx_srcpath)/glnx-fdio.c \
 	$(libglnx_srcpath)/glnx-xattrs.h \
 	$(libglnx_srcpath)/glnx-xattrs.c \
 	$(libglnx_srcpath)/glnx-shutil.h \

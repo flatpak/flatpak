@@ -31,5 +31,6 @@ G_BEGIN_DECLS
 #include <glnx-shutil.h>
 #include <glnx-xattrs.h>
 #include <glnx-console.h>
+#include <glnx-fdio.h>
 
 G_END_DECLS
