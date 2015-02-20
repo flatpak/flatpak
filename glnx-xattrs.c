@@ -395,3 +395,132 @@ glnx_fd_set_all_xattrs (int            fd,
  out:
   return ret;
 }
+
+/**
+ * glnx_lgetxattrat:
+ * @dfd: Directory file descriptor
+ * @subpath: Subpath
+ * @attribute: Extended attribute to retrieve
+ * @error: Error
+ *
+ * Retrieve an extended attribute value, relative to a directory file
+ * descriptor.
+ */
+GBytes *
+glnx_lgetxattrat (int            dfd,
+                  const char    *subpath,
+                  const char    *attribute,
+                  GError       **error)
+{
+  char pathbuf[PATH_MAX];
+  GBytes *bytes = NULL;
+  ssize_t bytes_read, real_size;
+  guint8 *buf;
+
+  snprintf (pathbuf, sizeof (pathbuf), "/proc/self/fd/%d/%s", dfd, subpath);
+
+  do
+    bytes_read = lgetxattr (pathbuf, attribute, NULL, 0);
+  while (G_UNLIKELY (bytes_read < 0 && errno == EINTR));
+  if (G_UNLIKELY (bytes_read < 0))
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
+
+  buf = g_malloc (bytes_read);
+  do
+    real_size = lgetxattr (pathbuf, attribute, buf, bytes_read);
+  while (G_UNLIKELY (real_size < 0 && errno == EINTR));
+  if (G_UNLIKELY (real_size < 0))
+    {
+      glnx_set_error_from_errno (error);
+      g_free (buf);
+      goto out;
+    }
+
+  bytes = g_bytes_new_take (buf, real_size);
+ out:
+  return bytes;
+}
+
+/**
+ * glnx_fgetxattr_bytes:
+ * @fd: Directory file descriptor
+ * @attribute: Extended attribute to retrieve
+ * @error: Error
+ *
+ * Returns: (transfer full): An extended attribute value, or %NULL on error
+ */
+GBytes *
+glnx_fgetxattr_bytes (int            fd,
+                      const char    *attribute,
+                      GError       **error)
+{
+  GBytes *bytes = NULL;
+  ssize_t bytes_read, real_size;
+  guint8 *buf;
+
+  do
+    bytes_read = fgetxattr (fd, attribute, NULL, 0);
+  while (G_UNLIKELY (bytes_read < 0 && errno == EINTR));
+  if (G_UNLIKELY (bytes_read < 0))
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
+
+  buf = g_malloc (bytes_read);
+  do
+    real_size = fgetxattr (fd, attribute, buf, bytes_read);
+  while (G_UNLIKELY (real_size < 0 && errno == EINTR));
+  if (G_UNLIKELY (real_size < 0))
+    {
+      glnx_set_error_from_errno (error);
+      g_free (buf);
+      goto out;
+    }
+
+  bytes = g_bytes_new_take (buf, real_size);
+ out:
+  return bytes;
+}
+
+/**
+ * glnx_lsetxattrat:
+ * @dfd: Directory file descriptor
+ * @subpath: Path
+ * @attribute: An attribute name
+ * @value: (array length=len) (element-type guint8): Attribute value
+ * @len: Length of @value
+ * @flags: Flags, containing either XATTR_CREATE or XATTR_REPLACE
+ * @error: Error
+ *
+ * Set an extended attribute, relative to a directory file descriptor.
+ */
+gboolean
+glnx_lsetxattrat (int            dfd,
+                  const char    *subpath,
+                  const char    *attribute,
+                  const guint8  *value,
+                  gsize          len,
+                  int            flags,
+                  GError       **error)
+{
+  char pathbuf[PATH_MAX];
+  int res;
+
+  snprintf (pathbuf, sizeof (pathbuf), "/proc/self/fd/%d/%s", dfd, subpath);
+
+  do
+    res = lsetxattr (subpath, attribute, value, len, flags);
+  while (G_UNLIKELY (res == -1 && errno == EINTR));
+  if (G_UNLIKELY (res == -1))
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+

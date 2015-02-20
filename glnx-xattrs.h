@@ -55,4 +55,24 @@ glnx_fd_set_all_xattrs (int            fd,
                         GCancellable  *cancellable,
                         GError       **error);
 
+GBytes *
+glnx_lgetxattrat (int            dfd,
+                  const char    *subpath,
+                  const char    *attribute,
+                  GError       **error);
+
+GBytes *
+glnx_fgetxattr_bytes (int            fd,
+                      const char    *attribute,
+                      GError       **error);
+
+gboolean
+glnx_lsetxattrat (int            dfd,
+                  const char    *subpath,
+                  const char    *attribute,
+                  const guint8  *value,
+                  gsize          len,
+                  int            flags,
+                  GError       **error);
+
 G_END_DECLS
