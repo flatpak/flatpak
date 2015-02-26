@@ -21,7 +21,15 @@
 
 #include <glnx-backport-autoptr.h>
 
-#if !GLIB_CHECK_VERSION(2, 43, 3)
+#if !GLIB_CHECK_VERSION(2, 43, 4)
+
+static inline void
+g_autoptr_cleanup_generic_gfree (void *p)
+{ 
+  void **pp = (void**)p;
+  if (*pp)
+    g_free (*pp);
+}
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GAsyncQueue, g_async_queue_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GBookmarkFile, g_bookmark_file_free)
