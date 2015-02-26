@@ -47,4 +47,26 @@ glnx_file_get_contents_utf8_at (int                   dfd,
                                 GCancellable         *cancellable,
                                 GError              **error);
 
+char *
+glnx_readlinkat_malloc (int            dfd,
+                        const char    *subpath,
+                        GCancellable  *cancellable,
+                        GError       **error);
+
+typedef enum {
+  GLNX_FILE_COPY_OVERWRITE,
+  GLNX_FILE_COPY_NOXATTRS,
+  GLNX_FILE_COPY_DATASYNC
+} GLnxFileCopyFlags;
+
+gboolean
+glnx_file_copy_at (int                   src_dfd,
+                   const char           *src_subpath,
+                   struct stat          *src_stbuf,
+                   int                   dest_dfd,
+                   const char           *dest_subpath,
+                   GLnxFileCopyFlags     copyflags,
+                   GCancellable         *cancellable,
+                   GError              **error);
+
 G_END_DECLS
