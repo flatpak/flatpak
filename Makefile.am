@@ -29,9 +29,6 @@ libexec_PROGRAMS = \
 	$(NULL)
 
 xdg_app_helper_SOURCES = xdg-app-helper.c
-# Only CAP_CFLAGS, we're not linking to libcap
-xdg_app_helper_CFLAGS = $(CAP_CFLAGS)
-
 
 dbus_built_sources = xdg-app-dbus.c xdg-app-dbus.h
 BUILT_SOURCES = $(dbus_built_sources)
