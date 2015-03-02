@@ -582,6 +582,8 @@ ostree_repo_load_summary (const char *repository_url,
   gs_unref_hashtable GHashTable *local_refs = NULL;
   gs_free char *local_title = NULL;
 
+  local_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
   summary_url = g_build_filename (repository_url, "summary", NULL);
   if (load_contents (summary_url, &bytes, cancellable, NULL))
     {
@@ -590,8 +592,6 @@ ostree_repo_load_summary (const char *repository_url,
       gs_unref_variant GVariant *extensions;
       GVariantDict dict;
       int i, n;
-
-      local_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
       summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, FALSE);
       ref_list = g_variant_get_child_value (summary, 0);
