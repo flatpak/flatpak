@@ -199,4 +199,5 @@ glnx_dirfd_iterator_clear (GLnxDirFdIterator *dfd_iter)
   GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
   /* fd is owned by dfd_iter */
   (void) closedir (real_dfd_iter->d);
+  real_dfd_iter->initialized = FALSE;
 }
