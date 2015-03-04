@@ -1,6 +1,8 @@
 #ifndef __XDG_APP_RUN_H__
 #define __XDG_APP_RUN_H__
 
+void xdg_app_run_in_transient_unit (const char *app_id);
+
 gboolean xdg_app_run_verify_environment_keys (const char **keys,
 					      GError     **error);
 void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,

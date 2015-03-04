@@ -31,7 +31,8 @@ libexec_PROGRAMS = \
 xdg_app_helper_SOURCES = xdg-app-helper.c
 
 dbus_built_sources = xdg-app-dbus.c xdg-app-dbus.h
-BUILT_SOURCES = $(dbus_built_sources)
+systemd_dbus_built_sources = xdg-app-systemd-dbus.c xdg-app-systemd-dbus.h
+BUILT_SOURCES = $(dbus_built_sources) $(systemd_dbus_built_sources)
 
 $(dbus_built_sources) : Makefile.am xdg-app-dbus-interfaces.xml
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
@@ -39,6 +40,14 @@ $(dbus_built_sources) : Makefile.am xdg-app-dbus-interfaces.xml
 		--c-namespace XdgApp				\
 		--generate-c-code xdg-app-dbus			\
 		$(srcdir)/xdg-app-dbus-interfaces.xml		\
+		$(NULL)
+
+$(systemd_dbus_built_sources) : Makefile.am org.freedesktop.systemd1.xml
+	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
+		--interface-prefix org.freedesktop.systemd1.	\
+		--c-namespace Systemd				\
+		--generate-c-code xdg-app-systemd-dbus			\
+		$(srcdir)/org.freedesktop.systemd1.xml		\
 		$(NULL)
 
 resource_files = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/xdg-app.gresource.xml)
@@ -92,6 +101,7 @@ xdg_app_SOURCES = \
 	xdg-app-run.h \
 	xdg-app-utils.h \
 	xdg-app-utils.c \
+	$(systemd_dbus_built_sources)	\
 	$(dbus_built_sources)		\
 	$(NULL)
 

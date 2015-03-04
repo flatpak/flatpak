@@ -30,5 +30,6 @@ xdg-app-session-helper
 doc/*.1
 *~
 xdg-app-dbus.[ch]
+xdg-app-systemd-dbus.[ch]
 xdg-app-resources.c
 *.service

@@ -1,0 +1,19 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+ <interface name="org.freedesktop.systemd1.Manager">
+  <method name="StartTransientUnit">
+   <arg type="s" direction="in" name="name"/>
+   <arg type="s" direction="in" name="mode"/>
+   <arg type="a(sv)" direction="in" name="properties"/>
+   <arg type="a(sa(sv))" direction="in" name="aux"/>
+   <arg type="o" direction="out" name="job"/>
+  </method>
+  <signal name="JobRemoved">
+   <arg type="u" name="id"/>
+   <arg type="o" name="job"/>
+   <arg type="s" name="unit"/>
+   <arg type="s" name="result"/>
+  </signal>
+ </interface>
+</node>

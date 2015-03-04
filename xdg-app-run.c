@@ -3,12 +3,14 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include <gio/gio.h>
 #include "libgsystem.h"
 
 #include "xdg-app-run.h"
 #include "xdg-app-utils.h"
+#include "xdg-app-systemd-dbus.h"
 
 gboolean
 xdg_app_run_verify_environment_keys (const char **keys,
@@ -334,4 +336,127 @@ xdg_app_ensure_data_dir (const char *app_id,
     return NULL;
 
   return g_object_ref (dir);
+}
+
+struct JobData {
+  char *job;
+  GMainLoop *main_loop;
+};
+
+static void
+job_removed_cb (SystemdManager *manager,
+                guint32 id,
+                char *job,
+                char *unit,
+                char *result,
+                struct JobData *data)
+{
+  if (strcmp (job, data->job) == 0)
+    g_main_loop_quit (data->main_loop);
+}
+
+void
+xdg_app_run_in_transient_unit (const char *appid)
+{
+  GDBusConnection *conn = NULL;
+  GError *error = NULL;
+  char *path = NULL;
+  char *address = NULL;
+  char *name = NULL;
+  char *job = NULL;
+  SystemdManager *manager = NULL;
+  GVariantBuilder builder;
+  GVariant *properties = NULL;
+  GVariant *aux = NULL;
+  guint32 pid;
+  GMainContext *main_context = NULL;
+  GMainLoop *main_loop = NULL;
+  struct JobData data;
+
+  path = g_strdup_printf ("/run/user/%d/systemd/private", getuid());
+
+  if (!g_file_test (path, G_FILE_TEST_EXISTS))
+    goto out;
+
+  main_context = g_main_context_new ();
+  main_loop = g_main_loop_new (main_context, FALSE);
+
+  g_main_context_push_thread_default (main_context);
+
+
+  address = g_strconcat ("unix:path=", path, NULL);
+
+  conn = g_dbus_connection_new_for_address_sync (address,
+                                                 G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT,
+                                                 NULL,
+                                                 NULL, &error);
+  if (!conn)
+    {
+      g_warning ("Can't connect to systemd: %s\n", error->message);
+      goto out;
+    }
+
+  manager = systemd_manager_proxy_new_sync (conn,
+                                            G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
+                                            NULL,
+                                            "/org/freedesktop/systemd1",
+                                            NULL, &error);
+  if (!manager)
+    {
+      g_warning ("Can't create manager proxy: %s\n", error->message);
+      goto out;
+    }
+
+  name = g_strdup_printf ("xdg-app-%s-%d.scope", appid, getpid());
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(sv)"));
+
+  pid = getpid ();
+  g_variant_builder_add (&builder, "(sv)",
+                         "PIDs",
+                         g_variant_new_fixed_array (G_VARIANT_TYPE ("u"),
+                                                    &pid, 1, sizeof (guint32))
+                         );
+
+  properties = g_variant_builder_end (&builder);
+
+  aux = g_variant_new_array (G_VARIANT_TYPE ("(sa(sv))"), NULL, 0);
+
+  if (!systemd_manager_call_start_transient_unit_sync (manager,
+                                                       name,
+                                                       "fail",
+                                                       properties,
+                                                       aux,
+                                                       &job,
+                                                       NULL,
+                                                       &error))
+    {
+      g_warning ("Can't start transient unit: %s\n", error->message);
+      goto out;
+    }
+
+  data.job = job;
+  data.main_loop = main_loop;
+  g_signal_connect (manager,"job-removed", G_CALLBACK (job_removed_cb), &data);
+
+  g_main_loop_run (main_loop);
+
+ out:
+  if (main_context)
+    {
+      g_main_context_pop_thread_default (main_context);
+      g_main_context_unref (main_context);
+    }
+  if (main_loop)
+    g_main_loop_unref (main_loop);
+  if (error)
+    g_error_free (error);
+  if (manager)
+    g_object_unref (manager);
+  if (conn)
+    g_object_unref (conn);
+  g_free (path);
+  g_free (address);
+  g_free (job);
+  g_free (name);
 }

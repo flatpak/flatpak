@@ -117,7 +117,6 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
   return ret;
 }
 
-
 gboolean
 xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -314,6 +313,8 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_setenv ("XDG_DATA_HOME", gs_file_get_path_cached (app_id_dir_data), TRUE);
   g_setenv ("XDG_CONFIG_HOME", gs_file_get_path_cached (app_id_dir_config), TRUE);
   g_setenv ("XDG_CACHE_HOME", gs_file_get_path_cached (app_id_dir_cache), TRUE);
+
+  xdg_app_run_in_transient_unit (app);
 
   if (execv (HELPER, (char **)argv_array->pdata) == -1)
     {
