@@ -30,6 +30,7 @@ G_BEGIN_DECLS
 #include <glnx-dirfd.h>
 #include <glnx-shutil.h>
 #include <glnx-xattrs.h>
+#include <glnx-libcontainer.h>
 #include <glnx-console.h>
 #include <glnx-fdio.h>
 
