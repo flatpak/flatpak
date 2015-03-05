@@ -325,6 +325,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "self", 0755},
   { FILE_TYPE_DIR, "run", 0755},
   { FILE_TYPE_DIR, "run/dbus", 0755},
+  { FILE_TYPE_DIR, "run/media", 0755},
   { FILE_TYPE_DIR, "run/user", 0755},
   { FILE_TYPE_DIR, "run/user/%1$d", 0700, NULL},
   { FILE_TYPE_DIR, "run/user/%1$d/pulse", 0700, NULL},
@@ -1553,7 +1554,10 @@ main (int argc,
     }
 
   if (mount_host_fs)
-    mount_extra_root_dirs (mount_host_fs_ro);
+    {
+      mount_extra_root_dirs (mount_host_fs_ro);
+      bind_mount ("/run/media", "run/media", BIND_RECURSIVE | (mount_host_fs_ro ? BIND_READONLY : 0));
+    }
 
   if (!mount_host_fs)
     create_homedir (mount_home, app_id);
