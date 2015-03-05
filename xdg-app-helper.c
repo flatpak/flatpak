@@ -1222,20 +1222,36 @@ main (int argc,
     {
       switch (c)
         {
-        case 'i':
-          ipc = TRUE;
+        case 'a':
+          app_path = optarg;
           break;
 
-        case 'n':
-          network = TRUE;
+        case 'b':
+          tmp = strchr (optarg, '=');
+          if (tmp == NULL || tmp[1] == 0)
+            usage (argv);
+          *tmp = 0;
+          tmp = tmp + 1;
+
+          if (n_extra_dirs == MAX_EXTRA_DIRS)
+            die ("Too many extra directories");
+
+          if (strncmp (optarg, "/usr/", strlen ("/usr/")) != 0 &&
+              strncmp (optarg, "/self/", strlen ("/self/")) != 0)
+            die ("Extra directories must be in /usr or /self");
+
+          extra_dirs_dest[n_extra_dirs] = optarg + 1;
+          extra_dirs_src[n_extra_dirs] = tmp;
+
+          n_extra_dirs++;
           break;
 
-        case 'W':
-          writable = TRUE;
+        case 'd':
+          session_dbus_socket = optarg;
           break;
 
-        case 'w':
-          writable_app = TRUE;
+        case 'D':
+          system_dbus_socket = optarg;
           break;
 
         case 'e':
@@ -1245,10 +1261,6 @@ main (int argc,
         case 'E':
           create_etc_symlink = TRUE;
           create_etc_dir = FALSE;
-          break;
-
-        case 's':
-          share_shm = TRUE;
           break;
 
         case 'f':
@@ -1264,68 +1276,56 @@ main (int argc,
           mount_home = TRUE;
           break;
 
-        case 'a':
-          app_path = optarg;
-          break;
-
-        case 'm':
-          monitor_path = optarg;
-          break;
-
-        case 'b':
-	  tmp = strchr (optarg, '=');
-	  if (tmp == NULL || tmp[1] == 0)
-	    usage (argv);
-	  *tmp = 0;
-	  tmp = tmp + 1;
-
-	  if (n_extra_dirs == MAX_EXTRA_DIRS)
-	    die ("Too many extra directories");
-
-	  if (strncmp (optarg, "/usr/", strlen ("/usr/")) != 0 &&
-	      strncmp (optarg, "/self/", strlen ("/self/")) != 0)
-	    die ("Extra directories must be in /usr or /self");
-
-	  extra_dirs_dest[n_extra_dirs] = optarg + 1;
-	  extra_dirs_src[n_extra_dirs] = tmp;
-
-	  n_extra_dirs++;
-          break;
-
-        case 'p':
-          pulseaudio_socket = optarg;
-          break;
-
-        case 'x':
-          x11_socket = optarg;
-          break;
-
-        case 'l':
-          lock_files = TRUE;
-          break;
-
-        case 'y':
-          wayland_socket = optarg;
-          break;
-
-        case 'd':
-          session_dbus_socket = optarg;
-          break;
-
-        case 'D':
-          system_dbus_socket = optarg;
-          break;
-
-        case 'v':
-          var_path = optarg;
+        case 'i':
+          ipc = TRUE;
           break;
 
         case 'I':
           app_id = optarg;
           break;
 
-	default: /* '?' */
-	  usage (argv);
+        case 'l':
+          lock_files = TRUE;
+          break;
+
+        case 'm':
+          monitor_path = optarg;
+          break;
+
+        case 'n':
+          network = TRUE;
+          break;
+
+        case 'p':
+          pulseaudio_socket = optarg;
+          break;
+
+        case 's':
+          share_shm = TRUE;
+          break;
+
+        case 'v':
+          var_path = optarg;
+          break;
+
+        case 'w':
+          writable_app = TRUE;
+          break;
+
+        case 'W':
+          writable = TRUE;
+          break;
+
+        case 'x':
+          x11_socket = optarg;
+          break;
+
+        case 'y':
+          wayland_socket = optarg;
+          break;
+
+        default: /* '?' */
+          usage (argv);
       }
     }
 
