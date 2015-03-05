@@ -85,7 +85,7 @@
                     Allow access to the named facility. This overrides
                     the Environment section from the application metadata.
                     KEY must be one of: x11, wayland, ipc, pulseaudio, system-dbus,
-                    session-dbus, network, host-fs, homedir.
+                    session-dbus, network, host-fs, homedir, dri.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -98,7 +98,7 @@
                     Environment section from the application metadata and
                     --allow options to this command.
                     KEY must be one of: x11, wayland, ipc, pulseaudio, system-dbus,
-                    session-dbus, network, host-fs, homedir.
+                    session-dbus, network, host-fs, homedir, dri.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

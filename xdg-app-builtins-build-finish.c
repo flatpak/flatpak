@@ -101,7 +101,7 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
   GError *temp_error = NULL;
   const char *environment_keys[] = {
     "x11", "wayland", "ipc", "pulseaudio", "system-dbus", "session-dbus",
-    "network", "host-fs", "homedir", NULL
+    "network", "host-fs", "homedir", "dri", NULL
   };
   const char *key;
   int i;

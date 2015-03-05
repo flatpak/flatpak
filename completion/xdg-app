@@ -56,7 +56,7 @@ _xdg-app() {
                                 comps=$(xdg-app $mode list-runtimes)
                                 ;;
                         --allow|--forbid)
-                                comps='x11 wayland ipc pulseaudio system-dbus session-dbus network host-fs homedir'
+                                comps='x11 wayland ipc pulseaudio system-dbus session-dbus network host-fs homedir dri'
                                 ;;
                         --branch|--subject|--body|--title)
                                 comps=''

@@ -19,7 +19,7 @@ xdg_app_run_verify_environment_keys (const char **keys,
   const char *key;
   const char *environment_keys[] = {
     "x11", "wayland", "ipc", "pulseaudio", "system-dbus", "session-dbus",
-    "network", "host-fs", "homedir", NULL
+    "network", "host-fs", "homedir", "dri", NULL
   };
 
   if (keys == NULL)
@@ -163,6 +163,13 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
     {
       g_debug ("Allowing ipc access");
       opts[i++] = 'i';
+    }
+
+  if ((g_key_file_get_boolean (metakey, "Environment", "dri", NULL) || g_strv_contains (allow, "dri")) &&
+      !g_strv_contains (forbid, "dri"))
+    {
+      g_debug ("Allowing dri access");
+      opts[i++] = 'g';
     }
 
   if ((g_key_file_get_boolean (metakey, "Environment", "host-fs", NULL) || g_strv_contains (allow, "nost-fs")) &&

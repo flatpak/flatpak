@@ -242,6 +242,7 @@ usage (char **argv)
            "	-e		Make /self/exports writable\n"
            "	-E		Make /etc a pure symlink to /usr/etc\n"
            "	-f		Mount the host filesystems\n"
+	   "    -g              Allow use of direct rendering graphics\n"
            "	-F		Mount the host filesystems read-only\n"
            "	-H		Mount the users home directory (implied by -f)\n"
            "	-i		Share IPC namespace with session\n"
@@ -317,6 +318,7 @@ ascii_isdigit (char c)
 static bool create_etc_symlink = FALSE;
 static bool create_etc_dir = TRUE;
 static bool create_monitor_links = FALSE;
+static bool allow_dri = FALSE;
 
 static const create_table_t create[] = {
   { FILE_TYPE_DIR, ".oldroot", 0755 },
@@ -369,7 +371,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_DEVICE, "dev/urandom", 0666},
   { FILE_TYPE_DEVICE, "dev/tty", 0666},
   { FILE_TYPE_DIR, "dev/dri", 0755},
-  { FILE_TYPE_BIND_RO, "dev/dri", 0755, "/dev/dri", FILE_FLAGS_NON_FATAL|FILE_FLAGS_DEVICES},
+  { FILE_TYPE_BIND_RO, "dev/dri", 0755, "/dev/dri", FILE_FLAGS_NON_FATAL|FILE_FLAGS_DEVICES, &allow_dri},
   { FILE_TYPE_REMOUNT, "dev", MS_RDONLY|MS_NOSUID|MS_NOEXEC},
 };
 
@@ -1219,7 +1221,7 @@ main (int argc,
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
     die_with_error ("prctl(PR_SET_NO_NEW_CAPS) failed");
 
-  while ((c =  getopt (argc, argv, "+inWweEsfFHa:m:b:p:x:ly:d:D:v:I:")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWweEsfFHa:m:b:p:x:ly:d:D:v:I:g")) >= 0)
     {
       switch (c)
         {
@@ -1271,6 +1273,10 @@ main (int argc,
         case 'F':
           mount_host_fs = TRUE;
           mount_host_fs_ro = TRUE;
+          break;
+
+        case 'g':
+          allow_dri = TRUE;
           break;
 
         case 'H':
