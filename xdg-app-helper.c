@@ -232,7 +232,31 @@ static inline int raw_clone(unsigned long flags, void *child_stack) {
 void
 usage (char **argv)
 {
-  fprintf (stderr, "usage: %s [-n] [-i] [-p <pulsaudio socket>] [-x X11 socket] [-y Wayland socket] [-w] [-W] [-E] [-l] [-m <path to monitor dir>] [-a <path to app>] [-v <path to var>] [-I <app id>] [-b <target-dir>=<src-dir>] <path to runtime> <command..>\n", argv[0]);
+  fprintf (stderr, "usage: %s [OPTIONS...] RUNTIMEPATH COMMAND [ARGS...]\n\n", argv[0]);
+
+  fprintf (stderr,
+           "	-a		Specify path for application (mounted at /self)\n"
+           "	-b SOURCE=DEST	Bind extra source directory into DEST (must be in /usr or /self)\n"
+           "	-d SOCKETPATH	Use SOCKETPATH as dbus session bus\n"
+           "	-D SOCKETPATH	Use SOCKETPATH as dbus system bus\n"
+           "	-e		Make /self/exports writable\n"
+           "	-E		Make /etc a pure symlink to /usr/etc\n"
+           "	-f		Mount the host filesystems\n"
+           "	-F		Mount the host filesystems read-only\n"
+           "	-H		Mount the users home directory (implied by -f)\n"
+           "	-i		Share IPC namespace with session\n"
+           "	-I APPID	Set app id (used to find app data)\n"
+           "	-l		Lock .ref files in all mounts\n"
+           "	-m PATH		Set path to xdg-app-session-helper output\n"
+           "	-n		Share network namespace with session\n"
+           "	-p SOCKETPATH	Use SOCKETPATH as pulseaudio connection\n"
+           "	-s		Share Shm namespace with session\n"
+           "	-v PATH		Mount PATH as /var\n"
+           "	-w		Make /self writable\n"
+           "	-W		Make /usr writable\n"
+           "	-x SOCKETPATH	Use SOCKETPATH as X display\n"
+           "	-y SOCKETPATH	Use SOCKETPATH as Wayland display\n"
+           );
   exit (1);
 }
 
