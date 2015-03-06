@@ -291,6 +291,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 				    (const char **)opt_allow,
 				    (const char **)opt_forbid);
 
+  g_ptr_array_add (argv_array, g_strdup ("-b"));
+  g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/fonts=%s", SYSTEM_FONTS_DIR));
+
   g_ptr_array_add (argv_array, g_strdup ("-a"));
   g_ptr_array_add (argv_array, g_file_get_path (app_files));
   g_ptr_array_add (argv_array, g_strdup ("-I"));

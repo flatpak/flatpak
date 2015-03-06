@@ -236,7 +236,7 @@ usage (char **argv)
 
   fprintf (stderr,
            "	-a		Specify path for application (mounted at /self)\n"
-           "	-b SOURCE=DEST	Bind extra source directory into DEST (must be in /usr or /self)\n"
+           "	-b SOURCE=DEST	Bind extra source directory into DEST (must be in /usr, /self, /run/host)\n"
            "	-d SOCKETPATH	Use SOCKETPATH as dbus session bus\n"
            "	-D SOCKETPATH	Use SOCKETPATH as dbus system bus\n"
            "	-e		Make /self/exports writable\n"
@@ -326,6 +326,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "tmp", 01777 },
   { FILE_TYPE_DIR, "self", 0755},
   { FILE_TYPE_DIR, "run", 0755},
+  { FILE_TYPE_DIR, "run/host", 0755},
   { FILE_TYPE_DIR, "run/dbus", 0755},
   { FILE_TYPE_DIR, "run/media", 0755},
   { FILE_TYPE_DIR, "run/user", 0755},
@@ -403,6 +404,11 @@ typedef enum {
   BIND_DEVICES = (1<<2),
   BIND_RECURSIVE = (1<<3),
 } bind_option_t;
+
+typedef struct {
+  char *src;
+  char *dest;
+} ExtraDir;
 
 #define MAX_EXTRA_DIRS 32
 #define MAX_LOCK_DIRS (MAX_EXTRA_DIRS+2)
@@ -1185,8 +1191,7 @@ main (int argc,
   char *monitor_path = NULL;
   char *app_id = NULL;
   char *var_path = NULL;
-  char *extra_dirs_src[MAX_EXTRA_DIRS];
-  char *extra_dirs_dest[MAX_EXTRA_DIRS];
+  ExtraDir extra_dirs[MAX_EXTRA_DIRS];
   int n_extra_dirs = 0;
   char *pulseaudio_socket = NULL;
   char *x11_socket = NULL;
@@ -1240,11 +1245,12 @@ main (int argc,
             die ("Too many extra directories");
 
           if (strncmp (optarg, "/usr/", strlen ("/usr/")) != 0 &&
-              strncmp (optarg, "/self/", strlen ("/self/")) != 0)
-            die ("Extra directories must be in /usr or /self");
+              strncmp (optarg, "/self/", strlen ("/self/")) != 0 &&
+              strncmp (optarg, "/run/host/", strlen ("/run/host/")) != 0)
+            die ("Extra directories must be in /usr, /self or /run/host");
 
-          extra_dirs_dest[n_extra_dirs] = optarg + 1;
-          extra_dirs_src[n_extra_dirs] = tmp;
+          extra_dirs[n_extra_dirs].dest = optarg + 1;
+          extra_dirs[n_extra_dirs].src = tmp;
 
           n_extra_dirs++;
           break;
@@ -1439,11 +1445,14 @@ main (int argc,
 
   for (i = 0; i < n_extra_dirs; i++)
     {
-      if (bind_mount (extra_dirs_src[i], extra_dirs_dest[i], BIND_PRIVATE | BIND_READONLY))
-	die_with_error ("mount extra dir %s", extra_dirs_src[i]);
+      if (mkdir_with_parents (extra_dirs[i].dest, 0755))
+        die_with_error ("create extra dir %s", extra_dirs[i].dest);
+
+      if (bind_mount (extra_dirs[i].src, extra_dirs[i].dest, BIND_PRIVATE | BIND_READONLY))
+        die_with_error ("mount extra dir %s", extra_dirs[i].src);
 
       if (lock_files)
-	add_lock_dir (extra_dirs_dest[i]);
+        add_lock_dir (extra_dirs[i].dest);
     }
 
   if (var_path != NULL)

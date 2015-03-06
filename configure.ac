@@ -34,6 +34,13 @@ AC_ARG_WITH(dbus_service_dir,
 DBUS_SERVICE_DIR=$with_dbus_service_dir
 AC_SUBST(DBUS_SERVICE_DIR)
 
+
+AC_ARG_WITH(system_fonts_dir,
+		AS_HELP_STRING([--with-system-fonts-dir=PATH],[Directory where system fonts are, [default=/usr/share/fonts]]),
+            with_system_fonts_dir="$withval", with_system_fonts_dir=/usr/share/fonts)
+SYSTEM_FONTS_DIR=$with_system_fonts_dir
+AC_SUBST(SYSTEM_FONTS_DIR)
+
 AC_CHECK_HEADER([sys/capability.h], have_caps=yes, AC_MSG_ERROR([sys/capability.h header not found]))
 
 AC_SUBST([GLIB_COMPILE_RESOURCES], [`$PKG_CONFIG --variable glib_compile_resources gio-2.0`])
