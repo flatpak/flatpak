@@ -593,22 +593,16 @@ export_desktop_file (const char    *app,
 }
 
 static gboolean
-export_dir (const char    *app,
-            const char    *branch,
-            const char    *arch,
-            int            source_parent_fd,
-            const char    *source_name,
-            const char    *source_symlink_prefix,
-            const char    *source_relpath,
-            int            destination_parent_fd,
-            const char    *destination_name,
-            GCancellable  *cancellable,
-            GError       **error)
+rewrite_export_dir (const char    *app,
+                    const char    *branch,
+                    const char    *arch,
+                    int            source_parent_fd,
+                    const char    *source_name,
+                    GCancellable  *cancellable,
+                    GError       **error)
 {
   gboolean ret = FALSE;
-  int res;
   gs_dirfd_iterator_cleanup GSDirFdIterator source_iter;
-  gs_fd_close int destination_dfd = -1;
   gs_unref_hashtable GHashTable *visited_children = NULL;
   struct dirent *dent;
 
@@ -616,23 +610,6 @@ export_dir (const char    *app,
     goto out;
 
   visited_children = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-
-  do
-    res = mkdirat (destination_parent_fd, destination_name, 0777);
-  while (G_UNLIKELY (res == -1 && errno == EINTR));
-  if (res == -1)
-    {
-      if (errno != EEXIST)
-        {
-          gs_set_error_from_errno (error, errno);
-          goto out;
-        }
-    }
-
-  if (!gs_file_open_dir_fd_at (destination_parent_fd, destination_name,
-                               &destination_dfd,
-                               cancellable, error))
-    goto out;
 
   while (TRUE)
     {
@@ -664,12 +641,9 @@ export_dir (const char    *app,
 
       if (S_ISDIR (stbuf.st_mode))
         {
-          gs_free gchar *child_symlink_prefix = g_build_filename ("..", source_symlink_prefix, dent->d_name, NULL);
-          gs_free gchar *child_relpath = g_strconcat (source_relpath, dent->d_name, "/", NULL);
-
-          if (!export_dir (app, branch, arch,
-                           source_iter.fd, dent->d_name, child_symlink_prefix, child_relpath, destination_dfd, dent->d_name,
-                           cancellable, error))
+          if (!rewrite_export_dir (app, branch, arch,
+                                   source_iter.fd, dent->d_name,
+                                   cancellable, error))
             goto out;
         }
       else if (S_ISREG (stbuf.st_mode))
@@ -678,8 +652,12 @@ export_dir (const char    *app,
 
           if (!xdg_app_has_name_prefix (dent->d_name, app))
             {
-              g_warning ("Non-prefixed filename %s in app %s, ignoring.\n", dent->d_name, app);
-              continue;
+              g_warning ("Non-prefixed filename %s in app %s, removing.\n", dent->d_name, app);
+              if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
+                {
+                  gs_set_error_from_errno (error, errno);
+                  goto out;
+                }
             }
 
           if (g_str_has_suffix (dent->d_name, ".desktop") || g_str_has_suffix (dent->d_name, ".service"))
@@ -697,6 +675,117 @@ export_dir (const char    *app,
                   goto out;
                 }
             }
+        }
+      else
+        {
+          g_warning ("Not exporting file %s of unsupported type\n", dent->d_name);
+          if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
+            {
+              gs_set_error_from_errno (error, errno);
+              goto out;
+            }
+        }
+    }
+
+  ret = TRUE;
+ out:
+
+  return ret;
+}
+
+gboolean
+xdg_app_rewrite_export_dir (const char *app,
+                            const char *branch,
+                            const char *arch,
+                            GFile    *source,
+                            GCancellable  *cancellable,
+                            GError       **error)
+{
+  gboolean ret = FALSE;
+
+  /* The fds are closed by this call */
+  if (!rewrite_export_dir (app, branch, arch,
+                           AT_FDCWD, gs_file_get_path_cached (source),
+                           cancellable, error))
+    goto out;
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
+
+static gboolean
+export_dir (int            source_parent_fd,
+            const char    *source_name,
+            const char    *source_symlink_prefix,
+            const char    *source_relpath,
+            int            destination_parent_fd,
+            const char    *destination_name,
+            GCancellable  *cancellable,
+            GError       **error)
+{
+  gboolean ret = FALSE;
+  int res;
+  gs_dirfd_iterator_cleanup GSDirFdIterator source_iter;
+  gs_fd_close int destination_dfd = -1;
+  struct dirent *dent;
+
+  if (!gs_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
+    goto out;
+
+  do
+    res = mkdirat (destination_parent_fd, destination_name, 0777);
+  while (G_UNLIKELY (res == -1 && errno == EINTR));
+  if (res == -1)
+    {
+      if (errno != EEXIST)
+        {
+          gs_set_error_from_errno (error, errno);
+          goto out;
+        }
+    }
+
+  if (!gs_file_open_dir_fd_at (destination_parent_fd, destination_name,
+                               &destination_dfd,
+                               cancellable, error))
+    goto out;
+
+  while (TRUE)
+    {
+      struct stat stbuf;
+
+      if (!gs_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
+        goto out;
+
+      if (dent == NULL)
+        break;
+
+      if (fstatat (source_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
+        {
+          int errsv = errno;
+          if (errsv == ENOENT)
+            continue;
+          else
+            {
+              gs_set_error_from_errno (error, errsv);
+              goto out;
+            }
+        }
+
+      if (S_ISDIR (stbuf.st_mode))
+        {
+          gs_free gchar *child_symlink_prefix = g_build_filename ("..", source_symlink_prefix, dent->d_name, NULL);
+          gs_free gchar *child_relpath = g_strconcat (source_relpath, dent->d_name, "/", NULL);
+
+          if (!export_dir (source_iter.fd, dent->d_name, child_symlink_prefix, child_relpath, destination_dfd, dent->d_name,
+                           cancellable, error))
+            goto out;
+        }
+      else if (S_ISREG (stbuf.st_mode))
+        {
+          gs_free gchar *target = NULL;
 
           target = g_build_filename (source_symlink_prefix, dent->d_name, NULL);
 
@@ -712,10 +801,6 @@ export_dir (const char    *app,
               goto out;
             }
         }
-      else
-        {
-          g_warning ("Not exporting file %s of unsupported type\n", source_relpath);
-        }
     }
 
   ret = TRUE;
@@ -725,10 +810,7 @@ export_dir (const char    *app,
 }
 
 gboolean
-xdg_app_export_dir (const char *app,
-                    const char *branch,
-                    const char *arch,
-                    GFile    *source,
+xdg_app_export_dir (GFile    *source,
                     GFile    *destination,
                     const char *symlink_prefix,
                     GCancellable  *cancellable,
@@ -740,8 +822,7 @@ xdg_app_export_dir (const char *app,
     goto out;
 
   /* The fds are closed by this call */
-  if (!export_dir (app, branch, arch,
-                   AT_FDCWD, gs_file_get_path_cached (source), symlink_prefix, "",
+  if (!export_dir (AT_FDCWD, gs_file_get_path_cached (source), symlink_prefix, "",
                    AT_FDCWD, gs_file_get_path_cached (destination),
                    cancellable, error))
     goto out;
@@ -906,12 +987,17 @@ xdg_app_dir_deploy (XdgAppDir *self,
           gs_free char *symlink_prefix = NULL;
           gs_strfreev char **ref_parts = NULL;
 
+          ref_parts = g_strsplit (ref, "/", -1);
+
+          if (!xdg_app_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2], export,
+                                           cancellable,
+                                           error))
+            goto out;
+
           relative_path = g_file_get_relative_path (self->basedir, export);
           symlink_prefix = g_build_filename ("..", relative_path, NULL);
 
-          ref_parts = g_strsplit (ref, "/", -1);
-
-          if (!xdg_app_export_dir (ref_parts[1], ref_parts[3], ref_parts[2], export, exports,
+          if (!xdg_app_export_dir (export, exports,
                                    symlink_prefix,
                                    cancellable,
                                    error))
