@@ -21,36 +21,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-static gboolean
-single_child_directory (GFile *dir, const char *name, GCancellable *cancellable)
-{
-  gboolean ret = FALSE;
-  gs_unref_object GFileEnumerator *dir_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
-
-  dir_enum = g_file_enumerate_children (dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
-                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                        cancellable, NULL);
-
-  if (!dir_enum)
-    goto out;
-
-  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, NULL)))
-    {
-      if (strcmp (name, g_file_info_get_name (child_info)) == 0)
-        {
-          g_clear_object (&child_info);
-          continue;
-        }
-      goto out;
-    }
-
-  ret = TRUE;
-
-out:
-  return ret;
-}
-
 gboolean
 xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -278,13 +248,6 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
           goto out;
         }
       g_clear_error (&temp_error);
-    }
-
-  top_dir = g_file_get_parent (arch_dir);
-  if (single_child_directory (top_dir, "data", cancellable))
-    {
-       if (!gs_shutil_rm_rf (top_dir, cancellable, error))
-         goto out;
     }
 
   if (!opt_keep_ref)
