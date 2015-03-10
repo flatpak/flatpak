@@ -111,7 +111,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   arch_dir = g_file_get_parent (deploy_base);
   if (!g_file_delete (arch_dir, cancellable, &temp_error))
     {
-      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_IS_DIRECTORY))
+      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
           g_propagate_error (error, temp_error);
           goto out;
@@ -122,7 +122,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   top_dir = g_file_get_parent (arch_dir);
   if (!g_file_delete (top_dir, cancellable, &temp_error))
     {
-      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_IS_DIRECTORY))
+      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
           g_propagate_error (error, temp_error);
           goto out;
@@ -242,7 +242,18 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   arch_dir = g_file_get_parent (deploy_base);
   if (!g_file_delete (arch_dir, cancellable, &temp_error))
     {
-      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_IS_DIRECTORY))
+      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
+        {
+          g_propagate_error (error, temp_error);
+          goto out;
+        }
+      g_clear_error (&temp_error);
+    }
+
+  top_dir = g_file_get_parent (arch_dir);
+  if (!g_file_delete (top_dir, cancellable, &temp_error))
+    {
+      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
           g_propagate_error (error, temp_error);
           goto out;
