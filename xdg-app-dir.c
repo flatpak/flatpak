@@ -270,6 +270,186 @@ xdg_app_dir_pull (XdgAppDir *self,
   return ret;
 }
 
+static int
+strvcmp(char **a, char **b)
+{
+  return strcmp (*a, *b);
+}
+
+gboolean
+xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
+                                const char     *kind,
+                                const char     *name,
+                                char         ***refs_out,
+                                GCancellable   *cancellable,
+                                GError        **error)
+{
+  gboolean ret = FALSE;
+  gs_unref_object GFile *base = NULL;
+  gs_unref_object GFile *dir = NULL;
+  gs_unref_object GFileEnumerator *dir_enum = NULL;
+  gs_unref_object GFileInfo *child_info = NULL;
+  GError *temp_error = NULL;
+  gs_unref_ptrarray GPtrArray *refs = NULL;
+
+  base = g_file_get_child (xdg_app_dir_get_path (self), kind);
+  dir = g_file_get_child (base, name);
+
+  refs = g_ptr_array_new ();
+
+  if (!g_file_query_exists (dir, cancellable))
+    {
+      ret = TRUE;
+      goto out;
+    }
+
+  dir_enum = g_file_enumerate_children (dir, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable, error);
+  if (!dir_enum)
+    goto out;
+
+  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
+    {
+      gs_unref_object GFile *child = NULL;
+      gs_unref_object GFileEnumerator *dir_enum2 = NULL;
+      gs_unref_object GFileInfo *child_info2 = NULL;
+      const char *arch;
+
+      arch = g_file_info_get_name (child_info);
+
+      if (g_file_info_get_file_type (child_info) != G_FILE_TYPE_DIRECTORY ||
+          strcmp (arch, "data") == 0 /* There used to be a data dir here, lets ignore it */)
+        {
+          g_clear_object (&child_info);
+          continue;
+        }
+
+      child = g_file_get_child (dir, arch);
+      g_clear_object (&dir_enum2);
+      dir_enum2 = g_file_enumerate_children (child, OSTREE_GIO_FAST_QUERYINFO,
+                                             G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                             cancellable, error);
+      if (!dir_enum2)
+        goto out;
+
+      while ((child_info2 = g_file_enumerator_next_file (dir_enum2, cancellable, &temp_error)))
+        {
+          const char *branch;
+
+          if (g_file_info_get_file_type (child_info2) == G_FILE_TYPE_DIRECTORY)
+            {
+              branch = g_file_info_get_name (child_info2);
+              g_ptr_array_add (refs,
+                               g_strdup_printf ("%s/%s/%s/%s", kind, name, arch, branch));
+            }
+
+          g_clear_object (&child_info2);
+        }
+
+
+      if (temp_error != NULL)
+        goto out;
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    goto out;
+
+  g_ptr_array_sort (refs, (GCompareFunc)strvcmp);
+
+  ret = TRUE;
+
+out:
+  if (ret)
+    {
+      g_ptr_array_add (refs, NULL);
+      *refs_out = (char **)g_ptr_array_free (refs, FALSE);
+      refs = NULL;
+    }
+
+  if (temp_error != NULL)
+    g_propagate_error (error, temp_error);
+
+  return ret;
+}
+
+gboolean
+xdg_app_dir_list_refs (XdgAppDir      *self,
+                       const char     *kind,
+                       char         ***refs_out,
+                       GCancellable   *cancellable,
+                       GError        **error)
+{
+  gboolean ret = FALSE;
+  gs_unref_object GFile *base;
+  gs_unref_object GFileEnumerator *dir_enum = NULL;
+  gs_unref_object GFileInfo *child_info = NULL;
+  GError *temp_error = NULL;
+  gs_unref_ptrarray GPtrArray *refs = NULL;
+
+  refs = g_ptr_array_new ();
+
+  base = g_file_get_child (xdg_app_dir_get_path (self), kind);
+
+  if (!g_file_query_exists (base, cancellable))
+    {
+      ret = TRUE;
+      goto out;
+    }
+
+  dir_enum = g_file_enumerate_children (base, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable, error);
+  if (!dir_enum)
+    goto out;
+
+  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
+    {
+      gchar **sub_refs = NULL;
+      const char *name;
+      int i;
+
+      if (g_file_info_get_file_type (child_info) != G_FILE_TYPE_DIRECTORY)
+        {
+          g_clear_object (&child_info);
+          continue;
+        }
+
+      name = g_file_info_get_name (child_info);
+
+      if (!xdg_app_dir_list_refs_for_name (self, kind, name, &sub_refs, cancellable, error))
+        goto out;
+
+      for (i = 0; sub_refs[i] != NULL; i++)
+        g_ptr_array_add (refs, sub_refs[i]);
+      g_free (sub_refs);
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    goto out;
+
+  ret = TRUE;
+
+  g_ptr_array_sort (refs, (GCompareFunc)strvcmp);
+
+out:
+  if (ret)
+    {
+      g_ptr_array_add (refs, NULL);
+      *refs_out = (char **)g_ptr_array_free (refs, FALSE);
+      refs = NULL;
+    }
+
+  if (temp_error != NULL)
+    g_propagate_error (error, temp_error);
+
+  return ret;
+}
+
 char *
 xdg_app_dir_read_active (XdgAppDir *self,
                          const char *ref,

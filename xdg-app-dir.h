@@ -50,6 +50,17 @@ gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          const char     *ref,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
+                                            const char     *kind,
+                                            const char     *name,
+                                            char          ***refs,
+                                            GCancellable   *cancellable,
+                                            GError        **error);
+gboolean    xdg_app_dir_list_refs       (XdgAppDir      *self,
+                                         const char     *kind,
+                                         char          ***refs,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 char *      xdg_app_dir_read_active     (XdgAppDir      *self,
                                          const char     *ref,
                                          GCancellable   *cancellable);
