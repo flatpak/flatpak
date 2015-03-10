@@ -22,119 +22,81 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
-print_installed_refs (XdgAppDir *dir, const char *kind, GCancellable *cancellable, GError **error)
+print_installed_refs (const char *kind, gboolean print_system, gboolean print_user, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *base;
-  gs_unref_object GFileEnumerator *dir_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
-  GError *temp_error = NULL;
-  gs_unref_ptrarray GPtrArray *refs = NULL;
-  int i;
+  gs_strfreev gchar **refs = NULL;
+  gs_free char *last_ref = NULL;
+  gs_free char *last = NULL;
+  gs_strfreev char **system = NULL;
+  gs_strfreev char **user = NULL;
+  int s, u;
 
-  base = g_file_get_child (xdg_app_dir_get_path (dir), kind);
-  if (!g_file_query_exists (base, cancellable))
-    return TRUE;
-
-  refs = g_ptr_array_new ();
-
-  dir_enum = g_file_enumerate_children (base, G_FILE_ATTRIBUTE_STANDARD_NAME,
-                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                        cancellable, error);
-  if (!dir_enum)
-    goto out;
-
-  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
+  if (print_user)
     {
-      gs_unref_object GFile *child = NULL;
-      gs_unref_object GFileEnumerator *dir_enum2 = NULL;
-      gs_unref_object GFileInfo *child_info2 = NULL;
-      const char *name;
+      gs_unref_object XdgAppDir *dir = NULL;
 
-      name = g_file_info_get_name (child_info);
-
-      child = g_file_get_child (base, name);
-      g_clear_object (&dir_enum2);
-      dir_enum2 = g_file_enumerate_children (child, G_FILE_ATTRIBUTE_STANDARD_NAME,
-                                             G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                             cancellable, error);
-      if (!dir_enum2)
+      dir = xdg_app_dir_get (TRUE);
+      if (!xdg_app_dir_list_refs (dir, kind, &user, cancellable, error))
         goto out;
-
-      while ((child_info2 = g_file_enumerator_next_file (dir_enum2, cancellable, &temp_error)))
-        {
-          gs_unref_object GFile *child2 = NULL;
-          gs_unref_object GFileEnumerator *dir_enum3 = NULL;
-          gs_unref_object GFileInfo *child_info3 = NULL;
-          const char *arch;
-
-          arch = g_file_info_get_name (child_info2);
-          if (strcmp (arch, "data") == 0)
-            continue;
-
-          child2 = g_file_get_child (child, arch);
-          g_clear_object (&dir_enum3);
-          dir_enum3 = g_file_enumerate_children (child2, G_FILE_ATTRIBUTE_STANDARD_NAME,
-                                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                                 cancellable, error);
-          if (!dir_enum3)
-            goto out;
-
-          while ((child_info3 = g_file_enumerator_next_file (dir_enum3, cancellable, &temp_error)))
-            {
-              const char *branch;
-              char *ref;
-	      gboolean found;
-
-              branch = g_file_info_get_name (child_info3);
-
-              if (opt_show_details)
-                ref = g_strdup_printf ("%s/%s/%s", name, arch, branch);
-              else
-                ref = g_strdup (name);
-
-	      found = FALSE;
-              for (i = 0; i < refs->len; i++)
-                {
-                  if (strcmp (ref, g_ptr_array_index (refs, i)) == 0)
-		    {
-		      found = TRUE;
-		      break;
-		    }
-                }
-	      if (found)
-		g_free (refs);
-	      else
-                g_ptr_array_add (refs, ref);
-
-              g_clear_object (&child_info3);
-            }
-
-	  g_ptr_array_sort (refs, (GCompareFunc)strcmp);
-
-          if (temp_error != NULL)
-            goto out;
-
-          g_clear_object (&child_info2);
-        }
-
-      if (temp_error != NULL)
-        goto out;
-
-      g_clear_object (&child_info);
     }
+  else
+    user = g_new0 (char *, 1);
 
-  if (temp_error != NULL)
-    goto out;
+  if (print_system)
+    {
+      gs_unref_object XdgAppDir *dir = NULL;
 
-  for (i = 0; i < refs->len; i++)
-    g_print ("%s\n", (char *)g_ptr_array_index (refs, i));
+      dir = xdg_app_dir_get (FALSE);
+      if (!xdg_app_dir_list_refs (dir, kind, &system, cancellable, error))
+        goto out;
+    }
+  else
+    system = g_new0 (char *, 1);
+
+  for (s = 0, u = 0; system[s] != NULL || user[u] != NULL; )
+    {
+      char *ref;
+      gs_strfreev char **parts = NULL;
+      gboolean is_user;
+
+      if (system[s] == NULL)
+        is_user = TRUE;
+      else if (user[u] == NULL)
+        is_user = FALSE;
+      else if (strcmp (system[s], user[u]) <= 0)
+        is_user = FALSE;
+      else
+        is_user = TRUE;
+
+      if (is_user)
+        ref = user[u++];
+      else
+        ref = system[s++];
+
+      parts = g_strsplit (ref, "/", -1);
+
+      if (opt_show_details)
+        {
+          g_print ("%s/%s/%s\t", parts[1], parts[2], parts[3]);
+          if (print_user && print_system)
+            g_print ("%s", is_user ? "user" : "system");
+          g_print ("\n");
+        }
+      else
+        {
+          if (last == NULL || strcmp (last, parts[1]) != 0)
+            {
+              g_print ("%s\n", parts[1]);
+              g_clear_pointer (&last, g_free);
+              last = g_strdup (parts[1]);
+            }
+        }
+    }
 
   ret = TRUE;
 
 out:
-  if (temp_error != NULL)
-    g_propagate_error (error, temp_error);
 
   return ret;
 }
@@ -144,29 +106,19 @@ xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable,
 {
   gboolean ret = FALSE;
   GOptionContext *context;
+  gs_strfreev char **system = NULL;
+  gs_strfreev char **user = NULL;
 
   context = g_option_context_new (" - List installed runtimes");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
-  if (opt_user || (!opt_user && !opt_system))
-    {
-      gs_unref_object XdgAppDir *dir = NULL;
-
-      dir = xdg_app_dir_get (TRUE);
-      if (!print_installed_refs (dir, "runtime", cancellable, error))
-        goto out;
-    }
-
-  if (opt_system || (!opt_user && !opt_system))
-    {
-      gs_unref_object XdgAppDir *dir = NULL;
-
-      dir = xdg_app_dir_get (FALSE);
-      if (!print_installed_refs (dir, "runtime", cancellable, error))
-        goto out;
-    }
+  if (!print_installed_refs ("runtime",
+                             opt_system || (!opt_user && !opt_system),
+                             opt_user || (!opt_user && !opt_system),
+                             cancellable, error))
+    goto out;
 
   ret = TRUE;
 
@@ -189,23 +141,11 @@ xdg_app_builtin_list_apps (int argc, char **argv, GCancellable *cancellable, GEr
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
-  if (opt_user || (!opt_user && !opt_system))
-    {
-      gs_unref_object XdgAppDir *dir = NULL;
-
-      dir = xdg_app_dir_get (TRUE);
-      if (!print_installed_refs (dir, "app", cancellable, error))
-        goto out;
-    }
-
-  if (opt_system || (!opt_user && !opt_system))
-    {
-      gs_unref_object XdgAppDir *dir = NULL;
-
-      dir = xdg_app_dir_get (FALSE);
-      if (!print_installed_refs (dir, "app", cancellable, error))
-        goto out;
-    }
+  if (!print_installed_refs ("app",
+                             opt_system || (!opt_user && !opt_system),
+                             opt_user || (!opt_user && !opt_system),
+                             cancellable, error))
+    goto out;
 
   ret = TRUE;
 
