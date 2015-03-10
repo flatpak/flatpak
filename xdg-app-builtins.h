@@ -37,6 +37,7 @@ BUILTINPROTO(update_runtime);
 BUILTINPROTO(uninstall_runtime);
 BUILTINPROTO(list_runtimes);
 BUILTINPROTO(install_app);
+BUILTINPROTO(make_current_app);
 BUILTINPROTO(update_app);
 BUILTINPROTO(uninstall_app);
 BUILTINPROTO(list_apps);

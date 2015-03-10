@@ -87,6 +87,7 @@ xdg_app_SOURCES = \
 	xdg-app-builtins-list-remotes.c \
 	xdg-app-builtins-repo-contents.c \
 	xdg-app-builtins-install.c \
+	xdg-app-builtins-make-current.c \
 	xdg-app-builtins-update.c \
 	xdg-app-builtins-uninstall.c \
 	xdg-app-builtins-list.c \
