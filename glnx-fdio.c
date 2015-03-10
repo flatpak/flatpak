@@ -509,7 +509,7 @@ glnx_file_copy_at (int                   src_dfd,
   else
     dest_open_flags |= O_TRUNC;
 
-  dest_fd = TEMP_FAILURE_RETRY (openat (dest_dfd, dest_subpath, dest_open_flags));
+  dest_fd = TEMP_FAILURE_RETRY (openat (dest_dfd, dest_subpath, dest_open_flags, src_stbuf->st_mode));
   if (dest_fd == -1)
     {
       glnx_set_error_from_errno (error);
