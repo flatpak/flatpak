@@ -78,9 +78,33 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
       if (opt_show_details)
         {
+          gboolean comma = FALSE;
+
           g_print ("%s/%s/%s\t", parts[1], parts[2], parts[3]);
+
           if (print_user && print_system)
-            g_print ("%s", is_user ? "user" : "system");
+            {
+              if (comma)
+                g_print (",");
+              comma = TRUE;
+              g_print ("%s", is_user ? "user" : "system");
+            }
+
+          if (strcmp (kind, "app") == 0)
+            {
+              gs_free char *current;
+              gs_unref_object XdgAppDir *dir = NULL;
+
+              dir = xdg_app_dir_get (is_user);
+              current = xdg_app_dir_current_ref (dir, parts[1], cancellable);
+              if (current && strcmp (ref, current) == 0)
+                {
+                  if (comma)
+                    g_print (",");
+                  comma = TRUE;
+                  g_print ("current");
+                }
+            }
           g_print ("\n");
         }
       else

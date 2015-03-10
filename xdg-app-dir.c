@@ -270,6 +270,86 @@ xdg_app_dir_pull (XdgAppDir *self,
   return ret;
 }
 
+char *
+xdg_app_dir_current_ref (XdgAppDir *self,
+                         const char *name,
+                         GCancellable *cancellable)
+{
+  gs_unref_object GFile *base = NULL;
+  gs_unref_object GFile *dir = NULL;
+  gs_unref_object GFile *current_link = NULL;
+  gs_unref_object GFileInfo *file_info = NULL;
+
+  base = g_file_get_child (xdg_app_dir_get_path (self), "app");
+  dir = g_file_get_child (base, name);
+
+  current_link = g_file_get_child (dir, "current");
+
+  file_info = g_file_query_info (current_link, OSTREE_GIO_FAST_QUERYINFO,
+                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                 cancellable, NULL);
+  if (file_info == NULL)
+    return NULL;
+
+  return g_strconcat ("app/", name, "/", g_file_info_get_symlink_target (file_info), NULL);
+}
+
+gboolean
+xdg_app_dir_drop_current_ref (XdgAppDir *self,
+                              const char *name,
+                              GCancellable *cancellable,
+                              GError **error)
+{
+  gs_unref_object GFile *base = NULL;
+  gs_unref_object GFile *dir = NULL;
+  gs_unref_object GFile *current_link = NULL;
+
+  base = g_file_get_child (xdg_app_dir_get_path (self), "app");
+  dir = g_file_get_child (base, name);
+
+  current_link = g_file_get_child (dir, "current");
+
+  return g_file_delete (current_link, cancellable, error);
+}
+
+gboolean
+xdg_app_dir_make_current_ref (XdgAppDir *self,
+                              const char *ref,
+                              GCancellable *cancellable,
+                              GError **error)
+{
+  gs_unref_object GFile *base = NULL;
+  gs_unref_object GFile *dir = NULL;
+  gs_unref_object GFile *current_link = NULL;
+  gs_strfreev char **ref_parts = NULL;
+  gs_free char *rest = NULL;
+  gboolean ret = FALSE;
+
+  ref_parts = g_strsplit (ref, "/", -1);
+
+  g_assert (g_strv_length (ref_parts) == 4);
+  g_assert (strcmp (ref_parts[0], "app") == 0);
+
+  base = g_file_get_child (xdg_app_dir_get_path (self), ref_parts[0]);
+  dir = g_file_get_child (base, ref_parts[1]);
+
+  current_link = g_file_get_child (dir, "current");
+
+  g_file_delete (current_link, cancellable, NULL);
+
+  if (*ref_parts[3] != 0)
+    {
+      rest = g_strdup_printf ("%s/%s", ref_parts[2], ref_parts[3]);
+      if (!g_file_make_symbolic_link (current_link, rest, cancellable, error))
+        goto out;
+    }
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
 static int
 strvcmp(char **a, char **b)
 {

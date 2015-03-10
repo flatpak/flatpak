@@ -167,6 +167,7 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   const char *branch;
   gs_free char *ref = NULL;
   gs_free char *repository = NULL;
+  gs_free char *current_ref = NULL;
   gs_strfreev char **deployed = NULL;
   int i;
   GError *temp_error = NULL;
@@ -220,6 +221,14 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   g_debug ("dropping active ref");
   if (!xdg_app_dir_set_active (dir, ref, NULL, cancellable, error))
     goto out;
+
+  current_ref = xdg_app_dir_current_ref (dir, name, cancellable);
+  if (current_ref != NULL && strcmp (ref, current_ref) == 0)
+    {
+      g_debug ("dropping current ref");
+      if (!xdg_app_dir_drop_current_ref (dir, name, cancellable, error))
+        goto out;
+    }
 
   if (!xdg_app_dir_list_deployed (dir, ref, &deployed, cancellable, error))
     goto out;

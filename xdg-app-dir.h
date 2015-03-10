@@ -69,6 +69,17 @@ gboolean    xdg_app_dir_set_active      (XdgAppDir      *self,
                                          const char     *checksum,
                                          GCancellable   *cancellable,
                                          GError        **error);
+char *      xdg_app_dir_current_ref     (XdgAppDir      *self,
+                                         const char     *name,
+                                         GCancellable   *cancellable);
+gboolean    xdg_app_dir_drop_current_ref (XdgAppDir      *self,
+                                          const char     *name,
+                                          GCancellable   *cancellable,
+                                          GError        **error);
+gboolean    xdg_app_dir_make_current_ref (XdgAppDir      *self,
+                                          const char     *ref,
+                                          GCancellable   *cancellable,
+                                          GError        **error);
 gboolean    xdg_app_dir_list_deployed   (XdgAppDir      *self,
                                          const char     *ref,
                                          char         ***deployed_checksums,
