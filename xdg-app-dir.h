@@ -74,6 +74,9 @@ gboolean    xdg_app_dir_undeploy        (XdgAppDir      *self,
 					 gboolean        force_remove,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_update_exports  (XdgAppDir      *self,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 gboolean    xdg_app_dir_prune           (XdgAppDir      *self,
                                          GCancellable   *cancellable,
                                          GError        **error);

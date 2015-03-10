@@ -833,7 +833,7 @@ xdg_app_export_dir (GFile    *source,
   return ret;
 }
 
-static gboolean
+gboolean
 xdg_app_dir_update_exports (XdgAppDir *self,
                             GCancellable *cancellable,
                             GError **error)
@@ -866,7 +866,6 @@ xdg_app_dir_deploy (XdgAppDir *self,
                     GError **error)
 {
   gboolean ret = FALSE;
-  gboolean is_app;
   gs_free char *resolved_ref = NULL;
   gs_unref_object GFile *root = NULL;
   gs_unref_object GFileInfo *file_info = NULL;
@@ -975,40 +974,32 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                 G_FILE_CREATE_NONE, NULL, cancellable, error))
     goto out;
 
-  is_app = g_str_has_prefix (ref, "app");
-
   exports = xdg_app_dir_get_exports_dir (self);
-  if (is_app)
+  export = g_file_get_child (checkoutdir, "export");
+  if (g_file_query_exists (export, cancellable))
     {
-      export = g_file_get_child (checkoutdir, "export");
-      if (g_file_query_exists (export, cancellable))
-        {
-          gs_free char *relative_path = NULL;
-          gs_free char *symlink_prefix = NULL;
-          gs_strfreev char **ref_parts = NULL;
+      gs_free char *relative_path = NULL;
+      gs_free char *symlink_prefix = NULL;
+      gs_strfreev char **ref_parts = NULL;
 
-          ref_parts = g_strsplit (ref, "/", -1);
+      ref_parts = g_strsplit (ref, "/", -1);
 
-          if (!xdg_app_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2], export,
-                                           cancellable,
-                                           error))
-            goto out;
+      if (!xdg_app_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2], export,
+                                       cancellable,
+                                       error))
+        goto out;
 
-          relative_path = g_file_get_relative_path (self->basedir, export);
-          symlink_prefix = g_build_filename ("..", relative_path, NULL);
+      relative_path = g_file_get_relative_path (self->basedir, export);
+      symlink_prefix = g_build_filename ("..", relative_path, NULL);
 
-          if (!xdg_app_export_dir (export, exports,
-                                   symlink_prefix,
-                                   cancellable,
-                                   error))
-            goto out;
-        }
+      if (!xdg_app_export_dir (export, exports,
+                               symlink_prefix,
+                               cancellable,
+                               error))
+        goto out;
     }
 
   if (!xdg_app_dir_set_active (self, ref, checksum, cancellable, error))
-    goto out;
-
-  if (is_app && !xdg_app_dir_update_exports (self, cancellable, error))
     goto out;
 
   ret = TRUE;
@@ -1171,7 +1162,6 @@ xdg_app_dir_undeploy (XdgAppDir *self,
   gs_unref_object GFile *removed_dir = NULL;
   gs_free char *tmpname = NULL;
   gs_free char *active = NULL;
-  gboolean is_app;
   int i;
 
   g_assert (ref != NULL);
@@ -1236,11 +1226,6 @@ xdg_app_dir_undeploy (XdgAppDir *self,
       if (!gs_shutil_rm_rf (removed_subdir, cancellable, error))
 	goto out;
     }
-
-  is_app = g_str_has_prefix (ref, "app");
-
-  if (is_app && !xdg_app_dir_update_exports (self, cancellable, error))
-    goto out;
 
   ret = TRUE;
  out:

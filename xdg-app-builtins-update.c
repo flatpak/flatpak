@@ -196,6 +196,9 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
         goto out;
     }
 
+  if (!xdg_app_dir_update_exports (dir, cancellable, error))
+    goto out;
+
   ret = TRUE;
  out:
   if (context)
