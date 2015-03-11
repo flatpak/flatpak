@@ -167,7 +167,7 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
   if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
     goto out;
 
-  if (!xdg_app_dir_update_exports (dir, cancellable, error))
+  if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
     goto out;
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);

@@ -244,7 +244,7 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
     goto out;
 
-  if (!xdg_app_dir_update_exports (dir, cancellable, error))
+  if (!xdg_app_dir_update_exports (dir, name, cancellable, error))
     goto out;
 
   g_debug ("cleaning up empty directories");
