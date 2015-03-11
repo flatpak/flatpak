@@ -862,7 +862,7 @@ rewrite_export_dir (const char    *app,
                     GError       **error)
 {
   gboolean ret = FALSE;
-  gs_dirfd_iterator_cleanup GSDirFdIterator source_iter;
+  gs_dirfd_iterator_cleanup GSDirFdIterator source_iter = {0};
   gs_unref_hashtable GHashTable *visited_children = NULL;
   struct dirent *dent;
 
@@ -988,7 +988,7 @@ export_dir (int            source_parent_fd,
 {
   gboolean ret = FALSE;
   int res;
-  gs_dirfd_iterator_cleanup GSDirFdIterator source_iter;
+  gs_dirfd_iterator_cleanup GSDirFdIterator source_iter = {0};
   gs_fd_close int destination_dfd = -1;
   struct dirent *dent;
 
