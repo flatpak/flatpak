@@ -43,6 +43,9 @@ glnx_opendirat_with_errno (int           dfd,
   int flags = O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOCTTY;
   if (!follow)
     flags |= O_NOFOLLOW;
+
+  dfd = glnx_dirfd_canonicalize (dfd);
+
   return openat (dfd, path, flags);
 }
 

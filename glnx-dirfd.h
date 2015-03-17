@@ -27,6 +27,23 @@
 #include <fcntl.h>
 
 G_BEGIN_DECLS
+ 
+/**
+ * glnx_dirfd_canonicalize:
+ * @fd: A directory file descriptor
+ *
+ * It's often convenient in programs to use `-1` for "unassigned fd",
+ * and also because gobject-introspection doesn't support `AT_FDCWD`,
+ * libglnx honors `-1` to mean `AT_FDCWD`.  This small inline function
+ * canonicalizes `-1 -> AT_FDCWD`.
+ */
+static inline int
+glnx_dirfd_canonicalize (int fd)
+{
+  if (fd == -1)
+    return AT_FDCWD;
+  return fd;
+}
 
 struct GLnxDirFdIterator {
   gboolean initialized;

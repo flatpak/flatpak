@@ -35,6 +35,7 @@
 #define BTRFS_IOC_CLONE _IOW(BTRFS_IOCTL_MAGIC, 9, int)
 
 #include <glnx-fdio.h>
+#include <glnx-dirfd.h>
 #include <glnx-errors.h>
 #include <glnx-xattrs.h>
 #include <glnx-backport-autoptr.h>
@@ -212,6 +213,8 @@ glnx_file_get_contents_utf8_at (int                   dfd,
   char *buf;
   gsize len;
 
+  dfd = glnx_dirfd_canonicalize (dfd);
+
   do
     fd = openat (dfd, subpath, O_RDONLY | O_NOCTTY | O_CLOEXEC);
   while (G_UNLIKELY (fd == -1 && errno == EINTR));
@@ -254,6 +257,8 @@ glnx_readlinkat_malloc (int            dfd,
                         GError       **error)
 {
   size_t l = 100;
+
+  dfd = glnx_dirfd_canonicalize (dfd);
 
   for (;;)
     {
@@ -481,6 +486,9 @@ glnx_file_copy_at (int                   src_dfd,
 
   if (g_cancellable_set_error_if_cancelled (cancellable, error))
     goto out;
+
+  src_dfd = glnx_dirfd_canonicalize (src_dfd);
+  dest_dfd = glnx_dirfd_canonicalize (dest_dfd);
 
   if (S_ISLNK (src_stbuf->st_mode))
     {

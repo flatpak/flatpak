@@ -118,7 +118,7 @@ glnx_shutil_rm_rf_children (GLnxDirFdIterator    *dfd_iter,
 
 /**
  * glnx_shutil_rm_rf_at:
- * @dfd: A directory file descriptor, or -1 for current
+ * @dfd: A directory file descriptor, or `AT_FDCWD` or `-1` for current
  * @path: Path
  * @cancellable: Cancellable
  * @error: Error
@@ -136,6 +136,8 @@ glnx_shutil_rm_rf_at (int                   dfd,
   gboolean ret = FALSE;
   glnx_fd_close int target_dfd = -1;
   g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
+
+  dfd = glnx_dirfd_canonicalize (dfd);
 
   /* With O_NOFOLLOW first */
   target_dfd = openat (dfd, path,
