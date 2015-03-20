@@ -7,6 +7,7 @@
 #include <ftw.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -27,8 +28,8 @@ show_export (const char *fpath, const struct stat *sb, int typeflag)
 {
   if (typeflag == FTW_F)
     {
-      gs_unref_object GFile *file;
-      gs_free char *relpath;
+      g_autoptr(GFile) file;
+      g_autofree char *relpath;
 
       file = g_file_new_for_path (fpath);
       relpath = g_file_get_relative_path (show_export_base, file);
@@ -42,8 +43,8 @@ static gboolean
 collect_exports (GFile *base, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *files = NULL;
-  gs_unref_object GFile *export = NULL;
+  g_autoptr(GFile) files = NULL;
+  g_autoptr(GFile) export = NULL;
   const char *paths[] = {
     "share/applications",                 /* Copy desktop files */
     "share/icons/hicolor",                /* Icons */
@@ -62,13 +63,13 @@ collect_exports (GFile *base, GCancellable *cancellable, GError **error)
 
   for (i = 0; paths[i]; i++)
     {
-      gs_unref_object GFile *src = NULL;
+      g_autoptr(GFile) src = NULL;
       src = g_file_resolve_relative_path (files, paths[i]);
       if (g_file_query_exists (src, cancellable))
         {
           g_debug ("Exporting from %s", paths[i]);
-          gs_unref_object GFile *dest = NULL;
-          gs_unref_object GFile *dest_parent = NULL;
+          g_autoptr(GFile) dest = NULL;
+          g_autoptr(GFile) dest_parent = NULL;
           dest = g_file_resolve_relative_path (export, paths[i]);
           dest_parent = g_file_get_parent (dest);
           g_debug ("Ensuring export/%s parent exists", paths[i]);
@@ -95,9 +96,9 @@ static gboolean
 update_metadata (GFile *base, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *metadata = NULL;
-  gs_free char *path = NULL;
-  gs_unref_keyfile GKeyFile *keyfile = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  g_autofree char *path = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
   GError *temp_error = NULL;
   const char *environment_keys[] = {
     "x11", "wayland", "ipc", "pulseaudio", "system-dbus", "session-dbus",
@@ -130,10 +131,10 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
     }
   else
     {
-      gs_free char *command = NULL;
-      gs_unref_object GFile *bin_dir = NULL;
-      gs_unref_object GFileEnumerator *bin_enum = NULL;
-      gs_unref_object GFileInfo *child_info = NULL;
+      g_autofree char *command = NULL;
+      g_autoptr(GFile) bin_dir = NULL;
+      g_autoptr(GFileEnumerator) bin_enum = NULL;
+      g_autoptr(GFileInfo) child_info = NULL;
 
       g_debug ("Looking for executables");
 
@@ -210,15 +211,15 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object GFile *base = NULL;
-  gs_unref_object GFile *files_dir = NULL;
-  gs_unref_object GFile *export_dir = NULL;
-  gs_unref_object GFile *var_dir = NULL;
-  gs_unref_object GFile *var_tmp_dir = NULL;
-  gs_unref_object GFile *var_run_dir = NULL;
-  gs_unref_object GFile *metadata_file = NULL;
-  gs_unref_object XdgAppDir *user_dir = NULL;
-  gs_unref_object XdgAppDir *system_dir = NULL;
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFile) files_dir = NULL;
+  g_autoptr(GFile) export_dir = NULL;
+  g_autoptr(GFile) var_dir = NULL;
+  g_autoptr(GFile) var_tmp_dir = NULL;
+  g_autoptr(GFile) var_run_dir = NULL;
+  g_autoptr(GFile) metadata_file = NULL;
+  g_autoptr(XdgAppDir) user_dir = NULL;
+  g_autoptr(XdgAppDir) system_dir = NULL;
   const char *directory;
 
   context = g_option_context_new ("DIRECTORY - Convert a directory to a bundle");

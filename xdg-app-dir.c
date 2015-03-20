@@ -6,6 +6,7 @@
 
 #include <gio/gio.h>
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-dir.h"
 #include "xdg-app-utils.h"
@@ -47,7 +48,7 @@ xdg_app_get_system_base_dir_location (void)
 GFile *
 xdg_app_get_user_base_dir_location (void)
 {
-  gs_free char *base = g_build_filename (g_get_user_data_dir (), "xdg-app", NULL);
+  g_autofree char *base = g_build_filename (g_get_user_data_dir (), "xdg-app", NULL);
   return g_file_new_for_path (base);
 }
 
@@ -188,8 +189,8 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
                          GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *repodir = NULL;
-  gs_unref_object OstreeRepo *repo = NULL;
+  g_autoptr(GFile) repodir = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
 
   if (self->repo == NULL)
     {
@@ -213,7 +214,7 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
         {
           if (!ostree_repo_open (repo, cancellable, error))
             {
-              gs_free char *repopath = NULL;
+              g_autofree char *repopath = NULL;
 
               repopath = g_file_get_path (repodir);
               g_prefix_error (error, "While opening repository %s: ", repopath);
@@ -238,7 +239,7 @@ xdg_app_dir_pull (XdgAppDir *self,
 {
   gboolean ret = FALSE;
   GSConsole *console = NULL;
-  gs_unref_object OstreeAsyncProgress *progress = NULL;
+  g_autoptr(OstreeAsyncProgress) progress = NULL;
   const char *refs[2];
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
@@ -275,10 +276,10 @@ xdg_app_dir_current_ref (XdgAppDir *self,
                          const char *name,
                          GCancellable *cancellable)
 {
-  gs_unref_object GFile *base = NULL;
-  gs_unref_object GFile *dir = NULL;
-  gs_unref_object GFile *current_link = NULL;
-  gs_unref_object GFileInfo *file_info = NULL;
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFile) dir = NULL;
+  g_autoptr(GFile) current_link = NULL;
+  g_autoptr(GFileInfo) file_info = NULL;
 
   base = g_file_get_child (xdg_app_dir_get_path (self), "app");
   dir = g_file_get_child (base, name);
@@ -300,9 +301,9 @@ xdg_app_dir_drop_current_ref (XdgAppDir *self,
                               GCancellable *cancellable,
                               GError **error)
 {
-  gs_unref_object GFile *base = NULL;
-  gs_unref_object GFile *dir = NULL;
-  gs_unref_object GFile *current_link = NULL;
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFile) dir = NULL;
+  g_autoptr(GFile) current_link = NULL;
 
   base = g_file_get_child (xdg_app_dir_get_path (self), "app");
   dir = g_file_get_child (base, name);
@@ -318,11 +319,11 @@ xdg_app_dir_make_current_ref (XdgAppDir *self,
                               GCancellable *cancellable,
                               GError **error)
 {
-  gs_unref_object GFile *base = NULL;
-  gs_unref_object GFile *dir = NULL;
-  gs_unref_object GFile *current_link = NULL;
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFile) dir = NULL;
+  g_autoptr(GFile) current_link = NULL;
   gs_strfreev char **ref_parts = NULL;
-  gs_free char *rest = NULL;
+  g_autofree char *rest = NULL;
   gboolean ret = FALSE;
 
   ref_parts = g_strsplit (ref, "/", -1);
@@ -365,12 +366,12 @@ xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
                                 GError        **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *base = NULL;
-  gs_unref_object GFile *dir = NULL;
-  gs_unref_object GFileEnumerator *dir_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFile) dir = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
-  gs_unref_ptrarray GPtrArray *refs = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
 
   base = g_file_get_child (xdg_app_dir_get_path (self), kind);
   dir = g_file_get_child (base, name);
@@ -391,9 +392,9 @@ xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
 
   while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)))
     {
-      gs_unref_object GFile *child = NULL;
-      gs_unref_object GFileEnumerator *dir_enum2 = NULL;
-      gs_unref_object GFileInfo *child_info2 = NULL;
+      g_autoptr(GFile) child = NULL;
+      g_autoptr(GFileEnumerator) dir_enum2 = NULL;
+      g_autoptr(GFileInfo) child_info2 = NULL;
       const char *arch;
 
       arch = g_file_info_get_name (child_info);
@@ -463,11 +464,11 @@ xdg_app_dir_list_refs (XdgAppDir      *self,
                        GError        **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *base;
-  gs_unref_object GFileEnumerator *dir_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
+  g_autoptr(GFile) base;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
-  gs_unref_ptrarray GPtrArray *refs = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
 
   refs = g_ptr_array_new ();
 
@@ -535,9 +536,9 @@ xdg_app_dir_read_active (XdgAppDir *self,
                          const char *ref,
                          GCancellable *cancellable)
 {
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *active_link = NULL;
-  gs_unref_object GFileInfo *file_info = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) active_link = NULL;
+  g_autoptr(GFileInfo) file_info = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
   active_link = g_file_get_child (deploy_base, "active");
@@ -559,11 +560,11 @@ xdg_app_dir_set_active (XdgAppDir *self,
                         GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_free char *tmpname = NULL;
-  gs_unref_object GFile *active_tmp_link = NULL;
-  gs_unref_object GFile *active_link = NULL;
-  gs_free_error GError *my_error = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autofree char *tmpname = NULL;
+  g_autoptr(GFile) active_tmp_link = NULL;
+  g_autoptr(GFile) active_link = NULL;
+  g_autoptr (GError) my_error = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
   active_link = g_file_get_child (deploy_base, "active");
@@ -603,10 +604,10 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
 			  GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFileEnumerator *dir_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
-  gs_unref_object GFile *triggersdir = NULL;
-  gs_unref_object GFile *exports = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
+  g_autoptr(GFile) triggersdir = NULL;
+  g_autoptr(GFile) exports = NULL;
   GError *temp_error = NULL;
 
   g_debug ("running triggers");
@@ -622,7 +623,7 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
 
   while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)) != NULL)
     {
-      gs_unref_object GFile *child = NULL;
+      g_autoptr(GFile) child = NULL;
       const char *name;
       GError *trigger_error = NULL;
 
@@ -633,7 +634,7 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_REGULAR &&
 	  g_str_has_suffix (name, ".trigger"))
 	{
-	  gs_unref_ptrarray GPtrArray *argv_array = NULL;
+	  g_autoptr(GPtrArray) argv_array = NULL;
 
 	  g_debug ("running trigger %s", name);
 
@@ -750,19 +751,19 @@ export_desktop_file (const char    *app,
 {
   gboolean ret = FALSE;
   gs_fd_close int desktop_fd = -1;
-  gs_free char *tmpfile_name = NULL;
-  gs_unref_object GOutputStream *out_stream = NULL;
-  gs_free gchar *data = NULL;
+  g_autofree char *tmpfile_name = NULL;
+  g_autoptr(GOutputStream) out_stream = NULL;
+  g_autofree gchar *data = NULL;
   gsize data_len;
-  gs_free gchar *new_data = NULL;
+  g_autofree gchar *new_data = NULL;
   gsize new_data_len;
-  gs_unref_keyfile GKeyFile *keyfile = NULL;
-  gs_free gchar *old_exec = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
+  g_autofree gchar *old_exec = NULL;
   gint old_argc;
   gs_strfreev gchar **old_argv = NULL;
   gs_strfreev gchar **groups = NULL;
   GString *new_exec = NULL;
-  gs_free char *escaped_app = g_shell_quote (app);
+  g_autofree char *escaped_app = g_shell_quote (app);
   int i;
 
   if (!gs_file_openat_noatime (parent_fd, name, &desktop_fd, cancellable, error))
@@ -777,8 +778,8 @@ export_desktop_file (const char    *app,
 
   if (g_str_has_suffix (name, ".service"))
     {
-      gs_free gchar *dbus_name = NULL;
-      gs_free gchar *expected_dbus_name = g_strndup (name, strlen (name) - strlen (".service"));
+      g_autofree gchar *dbus_name = NULL;
+      g_autofree gchar *expected_dbus_name = g_strndup (name, strlen (name) - strlen (".service"));
 
       dbus_name = g_key_file_get_string (keyfile, "D-BUS Service", "Name", NULL);
 
@@ -805,7 +806,7 @@ export_desktop_file (const char    *app,
       if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
         {
           int i;
-          gs_free char *command = g_shell_quote (old_argv[0]);
+          g_autofree char *command = g_shell_quote (old_argv[0]);
 
           g_string_append_printf (new_exec, " --command=%s", command);
 
@@ -814,7 +815,7 @@ export_desktop_file (const char    *app,
 
           for (i = 1; i < old_argc; i++)
             {
-              gs_free char *arg = g_shell_quote (old_argv[i]);
+              g_autofree char *arg = g_shell_quote (old_argv[i]);
               g_string_append (new_exec, " ");
               g_string_append (new_exec, arg);
             }
@@ -863,7 +864,7 @@ rewrite_export_dir (const char    *app,
 {
   gboolean ret = FALSE;
   gs_dirfd_iterator_cleanup GSDirFdIterator source_iter = {0};
-  gs_unref_hashtable GHashTable *visited_children = NULL;
+  g_autoptr(GHashTable) visited_children = NULL;
   struct dirent *dent;
 
   if (!gs_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
@@ -908,7 +909,7 @@ rewrite_export_dir (const char    *app,
         }
       else if (S_ISREG (stbuf.st_mode))
         {
-          gs_free gchar *target = NULL;
+          g_autofree gchar *target = NULL;
 
           if (!xdg_app_has_name_prefix (dent->d_name, app))
             {
@@ -922,7 +923,7 @@ rewrite_export_dir (const char    *app,
 
           if (g_str_has_suffix (dent->d_name, ".desktop") || g_str_has_suffix (dent->d_name, ".service"))
             {
-              gs_free gchar *new_name = NULL;
+              g_autofree gchar *new_name = NULL;
 
               if (!export_desktop_file (app, branch, arch, source_iter.fd, dent->d_name, &stbuf, &new_name, cancellable, error))
                 goto out;
@@ -1036,8 +1037,8 @@ export_dir (int            source_parent_fd,
 
       if (S_ISDIR (stbuf.st_mode))
         {
-          gs_free gchar *child_symlink_prefix = g_build_filename ("..", source_symlink_prefix, dent->d_name, NULL);
-          gs_free gchar *child_relpath = g_strconcat (source_relpath, dent->d_name, "/", NULL);
+          g_autofree gchar *child_symlink_prefix = g_build_filename ("..", source_symlink_prefix, dent->d_name, NULL);
+          g_autofree gchar *child_relpath = g_strconcat (source_relpath, dent->d_name, "/", NULL);
 
           if (!export_dir (source_iter.fd, dent->d_name, child_symlink_prefix, child_relpath, destination_dfd, dent->d_name,
                            cancellable, error))
@@ -1045,7 +1046,7 @@ export_dir (int            source_parent_fd,
         }
       else if (S_ISREG (stbuf.st_mode))
         {
-          gs_free gchar *target = NULL;
+          g_autofree gchar *target = NULL;
 
           target = g_build_filename (source_symlink_prefix, dent->d_name, NULL);
 
@@ -1100,10 +1101,10 @@ xdg_app_dir_update_exports (XdgAppDir *self,
                             GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *exports = NULL;
-  gs_free char *current_ref = NULL;
-  gs_free char *active_id = NULL;
-  gs_free char *symlink_prefix = NULL;
+  g_autoptr(GFile) exports = NULL;
+  g_autofree char *current_ref = NULL;
+  g_autofree char *active_id = NULL;
+  g_autofree char *symlink_prefix = NULL;
 
   exports = xdg_app_dir_get_exports_dir (self);
 
@@ -1114,9 +1115,9 @@ xdg_app_dir_update_exports (XdgAppDir *self,
       (current_ref = xdg_app_dir_current_ref (self, changed_app, cancellable)) &&
       (active_id = xdg_app_dir_read_active (self, current_ref, cancellable)))
     {
-      gs_unref_object GFile *deploy_base = NULL;
-      gs_unref_object GFile *active = NULL;
-      gs_unref_object GFile *export = NULL;
+      g_autoptr(GFile) deploy_base = NULL;
+      g_autoptr(GFile) active = NULL;
+      g_autoptr(GFile) export = NULL;
 
       deploy_base = xdg_app_dir_get_deploy_dir (self, current_ref);
       active = g_file_get_child (deploy_base, active_id);
@@ -1153,14 +1154,14 @@ xdg_app_dir_deploy (XdgAppDir *self,
                     GError **error)
 {
   gboolean ret = FALSE;
-  gs_free char *resolved_ref = NULL;
-  gs_unref_object GFile *root = NULL;
-  gs_unref_object GFileInfo *file_info = NULL;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *checkoutdir = NULL;
-  gs_unref_object GFile *dotref = NULL;
-  gs_unref_object GFile *export = NULL;
-  gs_unref_object GFile *exports = NULL;
+  g_autofree char *resolved_ref = NULL;
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFileInfo) file_info = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) checkoutdir = NULL;
+  g_autoptr(GFile) dotref = NULL;
+  g_autoptr(GFile) export = NULL;
+  g_autoptr(GFile) exports = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -1180,17 +1181,17 @@ xdg_app_dir_deploy (XdgAppDir *self,
     }
   else
     {
-      gs_unref_object GFile *root = NULL;
-      gs_free char *commit = NULL;
+      g_autoptr(GFile) root = NULL;
+      g_autofree char *commit = NULL;
 
       g_debug ("Looking for checksum %s in local repo", checksum);
       if (!ostree_repo_read_commit (self->repo, checksum, &root, &commit, cancellable, NULL))
         {
            GSConsole *console = NULL;
-           gs_unref_object OstreeAsyncProgress *progress = NULL;
+           g_autoptr(OstreeAsyncProgress) progress = NULL;
            const char *refs[2];
-           gs_unref_object GFile *origin = NULL;
-           gs_free char *repository = NULL;
+           g_autoptr(GFile) origin = NULL;
+           g_autofree char *repository = NULL;
 
            refs[0] = checksum;
            refs[1] = NULL;
@@ -1247,8 +1248,8 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                   OSTREE_REPO_FILE (root), file_info,
                                   cancellable, error))
     {
-      gs_free char *rootpath = NULL;
-      gs_free char *checkoutpath = NULL;
+      g_autofree char *rootpath = NULL;
+      g_autofree char *checkoutpath = NULL;
 
       rootpath = g_file_get_path (root);
       checkoutpath = g_file_get_path (checkoutdir);
@@ -1294,9 +1295,9 @@ xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
 				   GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *dir = NULL;
-  gs_unref_object GFileEnumerator *dir_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
+  g_autoptr(GFile) dir = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
 
   dir = g_file_get_child (self->basedir, type);
@@ -1317,10 +1318,10 @@ xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
           name[0] != '.' && (name_prefix == NULL || g_str_has_prefix (name, name_prefix)))
 	{
-	  gs_unref_object GFile *child1 = g_file_get_child (dir, name);
-	  gs_unref_object GFile *child2 = g_file_get_child (child1, branch);
-	  gs_unref_object GFile *child3 = g_file_get_child (child2, arch);
-	  gs_unref_object GFile *active = g_file_get_child (child3, "active");
+	  g_autoptr(GFile) child1 = g_file_get_child (dir, name);
+	  g_autoptr(GFile) child2 = g_file_get_child (child1, branch);
+	  g_autoptr(GFile) child3 = g_file_get_child (child2, arch);
+	  g_autoptr(GFile) active = g_file_get_child (child3, "active");
 
 	  if (g_file_query_exists (active, cancellable))
 	    g_hash_table_add (hash, g_strdup (name));
@@ -1348,12 +1349,12 @@ xdg_app_dir_list_deployed (XdgAppDir *self,
                            GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_ptrarray GPtrArray *checksums = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GPtrArray) checksums = NULL;
   GError *temp_error = NULL;
-  gs_unref_object GFileEnumerator *dir_enum = NULL;
-  gs_unref_object GFile *child = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFile) child = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
 
@@ -1404,7 +1405,7 @@ dir_is_locked (GFile *dir)
 {
   gs_fd_close int ref_fd = -1;
   struct flock lock = {0};
-  gs_unref_object GFile *reffile = NULL;
+  g_autoptr(GFile) reffile = NULL;
 
   reffile = g_file_resolve_relative_path (dir, "files/.ref");
 
@@ -1432,12 +1433,12 @@ xdg_app_dir_undeploy (XdgAppDir *self,
                       GError **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *checkoutdir = NULL;
-  gs_unref_object GFile *removed_subdir = NULL;
-  gs_unref_object GFile *removed_dir = NULL;
-  gs_free char *tmpname = NULL;
-  gs_free char *active = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) checkoutdir = NULL;
+  g_autoptr(GFile) removed_subdir = NULL;
+  g_autoptr(GFile) removed_dir = NULL;
+  g_autofree char *tmpname = NULL;
+  g_autofree char *active = NULL;
   int i;
 
   g_assert (ref != NULL);
@@ -1514,9 +1515,9 @@ xdg_app_dir_cleanup_removed (XdgAppDir      *self,
 			     GError        **error)
 {
   gboolean ret = FALSE;
-  gs_unref_object GFile *removed_dir = NULL;
-  gs_unref_object GFileEnumerator *dir_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
+  g_autoptr(GFile) removed_dir = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
 
   removed_dir = xdg_app_dir_get_removed_dir (self);
@@ -1533,7 +1534,7 @@ xdg_app_dir_cleanup_removed (XdgAppDir      *self,
   while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)) != NULL)
     {
       const char *name = g_file_info_get_name (child_info);
-      gs_unref_object GFile *child = g_file_get_child (removed_dir, name);
+      g_autoptr(GFile) child = g_file_get_child (removed_dir, name);
 
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
 	  !dir_is_locked (child))
@@ -1564,7 +1565,7 @@ xdg_app_dir_prune (XdgAppDir      *self,
   gboolean ret = FALSE;
   gint objects_total, objects_pruned;
   guint64 pruned_object_size_total;
-  gs_free char *formatted_freed_size = NULL;
+  g_autofree char *formatted_freed_size = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -1593,8 +1594,8 @@ xdg_app_dir_get_if_deployed (XdgAppDir     *self,
                              const char    *checksum,
                              GCancellable  *cancellable)
 {
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *deploy_dir = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) deploy_dir = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
   deploy_dir = g_file_get_child (deploy_base, checksum ? checksum : "active");
@@ -1617,7 +1618,7 @@ xdg_app_dir_get_system (void)
 
   if (system == NULL)
     {
-      gs_unref_object GFile *path = xdg_app_get_system_base_dir_location ();
+      g_autoptr(GFile) path = xdg_app_get_system_base_dir_location ();
       system = xdg_app_dir_new (path, FALSE);
     }
 
@@ -1631,7 +1632,7 @@ xdg_app_dir_get_user  (void)
 
   if (user == NULL)
     {
-      gs_unref_object GFile *path = xdg_app_get_user_base_dir_location ();
+      g_autoptr(GFile) path = xdg_app_get_user_base_dir_location ();
       user = xdg_app_dir_new (path, TRUE);
     }
 

@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -24,26 +25,26 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object GFile *runtime_deploy_base = NULL;
-  gs_unref_object GFile *sdk_deploy_base = NULL;
-  gs_unref_object GFile *var_deploy_base = NULL;
-  gs_unref_object GFile *var_deploy_files = NULL;
-  gs_unref_object GFile *base = NULL;
-  gs_unref_object GFile *files_dir = NULL;
-  gs_unref_object GFile *var_dir = NULL;
-  gs_unref_object GFile *var_tmp_dir = NULL;
-  gs_unref_object GFile *var_run_dir = NULL;
-  gs_unref_object GFile *metadata_file = NULL;
-  gs_unref_object XdgAppDir *user_dir = NULL;
-  gs_unref_object XdgAppDir *system_dir = NULL;
+  g_autoptr(GFile) runtime_deploy_base = NULL;
+  g_autoptr(GFile) sdk_deploy_base = NULL;
+  g_autoptr(GFile) var_deploy_base = NULL;
+  g_autoptr(GFile) var_deploy_files = NULL;
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFile) files_dir = NULL;
+  g_autoptr(GFile) var_dir = NULL;
+  g_autoptr(GFile) var_tmp_dir = NULL;
+  g_autoptr(GFile) var_run_dir = NULL;
+  g_autoptr(GFile) metadata_file = NULL;
+  g_autoptr(XdgAppDir) user_dir = NULL;
+  g_autoptr(XdgAppDir) system_dir = NULL;
   const char *directory;
   const char *sdk;
   const char *runtime;
   const char *branch = "master";
-  gs_free char *runtime_ref = NULL;
-  gs_free char *var_ref = NULL;
-  gs_free char *sdk_ref = NULL;
-  gs_free char *metadata_contents = NULL;
+  g_autofree char *runtime_ref = NULL;
+  g_autofree char *var_ref = NULL;
+  g_autofree char *sdk_ref = NULL;
+  g_autofree char *metadata_contents = NULL;
 
   context = g_option_context_new ("DIRECTORY SDK RUNTIME [BRANCH] - Initialize a directory for building");
 

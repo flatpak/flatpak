@@ -4,7 +4,9 @@
 #include "xdg-app-dir.h"
 
 #include <glib.h>
+#include <string.h>
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 #include <libsoup/soup.h>
 
 #include <stdlib.h>
@@ -254,10 +256,10 @@ xdg_app_list_deployed_refs (const char *type,
 			    GError **error)
 {
   gchar **ret = NULL;
-  gs_unref_ptrarray GPtrArray *names = NULL;
-  gs_unref_hashtable GHashTable *hash = NULL;
-  gs_unref_object XdgAppDir *user_dir = NULL;
-  gs_unref_object XdgAppDir *system_dir = NULL;
+  g_autoptr(GPtrArray) names = NULL;
+  g_autoptr(GHashTable) hash = NULL;
+  g_autoptr(XdgAppDir) user_dir = NULL;
+  g_autoptr(XdgAppDir) system_dir = NULL;
   const char *key;
   GHashTableIter iter;
 
@@ -296,8 +298,8 @@ xdg_app_find_deploy_dir_for_ref (const char *ref,
                                  GCancellable *cancellable,
                                  GError **error)
 {
-  gs_unref_object XdgAppDir *user_dir = NULL;
-  gs_unref_object XdgAppDir *system_dir = NULL;
+  g_autoptr(XdgAppDir) user_dir = NULL;
+  g_autoptr(XdgAppDir) system_dir = NULL;
   GFile *deploy = NULL;
 
   user_dir = xdg_app_dir_get_user ();
@@ -382,14 +384,14 @@ overlay_symlink_tree_dir (int            source_parent_fd,
 
       if (is_dir)
         {
-          gs_free gchar *target = g_build_filename ("..", source_symlink_prefix, dent->d_name, NULL);
+          g_autofree gchar *target = g_build_filename ("..", source_symlink_prefix, dent->d_name, NULL);
           if (!overlay_symlink_tree_dir (source_iter.fd, dent->d_name, target, destination_dfd, dent->d_name,
                                          cancellable, error))
             goto out;
         }
       else
         {
-          gs_free gchar *target = g_build_filename (source_symlink_prefix, dent->d_name, NULL);
+          g_autofree gchar *target = g_build_filename (source_symlink_prefix, dent->d_name, NULL);
 
           if (unlinkat (destination_dfd, dent->d_name, 0) != 0 && errno != ENOENT)
             {
@@ -529,14 +531,14 @@ static gboolean
 load_contents (const char *uri, GBytes **contents, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-  gs_free char *scheme = NULL;
+  g_autofree char *scheme = NULL;
 
   scheme = g_uri_parse_scheme (uri);
   if (strcmp (scheme, "file") == 0)
     {
       char *buffer;
       gsize length;
-      gs_unref_object GFile *file = NULL;
+      g_autoptr(GFile) file = NULL;
 
       g_debug ("Loading summary %s using GIO", uri);
       file = g_file_new_for_uri (uri);
@@ -547,8 +549,8 @@ load_contents (const char *uri, GBytes **contents, GCancellable *cancellable, GE
     }
   else
     {
-      gs_unref_object SoupSession *session = NULL;
-      gs_unref_object SoupMessage *msg = NULL;
+      g_autoptr(SoupSession) session = NULL;
+      g_autoptr(SoupMessage) msg = NULL;
 
       g_debug ("Loading summary %s using libsoup", uri);
       session = soup_session_new ();
@@ -577,19 +579,19 @@ ostree_repo_load_summary (const char *repository_url,
                           GError **error)
 {
   gboolean ret = FALSE;
-  gs_free char *summary_url = NULL;
-  gs_unref_bytes GBytes *bytes = NULL;
-  gs_unref_hashtable GHashTable *local_refs = NULL;
-  gs_free char *local_title = NULL;
+  g_autofree char *summary_url = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GHashTable) local_refs = NULL;
+  g_autofree char *local_title = NULL;
 
   local_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
   summary_url = g_build_filename (repository_url, "summary", NULL);
   if (load_contents (summary_url, &bytes, cancellable, NULL))
     {
-      gs_unref_variant GVariant *summary;
-      gs_unref_variant GVariant *ref_list;
-      gs_unref_variant GVariant *extensions;
+      g_autoptr(GVariant) summary;
+      g_autoptr(GVariant) ref_list;
+      g_autoptr(GVariant) extensions;
       GVariantDict dict;
       int i, n;
 
@@ -601,8 +603,8 @@ ostree_repo_load_summary (const char *repository_url,
       g_debug ("Summary contains %d refs", n);
       for (i = 0; i < n; i++)
         {
-          gs_unref_variant GVariant *ref = NULL;
-          gs_unref_variant GVariant *csum_v = NULL;
+          g_autoptr(GVariant) ref = NULL;
+          g_autoptr(GVariant) csum_v = NULL;
           char *refname;
           char *checksum;
 

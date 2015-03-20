@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -24,9 +25,9 @@ static gboolean
 metadata_get_arch (GFile *file, char **out_arch, GError **error)
 {
   gboolean ret = FALSE;
-  gs_free char *path = NULL;
-  gs_unref_keyfile GKeyFile *keyfile = NULL;
-  gs_free char *runtime = NULL;
+  g_autofree char *path = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
+  g_autofree char *runtime = NULL;
   gs_strfreev char **parts = NULL;
 
   keyfile = g_key_file_new ();
@@ -55,8 +56,8 @@ out:
 static gboolean
 is_empty_directory (GFile *file, GCancellable *cancellable)
 {
-  gs_unref_object GFileEnumerator *file_enum = NULL;
-  gs_unref_object GFileInfo *child_info = NULL;
+  g_autoptr(GFileEnumerator) file_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
 
   file_enum = g_file_enumerate_children (file, G_FILE_ATTRIBUTE_STANDARD_NAME,
                                          G_FILE_QUERY_INFO_NONE,
@@ -97,25 +98,25 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object GFile *base = NULL;
-  gs_unref_object GFile *files = NULL;
-  gs_unref_object GFile *metadata = NULL;
-  gs_unref_object GFile *export = NULL;
-  gs_unref_object GFile *repofile = NULL;
-  gs_unref_object GFile *arg = NULL;
-  gs_unref_object GFile *root = NULL;
-  gs_unref_object OstreeRepo *repo = NULL;
+  g_autoptr(GFile) base = NULL;
+  g_autoptr(GFile) files = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  g_autoptr(GFile) export = NULL;
+  g_autoptr(GFile) repofile = NULL;
+  g_autoptr(GFile) arg = NULL;
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
   const char *location;
   const char *directory;
   const char *name;
   const char *branch;
-  gs_free char *arch = NULL;
-  gs_free char *full_branch = NULL;
-  gs_free char *parent = NULL;
-  gs_free char *commit_checksum = NULL;
-  gs_unref_object OstreeMutableTree *mtree = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *full_branch = NULL;
+  g_autofree char *parent = NULL;
+  g_autofree char *commit_checksum = NULL;
+  g_autoptr(OstreeMutableTree) mtree = NULL;
   char *subject = NULL;
-  gs_free char *body = NULL;
+  g_autofree char *body = NULL;
   OstreeRepoTransactionStats stats;
   OstreeRepoCommitModifier *modifier = NULL;
 

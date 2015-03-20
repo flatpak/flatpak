@@ -7,6 +7,7 @@
 
 #include <gio/gio.h>
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-run.h"
 #include "xdg-app-utils.h"
@@ -68,7 +69,7 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
     {
       const char *display_nr = &display[1];
       const char *display_nr_end = display_nr;
-      gs_free char *d = NULL;
+      g_autofree char *d = NULL;
 
       while (g_ascii_isdigit (*display_nr_end))
         display_nr_end++;
@@ -317,8 +318,8 @@ xdg_app_run_setup_minimal_env (GPtrArray *env_array,
 GFile *
 xdg_app_get_data_dir (const char *app_id)
 {
-  gs_unref_object GFile *home = g_file_new_for_path (g_get_home_dir ());
-  gs_unref_object GFile *var_app = g_file_resolve_relative_path (home, ".var/app");
+  g_autoptr(GFile) home = g_file_new_for_path (g_get_home_dir ());
+  g_autoptr(GFile) var_app = g_file_resolve_relative_path (home, ".var/app");
 
   return g_file_get_child (var_app, app_id);
 }
@@ -328,10 +329,10 @@ xdg_app_ensure_data_dir (const char *app_id,
 			 GCancellable  *cancellable,
 			 GError **error)
 {
-  gs_unref_object GFile *dir = xdg_app_get_data_dir (app_id);
-  gs_unref_object GFile *data_dir = g_file_get_child (dir, "data");
-  gs_unref_object GFile *cache_dir = g_file_get_child (dir, "cache");
-  gs_unref_object GFile *config_dir = g_file_get_child (dir, "config");
+  g_autoptr(GFile) dir = xdg_app_get_data_dir (app_id);
+  g_autoptr(GFile) data_dir = g_file_get_child (dir, "data");
+  g_autoptr(GFile) cache_dir = g_file_get_child (dir, "cache");
+  g_autoptr(GFile) config_dir = g_file_get_child (dir, "config");
 
   if (!gs_file_ensure_directory (data_dir, TRUE, cancellable, error))
     return NULL;

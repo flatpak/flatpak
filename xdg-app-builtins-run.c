@@ -5,8 +5,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -37,9 +39,9 @@ add_extension_arg (const char *directory,
 		   const char *type, const char *extension, const char *arch, const char *branch,
 		   GPtrArray *argv_array, GCancellable *cancellable)
 {
-  gs_free char *extension_ref;
-  gs_unref_object GFile *deploy = NULL;
-  gs_free char *full_directory = NULL;
+  g_autofree char *extension_ref;
+  g_autoptr(GFile) deploy = NULL;
+  g_autofree char *full_directory = NULL;
   gboolean is_app;
 
   is_app = strcmp (type, "app") == 0;
@@ -50,7 +52,7 @@ add_extension_arg (const char *directory,
   deploy = xdg_app_find_deploy_dir_for_ref (extension_ref, cancellable, NULL);
   if (deploy != NULL)
     {
-      gs_unref_object GFile *files = g_file_get_child (deploy, "files");
+      g_autoptr(GFile) files = g_file_get_child (deploy, "files");
       g_ptr_array_add (argv_array, g_strdup ("-b"));
       g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", full_directory, gs_file_get_path_cached (files)));
     }
@@ -82,7 +84,7 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
       if (g_str_has_prefix (groups[i], "Extension ") &&
 	  *(extension = (groups[i] + strlen ("Extension "))) != 0)
 	{
-	  gs_free char *directory = g_key_file_get_string (metakey, groups[i], "directory", NULL);
+	  g_autofree char *directory = g_key_file_get_string (metakey, groups[i], "directory", NULL);
 
 	  if (directory == NULL)
 	    continue;
@@ -90,7 +92,7 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
 	  if (g_key_file_get_boolean (metakey, groups[i],
 				      "subdirectories", NULL))
 	    {
-	      gs_free char *prefix = g_strconcat (extension, ".", NULL);
+	      g_autofree char *prefix = g_strconcat (extension, ".", NULL);
 	      gs_strfreev char **refs = NULL;
 	      int i;
 
@@ -101,7 +103,7 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
 
 	      for (i = 0; refs[i] != NULL; i++)
 		{
-		  gs_free char *extended_dir = g_build_filename (directory, refs[i] + strlen (prefix), NULL);
+		  g_autofree char *extended_dir = g_build_filename (directory, refs[i] + strlen (prefix), NULL);
 		  add_extension_arg (extended_dir, parts[0], refs[i], parts[2], parts[3],
 				     argv_array, cancellable);
 		}
@@ -122,32 +124,32 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 {
   GOptionContext *context;
   gboolean ret = FALSE;
-  gs_unref_variant_builder GVariantBuilder *optbuilder = NULL;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *app_deploy = NULL;
-  gs_unref_object GFile *app_files = NULL;
-  gs_unref_object GFile *runtime_deploy = NULL;
-  gs_unref_object GFile *runtime_files = NULL;
-  gs_unref_object GFile *metadata = NULL;
-  gs_unref_object GFile *app_id_dir = NULL;
-  gs_unref_object GFile *app_id_dir_data = NULL;
-  gs_unref_object GFile *app_id_dir_config = NULL;
-  gs_unref_object GFile *app_id_dir_cache = NULL;
-  gs_unref_object GFile *runtime_metadata = NULL;
-  gs_unref_object XdgAppSessionHelper *session_helper = NULL;
-  gs_free char *metadata_contents = NULL;
-  gs_free char *runtime_metadata_contents = NULL;
-  gs_free char *runtime = NULL;
-  gs_free char *default_command = NULL;
-  gs_free char *runtime_ref = NULL;
-  gs_free char *app_ref = NULL;
-  gs_free char *path = NULL;
-  gs_unref_keyfile GKeyFile *metakey = NULL;
-  gs_unref_keyfile GKeyFile *runtime_metakey = NULL;
-  gs_free_error GError *my_error = NULL;
-  gs_free_error GError *my_error2 = NULL;
-  gs_unref_ptrarray GPtrArray *argv_array = NULL;
-  gs_free char *monitor_path = NULL;
+  g_autoptr(GVariantBuilder) optbuilder = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) app_deploy = NULL;
+  g_autoptr(GFile) app_files = NULL;
+  g_autoptr(GFile) runtime_deploy = NULL;
+  g_autoptr(GFile) runtime_files = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  g_autoptr(GFile) app_id_dir = NULL;
+  g_autoptr(GFile) app_id_dir_data = NULL;
+  g_autoptr(GFile) app_id_dir_config = NULL;
+  g_autoptr(GFile) app_id_dir_cache = NULL;
+  g_autoptr(GFile) runtime_metadata = NULL;
+  g_autoptr(XdgAppSessionHelper) session_helper = NULL;
+  g_autofree char *metadata_contents = NULL;
+  g_autofree char *runtime_metadata_contents = NULL;
+  g_autofree char *runtime = NULL;
+  g_autofree char *default_command = NULL;
+  g_autofree char *runtime_ref = NULL;
+  g_autofree char *app_ref = NULL;
+  g_autofree char *path = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr(GKeyFile) runtime_metakey = NULL;
+  g_autoptr (GError) my_error = NULL;
+  g_autoptr (GError) my_error2 = NULL;
+  g_autoptr(GPtrArray) argv_array = NULL;
+  g_autofree char *monitor_path = NULL;
   gsize metadata_size, runtime_metadata_size;
   const char *app;
   const char *branch = "master";

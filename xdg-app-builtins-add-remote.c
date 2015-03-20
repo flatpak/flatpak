@@ -3,8 +3,10 @@
 #include <locale.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -25,10 +27,10 @@ xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GE
 {
   GOptionContext *context;
   gboolean ret = FALSE;
-  gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_variant_builder GVariantBuilder *optbuilder = NULL;
-  gs_unref_hashtable GHashTable *refs = NULL;
-  gs_free char *title = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(GVariantBuilder) optbuilder = NULL;
+  g_autoptr(GHashTable) refs = NULL;
+  g_autofree char *title = NULL;
   const char *remote_name;
   const char *remote_url;
 

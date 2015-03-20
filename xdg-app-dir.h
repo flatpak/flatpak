@@ -11,6 +11,8 @@ typedef struct XdgAppDir XdgAppDir;
 
 GType xdg_app_dir_get_type (void);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppDir, g_object_unref)
+
 #define XDG_APP_DIR_ERROR xdg_app_dir_error_quark()
 
 typedef enum {

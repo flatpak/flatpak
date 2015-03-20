@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -26,15 +27,15 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 {
   gboolean ret = FALSE;
   gs_strfreev gchar **refs = NULL;
-  gs_free char *last_ref = NULL;
-  gs_free char *last = NULL;
+  g_autofree char *last_ref = NULL;
+  g_autofree char *last = NULL;
   gs_strfreev char **system = NULL;
   gs_strfreev char **user = NULL;
   int s, u;
 
   if (print_user)
     {
-      gs_unref_object XdgAppDir *dir = NULL;
+      g_autoptr(XdgAppDir) dir = NULL;
 
       dir = xdg_app_dir_get (TRUE);
       if (!xdg_app_dir_list_refs (dir, kind, &user, cancellable, error))
@@ -45,7 +46,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
   if (print_system)
     {
-      gs_unref_object XdgAppDir *dir = NULL;
+      g_autoptr(XdgAppDir) dir = NULL;
 
       dir = xdg_app_dir_get (FALSE);
       if (!xdg_app_dir_list_refs (dir, kind, &system, cancellable, error))
@@ -92,8 +93,8 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
           if (strcmp (kind, "app") == 0)
             {
-              gs_free char *current;
-              gs_unref_object XdgAppDir *dir = NULL;
+              g_autofree char *current;
+              g_autoptr(XdgAppDir) dir = NULL;
 
               dir = xdg_app_dir_get (is_user);
               current = xdg_app_dir_current_ref (dir, parts[1], cancellable);

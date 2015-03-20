@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 
@@ -21,7 +22,7 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 {
   GOptionContext *context;
   gboolean ret = FALSE;
-  gs_unref_object XdgAppDir *dir = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
   gs_strfreev char **remotes = NULL;
   guint ii, n_remotes = 0;
 
@@ -41,7 +42,7 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
       for (ii = 0; ii < n_remotes; ii++)
         {
-          gs_free char *remote_url = NULL;
+          g_autofree char *remote_url = NULL;
 
           if (!ostree_repo_remote_get_url (xdg_app_dir_get_repo (dir), remotes[ii], &remote_url, error))
             goto out;

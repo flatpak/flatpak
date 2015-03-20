@@ -2,6 +2,8 @@
 #define __XDG_APP_UTILS_H__
 
 #include <gio/gio.h>
+#include <libsoup/soup.h>
+#include "xdg-app-dbus.h"
 #include <ostree.h>
 
 const char * xdg_app_get_arch (void);
@@ -99,5 +101,12 @@ g_strv_subset (const gchar * const *strv,
 
   return NULL;
 }
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeRepo, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeMutableTree, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeAsyncProgress, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupSession, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupMessage, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppSessionHelper, g_object_unref)
 
 #endif /* __XDG_APP_UTILS_H__ */

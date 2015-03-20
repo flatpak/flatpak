@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -28,18 +29,18 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object XdgAppDir *dir = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
   OstreeRepo *repo = NULL;
-  gs_unref_hashtable GHashTable *refs = NULL;
-  gs_free char *title = NULL;
+  g_autoptr(GHashTable) refs = NULL;
+  g_autofree char *title = NULL;
   GHashTableIter iter;
   gpointer key;
   gpointer value;
-  gs_unref_ptrarray GPtrArray *names = NULL;
+  g_autoptr(GPtrArray) names = NULL;
   int i;
   const char *repository;
-  gs_free char *url = NULL;
-  gs_unref_bytes GBytes *bytes = NULL;
+  g_autofree char *url = NULL;
+  g_autoptr(GBytes) bytes = NULL;
 
   context = g_option_context_new (" REPOSITORY - Show available runtimes and applications");
 
@@ -68,8 +69,8 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
     {
       const char *refspec = key;
       const char *checksum = value;
-      gs_free char *remote = NULL;
-      gs_free char *ref = NULL;
+      g_autofree char *remote = NULL;
+      g_autofree char *ref = NULL;
       char *name = NULL;
       char *p;
 
@@ -81,7 +82,7 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
 
       if (opt_only_updates)
         {
-          gs_free char *deployed = NULL;
+          g_autofree char *deployed = NULL;
 
           deployed = xdg_app_dir_read_active (dir, ref, cancellable);
           if (deployed == NULL)

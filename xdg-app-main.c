@@ -2,9 +2,11 @@
 
 #include <locale.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <gio/gio.h>
+#include "libglnx/libglnx.h"
 #include "libgsystem.h"
 
 #include "xdg-app-builtins.h"
@@ -94,7 +96,7 @@ xdg_app_usage (XdgAppCommand *commands,
               gboolean is_error)
 {
   GOptionContext *context;
-  gs_free char *help;
+  g_autofree char *help;
 
   context = xdg_app_option_context_new_with_commands (commands);
 
@@ -123,7 +125,7 @@ xdg_app_option_context_parse (GOptionContext *context,
                               GError **error)
 {
   gboolean success = FALSE;
-  gs_unref_object XdgAppDir *dir = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
 
   if (!(flags & XDG_APP_BUILTIN_FLAG_NO_DIR))
     g_option_context_add_main_entries (context, user_entries, NULL);
@@ -167,7 +169,7 @@ xdg_app_option_context_parse (GOptionContext *context,
 void
 usage_error (GOptionContext *context, const char *message, GError **error)
 {
-  gs_free gchar *help = g_option_context_get_help (context, TRUE, NULL);
+  g_autofree gchar *help = g_option_context_get_help (context, TRUE, NULL);
   g_printerr ("%s", help);
   g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, message);
 }
@@ -182,7 +184,7 @@ xdg_app_run (int    argc,
   GError *error = NULL;
   GCancellable *cancellable = NULL;
   const char *command_name = NULL;
-  gs_free char *prgname = NULL;
+  g_autofree char *prgname = NULL;
   gboolean success = FALSE;
   int in, out;
 
@@ -220,7 +222,7 @@ xdg_app_run (int    argc,
   if (!command->fn)
     {
       GOptionContext *context;
-      gs_free char *help;
+      g_autofree char *help;
 
       context = xdg_app_option_context_new_with_commands (commands);
 
@@ -270,7 +272,7 @@ main (int    argc,
       char **argv)
 {
   GError *error = NULL;
-  gs_free const char *old_env = NULL;
+  g_autofree const char *old_env = NULL;
   int ret;
 
   setlocale (LC_ALL, "");

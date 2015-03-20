@@ -2,6 +2,8 @@ AC_PREREQ([2.63])
 
 AC_INIT([xdg-app],[0.0.1])
 
+AC_USE_SYSTEM_EXTENSIONS
+
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC
@@ -14,7 +16,6 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.11 no-define no-dist-gzip dist-bzip2 tar-ustar foreign subdir-objects])
 AC_PROG_SED
-AC_USE_SYSTEM_EXTENSIONS
 
 # Enable silent rules is available
 AM_SILENT_RULES([yes])

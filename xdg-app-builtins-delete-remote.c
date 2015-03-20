@@ -3,8 +3,10 @@
 #include <locale.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 
@@ -13,7 +15,7 @@ xdg_app_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
 {
   GOptionContext *context;
   gboolean ret = FALSE;
-  gs_unref_object XdgAppDir *dir = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
   const char *remote_name;
 
   context = g_option_context_new ("NAME - Delete a remote repository");

@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -22,13 +23,13 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *origin = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) origin = NULL;
   const char *repository;
   const char *runtime;
   const char *branch = "master";
-  gs_free char *ref = NULL;
+  g_autofree char *ref = NULL;
   gboolean created_deploy_base = FALSE;
 
   context = g_option_context_new ("REPOSITORY RUNTIME [BRANCH] - Install a runtime");
@@ -102,13 +103,13 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *origin = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) origin = NULL;
   const char *repository;
   const char *app;
   const char *branch = "master";
-  gs_free char *ref = NULL;
+  g_autofree char *ref = NULL;
   gboolean created_deploy_base = FALSE;
 
   context = g_option_context_new ("REPOSITORY APP [BRANCH] - Install an application");

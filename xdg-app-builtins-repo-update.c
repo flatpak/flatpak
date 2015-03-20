@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -23,8 +24,8 @@ xdg_app_builtin_repo_update (int argc, char **argv, GCancellable *cancellable, G
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object GFile *repofile = NULL;
-  gs_unref_object OstreeRepo *repo = NULL;
+  g_autoptr(GFile) repofile = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
   const char *location;
   GVariant *extra = NULL;
 

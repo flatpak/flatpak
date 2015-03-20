@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -28,27 +29,27 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 {
   GOptionContext *context;
   gboolean ret = FALSE;
-  gs_unref_object XdgAppDir *user_dir = NULL;
-  gs_unref_variant_builder GVariantBuilder *optbuilder = NULL;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *var = NULL;
-  gs_unref_object GFile *var_tmp = NULL;
-  gs_unref_object GFile *var_run = NULL;
-  gs_unref_object GFile *app_deploy = NULL;
-  gs_unref_object GFile *app_files = NULL;
-  gs_unref_object GFile *runtime_deploy = NULL;
-  gs_unref_object GFile *runtime_files = NULL;
-  gs_unref_object GFile *metadata = NULL;
-  gs_free char *metadata_contents = NULL;
-  gs_free char *runtime = NULL;
-  gs_free char *default_command = NULL;
-  gs_free char *runtime_ref = NULL;
-  gs_free char *app_ref = NULL;
-  gs_unref_keyfile GKeyFile *metakey = NULL;
-  gs_free_error GError *my_error = NULL;
-  gs_free_error GError *my_error2 = NULL;
-  gs_unref_ptrarray GPtrArray *argv_array = NULL;
-  gs_unref_ptrarray GPtrArray *env_array = NULL;
+  g_autoptr(XdgAppDir) user_dir = NULL;
+  g_autoptr(GVariantBuilder) optbuilder = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) var = NULL;
+  g_autoptr(GFile) var_tmp = NULL;
+  g_autoptr(GFile) var_run = NULL;
+  g_autoptr(GFile) app_deploy = NULL;
+  g_autoptr(GFile) app_files = NULL;
+  g_autoptr(GFile) runtime_deploy = NULL;
+  g_autoptr(GFile) runtime_files = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  g_autofree char *metadata_contents = NULL;
+  g_autofree char *runtime = NULL;
+  g_autofree char *default_command = NULL;
+  g_autofree char *runtime_ref = NULL;
+  g_autofree char *app_ref = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr (GError) my_error = NULL;
+  g_autoptr (GError) my_error2 = NULL;
+  g_autoptr(GPtrArray) argv_array = NULL;
+  g_autoptr(GPtrArray) env_array = NULL;
   gsize metadata_size;
   const char *directory = NULL;
   const char *command = "/bin/sh";

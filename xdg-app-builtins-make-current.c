@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -22,12 +23,12 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *origin = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) origin = NULL;
   const char *app;
   const char *branch = "master";
-  gs_free char *ref = NULL;
+  g_autofree char *ref = NULL;
 
   context = g_option_context_new ("APP BRANCH - Make branch of application current");
 

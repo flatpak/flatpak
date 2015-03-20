@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "libgsystem.h"
+#include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
@@ -26,17 +27,17 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *arch_dir = NULL;
-  gs_unref_object GFile *top_dir = NULL;
-  gs_unref_object GFile *origin = NULL;
-  gs_unref_object OstreeRepo *repo = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) arch_dir = NULL;
+  g_autoptr(GFile) top_dir = NULL;
+  g_autoptr(GFile) origin = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
   const char *name;
   const char *arch;
   const char *branch;
-  gs_free char *ref = NULL;
-  gs_free char *repository = NULL;
+  g_autofree char *ref = NULL;
+  g_autofree char *repository = NULL;
   gs_strfreev char **deployed = NULL;
   int i;
   GError *temp_error = NULL;
@@ -156,18 +157,18 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_unref_object XdgAppDir *dir = NULL;
-  gs_unref_object GFile *deploy_base = NULL;
-  gs_unref_object GFile *arch_dir = NULL;
-  gs_unref_object GFile *top_dir = NULL;
-  gs_unref_object GFile *origin = NULL;
-  gs_unref_object OstreeRepo *repo = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) arch_dir = NULL;
+  g_autoptr(GFile) top_dir = NULL;
+  g_autoptr(GFile) origin = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
   const char *name;
   const char *arch;
   const char *branch;
-  gs_free char *ref = NULL;
-  gs_free char *repository = NULL;
-  gs_free char *current_ref = NULL;
+  g_autofree char *ref = NULL;
+  g_autofree char *repository = NULL;
+  g_autofree char *current_ref = NULL;
   gs_strfreev char **deployed = NULL;
   int i;
   GError *temp_error = NULL;
