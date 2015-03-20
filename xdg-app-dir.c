@@ -863,11 +863,11 @@ rewrite_export_dir (const char    *app,
                     GError       **error)
 {
   gboolean ret = FALSE;
-  gs_dirfd_iterator_cleanup GSDirFdIterator source_iter = {0};
+  g_auto(GLnxDirFdIterator) source_iter = {0};
   g_autoptr(GHashTable) visited_children = NULL;
   struct dirent *dent;
 
-  if (!gs_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
+  if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
     goto out;
 
   visited_children = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -876,7 +876,7 @@ rewrite_export_dir (const char    *app,
     {
       struct stat stbuf;
 
-      if (!gs_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
+      if (!glnx_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
         goto out;
 
       if (dent == NULL)
@@ -989,11 +989,11 @@ export_dir (int            source_parent_fd,
 {
   gboolean ret = FALSE;
   int res;
-  gs_dirfd_iterator_cleanup GSDirFdIterator source_iter = {0};
+  g_auto(GLnxDirFdIterator) source_iter = {0};
   glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
 
-  if (!gs_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
+  if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
     goto out;
 
   do
@@ -1017,7 +1017,7 @@ export_dir (int            source_parent_fd,
     {
       struct stat stbuf;
 
-      if (!gs_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
+      if (!glnx_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
         goto out;
 
       if (dent == NULL)

@@ -329,11 +329,11 @@ overlay_symlink_tree_dir (int            source_parent_fd,
 {
   gboolean ret = FALSE;
   int res;
-  gs_dirfd_iterator_cleanup GSDirFdIterator source_iter = { 0 };
+  g_auto(GLnxDirFdIterator) source_iter = { 0 };
   glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
 
-  if (!gs_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
+  if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
     goto out;
 
   do
@@ -357,7 +357,7 @@ overlay_symlink_tree_dir (int            source_parent_fd,
     {
       gboolean is_dir = FALSE;
 
-      if (!gs_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
+      if (!glnx_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
         goto out;
 
       if (dent == NULL)
@@ -446,9 +446,9 @@ remove_dangling_symlinks (int            parent_fd,
 {
   gboolean ret = FALSE;
   struct dirent *dent;
-  GSDirFdIterator iter;
+  GLnxDirFdIterator iter;
 
-  if (!gs_dirfd_iterator_init_at (parent_fd, name, FALSE, &iter, error))
+  if (!glnx_dirfd_iterator_init_at (parent_fd, name, FALSE, &iter, error))
     goto out;
 
   while (TRUE)
@@ -456,7 +456,7 @@ remove_dangling_symlinks (int            parent_fd,
       gboolean is_dir = FALSE;
       gboolean is_link = FALSE;
 
-      if (!gs_dirfd_iterator_next_dent (&iter, &dent, cancellable, error))
+      if (!glnx_dirfd_iterator_next_dent (&iter, &dent, cancellable, error))
         goto out;
 
       if (dent == NULL)
