@@ -1,0 +1,3 @@
+[submodule "libglnx"]
+	path = libglnx
+	url = https://git.gnome.org/browse/libglnx

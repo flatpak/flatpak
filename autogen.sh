@@ -18,7 +18,13 @@ fi
 # regenerated from their corresponding *.in files by ./configure anyway.
 touch INSTALL
 
+cd "$olddir"
+if ! test -f libglnx/README.md || ! test -f bsdiff/README.md; then
+    git submodule update --init
+fi
+# Workaround automake bug with subdir-objects and computed paths
+sed -e 's,$(libglnx_srcpath),'${srcdir}/libglnx,g < libglnx/Makefile-libglnx.am >libglnx/Makefile-libglnx.am.inc
+
 autoreconf --force --install --verbose || exit $?
 
-cd "$olddir"
 test -n "$NOCONFIGURE" || "$srcdir/configure" "$@"

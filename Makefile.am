@@ -29,6 +29,15 @@ libexec_PROGRAMS = \
 	xdg-app-session-helper \
 	$(NULL)
 
+EXTRA_DIST =
+
+libglnx_srcpath := $(srcdir)/libglnx
+libglnx_cflags := $(BASE_CFLAGS) "-I$(libglnx_srcpath)"
+libglnx_libs := $(BASE_LIBS)
+include libglnx/Makefile-libglnx.am.inc
+
+noinst_LTLIBRARIES = libglnx.la
+
 xdg_app_helper_SOURCES = xdg-app-helper.c
 
 dbus_built_sources = xdg-app-dbus.c xdg-app-dbus.h
@@ -107,8 +116,8 @@ xdg_app_SOURCES = \
 	$(dbus_built_sources)		\
 	$(NULL)
 
-xdg_app_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS)
-xdg_app_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS)
+xdg_app_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) libglnx.la
+xdg_app_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) -I$(srcdir)/libglnx
 
 install-exec-hook:
 if PRIV_MODE_SETUID
@@ -122,4 +131,4 @@ endif
 
 completiondir = $(datadir)/bash-completion/completions
 completion_DATA = completion/xdg-app
-EXTRA_DIST = $(completion_DATA)
+EXTRA_DIST += $(completion_DATA)
