@@ -65,8 +65,13 @@ fd_columns (int fd)
   return ws.ws_col;
 }
 
-static guint
-columns (void)
+/**
+ * glnx_console_columns:
+ * 
+ * Returns: The number of columns for terminal output
+ */
+guint
+glnx_console_columns (void)
 {
   if (G_UNLIKELY (cached_columns == 0))
     {
@@ -86,7 +91,6 @@ columns (void)
   return cached_columns;
 }
 
-#if 0
 static int
 fd_lines (int fd)
 {
@@ -101,8 +105,13 @@ fd_lines (int fd)
   return ws.ws_row;
 }
 
-static guint
-lines (void)
+/**
+ * glnx_console_lines:
+ * 
+ * Returns: The number of lines for terminal output
+ */
+guint
+glnx_console_lines (void)
 {
   if (G_UNLIKELY (cached_lines == 0))
     {
@@ -118,7 +127,6 @@ lines (void)
 
   return cached_lines;
 }
-#endif
 
 static void
 on_sigwinch (int signum)
@@ -188,7 +196,7 @@ glnx_console_progress_text_percent (const char *text,
   const guint n_equals = sizeof (equals) - 1;
   static const char spaces[] = "                    ";
   const guint n_spaces = sizeof (spaces) - 1;
-  const guint ncolumns = columns ();
+  const guint ncolumns = glnx_console_columns ();
   const guint bar_min = 10;
   const guint input_textlen = text ? strlen (text) : 0;
   guint textlen;

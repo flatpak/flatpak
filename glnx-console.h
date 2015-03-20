@@ -37,6 +37,10 @@ void	 glnx_console_progress_text_percent (const char     *text,
 
 void	 glnx_console_unlock (GLnxConsoleRef *ref);
 
+guint    glnx_console_lines (void);
+
+guint    glnx_console_columns (void);
+
 static inline void
 glnx_console_ref_cleanup (GLnxConsoleRef *p)
 {
