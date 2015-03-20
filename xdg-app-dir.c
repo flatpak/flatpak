@@ -842,7 +842,8 @@ export_desktop_file (const char    *app,
   if (!g_output_stream_close (out_stream, cancellable, error))
     goto out;
 
-  gs_transfer_out_value (target, &tmpfile_name);
+  if (target)
+    *target = g_steal_pointer (&tmpfile_name);
 
   ret = TRUE;
  out:

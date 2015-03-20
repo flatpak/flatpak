@@ -159,7 +159,8 @@ xdg_app_option_context_parse (GOptionContext *context,
   if (opt_verbose)
     g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
-  gs_transfer_out_value (out_dir, &dir);
+  if (out_dir)
+    out_dir = g_steal_pointer (&dir);
 
   success = TRUE;
  out:
