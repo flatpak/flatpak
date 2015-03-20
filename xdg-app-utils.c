@@ -330,7 +330,7 @@ overlay_symlink_tree_dir (int            source_parent_fd,
   gboolean ret = FALSE;
   int res;
   gs_dirfd_iterator_cleanup GSDirFdIterator source_iter = { 0 };
-  gs_fd_close int destination_dfd = -1;
+  glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
 
   if (!gs_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))

@@ -28,7 +28,7 @@ metadata_get_arch (GFile *file, char **out_arch, GError **error)
   g_autofree char *path = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime = NULL;
-  gs_strfreev char **parts = NULL;
+  glnx_strfreev char **parts = NULL;
 
   keyfile = g_key_file_new ();
   path = g_file_get_path (file);

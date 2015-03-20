@@ -62,8 +62,8 @@ static gboolean
 add_extension_args (GKeyFile *metakey, const char *full_ref,
 		    GPtrArray *argv_array, GCancellable *cancellable, GError **error)
 {
-  gs_strfreev gchar **groups = NULL;
-  gs_strfreev gchar **parts = NULL;
+  glnx_strfreev gchar **groups = NULL;
+  glnx_strfreev gchar **parts = NULL;
   gboolean ret = FALSE;
   int i;
 
@@ -93,7 +93,7 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
 				      "subdirectories", NULL))
 	    {
 	      g_autofree char *prefix = g_strconcat (extension, ".", NULL);
-	      gs_strfreev char **refs = NULL;
+	      glnx_strfreev char **refs = NULL;
 	      int i;
 
 	      refs = xdg_app_list_deployed_refs (parts[0], prefix, parts[2], parts[3],

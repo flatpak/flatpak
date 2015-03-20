@@ -322,7 +322,7 @@ xdg_app_dir_make_current_ref (XdgAppDir *self,
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFile) current_link = NULL;
-  gs_strfreev char **ref_parts = NULL;
+  glnx_strfreev char **ref_parts = NULL;
   g_autofree char *rest = NULL;
   gboolean ret = FALSE;
 
@@ -750,7 +750,7 @@ export_desktop_file (const char    *app,
                      GError       **error)
 {
   gboolean ret = FALSE;
-  gs_fd_close int desktop_fd = -1;
+  glnx_fd_close int desktop_fd = -1;
   g_autofree char *tmpfile_name = NULL;
   g_autoptr(GOutputStream) out_stream = NULL;
   g_autofree gchar *data = NULL;
@@ -760,8 +760,8 @@ export_desktop_file (const char    *app,
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree gchar *old_exec = NULL;
   gint old_argc;
-  gs_strfreev gchar **old_argv = NULL;
-  gs_strfreev gchar **groups = NULL;
+  glnx_strfreev gchar **old_argv = NULL;
+  glnx_strfreev gchar **groups = NULL;
   GString *new_exec = NULL;
   g_autofree char *escaped_app = g_shell_quote (app);
   int i;
@@ -990,7 +990,7 @@ export_dir (int            source_parent_fd,
   gboolean ret = FALSE;
   int res;
   gs_dirfd_iterator_cleanup GSDirFdIterator source_iter = {0};
-  gs_fd_close int destination_dfd = -1;
+  glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
 
   if (!gs_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
@@ -1266,7 +1266,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
   export = g_file_get_child (checkoutdir, "export");
   if (g_file_query_exists (export, cancellable))
     {
-      gs_strfreev char **ref_parts = NULL;
+      glnx_strfreev char **ref_parts = NULL;
 
       ref_parts = g_strsplit (ref, "/", -1);
 
@@ -1403,7 +1403,7 @@ xdg_app_dir_list_deployed (XdgAppDir *self,
 static gboolean
 dir_is_locked (GFile *dir)
 {
-  gs_fd_close int ref_fd = -1;
+  glnx_fd_close int ref_fd = -1;
   struct flock lock = {0};
   g_autoptr(GFile) reffile = NULL;
 
@@ -1461,7 +1461,7 @@ xdg_app_dir_undeploy (XdgAppDir *self,
   active = xdg_app_dir_read_active (self, ref, cancellable);
   if (active != NULL && strcmp (active, checksum) == 0)
     {
-      gs_strfreev char **deployed_checksums = NULL;
+      glnx_strfreev char **deployed_checksums = NULL;
       const char *some_deployment;
 
       /* We're removing the active deployment, start by repointing that

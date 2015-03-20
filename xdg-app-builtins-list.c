@@ -26,11 +26,11 @@ static gboolean
 print_installed_refs (const char *kind, gboolean print_system, gboolean print_user, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-  gs_strfreev gchar **refs = NULL;
+  glnx_strfreev gchar **refs = NULL;
   g_autofree char *last_ref = NULL;
   g_autofree char *last = NULL;
-  gs_strfreev char **system = NULL;
-  gs_strfreev char **user = NULL;
+  glnx_strfreev char **system = NULL;
+  glnx_strfreev char **user = NULL;
   int s, u;
 
   if (print_user)
@@ -58,7 +58,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
   for (s = 0, u = 0; system[s] != NULL || user[u] != NULL; )
     {
       char *ref;
-      gs_strfreev char **parts = NULL;
+      glnx_strfreev char **parts = NULL;
       gboolean is_user;
 
       if (system[s] == NULL)
@@ -131,8 +131,8 @@ xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable,
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  gs_strfreev char **system = NULL;
-  gs_strfreev char **user = NULL;
+  glnx_strfreev char **system = NULL;
+  glnx_strfreev char **user = NULL;
 
   context = g_option_context_new (" - List installed runtimes");
 

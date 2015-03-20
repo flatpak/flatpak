@@ -23,7 +23,7 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   GOptionContext *context;
   gboolean ret = FALSE;
   g_autoptr(XdgAppDir) dir = NULL;
-  gs_strfreev char **remotes = NULL;
+  glnx_strfreev char **remotes = NULL;
   guint ii, n_remotes = 0;
 
   context = g_option_context_new (" - List remote repositories");
