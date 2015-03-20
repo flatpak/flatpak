@@ -890,12 +890,11 @@ rewrite_export_dir (const char    *app,
 
       if (fstatat (source_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
         {
-          int errsv = errno;
-          if (errsv == ENOENT)
+          if (errno == ENOENT)
             continue;
           else
             {
-              gs_set_error_from_errno (error, errsv);
+              glnx_set_error_from_errno (error);
               goto out;
             }
         }
@@ -916,7 +915,7 @@ rewrite_export_dir (const char    *app,
               g_warning ("Non-prefixed filename %s in app %s, removing.\n", dent->d_name, app);
               if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
                 {
-                  gs_set_error_from_errno (error, errno);
+                  glnx_set_error_from_errno (error);
                   goto out;
                 }
             }
@@ -932,7 +931,7 @@ rewrite_export_dir (const char    *app,
 
               if (renameat (source_iter.fd, new_name, source_iter.fd, dent->d_name) != 0)
                 {
-                  gs_set_error_from_errno (error, errno);
+                  glnx_set_error_from_errno (error);
                   goto out;
                 }
             }
@@ -942,7 +941,7 @@ rewrite_export_dir (const char    *app,
           g_warning ("Not exporting file %s of unsupported type\n", dent->d_name);
           if (unlinkat (source_iter.fd, dent->d_name, 0) != 0 && errno != ENOENT)
             {
-              gs_set_error_from_errno (error, errno);
+              glnx_set_error_from_errno (error);
               goto out;
             }
         }
@@ -1003,7 +1002,7 @@ export_dir (int            source_parent_fd,
     {
       if (errno != EEXIST)
         {
-          gs_set_error_from_errno (error, errno);
+          glnx_set_error_from_errno (error);
           goto out;
         }
     }
@@ -1025,12 +1024,11 @@ export_dir (int            source_parent_fd,
 
       if (fstatat (source_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
         {
-          int errsv = errno;
-          if (errsv == ENOENT)
+          if (errno == ENOENT)
             continue;
           else
             {
-              gs_set_error_from_errno (error, errsv);
+              glnx_set_error_from_errno (error);
               goto out;
             }
         }
@@ -1052,13 +1050,13 @@ export_dir (int            source_parent_fd,
 
           if (unlinkat (destination_dfd, dent->d_name, 0) != 0 && errno != ENOENT)
             {
-              gs_set_error_from_errno (error, errno);
+              glnx_set_error_from_errno (error);
               goto out;
             }
 
           if (symlinkat (target, destination_dfd, dent->d_name) != 0)
             {
-              gs_set_error_from_errno (error, errno);
+              glnx_set_error_from_errno (error);
               goto out;
             }
         }
