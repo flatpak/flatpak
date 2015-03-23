@@ -102,6 +102,15 @@ xmalloc (size_t size)
   return res;
 }
 
+static void *
+xrealloc (void *ptr, size_t size)
+{
+  void *res = realloc (ptr, size);
+  if (size != 0 && res == NULL)
+    die ("oom");
+  return res;
+}
+
 static char *
 xstrdup (const char *str)
 {
@@ -458,6 +467,135 @@ lock_all_dirs (void)
     lock_dir (lock_dirs[i]);
 }
 
+
+static char *
+load_file (const char *path)
+{
+  int fd;
+  char *data;
+  ssize_t data_read;
+  ssize_t data_len;
+  ssize_t res;
+
+  fd = open (path, O_CLOEXEC | O_RDONLY);
+  if (fd == -1)
+    return NULL;
+
+  data_read = 0;
+  data_len = 4080;
+  data = xmalloc (data_len);
+
+  do
+    {
+      if (data_len >= data_read + 1)
+        {
+          data_len *= 2;
+          data = xrealloc (data, data_len);
+        }
+
+      do
+        res = read (fd, data + data_read, data_len - data_read - 1);
+      while (res < 0 && errno == EINTR);
+
+      if (res < 0)
+        {
+          int errsv = errno;
+          free (data);
+          errno = errsv;
+          return NULL;
+        }
+
+      data_read += res;
+    }
+  while (res > 0);
+
+  data[data_read] = 0;
+
+  close (fd);
+
+  return data;
+}
+
+static char *
+skip_line (char *line)
+{
+  while (*line != 0 && *line != '\n')
+    line++;
+
+  if (*line == '\n')
+    line++;
+
+  return line;
+}
+
+static char *
+skip_token (char *line, bool eat_whitespace)
+{
+  while (*line != ' ' && *line != '\n')
+    line++;
+
+  if (eat_whitespace && *line == ' ')
+    line++;
+
+  return line;
+}
+
+static bool
+str_has_prefix (const char *str,
+                const char *prefix)
+{
+  return strncmp (str, prefix, strlen (prefix)) == 0;
+}
+
+char **
+get_submounts (const char *parent_mount)
+{
+  char *mountpoint, *mountpoint_end;
+  char **submounts;
+  int i, n_submounts, submounts_size;
+  char *mountinfo;
+  char *line;
+
+  mountinfo = load_file ("/proc/self/mountinfo");
+  if (mountinfo == NULL)
+    return NULL;
+
+  submounts_size = 8;
+  n_submounts = 0;
+  submounts = xmalloc (sizeof (char *) * submounts_size);
+
+  line = mountinfo;
+
+  while (*line != 0)
+    {
+      for (i = 0; i < 4; i++)
+        line = skip_token (line, TRUE);
+      mountpoint = line;
+      line = skip_token (line, FALSE);
+      mountpoint_end = line;
+      line = skip_line (line);
+      *mountpoint_end = 0;
+
+      if (*mountpoint == '/' &&
+          str_has_prefix (mountpoint + 1, parent_mount) &&
+          *(mountpoint + 1 + strlen (parent_mount)) == '/')
+        {
+          if (n_submounts + 1 >= submounts_size)
+            {
+              submounts_size *= 2;
+              submounts = xrealloc (submounts, sizeof (char *) * submounts_size);
+            }
+          submounts[n_submounts++] = xstrdup (mountpoint + 1);
+        }
+    }
+
+  submounts[n_submounts] = NULL;
+
+  free (mountinfo);
+
+  return submounts;
+}
+
 static int
 bind_mount (const char *src, const char *dest, bind_option_t options)
 {
@@ -465,6 +603,8 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
   bool private = (options & BIND_PRIVATE) != 0;
   bool devices = (options & BIND_DEVICES) != 0;
   bool recursive = (options & BIND_RECURSIVE) != 0;
+  char **submounts;
+  int i;
 
   if (mount (src, dest, NULL, MS_MGC_VAL|MS_BIND|(recursive?MS_REC:0), NULL) != 0)
     return 1;
@@ -479,6 +619,27 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
   if (mount ("none", dest,
              NULL, MS_MGC_VAL|MS_BIND|MS_REMOUNT|(devices?0:MS_NODEV)|MS_NOSUID|(readonly?MS_RDONLY:0), NULL) != 0)
     return 3;
+
+  /* We need to work around the fact that a bind mount does not apply the flags, so we need to manually
+   * apply the flags to all submounts in the recursive case.
+   * Note: This does not apply the flags to mounts which are later propagated into this namespace.
+   */
+  if (recursive)
+    {
+      submounts = get_submounts (dest);
+      if (submounts == NULL)
+        return 4;
+
+      for (i = 0; submounts[i] != NULL; i++)
+        {
+          if (mount ("none", submounts[i],
+                     NULL, MS_MGC_VAL|MS_BIND|MS_REMOUNT|(devices?0:MS_NODEV)|MS_NOSUID|(readonly?MS_RDONLY:0), NULL) != 0)
+            return 5;
+          free (submounts[i]);
+        }
+
+      free (submounts);
+    }
 
   return 0;
 }
