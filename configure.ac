@@ -14,7 +14,7 @@ LT_INIT([disable-static])
 AC_CONFIG_SRCDIR([xdg-app-helper.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([1.11 no-define no-dist-gzip dist-bzip2 tar-ustar foreign subdir-objects])
+AM_INIT_AUTOMAKE([1.11 no-define no-dist-gzip dist-xz tar-ustar foreign subdir-objects])
 AC_PROG_SED
 
 # Enable silent rules is available

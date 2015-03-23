@@ -29,7 +29,7 @@ libexec_PROGRAMS = \
 	xdg-app-session-helper \
 	$(NULL)
 
-EXTRA_DIST =
+EXTRA_DIST = xdg-app.gresource.xml xdg-app-dbus-interfaces.xml org.freedesktop.systemd1.xml
 
 libglnx_srcpath := $(srcdir)/libglnx
 libglnx_cflags := $(BASE_CFLAGS) "-I$(libglnx_srcpath)"
@@ -77,6 +77,8 @@ xdg-app-resources.c: xdg-app.gresource.xml $(resource_files)
 servicedir = $(DBUS_SERVICE_DIR)
 service_in_files = xdg-app-session.service.in
 service_DATA = xdg-app-session.service
+
+EXTRA_DIST += $(service_in_files)
 
 xdg_app_session_helper_SOURCES = \
 	xdg-app-session-helper.c	\
