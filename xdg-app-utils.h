@@ -1,6 +1,9 @@
 #ifndef __XDG_APP_UTILS_H__
 #define __XDG_APP_UTILS_H__
 
+#include <string.h>
+
+#include "libglnx/libglnx.h"
 #include <gio/gio.h>
 #include <libsoup/soup.h>
 #include "xdg-app-dbus.h"
@@ -108,5 +111,12 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeAsyncProgress, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupSession, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupMessage, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppSessionHelper, g_object_unref)
+
+#if !GLIB_CHECK_VERSION(2, 43, 4)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFile, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFileEnumerator, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFileInfo, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GOutputStream, g_object_unref)
+#endif
 
 #endif /* __XDG_APP_UTILS_H__ */

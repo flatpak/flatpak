@@ -3,12 +3,7 @@
 #include "xdg-app-utils.h"
 #include "xdg-app-dir.h"
 
-#include <glib.h>
 #include <string.h>
-#include "libgsystem.h"
-#include "libglnx/libglnx.h"
-#include <libsoup/soup.h>
-
 #include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -16,6 +11,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
+
+#include <glib.h>
+#include "libgsystem.h"
+#include "libglnx/libglnx.h"
+#include <libsoup/soup.h>
+
 
 const char *
 xdg_app_get_arch (void)
