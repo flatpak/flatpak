@@ -25,7 +25,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 /* From systemd/src/shared/util.h */
 /* When we include libgen.h because we need dirname() we immediately
  * undefine basename() since libgen.h defines it as a macro to the XDG

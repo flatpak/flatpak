@@ -25,7 +25,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 
 G_BEGIN_DECLS
 
