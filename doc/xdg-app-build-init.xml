@@ -32,6 +32,7 @@
             <cmdsynopsis>
                 <command>xdg-app build-init</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">APPNAME</arg>
                 <arg choice="plain">DIRECTORY</arg>
                 <arg choice="plain">SDK</arg>
                 <arg choice="plain">RUNTIME</arg>
@@ -45,6 +46,8 @@
         <para>
             Initializes a directory for building an application.
             <arg choice="plain">DIRECTORY</arg> is the name of the directory.
+            <arg choice="plain">APPNAME</arg> is the application id of the app
+            that will be built.
             <arg choice="plain">SDK</arg> and <arg choice="plain">RUNTIME</arg>
             specify the sdk and runtime that the application should be built
             against and run in.

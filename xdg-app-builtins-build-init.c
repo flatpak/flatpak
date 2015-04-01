@@ -57,6 +57,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(XdgAppDir) user_dir = NULL;
   g_autoptr(XdgAppDir) system_dir = NULL;
+  const char *app_id;
   const char *directory;
   const char *sdk;
   const char *runtime;
@@ -66,22 +67,29 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autofree char *sdk_ref = NULL;
   g_autofree char *metadata_contents = NULL;
 
-  context = g_option_context_new ("DIRECTORY SDK RUNTIME [BRANCH] - Initialize a directory for building");
+  context = g_option_context_new ("DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
-  if (argc < 4)
+  if (argc < 5)
     {
       usage_error (context, "RUNTIME must be specified", error);
       goto out;
     }
 
   directory = argv[1];
-  sdk = argv[2];
-  runtime = argv[3];
-  if (argc >= 5)
-    branch = argv[4];
+  app_id = argv[2];
+  sdk = argv[3];
+  runtime = argv[4];
+  if (argc >= 6)
+    branch = argv[5];
+
+  if (!xdg_app_is_valid_name (app_id))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app_id);
+      goto out;
+    }
 
   if (!xdg_app_is_valid_name (runtime))
     {
@@ -156,9 +164,10 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     goto out;
 
   metadata_contents = g_strdup_printf("[Application]\n"
+                                      "name=%s\n"
                                       "runtime=%s\n"
                                       "sdk=%s\n",
-                                      runtime_ref, sdk_ref);
+                                      app_id, runtime_ref, sdk_ref);
   if (!g_file_replace_contents (metadata_file,
                                 metadata_contents, strlen (metadata_contents), NULL, FALSE,
                                 G_FILE_CREATE_REPLACE_DESTINATION,

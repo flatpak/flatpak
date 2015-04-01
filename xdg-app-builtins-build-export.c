@@ -128,41 +128,37 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(OstreeRepo) repo = NULL;
   const char *location;
   const char *directory;
-  const char *name;
   const char *branch;
   g_autofree char *arch = NULL;
   g_autofree char *full_branch = NULL;
+  g_autofree char *app_id = NULL;
   g_autofree char *parent = NULL;
   g_autofree char *commit_checksum = NULL;
+  g_autofree char *metadata_contents = NULL;
   g_autoptr(OstreeMutableTree) mtree = NULL;
-  char *subject = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+  gsize metadata_size;
+  g_autofree char *subject = NULL;
   g_autofree char *body = NULL;
   OstreeRepoTransactionStats stats;
   OstreeRepoCommitModifier *modifier = NULL;
 
-  context = g_option_context_new ("LOCATION DIRECTORY NAME [BRANCH] - Create a repository from a build directory");
+  context = g_option_context_new ("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
-  if (argc < 4)
+  if (argc < 3)
     {
-      usage_error (context, "LOCATION, DIRECTORY and NAME must be specified", error);
+      usage_error (context, "LOCATION and DIRECTORY must be specified", error);
       goto out;
     }
 
   location = argv[1];
   directory = argv[2];
-  name = argv[3];
 
-  if (!xdg_app_is_valid_name (name))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", name);
-      goto out;
-    }
-
-  if (argc >= 5)
-    branch = argv[4];
+  if (argc >= 4)
+    branch = argv[3];
   else
     branch = "master";
 
@@ -184,6 +180,17 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       goto out;
     }
 
+  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
+    goto out;
+
+  metakey = g_key_file_new ();
+  if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
+    goto out;
+
+  app_id = g_key_file_get_string (metakey, "Application", "name", error);
+  if (app_id == NULL)
+    goto out;
+
   if (!g_file_query_exists (export, cancellable))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s not finalized", directory);
@@ -194,15 +201,15 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     goto out;
 
   if (opt_subject)
-    subject = opt_subject;
+    subject = g_strdup (opt_subject);
   else
-    subject = "Import an application build";
+    subject = g_strconcat ("Export ", app_id, NULL);
   if (opt_body)
     body = g_strdup (opt_body);
   else
-    body = g_strconcat ("Name: ", name, "\nArch: ", arch, "\nBranch: ", branch, NULL);
+    body = g_strconcat ("Name: ", app_id, "\nArch: ", arch, "\nBranch: ", branch, NULL);
 
-  full_branch = g_strconcat ("app/", name, "/", arch, "/", branch, NULL);
+  full_branch = g_strconcat ("app/", app_id, "/", arch, "/", branch, NULL);
 
   repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);
