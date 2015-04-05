@@ -43,7 +43,7 @@ AC_ARG_WITH(system_fonts_dir,
 SYSTEM_FONTS_DIR=$with_system_fonts_dir
 AC_SUBST(SYSTEM_FONTS_DIR)
 
-AC_CHECK_HEADER([attr/xattr.h], [], AC_MSG_ERROR([libattr development headers not found]))
+AC_CHECK_HEADER([sys/xattr.h], [], AC_MSG_ERROR([You must have sys/xattr.h from glibc]))
 AC_CHECK_HEADER([sys/capability.h], have_caps=yes, AC_MSG_ERROR([sys/capability.h header not found]))
 
 AC_SUBST([GLIB_COMPILE_RESOURCES], [`$PKG_CONFIG --variable glib_compile_resources gio-2.0`])
