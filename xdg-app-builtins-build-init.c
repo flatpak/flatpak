@@ -55,8 +55,6 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GFile) var_tmp_dir = NULL;
   g_autoptr(GFile) var_run_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
-  g_autoptr(XdgAppDir) user_dir = NULL;
-  g_autoptr(XdgAppDir) system_dir = NULL;
   const char *app_id;
   const char *directory;
   const char *sdk;
@@ -131,9 +129,6 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   if (opt_var)
     {
-      user_dir = xdg_app_dir_get_user ();
-      system_dir = xdg_app_dir_get_system ();
-
       var_ref = xdg_app_build_runtime_ref (opt_var, branch, opt_arch);
 
       var_deploy_base = xdg_app_find_deploy_dir_for_ref (var_ref, cancellable, error);
