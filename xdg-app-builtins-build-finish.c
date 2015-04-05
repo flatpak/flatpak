@@ -335,9 +335,6 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files_dir = NULL;
   g_autoptr(GFile) export_dir = NULL;
-  g_autoptr(GFile) var_dir = NULL;
-  g_autoptr(GFile) var_tmp_dir = NULL;
-  g_autoptr(GFile) var_run_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(XdgAppDir) user_dir = NULL;
   g_autoptr(XdgAppDir) system_dir = NULL;
@@ -364,9 +361,6 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   files_dir = g_file_get_child (base, "files");
   export_dir = g_file_get_child (base, "export");
-  var_dir = g_file_get_child (base, "var");
-  var_tmp_dir = g_file_get_child (var_dir, "tmp");
-  var_run_dir = g_file_get_child (var_dir, "run");
   metadata_file = g_file_get_child (base, "metadata");
 
   if (!g_file_query_exists (files_dir, cancellable) ||
