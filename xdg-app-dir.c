@@ -627,12 +627,9 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
   g_autoptr(GFile) triggersdir = NULL;
-  g_autoptr(GFile) exports = NULL;
   GError *temp_error = NULL;
 
   g_debug ("running triggers");
-
-  exports = xdg_app_dir_get_exports_dir (self);
 
   triggersdir = g_file_new_for_path (XDG_APP_TRIGGERDIR);
 
@@ -1180,7 +1177,6 @@ xdg_app_dir_deploy (XdgAppDir *self,
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) dotref = NULL;
   g_autoptr(GFile) export = NULL;
-  g_autoptr(GFile) exports = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -1281,7 +1277,6 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                 G_FILE_CREATE_NONE, NULL, cancellable, error))
     goto out;
 
-  exports = xdg_app_dir_get_exports_dir (self);
   export = g_file_get_child (checkoutdir, "export");
   if (g_file_query_exists (export, cancellable))
     {
