@@ -30,4 +30,11 @@ glnx_shutil_rm_rf_at (int                   dfd,
                       GCancellable         *cancellable,
                       GError              **error);
 
+gboolean
+glnx_shutil_mkdir_p_at (int                   dfd,
+                        const char           *path,
+                        int                   mode,
+                        GCancellable         *cancellable,
+                        GError              **error);
+
 G_END_DECLS

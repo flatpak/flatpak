@@ -188,3 +188,101 @@ glnx_shutil_rm_rf_at (int                   dfd,
  out:
   return ret;
 }
+
+static gboolean
+mkdir_p_at_internal (int              dfd,
+                     char            *path,
+                     int              mode,
+                     GCancellable    *cancellable,
+                     GError         **error)
+{
+  gboolean ret = FALSE;
+  gboolean did_recurse = FALSE;
+
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    goto out;
+
+ again:
+  if (mkdirat (dfd, path, mode) == -1)
+    {
+      if (errno == ENOENT)
+        {
+          char *lastslash;
+
+          g_assert (!did_recurse);
+
+          lastslash = strrchr (path, '/');
+          g_assert (lastslash != NULL);
+          /* Note we can mutate the buffer as we dup'd it */
+          *lastslash = '\0';
+
+          if (!glnx_shutil_mkdir_p_at (dfd, path, mode,
+                                       cancellable, error))
+            goto out;
+
+          /* Now restore it for another mkdir attempt */
+          *lastslash = '/';
+
+          did_recurse = TRUE;
+          goto again;
+        }
+      else if (errno == EEXIST)
+        {
+          /* Fall through; it may not have been a directory,
+           * but we'll find that out on the next call up.
+           */
+        }
+      else
+        {
+          glnx_set_error_from_errno (error);
+          goto out;
+        }
+    }
+
+  ret = TRUE;
+ out:
+  return ret;
+}
+
+/**
+ * glnx_shutil_mkdir_p_at:
+ * @dfd: Directory fd
+ * @path: Directory path to be created
+ * @mode: Mode for newly created directories
+ * @cancellable: Cancellable
+ * @error: Error
+ *
+ * Similar to g_mkdir_with_parents(), except operates relative to the
+ * directory fd @dfd.
+ */
+gboolean
+glnx_shutil_mkdir_p_at (int                   dfd,
+                        const char           *path,
+                        int                   mode,
+                        GCancellable         *cancellable,
+                        GError              **error)
+{
+  gboolean ret = FALSE;
+  struct stat stbuf;
+
+  /* Fast path stat to see whether it already exists */
+  if (fstatat (dfd, path, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
+    {
+      if (S_ISDIR (stbuf.st_mode))
+        {
+          ret = TRUE;
+          goto out;
+        }
+    }
+
+  {
+    char *buf = strdupa (path);
+
+    if (!mkdir_p_at_internal (dfd, buf, mode, cancellable, error))
+      goto out;
+  }
+
+  ret = TRUE;
+ out:
+  return ret;
+}
