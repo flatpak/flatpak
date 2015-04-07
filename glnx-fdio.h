@@ -25,6 +25,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/xattr.h>
 /* From systemd/src/shared/util.h */
 /* When we include libgen.h because we need dirname() we immediately
