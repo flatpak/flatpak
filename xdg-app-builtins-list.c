@@ -42,6 +42,14 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+static void
+print_comma_separator (gboolean *need_comma)
+{
+  if (*need_comma)
+    g_print (",");
+  *need_comma = TRUE;
+}
+
 static gboolean
 print_installed_refs (const char *kind, gboolean print_system, gboolean print_user, GCancellable *cancellable, GError **error)
 {
@@ -105,9 +113,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
           if (print_user && print_system)
             {
-              if (comma)
-                g_print (",");
-              comma = TRUE;
+              print_comma_separator (&comma);
               g_print ("%s", is_user ? "user" : "system");
             }
 
@@ -120,9 +126,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
               current = xdg_app_dir_current_ref (dir, parts[1], cancellable);
               if (current && strcmp (ref, current) == 0)
                 {
-                  if (comma)
-                    g_print (",");
-                  comma = TRUE;
+                  print_comma_separator (&comma);
                   g_print ("current");
                 }
             }
