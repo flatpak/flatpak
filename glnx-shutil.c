@@ -264,6 +264,7 @@ glnx_shutil_mkdir_p_at (int                   dfd,
 {
   gboolean ret = FALSE;
   struct stat stbuf;
+  char *buf;
 
   /* Fast path stat to see whether it already exists */
   if (fstatat (dfd, path, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
@@ -275,12 +276,10 @@ glnx_shutil_mkdir_p_at (int                   dfd,
         }
     }
 
-  {
-    char *buf = strdupa (path);
+  buf = strdupa (path);
 
-    if (!mkdir_p_at_internal (dfd, buf, mode, cancellable, error))
-      goto out;
-  }
+  if (!mkdir_p_at_internal (dfd, buf, mode, cancellable, error))
+    goto out;
 
   ret = TRUE;
  out:
