@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/ioctl.h>
@@ -582,5 +583,103 @@ glnx_file_copy_at (int                   src_dfd,
  out:
   if (!ret)
     (void) unlinkat (dest_dfd, dest_subpath, 0);
+  return ret;
+}
+
+/**
+ * glnx_file_replace_contents_utf8_at:
+ * @dfd: Directory fd
+ * @subpath: Subpath
+ * @buf: (array len=len) (element-type guint8): File contents
+ * @len: Length (if `-1`, assume @buf is `NUL` terminated)
+ * @flags: Flags
+ * @cancellable: Cancellable
+ * @error: Error
+ *
+ * Atomically replace the contents of @subpath (relative to @dfd) with
+ * @buf.  By default, if the file already existed, fdatasync() will be
+ * used before rename() to ensure stable contents.  This and other
+ * behavior can be controlled via @flags.
+ *
+ * Note that no metadata from the existing file is preserved, such as
+ * uid/gid or extended attributes.
+ */ 
+gboolean
+glnx_file_replace_contents_at (int                   dfd,
+                               const char           *subpath,
+                               const guint8         *buf,
+                               gsize                 len,
+                               int                   mode,
+                               GLnxFileReplaceFlags  flags,
+                               GCancellable         *cancellable,
+                               GError              **error)
+{
+  gboolean ret = FALSE;
+  /* We use the /proc/self trick as there's no mkostemp_at() yet */
+  g_autofree char *tmppath = g_strdup_printf ("/proc/self/fd/%d/.tmpXXXXXX", dfd);
+  glnx_fd_close int fd = -1;
+
+  if ((fd = mkostemp (tmppath, O_CLOEXEC)) == -1)
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
+
+  if (fchmod (fd, mode) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
+
+  if (len == -1)
+    len = strlen ((char*)buf);
+
+  if (posix_fallocate (fd, 0, len))
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
+
+  if (loop_write (fd, buf, len) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
+    
+  if (!(flags & GLNX_FILE_REPLACE_NODATASYNC))
+    {
+      struct stat stbuf;
+      gboolean do_sync;
+      
+      if (fstatat (dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
+        {
+          if (errno != ENOENT)
+            {
+              glnx_set_error_from_errno (error);
+              goto out;
+            }
+          do_sync = (flags & GLNX_FILE_REPLACE_DATASYNC_NEW) > 0;
+        }
+      else
+        do_sync = TRUE;
+
+      if (do_sync)
+        {
+          if (fdatasync (fd) != 0)
+            {
+              glnx_set_error_from_errno (error);
+              goto out;
+            }
+        }
+    }
+
+  if (renameat (dfd, tmppath, dfd, subpath) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
+
+  ret = TRUE;
+ out:
   return ret;
 }

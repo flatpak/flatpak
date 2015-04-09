@@ -63,6 +63,28 @@ glnx_file_get_contents_utf8_at (int                   dfd,
                                 GCancellable         *cancellable,
                                 GError              **error);
 
+/**
+ * GLnxFileReplaceFlags:
+ * @GLNX_FILE_REPLACE_DATASYNC_NEW: Call fdatasync() even if the file did not exist
+ * @GLNX_FILE_REPLACE_NODATASYNC: Never call fdatasync()
+ *
+ * Flags controlling file replacement.
+ */
+typedef enum {
+  GLNX_FILE_REPLACE_DATASYNC_NEW = (1 << 0),
+  GLNX_FILE_REPLACE_NODATASYNC = (1 << 1),
+} GLnxFileReplaceFlags;
+
+gboolean
+glnx_file_replace_contents_at (int                   dfd,
+                               const char           *subpath,
+                               const guint8         *buf,
+                               gsize                 len,
+                               int                   mode,
+                               GLnxFileReplaceFlags  flags,
+                               GCancellable         *cancellable,
+                               GError              **error);
+
 char *
 glnx_readlinkat_malloc (int            dfd,
                         const char    *subpath,
