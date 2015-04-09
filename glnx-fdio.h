@@ -80,10 +80,21 @@ glnx_file_replace_contents_at (int                   dfd,
                                const char           *subpath,
                                const guint8         *buf,
                                gsize                 len,
-                               int                   mode,
                                GLnxFileReplaceFlags  flags,
                                GCancellable         *cancellable,
                                GError              **error);
+
+gboolean
+glnx_file_replace_contents_with_perms_at (int                   dfd,
+                                          const char           *subpath,
+                                          const guint8         *buf,
+                                          gsize                 len,
+                                          mode_t                mode,
+                                          uid_t                 uid,
+                                          gid_t                 gid,
+                                          GLnxFileReplaceFlags  flags,
+                                          GCancellable         *cancellable,
+                                          GError              **error);
 
 char *
 glnx_readlinkat_malloc (int            dfd,

@@ -587,7 +587,7 @@ glnx_file_copy_at (int                   src_dfd,
 }
 
 /**
- * glnx_file_replace_contents_utf8_at:
+ * glnx_file_replace_contents_at:
  * @dfd: Directory fd
  * @subpath: Subpath
  * @buf: (array len=len) (element-type guint8): File contents
@@ -609,10 +609,40 @@ glnx_file_replace_contents_at (int                   dfd,
                                const char           *subpath,
                                const guint8         *buf,
                                gsize                 len,
-                               int                   mode,
                                GLnxFileReplaceFlags  flags,
                                GCancellable         *cancellable,
                                GError              **error)
+{
+  return glnx_file_replace_contents_with_perms_at (dfd, subpath, buf, len,
+                                                   (mode_t) -1, (uid_t) -1, (gid_t) -1,
+                                                   flags, cancellable, error);
+                                                   
+}
+
+/**
+ * glnx_file_replace_contents_with_perms_at:
+ * @dfd: Directory fd
+ * @subpath: Subpath
+ * @buf: (array len=len) (element-type guint8): File contents
+ * @len: Length (if `-1`, assume @buf is `NUL` terminated)
+ * @flags: Flags
+ * @cancellable: Cancellable
+ * @error: Error
+ *
+ * Like glnx_file_replace_contents_at(), but also supports
+ * setting mode, and uid/gid.
+ */ 
+gboolean
+glnx_file_replace_contents_with_perms_at (int                   dfd,
+                                          const char           *subpath,
+                                          const guint8         *buf,
+                                          gsize                 len,
+                                          mode_t                mode,
+                                          uid_t                 uid,
+                                          gid_t                 gid,
+                                          GLnxFileReplaceFlags  flags,
+                                          GCancellable         *cancellable,
+                                          GError              **error)
 {
   gboolean ret = FALSE;
   /* We use the /proc/self trick as there's no mkostemp_at() yet */
@@ -620,12 +650,6 @@ glnx_file_replace_contents_at (int                   dfd,
   glnx_fd_close int fd = -1;
 
   if ((fd = mkostemp (tmppath, O_CLOEXEC)) == -1)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-
-  if (fchmod (fd, mode) != 0)
     {
       glnx_set_error_from_errno (error);
       goto out;
@@ -670,6 +694,24 @@ glnx_file_replace_contents_at (int                   dfd,
               glnx_set_error_from_errno (error);
               goto out;
             }
+        }
+    }
+
+  if (uid != (uid_t) -1)
+    {
+      if (fchown (fd, uid, gid) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          goto out;
+        }
+    }
+
+  if (mode != (mode_t) -1)
+    {
+      if (fchmod (fd, mode) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          goto out;
         }
     }
 
