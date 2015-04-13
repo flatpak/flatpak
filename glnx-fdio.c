@@ -649,6 +649,8 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   g_autofree char *tmppath = g_strdup_printf ("/proc/self/fd/%d/.tmpXXXXXX", dfd);
   glnx_fd_close int fd = -1;
 
+  dfd = glnx_dirfd_canonicalize (dfd);
+
   if ((fd = mkostemp (tmppath, O_CLOEXEC)) == -1)
     {
       glnx_set_error_from_errno (error);
