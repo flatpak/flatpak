@@ -708,13 +708,13 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
         }
     }
 
-  if (mode != (mode_t) -1)
+  if (mode == (mode_t) -1)
+    mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+
+  if (fchmod (fd, mode) != 0)
     {
-      if (fchmod (fd, mode) != 0)
-        {
-          glnx_set_error_from_errno (error);
-          goto out;
-        }
+      glnx_set_error_from_errno (error);
+      goto out;
     }
 
   if (renameat (dfd, tmppath, dfd, subpath) != 0)
