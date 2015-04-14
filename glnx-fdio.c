@@ -596,13 +596,14 @@ glnx_file_copy_at (int                   src_dfd,
  * @cancellable: Cancellable
  * @error: Error
  *
- * Atomically replace the contents of @subpath (relative to @dfd) with
- * @buf.  By default, if the file already existed, fdatasync() will be
- * used before rename() to ensure stable contents.  This and other
- * behavior can be controlled via @flags.
+ * Create a new file, atomically replacing the contents of @subpath
+ * (relative to @dfd) with @buf.  By default, if the file already
+ * existed, fdatasync() will be used before rename() to ensure stable
+ * contents.  This and other behavior can be controlled via @flags.
  *
  * Note that no metadata from the existing file is preserved, such as
- * uid/gid or extended attributes.
+ * uid/gid or extended attributes.  The default mode will be `0666`,
+ * modified by umask.
  */ 
 gboolean
 glnx_file_replace_contents_at (int                   dfd,
@@ -625,6 +626,7 @@ glnx_file_replace_contents_at (int                   dfd,
  * @subpath: Subpath
  * @buf: (array len=len) (element-type guint8): File contents
  * @len: Length (if `-1`, assume @buf is `NUL` terminated)
+ * @mode: File mode; if `-1`, use `0666 - umask`
  * @flags: Flags
  * @cancellable: Cancellable
  * @error: Error
@@ -651,7 +653,8 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
 
   dfd = glnx_dirfd_canonicalize (dfd);
 
-  if ((fd = mkostemp (tmppath, O_CLOEXEC)) == -1)
+  if ((fd = g_mkstemp_full (tmppath, O_WRONLY | O_CLOEXEC,
+                            mode == (mode_t) -1 ? 0666 : mode)) == -1)
     {
       glnx_set_error_from_errno (error);
       goto out;
@@ -708,13 +711,14 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
         }
     }
 
-  if (mode == (mode_t) -1)
-    mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
-
-  if (fchmod (fd, mode) != 0)
+  /* If a mode was forced, override umask */
+  if (mode != (mode_t) -1)
     {
-      glnx_set_error_from_errno (error);
-      goto out;
+      if (fchmod (fd, mode) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          goto out;
+        }
     }
 
   if (renameat (dfd, tmppath, dfd, subpath) != 0)
