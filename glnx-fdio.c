@@ -647,6 +647,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
                                           GError              **error)
 {
   gboolean ret = FALSE;
+  int r;
   /* We use the /proc/self trick as there's no mkostemp_at() yet */
   g_autofree char *tmppath = g_strdup_printf ("/proc/self/fd/%d/.tmpXXXXXX", dfd);
   glnx_fd_close int fd = -1;
@@ -663,14 +664,18 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   if (len == -1)
     len = strlen ((char*)buf);
 
-  if (posix_fallocate (fd, 0, len))
+  /* Note that posix_fallocate does *not* set errno but returns it. */
+  r = posix_fallocate (fd, 0, len);
+  if (r != 0)
     {
+      errno = r;
       glnx_set_error_from_errno (error);
       goto out;
     }
 
-  if (loop_write (fd, buf, len) != 0)
+  if ((r = loop_write (fd, buf, len)) != 0)
     {
+      errno = -r;
       glnx_set_error_from_errno (error);
       goto out;
     }
