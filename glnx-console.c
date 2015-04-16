@@ -140,25 +140,27 @@ glnx_console_lock (GLnxConsoleRef *console)
 {
   static gsize sigwinch_initialized = 0;
 
-  if (!stdout_is_tty ())
-    return;
-
   g_return_if_fail (!locked);
   g_return_if_fail (!console->locked);
+
+  console->is_tty = stdout_is_tty ();
 
   locked = console->locked = TRUE;
 
   current_percent = 0;
 
-  if (g_once_init_enter (&sigwinch_initialized))
+  if (console->is_tty)
     {
-      signal (SIGWINCH, on_sigwinch);
-      g_once_init_leave (&sigwinch_initialized, 1);
+      if (g_once_init_enter (&sigwinch_initialized))
+        {
+          signal (SIGWINCH, on_sigwinch);
+          g_once_init_leave (&sigwinch_initialized, 1);
+        }
+      
+      { static const char initbuf[] = { '\n', 0x1B, 0x37 };
+        (void) fwrite (initbuf, 1, sizeof (initbuf), stdout);
+      }
     }
-
-  { static const char initbuf[] = { '\n', 0x1B, 0x37 };
-    (void) fwrite (initbuf, 1, sizeof (initbuf), stdout);
-  }
 }
 
 static void
@@ -180,13 +182,13 @@ printpad (const char *padbuf,
  * @text: Show this text before the progress bar
  * @percentage: An integer in the range of 0 to 100
  *
- * Print to the console @text followed by an ASCII art progress bar
- * whose percentage is @percentage.
+ * On a tty, print to the console @text followed by an ASCII art
+ * progress bar whose percentage is @percentage.  If stdout is not a
+ * tty, a more basic line by line change will be printed.
  *
  * You must have called glnx_console_lock() before invoking this
  * function.
  *
- * Currently, if stdout is not a tty, this function does nothing.
  */
 void
 glnx_console_progress_text_percent (const char *text,
@@ -202,9 +204,6 @@ glnx_console_progress_text_percent (const char *text,
   guint textlen;
   guint barlen;
 
-  if (!stdout_is_tty ())
-    return;
-
   g_return_if_fail (percentage >= 0 && percentage <= 100);
 
   if (text && !*text)
@@ -213,6 +212,21 @@ glnx_console_progress_text_percent (const char *text,
   if (percentage == current_percent
       && g_strcmp0 (text, current_text) == 0)
     return;
+
+  if (!stdout_is_tty ())
+    {
+      if (text)
+        fprintf (stdout, "%s", text);
+      if (percentage != -1)
+        {
+          if (text)
+            fputc (' ', stdout);
+          fprintf (stdout, "%u%%", percentage);
+        }
+      fputc ('\n', stdout);
+      fflush (stdout);
+      return;
+    }
 
   if (ncolumns < bar_min)
     return; /* TODO: spinner */
@@ -262,15 +276,14 @@ glnx_console_progress_text_percent (const char *text,
 void
 glnx_console_unlock (GLnxConsoleRef *console)
 {
-  if (!stdout_is_tty ())
-    return;
-  
   g_return_if_fail (locked);
   g_return_if_fail (console->locked);
 
   current_percent = -1;
   g_clear_pointer (&current_text, g_free);
-  fputc ('\n', stdout);
 
+  if (console->is_tty)
+    fputc ('\n', stdout);
+      
   locked = FALSE;
 }

@@ -26,6 +26,7 @@ G_BEGIN_DECLS
 
 struct GLnxConsoleRef {
   gboolean locked;
+  gboolean is_tty;
 };
 
 typedef struct GLnxConsoleRef GLnxConsoleRef;
