@@ -347,8 +347,8 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "var", 0755},
   { FILE_TYPE_SYMLINK, "var/tmp", 0755, "/tmp"},
   { FILE_TYPE_SYMLINK, "var/run", 0755, "/run"},
-  { FILE_TYPE_SYSTEM_SYMLINK, "lib32", 0755, NULL},
-  { FILE_TYPE_SYSTEM_SYMLINK, "lib64", 0755, NULL},
+  { FILE_TYPE_SYSTEM_SYMLINK, "lib32", 0755, "usr/lib32"},
+  { FILE_TYPE_SYSTEM_SYMLINK, "lib64", 0755, "usr/lib64"},
   { FILE_TYPE_SYSTEM_SYMLINK, "lib", 0755, "usr/lib"},
   { FILE_TYPE_SYSTEM_SYMLINK, "bin", 0755, "usr/bin" },
   { FILE_TYPE_SYSTEM_SYMLINK, "sbin", 0755, "usr/sbin"},
@@ -744,10 +744,14 @@ create_file (const char *path, mode_t mode, const char *content)
 }
 
 static void
-create_files (const create_table_t *create, int n_create, int ignore_shm, int system_mode)
+create_files (const create_table_t *create, int n_create, int ignore_shm, const char *usr_path)
 {
   bool last_failed = FALSE;
   int i;
+  int system_mode = FALSE;
+
+  if (strcmp (usr_path, "/usr") == 0)
+    system_mode = TRUE;
 
   for (i = 0; i < n_create; i++)
     {
@@ -804,6 +808,22 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, int sy
 
 	      break;
 	    }
+
+          /* Only create symlink if target exists */
+          if (data != NULL && str_has_prefix (data, "usr/"))
+	    {
+	      struct stat buf;
+	      char *in_usr = strconcat3 (usr_path, "/", data + strlen("usr/"));
+              int res;
+
+              res = lstat (in_usr, &buf);
+              free (in_usr);
+
+              if (res !=  0)
+                data = NULL;
+            }
+          else
+            data = NULL;
 
 	  if (data == NULL)
 	    break;
@@ -1364,7 +1384,6 @@ main (int argc,
   char **args;
   char *tmp;
   int n_args;
-  bool system_mode = FALSE;
   bool share_shm = FALSE;
   bool network = FALSE;
   bool ipc = FALSE;
@@ -1516,9 +1535,6 @@ main (int argc,
   args++;
   n_args--;
 
-  if (strcmp (runtime_path, "/usr") == 0)
-    system_mode = TRUE;
-
   /* The initial code is run with high permissions
      (at least CAP_SYS_ADMIN), so take lots of care. */
 
@@ -1571,7 +1587,7 @@ main (int argc,
   if (chdir (newroot) != 0)
       die_with_error ("chdir");
 
-  create_files (create, N_ELEMENTS (create), share_shm, system_mode);
+  create_files (create, N_ELEMENTS (create), share_shm, runtime_path);
 
   if (share_shm)
     {
@@ -1622,7 +1638,7 @@ main (int argc,
         die_with_error ("mount var");
     }
 
-  create_files (create_post, N_ELEMENTS (create_post), share_shm, system_mode);
+  create_files (create_post, N_ELEMENTS (create_post), share_shm, runtime_path);
 
   if (create_etc_dir)
     link_extra_etc_dirs ();
