@@ -74,4 +74,7 @@ gboolean glnx_opendirat (int             dfd,
                          int            *out_fd,
                          GError        **error);
 
+char *glnx_fdrel_abspath (int         dfd,
+                          const char *path);
+
 G_END_DECLS

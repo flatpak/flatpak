@@ -204,3 +204,25 @@ glnx_dirfd_iterator_clear (GLnxDirFdIterator *dfd_iter)
   (void) closedir (real_dfd_iter->d);
   real_dfd_iter->initialized = FALSE;
 }
+
+/**
+ * glnx_fdrel_abspath:
+ * @dfd: Directory fd
+ * @path: Path
+ *
+ * Turn a fd-relative pair into something that can be used for legacy
+ * APIs expecting absolute paths.
+ *
+ * This is Linux specific, and only valid inside this process (unless
+ * you set up the child process to have the exact same fd number, but
+ * don't try that).
+ */
+char *
+glnx_fdrel_abspath (int         dfd,
+                    const char *path)
+{
+  dfd = glnx_dirfd_canonicalize (dfd);
+  if (dfd == AT_FDCWD)
+    return g_strdup (path);
+  return g_strdup_printf ("/proc/self/fd/%d/%s", dfd, path);
+}
