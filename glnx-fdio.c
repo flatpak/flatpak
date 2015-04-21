@@ -484,12 +484,24 @@ glnx_file_copy_at (int                   src_dfd,
   struct timespec ts[2];
   glnx_fd_close int src_fd = -1;
   glnx_fd_close int dest_fd = -1;
+  struct stat local_stbuf;
 
   if (g_cancellable_set_error_if_cancelled (cancellable, error))
     goto out;
 
   src_dfd = glnx_dirfd_canonicalize (src_dfd);
   dest_dfd = glnx_dirfd_canonicalize (dest_dfd);
+
+  /* Automatically do stat() if no stat buffer was supplied */
+  if (!src_stbuf)
+    {
+      if (fstatat (src_dfd, src_subpath, &local_stbuf, AT_SYMLINK_NOFOLLOW) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          goto out;
+        }
+      src_stbuf = &local_stbuf;
+    }
 
   if (S_ISLNK (src_stbuf->st_mode))
     {
