@@ -584,7 +584,7 @@ load_contents (const char *uri, GBytes **contents, GCancellable *cancellable, GE
 
   ret = TRUE;
 
-  g_debug ("Received %ld bytes", g_bytes_get_size (*contents));
+  g_debug ("Received %" G_GSIZE_FORMAT " bytes", g_bytes_get_size (*contents));
 
 out:
   return ret;
