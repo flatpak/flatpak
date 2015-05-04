@@ -64,6 +64,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GScanner, g_scanner_destroy)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GSequence, g_sequence_free)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GSList, g_slist_free)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GStringChunk, g_string_chunk_free)
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC(GStrv, g_strfreev, NULL)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GThread, g_thread_unref)
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GMutex, g_mutex_clear)
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GCond, g_cond_clear)
@@ -77,5 +78,9 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GVariantIter, g_variant_iter_free)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GVariantDict, g_variant_dict_unref)
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GVariantDict, g_variant_dict_clear)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GVariantType, g_variant_type_free)
+
+/* Add GObject-based types add needed. */
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFile, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GOutputStream, g_object_unref)
 
 #endif
