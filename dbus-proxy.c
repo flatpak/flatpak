@@ -19,6 +19,24 @@ typedef struct {
 } Buffer;
 
 typedef struct {
+  gboolean big_endian;
+  guchar type;
+  guchar flags;
+  guint32 length;
+  guint32 serial;
+  const char *path;
+  const char *interface;
+  const char *member;
+  const char *error_name;
+  const char *destination;
+  const char *sender;
+  const char *signature;
+  gboolean has_reply_serial;
+  guint32 reply_serial;
+  guint32 unix_fds;
+} Header;
+
+typedef struct {
   gboolean got_first_byte; /* always true on bus side */
   gboolean closed; /* always true on bus side */
 
@@ -446,20 +464,382 @@ queue_outgoing_buffer (ProxySide *side, Buffer *buffer)
   side->buffers = g_list_append (side->buffers, buffer);
 }
 
+static guint32
+read_uint32 (Header *header, guint8 *ptr)
+{
+  if (header->big_endian)
+    return GUINT32_FROM_BE (*(guint32 *)ptr);
+  else
+    return GUINT32_FROM_LE (*(guint32 *)ptr);
+}
+
+static guint32
+align_by_8 (guint32 offset)
+{
+  return 8 * ((offset + 7)/8);
+}
+
+static guint32
+align_by_4 (guint32 offset)
+{
+  return 4 * ((offset + 3)/4);
+}
+
+static const char *
+get_signature (Buffer *buffer, guint32 *offset, guint32 end_offset)
+{
+  guint8 len;
+  char *str;
+
+  if (*offset >= end_offset)
+    return FALSE;
+
+  len = buffer->data[*offset];
+  (*offset)++;
+
+  if ((*offset) + len + 1 > end_offset)
+    return FALSE;
+
+  if (buffer->data[(*offset) + len] != 0)
+    return FALSE;
+
+  str = (char *)&buffer->data[(*offset)];
+  *offset += len + 1;
+
+  return str;
+}
+
+static const char *
+get_string (Buffer *buffer, Header *header, guint32 *offset, guint32 end_offset)
+{
+  guint8 len;
+  char *str;
+
+  *offset = align_by_4 (*offset);
+  if (*offset + 4  >= end_offset)
+    return FALSE;
+
+  len = read_uint32 (header, &buffer->data[*offset]);
+  *offset += 4;
+
+  if ((*offset) + len + 1 > end_offset)
+    return FALSE;
+
+  if (buffer->data[(*offset) + len] != 0)
+    return FALSE;
+
+  str = (char *)&buffer->data[(*offset)];
+  *offset += len + 1;
+
+  return str;
+}
+
+static gboolean
+parse_header (Buffer *buffer, Header *header)
+{
+  guint32 array_len, header_len;
+  guint32 offset, end_offset;
+  guint8 header_type;
+  const char *signature;
+
+  memset (header, 0, sizeof (Header));
+
+  if (buffer->size < 16)
+    return FALSE;
+
+  if (buffer->data[3] != 1) /* Protocol version */
+    return FALSE;
+
+  if (buffer->data[0] == 'B')
+    header->big_endian = TRUE;
+  else if (buffer->data[0] == 'l')
+    header->big_endian = FALSE;
+  else
+    return FALSE;
+
+  header->type = buffer->data[1];
+  header->flags = buffer->data[2];
+
+  header->length = read_uint32 (header, &buffer->data[4]);
+  header->serial = read_uint32 (header, &buffer->data[8]);
+
+  array_len = read_uint32 (header, &buffer->data[12]);
+
+  header_len = align_by_8 (12 + 4 + array_len);
+  g_assert (buffer->size >= header_len); /* We should have verified this when reading in the message */
+  if (header_len > buffer->size)
+    return FALSE;
+
+  offset = 12 + 4;
+  end_offset = offset + array_len;
+
+  while (offset < end_offset)
+    {
+      offset = align_by_8 (offset); /* Structs must be 8 byte aligned */
+      if (offset >= end_offset)
+        return FALSE;
+
+      header_type = buffer->data[offset++];
+      if (offset >= end_offset)
+        return FALSE;
+
+      signature = get_signature (buffer, &offset, end_offset);
+      if (signature == NULL)
+        return FALSE;
+
+      switch (header_type)
+        {
+        case G_DBUS_MESSAGE_HEADER_FIELD_INVALID:
+          return FALSE;
+
+        case G_DBUS_MESSAGE_HEADER_FIELD_PATH:
+          if (strcmp (signature, "o") != 0)
+            return FALSE;
+          header->path = get_string (buffer, header, &offset, end_offset);
+          if (header->path == NULL)
+            return FALSE;
+          break;
+
+        case G_DBUS_MESSAGE_HEADER_FIELD_INTERFACE:
+          if (strcmp (signature, "s") != 0)
+            return FALSE;
+          header->interface = get_string (buffer, header, &offset, end_offset);
+          if (header->interface == NULL)
+            return FALSE;
+          break;
+
+        case G_DBUS_MESSAGE_HEADER_FIELD_MEMBER:
+          if (strcmp (signature, "s") != 0)
+            return FALSE;
+          header->member = get_string (buffer, header, &offset, end_offset);
+          if (header->member == NULL)
+            return FALSE;
+          break;
+
+        case G_DBUS_MESSAGE_HEADER_FIELD_ERROR_NAME:
+          if (strcmp (signature, "s") != 0)
+            return FALSE;
+          header->error_name = get_string (buffer, header, &offset, end_offset);
+          if (header->error_name == NULL)
+            return FALSE;
+          break;
+
+        case G_DBUS_MESSAGE_HEADER_FIELD_REPLY_SERIAL:
+          if (offset + 4 > end_offset)
+            return FALSE;
+
+          header->has_reply_serial = TRUE;
+          header->reply_serial = read_uint32 (header, &buffer->data[offset]);
+          offset += 4;
+          break;
+
+        case G_DBUS_MESSAGE_HEADER_FIELD_DESTINATION:
+          if (strcmp (signature, "s") != 0)
+            return FALSE;
+          header->destination = get_string (buffer, header, &offset, end_offset);
+          if (header->destination == NULL)
+            return FALSE;
+          break;
+
+        case G_DBUS_MESSAGE_HEADER_FIELD_SENDER:
+          if (strcmp (signature, "s") != 0)
+            return FALSE;
+          header->sender = get_string (buffer, header, &offset, end_offset);
+          if (header->sender == NULL)
+            return FALSE;
+          break;
+
+        case G_DBUS_MESSAGE_HEADER_FIELD_SIGNATURE:
+          if (strcmp (signature, "g") != 0)
+            return FALSE;
+          header->signature = get_signature (buffer, &offset, end_offset);
+          if (header->signature == NULL)
+            return FALSE;
+          break;
+
+        case G_DBUS_MESSAGE_HEADER_FIELD_NUM_UNIX_FDS:
+          if (offset + 4 > end_offset)
+            return FALSE;
+
+          header->unix_fds = read_uint32 (header, &buffer->data[offset]);
+          offset += 4;
+          break;
+
+        default:
+          /* Unknown header field, for safety, fail parse */
+          return FALSE;
+        }
+    }
+
+  switch (header->type)
+    {
+    case G_DBUS_MESSAGE_TYPE_METHOD_CALL:
+      if (header->path == NULL || header->member == NULL)
+        return FALSE;
+      break;
+
+    case G_DBUS_MESSAGE_TYPE_METHOD_RETURN:
+      if (!header->has_reply_serial)
+        return FALSE;
+      break;
+
+    case G_DBUS_MESSAGE_TYPE_ERROR:
+      if (header->error_name  == NULL || !header->has_reply_serial)
+        return FALSE;
+      break;
+
+    case G_DBUS_MESSAGE_TYPE_SIGNAL:
+      if (header->path == NULL ||
+          header->interface == NULL ||
+          header->member == NULL)
+        return FALSE;
+      if (strcmp (header->path, "/org/freedesktop/DBus/Local") == 0 ||
+          strcmp (header->interface, "org.freedesktop.DBus.Local") == 0)
+        return FALSE;
+      break;
+    default:
+      /* Unknown message type, for safety, fail parse */
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static void
+print_outgoing_header (Header *header)
+{
+  switch (header->type)
+    {
+    case G_DBUS_MESSAGE_TYPE_METHOD_CALL:
+      g_print ("C%d: -> %s call %s.%s at %s\n",
+               header->serial,
+               header->destination ? header->destination : "(no dest)",
+               header->interface ? header->interface : "",
+               header->member ? header->member : "",
+               header->path ? header->path : "");
+      break;
+
+    case G_DBUS_MESSAGE_TYPE_METHOD_RETURN:
+      g_print ("C%d: -> %s return from B%d\n",
+               header->serial,
+               header->destination ? header->destination : "(no dest)",
+               header->reply_serial);
+      break;
+
+    case G_DBUS_MESSAGE_TYPE_ERROR:
+      g_print ("C%d: -> %s return error %s from B%d\n",
+               header->serial,
+               header->destination ? header->destination : "(no dest)",
+               header->error_name ? header->error_name : "(no error)",
+               header->reply_serial);
+      break;
+
+    case G_DBUS_MESSAGE_TYPE_SIGNAL:
+      g_print ("C%d: -> %s signal %s.%s at %s\n",
+               header->serial,
+               header->destination ? header->destination : "all",
+               header->interface ? header->interface : "",
+               header->member ? header->member : "",
+               header->path ? header->path : "");
+      break;
+    default:
+      g_print ("unknown message type\n");
+    }
+}
+
+static void
+print_incoming_header (Header *header)
+{
+  switch (header->type)
+    {
+    case G_DBUS_MESSAGE_TYPE_METHOD_CALL:
+      g_print ("B%d: <- %s call %s.%s at %s\n",
+               header->serial,
+               header->sender ? header->sender : "(no sender)",
+               header->interface ? header->interface : "",
+               header->member ? header->member : "",
+               header->path ? header->path : "");
+      break;
+
+    case G_DBUS_MESSAGE_TYPE_METHOD_RETURN:
+      g_print ("B%d: <- %s return from C%d\n",
+               header->serial,
+               header->sender ? header->sender : "(no sender)",
+               header->reply_serial);
+      break;
+
+    case G_DBUS_MESSAGE_TYPE_ERROR:
+      g_print ("B%d: <- %s return error %s from C%d\n",
+               header->serial,
+               header->sender ? header->sender : "(no sender)",
+               header->error_name ? header->error_name : "(no error)",
+               header->reply_serial);
+      break;
+
+    case G_DBUS_MESSAGE_TYPE_SIGNAL:
+      g_print ("B%d: <- %s signal %s.%s at %s\n",
+               header->serial,
+               header->sender ? header->sender : "(no sender)",
+               header->interface ? header->interface : "",
+               header->member ? header->member : "",
+               header->path ? header->path : "");
+      break;
+    default:
+      g_print ("unknown message type\n");
+    }
+}
+
+
 static void
 got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 {
-  queue_outgoing_buffer (&client->bus_side, buffer);
 
-  if (!client->authenticated && g_strstr_len ((char *)buffer->data, buffer->size, "BEGIN\r\n") != NULL)
-    client->authenticated = TRUE;
+  if (!client->authenticated)
+    {
+      queue_outgoing_buffer (&client->bus_side, buffer);
+
+      if (g_strstr_len ((char *)buffer->data, buffer->size, "BEGIN\r\n") != NULL)
+        client->authenticated = TRUE;
+    }
+  else
+    {
+      Header header;
+
+      if (!parse_header (buffer, &header))
+        {
+          g_warning ("Invalid message header format");
+          side_closed (side);
+        }
+
+      print_outgoing_header (&header);
+
+      queue_outgoing_buffer (&client->bus_side, buffer);
+    }
 }
 
 static void
 got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 {
-  queue_outgoing_buffer (&client->client_side, buffer);
+  if (!client->authenticated)
+    {
+      queue_outgoing_buffer (&client->client_side, buffer);
+    }
+  else
+    {
+      Header header;
+
+      if (!parse_header (buffer, &header))
+        {
+          g_warning ("Invalid message header format");
+          side_closed (side);
+        }
+
+      print_incoming_header (&header);
+
+      queue_outgoing_buffer (&client->client_side, buffer);
+    }
 }
+
 
 static void
 got_buffer_from_side (ProxySide *side, Buffer *buffer)
