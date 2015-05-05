@@ -4,6 +4,7 @@
 #include <gio/gio.h>
 #include <gio/gunixsocketaddress.h>
 #include <gio/gunixconnection.h>
+#include <gio/gunixfdmessage.h>
 
 typedef enum {
   XDG_APP_POLICY_NONE,
@@ -91,6 +92,7 @@ typedef struct {
   Buffer header_buffer;
 
   GList *buffers; /* to be sent */
+  GList *control_messages;
 } ProxySide;
 
 struct XdgAppProxyClient {
@@ -171,6 +173,7 @@ free_side (ProxySide *side)
   g_clear_object (&side->connection);
 
   g_list_free_full (side->buffers, (GDestroyNotify)buffer_free);
+  g_list_free_full (side->control_messages, (GDestroyNotify)g_object_unref);
 
   if (side->in_source)
     g_source_destroy (side->in_source);
@@ -1298,6 +1301,43 @@ filter_name_owner_changed (XdgAppProxyClient *client, Buffer *buffer)
   return filter;
 }
 
+static GList *
+side_get_n_unix_fds (ProxySide *side, int n_fds)
+{
+  GList *res = NULL;
+
+  while (side->control_messages != NULL)
+    {
+      GSocketControlMessage *control_message = side->control_messages->data;
+
+      if (G_IS_UNIX_FD_MESSAGE (control_message))
+        {
+          GUnixFDMessage *fd_message = G_UNIX_FD_MESSAGE (control_message);
+          GUnixFDList *fd_list = g_unix_fd_message_get_fd_list (fd_message);
+          int len = g_unix_fd_list_get_length (fd_list);
+
+          /* I believe that socket control messages are never merged, and
+             the sender side sends only one unix-fd-list per message, so
+             at this point there should always be one full fd list
+             per requested number of fds */
+          if (len != n_fds)
+            {
+              g_warning ("Not right nr of fds in socket message");
+              return NULL;
+            }
+
+          side->control_messages = g_list_delete_link (side->control_messages, side->control_messages);
+
+          return g_list_append (NULL, control_message);
+        }
+
+      g_object_unref (control_message);
+      side->control_messages = g_list_delete_link (side->control_messages, side->control_messages);
+    }
+
+  return res;
+}
+
 static void
 got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 {
@@ -1325,6 +1365,22 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
           side_closed (side);
           buffer_free (buffer);
           return;
+        }
+
+      /* We may accidentally combind multiple control messages into one buffer, so
+         we keep a list of all we get and then only re-attach the amount specified
+         in the header to the buffer. */
+      side->control_messages = g_list_concat (side->control_messages, buffer->control_messages);
+      buffer->control_messages = NULL;
+      if (header.unix_fds > 0)
+        {
+          buffer->control_messages = side_get_n_unix_fds (side, header.unix_fds);
+          if (buffer->control_messages == NULL)
+            {
+              g_warning ("Not enough fds for message");
+              side_closed (side);
+              buffer_free (buffer);
+            }
         }
 
       /* Make sure the client is not playing games with the serials, as that
