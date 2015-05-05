@@ -100,11 +100,12 @@ struct XdgAppProxyClient {
 
   gboolean authenticated;
 
-  guint32 hello_serial;
-  guint32 last_serial;
   ProxySide client_side;
   ProxySide bus_side;
 
+  /* Filtering data: */
+  guint32 hello_serial;
+  guint32 last_serial;
   GHashTable *rewrite_reply;
   GHashTable *named_reply;
   GHashTable *get_owner_reply;
@@ -124,6 +125,8 @@ struct XdgAppProxy {
   GList *clients;
   char *socket_path;
   char *dbus_address;
+
+  gboolean filter;
 
   GHashTable *policy;
 };
@@ -246,6 +249,13 @@ xdg_app_proxy_get_policy (XdgAppProxy *proxy,
   gpointer res;
   res = g_hash_table_lookup (proxy->policy, name);
   return GPOINTER_TO_INT (res);
+}
+
+void
+xdg_app_proxy_set_filter (XdgAppProxy *proxy,
+                          gboolean filter)
+{
+  proxy->filter = filter;
 }
 
 void
@@ -1275,10 +1285,16 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
       if (g_strstr_len ((char *)buffer->data, buffer->size, "BEGIN\r\n") != NULL)
         client->authenticated = TRUE;
     }
+  else if (!client->proxy->filter)
+    {
+      queue_outgoing_buffer (&client->bus_side, buffer);
+    }
   else
     {
       Header header;
       BusHandler handler;
+
+      /* Filtering */
 
       if (!parse_header (buffer, &header))
         {
@@ -1412,10 +1428,16 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
     {
       queue_outgoing_buffer (&client->client_side, buffer);
     }
+  else if (!client->proxy->filter)
+    {
+      queue_outgoing_buffer (&client->client_side, buffer);
+    }
   else
     {
       Header header;
       GDBusMessage *rewritten;
+
+      /* Filtering */
 
       if (!parse_header (buffer, &header))
         {
