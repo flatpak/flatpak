@@ -128,6 +128,7 @@ struct XdgAppProxy {
 
   gboolean filter;
 
+  GHashTable *wildcard_policy;
   GHashTable *policy;
 };
 
@@ -246,9 +247,22 @@ XdgAppPolicy
 xdg_app_proxy_get_policy (XdgAppProxy *proxy,
                           const char *name)
 {
-  gpointer res;
-  res = g_hash_table_lookup (proxy->policy, name);
-  return GPOINTER_TO_INT (res);
+  guint policy, wildcard_policy;
+  char *dot;
+  char buffer[256];
+
+  policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->policy, name));
+
+  dot = strrchr (name, '.');
+  if (dot && (dot - name) <= 255)
+    {
+      strncpy (buffer, name, dot - name);
+      buffer[dot-name] = 0;
+      wildcard_policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->wildcard_policy, buffer));
+      policy = MAX (policy, wildcard_policy);
+    }
+
+  return policy;
 }
 
 void
@@ -259,11 +273,19 @@ xdg_app_proxy_set_filter (XdgAppProxy *proxy,
 }
 
 void
-xdg_app_proxy_set_policy (XdgAppProxy *proxy,
+xdg_app_proxy_add_policy (XdgAppProxy *proxy,
                           const char *name,
                           XdgAppPolicy policy)
 {
   g_hash_table_replace (proxy->policy, g_strdup (name), GINT_TO_POINTER (policy));
+}
+
+void
+xdg_app_proxy_add_wildcarded_policy (XdgAppProxy *proxy,
+                                     const char *name,
+                                     XdgAppPolicy policy)
+{
+  g_hash_table_replace (proxy->wildcard_policy, g_strdup (name), GINT_TO_POINTER (policy));
 }
 
 static void
@@ -275,6 +297,7 @@ xdg_app_proxy_finalize (GObject *object)
   g_assert (proxy->clients == NULL);
 
   g_hash_table_destroy (proxy->policy);
+  g_hash_table_destroy (proxy->wildcard_policy);
 
   G_OBJECT_CLASS (xdg_app_proxy_parent_class)->finalize (object);
 }
@@ -1684,7 +1707,8 @@ static void
 xdg_app_proxy_init (XdgAppProxy *proxy)
 {
   proxy->policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  xdg_app_proxy_set_policy (proxy, "org.freedesktop.DBus", XDG_APP_POLICY_TALK);
+  proxy->wildcard_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  xdg_app_proxy_add_policy (proxy, "org.freedesktop.DBus", XDG_APP_POLICY_TALK);
 }
 
 static void
