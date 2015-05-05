@@ -211,7 +211,7 @@ glnx_file_get_contents_utf8_at (int                   dfd,
 {
   gboolean success = FALSE;
   glnx_fd_close int fd = -1;
-  char *buf;
+  char *buf = NULL;
   gsize len;
 
   dfd = glnx_dirfd_canonicalize (dfd);
