@@ -80,7 +80,23 @@ G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GVariantDict, g_variant_dict_clear)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GVariantType, g_variant_type_free)
 
 /* Add GObject-based types add needed. */
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GConverter, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GConverterOutputStream, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GDataInputStream, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFile, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFileEnumerator, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFileIOStream, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFileInfo, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFileInputStream, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFileMonitor, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GInputStream, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GMemoryInputStream, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GMemoryOutputStream, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GOutputStream, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GSocket, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GSocketAddress, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GTlsCertificate, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GTlsDatabase, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GTlsInteraction, g_object_unref)
 
 #endif
