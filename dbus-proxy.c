@@ -100,12 +100,15 @@ struct XdgAppProxyClient {
 
   gboolean authenticated;
 
+  guint32 hello_serial;
   guint32 last_serial;
   ProxySide client_side;
   ProxySide bus_side;
 
   GHashTable *rewrite_reply;
   GHashTable *named_reply;
+  GHashTable *get_owner_reply;
+  GHashTable *list_names_reply;
   GHashTable *unique_id_policy;
 };
 
@@ -181,6 +184,8 @@ xdg_app_proxy_client_finalize (GObject *object)
 
   g_hash_table_destroy (client->rewrite_reply);
   g_hash_table_destroy (client->named_reply);
+  g_hash_table_destroy (client->get_owner_reply);
+  g_hash_table_destroy (client->list_names_reply);
   g_hash_table_destroy (client->unique_id_policy);
 
   free_side (&client->client_side);
@@ -215,6 +220,8 @@ xdg_app_proxy_client_init (XdgAppProxyClient *client)
 
   client->rewrite_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_object_unref);
   client->named_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+  client->get_owner_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+  client->list_names_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, NULL);
   client->unique_id_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 }
 
@@ -879,17 +886,14 @@ xdg_app_proxy_client_get_policy (XdgAppProxyClient *client, const char *source)
   if (source[0] == ':')
     return GPOINTER_TO_UINT (g_hash_table_lookup (client->unique_id_policy, source));
 
-  /* TODO: This needs to also map unique id to names */
   return xdg_app_proxy_get_policy (client->proxy, source);
 }
 
 static void
 xdg_app_proxy_client_update_unique_id_policy (XdgAppProxyClient *client,
                                               const char *unique_id,
-                                              const char *as_name)
+                                              XdgAppPolicy policy)
 {
-  XdgAppPolicy policy = xdg_app_proxy_get_policy (client->proxy, as_name);
-
   if (policy > XDG_APP_POLICY_NONE)
     {
       XdgAppPolicy old_policy;
@@ -898,6 +902,17 @@ xdg_app_proxy_client_update_unique_id_policy (XdgAppProxyClient *client,
         g_hash_table_replace (client->unique_id_policy, g_strdup (unique_id), GINT_TO_POINTER (policy));
     }
 }
+
+static void
+xdg_app_proxy_client_update_unique_id_policy_from_name (XdgAppProxyClient *client,
+                                                        const char *unique_id,
+                                                        const char *as_name)
+{
+  xdg_app_proxy_client_update_unique_id_policy (client,
+                                                unique_id,
+                                                xdg_app_proxy_get_policy (client->proxy, as_name));
+}
+
 
 static gboolean
 client_message_has_reply (Header *header)
@@ -931,7 +946,7 @@ message_to_buffer (GDBusMessage *message)
 }
 
 static GDBusMessage *
-get_access_denied_for_header (Header *header)
+get_error_for_header (Header *header, const char *error)
 {
   GDBusMessage *reply;
 
@@ -939,8 +954,22 @@ get_access_denied_for_header (Header *header)
   g_dbus_message_set_message_type (reply, G_DBUS_MESSAGE_TYPE_ERROR);
   g_dbus_message_set_flags (reply, G_DBUS_MESSAGE_FLAGS_NO_REPLY_EXPECTED);
   g_dbus_message_set_reply_serial (reply, header->serial);
-  g_dbus_message_set_error_name (reply, "org.freedesktop.DBus.Error.AccessDenied");
-  g_dbus_message_set_body (reply, g_variant_new ("(s)", "Access Denied"));
+  g_dbus_message_set_error_name (reply, error);
+  g_dbus_message_set_body (reply, g_variant_new ("(s)", error));
+
+  return reply;
+}
+
+static GDBusMessage *
+get_bool_reply_for_header (Header *header, gboolean val)
+{
+  GDBusMessage *reply;
+
+  reply = g_dbus_message_new ();
+  g_dbus_message_set_message_type (reply, G_DBUS_MESSAGE_TYPE_METHOD_RETURN);
+  g_dbus_message_set_flags (reply, G_DBUS_MESSAGE_FLAGS_NO_REPLY_EXPECTED);
+  g_dbus_message_set_reply_serial (reply, header->serial);
+  g_dbus_message_set_body (reply, g_variant_new_boolean (val));
 
   return reply;
 }
@@ -963,6 +992,280 @@ get_ping_buffer_for_header (Header *header)
 }
 
 static void
+queue_error_roundtrip (XdgAppProxyClient *client, Header *header, const char *error_name)
+{
+  Buffer *ping_buffer = get_ping_buffer_for_header (header);
+  GDBusMessage *reply;
+
+  queue_outgoing_buffer (&client->bus_side, ping_buffer);
+
+  reply = get_error_for_header (header, error_name);
+  g_hash_table_replace (client->rewrite_reply, GINT_TO_POINTER (header->serial), reply);
+}
+
+
+static void
+queue_access_denied_roundtrip (XdgAppProxyClient *client, Header *header)
+{
+  queue_error_roundtrip (client, header, "org.freedesktop.DBus.Error.AccessDenied");
+}
+
+static void
+queue_name_has_no_owner_roundtrip (XdgAppProxyClient *client, Header *header)
+{
+  queue_error_roundtrip (client, header, "org.freedesktop.DBus.Error.NameHasNoOwner");
+}
+
+static void
+queue_service_unknown_roundtrip (XdgAppProxyClient *client, Header *header)
+{
+  queue_error_roundtrip (client, header, "org.freedesktop.DBus.Error.ServiceUnknown");
+}
+
+static void
+queue_bool_reply_roundtrip (XdgAppProxyClient *client, Header *header, gboolean val)
+{
+  Buffer *ping_buffer = get_ping_buffer_for_header (header);
+  GDBusMessage *reply;
+
+  queue_outgoing_buffer (&client->bus_side, ping_buffer);
+
+  reply = get_bool_reply_for_header (header, val);
+  g_hash_table_replace (client->rewrite_reply, GINT_TO_POINTER (header->serial), reply);
+}
+
+typedef enum {
+  HANDLE_PASS,
+  HANDLE_DENY,
+  HANDLE_HIDE,
+  HANDLE_FILTER_NAME_LIST_REPLY,
+  HANDLE_FILTER_HAS_OWNER_REPLY,
+  HANDLE_FILTER_GET_OWNER_REPLY,
+  HANDLE_VALIDATE_OWN,
+  HANDLE_VALIDATE_SEE,
+  HANDLE_VALIDATE_TALK,
+} BusHandler;
+
+static gboolean
+is_dbus_method_call (Header *header)
+{
+  return
+    header->type == G_DBUS_MESSAGE_TYPE_METHOD_CALL &&
+    g_strcmp0 (header->destination, "org.freedesktop.DBus") == 0 &&
+    g_strcmp0 (header->interface, "org.freedesktop.DBus") == 0;
+}
+
+static BusHandler
+get_dbus_method_handler (XdgAppProxyClient *client, Header *header)
+{
+  XdgAppPolicy policy;
+  const char *method;
+
+  policy = xdg_app_proxy_client_get_policy (client, header->destination);
+  if (policy < XDG_APP_POLICY_SEE)
+    return HANDLE_HIDE;
+  if (policy < XDG_APP_POLICY_TALK)
+    return HANDLE_DENY;
+
+  if (!is_dbus_method_call (header))
+    return HANDLE_PASS;
+
+  method = header->member;
+  if (method == NULL)
+    return HANDLE_DENY;
+
+  if (strcmp (method, "Hello") == 0 ||
+      strcmp (method, "AddMatch") == 0 ||
+      strcmp (method, "RemoveMatch") == 0 ||
+      strcmp (method, "GetId") == 0)
+    return HANDLE_PASS;
+
+  if (strcmp (method, "UpdateActivationEnvironment") == 0 ||
+      strcmp (method, "BecomeMonitor") == 0)
+    return HANDLE_DENY;
+
+  if (strcmp (method, "RequestName") == 0 ||
+      strcmp (method, "ReleaseName") == 0 ||
+      strcmp (method, "ListQueuedOwners") == 0)
+    return HANDLE_VALIDATE_OWN;
+
+  if (strcmp (method, "NameHasOwner") == 0)
+    return HANDLE_FILTER_HAS_OWNER_REPLY;
+
+  if (strcmp (method, "GetNameOwner") == 0)
+    return HANDLE_FILTER_GET_OWNER_REPLY;
+
+  if (strcmp (method, "GetConnectionUnixProcessID") == 0 ||
+      strcmp (method, "GetConnectionCredentials") == 0 ||
+      strcmp (method, "GetAdtAuditSessionData") == 0 ||
+      strcmp (method, "GetConnectionSELinuxSecurityContext") == 0 ||
+      strcmp (method, "GetConnectionUnixUser") == 0)
+    return HANDLE_VALIDATE_SEE;
+
+  if (strcmp (method, "StartServiceByName") == 0)
+    return HANDLE_VALIDATE_TALK;
+
+  if (strcmp (method, "ListNames") == 0 ||
+      strcmp (method, "ListActivatableNames") == 0)
+    return HANDLE_FILTER_NAME_LIST_REPLY;
+
+  g_warning ("Unknown bus method %s\n", method);
+  return HANDLE_DENY;
+}
+
+static XdgAppPolicy
+policy_from_handler (BusHandler handler)
+{
+  switch (handler)
+    {
+    case HANDLE_VALIDATE_OWN:
+      return XDG_APP_POLICY_OWN;
+    case HANDLE_VALIDATE_TALK:
+      return XDG_APP_POLICY_TALK;
+    case HANDLE_VALIDATE_SEE:
+      return XDG_APP_POLICY_SEE;
+    default:
+      return XDG_APP_POLICY_NONE;
+    }
+}
+
+static char *
+get_arg0_string (Buffer *buffer)
+{
+  GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
+  GVariant *body, *arg0;
+  char *name = NULL;
+
+  if (message != NULL &&
+      (body = g_dbus_message_get_body (message)) != NULL &&
+      (arg0 = g_variant_get_child_value (body, 0)) != NULL &&
+      g_variant_is_of_type (arg0, G_VARIANT_TYPE_STRING))
+    {
+      name = g_variant_dup_string (arg0, NULL);
+    }
+
+  g_object_unref (message);
+
+  return name;
+}
+
+static gboolean
+validate_arg0_name (XdgAppProxyClient *client, Buffer *buffer, XdgAppPolicy required_policy, XdgAppPolicy *has_policy)
+{
+  GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
+  GVariant *body, *arg0;
+  const char *name;
+  XdgAppPolicy name_policy;
+  gboolean res = FALSE;
+
+  if (has_policy)
+    *has_policy = XDG_APP_POLICY_NONE;
+
+  if (message != NULL &&
+      (body = g_dbus_message_get_body (message)) != NULL &&
+      (arg0 = g_variant_get_child_value (body, 0)) != NULL &&
+      g_variant_is_of_type (arg0, G_VARIANT_TYPE_STRING))
+    {
+      name = g_variant_get_string (arg0, NULL);
+      name_policy = xdg_app_proxy_client_get_policy (client, name);
+
+      if (has_policy)
+        *has_policy = name_policy;
+
+      if (name_policy >= required_policy)
+        res = TRUE;
+    }
+
+  g_object_unref (message);
+  return res;
+}
+
+static Buffer *
+filter_names_list (XdgAppProxyClient *client, Buffer *buffer)
+{
+  GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
+  GVariant *body, *arg0, *new_names;
+  const gchar **names;
+  int i;
+  GVariantBuilder builder;
+  Buffer *filtered;
+
+  if (message == NULL ||
+      (body = g_dbus_message_get_body (message)) == NULL ||
+      (arg0 = g_variant_get_child_value (body, 0)) == NULL ||
+      !g_variant_is_of_type (arg0, G_VARIANT_TYPE_STRING_ARRAY))
+    return NULL;
+
+  names = g_variant_get_strv (arg0, NULL);
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE_STRING_ARRAY);
+  for (i = 0; names[i] != NULL; i++)
+    {
+      if (xdg_app_proxy_client_get_policy (client, names[i]) >= XDG_APP_POLICY_SEE)
+        g_variant_builder_add (&builder, "s", names[i]);
+    }
+  g_free (names);
+
+  new_names = g_variant_builder_end (&builder);
+  g_dbus_message_set_body (message,
+                           g_variant_new_tuple (&new_names, 1));
+
+  filtered = message_to_buffer (message);
+  g_object_unref (message);
+  return filtered;
+}
+
+static gboolean
+message_is_name_owner_changed (XdgAppProxyClient *client, Header *header)
+{
+  if (header->type == G_DBUS_MESSAGE_TYPE_SIGNAL &&
+      g_strcmp0 (header->sender, "org.freedesktop.DBus") == 0 &&
+      g_strcmp0 (header->interface, "org.freedesktop.DBus") == 0 &&
+      g_strcmp0 (header->member, "NameOwnerChanged") == 0)
+    return TRUE;
+  return FALSE;
+}
+
+static gboolean
+filter_name_owner_changed (XdgAppProxyClient *client, Buffer *buffer)
+{
+  GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
+  GVariant *body, *arg0, *arg1, *arg2;
+  const gchar *name, *old, *new;
+  gboolean filter = TRUE;
+
+  if (message == NULL ||
+      (body = g_dbus_message_get_body (message)) == NULL ||
+      (arg0 = g_variant_get_child_value (body, 0)) == NULL ||
+      !g_variant_is_of_type (arg0, G_VARIANT_TYPE_STRING) ||
+      (arg1 = g_variant_get_child_value (body, 1)) == NULL ||
+      !g_variant_is_of_type (arg1, G_VARIANT_TYPE_STRING) ||
+      (arg2 = g_variant_get_child_value (body, 2)) == NULL ||
+      !g_variant_is_of_type (arg2, G_VARIANT_TYPE_STRING))
+    return TRUE;
+
+  name = g_variant_get_string (arg0, NULL);
+  old = g_variant_get_string (arg1, NULL);
+  new = g_variant_get_string (arg2, NULL);
+
+  if (name[0] != ':' &&
+      xdg_app_proxy_client_get_policy (client, name) > XDG_APP_POLICY_SEE)
+    {
+      if (old[0] != 0)
+        xdg_app_proxy_client_update_unique_id_policy_from_name (client, old, name);
+
+      if (new[0] != 0)
+        xdg_app_proxy_client_update_unique_id_policy_from_name (client, new, name);
+
+      filter = FALSE;
+    }
+
+  g_object_unref (message);
+
+  return filter;
+}
+
+static void
 got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 {
   if (!client->authenticated)
@@ -975,12 +1278,14 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
   else
     {
       Header header;
-      XdgAppPolicy policy;
+      BusHandler handler;
 
       if (!parse_header (buffer, &header))
         {
           g_warning ("Invalid message header format");
           side_closed (side);
+          buffer_free (buffer);
+          return;
         }
 
       /* Make sure the client is not playing games with the serials, as that
@@ -989,39 +1294,62 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
         {
           g_warning ("Invalid client serial");
           side_closed (side);
+          buffer_free (buffer);
+          return;
         }
       client->last_serial = header.serial;
 
       if (client->proxy->log_messages)
         print_outgoing_header (&header);
 
-      policy = xdg_app_proxy_client_get_policy (client, header.destination);
+      if (client->hello_serial == 0 && is_dbus_method_call (&header) &&
+          g_strcmp0 (header.member, "Hello") == 0)
+        client->hello_serial = header.serial;
 
-      /* TODO: Special case dbus iface (need own for e.g. aquire) */
-      if (policy < XDG_APP_POLICY_TALK)
+      handler = get_dbus_method_handler (client, &header);
+
+      switch (handler)
         {
-          if (client_message_has_reply (&header))
+        case HANDLE_FILTER_HAS_OWNER_REPLY:
+        case HANDLE_FILTER_GET_OWNER_REPLY:
+          if (!validate_arg0_name (client, buffer, XDG_APP_POLICY_SEE, NULL))
             {
-              Buffer *ping_buffer = get_ping_buffer_for_header (&header);
-              GDBusMessage *reply;
-
-              if (client->proxy->log_messages)
-                g_print ("*FILTERED* (ping)\n");
-
               buffer_free (buffer);
-              queue_outgoing_buffer (&client->bus_side, ping_buffer);
+              if (handler == HANDLE_FILTER_GET_OWNER_REPLY)
+                queue_name_has_no_owner_roundtrip (client, &header);
+              else
+                queue_bool_reply_roundtrip (client, &header, FALSE);
+              break;
+            }
 
-              reply = get_access_denied_for_header (&header);
-              g_hash_table_replace (client->rewrite_reply, GINT_TO_POINTER (header.serial), reply);
-            }
-          else
+          if (handler == HANDLE_FILTER_GET_OWNER_REPLY)
             {
-              if (client->proxy->log_messages)
-                g_print ("*FILTERED*\n");
+              char *name = get_arg0_string (buffer);
+              g_hash_table_replace (client->get_owner_reply, GINT_TO_POINTER (header.serial), name);
             }
-        }
-      else
-        {
+
+          goto handle_pass;
+
+        case HANDLE_VALIDATE_OWN:
+        case HANDLE_VALIDATE_SEE:
+        case HANDLE_VALIDATE_TALK:
+          {
+            XdgAppPolicy name_policy;
+            if (validate_arg0_name (client, buffer, policy_from_handler (handler), &name_policy))
+              goto handle_pass;
+
+            if (name_policy < (int)HANDLE_VALIDATE_SEE)
+              goto handle_hide;
+            else
+              goto handle_deny;
+          }
+
+        case HANDLE_FILTER_NAME_LIST_REPLY:
+          g_hash_table_replace (client->list_names_reply, GINT_TO_POINTER (header.serial), GINT_TO_POINTER (1));
+          goto handle_pass;
+
+        case HANDLE_PASS:
+        handle_pass:
           if (client_message_has_reply (&header) &&
               header.destination != NULL &&
               *header.destination != ':')
@@ -1031,6 +1359,48 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
             }
 
           queue_outgoing_buffer (&client->bus_side, buffer);
+          break;
+
+        case HANDLE_HIDE:
+        handle_hide:
+          buffer_free (buffer);
+
+          if (client_message_has_reply (&header))
+            {
+              if (client->proxy->log_messages)
+                g_print ("*HIDDEN* (ping)\n");
+
+              if ((header.destination != NULL && header.destination[0] == ':') ||
+                  (header.flags & G_DBUS_MESSAGE_FLAGS_NO_AUTO_START) != 0)
+                queue_name_has_no_owner_roundtrip (client, &header);
+              else
+                queue_service_unknown_roundtrip (client, &header);
+            }
+          else
+            {
+              if (client->proxy->log_messages)
+                g_print ("*HIDDEN*\n");
+            }
+          break;
+
+        default:
+        case HANDLE_DENY:
+        handle_deny:
+          buffer_free (buffer);
+
+          if (client_message_has_reply (&header))
+            {
+              if (client->proxy->log_messages)
+                g_print ("*DENIED* (ping)\n");
+
+              queue_access_denied_roundtrip (client, &header);
+            }
+          else
+            {
+              if (client->proxy->log_messages)
+                g_print ("*DENIED*\n");
+            }
+          break;
         }
     }
 }
@@ -1051,9 +1421,20 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
         {
           g_warning ("Invalid message header format");
           side_closed (side);
+          return;
         }
 
       print_incoming_header (&header);
+
+      if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
+          g_strcmp0 (header.sender, "org.freedesktop.DBus") == 0 &&
+          header.has_reply_serial &&
+          client->hello_serial != 0 &&
+          header.reply_serial == client->hello_serial)
+        {
+          char *my_id = get_arg0_string (buffer);
+          xdg_app_proxy_client_update_unique_id_policy (client, my_id, XDG_APP_POLICY_TALK);
+        }
 
       if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
           header.sender == NULL &&
@@ -1084,16 +1465,53 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
                   header.sender != NULL &&
                   *header.sender == ':')
                 {
-                  xdg_app_proxy_client_update_unique_id_policy (client, header.sender, name);
+                  xdg_app_proxy_client_update_unique_id_policy_from_name (client, header.sender, name);
 
                   g_hash_table_remove (client->named_reply, GINT_TO_POINTER (header.reply_serial));
                 }
             }
 
+          if (g_strcmp0 (header.sender, "org.freedesktop.DBus") == 0 &&
+              header.has_reply_serial &&
+              (name = g_hash_table_lookup (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial))) != NULL)
+            {
+              if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
+                {
+                  char *owner = get_arg0_string (buffer);
+                  xdg_app_proxy_client_update_unique_id_policy_from_name (client, owner, name);
+                  g_free (owner);
+                }
+
+              g_hash_table_remove (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial));
+            }
+
           policy = xdg_app_proxy_client_get_policy (client, header.sender);
 
           if (policy >= XDG_APP_POLICY_TALK)
-            queue_outgoing_buffer (&client->client_side, buffer);
+            {
+              /* Filter ListNames replies */
+              if (header.has_reply_serial &&
+                  g_hash_table_lookup (client->list_names_reply, GINT_TO_POINTER (header.reply_serial)))
+                {
+                  Buffer *filtered;
+                  g_hash_table_remove (client->list_names_reply, GINT_TO_POINTER (header.reply_serial));
+
+                  filtered = filter_names_list (client, buffer);
+                  buffer_free (buffer);
+                  buffer = filtered;
+                }
+              else if (message_is_name_owner_changed (client, &header))
+                {
+                  if (filter_name_owner_changed (client, buffer))
+                    {
+                      buffer_free (buffer);
+                      buffer = NULL;
+                    }
+                }
+
+              if (buffer)
+                queue_outgoing_buffer (&client->client_side, buffer);
+            }
           else
             {
               if (client->proxy->log_messages)
