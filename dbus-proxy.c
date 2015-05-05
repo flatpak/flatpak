@@ -1837,6 +1837,13 @@ main (int argc, char *argv[])
 
   proxy = xdg_app_proxy_new (g_getenv ("DBUS_SESSION_BUS_ADDRESS"));
 
+  proxy->log_messages = TRUE;
+  xdg_app_proxy_set_filter (proxy, TRUE);
+  xdg_app_proxy_add_policy (proxy, "ca.desrt.dconf", XDG_APP_POLICY_TALK);
+  xdg_app_proxy_add_policy (proxy, "org.gnome.gedit", XDG_APP_POLICY_TALK);
+  xdg_app_proxy_add_policy (proxy, "org.gnome.d-feet", XDG_APP_POLICY_OWN);
+  xdg_app_proxy_add_policy (proxy, "org.gtk.vfs.Daemon", XDG_APP_POLICY_TALK);
+
   xdg_app_proxy_start (proxy, &error);
   g_assert_no_error (error);
 
