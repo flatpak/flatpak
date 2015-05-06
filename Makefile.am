@@ -20,12 +20,9 @@ dist_triggers_SCRIPTS = \
 	triggers/desktop-database.trigger \
 	$(NULL)
 
-noinst_PROGRAMS = \
-	dbus-proxy \
-	$(NULL)
-
 bin_PROGRAMS = \
 	xdg-app-helper \
+	xdg-dbus-proxy \
 	xdg-app \
 	$(NULL)
 
@@ -126,14 +123,14 @@ xdg_app_SOURCES = \
 xdg_app_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) libglnx.la
 xdg_app_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) -I$(srcdir)/libglnx
 
-dbus_proxy_SOURCES = \
+xdg_dbus_proxy_SOURCES = \
 	xdg-app-proxy.c	\
 	xdg-app-proxy.h	\
 	dbus-proxy.c	\
 	$(NULL)
 
-dbus_proxy_LDADD = $(BASE_LIBS)
-dbus_proxy_CFLAGS = $(BASE_CFLAGS)
+xdg_dbus_proxy_LDADD = $(BASE_LIBS) libglnx.la
+xdg_dbus_proxy_CFLAGS = $(BASE_CFLAGS) -I$(srcdir)/libglnx
 
 
 install-exec-hook:

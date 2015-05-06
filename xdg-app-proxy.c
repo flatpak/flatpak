@@ -155,7 +155,8 @@ typedef struct {
 enum {
   PROP_0,
 
-  PROP_DBUS_ADDRESS
+  PROP_DBUS_ADDRESS,
+  PROP_SOCKET_PATH
 };
 
 #define XDG_APP_TYPE_PROXY xdg_app_proxy_get_type()
@@ -337,6 +338,9 @@ xdg_app_proxy_set_property (GObject         *object,
     case PROP_DBUS_ADDRESS:
       proxy->dbus_address = g_value_dup_string (value);
       break;
+    case PROP_SOCKET_PATH:
+      proxy->socket_path = g_value_dup_string (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -355,6 +359,9 @@ xdg_app_proxy_get_property (GObject         *object,
     {
     case PROP_DBUS_ADDRESS:
       g_value_set_string (value, proxy->dbus_address);
+      break;
+    case PROP_SOCKET_PATH:
+      g_value_set_string (value, proxy->socket_path);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1805,15 +1812,23 @@ xdg_app_proxy_class_init (XdgAppProxyClass *klass)
                                                         "",
                                                         NULL,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+  g_object_class_install_property (object_class,
+                                   PROP_SOCKET_PATH,
+                                   g_param_spec_string ("socket-path",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
 }
 
 XdgAppProxy *
-xdg_app_proxy_new (const char *dbus_address)
+xdg_app_proxy_new (const char *dbus_address,
+                   const char *socket_path)
 {
   XdgAppProxy *proxy;
 
-  proxy = g_object_new (XDG_APP_TYPE_PROXY, "dbus-address", dbus_address, NULL);
+  proxy = g_object_new (XDG_APP_TYPE_PROXY, "dbus-address", dbus_address, "socket-path", socket_path, NULL);
   return proxy;
 }
 
@@ -1823,7 +1838,6 @@ xdg_app_proxy_start (XdgAppProxy *proxy, GError **error)
   GSocketAddress *address;
   gboolean res;
 
-  proxy->socket_path = g_build_filename (g_get_user_runtime_dir (), "gdbus-proxy", NULL);
   unlink (proxy->socket_path);
 
   g_print ("listening on DBUS_SESSION_BUS_ADDRESS=\"unix:path=%s\"\n", proxy->socket_path);

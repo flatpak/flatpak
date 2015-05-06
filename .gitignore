@@ -31,5 +31,6 @@ doc/*.1
 *~
 xdg-app-dbus.[ch]
 xdg-app-systemd-dbus.[ch]
-xdg-app-resources.c
+xdg-app-resources.[ch]
+xdg-dbus-proxy
 *.service

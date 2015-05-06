@@ -32,9 +32,12 @@ typedef enum {
 
 typedef struct XdgAppProxy XdgAppProxy;
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppProxy, g_object_unref)
+
 GType xdg_app_proxy_get_type (void);
 
-XdgAppProxy *xdg_app_proxy_new                   (const char    *dbus_address);
+XdgAppProxy *xdg_app_proxy_new                   (const char    *dbus_address,
+                                                  const char    *socket_path);
 void         xdg_app_proxy_set_log_messages      (XdgAppProxy   *proxy,
                                                   gboolean       log);
 void         xdg_app_proxy_set_filter            (XdgAppProxy   *proxy,
