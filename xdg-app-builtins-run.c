@@ -154,7 +154,7 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
 }
 
 static void
-add_env_overrides (GKeyFile *metakey, GPtrArray *env_array, GError **error)
+add_env_overrides (GKeyFile *metakey, GPtrArray *env_array)
 {
   gsize i, keys_count;
   /* Only free the array of keys, not the actual values */
@@ -163,7 +163,7 @@ add_env_overrides (GKeyFile *metakey, GPtrArray *env_array, GError **error)
   if (!g_key_file_has_group (metakey, "Vars"))
     return;
 
-  keys = g_key_file_get_keys (metakey, "Vars", &keys_count, error);
+  keys = g_key_file_get_keys (metakey, "Vars", &keys_count, NULL);
   if (!keys)
     return;
 
@@ -171,7 +171,7 @@ add_env_overrides (GKeyFile *metakey, GPtrArray *env_array, GError **error)
     {
         EnvVar *var = malloc (sizeof (EnvVar));
         var->name = keys[i];
-        var->value = g_key_file_get_string (metakey, "Vars", keys[i], error);
+        var->value = g_key_file_get_string (metakey, "Vars", keys[i], NULL);
 
         g_ptr_array_add (env_array, var);
     }
@@ -313,11 +313,11 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       if (!add_extension_args (runtime_metakey, runtime_ref, argv_array, cancellable, error))
 	goto out;
 
-      add_env_overrides (runtime_metakey, env_array, error);
+      add_env_overrides (runtime_metakey, env_array);
     }
 
   /* Load application environment overrides *after* runtime */
-  add_env_overrides (metakey, env_array, error);
+  add_env_overrides (metakey, env_array);
 
   if ((app_id_dir = xdg_app_ensure_data_dir (app, cancellable, error)) == NULL)
       goto out;
