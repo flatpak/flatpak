@@ -43,6 +43,7 @@ include libglnx/Makefile-libglnx.am.inc
 noinst_LTLIBRARIES = libglnx.la
 
 xdg_app_helper_SOURCES = xdg-app-helper.c
+xdg_app_helper_LDADD = -L/gnome/lib -lglib-2.0
 
 dbus_built_sources = xdg-app-dbus.c xdg-app-dbus.h
 systemd_dbus_built_sources = xdg-app-systemd-dbus.c xdg-app-systemd-dbus.h
@@ -126,6 +127,8 @@ xdg_app_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) libglnx.la
 xdg_app_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) -I$(srcdir)/libglnx
 
 dbus_proxy_SOURCES = \
+	xdg-app-proxy.c	\
+	xdg-app-proxy.h	\
 	dbus-proxy.c	\
 	$(NULL)
 
