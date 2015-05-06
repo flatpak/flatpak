@@ -54,6 +54,20 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+typedef struct {
+  char *name;
+  char *value;
+} EnvVar;
+
+static void
+free_envvar (void *p)
+{
+  EnvVar *v = (EnvVar *) p;
+  g_free (v->name);
+  g_free (v->value);
+  g_free (v);
+}
+
 static void
 add_extension_arg (const char *directory,
 		   const char *type, const char *extension, const char *arch, const char *branch,
@@ -139,6 +153,30 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
   return ret;
 }
 
+static void
+add_env_overrides (GKeyFile *metakey, GPtrArray *env_array)
+{
+  gsize i, keys_count;
+  /* Only free the array of keys, not the actual values */
+  g_autofree char **keys;
+
+  if (!g_key_file_has_group (metakey, "Vars"))
+    return;
+
+  keys = g_key_file_get_keys (metakey, "Vars", &keys_count, NULL);
+  if (!keys)
+    return;
+
+  for (i = 0; i < keys_count; i++)
+    {
+        EnvVar *var = malloc (sizeof (EnvVar));
+        var->name = keys[i];
+        var->value = g_key_file_get_string (metakey, "Vars", keys[i], NULL);
+
+        g_ptr_array_add (env_array, var);
+    }
+}
+
 gboolean
 xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -169,6 +207,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr (GError) my_error = NULL;
   g_autoptr (GError) my_error2 = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
+  g_autoptr(GPtrArray) env_array = NULL;
   g_autofree char *monitor_path = NULL;
   gsize metadata_size, runtime_metadata_size;
   const char *app;
@@ -261,6 +300,8 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   path = g_file_get_path (runtime_deploy);
   g_debug ("Using runtime in %s", path);
 
+  env_array = g_ptr_array_new_with_free_func (free_envvar);
+
   runtime_metadata = g_file_get_child (runtime_deploy, "metadata");
   if (g_file_load_contents (runtime_metadata, cancellable, &runtime_metadata_contents, &runtime_metadata_size, NULL, NULL))
     {
@@ -271,7 +312,12 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
       if (!add_extension_args (runtime_metakey, runtime_ref, argv_array, cancellable, error))
 	goto out;
+
+      add_env_overrides (runtime_metakey, env_array);
     }
+
+  /* Load application environment overrides *after* runtime */
+  add_env_overrides (metakey, env_array);
 
   if ((app_id_dir = xdg_app_ensure_data_dir (app, cancellable, error)) == NULL)
       goto out;
@@ -338,6 +384,15 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_setenv ("XDG_DATA_HOME", gs_file_get_path_cached (app_id_dir_data), TRUE);
   g_setenv ("XDG_CONFIG_HOME", gs_file_get_path_cached (app_id_dir_config), TRUE);
   g_setenv ("XDG_CACHE_HOME", gs_file_get_path_cached (app_id_dir_cache), TRUE);
+
+  for (i = 0; i < env_array->len; i++)
+    {
+       EnvVar *var = g_ptr_array_index (env_array, i);
+       if (!var->value || !var->value[0])
+         g_unsetenv (var->name);
+       else
+         g_setenv (var->name, var->value, TRUE);
+    }
 
   xdg_app_run_in_transient_unit (app);
 
