@@ -34,10 +34,12 @@
 
 static char *opt_command;
 static char **opt_allow;
+static char **opt_env_override;
 
 static GOptionEntry options[] = {
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to set", "COMMAND" },
   { "allow", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_allow, "Environment options to set to true", "KEY" },
+  { "env", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_env_override, "Override an environment variable", "VARIABLE=[VALUE]" },
   { NULL }
 };
 
@@ -314,6 +316,21 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
           g_key_file_set_boolean (keyfile, "Environment", key, TRUE);
         }
     }
+
+  /* We don't care about error here (when the group does not exist for instance) */
+  g_key_file_remove_group (keyfile, "Vars", NULL);
+  if (opt_env_override)
+    {
+      for (i = 0; opt_env_override[i]; i++)
+        {
+          glnx_strfreev char **split = g_strsplit (opt_env_override[i], "=", 2);
+          if (split && split[0])
+            {
+              g_key_file_set_string (keyfile, "Vars", split[0], split[1] ? split[1] : "");
+            }
+        }
+    }
+
 
   if (!g_key_file_save_to_file (keyfile, path, error))
     goto out;
