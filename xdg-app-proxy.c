@@ -1551,7 +1551,8 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
           return;
         }
 
-      print_incoming_header (&header);
+      if (client->proxy->log_messages)
+        print_incoming_header (&header);
 
       if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
           g_strcmp0 (header.sender, "org.freedesktop.DBus") == 0 &&
