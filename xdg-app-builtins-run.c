@@ -388,7 +388,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   for (i = 0; i < env_array->len; i++)
     {
        EnvVar *var = g_ptr_array_index (env_array, i);
-       g_setenv (var->name, var->value, TRUE);
+       if (!var->value || !var->value[0])
+         g_unsetenv (var->name);
+       else
+         g_setenv (var->name, var->value, TRUE);
     }
 
   xdg_app_run_in_transient_unit (app);
