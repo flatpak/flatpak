@@ -322,9 +322,9 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
       for (i = 0; opt_env_override[i]; i++)
         {
           glnx_strfreev char **split = g_strsplit (opt_env_override[i], "=", 2);
-          if (split && split[0])
+          if (split && split[0] && split[1])
             {
-              g_key_file_set_string (keyfile, "Vars", split[0], split[1] ? split[1] : "");
+              g_key_file_set_string (keyfile, "Vars", split[0], split[1]);
             }
           else
             {
