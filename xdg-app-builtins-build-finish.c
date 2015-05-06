@@ -317,8 +317,6 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
         }
     }
 
-  /* We don't care about error here (when the group does not exist for instance) */
-  g_key_file_remove_group (keyfile, "Vars", NULL);
   if (opt_env_override)
     {
       for (i = 0; opt_env_override[i]; i++)
@@ -327,6 +325,11 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
           if (split && split[0])
             {
               g_key_file_set_string (keyfile, "Vars", split[0], split[1] ? split[1] : "");
+            }
+          else
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Cannot parse variable %s", opt_env_override[i]);
+              goto out;
             }
         }
     }
