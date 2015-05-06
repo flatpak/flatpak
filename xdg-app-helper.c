@@ -16,7 +16,8 @@
  *
  */
 
-#define _GNU_SOURCE /* Required for CLONE_NEWNS */
+#include "config.h"
+
 #include <assert.h>
 #include <arpa/inet.h>
 #include <dirent.h>
@@ -227,6 +228,59 @@ strdup_printf (const char *format,
 
   return buffer;
 }
+
+#ifndef HAVE_FDWALK
+static int
+fdwalk (int (*cb)(void *data, int fd), void *data)
+{
+  int open_max;
+  int fd;
+  int res = 0;
+  DIR *d;
+
+  if ((d = opendir ("/proc/self/fd")))
+    {
+      struct dirent *de;
+
+      while ((de = readdir (d)))
+        {
+          long l;
+          char *e = NULL;
+
+          if (de->d_name[0] == '.')
+            continue;
+
+          errno = 0;
+          l = strtol (de->d_name, &e, 10);
+          if (errno != 0 || !e || *e)
+            continue;
+
+          fd = (int) l;
+
+          if ((long) fd != l)
+            continue;
+
+          if (fd == dirfd (d))
+            continue;
+
+          if ((res = cb (data, fd)) != 0)
+            break;
+        }
+
+      closedir (d);
+      return res;
+  }
+
+  open_max = sysconf (_SC_OPEN_MAX);
+
+  for (fd = 0; fd < open_max; fd++)
+    if ((res = cb (data, fd)) != 0)
+      break;
+
+  return res;
+}
+#endif
+
 
 static inline int raw_clone(unsigned long flags, void *child_stack) {
 #if defined(__s390__) || defined(__CRIS__)
@@ -1217,6 +1271,17 @@ block_sigchild (void)
     die_with_error ("sigprocmask");
 }
 
+static int
+close_extra_fds (void *data, int fd)
+{
+  int event_fd = (int) (ssize_t) (data);
+
+  if (fd >= 3 && fd != event_fd)
+    close (fd);
+
+  return 0;
+}
+
 /* This stays around for as long as the initial process in the app does
  * and when that exits it exits, propagating the exit status. We do this
  * by having pid1 in the sandbox detect this exit and tell the monitor
@@ -1233,6 +1298,10 @@ monitor_child (int event_fd)
   sigset_t mask;
   struct pollfd fds[2];
   struct signalfd_siginfo fdsi;
+
+  /* Close all extra fds in the monitoring process.
+     Any passed in fds have been passed on to the child anyway. */
+  fdwalk (close_extra_fds, (void *)(ssize_t)event_fd);
 
   sigemptyset (&mask);
   sigaddset (&mask, SIGCHLD);
@@ -1805,6 +1874,10 @@ main (int argc,
         die_with_error ("execvp %s", args[0]);
       return 0;
     }
+
+  /* Close all extra fds in pid 1.
+     Any passed in fds have been passed on to the child anyway. */
+  fdwalk (close_extra_fds, (void *)(ssize_t)event_fd);
 
   strncpy (argv[0], "xdg-app-init\0", strlen (argv[0]));
   return do_init (event_fd, pid);
