@@ -1274,11 +1274,17 @@ block_sigchild (void)
 static int
 close_extra_fds (void *data, int fd)
 {
-  int event_fd = (int) (ssize_t) (data);
+  int *extra_fds = (int *)data;
+  int i;
 
-  if (fd >= 3 && fd != event_fd)
-    close (fd);
+  for (i = 0; extra_fds[i] != -1; i++)
+    if (fd == extra_fds[i])
+      return 0;
 
+  if (fd <= 2)
+    return 0;
+
+  close (fd);
   return 0;
 }
 
@@ -1298,10 +1304,11 @@ monitor_child (int event_fd)
   sigset_t mask;
   struct pollfd fds[2];
   struct signalfd_siginfo fdsi;
+  int dont_close[] = { event_fd, -1 };
 
   /* Close all extra fds in the monitoring process.
      Any passed in fds have been passed on to the child anyway. */
-  fdwalk (close_extra_fds, (void *)(ssize_t)event_fd);
+  fdwalk (close_extra_fds, dont_close);
 
   sigemptyset (&mask);
   sigaddset (&mask, SIGCHLD);
@@ -1467,6 +1474,8 @@ main (int argc,
   int c, i;
   pid_t pid;
   int event_fd;
+  int sync_fd = -1;
+  char *endp;
 
   /* Get the capabilities we need, drop root */
   acquire_caps ();
@@ -1475,7 +1484,7 @@ main (int argc,
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
     die_with_error ("prctl(PR_SET_NO_NEW_CAPS) failed");
 
-  while ((c =  getopt (argc, argv, "+inWweEsfFHa:m:b:p:x:ly:d:D:v:I:g")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWweEsfFHa:m:b:p:x:ly:d:D:v:I:gS:")) >= 0)
     {
       switch (c)
         {
@@ -1564,6 +1573,12 @@ main (int argc,
 
         case 's':
           share_shm = TRUE;
+          break;
+
+        case 'S':
+          sync_fd = strtol (optarg, &endp, 10);
+	  if (endp == optarg || *endp != 0)
+	    die ("Invalid fd argument");
           break;
 
         case 'v':
@@ -1870,6 +1885,9 @@ main (int argc,
     {
       __debug__(("launch executable %s\n", args[0]));
 
+      if (sync_fd != -1)
+	close (sync_fd);
+
       if (execvp (args[0], args) == -1)
         die_with_error ("execvp %s", args[0]);
       return 0;
@@ -1877,7 +1895,10 @@ main (int argc,
 
   /* Close all extra fds in pid 1.
      Any passed in fds have been passed on to the child anyway. */
-  fdwalk (close_extra_fds, (void *)(ssize_t)event_fd);
+  {
+    int dont_close[] = { event_fd, sync_fd, -1 };
+    fdwalk (close_extra_fds, dont_close);
+  }
 
   strncpy (argv[0], "xdg-app-init\0", strlen (argv[0]));
   return do_init (event_fd, pid);
