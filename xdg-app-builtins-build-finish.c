@@ -103,7 +103,7 @@ export_dir (int            source_parent_fd,
 
       if (S_ISDIR (stbuf.st_mode))
         {
-          g_autofree gchar *child_relpath = g_strconcat (source_relpath, dent->d_name, "/", NULL);
+          g_autofree gchar *child_relpath = g_build_filename(source_relpath, dent->d_name, NULL);
 
           if (!export_dir (source_iter.fd, dent->d_name, child_relpath, destination_dfd, dent->d_name,
                            required_prefix, cancellable, error))
