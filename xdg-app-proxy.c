@@ -616,12 +616,11 @@ static ExpectedReplyType
 steal_expected_reply (ProxySide *side, guint32 serial)
 {
   ExpectedReplyType type;
-  ProxySide *other_side = get_other_side (side);
 
-  type = GPOINTER_TO_UINT (g_hash_table_lookup (other_side->expected_replies,
+  type = GPOINTER_TO_UINT (g_hash_table_lookup (side->expected_replies,
 						GUINT_TO_POINTER (serial)));
   if (type)
-    g_hash_table_remove (other_side->expected_replies,
+    g_hash_table_remove (side->expected_replies,
 			 GUINT_TO_POINTER (serial));
   return type;
 }
@@ -1137,6 +1136,17 @@ get_dbus_method_handler (XdgAppProxyClient *client, Header *header)
   XdgAppPolicy policy;
   const char *method;
 
+  if (header->has_reply_serial)
+    {
+      ExpectedReplyType expected_reply =
+	steal_expected_reply (&client->bus_side,
+			      header->reply_serial);
+      if (expected_reply == EXPECTED_REPLY_NONE)
+	return HANDLE_DENY;
+
+      return HANDLE_PASS;
+    }
+
   policy = xdg_app_proxy_client_get_policy (client, header->destination);
   if (policy < XDG_APP_POLICY_SEE)
     return HANDLE_HIDE;
@@ -1596,7 +1606,7 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 
       if (header.has_reply_serial)
 	{
-	  expected_reply = steal_expected_reply (side, header.reply_serial);
+	  expected_reply = steal_expected_reply (get_other_side (side), header.reply_serial);
 
 	  /* We only allow replies we expect */
 	  if (expected_reply == EXPECTED_REPLY_NONE)
@@ -1705,6 +1715,9 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 	      g_clear_pointer (&buffer, buffer_free);
 	    }
 	}
+
+      if (buffer && client_message_generates_reply (&header))
+	queue_expected_reply (side, header.serial, EXPECTED_REPLY_NORMAL);
     }
 
   if (buffer)
