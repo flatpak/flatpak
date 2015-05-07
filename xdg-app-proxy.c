@@ -1053,47 +1053,27 @@ get_ping_buffer_for_header (Header *header)
   return buffer;
 }
 
-static void
-queue_error_roundtrip (XdgAppProxyClient *client, Header *header, const char *error_name)
+static Buffer *
+get_error_for_roundtrip (XdgAppProxyClient *client, Header *header, const char *error_name)
 {
   Buffer *ping_buffer = get_ping_buffer_for_header (header);
   GDBusMessage *reply;
-
-  queue_outgoing_buffer (&client->bus_side, ping_buffer);
 
   reply = get_error_for_header (header, error_name);
   g_hash_table_replace (client->rewrite_reply, GINT_TO_POINTER (header->serial), reply);
+  return ping_buffer;
 }
 
-
-static void
-queue_access_denied_roundtrip (XdgAppProxyClient *client, Header *header)
-{
-  queue_error_roundtrip (client, header, "org.freedesktop.DBus.Error.AccessDenied");
-}
-
-static void
-queue_name_has_no_owner_roundtrip (XdgAppProxyClient *client, Header *header)
-{
-  queue_error_roundtrip (client, header, "org.freedesktop.DBus.Error.NameHasNoOwner");
-}
-
-static void
-queue_service_unknown_roundtrip (XdgAppProxyClient *client, Header *header)
-{
-  queue_error_roundtrip (client, header, "org.freedesktop.DBus.Error.ServiceUnknown");
-}
-
-static void
-queue_bool_reply_roundtrip (XdgAppProxyClient *client, Header *header, gboolean val)
+static Buffer *
+get_bool_reply_for_roundtrip (XdgAppProxyClient *client, Header *header, gboolean val)
 {
   Buffer *ping_buffer = get_ping_buffer_for_header (header);
   GDBusMessage *reply;
 
-  queue_outgoing_buffer (&client->bus_side, ping_buffer);
-
   reply = get_bool_reply_for_header (header, val);
   g_hash_table_replace (client->rewrite_reply, GINT_TO_POINTER (header->serial), reply);
+
+  return ping_buffer;
 }
 
 typedef enum {
@@ -1278,6 +1258,17 @@ filter_names_list (XdgAppProxyClient *client, Buffer *buffer)
 }
 
 static gboolean
+message_is_hello_reply (XdgAppProxyClient *client, Header *header)
+{
+  return
+    header->type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
+    g_strcmp0 (header->sender, "org.freedesktop.DBus") == 0 &&
+    header->has_reply_serial &&
+    client->hello_serial != 0 &&
+    header->reply_serial == client->hello_serial;
+}
+
+static gboolean
 message_is_name_owner_changed (XdgAppProxyClient *client, Header *header)
 {
   if (header->type == G_DBUS_MESSAGE_TYPE_SIGNAL &&
@@ -1289,7 +1280,7 @@ message_is_name_owner_changed (XdgAppProxyClient *client, Header *header)
 }
 
 static gboolean
-filter_name_owner_changed (XdgAppProxyClient *client, Buffer *buffer)
+should_filter_name_owner_changed (XdgAppProxyClient *client, Buffer *buffer)
 {
   GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
   GVariant *body, *arg0, *arg1, *arg2;
@@ -1364,26 +1355,39 @@ side_get_n_unix_fds (ProxySide *side, int n_fds)
   return res;
 }
 
+static gboolean
+update_socket_messages (ProxySide *side, Buffer *buffer, Header *header)
+{
+  /* We may accidentally combine multiple control messages into one
+     buffer when we receive (since we can do several recvs), so we
+     keep a list of all we get and then only re-attach the amount
+     specified in the header to the buffer. */
+
+  side->control_messages = g_list_concat (side->control_messages, buffer->control_messages);
+  buffer->control_messages = NULL;
+  if (header->unix_fds > 0)
+    {
+      buffer->control_messages = side_get_n_unix_fds (side, header->unix_fds);
+      if (buffer->control_messages == NULL)
+	{
+	  g_warning ("Not enough fds for message");
+	  side_closed (side);
+	  buffer_free (buffer);
+	  return FALSE;
+	}
+    }
+  return TRUE;
+}
+
 static void
 got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 {
-  if (!client->authenticated)
-    {
-      queue_outgoing_buffer (&client->bus_side, buffer);
-
-      if (g_strstr_len ((char *)buffer->data, buffer->size, "BEGIN\r\n") != NULL)
-        client->authenticated = TRUE;
-    }
-  else if (!client->proxy->filter)
-    {
-      queue_outgoing_buffer (&client->bus_side, buffer);
-    }
-  else
+  if (client->authenticated && client->proxy->filter)
     {
       Header header;
       BusHandler handler;
 
-      /* Filtering */
+      /* Filter and rewrite outgoing messages as needed */
 
       if (!parse_header (buffer, &header))
         {
@@ -1393,21 +1397,8 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
           return;
         }
 
-      /* We may accidentally combind multiple control messages into one buffer, so
-         we keep a list of all we get and then only re-attach the amount specified
-         in the header to the buffer. */
-      side->control_messages = g_list_concat (side->control_messages, buffer->control_messages);
-      buffer->control_messages = NULL;
-      if (header.unix_fds > 0)
-        {
-          buffer->control_messages = side_get_n_unix_fds (side, header.unix_fds);
-          if (buffer->control_messages == NULL)
-            {
-              g_warning ("Not enough fds for message");
-              side_closed (side);
-              buffer_free (buffer);
-            }
-        }
+      if (!update_socket_messages (side, buffer, &header))
+	return;
 
       /* Make sure the client is not playing games with the serials, as that
          could confuse us. */
@@ -1423,6 +1414,8 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
       if (client->proxy->log_messages)
         print_outgoing_header (&header);
 
+      /* Keep track of the initial Hello request so that we can read
+	 the reply which has our assigned unique id */
       if (client->hello_serial == 0 && is_dbus_method_call (&header) &&
           g_strcmp0 (header.member, "Hello") == 0)
         client->hello_serial = header.serial;
@@ -1435,11 +1428,12 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
         case HANDLE_FILTER_GET_OWNER_REPLY:
           if (!validate_arg0_name (client, buffer, XDG_APP_POLICY_SEE, NULL))
             {
-              buffer_free (buffer);
+	      g_clear_pointer (&buffer, buffer_free);
               if (handler == HANDLE_FILTER_GET_OWNER_REPLY)
-                queue_name_has_no_owner_roundtrip (client, &header);
+		buffer = get_error_for_roundtrip (client, &header,
+						  "org.freedesktop.DBus.Error.NameHasNoOwner");
               else
-                queue_bool_reply_roundtrip (client, &header, FALSE);
+                buffer = get_bool_reply_for_roundtrip (client, &header, FALSE);
               break;
             }
 
@@ -1479,23 +1473,26 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
               g_hash_table_replace (client->named_reply, GINT_TO_POINTER (header.serial), g_strdup (header.destination));
             }
 
-          queue_outgoing_buffer (&client->bus_side, buffer);
           break;
 
         case HANDLE_HIDE:
         handle_hide:
-          buffer_free (buffer);
+	  g_clear_pointer (&buffer, buffer_free);
 
           if (client_message_has_reply (&header))
             {
+	      const char *error;
+
               if (client->proxy->log_messages)
                 g_print ("*HIDDEN* (ping)\n");
 
               if ((header.destination != NULL && header.destination[0] == ':') ||
                   (header.flags & G_DBUS_MESSAGE_FLAGS_NO_AUTO_START) != 0)
-                queue_name_has_no_owner_roundtrip (client, &header);
+                error = "org.freedesktop.DBus.Error.NameHasNoOwner";
               else
-                queue_service_unknown_roundtrip (client, &header);
+		error = "org.freedesktop.DBus.Error.ServiceUnknown";
+
+              buffer = get_error_for_roundtrip (client, &header, error);
             }
           else
             {
@@ -1507,14 +1504,15 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
         default:
         case HANDLE_DENY:
         handle_deny:
-          buffer_free (buffer);
+	  g_clear_pointer (&buffer, buffer_free);
 
           if (client_message_has_reply (&header))
             {
               if (client->proxy->log_messages)
                 g_print ("*DENIED* (ping)\n");
 
-              queue_access_denied_roundtrip (client, &header);
+              buffer = get_error_for_roundtrip (client, &header,
+						"org.freedesktop.DBus.Error.AccessDenied");
             }
           else
             {
@@ -1524,130 +1522,135 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
           break;
         }
     }
+
+
+  if (buffer && g_strstr_len ((char *)buffer->data, buffer->size, "BEGIN\r\n") != NULL)
+    client->authenticated = TRUE;
+
+  if (buffer)
+    queue_outgoing_buffer (&client->bus_side, buffer);
 }
 
 static void
 got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 {
-  if (!client->authenticated)
-    {
-      queue_outgoing_buffer (&client->client_side, buffer);
-    }
-  else if (!client->proxy->filter)
-    {
-      queue_outgoing_buffer (&client->client_side, buffer);
-    }
-  else
+  if (client->authenticated && client->proxy->filter)
     {
       Header header;
       GDBusMessage *rewritten;
+      char *name;
+      XdgAppPolicy policy;
 
-      /* Filtering */
+      /* Filter and rewrite incomming messages as needed */
 
       if (!parse_header (buffer, &header))
         {
           g_warning ("Invalid message header format");
+	  buffer_free (buffer);
           side_closed (side);
           return;
         }
 
+      if (!update_socket_messages (side, buffer, &header))
+	return;
+
       if (client->proxy->log_messages)
         print_incoming_header (&header);
 
-      if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
-          g_strcmp0 (header.sender, "org.freedesktop.DBus") == 0 &&
-          header.has_reply_serial &&
-          client->hello_serial != 0 &&
-          header.reply_serial == client->hello_serial)
-        {
-          char *my_id = get_arg0_string (buffer);
-          xdg_app_proxy_client_update_unique_id_policy (client, my_id, XDG_APP_POLICY_TALK);
-        }
+      if (header.has_reply_serial)
+	{
+	  /* If we sent a message to a named target and get a reply, then we allow further
+	     communications with that unique id */
+	  if ((name = g_hash_table_lookup (client->named_reply, GINT_TO_POINTER (header.reply_serial))) != NULL)
+	    {
+	      if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
+		  header.sender != NULL &&
+		  *header.sender == ':')
+		{
+		  xdg_app_proxy_client_update_unique_id_policy_from_name (client, header.sender, name);
 
-      if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
-          header.sender == NULL &&
-          header.has_reply_serial &&
-          (rewritten = g_hash_table_lookup (client->rewrite_reply, GINT_TO_POINTER (header.reply_serial))) != NULL)
-        {
-          Buffer *rewritten_buffer;
-          g_hash_table_steal (client->rewrite_reply, GINT_TO_POINTER (header.reply_serial));
+		  g_hash_table_remove (client->named_reply, GINT_TO_POINTER (header.reply_serial));
+		}
+	    }
 
-          if (client->proxy->log_messages)
-            g_print ("*REWRITTEN*\n");
 
-          g_dbus_message_set_serial (rewritten, header.serial);
-          rewritten_buffer = message_to_buffer (rewritten);
-          g_object_unref (rewritten);
-          buffer_free (buffer);
-          queue_outgoing_buffer (&client->client_side, rewritten_buffer);
-        }
-      else
-        {
-          char *name;
-          XdgAppPolicy policy;
+	  /* When we get the initial reply to Hello, allow all
+	     further communications to our own unique id. */
+	  if (message_is_hello_reply (client, &header))
+	    {
+	      char *my_id = get_arg0_string (buffer);
+	      xdg_app_proxy_client_update_unique_id_policy (client, my_id, XDG_APP_POLICY_TALK);
+	    }
 
-          if (header.has_reply_serial &&
-              (name = g_hash_table_lookup (client->named_reply, GINT_TO_POINTER (header.reply_serial))) != NULL)
-            {
-              if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
-                  header.sender != NULL &&
-                  *header.sender == ':')
-                {
-                  xdg_app_proxy_client_update_unique_id_policy_from_name (client, header.sender, name);
+	  /* Check if this a roundtrip ping and replace it with the rewritten message */
+	  else if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
+		   header.sender == NULL &&
+		   (rewritten = g_hash_table_lookup (client->rewrite_reply, GINT_TO_POINTER (header.reply_serial))) != NULL)
+	    {
+	      g_hash_table_steal (client->rewrite_reply, GINT_TO_POINTER (header.reply_serial));
 
-                  g_hash_table_remove (client->named_reply, GINT_TO_POINTER (header.reply_serial));
-                }
-            }
+	      if (client->proxy->log_messages)
+		g_print ("*REWRITTEN*\n");
 
-          if (g_strcmp0 (header.sender, "org.freedesktop.DBus") == 0 &&
-              header.has_reply_serial &&
-              (name = g_hash_table_lookup (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial))) != NULL)
-            {
-              if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
-                {
-                  char *owner = get_arg0_string (buffer);
-                  xdg_app_proxy_client_update_unique_id_policy_from_name (client, owner, name);
-                  g_free (owner);
-                }
+	      g_dbus_message_set_serial (rewritten, header.serial);
+	      g_clear_pointer (&buffer, buffer_free);
+	      buffer = message_to_buffer (rewritten);
+	      g_object_unref (rewritten);
+	    }
 
-              g_hash_table_remove (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial));
-            }
+	  /* This is a reply from the bus to an allowed GetNameOwner
+	     request, update the policy for this unique name based on
+	     the policy */
+	  else if ((name = g_hash_table_lookup (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial))) != NULL)
+	    {
+	      if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
+		{
+		  char *owner = get_arg0_string (buffer);
+		  xdg_app_proxy_client_update_unique_id_policy_from_name (client, owner, name);
+		  g_free (owner);
+		}
 
-          policy = xdg_app_proxy_client_get_policy (client, header.sender);
+	      g_hash_table_remove (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial));
+	    }
 
-          if (policy >= XDG_APP_POLICY_TALK)
-            {
-              /* Filter ListNames replies */
-              if (header.has_reply_serial &&
-                  g_hash_table_lookup (client->list_names_reply, GINT_TO_POINTER (header.reply_serial)))
-                {
-                  Buffer *filtered;
-                  g_hash_table_remove (client->list_names_reply, GINT_TO_POINTER (header.reply_serial));
+	  /* This is a reply from the bus to a ListNames request, filter
+	     it according to the policy */
+	  else if (g_hash_table_lookup (client->list_names_reply, GINT_TO_POINTER (header.reply_serial)))
+	    {
+	      Buffer *filtered_buffer;
+	      g_hash_table_remove (client->list_names_reply, GINT_TO_POINTER (header.reply_serial));
 
-                  filtered = filter_names_list (client, buffer);
-                  buffer_free (buffer);
-                  buffer = filtered;
-                }
-              else if (message_is_name_owner_changed (client, &header))
-                {
-                  if (filter_name_owner_changed (client, buffer))
-                    {
-                      buffer_free (buffer);
-                      buffer = NULL;
-                    }
-                }
 
-              if (buffer)
-                queue_outgoing_buffer (&client->client_side, buffer);
-            }
-          else
-            {
-              if (client->proxy->log_messages)
-                g_print ("*FILTERED IN*\n");
-              buffer_free (buffer);
-            }
-        }
+	      filtered_buffer = filter_names_list (client, buffer);
+	      g_clear_pointer (&buffer, buffer_free);
+	      buffer = filtered_buffer;
+	    }
+	}
+      else /* Not reply */
+	{
+	  /* We filter all NameOwnerChanged signal according to the policy */
+	  if (message_is_name_owner_changed (client, &header))
+	    {
+	      if (should_filter_name_owner_changed (client, buffer))
+		g_clear_pointer (&buffer, buffer_free);
+	    }
+	}
+
+      /* All incomming signals are filtered according to policy */
+      if (header.type == G_DBUS_MESSAGE_TYPE_SIGNAL)
+	{
+	  policy = xdg_app_proxy_client_get_policy (client, header.sender);
+	  if (policy < XDG_APP_POLICY_TALK)
+	    {
+	      if (client->proxy->log_messages)
+		g_print ("*FILTERED IN*\n");
+	      g_clear_pointer (&buffer, buffer_free);
+	    }
+	}
     }
+
+  if (buffer)
+    queue_outgoing_buffer (&client->client_side, buffer);
 }
 
 static void
