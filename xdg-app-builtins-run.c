@@ -177,6 +177,13 @@ add_env_overrides (GKeyFile *metakey, GPtrArray *env_array)
     }
 }
 
+static void
+dbus_spawn_child_setup (gpointer user_data)
+{
+  int fd = GPOINTER_TO_INT (user_data);
+  fcntl (fd, F_SETFD, 0);
+}
+
 gboolean
 xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -208,6 +215,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr (GError) my_error2 = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
   g_autoptr(GPtrArray) env_array = NULL;
+  g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
   g_autofree char *monitor_path = NULL;
   gsize metadata_size, runtime_metadata_size;
   const char *app;
@@ -215,6 +223,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   const char *command = "/bin/sh";
   int i;
   int rest_argv_start, rest_argc;
+  int sync_proxy_pipes[2];
 
   context = g_option_context_new ("APP [args...] - Run an app");
 
@@ -275,6 +284,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     goto out;
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
+  dbus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (argv_array, g_strdup (HELPER));
   g_ptr_array_add (argv_array, g_strdup ("-l"));
 
@@ -355,12 +365,53 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (!xdg_app_run_verify_environment_keys ((const char **)opt_allow, error))
     goto out;
 
-  xdg_app_run_add_environment_args (argv_array, metakey,
+  xdg_app_run_add_environment_args (argv_array, dbus_proxy_argv, metakey,
 				    (const char **)opt_allow,
 				    (const char **)opt_forbid);
 
   g_ptr_array_add (argv_array, g_strdup ("-b"));
   g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/fonts=%s", SYSTEM_FONTS_DIR));
+
+  /* Must run this before spawning the dbus proxy, to ensure it
+     ends up in the app cgroup */
+  xdg_app_run_in_transient_unit (app);
+
+  if (dbus_proxy_argv->len > 0)
+    {
+      char x;
+
+      if (pipe (sync_proxy_pipes) < 0)
+	{
+	  g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to create sync pipe");
+	  goto out;
+	}
+
+      g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup ("xdg-dbus-proxy"));
+      g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_proxy_pipes[1]));
+
+      g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
+
+      if (!g_spawn_async (NULL,
+			  (char **)dbus_proxy_argv->pdata,
+			  NULL,
+			  G_SPAWN_SEARCH_PATH,
+			  dbus_spawn_child_setup,
+			  GINT_TO_POINTER (sync_proxy_pipes[1]),
+			  NULL, error))
+	goto out;
+
+      close (sync_proxy_pipes[1]);
+
+      /* Sync with proxy, i.e. wait until its listening on the sockets */
+      if (read (sync_proxy_pipes[0], &x, 1) != 1)
+	{
+	  g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to sync with dbus proxy");
+	  goto out;
+	}
+
+      g_ptr_array_add (argv_array, g_strdup ("-S"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("%d", sync_proxy_pipes[0]));
+    }
 
   g_ptr_array_add (argv_array, g_strdup ("-a"));
   g_ptr_array_add (argv_array, g_file_get_path (app_files));
@@ -393,8 +444,6 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
        else
          g_setenv (var->name, var->value, TRUE);
     }
-
-  xdg_app_run_in_transient_unit (app);
 
   if (execv (HELPER, (char **)argv_array->pdata) == -1)
     {

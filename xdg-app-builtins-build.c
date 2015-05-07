@@ -144,7 +144,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (!xdg_app_run_verify_environment_keys ((const char **)opt_allow, error))
     goto out;
 
-  xdg_app_run_add_environment_args (argv_array, metakey,
+  xdg_app_run_add_environment_args (argv_array, NULL, metakey,
 				    (const char **)opt_allow,
 				    (const char **)opt_forbid);
 

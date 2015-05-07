@@ -1841,7 +1841,6 @@ xdg_app_proxy_start (XdgAppProxy *proxy, GError **error)
 
   unlink (proxy->socket_path);
 
-  g_print ("listening on DBUS_SESSION_BUS_ADDRESS=\"unix:path=%s\"\n", proxy->socket_path);
   address = g_unix_socket_address_new (proxy->socket_path);
 
   error = NULL;

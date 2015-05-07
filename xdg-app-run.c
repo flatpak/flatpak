@@ -126,31 +126,65 @@ xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array)
     }
 }
 
+static char *
+create_proxy_socket (char *template)
+{
+  g_autofree char *dir = g_build_filename (g_get_user_runtime_dir (), "bus-proxy", NULL);
+  g_autofree char *proxy_socket = g_build_filename (dir, template, NULL);
+  int fd;
+
+  if (mkdir (dir, 0700) == -1 && errno != EEXIST)
+    return NULL;
+
+  fd = g_mkstemp (proxy_socket);
+  if (fd == -1)
+    return NULL;
+
+  close (fd);
+
+  return g_steal_pointer (&proxy_socket);
+}
+
 void
-xdg_app_run_add_system_dbus_args (GPtrArray *argv_array)
+xdg_app_run_add_system_dbus_args (GPtrArray *argv_array,
+				  GPtrArray *dbus_proxy_argv)
 {
   const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
   char *dbus_system_socket = NULL;
 
-  dbus_system_socket = extract_unix_path_from_dbus_address (dbus_address);
-  if (dbus_system_socket == NULL &&
-      g_file_test ("/var/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
-    {
-      dbus_system_socket = g_strdup ("/var/run/dbus/system_bus_socket");
-    }
+  if (dbus_address != NULL)
+    dbus_system_socket = extract_unix_path_from_dbus_address (dbus_address);
+  else if (g_file_test ("/var/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
+    dbus_system_socket = g_strdup ("/var/run/dbus/system_bus_socket");
 
   if (dbus_system_socket != NULL)
     {
       g_ptr_array_add (argv_array, g_strdup ("-D"));
       g_ptr_array_add (argv_array, dbus_system_socket);
     }
+  else if (dbus_proxy_argv && dbus_address != NULL)
+    {
+      g_autofree char *proxy_socket = create_proxy_socket ("system-bus-proxy-XXXXXX");
+
+      if (proxy_socket == NULL)
+	return;
+
+      g_ptr_array_add (dbus_proxy_argv, g_strdup (dbus_address));
+      g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
+
+      g_ptr_array_add (argv_array, g_strdup ("-D"));
+      g_ptr_array_add (argv_array, g_strdup (proxy_socket));
+    }
 }
 
 void
-xdg_app_run_add_session_dbus_args (GPtrArray *argv_array)
+xdg_app_run_add_session_dbus_args (GPtrArray *argv_array, GPtrArray *dbus_proxy_argv)
 {
   const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
   char *dbus_session_socket = NULL;
+
+  if (dbus_address == NULL)
+    return;
 
   dbus_session_socket = extract_unix_path_from_dbus_address (dbus_address);
   if (dbus_session_socket != NULL)
@@ -158,10 +192,24 @@ xdg_app_run_add_session_dbus_args (GPtrArray *argv_array)
       g_ptr_array_add (argv_array, g_strdup ("-d"));
       g_ptr_array_add (argv_array, dbus_session_socket);
     }
+  else if (dbus_proxy_argv && dbus_address != NULL)
+    {
+      g_autofree char *proxy_socket = create_proxy_socket ("session-bus-proxy-XXXXXX");
+
+      if (proxy_socket == NULL)
+	return;
+
+      g_ptr_array_add (dbus_proxy_argv, g_strdup (dbus_address));
+      g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
+
+      g_ptr_array_add (argv_array, g_strdup ("-d"));
+      g_ptr_array_add (argv_array, g_strdup (proxy_socket));
+    }
 }
 
 void
 xdg_app_run_add_environment_args (GPtrArray *argv_array,
+				  GPtrArray *dbus_proxy_argv,
 				  GKeyFile *metakey,
 				  const char **allow,
 				  const char **forbid)
@@ -239,14 +287,14 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       !g_strv_contains (forbid, "system-dbus"))
     {
       g_debug ("Allowing system-dbus access");
-      xdg_app_run_add_system_dbus_args (argv_array);
+      xdg_app_run_add_system_dbus_args (argv_array, dbus_proxy_argv);
     }
 
   if ((g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL) || g_strv_contains (allow, "session-dbus")) &&
       !g_strv_contains (forbid, "session-dbus"))
     {
       g_debug ("Allowing session-dbus access");
-      xdg_app_run_add_session_dbus_args (argv_array);
+      xdg_app_run_add_session_dbus_args (argv_array, dbus_proxy_argv);
     }
 
   g_assert (sizeof(opts) > i);
