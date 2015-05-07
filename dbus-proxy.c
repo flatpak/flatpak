@@ -24,12 +24,40 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "libglnx/libglnx.h"
 
 #include "xdg-app-proxy.h"
 
 GList *proxies;
+int sync_fd = -1;
+
+int
+parse_generic_args (int n_args, const char *args[])
+{
+  if (g_str_has_prefix (args[0], "--fd="))
+    {
+      const char *fd_s = args[0] + strlen("--fd=");
+      char *endptr;
+      int fd;
+
+      fd = strtol (fd_s, &endptr, 10);
+      if (fd < 0 || endptr == fd_s || *endptr != 0)
+        {
+          g_printerr ("Invalid fd %s\n", fd_s);
+          return -1;
+        }
+      sync_fd = fd;
+
+      return 1;
+    }
+  else
+    {
+      g_printerr ("Unknown argument %s\n", args[0]);
+      return -1;
+    }
+}
 
 int
 start_proxy (int n_args, const char *args[])
@@ -102,8 +130,11 @@ start_proxy (int n_args, const char *args[])
         }
       else
         {
-          g_printerr ("Unknown argument %s\n", args[n]);
-          return -1;
+          int res = parse_generic_args (n_args - n, &args[n]);
+          if (res == -1)
+            return -1;
+
+          n += res - 1; /* res - 1, because we ++ below */
         }
 
       n++;
@@ -120,6 +151,14 @@ start_proxy (int n_args, const char *args[])
   return n;
 }
 
+static gboolean
+sync_closed_cb (GIOChannel   *source,
+                GIOCondition  condition,
+                gpointer      data)
+{
+  exit (0);
+  return TRUE;
+}
 
 int
 main (int argc, const char *argv[])
@@ -133,18 +172,41 @@ main (int argc, const char *argv[])
 
   while (n_args > 0)
     {
-      res = start_proxy (n_args, args);
-      if (res == -1)
-        return 1;
+      if (args[0][0] == '-')
+        {
+          res = parse_generic_args (n_args, &args[0]);
+          if (res == -1)
+            return 1;
+        }
+      else
+        {
+          res = start_proxy (n_args, args);
+          if (res == -1)
+            return 1;
+        }
 
+      g_assert (res > 0);
       n_args -= res;
-      args += n_args;
+      args += res;
     }
 
   if (proxies == NULL)
     {
       g_printerr ("No proxies specied\n");
       return 1;
+    }
+
+  if (sync_fd >= 0)
+    {
+      ssize_t written;
+      GIOChannel *sync_channel;
+      written = write (sync_fd, "x", 1);
+      if (written != 1)
+        g_warning ("Can't write to sync socket");
+
+      sync_channel = g_io_channel_unix_new (sync_fd);
+      g_io_add_watch (sync_channel, G_IO_ERR | G_IO_HUP,
+                      sync_closed_cb, NULL);
     }
 
   service_loop = g_main_loop_new (NULL, FALSE);
