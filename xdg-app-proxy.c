@@ -82,7 +82,7 @@
  *
  * TALK:
  *    You can send method calls and signals to the name/id
- *    You will receive signals from the name/id (if you have a match rule for them)
+ *    You will receive broadcast signals from the name/id (if you have a match rule for them)
  *    You can call StartServiceByName on the name
  *
  * OWN:
@@ -95,10 +95,10 @@
  * Every peer on the bus is considered priviledged, and we thus trust
  * it. So we rely on similar proxies to be running for all untrusted
  * clients. Any such priviledged peer is allowed to send method call
- * messages to the proxied client. Once another peer sends you a
- * message that peer unique id is now made visible (policy SEE) to the
- * proxied client, allowing it the client to track caller lifetimes
- * via NameOwnerChanged signals..
+ * or unicast signal messages to the proxied client. Once another peer
+ * sends you a message that peer unique id is now made visible (policy
+ * SEE) to the proxied client, allowing it the client to track caller
+ * lifetimes via NameOwnerChanged signals.
  *
  * Differences to kdbus custom endpoint policies:
  *
@@ -1813,8 +1813,8 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 	    }
 	}
 
-      /* All incomming signals are filtered according to policy */
-      if (header.type == G_DBUS_MESSAGE_TYPE_SIGNAL)
+      /* All incoming broadcast signals are filtered according to policy */
+      if (header.type == G_DBUS_MESSAGE_TYPE_SIGNAL && header.destination == NULL)
 	{
 	  policy = xdg_app_proxy_client_get_policy (client, header.sender);
 	  if (policy < XDG_APP_POLICY_TALK)
