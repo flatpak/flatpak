@@ -445,6 +445,9 @@ xdg_app_proxy_finalize (GObject *object)
   g_hash_table_destroy (proxy->policy);
   g_hash_table_destroy (proxy->wildcard_policy);
 
+  g_free (proxy->socket_path);
+  g_free (proxy->dbus_address);
+
   G_OBJECT_CLASS (xdg_app_proxy_parent_class)->finalize (object);
 }
 
