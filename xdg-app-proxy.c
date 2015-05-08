@@ -1805,7 +1805,17 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 	}
       else /* Not reply */
 	{
-	  /* We filter all NameOwnerChanged signal according to the policy */
+
+          /* Don't allow reply types with no reply_serial */
+          if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN ||
+              header.type == G_DBUS_MESSAGE_TYPE_ERROR)
+            {
+	      if (client->proxy->log_messages)
+		g_print ("*Invalid reply*\n");
+              g_clear_pointer (&buffer, buffer_free);
+            }
+
+          /* We filter all NameOwnerChanged signal according to the policy */
 	  if (message_is_name_owner_changed (client, &header))
 	    {
 	      if (should_filter_name_owner_changed (client, buffer))
