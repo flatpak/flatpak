@@ -436,6 +436,9 @@ xdg_app_proxy_finalize (GObject *object)
 {
   XdgAppProxy *proxy = XDG_APP_PROXY (object);
 
+  if (g_socket_service_is_active (G_SOCKET_SERVICE (proxy)))
+    unlink (proxy->socket_path);
+
   g_clear_pointer (&proxy->dbus_address, g_free);
   g_assert (proxy->clients == NULL);
 
@@ -2059,4 +2062,12 @@ xdg_app_proxy_start (XdgAppProxy *proxy, GError **error)
 
   g_socket_service_start (G_SOCKET_SERVICE (proxy));
   return TRUE;
+}
+
+void
+xdg_app_proxy_stop (XdgAppProxy *proxy)
+{
+  unlink (proxy->socket_path);
+
+  g_socket_service_stop (G_SOCKET_SERVICE (proxy));
 }

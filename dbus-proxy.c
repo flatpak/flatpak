@@ -156,6 +156,11 @@ sync_closed_cb (GIOChannel   *source,
                 GIOCondition  condition,
                 gpointer      data)
 {
+  GList *l;
+
+  for (l = proxies; l != NULL; l = l->next)
+    xdg_app_proxy_stop (XDG_APP_PROXY (l->data));
+
   exit (0);
   return TRUE;
 }
