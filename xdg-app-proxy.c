@@ -28,35 +28,144 @@
 #include <gio/gunixfdmessage.h>
 
 /**
+ * The proxy listens to a unix domain socket, and for each new
+ * connection it opens up a new connection to a specified dbus bus
+ * address (typically the session bus) and forwards data between the
+ * two.  During the authentication phase all data is forwarded as
+ * received, and additionally for the first 1 byte zero we also send
+ * the proxy credentials to the bus.
+ *
+ * Once the connection is authenticated there are two modes, filtered
+ * and unfiltered. In the unfiltered mode we just send all messages on
+ * as we receive, but in the in the filtering mode we apply a policy,
+ * which is similar to the policy supported by kdbus.
+ *
+ * The policy for the filtering consists of a mapping from well known
+ * names to a policy that is either SEE, TALK or OWN. The default
+ * initial policy is that the the user is only allowed to TALK to the
+ * bus itself (org.freedesktop.DBus, or no destination specified), and
+ * TALK to its own unique id. All other clients are invisible. The
+ * well known names can be specified exactly, or as a simple one-level
+ * wildcard like "org.foo.*" which matches "org.foo.bar", but not
+ * "org.foobar" or "org.foo.bar.gazonk".
+ *
+ * Polices are specified for well known names, but they also affect
+ * the owner of that name, so that the policy for a unique id is the
+ * superset of the polices for all the names it owns. Due to technical
+ * reasons the policies for a name are only in effect once the client
+ * is told of them in the course of normal communications. For
+ * instance, there is no way the proxy could know that :1.55 owns
+ * org.freedesktop.ScreenSaver until it has sent a message to the name
+ * and got a reply to it, or it has called GetNameOwner, so :1.55 will
+ * be invisible until such a call happens, but then it will get
+ * assigned the policy based on the org.freedesktop.ScreenSaver
+ * policy.
+ *
+ * Additionally, the policy for a unique name is "sticky", in that we
+ * keep the highest policy granted by a once-owned name even when the
+ * client releases that name. This is impossible to avoid in a
+ * race-free way in a proxy. But this is rarely a problem in practice,
+ * as clients rarely release names and stay on the bus.
+ *
+ * Here is a desciption of the policy levels:
+ * (all policy levels also imply the ones before it)
+ *
+ *  SEE:
+ *    The name/id is visible in the ListNames reply
+ *    The name/id is visible in the ListActivatableNames reply
+ *    You can call GetNameOwner on the name
+ *    You can call NameHasOwner on the name
+ *    You see NameOwnerChanged signals on the name
+ *    You see NameOwnerChanged signals on the client when it disconnects
+ *    You can call the GetXXX methods on the name/id to get e.g. the peer pid
+ *    You get AccessDenied rather than NameHasNoOwner when sending messages to the name/id
+ *
+ * TALK:
+ *    You can send method calls and signals to the name/id
+ *    You will receive signals from the name/id (if you have a match rule for them)
+ *    You can call StartServiceByName on the name
+ *
+ * OWN:
+ *    You are allowed to call RequestName/ReleaseName/ListQueuedOwners on the name.
+ *
+ * The policy apply only to signals and method calls. All replies
+ * (errors or method returns) are allowed once for an outstanding
+ * method call, and never otherwise.
+ *
+ * Every peer on the bus is considered priviledged, and we thus trust
+ * it. So we rely on similar proxies to be running for all untrusted
+ * clients. Any such priviledged peer is allowed to send method call
+ * messages to the proxied client. Once another peer sends you a
+ * message that peer unique id is now made visible (policy SEE) to the
+ * proxied client, allowing it the client to track caller lifetimes
+ * via NameOwnerChanged signals..
+ *
+ * Differences to kdbus custom endpoint policies:
+ *
+ *  * The proxy will return the credentials (like pid) of the proxy,
+ *    not the real client.
+ *
+ *  * Only the names this client has seen so far that a peer owns
+ *    affect the policy.
+ *
+ *  * Policy is not dropped when a peer releases a name.
+ *
+ *  * Peers that call you become visible (SEE) (and get signals for
+ *    NameOwnerChange disconnect) In kdbus currently custom endpoints
+ *    never get NameOwnerChange signals for unique ids, but this is
+ *    problematic as it disallows a services to track lifetimes of its
+ *    clients.
+ *
  * Mode of operation
  *
- * The proxy listens to a unix domain socket, and for each new connection it opens up
- * a new connection to the session bus and forwards data between the two.
- * During the authentication phase all data is sent, and in the first 1 byte zero we
- * also send the proxy credentials to the bus. This means the bus will know the pid
- * of the proxy as the pid of the app, unfortunately.
+ * Once authenticated we receive incoming messagages one at a time,
+ * and then we demarshal the message headers to make routing decisions
+ * on. This means we trust the bus bus to do message format validation
+ * etc (because we don't parse the body). Also we assume that the bus
+ * verifies reply_serials, i.e. that a reply can only be sent once and
+ * by the real recipient of an previously sent method call.
  *
- * After authentication we parse incoming dbus messages and do some minor validation
- * of the message headers. We then apply the policy to the header which may cause
- * us to drop or rewrite messages.
+ * We don't however trust the serials from the client. We verify that
+ * they are strictly increasing to make sure the code is not confused
+ * by serials being reused.
  *
- * Each well known name on the bus can have a policy of NONE, SEE, TALK, and OWN.
- * NONE means you can't see this name, nor send or receive messages from it.
- * SEE means you get told about the existance of this name and can get info about it.
- * TALK means you can also send and receive messages to the owner of the name
- * OWN means you can also aquire ownership of the name
+ * The filter is strictly passive, in that we never construct our own
+ * requests. For each message received from the client we look up the
+ * type and the destination policy and make a decision to either pass
+ * it on as is, rewrite it before passing on (for instance ListName
+ * replies), drop it completely, or return a made up reply/error to
+ * the sender.
  *
- * Policy is specified on the well known name, but clients are also allowed to
- * send directly to the unique id. To handle this we track all outgoing messages
- * sent to a well known name, and if we get a reply to it we record unique id that
- * replied to the message and apply the policy of the name to that unique id.
- * We also parse all NameOwnerChanged signals from the bus and update the policy
- * similarly.
+ * When returning a made up reply we replace the actual message with a
+ * Ping request to the bus with the same serial and replace the
+ * resulting reply with the made up reply (with the serial from the
+ * ping reply). This means we keep the strict message ordering and
+ * serial numbers of the bus.
  *
- * This means that each unique id destination effectively gets the
- * maximum policy of each of the names it has at one point owned. The fact
- * that dropping the name does not lower the policy is unfortunate, but it
- * is essentially impossible to avoid this (at least for some time) due to races.
+ * Policy is applied to unique ids in the following cases:
+ *  * When we get a method call from a unique id, it gets SEE
+ *  * When we do a method call on a well known name, we take
+ *    the unique id from the reply and apply the policy of the
+ *    name to it.
+ *  * If we get a response from GetNameOwner we apply to that
+ *    unique id the policy of the name.
+ *  * When we get a reply to the initial Hello request we give
+ *    our own assigned unique id TALK.
+ *
+ * All messages sent to the bus itself are fully demarshalled
+ * and handled on a per-method basis:
+ *
+ * Hello, AddMatch, RemoveMatch, GetId: Always allowed
+ * ListNames, ListActivatableNames: Always allowed, but response filtered
+ * UpdateActivationEnvironment, BecomeMonitor: Always denied
+ * RequestName, ReleaseName, ListQueuedOwners: Only allowed if arg0 is a name with policy OWN
+ * NameHasOwner, GetNameOwner: Only pass on if arg0 is a name with policy SEE, otherwise return fake reply
+ * StartServiceByName: Only allowed if policy TALK on arg0
+ * GetConnectionUnixProcessID, GetConnectionCredentials,
+ *  GetAdtAuditSessionData, GetConnectionSELinuxSecurityContext,
+ *  GetConnectionUnixUser: Allowed if policy SEE on arg0
+ *
+ * For unknown methods, we return a fake error.
  *
  */
 
