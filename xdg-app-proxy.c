@@ -1443,14 +1443,16 @@ should_filter_name_owner_changed (XdgAppProxyClient *client, Buffer *buffer)
   old = g_variant_get_string (arg1, NULL);
   new = g_variant_get_string (arg2, NULL);
 
-  if (name[0] != ':' &&
-      xdg_app_proxy_client_get_policy (client, name) > XDG_APP_POLICY_SEE)
+  if (xdg_app_proxy_client_get_policy (client, name) >= XDG_APP_POLICY_SEE)
     {
-      if (old[0] != 0)
-        xdg_app_proxy_client_update_unique_id_policy_from_name (client, old, name);
+      if (name[0] != ':')
+        {
+          if (old[0] != 0)
+            xdg_app_proxy_client_update_unique_id_policy_from_name (client, old, name);
 
-      if (new[0] != 0)
-        xdg_app_proxy_client_update_unique_id_policy_from_name (client, new, name);
+          if (new[0] != 0)
+            xdg_app_proxy_client_update_unique_id_policy_from_name (client, new, name);
+        }
 
       filter = FALSE;
     }
@@ -1834,6 +1836,11 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 	      g_clear_pointer (&buffer, buffer_free);
 	    }
 	}
+
+      /* We received and forwarded a message from a trusted peer. Make the policy for
+         this unique id SEE so that the client can track its lifetime. */
+      if (buffer && header.sender && header.sender[0] == ':')
+        xdg_app_proxy_client_update_unique_id_policy (client, header.sender, XDG_APP_POLICY_SEE);
 
       if (buffer && client_message_generates_reply (&header))
 	queue_expected_reply (side, header.serial, EXPECTED_REPLY_NORMAL);
