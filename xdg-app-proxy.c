@@ -67,7 +67,7 @@
  *    You can call GetNameOwner on the name
  *    You can call NameHasOwner on the name
  *    You see NameOwnerChanged signals on the name
- *    You see NameOwnerChanged signals on the client when it disconnects
+ *    You see NameOwnerChanged signals on the id when the client disconnects
  *    You can call the GetXXX methods on the name/id to get e.g. the peer pid
  *    You get AccessDenied rather than NameHasNoOwner when sending messages to the name/id
  *
@@ -79,7 +79,7 @@
  * OWN:
  *    You are allowed to call RequestName/ReleaseName/ListQueuedOwners on the name.
  *
- * The policy apply only to signals and method calls. All replies
+ * The policy applies only to signals and method calls. All replies
  * (errors or method returns) are allowed once for an outstanding
  * method call, and never otherwise.
  *
@@ -87,9 +87,9 @@
  * it. So we rely on similar proxies to be running for all untrusted
  * clients. Any such priviledged peer is allowed to send method call
  * or unicast signal messages to the proxied client. Once another peer
- * sends you a message that peer unique id is now made visible (policy
- * SEE) to the proxied client, allowing it the client to track caller
- * lifetimes via NameOwnerChanged signals.
+ * sends you a message the unique id of that peer is now made visible
+ * (policy SEE) to the proxied client, allowing the client to track
+ * caller lifetimes via NameOwnerChanged signals.
  *
  * Differences to kdbus custom endpoint policies:
  *
@@ -107,11 +107,12 @@
  * Mode of operation
  *
  * Once authenticated we receive incoming messagages one at a time,
- * and then we demarshal the message headers to make routing decisions
- * on. This means we trust the bus bus to do message format validation
- * etc (because we don't parse the body). Also we assume that the bus
- * verifies reply_serials, i.e. that a reply can only be sent once and
- * by the real recipient of an previously sent method call.
+ * and then we demarshal the message headers to make routing
+ * decisions.  This means we trust the bus bus to do message format
+ * validation etc (because we don't parse the body). Also we assume
+ * that the bus verifies reply_serials, i.e. that a reply can only be
+ * sent once and by the real recipient of an previously sent method
+ * call.
  *
  * We don't however trust the serials from the client. We verify that
  * they are strictly increasing to make sure the code is not confused
@@ -138,14 +139,19 @@
  * serial numbers of the bus.
  *
  * Policy is applied to unique ids in the following cases:
+ *  * During startup we AddWatch for signals on all policy names
+ *    and wildcards (using arg0namespace) so that we get
+ *    NameOwnerChanged events which we use to update the unique
+ *    id policies.
+ *  * During startup we create synthetic GetNameOwner for all
+ *    normal policy name, and if there are wildcarded names we
+ *    create a syntehtic ListNames and use the results of that
+ *    to do furthe GetNameOwner for the existing names matching
+ *    the wildcards. When we get replies for the GetNameOwner
+ *    requests the unique id policy is updated.
  *  * When we get a method call from a unique id, it gets SEE
- *  * When we do a method call on a well known name, we take
- *    the unique id from the reply and apply the policy of the
- *    name to it.
- *  * If we get a response from GetNameOwner we apply to that
- *    unique id the policy of the name.
  *  * When we get a reply to the initial Hello request we give
- *    our own assigned unique id TALK.
+ *    our own assigned unique id policy TALK.
  *
  * All messages sent to the bus itself are fully demarshalled
  * and handled on a per-method basis:
@@ -154,13 +160,13 @@
  * ListNames, ListActivatableNames: Always allowed, but response filtered
  * UpdateActivationEnvironment, BecomeMonitor: Always denied
  * RequestName, ReleaseName, ListQueuedOwners: Only allowed if arg0 is a name with policy OWN
- * NameHasOwner, GetNameOwner: Only pass on if arg0 is a name with policy SEE, otherwise return fake reply
+ * NameHasOwner, GetNameOwner: Only pass on if arg0 is a name with policy SEE, otherwise return syntethic reply
  * StartServiceByName: Only allowed if policy TALK on arg0
  * GetConnectionUnixProcessID, GetConnectionCredentials,
  *  GetAdtAuditSessionData, GetConnectionSELinuxSecurityContext,
  *  GetConnectionUnixUser: Allowed if policy SEE on arg0
  *
- * For unknown methods, we return a fake error.
+ * For unknown methods, we return a synthetic error.
  *
  */
 
