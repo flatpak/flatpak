@@ -52,16 +52,7 @@
  * Polices are specified for well known names, but they also affect
  * the owner of that name, so that the policy for a unique id is the
  * superset of the polices for all the names it owns. Due to technical
- * reasons the policies for a name are only in effect once the client
- * is told of them in the course of normal communications. For
- * instance, there is no way the proxy could know that :1.55 owns
- * org.freedesktop.ScreenSaver until it has sent a message to the name
- * and got a reply to it, or it has called GetNameOwner, so :1.55 will
- * be invisible until such a call happens, but then it will get
- * assigned the policy based on the org.freedesktop.ScreenSaver
- * policy.
- *
- * Additionally, the policy for a unique name is "sticky", in that we
+ * reasons the policy for a unique name is "sticky", in that we
  * keep the highest policy granted by a once-owned name even when the
  * client releases that name. This is impossible to avoid in a
  * race-free way in a proxy. But this is rarely a problem in practice,
@@ -129,12 +120,19 @@
  * they are strictly increasing to make sure the code is not confused
  * by serials being reused.
  *
- * The filter is strictly passive, in that we never construct our own
- * requests. For each message received from the client we look up the
- * type and the destination policy and make a decision to either pass
- * it on as is, rewrite it before passing on (for instance ListName
- * replies), drop it completely, or return a made up reply/error to
- * the sender.
+ * In order to track the ownership of the allowed names we hijack the
+ * connection after the initial Hello message, sending AddMatch,
+ * ListNames and GetNameOwner messages to get a proper view of who
+ * owns the names atm. Then we listen to NameOwnerChanged events for
+ * further updates. This causes a slight offset between serials in the
+ * client and serials as seen by the bus.
+ *
+ * After that the filter is strictly passive, in that we never
+ * construct our own requests. For each message received from the
+ * client we look up the type and the destination policy and make a
+ * decision to either pass it on as is, rewrite it before passing on
+ * (for instance ListName replies), drop it completely, or return a
+ * made up reply/error to the sender.
  *
  * When returning a made up reply we replace the actual message with a
  * Ping request to the bus with the same serial and replace the
