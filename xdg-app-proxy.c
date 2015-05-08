@@ -96,9 +96,6 @@
  *  * The proxy will return the credentials (like pid) of the proxy,
  *    not the real client.
  *
- *  * Only the names this client has seen so far that a peer owns
- *    affect the policy.
- *
  *  * Policy is not dropped when a peer releases a name.
  *
  *  * Peers that call you become visible (SEE) (and get signals for
@@ -177,6 +174,7 @@ typedef enum {
   EXPECTED_REPLY_HELLO,
   EXPECTED_REPLY_FILTER,
   EXPECTED_REPLY_FAKE_GET_NAME_OWNER,
+  EXPECTED_REPLY_FAKE_LIST_NAMES,
   EXPECTED_REPLY_LIST_NAMES,
   EXPECTED_REPLY_REWRITE,
 } ExpectedReplyType;
@@ -292,6 +290,9 @@ GType xdg_app_proxy_client_get_type (void);
 G_DEFINE_TYPE (XdgAppProxy, xdg_app_proxy, G_TYPE_SOCKET_SERVICE)
 G_DEFINE_TYPE (XdgAppProxyClient, xdg_app_proxy_client, G_TYPE_OBJECT)
 
+static void start_reading (ProxySide *side);
+static void stop_reading (ProxySide *side);
+
 static void
 buffer_free (Buffer *buffer)
 {
@@ -377,15 +378,13 @@ xdg_app_proxy_client_new (XdgAppProxy *proxy, GSocketConnection *connection)
   return client;
 }
 
-XdgAppPolicy
-xdg_app_proxy_get_policy (XdgAppProxy *proxy,
-                          const char *name)
+static XdgAppPolicy
+xdg_app_proxy_get_wildcard_policy (XdgAppProxy *proxy,
+                                   const char *name)
 {
-  guint policy, wildcard_policy;
+  guint wildcard_policy = 0;
   char *dot;
   char buffer[256];
-
-  policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->policy, name));
 
   dot = strrchr (name, '.');
   if (dot && (dot - name) <= 255)
@@ -393,10 +392,22 @@ xdg_app_proxy_get_policy (XdgAppProxy *proxy,
       strncpy (buffer, name, dot - name);
       buffer[dot-name] = 0;
       wildcard_policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->wildcard_policy, buffer));
-      policy = MAX (policy, wildcard_policy);
     }
 
-  return policy;
+  return wildcard_policy;
+}
+
+XdgAppPolicy
+xdg_app_proxy_get_policy (XdgAppProxy *proxy,
+                          const char *name)
+{
+  guint policy, wildcard_policy;
+
+  policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->policy, name));
+
+  wildcard_policy = xdg_app_proxy_get_wildcard_policy (proxy, name);
+
+  return MAX (policy, wildcard_policy);
 }
 
 void
@@ -1551,6 +1562,21 @@ update_socket_messages (ProxySide *side, Buffer *buffer, Header *header)
   return TRUE;
 }
 
+static void
+queue_fake_message (XdgAppProxyClient *client, GDBusMessage *message, ExpectedReplyType reply_type)
+{
+  Buffer *buffer;
+
+  client->last_serial++;
+  client->serial_offset++;
+  g_dbus_message_set_serial (message, client->last_serial);
+  buffer = message_to_buffer (message);
+  g_object_unref (message);
+
+  queue_outgoing_buffer (&client->bus_side, buffer);
+  queue_expected_reply (&client->client_side, client->last_serial, reply_type);
+}
+
 /* After the first Hello message we need to synthesize a bunch of messages to synchronize the
    ownership state for the names in the policy */
 static void
@@ -1558,13 +1584,13 @@ queue_initial_name_ops (XdgAppProxyClient *client)
 {
   GHashTableIter iter;
   gpointer key, value;
+  gboolean has_wildcards = FALSE;
 
   g_hash_table_iter_init (&iter, client->proxy->policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       const char *name = key;
       GDBusMessage *message;
-      Buffer *buffer;
       GVariant *match;
 
       if (strcmp (name, "org.freedesktop.DBus") == 0)
@@ -1572,34 +1598,22 @@ queue_initial_name_ops (XdgAppProxyClient *client)
 
       /* AddMatch the name so we get told about ownership changes.
          Do it before the GetNameOwner to avoid races */
-      client->last_serial++;
-      client->serial_offset++;
       message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "AddMatch");
-      g_dbus_message_set_serial (message, client->last_serial);
       match = g_variant_new_printf ("type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0='%s'", name);
       g_dbus_message_set_body (message, g_variant_new_tuple (&match, 1));
-      buffer = message_to_buffer (message);
-      g_object_unref (message);
+      queue_fake_message (client, message, EXPECTED_REPLY_FILTER);
 
       if (client->proxy->log_messages)
         g_print ("C%d: -> org.freedesktop.DBus fake AddMatch for %s\n", client->last_serial, name);
-      queue_outgoing_buffer (&client->bus_side, buffer);
-      queue_expected_reply (&client->client_side, client->last_serial, EXPECTED_REPLY_FILTER);
 
       /* Get the current owner of the name (if any) so we can apply policy to it */
-      client->last_serial++;
-      client->serial_offset++;
       message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetNameOwner");
-      g_dbus_message_set_serial (message, client->last_serial);
       g_dbus_message_set_body (message, g_variant_new ("(s)", name));
-      buffer = message_to_buffer (message);
-      g_object_unref (message);
+      queue_fake_message (client, message, EXPECTED_REPLY_FAKE_GET_NAME_OWNER);
+      g_hash_table_replace (client->get_owner_reply, GINT_TO_POINTER (client->last_serial), g_strdup (name));
 
       if (client->proxy->log_messages)
         g_print ("C%d: -> org.freedesktop.DBus fake GetNameOwner for %s\n", client->last_serial, name);
-      queue_outgoing_buffer (&client->bus_side, buffer);
-      queue_expected_reply (&client->client_side, client->last_serial, EXPECTED_REPLY_FAKE_GET_NAME_OWNER);
-      g_hash_table_replace (client->get_owner_reply, GINT_TO_POINTER (client->last_serial), g_strdup (name));
     }
 
   /* Same for wildcard proxies. Only here we don't know the actual names to GetNameOwner for, so we have to
@@ -1609,32 +1623,80 @@ queue_initial_name_ops (XdgAppProxyClient *client)
     {
       const char *name = key;
       GDBusMessage *message;
-      Buffer *buffer;
       GVariant *match;
 
-      if (strcmp (name, "org.freedesktop.DBus") == 0)
-        continue;
+      has_wildcards = TRUE;
+
+      /* AddMatch the name with arg0namespace so we get told about ownership changes to all subnames.
+         Do it before the GetNameOwner to avoid races */
+      message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "AddMatch");
+      match = g_variant_new_printf ("type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0namespace='%s'", name);
+      g_dbus_message_set_body (message, g_variant_new_tuple (&match, 1));
+      queue_fake_message (client, message, EXPECTED_REPLY_FILTER);
+
+      if (client->proxy->log_messages)
+        g_print ("C%d: -> org.freedesktop.DBus fake AddMatch for %s.*\n", client->last_serial, name);
+    }
+
+  if (has_wildcards)
+    {
+      GDBusMessage *message;
 
       /* AddMatch the name so we get told about ownership changes.
          Do it before the GetNameOwner to avoid races */
-      client->last_serial++;
-      client->serial_offset++;
-      message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "AddMatch");
-      g_dbus_message_set_serial (message, client->last_serial);
-      match = g_variant_new_printf ("type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0namespace='%s'", name);
-      g_dbus_message_set_body (message, g_variant_new_tuple (&match, 1));
-      buffer = message_to_buffer (message);
-      g_object_unref (message);
+      message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "ListNames");
+      g_dbus_message_set_body (message, g_variant_new ("()"));
+      queue_fake_message (client, message, EXPECTED_REPLY_FAKE_LIST_NAMES);
 
       if (client->proxy->log_messages)
-        g_print ("C%d: -> org.freedesktop.DBus fake AddMatch for %s\n", client->last_serial, name);
-      queue_outgoing_buffer (&client->bus_side, buffer);
-      queue_expected_reply (&client->client_side, client->last_serial, EXPECTED_REPLY_FILTER);
+        g_print ("C%d: -> org.freedesktop.DBus fake ListNames\n", client->last_serial);
 
-      /* TODO: List all the current names and getnameowner on each of them */
+      /* Stop reading from the client, to avoid incomming messages fighting with the ListNames roundtrip.
+         We will start it again once we have handled the ListNames reply */
+      stop_reading (&client->client_side);
+    }
+}
+
+static void
+queue_wildcard_initial_name_ops (XdgAppProxyClient *client, Header *header, Buffer *buffer)
+{
+  GDBusMessage *decoded_message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
+  GVariant *body, *arg0;
+
+  if (decoded_message != NULL &&
+      header->type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN &&
+      (body = g_dbus_message_get_body (decoded_message)) != NULL &&
+      (arg0 = g_variant_get_child_value (body, 0)) != NULL &&
+      g_variant_is_of_type (arg0, G_VARIANT_TYPE_STRING_ARRAY))
+    {
+      const gchar **names = g_variant_get_strv (arg0, NULL);
+      int i;
+
+      /* Loop over all current names and get the owner for all the ones that match our wildcard
+         policies so that we can update the unique id policies for those */
+      for (i = 0; names[i] != NULL; i++)
+        {
+          const char *name = names[i];
+
+          if (name[0] != ':' &&
+              xdg_app_proxy_get_wildcard_policy (client->proxy, name) != XDG_APP_POLICY_NONE)
+            {
+              /* Get the current owner of the name (if any) so we can apply policy to it */
+              GDBusMessage *message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetNameOwner");
+              g_dbus_message_set_body (message, g_variant_new ("(s)", name));
+              queue_fake_message (client, message, EXPECTED_REPLY_FAKE_GET_NAME_OWNER);
+              g_hash_table_replace (client->get_owner_reply, GINT_TO_POINTER (client->last_serial), g_strdup (name));
+
+              if (client->proxy->log_messages)
+                g_print ("C%d: -> org.freedesktop.DBus fake GetNameOwner for %s\n", client->last_serial, name);
+            }
+        }
+      g_free (names);
     }
 
+  g_object_unref (decoded_message);
 }
+
 
 static void
 got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
@@ -1862,6 +1924,22 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 				   GINT_TO_POINTER (header.reply_serial));
 	      break;
 
+	    case EXPECTED_REPLY_FAKE_LIST_NAMES:
+	      /* This is a reply from the bus to a fake ListNames
+		 request, request ownership of any name matching a
+                 wildcard policy */
+
+              queue_wildcard_initial_name_ops (client, &header, buffer);
+
+              /* Don't forward fake replies to the app */
+              if (client->proxy->log_messages)
+                g_print ("*SKIPPED*\n");
+              g_clear_pointer (&buffer, buffer_free);
+
+              /* Start reading the clients requests now that we are done with the names */
+              start_reading (&client->client_side);
+              break;
+
 	    case EXPECTED_REPLY_FAKE_GET_NAME_OWNER:
 	      /* This is a reply from the bus to a fake GetNameOwner
 		 request, update the policy for this unique name based on
@@ -1894,14 +1972,16 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 	    case EXPECTED_REPLY_LIST_NAMES:
 	      /* This is a reply from the bus to a ListNames request, filter
 		 it according to the policy */
-	      {
-		Buffer *filtered_buffer;
+              if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
+                {
+                  Buffer *filtered_buffer;
 
-		filtered_buffer = filter_names_list (client, buffer);
-		g_clear_pointer (&buffer, buffer_free);
-		buffer = filtered_buffer;
-		break;
-	      }
+                  filtered_buffer = filter_names_list (client, buffer);
+                  g_clear_pointer (&buffer, buffer_free);
+                  buffer = filtered_buffer;
+                }
+
+              break;
 
 	    case EXPECTED_REPLY_NORMAL:
 	      break;
@@ -2050,6 +2130,17 @@ start_reading (ProxySide *side)
   g_source_attach (side->in_source, NULL);
   g_source_unref (side->in_source);
 }
+
+static void
+stop_reading (ProxySide *side)
+{
+  if (side->in_source)
+    {
+      g_source_destroy (side->in_source);
+      side->in_source = NULL;
+    }
+}
+
 
 static void
 client_connected_to_dbus (GObject *source_object,
