@@ -31,7 +31,7 @@
  * The proxy listens to a unix domain socket, and for each new
  * connection it opens up a new connection to a specified dbus bus
  * address (typically the session bus) and forwards data between the
- * two.  During the authentication phase all data is forwarded as
+ * two. During the authentication phase all data is forwarded as
  * received, and additionally for the first 1 byte zero we also send
  * the proxy credentials to the bus.
  *
@@ -40,23 +40,23 @@
  * as we receive, but in the in the filtering mode we apply a policy,
  * which is similar to the policy supported by kdbus.
  *
- * The policy for the filtering consists of a mapping from well known
+ * The policy for the filtering consists of a mapping from well-known
  * names to a policy that is either SEE, TALK or OWN. The default
  * initial policy is that the the user is only allowed to TALK to the
  * bus itself (org.freedesktop.DBus, or no destination specified), and
  * TALK to its own unique id. All other clients are invisible. The
- * well known names can be specified exactly, or as a simple one-level
+ * well-known names can be specified exactly, or as a simple one-level
  * wildcard like "org.foo.*" which matches "org.foo.bar", but not
  * "org.foobar" or "org.foo.bar.gazonk".
  *
- * Polices are specified for well known names, but they also affect
+ * Polices are specified for well-known names, but they also affect
  * the owner of that name, so that the policy for a unique id is the
  * superset of the polices for all the names it owns. Due to technical
- * reasons the policy for a unique name is "sticky", in that we
- * keep the highest policy granted by a once-owned name even when the
- * client releases that name. This is impossible to avoid in a
- * race-free way in a proxy. But this is rarely a problem in practice,
- * as clients rarely release names and stay on the bus.
+ * reasons the policy for a unique name is "sticky", in that we keep
+ * the highest policy granted by a once-owned name even when the client
+ * releases that name. This is impossible to avoid in a race-free way
+ * in a proxy. But this is rarely a problem in practice, as clients
+ * rarely release names and stay on the bus.
  *
  * Here is a desciption of the policy levels:
  * (all policy levels also imply the ones before it)
@@ -106,13 +106,12 @@
  *
  * Mode of operation
  *
- * Once authenticated we receive incoming messagages one at a time,
- * and then we demarshal the message headers to make routing
- * decisions.  This means we trust the bus bus to do message format
- * validation etc (because we don't parse the body). Also we assume
- * that the bus verifies reply_serials, i.e. that a reply can only be
- * sent once and by the real recipient of an previously sent method
- * call.
+ * Once authenticated we receive incoming messages one at a time,
+ * and then we demarshal the message headers to make routing decisions.
+ * This means we trust the bus to do message format validation, etc.
+ * (because we don't parse the body). Also we assume that the bus verifies
+ * reply_serials, i.e. that a reply can only be sent once and by the real
+ * recipient of an previously sent method call.
  *
  * We don't however trust the serials from the client. We verify that
  * they are strictly increasing to make sure the code is not confused
@@ -130,25 +129,23 @@
  * client we look up the type and the destination policy and make a
  * decision to either pass it on as is, rewrite it before passing on
  * (for instance ListName replies), drop it completely, or return a
- * made up reply/error to the sender.
+ * made-up reply/error to the sender.
  *
- * When returning a made up reply we replace the actual message with a
- * Ping request to the bus with the same serial and replace the
- * resulting reply with the made up reply (with the serial from the
- * ping reply). This means we keep the strict message ordering and
- * serial numbers of the bus.
+ * When returning a made-up reply we replace the actual message with a
+ * Ping request to the bus with the same serial and replace the resulting
+ * reply with the made up reply (with the serial from the Ping reply).
+ * This means we keep the strict message ordering andserial numbers of
+ * the bus.
  *
  * Policy is applied to unique ids in the following cases:
- *  * During startup we AddWatch for signals on all policy names
- *    and wildcards (using arg0namespace) so that we get
- *    NameOwnerChanged events which we use to update the unique
- *    id policies.
- *  * During startup we create synthetic GetNameOwner for all
- *    normal policy name, and if there are wildcarded names we
- *    create a syntehtic ListNames and use the results of that
- *    to do furthe GetNameOwner for the existing names matching
- *    the wildcards. When we get replies for the GetNameOwner
- *    requests the unique id policy is updated.
+ *  * During startup we call AddWatch for signals on all policy names
+ *    and wildcards (using arg0namespace) so that we get NameOwnerChanged
+ *    events which we use to update the unique id policies.
+ *  * During startup we create synthetic GetNameOwner requests for all
+ *    normal policy names, and if there are wildcarded names we create a
+ *    synthetic ListNames request and use the results of that to do further
+ *    GetNameOwner for the existing names matching the wildcards. When we get
+ *    replies for the GetNameOwner requests the unique id policy is updated.
  *  * When we get a method call from a unique id, it gets SEE
  *  * When we get a reply to the initial Hello request we give
  *    our own assigned unique id policy TALK.
@@ -160,14 +157,13 @@
  * ListNames, ListActivatableNames: Always allowed, but response filtered
  * UpdateActivationEnvironment, BecomeMonitor: Always denied
  * RequestName, ReleaseName, ListQueuedOwners: Only allowed if arg0 is a name with policy OWN
- * NameHasOwner, GetNameOwner: Only pass on if arg0 is a name with policy SEE, otherwise return syntethic reply
+ * NameHasOwner, GetNameOwner: Only pass on if arg0 is a name with policy SEE, otherwise return synthetic reply
  * StartServiceByName: Only allowed if policy TALK on arg0
  * GetConnectionUnixProcessID, GetConnectionCredentials,
  *  GetAdtAuditSessionData, GetConnectionSELinuxSecurityContext,
  *  GetConnectionUnixUser: Allowed if policy SEE on arg0
  *
  * For unknown methods, we return a synthetic error.
- *
  */
 
 typedef struct XdgAppProxyClient XdgAppProxyClient;
