@@ -134,7 +134,7 @@
  * When returning a made-up reply we replace the actual message with a
  * Ping request to the bus with the same serial and replace the resulting
  * reply with the made up reply (with the serial from the Ping reply).
- * This means we keep the strict message ordering andserial numbers of
+ * This means we keep the strict message ordering and serial numbers of
  * the bus.
  *
  * Policy is applied to unique ids in the following cases:
