@@ -689,6 +689,7 @@ buffer_write (ProxySide *side,
     }
 
   g_list_free_full (buffer->control_messages, g_object_unref);
+  buffer->control_messages = NULL;
 
   buffer->pos += res;
   return buffer->pos == buffer->size;
