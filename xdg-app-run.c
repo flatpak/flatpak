@@ -305,26 +305,28 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
     }
 }
 
+static const struct {const char *env; const char *val;} default_exports[] = {
+  {"PATH","/self/bin:/usr/bin"},
+  {"_LD_LIBRARY_PATH", "/self/lib"},
+  {"XDG_CONFIG_DIRS","/self/etc/xdg:/etc/xdg"},
+  {"XDG_DATA_DIRS","/self/share:/usr/share"},
+  {"GI_TYPELIB_PATH","/self/lib/girepository-1.0"},
+  {"SHELL","/bin/sh"},
+};
+
+static const struct {const char *env; const char *val;} devel_exports[] = {
+  {"ACLOCAL_PATH","/self/share/aclocal"},
+  {"C_INCLUDE_PATH","/self/include"},
+  {"CPLUS_INCLUDE_PATH","/self/include"},
+  {"LDFLAGS","-L/self/lib "},
+  {"PKG_CONFIG_PATH","/self/lib/pkgconfig:/self/share/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig"},
+  {"LC_ALL","en_US.utf8"},
+};
+
 char **
 xdg_app_run_get_minimal_env (gboolean devel)
 {
   GPtrArray *env_array;
-  static const char const *exports[] = {
-    "PATH=/self/bin:/usr/bin",
-    "_LD_LIBRARY_PATH=/self/lib",
-    "XDG_CONFIG_DIRS=/self/etc/xdg:/etc/xdg",
-    "XDG_DATA_DIRS=/self/share:/usr/share",
-    "GI_TYPELIB_PATH=/self/lib/girepository-1.0",
-    "SHELL=/bin/sh",
-  };
-  static const char const *exports_devel[] = {
-    "ACLOCAL_PATH=/self/share/aclocal",
-    "C_INCLUDE_PATH=/self/include",
-    "CPLUS_INCLUDE_PATH=/self/include",
-    "LDFLAGS=-L/self/lib ",
-    "PKG_CONFIG_PATH=/self/lib/pkgconfig:/self/share/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig",
-    "LC_ALL=en_US.utf8",
-  };
   static const char const *copy[] = {
     "GDMSESSION",
     "XDG_CURRENT_DESKTOP",
@@ -360,13 +362,13 @@ xdg_app_run_get_minimal_env (gboolean devel)
 
   env_array = g_ptr_array_new_with_free_func (g_free);
 
-  for (i = 0; i < G_N_ELEMENTS(exports); i++)
-    g_ptr_array_add (env_array, g_strdup (exports[i]));
+  for (i = 0; i < G_N_ELEMENTS(default_exports); i++)
+    g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", default_exports[i].env, default_exports[i].val));
 
   if (devel)
     {
-      for (i = 0; i < G_N_ELEMENTS(exports_devel); i++)
-        g_ptr_array_add (env_array, g_strdup (exports_devel[i]));
+      for (i = 0; i < G_N_ELEMENTS(devel_exports); i++)
+        g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", devel_exports[i].env, devel_exports[i].val));
     }
 
   for (i = 0; i < G_N_ELEMENTS(copy); i++)
@@ -388,6 +390,35 @@ xdg_app_run_get_minimal_env (gboolean devel)
 
   g_ptr_array_add (env_array, NULL);
   return (char **)g_ptr_array_free (env_array, FALSE);
+}
+
+char **
+xdg_app_run_apply_env_default (char **envp)
+{
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS(default_exports); i++)
+    envp = g_environ_setenv (envp, default_exports[i].env, default_exports[i].val, TRUE);
+
+  return envp;
+}
+
+char **
+xdg_app_run_apply_env_appid (char       **envp,
+                             GFile       *app_dir)
+{
+  g_autoptr(GFile) app_dir_data = NULL;
+  g_autoptr(GFile) app_dir_config = NULL;
+  g_autoptr(GFile) app_dir_cache = NULL;
+
+  app_dir_data = g_file_get_child (app_dir, "data");
+  app_dir_config = g_file_get_child (app_dir, "config");
+  app_dir_cache = g_file_get_child (app_dir, "cache");
+  envp = g_environ_setenv (envp, "XDG_DATA_HOME", gs_file_get_path_cached (app_dir_data), TRUE);
+  envp = g_environ_setenv (envp, "XDG_CONFIG_HOME", gs_file_get_path_cached (app_dir_config), TRUE);
+  envp = g_environ_setenv (envp, "XDG_CACHE_HOME", gs_file_get_path_cached (app_dir_cache), TRUE);
+
+  return envp;
 }
 
 char **

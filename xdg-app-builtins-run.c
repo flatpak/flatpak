@@ -54,20 +54,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-typedef struct {
-  char *name;
-  char *value;
-} EnvVar;
-
-static void
-free_envvar (void *p)
-{
-  EnvVar *v = (EnvVar *) p;
-  g_free (v->name);
-  g_free (v->value);
-  g_free (v);
-}
-
 static void
 add_extension_arg (const char *directory,
 		   const char *type, const char *extension, const char *arch, const char *branch,
@@ -154,30 +140,6 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
 }
 
 static void
-add_env_overrides (GKeyFile *metakey, GPtrArray *env_array)
-{
-  gsize i, keys_count;
-  /* Only free the array of keys, not the actual values */
-  g_autofree char **keys;
-
-  if (!g_key_file_has_group (metakey, "Vars"))
-    return;
-
-  keys = g_key_file_get_keys (metakey, "Vars", &keys_count, NULL);
-  if (!keys)
-    return;
-
-  for (i = 0; i < keys_count; i++)
-    {
-        EnvVar *var = malloc (sizeof (EnvVar));
-        var->name = keys[i];
-        var->value = g_key_file_get_string (metakey, "Vars", keys[i], NULL);
-
-        g_ptr_array_add (env_array, var);
-    }
-}
-
-static void
 dbus_spawn_child_setup (gpointer user_data)
 {
   int fd = GPOINTER_TO_INT (user_data);
@@ -196,9 +158,6 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
-  g_autoptr(GFile) app_id_dir_data = NULL;
-  g_autoptr(GFile) app_id_dir_config = NULL;
-  g_autoptr(GFile) app_id_dir_cache = NULL;
   g_autoptr(XdgAppSessionHelper) session_helper = NULL;
   g_autofree char *runtime = NULL;
   g_autofree char *default_command = NULL;
@@ -208,7 +167,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
-  g_autoptr(GPtrArray) env_array = NULL;
+  glnx_strfreev char **envp = NULL;
   g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
   g_autofree char *monitor_path = NULL;
   const char *app;
@@ -290,17 +249,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (runtime_deploy == NULL)
     goto out;
 
-  env_array = g_ptr_array_new_with_free_func (free_envvar);
-
   runtime_metakey = xdg_app_deploy_get_metadata (runtime_deploy);
 
   if (!add_extension_args (runtime_metakey, runtime_ref, argv_array, cancellable, error))
     goto out;
-
-  add_env_overrides (runtime_metakey, env_array);
-
-  /* Load application environment overrides *after* runtime */
-  add_env_overrides (metakey, env_array);
 
   if ((app_id_dir = xdg_app_ensure_data_dir (app, cancellable, error)) == NULL)
       goto out;
@@ -398,29 +350,16 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   g_ptr_array_add (argv_array, NULL);
 
-  g_setenv ("PATH", "/self/bin:/usr/bin", TRUE);
-  g_setenv ("_LD_LIBRARY_PATH", "/self/lib", TRUE);
-  g_setenv ("XDG_CONFIG_DIRS","/self/etc/xdg:/etc/xdg", TRUE);
-  g_setenv ("XDG_DATA_DIRS", "/self/share:/usr/share", TRUE);
-  g_setenv ("GI_TYPELIB_PATH", "/self/lib/girepository-1.0", TRUE);
+  envp = g_get_environ ();
+  envp = xdg_app_run_apply_env_default (envp);
 
-  app_id_dir_data = g_file_get_child (app_id_dir, "data");
-  app_id_dir_config = g_file_get_child (app_id_dir, "config");
-  app_id_dir_cache = g_file_get_child (app_id_dir, "cache");
-  g_setenv ("XDG_DATA_HOME", gs_file_get_path_cached (app_id_dir_data), TRUE);
-  g_setenv ("XDG_CONFIG_HOME", gs_file_get_path_cached (app_id_dir_config), TRUE);
-  g_setenv ("XDG_CACHE_HOME", gs_file_get_path_cached (app_id_dir_cache), TRUE);
+  envp = xdg_app_run_apply_env_vars (envp, runtime_metakey);
+  /* Load application environment overrides *after* runtime */
+  envp = xdg_app_run_apply_env_vars (envp, metakey);
 
-  for (i = 0; i < env_array->len; i++)
-    {
-       EnvVar *var = g_ptr_array_index (env_array, i);
-       if (!var->value || !var->value[0])
-         g_unsetenv (var->name);
-       else
-         g_setenv (var->name, var->value, TRUE);
-    }
+  envp = xdg_app_run_apply_env_appid (envp, app_id_dir);
 
-  if (execv (HELPER, (char **)argv_array->pdata) == -1)
+  if (execvpe (HELPER, (char **)argv_array->pdata, envp) == -1)
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
       goto out;

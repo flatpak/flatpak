@@ -603,7 +603,7 @@ buffer_read (ProxySide *side,
     {
       if (res != 0)
         {
-          g_warning ("Error reading from socket: %s", error->message);
+          g_debug ("Error reading from socket: %s", error->message);
           g_error_free (error);
         }
 

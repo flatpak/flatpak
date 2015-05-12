@@ -31,6 +31,9 @@ void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,
 					      const char **allow,
 					      const char **forbid);
 char **  xdg_app_run_get_minimal_env         (gboolean     devel);
+char **  xdg_app_run_apply_env_default       (char       **envp);
+char **  xdg_app_run_apply_env_appid         (char       **envp,
+                                              GFile       *app_dir);
 char **  xdg_app_run_apply_env_vars          (char       **envp,
                                               GKeyFile    *metakey);
 
