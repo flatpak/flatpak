@@ -79,7 +79,7 @@ extract_unix_path_from_dbus_address (const char *address)
   return g_strndup (path, path_end - path);
 }
 
-void
+static void
 xdg_app_run_add_x11_args (GPtrArray *argv_array)
 {
   char *x11_socket = NULL;
@@ -102,7 +102,7 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
     }
 }
 
-void
+static void
 xdg_app_run_add_wayland_args (GPtrArray *argv_array)
 {
   char *wayland_socket = g_build_filename (g_get_user_runtime_dir (), "wayland-0", NULL);
@@ -115,7 +115,7 @@ xdg_app_run_add_wayland_args (GPtrArray *argv_array)
     g_free (wayland_socket);
 }
 
-void
+static void
 xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array)
 {
   char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
@@ -177,44 +177,119 @@ xdg_app_run_add_system_dbus_args (GPtrArray *argv_array,
     }
 }
 
-void
-xdg_app_run_add_session_dbus_args (GPtrArray *argv_array, GPtrArray *dbus_proxy_argv)
+gboolean
+xdg_app_run_add_session_dbus_args (GPtrArray *argv_array,
+                                   GPtrArray *dbus_proxy_argv,
+                                   gboolean unrestricted)
 {
   const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
   char *dbus_session_socket = NULL;
 
   if (dbus_address == NULL)
-    return;
+    return FALSE;
 
   dbus_session_socket = extract_unix_path_from_dbus_address (dbus_address);
-  if (dbus_session_socket != NULL)
+  if (dbus_session_socket != NULL && unrestricted)
     {
       g_ptr_array_add (argv_array, g_strdup ("-d"));
       g_ptr_array_add (argv_array, dbus_session_socket);
+
+      return TRUE;
     }
   else if (dbus_proxy_argv && dbus_address != NULL)
     {
       g_autofree char *proxy_socket = create_proxy_socket ("session-bus-proxy-XXXXXX");
 
       if (proxy_socket == NULL)
-	return;
+	return FALSE;
 
       g_ptr_array_add (dbus_proxy_argv, g_strdup (dbus_address));
       g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
 
       g_ptr_array_add (argv_array, g_strdup ("-d"));
       g_ptr_array_add (argv_array, g_strdup (proxy_socket));
+
+      return TRUE;
     }
+
+  return FALSE;
+}
+
+static void
+xdg_app_add_bus_filters_for_meta (GPtrArray *dbus_proxy_argv,
+                                  const char *header,
+                                  GKeyFile *metakey)
+{
+  glnx_strfreev char **keys = NULL;
+  gsize i, keys_count;
+
+  keys = g_key_file_get_keys (metakey, header, &keys_count, NULL);
+  if (keys)
+    {
+      for (i = 0; i < keys_count; i++)
+        {
+          const char *key = keys[i];
+          const char *key_part;
+          g_autofree char *tmp = NULL;
+          g_autofree char *value = g_key_file_get_string (metakey, header, key, NULL);
+
+          if (g_str_has_suffix (key, ".*"))
+            {
+              tmp = g_strndup (key, strlen (key) - 2);
+              key_part = tmp;
+            }
+          else
+            key_part = key;
+
+          if (!(g_dbus_is_name (key_part) && !g_dbus_is_unique_name (key_part)))
+            {
+              g_warning ("Invalid dbus name %s\n", key);
+              continue;
+            }
+
+          if (strcmp (value, "see") != 0 &&
+              strcmp (value, "talk") != 0 &&
+              strcmp (value, "own") != 0)
+            {
+              g_warning ("Invalid dbus policy: %s\n", value);
+              continue;
+            }
+
+          g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--%s=%s", value, key));
+        }
+    }
+}
+
+static void
+xdg_app_add_bus_filters (GPtrArray *dbus_proxy_argv,
+                         const char *app_id,
+                         GKeyFile *runtime_metakey,
+                         GKeyFile *metakey)
+{
+  g_ptr_array_add (dbus_proxy_argv, g_strdup ("--filter"));
+  g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s", app_id));
+  g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s.*", app_id));
+
+  xdg_app_add_bus_filters_for_meta (dbus_proxy_argv,
+                                    "Session Bus Policy",
+                                    runtime_metakey);
+  if (metakey)
+    xdg_app_add_bus_filters_for_meta (dbus_proxy_argv,
+                                      "Session Bus Policy",
+                                      metakey);
 }
 
 void
 xdg_app_run_add_environment_args (GPtrArray *argv_array,
 				  GPtrArray *dbus_proxy_argv,
+                                  const char *app_id,
+				  GKeyFile *runtime_metakey,
 				  GKeyFile *metakey,
 				  const char **allow,
 				  const char **forbid)
 {
   const char *no_opts[1] = { NULL };
+  gboolean unrestricted_session_bus;
   char opts[16];
   int i;
 
@@ -290,11 +365,20 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       xdg_app_run_add_system_dbus_args (argv_array, dbus_proxy_argv);
     }
 
+  unrestricted_session_bus =
+    (g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL) || g_strv_contains (allow, "session-dbus")) &&
+    !g_strv_contains (forbid, "session-dbus");
+  if (xdg_app_run_add_session_dbus_args (argv_array, dbus_proxy_argv, unrestricted_session_bus) &&
+      !unrestricted_session_bus && dbus_proxy_argv)
+    {
+      xdg_app_add_bus_filters (dbus_proxy_argv, app_id,
+                               runtime_metakey, metakey);
+    }
+
   if ((g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL) || g_strv_contains (allow, "session-dbus")) &&
       !g_strv_contains (forbid, "session-dbus"))
     {
       g_debug ("Allowing session-dbus access");
-      xdg_app_run_add_session_dbus_args (argv_array, dbus_proxy_argv);
     }
 
   g_assert (sizeof(opts) > i);

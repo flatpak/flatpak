@@ -74,6 +74,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   gsize metadata_size;
   const char *directory = NULL;
   const char *command = "/bin/sh";
+  g_autofree char *app_id = NULL;
   int i;
   int rest_argv_start, rest_argc;
 
@@ -115,6 +116,10 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     goto out;
 
+  app_id = g_key_file_get_string (metakey, "Application", "name", error);
+  if (app_id == NULL)
+    goto out;
+
   runtime = g_key_file_get_string (metakey, "Application", opt_runtime ? "runtime" : "sdk", error);
   if (runtime == NULL)
     goto out;
@@ -147,7 +152,8 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (!xdg_app_run_verify_environment_keys ((const char **)opt_allow, error))
     goto out;
 
-  xdg_app_run_add_environment_args (argv_array, NULL, metakey,
+  xdg_app_run_add_environment_args (argv_array, NULL, app_id,
+                                    runtime_metakey, metakey,
 				    (const char **)opt_allow,
 				    (const char **)opt_forbid);
 

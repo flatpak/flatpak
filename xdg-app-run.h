@@ -27,6 +27,8 @@ gboolean xdg_app_run_verify_environment_keys (const char **keys,
 					      GError     **error);
 void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,
 					      GPtrArray   *dbus_proxy_argv,
+                                              const char  *app_id,
+					      GKeyFile    *runtime_metakey,
 					      GKeyFile    *metakey,
 					      const char **allow,
 					      const char **forbid);
@@ -36,15 +38,6 @@ char **  xdg_app_run_apply_env_appid         (char       **envp,
                                               GFile       *app_dir);
 char **  xdg_app_run_apply_env_vars          (char       **envp,
                                               GKeyFile    *metakey);
-
-void xdg_app_run_add_x11_args          (GPtrArray *argv_array);
-void xdg_app_run_add_no_x11_args       (GPtrArray *argv_array);
-void xdg_app_run_add_wayland_args      (GPtrArray *argv_array);
-void xdg_app_run_add_pulseaudio_args   (GPtrArray *argv_array);
-void xdg_app_run_add_system_dbus_args  (GPtrArray *argv_array,
-					GPtrArray *dbus_proxy_argv);
-void xdg_app_run_add_session_dbus_args (GPtrArray *argv_array,
-					GPtrArray *dbus_proxy_argv);
 
 GFile *xdg_app_get_data_dir (const char *app_id);
 GFile *xdg_app_ensure_data_dir (const char *app_id,
