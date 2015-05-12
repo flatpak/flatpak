@@ -50,6 +50,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   GOptionContext *context;
   gboolean ret = FALSE;
   g_autoptr(XdgAppDir) user_dir = NULL;
+  g_autoptr(XdgAppDeploy) runtime_deploy = NULL;
   g_autoptr(GVariantBuilder) optbuilder = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) var = NULL;
@@ -57,7 +58,6 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(GFile) var_run = NULL;
   g_autoptr(GFile) app_deploy = NULL;
   g_autoptr(GFile) app_files = NULL;
-  g_autoptr(GFile) runtime_deploy = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
@@ -66,6 +66,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autofree char *runtime_ref = NULL;
   g_autofree char *app_ref = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr (GError) my_error = NULL;
   g_autoptr (GError) my_error2 = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
@@ -120,16 +121,18 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
 
-  runtime_deploy = xdg_app_find_deploy_dir_for_ref (runtime_ref, cancellable, error);
+  runtime_deploy = xdg_app_find_deploy_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
     goto out;
+
+  runtime_metakey = xdg_app_deploy_get_metadata (runtime_deploy);
 
   var = g_file_get_child (app_deploy, "var");
   if (!gs_file_ensure_directory (var, TRUE, cancellable, error))
     goto out;
 
   app_files = g_file_get_child (app_deploy, "files");
-  runtime_files = g_file_get_child (runtime_deploy, "files");
+  runtime_files = xdg_app_deploy_get_files (runtime_deploy);
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (argv_array, g_strdup (HELPER));
@@ -162,6 +165,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_ptr_array_add (argv_array, NULL);
 
   envp = xdg_app_run_get_minimal_env (TRUE);
+  envp = xdg_app_run_apply_env_vars (envp, runtime_metakey);
 
   if (!execve (HELPER, (char **)argv_array->pdata, envp))
     {
