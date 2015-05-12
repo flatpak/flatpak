@@ -30,8 +30,7 @@ void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,
 					      GKeyFile    *metakey,
 					      const char **allow,
 					      const char **forbid);
-void     xdg_app_run_setup_minimal_env       (GPtrArray   *env_array,
-					      gboolean     devel);
+char **  xdg_app_run_get_minimal_env         (gboolean     devel);
 
 void xdg_app_run_add_x11_args          (GPtrArray *argv_array);
 void xdg_app_run_add_no_x11_args       (GPtrArray *argv_array);

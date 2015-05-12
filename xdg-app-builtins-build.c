@@ -69,7 +69,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr (GError) my_error = NULL;
   g_autoptr (GError) my_error2 = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
-  g_autoptr(GPtrArray) env_array = NULL;
+  glnx_strfreev char **envp = NULL;
   gsize metadata_size;
   const char *directory = NULL;
   const char *command = "/bin/sh";
@@ -161,11 +161,9 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (argv_array, NULL);
 
-  env_array = g_ptr_array_new_with_free_func (g_free);
-  xdg_app_run_setup_minimal_env (env_array, TRUE);
-  g_ptr_array_add (env_array, NULL);
+  envp = xdg_app_run_get_minimal_env (TRUE);
 
-  if (!execve (HELPER, (char **)argv_array->pdata, (char **)env_array->pdata))
+  if (!execve (HELPER, (char **)argv_array->pdata, envp))
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
       goto out;

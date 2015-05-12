@@ -305,10 +305,10 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
     }
 }
 
-void
-xdg_app_run_setup_minimal_env (GPtrArray *env_array,
-			       gboolean devel)
+char **
+xdg_app_run_get_minimal_env (gboolean devel)
 {
+  GPtrArray *env_array;
   static const char const *exports[] = {
     "PATH=/self/bin:/usr/bin",
     "_LD_LIBRARY_PATH=/self/lib",
@@ -358,31 +358,36 @@ xdg_app_run_setup_minimal_env (GPtrArray *env_array,
   };
   int i;
 
+  env_array = g_ptr_array_new_with_free_func (g_free);
+
   for (i = 0; i < G_N_ELEMENTS(exports); i++)
     g_ptr_array_add (env_array, g_strdup (exports[i]));
 
   if (devel)
     {
       for (i = 0; i < G_N_ELEMENTS(exports_devel); i++)
-	g_ptr_array_add (env_array, g_strdup (exports_devel[i]));
+        g_ptr_array_add (env_array, g_strdup (exports_devel[i]));
     }
 
   for (i = 0; i < G_N_ELEMENTS(copy); i++)
     {
       const char *current = g_getenv(copy[i]);
       if (current)
-	g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", copy[i], current));
+        g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", copy[i], current));
     }
 
   if (!devel)
     {
       for (i = 0; i < G_N_ELEMENTS(copy_nodevel); i++)
-	{
-	  const char *current = g_getenv(copy_nodevel[i]);
-	  if (current)
-	    g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", copy_nodevel[i], current));
-	}
+        {
+          const char *current = g_getenv(copy_nodevel[i]);
+          if (current)
+            g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", copy_nodevel[i], current));
+        }
     }
+
+  g_ptr_array_add (env_array, NULL);
+  return (char **)g_ptr_array_free (env_array, FALSE);
 }
 
 GFile *
