@@ -398,9 +398,11 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   g_ptr_array_add (argv_array, NULL);
 
-  g_setenv ("XDG_DATA_DIRS", "/self/share:/usr/share", TRUE);
-  g_unsetenv ("LD_LIBRARY_PATH");
   g_setenv ("PATH", "/self/bin:/usr/bin", TRUE);
+  g_setenv ("_LD_LIBRARY_PATH", "/self/lib", TRUE);
+  g_setenv ("XDG_CONFIG_DIRS","/self/etc/xdg:/etc/xdg", TRUE);
+  g_setenv ("XDG_DATA_DIRS", "/self/share:/usr/share", TRUE);
+  g_setenv ("GI_TYPELIB_PATH", "/self/lib/girepository-1.0", TRUE);
 
   app_id_dir_data = g_file_get_child (app_id_dir, "data");
   app_id_dir_config = g_file_get_child (app_id_dir, "config");

@@ -310,15 +310,17 @@ xdg_app_run_setup_minimal_env (GPtrArray *env_array,
 			       gboolean devel)
 {
   static const char const *exports[] = {
-    "XDG_DATA_DIRS=/self/share:/usr/share",
     "PATH=/self/bin:/usr/bin",
+    "_LD_LIBRARY_PATH=/self/lib",
+    "XDG_CONFIG_DIRS=/self/etc/xdg:/etc/xdg",
+    "XDG_DATA_DIRS=/self/share:/usr/share",
+    "GI_TYPELIB_PATH=/self/lib/girepository-1.0",
     "SHELL=/bin/sh",
   };
   static const char const *exports_devel[] = {
     "ACLOCAL_PATH=/self/share/aclocal",
     "C_INCLUDE_PATH=/self/include",
     "CPLUS_INCLUDE_PATH=/self/include",
-    "GI_TYPELIB_PATH=/self/lib/girepository-1.0",
     "LDFLAGS=-L/self/lib ",
     "PKG_CONFIG_PATH=/self/lib/pkgconfig:/self/share/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig",
     "LC_ALL=en_US.utf8",

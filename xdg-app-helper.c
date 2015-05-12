@@ -1860,11 +1860,14 @@ main (int argc,
 
   chdir (old_cwd);
 
-  xsetenv ("PATH", "/self/bin:/usr/bin", 1);
-  xsetenv ("LD_LIBRARY_PATH", "/self/lib", 1);
-  xsetenv ("XDG_CONFIG_DIRS","/self/etc/xdg:/etc/xdg", 1);
-  xsetenv ("XDG_DATA_DIRS", "/self/share:/usr/share", 1);
-  xsetenv ("GI_TYPELIB_PATH", "/self/lib/girepository-1.0", 1);
+  /* We can't pass regular LD_LIBRARY_PATH, as it would affect the
+     setuid helper aspect, so we use _LD_LIBRARY_PATH */
+  if (getenv("_LD_LIBRARY_PATH"))
+    {
+      xsetenv ("LD_LIBRARY_PATH", getenv("_LD_LIBRARY_PATH"), 1);
+      xunsetenv ("_LD_LIBRARY_PATH");
+    }
+
   xdg_runtime_dir = strdup_printf ("/run/user/%d", getuid());
   xsetenv ("XDG_RUNTIME_DIR", xdg_runtime_dir, 1);
   free (xdg_runtime_dir);
