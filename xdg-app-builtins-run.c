@@ -191,19 +191,15 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   gboolean ret = FALSE;
   g_autoptr(GVariantBuilder) optbuilder = NULL;
   g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) app_deploy = NULL;
+  g_autoptr(XdgAppDeploy) app_deploy = NULL;
+  g_autoptr(XdgAppDeploy) runtime_deploy = NULL;
   g_autoptr(GFile) app_files = NULL;
-  g_autoptr(GFile) runtime_deploy = NULL;
   g_autoptr(GFile) runtime_files = NULL;
-  g_autoptr(GFile) metadata = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
   g_autoptr(GFile) app_id_dir_data = NULL;
   g_autoptr(GFile) app_id_dir_config = NULL;
   g_autoptr(GFile) app_id_dir_cache = NULL;
-  g_autoptr(GFile) runtime_metadata = NULL;
   g_autoptr(XdgAppSessionHelper) session_helper = NULL;
-  g_autofree char *metadata_contents = NULL;
-  g_autofree char *runtime_metadata_contents = NULL;
   g_autofree char *runtime = NULL;
   g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;
@@ -211,13 +207,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autofree char *path = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
-  g_autoptr (GError) my_error = NULL;
-  g_autoptr (GError) my_error2 = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
   g_autoptr(GPtrArray) env_array = NULL;
   g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
   g_autofree char *monitor_path = NULL;
-  gsize metadata_size, runtime_metadata_size;
   const char *app;
   const char *branch = "master";
   const char *command = "/bin/sh";
@@ -268,20 +261,11 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   app_ref = xdg_app_build_app_ref (app, branch, opt_arch);
 
-  app_deploy = xdg_app_find_deploy_dir_for_ref (app_ref, cancellable, error);
+  app_deploy = xdg_app_find_deploy_for_ref (app_ref, cancellable, error);
   if (app_deploy == NULL)
     goto out;
 
-  path = g_file_get_path (app_deploy);
-  g_debug ("Running application in %s", path);
-
-  metadata = g_file_get_child (app_deploy, "metadata");
-  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
-    goto out;
-
-  metakey = g_key_file_new ();
-  if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
-    goto out;
+  metakey = xdg_app_deploy_get_metadata (app_deploy);
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   dbus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
@@ -302,29 +286,18 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
 
-  runtime_deploy = xdg_app_find_deploy_dir_for_ref (runtime_ref, cancellable, error);
+  runtime_deploy = xdg_app_find_deploy_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
     goto out;
 
-  g_free (path);
-  path = g_file_get_path (runtime_deploy);
-  g_debug ("Using runtime in %s", path);
-
   env_array = g_ptr_array_new_with_free_func (free_envvar);
 
-  runtime_metadata = g_file_get_child (runtime_deploy, "metadata");
-  if (g_file_load_contents (runtime_metadata, cancellable, &runtime_metadata_contents, &runtime_metadata_size, NULL, NULL))
-    {
+  runtime_metakey = xdg_app_deploy_get_metadata (runtime_deploy);
 
-      runtime_metakey = g_key_file_new ();
-      if (!g_key_file_load_from_data (runtime_metakey, runtime_metadata_contents, runtime_metadata_size, 0, error))
-	goto out;
+  if (!add_extension_args (runtime_metakey, runtime_ref, argv_array, cancellable, error))
+    goto out;
 
-      if (!add_extension_args (runtime_metakey, runtime_ref, argv_array, cancellable, error))
-	goto out;
-
-      add_env_overrides (runtime_metakey, env_array);
-    }
+  add_env_overrides (runtime_metakey, env_array);
 
   /* Load application environment overrides *after* runtime */
   add_env_overrides (metakey, env_array);
@@ -332,8 +305,8 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if ((app_id_dir = xdg_app_ensure_data_dir (app, cancellable, error)) == NULL)
       goto out;
 
-  app_files = g_file_get_child (app_deploy, "files");
-  runtime_files = g_file_get_child (runtime_deploy, "files");
+  app_files = xdg_app_deploy_get_files (app_deploy);
+  runtime_files = xdg_app_deploy_get_files (runtime_deploy);
 
   default_command = g_key_file_get_string (metakey, "Application", "command", error);
   if (*error)
