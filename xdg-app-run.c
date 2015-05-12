@@ -390,6 +390,29 @@ xdg_app_run_get_minimal_env (gboolean devel)
   return (char **)g_ptr_array_free (env_array, FALSE);
 }
 
+char **
+xdg_app_run_apply_env_vars (char **envp, GKeyFile *metakey)
+{
+  glnx_strfreev char **keys = NULL;
+  gsize i, keys_count;
+
+  keys = g_key_file_get_keys (metakey, "Vars", &keys_count, NULL);
+  if (keys)
+    {
+      for (i = 0; i < keys_count; i++)
+        {
+          const char *key = keys[i];
+          g_autofree char *value = g_key_file_get_string (metakey, "Vars", key, NULL);
+          if (value)
+            envp = g_environ_setenv (envp, key, value, TRUE);
+          else
+            envp = g_environ_unsetenv (envp, key);
+        }
+    }
+
+  return envp;
+}
+
 GFile *
 xdg_app_get_data_dir (const char *app_id)
 {
