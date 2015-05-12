@@ -324,7 +324,7 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
           glnx_strfreev char **split = g_strsplit (opt_env_override[i], "=", 2);
           if (split && split[0] && split[1])
             {
-              g_key_file_set_string (keyfile, "Vars", split[0], split[1]);
+              g_key_file_set_string (keyfile, "Environment Vars", split[0], split[1]);
             }
           else
             {

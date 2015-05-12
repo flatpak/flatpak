@@ -512,13 +512,13 @@ xdg_app_run_apply_env_vars (char **envp, GKeyFile *metakey)
   glnx_strfreev char **keys = NULL;
   gsize i, keys_count;
 
-  keys = g_key_file_get_keys (metakey, "Vars", &keys_count, NULL);
+  keys = g_key_file_get_keys (metakey, "Environment Vars", &keys_count, NULL);
   if (keys)
     {
       for (i = 0; i < keys_count; i++)
         {
           const char *key = keys[i];
-          g_autofree char *value = g_key_file_get_string (metakey, "Vars", key, NULL);
+          g_autofree char *value = g_key_file_get_string (metakey, "Environment Vars", key, NULL);
 
           /* We special case LD_LIBRARY_PATH to avoid passing it top
              the helper */
