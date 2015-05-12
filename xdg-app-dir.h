@@ -24,26 +24,38 @@
 #include <ostree.h>
 
 typedef struct XdgAppDir XdgAppDir;
+typedef struct XdgAppDeploy XdgAppDeploy;
 
 #define XDG_APP_TYPE_DIR xdg_app_dir_get_type()
 #define XDG_APP_DIR(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_DIR, XdgAppDir))
 #define XDG_APP_IS_DIR(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_DIR))
 
+#define XDG_APP_TYPE_DEPLOY xdg_app_deploy_get_type()
+#define XDG_APP_DEPLOY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_DEPLOY, XdgAppDeploy))
+#define XDG_APP_IS_DEPLOY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_DEPLOY))
+
 GType xdg_app_dir_get_type (void);
+GType xdg_app_deploy_get_type (void);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppDir, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppDeploy, g_object_unref)
 
 #define XDG_APP_DIR_ERROR xdg_app_dir_error_quark()
 
 typedef enum {
   XDG_APP_DIR_ERROR_ALREADY_DEPLOYED,
   XDG_APP_DIR_ERROR_ALREADY_UNDEPLOYED,
+  XDG_APP_DIR_ERROR_NOT_DEPLOYED,
 } XdgAppErrorEnum;
 
 GQuark       xdg_app_dir_error_quark      (void);
 
 GFile *  xdg_app_get_system_base_dir_location (void);
 GFile *  xdg_app_get_user_base_dir_location   (void);
+
+GFile *  xdg_app_deploy_get_dir (XdgAppDeploy *deploy);
+GFile *  xdg_app_deploy_get_files (XdgAppDeploy *deploy);
+GKeyFile *  xdg_app_deploy_get_metadata (XdgAppDeploy *deploy);
 
 XdgAppDir*  xdg_app_dir_new             (GFile          *basedir,
                                          gboolean        user);
@@ -60,6 +72,11 @@ GFile *     xdg_app_dir_get_if_deployed (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,
                                          GCancellable   *cancellable);
+XdgAppDeploy *xdg_app_dir_load_deployed (XdgAppDir      *self,
+                                         const char     *ref,
+                                         const char     *checksum,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 OstreeRepo *xdg_app_dir_get_repo        (XdgAppDir      *self);
 gboolean    xdg_app_dir_ensure_path     (XdgAppDir      *self,
                                          GCancellable   *cancellable,

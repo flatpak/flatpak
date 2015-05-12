@@ -45,7 +45,20 @@ typedef struct {
   GObjectClass parent_class;
 } XdgAppDirClass;
 
+struct XdgAppDeploy {
+  GObject parent;
+
+  GFile *dir;
+  GKeyFile *metadata;
+};
+
+typedef struct {
+  GObjectClass parent_class;
+} XdgAppDeployClass;
+
+
 G_DEFINE_TYPE (XdgAppDir, xdg_app_dir, G_TYPE_OBJECT)
+G_DEFINE_TYPE (XdgAppDeploy, xdg_app_deploy, G_TYPE_OBJECT)
 
 G_DEFINE_QUARK (xdg-app-dir-error-quark, xdg_app_dir_error)
 
@@ -58,6 +71,61 @@ enum {
 
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
+
+static void
+xdg_app_deploy_finalize (GObject *object)
+{
+  XdgAppDeploy *self = XDG_APP_DEPLOY (object);
+
+  g_clear_object (&self->dir);
+  g_clear_pointer (&self->metadata, g_key_file_unref);
+
+  G_OBJECT_CLASS (xdg_app_deploy_parent_class)->finalize (object);
+}
+
+static void
+xdg_app_deploy_class_init (XdgAppDeployClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  object_class->finalize = xdg_app_deploy_finalize;
+
+}
+
+static void
+xdg_app_deploy_init (XdgAppDeploy *self)
+{
+}
+
+GFile *
+xdg_app_deploy_get_dir (XdgAppDeploy *deploy)
+{
+  return g_object_ref (deploy->dir);
+}
+
+GFile *
+xdg_app_deploy_get_files (XdgAppDeploy *deploy)
+{
+  return g_file_get_child (deploy->dir, "files");
+}
+
+GKeyFile *
+xdg_app_deploy_get_metadata (XdgAppDeploy *deploy)
+{
+  return g_key_file_ref (deploy->metadata);
+}
+
+static XdgAppDeploy *
+xdg_app_deploy_new (GFile *dir, GKeyFile *metadata)
+{
+  XdgAppDeploy *deploy;
+
+  deploy = g_object_new (XDG_APP_TYPE_DEPLOY, NULL);
+  deploy->dir = g_object_ref (dir);
+  deploy->metadata = g_key_file_ref (metadata);
+
+  return deploy;
+}
 
 GFile *
 xdg_app_get_system_base_dir_location (void)
@@ -168,6 +236,37 @@ GFile *
 xdg_app_dir_get_path (XdgAppDir *self)
 {
   return self->basedir;
+}
+
+XdgAppDeploy *
+xdg_app_dir_load_deployed (XdgAppDir    *self,
+                           const char   *ref,
+                           const char   *checksum,
+                           GCancellable *cancellable,
+                           GError      **error)
+{
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  g_autofree char *metadata_contents = NULL;
+  gsize metadata_size;
+
+  deploy_dir = xdg_app_dir_get_if_deployed (self, ref, checksum, cancellable);
+  if (deploy_dir == NULL)
+    {
+      g_set_error (error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_NOT_DEPLOYED, "%s not installed", ref);
+      return NULL;
+    }
+
+  metadata = g_file_get_child (deploy_dir, "metadata");
+  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
+    return NULL;
+
+  metakey = g_key_file_new ();
+  if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
+    return NULL;
+
+  return xdg_app_deploy_new (deploy_dir, metakey);
 }
 
 GFile *
