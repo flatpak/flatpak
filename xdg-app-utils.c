@@ -339,6 +339,32 @@ xdg_app_find_deploy_dir_for_ref (const char *ref,
 
 }
 
+XdgAppDeploy *
+xdg_app_find_deploy_for_ref (const char *ref,
+                             GCancellable *cancellable,
+                             GError **error)
+{
+  g_autoptr(XdgAppDir) user_dir = NULL;
+  g_autoptr(XdgAppDir) system_dir = NULL;
+  g_autoptr(XdgAppDeploy) deploy = NULL;
+  g_autoptr(GError) my_error = NULL;
+
+  user_dir = xdg_app_dir_get_user ();
+  system_dir = xdg_app_dir_get_system ();
+
+  deploy = xdg_app_dir_load_deployed (user_dir, ref, NULL, cancellable, &my_error);
+  if (deploy == NULL && g_error_matches (my_error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_NOT_DEPLOYED))
+    {
+      g_clear_error (&my_error);
+      deploy = xdg_app_dir_load_deployed (system_dir, ref, NULL, cancellable, &my_error);
+    }
+  if (deploy == NULL)
+    g_propagate_error (error, g_steal_pointer (&my_error));
+
+  return g_steal_pointer (&deploy);
+}
+
+
 static gboolean
 overlay_symlink_tree_dir (int            source_parent_fd,
                           const char    *source_name,

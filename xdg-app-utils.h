@@ -27,6 +27,7 @@
 #include <gio/gio.h>
 #include <libsoup/soup.h>
 #include "xdg-app-dbus.h"
+#include "xdg-app-dir.h"
 #include <ostree.h>
 
 const char * xdg_app_get_arch (void);
@@ -48,6 +49,9 @@ char * xdg_app_build_app_ref (const char *app,
 GFile * xdg_app_find_deploy_dir_for_ref (const char *ref,
                                          GCancellable *cancellable,
                                          GError **error);
+XdgAppDeploy * xdg_app_find_deploy_for_ref (const char *ref,
+                                            GCancellable *cancellable,
+                                            GError **error);
 char ** xdg_app_list_deployed_refs (const char *type,
 				    const char *name_prefix,
 				    const char *branch,
