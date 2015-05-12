@@ -1867,6 +1867,8 @@ main (int argc,
       xsetenv ("LD_LIBRARY_PATH", getenv("_LD_LIBRARY_PATH"), 1);
       xunsetenv ("_LD_LIBRARY_PATH");
     }
+  else
+    xunsetenv ("LD_LIBRARY_PATH");
 
   xdg_runtime_dir = strdup_printf ("/run/user/%d", getuid());
   xsetenv ("XDG_RUNTIME_DIR", xdg_runtime_dir, 1);

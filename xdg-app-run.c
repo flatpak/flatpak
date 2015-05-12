@@ -307,6 +307,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
 
 static const struct {const char *env; const char *val;} default_exports[] = {
   {"PATH","/self/bin:/usr/bin"},
+  {"LD_LIBRARY_PATH", ""},
   {"_LD_LIBRARY_PATH", "/self/lib"},
   {"XDG_CONFIG_DIRS","/self/etc/xdg:/etc/xdg"},
   {"XDG_DATA_DIRS","/self/share:/usr/share"},
@@ -434,6 +435,12 @@ xdg_app_run_apply_env_vars (char **envp, GKeyFile *metakey)
         {
           const char *key = keys[i];
           g_autofree char *value = g_key_file_get_string (metakey, "Vars", key, NULL);
+
+          /* We special case LD_LIBRARY_PATH to avoid passing it top
+             the helper */
+          if (strcmp (key, "LD_LIBRARY_PATH") == 0)
+            key = "_LD_LIBRARY_PATH";
+
           if (value)
             envp = g_environ_setenv (envp, key, value, TRUE);
           else
