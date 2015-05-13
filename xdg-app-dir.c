@@ -1613,8 +1613,13 @@ xdg_app_dir_undeploy (XdgAppDir *self,
 
   if (force_remove || !dir_is_locked (removed_subdir))
     {
-      if (!gs_shutil_rm_rf (removed_subdir, cancellable, error))
-	goto out;
+      GError *tmp_error = NULL;
+
+      if (!gs_shutil_rm_rf (removed_subdir, cancellable, &tmp_error))
+        {
+          g_warning ("Unable to remove old acheckout: %s\n", tmp_error->message);
+          g_error_free (tmp_error);
+        }
     }
 
   ret = TRUE;
@@ -1652,7 +1657,12 @@ xdg_app_dir_cleanup_removed (XdgAppDir      *self,
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
 	  !dir_is_locked (child))
 	{
-	  gs_shutil_rm_rf (child, cancellable, NULL);
+          GError *tmp_error = NULL;
+          if (!gs_shutil_rm_rf (child, cancellable, &tmp_error))
+            {
+              g_warning ("Unable to remove old acheckout: %s\n", tmp_error->message);
+              g_error_free (tmp_error);
+            }
 	}
 
       g_clear_object (&child_info);
