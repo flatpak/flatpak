@@ -145,6 +145,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_ptr_array_add (argv_array, g_strdup ("-i"));
   g_ptr_array_add (argv_array, g_strdup ("-f"));
   g_ptr_array_add (argv_array, g_strdup ("-H"));
+  g_ptr_array_add (argv_array, g_strdup ("-r"));
 
   if (!xdg_app_run_verify_environment_keys ((const char **)opt_forbid, error))
     goto out;

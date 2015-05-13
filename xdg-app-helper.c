@@ -381,6 +381,7 @@ ascii_isdigit (char c)
 static bool create_etc_symlink = FALSE;
 static bool create_etc_dir = TRUE;
 static bool create_monitor_links = FALSE;
+static bool bind_resolv_conf = FALSE;
 static bool allow_dri = FALSE;
 
 static const create_table_t create[] = {
@@ -410,6 +411,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "etc", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_REGULAR, "etc/passwd", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_REGULAR, "etc/group", 0755, NULL, 0, &create_etc_dir},
+  { FILE_TYPE_REGULAR, "etc/resolv.conf", 0755, NULL, 0, &bind_resolv_conf},
   { FILE_TYPE_SYMLINK, "etc/resolv.conf", 0755, "/run/user/%1$d/xdg-app-monitor/resolv.conf", 0, &create_monitor_links},
   { FILE_TYPE_REGULAR, "etc/machine-id", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_DIR, "tmp/.X11-unix", 0755 },
@@ -446,6 +448,7 @@ static const create_table_t create_post[] = {
   { FILE_TYPE_BIND_RO, "etc/group", 0444, "/etc/group", 0},
   { FILE_TYPE_BIND_RO, "etc/machine-id", 0444, "/etc/machine-id", FILE_FLAGS_NON_FATAL},
   { FILE_TYPE_BIND_RO, "etc/machine-id", 0444, "/var/lib/dbus/machine-id", FILE_FLAGS_NON_FATAL | FILE_FLAGS_IF_LAST_FAILED},
+  { FILE_TYPE_BIND_RO, "etc/resolv.conf", 0444, "/etc/resolv.conf", 0, &bind_resolv_conf},
 };
 
 static const mount_table_t mount_table[] = {
@@ -1484,7 +1487,7 @@ main (int argc,
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
     die_with_error ("prctl(PR_SET_NO_NEW_CAPS) failed");
 
-  while ((c =  getopt (argc, argv, "+inWweEsfFHa:m:b:p:x:ly:d:D:v:I:gS:")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWweEsfFHra:m:b:p:x:ly:d:D:v:I:gS:")) >= 0)
     {
       switch (c)
         {
@@ -1571,6 +1574,10 @@ main (int argc,
           pulseaudio_socket = optarg;
           break;
 
+        case 'r':
+          bind_resolv_conf = TRUE;
+          break;
+
         case 's':
           share_shm = TRUE;
           break;
@@ -1610,7 +1617,10 @@ main (int argc,
   n_args = argc - optind;
 
   if (monitor_path != NULL && create_etc_dir)
-    create_monitor_links = TRUE;
+    {
+      create_monitor_links = TRUE;
+      bind_resolv_conf = FALSE;
+    }
 
   if (n_args < 2)
     usage (argv);
