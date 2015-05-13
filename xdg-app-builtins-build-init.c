@@ -155,7 +155,8 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (!gs_file_ensure_directory (var_tmp_dir, FALSE, cancellable, error))
     goto out;
 
-  if (!g_file_make_symbolic_link (var_run_dir, "/run", cancellable, error))
+  if (!g_file_query_exists (var_run_dir, cancellable) &&
+      !g_file_make_symbolic_link (var_run_dir, "/run", cancellable, error))
     goto out;
 
   metadata_contents = g_strdup_printf("[Application]\n"
