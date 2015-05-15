@@ -22,6 +22,7 @@
 #define __XDG_APP_PROXY_H__
 
 #include <gio/gio.h>
+#include "libglnx/libglnx.h"
 
 typedef enum {
   XDG_APP_POLICY_NONE,
