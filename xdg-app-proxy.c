@@ -2071,22 +2071,15 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
 
   if (buffer_read (side, buffer, socket) || !client->authenticated)
     {
-      if (!side->got_first_byte)
+      if (!client->authenticated)
         {
           if (buffer->pos > 0)
             {
-              buffer->send_credentials = TRUE;
-              buffer->size = buffer->pos;
-              got_buffer_from_side (side, buffer);
-              side->got_first_byte = TRUE;
-            }
-          else
-            buffer_free (buffer);
-        }
-      else if (!client->authenticated)
-        {
-          if (buffer->pos > 0)
-            {
+              if (!side->got_first_byte)
+                {
+                  buffer->send_credentials = TRUE;
+                  side->got_first_byte = TRUE;
+                }
               buffer->size = buffer->pos;
               got_buffer_from_side (side, buffer);
             }
