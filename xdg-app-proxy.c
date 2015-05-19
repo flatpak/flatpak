@@ -172,6 +172,11 @@ typedef struct XdgAppProxyClient XdgAppProxyClient;
 
 XdgAppPolicy xdg_app_proxy_get_policy (XdgAppProxy *proxy, const char *name);
 
+/* We start looking ignoring the first cr-lf
+   since there is no previous line initially */
+#define AUTH_END_INIT_OFFSET 2
+#define AUTH_END_STRING "\r\nBEGIN\r\n"
+
 typedef enum {
   EXPECTED_REPLY_NONE,
   EXPECTED_REPLY_NORMAL,
@@ -220,6 +225,7 @@ typedef struct {
   GSource *in_source;
   GSource *out_source;
 
+  GBytes *extra_input_data;
   Buffer *current_read_buffer;
   Buffer header_buffer;
 
@@ -235,6 +241,7 @@ struct XdgAppProxyClient {
   XdgAppProxy *proxy;
 
   gboolean authenticated;
+  int auth_end_offset;
 
   ProxySide client_side;
   ProxySide bus_side;
@@ -308,6 +315,7 @@ static void
 free_side (ProxySide *side)
 {
   g_clear_object (&side->connection);
+  g_clear_pointer (&side->extra_input_data, g_bytes_unref);
 
   g_list_free_full (side->buffers, (GDestroyNotify)buffer_free);
   g_list_free_full (side->control_messages, (GDestroyNotify)g_object_unref);
@@ -363,6 +371,7 @@ xdg_app_proxy_client_init (XdgAppProxyClient *client)
   init_side (client, &client->client_side);
   init_side (client, &client->bus_side);
 
+  client->auth_end_offset = AUTH_END_INIT_OFFSET;
   client->rewrite_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_object_unref);
   client->get_owner_reply = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
   client->unique_id_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -588,35 +597,55 @@ buffer_read (ProxySide *side,
   GSocketControlMessage **messages;
   int num_messages, i;
 
-  v.buffer = &buffer->data[buffer->pos];
-  v.size = buffer->size - buffer->pos;
-
-  res = g_socket_receive_message (socket, NULL, &v, 1,
-                                  &messages,
-                                  &num_messages,
-                                  G_SOCKET_MSG_NONE, NULL, &error);
-  if (res < 0 && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
+  if (side->extra_input_data)
     {
-      g_error_free (error);
-      return FALSE;
+      gsize extra_size;
+      const guchar *extra_bytes = g_bytes_get_data (side->extra_input_data, &extra_size);
+
+      res = MIN (extra_size, buffer->size - buffer->pos);
+      memcpy (&buffer->data[buffer->pos], extra_bytes, res);
+
+      if (res < extra_size)
+        side->extra_input_data =
+          g_bytes_new_with_free_func (extra_bytes + res,
+                                      extra_size - res,
+                                      (GDestroyNotify)g_bytes_unref,
+                                      side->extra_input_data);
+      else
+        g_clear_pointer (&side->extra_input_data, g_bytes_unref);
     }
-
-  if (res <= 0)
+  else
     {
-      if (res != 0)
+      v.buffer = &buffer->data[buffer->pos];
+      v.size = buffer->size - buffer->pos;
+
+      res = g_socket_receive_message (socket, NULL, &v, 1,
+                                      &messages,
+                                      &num_messages,
+                                      G_SOCKET_MSG_NONE, NULL, &error);
+      if (res < 0 && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
         {
-          g_debug ("Error reading from socket: %s", error->message);
           g_error_free (error);
+          return FALSE;
         }
 
-      side_closed (side);
-      return FALSE;
+      if (res <= 0)
+        {
+          if (res != 0)
+            {
+              g_debug ("Error reading from socket: %s", error->message);
+              g_error_free (error);
+            }
+
+          side_closed (side);
+          return FALSE;
+        }
+
+      for (i = 0; i < num_messages; i++)
+        buffer->control_messages = g_list_append (buffer->control_messages, messages[i]);
+
+      g_free (messages);
     }
-
-  for (i = 0; i < num_messages; i++)
-    buffer->control_messages = g_list_append (buffer->control_messages, messages[i]);
-
-  g_free (messages);
 
   buffer->pos += res;
   return buffer->pos == buffer->size;
@@ -1851,9 +1880,6 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
         queue_expected_reply (side, header.serial, expecting_reply);
     }
 
-  if (buffer && g_strstr_len ((char *)buffer->data, buffer->size, "BEGIN\r\n") != NULL)
-    client->authenticated = TRUE;
-
   if (buffer)
     queue_outgoing_buffer (&client->bus_side, buffer);
 
@@ -2051,6 +2077,53 @@ got_buffer_from_side (ProxySide *side, Buffer *buffer)
     got_buffer_from_bus (client, side, buffer);
 }
 
+static gssize
+find_auth_end (XdgAppProxyClient *client, Buffer *buffer)
+{
+  guchar *match;
+  int i;
+
+  /* First try to match any leftover at the start */
+  if (client->auth_end_offset > 0)
+    {
+      gsize left = strlen (AUTH_END_STRING) - client->auth_end_offset;
+      gsize to_match = MIN (left, buffer->pos);
+      /* Matched at least up to to_match */
+      if (memcmp (buffer->data, AUTH_END_STRING + client->auth_end_offset, to_match) == 0)
+        {
+          client->auth_end_offset += to_match;
+
+          /* Matched all */
+          if (client->auth_end_offset == strlen (AUTH_END_STRING))
+            return to_match;
+
+          /* Matched to end of buffer */
+          return -1;
+        }
+
+      /* Did not actually match at start */
+      client->auth_end_offset = -1;
+    }
+
+  /* Look for whole match inside buffer */
+  match = memmem (buffer, buffer->pos,
+                  AUTH_END_STRING, strlen (AUTH_END_STRING));
+  if (match != NULL)
+    return match - buffer->data + strlen (AUTH_END_STRING);
+
+  /* Record longest prefix match at the end */
+  for (i = MIN (strlen (AUTH_END_STRING) - 1, buffer->pos); i > 0 ; i--)
+    {
+      if (memcmp (buffer->data + buffer->pos - i, AUTH_END_STRING, i) == 0)
+        {
+          client->auth_end_offset = i;
+          break;
+        }
+    }
+
+  return -1;
+}
+
 static gboolean
 side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
 {
@@ -2075,13 +2148,37 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
         {
           if (buffer->pos > 0)
             {
+              gboolean found_auth_end = FALSE;
+              gsize extra_data;
+
+              buffer->size = buffer->pos;
               if (!side->got_first_byte)
                 {
                   buffer->send_credentials = TRUE;
                   side->got_first_byte = TRUE;
                 }
-              buffer->size = buffer->pos;
+                /* Look for end of authentication mechanism */
+              else if (side == &client->client_side)
+                {
+                  gssize auth_end = find_auth_end (client, buffer);
+
+                  if (auth_end >= 0)
+                    {
+                      found_auth_end = TRUE;
+                      buffer->size = auth_end;
+                      extra_data = buffer->pos - buffer->size;
+
+                      /* We may have gotten some extra data which is not part of
+                         the auth handshake, keep it for the next iteration. */
+                      if (extra_data > 0)
+                        side->extra_input_data = g_bytes_new (buffer->data + buffer->size, extra_data);
+                    }
+                }
+
               got_buffer_from_side (side, buffer);
+
+              if (found_auth_end)
+                client->authenticated = TRUE;
             }
           else
             buffer_free (buffer);
@@ -2111,6 +2208,10 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
       side->in_source = NULL;
       retval = G_SOURCE_REMOVE;
     }
+
+  if (retval == G_SOURCE_CONTINUE &&
+      side->extra_input_data != NULL)
+    retval = side_in_cb (socket, condition, user_data);
 
   g_object_unref (client);
 
