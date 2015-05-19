@@ -725,7 +725,7 @@ buffer_write (ProxySide *side,
   buffer->control_messages = NULL;
 
   buffer->pos += res;
-  return buffer->pos == buffer->size;
+  return TRUE;
 }
 
 static gboolean
@@ -737,15 +737,20 @@ side_out_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
 
   g_object_ref (client);
 
-  if (side->buffers)
+  while (side->buffers)
     {
       Buffer *buffer = side->buffers->data;
 
       if (buffer_write (side, buffer, socket))
         {
-          side->buffers = g_list_delete_link (side->buffers, side->buffers);
-          buffer_free (buffer);
+          if (buffer->pos == buffer->size)
+            {
+              side->buffers = g_list_delete_link (side->buffers, side->buffers);
+              buffer_free (buffer);
+            }
         }
+      else
+        break;
     }
 
   if (side->buffers == NULL)
