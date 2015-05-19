@@ -29,6 +29,7 @@ xdg-app-helper
 xdg-app-session-helper
 doc/*.1
 *~
+profile/xdg-app.sh
 xdg-app-dbus.[ch]
 xdg-app-systemd-dbus.[ch]
 xdg-app-resources.[ch]

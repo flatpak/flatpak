@@ -146,3 +146,11 @@ endif
 completiondir = $(datadir)/bash-completion/completions
 completion_DATA = completion/xdg-app
 EXTRA_DIST += $(completion_DATA)
+
+profiledir = $(sysconfdir)/profile.d
+profile_DATA = profile/xdg-app.sh
+EXTRA_DIST += profile/xdg-app.sh.in
+
+profile/xdg-app.sh: profile/xdg-app.sh.in
+	$(AM_V_GEN) $(SED) -e "s|\@localstatedir\@|$(localstatedir)|" \
+		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
