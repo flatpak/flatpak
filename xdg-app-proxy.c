@@ -382,6 +382,8 @@ xdg_app_proxy_client_new (XdgAppProxy *proxy, GSocketConnection *connection)
 {
   XdgAppProxyClient *client;
 
+  g_socket_set_blocking (g_socket_connection_get_socket (connection), FALSE);
+
   client = g_object_new (XDG_APP_TYPE_PROXY_CLIENT, NULL);
   client->proxy = g_object_ref (proxy);
   client->client_side.connection = g_object_ref (connection);
@@ -648,7 +650,7 @@ buffer_read (ProxySide *side,
     }
 
   buffer->pos += res;
-  return buffer->pos == buffer->size;
+  return TRUE;
 }
 
 static gboolean
@@ -2135,15 +2137,18 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
 
   g_object_ref (client);
 
-  if (!side->got_first_byte)
-    buffer = buffer_new (1, NULL);
-  else if (!client->authenticated)
-    buffer = buffer_new (64, NULL);
-  else
-    buffer = side->current_read_buffer;
-
-  if (buffer_read (side, buffer, socket) || !client->authenticated)
+  while (!side->closed)
     {
+      if (!side->got_first_byte)
+        buffer = buffer_new (1, NULL);
+      else if (!client->authenticated)
+        buffer = buffer_new (64, NULL);
+      else
+        buffer = side->current_read_buffer;
+
+      if (!buffer_read (side, buffer, socket))
+        break;
+
       if (!client->authenticated)
         {
           if (buffer->pos > 0)
@@ -2157,7 +2162,7 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
                   buffer->send_credentials = TRUE;
                   side->got_first_byte = TRUE;
                 }
-                /* Look for end of authentication mechanism */
+              /* Look for end of authentication mechanism */
               else if (side == &client->client_side)
                 {
                   gssize auth_end = find_auth_end (client, buffer);
@@ -2183,23 +2188,26 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
           else
             buffer_free (buffer);
         }
-      else if (buffer == &side->header_buffer)
+      else if (buffer->pos == buffer->size)
         {
-          gssize required;
-          required = g_dbus_message_bytes_needed (buffer->data, buffer->size, &error);
-          if (required < 0)
+          if (buffer == &side->header_buffer)
             {
-              g_warning ("Invalid message header read");
-              side_closed (side);
+              gssize required;
+              required = g_dbus_message_bytes_needed (buffer->data, buffer->size, &error);
+              if (required < 0)
+                {
+                  g_warning ("Invalid message header read");
+                  side_closed (side);
+                }
+              else
+                side->current_read_buffer = buffer_new (required, buffer);
             }
           else
-            side->current_read_buffer = buffer_new (required, buffer);
-        }
-      else
-        {
-          got_buffer_from_side (side, buffer);
-          side->header_buffer.pos = 0;
-          side->current_read_buffer = &side->header_buffer;
+            {
+              got_buffer_from_side (side, buffer);
+              side->header_buffer.pos = 0;
+              side->current_read_buffer = &side->header_buffer;
+            }
         }
     }
 
@@ -2208,10 +2216,6 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
       side->in_source = NULL;
       retval = G_SOURCE_REMOVE;
     }
-
-  if (retval == G_SOURCE_CONTINUE &&
-      side->extra_input_data != NULL)
-    retval = side_in_cb (socket, condition, user_data);
 
   g_object_unref (client);
 
@@ -2247,6 +2251,7 @@ client_connected_to_dbus (GObject *source_object,
                           gpointer user_data)
 {
   XdgAppProxyClient *client = user_data;
+  GSocketConnection *connection;
   GError *error = NULL;
   GIOStream *stream;
 
@@ -2258,7 +2263,9 @@ client_connected_to_dbus (GObject *source_object,
       return;
     }
 
-  client->bus_side.connection = G_SOCKET_CONNECTION (stream);
+  connection = G_SOCKET_CONNECTION (stream);
+  g_socket_set_blocking (g_socket_connection_get_socket (connection), FALSE);
+  client->bus_side.connection = connection;
 
   start_reading (&client->client_side);
   start_reading (&client->bus_side);
