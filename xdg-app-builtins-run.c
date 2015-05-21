@@ -66,7 +66,7 @@ add_extension_arg (const char *directory,
 
   is_app = strcmp (type, "app") == 0;
 
-  full_directory = g_build_filename (is_app ? "/self" : "/usr", directory, NULL);
+  full_directory = g_build_filename (is_app ? "/app" : "/usr", directory, NULL);
 
   extension_ref = g_build_filename (type, extension, arch, branch, NULL);
   deploy = xdg_app_find_deploy_dir_for_ref (extension_ref, cancellable, NULL);

@@ -49,7 +49,7 @@
             xdg-app creates a sandboxed environment for the application to run in
             by mounting the right runtime at <filename>/usr</filename> and a writable
             directory at <filename>/var</filename>, whose content is preserved between
-            application runs. The application itself is mounted at <filename>/self</filename>.
+            application runs. The application itself is mounted at <filename>/app</filename>.
         </para>
         <para>
             The details of the sandboxed environment are controlled by the application

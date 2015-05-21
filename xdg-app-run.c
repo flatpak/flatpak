@@ -390,21 +390,21 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
 }
 
 static const struct {const char *env; const char *val;} default_exports[] = {
-  {"PATH","/self/bin:/usr/bin"},
+  {"PATH","/app/bin:/usr/bin"},
   {"LD_LIBRARY_PATH", ""},
-  {"_LD_LIBRARY_PATH", "/self/lib"},
-  {"XDG_CONFIG_DIRS","/self/etc/xdg:/etc/xdg"},
-  {"XDG_DATA_DIRS","/self/share:/usr/share"},
-  {"GI_TYPELIB_PATH","/self/lib/girepository-1.0"},
+  {"_LD_LIBRARY_PATH", "/app/lib"},
+  {"XDG_CONFIG_DIRS","/app/etc/xdg:/etc/xdg"},
+  {"XDG_DATA_DIRS","/app/share:/usr/share"},
+  {"GI_TYPELIB_PATH","/app/lib/girepository-1.0"},
   {"SHELL","/bin/sh"},
 };
 
 static const struct {const char *env; const char *val;} devel_exports[] = {
-  {"ACLOCAL_PATH","/self/share/aclocal"},
-  {"C_INCLUDE_PATH","/self/include"},
-  {"CPLUS_INCLUDE_PATH","/self/include"},
-  {"LDFLAGS","-L/self/lib "},
-  {"PKG_CONFIG_PATH","/self/lib/pkgconfig:/self/share/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig"},
+  {"ACLOCAL_PATH","/app/share/aclocal"},
+  {"C_INCLUDE_PATH","/app/include"},
+  {"CPLUS_INCLUDE_PATH","/app/include"},
+  {"LDFLAGS","-L/app/lib "},
+  {"PKG_CONFIG_PATH","/app/lib/pkgconfig:/app/share/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig"},
   {"LC_ALL","en_US.utf8"},
 };
 

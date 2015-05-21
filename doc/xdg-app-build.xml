@@ -48,7 +48,7 @@
             The sdk that is specfied in the <filename>metadata</filename> file
             in the directory is mounted at <filename>/usr</filename> and the
             <filename>files</filename> and <filename>var</filename> subdirectories
-            are mounted at <filename>/self</filename> and <filename>/var</filename>,
+            are mounted at <filename>/app</filename> and <filename>/var</filename>,
             respectively. They are writable, and their contents are preserved between
             build commands, to allow accumulating build artifacts there.
         </para>

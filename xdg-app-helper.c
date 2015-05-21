@@ -298,11 +298,11 @@ usage (char **argv)
   fprintf (stderr, "usage: %s [OPTIONS...] RUNTIMEPATH COMMAND [ARGS...]\n\n", argv[0]);
 
   fprintf (stderr,
-           "	-a		Specify path for application (mounted at /self)\n"
-           "	-b SOURCE=DEST	Bind extra source directory into DEST (must be in /usr, /self, /run/host)\n"
+           "	-a		Specify path for application (mounted at /app)\n"
+           "	-b SOURCE=DEST	Bind extra source directory into DEST (must be in /usr, /app, /run/host)\n"
            "	-d SOCKETPATH	Use SOCKETPATH as dbus session bus\n"
            "	-D SOCKETPATH	Use SOCKETPATH as dbus system bus\n"
-           "	-e		Make /self/exports writable\n"
+           "	-e		Make /app/exports writable\n"
            "	-E		Make /etc a pure symlink to /usr/etc\n"
            "	-f		Mount the host filesystems\n"
 	   "    -g              Allow use of direct rendering graphics\n"
@@ -316,7 +316,7 @@ usage (char **argv)
            "	-p SOCKETPATH	Use SOCKETPATH as pulseaudio connection\n"
            "	-s		Share Shm namespace with session\n"
            "	-v PATH		Mount PATH as /var\n"
-           "	-w		Make /self writable\n"
+           "	-w		Make /app writable\n"
            "	-W		Make /usr writable\n"
            "	-x SOCKETPATH	Use SOCKETPATH as X display\n"
            "	-y SOCKETPATH	Use SOCKETPATH as Wayland display\n"
@@ -388,7 +388,9 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, ".oldroot", 0755 },
   { FILE_TYPE_DIR, "usr", 0755 },
   { FILE_TYPE_DIR, "tmp", 01777 },
-  { FILE_TYPE_DIR, "self", 0755},
+  { FILE_TYPE_DIR, "app", 0755},
+  /* Backwards compat, the app prefix used to be /self */
+  { FILE_TYPE_SYMLINK, "self", 0755, "app"},
   { FILE_TYPE_DIR, "run", 0755},
   { FILE_TYPE_DIR, "run/host", 0755},
   { FILE_TYPE_DIR, "run/dbus", 0755},
@@ -469,7 +471,7 @@ static const mount_table_t mount_table[] = {
 
 const char *dont_mount_in_root[] = {
   ".", "..", "lib", "lib32", "lib64", "bin", "sbin", "usr", "boot", "root",
-  "tmp", "etc", "self", "run", "proc", "sys", "dev", "var"
+  "tmp", "etc", "self", "app", "run", "proc", "sys", "dev", "var"
 };
 
 typedef enum {
@@ -1514,9 +1516,9 @@ main (int argc,
             die ("Too many extra directories");
 
           if (strncmp (optarg, "/usr/", strlen ("/usr/")) != 0 &&
-              strncmp (optarg, "/self/", strlen ("/self/")) != 0 &&
+              strncmp (optarg, "/app/", strlen ("/app/")) != 0 &&
               strncmp (optarg, "/run/host/", strlen ("/run/host/")) != 0)
-            die ("Extra directories must be in /usr, /self or /run/host");
+            die ("Extra directories must be in /usr, /app or /run/host");
 
           extra_dirs[n_extra_dirs].dest = optarg + 1;
           extra_dirs[n_extra_dirs].src = tmp;
@@ -1705,18 +1707,18 @@ main (int argc,
 
   if (app_path != NULL)
     {
-      if (bind_mount (app_path, "self", BIND_PRIVATE | (writable_app?0:BIND_READONLY)))
-        die_with_error ("mount self");
+      if (bind_mount (app_path, "app", BIND_PRIVATE | (writable_app?0:BIND_READONLY)))
+        die_with_error ("mount app");
 
       if (lock_files)
-	add_lock_dir ("self");
+	add_lock_dir ("app");
 
       if (!writable_app && writable_exports)
 	{
 	  char *exports = strconcat (app_path, "/exports");
 
-	  if (bind_mount (exports, "self/exports", BIND_PRIVATE))
-	    die_with_error ("mount self/exports");
+	  if (bind_mount (exports, "app/exports", BIND_PRIVATE))
+	    die_with_error ("mount app/exports");
 
 	  free (exports);
 	}
