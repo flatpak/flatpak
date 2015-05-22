@@ -21,7 +21,33 @@
 #ifndef __XDG_APP_RUN_H__
 #define __XDG_APP_RUN_H__
 
+#include "libglnx/libglnx.h"
+
 void xdg_app_run_in_transient_unit (const char *app_id);
+
+typedef struct XdgAppContext XdgAppContext;
+
+#define XDG_APP_METADATA_GROUP_CONTEXT "Context"
+#define XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
+#define XDG_APP_METADATA_GROUP_ENVIRONMENT "Environment"
+#define XDG_APP_METADATA_KEY_SHARED "shared"
+#define XDG_APP_METADATA_KEY_SOCKETS "sockets"
+#define XDG_APP_METADATA_KEY_FILESYSTEMS "filesystems"
+#define XDG_APP_METADATA_KEY_PERSISTENT "persistent"
+#define XDG_APP_METADATA_KEY_DEVICES "devices"
+
+XdgAppContext *xdg_app_context_new                    (void);
+void           xdg_app_context_free                   (XdgAppContext            *context);
+void           xdg_app_context_merge                  (XdgAppContext            *context,
+                                                       XdgAppContext            *other);
+GOptionGroup  *xdg_app_context_get_options            (XdgAppContext            *context);
+gboolean       xdg_app_context_load_metadata          (XdgAppContext            *context,
+                                                       GKeyFile                 *metakey,
+                                                       GError                  **error);
+void           xdg_app_context_save_metadata          (XdgAppContext            *context,
+                                                       GKeyFile                 *metakey);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppContext, xdg_app_context_free)
 
 gboolean xdg_app_run_verify_environment_keys (const char **keys,
 					      GError     **error);
