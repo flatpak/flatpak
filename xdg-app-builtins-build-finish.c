@@ -31,15 +31,12 @@
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
+#include "xdg-app-run.h"
 
 static char *opt_command;
-static char **opt_allow;
-static char **opt_env_override;
 
 static GOptionEntry options[] = {
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to set", "COMMAND" },
-  { "allow", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_allow, "Environment options to set to true", "KEY" },
-  { "env", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_env_override, "Override an environment variable", "VARIABLE=[VALUE]" },
   { NULL }
 };
 
@@ -216,19 +213,14 @@ out:
 }
 
 static gboolean
-update_metadata (GFile *base, GCancellable *cancellable, GError **error)
+update_metadata (GFile *base, XdgAppContext *arg_context, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *path = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
+  g_autoptr(XdgAppContext) app_context = NULL;
   GError *temp_error = NULL;
-  const char *environment_keys[] = {
-    "x11", "wayland", "ipc", "pulseaudio", "system-dbus", "session-dbus",
-    "network", "host-fs", "homedir", "dri", NULL
-  };
-  const char *key;
-  int i;
 
   metadata = g_file_get_child (base, "metadata");
   if (!g_file_query_exists (metadata, cancellable))
@@ -294,46 +286,11 @@ update_metadata (GFile *base, GCancellable *cancellable, GError **error)
         }
     }
 
-  g_debug ("Setting environment");
-
-  for (i = 0; environment_keys[i]; i++)
-    {
-      key = environment_keys[i];
-      g_key_file_set_boolean (keyfile, "Environment", key, FALSE);
-    }
-
-  if (opt_allow)
-    {
-      for (i = 0; opt_allow[i]; i++)
-        {
-          key = opt_allow[i];
-          if (!g_strv_contains (environment_keys, key))
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unknown Environment key %s", key);
-              goto out;
-            }
-
-          g_key_file_set_boolean (keyfile, "Environment", key, TRUE);
-        }
-    }
-
-  if (opt_env_override)
-    {
-      for (i = 0; opt_env_override[i]; i++)
-        {
-          glnx_strfreev char **split = g_strsplit (opt_env_override[i], "=", 2);
-          if (split && split[0] && split[1])
-            {
-              g_key_file_set_string (keyfile, "Environment Vars", split[0], split[1]);
-            }
-          else
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Cannot parse variable %s", opt_env_override[i]);
-              goto out;
-            }
-        }
-    }
-
+  app_context = xdg_app_context_new ();
+  if (!xdg_app_context_load_metadata (app_context, keyfile, error))
+    goto out;
+  xdg_app_context_merge (app_context, arg_context);
+  xdg_app_context_save_metadata (app_context, keyfile);
 
   if (!g_key_file_save_to_file (keyfile, path, error))
     goto out;
@@ -363,8 +320,12 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   gsize metadata_size;
   const char *directory;
   g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr(XdgAppContext) arg_context = NULL;
 
   context = g_option_context_new ("DIRECTORY - Convert a directory to a bundle");
+
+  arg_context = xdg_app_context_new ();
+  g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
@@ -412,7 +373,7 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
     goto out;
 
   g_debug ("Updating metadata");
-  if (!update_metadata (base, cancellable, error))
+  if (!update_metadata (base, arg_context, cancellable, error))
     goto out;
 
   g_print ("Please review the exported files and the metadata\n");

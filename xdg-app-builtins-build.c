@@ -34,13 +34,9 @@
 #include "xdg-app-run.h"
 
 static gboolean opt_runtime;
-static char **opt_allow;
-static char **opt_forbid;
 
 static GOptionEntry options[] = {
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Use non-devel runtime", NULL },
-  { "allow", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_allow, "Environment options to set to true", "KEY" },
-  { "forbid", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_forbid, "Environment options to set to false", "KEY" },
   { NULL }
 };
 
@@ -77,6 +73,8 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autofree char *app_id = NULL;
   int i;
   int rest_argv_start, rest_argc;
+  g_autoptr(XdgAppContext) arg_context = NULL;
+  g_autoptr(XdgAppContext) app_context = NULL;
 
   context = g_option_context_new ("DIRECTORY [COMMAND [args...]] - Build in directory");
 
@@ -92,6 +90,9 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
           break;
         }
     }
+
+  arg_context = xdg_app_context_new ();
+  g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
@@ -147,16 +148,15 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_ptr_array_add (argv_array, g_strdup ("-H"));
   g_ptr_array_add (argv_array, g_strdup ("-r"));
 
-  if (!xdg_app_run_verify_environment_keys ((const char **)opt_forbid, error))
+  app_context = xdg_app_context_new ();
+  if (!xdg_app_context_load_metadata (app_context, runtime_metakey, error))
     goto out;
-
-  if (!xdg_app_run_verify_environment_keys ((const char **)opt_allow, error))
+  if (!xdg_app_context_load_metadata (app_context, metakey, error))
     goto out;
+  xdg_app_context_merge (app_context, arg_context);
 
   xdg_app_run_add_environment_args (argv_array, NULL, app_id,
-                                    runtime_metakey, metakey,
-				    (const char **)opt_allow,
-				    (const char **)opt_forbid);
+                                    app_context);
 
   g_ptr_array_add (argv_array, g_strdup ("-w"));
   g_ptr_array_add (argv_array, g_strdup ("-a"));
@@ -172,7 +172,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_ptr_array_add (argv_array, NULL);
 
   envp = xdg_app_run_get_minimal_env (TRUE);
-  envp = xdg_app_run_apply_env_vars (envp, runtime_metakey);
+  envp = xdg_app_run_apply_env_vars (envp, app_context);
 
   if (!execve (HELPER, (char **)argv_array->pdata, envp))
     {

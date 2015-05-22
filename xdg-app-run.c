@@ -986,79 +986,33 @@ xdg_app_run_add_session_dbus_args (GPtrArray *argv_array,
 }
 
 static void
-xdg_app_add_bus_filters_for_meta (GPtrArray *dbus_proxy_argv,
-                                  const char *header,
-                                  GKeyFile *metakey)
-{
-  glnx_strfreev char **keys = NULL;
-  gsize i, keys_count;
-
-  keys = g_key_file_get_keys (metakey, header, &keys_count, NULL);
-  if (keys)
-    {
-      for (i = 0; i < keys_count; i++)
-        {
-          const char *key = keys[i];
-          const char *key_part;
-          g_autofree char *tmp = NULL;
-          g_autofree char *value = g_key_file_get_string (metakey, header, key, NULL);
-
-          if (g_str_has_suffix (key, ".*"))
-            {
-              tmp = g_strndup (key, strlen (key) - 2);
-              key_part = tmp;
-            }
-          else
-            key_part = key;
-
-          if (!(g_dbus_is_name (key_part) && !g_dbus_is_unique_name (key_part)))
-            {
-              g_warning ("Invalid dbus name %s\n", key);
-              continue;
-            }
-
-          if (strcmp (value, "see") != 0 &&
-              strcmp (value, "talk") != 0 &&
-              strcmp (value, "own") != 0)
-            {
-              g_warning ("Invalid dbus policy: %s\n", value);
-              continue;
-            }
-
-          g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--%s=%s", value, key));
-        }
-    }
-}
-
-static void
 xdg_app_add_bus_filters (GPtrArray *dbus_proxy_argv,
                          const char *app_id,
-                         GKeyFile *runtime_metakey,
-                         GKeyFile *metakey)
+                         XdgAppContext *context)
 {
+  GHashTableIter iter;
+  gpointer key, value;
+
   g_ptr_array_add (dbus_proxy_argv, g_strdup ("--filter"));
   g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s", app_id));
   g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s.*", app_id));
 
-  xdg_app_add_bus_filters_for_meta (dbus_proxy_argv,
-                                    XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY,
-                                    runtime_metakey);
-  if (metakey)
-    xdg_app_add_bus_filters_for_meta (dbus_proxy_argv,
-                                      XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY,
-                                      metakey);
+  g_hash_table_iter_init (&iter, context->bus_policy);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      XdgAppPolicy policy = GPOINTER_TO_INT (value);
+
+      if (policy > 0)
+        g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--%s=%s", xdg_app_policy_to_string (policy), (char *)key));
+    }
 }
 
 void
 xdg_app_run_add_environment_args (GPtrArray *argv_array,
 				  GPtrArray *dbus_proxy_argv,
                                   const char *app_id,
-				  GKeyFile *runtime_metakey,
-				  GKeyFile *metakey,
-				  const char **allow,
-				  const char **forbid)
+                                  XdgAppContext *context)
 {
-  const char *no_opts[1] = { NULL };
   gboolean unrestricted_session_bus;
   char opts[16];
   int i;
@@ -1066,89 +1020,67 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
   i = 0;
   opts[i++] = '-';
 
-  if (allow == NULL)
-    allow = no_opts;
 
-  if (forbid == NULL)
-    forbid = no_opts;
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "ipc", NULL) || g_strv_contains (allow, "ipc")) &&
-      !g_strv_contains (forbid, "ipc"))
+  if (context->shares & XDG_APP_CONTEXT_SHARED_IPC)
     {
       g_debug ("Allowing ipc access");
       opts[i++] = 'i';
     }
 
-  if ((g_key_file_get_boolean (metakey, "Environment", "dri", NULL) || g_strv_contains (allow, "dri")) &&
-      !g_strv_contains (forbid, "dri"))
-    {
-      g_debug ("Allowing dri access");
-      opts[i++] = 'g';
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "host-fs", NULL) || g_strv_contains (allow, "nost-fs")) &&
-      !g_strv_contains (forbid, "host-fs"))
-    {
-      g_debug ("Allowing host-fs access");
-      opts[i++] = 'f';
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "homedir", NULL) || g_strv_contains (allow, "homedir")) &&
-      !g_strv_contains (forbid, "homedir"))
-    {
-      g_debug ("Allowing homedir access");
-      opts[i++] = 'H';
-    }
-
-  if ((g_key_file_get_boolean (metakey, "Environment", "network", NULL) || g_strv_contains (allow, "network")) &&
-      !g_strv_contains (forbid, "network"))
+  if (context->shares & XDG_APP_CONTEXT_SHARED_NETWORK)
     {
       g_debug ("Allowing network access");
       opts[i++] = 'n';
     }
 
-  if ((g_key_file_get_boolean (metakey, "Environment", "x11", NULL) || g_strv_contains (allow, "x11")) &&
-      !g_strv_contains (forbid, "x11"))
+  if (context->devices & XDG_APP_CONTEXT_DEVICE_DRI)
+    {
+      g_debug ("Allowing dri access");
+      opts[i++] = 'g';
+    }
+
+  if (g_hash_table_lookup (context->filesystems, "host"))
+    {
+      g_debug ("Allowing host-fs access");
+      opts[i++] = 'f';
+    }
+  else if (g_hash_table_lookup (context->filesystems, "home"))
+    {
+      g_debug ("Allowing homedir access");
+      opts[i++] = 'H';
+    }
+
+  if (context->sockets & XDG_APP_CONTEXT_SOCKET_X11)
     {
       g_debug ("Allowing x11 access");
       xdg_app_run_add_x11_args (argv_array);
     }
 
-  if ((g_key_file_get_boolean (metakey, "Environment", "wayland", NULL) || g_strv_contains (allow, "wayland")) &&
-      !g_strv_contains (forbid, "wayland"))
+  if (context->sockets & XDG_APP_CONTEXT_SOCKET_WAYLAND)
     {
       g_debug ("Allowing wayland access");
       xdg_app_run_add_wayland_args (argv_array);
     }
 
-  if ((g_key_file_get_boolean (metakey, "Environment", "pulseaudio", NULL) || g_strv_contains (allow, "pulseaudio")) &&
-      !g_strv_contains (forbid, "pulseaudio"))
+  if (context->sockets & XDG_APP_CONTEXT_SOCKET_PULSEAUDIO)
     {
       g_debug ("Allowing pulseaudio access");
       xdg_app_run_add_pulseaudio_args (argv_array);
     }
 
-  if ((g_key_file_get_boolean (metakey, "Environment", "system-dbus", NULL) || g_strv_contains (allow, "system-dbus")) &&
-      !g_strv_contains (forbid, "system-dbus"))
-    {
-      g_debug ("Allowing system-dbus access");
-      xdg_app_run_add_system_dbus_args (argv_array, dbus_proxy_argv);
-    }
-
-  unrestricted_session_bus =
-    (g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL) || g_strv_contains (allow, "session-dbus")) &&
-    !g_strv_contains (forbid, "session-dbus");
+  unrestricted_session_bus = (context->sockets & XDG_APP_CONTEXT_SOCKET_SESSION_BUS) != 0;
+  if (unrestricted_session_bus)
+    g_debug ("Allowing session-dbus access");
   if (xdg_app_run_add_session_dbus_args (argv_array, dbus_proxy_argv, unrestricted_session_bus) &&
       !unrestricted_session_bus && dbus_proxy_argv)
     {
-      xdg_app_add_bus_filters (dbus_proxy_argv, app_id,
-                               runtime_metakey, metakey);
+      xdg_app_add_bus_filters (dbus_proxy_argv, app_id, context);
     }
 
-  if ((g_key_file_get_boolean (metakey, "Environment", "session-dbus", NULL) || g_strv_contains (allow, "session-dbus")) &&
-      !g_strv_contains (forbid, "session-dbus"))
+  if (context->sockets & XDG_APP_CONTEXT_SOCKET_SYSTEM_BUS)
     {
-      g_debug ("Allowing session-dbus access");
+      g_debug ("Allowing system-dbus access");
+      xdg_app_run_add_system_dbus_args (argv_array, dbus_proxy_argv);
     }
 
   g_assert (sizeof(opts) > i);
@@ -1157,6 +1089,11 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       opts[i++] = 0;
       g_ptr_array_add (argv_array, g_strdup (opts));
     }
+
+  /* TODO:
+     Handle persistent
+     Handle detailed filesystems
+  */
 }
 
 static const struct {const char *env; const char *val;} default_exports[] = {
@@ -1277,29 +1214,26 @@ xdg_app_run_apply_env_appid (char       **envp,
 }
 
 char **
-xdg_app_run_apply_env_vars (char **envp, GKeyFile *metakey)
+xdg_app_run_apply_env_vars (char **envp, XdgAppContext *context)
 {
-  glnx_strfreev char **keys = NULL;
-  gsize i, keys_count;
+  GHashTableIter iter;
+  gpointer key, value;
 
-  keys = g_key_file_get_keys (metakey, "Environment Vars", &keys_count, NULL);
-  if (keys)
+  g_hash_table_iter_init (&iter, context->env_vars);
+  while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      for (i = 0; i < keys_count; i++)
-        {
-          const char *key = keys[i];
-          g_autofree char *value = g_key_file_get_string (metakey, "Environment Vars", key, NULL);
+      const char *var = key;
+      const char *val = value;
 
-          /* We special case LD_LIBRARY_PATH to avoid passing it top
-             the helper */
-          if (strcmp (key, "LD_LIBRARY_PATH") == 0)
-            key = "_LD_LIBRARY_PATH";
+      /* We special case LD_LIBRARY_PATH to avoid passing it top
+         the helper */
+      if (strcmp (var, "LD_LIBRARY_PATH") == 0)
+        var = "_LD_LIBRARY_PATH";
 
-          if (value)
-            envp = g_environ_setenv (envp, key, value, TRUE);
-          else
-            envp = g_environ_unsetenv (envp, key);
-        }
+      if (val && val[0] != 0)
+        envp = g_environ_setenv (envp, var, val, TRUE);
+      else
+        envp = g_environ_unsetenv (envp, var);
     }
 
   return envp;

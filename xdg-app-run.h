@@ -49,21 +49,16 @@ void           xdg_app_context_save_metadata          (XdgAppContext            
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppContext, xdg_app_context_free)
 
-gboolean xdg_app_run_verify_environment_keys (const char **keys,
-					      GError     **error);
 void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,
 					      GPtrArray   *dbus_proxy_argv,
                                               const char  *app_id,
-					      GKeyFile    *runtime_metakey,
-					      GKeyFile    *metakey,
-					      const char **allow,
-					      const char **forbid);
+                                              XdgAppContext *context);
 char **  xdg_app_run_get_minimal_env         (gboolean     devel);
 char **  xdg_app_run_apply_env_default       (char       **envp);
 char **  xdg_app_run_apply_env_appid         (char       **envp,
                                               GFile       *app_dir);
 char **  xdg_app_run_apply_env_vars          (char       **envp,
-                                              GKeyFile    *metakey);
+                                              XdgAppContext *context);
 
 GFile *xdg_app_get_data_dir (const char *app_id);
 GFile *xdg_app_ensure_data_dir (const char *app_id,

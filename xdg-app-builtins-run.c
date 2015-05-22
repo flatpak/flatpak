@@ -40,8 +40,6 @@ static char *opt_branch;
 static char *opt_command;
 static gboolean opt_devel;
 static char *opt_runtime;
-static char **opt_allow;
-static char **opt_forbid;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
@@ -49,8 +47,6 @@ static GOptionEntry options[] = {
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to use", "BRANCH" },
   { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, "Runtime to use", "RUNTIME" },
-  { "allow", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_allow, "Environment options to set to true", "KEY" },
-  { "forbid", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_forbid, "Environment options to set to false", "KEY" },
   { NULL }
 };
 
@@ -176,6 +172,8 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   int i;
   int rest_argv_start, rest_argc;
   int sync_proxy_pipes[2];
+  g_autoptr(XdgAppContext) arg_context = NULL;
+  g_autoptr(XdgAppContext) app_context = NULL;
 
   context = g_option_context_new ("APP [args...] - Run an app");
 
@@ -191,6 +189,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
           break;
         }
     }
+
+  arg_context = xdg_app_context_new ();
+  g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
@@ -251,6 +252,13 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   runtime_metakey = xdg_app_deploy_get_metadata (runtime_deploy);
 
+  app_context = xdg_app_context_new ();
+  if (!xdg_app_context_load_metadata (app_context, runtime_metakey, error))
+    goto out;
+  if (!xdg_app_context_load_metadata (app_context, metakey, error))
+    goto out;
+  xdg_app_context_merge (app_context, arg_context);
+
   if (!add_extension_args (runtime_metakey, runtime_ref, argv_array, cancellable, error))
     goto out;
 
@@ -284,16 +292,8 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 	}
     }
 
-  if (!xdg_app_run_verify_environment_keys ((const char **)opt_forbid, error))
-    goto out;
-
-  if (!xdg_app_run_verify_environment_keys ((const char **)opt_allow, error))
-    goto out;
-
   xdg_app_run_add_environment_args (argv_array, dbus_proxy_argv,
-                                    app, runtime_metakey, metakey,
-				    (const char **)opt_allow,
-				    (const char **)opt_forbid);
+                                    app, app_context);
 
   g_ptr_array_add (argv_array, g_strdup ("-b"));
   g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/fonts=%s", SYSTEM_FONTS_DIR));
@@ -354,9 +354,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   envp = g_get_environ ();
   envp = xdg_app_run_apply_env_default (envp);
 
-  envp = xdg_app_run_apply_env_vars (envp, runtime_metakey);
-  /* Load application environment overrides *after* runtime */
-  envp = xdg_app_run_apply_env_vars (envp, metakey);
+  envp = xdg_app_run_apply_env_vars (envp, app_context);
 
   envp = xdg_app_run_apply_env_appid (envp, app_id_dir);
 
