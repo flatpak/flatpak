@@ -1261,7 +1261,6 @@ static const struct {const char *env; const char *val;} default_exports[] = {
   {"_LD_LIBRARY_PATH", "/app/lib"},
   {"XDG_CONFIG_DIRS","/app/etc/xdg:/etc/xdg"},
   {"XDG_DATA_DIRS","/app/share:/usr/share"},
-  {"GI_TYPELIB_PATH","/app/lib/girepository-1.0"},
   {"SHELL","/bin/sh"},
 };
 
