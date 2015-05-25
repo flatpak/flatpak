@@ -875,6 +875,12 @@ xdg_app_run_verify_environment_keys (const char **keys,
   return TRUE;
 }
 
+void
+xdg_app_context_allow_host_fs (XdgAppContext            *context)
+{
+  xdg_app_context_add_filesystem (context, "host");
+}
+
 
 static char *
 extract_unix_path_from_dbus_address (const char *address)

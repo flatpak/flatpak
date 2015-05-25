@@ -46,6 +46,7 @@ gboolean       xdg_app_context_load_metadata          (XdgAppContext            
                                                        GError                  **error);
 void           xdg_app_context_save_metadata          (XdgAppContext            *context,
                                                        GKeyFile                 *metakey);
+void           xdg_app_context_allow_host_fs          (XdgAppContext            *context);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppContext, xdg_app_context_free)
 
