@@ -889,7 +889,7 @@ create_file (const char *path, mode_t mode, const char *content)
   if (fd == -1)
     return FALSE;
 
-  res = 0;
+  res = TRUE;
   if (content)
     res = write_to_file (fd, content, strlen (content));
 
@@ -1921,7 +1921,7 @@ main (int argc,
       char *config_path_absolute = strdup_printf ("/run/user/%d/pulse/config", getuid());
       char *client_config = strdup_printf ("enable-shm=%s\n", share_shm ? "yes" : "no");
 
-      if (!create_file (config_path_relative, 0666, client_config) == 0 &&
+      if (!create_file (config_path_relative, 0666, client_config) &&
           bind_mount (pulseaudio_socket, pulse_path_relative, BIND_READONLY) == 0)
         {
           xsetenv ("PULSE_SERVER", pulse_server, 1);
@@ -1941,7 +1941,7 @@ main (int argc,
 
   if (system_dbus_socket != NULL)
     {
-      if (!create_file ("run/dbus/system_bus_socket", 0666, NULL) == 0 &&
+      if (!create_file ("run/dbus/system_bus_socket", 0666, NULL) &&
           bind_mount (system_dbus_socket, "run/dbus/system_bus_socket", 0) == 0)
         xsetenv ("DBUS_SYSTEM_BUS_ADDRESS",  "unix:path=/var/run/dbus/system_bus_socket", 1);
       else
@@ -1953,7 +1953,7 @@ main (int argc,
       char *session_dbus_socket_path_relative = strdup_printf ("run/user/%d/bus", getuid());
       char *session_dbus_address = strdup_printf ("unix:path=/run/user/%d/bus", getuid());
 
-      if (!create_file (session_dbus_socket_path_relative, 0666, NULL) == 0 &&
+      if (!create_file (session_dbus_socket_path_relative, 0666, NULL) &&
           bind_mount (session_dbus_socket, session_dbus_socket_path_relative, 0) == 0)
         xsetenv ("DBUS_SESSION_BUS_ADDRESS",  session_dbus_address, 1);
       else
