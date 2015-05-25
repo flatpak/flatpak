@@ -484,19 +484,21 @@ typedef enum {
 typedef struct {
   char *src;
   char *dest;
+  bool readonly;
 } ExtraDir;
 
 ExtraDir *extra_dirs = NULL;
 int n_extra_dirs = 0;
 
 static void
-add_extra_dir (char *src, char *dest)
+add_extra_dir (char *src, char *dest, bool readonly)
 {
   int i = n_extra_dirs;
   n_extra_dirs++;
   extra_dirs = xrealloc (extra_dirs, n_extra_dirs * sizeof (ExtraDir));
   extra_dirs[i].src = src;
   extra_dirs[i].dest = dest;
+  extra_dirs[i].readonly = readonly;
 }
 
 static int n_lock_dirs = 0;
@@ -1507,7 +1509,7 @@ main (int argc,
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
     die_with_error ("prctl(PR_SET_NO_NEW_CAPS) failed");
 
-  while ((c =  getopt (argc, argv, "+inWweEsfFHra:m:b:p:x:ly:d:D:v:I:gS:")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWweEsfFHra:m:b:B:p:x:ly:d:D:v:I:gS:")) >= 0)
     {
       switch (c)
         {
@@ -1515,6 +1517,8 @@ main (int argc,
           app_path = optarg;
           break;
 
+        case 'B':
+          /* Fall through, but non-readonly */
         case 'b':
           tmp = strchr (optarg, '=');
           if (tmp == NULL || tmp[1] == 0)
@@ -1522,12 +1526,16 @@ main (int argc,
           *tmp = 0;
           tmp = tmp + 1;
 
-          if (strncmp (optarg, "/usr/", strlen ("/usr/")) != 0 &&
-              strncmp (optarg, "/app/", strlen ("/app/")) != 0 &&
-              strncmp (optarg, "/run/host/", strlen ("/run/host/")) != 0)
-            die ("Extra directories must be in /usr, /app or /run/host");
+          if (optarg[0] != '/')
+            die ("Extra directories must be absolute paths");
 
-          add_extra_dir (tmp, optarg + 1);
+          while (*optarg == '/')
+            optarg++;
+
+          if (*optarg == 0)
+            die ("Extra directories must not be root");
+
+          add_extra_dir (tmp, optarg, c == 'b');
           break;
 
         case 'd':
@@ -1733,7 +1741,7 @@ main (int argc,
       if (mkdir_with_parents (extra_dirs[i].dest, 0755))
         die_with_error ("create extra dir %s", extra_dirs[i].dest);
 
-      if (bind_mount (extra_dirs[i].src, extra_dirs[i].dest, BIND_PRIVATE | BIND_READONLY))
+      if (bind_mount (extra_dirs[i].src, extra_dirs[i].dest, BIND_PRIVATE | (extra_dirs[i].readonly ? BIND_READONLY : 0)))
         die_with_error ("mount extra dir %s", extra_dirs[i].src);
 
       if (lock_files)
