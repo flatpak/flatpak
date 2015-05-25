@@ -311,6 +311,55 @@ xdg_app_context_set_persistent (XdgAppContext            *context,
   g_hash_table_insert (context->persistent, g_strdup (path), GINT_TO_POINTER (1));
 }
 
+static const char *
+get_user_dir_config_key (GUserDirectory dir)
+{
+  switch (dir)
+    {
+    case G_USER_DIRECTORY_DESKTOP:
+      return "XDG_DESKTOP_DIR";
+    case G_USER_DIRECTORY_DOCUMENTS:
+      return "XDG_DOCUMENTS_DIR";
+    case G_USER_DIRECTORY_DOWNLOAD:
+      return "XDG_DOWNLOAD_DIR";
+    case G_USER_DIRECTORY_MUSIC:
+      return "XDG_MUSIC_DIR";
+    case G_USER_DIRECTORY_PICTURES:
+      return "XDG_PICTURES_DIR";
+    case G_USER_DIRECTORY_PUBLIC_SHARE:
+      return "XDG_PUBLICSHARE_DIR";
+    case G_USER_DIRECTORY_TEMPLATES:
+      return "XDG_TEMPLATES_DIR";
+    case G_USER_DIRECTORY_VIDEOS:
+      return "XDG_VIDEOS_DIR";
+    default:
+      return NULL;
+    }
+}
+
+static int
+get_user_dir_from_string (const char *filesystem)
+{
+  if (strcmp (filesystem, "xdg-desktop") == 0)
+    return G_USER_DIRECTORY_DESKTOP;
+  if (strcmp (filesystem, "xdg-documents") == 0)
+    return G_USER_DIRECTORY_DOCUMENTS;
+  if (strcmp (filesystem, "xdg-download") == 0)
+    return G_USER_DIRECTORY_DOWNLOAD;
+  if (strcmp (filesystem, "xdg-music") == 0)
+    return G_USER_DIRECTORY_MUSIC;
+  if (strcmp (filesystem, "xdg-pictures") == 0)
+    return G_USER_DIRECTORY_PICTURES;
+  if (strcmp (filesystem, "xdg-public-share") == 0)
+    return G_USER_DIRECTORY_PUBLIC_SHARE;
+  if (strcmp (filesystem, "xdg-templates") == 0)
+    return G_USER_DIRECTORY_TEMPLATES;
+  if (strcmp (filesystem, "xdg-videos") == 0)
+    return G_USER_DIRECTORY_VIDEOS;
+
+  return -1;
+}
+
 static gboolean
 xdg_app_context_verify_filesystem (const char *filesystem,
                                    GError **error)
@@ -319,7 +368,7 @@ xdg_app_context_verify_filesystem (const char *filesystem,
     return TRUE;
   if (strcmp (filesystem, "home") == 0)
     return TRUE;
-  if (g_str_has_prefix (filesystem, "xdg-"))
+  if (get_user_dir_from_string (filesystem) >= 0)
     return TRUE;
   if (g_str_has_prefix (filesystem, "~/"))
     return TRUE;
@@ -1013,13 +1062,16 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
                                   const char *app_id,
                                   XdgAppContext *context)
 {
+  GHashTableIter iter;
+  gpointer key;
   gboolean unrestricted_session_bus;
+  gboolean home_access = FALSE;
+  GString *xdg_dirs_conf = NULL;
   char opts[16];
   int i;
 
   i = 0;
   opts[i++] = '-';
-
 
   if (context->shares & XDG_APP_CONTEXT_SHARED_IPC)
     {
@@ -1043,17 +1095,16 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
     {
       g_debug ("Allowing host-fs access");
       opts[i++] = 'f';
+      home_access = TRUE;
     }
   else if (g_hash_table_lookup (context->filesystems, "home"))
     {
       g_debug ("Allowing homedir access");
       opts[i++] = 'H';
+      home_access = TRUE;
     }
   else
     {
-      GHashTableIter iter;
-      gpointer key;
-
       /* Enable persistant mapping only if no access to real home dir */
 
       g_hash_table_iter_init (&iter, context->persistent);
@@ -1068,6 +1119,97 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
           g_ptr_array_add (argv_array, g_strdup ("-B"));
           g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", dest, src));
         }
+
+    }
+
+  g_hash_table_iter_init (&iter, context->filesystems);
+  while (g_hash_table_iter_next (&iter, &key, NULL))
+    {
+      const char *filesystem = key;
+
+      if (strcmp (filesystem, "host") == 0 ||
+          strcmp (filesystem, "home") == 0)
+        continue;
+
+      if (g_str_has_prefix (filesystem, "xdg-"))
+        {
+          const char *path;
+          int dir = get_user_dir_from_string (filesystem);
+
+          if (home_access)
+            continue;
+
+          if (dir < 0)
+            {
+              g_warning ("Unsupported xdg dir %s\n", filesystem);
+              continue;
+            }
+
+         path = g_get_user_special_dir (dir);
+          if (strcmp (path, g_get_home_dir ()) == 0)
+            {
+              /* xdg-user-dirs sets disabled dirs to $HOME, and its in general not a good
+                 idea to set full access to $HOME other than explicitly, so we ignore
+                 these */
+              g_debug ("Xdg dir %s is $HOME (i.e. disabled), ignoring\n", filesystem);
+              continue;
+            }
+
+          if (g_file_test (path, G_FILE_TEST_EXISTS))
+            {
+              if (xdg_dirs_conf == NULL)
+                xdg_dirs_conf = g_string_new ("");
+
+              g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n", get_user_dir_config_key (dir), path);
+
+              g_ptr_array_add (argv_array, g_strdup ("-B"));
+              g_ptr_array_add (argv_array, g_strdup_printf ("%s", path));
+            }
+        }
+      else if (g_str_has_prefix (filesystem, "~/"))
+        {
+          g_autofree char *path = NULL;
+
+          if (home_access)
+            continue;
+
+          path = g_build_filename (g_get_home_dir(), filesystem+2, NULL);
+          if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
+            {
+              g_ptr_array_add (argv_array, g_strdup ("-B"));
+              g_ptr_array_add (argv_array, g_strdup (path));
+            }
+        }
+      else if (g_str_has_prefix (filesystem, "/"))
+        {
+          if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
+            {
+              g_ptr_array_add (argv_array, g_strdup ("-B"));
+              g_ptr_array_add (argv_array, g_strdup_printf ("%s", filesystem));
+            }
+        }
+      else
+        g_warning ("Unexpected filesystem arg %s\n", filesystem);
+    }
+
+  if (xdg_dirs_conf != NULL)
+    {
+      g_autofree char *tmp_path = NULL;
+      g_autofree char *path = NULL;
+      int fd;
+
+      fd = g_file_open_tmp ("xdg-app-user-dir-XXXXXX.dirs", &tmp_path, NULL);
+      if (fd >= 0)
+        {
+          close (fd);
+          if (g_file_set_contents (tmp_path, xdg_dirs_conf->str, xdg_dirs_conf->len, NULL))
+            {
+              path = g_build_filename (g_get_home_dir (), ".config/user-dirs.dirs", NULL);
+              g_ptr_array_add (argv_array, g_strdup ("-M"));
+              g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", path, tmp_path));
+            }
+        }
+      g_string_free (xdg_dirs_conf, TRUE);
     }
 
   if (context->sockets & XDG_APP_CONTEXT_SOCKET_X11)
@@ -1102,10 +1244,6 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       g_debug ("Allowing system-dbus access");
       xdg_app_run_add_system_dbus_args (argv_array, dbus_proxy_argv);
     }
-
-  /* TODO:
-     Handle detailed filesystems
-  */
 
   g_assert (sizeof(opts) > i);
   if (i > 1)
