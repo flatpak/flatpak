@@ -486,11 +486,21 @@ typedef struct {
   char *dest;
 } ExtraDir;
 
-#define MAX_EXTRA_DIRS 32
-#define MAX_LOCK_DIRS (MAX_EXTRA_DIRS+2)
+ExtraDir *extra_dirs = NULL;
+int n_extra_dirs = 0;
+
+static void
+add_extra_dir (char *src, char *dest)
+{
+  int i = n_extra_dirs;
+  n_extra_dirs++;
+  extra_dirs = xrealloc (extra_dirs, n_extra_dirs * sizeof (ExtraDir));
+  extra_dirs[i].src = src;
+  extra_dirs[i].dest = dest;
+}
 
 static int n_lock_dirs = 0;
-static const char *lock_dirs[MAX_LOCK_DIRS];
+static const char **lock_dirs = NULL;
 
 static void
 lock_dir (const char *dir)
@@ -519,13 +529,16 @@ lock_dir (const char *dir)
 static void
 add_lock_dir (const char *dir)
 {
-  /* We need to lock the dirs in pid1 because otherwise the
-     locks are not held by the right process and will not live
-     for the full duration of the sandbox. */
-  if (n_lock_dirs < MAX_LOCK_DIRS)
-    lock_dirs[n_lock_dirs++] = dir;
+  int i = n_lock_dirs;
+
+  n_lock_dirs++;
+  lock_dirs = xrealloc (lock_dirs, n_lock_dirs * sizeof (char *));
+  lock_dirs[i] = dir;
 }
 
+/* We need to lock the dirs in pid1 because otherwise the
+   locks are not held by the right process and will not live
+   for the full duration of the sandbox. */
 static void
 lock_all_dirs (void)
 {
@@ -533,7 +546,6 @@ lock_all_dirs (void)
   for (i = 0; i < n_lock_dirs; i++)
     lock_dir (lock_dirs[i]);
 }
-
 
 static char *
 load_file (const char *path)
@@ -1461,8 +1473,6 @@ main (int argc,
   char *monitor_path = NULL;
   char *app_id = NULL;
   char *var_path = NULL;
-  ExtraDir extra_dirs[MAX_EXTRA_DIRS];
-  int n_extra_dirs = 0;
   char *pulseaudio_socket = NULL;
   char *x11_socket = NULL;
   char *wayland_socket = NULL;
@@ -1512,18 +1522,12 @@ main (int argc,
           *tmp = 0;
           tmp = tmp + 1;
 
-          if (n_extra_dirs == MAX_EXTRA_DIRS)
-            die ("Too many extra directories");
-
           if (strncmp (optarg, "/usr/", strlen ("/usr/")) != 0 &&
               strncmp (optarg, "/app/", strlen ("/app/")) != 0 &&
               strncmp (optarg, "/run/host/", strlen ("/run/host/")) != 0)
             die ("Extra directories must be in /usr, /app or /run/host");
 
-          extra_dirs[n_extra_dirs].dest = optarg + 1;
-          extra_dirs[n_extra_dirs].src = tmp;
-
-          n_extra_dirs++;
+          add_extra_dir (tmp, optarg + 1);
           break;
 
         case 'd':
