@@ -298,28 +298,30 @@ usage (char **argv)
   fprintf (stderr, "usage: %s [OPTIONS...] RUNTIMEPATH COMMAND [ARGS...]\n\n", argv[0]);
 
   fprintf (stderr,
-           "	-a		Specify path for application (mounted at /app)\n"
-           "	-b SOURCE=DEST	Bind extra source directory into DEST (must be in /usr, /app, /run/host)\n"
-           "	-d SOCKETPATH	Use SOCKETPATH as dbus session bus\n"
-           "	-D SOCKETPATH	Use SOCKETPATH as dbus system bus\n"
-           "	-e		Make /app/exports writable\n"
-           "	-E		Make /etc a pure symlink to /usr/etc\n"
-           "	-f		Mount the host filesystems\n"
-	   "    -g              Allow use of direct rendering graphics\n"
-           "	-F		Mount the host filesystems read-only\n"
-           "	-H		Mount the users home directory (implied by -f)\n"
-           "	-i		Share IPC namespace with session\n"
-           "	-I APPID	Set app id (used to find app data)\n"
-           "	-l		Lock .ref files in all mounts\n"
-           "	-m PATH		Set path to xdg-app-session-helper output\n"
-           "	-n		Share network namespace with session\n"
-           "	-p SOCKETPATH	Use SOCKETPATH as pulseaudio connection\n"
-           "	-s		Share Shm namespace with session\n"
-           "	-v PATH		Mount PATH as /var\n"
-           "	-w		Make /app writable\n"
-           "	-W		Make /usr writable\n"
-           "	-x SOCKETPATH	Use SOCKETPATH as X display\n"
-           "	-y SOCKETPATH	Use SOCKETPATH as Wayland display\n"
+           "	-a		 Specify path for application (mounted at /app)\n"
+           "	-b DEST[=SOURCE] Bind extra source path readonly into DEST\n"
+           "	-B DEST[=SOURCE] Bind extra source path into DEST\n"
+           "	-M DEST[=SOURCE] Bind extra source path into DEST and remove original\n"
+           "	-d SOCKETPATH	 Use SOCKETPATH as dbus session bus\n"
+           "	-D SOCKETPATH	 Use SOCKETPATH as dbus system bus\n"
+           "	-e		 Make /app/exports writable\n"
+           "	-E		 Make /etc a pure symlink to /usr/etc\n"
+           "	-f		 Mount the host filesystems\n"
+	   "    -g               Allow use of direct rendering graphics\n"
+           "	-F		 Mount the host filesystems read-only\n"
+           "	-H		 Mount the users home directory (implied by -f)\n"
+           "	-i		 Share IPC namespace with session\n"
+           "	-I APPID	 Set app id (used to find app data)\n"
+           "	-l		 Lock .ref files in all mounts\n"
+           "	-m PATH		 Set path to xdg-app-session-helper output\n"
+           "	-n		 Share network namespace with session\n"
+           "	-p SOCKETPATH	 Use SOCKETPATH as pulseaudio connection\n"
+           "	-s		 Share Shm namespace with session\n"
+           "	-v PATH		 Mount PATH as /var\n"
+           "	-w		 Make /app writable\n"
+           "	-W		 Make /usr writable\n"
+           "	-x SOCKETPATH	 Use SOCKETPATH as X display\n"
+           "	-y SOCKETPATH	 Use SOCKETPATH as Wayland display\n"
            );
   exit (1);
 }
@@ -485,20 +487,22 @@ typedef struct {
   char *src;
   char *dest;
   bool readonly;
-} ExtraDir;
+  bool move;
+} ExtraFile;
 
-ExtraDir *extra_dirs = NULL;
-int n_extra_dirs = 0;
+ExtraFile *extra_files = NULL;
+int n_extra_files = 0;
 
 static void
-add_extra_dir (char *src, char *dest, bool readonly)
+add_extra_file (char *src, char *dest, bool readonly, bool move)
 {
-  int i = n_extra_dirs;
-  n_extra_dirs++;
-  extra_dirs = xrealloc (extra_dirs, n_extra_dirs * sizeof (ExtraDir));
-  extra_dirs[i].src = src;
-  extra_dirs[i].dest = dest;
-  extra_dirs[i].readonly = readonly;
+  int i = n_extra_files;
+  n_extra_files++;
+  extra_files = xrealloc (extra_files, n_extra_files * sizeof (ExtraFile));
+  extra_files[i].src = src;
+  extra_files[i].dest = dest;
+  extra_files[i].readonly = readonly;
+  extra_files[i].move = move;
 }
 
 static int n_lock_dirs = 0;
@@ -725,9 +729,21 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
   return 0;
 }
 
+static bool
+stat_is_dir (const char *pathname)
+{
+ struct stat buf;
+
+ if (stat (pathname, &buf) !=  0)
+   return FALSE;
+
+ return S_ISDIR (buf.st_mode);
+}
+
 static int
 mkdir_with_parents (const char *pathname,
-                    int         mode)
+                    int         mode,
+                    bool        create_last)
 {
   char *fn, *p;
   struct stat buf;
@@ -753,6 +769,9 @@ mkdir_with_parents (const char *pathname,
         p = NULL;
       else
         *p = '\0';
+
+      if (!create_last && p == NULL)
+        break;
 
       if (stat (fn, &buf) !=  0)
         {
@@ -785,10 +804,9 @@ mkdir_with_parents (const char *pathname,
   return 0;
 }
 
-static int
-write_to_file (int fd, const char *content)
+static bool
+write_to_file (int fd, const char *content, ssize_t len)
 {
-  ssize_t len = strlen (content);
   ssize_t res;
 
   while (len > 0)
@@ -797,29 +815,89 @@ write_to_file (int fd, const char *content)
       if (res < 0 && errno == EINTR)
 	continue;
       if (res <= 0)
-	return -1;
+	return FALSE;
       len -= res;
       content += res;
     }
 
-  return 0;
+  return TRUE;
 }
 
-static int
+#define BUFSIZE	8192
+static bool
+copy_file_data (int     sfd,
+                int     dfd)
+{
+  char buffer[BUFSIZE];
+  ssize_t bytes_read;
+
+  while (TRUE)
+    {
+      bytes_read = read (sfd, buffer, BUFSIZE);
+      if (bytes_read == -1)
+        {
+          if (errno == EINTR)
+            continue;
+
+          return FALSE;;
+        }
+
+      if (bytes_read == 0)
+        break;
+
+      if (!write_to_file (dfd, buffer, bytes_read))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+static bool
+copy_file (const char *src_path, const char *dst_path, mode_t mode)
+{
+  int sfd, dfd;
+  bool res;
+  int errsv;
+
+  sfd = open (src_path, O_CLOEXEC | O_RDONLY);
+  if (sfd == -1)
+    return FALSE;
+
+  dfd = creat (dst_path, mode);
+  if (dfd == -1)
+    {
+      close (sfd);
+      return FALSE;
+    }
+
+  res = copy_file_data (sfd, dfd);
+
+  errsv = errno;
+  close (sfd);
+  close (dfd);
+  errno = errsv;
+
+  return res;
+}
+
+static bool
 create_file (const char *path, mode_t mode, const char *content)
 {
   int fd;
   int res;
+  int errsv;
 
   fd = creat (path, mode);
   if (fd == -1)
-    return -1;
+    return FALSE;
 
   res = 0;
   if (content)
-    res = write_to_file (fd, content);
+    res = write_to_file (fd, content, strlen (content));
 
+  errsv = errno;
   close (fd);
+  errno = errsv;
 
   return res;
 }
@@ -867,7 +945,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, const 
           break;
 
         case FILE_TYPE_REGULAR:
-          if (create_file (name, mode, NULL))
+          if (!create_file (name, mode, NULL))
             die_with_error ("creating file %s", name);
           break;
 
@@ -964,7 +1042,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, const 
           break;
 
         case FILE_TYPE_DEVICE:
-          if (create_file (name, mode, NULL))
+          if (!create_file (name, mode, NULL))
             die_with_error ("creating file %s", name);
 
 	  in_root = strconcat ("/", name);
@@ -1088,7 +1166,7 @@ create_homedir (int mount_real_home, const char *app_id)
   while (*relative_home == '/')
     relative_home++;
 
-  if (mkdir_with_parents (relative_home, 0755))
+  if (mkdir_with_parents (relative_home, 0755, TRUE))
     die_with_error ("unable to create %s", relative_home);
 
   if (mount_real_home)
@@ -1106,7 +1184,7 @@ create_homedir (int mount_real_home, const char *app_id)
 	  while (*relative_app_id_dir == '/')
 	    relative_app_id_dir++;
 
-	  if (mkdir_with_parents (relative_app_id_dir, 0755))
+	  if (mkdir_with_parents (relative_app_id_dir, 0755, TRUE))
 	    die_with_error ("unable to create %s", relative_app_id_dir);
 
 	  if (bind_mount (app_id_dir, relative_app_id_dir, 0))
@@ -1509,7 +1587,7 @@ main (int argc,
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
     die_with_error ("prctl(PR_SET_NO_NEW_CAPS) failed");
 
-  while ((c =  getopt (argc, argv, "+inWweEsfFHra:m:b:B:p:x:ly:d:D:v:I:gS:")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWweEsfFHra:m:M:b:B:p:x:ly:d:D:v:I:gS:")) >= 0)
     {
       switch (c)
         {
@@ -1517,14 +1595,30 @@ main (int argc,
           app_path = optarg;
           break;
 
+        case 'M':
+          /* Same, but remove source */
+          goto extra_file;
+
         case 'B':
-          /* Fall through, but non-readonly */
+          /* Same, but non-readonly */
+          goto extra_file;
+
         case 'b':
+        extra_file:
+          /* Format: DEST[=SOURCE] */
           tmp = strchr (optarg, '=');
-          if (tmp == NULL || tmp[1] == 0)
-            usage (argv);
-          *tmp = 0;
-          tmp = tmp + 1;
+          if (tmp == NULL)
+            {
+              /* no SOURCE, use DEST */
+              tmp = optarg;
+            }
+          else
+            {
+              if (tmp[1] == 0)
+                usage (argv);
+              *tmp = 0;
+              tmp = tmp + 1;
+             }
 
           if (optarg[0] != '/')
             die ("Extra directories must be absolute paths");
@@ -1535,7 +1629,7 @@ main (int argc,
           if (*optarg == 0)
             die ("Extra directories must not be root");
 
-          add_extra_dir (tmp, optarg, c == 'b');
+          add_extra_file (tmp, optarg, c == 'b', c == 'M');
           break;
 
         case 'd':
@@ -1736,16 +1830,34 @@ main (int argc,
 	}
     }
 
-  for (i = 0; i < n_extra_dirs; i++)
+  for (i = 0; i < n_extra_files; i++)
     {
-      if (mkdir_with_parents (extra_dirs[i].dest, 0755))
-        die_with_error ("create extra dir %s", extra_dirs[i].dest);
+      bool is_dir;
 
-      if (bind_mount (extra_dirs[i].src, extra_dirs[i].dest, BIND_PRIVATE | (extra_dirs[i].readonly ? BIND_READONLY : 0)))
-        die_with_error ("mount extra dir %s", extra_dirs[i].src);
+      is_dir = stat_is_dir (extra_files[i].src);
 
-      if (lock_files)
-        add_lock_dir (extra_dirs[i].dest);
+      if (mkdir_with_parents (extra_files[i].dest, 0755,
+                              is_dir && !extra_files[i].move))
+        die_with_error ("create extra dir %s", extra_files[i].dest);
+
+      if (extra_files[i].move)
+        {
+          if (!copy_file (extra_files[i].src, extra_files[i].dest, 0700))
+            die_with_error ("copy extra file %s", extra_files[i].dest);
+          if (unlink (extra_files[i].src) != 0)
+            die_with_error ("unlink moved extra file %s", extra_files[i].src);
+        }
+      else
+        {
+          if (!is_dir)
+            create_file (extra_files[i].dest, 0700, NULL);
+
+          if (bind_mount (extra_files[i].src, extra_files[i].dest, BIND_PRIVATE | (extra_files[i].readonly ? BIND_READONLY : 0)))
+            die_with_error ("mount extra dir %s", extra_files[i].src);
+
+          if (lock_files && is_dir)
+            add_lock_dir (extra_files[i].dest);
+        }
     }
 
   if (var_path != NULL)
@@ -1797,7 +1909,7 @@ main (int argc,
   if (wayland_socket != 0)
     {
       char *wayland_path_relative = strdup_printf ("run/user/%d/wayland-0", getuid());
-      if (create_file (wayland_path_relative, 0666, NULL) ||
+      if (!create_file (wayland_path_relative, 0666, NULL) ||
           bind_mount (wayland_socket, wayland_path_relative, 0))
         die ("can't bind Wayland socket %s -> %s: %s", wayland_socket, wayland_path_relative, strerror (errno));
       free (wayland_path_relative);
@@ -1811,7 +1923,7 @@ main (int argc,
       char *config_path_absolute = strdup_printf ("/run/user/%d/pulse/config", getuid());
       char *client_config = strdup_printf ("enable-shm=%s\n", share_shm ? "yes" : "no");
 
-      if (create_file (config_path_relative, 0666, client_config) == 0 &&
+      if (!create_file (config_path_relative, 0666, client_config) == 0 &&
           bind_mount (pulseaudio_socket, pulse_path_relative, BIND_READONLY) == 0)
         {
           xsetenv ("PULSE_SERVER", pulse_server, 1);
@@ -1831,7 +1943,7 @@ main (int argc,
 
   if (system_dbus_socket != NULL)
     {
-      if (create_file ("run/dbus/system_bus_socket", 0666, NULL) == 0 &&
+      if (!create_file ("run/dbus/system_bus_socket", 0666, NULL) == 0 &&
           bind_mount (system_dbus_socket, "run/dbus/system_bus_socket", 0) == 0)
         xsetenv ("DBUS_SYSTEM_BUS_ADDRESS",  "unix:path=/var/run/dbus/system_bus_socket", 1);
       else
@@ -1843,7 +1955,7 @@ main (int argc,
       char *session_dbus_socket_path_relative = strdup_printf ("run/user/%d/bus", getuid());
       char *session_dbus_address = strdup_printf ("unix:path=/run/user/%d/bus", getuid());
 
-      if (create_file (session_dbus_socket_path_relative, 0666, NULL) == 0 &&
+      if (!create_file (session_dbus_socket_path_relative, 0666, NULL) == 0 &&
           bind_mount (session_dbus_socket, session_dbus_socket_path_relative, 0) == 0)
         xsetenv ("DBUS_SESSION_BUS_ADDRESS",  session_dbus_address, 1);
       else
