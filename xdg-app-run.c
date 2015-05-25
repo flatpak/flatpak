@@ -1049,6 +1049,26 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       g_debug ("Allowing homedir access");
       opts[i++] = 'H';
     }
+  else
+    {
+      GHashTableIter iter;
+      gpointer key;
+
+      /* Enable persistant mapping only if no access to real home dir */
+
+      g_hash_table_iter_init (&iter, context->persistent);
+      while (g_hash_table_iter_next (&iter, &key, NULL))
+        {
+          const char *persist = key;
+          g_autofree char *src = g_build_filename (g_get_home_dir (), ".var/app", app_id, persist, NULL);
+          g_autofree char *dest = g_build_filename (g_get_home_dir (), persist, NULL);
+
+          g_mkdir_with_parents (src, 0755);
+
+          g_ptr_array_add (argv_array, g_strdup ("-B"));
+          g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", dest, src));
+        }
+    }
 
   if (context->sockets & XDG_APP_CONTEXT_SOCKET_X11)
     {
@@ -1083,6 +1103,10 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       xdg_app_run_add_system_dbus_args (argv_array, dbus_proxy_argv);
     }
 
+  /* TODO:
+     Handle detailed filesystems
+  */
+
   g_assert (sizeof(opts) > i);
   if (i > 1)
     {
@@ -1090,10 +1114,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       g_ptr_array_add (argv_array, g_strdup (opts));
     }
 
-  /* TODO:
-     Handle persistent
-     Handle detailed filesystems
-  */
+
 }
 
 static const struct {const char *env; const char *val;} default_exports[] = {
