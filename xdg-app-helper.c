@@ -1890,7 +1890,12 @@ main (int argc,
   /* Now we have everything we need CAP_SYS_ADMIN for, so drop it */
   drop_caps ();
 
-  chdir (old_cwd);
+  if (chdir (old_cwd) < 0)
+    {
+      /* If the old cwd is not mapped, go to home */
+      const char *home = getenv("HOME");
+      chdir (home);
+    }
 
   /* We can't pass regular LD_LIBRARY_PATH, as it would affect the
      setuid helper aspect, so we use _LD_LIBRARY_PATH */
