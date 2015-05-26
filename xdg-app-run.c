@@ -748,7 +748,7 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
       for (i = 0; i < keys_count; i++)
         {
           const char *key = keys[i];
-          g_autofree char *value = g_key_file_get_string (metakey, XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY, key, NULL);
+          g_autofree char *value = g_key_file_get_string (metakey, XDG_APP_METADATA_GROUP_ENVIRONMENT, key, NULL);
 
           xdg_app_context_set_env_var (context, key, value);
         }
