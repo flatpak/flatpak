@@ -63,6 +63,8 @@ typedef int bool;
 #define READ_END 0
 #define WRITE_END 1
 
+int uid, gid;
+
 static void
 die_with_error (const char *format, ...)
 {
@@ -929,9 +931,9 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, const 
       if (option && !*option)
 	continue;
 
-      name = strdup_printf (create[i].name, getuid());
+      name = strdup_printf (create[i].name, uid);
       if (create[i].data)
-	data = strdup_printf (create[i].data, getuid());
+	data = strdup_printf (create[i].data, uid);
 
       last_failed = FALSE;
 
@@ -1748,11 +1750,14 @@ main (int argc,
 
   __debug__(("Creating xdg-app-root dir\n"));
 
-  newroot = strdup_printf ("/run/user/%d/.xdg-app-root", getuid());
+  uid = getuid ();
+  gid = getgid ();
+
+  newroot = strdup_printf ("/run/user/%d/.xdg-app-root", uid);
   if (mkdir (newroot, 0755) && errno != EEXIST)
     {
       free (newroot);
-      newroot = strdup_printf ("/tmp/.xdg-app-root", getuid());
+      newroot = strdup_printf ("/tmp/.xdg-app-root", uid);
       if (mkdir (newroot, 0755) && errno != EEXIST)
 	die_with_error ("Creating xdg-app-root failed");
     }
@@ -1871,7 +1876,7 @@ main (int argc,
 
   if (monitor_path)
     {
-      char *monitor_mount_path = strdup_printf ("run/user/%d/xdg-app-monitor", getuid());
+      char *monitor_mount_path = strdup_printf ("run/user/%d/xdg-app-monitor", uid);
 
       if (bind_mount (monitor_path, monitor_mount_path, BIND_READONLY))
 	die ("can't bind monitor dir");
@@ -1906,7 +1911,7 @@ main (int argc,
   /* Bind mount in the Wayland socket */
   if (wayland_socket != 0)
     {
-      char *wayland_path_relative = strdup_printf ("run/user/%d/wayland-0", getuid());
+      char *wayland_path_relative = strdup_printf ("run/user/%d/wayland-0", uid);
       if (!create_file (wayland_path_relative, 0666, NULL) ||
           bind_mount (wayland_socket, wayland_path_relative, 0))
         die ("can't bind Wayland socket %s -> %s: %s", wayland_socket, wayland_path_relative, strerror (errno));
@@ -1915,10 +1920,10 @@ main (int argc,
 
   if (pulseaudio_socket != NULL)
     {
-      char *pulse_path_relative = strdup_printf ("run/user/%d/pulse/native", getuid());
-      char *pulse_server = strdup_printf ("unix:/run/user/%d/pulse/native", getuid());
-      char *config_path_relative = strdup_printf ("run/user/%d/pulse/config", getuid());
-      char *config_path_absolute = strdup_printf ("/run/user/%d/pulse/config", getuid());
+      char *pulse_path_relative = strdup_printf ("run/user/%d/pulse/native", uid);
+      char *pulse_server = strdup_printf ("unix:/run/user/%d/pulse/native", uid);
+      char *config_path_relative = strdup_printf ("run/user/%d/pulse/config", uid);
+      char *config_path_absolute = strdup_printf ("/run/user/%d/pulse/config", uid);
       char *client_config = strdup_printf ("enable-shm=%s\n", share_shm ? "yes" : "no");
 
       if (!create_file (config_path_relative, 0666, client_config) &&
@@ -1950,8 +1955,8 @@ main (int argc,
 
   if (session_dbus_socket != NULL)
     {
-      char *session_dbus_socket_path_relative = strdup_printf ("run/user/%d/bus", getuid());
-      char *session_dbus_address = strdup_printf ("unix:path=/run/user/%d/bus", getuid());
+      char *session_dbus_socket_path_relative = strdup_printf ("run/user/%d/bus", uid);
+      char *session_dbus_address = strdup_printf ("unix:path=/run/user/%d/bus", uid);
 
       if (!create_file (session_dbus_socket_path_relative, 0666, NULL) &&
           bind_mount (session_dbus_socket, session_dbus_socket_path_relative, 0) == 0)
@@ -1965,8 +1970,8 @@ main (int argc,
 
   if (mount_host_fs || mount_home)
     {
-      char *dconf_run_path_relative = strdup_printf ("run/user/%d/dconf", getuid());
-      char *dconf_run_path_absolute = strdup_printf ("/run/user/%d/dconf", getuid());
+      char *dconf_run_path_relative = strdup_printf ("run/user/%d/dconf", uid);
+      char *dconf_run_path_absolute = strdup_printf ("/run/user/%d/dconf", uid);
 
       bind_mount (dconf_run_path_absolute, dconf_run_path_relative, 0);
     }
@@ -2017,12 +2022,12 @@ main (int argc,
   else
     xunsetenv ("LD_LIBRARY_PATH");
 
-  xdg_runtime_dir = strdup_printf ("/run/user/%d", getuid());
+  xdg_runtime_dir = strdup_printf ("/run/user/%d", uid);
   xsetenv ("XDG_RUNTIME_DIR", xdg_runtime_dir, 1);
   free (xdg_runtime_dir);
   if (monitor_path)
     {
-      tz_val = strdup_printf (":/run/user/%d/xdg-app-monitor/localtime", getuid());
+      tz_val = strdup_printf (":/run/user/%d/xdg-app-monitor/localtime", uid);
       xsetenv ("TZ", tz_val, 0);
       free (tz_val);
     }
