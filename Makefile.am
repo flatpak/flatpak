@@ -133,16 +133,6 @@ xdg_dbus_proxy_LDADD = $(BASE_LIBS) libglnx.la
 xdg_dbus_proxy_CFLAGS = $(BASE_CFLAGS) -I$(srcdir)/libglnx
 
 
-install-exec-hook:
-if PRIV_MODE_SETUID
-	$(SUDO_BIN) chown root $(DESTDIR)$(bindir)/xdg-app-helper
-	$(SUDO_BIN) chmod u+s $(DESTDIR)$(bindir)/xdg-app-helper
-else
-if PRIV_MODE_FILECAPS
-	$(SUDO_BIN) setcap cap_sys_admin+ep $(DESTDIR)$(bindir)/xdg-app-helper
-endif
-endif
-
 completiondir = $(datadir)/bash-completion/completions
 completion_DATA = completion/xdg-app
 EXTRA_DIST += $(completion_DATA)

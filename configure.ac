@@ -61,20 +61,6 @@ PKG_CHECK_MODULES(OSTREE, [libgsystem >= 2015.1 ostree-1 >= 2015.3])
 AC_SUBST(OSTREE_CFLAGS)
 AC_SUBST(OSTREE_LIBS)
 
-AC_ARG_WITH(priv-mode,
-            AS_HELP_STRING([--with-priv-mode=setuid/caps/none],
-                           [How to gain privileges]),
-            [],
-	    [with_priv_mode="setuid"])
-
-AM_CONDITIONAL(PRIV_MODE_SETUID, test "x$with_priv_mode" = "xsetuid")
-AM_CONDITIONAL(PRIV_MODE_FILECAPS, test "x$with_priv_mode" = "xcaps")
-
-AC_ARG_ENABLE(sudo,
-              AS_HELP_STRING([--enable-sudo],[Use sudo to set setuid flags on binaries during install]),
-              [SUDO_BIN="sudo"], [SUDO_BIN=""])
-AC_SUBST([SUDO_BIN])
-
 AC_ARG_ENABLE(documentation,
               AC_HELP_STRING([--enable-documentation], [Build documentation]),,
               enable_documentation=yes)

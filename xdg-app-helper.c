@@ -357,6 +357,7 @@ typedef enum {
   FILE_FLAGS_NON_FATAL = 1 << 0,
   FILE_FLAGS_IF_LAST_FAILED = 1 << 1,
   FILE_FLAGS_DEVICES = 1 << 2,
+  FILE_FLAGS_NOREMOUNT = 1 << 3,
 } file_flags_t;
 
 typedef struct {
@@ -428,15 +429,15 @@ static const create_table_t create[] = {
   { FILE_TYPE_BIND_RO, "proc/bus", 0755, "proc/bus"},
   { FILE_TYPE_DIR, "sys", 0755},
   { FILE_TYPE_DIR, "sys/block", 0755},
-  { FILE_TYPE_BIND_RO, "sys/block", 0755, "/sys/block"},
+  { FILE_TYPE_BIND, "sys/block", 0755, "/sys/block", FILE_FLAGS_NOREMOUNT},
   { FILE_TYPE_DIR, "sys/bus", 0755},
-  { FILE_TYPE_BIND_RO, "sys/bus", 0755, "/sys/bus"},
+  { FILE_TYPE_BIND, "sys/bus", 0755, "/sys/bus", FILE_FLAGS_NOREMOUNT},
   { FILE_TYPE_DIR, "sys/class", 0755},
-  { FILE_TYPE_BIND_RO, "sys/class", 0755, "/sys/class"},
+  { FILE_TYPE_BIND, "sys/class", 0755, "/sys/class", FILE_FLAGS_NOREMOUNT},
   { FILE_TYPE_DIR, "sys/dev", 0755},
-  { FILE_TYPE_BIND_RO, "sys/dev", 0755, "/sys/dev"},
+  { FILE_TYPE_BIND, "sys/dev", 0755, "/sys/dev", FILE_FLAGS_NOREMOUNT},
   { FILE_TYPE_DIR, "sys/devices", 0755},
-  { FILE_TYPE_BIND_RO, "sys/devices", 0755, "/sys/devices"},
+  { FILE_TYPE_BIND, "sys/devices", 0755, "/sys/devices", FILE_FLAGS_NOREMOUNT},
   { FILE_TYPE_DIR, "dev", 0755},
   { FILE_TYPE_MOUNT, "dev"},
   { FILE_TYPE_DIR, "dev/pts", 0755},
@@ -451,7 +452,6 @@ static const create_table_t create[] = {
   { FILE_TYPE_DEVICE, "dev/tty", 0666},
   { FILE_TYPE_DIR, "dev/dri", 0755},
   { FILE_TYPE_BIND_RO, "dev/dri", 0755, "/dev/dri", FILE_FLAGS_NON_FATAL|FILE_FLAGS_DEVICES, &allow_dri},
-  { FILE_TYPE_REMOUNT, "dev", MS_RDONLY|MS_NOSUID|MS_NOEXEC},
 };
 
 /* warning: Don't create any actual files here, as we could potentially
@@ -467,7 +467,7 @@ static const create_table_t create_post[] = {
 static const mount_table_t mount_table[] = {
   { "proc",      "proc",     "proc",  NULL,        MS_NOSUID|MS_NOEXEC|MS_NODEV           },
   { "tmpfs",     "dev",      "tmpfs", "mode=755",  MS_NOSUID|MS_STRICTATIME               },
-  { "devpts",    "dev/pts",  "devpts","newinstance,ptmxmode=0666,mode=620,gid=5", MS_NOSUID|MS_NOEXEC },
+  { "devpts",    "dev/pts",  "devpts","newinstance,ptmxmode=0666,mode=620", MS_NOSUID|MS_NOEXEC },
   { "tmpfs",     "dev/shm",  "tmpfs", "mode=1777", MS_NOSUID|MS_NODEV|MS_STRICTATIME      },
 };
 
@@ -481,6 +481,7 @@ typedef enum {
   BIND_PRIVATE = (1<<1),
   BIND_DEVICES = (1<<2),
   BIND_RECURSIVE = (1<<3),
+  BIND_NOREMOUNT = (1<<4),
 } bind_option_t;
 
 typedef struct {
@@ -688,6 +689,7 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
   bool private = (options & BIND_PRIVATE) != 0;
   bool devices = (options & BIND_DEVICES) != 0;
   bool recursive = (options & BIND_RECURSIVE) != 0;
+  bool noremount = (options & BIND_NOREMOUNT) != 0;
   char **submounts;
   int i;
 
@@ -701,7 +703,8 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
         return 2;
     }
 
-  if (mount ("none", dest,
+  if (!noremount &&
+      mount ("none", dest,
              NULL, MS_MGC_VAL|MS_BIND|MS_REMOUNT|(devices?0:MS_NODEV)|MS_NOSUID|(readonly?MS_RDONLY:0), NULL) != 0)
     return 3;
 
@@ -881,10 +884,32 @@ copy_file (const char *src_path, const char *dst_path, mode_t mode)
 }
 
 static bool
+write_file (const char *path, const char *content)
+{
+  int fd;
+  bool res;
+  int errsv;
+
+  fd = open (path, O_RDWR | O_CLOEXEC, 0);
+  if (fd == -1)
+    return FALSE;
+
+  res = TRUE;
+  if (content)
+    res = write_to_file (fd, content, strlen (content));
+
+  errsv = errno;
+  close (fd);
+  errno = errsv;
+
+  return res;
+}
+
+static bool
 create_file (const char *path, mode_t mode, const char *content)
 {
   int fd;
-  int res;
+  bool res;
   int errsv;
 
   fd = creat (path, mode);
@@ -999,7 +1024,9 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, const 
           if ((res = bind_mount (data, name,
                                  0 |
                                  ((create[i].type == FILE_TYPE_BIND_RO) ? BIND_READONLY : 0) |
-                                 ((flags & FILE_FLAGS_DEVICES) ? BIND_DEVICES : 0))))
+                                 ((flags & FILE_FLAGS_DEVICES) ? BIND_DEVICES : 0) |
+                                 ((flags & FILE_FLAGS_NOREMOUNT) ? BIND_NOREMOUNT : 0)
+				 )))
             {
               if (res > 1 || (flags & FILE_FLAGS_NON_FATAL) == 0)
                 die_with_error ("mounting bindmount %s", name);
@@ -1497,51 +1524,6 @@ do_init (int event_fd, pid_t initial_pid)
   return initial_exit_status;
 }
 
-#define REQUIRED_CAPS (CAP_TO_MASK(CAP_SYS_ADMIN))
-
-static void
-acquire_caps (void)
-{
-  struct __user_cap_header_struct hdr;
-  struct __user_cap_data_struct data;
-
-  if (getuid () != geteuid ())
-    {
-      /* Tell kernel not clear capabilities when dropping root */
-      if (prctl (PR_SET_KEEPCAPS, 1, 0, 0, 0) < 0)
-	die_with_error ("prctl(PR_SET_KEEPCAPS) failed");
-
-      /* Drop root uid, but retain the required permitted caps */
-      if (setuid (getuid ()) < 0)
-	die_with_error ("unable to drop privs");
-    }
-
-  memset (&hdr, 0, sizeof(hdr));
-  hdr.version = _LINUX_CAPABILITY_VERSION;
-
-  /* Drop all non-require capabilities */
-  data.effective = REQUIRED_CAPS;
-  data.permitted = REQUIRED_CAPS;
-  data.inheritable = 0;
-  if (capset (&hdr, &data) < 0)
-    die_with_error ("capset failed");
-}
-
-static void
-drop_caps (void)
-{
-  struct __user_cap_header_struct hdr;
-  struct __user_cap_data_struct data;
-
-  memset (&hdr, 0, sizeof(hdr));
-  hdr.version = _LINUX_CAPABILITY_VERSION;
-  data.effective = 0;
-  data.permitted = 0;
-  data.inheritable = 0;
-
-  if (capset (&hdr, &data) < 0)
-    die_with_error ("capset failed");
-}
 int
 main (int argc,
       char **argv)
@@ -1574,14 +1556,12 @@ main (int argc,
   bool writable_app = FALSE;
   bool writable_exports = FALSE;
   char old_cwd[256];
+  char *uid_map, *gid_map;
   int c, i;
   pid_t pid;
   int event_fd;
   int sync_fd = -1;
   char *endp;
-
-  /* Get the capabilities we need, drop root */
-  acquire_caps ();
 
   /* Never gain any more privs during exec */
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
@@ -1768,7 +1748,7 @@ main (int argc,
 
   block_sigchild (); /* Block before we clone to avoid races */
 
-  pid = raw_clone (SIGCHLD | CLONE_NEWNS | CLONE_NEWPID |
+  pid = raw_clone (SIGCHLD | CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWUSER |
 		   (network ? 0 : CLONE_NEWNET) |
 		   (ipc ? 0 : CLONE_NEWIPC),
 		   NULL);
@@ -1777,11 +1757,26 @@ main (int argc,
 
   if (pid != 0)
     {
-      /* Drop all extra caps in the monitor child process */
-      drop_caps ();
       monitor_child (event_fd);
       exit (0); /* Should not be reached, but better safe... */
     }
+
+  /* This is a bit hacky, but we need to first map the real uid/gid to
+     0, otherwise we can't mount the devpts filesystem because root is
+     not mapped. Later we will create another child user namespace and
+     map back to the real uid */
+  uid_map = strdup_printf ("0 %d 1\n", uid);
+  if (!write_file ("/proc/self/uid_map", uid_map))
+    die_with_error ("setting up uid map");
+  free (uid_map);
+
+  if (!write_file("/proc/self/setgroups", "deny\n"))
+    die_with_error ("error writing to setgroups");
+
+  gid_map = strdup_printf ("0 %d 1\n", gid);
+  if (!write_file ("/proc/self/gid_map", gid_map))
+    die_with_error ("setting up gid map");
+  free (gid_map);
 
   old_umask = umask (0);
 
@@ -2002,9 +1997,6 @@ main (int argc,
 
   umask (old_umask);
 
-  /* Now we have everything we need CAP_SYS_ADMIN for, so drop it */
-  drop_caps ();
-
   if (chdir (old_cwd) < 0)
     {
       /* If the old cwd is not mapped, go to home */
@@ -2031,6 +2023,21 @@ main (int argc,
       xsetenv ("TZ", tz_val, 0);
       free (tz_val);
     }
+
+  /* Now that devpts is mounted we can create a new userspace and map
+     our uid 1:1 */
+  if (unshare (CLONE_NEWUSER))
+    die_with_error ("unshare user ns");
+
+  uid_map = strdup_printf ("%d 0 1\n", uid);
+  if (!write_file ("/proc/self/uid_map", uid_map))
+    die_with_error ("setting up uid map");
+  free (uid_map);
+
+  gid_map = strdup_printf ("%d 0 1\n", gid);
+  if (!write_file ("/proc/self/gid_map", gid_map))
+    die_with_error ("setting up gid map");
+  free (gid_map);
 
   __debug__(("forking for child\n"));
 
