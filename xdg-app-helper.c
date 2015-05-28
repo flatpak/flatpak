@@ -63,7 +63,9 @@ typedef int bool;
 #define READ_END 0
 #define WRITE_END 1
 
-int uid, gid;
+/* Globals to avoid having to use getuid(), since the uid/gid changes during runtime */
+static uid_t uid;
+static gid_t gid;
 
 static void
 die_with_error (const char *format, ...)
@@ -1737,7 +1739,7 @@ main (int argc,
   if (mkdir (newroot, 0755) && errno != EEXIST)
     {
       free (newroot);
-      newroot = strdup_printf ("/tmp/.xdg-app-root", uid);
+      newroot = "/tmp/.xdg-app-root";
       if (mkdir (newroot, 0755) && errno != EEXIST)
 	die_with_error ("Creating xdg-app-root failed");
     }
