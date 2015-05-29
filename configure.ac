@@ -61,6 +61,33 @@ PKG_CHECK_MODULES(OSTREE, [libgsystem >= 2015.1 ostree-1 >= 2015.3])
 AC_SUBST(OSTREE_CFLAGS)
 AC_SUBST(OSTREE_LIBS)
 
+AC_ARG_ENABLE([userns],
+              AC_HELP_STRING([--disable-userns],
+                             [Disable User namespaces (requires setuid/setcaps)]),
+              [],
+              [enable_userns=yes])
+
+AM_CONDITIONAL(DISABLE_USERNS, test "x$enable_userns" = "xno")
+if test "x$enable_userns" = "xno"; then
+  AC_DEFINE([DISABLE_USERNS], [1],
+      [Define if not using user namespaces])
+fi
+
+AC_ARG_WITH(priv-mode,
+            AS_HELP_STRING([--with-priv-mode=setuid/caps/none],
+                           [How to set privilege-raising during install (only needed if userns disabled)]),
+            [],
+            [with_priv_mode="setuid"])
+
+AM_CONDITIONAL(PRIV_MODE_FILECAPS, test "x$with_priv_mode" = "xcaps")
+AM_CONDITIONAL(PRIV_MODE_SETUID, test "x$with_priv_mode" = "xsetuid")
+AM_CONDITIONAL(PRIV_MODE_FILECAPS, test "x$with_priv_mode" = "xcaps")
+
+AC_ARG_ENABLE(sudo,
+              AS_HELP_STRING([--enable-sudo],[Use sudo to set setuid flags on binaries during install (only needed if userns disabled)]),
+              [SUDO_BIN="sudo"], [SUDO_BIN=""])
+AC_SUBST([SUDO_BIN])
+
 AC_ARG_ENABLE(documentation,
               AC_HELP_STRING([--enable-documentation], [Build documentation]),,
               enable_documentation=yes)

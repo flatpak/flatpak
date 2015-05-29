@@ -1526,6 +1526,56 @@ do_init (int event_fd, pid_t initial_pid)
   return initial_exit_status;
 }
 
+#ifdef DISABLE_USERNS
+
+#define REQUIRED_CAPS (CAP_TO_MASK(CAP_SYS_ADMIN))
+
+static void
+acquire_caps (void)
+{
+  struct __user_cap_header_struct hdr;
+  struct __user_cap_data_struct data;
+
+  if (getuid () != geteuid ())
+    {
+      /* Tell kernel not clear capabilities when dropping root */
+      if (prctl (PR_SET_KEEPCAPS, 1, 0, 0, 0) < 0)
+        die_with_error ("prctl(PR_SET_KEEPCAPS) failed");
+
+      /* Drop root uid, but retain the required permitted caps */
+      if (setuid (getuid ()) < 0)
+        die_with_error ("unable to drop privs");
+    }
+
+  memset (&hdr, 0, sizeof(hdr));
+  hdr.version = _LINUX_CAPABILITY_VERSION;
+
+  /* Drop all non-require capabilities */
+  data.effective = REQUIRED_CAPS;
+  data.permitted = REQUIRED_CAPS;
+  data.inheritable = 0;
+  if (capset (&hdr, &data) < 0)
+    die_with_error ("capset failed");
+}
+
+static void
+drop_caps (void)
+{
+  struct __user_cap_header_struct hdr;
+  struct __user_cap_data_struct data;
+
+  memset (&hdr, 0, sizeof(hdr));
+  hdr.version = _LINUX_CAPABILITY_VERSION;
+  data.effective = 0;
+  data.permitted = 0;
+  data.inheritable = 0;
+
+  if (capset (&hdr, &data) < 0)
+    die_with_error ("capset failed");
+}
+
+#endif
+
 int
 main (int argc,
       char **argv)
@@ -1558,12 +1608,16 @@ main (int argc,
   bool writable_app = FALSE;
   bool writable_exports = FALSE;
   char old_cwd[256];
-  char *uid_map, *gid_map;
   int c, i;
   pid_t pid;
   int event_fd;
   int sync_fd = -1;
   char *endp;
+
+#ifdef DISABLE_USERNS
+  /* Get the capabilities we need, drop root */
+  acquire_caps ();
+#endif
 
   /* Never gain any more privs during exec */
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
@@ -1750,7 +1804,10 @@ main (int argc,
 
   block_sigchild (); /* Block before we clone to avoid races */
 
-  pid = raw_clone (SIGCHLD | CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWUSER |
+  pid = raw_clone (SIGCHLD | CLONE_NEWNS | CLONE_NEWPID |
+#ifndef DISABLE_USERNS
+                   CLONE_NEWUSER |
+#endif
 		   (network ? 0 : CLONE_NEWNET) |
 		   (ipc ? 0 : CLONE_NEWIPC),
 		   NULL);
@@ -1763,22 +1820,27 @@ main (int argc,
       exit (0); /* Should not be reached, but better safe... */
     }
 
-  /* This is a bit hacky, but we need to first map the real uid/gid to
-     0, otherwise we can't mount the devpts filesystem because root is
-     not mapped. Later we will create another child user namespace and
-     map back to the real uid */
-  uid_map = strdup_printf ("0 %d 1\n", uid);
-  if (!write_file ("/proc/self/uid_map", uid_map))
-    die_with_error ("setting up uid map");
-  free (uid_map);
+#ifndef DISABLE_USERNS
+  {
+    char *uid_map, *gid_map;
+    /* This is a bit hacky, but we need to first map the real uid/gid to
+       0, otherwise we can't mount the devpts filesystem because root is
+       not mapped. Later we will create another child user namespace and
+       map back to the real uid */
+    uid_map = strdup_printf ("0 %d 1\n", uid);
+    if (!write_file ("/proc/self/uid_map", uid_map))
+      die_with_error ("setting up uid map");
+    free (uid_map);
 
-  if (!write_file("/proc/self/setgroups", "deny\n"))
-    die_with_error ("error writing to setgroups");
+    if (!write_file("/proc/self/setgroups", "deny\n"))
+      die_with_error ("error writing to setgroups");
 
-  gid_map = strdup_printf ("0 %d 1\n", gid);
-  if (!write_file ("/proc/self/gid_map", gid_map))
-    die_with_error ("setting up gid map");
-  free (gid_map);
+    gid_map = strdup_printf ("0 %d 1\n", gid);
+    if (!write_file ("/proc/self/gid_map", gid_map))
+      die_with_error ("setting up gid map");
+    free (gid_map);
+  }
+#endif
 
   old_umask = umask (0);
 
@@ -1999,6 +2061,11 @@ main (int argc,
 
   umask (old_umask);
 
+#ifdef DISABLE_USERNS
+  /* Now we have everything we need CAP_SYS_ADMIN for, so drop it */
+  drop_caps ();
+#endif
+
   if (chdir (old_cwd) < 0)
     {
       /* If the old cwd is not mapped, go to home */
@@ -2026,20 +2093,25 @@ main (int argc,
       free (tz_val);
     }
 
-  /* Now that devpts is mounted we can create a new userspace and map
-     our uid 1:1 */
-  if (unshare (CLONE_NEWUSER))
-    die_with_error ("unshare user ns");
+#ifndef DISABLE_USERNS
+  {
+    char *uid_map, *gid_map;
+    /* Now that devpts is mounted we can create a new userspace and map
+       our uid 1:1 */
+    if (unshare (CLONE_NEWUSER))
+      die_with_error ("unshare user ns");
 
-  uid_map = strdup_printf ("%d 0 1\n", uid);
-  if (!write_file ("/proc/self/uid_map", uid_map))
-    die_with_error ("setting up uid map");
-  free (uid_map);
+    uid_map = strdup_printf ("%d 0 1\n", uid);
+    if (!write_file ("/proc/self/uid_map", uid_map))
+      die_with_error ("setting up uid map");
+    free (uid_map);
 
-  gid_map = strdup_printf ("%d 0 1\n", gid);
-  if (!write_file ("/proc/self/gid_map", gid_map))
-    die_with_error ("setting up gid map");
-  free (gid_map);
+    gid_map = strdup_printf ("%d 0 1\n", gid);
+    if (!write_file ("/proc/self/gid_map", gid_map))
+      die_with_error ("setting up gid map");
+    free (gid_map);
+  }
+#endif
 
   __debug__(("forking for child\n"));
 
