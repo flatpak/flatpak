@@ -51,7 +51,6 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) arch_dir = NULL;
   g_autoptr(GFile) top_dir = NULL;
-  g_autoptr(GFile) origin = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   const char *name;
   const char *arch;
@@ -106,8 +105,8 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
       goto out;
     }
 
-  origin = g_file_get_child (deploy_base, "origin");
-  if (!g_file_load_contents (origin, cancellable, &repository, NULL, NULL, error))
+  repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
+  if (repository == NULL)
     goto out;
 
   g_debug ("dropping active ref");
@@ -181,7 +180,6 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) arch_dir = NULL;
   g_autoptr(GFile) top_dir = NULL;
-  g_autoptr(GFile) origin = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   const char *name;
   const char *arch;
@@ -235,8 +233,8 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
       goto out;
     }
 
-  origin = g_file_get_child (deploy_base, "origin");
-  if (!g_file_load_contents (origin, cancellable, &repository, NULL, NULL, error))
+  repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
+  if (repository == NULL)
     goto out;
 
   g_debug ("dropping active ref");

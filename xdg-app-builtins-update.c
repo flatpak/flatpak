@@ -48,8 +48,6 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   gboolean ret = FALSE;
   GOptionContext *context;
   g_autoptr(XdgAppDir) dir = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) origin = NULL;
   const char *runtime;
   const char *branch = "master";
   g_autofree char *previous_deployment = NULL;
@@ -86,15 +84,8 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
 
   ref = xdg_app_build_runtime_ref (runtime, branch, opt_arch);
 
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Runtime %s branch %s not installed", runtime, branch);
-      goto out;
-    }
-
-  origin = g_file_get_child (deploy_base, "origin");
-  if (!g_file_load_contents (origin, cancellable, &repository, NULL, NULL, error))
+  repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
+  if (repository == NULL)
     goto out;
 
   if (!xdg_app_dir_pull (dir, repository, ref,
@@ -139,8 +130,6 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   gboolean ret = FALSE;
   GOptionContext *context;
   g_autoptr(XdgAppDir) dir = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) origin = NULL;
   const char *app;
   const char *branch = "master";
   g_autofree char *ref = NULL;
@@ -177,15 +166,8 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
 
   ref = xdg_app_build_app_ref (app, branch, opt_arch);
 
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "App %s branch %s not installed", app, branch);
-      goto out;
-    }
-
-  origin = g_file_get_child (deploy_base, "origin");
-  if (!g_file_load_contents (origin, cancellable, &repository, NULL, NULL, error))
+  repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
+  if (repository == NULL)
     goto out;
 
   if (!xdg_app_dir_pull (dir, repository, ref,
