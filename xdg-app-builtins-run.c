@@ -154,6 +154,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
+  g_autoptr(GFile) app_cache_dir = NULL;
   g_autoptr(XdgAppSessionHelper) session_helper = NULL;
   g_autofree char *runtime = NULL;
   g_autofree char *default_command = NULL;
@@ -264,6 +265,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if ((app_id_dir = xdg_app_ensure_data_dir (app, cancellable, error)) == NULL)
       goto out;
+
+  app_cache_dir = g_file_get_child (app_id_dir, "cache");
+  g_ptr_array_add (argv_array, g_strdup ("-b"));
+  g_ptr_array_add (argv_array, g_strdup_printf ("/var/cache=%s", gs_file_get_path_cached (app_cache_dir)));
 
   app_files = xdg_app_deploy_get_files (app_deploy);
   runtime_files = xdg_app_deploy_get_files (runtime_deploy);
