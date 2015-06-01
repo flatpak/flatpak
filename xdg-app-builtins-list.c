@@ -139,7 +139,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
         {
           if (last == NULL || strcmp (last, parts[1]) != 0)
             {
-              g_print ("%s\t%s\n", parts[1], repo);
+              g_print ("%s\t%s\t%s\n", parts[1], parts[3], repo);
               g_clear_pointer (&last, g_free);
               last = g_strdup (parts[1]);
             }
