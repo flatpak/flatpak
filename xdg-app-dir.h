@@ -66,6 +66,10 @@ gboolean    xdg_app_dir_is_user         (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_path        (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_deploy_dir  (XdgAppDir      *self,
                                          const char     *ref);
+char *      xdg_app_dir_get_origin      (XdgAppDir      *self,
+                                         const char     *ref,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 GFile *     xdg_app_dir_get_exports_dir (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_removed_dir (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_if_deployed (XdgAppDir      *self,

@@ -294,6 +294,30 @@ xdg_app_dir_get_repo (XdgAppDir *self)
   return self->repo;
 }
 
+char *
+xdg_app_dir_get_origin (XdgAppDir      *self,
+                        const char     *ref,
+                        GCancellable   *cancellable,
+                        GError        **error)
+{
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) origin = NULL;
+  char *repository = NULL;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+  if (!g_file_query_exists (deploy_base, cancellable))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "%s is not installed", ref);
+      return NULL;
+    }
+
+  origin = g_file_get_child (deploy_base, "origin");
+  if (!g_file_load_contents (origin, cancellable, &repository, NULL, NULL, error))
+    return NULL;
+
+  return repository;
+}
+
 gboolean
 xdg_app_dir_ensure_path (XdgAppDir     *self,
                          GCancellable  *cancellable,
