@@ -87,7 +87,9 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
     {
       char *ref;
       glnx_strfreev char **parts = NULL;
+      g_autofree char *repo = NULL;
       gboolean is_user;
+      g_autoptr(XdgAppDir) dir = NULL;
 
       if (system[s] == NULL)
         is_user = TRUE;
@@ -105,11 +107,14 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
       parts = g_strsplit (ref, "/", -1);
 
+      dir = xdg_app_dir_get (is_user);
+      repo = xdg_app_dir_get_origin (dir, ref, NULL, NULL);
+
       if (opt_show_details)
         {
           gboolean comma = FALSE;
 
-          g_print ("%s/%s/%s\t", parts[1], parts[2], parts[3]);
+          g_print ("%s/%s/%s\t%s\t", parts[1], parts[2], parts[3], repo);
 
           if (print_user && print_system)
             {
@@ -120,9 +125,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
           if (strcmp (kind, "app") == 0)
             {
               g_autofree char *current;
-              g_autoptr(XdgAppDir) dir = NULL;
 
-              dir = xdg_app_dir_get (is_user);
               current = xdg_app_dir_current_ref (dir, parts[1], cancellable);
               if (current && strcmp (ref, current) == 0)
                 {
@@ -136,7 +139,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
         {
           if (last == NULL || strcmp (last, parts[1]) != 0)
             {
-              g_print ("%s\n", parts[1]);
+              g_print ("%s\t%s\n", parts[1], repo);
               g_clear_pointer (&last, g_free);
               last = g_strdup (parts[1]);
             }
