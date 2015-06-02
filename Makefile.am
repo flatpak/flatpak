@@ -40,7 +40,8 @@ include libglnx/Makefile-libglnx.am.inc
 noinst_LTLIBRARIES = libglnx.la
 
 xdg_app_helper_SOURCES = xdg-app-helper.c
-xdg_app_helper_LDADD = -L/gnome/lib -lglib-2.0
+xdg_app_helper_LDADD = $(LIBSECCOMP_LIBS)
+xdg_app_helper_CFLAGS = $(LIBSECCOMP_CFLAGS)
 
 dbus_built_sources = xdg-app-dbus.c xdg-app-dbus.h
 systemd_dbus_built_sources = xdg-app-systemd-dbus.c xdg-app-systemd-dbus.h

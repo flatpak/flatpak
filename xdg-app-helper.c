@@ -48,6 +48,8 @@
 #include <sys/prctl.h>
 #include <unistd.h>
 
+#include <seccomp.h>
+
 #if 0
 #define __debug__(x) printf x
 #else
@@ -98,12 +100,18 @@ die (const char *format, ...)
   exit (1);
 }
 
+static void
+die_oom (void)
+{
+  die ("Out of memory");
+}
+
 static void *
 xmalloc (size_t size)
 {
   void *res = malloc (size);
   if (res == NULL)
-    die ("oom");
+    die_oom ();
   return res;
 }
 
@@ -112,7 +120,7 @@ xrealloc (void *ptr, size_t size)
 {
   void *res = realloc (ptr, size);
   if (size != 0 && res == NULL)
-    die ("oom");
+    die_oom ();
   return res;
 }
 
@@ -125,7 +133,7 @@ xstrdup (const char *str)
 
   res = strdup (str);
   if (res == NULL)
-    die ("oom");
+    die_oom ();
 
   return res;
 }
@@ -205,7 +213,7 @@ strdup_printf (const char *format,
   va_end (args);
 
   if (buffer == NULL)
-    die ("oom");
+    die_oom ();
 
   return buffer;
 }
@@ -271,6 +279,97 @@ static inline int raw_clone(unsigned long flags, void *child_stack) {
 #else
         return (int) syscall(__NR_clone, flags, child_stack);
 #endif
+}
+
+static void
+setup_seccomp (void)
+{
+  scmp_filter_ctx seccomp;
+  struct {
+    int scall;
+    struct scmp_arg_cmp *arg;
+  } syscall_blacklist[] = {
+    /* Block dmesg */
+    {SCMP_SYS(syslog)},
+    /* Useless old syscall */
+    {SCMP_SYS(uselib)},
+    /* Don't allow you to switch to bsd emulation or whatnot */
+    {SCMP_SYS(personality)},
+    /* Don't allow disabling accounting */
+    {SCMP_SYS(acct)},
+    /* 16-bit code is unnecessary in the sandbox, and modify_ldt is a
+       historic source of interesting information leaks. */
+    {SCMP_SYS(modify_ldt)},
+    /* Don't allow reading current quota use */
+    {SCMP_SYS(quotactl)},
+
+    /* Scary VM/NUMA ops */
+    {SCMP_SYS(move_pages)},
+    {SCMP_SYS(mbind)},
+    {SCMP_SYS(get_mempolicy)},
+    {SCMP_SYS(set_mempolicy)},
+    {SCMP_SYS(migrate_pages)},
+
+    /* Don't allow subnamespace setups: */
+    {SCMP_SYS(unshare)},
+    {SCMP_SYS(mount)},
+    {SCMP_SYS(pivot_root)},
+    {SCMP_SYS(clone), &SCMP_A0(SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)}
+  };
+  /* Blacklist all but unix, inet, inet6 and netlink */
+  int socket_family_blacklist[] = {
+    AF_AX25,
+    AF_IPX,
+    AF_APPLETALK,
+    AF_NETROM,
+    AF_BRIDGE,
+    AF_ATMPVC,
+    AF_X25,
+    AF_ROSE,
+    AF_DECnet,
+    AF_NETBEUI,
+    AF_SECURITY,
+    AF_KEY,
+    AF_NETLINK + 1, /* Last gets CMP_GE, so order is important */
+  };
+  int i, r;
+
+  seccomp = seccomp_init(SCMP_ACT_ALLOW);
+  if (!seccomp)
+    return die_oom ();
+
+  /* TODO: Should we filter the kernel keyring syscalls in some way?
+   * We do want them to be used by desktop apps, but they could also perhaps
+   * leak system stuff or secrets from other apps.
+   */
+
+  for (i = 0; i < N_ELEMENTS (syscall_blacklist); i++)
+    {
+      int scall = syscall_blacklist[i].scall;
+      if (syscall_blacklist[i].arg)
+        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 1, *syscall_blacklist[i].arg);
+      else
+        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 0);
+      if (r < 0 && r == -EFAULT /* unknown syscall */)
+        die_with_error ("Failed to block syscall %d", scall);
+    }
+
+  for (i = 0; i < N_ELEMENTS (socket_family_blacklist); i++)
+    {
+      int family = socket_family_blacklist[i];
+      if (i == N_ELEMENTS (socket_family_blacklist) - 1)
+        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_EQ, family));
+      else
+        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_GE, family));
+      if (r < 0)
+        die_with_error ("Failed to block socket family %d", family);
+    }
+
+  r = seccomp_load (seccomp);
+  if (r < 0)
+    die_with_error ("Failed to install seccomp audit filter: ");
+
+  seccomp_release (seccomp);
 }
 
 static void
@@ -2083,6 +2182,9 @@ main (int argc,
     free (gid_map);
   }
 #endif
+
+  __debug__(("setting up seccomp\n"));
+  setup_seccomp ();
 
   __debug__(("forking for child\n"));
 
