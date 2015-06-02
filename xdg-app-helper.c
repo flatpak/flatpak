@@ -2122,7 +2122,7 @@ main (int argc,
 
           xdg_app_dir = strconcat (home, "/.local/share/xdg-app");
 
-          if (bind_mount (xdg_app_dir, get_relative_path (xdg_app_dir), BIND_READONLY))
+          if (bind_mount (xdg_app_dir, get_relative_path (xdg_app_dir), BIND_READONLY) && errno != ENOENT)
             die_with_error ("Unable to remount xdg-app dir readonly\n");
           free (xdg_app_dir);
         }
