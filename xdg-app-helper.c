@@ -218,6 +218,14 @@ strdup_printf (const char *format,
   return buffer;
 }
 
+static const char *
+get_relative_path (const char *path)
+{
+  while (*path == '/')
+    path++;
+  return path;
+}
+
 #ifndef HAVE_FDWALK
 static int
 fdwalk (int (*cb)(void *data, int fd), void *data)
@@ -1261,9 +1269,7 @@ create_homedir (int mount_real_home, const char *app_id)
   if (home == NULL)
     return;
 
-  relative_home = home;
-  while (*relative_home == '/')
-    relative_home++;
+  relative_home = get_relative_path (home);
 
   if (mkdir_with_parents (relative_home, 0755, TRUE))
     die_with_error ("unable to create %s", relative_home);
@@ -1279,10 +1285,7 @@ create_homedir (int mount_real_home, const char *app_id)
       app_id_dir = strconcat3 (home, "/.var/app/", app_id);
       if (stat (app_id_dir, &st) == 0 && S_ISDIR (st.st_mode))
 	{
-	  relative_app_id_dir = app_id_dir;
-	  while (*relative_app_id_dir == '/')
-	    relative_app_id_dir++;
-
+	  relative_app_id_dir = get_relative_path (app_id_dir);
 	  if (mkdir_with_parents (relative_app_id_dir, 0755, TRUE))
 	    die_with_error ("unable to create %s", relative_app_id_dir);
 
@@ -2097,14 +2100,6 @@ main (int argc,
       free (session_dbus_address);
    }
 
-  if (mount_host_fs || mount_home)
-    {
-      char *dconf_run_path_relative = strdup_printf ("run/user/%d/dconf", uid);
-      char *dconf_run_path_absolute = strdup_printf ("/run/user/%d/dconf", uid);
-
-      bind_mount (dconf_run_path_absolute, dconf_run_path_relative, 0);
-    }
-
   if (mount_host_fs)
     {
       mount_extra_root_dirs (mount_host_fs_ro);
@@ -2113,6 +2108,29 @@ main (int argc,
 
   if (!mount_host_fs)
     create_homedir (mount_home, app_id);
+
+  if (mount_host_fs || mount_home)
+    {
+      const char *home = getenv("HOME");
+      char *dconf_run_path = strdup_printf ("/run/user/%d/dconf", uid);
+
+      /* There really is no need for an app to install or modify other
+         apps, so lets forbid it directly */
+      if (home)
+        {
+          char *xdg_app_dir;
+
+          xdg_app_dir = strconcat (home, "/.local/share/xdg-app");
+
+          if (bind_mount (xdg_app_dir, get_relative_path (xdg_app_dir), BIND_READONLY))
+            die_with_error ("Unable to remount xdg-app dir readonly\n");
+          free (xdg_app_dir);
+        }
+
+      /* If the user has homedir access, also allow dconf run dir access */
+      bind_mount (dconf_run_path, get_relative_path (dconf_run_path), 0);
+      free (dconf_run_path);
+    }
 
   if (!network)
     loopback_setup ();
