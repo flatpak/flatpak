@@ -1649,6 +1649,30 @@ drop_caps (void)
 
 #endif
 
+static char *arg_space;
+size_t arg_space_size;
+
+static void
+clean_argv (int argc,
+            char **argv)
+{
+  int i;
+  char *newargv;
+
+  arg_space = argv[0];
+  arg_space_size = argv[argc-1] - argv[0] + strlen (argv[argc-1]) + 1;
+  newargv = xmalloc (arg_space_size);
+  memcpy (newargv, arg_space, arg_space_size);
+  for (i = 0; i < argc; i++)
+    argv[i] = newargv + (argv[i] - arg_space);
+}
+
+static void
+set_procname (const char *name)
+{
+  strncpy (arg_space, name, arg_space_size);
+}
+
 int
 main (int argc,
       char **argv)
@@ -1695,6 +1719,8 @@ main (int argc,
   /* Never gain any more privs during exec */
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
     die_with_error ("prctl(PR_SET_NO_NEW_CAPS) failed");
+
+  clean_argv (argc, argv);
 
   while ((c =  getopt (argc, argv, "+inWweEsfFHra:m:M:b:B:p:x:ly:d:D:v:I:gS:")) >= 0)
     {
@@ -1889,6 +1915,8 @@ main (int argc,
 
   if (pid != 0)
     {
+      if (app_id)
+        set_procname (strdup_printf ("xdg-app-helper %s launcher", app_id));
       monitor_child (event_fd);
       exit (0); /* Should not be reached, but better safe... */
     }
@@ -2229,6 +2257,7 @@ main (int argc,
     fdwalk (close_extra_fds, dont_close);
   }
 
-  strncpy (argv[0], "xdg-app-init\0", strlen (argv[0]));
+  if (app_id)
+    set_procname (strdup_printf ("xdg-app-helper %s monitor", app_id));
   return do_init (event_fd, pid);
 }
