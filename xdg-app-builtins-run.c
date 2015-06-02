@@ -286,16 +286,16 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 								  "org.freedesktop.XdgApp.SessionHelper",
 								  "/org/freedesktop/XdgApp/SessionHelper",
 								  NULL, NULL);
-  if (session_helper)
+  if (session_helper &&
+      xdg_app_session_helper_call_request_monitor_sync (session_helper,
+                                                        &monitor_path,
+                                                        NULL, NULL))
     {
-      if (xdg_app_session_helper_call_request_monitor_sync (session_helper,
-							    &monitor_path,
-							    NULL, NULL))
-	{
-	  g_ptr_array_add (argv_array, g_strdup ("-m"));
-	  g_ptr_array_add (argv_array, monitor_path);
-	}
+      g_ptr_array_add (argv_array, g_strdup ("-m"));
+      g_ptr_array_add (argv_array, monitor_path);
     }
+  else
+    g_ptr_array_add (argv_array, g_strdup ("-r"));
 
   xdg_app_run_add_environment_args (argv_array, dbus_proxy_argv,
                                     app, app_context);
