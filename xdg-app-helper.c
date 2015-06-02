@@ -144,7 +144,7 @@ xunsetenv (const char *name)
     die ("unsetenv failed");
 }
 
-char *
+static char *
 strconcat (const char *s1,
            const char *s2)
 {
@@ -166,7 +166,7 @@ strconcat (const char *s1,
   return res;
 }
 
-char *
+static char *
 strconcat3 (const char *s1,
 	    const char *s2,
 	    const char *s3)
@@ -193,30 +193,7 @@ strconcat3 (const char *s1,
   return res;
 }
 
-char *
-strconcat_len (const char *s1,
-               const char *s2,
-               size_t s2_len)
-{
-  size_t len = 0;
-  char *res;
-
-  if (s1)
-    len += strlen (s1);
-  if (s2)
-    len += s2_len;
-
-  res = xmalloc (len + 1);
-  *res = 0;
-  if (s1)
-    strcat (res, s1);
-  if (s2)
-    strncat (res, s2, s2_len);
-
-  return res;
-}
-
-char*
+static char*
 strdup_printf (const char *format,
                ...)
 {
@@ -296,7 +273,7 @@ static inline int raw_clone(unsigned long flags, void *child_stack) {
 #endif
 }
 
-void
+static void
 usage (char **argv)
 {
   fprintf (stderr, "usage: %s [OPTIONS...] RUNTIMEPATH COMMAND [ARGS...]\n\n", argv[0]);
@@ -378,12 +355,6 @@ typedef struct {
   const char *options;
   unsigned long flags;
 } mount_table_t;
-
-int
-ascii_isdigit (char c)
-{
-  return c >= '0' && c <= '9';
-}
 
 static bool create_etc_symlink = FALSE;
 static bool create_etc_dir = TRUE;
@@ -635,7 +606,7 @@ str_has_prefix (const char *str,
   return strncmp (str, prefix, strlen (prefix)) == 0;
 }
 
-char **
+static char **
 get_submounts (const char *parent_mount)
 {
   char *mountpoint, *mountpoint_end;
