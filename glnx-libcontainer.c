@@ -242,8 +242,16 @@ glnx_libcontainer_run_in_root (const char  *dest,
   if (chdir ("/") != 0)
     _perror_fatal ("chdir: ");
 
-  if (execv (binary, argv) != 0)
-    _perror_fatal ("execl: ");
+  if (binary[0] == '/')
+    {
+      if (execv (binary, argv) != 0)
+        _perror_fatal ("execv: ");
+    }
+  else
+    {
+      if (execvp (binary, argv) != 0)
+        _perror_fatal ("execvp: ");
+    }
 
   g_assert_not_reached ();
 }
