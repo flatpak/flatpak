@@ -105,16 +105,18 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
           goto out;
         }
     }
-
-  if (previous_deployment != NULL)
+  else
     {
-      if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
-				 opt_force_remove,
-                                 cancellable, error))
-        goto out;
+      if (previous_deployment != NULL)
+        {
+          if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
+                                     opt_force_remove,
+                                     cancellable, error))
+            goto out;
 
-      if (!xdg_app_dir_prune (dir, cancellable, error))
-        goto out;
+          if (!xdg_app_dir_prune (dir, cancellable, error))
+            goto out;
+        }
     }
 
   ret = TRUE;
@@ -187,20 +189,22 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
           goto out;
         }
     }
-
-  if (previous_deployment != NULL)
+  else
     {
-      if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
-				 opt_force_remove,
-                                 cancellable, error))
-        goto out;
+      if (previous_deployment != NULL)
+        {
+          if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
+                                     opt_force_remove,
+                                     cancellable, error))
+            goto out;
 
-      if (!xdg_app_dir_prune (dir, cancellable, error))
+          if (!xdg_app_dir_prune (dir, cancellable, error))
+            goto out;
+        }
+
+      if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
         goto out;
     }
-
-  if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
-    goto out;
 
   ret = TRUE;
  out:
