@@ -99,6 +99,20 @@ if test x$enable_documentation = xyes; then
    if test x$XSLTPROC = x; then
       AC_MSG_ERROR([xsltproc is required to build documentation])
    fi
+
+  dnl check for DocBook DTD in the local catalog
+  JH_CHECK_XML_CATALOG([-//OASIS//DTD DocBook XML V4.1.2//EN],
+     [DocBook XML DTD V4.1.2], [have_docbook_dtd=yes], [have_docbook_dtd=no])
+  if test "$have_docbook_dtd" != yes; then
+    AC_MSG_ERROR([DocBook DTD is required for --enable-documentation])
+  fi
+
+  dnl check for DocBook XSL stylesheets in the local catalog
+  JH_CHECK_XML_CATALOG([http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl],
+     [DocBook XSL Stylesheets], [have_docbook_style=yes],[have_docbook_style=no])
+  if test "$have_docbook_style" != yes; then
+    AC_MSG_ERROR([DocBook XSL Stylesheets are required for --enable-documentation])
+  fi
 fi
 AM_CONDITIONAL(BUILD_DOCUMENTATION, test x$enable_documentation = xyes)
 
