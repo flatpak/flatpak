@@ -443,7 +443,6 @@ typedef enum {
   FILE_FLAGS_NON_FATAL = 1 << 0,
   FILE_FLAGS_IF_LAST_FAILED = 1 << 1,
   FILE_FLAGS_DEVICES = 1 << 2,
-  FILE_FLAGS_NOREMOUNT = 1 << 3,
 } file_flags_t;
 
 typedef struct {
@@ -509,15 +508,15 @@ static const create_table_t create[] = {
   { FILE_TYPE_BIND_RO, "proc/bus", 0755, "proc/bus"},
   { FILE_TYPE_DIR, "sys", 0755},
   { FILE_TYPE_DIR, "sys/block", 0755},
-  { FILE_TYPE_BIND, "sys/block", 0755, "/sys/block", FILE_FLAGS_NOREMOUNT},
+  { FILE_TYPE_BIND, "sys/block", 0755, "/sys/block"},
   { FILE_TYPE_DIR, "sys/bus", 0755},
-  { FILE_TYPE_BIND, "sys/bus", 0755, "/sys/bus", FILE_FLAGS_NOREMOUNT},
+  { FILE_TYPE_BIND, "sys/bus", 0755, "/sys/bus"},
   { FILE_TYPE_DIR, "sys/class", 0755},
-  { FILE_TYPE_BIND, "sys/class", 0755, "/sys/class", FILE_FLAGS_NOREMOUNT},
+  { FILE_TYPE_BIND, "sys/class", 0755, "/sys/class"},
   { FILE_TYPE_DIR, "sys/dev", 0755},
-  { FILE_TYPE_BIND, "sys/dev", 0755, "/sys/dev", FILE_FLAGS_NOREMOUNT},
+  { FILE_TYPE_BIND, "sys/dev", 0755, "/sys/dev"},
   { FILE_TYPE_DIR, "sys/devices", 0755},
-  { FILE_TYPE_BIND, "sys/devices", 0755, "/sys/devices", FILE_FLAGS_NOREMOUNT},
+  { FILE_TYPE_BIND, "sys/devices", 0755, "/sys/devices"},
   { FILE_TYPE_DIR, "dev", 0755},
   { FILE_TYPE_MOUNT, "dev"},
   { FILE_TYPE_DIR, "dev/pts", 0755},
@@ -561,7 +560,6 @@ typedef enum {
   BIND_PRIVATE = (1<<1),
   BIND_DEVICES = (1<<2),
   BIND_RECURSIVE = (1<<3),
-  BIND_NOREMOUNT = (1<<4),
 } bind_option_t;
 
 typedef struct {
@@ -875,7 +873,6 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
   bool private = (options & BIND_PRIVATE) != 0;
   bool devices = (options & BIND_DEVICES) != 0;
   bool recursive = (options & BIND_RECURSIVE) != 0;
-  bool noremount = (options & BIND_NOREMOUNT) != 0;
   unsigned long current_flags;
   char **submounts;
   int i;
@@ -892,8 +889,7 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
 
   current_flags = get_mountflags (dest);
 
-  if (!noremount &&
-      mount ("none", dest,
+  if (mount ("none", dest,
              NULL, MS_MGC_VAL|MS_BIND|MS_REMOUNT|current_flags|(devices?0:MS_NODEV)|MS_NOSUID|(readonly?MS_RDONLY:0), NULL) != 0)
     return 3;
 
@@ -1215,8 +1211,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, const 
           if ((res = bind_mount (data, name,
                                  0 |
                                  ((create[i].type == FILE_TYPE_BIND_RO) ? BIND_READONLY : 0) |
-                                 ((flags & FILE_FLAGS_DEVICES) ? BIND_DEVICES : 0) |
-                                 ((flags & FILE_FLAGS_NOREMOUNT) ? BIND_NOREMOUNT : 0)
+                                 ((flags & FILE_FLAGS_DEVICES) ? BIND_DEVICES : 0)
 				 )))
             {
               if (res > 1 || (flags & FILE_FLAGS_NON_FATAL) == 0)
