@@ -518,7 +518,6 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "sys/devices", 0755},
   { FILE_TYPE_BIND, "sys/devices", 0755, "/sys/devices"},
   { FILE_TYPE_DIR, "dev", 0755},
-  { FILE_TYPE_MOUNT, "dev"},
   { FILE_TYPE_DIR, "dev/pts", 0755},
   { FILE_TYPE_MOUNT, "dev/pts"},
   { FILE_TYPE_DIR, "dev/shm", 0755},
@@ -545,7 +544,6 @@ static const create_table_t create_post[] = {
 
 static const mount_table_t mount_table[] = {
   { "proc",      "proc",     "proc",  NULL,        MS_NOSUID|MS_NOEXEC|MS_NODEV           },
-  { "tmpfs",     "dev",      "tmpfs", "mode=755",  MS_NOSUID|MS_STRICTATIME               },
   { "devpts",    "dev/pts",  "devpts","newinstance,ptmxmode=0666,mode=620", MS_NOSUID|MS_NOEXEC },
   { "tmpfs",     "dev/shm",  "tmpfs", "mode=1777", MS_NOSUID|MS_NODEV|MS_STRICTATIME      },
 };
