@@ -713,6 +713,112 @@ str_has_prefix (const char *str,
   return strncmp (str, prefix, strlen (prefix)) == 0;
 }
 
+static char *
+get_mountinfo (const char *mountpoint)
+{
+  char *line_mountpoint, *line_mountpoint_end;
+  char *mountinfo;
+  char *free_me = NULL;
+  char *line, *line_start;
+  char *res = NULL;
+  int i;
+
+  if (mountpoint[0] != '/')
+    {
+      char *cwd = getcwd(NULL, 0);
+      if (cwd == NULL)
+        die_oom ();
+
+      mountpoint = free_me = strconcat3 (cwd, "/", mountpoint);
+      free (cwd);
+    }
+
+  mountinfo = load_file ("/proc/self/mountinfo");
+  if (mountinfo == NULL)
+    return NULL;
+
+  line = mountinfo;
+
+  while (*line != 0)
+    {
+      line_start = line;
+      for (i = 0; i < 4; i++)
+        line = skip_token (line, TRUE);
+      line_mountpoint = line;
+      line = skip_token (line, FALSE);
+      line_mountpoint_end = line;
+      line = skip_line (line);
+
+      if (strlen (mountpoint) == (line_mountpoint_end - line_mountpoint) &&
+          strncmp (mountpoint, line_mountpoint, line_mountpoint_end - line_mountpoint) == 0)
+        {
+          res = line_start;
+          line[-1] = 0;
+          break;
+        }
+    }
+
+  if (free_me)
+    free (free_me);
+  free (mountinfo);
+
+  if (res)
+    return xstrdup (res);
+  return NULL;
+}
+
+static unsigned long
+get_mountflags (const char *mountpoint)
+{
+  char *line, *token, *end_token;
+  int i;
+  unsigned long flags = 0;
+  static const struct  { int flag; char *name; } flags_data[] = {
+    { 0, "rw" },
+    { MS_RDONLY, "ro" },
+    { MS_NOSUID, "nosuid" },
+    { MS_NODEV, "nodev" },
+    { MS_NOEXEC, "noexec" },
+    { MS_NOATIME, "noatime" },
+    { MS_NODIRATIME, "nodiratime" },
+    { MS_RELATIME, "relatime" },
+    { 0, NULL }
+  };
+
+  line = get_mountinfo (mountpoint);
+  if (line == NULL)
+    return 0;
+
+  token = line;
+  for (i = 0; i < 5; i++)
+    token = skip_token (token, TRUE);
+
+  end_token = skip_token (token, FALSE);
+  *end_token = 0;
+
+  do {
+    end_token = strchr (token, ',');
+    if (end_token != NULL)
+      *end_token = 0;
+
+    for (i = 0; flags_data[i].name != NULL; i++)
+      {
+        if (strcmp (token, flags_data[i].name) == 0)
+          flags |= flags_data[i].flag;
+      }
+
+    if (end_token)
+      token = end_token + 1;
+    else
+      token = NULL;
+  } while (token != NULL);
+
+  free (line);
+
+  return flags;
+}
+
+
 static char **
 get_submounts (const char *parent_mount)
 {
@@ -770,6 +876,7 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
   bool devices = (options & BIND_DEVICES) != 0;
   bool recursive = (options & BIND_RECURSIVE) != 0;
   bool noremount = (options & BIND_NOREMOUNT) != 0;
+  unsigned long current_flags;
   char **submounts;
   int i;
 
@@ -783,9 +890,11 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
         return 2;
     }
 
+  current_flags = get_mountflags (dest);
+
   if (!noremount &&
       mount ("none", dest,
-             NULL, MS_MGC_VAL|MS_BIND|MS_REMOUNT|(devices?0:MS_NODEV)|MS_NOSUID|(readonly?MS_RDONLY:0), NULL) != 0)
+             NULL, MS_MGC_VAL|MS_BIND|MS_REMOUNT|current_flags|(devices?0:MS_NODEV)|MS_NOSUID|(readonly?MS_RDONLY:0), NULL) != 0)
     return 3;
 
   /* We need to work around the fact that a bind mount does not apply the flags, so we need to manually
@@ -800,8 +909,9 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
 
       for (i = 0; submounts[i] != NULL; i++)
         {
+          current_flags = get_mountflags (dest);
           if (mount ("none", submounts[i],
-                     NULL, MS_MGC_VAL|MS_BIND|MS_REMOUNT|(devices?0:MS_NODEV)|MS_NOSUID|(readonly?MS_RDONLY:0), NULL) != 0)
+                     NULL, MS_MGC_VAL|MS_BIND|MS_REMOUNT|current_flags|(devices?0:MS_NODEV)|MS_NOSUID|(readonly?MS_RDONLY:0), NULL) != 0)
             return 5;
           free (submounts[i]);
         }
@@ -1024,6 +1134,7 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, const 
       mode_t mode = create[i].mode;
       file_flags_t flags = create[i].flags;
       int *option = create[i].option;
+      unsigned long current_mount_flags;
       char *in_root;
       int k;
       bool found;
@@ -1142,8 +1253,9 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, const 
           break;
 
         case FILE_TYPE_REMOUNT:
+          current_mount_flags = get_mountflags (name);
           if (mount ("none", name,
-                     NULL, MS_MGC_VAL|MS_REMOUNT|mode, NULL) != 0)
+                     NULL, MS_MGC_VAL|MS_REMOUNT|current_mount_flags|mode, NULL) != 0)
             die_with_error ("Unable to remount %s\n", name);
 
           break;
