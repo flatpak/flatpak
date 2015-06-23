@@ -153,6 +153,14 @@ profiledir = $(sysconfdir)/profile.d
 profile_DATA = xdg-app.sh
 EXTRA_DIST += profile/xdg-app.sh.in
 
+envdir = $(datadir)/gdm/env.d
+env_DATA = xdg-app.env
+EXTRA_DIST += env.d/xdg-app.env.in
+
 xdg-app.sh: profile/xdg-app.sh.in
+	$(AM_V_GEN) $(SED) -e "s|\@localstatedir\@|$(localstatedir)|" \
+		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
+
+xdg-app.env: env.d/xdg-app.env.in
 	$(AM_V_GEN) $(SED) -e "s|\@localstatedir\@|$(localstatedir)|" \
 		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
