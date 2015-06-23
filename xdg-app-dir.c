@@ -878,6 +878,32 @@ read_fd (int           fd,
   return TRUE;
 }
 
+/* This is conservative, but lets us avoid escaping most
+   regular Exec= lines, which is nice as that can sometimes
+   cause problems for apps launching desktop files. */
+static gboolean
+need_quotes (const char *str)
+{
+  const char *p;
+
+  for (p = str; *p; p++)
+    {
+      if (!g_ascii_isalnum (*p) &&
+          strchr ("-_%.=:/@", *p) == NULL)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static char *
+maybe_quote (const char *str)
+{
+  if (need_quotes (str))
+    return g_shell_quote (str);
+  return g_strdup (str);
+}
+
 static gboolean
 export_desktop_file (const char    *app,
                      const char    *branch,
@@ -903,7 +929,9 @@ export_desktop_file (const char    *app,
   glnx_strfreev gchar **old_argv = NULL;
   glnx_strfreev gchar **groups = NULL;
   GString *new_exec = NULL;
-  g_autofree char *escaped_app = g_shell_quote (app);
+  g_autofree char *escaped_app = maybe_quote (app);
+  g_autofree char *escaped_branch = maybe_quote (branch);
+  g_autofree char *escaped_arch = maybe_quote (arch);
   int i;
 
   if (!gs_file_openat_noatime (parent_fd, name, &desktop_fd, cancellable, error))
@@ -940,13 +968,13 @@ export_desktop_file (const char    *app,
       g_key_file_remove_key (keyfile, groups[i], "X-GNOME-Bugzilla-ExtraInfoScript", NULL);
 
       new_exec = g_string_new ("");
-      g_string_append_printf (new_exec, XDG_APP_BINDIR"/xdg-app run --branch='%s' --arch='%s'", branch, arch);
+      g_string_append_printf (new_exec, XDG_APP_BINDIR"/xdg-app run --branch=%s --arch=%s", escaped_branch, escaped_arch);
 
       old_exec = g_key_file_get_string (keyfile, groups[i], "Exec", NULL);
       if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
         {
           int i;
-          g_autofree char *command = g_shell_quote (old_argv[0]);
+          g_autofree char *command = maybe_quote (old_argv[0]);
 
           g_string_append_printf (new_exec, " --command=%s", command);
 
@@ -955,7 +983,7 @@ export_desktop_file (const char    *app,
 
           for (i = 1; i < old_argc; i++)
             {
-              g_autofree char *arg = g_shell_quote (old_argv[i]);
+              g_autofree char *arg = maybe_quote (old_argv[i]);
               g_string_append (new_exec, " ");
               g_string_append (new_exec, arg);
             }
