@@ -46,6 +46,7 @@
 #include <sys/signalfd.h>
 #include <sys/capability.h>
 #include <sys/prctl.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 
 #include <seccomp.h>
@@ -341,6 +342,7 @@ setup_seccomp (void)
     AF_NETLINK + 1, /* Last gets CMP_GE, so order is important */
   };
   int i, r;
+  struct utsname uts;
 
   seccomp = seccomp_init(SCMP_ACT_ALLOW);
   if (!seccomp)
@@ -362,15 +364,19 @@ setup_seccomp (void)
         die_with_error ("Failed to block syscall %d", scall);
     }
 
-  for (i = 0; i < N_ELEMENTS (socket_family_blacklist); i++)
+  /* Socket filtering doesn't work on x86 */
+  if (uname (&uts) == 0 && strcmp (uts.machine, "i686") != 0)
     {
-      int family = socket_family_blacklist[i];
-      if (i == N_ELEMENTS (socket_family_blacklist) - 1)
-        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_GE, family));
-      else
-        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_EQ, family));
-      if (r < 0)
-        die_with_error ("Failed to block socket family %d", family);
+      for (i = 0; i < N_ELEMENTS (socket_family_blacklist); i++)
+	{
+	  int family = socket_family_blacklist[i];
+	  if (i == N_ELEMENTS (socket_family_blacklist) - 1)
+	    r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_GE, family));
+	  else
+	    r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_EQ, family));
+	  if (r < 0)
+	    die_with_error ("Failed to block socket family %d", family);
+	}
     }
 
   r = seccomp_load (seccomp);
