@@ -1066,7 +1066,8 @@ void
 xdg_app_run_add_environment_args (GPtrArray *argv_array,
 				  GPtrArray *dbus_proxy_argv,
                                   const char *app_id,
-                                  XdgAppContext *context)
+                                  XdgAppContext *context,
+                                  GFile *app_id_dir)
 {
   GHashTableIter iter;
   gpointer key;
@@ -1198,7 +1199,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
         g_warning ("Unexpected filesystem arg %s\n", filesystem);
     }
 
-  if (xdg_dirs_conf != NULL)
+  if (xdg_dirs_conf != NULL && app_id_dir != NULL)
     {
       g_autofree char *tmp_path = NULL;
       g_autofree char *path = NULL;
@@ -1210,7 +1211,8 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
           close (fd);
           if (g_file_set_contents (tmp_path, xdg_dirs_conf->str, xdg_dirs_conf->len, NULL))
             {
-              path = g_build_filename (g_get_home_dir (), ".config/user-dirs.dirs", NULL);
+              path = g_build_filename (gs_file_get_path_cached (app_id_dir),
+                                       "config/user-dirs.dirs", NULL);
               g_ptr_array_add (argv_array, g_strdup ("-M"));
               g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", path, tmp_path));
             }

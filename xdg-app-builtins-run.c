@@ -301,7 +301,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     g_ptr_array_add (argv_array, g_strdup ("-r"));
 
   xdg_app_run_add_environment_args (argv_array, dbus_proxy_argv,
-                                    app, app_context);
+                                    app, app_context, app_id_dir);
 
   g_ptr_array_add (argv_array, g_strdup ("-b"));
   g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/fonts=%s", SYSTEM_FONTS_DIR));
