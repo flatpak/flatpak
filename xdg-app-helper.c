@@ -366,9 +366,9 @@ setup_seccomp (void)
     {
       int family = socket_family_blacklist[i];
       if (i == N_ELEMENTS (socket_family_blacklist) - 1)
-        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_EQ, family));
-      else
         r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_GE, family));
+      else
+        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_EQ, family));
       if (r < 0)
         die_with_error ("Failed to block socket family %d", family);
     }
