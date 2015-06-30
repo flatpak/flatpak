@@ -155,6 +155,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
   g_autoptr(GFile) app_cache_dir = NULL;
+  g_autoptr(GFile) home = NULL;
+  g_autoptr(GFile) user_font1 = NULL;
+  g_autoptr(GFile) user_font2 = NULL;
   g_autoptr(XdgAppSessionHelper) session_helper = NULL;
   g_autofree char *runtime = NULL;
   g_autofree char *default_command = NULL;
@@ -302,6 +305,23 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   g_ptr_array_add (argv_array, g_strdup ("-b"));
   g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/fonts=%s", SYSTEM_FONTS_DIR));
+
+  home = g_file_new_for_path (g_get_home_dir ());
+  user_font1 = g_file_resolve_relative_path (home, ".local/share/fonts");
+  user_font2 = g_file_resolve_relative_path (home, ".fonts");
+
+  if (g_file_query_exists (user_font1, NULL))
+    {
+      g_autofree char *path = g_file_get_path (user_font1);
+      g_ptr_array_add (argv_array, g_strdup ("-b"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/user-fonts=%s", path));
+    }
+  else if (g_file_query_exists (user_font2, NULL))
+    {
+      g_autofree char *path = g_file_get_path (user_font2);
+      g_ptr_array_add (argv_array, g_strdup ("-b"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/user-fonts=%s", path));
+    }
 
   /* Must run this before spawning the dbus proxy, to ensure it
      ends up in the app cgroup */
