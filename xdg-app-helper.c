@@ -2104,36 +2104,6 @@ main (int argc,
 	}
     }
 
-  for (i = 0; i < n_extra_files; i++)
-    {
-      bool is_dir;
-
-      is_dir = stat_is_dir (extra_files[i].src);
-
-      if (mkdir_with_parents (extra_files[i].dest, 0755,
-                              is_dir && !extra_files[i].move))
-        die_with_error ("create extra dir %s", extra_files[i].dest);
-
-      if (extra_files[i].move)
-        {
-          if (!copy_file (extra_files[i].src, extra_files[i].dest, 0700))
-            die_with_error ("copy extra file %s", extra_files[i].dest);
-          if (unlink (extra_files[i].src) != 0)
-            die_with_error ("unlink moved extra file %s", extra_files[i].src);
-        }
-      else
-        {
-          if (!is_dir)
-            create_file (extra_files[i].dest, 0700, NULL);
-
-          if (bind_mount (extra_files[i].src, extra_files[i].dest, BIND_PRIVATE | (extra_files[i].readonly ? BIND_READONLY : 0)))
-            die_with_error ("mount extra dir %s", extra_files[i].src);
-
-          if (lock_files && is_dir)
-            add_lock_dir (extra_files[i].dest);
-        }
-    }
-
   if (var_path != NULL)
     {
       if (bind_mount (var_path, "var", BIND_PRIVATE))
@@ -2269,6 +2239,36 @@ main (int argc,
       /* If the user has homedir access, also allow dconf run dir access */
       bind_mount (dconf_run_path, get_relative_path (dconf_run_path), 0);
       free (dconf_run_path);
+    }
+
+  for (i = 0; i < n_extra_files; i++)
+    {
+      bool is_dir;
+
+      is_dir = stat_is_dir (extra_files[i].src);
+
+      if (mkdir_with_parents (extra_files[i].dest, 0755,
+                              is_dir && !extra_files[i].move))
+        die_with_error ("create extra dir %s", extra_files[i].dest);
+
+      if (extra_files[i].move)
+        {
+          if (!copy_file (extra_files[i].src, extra_files[i].dest, 0700))
+            die_with_error ("copy extra file %s", extra_files[i].dest);
+          if (unlink (extra_files[i].src) != 0)
+            die_with_error ("unlink moved extra file %s", extra_files[i].src);
+        }
+      else
+        {
+          if (!is_dir)
+            create_file (extra_files[i].dest, 0700, NULL);
+
+          if (bind_mount (extra_files[i].src, extra_files[i].dest, BIND_PRIVATE | (extra_files[i].readonly ? BIND_READONLY : 0)))
+            die_with_error ("mount extra dir %s", extra_files[i].src);
+
+          if (lock_files && is_dir)
+            add_lock_dir (extra_files[i].dest);
+        }
     }
 
   if (!network)
