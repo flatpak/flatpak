@@ -337,7 +337,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 	  goto out;
 	}
 
-      g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup ("xdg-dbus-proxy"));
+      g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (DBUSPROXY));
       g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_proxy_pipes[1]));
 
       g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */

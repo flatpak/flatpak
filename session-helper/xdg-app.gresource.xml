@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <gresources>
   <gresource prefix='/org/freedesktop/XdgApp'>
-    <file>xdg-app-dbus-interfaces.xml</file>
+    <file alias="xdg-app-dbus-interfaces.xml">data/xdg-app-dbus-interfaces.xml</file>
   </gresource>
 </gresources>

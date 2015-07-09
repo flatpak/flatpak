@@ -35,3 +35,6 @@ xdg-app-systemd-dbus.[ch]
 xdg-app-resources.[ch]
 xdg-dbus-proxy
 *.service
+xdg-app.env
+xdg-app.sh
+
