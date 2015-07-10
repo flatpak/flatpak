@@ -1,0 +1,7 @@
+Major changes in 0.3.6
+======================
+
+* Fix a typo in the socket seccomp rules that made ipv6 not work
+* Export the users fonts (~/.local/share/fonts or ~/.fonts) in the sandbox
+* Fix seccomp rules to work on i386
+* Make exposing xdg user dirs work right
