@@ -27,6 +27,7 @@ stamp-*
 xdg-app
 xdg-app-helper
 xdg-app-session-helper
+xdg-document-portal
 doc/*.1
 *~
 profile/xdg-app.sh
@@ -37,4 +38,8 @@ xdg-dbus-proxy
 *.service
 xdg-app.env
 xdg-app.sh
+document-portal/xdp-dbus.c
+document-portal/xdp-dbus.h
+document-portal/xdp-resources.c
+.dirstamp
 

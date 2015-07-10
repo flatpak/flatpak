@@ -1,0 +1,7 @@
+DO NOT MODIFY ANY FILE IN THIS DIRECTORY
+
+(except maybe the Makefile.am)
+
+This directory is the result of a git subtree merge with the 'gvdb'
+module on git.gnome.org.  Please apply fixes to the 'gvdb' module and
+perform a git merge.

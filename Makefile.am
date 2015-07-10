@@ -3,10 +3,19 @@ NULL =
 bin_PROGRAMS = $(NULL)
 libexec_PROGRAMS = $(NULL)
 DISTCLEANFILES= $(NULL)
+BUILT_SOURCES = $(NULL)
 
 if BUILD_DOCUMENTATION
 SUBDIRS = doc
 endif
+
+# D-BUS service file
+%.service: %.service.in config.log
+	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
+
+servicedir = $(DBUS_SERVICE_DIR)
+service_in_files = $(NULL)
+service_DATA = $(NULL)
 
 AM_CPPFLAGS =						\
 	-DXDG_APP_BINDIR=\"$(bindir)\"			\
@@ -40,6 +49,7 @@ include lib/Makefile.am.inc
 include app/Makefile.am.inc
 include session-helper/Makefile.am.inc
 include dbus-proxy/Makefile.am.inc
+include document-portal/Makefile.am.inc
 
 completiondir = $(datadir)/bash-completion/completions
 completion_DATA = completion/xdg-app

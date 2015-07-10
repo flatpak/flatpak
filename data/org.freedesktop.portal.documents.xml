@@ -1,0 +1,50 @@
+<!DOCTYPE node PUBLIC
+"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<!--
+ Copyright (C) 2015 Red Hat, Inc.
+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General
+ Public License along with this library; if not, write to the
+ Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
+
+ Author: Alexander Larsson <alexl@redhat.com>
+-->
+
+<node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
+  <interface name='org.freedesktop.portal.Documents'>
+    <method name="Add">
+      <arg type='s' name='uri' direction='in'/>
+      <arg type='u' name='doc_id' direction='out'/>
+    </method>
+    <method name="AddLocal">
+      <arg type='h' name='fd' direction='in'/>
+      <arg type='u' name='doc_id' direction='out'/>
+    </method>
+    <method name="GrantPermissions">
+      <arg type='u' name='doc_id' direction='in'/>
+      <arg type='s' name='app_id' direction='in'/>
+      <arg type='as' name='permissions' direction='in'/>
+    </method>
+    <method name="RevokePermissions">
+      <arg type='u' name='doc_id' direction='in'/>
+      <arg type='s' name='app_id' direction='in'/>
+      <arg type='as' name='permissions' direction='in'/>
+    </method>
+    <method name="Delete">
+      <arg type='u' name='doc_id' direction='in'/>
+    </method>
+  </interface>
+</node>

@@ -12,14 +12,9 @@ session-helper/xdg-app-resources.c: session-helper/xdg-app.gresource.xml $(resou
 	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) $< \
 		--target=$@ --sourcedir=$(srcdir) --c-name _gtk --generate-source
 
-# D-BUS service file
-%.service: %.service.in config.log
-	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
-
-servicedir = $(DBUS_SERVICE_DIR)
-service_in_files = session-helper/xdg-app-session.service.in
-service_DATA = session-helper/xdg-app-session.service
-DISTCLEANFILES += $(service_DATA)
+service_in_files += session-helper/xdg-app-session.service.in
+service_DATA += session-helper/xdg-app-session.service
+DISTCLEANFILES += session-helper/xdg-app-session.service
 
 EXTRA_DIST += session-helper/xdg-app.gresource.xml $(service_in_files)
 

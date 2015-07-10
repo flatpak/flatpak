@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.freedesktop.portal.Documents
+Exec=@libexecdir@/xdg-document-portal

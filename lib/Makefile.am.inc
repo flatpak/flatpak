@@ -2,7 +2,7 @@ noinst_LTLIBRARIES += libxdgapp.la
 
 dbus_built_sources = lib/xdg-app-dbus.c lib/xdg-app-dbus.h
 systemd_dbus_built_sources = lib/xdg-app-systemd-dbus.c lib/xdg-app-systemd-dbus.h
-BUILT_SOURCES = $(dbus_built_sources) $(systemd_dbus_built_sources)
+BUILT_SOURCES += $(dbus_built_sources) $(systemd_dbus_built_sources)
 
 $(dbus_built_sources) : data/xdg-app-dbus-interfaces.xml
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
