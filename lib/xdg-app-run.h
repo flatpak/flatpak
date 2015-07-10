@@ -52,6 +52,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppContext, xdg_app_context_free)
 
 void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,
 					      GPtrArray   *dbus_proxy_argv,
+                                              const char  *doc_mount_path,
                                               const char  *app_id,
                                               XdgAppContext *context,
                                               GFile       *app_id_dir);

@@ -164,6 +164,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autofree char *runtime_ref = NULL;
   g_autofree char *app_ref = NULL;
   g_autofree char *path = NULL;
+  g_autofree char *doc_mount_path = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
@@ -178,6 +179,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   int sync_proxy_pipes[2];
   g_autoptr(XdgAppContext) arg_context = NULL;
   g_autoptr(XdgAppContext) app_context = NULL;
+  g_autoptr(GDBusConnection) session_bus = NULL;
 
   context = g_option_context_new ("APP [args...] - Run an app");
 
@@ -300,7 +302,29 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   else
     g_ptr_array_add (argv_array, g_strdup ("-r"));
 
-  xdg_app_run_add_environment_args (argv_array, dbus_proxy_argv,
+  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (session_bus)
+    {
+      g_autoptr (GDBusMessage) reply = NULL;
+      g_autoptr (GDBusMessage) msg = g_dbus_message_new_method_call ("org.freedesktop.portal.Documents",
+                                                                     "/org/freedesktop/portal/documents",
+                                                                     "org.freedesktop.portal.Documents",
+                                                                     "GetMountPoint");
+      g_dbus_message_set_body (msg, g_variant_new ("()"));
+      reply = g_dbus_connection_send_message_with_reply_sync (session_bus, msg,
+                                                              G_DBUS_SEND_MESSAGE_FLAGS_NONE,
+                                                              30000,
+                                                              NULL,
+                                                              NULL,
+                                                              NULL);
+      if (reply)
+        {
+          g_variant_get (g_dbus_message_get_body (reply),
+                         "(^ay)", &doc_mount_path);
+        }
+    }
+
+  xdg_app_run_add_environment_args (argv_array, dbus_proxy_argv, doc_mount_path,
                                     app, app_context, app_id_dir);
 
   g_ptr_array_add (argv_array, g_strdup ("-b"));

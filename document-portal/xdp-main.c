@@ -388,13 +388,6 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
-  g_autoptr(GError) error = NULL;
-  if (!xdp_fuse_init (db, &error))
-    {
-      g_printerr ("fuse init failed: %s\n", error->message);
-      exit (1);
-    }
-
 }
 
 static void
@@ -543,6 +536,12 @@ main (int    argc,
   g_assert (introspection_bytes != NULL);
 
   introspection_data = g_dbus_node_info_new_for_xml (g_bytes_get_data (introspection_bytes, NULL), NULL);
+
+  if (!xdp_fuse_init (db, &error))
+    {
+      g_printerr ("fuse init failed: %s\n", error->message);
+      return 1;
+    }
 
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
                              "org.freedesktop.portal.Documents",
