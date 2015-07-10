@@ -1199,7 +1199,17 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
         g_warning ("Unexpected filesystem arg %s\n", filesystem);
     }
 
-  if (xdg_dirs_conf != NULL && app_id_dir != NULL)
+  if (home_access  && app_id_dir != NULL)
+    {
+      g_autofree char *src_path = g_build_filename (g_get_user_config_dir (),
+                                                    "user-dirs.dirs",
+                                                    NULL);
+      g_autofree char *path = g_build_filename (gs_file_get_path_cached (app_id_dir),
+                                                "config/user-dirs.dirs", NULL);
+      g_ptr_array_add (argv_array, g_strdup ("-b"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", path, src_path));
+    }
+  else if (xdg_dirs_conf != NULL && app_id_dir != NULL)
     {
       g_autofree char *tmp_path = NULL;
       g_autofree char *path = NULL;
