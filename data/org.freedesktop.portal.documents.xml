@@ -25,6 +25,9 @@
 
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
   <interface name='org.freedesktop.portal.Documents'>
+    <method name="GetMountPoint">
+      <arg type='ay' name='path' direction='out'/>
+    </method>
     <method name="Add">
       <arg type='s' name='uri' direction='in'/>
       <arg type='u' name='doc_id' direction='out'/>

@@ -1724,6 +1724,12 @@ static struct fuse_session *session = NULL;
 static struct fuse_chan *main_ch = NULL;
 static char *mount_path = NULL;
 
+const char *
+xdp_fuse_get_mountpoint (void)
+{
+  return mount_path;
+}
+
 void
 xdp_fuse_exit (void)
 {

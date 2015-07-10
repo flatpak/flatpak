@@ -347,6 +347,13 @@ handle_method (GCallback method_callback,
   return TRUE;
 }
 
+static gboolean
+handle_get_mount_point (XdpDbusDocuments *object, GDBusMethodInvocation *invocation)
+{
+  xdp_dbus_documents_complete_get_mount_point (object, invocation, xdp_fuse_get_mountpoint ());
+  return TRUE;
+}
+
 static void
 on_bus_acquired (GDBusConnection *connection,
                  const gchar     *name,
@@ -357,6 +364,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   helper = xdp_dbus_documents_skeleton_new ();
 
+  g_signal_connect_swapped (helper, "handle-get-mount-point", G_CALLBACK (handle_get_mount_point), NULL);
   g_signal_connect_swapped (helper, "handle-add", G_CALLBACK (handle_method), portal_add);
   g_signal_connect_swapped (helper, "handle-add-local", G_CALLBACK (handle_method), portal_add_local);
   g_signal_connect_swapped (helper, "handle-grant-permissions", G_CALLBACK (handle_method), portal_grant_permissions);
