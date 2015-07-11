@@ -1104,33 +1104,16 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       g_debug ("Allowing host-fs access");
       opts[i++] = 'f';
       home_access = TRUE;
-
-      if (doc_mount_path)
-        {
-          g_ptr_array_add (argv_array, g_strdup ("-b"));
-          g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/doc=%s", getuid(), doc_mount_path));
-        }
     }
   else if (g_hash_table_lookup (context->filesystems, "home"))
     {
       g_debug ("Allowing homedir access");
       opts[i++] = 'H';
       home_access = TRUE;
-      if (doc_mount_path)
-        {
-          g_ptr_array_add (argv_array, g_strdup ("-b"));
-          g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/doc=%s/in-homedir", getuid(), doc_mount_path));
-        }
     }
   else
     {
       /* Enable persistant mapping only if no access to real home dir */
-
-      if (doc_mount_path && app_id)
-        {
-          g_ptr_array_add (argv_array, g_strdup ("-b"));
-          g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/doc=%s/by-app/%s", getuid(), doc_mount_path, app_id));
-        }
 
       g_hash_table_iter_init (&iter, context->persistent);
       while (g_hash_table_iter_next (&iter, &key, NULL))
@@ -1144,6 +1127,13 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
           g_ptr_array_add (argv_array, g_strdup ("-B"));
           g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", dest, src));
         }
+    }
+
+  if (doc_mount_path && app_id)
+    {
+      g_ptr_array_add (argv_array, g_strdup ("-b"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/doc=%s/by-app/%s",
+                                                    getuid(), doc_mount_path, app_id));
     }
 
   g_hash_table_iter_init (&iter, context->filesystems);
