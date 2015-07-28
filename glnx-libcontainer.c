@@ -212,10 +212,24 @@ glnx_libcontainer_run_in_root (const char  *dest,
   if (container_available)
     {
       if (mount (NULL, "/", "none", MS_PRIVATE | MS_REC, NULL) != 0)
-        _perror_fatal ("mount: ");
+        {
+          if (errno == EINVAL)
+            {
+              /* Ok, we may be inside a mock chroot or the like.  In
+               * that case, let's just fall back to not
+               * containerizing.
+               */
+              container_available = FALSE;
+            }
+          else
+            _perror_fatal ("mount: ");
+        }
       
-      if (mount (NULL, "/", "none", MS_PRIVATE | MS_REMOUNT | MS_NOSUID, NULL) != 0)
-        _perror_fatal ("mount (MS_NOSUID): ");
+      if (container_available)
+        {
+          if (mount (NULL, "/", "none", MS_PRIVATE | MS_REMOUNT | MS_NOSUID, NULL) != 0)
+            _perror_fatal ("mount (MS_NOSUID): ");
+        }
     }
 
   if (chdir (dest) != 0)
