@@ -815,8 +815,9 @@ xdp_fuse_opendir (fuse_req_t req,
                 const char *name = key;
                 guint32 id = GPOINTER_TO_UINT(value);
 
-                dirbuf_add (req, &b, name,
-                            make_inode (APP_DIR_INO_CLASS, id));
+                if (strlen (name) > 0)
+                  dirbuf_add (req, &b, name,
+                              make_inode (APP_DIR_INO_CLASS, id));
               }
           }
           break;
