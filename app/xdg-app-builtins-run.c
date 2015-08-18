@@ -288,7 +288,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   session_helper = xdg_app_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
 								  G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
-								  "org.freedesktop.XdgApp.SessionHelper",
+								  "org.freedesktop.XdgApp",
 								  "/org/freedesktop/XdgApp/SessionHelper",
 								  NULL, NULL);
   if (session_helper &&
