@@ -34,8 +34,8 @@ xdg_document_portal_SOURCES = \
 	document-portal/xdp-enums.h		\
 	document-portal/xdp-doc-db.h		\
 	document-portal/xdp-doc-db.c		\
-	document-portal/gvdb/gvdb-reader.c	\
-	document-portal/gvdb/gvdb-builder.c	\
+	lib/gvdb/gvdb-reader.c	\
+	lib/gvdb/gvdb-builder.c	\
 	$(xdp_dbus_built_sources)	\
 	document-portal/xdp-resources.h		\
 	document-portal/xdp-resources.c		\
