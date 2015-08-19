@@ -27,6 +27,10 @@ libxdgapp_la_SOURCES = \
 	lib/xdg-app-run.h \
 	lib/xdg-app-utils.c \
 	lib/xdg-app-utils.h \
+	lib/gvdb/gvdb-reader.c	\
+	lib/gvdb/gvdb-builder.c	\
+	lib/xdg-app-db.c \
+	lib/xdg-app-db.h \
 	$(dbus_built_sources)		\
 	$(systemd_dbus_built_sources)	\
 	$(NULL)
