@@ -20,6 +20,8 @@ EXTRA_DIST += session-helper/xdg-app.gresource.xml $(service_in_files)
 
 xdg_app_session_helper_SOURCES = \
 	session-helper/xdg-app-session-helper.c	\
+	session-helper/xdg-app-permission-store.c	\
+	session-helper/xdg-app-permission-store.h	\
 	session-helper/xdg-app-resources.h	\
 	session-helper/xdg-app-resources.c	\
 	$(NULL)

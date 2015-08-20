@@ -25,6 +25,7 @@
 #include <string.h>
 #include <gio/gio.h>
 #include "xdg-app-dbus.h"
+#include "xdg-app-permission-store.h"
 
 static GDBusNodeInfo *introspection_data = NULL;
 static char *monitor_dir;
@@ -47,6 +48,8 @@ on_bus_acquired (GDBusConnection *connection,
 {
   XdgAppSessionHelper *helper;
   GError *error = NULL;
+
+  xdg_app_permission_store_start (connection);
 
   helper = xdg_app_session_helper_skeleton_new ();
 

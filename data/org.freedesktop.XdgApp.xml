@@ -30,5 +30,49 @@
       <arg type='ay' name='path' direction='out'/>
     </method>
   </interface>
-</node>
 
+  <interface name='org.freedesktop.XdgApp.PermissionStore'>
+
+    <method name="Lookup">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='permissions' type='a{sas}' direction='out'/>
+      <arg name='data' type='v' direction='out'/>
+    </method>
+
+    <method name="Set">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='create' type='b' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='app_permissions' type='a{sas}' direction='in'/>
+      <arg name='data' type='v' direction='in'/>
+    </method>
+
+    <method name="Delete">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+    </method>
+
+    <method name="SetValue">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='create' type='b' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='data' type='v' direction='in'/>
+    </method>
+
+    <method name="SetPermission">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='create' type='b' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='app' type='s' direction='in'/>
+      <arg name='permissions' type='as' direction='in'/>
+    </method>
+
+    <method name="List">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='ids' type='as' direction='out'/>
+    </method>
+
+  </interface>
+
+</node>
