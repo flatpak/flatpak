@@ -52,4 +52,9 @@ gboolean                gvdb_table_write_contents                       (GHashTa
                                                                          gboolean        byteswap,
                                                                          GError        **error);
 
+G_GNUC_INTERNAL
+GBytes *                gvdb_table_get_content                          (GHashTable     *table,
+                                                                         gboolean        byteswap);
+
+
 #endif /* __gvdb_builder_h__ */
