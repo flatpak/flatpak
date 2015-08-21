@@ -50,6 +50,8 @@ include app/Makefile.am.inc
 include session-helper/Makefile.am.inc
 include dbus-proxy/Makefile.am.inc
 include document-portal/Makefile.am.inc
+include Makefile.gtester
+include tests/Makefile.am.inc
 
 completiondir = $(datadir)/bash-completion/completions
 completion_DATA = completion/xdg-app
