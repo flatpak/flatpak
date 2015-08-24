@@ -31,14 +31,6 @@
 #include <sys/capability.h>
 #include <sched.h>
 
-void glnx_libcontainer_set_not_available (void);
-gboolean glnx_libcontainer_get_available (void);
-
-gboolean glnx_libcontainer_bind_mount_readonly (const char *path, GError **error);
-
-int glnx_libcontainer_make_api_mounts (const char *dest);
-int glnx_libcontainer_prep_dev (const char  *dest);
-
-pid_t glnx_libcontainer_run_in_root (const char  *dest,
-                                     const char  *binary,
-                                     char **argv);
+pid_t glnx_libcontainer_run_chroot_private (const char  *dest,
+                                            const char  *binary,
+                                            char **argv);

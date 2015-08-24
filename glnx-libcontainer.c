@@ -37,8 +37,6 @@
 #include "glnx-backport-autocleanups.h"
 #include "glnx-local-alloc.h"
 
-static gboolean container_available = TRUE;
-
 static void _perror_fatal (const char *message) __attribute__ ((noreturn));
 
 static void
@@ -48,19 +46,35 @@ _perror_fatal (const char *message)
   exit (1);
 }
 
-void
-glnx_libcontainer_set_not_available (void)
+typedef enum {
+  CONTAINER_UNINIT = 0,
+  CONTAINER_YES = 1,
+  CONTAINER_NO = 2
+} ContainerDetectionState;
+
+static gboolean
+currently_in_container (void)
 {
-  container_available = FALSE;
+  static gsize container_detected = CONTAINER_UNINIT;
+
+  if (g_once_init_enter (&container_detected))
+    {
+      ContainerDetectionState tmp_state = CONTAINER_NO;
+      struct stat stbuf;
+      
+      /* http://www.freedesktop.org/wiki/Software/systemd/ContainerInterface/ */
+      if (getenv ("container") != NULL
+          || stat ("/.dockerinit", &stbuf) == 0)
+        tmp_state = CONTAINER_YES;
+      /* But since Docker isn't on board, yet, so...
+         http://stackoverflow.com/questions/23513045/how-to-check-if-a-process-is-running-inside-docker-container */
+      g_once_init_leave (&container_detected, tmp_state);
+    }
+  return container_detected == CONTAINER_YES;
 }
 
-gboolean
-glnx_libcontainer_get_available (void)
-{
-  return container_available;
-}
-
-gboolean
+#if 0
+static gboolean
 glnx_libcontainer_bind_mount_readonly (const char *path, GError **error)
 {
   gboolean ret = FALSE;
@@ -88,10 +102,10 @@ glnx_libcontainer_bind_mount_readonly (const char *path, GError **error)
  out:
   return ret;
 }
-
+#endif
 
 /* Based on code from nspawn.c */
-int
+static int
 glnx_libcontainer_make_api_mounts (const char *dest)
 {
   typedef struct MountPoint {
@@ -148,7 +162,7 @@ glnx_libcontainer_make_api_mounts (const char *dest)
   return 0;
 }
 
-int
+static int
 glnx_libcontainer_prep_dev (const char  *dest_devdir)
 {
   glnx_fd_close int src_fd = -1;
@@ -187,15 +201,19 @@ glnx_libcontainer_prep_dev (const char  *dest_devdir)
 }
 
 pid_t
-glnx_libcontainer_run_in_root (const char  *dest,
-                               const char  *binary,
-                               char **argv)
+glnx_libcontainer_run_chroot_private (const char  *dest,
+                                      const char  *binary,
+                                      char **argv)
 {
+  /* Make most new namespaces; note our use of CLONE_NEWNET means we
+   * have no networking in the container root.
+   */
   const int cloneflags = 
     SIGCHLD | CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWNET | CLONE_SYSVSEM | CLONE_NEWUTS;
   pid_t child;
+  gboolean in_container = currently_in_container ();
 
-  if (container_available)
+  if (!in_container)
     {
       if ((child = syscall (__NR_clone, cloneflags, NULL)) < 0)
         return -1;
@@ -209,7 +227,7 @@ glnx_libcontainer_run_in_root (const char  *dest,
   if (child != 0)
     return child;
 
-  if (container_available)
+  if (!in_container)
     {
       if (mount (NULL, "/", "none", MS_PRIVATE | MS_REC, NULL) != 0)
         {
@@ -219,13 +237,13 @@ glnx_libcontainer_run_in_root (const char  *dest,
                * that case, let's just fall back to not
                * containerizing.
                */
-              container_available = FALSE;
+              in_container = TRUE;
             }
           else
             _perror_fatal ("mount: ");
         }
       
-      if (container_available)
+      if (!in_container)
         {
           if (mount (NULL, "/", "none", MS_PRIVATE | MS_REMOUNT | MS_NOSUID, NULL) != 0)
             _perror_fatal ("mount (MS_NOSUID): ");
@@ -235,7 +253,7 @@ glnx_libcontainer_run_in_root (const char  *dest,
   if (chdir (dest) != 0)
     _perror_fatal ("chdir: ");
 
-  if (container_available)
+  if (!in_container)
     {
       if (glnx_libcontainer_make_api_mounts (dest) != 0)
         _perror_fatal ("preparing api mounts: ");
