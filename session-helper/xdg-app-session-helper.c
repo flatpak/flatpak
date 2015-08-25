@@ -141,7 +141,7 @@ main (int    argc,
   setup_file_monitor ("/etc/resolv.conf");
   setup_file_monitor ("/etc/localtime");
   
-  introspection_bytes = g_resources_lookup_data ("/org/freedesktop/XdgApp/xdg-app-dbus-interfaces.xml", 0, NULL);
+  introspection_bytes = g_resources_lookup_data ("/org/freedesktop/XdgApp/org.freedesktop.XdgApp.xml", 0, NULL);
   g_assert (introspection_bytes != NULL);
 
   introspection_data = g_dbus_node_info_new_for_xml (g_bytes_get_data (introspection_bytes, NULL), NULL);

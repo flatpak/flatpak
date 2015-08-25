@@ -4,12 +4,12 @@ dbus_built_sources = lib/xdg-app-dbus.c lib/xdg-app-dbus.h
 systemd_dbus_built_sources = lib/xdg-app-systemd-dbus.c lib/xdg-app-systemd-dbus.h
 BUILT_SOURCES += $(dbus_built_sources) $(systemd_dbus_built_sources)
 
-$(dbus_built_sources) : data/xdg-app-dbus-interfaces.xml
+$(dbus_built_sources) : data/org.freedesktop.XdgApp.xml
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.XdgApp.	\
 		--c-namespace XdgApp				\
-		--generate-c-code $(builddir)/lib/xdg-app-dbus		\
-		$(srcdir)/data/xdg-app-dbus-interfaces.xml	\
+		--generate-c-code $(builddir)/lib/xdg-app-dbus	\
+		$(srcdir)/data/org.freedesktop.XdgApp.xml	\
 		$(NULL)
 
 $(systemd_dbus_built_sources) : data/org.freedesktop.systemd1.xml
