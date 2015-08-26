@@ -104,15 +104,13 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
                           const char *app_id)
 {
   const char *target_app_id;
-  guint32 doc_id;
-  g_autofree char *id = NULL;
+  const char *id;
   g_autoptr(GError) error = NULL;
   g_autofree const char **permissions = NULL;
   XdpPermissionFlags perms;
   g_autoptr(XdgAppDbEntry) entry = NULL;
 
-  g_variant_get (parameters, "(u&s^a&s)", &doc_id, &target_app_id, &permissions);
-  id = xdp_name_from_id (doc_id);
+  g_variant_get (parameters, "(&s&s^a&s)", &id, &target_app_id, &permissions);
 
   entry = xdg_app_db_lookup (db, id);
   if (entry == NULL)
@@ -152,14 +150,12 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
 {
   const char *target_app_id;
   g_autoptr(GError) error = NULL;
-  g_autofree char *id = NULL;
-  guint32 doc_id;
+  const char *id;
   g_autofree const char **permissions = NULL;
   g_autoptr(XdgAppDbEntry) entry = NULL;
   XdpPermissionFlags perms;
 
-  g_variant_get (parameters, "(u&s^a&s)", &doc_id, &target_app_id, &permissions);
-  id = xdp_name_from_id (doc_id);
+  g_variant_get (parameters, "(&s&s^a&s)", &id, &target_app_id, &permissions);
 
   entry = xdg_app_db_lookup (db, id);
   if (entry == NULL)
@@ -198,18 +194,16 @@ portal_delete (GDBusMethodInvocation *invocation,
                GVariant *parameters,
                const char *app_id)
 {
-  guint32 doc_id;
-  g_autofree char *id = NULL;
+  const char *id;
   g_autoptr(XdgAppDbEntry) entry = NULL;
 
-  g_variant_get (parameters, "(u)", &doc_id);
-  id = xdp_name_from_id (doc_id);
+  g_variant_get (parameters, "(s)", &id);
 
   entry = xdg_app_db_lookup (db, id);
   if (entry == NULL)
     {
       g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
-                                             "No such document: %d", doc_id);
+                                             "No such document: %s", id);
       return;
     }
 
@@ -291,7 +285,7 @@ portal_add (GDBusMethodInvocation *invocation,
   id = do_create_doc (uri);
 
   g_dbus_method_invocation_return_value (invocation,
-                                         g_variant_new ("(u)", xdp_id_from_name (id)));
+                                         g_variant_new ("(s)", id));
 }
 
 static void
@@ -376,7 +370,7 @@ portal_add_local (GDBusMethodInvocation *invocation,
     }
 
   g_dbus_method_invocation_return_value (invocation,
-                                         g_variant_new ("(u)", xdp_id_from_name (id)));
+                                         g_variant_new ("(s)", id));
 }
 
 typedef void (*PortalMethod) (GDBusMethodInvocation *invocation,

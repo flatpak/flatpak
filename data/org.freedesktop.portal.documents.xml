@@ -30,24 +30,24 @@
     </method>
     <method name="Add">
       <arg type='s' name='uri' direction='in'/>
-      <arg type='u' name='doc_id' direction='out'/>
+      <arg type='s' name='doc_id' direction='out'/>
     </method>
     <method name="AddLocal">
       <arg type='h' name='fd' direction='in'/>
-      <arg type='u' name='doc_id' direction='out'/>
+      <arg type='s' name='doc_id' direction='out'/>
     </method>
     <method name="GrantPermissions">
-      <arg type='u' name='doc_id' direction='in'/>
+      <arg type='s' name='doc_id' direction='in'/>
       <arg type='s' name='app_id' direction='in'/>
       <arg type='as' name='permissions' direction='in'/>
     </method>
     <method name="RevokePermissions">
-      <arg type='u' name='doc_id' direction='in'/>
+      <arg type='s' name='doc_id' direction='in'/>
       <arg type='s' name='app_id' direction='in'/>
       <arg type='as' name='permissions' direction='in'/>
     </method>
     <method name="Delete">
-      <arg type='u' name='doc_id' direction='in'/>
+      <arg type='s' name='doc_id' direction='in'/>
     </method>
   </interface>
 </node>
