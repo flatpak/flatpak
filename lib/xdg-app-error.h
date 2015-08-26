@@ -35,7 +35,7 @@ typedef enum {
   XDG_APP_ERROR_NOT_FOUND,
   XDG_APP_ERROR_EXISTS,
   XDG_APP_ERROR_NOT_ALLOWED,
-} XdpErrorEnum;
+} XdgAppErrorEnum;
 
 
 #define XDG_APP_ERROR xdg_app_error_quark()

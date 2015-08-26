@@ -46,7 +46,7 @@ typedef enum {
   XDG_APP_DIR_ERROR_ALREADY_DEPLOYED,
   XDG_APP_DIR_ERROR_ALREADY_UNDEPLOYED,
   XDG_APP_DIR_ERROR_NOT_DEPLOYED,
-} XdgAppErrorEnum;
+} XdgAppDirErrorEnum;
 
 GQuark       xdg_app_dir_error_quark      (void);
 

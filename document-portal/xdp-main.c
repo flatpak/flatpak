@@ -12,10 +12,15 @@
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "xdp-dbus.h"
-#include "xdp-doc-db.h"
 #include "xdp-error.h"
 #include "xdp-util.h"
+#include "xdg-app-db.h"
+#include "xdg-app-dbus.h"
+#include "xdg-app-utils.h"
+#include "xdg-app-error.h"
 #include "xdp-fuse.h"
+
+#define TABLE_NAME "documents"
 
 typedef struct
 {
@@ -29,63 +34,68 @@ typedef struct
 
 
 static GMainLoop *loop = NULL;
-static XdpDocDb *db = NULL;
+static XdgAppDb *db = NULL;
+XdgAppPermissionStore *permission_store;
 static GDBusNodeInfo *introspection_data = NULL;
 
-static guint save_timeout = 0;
-
-static gboolean
-queue_db_save_timeout (gpointer user_data)
+char **
+xdp_list_apps (void)
 {
-  g_autoptr(GError) error = NULL;
+  return xdg_app_db_list_apps (db);
+}
 
-  save_timeout = 0;
+guint32 *
+xdp_list_docs (void)
+{
+  GArray *res;
+  glnx_strfreev char **ids;
+  guint32 id;
+  int i;
 
-  if (xdp_doc_db_is_dirty (db))
+  res = g_array_new (TRUE, FALSE, sizeof (guint32));
+
+  ids = xdg_app_db_list_ids (db);
+
+  for (i = 0; ids[i] != NULL; i++)
     {
-      if (!xdp_doc_db_save (db, &error))
-        g_warning ("db save: %s\n", error->message);
+      guint32 id = xdp_id_from_name (ids[i]);
+      g_array_append_val (res, id);
     }
 
-  return FALSE;
+  id = 0;
+  g_array_append_val (res, id);
+
+  return (guint32 *)g_array_free (res, FALSE);
+}
+
+XdgAppDbEntry *
+xdp_lookup_doc (guint32 id)
+{
+  g_autofree char *doc_id = xdp_name_from_id (id);
+
+  return xdg_app_db_lookup (db, doc_id);
 }
 
 static void
-queue_db_save (void)
+do_set_permissions (XdgAppDbEntry *entry,
+                    const char *doc_id,
+                    const char *app_id,
+                    XdpPermissionFlags perms)
 {
-  if (save_timeout != 0)
-    return;
+  g_autofree const char **perms_s = xdg_unparse_permissions (perms);
+  g_autoptr(XdgAppDbEntry) new_entry = NULL;
 
-  if (xdp_doc_db_is_dirty (db))
-    save_timeout = g_timeout_add_seconds (10, queue_db_save_timeout, NULL);
-}
+  new_entry = xdg_app_db_entry_set_app_permissions (entry, app_id, perms_s);
+  xdg_app_db_set_entry (db, doc_id, new_entry);
 
-static XdpPermissionFlags
-parse_permissions (const char **permissions, GError **error)
-{
-  XdpPermissionFlags perms;
-  int i;
-
-  perms = 0;
-  for (i = 0; permissions[i]; i++)
-    {
-      if (strcmp (permissions[i], "read") == 0)
-        perms |= XDP_PERMISSION_FLAGS_READ;
-      else if (strcmp (permissions[i], "write") == 0)
-        perms |= XDP_PERMISSION_FLAGS_WRITE;
-      else if (strcmp (permissions[i], "grant-permissions") == 0)
-        perms |= XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS;
-      else if (strcmp (permissions[i], "delete") == 0)
-        perms |= XDP_PERMISSION_FLAGS_DELETE;
-      else
-        {
-          g_set_error (error, XDP_ERROR, XDP_ERROR_INVALID_ARGUMENT,
-                       "No such permission: %s", permissions[i]);
-          return -1;
-        }
-    }
-
-  return perms;
+  xdg_app_permission_store_call_set_permission (permission_store,
+                                                TABLE_NAME,
+                                                FALSE,
+                                                doc_id,
+                                                app_id,
+                                                perms_s,
+                                                NULL,
+                                                NULL, NULL);
 }
 
 static void
@@ -95,41 +105,44 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
 {
   const char *target_app_id;
   guint32 doc_id;
-  g_autoptr(GVariant) doc = NULL;
+  g_autofree char *id = NULL;
   g_autoptr(GError) error = NULL;
-  const char **permissions;
+  g_autofree const char **permissions = NULL;
   XdpPermissionFlags perms;
+  g_autoptr(XdgAppDbEntry) entry = NULL;
 
   g_variant_get (parameters, "(u&s^a&s)", &doc_id, &target_app_id, &permissions);
+  id = xdp_name_from_id (doc_id);
 
-  doc = xdp_doc_db_lookup_doc (db, doc_id);
-  if (doc == NULL)
+  entry = xdg_app_db_lookup (db, id);
+  if (entry == NULL)
     {
-      g_dbus_method_invocation_return_error (invocation, XDP_ERROR, XDP_ERROR_NOT_FOUND,
-                                             "No such document: %d", doc_id);
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+                                             "No such document: %s", id);
       return;
     }
-  
-  perms = parse_permissions (permissions, &error);
-  if (perms == -1)
+
+  if (!xdg_app_is_valid_name (target_app_id))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             "Invalid app name: %s", target_app_id);
       return;
     }
+
+  perms = xdp_parse_permissions (permissions);
 
   /* Must have grant-permissions and all the newly granted permissions */
-  if (!xdp_doc_has_permissions (doc, app_id, XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS | perms))
+  if (!xdp_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS | perms))
     {
-      g_dbus_method_invocation_return_error (invocation, XDP_ERROR, XDP_ERROR_NOT_ALLOWED,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
                                              "Not enough permissions");
       return;
     }
 
-  xdp_doc_db_set_permissions (db, doc_id, target_app_id, perms, TRUE);
-  queue_db_save ();
+  do_set_permissions (entry, id, target_app_id,
+                      perms | xdp_get_permissions (entry, target_app_id));
 
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
-
 }
 
 static void
@@ -138,42 +151,44 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
                            const char *app_id)
 {
   const char *target_app_id;
-  g_autoptr(GVariant) doc = NULL;
   g_autoptr(GError) error = NULL;
+  g_autofree char *id = NULL;
   guint32 doc_id;
-  const char **permissions;
+  g_autofree const char **permissions = NULL;
+  g_autoptr(XdgAppDbEntry) entry = NULL;
   XdpPermissionFlags perms;
 
   g_variant_get (parameters, "(u&s^a&s)", &doc_id, &target_app_id, &permissions);
+  id = xdp_name_from_id (doc_id);
 
-  doc = xdp_doc_db_lookup_doc (db, doc_id);
-  if (doc == NULL)
+  entry = xdg_app_db_lookup (db, id);
+  if (entry == NULL)
     {
-      g_dbus_method_invocation_return_error (invocation, XDP_ERROR, XDP_ERROR_NOT_FOUND,
-                                             "No such document: %d", doc_id);
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+                                             "No such document: %s", id);
       return;
     }
 
-  perms = parse_permissions (permissions, &error);
-  if (perms == -1)
+  if (!xdg_app_is_valid_name (target_app_id))
     {
-      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             "Invalid app name: %s", target_app_id);
       return;
     }
+
+  perms = xdp_parse_permissions (permissions);
 
   /* Must have grant-permissions, or be itself */
-  if (!xdp_doc_has_permissions (doc, app_id, XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS) ||
+  if (!xdp_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS) ||
       strcmp (app_id, target_app_id) == 0)
     {
-      g_dbus_method_invocation_return_error (invocation, XDP_ERROR, XDP_ERROR_NOT_ALLOWED,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
                                              "Not enough permissions");
       return;
     }
 
-  xdp_doc_db_set_permissions (db, doc_id, target_app_id,
-                              xdp_doc_get_permissions (doc, target_app_id) & ~perms,
-                              FALSE);
-  queue_db_save ();
+  do_set_permissions (entry, id, target_app_id,
+                      ~perms & xdp_get_permissions (entry, target_app_id));
 
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 }
@@ -184,29 +199,74 @@ portal_delete (GDBusMethodInvocation *invocation,
                const char *app_id)
 {
   guint32 doc_id;
-  g_autoptr(GVariant) doc = NULL;
+  g_autofree char *id = NULL;
+  g_autoptr(XdgAppDbEntry) entry = NULL;
 
   g_variant_get (parameters, "(u)", &doc_id);
+  id = xdp_name_from_id (doc_id);
 
-  doc = xdp_doc_db_lookup_doc (db, doc_id);
-  if (doc == NULL)
+  entry = xdg_app_db_lookup (db, id);
+  if (entry == NULL)
     {
-      g_dbus_method_invocation_return_error (invocation, XDP_ERROR, XDP_ERROR_NOT_FOUND,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
                                              "No such document: %d", doc_id);
       return;
     }
 
-  if (!xdp_doc_has_permissions (doc, app_id, XDP_PERMISSION_FLAGS_DELETE))
+  if (!xdp_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_DELETE))
     {
-      g_dbus_method_invocation_return_error (invocation, XDP_ERROR, XDP_ERROR_NOT_ALLOWED,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
                                              "Not enough permissions");
       return;
     }
-  
-  xdp_doc_db_delete_doc (db, doc_id);
-  queue_db_save ();
+
+  xdg_app_db_set_entry (db, id, NULL);
+
+  xdg_app_permission_store_call_delete (permission_store, TABLE_NAME,
+                                        id, NULL, NULL, NULL);
 
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
+}
+
+char *
+do_create_doc (const char *uri)
+{
+  g_autoptr(GVariant) data = g_variant_ref_sink (g_variant_new_string (uri));
+  g_autofree char *existing_id = NULL;
+  g_autoptr (GVariant) uri_v = NULL;
+  g_autoptr (XdgAppDbEntry) entry = NULL;
+  g_autofree char *new_id = NULL;
+  glnx_strfreev char **ids = NULL;
+  char *id = NULL;
+
+  ids = xdg_app_db_list_ids_by_value (db, data);
+
+  if (ids[0] != NULL)
+    return g_strdup (ids[0]);  /* Reuse pre-existing entry with same uri */
+
+  while (TRUE)
+    {
+      g_autoptr(XdgAppDbEntry) existing = NULL;
+
+      g_clear_pointer (&id, g_free);
+      id = xdp_name_from_id ((guint32)g_random_int ());
+      existing = xdg_app_db_lookup (db, id);
+      if (existing == NULL)
+        break;
+    }
+
+  entry = xdg_app_db_entry_new (data);
+  xdg_app_db_set_entry (db, id, entry);
+
+  xdg_app_permission_store_call_set (permission_store,
+                                     TABLE_NAME,
+                                     TRUE,
+                                     id,
+                                     g_variant_new_array (G_VARIANT_TYPE("{sas}"), NULL, 0),
+                                     g_variant_new_variant (data),
+                                     NULL, NULL, NULL);
+
+  return id;
 }
 
 static void
@@ -214,8 +274,8 @@ portal_add (GDBusMethodInvocation *invocation,
             GVariant *parameters,
             const char *app_id)
 {
-  guint32 id;
   const char *uri;
+  g_autofree char *id = NULL;
 
   if (app_id[0] != '\0')
     {
@@ -228,10 +288,10 @@ portal_add (GDBusMethodInvocation *invocation,
 
   g_variant_get (parameters, "(&s)", &uri);
 
-  id = xdp_doc_db_create_doc (db, uri);
+  id = do_create_doc (uri);
+
   g_dbus_method_invocation_return_value (invocation,
-                                         g_variant_new ("(u)", id));
-  queue_db_save ();
+                                         g_variant_new ("(u)", xdp_id_from_name (id)));
 }
 
 static void
@@ -241,7 +301,7 @@ portal_add_local (GDBusMethodInvocation *invocation,
 {
   GDBusMessage *message;
   GUnixFDList *fd_list;
-  guint32 id;
+  g_autofree char *id = NULL;
   g_autofree char *proc_path = NULL;
   g_autofree char *uri = NULL;
   int fd_id, fd, fds_len, fd_flags;
@@ -300,20 +360,23 @@ portal_add_local (GDBusMethodInvocation *invocation,
   file = g_file_new_for_path (path_buffer);
   uri = g_file_get_uri (file);
 
-  id = xdp_doc_db_create_doc (db, uri);
+  id = do_create_doc (uri);
 
   if (app_id[0] != '\0')
     {
       /* also grant app-id perms based on file_mode */
       guint32 perms = XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS | XDP_PERMISSION_FLAGS_READ;
+      g_autoptr(XdgAppDbEntry) entry = NULL;
+      entry = xdg_app_db_lookup (db, id);
+
       if ((fd_flags & O_ACCMODE) == O_RDWR)
         perms |= XDP_PERMISSION_FLAGS_WRITE;
-      xdp_doc_db_set_permissions (db, id, app_id, perms, TRUE);
+
+      do_set_permissions (entry, id, app_id, perms);
     }
 
   g_dbus_method_invocation_return_value (invocation,
-                                         g_variant_new ("(u)", id));
-  queue_db_save ();
+                                         g_variant_new ("(u)", xdp_id_from_name (id)));
 }
 
 typedef void (*PortalMethod) (GDBusMethodInvocation *invocation,
@@ -469,10 +532,7 @@ main (int    argc,
   GBytes *introspection_bytes;
   g_autoptr(GList) object_types = NULL;
   g_autoptr(GError) error = NULL;
-  g_autofree char *data_path = NULL;
-  g_autofree char *db_path = NULL;
-  g_autoptr(GFile) data_dir = NULL;
-  g_autoptr(GFile) db_file = NULL;
+  g_autofree char *path = NULL;
   GDBusConnection  *session_bus;
   GOptionContext *context;
 
@@ -485,7 +545,7 @@ main (int    argc,
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      g_print ("option parsing failed: %s\n", error->message);
+      g_printerr ("option parsing failed: %s\n", error->message);
       return 1;
     }
 
@@ -496,29 +556,29 @@ main (int    argc,
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  data_path = g_build_filename (g_get_user_data_dir(), "xdg-document-portal", NULL);
-  if (g_mkdir_with_parents  (data_path, 0700))
-    {
-      g_printerr ("Unable to create dir %s\n", data_path);
-      return 1;
-    }
-
-  data_dir = g_file_new_for_path (data_path);
-  db_file = g_file_get_child (data_dir, "main.gvdb");
-  db_path = g_file_get_path (db_file);
-
-  db = xdp_doc_db_new (db_path, &error);
+  path = g_build_filename (g_get_user_data_dir (), "xdg-app/db", TABLE_NAME, NULL);
+  db = xdg_app_db_new (path, FALSE, &error);
   if (db == NULL)
     {
-      g_print ("%s\n", error->message);
+      g_printerr ("Failed to load db: %s\n", error->message);
       return 2;
     }
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (session_bus == NULL)
     {
-      g_print ("No session bus: %s\n", error->message);
+      g_printerr ("No session bus: %s\n", error->message);
       return 3;
+    }
+
+  permission_store = xdg_app_permission_store_proxy_new_sync (session_bus,G_DBUS_PROXY_FLAGS_NONE,
+                                                              "org.freedesktop.XdgApp",
+                                                              "/org/freedesktop/XdgApp/PermissionStore",
+                                                              NULL, &error);
+  if (permission_store == NULL)
+    {
+      g_print ("No permission store: %s\n", error->message);
+      return 4;
     }
 
   /* We want do do our custom post-mainloop exit */
@@ -537,7 +597,7 @@ main (int    argc,
 
   introspection_data = g_dbus_node_info_new_for_xml (g_bytes_get_data (introspection_bytes, NULL), NULL);
 
-  if (!xdp_fuse_init (db, &error))
+  if (!xdp_fuse_init (&error))
     {
       g_printerr ("fuse init failed: %s\n", error->message);
       return 1;
@@ -553,13 +613,6 @@ main (int    argc,
                              NULL);
 
   g_main_loop_run (loop);
-
-  if (xdp_doc_db_is_dirty (db))
-    {
-      g_autoptr(GError) error = NULL;
-      if (!xdp_doc_db_save (db, &error))
-        g_warning ("db save: %s\n", error->message);
-    }
 
   xdp_fuse_exit ();
 

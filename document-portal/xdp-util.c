@@ -3,6 +3,122 @@
 #include <errno.h>
 #include <gio/gio.h>
 #include "xdp-error.h"
+#include "xdp-util.h"
+
+const char **
+xdg_unparse_permissions (XdpPermissionFlags permissions)
+{
+  GPtrArray *array;
+
+  array = g_ptr_array_new ();
+
+  if (permissions & XDP_PERMISSION_FLAGS_READ)
+    g_ptr_array_add (array, "read");
+  if (permissions & XDP_PERMISSION_FLAGS_WRITE)
+    g_ptr_array_add (array, "write");
+  if (permissions & XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS)
+    g_ptr_array_add (array, "grant-permissions");
+  if (permissions & XDP_PERMISSION_FLAGS_DELETE)
+    g_ptr_array_add (array, "delete");
+
+  g_ptr_array_add (array, NULL);
+  return (const char **)g_ptr_array_free (array, FALSE);
+}
+
+XdpPermissionFlags
+xdp_parse_permissions (const char **permissions)
+{
+  XdpPermissionFlags perms;
+  int i;
+
+  perms = 0;
+  for (i = 0; permissions[i]; i++)
+    {
+      if (strcmp (permissions[i], "read") == 0)
+        perms |= XDP_PERMISSION_FLAGS_READ;
+      else if (strcmp (permissions[i], "write") == 0)
+        perms |= XDP_PERMISSION_FLAGS_WRITE;
+      else if (strcmp (permissions[i], "grant-permissions") == 0)
+        perms |= XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS;
+      else if (strcmp (permissions[i], "delete") == 0)
+        perms |= XDP_PERMISSION_FLAGS_DELETE;
+      else
+        g_warning ("No such permission: %s", permissions[i]);
+    }
+
+  return perms;
+}
+
+XdpPermissionFlags
+xdp_get_permissions (XdgAppDbEntry *entry,
+                     const char *app_id)
+{
+  g_autoptr(GVariant) app_array = NULL;
+  g_autofree const char **permissions = NULL;
+
+  if (strcmp (app_id, "") == 0)
+    return XDP_PERMISSION_FLAGS_ALL;
+
+  permissions = xdg_app_db_entry_list_permissions (entry, app_id);
+  return xdp_parse_permissions (permissions);
+}
+
+gboolean
+xdp_has_permissions (XdgAppDbEntry *entry,
+                     const char *app_id,
+                     XdpPermissionFlags perms)
+{
+  XdpPermissionFlags current_perms;
+
+  current_perms = xdp_get_permissions (entry, app_id);
+
+  return (current_perms & perms) == perms;
+}
+
+guint32
+xdp_id_from_name (const char *name)
+{
+  return g_ascii_strtoull (name, NULL, 16);
+}
+
+char *
+xdp_name_from_id (guint32 doc_id)
+{
+  return g_strdup_printf ("%x", doc_id);
+}
+
+const char *
+xdp_get_uri (XdgAppDbEntry *entry)
+{
+  g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
+  return g_variant_get_string (v, NULL);
+}
+
+char *
+xdp_dup_path (XdgAppDbEntry *entry)
+{
+  const char *uri = xdp_get_uri (entry);
+  g_autoptr(GFile) file = g_file_new_for_uri (uri);
+
+  return g_file_get_path (file);
+}
+
+char *
+xdp_dup_basename (XdgAppDbEntry *entry)
+{
+  const char *uri = xdp_get_uri (entry);
+  g_autoptr(GFile) file = g_file_new_for_uri (uri);
+
+  return g_file_get_basename (file);
+}
+
+char *
+xdp_dup_dirname (XdgAppDbEntry *entry)
+{
+  g_autofree char *path = xdp_dup_path (entry);
+
+  return g_path_get_dirname (path);
+}
 
 
 static GHashTable *app_ids;

@@ -32,10 +32,6 @@ xdg_document_portal_SOURCES = \
 	document-portal/xdp-error.c		\
 	document-portal/xdp-error.h		\
 	document-portal/xdp-enums.h		\
-	document-portal/xdp-doc-db.h		\
-	document-portal/xdp-doc-db.c		\
-	lib/gvdb/gvdb-reader.c	\
-	lib/gvdb/gvdb-builder.c	\
 	$(xdp_dbus_built_sources)	\
 	document-portal/xdp-resources.h		\
 	document-portal/xdp-resources.c		\
@@ -45,5 +41,5 @@ xdg_document_portal_SOURCES = \
 	document-portal/xdp-fuse.c		\
 	$(NULL)
 
-xdg_document_portal_LDADD = $(BASE_LIBS) $(FUSE_LIBS)
-xdg_document_portal_CFLAGS = $(BASE_CFLAGS) $(FUSE_CFLAGS) -I$(src)/document-portal
+xdg_document_portal_LDADD = $(BASE_LIBS) $(FUSE_LIBS) libxdgapp.la
+xdg_document_portal_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(FUSE_CFLAGS) -I$(src)/document-portal

@@ -16,6 +16,7 @@
 
 #include "xdp-error.h"
 #include "xdp-fuse.h"
+#include "xdp-util.h"
 
 /* Layout:
 
@@ -53,8 +54,6 @@ typedef enum {
 } XdpInodeClass;
 
 #define BY_APP_NAME "by-app"
-
-static XdpDocDb *db;
 
 static GHashTable *app_name_to_id;
 static GHashTable *app_id_to_name;
@@ -212,13 +211,12 @@ get_app_name_from_id (guint32 id)
 static void
 fill_app_name_hash (void)
 {
-  char **keys;
+  glnx_strfreev char **keys = NULL;
   int i;
 
-  keys = xdp_doc_db_list_apps (db);
+  keys = xdp_list_apps ();
   for (i = 0; keys[i] != NULL; i++)
     get_app_id_from_name (keys[i]);
-  g_strfreev (keys);
 }
 
 static XdpFh *
@@ -295,12 +293,12 @@ get_entry_cache_time (int st_mode)
 }
 
 static gboolean
-app_can_see_doc (GVariant *doc, guint32 app_id)
+app_can_see_doc (XdgAppDbEntry *entry, guint32 app_id)
 {
   const char *app_name = get_app_name_from_id (app_id);
 
   if (app_name != NULL &&
-      xdp_doc_has_permissions (doc, app_name, XDP_PERMISSION_FLAGS_READ))
+      xdp_has_permissions (entry, app_name, XDP_PERMISSION_FLAGS_READ))
     return TRUE;
 
   return FALSE;
@@ -309,11 +307,11 @@ app_can_see_doc (GVariant *doc, guint32 app_id)
 static int
 xdp_stat (fuse_ino_t ino,
           struct stat *stbuf,
-          GVariant **doc_out)
+          XdgAppDbEntry **entry_out)
 {
   XdpInodeClass class = get_class (ino);
   guint64 class_ino = get_class_ino (ino);
-  g_autoptr (GVariant) doc = NULL;
+  g_autoptr (XdgAppDbEntry) entry = NULL;
   g_autofree char *path = NULL;
   struct stat tmp_stbuf;
   XdpTmp *tmp;
@@ -354,8 +352,8 @@ xdp_stat (fuse_ino_t ino,
         guint32 app_id = get_app_id_from_app_doc_ino (class_ino);
         guint32 doc_id = get_doc_id_from_app_doc_ino (class_ino);
 
-        doc = xdp_doc_db_lookup_doc (db, doc_id);
-        if (doc == NULL || !app_can_see_doc (doc, app_id))
+        entry = xdp_lookup_doc (doc_id);
+        if (entry == NULL || !app_can_see_doc (entry, app_id))
           return ENOENT;
 
         stbuf->st_mode = S_IFDIR | DOC_DIR_PERMS;
@@ -364,9 +362,8 @@ xdp_stat (fuse_ino_t ino,
       }
 
     case DOC_DIR_INO_CLASS:
-      doc = xdp_doc_db_lookup_doc (db, class_ino);
-
-      if (doc == NULL)
+      entry = xdp_lookup_doc (class_ino);
+      if (entry == NULL)
         return ENOENT;
 
       stbuf->st_mode = S_IFDIR | DOC_DIR_PERMS;
@@ -374,14 +371,13 @@ xdp_stat (fuse_ino_t ino,
       break;
 
     case DOC_FILE_INO_CLASS:
-      doc = xdp_doc_db_lookup_doc (db, class_ino);
-
-      if (doc == NULL)
+      entry = xdp_lookup_doc (class_ino);
+      if (entry == NULL)
         return ENOENT;
 
       stbuf->st_nlink = DOC_FILE_NLINK;
 
-      path = xdp_doc_dup_path (doc);
+      path = xdp_dup_path (entry);
       if (stat (path, &tmp_stbuf) != 0)
         return ENOENT;
 
@@ -422,8 +418,8 @@ xdp_stat (fuse_ino_t ino,
       return ENOENT;
     }
 
-  if (doc && doc_out)
-    *doc_out = g_steal_pointer (&doc);
+  if (entry && entry_out)
+    *entry_out = g_steal_pointer (&entry);
 
   return 0;
 }
@@ -505,16 +501,16 @@ xdp_lookup (fuse_ino_t parent,
             const char *name,
             fuse_ino_t *inode,
             struct stat *stbuf,
-            GVariant **doc_out,
+            XdgAppDbEntry **entry_out,
             XdpTmp **tmp_out)
 {
   XdpInodeClass parent_class = get_class (parent);
   guint64 parent_class_ino = get_class_ino (parent);
-  g_autoptr (GVariant) doc = NULL;
+  g_autoptr (XdgAppDbEntry) entry = NULL;
   XdpTmp *tmp;
 
-  if (doc_out)
-    *doc_out = NULL;
+  if (entry_out)
+    *entry_out = NULL;
   if (tmp_out)
     *tmp_out = NULL;
 
@@ -534,7 +530,7 @@ xdp_lookup (fuse_ino_t parent,
           else if (name_looks_like_id (name))
             {
               *inode = make_inode (DOC_DIR_INO_CLASS,
-                                   xdb_doc_id_from_name (name));
+                                   xdp_id_from_name (name));
               if (xdp_stat (*inode, stbuf, NULL) == 0)
                 return 0;
             }
@@ -562,7 +558,7 @@ xdp_lookup (fuse_ino_t parent,
         if (name_looks_like_id (name))
           {
             *inode = make_app_doc_dir_inode (parent_class_ino,
-                                             xdb_doc_id_from_name (name));
+                                             xdp_id_from_name (name));
             if (xdp_stat (*inode, stbuf, NULL) == 0)
               return 0;
           }
@@ -573,19 +569,19 @@ xdp_lookup (fuse_ino_t parent,
     case APP_DOC_DIR_INO_CLASS:
     case DOC_DIR_INO_CLASS:
       if (parent_class == APP_DOC_DIR_INO_CLASS)
-        doc = xdp_doc_db_lookup_doc (db, get_doc_id_from_app_doc_ino (parent_class_ino));
+        entry = xdp_lookup_doc (get_doc_id_from_app_doc_ino (parent_class_ino));
       else
-        doc = xdp_doc_db_lookup_doc (db, parent_class_ino);
-      if (doc != NULL)
+        entry = xdp_lookup_doc (parent_class_ino);
+      if (entry != NULL)
         {
-          g_autofree char *basename = xdp_doc_dup_basename (doc);
+          g_autofree char *basename = xdp_dup_basename (entry);
           if (strcmp (name, basename) == 0)
             {
               *inode = make_inode (DOC_FILE_INO_CLASS, parent_class_ino);
               if (xdp_stat (*inode, stbuf, NULL) == 0)
                 {
-                  if (doc_out)
-                    *doc_out = g_steal_pointer (&doc);
+                  if (entry_out)
+                    *entry_out = g_steal_pointer (&entry);
                   return 0;
                 }
 
@@ -599,8 +595,8 @@ xdp_lookup (fuse_ino_t parent,
           *inode = make_inode (TMPFILE_INO_CLASS, tmp->tmp_id);
           if (xdp_stat (*inode, stbuf, NULL) == 0)
             {
-              if (doc_out)
-                *doc_out = g_steal_pointer (&doc);
+              if (entry_out)
+                *entry_out = g_steal_pointer (&entry);
               if (tmp_out)
                 *tmp_out = tmp;
               return 0;
@@ -682,21 +678,21 @@ dirbuf_add_docs (fuse_req_t req,
   int i;
   g_autofree char *doc_name = NULL;
 
-  docs = xdp_doc_db_list_docs (db);
+  docs = xdp_list_docs ();
   for (i = 0; docs[i] != 0; i++)
     {
       if (app_id)
         {
-          g_autoptr(GVariant) doc = xdp_doc_db_lookup_doc (db, docs[i]);
-          if (doc == NULL ||
-              !app_can_see_doc (doc, app_id))
+          g_autoptr(XdgAppDbEntry) entry = xdp_lookup_doc (docs[i]);
+          if (entry == NULL ||
+              !app_can_see_doc (entry, app_id))
             continue;
         }
       if (app_id)
         inode = make_app_doc_dir_inode (app_id, docs[i]);
       else
         inode = make_inode (DOC_DIR_INO_CLASS, docs[i]);
-      doc_name = xdb_doc_name_from_id (docs[i]);
+      doc_name = xdp_name_from_id (docs[i]);
       dirbuf_add (req, b, doc_name, inode);
 
     }
@@ -705,12 +701,12 @@ dirbuf_add_docs (fuse_req_t req,
 static void
 dirbuf_add_doc_file (fuse_req_t req,
                      struct dirbuf *b,
-                     GVariant *doc,
+                     XdgAppDbEntry *entry,
                      guint32 doc_id)
 {
   struct stat tmp_stbuf;
-  g_autofree char *path = xdp_doc_dup_path (doc);
-  g_autofree char *basename = xdp_doc_dup_basename (doc);
+  g_autofree char *path = xdp_dup_path (entry);
+  g_autofree char *basename = xdp_dup_basename (entry);
   if (stat (path, &tmp_stbuf) == 0)
     dirbuf_add (req, b, basename,
                 make_inode (DOC_FILE_INO_CLASS, doc_id));
@@ -764,13 +760,13 @@ xdp_fuse_opendir (fuse_req_t req,
   struct dirbuf b = {0};
   XdpInodeClass class;
   guint64 class_ino;
-  g_autoptr (GVariant) doc = NULL;
+  g_autoptr (XdgAppDbEntry) entry = NULL;
   g_autofree char *basename = NULL;
   int res;
 
   g_debug ("xdp_fuse_opendir %lx", ino);
 
-  if ((res = xdp_stat (ino, &stbuf, &doc)) != 0)
+  if ((res = xdp_stat (ino, &stbuf, &entry)) != 0)
     {
       fuse_reply_err (req, res);
       return;
@@ -840,7 +836,7 @@ xdp_fuse_opendir (fuse_req_t req,
     case DOC_DIR_INO_CLASS:
       dirbuf_add (req, &b, ".", ino);
       dirbuf_add (req, &b, "..", FUSE_ROOT_ID);
-      dirbuf_add_doc_file (req, &b, doc, class_ino);
+      dirbuf_add_doc_file (req, &b, entry, class_ino);
       dirbuf_add_tmp_files (req, &b, ino);
       break;
 
@@ -848,7 +844,7 @@ xdp_fuse_opendir (fuse_req_t req,
       dirbuf_add (req, &b, ".", ino);
       dirbuf_add (req, &b, "..", make_inode (APP_DIR_INO_CLASS,
                                              get_app_id_from_app_doc_ino (class_ino)));
-      dirbuf_add_doc_file (req, &b, doc,
+      dirbuf_add_doc_file (req, &b, entry,
                            get_doc_id_from_app_doc_ino (class_ino));
       dirbuf_add_tmp_files (req, &b, ino);
       break;
@@ -892,10 +888,10 @@ get_open_flags (struct fuse_file_info *fi)
 }
 
 static char *
-create_tmp_for_doc (GVariant *doc, int flags, int *fd_out)
+create_tmp_for_doc (XdgAppDbEntry *entry, int flags, int *fd_out)
 {
-  g_autofree char *dirname = xdp_doc_dup_dirname (doc);
-  g_autofree char *basename = xdp_doc_dup_basename (doc);
+  g_autofree char *dirname = xdp_dup_dirname (entry);
+  g_autofree char *basename = xdp_dup_basename (entry);
   g_autofree char *template = g_strconcat (dirname, "/.", basename, ".XXXXXX", NULL);
   int fd;
 
@@ -911,7 +907,7 @@ create_tmp_for_doc (GVariant *doc, int flags, int *fd_out)
 static XdpTmp *
 tmpfile_new (fuse_ino_t parent,
              const char *name,
-             GVariant *doc,
+             XdgAppDbEntry *entry,
              int flags,
              int *fd_out)
 {
@@ -919,7 +915,7 @@ tmpfile_new (fuse_ino_t parent,
   g_autofree char *path = NULL;
   int fd;
 
-  path = create_tmp_for_doc (doc, flags, &fd);
+  path = create_tmp_for_doc (entry, flags, &fd);
   if (path == NULL)
     return NULL;
 
@@ -969,7 +965,7 @@ xdp_fuse_open (fuse_req_t req,
   XdpInodeClass class = get_class (ino);
   guint64 class_ino = get_class_ino (ino);
   struct stat stbuf = {0};
-  g_autoptr (GVariant) doc = NULL;
+  g_autoptr (XdgAppDbEntry) entry = NULL;
   g_autofree char *path = NULL;
   XdpTmp *tmp;
   int fd, res;
@@ -977,7 +973,7 @@ xdp_fuse_open (fuse_req_t req,
 
   g_debug ("xdp_fuse_open %lx", ino);
 
-  if ((res = xdp_stat (ino, &stbuf, &doc)) != 0)
+  if ((res = xdp_stat (ino, &stbuf, &entry)) != 0)
     {
       fuse_reply_err (req, res);
       return;
@@ -989,12 +985,12 @@ xdp_fuse_open (fuse_req_t req,
       return;
     }
 
-  if (doc && class == DOC_FILE_INO_CLASS)
+  if (entry && class == DOC_FILE_INO_CLASS)
     {
       g_autofree char *write_path = NULL;
       int write_fd = -1;
 
-      path = xdp_doc_dup_path (doc);
+      path = xdp_dup_path (entry);
 
       if ((fi->flags & 3) != O_RDONLY)
         {
@@ -1003,7 +999,7 @@ xdp_fuse_open (fuse_req_t req,
               fuse_reply_err (req, errno);
               return;
             }
-          write_path = create_tmp_for_doc (doc, O_RDWR, &write_fd);
+          write_path = create_tmp_for_doc (entry, O_RDWR, &write_fd);
           if (write_path == NULL)
             {
               fuse_reply_err (req, errno);
@@ -1055,7 +1051,7 @@ xdp_fuse_create (fuse_req_t req,
   XdpInodeClass parent_class = get_class (parent);
   struct stat stbuf;
   XdpFh *fh;
-  g_autoptr(GVariant) doc = NULL;
+  g_autoptr(XdgAppDbEntry) entry = NULL;
   g_autofree char *basename = NULL;
   g_autofree char *path = NULL;
   XdpTmp *tmpfile;
@@ -1063,7 +1059,7 @@ xdp_fuse_create (fuse_req_t req,
 
   g_debug ("xdp_fuse_create %lx/%s, flags %o", parent, name, fi->flags);
 
-  if ((res = xdp_stat (parent, &stbuf, &doc)) != 0)
+  if ((res = xdp_stat (parent, &stbuf, &entry)) != 0)
     {
       fuse_reply_err (req, res);
       return;
@@ -1082,21 +1078,21 @@ xdp_fuse_create (fuse_req_t req,
       return;
     }
 
-  basename = xdp_doc_dup_basename (doc);
+  basename = xdp_dup_basename (entry);
   if (strcmp (name, basename) == 0)
     {
       g_autofree char *write_path = NULL;
       int write_fd = -1;
-      guint32 doc_id = xdb_doc_id_from_name (name);
+      guint32 doc_id = xdp_id_from_name (name);
 
-      write_path = create_tmp_for_doc (doc, O_RDWR, &write_fd);
+      write_path = create_tmp_for_doc (entry, O_RDWR, &write_fd);
       if (write_path == NULL)
         {
           fuse_reply_err (req, errno);
           return;
         }
 
-      path = xdp_doc_dup_path (doc);
+      path = xdp_dup_path (entry);
 
       fd = open (path, O_CREAT|O_EXCL|O_RDONLY);
       if (fd < 0)
@@ -1149,7 +1145,7 @@ xdp_fuse_create (fuse_req_t req,
         }
       else
         {
-          tmpfile = tmpfile_new (parent, name, doc, get_open_flags (fi), &fd);
+          tmpfile = tmpfile_new (parent, name, entry, get_open_flags (fi), &fd);
           if (tmpfile == NULL)
             {
               fuse_reply_err (req, errno);
@@ -1288,7 +1284,7 @@ xdp_fuse_rename (fuse_req_t req,
                  const char *newname)
 {
   XdpInodeClass parent_class = get_class (parent);
-  g_autoptr (GVariant) doc = NULL;
+  g_autoptr (XdgAppDbEntry) entry = NULL;
   int res;
   fuse_ino_t inode;
   struct stat stbuf = {0};
@@ -1298,7 +1294,7 @@ xdp_fuse_rename (fuse_req_t req,
 
   g_debug ("xdp_fuse_rename %lx/%s -> %lx/%s", parent, name, newparent, newname);
 
-  res = xdp_lookup (parent, name,  &inode, &stbuf, &doc, &tmp);
+  res = xdp_lookup (parent, name,  &inode, &stbuf, &entry, &tmp);
   if (res != 0)
     {
       fuse_reply_err (req, res);
@@ -1309,7 +1305,7 @@ xdp_fuse_rename (fuse_req_t req,
   if ((parent_class != DOC_DIR_INO_CLASS &&
        parent_class != APP_DOC_DIR_INO_CLASS) ||
       parent != newparent ||
-      doc == NULL ||
+      entry == NULL ||
       /* Also, don't allow renaming non-tmpfiles */
       tmp == NULL)
     {
@@ -1317,11 +1313,11 @@ xdp_fuse_rename (fuse_req_t req,
       return;
     }
 
-  basename = xdp_doc_dup_basename (doc);
+  basename = xdp_dup_basename (entry);
 
   if (strcmp (newname, basename) == 0)
     {
-      g_autofree char *real_path = xdp_doc_dup_path (doc);
+      g_autofree char *real_path = xdp_dup_path (entry);
       /* Rename tmpfile to regular file */
 
       /* Stop writes to all outstanding fds to the temp file */
@@ -1512,16 +1508,16 @@ xdp_fuse_fsyncdir (fuse_req_t req,
   if (class == DOC_DIR_INO_CLASS ||
       class == APP_DOC_DIR_INO_CLASS)
     {
-      g_autoptr (GVariant) doc = NULL;
+      g_autoptr (XdgAppDbEntry) entry = NULL;
       if (class == APP_DOC_DIR_INO_CLASS)
         doc_id = get_doc_id_from_app_doc_ino (class_ino);
       else
         doc_id = class_ino;
 
-      doc = xdp_doc_db_lookup_doc (db, doc_id);
-      if (doc != NULL)
+      entry = xdp_lookup_doc (doc_id);
+      if (entry != NULL)
         {
-          g_autofree char *dirname = xdp_doc_dup_dirname (doc);
+          g_autofree char *dirname = xdp_dup_dirname (entry);
           int fd = open (dirname, O_DIRECTORY|O_RDONLY);
           if (fd >= 0)
             {
@@ -1564,7 +1560,7 @@ xdp_fuse_unlink (fuse_req_t req,
                  const char *name)
 {
   XdpInodeClass parent_class = get_class (parent);
-  g_autoptr (GVariant) doc = NULL;
+  g_autoptr (XdgAppDbEntry) entry = NULL;
   int res;
   fuse_ino_t inode;
   struct stat stbuf = {0};
@@ -1573,7 +1569,7 @@ xdp_fuse_unlink (fuse_req_t req,
 
   g_debug ("xdp_fuse_unlink %lx/%s", parent, name);
 
-  res = xdp_lookup (parent, name,  &inode, &stbuf, &doc, &tmp);
+  res = xdp_lookup (parent, name,  &inode, &stbuf, &entry, &tmp);
   if (res != 0)
     {
       fuse_reply_err (req, res);
@@ -1583,16 +1579,16 @@ xdp_fuse_unlink (fuse_req_t req,
   /* Only allow unlink in (app) doc dirs */
   if ((parent_class != DOC_DIR_INO_CLASS &&
        parent_class != APP_DOC_DIR_INO_CLASS) ||
-      doc == NULL)
+      entry == NULL)
     {
       fuse_reply_err (req, EACCES);
       return;
     }
 
-  basename = xdp_doc_dup_basename (doc);
+  basename = xdp_dup_basename (entry);
   if (strcmp (name, basename) == 0)
     {
-      g_autofree char *real_path = xdp_doc_dup_path (doc);
+      g_autofree char *real_path = xdp_dup_path (entry);
 
       if (unlink (real_path) != 0)
         {
@@ -1725,15 +1721,13 @@ xdp_fuse_exit (void)
 }
 
 gboolean
-xdp_fuse_init (XdpDocDb *_db,
-               GError **error)
+xdp_fuse_init (GError **error)
 {
   char *argv[] = { "xdp-fuse", "-osplice_write,splice_move,splice_read" };
   struct fuse_args args = FUSE_ARGS_INIT(G_N_ELEMENTS(argv), argv);
   struct fuse_chan *ch;
   GSource *source;
 
-  db = _db;
   app_name_to_id =
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   app_id_to_name =
