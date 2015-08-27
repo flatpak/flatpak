@@ -732,7 +732,7 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
             return FALSE;
 
           policy = xdg_app_policy_from_string (value, error);
-          if (policy == -1)
+          if ((int)policy == -1)
             return FALSE;
 
           xdg_app_context_set_session_bus_policy (context, key, policy);
