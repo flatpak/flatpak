@@ -29,7 +29,7 @@
       <arg type='ay' name='path' direction='out'/>
     </method>
     <method name="Add">
-      <arg type='s' name='uri' direction='in'/>
+      <arg type='ay' name='path' direction='in'/>
       <arg type='s' name='doc_id' direction='out'/>
     </method>
     <method name="AddLocal">

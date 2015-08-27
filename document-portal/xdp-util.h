@@ -14,8 +14,7 @@ XdpPermissionFlags xdp_get_permissions     (XdgAppDbEntry       *entry,
 gboolean           xdp_has_permissions     (XdgAppDbEntry       *entry,
                                             const char          *app_id,
                                             XdpPermissionFlags   perms);
-const char *       xdp_get_uri             (XdgAppDbEntry       *entry);
-char  *            xdp_dup_path            (XdgAppDbEntry       *entry);
+const char *       xdp_get_path            (XdgAppDbEntry       *entry);
 char *             xdp_dup_basename        (XdgAppDbEntry       *entry);
 char *             xdp_dup_dirname         (XdgAppDbEntry       *entry);
 guint32            xdp_id_from_name        (const char          *name);

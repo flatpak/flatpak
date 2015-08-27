@@ -88,38 +88,27 @@ xdp_name_from_id (guint32 doc_id)
 }
 
 const char *
-xdp_get_uri (XdgAppDbEntry *entry)
+xdp_get_path (XdgAppDbEntry *entry)
 {
   g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
-  return g_variant_get_string (v, NULL);
-}
-
-char *
-xdp_dup_path (XdgAppDbEntry *entry)
-{
-  const char *uri = xdp_get_uri (entry);
-  g_autoptr(GFile) file = g_file_new_for_uri (uri);
-
-  return g_file_get_path (file);
+  return g_variant_get_bytestring (v);
 }
 
 char *
 xdp_dup_basename (XdgAppDbEntry *entry)
 {
-  const char *uri = xdp_get_uri (entry);
-  g_autoptr(GFile) file = g_file_new_for_uri (uri);
+  const char *path = xdp_get_path (entry);
 
-  return g_file_get_basename (file);
+  return g_path_get_basename (path);
 }
 
 char *
 xdp_dup_dirname (XdgAppDbEntry *entry)
 {
-  g_autofree char *path = xdp_dup_path (entry);
+  const char *path = xdp_get_path (entry);
 
   return g_path_get_dirname (path);
 }
-
 
 static GHashTable *app_ids;
 

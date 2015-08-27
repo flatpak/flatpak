@@ -312,7 +312,7 @@ xdp_stat (fuse_ino_t ino,
   XdpInodeClass class = get_class (ino);
   guint64 class_ino = get_class_ino (ino);
   g_autoptr (XdgAppDbEntry) entry = NULL;
-  g_autofree char *path = NULL;
+  const char *path = NULL;
   struct stat tmp_stbuf;
   XdpTmp *tmp;
 
@@ -377,7 +377,7 @@ xdp_stat (fuse_ino_t ino,
 
       stbuf->st_nlink = DOC_FILE_NLINK;
 
-      path = xdp_dup_path (entry);
+      path = xdp_get_path (entry);
       if (stat (path, &tmp_stbuf) != 0)
         return ENOENT;
 
@@ -705,7 +705,7 @@ dirbuf_add_doc_file (fuse_req_t req,
                      guint32 doc_id)
 {
   struct stat tmp_stbuf;
-  g_autofree char *path = xdp_dup_path (entry);
+  const char *path = xdp_get_path (entry);
   g_autofree char *basename = xdp_dup_basename (entry);
   if (stat (path, &tmp_stbuf) == 0)
     dirbuf_add (req, b, basename,
@@ -966,7 +966,7 @@ xdp_fuse_open (fuse_req_t req,
   guint64 class_ino = get_class_ino (ino);
   struct stat stbuf = {0};
   g_autoptr (XdgAppDbEntry) entry = NULL;
-  g_autofree char *path = NULL;
+  const char *path = NULL;
   XdpTmp *tmp;
   int fd, res;
   XdpFh *fh;
@@ -990,7 +990,7 @@ xdp_fuse_open (fuse_req_t req,
       g_autofree char *write_path = NULL;
       int write_fd = -1;
 
-      path = xdp_dup_path (entry);
+      path = xdp_get_path (entry);
 
       if ((fi->flags & 3) != O_RDONLY)
         {
@@ -1019,7 +1019,7 @@ xdp_fuse_open (fuse_req_t req,
       fh = xdp_fh_new (ino, fi, fd, NULL);
       fh->trunc_fd = write_fd;
       fh->trunc_path = g_steal_pointer (&write_path);
-      fh->real_path = g_steal_pointer (&path);
+      fh->real_path = g_strdup (path);
       if (fuse_reply_open (req, fi))
         xdp_fh_free (fh);
     }
@@ -1053,7 +1053,7 @@ xdp_fuse_create (fuse_req_t req,
   XdpFh *fh;
   g_autoptr(XdgAppDbEntry) entry = NULL;
   g_autofree char *basename = NULL;
-  g_autofree char *path = NULL;
+  const char *path = NULL;
   XdpTmp *tmpfile;
   int fd, res;
 
@@ -1092,7 +1092,7 @@ xdp_fuse_create (fuse_req_t req,
           return;
         }
 
-      path = xdp_dup_path (entry);
+      path = xdp_get_path (entry);
 
       fd = open (path, O_CREAT|O_EXCL|O_RDONLY);
       if (fd < 0)
@@ -1110,7 +1110,7 @@ xdp_fuse_create (fuse_req_t req,
       fh->truncated = TRUE;
       fh->trunc_fd = write_fd;
       fh->trunc_path = g_steal_pointer (&write_path);
-      fh->real_path = g_steal_pointer (&path);
+      fh->real_path = g_strdup (path);
 
       if (xdp_fstat (fh, &e.attr) != 0)
         {
@@ -1317,7 +1317,7 @@ xdp_fuse_rename (fuse_req_t req,
 
   if (strcmp (newname, basename) == 0)
     {
-      g_autofree char *real_path = xdp_dup_path (entry);
+      const char *real_path = xdp_get_path (entry);
       /* Rename tmpfile to regular file */
 
       /* Stop writes to all outstanding fds to the temp file */
@@ -1588,7 +1588,7 @@ xdp_fuse_unlink (fuse_req_t req,
   basename = xdp_dup_basename (entry);
   if (strcmp (name, basename) == 0)
     {
-      g_autofree char *real_path = xdp_dup_path (entry);
+      const char *real_path = xdp_get_path (entry);
 
       if (unlink (real_path) != 0)
         {

@@ -223,11 +223,10 @@ portal_delete (GDBusMethodInvocation *invocation,
 }
 
 char *
-do_create_doc (const char *uri)
+do_create_doc (const char *path)
 {
-  g_autoptr(GVariant) data = g_variant_ref_sink (g_variant_new_string (uri));
+  g_autoptr(GVariant) data = g_variant_ref_sink (g_variant_new_bytestring (path));
   g_autofree char *existing_id = NULL;
-  g_autoptr (GVariant) uri_v = NULL;
   g_autoptr (XdgAppDbEntry) entry = NULL;
   g_autofree char *new_id = NULL;
   glnx_strfreev char **ids = NULL;
@@ -236,7 +235,7 @@ do_create_doc (const char *uri)
   ids = xdg_app_db_list_ids_by_value (db, data);
 
   if (ids[0] != NULL)
-    return g_strdup (ids[0]);  /* Reuse pre-existing entry with same uri */
+    return g_strdup (ids[0]);  /* Reuse pre-existing entry with same path */
 
   while (TRUE)
     {
@@ -268,7 +267,7 @@ portal_add (GDBusMethodInvocation *invocation,
             GVariant *parameters,
             const char *app_id)
 {
-  const char *uri;
+  const char *path;
   g_autofree char *id = NULL;
 
   if (app_id[0] != '\0')
@@ -280,9 +279,16 @@ portal_add (GDBusMethodInvocation *invocation,
       return;
     }
 
-  g_variant_get (parameters, "(&s)", &uri);
+  g_variant_get (parameters, "(^ay)", &path);
+  if (!g_path_is_absolute (path))
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             XDP_ERROR, XDP_ERROR_INVALID_ARGUMENT,
+                                             "Document paths must be absolute");
+      return;
+    }
 
-  id = do_create_doc (uri);
+  id = do_create_doc (path);
 
   g_dbus_method_invocation_return_value (invocation,
                                          g_variant_new ("(s)", id));
@@ -297,11 +303,9 @@ portal_add_local (GDBusMethodInvocation *invocation,
   GUnixFDList *fd_list;
   g_autofree char *id = NULL;
   g_autofree char *proc_path = NULL;
-  g_autofree char *uri = NULL;
   int fd_id, fd, fds_len, fd_flags;
   const int *fds;
   char path_buffer[PATH_MAX+1];
-  g_autoptr(GFile) file = NULL;
   ssize_t symlink_size;
   struct stat st_buf, real_st_buf;
 
@@ -351,10 +355,7 @@ portal_add_local (GDBusMethodInvocation *invocation,
       return;
     }
 
-  file = g_file_new_for_path (path_buffer);
-  uri = g_file_get_uri (file);
-
-  id = do_create_doc (uri);
+  id = do_create_doc (path_buffer);
 
   if (app_id[0] != '\0')
     {
