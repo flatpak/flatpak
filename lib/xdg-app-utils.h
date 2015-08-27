@@ -129,6 +129,22 @@ g_strv_subset (const gchar * const *strv,
   return NULL;
 }
 
+static inline void xdg_app_auto_unlock_helper (GMutex **mutex)
+{
+  if (*mutex)
+    g_mutex_unlock (*mutex);
+}
+
+static inline GMutex *xdg_app_auto_lock_helper (GMutex *mutex)
+{
+  if (mutex)
+    g_mutex_lock (mutex);
+  return mutex;
+}
+
+
+#define AUTOLOCK(name) __attribute__((cleanup(xdg_app_auto_unlock_helper))) GMutex * G_PASTE(auto_unlock, __LINE__) = xdg_app_auto_lock_helper (&G_LOCK_NAME (name))
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeRepo, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeMutableTree, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeAsyncProgress, g_object_unref)
