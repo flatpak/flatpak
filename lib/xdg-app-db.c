@@ -111,7 +111,7 @@ void
 xdg_app_db_set_path (XdgAppDb *self,
                      const char *path)
 {
-  g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
+  g_return_if_fail (XDG_APP_IS_DB (self));
 
   g_clear_pointer (&self->path, g_free);
   self->path = g_strdup (path);
