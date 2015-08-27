@@ -618,13 +618,14 @@ buffer_read (ProxySide *side,
     }
   else
     {
+      int flags;
       v.buffer = &buffer->data[buffer->pos];
       v.size = buffer->size - buffer->pos;
 
       res = g_socket_receive_message (socket, NULL, &v, 1,
                                       &messages,
                                       &num_messages,
-                                      G_SOCKET_MSG_NONE, NULL, &error);
+                                      &flags, NULL, &error);
       if (res < 0 && g_error_matches (error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
         {
           g_error_free (error);
