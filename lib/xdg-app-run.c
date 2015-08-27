@@ -1302,7 +1302,7 @@ char **
 xdg_app_run_get_minimal_env (gboolean devel)
 {
   GPtrArray *env_array;
-  static const char const *copy[] = {
+  static const char * const copy[] = {
     "GDMSESSION",
     "XDG_CURRENT_DESKTOP",
     "XDG_SESSION_DESKTOP",
@@ -1316,7 +1316,7 @@ xdg_app_run_get_minimal_env (gboolean devel)
     "USER",
     "USERNAME",
   };
-  static const char const *copy_nodevel[] = {
+  static const char * const copy_nodevel[] = {
     "LANG",
     "LANGUAGE",
     "LC_ALL",
