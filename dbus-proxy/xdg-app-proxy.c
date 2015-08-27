@@ -2097,7 +2097,7 @@ find_auth_end (XdgAppProxyClient *client, Buffer *buffer)
       gsize left = strlen (AUTH_END_STRING) - client->auth_end_offset;
       gsize to_match = MIN (left, buffer->pos);
       /* Matched at least up to to_match */
-      if (memcmp (buffer->data, AUTH_END_STRING + client->auth_end_offset, to_match) == 0)
+      if (memcmp (buffer->data, &AUTH_END_STRING[client->auth_end_offset], to_match) == 0)
         {
           client->auth_end_offset += to_match;
 
