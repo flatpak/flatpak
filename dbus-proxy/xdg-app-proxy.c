@@ -1815,7 +1815,7 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
             if (validate_arg0_name (client, buffer, policy_from_handler (handler), &name_policy))
               goto handle_pass;
 
-            if (name_policy < (int)HANDLE_VALIDATE_SEE)
+            if (name_policy < (int)XDG_APP_POLICY_SEE)
               goto handle_hide;
             else
               goto handle_deny;
