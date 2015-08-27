@@ -214,9 +214,7 @@ handle_delete (XdgAppPermissionStore *object,
                const gchar *id)
 {
   Table *table;
-  g_autoptr(GVariant) data = NULL;
   g_autoptr(XdgAppDbEntry) entry = NULL;
-  g_autofree const char **apps = NULL;
 
   table = lookup_table (table_name, invocation);
   if (table == NULL)

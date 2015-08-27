@@ -45,26 +45,17 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 {
   GOptionContext *context;
   gboolean ret = FALSE;
-  g_autoptr(XdgAppDir) user_dir = NULL;
   g_autoptr(XdgAppDeploy) runtime_deploy = NULL;
-  g_autoptr(GVariantBuilder) optbuilder = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) var = NULL;
-  g_autoptr(GFile) var_tmp = NULL;
-  g_autoptr(GFile) var_run = NULL;
   g_autoptr(GFile) app_deploy = NULL;
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
   g_autofree char *runtime = NULL;
-  g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;
-  g_autofree char *app_ref = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
-  g_autoptr (GError) my_error = NULL;
-  g_autoptr (GError) my_error2 = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
   glnx_strfreev char **envp = NULL;
   gsize metadata_size;

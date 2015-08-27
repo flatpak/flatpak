@@ -1077,8 +1077,6 @@ rewrite_export_dir (const char    *app,
         }
       else if (S_ISREG (stbuf.st_mode))
         {
-          g_autofree gchar *target = NULL;
-
           if (!xdg_app_has_name_prefix (dent->d_name, app))
             {
               g_warning ("Non-prefixed filename %s in app %s, removing.\n", dent->d_name, app);

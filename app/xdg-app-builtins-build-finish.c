@@ -313,8 +313,6 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GFile) files_dir = NULL;
   g_autoptr(GFile) export_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
-  g_autoptr(XdgAppDir) user_dir = NULL;
-  g_autoptr(XdgAppDir) system_dir = NULL;
   g_autofree char *metadata_contents = NULL;
   g_autofree char *app_id = NULL;
   gsize metadata_size;

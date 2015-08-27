@@ -45,8 +45,6 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 {
   gboolean ret = FALSE;
   GOptionContext *context;
-  g_autoptr(GFile) runtime_deploy_base = NULL;
-  g_autoptr(GFile) sdk_deploy_base = NULL;
   g_autoptr(GFile) var_deploy_base = NULL;
   g_autoptr(GFile) var_deploy_files = NULL;
   g_autoptr(GFile) base = NULL;

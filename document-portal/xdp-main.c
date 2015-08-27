@@ -104,7 +104,6 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
 {
   const char *target_app_id;
   const char *id;
-  g_autoptr(GError) error = NULL;
   g_autofree const char **permissions = NULL;
   XdpPermissionFlags perms;
   g_autoptr(XdgAppDbEntry) entry = NULL;
@@ -148,7 +147,6 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
                            const char *app_id)
 {
   const char *target_app_id;
-  g_autoptr(GError) error = NULL;
   const char *id;
   g_autofree const char **permissions = NULL;
   g_autoptr(XdgAppDbEntry) entry = NULL;
@@ -225,9 +223,7 @@ char *
 do_create_doc (const char *path)
 {
   g_autoptr(GVariant) data = g_variant_ref_sink (g_variant_new_bytestring (path));
-  g_autofree char *existing_id = NULL;
   g_autoptr (XdgAppDbEntry) entry = NULL;
-  g_autofree char *new_id = NULL;
   glnx_strfreev char **ids = NULL;
   char *id = NULL;
 
@@ -524,7 +520,6 @@ main (int    argc,
 {
   guint owner_id;
   GBytes *introspection_bytes;
-  g_autoptr(GList) object_types = NULL;
   g_autoptr(GError) error = NULL;
   g_autofree char *path = NULL;
   GDBusConnection  *session_bus;

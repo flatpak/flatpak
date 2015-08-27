@@ -60,7 +60,6 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   int i;
   const char *repository;
   g_autofree char *url = NULL;
-  g_autoptr(GBytes) bytes = NULL;
 
   context = g_option_context_new (" REPOSITORY - Show available runtimes and applications");
 

@@ -45,7 +45,6 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   GOptionContext *context;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) origin = NULL;
   const char *app;
   const char *branch = "master";
   g_autofree char *ref = NULL;

@@ -455,7 +455,6 @@ char **
 xdg_app_db_list_ids_by_app (XdgAppDb *self,
                             const char *app)
 {
-  g_autofree char **apps = NULL;
   GPtrArray *res;
   GPtrArray *additions;
   GPtrArray *removals;

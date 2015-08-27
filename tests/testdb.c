@@ -265,7 +265,6 @@ test_modify (void)
     g_autoptr(XdgAppDbEntry) entry5 = NULL;
     g_autoptr(XdgAppDbEntry) entry6 = NULL;
     g_autoptr(XdgAppDbEntry) entry7 = NULL;
-    g_autofree const char **apps1 = NULL;
     g_autofree const char **apps2 = NULL;
     glnx_strfreev char **apps3 = NULL;
     g_autofree const char **permissions1 = NULL;
@@ -309,7 +308,6 @@ test_modify (void)
     g_autoptr(XdgAppDbEntry) entry5 = NULL;
     g_autoptr(XdgAppDbEntry) entry6 = NULL;
     g_autoptr(XdgAppDbEntry) entry7 = NULL;
-    g_autofree const char **apps1 = NULL;
     g_autofree const char **apps2 = NULL;
     glnx_strfreev char **apps3 = NULL;
     g_autofree const char **permissions1 = NULL;

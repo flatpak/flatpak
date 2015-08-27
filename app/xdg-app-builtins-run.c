@@ -147,8 +147,6 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 {
   GOptionContext *context;
   gboolean ret = FALSE;
-  g_autoptr(GVariantBuilder) optbuilder = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDeploy) app_deploy = NULL;
   g_autoptr(XdgAppDeploy) runtime_deploy = NULL;
   g_autoptr(GFile) app_files = NULL;
@@ -163,7 +161,6 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;
   g_autofree char *app_ref = NULL;
-  g_autofree char *path = NULL;
   g_autofree char *doc_mount_path = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;

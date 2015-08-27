@@ -53,7 +53,6 @@ XdpPermissionFlags
 xdp_get_permissions (XdgAppDbEntry *entry,
                      const char *app_id)
 {
-  g_autoptr(GVariant) app_array = NULL;
   g_autofree const char **permissions = NULL;
 
   if (strcmp (app_id, "") == 0)

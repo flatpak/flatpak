@@ -761,7 +761,6 @@ xdp_fuse_opendir (fuse_req_t req,
   XdpInodeClass class;
   guint64 class_ino;
   g_autoptr (XdgAppDbEntry) entry = NULL;
-  g_autofree char *basename = NULL;
   int res;
 
   g_debug ("xdp_fuse_opendir %lx", ino);
