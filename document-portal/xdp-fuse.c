@@ -13,10 +13,12 @@
 #include <assert.h>
 #include <glib/gprintf.h>
 #include <gio/gio.h>
+#include <pthread.h>
 
 #include "xdg-app-error.h"
 #include "xdp-fuse.h"
 #include "xdp-util.h"
+#include "xdg-app-utils.h"
 
 /* Layout:
 
@@ -59,35 +61,128 @@ static GHashTable *app_name_to_id;
 static GHashTable *app_id_to_name;
 static guint32 next_app_id;
 
-static guint32 next_tmp_id;
+G_LOCK_DEFINE(app_id);
+
+static int
+steal_fd (int *fdp)
+{
+  int fd = *fdp;
+  *fdp = -1;
+  return fd;
+}
+
+static int
+get_user_perms (const struct stat *stbuf)
+{
+  /* Strip out exec and setuid bits */
+  return stbuf->st_mode & 0666;
+}
+
+static double
+get_attr_cache_time (int st_mode)
+{
+  if (S_ISDIR (st_mode))
+    return DIRS_ATTR_CACHE_TIME;
+  return 0.0;
+}
+
+static double
+get_entry_cache_time (int st_mode)
+{
+  if (S_ISDIR (st_mode))
+    return DIRS_ATTR_CACHE_TIME;
+  return 1.0;
+}
+
+/******************************* XdpTmp *******************************
+ *
+ * XdpTmp is a ref-counted object representing a temporary file created
+ * on the outer filesystem which is stored next to a real file in the fuse
+ * filesystem. Its useful to support write-to-tmp-then-rename-over-target
+ * operations.
+ *
+ * locking:
+ *
+ * The global list of outstanding Tmp are protected by the tmp_files
+ * lock.  Use it when doing lookups by name or id, or when changing
+ * the list (add/remove) or name of a tmpfile.
+ *
+ * Each instance has a mutex that locks access to the backing path,
+ * as it can be removed at runtime. Use get/steal_backing_path() to
+ * safely access it.
+ *
+ ******************************* XdpTmp *******************************/
+
+static volatile gint next_tmp_id = 1;
 
 typedef struct
 {
+  volatile gint ref_count;
+
+  /* These are immutable, no lock needed */
   guint64 parent_inode;
+  guint32 tmp_id;
+
+  /* Changes always done under tmp_files lock */
   char *name;
 
+  GMutex mutex;
+
+  /* protected by mutex */
   char *backing_path;
-  guint32 tmp_id;
 } XdpTmp;
 
-typedef struct
-{
-  int fd;
-  fuse_ino_t inode;
-  int trunc_fd;
-  char *trunc_path;
-  char *real_path;
-  gboolean truncated;
-  gboolean readonly;
-  guint32 tmp_id;
-} XdpFh;
-
+/* Owns a ref to the files */
 static GList *tmp_files = NULL;
-static GList *open_files = NULL;
+G_LOCK_DEFINE(tmp_files);
 
 static XdpTmp *
-find_tmp_by_name (guint64 parent_inode,
-                  const char *name)
+xdp_tmp_ref (XdpTmp *tmp)
+{
+  g_atomic_int_inc (&tmp->ref_count);
+  return tmp;
+}
+
+static void
+xdp_tmp_unref (XdpTmp *tmp)
+{
+  if (g_atomic_int_dec_and_test (&tmp->ref_count))
+    {
+      g_free (tmp->name);
+      g_free (tmp->backing_path);
+      g_free (tmp);
+    }
+}
+
+char *
+xdp_tmp_get_backing_path (XdpTmp *tmp)
+{
+  char *res;
+  g_mutex_lock (&tmp->mutex);
+  res = g_strdup (tmp->backing_path);
+  g_mutex_unlock (&tmp->mutex);
+
+  return res;
+}
+
+char *
+xdp_tmp_steal_backing_path (XdpTmp *tmp)
+{
+  char *res;
+  g_mutex_lock (&tmp->mutex);
+  res = tmp->backing_path;
+  tmp->backing_path = NULL;
+  g_mutex_unlock (&tmp->mutex);
+
+  return res;
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdpTmp, xdp_tmp_unref)
+
+/* Must first take tmp_files lock */
+static XdpTmp *
+find_tmp_by_name_nolock (guint64 parent_inode,
+                         const char *name)
 {
   GList *l;
 
@@ -96,26 +191,359 @@ find_tmp_by_name (guint64 parent_inode,
       XdpTmp *tmp = l->data;
       if (tmp->parent_inode == parent_inode &&
           strcmp (tmp->name, name) == 0)
-        return tmp;
+        return xdp_tmp_ref (tmp);
     }
 
   return NULL;
 }
 
+/* Takes tmp_files lock */
+static XdpTmp *
+find_tmp_by_name (guint64 parent_inode,
+                  const char *name)
+{
+  AUTOLOCK(tmp_files);
+  return find_tmp_by_name_nolock (parent_inode, name);
+}
+
+/* Takes tmp_files lock */
 static XdpTmp *
 find_tmp_by_id (guint32 tmp_id)
 {
   GList *l;
 
+  AUTOLOCK(tmp_files);
+
   for (l = tmp_files; l != NULL; l = l->next)
     {
       XdpTmp *tmp = l->data;
       if (tmp->tmp_id == tmp_id)
-        return tmp;
+        return xdp_tmp_ref (tmp);
     }
 
   return NULL;
 }
+
+/* Caller must hold tmp_files lock */
+static XdpTmp *
+xdp_tmp_new_nolock (fuse_ino_t parent,
+                    const char *name,
+                    const char *path)
+{
+  XdpTmp *tmp;
+
+  tmp = g_new0 (XdpTmp, 1);
+  tmp->parent_inode = parent;
+  tmp->name = g_strdup (name);
+  tmp->backing_path = g_strdup (path);
+  tmp->tmp_id = g_atomic_int_add (&next_tmp_id, 1);
+  tmp->ref_count = 1; /* Owned by tmp_files */
+
+  tmp_files = g_list_prepend (tmp_files, tmp);
+
+  return tmp;
+}
+
+/* Caller must own tmp_files lock */
+static void
+xdp_tmp_unlink_nolock (XdpTmp *tmp)
+{
+
+  g_autofree char *backing_path = NULL;
+
+  backing_path = xdp_tmp_steal_backing_path (tmp);
+  if (backing_path)
+    unlink (backing_path);
+
+  tmp_files = g_list_remove (tmp_files, tmp);
+  xdp_tmp_unref (tmp);
+}
+
+/******************************* XdpFh *******************************
+ *
+ * XdpFh is a ref-counted object representing an open file on the
+ * filesystem. Normally it has a regular fd you can do only the allowed
+ * i/o on, although in the case of a direct write to a document file
+ * it has two fds, one is the read-only fd to the file, and the other
+ * is a read-write to a temporary file which is only used once the
+ * file is truncated (and is renamed over the real file on close).
+ *
+ * locking:
+ *
+ * The global list of outstanding Fh is protected by the open_files
+ * lock.  Use it when doing lookups by inode, or when changing
+ * the list (add/remove), or when otherwise traversing the list.
+ *
+ * Each instance has a mutex that must be locked when doing some
+ * kind of operation on the file handle, to serialize both lower
+ * layer i/o as well as access to the members.
+ *
+ * To avoid deadlocks or just slow locking, never aquire the
+ * open_files lock and a lock on a Fh at the same time.
+ *
+ ******************************* XdpFh *******************************/
+
+
+typedef struct
+{
+  volatile gint ref_count;
+
+  /* These are immutable, no lock needed */
+  guint32 tmp_id;
+  fuse_ino_t inode;
+  char *trunc_path;
+  char *real_path;
+
+  /* These need a lock whenever they are used */
+  int fd;
+  int trunc_fd;
+  gboolean truncated;
+  gboolean readonly;
+
+  GMutex mutex;
+} XdpFh;
+
+static GList *open_files = NULL;
+G_LOCK_DEFINE(open_files);
+
+static XdpFh *
+xdp_fh_ref (XdpFh *fh)
+{
+  g_atomic_int_inc (&fh->ref_count);
+  return fh;
+}
+
+static void
+xdp_fh_finalize (XdpFh *fh)
+{
+  if (fh->truncated)
+    {
+      fsync (fh->trunc_fd);
+      if (rename (fh->trunc_path, fh->real_path) != 0)
+        g_warning ("Unable to replace truncated document");
+    }
+  else if (fh->trunc_path)
+    unlink (fh->trunc_path);
+
+  if (fh->fd >= 0)
+    close (fh->fd);
+  if (fh->trunc_fd >= 0)
+    close (fh->trunc_fd);
+
+  if (fh->fd >= 0)
+    close (fh->fd);
+  if (fh->trunc_fd >= 0)
+    close (fh->trunc_fd);
+
+  g_clear_pointer (&fh->trunc_path, g_free);
+  g_clear_pointer (&fh->real_path, g_free);
+
+  g_free (fh);
+}
+
+static void
+xdp_fh_unref (XdpFh *fh)
+{
+  if (g_atomic_int_dec_and_test (&fh->ref_count))
+    {
+      /* There is a tiny race here where fhs can be on the open_files list
+         with refcount 0, so make sure to skip such while under the open_files
+         lock */
+      {
+        AUTOLOCK (open_files);
+        open_files = g_list_remove (open_files, fh);
+      }
+
+      xdp_fh_finalize (fh);
+    }
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdpFh, xdp_fh_unref)
+
+static void
+xdp_fh_lock (XdpFh *fh)
+{
+  g_mutex_lock (&fh->mutex);
+}
+
+static void
+xdp_fh_unlock (XdpFh *fh)
+{
+  g_mutex_unlock (&fh->mutex);
+}
+
+static inline void xdp_fh_auto_unlock_helper (XdpFh **fhp)
+{
+  if (*fhp)
+    xdp_fh_unlock (*fhp);
+}
+
+static inline XdpFh *xdp_fh_auto_lock_helper (XdpFh *fh)
+{
+  if (fh)
+    xdp_fh_lock (fh);
+  return fh;
+}
+
+#define XDP_FH_AUTOLOCK(_fh) G_GNUC_UNUSED __attribute__((cleanup(xdp_fh_auto_unlock_helper))) XdpFh * G_PASTE(xdp_fh_auto_unlock, __LINE__) = xdp_fh_auto_lock_helper (fh)
+
+static XdpFh *
+xdp_fh_new (fuse_ino_t inode,
+            struct fuse_file_info *fi,
+            int fd,
+            XdpTmp *tmp)
+{
+  XdpFh *fh = g_new0 (XdpFh, 1);
+  fh->inode = inode;
+  fh->fd = fd;
+  if (tmp)
+    fh->tmp_id = tmp->tmp_id;
+  fh->trunc_fd = -1;
+  fh->ref_count = 1; /* Owned by fuse_file_info fi */
+
+  fi->fh = (gsize)fh;
+
+  AUTOLOCK (open_files);
+
+  open_files = g_list_prepend (open_files, fh);
+
+  return fh;
+}
+
+static int
+xdp_fh_get_fd_nolock (XdpFh *fh)
+{
+  if (fh->truncated)
+    return fh->trunc_fd;
+  else
+    return fh->fd;
+}
+
+static int
+xdp_fh_fstat (XdpFh *fh,
+              struct stat *stbuf)
+{
+  struct stat tmp_stbuf;
+  int fd;
+
+  fd = xdp_fh_get_fd_nolock (fh);
+  if (fd < 0)
+    return -ENOSYS;
+
+  if (fstat (fd, &tmp_stbuf) != 0)
+    return -errno;
+
+  stbuf->st_nlink = DOC_FILE_NLINK;
+  stbuf->st_mode = S_IFREG | get_user_perms (&tmp_stbuf);
+  stbuf->st_size = tmp_stbuf.st_size;
+  stbuf->st_uid = tmp_stbuf.st_uid;
+  stbuf->st_gid = tmp_stbuf.st_gid;
+  stbuf->st_blksize = tmp_stbuf.st_blksize;
+  stbuf->st_blocks = tmp_stbuf.st_blocks;
+  stbuf->st_atim = tmp_stbuf.st_atim;
+  stbuf->st_mtim = tmp_stbuf.st_mtim;
+  stbuf->st_ctim = tmp_stbuf.st_ctim;
+
+  return 0;
+}
+
+static int
+xdp_fh_fstat_locked (XdpFh *fh,
+                     struct stat *stbuf)
+{
+  XDP_FH_AUTOLOCK (fh);
+
+  return xdp_fh_fstat (fh, stbuf);
+}
+
+static int
+xdp_fh_truncate_locked (XdpFh *fh, off_t size, struct stat  *newattr)
+{
+  int fd;
+
+  XDP_FH_AUTOLOCK (fh);
+
+  if (fh->trunc_fd >= 0 && !fh->truncated)
+    {
+      if (size != 0)
+        return -EACCES;
+
+      fh->truncated = TRUE;
+      fd = fh->trunc_fd;
+    }
+  else
+    {
+      fd = xdp_fh_get_fd_nolock (fh);
+      if (fd == -1)
+        return -EIO;
+
+      if (ftruncate (fd, size) != 0)
+        return - errno;
+    }
+
+  if (newattr)
+    {
+      int res = xdp_fh_fstat (fh, newattr);
+      if (res < 0)
+        return res;
+    }
+
+  return 0;
+}
+
+static void
+mark_open_tmp_file_readonly (guint32 tmp_id)
+{
+  GList *found = NULL;
+  GList *l;
+
+  {
+    AUTOLOCK (open_files);
+
+    for (l = open_files; l != NULL; l = l->next)
+      {
+        XdpFh *fh = l->data;
+        /* See xdp_fh_unref for details of this ref_count check */
+        if (g_atomic_int_get (&fh->ref_count) > 0 &&
+            fh->tmp_id == tmp_id && fh->fd >= 0)
+          found = g_list_prepend (found, xdp_fh_ref (fh));
+      }
+  }
+
+  /* We do the actual updates outside of the open_files lock to avoid
+     potentially blocking for a long time with it held */
+
+  for (l = found; l != NULL; l = l->next)
+    {
+      XdpFh *fh = l->data;
+      XDP_FH_AUTOLOCK (fh);
+      fh->readonly = TRUE;
+      xdp_fh_unref (fh);
+    }
+  g_list_free (found);
+}
+
+
+static XdpFh *
+find_open_fh (fuse_ino_t ino)
+{
+  GList *l;
+
+  AUTOLOCK (open_files);
+
+  for (l = open_files; l != NULL; l = l->next)
+    {
+      XdpFh *fh = l->data;
+      /* See xdp_fh_unref for details of this ref_count check */
+      if (fh->inode == ino &&
+          g_atomic_int_get (&fh->ref_count) > 0)
+        return xdp_fh_ref (fh);
+    }
+
+  return NULL;
+}
+
+/******************************* Main *******************************/
 
 static XdpInodeClass
 get_class (guint64 inode)
@@ -186,6 +614,8 @@ get_app_id_from_name (const char *name)
   guint32 id;
   char *myname;
 
+  AUTOLOCK(app_id);
+
   id = GPOINTER_TO_UINT (g_hash_table_lookup (app_name_to_id, name));
 
   if (id != 0)
@@ -205,6 +635,7 @@ get_app_id_from_name (const char *name)
 static const char *
 get_app_name_from_id (guint32 id)
 {
+  AUTOLOCK(app_id);
   return g_hash_table_lookup (app_id_to_name, GUINT_TO_POINTER (id));
 }
 
@@ -217,79 +648,6 @@ fill_app_name_hash (void)
   keys = xdp_list_apps ();
   for (i = 0; keys[i] != NULL; i++)
     get_app_id_from_name (keys[i]);
-}
-
-static XdpFh *
-xdp_fh_new (fuse_ino_t inode, struct fuse_file_info *fi, int fd, XdpTmp *tmp)
-{
-  XdpFh *fh = g_new0 (XdpFh, 1);
-  fh->inode = inode;
-  fh->fd = fd;
-  if (tmp)
-    fh->tmp_id = tmp->tmp_id;
-  fh->trunc_fd = -1;
-
-  open_files = g_list_prepend (open_files, fh);
-
-  fi->fh = (gsize)fh;
-  return fh;
-}
-
-static void
-xdp_fh_free (XdpFh *fh)
-{
-  open_files = g_list_remove (open_files, fh);
-
-  if (fh->truncated)
-    {
-      fsync (fh->trunc_fd);
-      if (rename (fh->trunc_path, fh->real_path) != 0)
-        g_warning ("Unable to replace truncated document");
-    }
-  else if (fh->trunc_path)
-    unlink (fh->trunc_path);
-
-  if (fh->fd >= 0)
-    close (fh->fd);
-  if (fh->trunc_fd >= 0)
-    close (fh->trunc_fd);
-
-  g_clear_pointer (&fh->trunc_path, g_free);
-  g_clear_pointer (&fh->real_path, g_free);
-
-  g_free (fh);
-}
-
-static int
-xdp_fh_get_fd (XdpFh *fh)
-{
-  if (fh->truncated)
-    return fh->trunc_fd;
-  else
-    return fh->fd;
-}
-
-static int
-get_user_perms (const struct stat *stbuf)
-{
-  /* Strip out exec and setuid bits */
-  return stbuf->st_mode & 0666;
-}
-
-static double
-get_attr_cache_time (int st_mode)
-{
-  if (S_ISDIR (st_mode))
-    return DIRS_ATTR_CACHE_TIME;
-  return 0.0;
-}
-
-static double
-get_entry_cache_time (int st_mode)
-{
-  if (S_ISDIR (st_mode))
-    return DIRS_ATTR_CACHE_TIME;
-  return 1.0;
 }
 
 static gboolean
@@ -314,7 +672,8 @@ xdp_stat (fuse_ino_t ino,
   g_autoptr (XdgAppDbEntry) entry = NULL;
   const char *path = NULL;
   struct stat tmp_stbuf;
-  XdpTmp *tmp;
+  g_autoptr(XdpTmp) tmp = NULL;
+  g_autofree char *backing_path = NULL;
 
   stbuf->st_ino = ino;
 
@@ -400,7 +759,9 @@ xdp_stat (fuse_ino_t ino,
       stbuf->st_mode = S_IFREG;
       stbuf->st_nlink = DOC_FILE_NLINK;
 
-      if (stat (tmp->backing_path, &tmp_stbuf) != 0)
+      backing_path = xdp_tmp_get_backing_path (tmp);
+
+      if (backing_path == NULL || stat (backing_path, &tmp_stbuf) != 0)
         return ENOENT;
 
       stbuf->st_mode = S_IFREG | get_user_perms (&tmp_stbuf);
@@ -424,41 +785,13 @@ xdp_stat (fuse_ino_t ino,
   return 0;
 }
 
-static int
-xdp_fstat (XdpFh *fh,
-           struct stat *stbuf)
-{
-  struct stat tmp_stbuf;
-  int fd;
-
-  fd = xdp_fh_get_fd (fh);
-  if (fd < 0)
-    return -ENOSYS;
-
-  if (fstat (fd, &tmp_stbuf) != 0)
-    return -errno;
-
-  stbuf->st_nlink = DOC_FILE_NLINK;
-  stbuf->st_mode = S_IFREG | get_user_perms (&tmp_stbuf);
-  stbuf->st_size = tmp_stbuf.st_size;
-  stbuf->st_uid = tmp_stbuf.st_uid;
-  stbuf->st_gid = tmp_stbuf.st_gid;
-  stbuf->st_blksize = tmp_stbuf.st_blksize;
-  stbuf->st_blocks = tmp_stbuf.st_blocks;
-  stbuf->st_atim = tmp_stbuf.st_atim;
-  stbuf->st_mtim = tmp_stbuf.st_mtim;
-  stbuf->st_ctim = tmp_stbuf.st_ctim;
-
-  return 0;
-}
-
 static void
 xdp_fuse_getattr (fuse_req_t req,
                   fuse_ino_t ino,
                   struct fuse_file_info *fi)
 {
   struct stat stbuf = { 0 };
-  GList *l;
+  g_autoptr(XdpFh) fh = NULL;
   int res;
 
   g_debug ("xdp_fuse_getattr %lx (fi=%p)", ino, fi);
@@ -468,7 +801,7 @@ xdp_fuse_getattr (fuse_req_t req,
     {
       XdpFh *fh = (gpointer)fi->fh;
 
-      res = xdp_fstat (fh, &stbuf);
+      res = xdp_fh_fstat_locked (fh, &stbuf);
       if (res == 0)
         {
           fuse_reply_attr (req, &stbuf, get_attr_cache_time (stbuf.st_mode));
@@ -476,17 +809,15 @@ xdp_fuse_getattr (fuse_req_t req,
         }
     }
 
-  for (l = open_files; l != NULL; l = l->next)
+
+  fh = find_open_fh (ino);
+  if (fh)
     {
-      XdpFh *fh = l->data;
-      if (fh->inode == ino)
+      res = xdp_fh_fstat_locked (fh, &stbuf);
+      if (res == 0)
         {
-          res = xdp_fstat (fh, &stbuf);
-          if (res == 0)
-            {
-              fuse_reply_attr (req, &stbuf, get_attr_cache_time (stbuf.st_mode));
-              return;
-            }
+          fuse_reply_attr (req, &stbuf, get_attr_cache_time (stbuf.st_mode));
+          return;
         }
     }
 
@@ -507,7 +838,7 @@ xdp_lookup (fuse_ino_t parent,
   XdpInodeClass parent_class = get_class (parent);
   guint64 parent_class_ino = get_class_ino (parent);
   g_autoptr (XdgAppDbEntry) entry = NULL;
-  XdpTmp *tmp;
+  g_autoptr (XdpTmp) tmp = NULL;
 
   if (entry_out)
     *entry_out = NULL;
@@ -598,7 +929,7 @@ xdp_lookup (fuse_ino_t parent,
               if (entry_out)
                 *entry_out = g_steal_pointer (&entry);
               if (tmp_out)
-                *tmp_out = tmp;
+                *tmp_out = g_steal_pointer (&tmp);
               return 0;
             }
 
@@ -719,6 +1050,8 @@ dirbuf_add_tmp_files (fuse_req_t req,
 {
   GList *l;
 
+  AUTOLOCK(tmp_files);
+
   for (l = tmp_files; l != NULL; l = l->next)
     {
       XdpTmp *tmp = l->data;
@@ -803,6 +1136,8 @@ xdp_fuse_opendir (fuse_req_t req,
           {
             GHashTableIter iter;
             gpointer key, value;
+
+            AUTOLOCK(app_id);
 
             g_hash_table_iter_init (&iter, app_name_to_id);
             while (g_hash_table_iter_next (&iter, &key, &value))
@@ -902,60 +1237,6 @@ create_tmp_for_doc (XdgAppDbEntry *entry, int flags, int *fd_out)
   return g_steal_pointer (&template);
 }
 
-
-static XdpTmp *
-tmpfile_new (fuse_ino_t parent,
-             const char *name,
-             XdgAppDbEntry *entry,
-             int flags,
-             int *fd_out)
-{
-  XdpTmp *tmp;
-  g_autofree char *path = NULL;
-  int fd;
-
-  path = create_tmp_for_doc (entry, flags, &fd);
-  if (path == NULL)
-    return NULL;
-
-  tmp = g_new0 (XdpTmp, 1);
-  tmp->parent_inode = parent;
-  tmp->name = g_strdup (name);
-  tmp->backing_path = g_steal_pointer (&path);
-  tmp->tmp_id = next_tmp_id++;
-
-  if (fd_out)
-    *fd_out = fd;
-  else
-    close (fd);
-
-  tmp_files = g_list_prepend (tmp_files, tmp);
-
-  return tmp;
-}
-
-static void
-tmpfile_free (XdpTmp *tmp)
-{
-  GList *l;
-
-  tmp_files = g_list_remove (tmp_files, tmp);
-
-  for (l = open_files; l != NULL; l = l->next)
-    {
-      XdpFh *fh = l->data;
-      if (fh->tmp_id == tmp->tmp_id)
-        fh->tmp_id = 0;
-    }
-
-  if (tmp->backing_path)
-    unlink (tmp->backing_path);
-
-  g_free (tmp->name);
-  g_free (tmp->backing_path);
-  g_free (tmp);
-}
-
 static void
 xdp_fuse_open (fuse_req_t req,
                fuse_ino_t ino,
@@ -966,9 +1247,10 @@ xdp_fuse_open (fuse_req_t req,
   struct stat stbuf = {0};
   g_autoptr (XdgAppDbEntry) entry = NULL;
   const char *path = NULL;
-  XdpTmp *tmp;
-  int fd, res;
-  XdpFh *fh;
+  g_autoptr(XdpTmp) tmp = NULL;
+  glnx_fd_close int fd = -1;
+  int res;
+  XdpFh *fh = NULL;
 
   g_debug ("xdp_fuse_open %lx", ino);
 
@@ -987,7 +1269,7 @@ xdp_fuse_open (fuse_req_t req,
   if (entry && class == DOC_FILE_INO_CLASS)
     {
       g_autofree char *write_path = NULL;
-      int write_fd = -1;
+      glnx_fd_close int write_fd = -1;
 
       path = xdp_get_path (entry);
 
@@ -1009,31 +1291,35 @@ xdp_fuse_open (fuse_req_t req,
       fd = open (path, O_RDONLY);
       if (fd < 0)
         {
-          int errsv = errno;
-          if (write_fd >= 0)
-            close (write_fd);
-          fuse_reply_err (req, errsv);
+          fuse_reply_err (req, errno);
           return;
         }
-      fh = xdp_fh_new (ino, fi, fd, NULL);
-      fh->trunc_fd = write_fd;
+      fh = xdp_fh_new (ino, fi, steal_fd(&fd), NULL);
+      fh->trunc_fd = steal_fd (&write_fd);
       fh->trunc_path = g_steal_pointer (&write_path);
       fh->real_path = g_strdup (path);
       if (fuse_reply_open (req, fi))
-        xdp_fh_free (fh);
+        xdp_fh_unref (fh);
     }
   else if (class == TMPFILE_INO_CLASS &&
            (tmp = find_tmp_by_id (class_ino)))
     {
-      fd = open (tmp->backing_path, get_open_flags (fi));
+      g_autofree char *backing_path = xdp_tmp_get_backing_path (tmp);
+      if (backing_path == NULL)
+        {
+          fuse_reply_err (req, ENOENT);
+          return;
+        }
+
+      fd = open (backing_path, get_open_flags (fi));
       if (fd < 0)
         {
           fuse_reply_err (req, errno);
           return;
         }
-      fh = xdp_fh_new (ino, fi, fd, tmp);
+      fh = xdp_fh_new (ino, fi, steal_fd (&fd), tmp);
       if (fuse_reply_open (req, fi))
-        xdp_fh_free (fh);
+        xdp_fh_unref (fh);
     }
   else
     fuse_reply_err (req, EIO);
@@ -1053,8 +1339,8 @@ xdp_fuse_create (fuse_req_t req,
   g_autoptr(XdgAppDbEntry) entry = NULL;
   g_autofree char *basename = NULL;
   const char *path = NULL;
-  XdpTmp *tmpfile;
-  int fd, res;
+  glnx_fd_close int fd = -1;
+  int res;
 
   g_debug ("xdp_fuse_create %lx/%s, flags %o", parent, name, fi->flags);
 
@@ -1081,7 +1367,7 @@ xdp_fuse_create (fuse_req_t req,
   if (strcmp (name, basename) == 0)
     {
       g_autofree char *write_path = NULL;
-      int write_fd = -1;
+      glnx_fd_close int write_fd = -1;
       guint32 doc_id = xdp_id_from_name (name);
 
       write_path = create_tmp_for_doc (entry, O_RDWR, &write_fd);
@@ -1096,24 +1382,21 @@ xdp_fuse_create (fuse_req_t req,
       fd = open (path, O_CREAT|O_EXCL|O_RDONLY);
       if (fd < 0)
         {
-          int errsv = errno;
-          if (write_fd >= 0)
-            close (write_fd);
-          fuse_reply_err (req, errsv);
+          fuse_reply_err (req, errno);
           return;
         }
 
       e.ino = make_inode (DOC_FILE_INO_CLASS, doc_id);
 
-      fh = xdp_fh_new (e.ino, fi, fd, NULL);
+      fh = xdp_fh_new (e.ino, fi, steal_fd (&fd), NULL);
       fh->truncated = TRUE;
-      fh->trunc_fd = write_fd;
+      fh->trunc_fd = steal_fd (&write_fd);
       fh->trunc_path = g_steal_pointer (&write_path);
       fh->real_path = g_strdup (path);
 
-      if (xdp_fstat (fh, &e.attr) != 0)
+      if (xdp_fh_fstat_locked (fh, &e.attr) != 0)
         {
-          xdp_fh_free (fh);
+          xdp_fh_unref (fh);
           fuse_reply_err (req, EIO);
           return;
         }
@@ -1122,20 +1405,35 @@ xdp_fuse_create (fuse_req_t req,
       e.entry_timeout = get_entry_cache_time (e.attr.st_mode);
 
       if (fuse_reply_create (req, &e, fi))
-        xdp_fh_free (fh);
+        xdp_fh_unref (fh);
     }
   else
     {
-      tmpfile = find_tmp_by_name (parent, name);
+      g_autoptr(XdpTmp) tmpfile = NULL;
+
+      G_LOCK(tmp_files);
+      tmpfile = find_tmp_by_name_nolock (parent, name);
       if (tmpfile != NULL && fi->flags & O_EXCL)
         {
+          G_UNLOCK(tmp_files);
           fuse_reply_err (req, EEXIST);
           return;
         }
 
       if (tmpfile)
         {
-          fd = open (tmpfile->backing_path, get_open_flags (fi));
+          g_autofree char *backing_path = NULL;
+
+          G_UNLOCK(tmp_files);
+
+          backing_path = xdp_tmp_get_backing_path (tmpfile);
+          if (backing_path == NULL)
+            {
+              fuse_reply_err (req, EINVAL);
+              return;
+            }
+
+          fd = open (backing_path, get_open_flags (fi));
           if (fd == -1)
             {
               fuse_reply_err (req, errno);
@@ -1144,10 +1442,20 @@ xdp_fuse_create (fuse_req_t req,
         }
       else
         {
-          tmpfile = tmpfile_new (parent, name, entry, get_open_flags (fi), &fd);
+          int errsv;
+          g_autofree char *tmp_path = NULL;
+
+          tmp_path = create_tmp_for_doc (entry, get_open_flags (fi), &fd);
+          if (tmp_path == NULL)
+            return NULL;
+
+          tmpfile = xdp_tmp_new_nolock (parent, name, tmp_path);
+          errsv = errno;
+          G_UNLOCK(tmp_files);
+
           if (tmpfile == NULL)
             {
-              fuse_reply_err (req, errno);
+              fuse_reply_err (req, errsv);
               return;
             }
         }
@@ -1161,9 +1469,9 @@ xdp_fuse_create (fuse_req_t req,
       e.attr_timeout = get_attr_cache_time (e.attr.st_mode);
       e.entry_timeout = get_entry_cache_time (e.attr.st_mode);
 
-      fh = xdp_fh_new (e.ino, fi, fd, tmpfile);
+      fh = xdp_fh_new (e.ino, fi, steal_fd (&fd), tmpfile);
       if (fuse_reply_create (req, &e, fi))
-        xdp_fh_free (fh);
+        xdp_fh_unref (fh);
     }
 }
 
@@ -1179,7 +1487,9 @@ xdp_fuse_read (fuse_req_t req,
   static char c = 'x';
   int fd;
 
-  fd = xdp_fh_get_fd (fh);
+  XDP_FH_AUTOLOCK (fh);
+
+  fd = xdp_fh_get_fd_nolock (fh);
   if (fd == -1)
     {
       bufv.buf[0].flags = 0;
@@ -1209,13 +1519,15 @@ xdp_fuse_write (fuse_req_t req,
   gssize res;
   int fd;
 
+  XDP_FH_AUTOLOCK (fh);
+
   if (fh->readonly)
     {
       fuse_reply_err (req, EACCES);
       return;
     }
 
-  fd = xdp_fh_get_fd (fh);
+  fd = xdp_fh_get_fd_nolock (fh);
   if (fd == -1)
     {
       fuse_reply_err (req, EIO);
@@ -1241,13 +1553,15 @@ xdp_fuse_write_buf (fuse_req_t req,
   gssize res;
   int fd;
 
+  XDP_FH_AUTOLOCK (fh);
+
   if (fh->readonly)
     {
       fuse_reply_err (req, EACCES);
       return;
     }
 
-  fd = xdp_fh_get_fd (fh);
+  fd = xdp_fh_get_fd_nolock (fh);
   if (fd == -1)
     {
       fuse_reply_err (req, EIO);
@@ -1271,7 +1585,7 @@ xdp_fuse_release (fuse_req_t req,
                   struct fuse_file_info *fi)
 {
   XdpFh *fh = (gpointer)fi->fh;
-  xdp_fh_free (fh);
+  xdp_fh_unref (fh);
   fuse_reply_err (req, 0);
 }
 
@@ -1288,8 +1602,8 @@ xdp_fuse_rename (fuse_req_t req,
   fuse_ino_t inode;
   struct stat stbuf = {0};
   g_autofree char *basename = NULL;
-  XdpTmp *other_tmp, *tmp;
-  GList *l;
+  g_autoptr(XdpTmp) tmp = NULL;
+  g_autoptr(XdpTmp) other_tmp = NULL;
 
   g_debug ("xdp_fuse_rename %lx/%s -> %lx/%s", parent, name, newparent, newname);
 
@@ -1317,25 +1631,29 @@ xdp_fuse_rename (fuse_req_t req,
   if (strcmp (newname, basename) == 0)
     {
       const char *real_path = xdp_get_path (entry);
+      g_autofree char *backing_path = NULL;
       /* Rename tmpfile to regular file */
 
-      /* Stop writes to all outstanding fds to the temp file */
-      for (l = open_files; l != NULL; l = l->next)
+      /* Steal backing path so we don't delete it when unlinking tmp */
+      backing_path = xdp_tmp_steal_backing_path (tmp);
+      if (backing_path == NULL)
         {
-          XdpFh *fh = l->data;
-          if (fh->tmp_id == tmp->tmp_id && fh->fd >= 0)
-            fh->readonly = TRUE;
+          fuse_reply_err (req, EINVAL);
+          return;
         }
 
-      if (rename (tmp->backing_path, real_path) != 0)
+      /* Stop writes to all outstanding fds to the temp file */
+      mark_open_tmp_file_readonly (tmp->tmp_id);
+
+      if (rename (backing_path, real_path) != 0)
         {
           fuse_reply_err (req, errno);
           return;
         }
 
-      /* Clear backing path so we don't unlink it when freeing tmp */
-      g_clear_pointer (&tmp->backing_path, g_free);
-      tmpfile_free (tmp);
+      AUTOLOCK(tmp_files);
+
+      xdp_tmp_unlink_nolock (tmp);
 
       fuse_reply_err (req, 0);
     }
@@ -1343,47 +1661,16 @@ xdp_fuse_rename (fuse_req_t req,
     {
       /* Rename tmpfile to other tmpfile name */
 
-      other_tmp = find_tmp_by_name (newparent, newname);
+      AUTOLOCK(tmp_files);
+
+      other_tmp = find_tmp_by_name_nolock (newparent, newname);
       if (other_tmp)
-        tmpfile_free (other_tmp);
+        xdp_tmp_unlink_nolock (other_tmp);
 
       g_free (tmp->name);
       tmp->name = g_strdup (newname);
       fuse_reply_err (req, 0);
    }
-}
-
-static int
-fh_truncate (XdpFh *fh, off_t size, struct stat  *newattr)
-{
-  int fd;
-
-  if (fh->trunc_fd >= 0 && !fh->truncated)
-    {
-      if (size != 0)
-        return -EACCES;
-
-      fh->truncated = TRUE;
-      fd = fh->trunc_fd;
-    }
-  else
-    {
-      fd = xdp_fh_get_fd (fh);
-      if (fd == -1)
-        return -EIO;
-
-      if (ftruncate (fd, size) != 0)
-        return - errno;
-    }
-
-  if (newattr)
-    {
-      int res = xdp_fstat (fh, newattr);
-      if (res < 0)
-        return res;
-    }
-
-  return 0;
 }
 
 static void
@@ -1403,7 +1690,7 @@ xdp_fuse_setattr (fuse_req_t req,
 
       /* ftruncate */
 
-      res = fh_truncate (fh, attr->st_size, &newattr);
+      res = xdp_fh_truncate_locked (fh, attr->st_size, &newattr);
       if (res < 0)
         {
           fuse_reply_err (req, res);
@@ -1414,26 +1701,20 @@ xdp_fuse_setattr (fuse_req_t req,
     }
   else if (to_set == FUSE_SET_ATTR_SIZE && fi == NULL)
     {
-      gboolean found = FALSE;
       int res = 0;
-      GList *l;
       struct stat newattr = {0};
       struct stat *newattrp = &newattr;
+      g_autoptr(XdpFh) fh = NULL;
 
       /* truncate, truncate any open files (but EACCES if not open) */
 
-      for (l = open_files; l != NULL; l = l->next)
+      fh = find_open_fh (ino);
+      if (fh)
         {
-          XdpFh *fh = l->data;
-          if (fh->inode == ino)
-            {
-              found = TRUE;
-              res = fh_truncate (fh, attr->st_size, newattrp);
-              newattrp = NULL;
-            }
+          res = xdp_fh_truncate_locked (fh, attr->st_size, newattrp);
+          newattrp = NULL;
         }
-
-      if (!found)
+      else
         {
           fuse_reply_err (req, EACCES);
           return;
@@ -1451,28 +1732,28 @@ xdp_fuse_setattr (fuse_req_t req,
     {
       gboolean found = FALSE;
       int res, err = -1;
-      GList *l;
       struct stat newattr = {0};
+      XdpFh *fh;
 
-      for (l = open_files; l != NULL; l = l->next)
+      fh = find_open_fh (ino);
+      if (fh)
         {
-          XdpFh *fh = l->data;
+          int fd, errsv;
 
-          if (fh->inode == ino)
+          XDP_FH_AUTOLOCK (fh);
+
+          fd = xdp_fh_get_fd_nolock (fh);
+          if (fd != -1)
             {
-              int fd = xdp_fh_get_fd (fh);
-              if (fd != -1)
-                {
-                  res = fchmod (fd, get_user_perms (attr));
-                  if (!found)
-                    {
-                      if (res != 0)
-                        err = -errno;
-                      else
-                        err = xdp_fstat (fh, &newattr);
-                      found = TRUE;
-                    }
-                }
+              res = fchmod (fd, get_user_perms (attr));
+              errsv = errno;
+
+              found = TRUE;
+
+              if (res != 0)
+                err = -errsv;
+              else
+                err = xdp_fh_fstat (fh, &newattr);
             }
         }
 
@@ -1544,6 +1825,9 @@ xdp_fuse_fsync (fuse_req_t req,
       class == TMPFILE_INO_CLASS)
     {
       XdpFh *fh = (gpointer)fi->fh;
+
+      XDP_FH_AUTOLOCK (fh);
+
       if (fh->fd >= 0)
         fsync (fh->fd);
       if (fh->truncated && fh->trunc_fd >= 0)
@@ -1564,7 +1848,7 @@ xdp_fuse_unlink (fuse_req_t req,
   fuse_ino_t inode;
   struct stat stbuf = {0};
   g_autofree char *basename = NULL;
-  XdpTmp *tmp;
+  g_autoptr (XdpTmp) tmp = NULL;
 
   g_debug ("xdp_fuse_unlink %lx/%s", parent, name);
 
@@ -1599,7 +1883,8 @@ xdp_fuse_unlink (fuse_req_t req,
     }
   else
     {
-      tmpfile_free (tmp);
+      AUTOLOCK(tmp_files);
+      xdp_tmp_unlink_nolock (tmp);
 
       fuse_reply_err (req, 0);
    }
@@ -1624,81 +1909,11 @@ static struct fuse_lowlevel_ops xdp_fuse_oper = {
   .unlink       = xdp_fuse_unlink,
 };
 
-typedef struct
-{
-  GSource     source;
-
-  struct fuse_chan *ch;
-  gpointer    fd_tag;
-} FuseSource;
-
-static gboolean
-fuse_source_dispatch (GSource     *source,
-                      GSourceFunc  func,
-                      gpointer     user_data)
-{
-  FuseSource *fs = (FuseSource *)source;
-  struct fuse_chan *ch = fs->ch;
-  struct fuse_session *se = fuse_chan_session (ch);
-  gsize bufsize = fuse_chan_bufsize (ch);
-
-  if (g_source_query_unix_fd (source, fs->fd_tag) != 0)
-    {
-      int res = 0;
-      char *buf = (char *) g_malloc (bufsize);
-
-      while (TRUE)
-        {
-          struct fuse_chan *tmpch = ch;
-          struct fuse_buf fbuf = {
-            .mem = buf,
-            .size = bufsize,
-          };
-          res = fuse_session_receive_buf (se, &fbuf, &tmpch);
-          if (res == -EINTR)
-            continue;
-          if (res <= 0)
-            break;
-
-          fuse_session_process_buf (se, &fbuf, tmpch);
-        }
-      g_free (buf);
-    }
-
-  return TRUE;
-}
-
-static GSource *
-fuse_source_new (struct fuse_chan *ch)
-{
-  static GSourceFuncs source_funcs = {
-    NULL, NULL,
-    fuse_source_dispatch
-    /* should have a finalize, but it will never happen */
-  };
-  FuseSource *fs;
-  GSource *source;
-  GError *error = NULL;
-  int fd;
-
-  source = g_source_new (&source_funcs, sizeof (FuseSource));
-  fs = (FuseSource *) source;
-  fs->ch = ch;
-
-  g_source_set_name (source, "fuse source");
-
-  fd = fuse_chan_fd(ch);
-  g_unix_set_fd_nonblocking (fd, TRUE, &error);
-  g_assert_no_error (error);
-
-  fs->fd_tag = g_source_add_unix_fd (source, fd, G_IO_IN);
-
-  return source;
-}
-
+static GThread *fuse_thread = NULL;
 static struct fuse_session *session = NULL;
 static struct fuse_chan *main_ch = NULL;
 static char *mount_path = NULL;
+static pthread_t fuse_pthread = 0;
 
 const char *
 xdp_fuse_get_mountpoint (void)
@@ -1710,13 +1925,26 @@ void
 xdp_fuse_exit (void)
 {
   if (session)
-    fuse_session_reset (session);
-  if (main_ch)
-    fuse_session_remove_chan (main_ch);
-  if (session)
-    fuse_session_destroy (session);
-  if (main_ch)
-    fuse_unmount (mount_path, main_ch);
+    fuse_session_exit (session);
+
+  if (fuse_pthread)
+    pthread_kill (fuse_pthread, SIGHUP);
+
+  if (fuse_thread)
+    g_thread_join (fuse_thread);
+}
+
+static gpointer
+xdp_fuse_mainloop (gpointer data)
+{
+  fuse_pthread = pthread_self ();
+
+  fuse_session_loop_mt (session);
+
+  fuse_session_remove_chan(main_ch);
+  fuse_session_destroy (session);
+  fuse_unmount (mount_path, main_ch);
+  return NULL;
 }
 
 gboolean
@@ -1724,15 +1952,12 @@ xdp_fuse_init (GError **error)
 {
   char *argv[] = { "xdp-fuse", "-osplice_write,splice_move,splice_read" };
   struct fuse_args args = FUSE_ARGS_INIT(G_N_ELEMENTS(argv), argv);
-  struct fuse_chan *ch;
-  GSource *source;
 
   app_name_to_id =
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   app_id_to_name =
     g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, NULL);
   next_app_id = 1;
-  next_tmp_id = 1;
 
   mount_path = g_build_filename (g_get_user_runtime_dir(), "doc", NULL);
   if (g_mkdir_with_parents  (mount_path, 0700))
@@ -1742,8 +1967,8 @@ xdp_fuse_init (GError **error)
       return FALSE;
     }
 
-  main_ch = ch = fuse_mount (mount_path, &args);
-  if (ch == NULL)
+  main_ch = fuse_mount (mount_path, &args);
+  if (main_ch == NULL)
     {
       g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_FAILED, "Can't mount fuse fs");
       return FALSE;
@@ -1757,11 +1982,9 @@ xdp_fuse_init (GError **error)
                    "Can't create fuse session");
       return FALSE;
     }
+  fuse_session_add_chan (session, main_ch);
 
-  fuse_session_add_chan (session, ch);
-
-  source = fuse_source_new (ch);
-  g_source_attach (source, NULL);
+  fuse_thread = g_thread_new ("fuse mainloop", xdp_fuse_mainloop, session);
 
   return TRUE;
 }

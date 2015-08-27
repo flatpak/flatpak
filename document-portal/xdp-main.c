@@ -34,12 +34,15 @@ typedef struct
 
 static GMainLoop *loop = NULL;
 static XdgAppDb *db = NULL;
-XdgAppPermissionStore *permission_store;
+static XdgAppPermissionStore *permission_store;
 static GDBusNodeInfo *introspection_data = NULL;
+
+G_LOCK_DEFINE(db);
 
 char **
 xdp_list_apps (void)
 {
+  AUTOLOCK(db);
   return xdg_app_db_list_apps (db);
 }
 
@@ -50,6 +53,8 @@ xdp_list_docs (void)
   g_auto(GStrv) ids = NULL;
   guint32 id;
   int i;
+
+  AUTOLOCK(db);
 
   res = g_array_new (TRUE, FALSE, sizeof (guint32));
 
@@ -72,6 +77,7 @@ xdp_lookup_doc (guint32 id)
 {
   g_autofree char *doc_id = xdp_name_from_id (id);
 
+  AUTOLOCK(db);
   return xdg_app_db_lookup (db, doc_id);
 }
 
@@ -388,7 +394,10 @@ got_app_id_cb (GObject *source_object,
   if (app_id == NULL)
     g_dbus_method_invocation_return_gerror (invocation, error);
   else
-    portal_method (invocation, g_dbus_method_invocation_get_parameters (invocation), app_id);
+    {
+      AUTOLOCK(db);
+      portal_method (invocation, g_dbus_method_invocation_get_parameters (invocation), app_id);
+    }
 }
 
 static gboolean
