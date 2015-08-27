@@ -14,7 +14,7 @@
 #include <glib/gprintf.h>
 #include <gio/gio.h>
 
-#include "xdp-error.h"
+#include "xdg-app-error.h"
 #include "xdp-fuse.h"
 #include "xdp-util.h"
 
@@ -1738,7 +1738,7 @@ xdp_fuse_init (GError **error)
   mount_path = g_build_filename (g_get_user_runtime_dir(), "doc", NULL);
   if (g_mkdir_with_parents  (mount_path, 0700))
     {
-      g_set_error (error, XDP_ERROR, XDP_ERROR_FAILED,
+      g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_FAILED,
                    "Unable to create dir %s\n", mount_path);
       return FALSE;
     }
@@ -1746,7 +1746,7 @@ xdp_fuse_init (GError **error)
   main_ch = ch = fuse_mount (mount_path, &args);
   if (ch == NULL)
     {
-      g_set_error (error, XDP_ERROR, XDP_ERROR_FAILED, "Can't mount fuse fs");
+      g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_FAILED, "Can't mount fuse fs");
       return FALSE;
     }
 
@@ -1754,7 +1754,7 @@ xdp_fuse_init (GError **error)
                                sizeof (xdp_fuse_oper), NULL);
   if (session == NULL)
     {
-      g_set_error (error, XDP_ERROR, XDP_ERROR_FAILED,
+      g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_FAILED,
                    "Can't create fuse session");
       return FALSE;
     }

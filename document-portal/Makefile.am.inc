@@ -29,8 +29,6 @@ DISTCLEANFILES += document-portal/org.freedesktop.portal.Documents.service
 
 xdg_document_portal_SOURCES = \
 	document-portal/xdp-main.c		\
-	document-portal/xdp-error.c		\
-	document-portal/xdp-error.h		\
 	document-portal/xdp-enums.h		\
 	$(xdp_dbus_built_sources)	\
 	document-portal/xdp-resources.h		\

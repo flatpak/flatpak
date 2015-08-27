@@ -2,7 +2,7 @@
 #include <string.h>
 #include <errno.h>
 #include <gio/gio.h>
-#include "xdp-error.h"
+#include "xdg-app-error.h"
 #include "xdp-util.h"
 
 const char **
@@ -195,7 +195,7 @@ got_credentials_cb (GObject *source_object,
       GTask *task = l->data;
 
       if (info->app_id == NULL)
-        g_task_return_new_error (task, XDP_ERROR, XDP_ERROR_FAILED,
+        g_task_return_new_error (task, XDG_APP_ERROR, XDG_APP_ERROR_FAILED,
                                  "Can't find app id");
       else
         g_task_return_pointer (task, g_strdup (info->app_id), g_free);

@@ -12,7 +12,6 @@
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "xdp-dbus.h"
-#include "xdp-error.h"
 #include "xdp-util.h"
 #include "xdg-app-db.h"
 #include "xdg-app-dbus.h"
@@ -274,7 +273,7 @@ portal_add (GDBusMethodInvocation *invocation,
     {
       /* don't allow this from within the sandbox */
       g_dbus_method_invocation_return_error (invocation,
-                                             XDP_ERROR, XDP_ERROR_NOT_ALLOWED,
+                                             XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
                                              "Not allowed inside sandbox");
       return;
     }
@@ -283,7 +282,7 @@ portal_add (GDBusMethodInvocation *invocation,
   if (!g_path_is_absolute (path))
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDP_ERROR, XDP_ERROR_INVALID_ARGUMENT,
+                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
                                              "Document paths must be absolute");
       return;
     }
@@ -337,7 +336,7 @@ portal_add_local (GDBusMethodInvocation *invocation,
       (symlink_size = readlink (proc_path, path_buffer, sizeof (path_buffer) - 1)) < 0)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDP_ERROR, XDP_ERROR_INVALID_ARGUMENT,
+                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
                                              "Invalid fd passed");
       return;
     }
@@ -350,7 +349,7 @@ portal_add_local (GDBusMethodInvocation *invocation,
     {
       /* Don't leak any info about real file path existance, etc */
       g_dbus_method_invocation_return_error (invocation,
-                                             XDP_ERROR, XDP_ERROR_INVALID_ARGUMENT,
+                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
                                              "Invalid fd passed");
       return;
     }
