@@ -99,5 +99,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GTask, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GTlsCertificate, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GTlsDatabase, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GTlsInteraction, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GDBusConnection, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GDBusMessage, g_object_unref)
 
 #endif
