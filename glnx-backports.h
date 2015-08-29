@@ -1,6 +1,9 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
- * Copyright (C) 2012,2013,2015 Colin Walters <walters@verbum.org>.
+ * Copyright (C) 2015 Colin Walters <walters@verbum.org>
+ * 
+ * GLIB - Library of useful routines for C programming
+ * Copyright (C) 1995-1997  Peter Mattis, Spencer Kimball and Josh MacDonald
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,16 +27,10 @@
 
 G_BEGIN_DECLS
 
-#include <glnx-local-alloc.h>
-#include <glnx-backport-autocleanups.h>
-#include <glnx-backports.h>
-#include <glnx-lockfile.h>
-#include <glnx-errors.h>
-#include <glnx-dirfd.h>
-#include <glnx-shutil.h>
-#include <glnx-xattrs.h>
-#include <glnx-libcontainer.h>
-#include <glnx-console.h>
-#include <glnx-fdio.h>
+#if !GLIB_CHECK_VERSION(2, 44, 0)
+#define g_strv_contains glnx_strv_contains
+gboolean              glnx_strv_contains  (const gchar * const *strv,
+                                           const gchar         *str);
+#endif /* !GLIB_CHECK_VERSION(2, 44, 0) */
 
 G_END_DECLS
