@@ -19,7 +19,7 @@ fi
 touch INSTALL
 
 cd "$olddir"
-if ! test -f libglnx/README.md || ! test -f bsdiff/README.md; then
+if ! test -f libglnx/README.md; then
     git submodule update --init
 fi
 # Workaround automake bug with subdir-objects and computed paths
