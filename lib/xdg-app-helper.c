@@ -294,6 +294,35 @@ static void
 setup_seccomp (void)
 {
   scmp_filter_ctx seccomp;
+  /**** BEGIN NOTE ON CODE SHARING
+   *
+   * There are today a number of different Linux container
+   * implementations.  That will likely continue for long into the
+   * future.  But we can still try to share code, and it's important
+   * to do so because it affects what library and application writers
+   * can do, and we should support code portability between different
+   * container tools.
+   *
+   * This syscall blacklist is copied from xdg-app, which was in turn
+   * clearly influenced by the Sandstorm.io blacklist.
+   *
+   * If you make any changes here, I suggest sending the changes along
+   * to other sandbox maintainers.  Using the libseccomp list is also
+   * an appropriate venue:
+   * https://groups.google.com/forum/#!topic/libseccomp
+   *
+   * A non-exhaustive list of links to container tooling that might
+   * want to share this blacklist:
+   *
+   *  https://github.com/sandstorm-io/sandstorm
+   *    in src/sandstorm/supervisor.c++
+   *  http://cgit.freedesktop.org/xdg-app/xdg-app/
+   *    in lib/xdg-app-helper.c
+   *  https://git.gnome.org/browse/linux-user-chroot
+   *    in src/setup-seccomp.c
+   *
+   **** END NOTE ON CODE SHARING
+   */
   struct {
     int scall;
     struct scmp_arg_cmp *arg;
@@ -323,7 +352,13 @@ setup_seccomp (void)
     {SCMP_SYS(unshare)},
     {SCMP_SYS(mount)},
     {SCMP_SYS(pivot_root)},
-    {SCMP_SYS(clone), &SCMP_A0(SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)}
+    {SCMP_SYS(clone), &SCMP_A0(SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+
+    /* Profiling operations; we expect these to be done by tools from outside
+     * the sandbox.  In particular perf has been the source of many CVEs.
+     */
+    {SCMP_SYS(perf_event_open)},
+    {SCMP_SYS(ptrace)}
   };
   /* Blacklist all but unix, inet, inet6 and netlink */
   int socket_family_blacklist[] = {
