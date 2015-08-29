@@ -74,24 +74,6 @@ gboolean ostree_repo_load_summary (const char *repository_url,
                                    GCancellable *cancellable,
                                    GError **error);
 
-#if !GLIB_CHECK_VERSION(2,43,1)
-static inline  gboolean
-g_strv_contains (const gchar * const *strv,
-                 const gchar         *str)
-{
-  g_return_val_if_fail (strv != NULL, FALSE);
-  g_return_val_if_fail (str != NULL, FALSE);
-
-  for (; *strv != NULL; strv++)
-    {
-      if (g_str_equal (str, *strv))
-        return TRUE;
-    }
-
-  return FALSE;
-}
-#endif
-
 #if !GLIB_CHECK_VERSION(2,40,0)
 static inline gboolean
 g_key_file_save_to_file (GKeyFile     *key_file,
@@ -151,12 +133,5 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeAsyncProgress, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupSession, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupMessage, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppSessionHelper, g_object_unref)
-
-#if !GLIB_CHECK_VERSION(2, 43, 4)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFile, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFileEnumerator, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GFileInfo, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GOutputStream, g_object_unref)
-#endif
 
 #endif /* __XDG_APP_UTILS_H__ */
