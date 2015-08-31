@@ -718,8 +718,8 @@ xdg_app_db_update (XdgAppDb *self)
   GBytes *new_contents;
   GvdbTable *new_gvdb;
   int i;
-  glnx_strfreev char **ids = NULL;
-  glnx_strfreev char **apps = NULL;
+  g_auto(GStrv) ids = NULL;
+  g_auto(GStrv) apps = NULL;
 
   g_return_if_fail (XDG_APP_IS_DB (self));
 
@@ -745,7 +745,7 @@ xdg_app_db_update (XdgAppDb *self)
   apps = xdg_app_db_list_apps (self);
   for (i = 0; apps[i] != 0; i++)
     {
-      glnx_strfreev char **app_ids = xdg_app_db_list_ids_by_app (self, apps[i]);
+      g_auto(GStrv) app_ids = xdg_app_db_list_ids_by_app (self, apps[i]);
       GVariantBuilder builder;
       GvdbItem *item;
       int j;
@@ -879,8 +879,8 @@ GString *
 xdg_app_db_print_string (XdgAppDb *self,
                          GString *string)
 {
-  glnx_strfreev char **ids = NULL;
-  glnx_strfreev char **apps = NULL;
+  g_auto(GStrv) ids = NULL;
+  g_auto(GStrv) apps = NULL;
   int i;
 
   g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
@@ -908,7 +908,7 @@ xdg_app_db_print_string (XdgAppDb *self,
   for (i = 0; apps[i] != 0; i++)
     {
       int j;
-      glnx_strfreev char **app_ids = NULL;
+      g_auto(GStrv) app_ids = NULL;
 
       app_ids = xdg_app_db_list_ids_by_app (self, apps[i]);
       sort_strv ((const char **)app_ids);

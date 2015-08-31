@@ -57,7 +57,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   const char *branch;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
-  glnx_strfreev char **deployed = NULL;
+  g_auto(GStrv) deployed = NULL;
   int i;
   GError *temp_error = NULL;
 
@@ -187,7 +187,7 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   g_autofree char *current_ref = NULL;
-  glnx_strfreev char **deployed = NULL;
+  g_auto(GStrv) deployed = NULL;
   int i;
   GError *temp_error = NULL;
 

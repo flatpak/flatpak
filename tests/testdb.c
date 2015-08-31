@@ -33,13 +33,13 @@ create_test_db (gboolean serialized)
   g_assert (db != NULL);
 
   {
-    glnx_strfreev char **ids = xdg_app_db_list_ids (db);
+    g_auto(GStrv) ids = xdg_app_db_list_ids (db);
     g_assert (ids != NULL);
     g_assert (ids[0] == NULL);
   }
 
   {
-    glnx_strfreev char **apps = xdg_app_db_list_apps (db);
+    g_auto(GStrv) apps = xdg_app_db_list_apps (db);
     g_assert (apps != NULL);
     g_assert (apps[0] == NULL);
   }
@@ -66,10 +66,10 @@ create_test_db (gboolean serialized)
 static void
 verify_test_db (XdgAppDb *db)
 {
-  glnx_strfreev char **ids;
+  g_auto(GStrv) ids;
   g_autofree const char **apps1 = NULL;
   g_autofree const char **apps2 = NULL;
-  glnx_strfreev char **all_apps = NULL;
+  g_auto(GStrv) all_apps = NULL;
 
   ids = xdg_app_db_list_ids (db);
   g_assert (g_strv_length (ids) == 2);
@@ -266,7 +266,7 @@ test_modify (void)
     g_autoptr(XdgAppDbEntry) entry6 = NULL;
     g_autoptr(XdgAppDbEntry) entry7 = NULL;
     g_autofree const char **apps2 = NULL;
-    glnx_strfreev char **apps3 = NULL;
+    g_auto(GStrv) apps3 = NULL;
     g_autofree const char **permissions1 = NULL;
     g_autofree const char **permissions2 = NULL;
     g_autofree const char **permissions3 = NULL;
@@ -309,7 +309,7 @@ test_modify (void)
     g_autoptr(XdgAppDbEntry) entry6 = NULL;
     g_autoptr(XdgAppDbEntry) entry7 = NULL;
     g_autofree const char **apps2 = NULL;
-    glnx_strfreev char **apps3 = NULL;
+    g_auto(GStrv) apps3 = NULL;
     g_autofree const char **permissions1 = NULL;
     g_autofree const char **permissions2 = NULL;
     g_autofree const char **permissions3 = NULL;

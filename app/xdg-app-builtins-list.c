@@ -55,8 +55,8 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 {
   gboolean ret = FALSE;
   g_autofree char *last = NULL;
-  glnx_strfreev char **system = NULL;
-  glnx_strfreev char **user = NULL;
+  g_auto(GStrv) system = NULL;
+  g_auto(GStrv) user = NULL;
   int s, u;
 
   if (print_user)
@@ -84,7 +84,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
   for (s = 0, u = 0; system[s] != NULL || user[u] != NULL; )
     {
       char *ref;
-      glnx_strfreev char **parts = NULL;
+      g_auto(GStrv) parts = NULL;
       g_autofree char *repo = NULL;
       gboolean is_user;
       g_autoptr(XdgAppDir) dir = NULL;

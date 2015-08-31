@@ -211,7 +211,7 @@ get_app_name_from_id (guint32 id)
 static void
 fill_app_name_hash (void)
 {
-  glnx_strfreev char **keys = NULL;
+  g_auto(GStrv) keys = NULL;
   int i;
 
   keys = xdp_list_apps ();

@@ -57,7 +57,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
-  glnx_strfreev char **envp = NULL;
+  g_auto(GStrv) envp = NULL;
   gsize metadata_size;
   const char *directory = NULL;
   const char *command = "/bin/sh";

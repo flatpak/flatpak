@@ -465,7 +465,7 @@ xdg_app_dir_make_current_ref (XdgAppDir *self,
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFile) current_link = NULL;
-  glnx_strfreev char **ref_parts = NULL;
+  g_auto(GStrv) ref_parts = NULL;
   g_autofree char *rest = NULL;
   gboolean ret = FALSE;
 
@@ -926,8 +926,8 @@ export_desktop_file (const char    *app,
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree gchar *old_exec = NULL;
   gint old_argc;
-  glnx_strfreev gchar **old_argv = NULL;
-  glnx_strfreev gchar **groups = NULL;
+  g_auto(GStrv) old_argv = NULL;
+  g_auto(GStrv) groups = NULL;
   GString *new_exec = NULL;
   g_autofree char *escaped_app = maybe_quote (app);
   g_autofree char *escaped_branch = maybe_quote (branch);
@@ -1429,7 +1429,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
   export = g_file_get_child (checkoutdir, "export");
   if (g_file_query_exists (export, cancellable))
     {
-      glnx_strfreev char **ref_parts = NULL;
+      g_auto(GStrv) ref_parts = NULL;
 
       ref_parts = g_strsplit (ref, "/", -1);
 
@@ -1624,7 +1624,7 @@ xdg_app_dir_undeploy (XdgAppDir *self,
   active = xdg_app_dir_read_active (self, ref, cancellable);
   if (active != NULL && strcmp (active, checksum) == 0)
     {
-      glnx_strfreev char **deployed_checksums = NULL;
+      g_auto(GStrv) deployed_checksums = NULL;
       const char *some_deployment;
 
       /* We're removing the active deployment, start by repointing that

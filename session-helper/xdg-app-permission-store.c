@@ -146,7 +146,7 @@ handle_list (XdgAppPermissionStore *object,
              const gchar *table_name)
 {
   Table *table;
-  glnx_strfreev char **ids = NULL;
+  g_auto(GStrv) ids = NULL;
 
   table = lookup_table (table_name, invocation);
   if (table == NULL)

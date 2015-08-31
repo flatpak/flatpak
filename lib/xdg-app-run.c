@@ -548,7 +548,7 @@ option_env_cb (const gchar    *option_name,
                GError        **error)
 {
   XdgAppContext *context = data;
-  glnx_strfreev char **split = g_strsplit (value, "=", 2);
+  g_auto(GStrv) split = g_strsplit (value, "=", 2);
 
   if (split == NULL || split[0] == NULL || split[0][0] == 0 || split[1] == NULL)
     {
@@ -643,7 +643,7 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
 
   if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_SHARED, NULL))
     {
-      glnx_strfreev char **shares = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
+      g_auto(GStrv) shares = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
                                                                 XDG_APP_METADATA_KEY_SHARED, NULL, error);
       if (shares == NULL)
         return FALSE;
@@ -659,7 +659,7 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
 
   if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_SOCKETS, NULL))
     {
-      glnx_strfreev char **sockets = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
+      g_auto(GStrv) sockets = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
                                                                  XDG_APP_METADATA_KEY_SOCKETS, NULL, error);
       if (sockets == NULL)
         return FALSE;
@@ -675,7 +675,7 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
 
   if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_DEVICES, NULL))
     {
-      glnx_strfreev char **devices = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
+      g_auto(GStrv) devices = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
                                                                  XDG_APP_METADATA_KEY_DEVICES, NULL, error);
       if (devices == NULL)
         return FALSE;
@@ -692,7 +692,7 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
 
   if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_FILESYSTEMS, NULL))
     {
-      glnx_strfreev char **filesystems = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
+      g_auto(GStrv) filesystems = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
                                                                      XDG_APP_METADATA_KEY_FILESYSTEMS, NULL, error);
       if (filesystems == NULL)
         return FALSE;
@@ -707,7 +707,7 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
 
   if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_PERSISTENT, NULL))
     {
-      glnx_strfreev char **persistent = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
+      g_auto(GStrv) persistent = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
                                                                     XDG_APP_METADATA_KEY_PERSISTENT, NULL, error);
       if (persistent == NULL)
         return FALSE;
@@ -718,7 +718,7 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
 
   if (g_key_file_has_group (metakey, XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY))
     {
-      glnx_strfreev char **keys = NULL;
+      g_auto(GStrv) keys = NULL;
       gsize i, keys_count;
 
       keys = g_key_file_get_keys (metakey, XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY, &keys_count, NULL);
@@ -741,7 +741,7 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
 
   if (g_key_file_has_group (metakey, XDG_APP_METADATA_GROUP_ENVIRONMENT))
     {
-      glnx_strfreev char **keys = NULL;
+      g_auto(GStrv) keys = NULL;
       gsize i, keys_count;
 
       keys = g_key_file_get_keys (metakey, XDG_APP_METADATA_GROUP_ENVIRONMENT, &keys_count, NULL);
@@ -761,9 +761,9 @@ void
 xdg_app_context_save_metadata (XdgAppContext            *context,
                                GKeyFile                 *metakey)
 {
-  glnx_strfreev char **shared = xdg_app_context_shared_to_string (context->shares);
-  glnx_strfreev char **sockets = xdg_app_context_sockets_to_string (context->sockets);
-  glnx_strfreev char **devices = xdg_app_context_devices_to_string (context->devices);
+  g_auto(GStrv) shared = xdg_app_context_shared_to_string (context->shares);
+  g_auto(GStrv) sockets = xdg_app_context_sockets_to_string (context->sockets);
+  g_auto(GStrv) devices = xdg_app_context_devices_to_string (context->devices);
   GHashTableIter iter;
   gpointer key, value;
 

@@ -47,7 +47,7 @@ guint32 *
 xdp_list_docs (void)
 {
   GArray *res;
-  glnx_strfreev char **ids;
+  g_auto(GStrv) ids = NULL;
   guint32 id;
   int i;
 
@@ -224,7 +224,7 @@ do_create_doc (const char *path)
 {
   g_autoptr(GVariant) data = g_variant_ref_sink (g_variant_new_bytestring (path));
   g_autoptr (XdgAppDbEntry) entry = NULL;
-  glnx_strfreev char **ids = NULL;
+  g_auto(GStrv) ids = NULL;
   char *id = NULL;
 
   ids = xdg_app_db_list_ids_by_value (db, data);

@@ -78,8 +78,8 @@ static gboolean
 add_extension_args (GKeyFile *metakey, const char *full_ref,
 		    GPtrArray *argv_array, GCancellable *cancellable, GError **error)
 {
-  glnx_strfreev gchar **groups = NULL;
-  glnx_strfreev gchar **parts = NULL;
+  g_auto(GStrv) groups = NULL;
+  g_auto(GStrv) parts = NULL;
   gboolean ret = FALSE;
   int i;
 
@@ -109,7 +109,7 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
 				      "subdirectories", NULL))
 	    {
 	      g_autofree char *prefix = g_strconcat (extension, ".", NULL);
-	      glnx_strfreev char **refs = NULL;
+	      g_auto(GStrv) refs = NULL;
 	      int i;
 
 	      refs = xdg_app_list_deployed_refs (parts[0], prefix, parts[2], parts[3],
@@ -165,7 +165,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
-  glnx_strfreev char **envp = NULL;
+  g_auto(GStrv) envp = NULL;
   g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
   g_autofree char *monitor_path = NULL;
   const char *app;
