@@ -677,3 +677,68 @@ ostree_repo_load_summary (const char *repository_url,
 out:
   return ret;
 }
+
+/* Based on g_mkstemp from glib */
+
+gint
+xdg_app_mkstempat (int dir_fd,
+                   gchar *tmpl,
+                   int flags,
+                   int mode)
+{
+  char *XXXXXX;
+  int count, fd;
+  static const char letters[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  static const int NLETTERS = sizeof (letters) - 1;
+  glong value;
+  GTimeVal tv;
+  static int counter = 0;
+
+  g_return_val_if_fail (tmpl != NULL, -1);
+
+  /* find the last occurrence of "XXXXXX" */
+  XXXXXX = g_strrstr (tmpl, "XXXXXX");
+
+  if (!XXXXXX || strncmp (XXXXXX, "XXXXXX", 6))
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  /* Get some more or less random data.  */
+  g_get_current_time (&tv);
+  value = (tv.tv_usec ^ tv.tv_sec) + counter++;
+
+  for (count = 0; count < 100; value += 7777, ++count)
+    {
+      glong v = value;
+
+      /* Fill in the random bits.  */
+      XXXXXX[0] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[1] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[2] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[3] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[4] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[5] = letters[v % NLETTERS];
+
+      fd = openat (dir_fd, tmpl, flags | O_CREAT | O_EXCL, mode);
+
+      if (fd >= 0)
+        return fd;
+      else if (errno != EEXIST)
+        /* Any other error will apply also to other names we might
+         *  try, and there are 2^32 or so of them, so give up now.
+         */
+        return -1;
+    }
+
+  /* We got out of the loop because we ran out of combinations to try.  */
+  errno = EEXIST;
+  return -1;
+}
