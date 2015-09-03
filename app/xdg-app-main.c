@@ -55,6 +55,7 @@ static XdgAppCommand commands[] = {
   { "uninstall-app", xdg_app_builtin_uninstall_app },
   { "list-apps", xdg_app_builtin_list_apps },
   { "run", xdg_app_builtin_run },
+  { "export-file", xdg_app_builtin_export_file },
   { "build-init", xdg_app_builtin_build_init },
   { "build", xdg_app_builtin_build },
   { "build-finish", xdg_app_builtin_build_finish },
