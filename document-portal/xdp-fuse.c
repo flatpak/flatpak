@@ -1626,6 +1626,9 @@ xdp_fuse_release (fuse_req_t req,
                   struct fuse_file_info *fi)
 {
   XdpFh *fh = (gpointer)fi->fh;
+
+  g_debug ("xdp_fuse_release %lx (fi=%p, refcount: %d)", ino, fi, fh->ref_count);
+
   xdp_fh_unref (fh);
   fuse_reply_err (req, 0);
 }
