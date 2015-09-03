@@ -134,7 +134,8 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
   perms = xdp_parse_permissions (permissions);
 
   /* Must have grant-permissions and all the newly granted permissions */
-  if (!xdp_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS | perms))
+  if (!xdp_entry_has_permissions (entry, app_id,
+                                  XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS | perms))
     {
       g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
                                              "Not enough permissions");
@@ -142,7 +143,7 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
     }
 
   do_set_permissions (entry, id, target_app_id,
-                      perms | xdp_get_permissions (entry, target_app_id));
+                      perms | xdp_entry_get_permissions (entry, target_app_id));
 
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 }
@@ -178,7 +179,8 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
   perms = xdp_parse_permissions (permissions);
 
   /* Must have grant-permissions, or be itself */
-  if (!xdp_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS) ||
+  if (!xdp_entry_has_permissions (entry, app_id,
+                                  XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS) ||
       strcmp (app_id, target_app_id) == 0)
     {
       g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
@@ -187,7 +189,7 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
     }
 
   do_set_permissions (entry, id, target_app_id,
-                      ~perms & xdp_get_permissions (entry, target_app_id));
+                      ~perms & xdp_entry_get_permissions (entry, target_app_id));
 
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 }
@@ -210,7 +212,7 @@ portal_delete (GDBusMethodInvocation *invocation,
       return;
     }
 
-  if (!xdp_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_DELETE))
+  if (!xdp_entry_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_DELETE))
     {
       g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
                                              "Not enough permissions");
@@ -226,12 +228,18 @@ portal_delete (GDBusMethodInvocation *invocation,
 }
 
 char *
-do_create_doc (const char *path)
+do_create_doc (struct stat *parent_st_buf, const char *path)
 {
-  g_autoptr(GVariant) data = g_variant_ref_sink (g_variant_new_bytestring (path));
+  g_autoptr(GVariant) data = NULL;
   g_autoptr (XdgAppDbEntry) entry = NULL;
   g_auto(GStrv) ids = NULL;
   char *id = NULL;
+
+  data =
+    g_variant_ref_sink (g_variant_new ("(^aytt)",
+                                       path,
+                                       (guint64)parent_st_buf->st_dev,
+                                       (guint64)parent_st_buf->st_ino));
 
   ids = xdg_app_db_list_ids_by_value (db, data);
 
@@ -268,47 +276,18 @@ portal_add (GDBusMethodInvocation *invocation,
             GVariant *parameters,
             const char *app_id)
 {
-  const char *path;
-  g_autofree char *id = NULL;
-
-  if (app_id[0] != '\0')
-    {
-      /* don't allow this from within the sandbox */
-      g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
-                                             "Not allowed inside sandbox");
-      return;
-    }
-
-  g_variant_get (parameters, "(^ay)", &path);
-  if (!g_path_is_absolute (path))
-    {
-      g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
-                                             "Document paths must be absolute");
-      return;
-    }
-
-  id = do_create_doc (path);
-
-  g_dbus_method_invocation_return_value (invocation,
-                                         g_variant_new ("(s)", id));
-}
-
-static void
-portal_add_local (GDBusMethodInvocation *invocation,
-                  GVariant *parameters,
-                  const char *app_id)
-{
   GDBusMessage *message;
   GUnixFDList *fd_list;
   g_autofree char *id = NULL;
   g_autofree char *proc_path = NULL;
   int fd_id, fd, fds_len, fd_flags;
+  glnx_fd_close int dir_fd = -1;
   const int *fds;
   char path_buffer[PATH_MAX+1];
   ssize_t symlink_size;
-  struct stat st_buf, real_st_buf;
+  struct stat st_buf, real_st_buf, real_parent_st_buf;
+  g_autofree char *dirname = NULL;
+  g_autofree char *name = NULL;
 
   g_variant_get (parameters, "(h)", &fd_id);
 
@@ -326,15 +305,18 @@ portal_add_local (GDBusMethodInvocation *invocation,
   proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
 
   if (fd == -1 ||
+      /* Must be able to get fd flags */
+      (fd_flags = fcntl (fd, F_GETFL)) == -1 ||
+      /* Must be O_PATH */
+      ((fd_flags & O_PATH) != O_PATH) ||
+      /* Must not be O_NOFOLLOW (because we want the target file) */
+      ((fd_flags & O_NOFOLLOW) == O_PATH) ||
       /* Must be able to fstat */
       fstat (fd, &st_buf) < 0 ||
       /* Must be a regular file */
       (st_buf.st_mode & S_IFMT) != S_IFREG ||
-      /* Must be able to get fd flags */
-      (fd_flags = fcntl (fd, F_GETFL)) == -1 ||
-      /* Must be able to read */
-      (fd_flags & O_ACCMODE) == O_WRONLY ||
       /* Must be able to read path from /proc/self/fd */
+      /* This is an absolute and (at least at open time) symlink-expanded path */
       (symlink_size = readlink (proc_path, path_buffer, sizeof (path_buffer) - 1)) < 0)
     {
       g_dbus_method_invocation_return_error (invocation,
@@ -345,7 +327,15 @@ portal_add_local (GDBusMethodInvocation *invocation,
 
   path_buffer[symlink_size] = 0;
 
-  if (lstat (path_buffer, &real_st_buf) < 0 ||
+  /* We open the parent directory and do the stat in that, so that we have
+     trustworthy parent dev/ino for later verification. Otherwise the caller
+     could later replace a parent with a symlink and make us read some other file */
+  dirname = g_path_get_dirname (path_buffer);
+  name = g_path_get_basename (path_buffer);
+  dir_fd = open (dirname, O_CLOEXEC|O_PATH);
+
+  if (fstat (dir_fd, &real_parent_st_buf) < 0 ||
+      fstatat (dir_fd, name, &real_st_buf, AT_SYMLINK_NOFOLLOW) < 0 ||
       st_buf.st_dev != real_st_buf.st_dev ||
       st_buf.st_ino != real_st_buf.st_ino)
     {
@@ -356,19 +346,17 @@ portal_add_local (GDBusMethodInvocation *invocation,
       return;
     }
 
-  id = do_create_doc (path_buffer);
+  id = do_create_doc (&real_parent_st_buf, path_buffer);
 
   if (app_id[0] != '\0')
     {
-      /* also grant app-id perms based on file_mode */
-      guint32 perms = XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS | XDP_PERMISSION_FLAGS_READ;
       g_autoptr(XdgAppDbEntry) entry = NULL;
       entry = xdg_app_db_lookup (db, id);
 
-      if ((fd_flags & O_ACCMODE) == O_RDWR)
-        perms |= XDP_PERMISSION_FLAGS_WRITE;
-
-      do_set_permissions (entry, id, app_id, perms);
+      do_set_permissions (entry, id, app_id,
+                          XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
+                          XDP_PERMISSION_FLAGS_READ |
+                          XDP_PERMISSION_FLAGS_WRITE);
     }
 
   g_dbus_method_invocation_return_value (invocation,
@@ -428,7 +416,6 @@ on_bus_acquired (GDBusConnection *connection,
 
   g_signal_connect_swapped (helper, "handle-get-mount-point", G_CALLBACK (handle_get_mount_point), NULL);
   g_signal_connect_swapped (helper, "handle-add", G_CALLBACK (handle_method), portal_add);
-  g_signal_connect_swapped (helper, "handle-add-local", G_CALLBACK (handle_method), portal_add_local);
   g_signal_connect_swapped (helper, "handle-grant-permissions", G_CALLBACK (handle_method), portal_grant_permissions);
   g_signal_connect_swapped (helper, "handle-revoke-permissions", G_CALLBACK (handle_method), portal_revoke_permissions);
   g_signal_connect_swapped (helper, "handle-delete", G_CALLBACK (handle_method), portal_delete);

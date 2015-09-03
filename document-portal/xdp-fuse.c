@@ -108,7 +108,7 @@ get_entry_cache_time (int st_mode)
  * the list (add/remove) or name of a tmpfile.
  *
  * Each instance has a mutex that locks access to the backing path,
- * as it can be removed at runtime. Use get/steal_backing_path() to
+ * as it can be removed at runtime. Use get/steal_backing_basename() to
  * safely access it.
  *
  ******************************* XdpTmp *******************************/
@@ -122,6 +122,7 @@ typedef struct
   /* These are immutable, no lock needed */
   guint64 parent_inode;
   guint32 tmp_id;
+  XdgAppDbEntry *entry;
 
   /* Changes always done under tmp_files lock */
   char *name;
@@ -129,7 +130,7 @@ typedef struct
   GMutex mutex;
 
   /* protected by mutex */
-  char *backing_path;
+  char *backing_basename;
 } XdpTmp;
 
 /* Owns a ref to the files */
@@ -148,30 +149,31 @@ xdp_tmp_unref (XdpTmp *tmp)
 {
   if (g_atomic_int_dec_and_test (&tmp->ref_count))
     {
+      xdg_app_db_entry_unref (tmp->entry);
       g_free (tmp->name);
-      g_free (tmp->backing_path);
+      g_free (tmp->backing_basename);
       g_free (tmp);
     }
 }
 
 char *
-xdp_tmp_get_backing_path (XdpTmp *tmp)
+xdp_tmp_get_backing_basename (XdpTmp *tmp)
 {
   char *res;
   g_mutex_lock (&tmp->mutex);
-  res = g_strdup (tmp->backing_path);
+  res = g_strdup (tmp->backing_basename);
   g_mutex_unlock (&tmp->mutex);
 
   return res;
 }
 
 char *
-xdp_tmp_steal_backing_path (XdpTmp *tmp)
+xdp_tmp_steal_backing_basename (XdpTmp *tmp)
 {
   char *res;
   g_mutex_lock (&tmp->mutex);
-  res = tmp->backing_path;
-  tmp->backing_path = NULL;
+  res = tmp->backing_basename;
+  tmp->backing_basename = NULL;
   g_mutex_unlock (&tmp->mutex);
 
   return res;
@@ -227,17 +229,25 @@ find_tmp_by_id (guint32 tmp_id)
 /* Caller must hold tmp_files lock */
 static XdpTmp *
 xdp_tmp_new_nolock (fuse_ino_t parent,
+                    XdgAppDbEntry *entry,
                     const char *name,
-                    const char *path)
+                    const char *tmp_basename)
 {
   XdpTmp *tmp;
+  g_autofree char *tmp_dirname = NULL;
+
+  /* We store the pathname instead of dir_fd + basename, because
+     its very easy to get a lot of tempfiles leaking and that would
+     mean quite a lot of open fds */
+  tmp_dirname = xdp_entry_dup_dirname (entry);
 
   tmp = g_new0 (XdpTmp, 1);
+  tmp->ref_count = 2; /* One owned by tmp_files */
+  tmp->tmp_id = g_atomic_int_add (&next_tmp_id, 1);
   tmp->parent_inode = parent;
   tmp->name = g_strdup (name);
-  tmp->backing_path = g_strdup (path);
-  tmp->tmp_id = g_atomic_int_add (&next_tmp_id, 1);
-  tmp->ref_count = 1; /* Owned by tmp_files */
+  tmp->entry = xdg_app_db_entry_ref (entry);
+  tmp->backing_basename = g_strdup (tmp_basename);
 
   tmp_files = g_list_prepend (tmp_files, tmp);
 
@@ -249,11 +259,15 @@ static void
 xdp_tmp_unlink_nolock (XdpTmp *tmp)
 {
 
-  g_autofree char *backing_path = NULL;
+  g_autofree char *backing_basename = NULL;
 
-  backing_path = xdp_tmp_steal_backing_path (tmp);
-  if (backing_path)
-    unlink (backing_path);
+  backing_basename = xdp_tmp_steal_backing_basename (tmp);
+  if (backing_basename)
+    {
+      glnx_fd_close int dir_fd = xdp_entry_open_dir (tmp->entry);
+      if (dir_fd)
+        unlinkat (dir_fd, backing_basename, 0);
+    }
 
   tmp_files = g_list_remove (tmp_files, tmp);
   xdp_tmp_unref (tmp);
@@ -291,8 +305,9 @@ typedef struct
   /* These are immutable, no lock needed */
   guint32 tmp_id;
   fuse_ino_t inode;
-  char *trunc_path;
-  char *real_path;
+  int dir_fd;
+  char *trunc_basename;
+  char *real_basename;
 
   /* These need a lock whenever they are used */
   int fd;
@@ -319,24 +334,24 @@ xdp_fh_finalize (XdpFh *fh)
   if (fh->truncated)
     {
       fsync (fh->trunc_fd);
-      if (rename (fh->trunc_path, fh->real_path) != 0)
+      if (renameat (fh->dir_fd, fh->trunc_basename,
+                    fh->dir_fd, fh->real_basename) != 0)
         g_warning ("Unable to replace truncated document");
     }
-  else if (fh->trunc_path)
-    unlink (fh->trunc_path);
+  else if (fh->trunc_basename)
+    unlinkat (fh->dir_fd, fh->trunc_basename, 0);
 
   if (fh->fd >= 0)
     close (fh->fd);
+
   if (fh->trunc_fd >= 0)
     close (fh->trunc_fd);
 
-  if (fh->fd >= 0)
-    close (fh->fd);
-  if (fh->trunc_fd >= 0)
-    close (fh->trunc_fd);
+  if (fh->dir_fd >= 0)
+    close (fh->dir_fd);
 
-  g_clear_pointer (&fh->trunc_path, g_free);
-  g_clear_pointer (&fh->real_path, g_free);
+  g_clear_pointer (&fh->trunc_basename, g_free);
+  g_clear_pointer (&fh->real_basename, g_free);
 
   g_free (fh);
 }
@@ -398,6 +413,7 @@ xdp_fh_new (fuse_ino_t inode,
   fh->fd = fd;
   if (tmp)
     fh->tmp_id = tmp->tmp_id;
+  fh->dir_fd = -1;
   fh->trunc_fd = -1;
   fh->ref_count = 1; /* Owned by fuse_file_info fi */
 
@@ -656,7 +672,7 @@ app_can_see_doc (XdgAppDbEntry *entry, guint32 app_id)
   const char *app_name = get_app_name_from_id (app_id);
 
   if (app_name != NULL &&
-      xdp_has_permissions (entry, app_name, XDP_PERMISSION_FLAGS_READ))
+      xdp_entry_has_permissions (entry, app_name, XDP_PERMISSION_FLAGS_READ))
     return TRUE;
 
   return FALSE;
@@ -670,10 +686,9 @@ xdp_stat (fuse_ino_t ino,
   XdpInodeClass class = get_class (ino);
   guint64 class_ino = get_class_ino (ino);
   g_autoptr (XdgAppDbEntry) entry = NULL;
-  const char *path = NULL;
   struct stat tmp_stbuf;
   g_autoptr(XdpTmp) tmp = NULL;
-  g_autofree char *backing_path = NULL;
+  g_autofree char *backing_basename = NULL;
 
   stbuf->st_ino = ino;
 
@@ -736,8 +751,7 @@ xdp_stat (fuse_ino_t ino,
 
       stbuf->st_nlink = DOC_FILE_NLINK;
 
-      path = xdp_get_path (entry);
-      if (stat (path, &tmp_stbuf) != 0)
+      if (xdp_entry_stat (entry, &tmp_stbuf, AT_SYMLINK_NOFOLLOW) != 0)
         return ENOENT;
 
       stbuf->st_mode = S_IFREG | get_user_perms (&tmp_stbuf);
@@ -759,10 +773,16 @@ xdp_stat (fuse_ino_t ino,
       stbuf->st_mode = S_IFREG;
       stbuf->st_nlink = DOC_FILE_NLINK;
 
-      backing_path = xdp_tmp_get_backing_path (tmp);
+      backing_basename = xdp_tmp_get_backing_basename (tmp);
 
-      if (backing_path == NULL || stat (backing_path, &tmp_stbuf) != 0)
-        return ENOENT;
+      {
+        glnx_fd_close int dir_fd = xdp_entry_open_dir (tmp->entry);
+
+        if (backing_basename == NULL ||
+            dir_fd == -1 ||
+            fstatat (dir_fd, backing_basename, &tmp_stbuf, 0) != 0)
+          return ENOENT;
+      }
 
       stbuf->st_mode = S_IFREG | get_user_perms (&tmp_stbuf);
       stbuf->st_size = tmp_stbuf.st_size;
@@ -905,7 +925,7 @@ xdp_lookup (fuse_ino_t parent,
         entry = xdp_lookup_doc (parent_class_ino);
       if (entry != NULL)
         {
-          g_autofree char *basename = xdp_dup_basename (entry);
+          g_autofree char *basename = xdp_entry_dup_basename (entry);
           if (strcmp (name, basename) == 0)
             {
               *inode = make_inode (DOC_FILE_INO_CLASS, parent_class_ino);
@@ -1036,9 +1056,8 @@ dirbuf_add_doc_file (fuse_req_t req,
                      guint32 doc_id)
 {
   struct stat tmp_stbuf;
-  const char *path = xdp_get_path (entry);
-  g_autofree char *basename = xdp_dup_basename (entry);
-  if (stat (path, &tmp_stbuf) == 0)
+  g_autofree char *basename = xdp_entry_dup_basename (entry);
+  if (xdp_entry_stat (entry, &tmp_stbuf, AT_SYMLINK_NOFOLLOW) == 0)
     dirbuf_add (req, b, basename,
                 make_inode (DOC_FILE_INO_CLASS, doc_id));
 }
@@ -1222,14 +1241,13 @@ get_open_flags (struct fuse_file_info *fi)
 }
 
 static char *
-create_tmp_for_doc (XdgAppDbEntry *entry, int flags, int *fd_out)
+create_tmp_for_doc (XdgAppDbEntry *entry, int dir_fd, int flags, int *fd_out)
 {
-  g_autofree char *dirname = xdp_dup_dirname (entry);
-  g_autofree char *basename = xdp_dup_basename (entry);
-  g_autofree char *template = g_strconcat (dirname, "/.", basename, ".XXXXXX", NULL);
+  g_autofree char *basename = xdp_entry_dup_basename (entry);
+  g_autofree char *template = g_strconcat (".xdp_", basename, ".XXXXXX", NULL);
   int fd;
 
-  fd = g_mkstemp_full (template, flags, 0600);
+  fd = xdg_app_mkstempat (dir_fd, template, flags, 0600);
   if (fd == -1)
     return NULL;
 
@@ -1246,7 +1264,6 @@ xdp_fuse_open (fuse_req_t req,
   guint64 class_ino = get_class_ino (ino);
   struct stat stbuf = {0};
   g_autoptr (XdgAppDbEntry) entry = NULL;
-  const char *path = NULL;
   g_autoptr(XdpTmp) tmp = NULL;
   glnx_fd_close int fd = -1;
   int res;
@@ -1268,50 +1285,59 @@ xdp_fuse_open (fuse_req_t req,
 
   if (entry && class == DOC_FILE_INO_CLASS)
     {
-      g_autofree char *write_path = NULL;
+      g_autofree char *tmp_basename = NULL;
       glnx_fd_close int write_fd = -1;
+      glnx_fd_close int dir_fd = -1;
+      g_autofree char *basename = xdp_entry_dup_basename (entry);
 
-      path = xdp_get_path (entry);
+      dir_fd = xdp_entry_open_dir (entry);
+      if (dir_fd == -1)
+        {
+          fuse_reply_err (req, errno);
+          return;
+        }
 
       if ((fi->flags & 3) != O_RDONLY)
         {
-          if (access (path, W_OK) != 0)
+          if (faccessat (dir_fd, basename, W_OK, 0) != 0)
             {
               fuse_reply_err (req, errno);
               return;
             }
-          write_path = create_tmp_for_doc (entry, O_RDWR, &write_fd);
-          if (write_path == NULL)
+          tmp_basename = create_tmp_for_doc (entry, dir_fd, O_RDWR, &write_fd);
+          if (tmp_basename == NULL)
             {
               fuse_reply_err (req, errno);
               return;
             }
         }
 
-      fd = open (path, O_RDONLY);
+      fd = openat (dir_fd, basename, O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
       if (fd < 0)
         {
           fuse_reply_err (req, errno);
           return;
         }
       fh = xdp_fh_new (ino, fi, steal_fd(&fd), NULL);
+      fh->dir_fd = steal_fd (&dir_fd);
       fh->trunc_fd = steal_fd (&write_fd);
-      fh->trunc_path = g_steal_pointer (&write_path);
-      fh->real_path = g_strdup (path);
+      fh->trunc_basename = g_steal_pointer (&tmp_basename);
+      fh->real_basename = g_strdup (basename);
       if (fuse_reply_open (req, fi))
         xdp_fh_unref (fh);
     }
   else if (class == TMPFILE_INO_CLASS &&
            (tmp = find_tmp_by_id (class_ino)))
     {
-      g_autofree char *backing_path = xdp_tmp_get_backing_path (tmp);
-      if (backing_path == NULL)
+      glnx_fd_close int dir_fd = xdp_entry_open_dir (tmp->entry);
+      g_autofree char *backing_basename = xdp_tmp_get_backing_basename (tmp);
+      if (dir_fd == -1 || backing_basename == NULL)
         {
           fuse_reply_err (req, ENOENT);
           return;
         }
 
-      fd = open (backing_path, get_open_flags (fi));
+      fd = openat (dir_fd, backing_basename, get_open_flags (fi));
       if (fd < 0)
         {
           fuse_reply_err (req, errno);
@@ -1338,7 +1364,6 @@ xdp_fuse_create (fuse_req_t req,
   XdpFh *fh;
   g_autoptr(XdgAppDbEntry) entry = NULL;
   g_autofree char *basename = NULL;
-  const char *path = NULL;
   glnx_fd_close int fd = -1;
   int res;
 
@@ -1363,23 +1388,29 @@ xdp_fuse_create (fuse_req_t req,
       return;
     }
 
-  basename = xdp_dup_basename (entry);
+  basename = xdp_entry_dup_basename (entry);
   if (strcmp (name, basename) == 0)
     {
-      g_autofree char *write_path = NULL;
+      g_autofree char *tmp_basename = NULL;
       glnx_fd_close int write_fd = -1;
       guint32 doc_id = xdp_id_from_name (name);
+      glnx_fd_close int dir_fd = -1;
 
-      write_path = create_tmp_for_doc (entry, O_RDWR, &write_fd);
-      if (write_path == NULL)
+      dir_fd = xdp_entry_open_dir (entry);
+      if (dir_fd == -1)
         {
           fuse_reply_err (req, errno);
           return;
         }
 
-      path = xdp_get_path (entry);
+      tmp_basename = create_tmp_for_doc (entry, dir_fd, O_RDWR, &write_fd);
+      if (tmp_basename == NULL)
+        {
+          fuse_reply_err (req, errno);
+          return;
+        }
 
-      fd = open (path, O_CREAT|O_EXCL|O_RDONLY);
+      fd = openat (dir_fd, basename, O_CREAT|O_EXCL|O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
       if (fd < 0)
         {
           fuse_reply_err (req, errno);
@@ -1389,10 +1420,11 @@ xdp_fuse_create (fuse_req_t req,
       e.ino = make_inode (DOC_FILE_INO_CLASS, doc_id);
 
       fh = xdp_fh_new (e.ino, fi, steal_fd (&fd), NULL);
+      fh->dir_fd = steal_fd (&dir_fd);
       fh->truncated = TRUE;
       fh->trunc_fd = steal_fd (&write_fd);
-      fh->trunc_path = g_steal_pointer (&write_path);
-      fh->real_path = g_strdup (path);
+      fh->trunc_basename = g_steal_pointer (&tmp_basename);
+      fh->real_basename = g_strdup (basename);
 
       if (xdp_fh_fstat_locked (fh, &e.attr) != 0)
         {
@@ -1422,18 +1454,19 @@ xdp_fuse_create (fuse_req_t req,
 
       if (tmpfile)
         {
-          g_autofree char *backing_path = NULL;
+          glnx_fd_close int dir_fd = xdp_entry_open_dir (tmpfile->entry);
+          g_autofree char *backing_basename = NULL;
 
           G_UNLOCK(tmp_files);
 
-          backing_path = xdp_tmp_get_backing_path (tmpfile);
-          if (backing_path == NULL)
+          backing_basename = xdp_tmp_get_backing_basename (tmpfile);
+          if (dir_fd == -1 || backing_basename == NULL)
             {
               fuse_reply_err (req, EINVAL);
               return;
             }
 
-          fd = open (backing_path, get_open_flags (fi));
+          fd = openat (dir_fd, backing_basename, get_open_flags (fi));
           if (fd == -1)
             {
               fuse_reply_err (req, errno);
@@ -1443,13 +1476,21 @@ xdp_fuse_create (fuse_req_t req,
       else
         {
           int errsv;
-          g_autofree char *tmp_path = NULL;
+          g_autofree char *tmp_basename = NULL;
+          glnx_fd_close int dir_fd = -1;
 
-          tmp_path = create_tmp_for_doc (entry, get_open_flags (fi), &fd);
-          if (tmp_path == NULL)
-            return NULL;
+          dir_fd = xdp_entry_open_dir (entry);
+          if (dir_fd == -1)
+            {
+              fuse_reply_err (req, errno);
+              return;
+            }
 
-          tmpfile = xdp_tmp_new_nolock (parent, name, tmp_path);
+          tmp_basename = create_tmp_for_doc (entry, dir_fd, get_open_flags (fi), &fd);
+          if (tmp_basename == NULL)
+            return;
+
+          tmpfile = xdp_tmp_new_nolock (parent, entry, name, tmp_basename);
           errsv = errno;
           G_UNLOCK(tmp_files);
 
@@ -1626,17 +1667,24 @@ xdp_fuse_rename (fuse_req_t req,
       return;
     }
 
-  basename = xdp_dup_basename (entry);
+  basename = xdp_entry_dup_basename (entry);
 
   if (strcmp (newname, basename) == 0)
     {
-      const char *real_path = xdp_get_path (entry);
-      g_autofree char *backing_path = NULL;
+      glnx_fd_close int dir_fd = -1;
+      g_autofree char *backing_basename = NULL;
       /* Rename tmpfile to regular file */
 
+      dir_fd = xdp_entry_open_dir (entry);
+      if (dir_fd == -1)
+        {
+          fuse_reply_err (req, errno);
+          return;
+        }
+
       /* Steal backing path so we don't delete it when unlinking tmp */
-      backing_path = xdp_tmp_steal_backing_path (tmp);
-      if (backing_path == NULL)
+      backing_basename = xdp_tmp_steal_backing_basename (tmp);
+      if (backing_basename == NULL)
         {
           fuse_reply_err (req, EINVAL);
           return;
@@ -1645,7 +1693,8 @@ xdp_fuse_rename (fuse_req_t req,
       /* Stop writes to all outstanding fds to the temp file */
       mark_open_tmp_file_readonly (tmp->tmp_id);
 
-      if (rename (backing_path, real_path) != 0)
+      if (renameat (dir_fd, backing_basename,
+                    dir_fd, basename) != 0)
         {
           fuse_reply_err (req, errno);
           return;
@@ -1797,7 +1846,7 @@ xdp_fuse_fsyncdir (fuse_req_t req,
       entry = xdp_lookup_doc (doc_id);
       if (entry != NULL)
         {
-          g_autofree char *dirname = xdp_dup_dirname (entry);
+          g_autofree char *dirname = xdp_entry_dup_dirname (entry);
           int fd = open (dirname, O_DIRECTORY|O_RDONLY);
           if (fd >= 0)
             {
@@ -1868,12 +1917,19 @@ xdp_fuse_unlink (fuse_req_t req,
       return;
     }
 
-  basename = xdp_dup_basename (entry);
+  basename = xdp_entry_dup_basename (entry);
   if (strcmp (name, basename) == 0)
     {
-      const char *real_path = xdp_get_path (entry);
+      glnx_fd_close int dir_fd = -1;
 
-      if (unlink (real_path) != 0)
+      dir_fd = xdp_entry_open_dir (entry);
+      if (dir_fd == -1)
+        {
+          fuse_reply_err (req, errno);
+          return;
+        }
+
+      if (unlinkat (dir_fd, basename, 0) != 0)
         {
           fuse_reply_err (req, errno);
           return;

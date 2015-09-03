@@ -50,7 +50,7 @@ xdp_parse_permissions (const char **permissions)
 }
 
 XdpPermissionFlags
-xdp_get_permissions (XdgAppDbEntry *entry,
+xdp_entry_get_permissions (XdgAppDbEntry *entry,
                      const char *app_id)
 {
   g_autofree const char **permissions = NULL;
@@ -63,13 +63,13 @@ xdp_get_permissions (XdgAppDbEntry *entry,
 }
 
 gboolean
-xdp_has_permissions (XdgAppDbEntry *entry,
+xdp_entry_has_permissions (XdgAppDbEntry *entry,
                      const char *app_id,
                      XdpPermissionFlags perms)
 {
   XdpPermissionFlags current_perms;
 
-  current_perms = xdp_get_permissions (entry, app_id);
+  current_perms = xdp_entry_get_permissions (entry, app_id);
 
   return (current_perms & perms) == perms;
 }
@@ -87,26 +87,90 @@ xdp_name_from_id (guint32 doc_id)
 }
 
 const char *
-xdp_get_path (XdgAppDbEntry *entry)
+xdp_entry_get_path (XdgAppDbEntry *entry)
 {
   g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
-  return g_variant_get_bytestring (v);
+  g_autoptr(GVariant) c = g_variant_get_child_value (v, 0);
+  return g_variant_get_bytestring (c);
 }
 
 char *
-xdp_dup_basename (XdgAppDbEntry *entry)
+xdp_entry_dup_basename (XdgAppDbEntry *entry)
 {
-  const char *path = xdp_get_path (entry);
+  const char *path = xdp_entry_get_path (entry);
 
   return g_path_get_basename (path);
 }
 
 char *
-xdp_dup_dirname (XdgAppDbEntry *entry)
+xdp_entry_dup_dirname (XdgAppDbEntry *entry)
 {
-  const char *path = xdp_get_path (entry);
+  const char *path = xdp_entry_get_path (entry);
 
   return g_path_get_dirname (path);
+}
+
+guint64
+xdp_entry_get_device (XdgAppDbEntry *entry)
+{
+  g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
+  g_autoptr(GVariant) c = g_variant_get_child_value (v, 1);
+  return g_variant_get_uint64 (c);
+}
+
+guint64
+xdp_entry_get_inode (XdgAppDbEntry *entry)
+{
+  g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
+  g_autoptr(GVariant) c = g_variant_get_child_value (v, 2);
+  return g_variant_get_uint64 (c);
+}
+
+int
+xdp_entry_open_dir (XdgAppDbEntry *entry)
+{
+  g_autofree char *dirname = xdp_entry_dup_dirname (entry);
+  struct stat st_buf;
+  int fd;
+
+  fd = open (dirname, O_CLOEXEC | O_PATH | O_DIRECTORY);
+  if (fd == -1)
+    return -1;
+
+  if (fstat (fd, &st_buf) < 0)
+    {
+      close (fd);
+      errno = ENOENT;
+      return -1;
+    }
+
+  if (st_buf.st_ino != xdp_entry_get_inode (entry) ||
+      st_buf.st_dev != xdp_entry_get_device (entry))
+    {
+      close (fd);
+      errno = ENOENT;
+      return -1;
+    }
+
+  return fd;
+}
+
+int
+xdp_entry_stat (XdgAppDbEntry *entry,
+                struct stat *buf,
+                int flags)
+{
+  glnx_fd_close int fd = -1;
+  g_autofree char *basename = xdp_entry_dup_basename (entry);
+
+  fd = xdp_entry_open_dir (entry);
+  if (fd < 0)
+    return -1;
+
+  if (fstatat (fd, basename, buf, flags) != 0)
+    return -1;
+
+  return 0;
 }
 
 static GHashTable *app_ids;

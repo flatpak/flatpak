@@ -29,11 +29,7 @@
       <arg type='ay' name='path' direction='out'/>
     </method>
     <method name="Add">
-      <arg type='ay' name='path' direction='in'/>
-      <arg type='s' name='doc_id' direction='out'/>
-    </method>
-    <method name="AddLocal">
-      <arg type='h' name='fd' direction='in'/>
+      <arg type='h' name='o_path_fd' direction='in'/>
       <arg type='s' name='doc_id' direction='out'/>
     </method>
     <method name="GrantPermissions">
