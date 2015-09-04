@@ -889,7 +889,7 @@ xdp_lookup (fuse_ino_t parent,
           break;
 
         case BY_APP_INO:
-          if (g_dbus_is_name (name) && !g_dbus_is_unique_name (name))
+          if (xdg_app_is_valid_name (name))
             {
               guint32 app_id = get_app_id_from_name (name);
               *inode = make_inode (APP_DIR_INO_CLASS, app_id);
