@@ -1247,7 +1247,7 @@ create_tmp_for_doc (XdgAppDbEntry *entry, int dir_fd, int flags, int *fd_out)
   g_autofree char *template = g_strconcat (".xdp_", basename, ".XXXXXX", NULL);
   int fd;
 
-  fd = xdg_app_mkstempat (dir_fd, template, flags, 0600);
+  fd = xdg_app_mkstempat (dir_fd, template, flags|O_CLOEXEC, 0600);
   if (fd == -1)
     return NULL;
 
@@ -1337,7 +1337,7 @@ xdp_fuse_open (fuse_req_t req,
           return;
         }
 
-      fd = openat (dir_fd, backing_basename, get_open_flags (fi));
+      fd = openat (dir_fd, backing_basename, get_open_flags (fi)|O_NOFOLLOW|O_CLOEXEC);
       if (fd < 0)
         {
           fuse_reply_err (req, errno);
@@ -1466,7 +1466,7 @@ xdp_fuse_create (fuse_req_t req,
               return;
             }
 
-          fd = openat (dir_fd, backing_basename, get_open_flags (fi));
+          fd = openat (dir_fd, backing_basename, get_open_flags (fi)|O_NOFOLLOW|O_CLOEXEC);
           if (fd == -1)
             {
               fuse_reply_err (req, errno);
