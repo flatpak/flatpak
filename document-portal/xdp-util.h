@@ -7,6 +7,8 @@
 
 G_BEGIN_DECLS
 
+#define XDP_ENTRY_FLAG_UNIQUE (1<<0)
+
 const char **      xdg_unparse_permissions (XdpPermissionFlags   permissions);
 XdpPermissionFlags xdp_parse_permissions   (const char         **permissions);
 
@@ -20,6 +22,7 @@ char *             xdp_entry_dup_basename    (XdgAppDbEntry      *entry);
 char *             xdp_entry_dup_dirname     (XdgAppDbEntry      *entry);
 guint64            xdp_entry_get_device      (XdgAppDbEntry      *entry);
 guint64            xdp_entry_get_inode       (XdgAppDbEntry      *entry);
+guint32            xdp_entry_get_flags       (XdgAppDbEntry      *entry);
 int                xdp_entry_open_dir        (XdgAppDbEntry      *entry);
 int                xdp_entry_stat            (XdgAppDbEntry      *entry,
                                               struct stat        *buf,

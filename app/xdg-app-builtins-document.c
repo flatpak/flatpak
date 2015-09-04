@@ -36,7 +36,10 @@
 #include "xdg-app-utils.h"
 #include "xdg-app-run.h"
 
+gboolean opt_unique = FALSE;
+
 static GOptionEntry options[] = {
+  { "unique", 'u', 0, G_OPTION_ARG_NONE, &opt_unique, "Create a unique document reference", NULL },
   { NULL }
 };
 
@@ -99,7 +102,7 @@ xdg_app_builtin_export_file (int argc, char **argv,
                                                          "/org/freedesktop/portal/documents",
                                                          "org.freedesktop.portal.Documents",
                                                          "Add",
-                                                         g_variant_new ("(h)", fd_id),
+                                                         g_variant_new ("(hb)", fd_id, !opt_unique),
                                                          G_VARIANT_TYPE ("(s)"),
                                                          G_DBUS_CALL_FLAGS_NONE,
                                                          30000,

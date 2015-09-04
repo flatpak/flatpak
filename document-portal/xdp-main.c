@@ -228,23 +228,30 @@ portal_delete (GDBusMethodInvocation *invocation,
 }
 
 char *
-do_create_doc (struct stat *parent_st_buf, const char *path)
+do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_existing)
 {
   g_autoptr(GVariant) data = NULL;
   g_autoptr (XdgAppDbEntry) entry = NULL;
   g_auto(GStrv) ids = NULL;
   char *id = NULL;
+  guint32 flags = 0;
 
+  if (!reuse_existing)
+    flags |= XDP_ENTRY_FLAG_UNIQUE;
   data =
-    g_variant_ref_sink (g_variant_new ("(^aytt)",
+    g_variant_ref_sink (g_variant_new ("(^ayttu)",
                                        path,
                                        (guint64)parent_st_buf->st_dev,
-                                       (guint64)parent_st_buf->st_ino));
+                                       (guint64)parent_st_buf->st_ino,
+                                       flags));
 
-  ids = xdg_app_db_list_ids_by_value (db, data);
+  if (reuse_existing)
+    {
+      ids = xdg_app_db_list_ids_by_value (db, data);
 
-  if (ids[0] != NULL)
-    return g_strdup (ids[0]);  /* Reuse pre-existing entry with same path */
+      if (ids[0] != NULL)
+        return g_strdup (ids[0]);  /* Reuse pre-existing entry with same path */
+    }
 
   while (TRUE)
     {
@@ -288,8 +295,9 @@ portal_add (GDBusMethodInvocation *invocation,
   struct stat st_buf, real_st_buf, real_parent_st_buf;
   g_autofree char *dirname = NULL;
   g_autofree char *name = NULL;
+  gboolean reuse_existing;
 
-  g_variant_get (parameters, "(h)", &fd_id);
+  g_variant_get (parameters, "(hb)", &fd_id, &reuse_existing);
 
   message = g_dbus_method_invocation_get_message (invocation);
   fd_list = g_dbus_message_get_unix_fd_list (message);
@@ -346,17 +354,23 @@ portal_add (GDBusMethodInvocation *invocation,
       return;
     }
 
-  id = do_create_doc (&real_parent_st_buf, path_buffer);
+  id = do_create_doc (&real_parent_st_buf, path_buffer, reuse_existing);
 
   if (app_id[0] != '\0')
     {
       g_autoptr(XdgAppDbEntry) entry = NULL;
+      XdpPermissionFlags perms =
+        XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
+        XDP_PERMISSION_FLAGS_READ |
+        XDP_PERMISSION_FLAGS_WRITE;
       entry = xdg_app_db_lookup (db, id);
 
-      do_set_permissions (entry, id, app_id,
-                          XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
-                          XDP_PERMISSION_FLAGS_READ |
-                          XDP_PERMISSION_FLAGS_WRITE);
+      /* If its a unique one its safe for the creator to
+         delete it at will */
+      if (!reuse_existing)
+        perms |= XDP_PERMISSION_FLAGS_DELETE;
+
+      do_set_permissions (entry, id, app_id, perms);
     }
 
   g_dbus_method_invocation_return_value (invocation,

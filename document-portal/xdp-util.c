@@ -51,7 +51,7 @@ xdp_parse_permissions (const char **permissions)
 
 XdpPermissionFlags
 xdp_entry_get_permissions (XdgAppDbEntry *entry,
-                     const char *app_id)
+                           const char *app_id)
 {
   g_autofree const char **permissions = NULL;
 
@@ -64,8 +64,8 @@ xdp_entry_get_permissions (XdgAppDbEntry *entry,
 
 gboolean
 xdp_entry_has_permissions (XdgAppDbEntry *entry,
-                     const char *app_id,
-                     XdpPermissionFlags perms)
+                           const char *app_id,
+                           XdpPermissionFlags perms)
 {
   XdpPermissionFlags current_perms;
 
@@ -124,6 +124,14 @@ xdp_entry_get_inode (XdgAppDbEntry *entry)
   g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
   g_autoptr(GVariant) c = g_variant_get_child_value (v, 2);
   return g_variant_get_uint64 (c);
+}
+
+guint32
+xdp_entry_get_flags (XdgAppDbEntry *entry)
+{
+  g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
+  g_autoptr(GVariant) c = g_variant_get_child_value (v, 3);
+  return g_variant_get_uint32 (c);
 }
 
 int
