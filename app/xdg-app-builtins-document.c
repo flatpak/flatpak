@@ -37,9 +37,17 @@
 #include "xdg-app-run.h"
 
 gboolean opt_unique = FALSE;
+gboolean opt_allow_write = FALSE;
+gboolean opt_allow_delete = FALSE;
+gboolean opt_allow_grant_permissions = FALSE;
+char **opt_apps = NULL;
 
 static GOptionEntry options[] = {
   { "unique", 'u', 0, G_OPTION_ARG_NONE, &opt_unique, "Create a unique document reference", NULL },
+  { "allow-write", 'w', 0, G_OPTION_ARG_NONE, &opt_allow_write, "Give the app write permissions", NULL },
+  { "allow-delete", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_delete, "Give the app permissions to delete the document id", NULL },
+  { "allow-grant-permission", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_grant_permissions, "Give the app permissions to grant furthern permissions", NULL },
+  { "app", 'a', 0, G_OPTION_ARG_STRING_ARRAY, &opt_apps, "Add permissions for this app", NULL },
   { NULL }
 };
 
@@ -52,10 +60,12 @@ xdg_app_builtin_export_file (int argc, char **argv,
   GOptionContext *context;
   g_autoptr(GVariant) reply = NULL;
   g_autoptr(GDBusConnection) session_bus = NULL;
+  g_autoptr(GPtrArray) permissions = NULL;
   const char *file;
   g_autofree char  *mountpoint = NULL;
   XdpDbusDocuments *documents;
   int fd, fd_id;
+  int i;
   GUnixFDList *fd_list = NULL;
   const char *doc_id;
 
@@ -115,6 +125,29 @@ xdg_app_builtin_export_file (int argc, char **argv,
     goto out;
 
   g_variant_get (reply, "(s)", &doc_id);
+
+  permissions = g_ptr_array_new ();
+
+  g_ptr_array_add (permissions, "read");
+  if (opt_allow_write)
+    g_ptr_array_add (permissions, "write");
+  if (opt_allow_delete)
+    g_ptr_array_add (permissions, "delete");
+  if (opt_allow_grant_permissions)
+    g_ptr_array_add (permissions, "grant-permissions");
+  g_ptr_array_add (permissions, NULL);
+
+  for (i = 0; opt_apps != NULL && opt_apps[i] != NULL; i++)
+    {
+      if (!xdp_dbus_documents_call_grant_permissions_sync (documents,
+                                                           doc_id,
+                                                           opt_apps[i],
+                                                           (const char **)permissions->pdata,
+                                                           NULL,
+                                                           error))
+        goto out;
+
+    }
 
   g_print ("%s/%s\n", mountpoint, doc_id);
 
