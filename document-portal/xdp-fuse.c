@@ -28,7 +28,7 @@
         "$id/" (APP_DOC_DIR:app_id<<32|doc_id)
           <same as DOC_DIR>
     "$id" (DOC_DIR:doc_idid)
-      $basename (DOC_FILE:doc_id)
+      $basename (APP_DOC_FILE:app_id<<32|doc_id) (app id == 0 if not in app dir)
       $tmpfile (TMPFILE:tmp_id)
 */
 
@@ -49,17 +49,17 @@
 typedef enum {
   STD_DIRS_INO_CLASS,
   DOC_DIR_INO_CLASS,
-  DOC_FILE_INO_CLASS,
   TMPFILE_INO_CLASS,
   APP_DIR_INO_CLASS,
   APP_DOC_DIR_INO_CLASS,
+  APP_DOC_FILE_INO_CLASS,
 } XdpInodeClass;
 
 #define BY_APP_NAME "by-app"
 
 static GHashTable *app_name_to_id;
 static GHashTable *app_id_to_name;
-static guint32 next_app_id;
+static guint32 next_app_id = 1;
 
 G_LOCK_DEFINE(app_id);
 
@@ -308,6 +308,7 @@ typedef struct
   int dir_fd;
   char *trunc_basename;
   char *real_basename;
+  gboolean can_write;
 
   /* These need a lock whenever they are used */
   int fd;
@@ -451,6 +452,8 @@ xdp_fh_fstat (XdpFh *fh,
 
   stbuf->st_nlink = DOC_FILE_NLINK;
   stbuf->st_mode = S_IFREG | get_user_perms (&tmp_stbuf);
+  if (!fh->can_write)
+    stbuf->st_mode &= ~(0222);
   stbuf->st_size = tmp_stbuf.st_size;
   stbuf->st_uid = tmp_stbuf.st_uid;
   stbuf->st_gid = tmp_stbuf.st_gid;
@@ -598,6 +601,13 @@ make_app_doc_dir_inode (guint32 app_id, guint32 doc_id)
                      ((guint64)app_id << 32) | (guint64)doc_id);
 }
 
+static guint64
+make_app_doc_file_inode (guint32 app_id, guint32 doc_id)
+{
+  return make_inode (APP_DOC_FILE_INO_CLASS,
+                     ((guint64)app_id << 32) | (guint64)doc_id);
+}
+
 static gboolean
 name_looks_like_id (const char *name)
 {
@@ -671,12 +681,31 @@ app_can_see_doc (XdgAppDbEntry *entry, guint32 app_id)
 {
   const char *app_name = get_app_name_from_id (app_id);
 
+  if (app_id == 0)
+    return TRUE;
+
   if (app_name != NULL &&
       xdp_entry_has_permissions (entry, app_name, XDP_PERMISSION_FLAGS_READ))
     return TRUE;
 
   return FALSE;
 }
+
+static gboolean
+app_can_write_doc (XdgAppDbEntry *entry, guint32 app_id)
+{
+  const char *app_name = get_app_name_from_id (app_id);
+
+  if (app_id == 0)
+    return TRUE;
+
+  if (app_name != NULL &&
+      xdp_entry_has_permissions (entry, app_name, XDP_PERMISSION_FLAGS_WRITE))
+    return TRUE;
+
+  return FALSE;
+}
+
 
 static int
 xdp_stat (fuse_ino_t ino,
@@ -744,26 +773,36 @@ xdp_stat (fuse_ino_t ino,
       stbuf->st_nlink = 2;
       break;
 
-    case DOC_FILE_INO_CLASS:
-      entry = xdp_lookup_doc (class_ino);
-      if (entry == NULL)
-        return ENOENT;
+    case APP_DOC_FILE_INO_CLASS:
+      {
+        guint32 app_id = get_app_id_from_app_doc_ino (class_ino);
+        guint32 doc_id = get_doc_id_from_app_doc_ino (class_ino);
+        gboolean can_write;
 
-      stbuf->st_nlink = DOC_FILE_NLINK;
+        entry = xdp_lookup_doc (doc_id);
+        if (entry == NULL)
+          return ENOENT;
 
-      if (xdp_entry_stat (entry, &tmp_stbuf, AT_SYMLINK_NOFOLLOW) != 0)
-        return ENOENT;
+        can_write = app_can_write_doc (entry, app_id);
 
-      stbuf->st_mode = S_IFREG | get_user_perms (&tmp_stbuf);
-      stbuf->st_size = tmp_stbuf.st_size;
-      stbuf->st_uid = tmp_stbuf.st_uid;
-      stbuf->st_gid = tmp_stbuf.st_gid;
-      stbuf->st_blksize = tmp_stbuf.st_blksize;
-      stbuf->st_blocks = tmp_stbuf.st_blocks;
-      stbuf->st_atim = tmp_stbuf.st_atim;
-      stbuf->st_mtim = tmp_stbuf.st_mtim;
-      stbuf->st_ctim = tmp_stbuf.st_ctim;
-      break;
+        stbuf->st_nlink = DOC_FILE_NLINK;
+
+        if (xdp_entry_stat (entry, &tmp_stbuf, AT_SYMLINK_NOFOLLOW) != 0)
+          return ENOENT;
+
+        stbuf->st_mode = S_IFREG | get_user_perms (&tmp_stbuf);
+        if (!can_write)
+          stbuf->st_mode &= ~(0222);
+        stbuf->st_size = tmp_stbuf.st_size;
+        stbuf->st_uid = tmp_stbuf.st_uid;
+        stbuf->st_gid = tmp_stbuf.st_gid;
+        stbuf->st_blksize = tmp_stbuf.st_blksize;
+        stbuf->st_blocks = tmp_stbuf.st_blocks;
+        stbuf->st_atim = tmp_stbuf.st_atim;
+        stbuf->st_mtim = tmp_stbuf.st_mtim;
+        stbuf->st_ctim = tmp_stbuf.st_ctim;
+        break;
+      }
 
     case TMPFILE_INO_CLASS:
       tmp = find_tmp_by_id (class_ino);
@@ -919,47 +958,57 @@ xdp_lookup (fuse_ino_t parent,
 
     case APP_DOC_DIR_INO_CLASS:
     case DOC_DIR_INO_CLASS:
-      if (parent_class == APP_DOC_DIR_INO_CLASS)
-        entry = xdp_lookup_doc (get_doc_id_from_app_doc_ino (parent_class_ino));
-      else
-        entry = xdp_lookup_doc (parent_class_ino);
-      if (entry != NULL)
-        {
-          g_autofree char *basename = xdp_entry_dup_basename (entry);
-          if (strcmp (name, basename) == 0)
-            {
-              *inode = make_inode (DOC_FILE_INO_CLASS, parent_class_ino);
-              if (xdp_stat (*inode, stbuf, NULL) == 0)
-                {
-                  if (entry_out)
-                    *entry_out = g_steal_pointer (&entry);
-                  return 0;
-                }
+      {
+        guint32 app_id = 0;
+        guint32 doc_id;
 
-              break;
-            }
-        }
+        if (parent_class == APP_DOC_DIR_INO_CLASS)
+          {
+            app_id = get_app_id_from_app_doc_ino (parent_class_ino);
+            doc_id = get_doc_id_from_app_doc_ino (parent_class_ino);
+          }
+        else
+          doc_id = parent_class_ino;
 
-      tmp = find_tmp_by_name (parent, name);
-      if (tmp != NULL)
-        {
-          *inode = make_inode (TMPFILE_INO_CLASS, tmp->tmp_id);
-          if (xdp_stat (*inode, stbuf, NULL) == 0)
-            {
-              if (entry_out)
-                *entry_out = g_steal_pointer (&entry);
-              if (tmp_out)
-                *tmp_out = g_steal_pointer (&tmp);
-              return 0;
-            }
+        entry = xdp_lookup_doc (doc_id);
+        if (entry != NULL)
+          {
+            g_autofree char *basename = xdp_entry_dup_basename (entry);
+            if (strcmp (name, basename) == 0)
+              {
+                *inode = make_app_doc_file_inode (app_id, doc_id);
+                if (xdp_stat (*inode, stbuf, NULL) == 0)
+                  {
+                    if (entry_out)
+                      *entry_out = g_steal_pointer (&entry);
+                    return 0;
+                  }
 
-          break;
-        }
+                break;
+              }
+          }
 
-      break;
+        tmp = find_tmp_by_name (parent, name);
+        if (tmp != NULL)
+          {
+            *inode = make_inode (TMPFILE_INO_CLASS, tmp->tmp_id);
+            if (xdp_stat (*inode, stbuf, NULL) == 0)
+              {
+                if (entry_out)
+                  *entry_out = g_steal_pointer (&entry);
+                if (tmp_out)
+                  *tmp_out = g_steal_pointer (&tmp);
+                return 0;
+              }
+
+            break;
+          }
+
+        break;
+      }
 
     case TMPFILE_INO_CLASS:
-    case DOC_FILE_INO_CLASS:
+    case APP_DOC_FILE_INO_CLASS:
       return ENOTDIR;
 
     default:
@@ -1039,13 +1088,9 @@ dirbuf_add_docs (fuse_req_t req,
               !app_can_see_doc (entry, app_id))
             continue;
         }
-      if (app_id)
-        inode = make_app_doc_dir_inode (app_id, docs[i]);
-      else
-        inode = make_inode (DOC_DIR_INO_CLASS, docs[i]);
+      inode = make_app_doc_dir_inode (app_id, docs[i]);
       doc_name = xdp_name_from_id (docs[i]);
       dirbuf_add (req, b, doc_name, inode);
-
     }
 }
 
@@ -1053,13 +1098,17 @@ static void
 dirbuf_add_doc_file (fuse_req_t req,
                      struct dirbuf *b,
                      XdgAppDbEntry *entry,
-                     guint32 doc_id)
+                     guint32 doc_id,
+                     guint32 app_id)
 {
   struct stat tmp_stbuf;
+  guint64 inode;
   g_autofree char *basename = xdp_entry_dup_basename (entry);
+
+  inode = make_app_doc_file_inode (app_id, doc_id);
+
   if (xdp_entry_stat (entry, &tmp_stbuf, AT_SYMLINK_NOFOLLOW) == 0)
-    dirbuf_add (req, b, basename,
-                make_inode (DOC_FILE_INO_CLASS, doc_id));
+    dirbuf_add (req, b, basename, inode);
 }
 
 static void
@@ -1189,7 +1238,7 @@ xdp_fuse_opendir (fuse_req_t req,
     case DOC_DIR_INO_CLASS:
       dirbuf_add (req, &b, ".", ino);
       dirbuf_add (req, &b, "..", FUSE_ROOT_ID);
-      dirbuf_add_doc_file (req, &b, entry, class_ino);
+      dirbuf_add_doc_file (req, &b, entry, class_ino, 0);
       dirbuf_add_tmp_files (req, &b, ino);
       break;
 
@@ -1198,11 +1247,12 @@ xdp_fuse_opendir (fuse_req_t req,
       dirbuf_add (req, &b, "..", make_inode (APP_DIR_INO_CLASS,
                                              get_app_id_from_app_doc_ino (class_ino)));
       dirbuf_add_doc_file (req, &b, entry,
-                           get_doc_id_from_app_doc_ino (class_ino));
+                           get_doc_id_from_app_doc_ino (class_ino),
+                           get_app_id_from_app_doc_ino (class_ino));
       dirbuf_add_tmp_files (req, &b, ino);
       break;
 
-    case DOC_FILE_INO_CLASS:
+    case APP_DOC_FILE_INO_CLASS:
     case TMPFILE_INO_CLASS:
       /* These should have returned ENOTDIR above */
     default:
@@ -1283,12 +1333,14 @@ xdp_fuse_open (fuse_req_t req,
       return;
     }
 
-  if (entry && class == DOC_FILE_INO_CLASS)
+  if (entry && class == APP_DOC_FILE_INO_CLASS)
     {
       g_autofree char *tmp_basename = NULL;
       glnx_fd_close int write_fd = -1;
       glnx_fd_close int dir_fd = -1;
       g_autofree char *basename = xdp_entry_dup_basename (entry);
+      guint32 app_id = get_app_id_from_app_doc_ino (class_ino);
+      gboolean can_write;
 
       dir_fd = xdp_entry_open_dir (entry);
       if (dir_fd == -1)
@@ -1297,13 +1349,22 @@ xdp_fuse_open (fuse_req_t req,
           return;
         }
 
+      can_write = app_can_write_doc (entry, app_id);
+
       if ((fi->flags & 3) != O_RDONLY)
         {
+          if (!can_write)
+            {
+              fuse_reply_err (req, EACCES);
+              return;
+            }
+
           if (faccessat (dir_fd, basename, W_OK, 0) != 0)
             {
               fuse_reply_err (req, errno);
               return;
             }
+
           tmp_basename = create_tmp_for_doc (entry, dir_fd, O_RDWR, &write_fd);
           if (tmp_basename == NULL)
             {
@@ -1319,6 +1380,7 @@ xdp_fuse_open (fuse_req_t req,
           return;
         }
       fh = xdp_fh_new (ino, fi, steal_fd(&fd), NULL);
+      fh->can_write = can_write;
       fh->dir_fd = steal_fd (&dir_fd);
       fh->trunc_fd = steal_fd (&write_fd);
       fh->trunc_basename = g_steal_pointer (&tmp_basename);
@@ -1344,6 +1406,7 @@ xdp_fuse_open (fuse_req_t req,
           return;
         }
       fh = xdp_fh_new (ino, fi, steal_fd (&fd), tmp);
+      fh->can_write = TRUE;
       if (fuse_reply_open (req, fi))
         xdp_fh_unref (fh);
     }
@@ -1360,12 +1423,16 @@ xdp_fuse_create (fuse_req_t req,
 {
   struct fuse_entry_param e = {0};
   XdpInodeClass parent_class = get_class (parent);
+  guint64 parent_class_ino = get_class_ino (parent);
   struct stat stbuf;
   XdpFh *fh;
   g_autoptr(XdgAppDbEntry) entry = NULL;
   g_autofree char *basename = NULL;
   glnx_fd_close int fd = -1;
+  gboolean can_write;
   int res;
+  guint32 app_id = 0;
+  guint32 doc_id;
 
   g_debug ("xdp_fuse_create %lx/%s, flags %o", parent, name, fi->flags);
 
@@ -1381,25 +1448,40 @@ xdp_fuse_create (fuse_req_t req,
       return;
     }
 
-  if (parent_class != APP_DOC_DIR_INO_CLASS &&
-      parent_class != DOC_DIR_INO_CLASS)
+  if (parent_class == APP_DOC_DIR_INO_CLASS)
+    {
+      app_id = get_app_id_from_app_doc_ino (parent_class_ino);
+      doc_id = get_doc_id_from_app_doc_ino (parent_class_ino);
+    }
+  else if (parent_class == DOC_DIR_INO_CLASS)
+    {
+      doc_id = parent_class_ino;
+    }
+  else
     {
       fuse_reply_err (req, EACCES);
       return;
     }
+
+  can_write = app_can_write_doc (entry, app_id);
 
   basename = xdp_entry_dup_basename (entry);
   if (strcmp (name, basename) == 0)
     {
       g_autofree char *tmp_basename = NULL;
       glnx_fd_close int write_fd = -1;
-      guint32 doc_id = xdp_id_from_name (name);
       glnx_fd_close int dir_fd = -1;
 
       dir_fd = xdp_entry_open_dir (entry);
       if (dir_fd == -1)
         {
           fuse_reply_err (req, errno);
+          return;
+        }
+
+      if (!can_write)
+        {
+          fuse_reply_err (req, EACCES);
           return;
         }
 
@@ -1417,9 +1499,10 @@ xdp_fuse_create (fuse_req_t req,
           return;
         }
 
-      e.ino = make_inode (DOC_FILE_INO_CLASS, doc_id);
+      e.ino = make_app_doc_file_inode (app_id, doc_id);
 
       fh = xdp_fh_new (e.ino, fi, steal_fd (&fd), NULL);
+      fh->can_write = TRUE;
       fh->dir_fd = steal_fd (&dir_fd);
       fh->truncated = TRUE;
       fh->trunc_fd = steal_fd (&write_fd);
@@ -1449,6 +1532,12 @@ xdp_fuse_create (fuse_req_t req,
         {
           G_UNLOCK(tmp_files);
           fuse_reply_err (req, EEXIST);
+          return;
+        }
+
+      if (!can_write)
+        {
+          fuse_reply_err (req, EACCES);
           return;
         }
 
@@ -1511,6 +1600,7 @@ xdp_fuse_create (fuse_req_t req,
       e.entry_timeout = get_entry_cache_time (e.attr.st_mode);
 
       fh = xdp_fh_new (e.ino, fi, steal_fd (&fd), tmpfile);
+      fh->can_write = TRUE;
       if (fuse_reply_create (req, &e, fi))
         xdp_fh_unref (fh);
     }
@@ -1641,6 +1731,7 @@ xdp_fuse_rename (fuse_req_t req,
                  const char *newname)
 {
   XdpInodeClass parent_class = get_class (parent);
+  guint64 parent_class_ino = get_class_ino (parent);
   g_autoptr (XdgAppDbEntry) entry = NULL;
   int res;
   fuse_ino_t inode;
@@ -1648,6 +1739,8 @@ xdp_fuse_rename (fuse_req_t req,
   g_autofree char *basename = NULL;
   g_autoptr(XdpTmp) tmp = NULL;
   g_autoptr(XdpTmp) other_tmp = NULL;
+  guint32 app_id = 0;
+  gboolean can_write;
 
   g_debug ("xdp_fuse_rename %lx/%s -> %lx/%s", parent, name, newparent, newname);
 
@@ -1658,9 +1751,24 @@ xdp_fuse_rename (fuse_req_t req,
       return;
     }
 
-  /* Only allow renames in (app) doc dirs, and only inside the same dir */
-  if ((parent_class != DOC_DIR_INO_CLASS &&
-       parent_class != APP_DOC_DIR_INO_CLASS) ||
+  if (parent_class == APP_DOC_DIR_INO_CLASS)
+    {
+      app_id = get_app_id_from_app_doc_ino (parent_class_ino);
+    }
+  else if (parent_class == DOC_DIR_INO_CLASS)
+    {
+    }
+  else
+    {
+      /* Only allow renames in (app) doc dirs */
+      fuse_reply_err (req, EACCES);
+      return;
+    }
+
+  can_write = app_can_write_doc (entry, app_id);
+
+  /* Only allow renames inside the same dir */
+  if (!can_write ||
       parent != newparent ||
       entry == NULL ||
       /* Also, don't allow renaming non-tmpfiles */
@@ -1742,6 +1850,12 @@ xdp_fuse_setattr (fuse_req_t req,
 
       /* ftruncate */
 
+      if (!fh->can_write)
+        {
+          fuse_reply_err (req, EACCES);
+          return;
+        }
+
       res = xdp_fh_truncate_locked (fh, attr->st_size, &newattr);
       if (res < 0)
         {
@@ -1763,6 +1877,11 @@ xdp_fuse_setattr (fuse_req_t req,
       fh = find_open_fh (ino);
       if (fh)
         {
+          if (!fh->can_write)
+            {
+              fuse_reply_err (req, EACCES);
+              return;
+            }
           res = xdp_fh_truncate_locked (fh, attr->st_size, newattrp);
           newattrp = NULL;
         }
@@ -1791,6 +1910,12 @@ xdp_fuse_setattr (fuse_req_t req,
       if (fh)
         {
           int fd, errsv;
+
+          if (!fh->can_write)
+            {
+              fuse_reply_err (req, EACCES);
+              return;
+            }
 
           XDP_FH_AUTOLOCK (fh);
 
@@ -1873,7 +1998,7 @@ xdp_fuse_fsync (fuse_req_t req,
 {
   XdpInodeClass class = get_class (ino);
 
-  if (class == DOC_FILE_INO_CLASS ||
+  if (class == APP_DOC_FILE_INO_CLASS ||
       class == TMPFILE_INO_CLASS)
     {
       XdpFh *fh = (gpointer)fi->fh;
@@ -1895,12 +2020,15 @@ xdp_fuse_unlink (fuse_req_t req,
                  const char *name)
 {
   XdpInodeClass parent_class = get_class (parent);
+  guint64 parent_class_ino = get_class_ino (parent);
   g_autoptr (XdgAppDbEntry) entry = NULL;
   int res;
   fuse_ino_t inode;
   struct stat stbuf = {0};
   g_autofree char *basename = NULL;
   g_autoptr (XdpTmp) tmp = NULL;
+  guint32 app_id = 0;
+  gboolean can_write;
 
   g_debug ("xdp_fuse_unlink %lx/%s", parent, name);
 
@@ -1911,10 +2039,28 @@ xdp_fuse_unlink (fuse_req_t req,
       return;
     }
 
-  /* Only allow unlink in (app) doc dirs */
-  if ((parent_class != DOC_DIR_INO_CLASS &&
-       parent_class != APP_DOC_DIR_INO_CLASS) ||
-      entry == NULL)
+  if (entry == NULL)
+    {
+      fuse_reply_err (req, EACCES);
+      return;
+    }
+
+ if (parent_class == APP_DOC_DIR_INO_CLASS)
+    {
+      app_id = get_app_id_from_app_doc_ino (parent_class_ino);
+    }
+  else if (parent_class == DOC_DIR_INO_CLASS)
+    {
+    }
+  else
+    {
+      /* Only allow unlink in (app) doc dirs */
+      fuse_reply_err (req, EACCES);
+      return;
+    }
+
+  can_write = app_can_write_doc (entry, app_id);
+  if (!can_write)
     {
       fuse_reply_err (req, EACCES);
       return;
@@ -2016,7 +2162,6 @@ xdp_fuse_init (GError **error)
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   app_id_to_name =
     g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, NULL);
-  next_app_id = 1;
 
   mount_path = g_build_filename (g_get_user_runtime_dir(), "doc", NULL);
   if (g_mkdir_with_parents  (mount_path, 0700))
