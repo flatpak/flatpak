@@ -8,6 +8,7 @@ Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache/
+test-driver
 compile
 config.guess
 config.h
@@ -39,8 +40,7 @@ xdg-dbus-proxy
 *.service
 xdg-app.env
 xdg-app.sh
-document-portal/xdp-dbus.c
-document-portal/xdp-dbus.h
-document-portal/xdp-resources.c
+document-portal/xdp-dbus.[ch]
+document-portal/xdp-resources.[ch]
 .dirstamp
-
+test-suite*.log

@@ -8,4 +8,11 @@ testdb_LDADD = \
              $(NULL)
 testdb_SOURCES = tests/testdb.c
 
+
 noinst_PROGRAMS = $(TEST_PROGS)
+
+TESTS=testdb
+
+@VALGRIND_CHECK_RULES@
+VALGRIND_SUPPRESSIONS_FILES=tests/xdg-app.supp
+EXTRA_DIST+=tests/xdg-app.supp

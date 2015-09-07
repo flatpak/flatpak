@@ -1,0 +1,23 @@
+{
+   glib _dl_init
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   fun:_dl_init
+}
+
+{
+   glib _static_types
+   Memcheck:Leak
+   fun:*alloc
+   ...
+   fun:g_type_register_static
+}
+
+{
+   glib _static_typ
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:type_class_init_Wm
+}

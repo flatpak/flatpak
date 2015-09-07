@@ -28,6 +28,8 @@ if test "x$GCC" = "xyes"; then
   esac
 fi
 
+AX_VALGRIND_CHECK
+
 PKG_PROG_PKG_CONFIG([0.24])
 
 AC_ARG_WITH(dbus_service_dir,
