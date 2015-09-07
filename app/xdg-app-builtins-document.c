@@ -124,7 +124,7 @@ xdg_app_builtin_export_file (int argc, char **argv,
   if (reply == NULL)
     goto out;
 
-  g_variant_get (reply, "(s)", &doc_id);
+  g_variant_get (reply, "(&s)", &doc_id);
 
   permissions = g_ptr_array_new ();
 
