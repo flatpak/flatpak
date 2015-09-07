@@ -9,7 +9,6 @@ if BUILD_DOCUMENTATION
 SUBDIRS = doc
 endif
 
-# D-BUS service file
 %.service: %.service.in config.log
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
 

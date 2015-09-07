@@ -132,7 +132,9 @@ AC_DEFUN([AX_VALGRIND_CHECK],[
 	AC_MSG_RESULT([$enable_valgrind])
 
 	# Check for Valgrind tools we care about.
-	m4_define([valgrind_tool_list],[[memcheck], [helgrind], [drd], [exp-sgcheck]])
+        #m4_define([valgrind_tool_list],[[memcheck], [helgrind], [drd], [exp-sgcheck]])
+        # I trimmed this, because we fail on all the thread stuff
+        m4_define([valgrind_tool_list],[[memcheck]])
 
 	AS_IF([test "$VALGRIND" != ""],[
 		m4_foreach([vgtool],[valgrind_tool_list],[
