@@ -442,7 +442,7 @@ xdg_app_db_list_apps (XdgAppDb *self)
           if (empty)
             g_free (app);
           else
-            g_ptr_array_add (res, g_strdup (app));
+            g_ptr_array_add (res, app);
         }
     }
 
