@@ -93,11 +93,9 @@ get_attr_cache_time (int st_mode)
 }
 
 static double
-get_entry_cache_time (int st_mode)
+get_entry_cache_time (fuse_ino_t inode)
 {
-  if (S_ISDIR (st_mode))
-    return DIRS_ATTR_CACHE_TIME;
-  return 1.0;
+  return 60.0;
 }
 
 /******************************* XdpTmp *******************************
@@ -1041,7 +1039,7 @@ xdp_fuse_lookup (fuse_req_t req,
   if (res == 0)
     {
       e.attr_timeout = get_attr_cache_time (e.attr.st_mode);
-      e.entry_timeout = get_entry_cache_time (e.attr.st_mode);
+      e.entry_timeout = get_entry_cache_time (e.ino);
       fuse_reply_entry (req, &e);
     }
   else
@@ -1523,7 +1521,7 @@ xdp_fuse_create (fuse_req_t req,
         }
 
       e.attr_timeout = get_attr_cache_time (e.attr.st_mode);
-      e.entry_timeout = get_entry_cache_time (e.attr.st_mode);
+      e.entry_timeout = get_entry_cache_time (e.ino);
 
       if (fuse_reply_create (req, &e, fi))
         xdp_fh_unref (fh);
@@ -1603,7 +1601,7 @@ xdp_fuse_create (fuse_req_t req,
           return;
         }
       e.attr_timeout = get_attr_cache_time (e.attr.st_mode);
-      e.entry_timeout = get_entry_cache_time (e.attr.st_mode);
+      e.entry_timeout = get_entry_cache_time (e.ino);
 
       fh = xdp_fh_new (e.ino, fi, steal_fd (&fd), tmpfile);
       fh->can_write = TRUE;
