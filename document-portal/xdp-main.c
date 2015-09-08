@@ -19,6 +19,8 @@
 #include "xdg-app-error.h"
 #include "xdp-fuse.h"
 
+#include <sys/eventfd.h>
+
 #define TABLE_NAME "documents"
 
 typedef struct
@@ -36,6 +38,8 @@ static GMainLoop *loop = NULL;
 static XdgAppDb *db = NULL;
 static XdgAppPermissionStore *permission_store;
 static GDBusNodeInfo *introspection_data = NULL;
+static int daemon_event_fd = -1;
+static int final_exit_status = 0;
 
 G_LOCK_DEFINE(db);
 
@@ -447,10 +451,44 @@ on_bus_acquired (GDBusConnection *connection,
 }
 
 static void
+daemon_report_done (int status)
+{
+  if (daemon_event_fd != -1)
+    {
+      guint64 counter;
+
+      counter = status + 1;
+      write (daemon_event_fd, &counter, sizeof (counter));
+
+      daemon_event_fd = -1;
+    }
+}
+
+static void
+do_exit (int status)
+{
+  daemon_report_done (status);
+  exit (status);
+}
+
+static void
 on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
+  g_autoptr(GError) error = NULL;
+
+  g_debug ("org.freedesktop.portal.Documents acquired");
+
+  if (!xdp_fuse_init (&error))
+    {
+      final_exit_status = 6;
+      g_printerr ("fuse init failed: %s\n", error->message);
+      g_main_loop_quit (loop);
+      return;
+    }
+
+  daemon_report_done (0);
 }
 
 static void
@@ -458,6 +496,8 @@ on_name_lost (GDBusConnection *connection,
               const gchar     *name,
               gpointer         user_data)
 {
+  g_debug ("org.freedesktop.portal.Documents lost");
+  final_exit_status = 7;
   g_main_loop_quit (loop);
 }
 
@@ -505,9 +545,11 @@ set_one_signal_handler (int sig,
 }
 
 static gboolean opt_verbose;
+static gboolean opt_daemon;
 
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
+  { "daemon", 'd', 0, G_OPTION_ARG_NONE, &opt_daemon, "Run in background", NULL },
   { NULL }
 };
 
@@ -548,6 +590,24 @@ main (int    argc,
       return 1;
     }
 
+  if (opt_daemon)
+    {
+      pid_t pid;
+      ssize_t read_res;
+
+      daemon_event_fd = eventfd (0, EFD_CLOEXEC);
+      pid = fork ();
+      if (pid != 0)
+        {
+          guint64 counter;
+
+          read_res = read (daemon_event_fd, &counter, sizeof (counter));
+          if (read_res != 8)
+            exit (1);
+          exit (counter - 1);
+        }
+    }
+
   if (opt_verbose)
     g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
@@ -560,14 +620,14 @@ main (int    argc,
   if (db == NULL)
     {
       g_printerr ("Failed to load db: %s\n", error->message);
-      return 2;
+      do_exit (2);
     }
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (session_bus == NULL)
     {
       g_printerr ("No session bus: %s\n", error->message);
-      return 3;
+      do_exit (3);
     }
 
   permission_store = xdg_app_permission_store_proxy_new_sync (session_bus,G_DBUS_PROXY_FLAGS_NONE,
@@ -577,7 +637,7 @@ main (int    argc,
   if (permission_store == NULL)
     {
       g_print ("No permission store: %s\n", error->message);
-      return 4;
+      do_exit (4);
     }
 
   /* We want do do our custom post-mainloop exit */
@@ -589,18 +649,14 @@ main (int    argc,
       set_one_signal_handler(SIGINT, exit_handler, 0) == -1 ||
       set_one_signal_handler(SIGTERM, exit_handler, 0) == -1 ||
       set_one_signal_handler(SIGPIPE, SIG_IGN, 0) == -1)
-    return -1;
+    {
+      do_exit (5);
+    }
 
   introspection_bytes = g_resources_lookup_data ("/org/freedesktop/portal/Documents/org.freedesktop.portal.documents.xml", 0, NULL);
   g_assert (introspection_bytes != NULL);
 
   introspection_data = g_dbus_node_info_new_for_xml (g_bytes_get_data (introspection_bytes, NULL), NULL);
-
-  if (!xdp_fuse_init (&error))
-    {
-      g_printerr ("fuse init failed: %s\n", error->message);
-      return 1;
-    }
 
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
                              "org.freedesktop.portal.Documents",
@@ -619,5 +675,5 @@ main (int    argc,
 
   g_dbus_node_info_unref (introspection_data);
 
-  return 0;
+  do_exit (final_exit_status);
 }
