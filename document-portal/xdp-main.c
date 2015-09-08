@@ -563,10 +563,12 @@ set_one_signal_handler (int sig,
 
 static gboolean opt_verbose;
 static gboolean opt_daemon;
+static gboolean opt_replace;
 
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
   { "daemon", 'd', 0, G_OPTION_ARG_NONE, &opt_daemon, "Run in background", NULL },
+  { "replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace", NULL },
   { NULL }
 };
 
@@ -677,7 +679,7 @@ main (int    argc,
 
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
                              "org.freedesktop.portal.Documents",
-                             G_BUS_NAME_OWNER_FLAGS_NONE,
+                             G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT | (opt_replace ? G_BUS_NAME_OWNER_FLAGS_REPLACE : 0),
                              on_bus_acquired,
                              on_name_acquired,
                              on_name_lost,
