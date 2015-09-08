@@ -94,6 +94,8 @@ do_set_permissions (XdgAppDbEntry *entry,
   g_autofree const char **perms_s = xdg_unparse_permissions (perms);
   g_autoptr(XdgAppDbEntry) new_entry = NULL;
 
+  g_debug ("set_permissions %s %s %x\n", doc_id, app_id, perms);
+
   new_entry = xdg_app_db_entry_set_app_permissions (entry, app_id, perms_s);
   xdg_app_db_set_entry (db, doc_id, new_entry);
 
@@ -227,6 +229,8 @@ portal_delete (GDBusMethodInvocation *invocation,
       return;
     }
 
+  g_debug ("delete %s\n", id);
+
   xdg_app_db_set_entry (db, id, NULL);
 
   old_apps = xdg_app_db_entry_list_apps (entry);
@@ -276,6 +280,8 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
       if (existing == NULL)
         break;
     }
+
+  g_debug ("create_doc %s\n", id);
 
   entry = xdg_app_db_entry_new (data);
   xdg_app_db_set_entry (db, id, entry);

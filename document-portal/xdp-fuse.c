@@ -1030,7 +1030,7 @@ xdp_fuse_lookup (fuse_req_t req,
   struct fuse_entry_param e = {0};
   int res;
 
-  g_debug ("xdp_fuse_lookup %lx/%s", parent, name);
+  g_debug ("xdp_fuse_lookup %lx/%s -> ", parent, name);
 
   memset (&e, 0, sizeof(e));
 
@@ -1038,12 +1038,14 @@ xdp_fuse_lookup (fuse_req_t req,
 
   if (res == 0)
     {
+      g_debug ("xdp_fuse_lookup <- inode %lx", (long)e.ino);
       e.attr_timeout = get_attr_cache_time (e.attr.st_mode);
       e.entry_timeout = get_entry_cache_time (e.ino);
       fuse_reply_entry (req, &e);
     }
   else
     {
+      g_debug ("xdp_fuse_lookup <- error %s", strerror (res));
       fuse_reply_err (req, res);
     }
 }
