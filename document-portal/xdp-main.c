@@ -97,6 +97,8 @@ do_set_permissions (XdgAppDbEntry *entry,
   new_entry = xdg_app_db_entry_set_app_permissions (entry, app_id, perms_s);
   xdg_app_db_set_entry (db, doc_id, new_entry);
 
+  xdp_fuse_invalidate_doc_app (doc_id, app_id, entry);
+
   xdg_app_permission_store_call_set_permission (permission_store,
                                                 TABLE_NAME,
                                                 FALSE,
@@ -205,6 +207,8 @@ portal_delete (GDBusMethodInvocation *invocation,
 {
   const char *id;
   g_autoptr(XdgAppDbEntry) entry = NULL;
+  g_autofree const char **old_apps = NULL;
+  int i;
 
   g_variant_get (parameters, "(s)", &id);
 
@@ -224,6 +228,11 @@ portal_delete (GDBusMethodInvocation *invocation,
     }
 
   xdg_app_db_set_entry (db, id, NULL);
+
+  old_apps = xdg_app_db_entry_list_apps (entry);
+  for (i = 0; old_apps[i] != NULL; i++)
+    xdp_fuse_invalidate_doc_app (id, old_apps[i], entry);
+  xdp_fuse_invalidate_doc (id, entry);
 
   xdg_app_permission_store_call_delete (permission_store, TABLE_NAME,
                                         id, NULL, NULL, NULL);
@@ -270,6 +279,8 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
 
   entry = xdg_app_db_entry_new (data);
   xdg_app_db_set_entry (db, id, entry);
+
+  xdp_fuse_invalidate_doc (id, entry);
 
   xdg_app_permission_store_call_set (permission_store,
                                      TABLE_NAME,

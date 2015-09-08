@@ -63,6 +63,12 @@ static guint32 next_app_id = 1;
 
 G_LOCK_DEFINE(app_id);
 
+static GThread *fuse_thread = NULL;
+static struct fuse_session *session = NULL;
+static struct fuse_chan *main_ch = NULL;
+static char *mount_path = NULL;
+static pthread_t fuse_pthread = 0;
+
 static int
 steal_fd (int *fdp)
 {
@@ -1740,6 +1746,7 @@ xdp_fuse_rename (fuse_req_t req,
   g_autoptr(XdpTmp) tmp = NULL;
   g_autoptr(XdpTmp) other_tmp = NULL;
   guint32 app_id = 0;
+  guint32 doc_id = 0;
   gboolean can_write;
 
   g_debug ("xdp_fuse_rename %lx/%s -> %lx/%s", parent, name, newparent, newname);
@@ -1754,9 +1761,11 @@ xdp_fuse_rename (fuse_req_t req,
   if (parent_class == APP_DOC_DIR_INO_CLASS)
     {
       app_id = get_app_id_from_app_doc_ino (parent_class_ino);
+      doc_id = get_doc_id_from_app_doc_ino (parent_class_ino);
     }
   else if (parent_class == DOC_DIR_INO_CLASS)
     {
+      doc_id = parent_class_ino;
     }
   else
     {
@@ -1816,6 +1825,16 @@ xdp_fuse_rename (fuse_req_t req,
       xdp_tmp_unlink_nolock (tmp);
 
       fuse_reply_err (req, 0);
+
+      /* We actually turn the old inode to a different one after the rename, so
+         we need to invalidate the target entry */
+
+      if (app_id != 0)
+        fuse_lowlevel_notify_inval_entry (main_ch, make_app_doc_dir_inode (app_id, doc_id),
+                                          basename, strlen (basename));
+      else
+        fuse_lowlevel_notify_inval_entry (main_ch, make_inode (DOC_DIR_INO_CLASS, doc_id),
+                                          basename, strlen (basename));
     }
   else
     {
@@ -2114,11 +2133,42 @@ static struct fuse_lowlevel_ops xdp_fuse_oper = {
   .unlink       = xdp_fuse_unlink,
 };
 
-static GThread *fuse_thread = NULL;
-static struct fuse_session *session = NULL;
-static struct fuse_chan *main_ch = NULL;
-static char *mount_path = NULL;
-static pthread_t fuse_pthread = 0;
+/* Called when a apps permissions to see a document is changed */
+void
+xdp_fuse_invalidate_doc_app (const char  *doc_id_s,
+                             const char  *app_id_s,
+                             XdgAppDbEntry *entry)
+{
+  guint32 app_id = get_app_id_from_name (app_id_s);
+  guint32 doc_id = xdp_id_from_name (doc_id_s);
+  g_autofree char *basename = xdp_entry_dup_basename (entry);
+
+  g_debug ("invalidate %s/%s\n", doc_id_s, app_id_s);
+
+  fuse_lowlevel_notify_inval_inode (main_ch, make_app_doc_file_inode (app_id, doc_id), 0, 0);
+  fuse_lowlevel_notify_inval_entry (main_ch, make_app_doc_dir_inode (app_id, doc_id),
+                                    basename, strlen (basename));
+  fuse_lowlevel_notify_inval_inode (main_ch, make_app_doc_dir_inode (app_id, doc_id), 0, 0);
+  fuse_lowlevel_notify_inval_entry (main_ch, make_inode (APP_DIR_INO_CLASS, app_id),
+                                    doc_id_s, strlen (doc_id_s));
+}
+
+/* Called when a document id is created/removed */
+void
+xdp_fuse_invalidate_doc (const char  *doc_id_s,
+                         XdgAppDbEntry *entry)
+{
+  guint32 doc_id = xdp_id_from_name (doc_id_s);
+  g_autofree char *basename = xdp_entry_dup_basename (entry);
+
+  g_debug ("invalidate %s\n", doc_id_s);
+
+  fuse_lowlevel_notify_inval_inode (main_ch, make_app_doc_file_inode (0, doc_id), 0, 0);
+  fuse_lowlevel_notify_inval_entry (main_ch, make_inode (DOC_DIR_INO_CLASS, doc_id),
+                                    basename, strlen (basename));
+  fuse_lowlevel_notify_inval_inode (main_ch, make_inode (DOC_DIR_INO_CLASS, doc_id), 0, 0);
+  fuse_lowlevel_notify_inval_entry (main_ch, FUSE_ROOT_ID, doc_id_s, strlen (doc_id_s));
+}
 
 const char *
 xdp_fuse_get_mountpoint (void)
