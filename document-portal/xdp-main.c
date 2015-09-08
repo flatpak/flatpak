@@ -124,6 +124,8 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
 
   g_variant_get (parameters, "(&s&s^a&s)", &id, &target_app_id, &permissions);
 
+  AUTOLOCK(db);
+
   entry = xdg_app_db_lookup (db, id);
   if (entry == NULL)
     {
@@ -169,6 +171,8 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
 
   g_variant_get (parameters, "(&s&s^a&s)", &id, &target_app_id, &permissions);
 
+  AUTOLOCK(db);
+
   entry = xdg_app_db_lookup (db, id);
   if (entry == NULL)
     {
@@ -213,6 +217,8 @@ portal_delete (GDBusMethodInvocation *invocation,
   int i;
 
   g_variant_get (parameters, "(s)", &id);
+
+  AUTOLOCK(db);
 
   entry = xdg_app_db_lookup (db, id);
   if (entry == NULL)
@@ -375,6 +381,8 @@ portal_add (GDBusMethodInvocation *invocation,
       return;
     }
 
+  AUTOLOCK(db);
+
   id = do_create_doc (&real_parent_st_buf, path_buffer, reuse_existing);
 
   if (app_id[0] != '\0')
@@ -417,10 +425,7 @@ got_app_id_cb (GObject *source_object,
   if (app_id == NULL)
     g_dbus_method_invocation_return_gerror (invocation, error);
   else
-    {
-      AUTOLOCK(db);
-      portal_method (invocation, g_dbus_method_invocation_get_parameters (invocation), app_id);
-    }
+    portal_method (invocation, g_dbus_method_invocation_get_parameters (invocation), app_id);
 }
 
 static gboolean
