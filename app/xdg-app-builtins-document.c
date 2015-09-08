@@ -63,6 +63,8 @@ xdg_app_builtin_export_file (int argc, char **argv,
   g_autoptr(GPtrArray) permissions = NULL;
   const char *file;
   g_autofree char  *mountpoint = NULL;
+  g_autofree char  *basename = NULL;
+  g_autofree char  *doc_path = NULL;
   XdpDbusDocuments *documents;
   int fd, fd_id;
   int i;
@@ -101,7 +103,10 @@ xdg_app_builtin_export_file (int argc, char **argv,
 
   fd = open (file, O_PATH | O_CLOEXEC);
   if (fd == -1)
-    goto out;
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
 
   fd_list = g_unix_fd_list_new ();
   fd_id = g_unix_fd_list_append (fd_list, fd, error);
@@ -149,7 +154,9 @@ xdg_app_builtin_export_file (int argc, char **argv,
 
     }
 
-  g_print ("%s/%s\n", mountpoint, doc_id);
+  basename = g_path_get_basename (file);
+  doc_path = g_build_filename (mountpoint, doc_id, basename, NULL);
+  g_print ("%s\n", doc_path);
 
   ret = TRUE;
 
