@@ -2170,6 +2170,18 @@ xdp_fuse_invalidate_doc (const char  *doc_id_s,
   fuse_lowlevel_notify_inval_entry (main_ch, FUSE_ROOT_ID, doc_id_s, strlen (doc_id_s));
 }
 
+guint32
+xdp_fuse_lookup_id_for_inode (ino_t inode)
+{
+  XdpInodeClass class = get_class (inode);
+  guint64 class_ino = get_class_ino (inode);
+
+  if (class != APP_DOC_FILE_INO_CLASS)
+    return 0;
+
+  return get_doc_id_from_app_doc_ino (class_ino);
+}
+
 const char *
 xdp_fuse_get_mountpoint (void)
 {

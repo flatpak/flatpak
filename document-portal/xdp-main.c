@@ -40,6 +40,7 @@ static XdgAppPermissionStore *permission_store;
 static GDBusNodeInfo *introspection_data = NULL;
 static int daemon_event_fd = -1;
 static int final_exit_status = 0;
+static dev_t fuse_dev = 0;
 
 G_LOCK_DEFINE(db);
 
@@ -383,23 +384,57 @@ portal_add (GDBusMethodInvocation *invocation,
 
   AUTOLOCK(db);
 
-  id = do_create_doc (&real_parent_st_buf, path_buffer, reuse_existing);
-
-  if (app_id[0] != '\0')
+  if (st_buf.st_dev == fuse_dev)
     {
-      g_autoptr(XdgAppDbEntry) entry = NULL;
-      XdpPermissionFlags perms =
-        XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
-        XDP_PERMISSION_FLAGS_READ |
-        XDP_PERMISSION_FLAGS_WRITE;
-      entry = xdg_app_db_lookup (db, id);
+      /* The passed in fd is on the fuse filesystem itself */
+      guint32 old_id;
+      g_autoptr(XdgAppDbEntry) old_entry = NULL;
 
-      /* If its a unique one its safe for the creator to
-         delete it at will */
-      if (!reuse_existing)
-        perms |= XDP_PERMISSION_FLAGS_DELETE;
+      old_id = xdp_fuse_lookup_id_for_inode (st_buf.st_ino);
+      if (old_id == 0)
+        {
+          g_dbus_method_invocation_return_error (invocation,
+                                                 XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                                 "Invalid fd passed");
+          return;
+        }
 
-      do_set_permissions (entry, id, app_id, perms);
+      id = xdp_name_from_id (old_id);
+
+      /* If the entry doesn't exist anymore, fail.  Also fail if not
+         resuse_existing, because otherwise the user could use this to
+         get a copy with permissions and thus escape later permission
+         revocations */
+      old_entry = xdg_app_db_lookup (db, id);
+      if (old_entry == NULL ||
+          !reuse_existing)
+        {
+          g_dbus_method_invocation_return_error (invocation,
+                                                 XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                                 "Invalid fd passed");
+          return;
+        }
+    }
+  else
+    {
+      id = do_create_doc (&real_parent_st_buf, path_buffer, reuse_existing);
+
+      if (app_id[0] != '\0')
+        {
+          g_autoptr(XdgAppDbEntry) entry = NULL;
+          XdpPermissionFlags perms =
+            XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
+            XDP_PERMISSION_FLAGS_READ |
+            XDP_PERMISSION_FLAGS_WRITE;
+          entry = xdg_app_db_lookup (db, id);
+
+          /* If its a unique one its safe for the creator to
+             delete it at will */
+          if (!reuse_existing)
+            perms |= XDP_PERMISSION_FLAGS_DELETE;
+
+          do_set_permissions (entry, id, app_id, perms);
+        }
     }
 
   g_dbus_method_invocation_return_value (invocation,
@@ -499,6 +534,7 @@ on_name_acquired (GDBusConnection *connection,
                   gpointer         user_data)
 {
   g_autoptr(GError) error = NULL;
+  struct stat stbuf;
 
   g_debug ("org.freedesktop.portal.Documents acquired");
 
@@ -510,6 +546,16 @@ on_name_acquired (GDBusConnection *connection,
       return;
     }
 
+  if (stat (xdp_fuse_get_mountpoint (), &stbuf) != 0)
+    {
+      final_exit_status = 7;
+      g_printerr ("fuse stat failed: %s\n", strerror (errno));
+      g_main_loop_quit (loop);
+      return;
+    }
+
+  fuse_dev = stbuf.st_dev;
+
   daemon_report_done (0);
 }
 
@@ -519,7 +565,7 @@ on_name_lost (GDBusConnection *connection,
               gpointer         user_data)
 {
   g_debug ("org.freedesktop.portal.Documents lost");
-  final_exit_status = 7;
+  final_exit_status = 20;
   g_main_loop_quit (loop);
 }
 
