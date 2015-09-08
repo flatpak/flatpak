@@ -90,7 +90,7 @@ export_file (const char *path, gboolean unique)
                                                          "/org/freedesktop/portal/documents",
                                                          "org.freedesktop.portal.Documents",
                                                          "Add",
-                                                         g_variant_new ("(hb)", fd_id, unique),
+                                                         g_variant_new ("(hb)", fd_id, !unique),
                                                          G_VARIANT_TYPE ("(s)"),
                                                          G_DBUS_CALL_FLAGS_NONE,
                                                          30000,
@@ -119,7 +119,7 @@ export_new_file (const char *basename, const char *contents, gboolean unique)
   g_file_set_contents (path, contents, -1, &error);
   g_assert_no_error (error);
 
-  return export_file (path, FALSE);
+  return export_file (path, unique);
 }
 
 static gboolean
