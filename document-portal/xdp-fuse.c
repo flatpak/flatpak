@@ -2157,6 +2157,7 @@ xdp_fuse_init (GError **error)
 {
   char *argv[] = { "xdp-fuse", "-osplice_write,splice_move,splice_read" };
   struct fuse_args args = FUSE_ARGS_INIT(G_N_ELEMENTS(argv), argv);
+  struct stat st;
 
   app_name_to_id =
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -2164,6 +2165,15 @@ xdp_fuse_init (GError **error)
     g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, NULL);
 
   mount_path = g_build_filename (g_get_user_runtime_dir(), "doc", NULL);
+
+  if (stat (mount_path, &st) == -1 && errno == ENOTCONN)
+    {
+      char *argv[] = { "fusermount", "-u", mount_path, NULL };
+
+      g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+                    NULL, NULL, NULL, NULL, NULL, NULL);
+    }
+
   if (g_mkdir_with_parents  (mount_path, 0700))
     {
       g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_FAILED,
