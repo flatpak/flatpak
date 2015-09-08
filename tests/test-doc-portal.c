@@ -150,7 +150,6 @@ grant_permissions (const char *id, const char *app, gboolean write)
   g_assert_no_error (error);
 }
 
-
 static void
 test_create_doc (void)
 {
@@ -182,6 +181,35 @@ test_create_doc (void)
   g_clear_error (&error);
 }
 
+static void
+test_recursive_doc (void)
+{
+  g_autofree char *id = NULL;
+  g_autofree char *id2 = NULL;
+  g_autofree char *id3 = NULL;
+  const char *basename = "recursive-file";
+  g_autofree char *path = NULL;
+  g_autofree char *app_path = NULL;
+
+  id = export_new_file (basename, "recursive-content", FALSE);
+
+  assert_doc_has_contents (id, basename, NULL, "recursive-content");
+
+  path = make_doc_path (id, basename, NULL);
+  g_print ("path: %s\n", path);
+
+  id2 = export_file (path, FALSE);
+
+  g_assert_cmpstr (id, ==, id2);
+
+  grant_permissions (id, "com.test.App1", FALSE);
+
+  app_path = make_doc_path (id, basename, "com.test.App1");
+
+  id3 = export_file (app_path, FALSE);
+
+  g_assert_cmpstr (id, ==, id3);
+}
 
 int
 main (int argc, char **argv)
@@ -227,6 +255,7 @@ main (int argc, char **argv)
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/db/create_doc", test_create_doc);
+  g_test_add_func ("/db/recursive_doc", test_recursive_doc);
 
   res = g_test_run ();
 
