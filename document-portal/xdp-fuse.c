@@ -27,7 +27,7 @@
       "org.gnome.gedit/" (APP_DIR:app id)
         "$id/" (APP_DOC_DIR:app_id<<32|doc_id)
           <same as DOC_DIR>
-    "$id" (DOC_DIR:doc_idid)
+    "$id" (APP_DOC_DIR:(app_id==0)<<32|doc_idid)
       $basename (APP_DOC_FILE:app_id<<32|doc_id) (app id == 0 if not in app dir)
       $tmpfile (TMPFILE:tmp_id)
 */
@@ -48,7 +48,6 @@
 
 typedef enum {
   STD_DIRS_INO_CLASS,
-  DOC_DIR_INO_CLASS,
   TMPFILE_INO_CLASS,
   APP_DIR_INO_CLASS,
   APP_DOC_DIR_INO_CLASS,
@@ -768,15 +767,6 @@ xdp_stat (fuse_ino_t ino,
         break;
       }
 
-    case DOC_DIR_INO_CLASS:
-      entry = xdp_lookup_doc (class_ino);
-      if (entry == NULL)
-        return ENOENT;
-
-      stbuf->st_mode = S_IFDIR | DOC_DIR_PERMS;
-      stbuf->st_nlink = 2;
-      break;
-
     case APP_DOC_FILE_INO_CLASS:
       {
         guint32 app_id = get_app_id_from_app_doc_ino (class_ino);
@@ -923,8 +913,7 @@ xdp_lookup (fuse_ino_t parent,
             }
           else if (name_looks_like_id (name))
             {
-              *inode = make_inode (DOC_DIR_INO_CLASS,
-                                   xdp_id_from_name (name));
+              *inode = make_app_doc_dir_inode (0, xdp_id_from_name (name));
               if (xdp_stat (*inode, stbuf, NULL) == 0)
                 return 0;
             }
@@ -961,18 +950,9 @@ xdp_lookup (fuse_ino_t parent,
       break;
 
     case APP_DOC_DIR_INO_CLASS:
-    case DOC_DIR_INO_CLASS:
       {
-        guint32 app_id = 0;
-        guint32 doc_id;
-
-        if (parent_class == APP_DOC_DIR_INO_CLASS)
-          {
-            app_id = get_app_id_from_app_doc_ino (parent_class_ino);
-            doc_id = get_doc_id_from_app_doc_ino (parent_class_ino);
-          }
-        else
-          doc_id = parent_class_ino;
+        guint32 app_id = get_app_id_from_app_doc_ino (parent_class_ino);
+        guint32 doc_id = get_doc_id_from_app_doc_ino (parent_class_ino);
 
         entry = xdp_lookup_doc (doc_id);
         if (entry != NULL)
@@ -1241,17 +1221,13 @@ xdp_fuse_opendir (fuse_req_t req,
 
       break;
 
-    case DOC_DIR_INO_CLASS:
-      dirbuf_add (req, &b, ".", ino);
-      dirbuf_add (req, &b, "..", FUSE_ROOT_ID);
-      dirbuf_add_doc_file (req, &b, entry, class_ino, 0);
-      dirbuf_add_tmp_files (req, &b, ino);
-      break;
-
     case APP_DOC_DIR_INO_CLASS:
       dirbuf_add (req, &b, ".", ino);
-      dirbuf_add (req, &b, "..", make_inode (APP_DIR_INO_CLASS,
-                                             get_app_id_from_app_doc_ino (class_ino)));
+      if (get_app_id_from_app_doc_ino (class_ino) == 0)
+        dirbuf_add (req, &b, "..", FUSE_ROOT_ID);
+      else
+        dirbuf_add (req, &b, "..", make_inode (APP_DIR_INO_CLASS,
+                                               get_app_id_from_app_doc_ino (class_ino)));
       dirbuf_add_doc_file (req, &b, entry,
                            get_doc_id_from_app_doc_ino (class_ino),
                            get_app_id_from_app_doc_ino (class_ino));
@@ -1454,20 +1430,14 @@ xdp_fuse_create (fuse_req_t req,
       return;
     }
 
-  if (parent_class == APP_DOC_DIR_INO_CLASS)
-    {
-      app_id = get_app_id_from_app_doc_ino (parent_class_ino);
-      doc_id = get_doc_id_from_app_doc_ino (parent_class_ino);
-    }
-  else if (parent_class == DOC_DIR_INO_CLASS)
-    {
-      doc_id = parent_class_ino;
-    }
-  else
+  if (parent_class != APP_DOC_DIR_INO_CLASS)
     {
       fuse_reply_err (req, EACCES);
       return;
     }
+
+  app_id = get_app_id_from_app_doc_ino (parent_class_ino);
+  doc_id = get_doc_id_from_app_doc_ino (parent_class_ino);
 
   can_write = app_can_write_doc (entry, app_id);
 
@@ -1758,21 +1728,15 @@ xdp_fuse_rename (fuse_req_t req,
       return;
     }
 
-  if (parent_class == APP_DOC_DIR_INO_CLASS)
-    {
-      app_id = get_app_id_from_app_doc_ino (parent_class_ino);
-      doc_id = get_doc_id_from_app_doc_ino (parent_class_ino);
-    }
-  else if (parent_class == DOC_DIR_INO_CLASS)
-    {
-      doc_id = parent_class_ino;
-    }
-  else
+  if (parent_class != APP_DOC_DIR_INO_CLASS)
     {
       /* Only allow renames in (app) doc dirs */
       fuse_reply_err (req, EACCES);
       return;
     }
+
+  app_id = get_app_id_from_app_doc_ino (parent_class_ino);
+  doc_id = get_doc_id_from_app_doc_ino (parent_class_ino);
 
   can_write = app_can_write_doc (entry, app_id);
 
@@ -1829,12 +1793,8 @@ xdp_fuse_rename (fuse_req_t req,
       /* We actually turn the old inode to a different one after the rename, so
          we need to invalidate the target entry */
 
-      if (app_id != 0)
-        fuse_lowlevel_notify_inval_entry (main_ch, make_app_doc_dir_inode (app_id, doc_id),
-                                          basename, strlen (basename));
-      else
-        fuse_lowlevel_notify_inval_entry (main_ch, make_inode (DOC_DIR_INO_CLASS, doc_id),
-                                          basename, strlen (basename));
+      fuse_lowlevel_notify_inval_entry (main_ch, make_app_doc_dir_inode (app_id, doc_id),
+                                        basename, strlen (basename));
     }
   else
     {
@@ -1981,14 +1941,10 @@ xdp_fuse_fsyncdir (fuse_req_t req,
   guint64 class_ino = get_class_ino (ino);
   guint32 doc_id;
 
-  if (class == DOC_DIR_INO_CLASS ||
-      class == APP_DOC_DIR_INO_CLASS)
+  if (class == APP_DOC_DIR_INO_CLASS)
     {
       g_autoptr (XdgAppDbEntry) entry = NULL;
-      if (class == APP_DOC_DIR_INO_CLASS)
-        doc_id = get_doc_id_from_app_doc_ino (class_ino);
-      else
-        doc_id = class_ino;
+      doc_id = get_doc_id_from_app_doc_ino (class_ino);
 
       entry = xdp_lookup_doc (doc_id);
       if (entry != NULL)
@@ -2064,19 +2020,14 @@ xdp_fuse_unlink (fuse_req_t req,
       return;
     }
 
- if (parent_class == APP_DOC_DIR_INO_CLASS)
-    {
-      app_id = get_app_id_from_app_doc_ino (parent_class_ino);
-    }
-  else if (parent_class == DOC_DIR_INO_CLASS)
-    {
-    }
-  else
+  if (parent_class != APP_DOC_DIR_INO_CLASS)
     {
       /* Only allow unlink in (app) doc dirs */
       fuse_reply_err (req, EACCES);
       return;
     }
+
+  app_id = get_app_id_from_app_doc_ino (parent_class_ino);
 
   can_write = app_can_write_doc (entry, app_id);
   if (!can_write)
@@ -2164,9 +2115,9 @@ xdp_fuse_invalidate_doc (const char  *doc_id_s,
   g_debug ("invalidate %s\n", doc_id_s);
 
   fuse_lowlevel_notify_inval_inode (main_ch, make_app_doc_file_inode (0, doc_id), 0, 0);
-  fuse_lowlevel_notify_inval_entry (main_ch, make_inode (DOC_DIR_INO_CLASS, doc_id),
+  fuse_lowlevel_notify_inval_entry (main_ch, make_app_doc_dir_inode (0, doc_id),
                                     basename, strlen (basename));
-  fuse_lowlevel_notify_inval_inode (main_ch, make_inode (DOC_DIR_INO_CLASS, doc_id), 0, 0);
+  fuse_lowlevel_notify_inval_inode (main_ch, make_app_doc_dir_inode (0, doc_id), 0, 0);
   fuse_lowlevel_notify_inval_entry (main_ch, FUSE_ROOT_ID, doc_id_s, strlen (doc_id_s));
 }
 
