@@ -189,6 +189,7 @@ main (int argc, char **argv)
   int res;
   gboolean inited;
   GError *error = NULL;
+  gint exit_status;
 
   g_mkdtemp (outdir);
   g_print ("outdir: %s\n", outdir);
@@ -199,6 +200,10 @@ main (int argc, char **argv)
   dbus = g_test_dbus_new (G_TEST_DBUS_NONE);
   g_test_dbus_add_service_dir (dbus, TEST_SERVICES);
   g_test_dbus_up (dbus);
+
+  g_spawn_command_line_sync (DOC_PORTAL " -d", NULL, NULL, &exit_status, &error);
+  g_assert_cmpint (exit_status, ==, 0);
+  g_assert_no_error (error);
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   g_assert_no_error (error);
