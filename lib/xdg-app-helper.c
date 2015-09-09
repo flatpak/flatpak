@@ -2199,6 +2199,10 @@ main (int argc,
           xunsetenv ("DISPLAY");
         }
     }
+  else
+    {
+      xunsetenv ("DISPLAY");
+    }
 
   /* Bind mount in the Wayland socket */
   if (wayland_socket != 0)
