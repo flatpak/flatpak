@@ -156,12 +156,14 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GFile) home = NULL;
   g_autoptr(GFile) user_font1 = NULL;
   g_autoptr(GFile) user_font2 = NULL;
+  g_autoptr(GFile) override_file = NULL;
   g_autoptr(XdgAppSessionHelper) session_helper = NULL;
   g_autofree char *runtime = NULL;
   g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;
   g_autofree char *app_ref = NULL;
   g_autofree char *doc_mount_path = NULL;
+  g_autoptr(GKeyFile) override_metakey = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
@@ -177,6 +179,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(XdgAppContext) arg_context = NULL;
   g_autoptr(XdgAppContext) app_context = NULL;
   g_autoptr(GDBusConnection) session_bus = NULL;
+  g_autoptr(GFile) override_metadata = NULL;
+  g_autofree char *override_metadata_contents = NULL;
+  gsize override_metadata_size;
 
   context = g_option_context_new ("APP [args...] - Run an app");
 
@@ -260,6 +265,25 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     goto out;
   if (!xdg_app_context_load_metadata (app_context, metakey, error))
     goto out;
+
+  override_metadata = xdg_app_get_override_file (app);
+  if (g_file_load_contents (override_metadata, cancellable,
+                            &override_metadata_contents, &override_metadata_size, NULL, NULL))
+    {
+      g_autoptr(GError) local_error = NULL;
+      g_autoptr(GKeyFile) override_metakey = NULL;
+      override_metakey = g_key_file_new ();
+      if (!g_key_file_load_from_data (override_metakey,
+                                      override_metadata_contents, override_metadata_size,
+                                      0, &local_error))
+        g_warning ("Invalid override file: %s\n", local_error->message);
+      else
+        {
+          if (!xdg_app_context_load_metadata (app_context, override_metakey, &local_error))
+            g_warning ("Invalid override file: %s\n", local_error->message);
+        }
+    }
+
   xdg_app_context_merge (app_context, arg_context);
 
   if (!add_extension_args (runtime_metakey, runtime_ref, argv_array, cancellable, error))

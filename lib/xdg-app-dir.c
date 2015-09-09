@@ -140,6 +140,18 @@ xdg_app_get_user_base_dir_location (void)
   return g_file_new_for_path (base);
 }
 
+GFile *
+xdg_app_get_override_file (const char *app_id)
+{
+  g_autoptr(GFile) user_dir = NULL;
+  g_autoptr(GFile) override_dir = NULL;
+
+  user_dir = xdg_app_get_user_base_dir_location ();
+  override_dir = g_file_get_child (user_dir, "overrides");
+
+  return g_file_get_child (override_dir, app_id);
+}
+
 static void
 xdg_app_dir_finalize (GObject *object)
 {
