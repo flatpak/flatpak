@@ -302,6 +302,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
   if (session_bus)
     {
+      g_autoptr (GError) local_error = NULL;
       g_autoptr (GDBusMessage) reply = NULL;
       g_autoptr (GDBusMessage) msg = g_dbus_message_new_method_call ("org.freedesktop.portal.Documents",
                                                                      "/org/freedesktop/portal/documents",
@@ -316,8 +317,13 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                                                               NULL);
       if (reply)
         {
-          g_variant_get (g_dbus_message_get_body (reply),
-                         "(^ay)", &doc_mount_path);
+          if (g_dbus_message_to_gerror (reply, &local_error))
+            {
+              g_warning ("Can't get document portal: %s\n", local_error->message);
+            }
+          else
+            g_variant_get (g_dbus_message_get_body (reply),
+                           "(^ay)", &doc_mount_path);
         }
     }
 
