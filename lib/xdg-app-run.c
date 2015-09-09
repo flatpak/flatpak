@@ -39,6 +39,13 @@ typedef enum {
   XDG_APP_CONTEXT_SHARED_IPC       = 1 << 1,
 } XdgAppContextShares;
 
+/* Same order as enum */
+static const char *xdg_app_context_shares[] = {
+  "network",
+  "ipc",
+  NULL
+};
+
 typedef enum {
   XDG_APP_CONTEXT_SOCKET_X11         = 1 << 0,
   XDG_APP_CONTEXT_SOCKET_WAYLAND     = 1 << 1,
@@ -47,9 +54,24 @@ typedef enum {
   XDG_APP_CONTEXT_SOCKET_SYSTEM_BUS  = 1 << 4,
 } XdgAppContextSockets;
 
+/* Same order as enum */
+static const char *xdg_app_context_sockets[] = {
+  "x11",
+  "wayland",
+  "pulseaudio",
+  "session-bus",
+  "system-bus",
+  NULL
+};
+
 typedef enum {
   XDG_APP_CONTEXT_DEVICE_DRI         = 1 << 0,
 } XdgAppContextDevices;
+
+static const char *xdg_app_context_devices[] = {
+  "dri",
+  NULL
+};
 
 struct XdgAppContext {
   XdgAppContextShares shares;
@@ -88,34 +110,60 @@ xdg_app_context_free (XdgAppContext *context)
   g_slice_free (XdgAppContext, context);
 }
 
-static XdgAppContextShares
-xdg_app_context_share_from_string (const char *string, GError **error)
+static guint32
+xdg_app_context_bitmask_from_string (const char *name, const char **names)
 {
-  if (strcmp (string, "network") == 0)
-    return XDG_APP_CONTEXT_SHARED_NETWORK;
-  if (strcmp (string, "ipc") == 0)
-    return XDG_APP_CONTEXT_SHARED_IPC;
+  guint32 i;
 
-  g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               "Unknown share type %s, valid types are: network, ipc\n", string);
+  for (i = 0; names[i] != NULL; i++)
+    {
+      if (strcmp (names[i], name) == 0)
+        return 1 << i;
+    }
+
   return 0;
 }
 
+
 static char **
-xdg_app_context_shared_to_string (XdgAppContextShares shares)
+xdg_app_context_bitmask_to_string (guint32 enabled, guint32 valid, const char **names)
 {
+  guint32 i;
   GPtrArray *array;
 
   array = g_ptr_array_new ();
 
-  if (shares & XDG_APP_CONTEXT_SHARED_NETWORK)
-    g_ptr_array_add (array, g_strdup ("network"));
-
-  if (shares & XDG_APP_CONTEXT_SHARED_IPC)
-    g_ptr_array_add (array, g_strdup ("ipc"));
+  for (i = 0; names[i] != NULL; i++)
+    {
+      guint32 bitmask = 1 << i;
+      if (valid & bitmask)
+        {
+          if (enabled & bitmask)
+            g_ptr_array_add (array, g_strdup (names[i]));
+          else
+            g_ptr_array_add (array, g_strdup_printf ("!%s", names[i]));
+        }
+    }
 
   g_ptr_array_add (array, NULL);
   return (char **)g_ptr_array_free (array, FALSE);
+}
+
+static XdgAppContextShares
+xdg_app_context_share_from_string (const char *string, GError **error)
+{
+  XdgAppContextShares shares = xdg_app_context_bitmask_from_string (string, xdg_app_context_shares);
+
+  if (shares == 0)
+    g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                 "Unknown share type %s, valid types are: network, ipc\n", string);
+  return shares;
+}
+
+static char **
+xdg_app_context_shared_to_string (XdgAppContextShares shares, XdgAppContextShares valid)
+{
+  return xdg_app_context_bitmask_to_string (shares, valid, xdg_app_context_shares);
 }
 
 static XdgAppPolicy
@@ -173,71 +221,35 @@ xdg_app_verify_dbus_name (const char *name, GError **error)
 static XdgAppContextSockets
 xdg_app_context_socket_from_string (const char *string, GError **error)
 {
-  if (strcmp (string, "x11") == 0)
-    return XDG_APP_CONTEXT_SOCKET_X11;
-  if (strcmp (string, "wayland") == 0)
-    return XDG_APP_CONTEXT_SOCKET_WAYLAND;
-  if (strcmp (string, "pulseaudio") == 0)
-    return XDG_APP_CONTEXT_SOCKET_PULSEAUDIO;
-  if (strcmp (string, "session-bus") == 0)
-    return XDG_APP_CONTEXT_SOCKET_SESSION_BUS;
-  if (strcmp (string, "system-bus") == 0)
-    return XDG_APP_CONTEXT_SOCKET_SYSTEM_BUS;
+  XdgAppContextSockets sockets = xdg_app_context_bitmask_from_string (string, xdg_app_context_sockets);
 
-  g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               "Unknown socket type %s, valid types are: x11,wayland,pulseaudio,session-bus,system-bus\n", string);
-  return 0;
+  if (sockets == 0)
+    g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                 "Unknown socket type %s, valid types are: x11,wayland,pulseaudio,session-bus,system-bus\n", string);
+  return sockets;
 }
 
 static char **
-xdg_app_context_sockets_to_string (XdgAppContextSockets sockets)
+xdg_app_context_sockets_to_string (XdgAppContextSockets sockets, XdgAppContextSockets valid)
 {
-  GPtrArray *array;
-
-  array = g_ptr_array_new ();
-
-  if (sockets & XDG_APP_CONTEXT_SOCKET_X11)
-    g_ptr_array_add (array, g_strdup ("x11"));
-
-  if (sockets & XDG_APP_CONTEXT_SOCKET_WAYLAND)
-    g_ptr_array_add (array, g_strdup ("wayland"));
-
-  if (sockets & XDG_APP_CONTEXT_SOCKET_PULSEAUDIO)
-    g_ptr_array_add (array, g_strdup ("pulseaudio"));
-
-  if (sockets & XDG_APP_CONTEXT_SOCKET_SESSION_BUS)
-    g_ptr_array_add (array, g_strdup ("session-bus"));
-
-  if (sockets & XDG_APP_CONTEXT_SOCKET_SYSTEM_BUS)
-    g_ptr_array_add (array, g_strdup ("system-bus"));
-
-  g_ptr_array_add (array, NULL);
-  return (char **)g_ptr_array_free (array, FALSE);
+  return xdg_app_context_bitmask_to_string (sockets, valid, xdg_app_context_sockets);
 }
 
 static XdgAppContextDevices
 xdg_app_context_device_from_string (const char *string, GError **error)
 {
-  if (strcmp (string, "dri") == 0)
-    return XDG_APP_CONTEXT_DEVICE_DRI;
+  XdgAppContextDevices devices = xdg_app_context_bitmask_from_string (string, xdg_app_context_devices);
 
-  g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               "Unknown device type %s, valid types are: dri\n", string);
-  return 0;
+  if (devices == 0)
+    g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                 "Unknown device type %s, valid types are: dri\n", string);
+  return devices;
 }
 
 static char **
-xdg_app_context_devices_to_string (XdgAppContextDevices devices)
+xdg_app_context_devices_to_string (XdgAppContextDevices devices, XdgAppContextDevices valid)
 {
-  GPtrArray *array;
-
-  array = g_ptr_array_new ();
-
-  if (devices & XDG_APP_CONTEXT_DEVICE_DRI)
-    g_ptr_array_add (array, g_strdup ("dri"));
-
-  g_ptr_array_add (array, NULL);
-  return (char **)g_ptr_array_free (array, FALSE);
+  return xdg_app_context_bitmask_to_string (devices, valid, xdg_app_context_devices);
 }
 
 static void
@@ -387,6 +399,13 @@ xdg_app_context_add_filesystem (XdgAppContext            *context,
   g_hash_table_insert (context->filesystems, g_strdup (what), GINT_TO_POINTER (1));
 }
 
+static void
+xdg_app_context_remove_filesystem (XdgAppContext            *context,
+                                   const char               *what)
+{
+  g_hash_table_insert (context->filesystems, g_strdup (what), NULL);
+}
+
 void
 xdg_app_context_merge (XdgAppContext            *context,
                        XdgAppContext            *other)
@@ -396,10 +415,13 @@ xdg_app_context_merge (XdgAppContext            *context,
 
   context->shares &= ~other->shares_valid;
   context->shares |= other->shares;
+  context->shares_valid |= other->shares_valid;
   context->sockets &= ~other->sockets_valid;
   context->sockets |= other->sockets;
+  context->sockets_valid |= other->sockets_valid;
   context->devices &= ~other->devices_valid;
   context->devices |= other->devices;
+  context->devices_valid |= other->devices_valid;
 
   g_hash_table_iter_init (&iter, other->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -633,75 +655,104 @@ xdg_app_context_get_options (XdgAppContext            *context)
   return group;
 }
 
+static const char *
+parse_negated (const char *option, gboolean *negated)
+{
+  if (option[0] == '!')
+    {
+      option++;
+      *negated = TRUE;
+    }
+  else
+    *negated = FALSE;
+  return option;
+}
+
 /* This is a merge, not a replace */
 gboolean
 xdg_app_context_load_metadata (XdgAppContext            *context,
                                GKeyFile                 *metakey,
                                GError                  **error)
 {
+  gboolean remove;
   int i;
 
   if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_SHARED, NULL))
     {
       g_auto(GStrv) shares = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
-                                                                XDG_APP_METADATA_KEY_SHARED, NULL, error);
+                                                         XDG_APP_METADATA_KEY_SHARED, NULL, error);
       if (shares == NULL)
         return FALSE;
 
       for (i = 0; shares[i] != NULL; i++)
         {
-          XdgAppContextShares share = xdg_app_context_share_from_string (shares[i], error);
+          XdgAppContextShares share;
+
+          share = xdg_app_context_share_from_string (parse_negated (shares[i], &remove), error);
           if (share == 0)
             return FALSE;
-          xdg_app_context_add_shares (context, share);
+          if (remove)
+            xdg_app_context_remove_shares (context, share);
+          else
+            xdg_app_context_add_shares (context, share);
         }
     }
 
   if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_SOCKETS, NULL))
     {
       g_auto(GStrv) sockets = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
-                                                                 XDG_APP_METADATA_KEY_SOCKETS, NULL, error);
+                                                          XDG_APP_METADATA_KEY_SOCKETS, NULL, error);
       if (sockets == NULL)
         return FALSE;
 
       for (i = 0; sockets[i] != NULL; i++)
         {
-          XdgAppContextSockets socket = xdg_app_context_socket_from_string (sockets[i], error);
+          XdgAppContextSockets socket = xdg_app_context_socket_from_string (parse_negated (sockets[i], &remove), error);
           if (socket == 0)
             return FALSE;
-          xdg_app_context_add_sockets (context, socket);
+          if (remove)
+            xdg_app_context_remove_sockets (context, socket);
+          else
+            xdg_app_context_add_sockets (context, socket);
         }
     }
 
   if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_DEVICES, NULL))
     {
       g_auto(GStrv) devices = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
-                                                                 XDG_APP_METADATA_KEY_DEVICES, NULL, error);
+                                                          XDG_APP_METADATA_KEY_DEVICES, NULL, error);
       if (devices == NULL)
         return FALSE;
 
 
       for (i = 0; devices[i] != NULL; i++)
         {
-          XdgAppContextDevices device = xdg_app_context_device_from_string (devices[i], error);
+          XdgAppContextDevices device = xdg_app_context_device_from_string (parse_negated (devices[i], &remove), error);
           if (device == 0)
             return FALSE;
-          xdg_app_context_add_devices (context, device);
+          if (remove)
+            xdg_app_context_remove_devices (context, device);
+          else
+            xdg_app_context_add_devices (context, device);
         }
     }
 
   if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_FILESYSTEMS, NULL))
     {
       g_auto(GStrv) filesystems = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
-                                                                     XDG_APP_METADATA_KEY_FILESYSTEMS, NULL, error);
+                                                              XDG_APP_METADATA_KEY_FILESYSTEMS, NULL, error);
       if (filesystems == NULL)
         return FALSE;
 
       for (i = 0; filesystems[i] != NULL; i++)
         {
-          if (!xdg_app_context_verify_filesystem (filesystems[i], error))
+          const char *fs = parse_negated (filesystems[i], &remove);
+          if (!xdg_app_context_verify_filesystem (fs, error))
             return FALSE;
-          xdg_app_context_add_filesystem (context, filesystems[i]);
+          if (remove)
+            xdg_app_context_add_filesystem (context, fs);
+          else
+            xdg_app_context_remove_filesystem (context, fs);
         }
     }
 
@@ -761,9 +812,9 @@ void
 xdg_app_context_save_metadata (XdgAppContext            *context,
                                GKeyFile                 *metakey)
 {
-  g_auto(GStrv) shared = xdg_app_context_shared_to_string (context->shares);
-  g_auto(GStrv) sockets = xdg_app_context_sockets_to_string (context->sockets);
-  g_auto(GStrv) devices = xdg_app_context_devices_to_string (context->devices);
+  g_auto(GStrv) shared = xdg_app_context_shared_to_string (context->shares, context->shares_valid);
+  g_auto(GStrv) sockets = xdg_app_context_sockets_to_string (context->sockets, context->sockets_valid);
+  g_auto(GStrv) devices = xdg_app_context_devices_to_string (context->devices, context->devices_valid);
   GHashTableIter iter;
   gpointer key, value;
 
@@ -802,12 +853,19 @@ xdg_app_context_save_metadata (XdgAppContext            *context,
 
   if (g_hash_table_size (context->filesystems) > 0)
     {
-      g_autofree char **keys = (char **)g_hash_table_get_keys_as_array (context->filesystems, NULL);
+      GPtrArray *array = g_ptr_array_new ();
+
+      g_hash_table_iter_init (&iter, context->filesystems);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        {
+          if (value != NULL)
+            g_ptr_array_add (array, key);
+        }
 
       g_key_file_set_string_list (metakey,
                                   XDG_APP_METADATA_GROUP_CONTEXT,
                                   XDG_APP_METADATA_KEY_FILESYSTEMS,
-                                  (const char * const*)keys, g_strv_length (keys));
+                                  (const char * const*)array->pdata, array->len);
     }
   else
     g_key_file_remove_key (metakey,
@@ -1071,7 +1129,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
                                   GFile *app_id_dir)
 {
   GHashTableIter iter;
-  gpointer key;
+  gpointer key, value;
   gboolean unrestricted_session_bus;
   gboolean home_access = FALSE;
   GString *xdg_dirs_conf = NULL;
@@ -1137,11 +1195,12 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
     }
 
   g_hash_table_iter_init (&iter, context->filesystems);
-  while (g_hash_table_iter_next (&iter, &key, NULL))
+  while (g_hash_table_iter_next (&iter, &key, &value))
     {
       const char *filesystem = key;
 
-      if (strcmp (filesystem, "host") == 0 ||
+      if (value == NULL ||
+          strcmp (filesystem, "host") == 0 ||
           strcmp (filesystem, "home") == 0)
         continue;
 
@@ -1276,8 +1335,6 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       opts[i++] = 0;
       g_ptr_array_add (argv_array, g_strdup (opts));
     }
-
-
 }
 
 static const struct {const char *env; const char *val;} default_exports[] = {
