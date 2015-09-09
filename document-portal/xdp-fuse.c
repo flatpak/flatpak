@@ -2096,6 +2096,11 @@ xdp_fuse_invalidate_doc_app (const char  *doc_id_s,
 
   g_debug ("invalidate %s/%s\n", doc_id_s, app_id_s);
 
+  /* This can happen if fuse is not initialized yet for the very
+     first dbus message that activated the service */
+  if (main_ch == NULL)
+    return;
+
   fuse_lowlevel_notify_inval_inode (main_ch, make_app_doc_file_inode (app_id, doc_id), 0, 0);
   fuse_lowlevel_notify_inval_entry (main_ch, make_app_doc_dir_inode (app_id, doc_id),
                                     basename, strlen (basename));
@@ -2113,6 +2118,11 @@ xdp_fuse_invalidate_doc (const char  *doc_id_s,
   g_autofree char *basename = xdp_entry_dup_basename (entry);
 
   g_debug ("invalidate %s\n", doc_id_s);
+
+  /* This can happen if fuse is not initialized yet for the very
+     first dbus message that activated the service */
+  if (main_ch == NULL)
+    return;
 
   fuse_lowlevel_notify_inval_inode (main_ch, make_app_doc_file_inode (0, doc_id), 0, 0);
   fuse_lowlevel_notify_inval_entry (main_ch, make_app_doc_dir_inode (0, doc_id),
@@ -2136,6 +2146,8 @@ xdp_fuse_lookup_id_for_inode (ino_t inode)
 const char *
 xdp_fuse_get_mountpoint (void)
 {
+  if (mount_path == NULL)
+    mount_path = g_build_filename (g_get_user_runtime_dir(), "doc", NULL);
   return mount_path;
 }
 
@@ -2171,17 +2183,18 @@ xdp_fuse_init (GError **error)
   char *argv[] = { "xdp-fuse", "-osplice_write,splice_move,splice_read" };
   struct fuse_args args = FUSE_ARGS_INIT(G_N_ELEMENTS(argv), argv);
   struct stat st;
+  const char *mount_path;
 
   app_name_to_id =
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   app_id_to_name =
     g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, NULL);
 
-  mount_path = g_build_filename (g_get_user_runtime_dir(), "doc", NULL);
+  mount_path = xdp_fuse_get_mountpoint ();
 
   if (stat (mount_path, &st) == -1 && errno == ENOTCONN)
     {
-      char *argv[] = { "fusermount", "-u", mount_path, NULL };
+      char *argv[] = { "fusermount", "-u", (char *)mount_path, NULL };
 
       g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
                     NULL, NULL, NULL, NULL, NULL, NULL);
