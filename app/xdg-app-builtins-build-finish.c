@@ -60,7 +60,7 @@ export_dir (int            source_parent_fd,
     goto out;
 
   do
-    res = mkdirat (destination_parent_fd, destination_name, 0777);
+    res = mkdirat (destination_parent_fd, destination_name, 0755);
   while (G_UNLIKELY (res == -1 && errno == EINTR));
   if (res == -1)
     {
