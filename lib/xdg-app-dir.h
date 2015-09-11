@@ -55,6 +55,17 @@ GQuark       xdg_app_dir_error_quark      (void);
 GFile *  xdg_app_get_system_base_dir_location (void);
 GFile *  xdg_app_get_user_base_dir_location   (void);
 
+GKeyFile *     xdg_app_load_override_keyfile (const char  *app_id,
+                                              gboolean     user,
+                                              GError     **error);
+XdgAppContext *xdg_app_load_override_file    (const char  *app_id,
+                                              gboolean     user,
+                                              GError     **error);
+gboolean       xdg_app_save_override_keyfile (GKeyFile    *metakey,
+                                              const char  *app_id,
+                                              gboolean     user,
+                                              GError     **error);
+
 GFile *        xdg_app_deploy_get_dir       (XdgAppDeploy *deploy);
 GFile *        xdg_app_deploy_get_files     (XdgAppDeploy *deploy);
 XdgAppContext *xdg_app_deploy_get_overrides (XdgAppDeploy *deploy);

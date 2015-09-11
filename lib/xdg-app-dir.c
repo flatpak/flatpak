@@ -50,8 +50,8 @@ struct XdgAppDeploy {
 
   GFile *dir;
   GKeyFile *metadata;
-  GKeyFile *system_overrides;
-  GKeyFile *user_overrides;
+  XdgAppContext *system_overrides;
+  XdgAppContext *user_overrides;
 };
 
 typedef struct {
@@ -81,8 +81,8 @@ xdg_app_deploy_finalize (GObject *object)
 
   g_clear_object (&self->dir);
   g_clear_pointer (&self->metadata, g_key_file_unref);
-  g_clear_pointer (&self->system_overrides, g_key_file_unref);
-  g_clear_pointer (&self->user_overrides, g_key_file_unref);
+  g_clear_pointer (&self->system_overrides, g_object_unref);
+  g_clear_pointer (&self->user_overrides, g_object_unref);
 
   G_OBJECT_CLASS (xdg_app_deploy_parent_class)->finalize (object);
 }
@@ -116,22 +116,13 @@ xdg_app_deploy_get_files (XdgAppDeploy *deploy)
 XdgAppContext *
 xdg_app_deploy_get_overrides (XdgAppDeploy *deploy)
 {
-  GError *local_error = NULL;
   XdgAppContext *overrides = xdg_app_context_new ();
 
-  if (deploy->system_overrides &&
-      !xdg_app_context_load_metadata (overrides, deploy->system_overrides, &local_error))
-    {
-      g_warning ("Invalid system override file: %s\n", local_error->message);
-      g_clear_error (&local_error);
-    }
+  if (deploy->system_overrides)
+    xdg_app_context_merge (overrides, deploy->system_overrides);
 
-  if (deploy->user_overrides &&
-      !xdg_app_context_load_metadata (overrides, deploy->user_overrides, &local_error))
-    {
-      g_warning ("Invalid user override file: %s\n", local_error->message);
-      g_clear_error (&local_error);
-    }
+  if (deploy->user_overrides)
+    xdg_app_context_merge (overrides, deploy->user_overrides);
 
   return overrides;
 }
@@ -265,14 +256,15 @@ xdg_app_dir_get_path (XdgAppDir *self)
   return self->basedir;
 }
 
-static GKeyFile *
-xdg_app_load_override_file (const char *app_id, gboolean user)
+GKeyFile *
+xdg_app_load_override_keyfile (const char *app_id, gboolean user, GError **error)
 {
   g_autoptr(GFile) base_dir = NULL;
   g_autoptr(GFile) override_dir = NULL;
   g_autoptr(GFile) file = NULL;
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
+  g_autoptr(GKeyFile) metakey = g_key_file_new ();
 
   if (user)
     base_dir = xdg_app_get_user_base_dir_location ();
@@ -285,17 +277,61 @@ xdg_app_load_override_file (const char *app_id, gboolean user)
   if (g_file_load_contents (file, NULL,
                             &metadata_contents, &metadata_size, NULL, NULL))
     {
-      g_autoptr(GError) local_error = NULL;
-      g_autoptr(GKeyFile) metakey = g_key_file_new ();
 
       if (!g_key_file_load_from_data (metakey,
                                       metadata_contents, metadata_size,
-                                      0, &local_error))
-        g_warning ("Invalid override file: %s\n", local_error->message);
-      else
-        return g_steal_pointer (&metakey);
+                                      0, error))
+        return NULL;
     }
-  return NULL;
+
+  return g_steal_pointer (&metakey);
+}
+
+XdgAppContext *
+xdg_app_load_override_file (const char *app_id, gboolean user, GError **error)
+{
+  XdgAppContext *overrides = xdg_app_context_new ();
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  metakey = xdg_app_load_override_keyfile (app_id, user, error);
+  if (metakey == NULL)
+    return NULL;
+
+  if (!xdg_app_context_load_metadata (overrides, metakey, error))
+    return NULL;
+
+  return g_steal_pointer (&overrides);
+}
+
+gboolean
+xdg_app_save_override_keyfile (GKeyFile    *metakey,
+                               const char       *app_id,
+                               gboolean          user,
+                               GError          **error)
+{
+  g_autoptr(GFile) base_dir = NULL;
+  g_autoptr(GFile) override_dir = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autofree char *filename = NULL;
+  g_autofree char *parent = NULL;
+
+  if (user)
+    base_dir = xdg_app_get_user_base_dir_location ();
+  else
+    base_dir = xdg_app_get_system_base_dir_location ();
+
+  override_dir = g_file_get_child (base_dir, "overrides");
+  file = g_file_get_child (override_dir, app_id);
+
+  filename = g_file_get_path (file);
+  parent = g_path_get_dirname (filename);
+  if (g_mkdir_with_parents  (parent, 0755))
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  return g_key_file_save_to_file (metakey, filename, error);
 }
 
 XdgAppDeploy *
@@ -338,10 +374,16 @@ xdg_app_dir_load_deployed (XdgAppDir    *self,
     {
       /* Only load system overrides for system installed apps */
       if (!self->user)
-        deploy->system_overrides = xdg_app_load_override_file (ref_parts[1], FALSE);
+        {
+          deploy->system_overrides = xdg_app_load_override_file (ref_parts[1], FALSE, error);
+          if (deploy->system_overrides == NULL)
+            return NULL;
+        }
 
       /* Always load user overrides */
-      deploy->user_overrides = xdg_app_load_override_file (ref_parts[1], TRUE);
+      deploy->user_overrides = xdg_app_load_override_file (ref_parts[1], TRUE, error);
+      if (deploy->user_overrides == NULL)
+        return NULL;
     }
 
   return deploy;

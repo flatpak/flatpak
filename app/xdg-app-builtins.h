@@ -68,6 +68,7 @@ BUILTINPROTO(build_finish);
 BUILTINPROTO(build_export);
 BUILTINPROTO(repo_update);
 BUILTINPROTO(export_file);
+BUILTINPROTO(override);
 
 #undef BUILTINPROTO
 
