@@ -98,6 +98,11 @@ export_dir (int            source_parent_fd,
             }
         }
 
+      /* Don't export any hidden files or backups */
+      if (g_str_has_prefix (dent->d_name, ".") ||
+          g_str_has_suffix (dent->d_name, "~"))
+        continue;
+
       if (S_ISDIR (stbuf.st_mode))
         {
           g_autofree gchar *child_relpath = g_build_filename(source_relpath, dent->d_name, NULL);
