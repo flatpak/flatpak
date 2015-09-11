@@ -91,7 +91,7 @@ xdg_app_context_new (void)
 {
   XdgAppContext *context;
 
-  context = g_slice_new (XdgAppContext);
+  context = g_slice_new0 (XdgAppContext);
   context->env_vars = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   context->persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
