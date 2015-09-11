@@ -23,6 +23,8 @@
 
 #include <ostree.h>
 
+#include <xdg-app-run.h>
+
 typedef struct XdgAppDir XdgAppDir;
 typedef struct XdgAppDeploy XdgAppDeploy;
 
@@ -53,11 +55,10 @@ GQuark       xdg_app_dir_error_quark      (void);
 GFile *  xdg_app_get_system_base_dir_location (void);
 GFile *  xdg_app_get_user_base_dir_location   (void);
 
-GFile *xdg_app_get_override_file (const char *app_id);
-
-GFile *  xdg_app_deploy_get_dir (XdgAppDeploy *deploy);
-GFile *  xdg_app_deploy_get_files (XdgAppDeploy *deploy);
-GKeyFile *  xdg_app_deploy_get_metadata (XdgAppDeploy *deploy);
+GFile *        xdg_app_deploy_get_dir       (XdgAppDeploy *deploy);
+GFile *        xdg_app_deploy_get_files     (XdgAppDeploy *deploy);
+XdgAppContext *xdg_app_deploy_get_overrides (XdgAppDeploy *deploy);
+GKeyFile *     xdg_app_deploy_get_metadata  (XdgAppDeploy *deploy);
 
 XdgAppDir*  xdg_app_dir_new             (GFile          *basedir,
                                          gboolean        user);
