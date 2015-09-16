@@ -281,6 +281,9 @@ glnx_libcontainer_run_chroot_private (const char  *dest,
     }
   else
     {
+      /* Set PATH to something sane. */
+      setenv ("PATH", "/usr/sbin:/usr/bin", 1);
+
       if (execvp (binary, argv) != 0)
         _perror_fatal ("execvp: ");
     }
