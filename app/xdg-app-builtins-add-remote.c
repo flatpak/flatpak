@@ -25,17 +25,22 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <gio/gunixinputstream.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
+#include "xdg-app-chain-input-stream.h"
 
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
 static gboolean opt_if_not_exists;
 static char *opt_title;
 static char *opt_url;
+static char **opt_gpg_import;
+
 
 static GOptionEntry add_options[] = {
   { "if-not-exists", 0, 0, G_OPTION_ARG_NONE, &opt_if_not_exists, "Do nothing if the provided remote exists", NULL },
@@ -51,11 +56,90 @@ static GOptionEntry modify_options[] = {
 static GOptionEntry common_options[] = {
   { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, "Disable GPG verification", NULL },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this remote", "TITLE" },
+  { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, "Import GPG key from FILE (- for stdin)", "FILE" },
+  { "gpg-key", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_import, "Optionally only import the named key(s) from the keyring files", "KEY" },
   { NULL }
 };
 
+static gboolean
+open_source_stream (GInputStream **out_source_stream,
+                    GCancellable *cancellable,
+                    GError **error)
+{
+  g_autoptr(GInputStream) source_stream = NULL;
+  guint n_keyrings = 0;
+  gboolean ret = FALSE;
+  g_autoptr(GPtrArray) streams = NULL;
+
+  if (opt_gpg_import != NULL)
+    n_keyrings = g_strv_length (opt_gpg_import);
+
+  guint ii;
+
+  streams = g_ptr_array_new_with_free_func (g_object_unref);
+
+  for (ii = 0; ii < n_keyrings; ii++)
+    {
+      GInputStream *input_stream = NULL;
+
+      if (strcmp (opt_gpg_import[ii], "-") == 0)
+        {
+          input_stream = g_unix_input_stream_new (STDIN_FILENO, FALSE);
+        }
+      else
+        {
+          g_autoptr(GFile) file = g_file_new_for_path (opt_gpg_import[ii]);
+          input_stream = G_INPUT_STREAM(g_file_read (file, cancellable, error));
+
+          if (input_stream == NULL)
+            goto out;
+        }
+
+      /* Takes ownership. */
+      g_ptr_array_add (streams, input_stream);
+    }
+
+  /* Chain together all the --keyring options as one long stream. */
+  source_stream = (GInputStream *) xdg_app_chain_input_stream_new (streams);
+
+  *out_source_stream = g_steal_pointer (&source_stream);
+
+  ret = TRUE;
+
+out:
+  return ret;
+}
+
 gboolean
-xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
+import_keys (XdgAppDir *dir,
+             const char *remote_name,
+             GCancellable *cancellable,
+             GError **error)
+{
+  if (opt_gpg_import != NULL)
+    {
+      g_autoptr(GFile) file = NULL;
+      g_autoptr(GInputStream) input_stream = NULL;
+      guint imported = 0;
+
+      if (!open_source_stream (&input_stream, cancellable, error))
+        return FALSE;
+
+      if (!ostree_repo_remote_gpg_import (xdg_app_dir_get_repo (dir), remote_name, input_stream,
+                                          NULL, &imported, cancellable, error))
+        return FALSE;
+
+      /* XXX If we ever add internationalization, use ngettext() here. */
+      g_print ("Imported %u GPG key%s to remote \"%s\"\n",
+               imported, (imported == 1) ? "" : "s", remote_name);
+    }
+
+  return TRUE;
+}
+
+gboolean
+xdg_app_builtin_add_remote (int argc, char **argv,
+                            GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
@@ -108,6 +192,9 @@ xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GE
                                   remote_name, remote_url,
                                   g_variant_builder_end (optbuilder),
                                   cancellable, error))
+    return FALSE;
+
+  if (!import_keys (dir, remote_name, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -164,6 +251,9 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
     g_key_file_set_string (config, group, "xa.title", opt_title);
 
   if (!ostree_repo_write_config (xdg_app_dir_get_repo (dir), config, error))
+    return FALSE;
+
+  if (!import_keys (dir, remote_name, cancellable, error))
     return FALSE;
 
   return TRUE;
