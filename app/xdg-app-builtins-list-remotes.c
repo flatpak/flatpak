@@ -102,7 +102,7 @@ table_printer_print (TablePrinter *printer)
       char **row = g_ptr_array_index (printer->rows,i);
 
       for (j = 0; row[j] != NULL; j++)
-        g_print ("%-*s%s", widths[j], row[j], j == printer->n_columns - 1 ? "" : " ");
+        g_print ("%-*s%s", widths[j], row[j], j == printer->n_columns - 1 ? "" : "\t");
       g_print ("\n");
     }
 }
