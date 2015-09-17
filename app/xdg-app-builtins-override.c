@@ -42,7 +42,6 @@ gboolean
 xdg_app_builtin_override (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  gboolean ret = FALSE;
   const char *app;
   g_autoptr(XdgAppContext) arg_context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
@@ -86,10 +85,5 @@ xdg_app_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
   if (!xdg_app_save_override_keyfile (metakey, app, xdg_app_dir_is_user (dir), error))
     return FALSE;
 
-  ret = TRUE;
-
- out:
-  /*  if (context)
-      g_option_context_free (context);*/
-  return ret;
+  return TRUE;
 }
