@@ -8,15 +8,24 @@ __contains_word () {
 }
 
 _xdg-app() {
+        local cur prev
         local cur=${COMP_WORDS[COMP_CWORD]}
         local prev=${COMP_WORDS[COMP_CWORD-1]}
+
+        if [[ $cur == "=" ]] && [[ "$prev" = -* ]]; then
+           cur=""
+        elif [[ $prev == "=" ]]  && [[ "${COMP_WORDS[COMP_CWORD-2]}" = -* ]]; then
+                prev=${COMP_WORDS[COMP_CWORD-2]}
+        fi
+
         local i verb comps mode
         local remote name
         local dir cmd sdk loc
 
         local -A VERBS=(
-                [ALL]='add-remote delete-remote list-remotes repo-contents install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps run build-init build build-finish build-export repo-update make-app-current'
-                [MODE]='add-remote delete-remote list-remotes repo-contents install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps make-app-current'
+                [ALL]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps run override export-file build-init build build-finish build-export repo-update make-app-current'
+                [MODE]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps make-app-current'
+                [PERMS]='run override build build-finish'
                 [UNINSTALL]='uninstall-runtime uninstall-app'
                 [ARCH]='build-init install-runtime install-app run uninstall-runtime uninstall-app update-runtime update-app make-app-current'
         )
@@ -24,18 +33,21 @@ _xdg-app() {
         local -A OPTS=(
                 [GENERAL]='--help --verbose --version'
                 [MODE]='--user --system'
-                [ARCH]='--arch'
-                [ADD_REMOTE]='--no-gpg-verify --if-not-exists --title'
-                [LIST_REMOTES]='--show-urls'
-                [REPO_CONTENTS]='--show-details --runtimes --apps --update'
-                [UNINSTALL]='--keep-ref'
-                [RUN]='--command --branch --devel --allow --forbid --runtime'
-                [BUILD_INIT]='--arch --var'
-                [BUILD]='--runtime  --allow --forbid'
-                [BUILD_FINISH]='--command --allow'
-                [BUILD_EXPORT]='--subject --body'
-                [REPO_UPDATE]='--title'
-                [ARG]='--arch --command --branch --var --allow --forbid --subject --body --title --runtime'
+                [ARCH]='--arch='
+                [PERMS]='--share= --unshare= --socket= --nosocket= --device= --nodevice= --filesystem= --env= --own-name= --talk-name= --persist='
+                [ADD_REMOTE]='--no-gpg-verify --if-not-exists --title= --gpg-import= --gpg-key='
+                [MODIFY_REMOTE]='--no-gpg-verify --gpg-verify --title= --gpg-import= --gpg-key='
+                [LIST_REMOTES]='--show-details'
+                [LS_REMOTE]='--show-details --runtimes --apps --updates'
+                [UNINSTALL]='--keep-ref --force-remove'
+                [RUN]='--command= --branch= --devel --runtime='
+                [BUILD_INIT]='--arch= --var='
+                [BUILD]='--runtime'
+                [BUILD_FINISH]='--command= --allow'
+                [BUILD_EXPORT]='--subject= --body='
+                [EXPORT_FILE]='--app= --allow-write --allow-delete --allow-grant-permission --unique'
+
+                [ARG]='--arch --command --branch --var --share --unshare  --socket --nosocket --device --nodevice --subject --body --title --runtime --filesystem'
         )
 
         if __contains_word "--user" ${COMP_WORDS[*]}; then
@@ -55,11 +67,20 @@ _xdg-app() {
                         --var|--runtime)
                                 comps=$(xdg-app $mode list-runtimes)
                                 ;;
-                        --allow|--forbid)
-                                comps='x11 wayland ipc pulseaudio system-dbus session-dbus network host-fs homedir dri'
+                        --share|--noshare)
+                                comps='network ipc'
+                                ;;
+                        --device|--nodevice)
+                                comps='dri'
+                                ;;
+                        --socket|--nosocket)
+                                comps='x11 wayland pulseaudio system-bus session-bus'
                                 ;;
                         --branch|--subject|--body|--title)
                                 comps=''
+                                ;;
+                        --filesystem)
+                                comps='host home xdg-desktop xdg-documents xdg-download xdg-music xdg-pictures xdg-public-share xdg-templates xdg-videos'
                                 ;;
                 esac
                 COMPREPLY=( $(compgen -W '$comps' -- "$cur") )
@@ -116,6 +137,10 @@ _xdg-app() {
                         if [[ -z $loc ]]; then
                                 loc=${COMP_WORDS[i]}
                         fi
+                elif [[ $verb = export-file ]]; then
+                        if [[ -z $file ]]; then
+                                file=${COMP_WORDS[i]}
+                        fi
                 fi
         done
 
@@ -126,6 +151,9 @@ _xdg-app() {
                 comps="${OPTS[GENERAL]}"
                 if __contains_word "$verb" ${VERBS[MODE]}; then
                         comps="$comps ${OPTS[MODE]}"
+                fi
+                if __contains_word "$verb" ${VERBS[PERMS]}; then
+                        comps="$comps ${OPTS[PERMS]}"
                 fi
                 if [ "$verb" = "list-remotes" ]; then
                         comps="$comps ${OPTS[LIST_REMOTES]}"
@@ -139,8 +167,11 @@ _xdg-app() {
                 if [ "$verb" = "run" ]; then
                         comps="$comps ${OPTS[RUN]}"
                 fi
-                if [ "$verb" = "repo-contents" ]; then
-                        comps="$comps ${OPTS[REPO_CONTENTS]}"
+                if [ "$verb" = "export-file" ]; then
+                        comps="$comps ${OPTS[EXPORT_FILE]}"
+                fi
+                if [ "$verb" = "ls-remote" ]; then
+                        comps="$comps ${OPTS[LS_REMOTE]}"
                 fi
                 if [ "$verb" = "build-init" ]; then
                         comps="$comps ${OPTS[BUILD_INIT]}"
@@ -160,10 +191,12 @@ _xdg-app() {
                 if [ "$verb" = "add-remote" ]; then
                         comps="$comps ${OPTS[ADD_REMOTE]}"
                 fi
-
+                if [ "$verb" = "modify-remote" ]; then
+                        comps="$comps ${OPTS[MODIFY_REMOTE]}"
+                fi
         else
                 case "$verb" in
-                add-remote|delete-remote|repo-contents)
+                add-remote|modify-remote|delete-remote|ls-remote)
                         comps=$(xdg-app $mode list-remotes)
                 ;;
 
@@ -207,11 +240,12 @@ _xdg-app() {
                         fi
                         ;;
 
-                run)
+                run|override)
                         if [[ -z $name ]]; then
                                 comps=$(xdg-app $mode list-apps)
                         fi
                         ;;
+
 
                 build-init)
                         if [[ -z $dir ]]; then
@@ -260,10 +294,18 @@ _xdg-app() {
                         fi
                         ;;
 
+                export-file)
+                        if [[ -z $file ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        fi
+                        ;;
+
                 esac
         fi
 
         COMPREPLY=( $(compgen -W '$comps' -- "$cur") )
+        [[ $COMPREPLY == *= ]] && compopt -o nospace
         return 0
 }
 
