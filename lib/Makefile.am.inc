@@ -31,7 +31,10 @@ libxdgapp_la_SOURCES = \
 	lib/xdg-app-utils.h \
 	lib/xdg-app-chain-input-stream.c \
 	lib/xdg-app-chain-input-stream.h \
+	lib/gvdb/gvdb-reader.h	\
+	lib/gvdb/gvdb-format.h	\
 	lib/gvdb/gvdb-reader.c	\
+	lib/gvdb/gvdb-builder.h	\
 	lib/gvdb/gvdb-builder.c	\
 	lib/xdg-app-db.c \
 	lib/xdg-app-db.h \

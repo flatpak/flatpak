@@ -16,7 +16,7 @@ service_in_files += session-helper/xdg-app-session.service.in
 service_DATA += session-helper/xdg-app-session.service
 DISTCLEANFILES += session-helper/xdg-app-session.service
 
-EXTRA_DIST += session-helper/xdg-app.gresource.xml $(service_in_files)
+EXTRA_DIST += session-helper/xdg-app.gresource.xml
 
 xdg_app_session_helper_SOURCES = \
 	session-helper/xdg-app-session-helper.c	\

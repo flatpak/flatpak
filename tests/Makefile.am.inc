@@ -34,4 +34,5 @@ TESTS=testdb test-doc-portal
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/xdg-app.supp
-EXTRA_DIST+=tests/xdg-app.supp
+EXTRA_DIST += tests/xdg-app.supp tests/dbs/no_tables
+DISTCLEANFILES += tests/services/xdg-app-session.service tests/services/org.freedesktop.portal.Documents.service

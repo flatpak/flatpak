@@ -36,7 +36,7 @@ dist_triggers_SCRIPTS = \
 	triggers/desktop-database.trigger \
 	$(NULL)
 
-EXTRA_DIST = data/xdg-app-dbus-interfaces.xml data/org.freedesktop.systemd1.xml
+EXTRA_DIST = data/org.freedesktop.portal.documents.xml  data/org.freedesktop.systemd1.xml  data/org.freedesktop.XdgApp.xml
 
 noinst_LTLIBRARIES = libglnx.la
 libglnx_srcpath := $(srcdir)/libglnx
@@ -58,7 +58,7 @@ EXTRA_DIST += $(completion_DATA)
 
 profiledir = $(sysconfdir)/profile.d
 profile_DATA = xdg-app.sh
-EXTRA_DIST += profile/xdg-app.sh.in
+EXTRA_DIST += profile/xdg-app.sh.in $(service_in_files)
 DISTCLEANFILES += xdg-app.sh
 
 xdg-app.sh: profile/xdg-app.sh.in

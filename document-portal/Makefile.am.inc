@@ -27,6 +27,8 @@ service_in_files += document-portal/org.freedesktop.portal.Documents.service.in
 service_DATA += document-portal/org.freedesktop.portal.Documents.service
 DISTCLEANFILES += document-portal/org.freedesktop.portal.Documents.service
 
+EXTRA_DIST += document-portal/xdg-document-portal.gresource.xml
+
 xdg_document_portal_SOURCES = \
 	document-portal/xdp-main.c		\
 	document-portal/xdp-enums.h		\
