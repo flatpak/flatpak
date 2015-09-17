@@ -1,3 +1,27 @@
+Major changes in 0.4.0
+======================
+* A new permissions store was added to the dbus api.
+  This can be used by portal implementations that want to store
+  per-app permissions for objects.
+* The document portal was added. This is a dbus api
+  which you can use to create document ids and assign
+  apps permissions to see these documents. The documents
+  themselves are accessed via a custom fuse filesystem.
+* perf and strace are now blocked via the seccomp filters
+* You can now override application metadata on a system
+  and per-user level, giving apps more or less access
+  than what they request.
+* New command modify-remote added which lets you change
+  configuration of a remote after it has been added with
+  add-remote.
+* Support for adding trusted gpg keys on a per-remote basis
+  has been added to add-remote and modify-remote.
+* The repo-contents command has been renamed to ls-remote
+  to better match the other commands.
+* The list-remotes command can now show more information
+  about the remotes.
+* The bash completion implementation has been improved.
+
 Major changes in 0.3.6
 ======================
 
