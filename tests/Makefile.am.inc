@@ -28,7 +28,7 @@ tests/services/xdg-app-session.service: session-helper/xdg-app-session.service.i
 
 test_doc_portal_DEPENDENCIES = tests/services/org.freedesktop.portal.Documents.service  tests/services/xdg-app-session.service
 
-noinst_PROGRAMS = $(TEST_PROGS)
+check_PROGRAMS = $(TEST_PROGS)
 
 TESTS=testdb test-doc-portal
 
