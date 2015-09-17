@@ -33,7 +33,7 @@
 static gboolean opt_show_details;
 
 static GOptionEntry options[] = {
-  { "details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show remote details", NULL },
+  { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show remote details", NULL },
   { NULL }
 };
 
