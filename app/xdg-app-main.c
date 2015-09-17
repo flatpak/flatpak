@@ -43,6 +43,7 @@ typedef struct {
 static XdgAppCommand commands[] = {
   { "add-remote", xdg_app_builtin_add_remote },
   { "delete-remote", xdg_app_builtin_delete_remote },
+  { "modify-remote", xdg_app_builtin_modify_remote },
   { "list-remotes", xdg_app_builtin_list_remotes },
   { "repo-contents", xdg_app_builtin_repo_contents },
   { "install-runtime", xdg_app_builtin_install_runtime },

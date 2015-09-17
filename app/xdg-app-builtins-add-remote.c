@@ -32,12 +32,24 @@
 #include "xdg-app-utils.h"
 
 static gboolean opt_no_gpg_verify;
+static gboolean opt_do_gpg_verify;
 static gboolean opt_if_not_exists;
 static char *opt_title;
+static char *opt_url;
 
-static GOptionEntry options[] = {
-  { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, "Disable GPG verification", NULL },
+static GOptionEntry add_options[] = {
   { "if-not-exists", 0, 0, G_OPTION_ARG_NONE, &opt_if_not_exists, "Do nothing if the provided remote exists", NULL },
+  { NULL }
+};
+
+static GOptionEntry modify_options[] = {
+  { "gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_do_gpg_verify, "Enable GPG verification", NULL },
+  { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url, "Set a new url", NULL },
+  { NULL }
+};
+
+static GOptionEntry common_options[] = {
+  { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, "Disable GPG verification", NULL },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this remote", "TITLE" },
   { NULL }
 };
@@ -45,8 +57,7 @@ static GOptionEntry options[] = {
 gboolean
 xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  GOptionContext *context;
-  gboolean ret = FALSE;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GVariantBuilder) optbuilder = NULL;
   g_autoptr(GHashTable) refs = NULL;
@@ -56,13 +67,15 @@ xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GE
 
   context = g_option_context_new ("NAME URL - Add a remote repository");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
+  g_option_context_add_main_entries (context, common_options, NULL);
+
+  if (!xdg_app_option_context_parse (context, add_options, &argc, &argv, 0, &dir, cancellable, error))
+    return FALSE;
 
   if (argc < 3)
     {
       usage_error (context, "NAME and URL must be specified", error);
-      goto out;
+      return FALSE;
     }
 
   remote_name = argv[1];
@@ -71,7 +84,7 @@ xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GE
   optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
   if (!ostree_repo_load_summary (remote_url, &refs, &title, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (opt_no_gpg_verify)
     g_variant_builder_add (optbuilder, "{s@v}",
@@ -95,12 +108,63 @@ xdg_app_builtin_add_remote (int argc, char **argv, GCancellable *cancellable, GE
                                   remote_name, remote_url,
                                   g_variant_builder_end (optbuilder),
                                   cancellable, error))
-    goto out;
+    return FALSE;
 
-  ret = TRUE;
+  return TRUE;
+}
 
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+gboolean
+xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(GVariantBuilder) optbuilder = NULL;
+  g_autoptr(GHashTable) refs = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+  const char *remote_name;
+  g_autofree char *group = NULL;
+
+  context = g_option_context_new ("NAME - Modify a remote repository");
+
+  g_option_context_add_main_entries (context, common_options, NULL);
+
+  if (!xdg_app_option_context_parse (context, modify_options, &argc, &argv, 0, &dir, cancellable, error))
+    return FALSE;
+
+  if (argc < 2)
+    {
+      usage_error (context, "remote NAME must be specified", error);
+      return FALSE;
+    }
+
+  remote_name = argv[1];
+
+  optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+  group = g_strdup_printf ("remote \"%s\"", remote_name);
+
+  if (!ostree_repo_remote_get_url (xdg_app_dir_get_repo (dir), remote_name, NULL, NULL))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "No remote %s", remote_name);
+      return FALSE;
+    }
+
+  config = ostree_repo_copy_config (xdg_app_dir_get_repo (dir));
+
+  if (opt_no_gpg_verify)
+    g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
+
+  if (opt_do_gpg_verify)
+    g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
+
+  if (opt_url)
+    g_key_file_set_string (config, group, "url", opt_url);
+
+  if (opt_title)
+    g_key_file_set_string (config, group, "xa.title", opt_title);
+
+  if (!ostree_repo_write_config (xdg_app_dir_get_repo (dir), config, error))
+    return FALSE;
+
+  return TRUE;
 }
