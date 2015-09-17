@@ -39,11 +39,13 @@
 gboolean opt_unique = FALSE;
 gboolean opt_allow_write = FALSE;
 gboolean opt_allow_delete = FALSE;
+gboolean opt_transient = FALSE;
 gboolean opt_allow_grant_permissions = FALSE;
 char **opt_apps = NULL;
 
 static GOptionEntry options[] = {
   { "unique", 'u', 0, G_OPTION_ARG_NONE, &opt_unique, "Create a unique document reference", NULL },
+  { "transient", 't', 0, G_OPTION_ARG_NONE, &opt_transient, "Make the document transient for the current session", NULL },
   { "allow-write", 'w', 0, G_OPTION_ARG_NONE, &opt_allow_write, "Give the app write permissions", NULL },
   { "allow-delete", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_delete, "Give the app permissions to delete the document id", NULL },
   { "allow-grant-permission", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_grant_permissions, "Give the app permissions to grant furthern permissions", NULL },
@@ -117,7 +119,7 @@ xdg_app_builtin_export_file (int argc, char **argv,
                                                          "/org/freedesktop/portal/documents",
                                                          "org.freedesktop.portal.Documents",
                                                          "Add",
-                                                         g_variant_new ("(hb)", fd_id, !opt_unique),
+                                                         g_variant_new ("(hbb)", fd_id, !opt_unique, !opt_transient),
                                                          G_VARIANT_TYPE ("(s)"),
                                                          G_DBUS_CALL_FLAGS_NONE,
                                                          30000,

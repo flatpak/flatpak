@@ -86,6 +86,14 @@ xdp_lookup_doc (guint32 id)
   return xdg_app_db_lookup (db, doc_id);
 }
 
+static gboolean
+persist_entry (XdgAppDbEntry *entry)
+{
+  guint32 flags = xdp_entry_get_flags (entry);
+
+  return (flags & XDP_ENTRY_FLAG_TRANSIENT) == 0;
+}
+
 static void
 do_set_permissions (XdgAppDbEntry *entry,
                     const char *doc_id,
@@ -102,14 +110,15 @@ do_set_permissions (XdgAppDbEntry *entry,
 
   xdp_fuse_invalidate_doc_app (doc_id, app_id, entry);
 
-  xdg_app_permission_store_call_set_permission (permission_store,
-                                                TABLE_NAME,
-                                                FALSE,
-                                                doc_id,
-                                                app_id,
-                                                perms_s,
-                                                NULL,
-                                                NULL, NULL);
+  if (persist_entry (new_entry))
+    xdg_app_permission_store_call_set_permission (permission_store,
+                                                  TABLE_NAME,
+                                                  FALSE,
+                                                  doc_id,
+                                                  app_id,
+                                                  perms_s,
+                                                  NULL,
+                                                  NULL, NULL);
 }
 
 static void
@@ -245,14 +254,15 @@ portal_delete (GDBusMethodInvocation *invocation,
     xdp_fuse_invalidate_doc_app (id, old_apps[i], entry);
   xdp_fuse_invalidate_doc (id, entry);
 
-  xdg_app_permission_store_call_delete (permission_store, TABLE_NAME,
-                                        id, NULL, NULL, NULL);
+  if (persist_entry (entry))
+    xdg_app_permission_store_call_delete (permission_store, TABLE_NAME,
+                                          id, NULL, NULL, NULL);
 
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 }
 
 char *
-do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_existing)
+do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_existing, gboolean persistent)
 {
   g_autoptr(GVariant) data = NULL;
   g_autoptr (XdgAppDbEntry) entry = NULL;
@@ -262,6 +272,8 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
 
   if (!reuse_existing)
     flags |= XDP_ENTRY_FLAG_UNIQUE;
+  if (!persistent)
+    flags |= XDP_ENTRY_FLAG_TRANSIENT;
   data =
     g_variant_ref_sink (g_variant_new ("(^ayttu)",
                                        path,
@@ -295,13 +307,14 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
 
   xdp_fuse_invalidate_doc (id, entry);
 
-  xdg_app_permission_store_call_set (permission_store,
-                                     TABLE_NAME,
-                                     TRUE,
-                                     id,
-                                     g_variant_new_array (G_VARIANT_TYPE("{sas}"), NULL, 0),
-                                     g_variant_new_variant (data),
-                                     NULL, NULL, NULL);
+  if (persistent)
+    xdg_app_permission_store_call_set (permission_store,
+                                       TABLE_NAME,
+                                       TRUE,
+                                       id,
+                                       g_variant_new_array (G_VARIANT_TYPE("{sas}"), NULL, 0),
+                                       g_variant_new_variant (data),
+                                       NULL, NULL, NULL);
 
   return id;
 }
@@ -323,9 +336,9 @@ portal_add (GDBusMethodInvocation *invocation,
   struct stat st_buf, real_st_buf, real_parent_st_buf;
   g_autofree char *dirname = NULL;
   g_autofree char *name = NULL;
-  gboolean reuse_existing;
+  gboolean reuse_existing, persistent;
 
-  g_variant_get (parameters, "(hb)", &fd_id, &reuse_existing);
+  g_variant_get (parameters, "(hbb)", &fd_id, &reuse_existing, &persistent);
 
   message = g_dbus_method_invocation_get_message (invocation);
   fd_list = g_dbus_message_get_unix_fd_list (message);
@@ -420,7 +433,7 @@ portal_add (GDBusMethodInvocation *invocation,
     }
   else
     {
-      id = do_create_doc (&real_parent_st_buf, path_buffer, reuse_existing);
+      id = do_create_doc (&real_parent_st_buf, path_buffer, reuse_existing, persistent);
 
       if (app_id[0] != '\0')
         {

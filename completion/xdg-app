@@ -45,7 +45,7 @@ _xdg-app() {
                 [BUILD]='--runtime'
                 [BUILD_FINISH]='--command= --allow'
                 [BUILD_EXPORT]='--subject= --body='
-                [EXPORT_FILE]='--app= --allow-write --allow-delete --allow-grant-permission --unique'
+                [EXPORT_FILE]='--app= --allow-write --allow-delete --allow-grant-permission --unique --transient'
 
                 [ARG]='--arch --command --branch --var --share --unshare  --socket --nosocket --device --nodevice --subject --body --title --runtime --filesystem'
         )

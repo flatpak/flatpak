@@ -31,6 +31,7 @@
     <method name="Add">
       <arg type='h' name='o_path_fd' direction='in'/>
       <arg type='b' name='reuse_existing' direction='in'/>
+      <arg type='b' name='persistent' direction='in'/>
       <arg type='s' name='doc_id' direction='out'/>
     </method>
     <method name="GrantPermissions">

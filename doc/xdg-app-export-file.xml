@@ -78,6 +78,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--transient</option></term>
+
+                <listitem><para>
+                  The document will only exist for the length of
+                  the session. This is useful for temporary grants.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--app=APPID</option></term>
 
                 <listitem><para>

@@ -8,6 +8,7 @@
 G_BEGIN_DECLS
 
 #define XDP_ENTRY_FLAG_UNIQUE (1<<0)
+#define XDP_ENTRY_FLAG_TRANSIENT (1<<1)
 
 const char **      xdg_unparse_permissions (XdpPermissionFlags   permissions);
 XdpPermissionFlags xdp_parse_permissions   (const char         **permissions);
