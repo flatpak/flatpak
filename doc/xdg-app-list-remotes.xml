@@ -80,10 +80,10 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--show-urls</option></term>
+                <term><option>--details</option></term>
 
                 <listitem><para>
-                    Show the url for each repository in addition to the name.
+                    Show more information each repository in addition to the name.
                 </para></listitem>
             </varlistentry>
 
@@ -110,10 +110,10 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app list-remotes --user --show-urls</command>
+            <command>$ xdg-app list-remotes --user --details</command>
         </para>
 <programlisting>
-testrepo  http://209.132.179.91/repo/
+testrepo	Test Repository	 http://209.132.179.91/repo/ no-gpg-verify
 </programlisting>
     </refsect1>
 
