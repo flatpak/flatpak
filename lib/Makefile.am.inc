@@ -29,6 +29,8 @@ libxdgapp_la_SOURCES = \
 	lib/xdg-app-error.h \
 	lib/xdg-app-utils.c \
 	lib/xdg-app-utils.h \
+	lib/xdg-app-chain-input-stream.c \
+	lib/xdg-app-chain-input-stream.h \
 	lib/gvdb/gvdb-reader.c	\
 	lib/gvdb/gvdb-builder.c	\
 	lib/xdg-app-db.c \
