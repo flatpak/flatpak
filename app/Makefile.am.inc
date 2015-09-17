@@ -8,7 +8,7 @@ xdg_app_SOURCES = \
 	app/xdg-app-builtins-add-remote.c \
 	app/xdg-app-builtins-delete-remote.c \
 	app/xdg-app-builtins-list-remotes.c \
-	app/xdg-app-builtins-repo-contents.c \
+	app/xdg-app-builtins-ls-remote.c \
 	app/xdg-app-builtins-install.c \
 	app/xdg-app-builtins-override.c \
 	app/xdg-app-builtins-make-current.c \

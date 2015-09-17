@@ -51,8 +51,8 @@ void usage_error (GOptionContext *context,
 BUILTINPROTO(add_remote);
 BUILTINPROTO(modify_remote);
 BUILTINPROTO(delete_remote);
+BUILTINPROTO(ls_remote);
 BUILTINPROTO(list_remotes);
-BUILTINPROTO(repo_contents);
 BUILTINPROTO(install_runtime);
 BUILTINPROTO(update_runtime);
 BUILTINPROTO(uninstall_runtime);

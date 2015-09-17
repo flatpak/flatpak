@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-repo-contents">
+<refentry id="xdg-app-ls-remote">
 
     <refentryinfo>
-        <title>xdg-app repo-contents</title>
+        <title>xdg-app ls-remote</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,20 +19,20 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app repo-contents</refentrytitle>
+        <refentrytitle>xdg-app ls-remote</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-repo-contents</refname>
+        <refname>xdg-app-ls-remote</refname>
         <refpurpose>Show available runtimes and applications</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app repo-contents</command>
+                <command>xdg-app ls-remote</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">REPOSITORY</arg>
+                <arg choice="plain">REMOTE</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -41,7 +41,7 @@
 
         <para>
             Shows runtimes and applications that are available in the
-            remote repository with the name <arg choice="plain">REPOSITORY</arg>.
+            remote repository with the name <arg choice="plain">REMOTE</arg>.
             You can find all configured remote repositories with xdg-app list-repos.
         </para>
         <para>
@@ -137,7 +137,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app --user repo-contents --only-apps testrepo</command>
+            <command>$ xdg-app --user ls-remote --only-apps testrepo</command>
         </para>
 <programlisting>
 org.gnome.Builder

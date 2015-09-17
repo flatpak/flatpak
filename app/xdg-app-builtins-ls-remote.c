@@ -45,7 +45,7 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable, GError **error)
+xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
   GOptionContext *context;
@@ -61,14 +61,14 @@ xdg_app_builtin_repo_contents (int argc, char **argv, GCancellable *cancellable,
   const char *repository;
   g_autofree char *url = NULL;
 
-  context = g_option_context_new (" REPOSITORY - Show available runtimes and applications");
+  context = g_option_context_new (" REMOTE - Show available runtimes and applications");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     goto out;
 
   if (argc < 2)
     {
-      usage_error (context, "REPOSITORY must be specified", error);
+      usage_error (context, "REMOTE must be specified", error);
       goto out;
     }
 

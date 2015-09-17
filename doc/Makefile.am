@@ -17,7 +17,7 @@ man_MANS = \
 	xdg-app-add-remote.1 		\
 	xdg-app-delete-remote.1		\
 	xdg-app-list-remotes.1 		\
-	xdg-app-repo-contents.1		\
+	xdg-app-ls-remote.1		\
 	xdg-app-install-runtime.1 	\
 	xdg-app-update-runtime.1 	\
 	xdg-app-uninstall-runtime.1 	\
