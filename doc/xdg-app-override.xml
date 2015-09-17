@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-run">
+<refentry id="xdg-app-override">
 
     <refentryinfo>
-        <title>xdg-app run</title>
+        <title>xdg-app override</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,21 +19,20 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app run</refentrytitle>
+        <refentrytitle>xdg-app override</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-run</refname>
-        <refpurpose>Run an application</refpurpose>
+        <refname>xdg-app-override</refname>
+        <refpurpose>Override application requirements</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app run</command>
+                <command>xdg-app override</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">APP</arg>
-                <arg choice="opt" rep="repeat">ARG</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -41,21 +40,14 @@
         <title>Description</title>
 
         <para>
-            Runs an application in a sandboxed environment.
-            <arg choice="plain">APP</arg> must name an installed application.
-            Extra arguments are passed on to the application.
+            Overrides the application specified runtime requirements. This can be used
+            to grant a sandboxed application more or less resources than it requested.
         </para>
         <para>
-            xdg-app creates a sandboxed environment for the application to run in
-            by mounting the right runtime at <filename>/usr</filename> and a writable
-            directory at <filename>/var</filename>, whose content is preserved between
-            application runs. The application itself is mounted at <filename>/app</filename>.
-        </para>
-        <para>
-            The details of the sandboxed environment are controlled by the application
-            metadata and various options like --share and --socket that are passed to the run
-            command: Access is allowed if it was requested either in the application
-            metadata file or with an option and the user hasn't overridden it.
+          By default the application gets access to the resources it
+          requested when it is started. But the user can override it
+          on a particular instance by specifying extra arguments to
+          xdg-app run, or every time by using xdg-app override.
         </para>
 
     </refsect1>
@@ -72,47 +64,6 @@
 
                 <listitem><para>
                     Show help options and exit.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--arch=ARCH</option></term>
-
-                <listitem><para>
-                    The architecture to install for.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--command=COMMAND</option></term>
-
-                <listitem><para>
-                    The command to run instead of the one listed in the application metadata.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--branch=BRANCH</option></term>
-
-                <listitem><para>
-                    The branch to use.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>-d</option></term>
-                <term><option>--devel</option></term>
-
-                <listitem><para>
-                    Use the devel runtime that is specified in the application metadata instead of the regular runtime.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--runtime=RUNTIME</option></term>
-
-                <listitem><para>
-                    Use this runtime instead of the one that is specified in the application metadata.
                 </para></listitem>
             </varlistentry>
 
@@ -260,10 +211,10 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app run org.gnome.GEdit</command>
+            <command>$ xdg-app override --nosocket=wayland org.gnome.GEdit</command>
         </para>
         <para>
-            <command>$ xdg-app run --devel --command=bash org.gnome.Builder</command>
+            <command>$ xdg-app override --filesystem=home org.mozilla.Firefox</command>
         </para>
 
     </refsect1>
@@ -273,7 +224,7 @@
 
         <para>
             <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-            <citerefentry><refentrytitle>xdg-app-override</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>xdg-app-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

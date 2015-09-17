@@ -17,6 +17,7 @@ man_MANS = \
 	xdg-app-add-remote.1 		\
 	xdg-app-delete-remote.1		\
 	xdg-app-list-remotes.1 		\
+	xdg-app-modify-remote.1		\
 	xdg-app-ls-remote.1		\
 	xdg-app-install-runtime.1 	\
 	xdg-app-update-runtime.1 	\
@@ -28,6 +29,8 @@ man_MANS = \
 	xdg-app-uninstall-app.1	 	\
 	xdg-app-list-apps.1	 	\
 	xdg-app-run.1		 	\
+	xdg-app-override.1		\
+	xdg-app-export-file.1		\
 	xdg-app-build-init.1	 	\
 	xdg-app-build.1		 	\
 	xdg-app-build-finish.1	 	\

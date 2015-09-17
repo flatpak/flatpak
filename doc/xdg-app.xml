@@ -114,6 +114,13 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-modify-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Modify remote repository properties.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-delete-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
@@ -128,7 +135,7 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-repo-contents</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-ls-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Show available runtimes and applications.
@@ -210,6 +217,20 @@
 
                 <listitem><para>
                     Run an application.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-override</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Override application requirements.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-export-file</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Export a file to a sandboxed application.
                 </para></listitem>
             </varlistentry>
         </variablelist>
