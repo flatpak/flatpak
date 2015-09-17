@@ -135,8 +135,12 @@ gint xdg_app_mkstempat (int dir_fd,
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeRepo, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeMutableTree, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeAsyncProgress, g_object_unref)
+
+#ifndef SOUP_AUTOCLEANUPS_H
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupSession, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupMessage, g_object_unref)
+#endif
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppSessionHelper, g_object_unref)
 
 #endif /* __XDG_APP_UTILS_H__ */
