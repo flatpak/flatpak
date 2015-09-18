@@ -134,7 +134,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (argv_array, g_strdup (HELPER));
 
-  g_ptr_array_add (argv_array, g_strdup ("-wr"));
+  g_ptr_array_add (argv_array, g_strdup ("-wrc"));
 
   app_context = xdg_app_context_new ();
   if (!xdg_app_context_load_metadata (app_context, runtime_metakey, error))

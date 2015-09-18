@@ -291,7 +291,7 @@ static inline int raw_clone(unsigned long flags, void *child_stack) {
 }
 
 static void
-setup_seccomp (void)
+setup_seccomp (bool devel)
 {
   scmp_filter_ctx seccomp;
   /**** BEGIN NOTE ON CODE SHARING
@@ -353,7 +353,12 @@ setup_seccomp (void)
     {SCMP_SYS(mount)},
     {SCMP_SYS(pivot_root)},
     {SCMP_SYS(clone), &SCMP_A0(SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+  };
 
+  struct {
+    int scall;
+    struct scmp_arg_cmp *arg;
+  } syscall_nondevel_blacklist[] = {
     /* Profiling operations; we expect these to be done by tools from outside
      * the sandbox.  In particular perf has been the source of many CVEs.
      */
@@ -413,6 +418,20 @@ setup_seccomp (void)
         r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 0);
       if (r < 0 && r == -EFAULT /* unknown syscall */)
         die_with_error ("Failed to block syscall %d", scall);
+    }
+
+  if (!devel)
+    {
+      for (i = 0; i < N_ELEMENTS (syscall_nondevel_blacklist); i++)
+        {
+          int scall = syscall_nondevel_blacklist[i].scall;
+          if (syscall_nondevel_blacklist[i].arg)
+            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 1, *syscall_nondevel_blacklist[i].arg);
+          else
+            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 0);
+          if (r < 0 && r == -EFAULT /* unknown syscall */)
+            die_with_error ("Failed to block syscall %d", scall);
+        }
     }
 
   /* Socket filtering doesn't work on x86 */
@@ -1856,6 +1875,7 @@ main (int argc,
   char **args;
   char *tmp;
   int n_args;
+  bool devel = FALSE;
   bool share_shm = FALSE;
   bool network = FALSE;
   bool ipc = FALSE;
@@ -1884,12 +1904,16 @@ main (int argc,
 
   clean_argv (argc, argv);
 
-  while ((c =  getopt (argc, argv, "+inWweEsfFHra:m:M:b:B:p:x:ly:d:D:v:I:gS:")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWwceEsfFHra:m:M:b:B:p:x:ly:d:D:v:I:gS:")) >= 0)
     {
       switch (c)
         {
         case 'a':
           app_path = optarg;
+          break;
+
+        case 'c':
+          devel = TRUE;
           break;
 
         case 'M':
@@ -2396,7 +2420,7 @@ main (int argc,
 #endif
 
   __debug__(("setting up seccomp\n"));
-  setup_seccomp ();
+  setup_seccomp (devel);
 
   __debug__(("forking for child\n"));
 

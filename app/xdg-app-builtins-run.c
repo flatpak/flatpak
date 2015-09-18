@@ -338,6 +338,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_ptr_array_add (argv_array, g_strdup ("-b"));
   g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/fonts=%s", SYSTEM_FONTS_DIR));
 
+  if (opt_devel)
+    g_ptr_array_add (argv_array, g_strdup ("-c"));
+
   home = g_file_new_for_path (g_get_home_dir ());
   user_font1 = g_file_resolve_relative_path (home, ".local/share/fonts");
   user_font2 = g_file_resolve_relative_path (home, ".fonts");
