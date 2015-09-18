@@ -101,6 +101,7 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
 	  *(extension = (groups[i] + strlen ("Extension "))) != 0)
 	{
 	  g_autofree char *directory = g_key_file_get_string (metakey, groups[i], "directory", NULL);
+	  g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
 
 	  if (directory == NULL)
 	    continue;
@@ -125,7 +126,7 @@ add_extension_args (GKeyFile *metakey, const char *full_ref,
 		}
 	    }
 	  else
-	    add_extension_arg (directory, parts[0], extension, parts[2], parts[3],
+	    add_extension_arg (directory, parts[0], extension, parts[2], version ? version : parts[3],
 			       argv_array, cancellable);
 	}
     }
