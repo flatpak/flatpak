@@ -606,6 +606,8 @@ static const create_table_t create[] = {
   { FILE_TYPE_DEVICE, "dev/tty", 0666},
   { FILE_TYPE_DIR, "dev/dri", 0755},
   { FILE_TYPE_BIND_RO, "dev/dri", 0755, "/dev/dri", FILE_FLAGS_NON_FATAL|FILE_FLAGS_DEVICES, &allow_dri},
+  { FILE_TYPE_DEVICE, "dev/nvidiactl", 0666, NULL, FILE_FLAGS_NON_FATAL, &allow_dri},
+  { FILE_TYPE_DEVICE, "dev/nvidia0", 0666, NULL, FILE_FLAGS_NON_FATAL, &allow_dri},
 };
 
 /* warning: Don't create any actual files here, as we could potentially
