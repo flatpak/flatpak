@@ -1468,7 +1468,7 @@ xdp_fuse_create (fuse_req_t req,
           return;
         }
 
-      fd = openat (dir_fd, basename, O_CREAT|O_EXCL|O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
+      fd = openat (dir_fd, basename, O_CREAT|O_EXCL|O_RDONLY|O_NOFOLLOW|O_CLOEXEC, mode & 0777);
       if (fd < 0)
         {
           fuse_reply_err (req, errno);
