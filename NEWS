@@ -1,3 +1,11 @@
+Major changes in 0.4.1
+======================
+* Fixed a parallel build issue
+* Fixed a build issue where openat() didn't get a mode passed
+* Don't block ptrace and perf in debug and build runs
+* Put nvidia drivers in sandbox if DRI allowed
+* Support specifying a version for runtime extensions
+
 Major changes in 0.4.0
 ======================
 * A new permissions store was added to the dbus api.
