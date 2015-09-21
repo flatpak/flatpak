@@ -1368,21 +1368,44 @@ link_extra_etc_dirs ()
         {
           char *dst_path;
           char *src_path;
+          char *target;
           struct stat st;
 
           src_path = strconcat ("etc/", dirent->d_name);
-          if (stat (src_path, &st) == 0)
+          if (lstat (src_path, &st) == 0)
             {
               free (src_path);
               continue;
             }
 
-          dst_path = strconcat ("/usr/etc/", dirent->d_name);
-	  if (symlink (dst_path, src_path) != 0)
-	    die_with_error ("symlink %s", src_path);
+          dst_path = strconcat ("usr/etc/", dirent->d_name);
+          if (lstat (dst_path, &st) != 0)
+            {
+              free (src_path);
+              free (dst_path);
+              continue;
+            }
 
-	  free (dst_path);
-	  free (src_path);
+          /* For symlinks we copy the actual symlink value, to correctly handle
+             things like /etc/localtime symlinks */
+          if (S_ISLNK (st.st_mode))
+            {
+              ssize_t r;
+
+              target = xmalloc (st.st_size + 1);
+              r = readlink (dst_path, target, st.st_size + 1);
+              if (r == -1)
+                die_with_error ("readlink %s", dst_path);
+            }
+          else
+            target = strconcat ("/usr/etc/", dirent->d_name);
+
+          if (symlink (target, src_path) != 0)
+            die_with_error ("symlink %s", src_path);
+
+          free (dst_path);
+          free (src_path);
+          free (target);
         }
     }
 }
