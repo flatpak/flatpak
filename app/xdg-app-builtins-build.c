@@ -43,8 +43,7 @@ static GOptionEntry options[] = {
 gboolean
 xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  GOptionContext *context;
-  gboolean ret = FALSE;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDeploy) runtime_deploy = NULL;
   g_autoptr(GFile) var = NULL;
   g_autoptr(GFile) app_deploy = NULL;
@@ -86,12 +85,12 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (rest_argc == 0)
     {
       usage_error (context, "DIRECTORY must be specified", error);
-      goto out;
+      return FALSE;
     }
 
   directory = argv[rest_argv_start];
@@ -102,31 +101,31 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   metadata = g_file_get_child (app_deploy, "metadata");
   if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
-    goto out;
+    return FALSE;
 
   metakey = g_key_file_new ();
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
-    goto out;
+    return FALSE;
 
   app_id = g_key_file_get_string (metakey, "Application", "name", error);
   if (app_id == NULL)
-    goto out;
+    return FALSE;
 
   runtime = g_key_file_get_string (metakey, "Application", opt_runtime ? "runtime" : "sdk", error);
   if (runtime == NULL)
-    goto out;
+    return FALSE;
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
 
   runtime_deploy = xdg_app_find_deploy_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
-    goto out;
+    return FALSE;
 
   runtime_metakey = xdg_app_deploy_get_metadata (runtime_deploy);
 
   var = g_file_get_child (app_deploy, "var");
   if (!gs_file_ensure_directory (var, TRUE, cancellable, error))
-    goto out;
+    return FALSE;
 
   app_files = g_file_get_child (app_deploy, "files");
   runtime_files = xdg_app_deploy_get_files (runtime_deploy);
@@ -138,15 +137,18 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   app_context = xdg_app_context_new ();
   if (!xdg_app_context_load_metadata (app_context, runtime_metakey, error))
-    goto out;
+    return FALSE;
   if (!xdg_app_context_load_metadata (app_context, metakey, error))
-    goto out;
+    return FALSE;
   xdg_app_context_merge (app_context, arg_context);
 
   xdg_app_context_allow_host_fs (app_context);
 
   xdg_app_run_add_environment_args (argv_array, NULL, NULL, app_id,
                                     app_context, NULL);
+
+  if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
+    return FALSE;
 
   g_ptr_array_add (argv_array, g_strdup ("-a"));
   g_ptr_array_add (argv_array, g_file_get_path (app_files));
@@ -166,14 +168,9 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (!execve (HELPER, (char **)argv_array->pdata, envp))
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
-      goto out;
+      return FALSE;
     }
 
   /* Not actually reached... */
-  ret = TRUE;
-
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return TRUE;
 }

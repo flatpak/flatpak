@@ -50,6 +50,11 @@ void           xdg_app_context_allow_host_fs          (XdgAppContext            
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppContext, xdg_app_context_free)
 
+gboolean  xdg_app_run_add_extension_args     (GPtrArray   *argv_array,
+                                              GKeyFile    *metakey,
+                                              const char  *full_ref,
+                                              GCancellable *cancellable,
+                                              GError     **error);
 void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,
 					      GPtrArray   *dbus_proxy_argv,
                                               const char  *doc_mount_path,

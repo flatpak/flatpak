@@ -1120,6 +1120,98 @@ xdg_app_add_bus_filters (GPtrArray *dbus_proxy_argv,
     }
 }
 
+static void
+add_extension_arg (const char *directory,
+                   const char *type,
+                   const char *extension,
+                   const char *arch,
+                   const char *branch,
+                   GPtrArray *argv_array,
+                   GCancellable *cancellable)
+{
+  g_autofree char *extension_ref;
+  g_autoptr(GFile) deploy = NULL;
+  g_autofree char *full_directory = NULL;
+  gboolean is_app;
+
+  is_app = strcmp (type, "app") == 0;
+
+  full_directory = g_build_filename (is_app ? "/app" : "/usr", directory, NULL);
+
+  extension_ref = g_build_filename (type, extension, arch, branch, NULL);
+  deploy = xdg_app_find_deploy_dir_for_ref (extension_ref, cancellable, NULL);
+  if (deploy != NULL)
+    {
+      g_autoptr(GFile) files = g_file_get_child (deploy, "files");
+      g_ptr_array_add (argv_array, g_strdup ("-b"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", full_directory, gs_file_get_path_cached (files)));
+    }
+}
+
+
+gboolean
+xdg_app_run_add_extension_args (GPtrArray   *argv_array,
+                                GKeyFile    *metakey,
+                                const char  *full_ref,
+                                GCancellable *cancellable,
+                                GError     **error)
+{
+  g_auto(GStrv) groups = NULL;
+  g_auto(GStrv) parts = NULL;
+  gboolean ret = FALSE;
+  int i;
+
+  ret = TRUE;
+
+  parts = g_strsplit (full_ref, "/", 0);
+  if (g_strv_length (parts) != 4)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to determine parts from ref: %s", full_ref);
+      return FALSE;
+    }
+
+  groups = g_key_file_get_groups (metakey, NULL);
+  for (i = 0; groups[i] != NULL; i++)
+    {
+      char *extension;
+
+      if (g_str_has_prefix (groups[i], "Extension ") &&
+          *(extension = (groups[i] + strlen ("Extension "))) != 0)
+        {
+          g_autofree char *directory = g_key_file_get_string (metakey, groups[i], "directory", NULL);
+          g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
+
+          if (directory == NULL)
+            continue;
+
+          if (g_key_file_get_boolean (metakey, groups[i],
+                                      "subdirectories", NULL))
+            {
+              g_autofree char *prefix = g_strconcat (extension, ".", NULL);
+              g_auto(GStrv) refs = NULL;
+              int i;
+
+              refs = xdg_app_list_deployed_refs (parts[0], prefix, parts[2], parts[3],
+                                                 cancellable, error);
+              if (refs == NULL)
+                return FALSE;
+
+              for (i = 0; refs[i] != NULL; i++)
+                {
+                  g_autofree char *extended_dir = g_build_filename (directory, refs[i] + strlen (prefix), NULL);
+                  add_extension_arg (extended_dir, parts[0], refs[i], parts[2], parts[3],
+                                     argv_array, cancellable);
+                }
+            }
+          else
+            add_extension_arg (directory, parts[0], extension, parts[2], version ? version : parts[3],
+                               argv_array, cancellable);
+        }
+    }
+
+  return TRUE;
+}
+
 void
 xdg_app_run_add_environment_args (GPtrArray *argv_array,
 				  GPtrArray *dbus_proxy_argv,

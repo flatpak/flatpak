@@ -51,92 +51,6 @@ static GOptionEntry options[] = {
 };
 
 static void
-add_extension_arg (const char *directory,
-		   const char *type, const char *extension, const char *arch, const char *branch,
-		   GPtrArray *argv_array, GCancellable *cancellable)
-{
-  g_autofree char *extension_ref;
-  g_autoptr(GFile) deploy = NULL;
-  g_autofree char *full_directory = NULL;
-  gboolean is_app;
-
-  is_app = strcmp (type, "app") == 0;
-
-  full_directory = g_build_filename (is_app ? "/app" : "/usr", directory, NULL);
-
-  extension_ref = g_build_filename (type, extension, arch, branch, NULL);
-  deploy = xdg_app_find_deploy_dir_for_ref (extension_ref, cancellable, NULL);
-  if (deploy != NULL)
-    {
-      g_autoptr(GFile) files = g_file_get_child (deploy, "files");
-      g_ptr_array_add (argv_array, g_strdup ("-b"));
-      g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", full_directory, gs_file_get_path_cached (files)));
-    }
-}
-
-static gboolean
-add_extension_args (GKeyFile *metakey, const char *full_ref,
-		    GPtrArray *argv_array, GCancellable *cancellable, GError **error)
-{
-  g_auto(GStrv) groups = NULL;
-  g_auto(GStrv) parts = NULL;
-  gboolean ret = FALSE;
-  int i;
-
-  ret = TRUE;
-
-  parts = g_strsplit (full_ref, "/", 0);
-  if (g_strv_length (parts) != 4)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to determine parts from ref: %s", full_ref);
-      goto out;
-    }
-
-  groups = g_key_file_get_groups (metakey, NULL);
-  for (i = 0; groups[i] != NULL; i++)
-    {
-      char *extension;
-
-      if (g_str_has_prefix (groups[i], "Extension ") &&
-	  *(extension = (groups[i] + strlen ("Extension "))) != 0)
-	{
-	  g_autofree char *directory = g_key_file_get_string (metakey, groups[i], "directory", NULL);
-	  g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
-
-	  if (directory == NULL)
-	    continue;
-
-	  if (g_key_file_get_boolean (metakey, groups[i],
-				      "subdirectories", NULL))
-	    {
-	      g_autofree char *prefix = g_strconcat (extension, ".", NULL);
-	      g_auto(GStrv) refs = NULL;
-	      int i;
-
-	      refs = xdg_app_list_deployed_refs (parts[0], prefix, parts[2], parts[3],
-						 cancellable, error);
-	      if (refs == NULL)
-		goto out;
-
-	      for (i = 0; refs[i] != NULL; i++)
-		{
-		  g_autofree char *extended_dir = g_build_filename (directory, refs[i] + strlen (prefix), NULL);
-		  add_extension_arg (extended_dir, parts[0], refs[i], parts[2], parts[3],
-				     argv_array, cancellable);
-		}
-	    }
-	  else
-	    add_extension_arg (directory, parts[0], extension, parts[2], version ? version : parts[3],
-			       argv_array, cancellable);
-	}
-    }
-
-  ret = TRUE;
- out:
-  return ret;
-}
-
-static void
 dbus_spawn_child_setup (gpointer user_data)
 {
   int fd = GPOINTER_TO_INT (user_data);
@@ -237,7 +151,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_ptr_array_add (argv_array, g_strdup (HELPER));
   g_ptr_array_add (argv_array, g_strdup ("-l"));
 
-  if (!add_extension_args (metakey, app_ref, argv_array, cancellable, error))
+  if (!xdg_app_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
     goto out;
 
   if (opt_runtime)
@@ -268,7 +182,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   xdg_app_context_merge (app_context, arg_context);
 
-  if (!add_extension_args (runtime_metakey, runtime_ref, argv_array, cancellable, error))
+  if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
     goto out;
 
   if ((app_id_dir = xdg_app_ensure_data_dir (app, cancellable, error)) == NULL)
