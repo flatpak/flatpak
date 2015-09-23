@@ -750,9 +750,9 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
           if (!xdg_app_context_verify_filesystem (fs, error))
             return FALSE;
           if (remove)
-            xdg_app_context_add_filesystem (context, fs);
-          else
             xdg_app_context_remove_filesystem (context, fs);
+          else
+            xdg_app_context_add_filesystem (context, fs);
         }
     }
 
