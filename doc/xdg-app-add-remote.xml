@@ -33,7 +33,7 @@
                 <command>xdg-app add-remote</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">NAME</arg>
-                <arg choice="plain">URL</arg>
+                <arg choice="plain">LOCATION</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -43,7 +43,7 @@
         <para>
             Adds a remote repository to the xdg-app repository configuration.
             <arg choice="plain">NAME</arg> is the name for the new remote, and
-            <arg choice="plain">URL</arg> is the location for the repository.
+            <arg choice="plain">LOCATION</arg> is the url or pathname for the repository.
         </para>
         <para>
             Unless overridden with the --user option, this command changes

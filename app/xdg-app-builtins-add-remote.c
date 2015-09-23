@@ -145,11 +145,13 @@ xdg_app_builtin_add_remote (int argc, char **argv,
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GVariantBuilder) optbuilder = NULL;
   g_autoptr(GHashTable) refs = NULL;
+  g_autoptr(GFile) file = NULL;
   g_autofree char *title = NULL;
+  g_autofree char *remote_url = NULL;
   const char *remote_name;
-  const char *remote_url;
+  const char *url_or_path;
 
-  context = g_option_context_new ("NAME URL - Add a remote repository");
+  context = g_option_context_new ("NAME LOCATION - Add a remote repository");
 
   g_option_context_add_main_entries (context, common_options, NULL);
 
@@ -158,12 +160,18 @@ xdg_app_builtin_add_remote (int argc, char **argv,
 
   if (argc < 3)
     {
-      usage_error (context, "NAME and URL must be specified", error);
+      usage_error (context, "NAME and LOCATION must be specified", error);
       return FALSE;
     }
 
   remote_name = argv[1];
-  remote_url  = argv[2];
+  url_or_path  = argv[2];
+
+  file = g_file_new_for_commandline_arg (url_or_path);
+  if (g_file_is_native (file))
+    remote_url = g_file_get_uri (file);
+  else
+    remote_url = g_strdup (url_or_path);
 
   optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
