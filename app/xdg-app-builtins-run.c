@@ -68,6 +68,8 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
   g_autoptr(GFile) app_cache_dir = NULL;
+  g_autoptr(GFile) app_data_dir = NULL;
+  g_autoptr(GFile) app_config_dir = NULL;
   g_autoptr(GFile) home = NULL;
   g_autoptr(GFile) user_font1 = NULL;
   g_autoptr(GFile) user_font2 = NULL;
@@ -189,8 +191,16 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       goto out;
 
   app_cache_dir = g_file_get_child (app_id_dir, "cache");
-  g_ptr_array_add (argv_array, g_strdup ("-b"));
+  g_ptr_array_add (argv_array, g_strdup ("-B"));
   g_ptr_array_add (argv_array, g_strdup_printf ("/var/cache=%s", gs_file_get_path_cached (app_cache_dir)));
+
+  app_data_dir = g_file_get_child (app_id_dir, "data");
+  g_ptr_array_add (argv_array, g_strdup ("-B"));
+  g_ptr_array_add (argv_array, g_strdup_printf ("/var/data=%s", gs_file_get_path_cached (app_data_dir)));
+
+  app_config_dir = g_file_get_child (app_id_dir, "config");
+  g_ptr_array_add (argv_array, g_strdup ("-B"));
+  g_ptr_array_add (argv_array, g_strdup_printf ("/var/config=%s", gs_file_get_path_cached (app_config_dir)));
 
   app_files = xdg_app_deploy_get_files (app_deploy);
   runtime_files = xdg_app_deploy_get_files (runtime_deploy);
