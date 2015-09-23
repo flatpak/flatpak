@@ -1158,10 +1158,7 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
 {
   g_auto(GStrv) groups = NULL;
   g_auto(GStrv) parts = NULL;
-  gboolean ret = FALSE;
   int i;
-
-  ret = TRUE;
 
   parts = g_strsplit (full_ref, "/", 0);
   if (g_strv_length (parts) != 4)
