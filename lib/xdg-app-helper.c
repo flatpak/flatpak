@@ -49,7 +49,9 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
+#ifdef ENABLE_SECCOMP
 #include <seccomp.h>
+#endif
 
 #if 0
 #define __debug__(x) printf x
@@ -293,6 +295,7 @@ static inline int raw_clone(unsigned long flags, void *child_stack) {
 static void
 setup_seccomp (bool devel)
 {
+#ifdef ENABLE_SECCOMP
   scmp_filter_ctx seccomp;
   /**** BEGIN NOTE ON CODE SHARING
    *
@@ -454,6 +457,7 @@ setup_seccomp (bool devel)
     die_with_error ("Failed to install seccomp audit filter: ");
 
   seccomp_release (seccomp);
+#endif
 }
 
 static void

@@ -59,15 +59,27 @@ AC_SUBST(BASE_LIBS)
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
 AC_SUBST(SOUP_CFLAGS)
 AC_SUBST(SOUP_LIBS)
-PKG_CHECK_MODULES(LIBSECCOMP, [libseccomp])
-AC_SUBST(LIBSECCOMP_CFLAGS)
-AC_SUBST(LIBSECCOMP_LIBS)
 PKG_CHECK_MODULES(OSTREE, [libgsystem >= 2015.1 ostree-1 >= 2015.3])
 AC_SUBST(OSTREE_CFLAGS)
 AC_SUBST(OSTREE_LIBS)
 PKG_CHECK_MODULES(FUSE, [fuse])
 AC_SUBST(FUSE_CFLAGS)
 AC_SUBST(FUSE_LIBS)
+
+AC_ARG_ENABLE([seccomp],
+              AC_HELP_STRING([--disable-seccomp],
+                             [Disable seccomp]),
+              [],
+              [enable_seccomp=yes])
+
+if test "x$enable_seccomp" = "xyes"; then
+   PKG_CHECK_MODULES(LIBSECCOMP, [libseccomp])
+   AC_SUBST(LIBSECCOMP_CFLAGS)
+   AC_SUBST(LIBSECCOMP_LIBS)
+   AC_DEFINE([ENABLE_SECCOMP], [1],
+      [Define if using seccomp])
+fi
+
 
 AC_ARG_ENABLE([userns],
               AC_HELP_STRING([--disable-userns],
