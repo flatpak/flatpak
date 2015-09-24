@@ -29,6 +29,7 @@
 #include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
+#include "xdg-app-utils.h"
 
 static gboolean opt_show_details;
 
@@ -36,76 +37,6 @@ static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show remote details", NULL },
   { NULL }
 };
-
-typedef struct {
-  GPtrArray *rows;
-  GPtrArray *current;
-  int n_columns;
-} TablePrinter;
-
-static TablePrinter *
-table_printer_new (void)
-{
-  TablePrinter *printer = g_new0 (TablePrinter, 1);
-  printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify)g_strfreev);
-  printer->current = g_ptr_array_new_with_free_func (g_free);
-
-  return printer;
-}
-
-static void
-table_printer_free (TablePrinter *printer)
-{
-  g_ptr_array_free (printer->rows, TRUE);
-  g_ptr_array_free (printer->current, TRUE);
-  g_free (printer);
-}
-
-static void
-table_printer_add_column (TablePrinter *printer,
-                          const char *text)
-{
-  g_ptr_array_add (printer->current, text ? g_strdup (text) : g_strdup (""));
-}
-
-static void
-table_printer_finish_row (TablePrinter *printer)
-{
-  printer->n_columns = MAX (printer->n_columns, printer->current->len);
-  g_ptr_array_add (printer->current, NULL);
-  g_ptr_array_add (printer->rows,
-                   g_ptr_array_free (printer->current, FALSE));
-  printer->current = g_ptr_array_new_with_free_func (g_free);
-}
-
-static void
-table_printer_print (TablePrinter *printer)
-{
-  g_autofree int *widths = NULL;
-  int i, j;
-
-  if (printer->current->len != 0)
-    table_printer_finish_row (printer);
-
-  widths = g_new0 (int, printer->n_columns);
-
-  for (i = 0; i < printer->rows->len; i++)
-    {
-      char **row = g_ptr_array_index (printer->rows,i);
-
-      for (j = 0; row[j] != NULL; j++)
-        widths[j] = MAX (widths[j], strlen (row[j]));
-    }
-
-  for (i = 0; i < printer->rows->len; i++)
-    {
-      char **row = g_ptr_array_index (printer->rows,i);
-
-      for (j = 0; row[j] != NULL; j++)
-        g_print ("%-*s%s", widths[j], row[j], j == printer->n_columns - 1 ? "" : "\t");
-      g_print ("\n");
-    }
-}
 
 gboolean
 xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, GError **error)
@@ -124,7 +55,7 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_show_details)
     {
-      TablePrinter *printer = table_printer_new ();
+      XdgAppTablePrinter *printer = xdg_app_table_printer_new ();
       GKeyFile *config = ostree_repo_get_config (xdg_app_dir_get_repo (dir));;
       g_autoptr(GString) options = g_string_new ("");
 
@@ -138,17 +69,17 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
           group = g_strdup_printf ("remote \"%s\"", remote_name);
 
-          table_printer_add_column (printer, remote_name);
+          xdg_app_table_printer_add_column (printer, remote_name);
 
           title = g_key_file_get_string (config, group, "xa.title", NULL);
           if (title)
-            table_printer_add_column (printer, title);
+            xdg_app_table_printer_add_column (printer, title);
           else
-            table_printer_add_column (printer, "-");
+            xdg_app_table_printer_add_column (printer, "-");
 
           ostree_repo_remote_get_url (xdg_app_dir_get_repo (dir), remote_name, &remote_url, NULL);
 
-          table_printer_add_column (printer, remote_url);
+          xdg_app_table_printer_add_column (printer, remote_url);
 
           ostree_repo_remote_get_gpg_verify (xdg_app_dir_get_repo (dir), remote_name,
                                              &gpg_verify, NULL);
@@ -160,15 +91,15 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
               }
 
           if (options->len != 0)
-            table_printer_add_column (printer, options->str);
+            xdg_app_table_printer_add_column (printer, options->str);
 
           g_string_truncate (options, 0);
 
-          table_printer_finish_row (printer);
+          xdg_app_table_printer_finish_row (printer);
         }
 
-      table_printer_print (printer);
-      table_printer_free (printer);
+      xdg_app_table_printer_print (printer);
+      xdg_app_table_printer_free (printer);
     }
   else
     {

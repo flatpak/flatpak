@@ -742,3 +742,73 @@ xdg_app_mkstempat (int dir_fd,
   errno = EEXIST;
   return -1;
 }
+
+struct XdgAppTablePrinter {
+  GPtrArray *rows;
+  GPtrArray *current;
+  int n_columns;
+};
+
+XdgAppTablePrinter *
+xdg_app_table_printer_new (void)
+{
+  XdgAppTablePrinter *printer = g_new0 (XdgAppTablePrinter, 1);
+  printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify)g_strfreev);
+  printer->current = g_ptr_array_new_with_free_func (g_free);
+
+  return printer;
+}
+
+void
+xdg_app_table_printer_free (XdgAppTablePrinter *printer)
+{
+  g_ptr_array_free (printer->rows, TRUE);
+  g_ptr_array_free (printer->current, TRUE);
+  g_free (printer);
+}
+
+void
+xdg_app_table_printer_add_column (XdgAppTablePrinter *printer,
+                                  const char *text)
+{
+  g_ptr_array_add (printer->current, text ? g_strdup (text) : g_strdup (""));
+}
+
+void
+xdg_app_table_printer_finish_row (XdgAppTablePrinter *printer)
+{
+  printer->n_columns = MAX (printer->n_columns, printer->current->len);
+  g_ptr_array_add (printer->current, NULL);
+  g_ptr_array_add (printer->rows,
+                   g_ptr_array_free (printer->current, FALSE));
+  printer->current = g_ptr_array_new_with_free_func (g_free);
+}
+
+void
+xdg_app_table_printer_print (XdgAppTablePrinter *printer)
+{
+  g_autofree int *widths = NULL;
+  int i, j;
+
+  if (printer->current->len != 0)
+    xdg_app_table_printer_finish_row (printer);
+
+  widths = g_new0 (int, printer->n_columns);
+
+  for (i = 0; i < printer->rows->len; i++)
+    {
+      char **row = g_ptr_array_index (printer->rows,i);
+
+      for (j = 0; row[j] != NULL; j++)
+        widths[j] = MAX (widths[j], strlen (row[j]));
+    }
+
+  for (i = 0; i < printer->rows->len; i++)
+    {
+      char **row = g_ptr_array_index (printer->rows,i);
+
+      for (j = 0; row[j] != NULL; j++)
+        g_print ("%-*s%s", widths[j], row[j], j == printer->n_columns - 1 ? "" : "\t");
+      g_print ("\n");
+    }
+}

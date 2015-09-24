@@ -130,6 +130,16 @@ gint xdg_app_mkstempat (int dir_fd,
                         int mode);
 
 
+typedef struct XdgAppTablePrinter XdgAppTablePrinter;
+
+XdgAppTablePrinter *xdg_app_table_printer_new        (void);
+void                xdg_app_table_printer_free       (XdgAppTablePrinter *printer);
+void                xdg_app_table_printer_add_column (XdgAppTablePrinter *printer,
+                                                      const char         *text);
+void                xdg_app_table_printer_finish_row (XdgAppTablePrinter *printer);
+void                xdg_app_table_printer_print      (XdgAppTablePrinter *printer);
+
+
 #define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup(xdg_app_auto_unlock_helper))) GMutex * G_PASTE(auto_unlock, __LINE__) = xdg_app_auto_lock_helper (&G_LOCK_NAME (name))
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeRepo, g_object_unref)
