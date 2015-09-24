@@ -797,6 +797,9 @@ xdg_app_table_printer_append_with_comma (XdgAppTablePrinter *printer,
 void
 xdg_app_table_printer_finish_row (XdgAppTablePrinter *printer)
 {
+  if (printer->current->len == 0)
+    return; /* Ignore empty rows */
+
   printer->n_columns = MAX (printer->n_columns, printer->current->len);
   g_ptr_array_add (printer->current, NULL);
   g_ptr_array_add (printer->rows,

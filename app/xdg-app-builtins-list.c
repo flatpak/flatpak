@@ -42,14 +42,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-static void
-print_comma_separator (gboolean *need_comma)
-{
-  if (*need_comma)
-    g_print (",");
-  *need_comma = TRUE;
-}
-
 static gboolean
 print_installed_refs (const char *kind, gboolean print_system, gboolean print_user, GCancellable *cancellable, GError **error)
 {
@@ -81,9 +73,11 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
   else
     system = g_new0 (char *, 1);
 
+  XdgAppTablePrinter *printer = xdg_app_table_printer_new ();
+
   for (s = 0, u = 0; system[s] != NULL || user[u] != NULL; )
     {
-      char *ref;
+      char *ref, *partial_ref;
       g_auto(GStrv) parts = NULL;
       g_autofree char *repo = NULL;
       gboolean is_user;
@@ -104,21 +98,20 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
         ref = system[s++];
 
       parts = g_strsplit (ref, "/", -1);
+      partial_ref = strchr(ref, '/') + 1;
 
       dir = xdg_app_dir_get (is_user);
       repo = xdg_app_dir_get_origin (dir, ref, NULL, NULL);
 
       if (opt_show_details)
         {
-          gboolean comma = FALSE;
+          xdg_app_table_printer_add_column (printer, partial_ref);
+          xdg_app_table_printer_add_column (printer, repo);
 
-          g_print ("%s/%s/%s\t%s\t", parts[1], parts[2], parts[3], repo);
+          xdg_app_table_printer_add_column (printer, ""); /* Options */
 
           if (print_user && print_system)
-            {
-              print_comma_separator (&comma);
-              g_print ("%s", is_user ? "user" : "system");
-            }
+            xdg_app_table_printer_append_with_comma (printer, is_user ? "user" : "system");
 
           if (strcmp (kind, "app") == 0)
             {
@@ -126,26 +119,25 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
               current = xdg_app_dir_current_ref (dir, parts[1], cancellable);
               if (current && strcmp (ref, current) == 0)
-                {
-                  print_comma_separator (&comma);
-                  g_print ("current");
-                }
+                xdg_app_table_printer_append_with_comma (printer, "current");
             }
-          g_print ("\n");
         }
       else
         {
           if (last == NULL || strcmp (last, parts[1]) != 0)
             {
-              g_print ("%s\t%s\t%s\n", parts[1], parts[3], repo);
+              xdg_app_table_printer_add_column (printer, parts[1]);
               g_clear_pointer (&last, g_free);
               last = g_strdup (parts[1]);
             }
         }
+      xdg_app_table_printer_finish_row (printer);
     }
 
-  ret = TRUE;
+  xdg_app_table_printer_print (printer);
+  xdg_app_table_printer_free (printer);
 
+  ret = TRUE;
 out:
 
   return ret;
