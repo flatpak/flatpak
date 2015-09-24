@@ -30,6 +30,7 @@ man_MANS = \
 	xdg-app-list-apps.1	 	\
 	xdg-app-run.1		 	\
 	xdg-app-override.1		\
+	xdg-app-enter.1		 	\
 	xdg-app-export-file.1		\
 	xdg-app-build-init.1	 	\
 	xdg-app-build.1		 	\

@@ -274,6 +274,7 @@
         <para>
             <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             <citerefentry><refentrytitle>xdg-app-override</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>xdg-app-enter</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

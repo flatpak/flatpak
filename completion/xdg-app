@@ -23,7 +23,7 @@ _xdg-app() {
         local dir cmd sdk loc
 
         local -A VERBS=(
-                [ALL]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps run override export-file build-init build build-finish build-export repo-update make-app-current'
+                [ALL]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps run override enter export-file build-init build build-finish build-export repo-update make-app-current'
                 [MODE]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps make-app-current'
                 [PERMS]='run override build build-finish'
                 [UNINSTALL]='uninstall-runtime uninstall-app'

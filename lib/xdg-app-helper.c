@@ -2428,29 +2428,6 @@ main (int argc,
       free (tz_val);
     }
 
-#ifndef DISABLE_USERNS
-  {
-    char *uid_map, *gid_map;
-    /* Now that devpts is mounted we can create a new userspace and map
-       our uid 1:1 */
-    if (unshare (CLONE_NEWUSER))
-      die_with_error ("unshare user ns");
-
-    uid_map = strdup_printf ("%d 0 1\n", uid);
-    if (!write_file ("/proc/self/uid_map", uid_map))
-      die_with_error ("setting up uid map");
-    free (uid_map);
-
-    gid_map = strdup_printf ("%d 0 1\n", gid);
-    if (!write_file ("/proc/self/gid_map", gid_map))
-      die_with_error ("setting up gid map");
-    free (gid_map);
-  }
-#endif
-
-  __debug__(("setting up seccomp\n"));
-  setup_seccomp (devel);
-
   __debug__(("forking for child\n"));
 
   pid = fork ();
@@ -2461,6 +2438,30 @@ main (int argc,
     {
       __debug__(("launch executable %s\n", args[0]));
 
+#ifndef DISABLE_USERNS
+      {
+        char *uid_map, *gid_map;
+        /* Now that devpts is mounted we can create a new userspace and map
+           our uid 1:1 */
+
+        if (unshare (CLONE_NEWUSER))
+          die_with_error ("unshare user ns");
+
+        uid_map = strdup_printf ("%d 0 1\n", uid);
+        if (!write_file ("/proc/self/uid_map", uid_map))
+          die_with_error ("setting up uid map");
+        free (uid_map);
+
+        gid_map = strdup_printf ("%d 0 1\n", gid);
+        if (!write_file ("/proc/self/gid_map", gid_map))
+          die_with_error ("setting up gid map");
+        free (gid_map);
+      }
+#endif
+
+      __debug__(("setting up seccomp in child\n"));
+      setup_seccomp (devel);
+
       if (sync_fd != -1)
 	close (sync_fd);
 
@@ -2468,6 +2469,9 @@ main (int argc,
         die_with_error ("execvp %s", args[0]);
       return 0;
     }
+
+  __debug__(("setting up seccomp in monitor\n"));
+  setup_seccomp (devel);
 
   /* Close all extra fds in pid 1.
      Any passed in fds have been passed on to the child anyway. */
