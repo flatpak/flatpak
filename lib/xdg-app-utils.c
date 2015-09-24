@@ -775,6 +775,26 @@ xdg_app_table_printer_add_column (XdgAppTablePrinter *printer,
 }
 
 void
+xdg_app_table_printer_append_with_comma (XdgAppTablePrinter *printer,
+                                         const char *text)
+{
+  char *old, *new;
+
+  g_assert (printer->current->len > 0);
+
+  old = g_ptr_array_index (printer->current, printer->current->len - 1);
+
+  if (old[0] != 0)
+    new = g_strconcat (old, ",", text, NULL);
+  else
+    new = g_strdup (text);
+
+  g_ptr_array_index (printer->current, printer->current->len - 1) = new;
+  g_free (old);
+}
+
+
+void
 xdg_app_table_printer_finish_row (XdgAppTablePrinter *printer)
 {
   printer->n_columns = MAX (printer->n_columns, printer->current->len);
@@ -808,7 +828,7 @@ xdg_app_table_printer_print (XdgAppTablePrinter *printer)
       char **row = g_ptr_array_index (printer->rows,i);
 
       for (j = 0; row[j] != NULL; j++)
-        g_print ("%-*s%s", widths[j], row[j], j == printer->n_columns - 1 ? "" : "\t");
+        g_print ("%s%-*s", (j == 0) ? "" : "\t", widths[j], row[j]);
       g_print ("\n");
     }
 }

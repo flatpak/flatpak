@@ -42,8 +42,9 @@
             Lists the known remote repositories.
         </para>
         <para>
-           Unless overridden with the --user option, this command
-           shows the system-wide configuration.
+            By default, both per-user and system-wide installations
+            are shown. Use the --user or --system options to change
+            this.
         </para>
 
     </refsect1>
