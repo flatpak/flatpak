@@ -1,3 +1,13 @@
+Major changes in 0.4.2
+======================
+* Fix build with older versions of glib
+* Fix regression in filesystem access configuration
+* Make seccomp use optional (for arches without it)
+* Add xdg-app enter command to enter a running sandbox
+* Fix /var/cache being readonly
+* Add /var/data and /var/config shortcuts for per-app data
+* Minor fixes to bash completion
+
 Major changes in 0.4.1
 ======================
 * Fixed a parallel build issue
