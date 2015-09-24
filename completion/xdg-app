@@ -28,6 +28,7 @@ _xdg-app() {
                 [PERMS]='run override build build-finish'
                 [UNINSTALL]='uninstall-runtime uninstall-app'
                 [ARCH]='build-init install-runtime install-app run uninstall-runtime uninstall-app update-runtime update-app make-app-current'
+                [USER_AND_SYSTEM]='run list-remotes list-apps list-runtimes'
         )
 
         local -A OPTS=(
@@ -50,10 +51,35 @@ _xdg-app() {
                 [ARG]='--arch --command --branch --var --share --unshare  --socket --nosocket --device --nodevice --subject --body --title --runtime --filesystem'
         )
 
+        for ((i=0; i < COMP_CWORD; i++)); do
+                if [[ "${COMP_WORDS[i]}" = -* ]]; then
+                        continue
+                fi
+                if  __contains_word "${COMP_WORDS[i-1]}" ${OPTS[ARG]}; then
+                        continue
+                fi
+                if __contains_word "${COMP_WORDS[i]}" ${VERBS[*]} &&
+                   test -z $first_verb; then
+                        first_verb=${COMP_WORDS[i]}
+                fi
+        done
+
         if __contains_word "--user" ${COMP_WORDS[*]}; then
-                mode=--user
+            if __contains_word "--system" ${COMP_WORDS[*]}; then
+                mode="--user --system"
+            else
+                mode="--user"
+            fi
         else
+            if __contains_word "--system" ${COMP_WORDS[*]}; then
                 mode=--system
+            else
+                if __contains_word "$first_verb" ${VERBS[USER_AND_SYSTEM]}; then
+                    mode="--user --system"
+                else
+                    mode="--system"
+                fi
+            fi
         fi
 
         if __contains_word "$prev" ${OPTS[ARG]}; then
