@@ -38,7 +38,7 @@ static gboolean opt_system;
 static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Show user installations", NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Show system-wide installations", NULL },
-  { "show-details", 0, 0, G_OPTION_ARG_NONE, &opt_show_details, "Show arches and branches", NULL },
+  { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show arches and branches", NULL },
   { NULL }
 };
 
