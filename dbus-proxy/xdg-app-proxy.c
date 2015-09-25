@@ -618,7 +618,7 @@ buffer_read (ProxySide *side,
     }
   else
     {
-      int flags;
+      int flags = 0;
       v.buffer = &buffer->data[buffer->pos];
       v.size = buffer->size - buffer->pos;
 
