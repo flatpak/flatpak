@@ -564,6 +564,21 @@ option_filesystem_cb (const gchar    *option_name,
 }
 
 static gboolean
+option_nofilesystem_cb (const gchar    *option_name,
+                        const gchar    *value,
+                        gpointer        data,
+                        GError        **error)
+{
+  XdgAppContext *context = data;
+
+  if (!xdg_app_context_verify_filesystem (value, error))
+    return FALSE;
+
+  xdg_app_context_remove_filesystem (context, value);
+  return TRUE;
+}
+
+static gboolean
 option_env_cb (const gchar    *option_name,
                const gchar    *value,
                gpointer        data,
@@ -632,6 +647,7 @@ static GOptionEntry context_options[] = {
   { "device", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_device_cb, "Expose device to app", "DEVICE" },
   { "nodevice", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nodevice_cb, "Don't expose device to app", "DEVICE" },
   { "filesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_filesystem_cb, "Expose filesystem to app", "FILESYSTEM" },
+  { "nofilesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nofilesystem_cb, "Don't expose filesystem to app", "FILESYSTEM" },
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, "Set environment variable", "VAR=VALUE" },
   { "own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_own_name_cb, "Allow app to own name on the session bus", "DBUS_NAME" },
   { "talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_talk_name_cb, "Allow app to talk to name on the session bus", "DBUS_NAME" },
