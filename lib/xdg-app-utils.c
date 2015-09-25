@@ -37,6 +37,22 @@
 #include "libglnx/libglnx.h"
 #include <libsoup/soup.h>
 
+gboolean
+xdg_app_fail (GError **error, const char *format, ...)
+{
+  g_autofree char *message = NULL;
+  va_list args;
+
+  va_start (args, format);
+  message = g_strdup_vprintf (format, args);
+  va_end (args);
+
+  g_set_error_literal (error,
+                       G_IO_ERROR, G_IO_ERROR_FAILED,
+                       message);
+
+  return FALSE;
+}
 
 const char *
 xdg_app_get_arch (void)
