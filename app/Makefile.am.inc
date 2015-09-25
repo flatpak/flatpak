@@ -17,6 +17,7 @@ xdg_app_SOURCES = \
 	app/xdg-app-builtins-list.c \
 	app/xdg-app-builtins-run.c \
 	app/xdg-app-builtins-enter.c \
+	app/xdg-app-builtins-dump.c \
 	app/xdg-app-builtins-build-init.c \
 	app/xdg-app-builtins-build.c \
 	app/xdg-app-builtins-build-finish.c \
@@ -26,6 +27,6 @@ xdg_app_SOURCES = \
 	$(xdp_dbus_built_sources)	\
 	$(NULL)
 
-xdg_app_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) libglnx.la libxdgapp.la
-xdg_app_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS)
+xdg_app_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(LIBARCHIVE_LIBS) libglnx.la libxdgapp.la
+xdg_app_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(LIBARCHIVE_CFLAGS)
 

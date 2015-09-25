@@ -108,6 +108,34 @@ AC_ARG_ENABLE(sudo,
               [SUDO_BIN="sudo"], [SUDO_BIN=""])
 AC_SUBST([SUDO_BIN])
 
+LIBARCHIVE_DEPENDENCY="libarchive >= 2.8.0"
+
+AC_ARG_WITH(libarchive,
+	    AS_HELP_STRING([--without-libarchive], [Do not use libarchive]),
+	    :, with_libarchive=maybe)
+
+AS_IF([ test x$with_libarchive != xno ], [
+    AC_MSG_CHECKING([for $LIBARCHIVE_DEPENDENCY])
+    PKG_CHECK_EXISTS($LIBARCHIVE_DEPENDENCY, have_libarchive=yes, have_libarchive=no)
+    AC_MSG_RESULT([$have_libarchive])
+    AS_IF([ test x$have_libarchive = xno && test x$with_libarchive != xmaybe ], [
+       AC_MSG_ERROR([libarchive is enabled but could not be found])
+    ])
+    AS_IF([ test x$have_libarchive = xyes], [
+        AC_DEFINE([HAVE_LIBARCHIVE], 1, [Define if we have libarchive.pc])
+	PKG_CHECK_MODULES(LIBARCHIVE, $LIBARCHIVE_DEPENDENCY)
+        save_LIBS=$LIBS
+        LIBS=$LIBARCHIVE_LIBS
+        AC_CHECK_FUNCS(archive_read_support_filter_all)
+        LIBS=$save_LIBS
+	with_libarchive=yes
+    ], [
+	with_libarchive=no
+    ])
+], [ with_libarchive=no ])
+AM_CONDITIONAL(USE_LIBARCHIVE, test $with_libarchive != no)
+
+
 AC_ARG_ENABLE(documentation,
               AC_HELP_STRING([--enable-documentation], [Build documentation]),,
               enable_documentation=yes)
