@@ -1,3 +1,7 @@
+Major changes in 0.4.2.1
+======================
+* Fix dbus proxy
+
 Major changes in 0.4.2
 ======================
 * Fix build with older versions of glib
