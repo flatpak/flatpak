@@ -191,12 +191,13 @@ xdg_app_option_context_parse (GOptionContext *context,
   return success;
 }
 
-void
+gboolean
 usage_error (GOptionContext *context, const char *message, GError **error)
 {
   g_autofree gchar *help = g_option_context_get_help (context, TRUE, NULL);
   g_printerr ("%s", help);
   g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, message);
+  return FALSE;
 }
 
 int
