@@ -33,21 +33,17 @@
 gboolean
 xdg_app_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  GOptionContext *context;
-  gboolean ret = FALSE;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   const char *remote_name;
 
   context = g_option_context_new ("NAME - Delete a remote repository");
 
   if (!xdg_app_option_context_parse (context, NULL, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "NAME must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "NAME must be specified", error);
 
   remote_name = argv[1];
 
@@ -56,12 +52,7 @@ xdg_app_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
                                   remote_name, NULL,
                                   NULL,
                                   cancellable, error))
-    goto out;
+    return FALSE;
 
-  ret = TRUE;
-
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return TRUE;
 }

@@ -60,8 +60,7 @@ dbus_spawn_child_setup (gpointer user_data)
 gboolean
 xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  GOptionContext *context;
-  gboolean ret = FALSE;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDeploy) app_deploy = NULL;
   g_autoptr(XdgAppDeploy) runtime_deploy = NULL;
   g_autoptr(GFile) app_files = NULL;
@@ -115,13 +114,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (rest_argc == 0)
-    {
-      usage_error (context, "APP must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "APP must be specified", error);
 
   app = argv[rest_argv_start];
 
@@ -131,20 +127,20 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (!xdg_app_is_valid_name (app))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_is_valid_branch (branch))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      goto out;
+      return FALSE;
     }
 
   app_ref = xdg_app_build_app_ref (app, branch, opt_arch);
 
   app_deploy = xdg_app_find_deploy_for_ref (app_ref, cancellable, error);
   if (app_deploy == NULL)
-    goto out;
+    return FALSE;
 
   metakey = xdg_app_deploy_get_metadata (app_deploy);
 
@@ -154,7 +150,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_ptr_array_add (argv_array, g_strdup ("-l"));
 
   if (!xdg_app_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (opt_runtime)
     runtime = opt_runtime;
@@ -162,22 +158,22 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     {
       runtime = g_key_file_get_string (metakey, "Application", opt_devel ? "sdk" : "runtime", error);
       if (*error)
-        goto out;
+        return FALSE;
     }
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
 
   runtime_deploy = xdg_app_find_deploy_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
-    goto out;
+    return FALSE;
 
   runtime_metakey = xdg_app_deploy_get_metadata (runtime_deploy);
 
   app_context = xdg_app_context_new ();
   if (!xdg_app_context_load_metadata (app_context, runtime_metakey, error))
-    goto out;
+    return FALSE;
   if (!xdg_app_context_load_metadata (app_context, metakey, error))
-    goto out;
+    return FALSE;
 
   overrides = xdg_app_deploy_get_overrides (app_deploy);
   xdg_app_context_merge (app_context, overrides);
@@ -185,10 +181,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   xdg_app_context_merge (app_context, arg_context);
 
   if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
-    goto out;
+    return FALSE;
 
   if ((app_id_dir = xdg_app_ensure_data_dir (app, cancellable, error)) == NULL)
-      goto out;
+      return FALSE;
 
   app_cache_dir = g_file_get_child (app_id_dir, "cache");
   g_ptr_array_add (argv_array, g_strdup ("-B"));
@@ -207,7 +203,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   default_command = g_key_file_get_string (metakey, "Application", "command", error);
   if (*error)
-    goto out;
+    return FALSE;
   if (opt_command)
     command = opt_command;
   else
@@ -294,7 +290,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       if (pipe (sync_proxy_pipes) < 0)
 	{
 	  g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to create sync pipe");
-	  goto out;
+	  return FALSE;
 	}
 
       g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (DBUSPROXY));
@@ -309,7 +305,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 			  dbus_spawn_child_setup,
 			  GINT_TO_POINTER (sync_proxy_pipes[1]),
 			  NULL, error))
-	goto out;
+	return FALSE;
 
       close (sync_proxy_pipes[1]);
 
@@ -317,7 +313,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
       if (read (sync_proxy_pipes[0], &x, 1) != 1)
 	{
 	  g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to sync with dbus proxy");
-	  goto out;
+	  return FALSE;
 	}
 
       g_ptr_array_add (argv_array, g_strdup ("-S"));
@@ -346,14 +342,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (execvpe (HELPER, (char **)argv_array->pdata, envp) == -1)
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
-      goto out;
+      return FALSE;
     }
 
   /* Not actually reached... */
-  ret = TRUE;
-
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return TRUE;
 }

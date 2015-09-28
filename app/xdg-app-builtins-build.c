@@ -88,10 +88,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   if (rest_argc == 0)
-    {
-      usage_error (context, "DIRECTORY must be specified", error);
-      return FALSE;
-    }
+    return usage_error (context, "DIRECTORY must be specified", error);
 
   directory = argv[rest_argv_start];
   if (rest_argc >= 2)

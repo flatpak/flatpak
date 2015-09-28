@@ -43,8 +43,7 @@ static GOptionEntry options[] = {
 gboolean
 xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) var_deploy_base = NULL;
   g_autoptr(GFile) var_deploy_files = NULL;
   g_autoptr(GFile) base = NULL;
@@ -66,13 +65,10 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   context = g_option_context_new ("DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 5)
-    {
-      usage_error (context, "RUNTIME must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "RUNTIME must be specified", error);
 
   directory = argv[1];
   app_id = argv[2];
@@ -84,25 +80,25 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (!xdg_app_is_valid_name (app_id))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app_id);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_is_valid_name (runtime))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid runtime name", runtime);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_is_valid_name (sdk))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid sdk name", sdk);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_is_valid_branch (branch))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      goto out;
+      return FALSE;
     }
 
   runtime_ref = xdg_app_build_untyped_ref (runtime, branch, opt_arch);
@@ -111,7 +107,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   base = g_file_new_for_commandline_arg (directory);
 
   if (!gs_file_ensure_directory (base, TRUE, cancellable, error))
-    goto out;
+    return FALSE;
 
   files_dir = g_file_get_child (base, "files");
   var_dir = g_file_get_child (base, "var");
@@ -122,7 +118,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (g_file_query_exists (files_dir, cancellable))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s already initialized", directory);
-      goto out;
+      return FALSE;
     }
 
   if (opt_var)
@@ -131,31 +127,31 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
       var_deploy_base = xdg_app_find_deploy_dir_for_ref (var_ref, cancellable, error);
       if (var_deploy_base == NULL)
-        goto out;
+        return FALSE;
 
       var_deploy_files = g_file_get_child (var_deploy_base, "files");
     }
 
   if (!g_file_make_directory (files_dir, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (var_deploy_files)
     {
       if (!gs_shutil_cp_a (var_deploy_files, var_dir, cancellable, error))
-        goto out;
+        return FALSE;
     }
   else
     {
       if (!g_file_make_directory (var_dir, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
   if (!gs_file_ensure_directory (var_tmp_dir, FALSE, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!g_file_query_exists (var_run_dir, cancellable) &&
       !g_file_make_symbolic_link (var_run_dir, "/run", cancellable, error))
-    goto out;
+    return FALSE;
 
   metadata_contents = g_strdup_printf("[Application]\n"
                                       "name=%s\n"
@@ -166,11 +162,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                                 metadata_contents, strlen (metadata_contents), NULL, FALSE,
                                 G_FILE_CREATE_REPLACE_DESTINATION,
                                 NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
-  ret = TRUE;
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return TRUE;
 }

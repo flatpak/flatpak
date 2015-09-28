@@ -68,7 +68,6 @@ open_source_stream (GInputStream **out_source_stream,
 {
   g_autoptr(GInputStream) source_stream = NULL;
   guint n_keyrings = 0;
-  gboolean ret = FALSE;
   g_autoptr(GPtrArray) streams = NULL;
 
   if (opt_gpg_import != NULL)
@@ -92,7 +91,7 @@ open_source_stream (GInputStream **out_source_stream,
           input_stream = G_INPUT_STREAM(g_file_read (file, cancellable, error));
 
           if (input_stream == NULL)
-            goto out;
+            return FALSE;
         }
 
       /* Takes ownership. */
@@ -104,10 +103,7 @@ open_source_stream (GInputStream **out_source_stream,
 
   *out_source_stream = g_steal_pointer (&source_stream);
 
-  ret = TRUE;
-
-out:
-  return ret;
+  return TRUE;
 }
 
 gboolean
@@ -159,10 +155,7 @@ xdg_app_builtin_add_remote (int argc, char **argv,
     return FALSE;
 
   if (argc < 3)
-    {
-      usage_error (context, "NAME and LOCATION must be specified", error);
-      return FALSE;
-    }
+    return usage_error (context, "NAME and LOCATION must be specified", error);
 
   remote_name = argv[1];
   url_or_path  = argv[2];
@@ -227,10 +220,7 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
     return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "remote NAME must be specified", error);
-      return FALSE;
-    }
+    return usage_error (context, "remote NAME must be specified", error);
 
   remote_name = argv[1];
 

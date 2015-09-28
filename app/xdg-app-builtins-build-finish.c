@@ -50,14 +50,13 @@ export_dir (int            source_parent_fd,
             GCancellable  *cancellable,
             GError       **error)
 {
-  gboolean ret = FALSE;
   int res;
   g_auto(GLnxDirFdIterator) source_iter = {0};
   glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
 
   if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
-    goto out;
+    return FALSE;
 
   do
     res = mkdirat (destination_parent_fd, destination_name, 0755);
@@ -67,14 +66,14 @@ export_dir (int            source_parent_fd,
       if (errno != EEXIST)
         {
           glnx_set_error_from_errno (error);
-          goto out;
+          return FALSE;
         }
     }
 
   if (!gs_file_open_dir_fd_at (destination_parent_fd, destination_name,
                                &destination_dfd,
                                cancellable, error))
-    goto out;
+    return FALSE;
 
   while (TRUE)
     {
@@ -82,7 +81,7 @@ export_dir (int            source_parent_fd,
       g_autofree char *source_printable = NULL;
 
       if (!glnx_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
-        goto out;
+        return FALSE;
 
       if (dent == NULL)
         break;
@@ -94,7 +93,7 @@ export_dir (int            source_parent_fd,
           else
             {
               glnx_set_error_from_errno (error);
-              goto out;
+              return FALSE;
             }
         }
 
@@ -109,7 +108,7 @@ export_dir (int            source_parent_fd,
 
           if (!export_dir (source_iter.fd, dent->d_name, child_relpath, destination_dfd, dent->d_name,
                            required_prefix, cancellable, error))
-            goto out;
+            return FALSE;
         }
       else if (S_ISREG (stbuf.st_mode))
         {
@@ -129,7 +128,7 @@ export_dir (int            source_parent_fd,
                                   GLNX_FILE_COPY_NOXATTRS,
                                   cancellable,
                                   error))
-            goto out;
+            return FALSE;
         }
       else
         {
@@ -138,10 +137,7 @@ export_dir (int            source_parent_fd,
         }
     }
 
-  ret = TRUE;
- out:
-
-  return ret;
+  return TRUE;
 }
 
 static gboolean
@@ -152,27 +148,21 @@ copy_exports (GFile    *source,
               GCancellable  *cancellable,
               GError       **error)
 {
-  gboolean ret = FALSE;
-
   if (!gs_file_ensure_directory (destination, TRUE, cancellable, error))
-    goto out;
+    return FALSE;
 
   /* The fds are closed by this call */
   if (!export_dir (AT_FDCWD, gs_file_get_path_cached (source), source_prefix,
                    AT_FDCWD, gs_file_get_path_cached (destination),
                    required_prefix, cancellable, error))
-    goto out;
+    return FALSE;
 
-  ret = TRUE;
-
- out:
-  return ret;
+  return TRUE;
 }
 
 static gboolean
 collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
   g_autoptr(GFile) files = NULL;
   g_autoptr(GFile) export = NULL;
   const char *paths[] = {
@@ -188,7 +178,7 @@ collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GEr
   export = g_file_get_child (base, "export");
 
   if (!gs_file_ensure_directory (export, TRUE, cancellable, error))
-    goto out;
+    return FALSE;
 
   for (i = 0; paths[i]; i++)
     {
@@ -203,18 +193,15 @@ collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GEr
           dest_parent = g_file_get_parent (dest);
           g_debug ("Ensuring export/%s parent exists", paths[i]);
           if (!gs_file_ensure_directory (dest_parent, TRUE, cancellable, error))
-            goto out;
+            return FALSE;
           g_debug ("Copying from files/%s", paths[i]);
           if (!copy_exports (src, dest, paths[i], app_id, cancellable, error))
-            goto out;
+            return FALSE;
         }
     }
 
-  ret = TRUE;
-
   g_assert_no_error (*error);
-out:
-  return ret;
+  return TRUE;
 }
 
 static gboolean
@@ -312,8 +299,7 @@ out:
 gboolean
 xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files_dir = NULL;
   g_autoptr(GFile) export_dir = NULL;
@@ -331,13 +317,10 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "DIRECTORY must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "DIRECTORY must be specified", error);
 
   directory = argv[1];
 
@@ -351,39 +334,35 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
       !g_file_query_exists (metadata_file, cancellable))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s not initialized", directory);
-      goto out;
+      return FALSE;
     }
 
   if (!g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, error))
-    goto out;
+    return FALSE;
 
   metakey = g_key_file_new ();
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
-    goto out;
+    return FALSE;
 
   app_id = g_key_file_get_string (metakey, "Application", "name", error);
   if (app_id == NULL)
-    goto out;
+    return FALSE;
 
   if (g_file_query_exists (export_dir, cancellable))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s already finalized", directory);
-      goto out;
+      return FALSE;
     }
 
   g_debug ("Collecting exports");
   if (!collect_exports (base, app_id, cancellable, error))
-    goto out;
+    return FALSE;
 
   g_debug ("Updating metadata");
   if (!update_metadata (base, arg_context, cancellable, error))
-    goto out;
+    return FALSE;
 
   g_print ("Please review the exported files and the metadata\n");
 
-  ret = TRUE;
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return TRUE;
 }

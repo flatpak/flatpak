@@ -45,8 +45,7 @@ static GOptionEntry options[] = {
 gboolean
 xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   const char *runtime;
   const char *branch = "master";
@@ -58,13 +57,10 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   context = g_option_context_new ("RUNTIME [BRANCH] - Update a runtime");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "RUNTIME must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "RUNTIME must be specified", error);
 
   runtime = argv[1];
   if (argc >= 3)
@@ -73,24 +69,24 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   if (!xdg_app_is_valid_name (runtime))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid runtime name", runtime);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_is_valid_branch (branch))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      goto out;
+      return FALSE;
     }
 
   ref = xdg_app_build_runtime_ref (runtime, branch, opt_arch);
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
-    goto out;
+    return FALSE;
 
   if (!xdg_app_dir_pull (dir, repository, ref,
                          cancellable, error))
-    goto out;
+    return FALSE;
 
   previous_deployment = xdg_app_dir_read_active (dir, ref, cancellable);
 
@@ -102,7 +98,7 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
       else
         {
           g_propagate_error (error, my_error);
-          goto out;
+          return FALSE;
         }
     }
   else
@@ -112,25 +108,20 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
           if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
                                      opt_force_remove,
                                      cancellable, error))
-            goto out;
+            return FALSE;
 
           if (!xdg_app_dir_prune (dir, cancellable, error))
-            goto out;
+            return FALSE;
         }
     }
 
-  ret = TRUE;
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return TRUE;
 }
 
 gboolean
 xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   const char *app;
   const char *branch = "master";
@@ -142,13 +133,10 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   context = g_option_context_new ("APP [BRANCH] - Update an application");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "APP must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "APP must be specified", error);
 
   app = argv[1];
   if (argc >= 3)
@@ -157,24 +145,24 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   if (!xdg_app_is_valid_name (app))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_is_valid_branch (branch))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      goto out;
+      return FALSE;
     }
 
   ref = xdg_app_build_app_ref (app, branch, opt_arch);
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
-    goto out;
+    return FALSE;
 
   if (!xdg_app_dir_pull (dir, repository, ref,
                          cancellable, error))
-    goto out;
+    return FALSE;
 
   previous_deployment = xdg_app_dir_read_active (dir, ref, cancellable);
 
@@ -186,7 +174,7 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
       else
         {
           g_propagate_error (error, my_error);
-          goto out;
+          return FALSE;
         }
     }
   else
@@ -196,19 +184,15 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
           if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
                                      opt_force_remove,
                                      cancellable, error))
-            goto out;
+            return FALSE;
 
           if (!xdg_app_dir_prune (dir, cancellable, error))
-            goto out;
+            return FALSE;
         }
 
       if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
-  ret = TRUE;
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return  TRUE;
 }

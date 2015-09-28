@@ -149,7 +149,6 @@ xdg_app_option_context_parse (GOptionContext *context,
                               GCancellable *cancellable,
                               GError **error)
 {
-  gboolean success = FALSE;
   g_autoptr(XdgAppDir) dir = NULL;
 
   if (!(flags & XDG_APP_BUILTIN_FLAG_NO_DIR))
@@ -174,11 +173,11 @@ xdg_app_option_context_parse (GOptionContext *context,
       dir = xdg_app_dir_get (opt_user);
 
       if (!xdg_app_dir_ensure_path (dir, cancellable, error))
-        goto out;
+        return FALSE;
 
       if (!(flags & XDG_APP_BUILTIN_FLAG_NO_REPO) &&
           !xdg_app_dir_ensure_repo (dir, cancellable,error))
-        goto out;
+        return FALSE;
     }
 
   if (opt_verbose)
@@ -187,9 +186,7 @@ xdg_app_option_context_parse (GOptionContext *context,
   if (out_dir)
     *out_dir = g_steal_pointer (&dir);
 
-  success = TRUE;
- out:
-  return success;
+  return TRUE;
 }
 
 gboolean

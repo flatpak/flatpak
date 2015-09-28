@@ -42,7 +42,7 @@ gboolean
 xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) origin = NULL;
@@ -113,8 +113,6 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
   if (created_deploy_base && !ret)
     gs_shutil_rm_rf (deploy_base, cancellable, NULL);
 
-  if (context)
-    g_option_context_free (context);
   return ret;
 }
 
@@ -122,7 +120,7 @@ gboolean
 xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) origin = NULL;
@@ -199,7 +197,5 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
   if (created_deploy_base && !ret)
     gs_shutil_rm_rf (deploy_base, cancellable, NULL);
 
-  if (context)
-    g_option_context_free (context);
   return ret;
 }

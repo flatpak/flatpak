@@ -42,8 +42,7 @@ static GOptionEntry options[] = {
 gboolean
 xdg_app_builtin_repo_update (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   const char *location;
@@ -52,13 +51,10 @@ xdg_app_builtin_repo_update (int argc, char **argv, GCancellable *cancellable, G
   context = g_option_context_new ("LOCATION - Update repository metadata");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "LOCATION must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "LOCATION must be specified", error);
 
   location = argv[1];
 
@@ -66,7 +62,7 @@ xdg_app_builtin_repo_update (int argc, char **argv, GCancellable *cancellable, G
   repo = ostree_repo_new (repofile);
 
   if (!ostree_repo_open (repo, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (opt_title)
     {
@@ -78,15 +74,9 @@ xdg_app_builtin_repo_update (int argc, char **argv, GCancellable *cancellable, G
     }
 
   if (!ostree_repo_regenerate_summary (repo, extra, cancellable, error))
-    goto out;
+    return FALSE;
 
   /* TODO: appstream data */
 
-  ret = TRUE;
-
- out:
-  if (context)
-    g_option_context_free (context);
-
-  return ret;
+  return TRUE;
 }

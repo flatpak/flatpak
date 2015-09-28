@@ -41,8 +41,7 @@ static GOptionEntry options[] = {
 gboolean
 xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   const char *app;
@@ -52,13 +51,10 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   context = g_option_context_new ("APP BRANCH - Make branch of application current");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 3)
-    {
-      usage_error (context, "APP and BRANCH must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "APP and BRANCH must be specified", error);
 
   app  = argv[1];
   branch = argv[2];
@@ -66,13 +62,13 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   if (!xdg_app_is_valid_name (app))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_is_valid_branch (branch))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      goto out;
+      return FALSE;
     }
 
   ref = xdg_app_build_app_ref (app, branch, opt_arch);
@@ -81,19 +77,14 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   if (!g_file_query_exists (deploy_base, cancellable))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "App %s branch %s is not installed", app, branch);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
-    goto out;
+    return FALSE;
 
-  ret = TRUE;
-
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return TRUE;
 }

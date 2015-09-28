@@ -45,7 +45,6 @@ static GOptionEntry options[] = {
 static gboolean
 print_installed_refs (const char *kind, gboolean print_system, gboolean print_user, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
   g_autofree char *last = NULL;
   g_auto(GStrv) system = NULL;
   g_auto(GStrv) user = NULL;
@@ -57,7 +56,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
       dir = xdg_app_dir_get (TRUE);
       if (!xdg_app_dir_list_refs (dir, kind, &user, cancellable, error))
-        goto out;
+        return FALSE;
     }
   else
     user = g_new0 (char *, 1);
@@ -68,7 +67,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
       dir = xdg_app_dir_get (FALSE);
       if (!xdg_app_dir_list_refs (dir, kind, &system, cancellable, error))
-        goto out;
+        return FALSE;
     }
   else
     system = g_new0 (char *, 1);
@@ -137,62 +136,43 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
   xdg_app_table_printer_print (printer);
   xdg_app_table_printer_free (printer);
 
-  ret = TRUE;
-out:
-
-  return ret;
+  return TRUE;
 }
 
 gboolean
 xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
 
   context = g_option_context_new (" - List installed runtimes");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!print_installed_refs ("runtime",
                              opt_system || (!opt_user && !opt_system),
                              opt_user || (!opt_user && !opt_system),
                              cancellable, error))
-    goto out;
+    return FALSE;
 
-  ret = TRUE;
-
- out:
-
-  if (context)
-    g_option_context_free (context);
-
-  return ret;
+  return TRUE;
 }
 
 gboolean
 xdg_app_builtin_list_apps (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
 
   context = g_option_context_new (" - List installed applications");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!print_installed_refs ("app",
                              opt_system || (!opt_user && !opt_system),
                              opt_user || (!opt_user && !opt_system),
                              cancellable, error))
-    goto out;
+    return FALSE;
 
-  ret = TRUE;
-
- out:
-
-  if (context)
-    g_option_context_free (context);
-
-  return ret;
+  return TRUE;
 }

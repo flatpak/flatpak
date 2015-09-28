@@ -45,8 +45,7 @@ static GOptionEntry options[] = {
 gboolean
 xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) arch_dir = NULL;
@@ -64,13 +63,10 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   context = g_option_context_new ("RUNTIME [BRANCH] - Uninstall a runtime");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "RUNTIME must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "RUNTIME must be specified", error);
 
   name = argv[1];
   if (argc > 2)
@@ -85,13 +81,13 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   if (!xdg_app_is_valid_name (name))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid runtime name", name);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_is_valid_branch (branch))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      goto out;
+      return FALSE;
     }
 
   /* TODO: look for apps, require --force */
@@ -102,30 +98,30 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   if (!g_file_query_exists (deploy_base, cancellable))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Nothing to uninstall");
-      goto out;
+      return FALSE;
     }
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
-    goto out;
+    return FALSE;
 
   g_debug ("dropping active ref");
   if (!xdg_app_dir_set_active (dir, ref, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!xdg_app_dir_list_deployed (dir, ref, &deployed, cancellable, error))
-    goto out;
+    return FALSE;
 
   for (i = 0; deployed[i] != NULL; i++)
     {
       g_debug ("undeploying %s", deployed[i]);
       if (!xdg_app_dir_undeploy (dir, ref, deployed[i], opt_force_remove, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
   g_debug ("removing deploy base");
   if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
-    goto out;
+    return FALSE;
 
   g_debug ("cleaning up empty directories");
   arch_dir = g_file_get_parent (deploy_base);
@@ -134,7 +130,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
       if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
           g_propagate_error (error, temp_error);
-          goto out;
+          return FALSE;
         }
       g_clear_error (&temp_error);
     }
@@ -145,7 +141,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
       if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
           g_propagate_error (error, temp_error);
-          goto out;
+          return FALSE;
         }
       g_clear_error (&temp_error);
     }
@@ -155,27 +151,21 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
       repo = xdg_app_dir_get_repo (dir);
 
       if (!ostree_repo_set_ref_immediate (repo, repository, ref, NULL, cancellable, error))
-        goto out;
+        return FALSE;
 
       if (!xdg_app_dir_prune (dir, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
-  ret = TRUE;
-
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return TRUE;
 }
 
 gboolean
 xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) arch_dir = NULL;
@@ -194,13 +184,10 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "APP must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "APP must be specified", error);
 
   name = argv[1];
   if (argc > 2)
@@ -215,13 +202,13 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   if (!xdg_app_is_valid_name (name))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", name);
-      goto out;
+      return FALSE;
     }
 
   if (!xdg_app_is_valid_branch (branch))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      goto out;
+      return FALSE;
     }
 
   ref = g_build_filename ("app", name, arch, branch, NULL);
@@ -230,41 +217,41 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   if (!g_file_query_exists (deploy_base, cancellable))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Nothing to uninstall");
-      goto out;
+      return FALSE;
     }
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
-    goto out;
+    return FALSE;
 
   g_debug ("dropping active ref");
   if (!xdg_app_dir_set_active (dir, ref, NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   current_ref = xdg_app_dir_current_ref (dir, name, cancellable);
   if (current_ref != NULL && strcmp (ref, current_ref) == 0)
     {
       g_debug ("dropping current ref");
       if (!xdg_app_dir_drop_current_ref (dir, name, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
   if (!xdg_app_dir_list_deployed (dir, ref, &deployed, cancellable, error))
-    goto out;
+    return FALSE;
 
   for (i = 0; deployed[i] != NULL; i++)
     {
       g_debug ("undeploying %s", deployed[i]);
       if (!xdg_app_dir_undeploy (dir, ref, deployed[i], opt_force_remove, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
   g_debug ("removing deploy base");
   if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!xdg_app_dir_update_exports (dir, name, cancellable, error))
-    goto out;
+    return FALSE;
 
   g_debug ("cleaning up empty directories");
   arch_dir = g_file_get_parent (deploy_base);
@@ -273,7 +260,7 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
       if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
           g_propagate_error (error, temp_error);
-          goto out;
+          return FALSE;
         }
       g_clear_error (&temp_error);
     }
@@ -284,7 +271,7 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
       if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
           g_propagate_error (error, temp_error);
-          goto out;
+          return FALSE;
         }
       g_clear_error (&temp_error);
     }
@@ -294,18 +281,13 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
       repo = xdg_app_dir_get_repo (dir);
 
       if (!ostree_repo_set_ref_immediate (repo, repository, ref, NULL, cancellable, error))
-        goto out;
+        return FALSE;
 
       if (!xdg_app_dir_prune (dir, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
-  ret = TRUE;
-
- out:
-  if (context)
-    g_option_context_free (context);
-  return ret;
+  return TRUE;
 }

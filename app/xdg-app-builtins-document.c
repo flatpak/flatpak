@@ -58,8 +58,7 @@ xdg_app_builtin_export_file (int argc, char **argv,
                              GCancellable *cancellable,
                              GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GVariant) reply = NULL;
   g_autoptr(GDBusConnection) session_bus = NULL;
   g_autoptr(GPtrArray) permissions = NULL;
@@ -78,36 +77,33 @@ xdg_app_builtin_export_file (int argc, char **argv,
   if (!xdg_app_option_context_parse (context, options, &argc, &argv,
                                      XDG_APP_BUILTIN_FLAG_NO_DIR,
                                      NULL, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "FILE must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "FILE must be specified", error);
 
   file = argv[1];
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
   if (session_bus == NULL)
-    goto out;
+    return FALSE;
 
   documents = xdp_dbus_documents_proxy_new_sync (session_bus, 0,
                                                  "org.freedesktop.portal.Documents",
                                                  "/org/freedesktop/portal/documents",
                                                  NULL, error);
   if (documents == NULL)
-    goto out;
+    return FALSE;
 
   if (!xdp_dbus_documents_call_get_mount_point_sync (documents, &mountpoint,
                                                      NULL, error))
-    goto out;
+    return FALSE;
 
   fd = open (file, O_PATH | O_CLOEXEC);
   if (fd == -1)
     {
       glnx_set_error_from_errno (error);
-      goto out;
+      return FALSE;
     }
 
   fd_list = g_unix_fd_list_new ();
@@ -129,7 +125,7 @@ xdg_app_builtin_export_file (int argc, char **argv,
   g_object_unref (fd_list);
 
   if (reply == NULL)
-    goto out;
+    return FALSE;
 
   g_variant_get (reply, "(&s)", &doc_id);
 
@@ -152,7 +148,7 @@ xdg_app_builtin_export_file (int argc, char **argv,
                                                            (const char **)permissions->pdata,
                                                            NULL,
                                                            error))
-        goto out;
+        return FALSE;
 
     }
 
@@ -160,12 +156,5 @@ xdg_app_builtin_export_file (int argc, char **argv,
   doc_path = g_build_filename (mountpoint, doc_id, basename, NULL);
   g_print ("%s\n", doc_path);
 
-  ret = TRUE;
-
- out:
-
-  if (context)
-    g_option_context_free (context);
-
-  return ret;
+  return TRUE;
 }

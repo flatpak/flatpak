@@ -44,7 +44,6 @@ static GOptionEntry options[] = {
 static gboolean
 metadata_get_arch (GFile *file, char **out_arch, GError **error)
 {
-  gboolean ret = FALSE;
   g_autofree char *path = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime = NULL;
@@ -53,24 +52,22 @@ metadata_get_arch (GFile *file, char **out_arch, GError **error)
   keyfile = g_key_file_new ();
   path = g_file_get_path (file);
   if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
-    goto out;
+    return FALSE;
 
   runtime = g_key_file_get_string (keyfile, "Application", "runtime", error);
   if (*error)
-    goto out;
+    return FALSE;
 
   parts = g_strsplit (runtime, "/", 0);
   if (g_strv_length (parts) != 3)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to determine arch from metadata runtime key: %s", runtime);
-      goto out;
+      return FALSE;
     }
 
   *out_arch = g_strdup (parts[1]);
 
-  ret = TRUE;
-out:
-  return ret;
+  return TRUE;
 }
 
 static gboolean
@@ -117,7 +114,7 @@ gboolean
 xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files = NULL;
   g_autoptr(GFile) metadata = NULL;
@@ -264,8 +261,6 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
  out:
   if (repo)
     ostree_repo_abort_transaction (repo, cancellable, NULL);
-  if (context)
-    g_option_context_free (context);
   if (modifier)
     ostree_repo_commit_modifier_unref (modifier);
 

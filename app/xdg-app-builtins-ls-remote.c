@@ -47,8 +47,7 @@ static GOptionEntry options[] = {
 gboolean
 xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   OstreeRepo *repo = NULL;
   g_autoptr(GHashTable) refs = NULL;
@@ -64,22 +63,19 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   context = g_option_context_new (" REMOTE - Show available runtimes and applications");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, "REMOTE must be specified", error);
-      goto out;
-    }
+    return usage_error (context, "REMOTE must be specified", error);
 
   repository = argv[1];
 
   repo = xdg_app_dir_get_repo (dir);
   if (!ostree_repo_remote_get_url (repo, repository, &url, error))
-    goto out;
+    return FALSE;
 
   if (!ostree_repo_load_summary (url, &refs, &title, cancellable, error))
-    goto out;
+    return FALSE;
 
   names = g_ptr_array_new_with_free_func (g_free);
 
@@ -94,7 +90,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       char *p;
 
       if (!ostree_parse_refspec (refspec, &remote, &ref, error))
-        goto out;
+        return FALSE;
 
       if (remote != NULL && !g_str_equal (remote, repository))
         continue;
@@ -164,11 +160,5 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   for (i = 0; i < names->len; i++)
     g_print ("%s\n", (char *)g_ptr_array_index (names, i));
 
-  ret = TRUE;
-
- out:
-  if (context)
-    g_option_context_free (context);
-
-  return ret;
+  return TRUE;
 }
