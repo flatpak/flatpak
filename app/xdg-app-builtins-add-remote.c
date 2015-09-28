@@ -114,7 +114,6 @@ import_keys (XdgAppDir *dir,
 {
   if (opt_gpg_import != NULL)
     {
-      g_autoptr(GFile) file = NULL;
       g_autoptr(GInputStream) input_stream = NULL;
       guint imported = 0;
 
@@ -207,7 +206,6 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GVariantBuilder) optbuilder = NULL;
-  g_autoptr(GHashTable) refs = NULL;
   g_autoptr(GKeyFile) config = NULL;
   const char *remote_name;
   g_autofree char *group = NULL;

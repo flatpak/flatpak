@@ -230,7 +230,6 @@ dump_runtime (GFile *root, GCancellable *cancellable, GError **error)
   for (i = 0; i < G_N_ELEMENTS(extra_symlinks); i++)
     {
       g_autoptr(archive_entry_t) entry = NULL;
-      g_autoptr(GFile) dest = g_file_resolve_relative_path (files, extra_symlinks[i].target);
 
       if (g_str_has_prefix (extra_symlinks[i].target, "usr/"))
         {
