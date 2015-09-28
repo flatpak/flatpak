@@ -940,11 +940,7 @@ xdg_app_run_verify_environment_keys (const char **keys,
     return TRUE;
 
   if ((key = g_strv_subset (environment_keys, keys)) != NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-		   "Unknown Environment key %s", key);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "Unknown Environment key %s", key);
 
   return TRUE;
 }
@@ -1178,10 +1174,7 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
 
   parts = g_strsplit (full_ref, "/", 0);
   if (g_strv_length (parts) != 4)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to determine parts from ref: %s", full_ref);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "Failed to determine parts from ref: %s", full_ref);
 
   groups = g_key_file_get_groups (metakey, NULL);
   for (i = 0; groups[i] != NULL; i++)

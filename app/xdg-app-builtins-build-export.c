@@ -60,10 +60,7 @@ metadata_get_arch (GFile *file, char **out_arch, GError **error)
 
   parts = g_strsplit (runtime, "/", 0);
   if (g_strv_length (parts) != 3)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Failed to determine arch from metadata runtime key: %s", runtime);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "Failed to determine arch from metadata runtime key: %s", runtime);
 
   *out_arch = g_strdup (parts[1]);
 
@@ -161,7 +158,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (!xdg_app_is_valid_branch (branch))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
+      xdg_app_fail (error, "'%s' is not a valid branch name", branch);
       goto out;
     }
 
@@ -173,7 +170,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!g_file_query_exists (files, cancellable) ||
       !g_file_query_exists (metadata, cancellable))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s not initialized", directory);
+      xdg_app_fail (error, "Build directory %s not initialized", directory);
       goto out;
     }
 
@@ -190,7 +187,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (!g_file_query_exists (export, cancellable))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s not finalized", directory);
+      xdg_app_fail (error, "Build directory %s not finalized", directory);
       goto out;
     }
 

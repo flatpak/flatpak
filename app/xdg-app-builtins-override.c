@@ -65,10 +65,7 @@ xdg_app_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
   app = argv[1];
 
   if (!xdg_app_is_valid_name (app))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid application name", app);
 
   metakey = xdg_app_load_override_keyfile (app, xdg_app_dir_is_user (dir), error);
   if (metakey == NULL)

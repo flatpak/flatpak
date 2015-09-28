@@ -67,16 +67,10 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
     branch = argv[2];
 
   if (!xdg_app_is_valid_name (runtime))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid runtime name", runtime);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid runtime name", runtime);
 
   if (!xdg_app_is_valid_branch (branch))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
 
   ref = xdg_app_build_runtime_ref (runtime, branch, opt_arch);
 
@@ -143,16 +137,10 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
     branch = argv[2];
 
   if (!xdg_app_is_valid_name (app))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid application name", app);
 
   if (!xdg_app_is_valid_branch (branch))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
 
   ref = xdg_app_build_app_ref (app, branch, opt_arch);
 

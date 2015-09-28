@@ -332,10 +332,7 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   if (!g_file_query_exists (files_dir, cancellable) ||
       !g_file_query_exists (metadata_file, cancellable))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s not initialized", directory);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "Build directory %s not initialized", directory);
 
   if (!g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, error))
     return FALSE;
@@ -349,10 +346,7 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
     return FALSE;
 
   if (g_file_query_exists (export_dir, cancellable))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s already finalized", directory);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "Build directory %s already finalized", directory);
 
   g_debug ("Collecting exports");
   if (!collect_exports (base, app_id, cancellable, error))

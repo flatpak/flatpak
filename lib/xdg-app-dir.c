@@ -427,7 +427,7 @@ xdg_app_dir_get_origin (XdgAppDir      *self,
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "%s is not installed", ref);
+      xdg_app_fail (error, "%s is not installed", ref);
       return NULL;
     }
 
@@ -1073,7 +1073,7 @@ export_desktop_file (const char    *app,
 
       if (dbus_name == NULL || strcmp (dbus_name, expected_dbus_name) != 0)
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "dbus service file %s has wrong name", name);
+          xdg_app_fail (error, "dbus service file %s has wrong name", name);
           return FALSE;
         }
     }

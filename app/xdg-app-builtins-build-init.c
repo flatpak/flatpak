@@ -78,28 +78,16 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     branch = argv[5];
 
   if (!xdg_app_is_valid_name (app_id))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app_id);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid application name", app_id);
 
   if (!xdg_app_is_valid_name (runtime))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid runtime name", runtime);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid runtime name", runtime);
 
   if (!xdg_app_is_valid_name (sdk))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid sdk name", sdk);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid sdk name", sdk);
 
   if (!xdg_app_is_valid_branch (branch))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
 
   runtime_ref = xdg_app_build_untyped_ref (runtime, branch, opt_arch);
   sdk_ref = xdg_app_build_untyped_ref (sdk, branch, opt_arch);
@@ -116,10 +104,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   metadata_file = g_file_get_child (base, "metadata");
 
   if (g_file_query_exists (files_dir, cancellable))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Build directory %s already initialized", directory);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "Build directory %s already initialized", directory);
 
   if (opt_var)
     {

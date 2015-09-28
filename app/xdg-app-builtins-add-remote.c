@@ -227,10 +227,7 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
   group = g_strdup_printf ("remote \"%s\"", remote_name);
 
   if (!ostree_repo_remote_get_url (xdg_app_dir_get_repo (dir), remote_name, NULL, NULL))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "No remote %s", remote_name);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "No remote %s", remote_name);
 
   config = ostree_repo_copy_config (xdg_app_dir_get_repo (dir));
 

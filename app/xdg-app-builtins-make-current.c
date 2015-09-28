@@ -60,25 +60,16 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   branch = argv[2];
 
   if (!xdg_app_is_valid_name (app))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid application name", app);
 
   if (!xdg_app_is_valid_branch (branch))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
 
   ref = xdg_app_build_app_ref (app, branch, opt_arch);
 
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "App %s branch %s is not installed", app, branch);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "App %s branch %s is not installed", app, branch);
 
   if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
     return FALSE;

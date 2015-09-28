@@ -79,16 +79,10 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
     arch = xdg_app_get_arch ();
 
   if (!xdg_app_is_valid_name (name))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid runtime name", name);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid runtime name", name);
 
   if (!xdg_app_is_valid_branch (branch))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
 
   /* TODO: look for apps, require --force */
 
@@ -96,10 +90,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
 
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Nothing to uninstall");
-      return FALSE;
-    }
+    return xdg_app_fail (error, "Nothing to uninstall");
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
@@ -200,25 +191,16 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
     arch = xdg_app_get_arch ();
 
   if (!xdg_app_is_valid_name (name))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", name);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid application name", name);
 
   if (!xdg_app_is_valid_branch (branch))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
 
   ref = g_build_filename ("app", name, arch, branch, NULL);
 
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Nothing to uninstall");
-      return FALSE;
-    }
+    return xdg_app_fail (error, "Nothing to uninstall");
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)

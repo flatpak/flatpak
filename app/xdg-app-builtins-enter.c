@@ -173,10 +173,7 @@ xdg_app_builtin_enter (int argc,
 
   pid = atoi (pid_s);
   if (pid <= 0)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid pid %s\n", pid_s);
-      return FALSE;
-    }
+    return xdg_app_fail (error, "Invalid pid %s\n", pid_s);
 
   environment_path = g_strdup_printf ("/proc/%d/environ", pid);
   if (!g_file_get_contents (environment_path, &environment, &environment_len, error))
@@ -189,19 +186,13 @@ xdg_app_builtin_enter (int argc,
 
       pid_ns_len = readlink (path, pid_ns, sizeof (pid_ns) - 1);
       if (pid_ns_len <= 0)
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid %s namespace for pid %d\n", ns_name[i], pid);
-          return FALSE;
-        }
+        return xdg_app_fail (error, "Invalid %s namespace for pid %d\n", ns_name[i], pid);
       pid_ns[pid_ns_len] = 0;
 
       self_ns_len = readlink (self_path, self_ns, sizeof (self_ns) - 1);
       if (self_ns_len <= 0)
       if (pid_ns_len <= 0)
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid %s namespace for self\n", ns_name[i]);
-          return FALSE;
-        }
+        return xdg_app_fail (error, "Invalid %s namespace for self\n", ns_name[i]);
       self_ns[self_ns_len] = 0;
 
       if (strcmp (self_ns, pid_ns) == 0)
@@ -213,22 +204,16 @@ xdg_app_builtin_enter (int argc,
         {
           ns_fd[i] = open (path, O_RDONLY);
           if (ns_fd[i] == -1)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't open %s namespace: %s", ns_name[i], strerror (errno));
-              return FALSE;
-            }
+            return xdg_app_fail (error, "Can't open %s namespace: %s", ns_name[i], strerror (errno));
         }
     }
-  
+
   for (i = 0; i < G_N_ELEMENTS(ns_fd); i++)
     {
       if (ns_fd[i] != -1)
         {
           if (setns (ns_fd[i], 0) == -1)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't enter %s namespace: %s", ns_name[i], strerror (errno));
-              return FALSE;
-            }
+            return xdg_app_fail (error, "Can't enter %s namespace: %s", ns_name[i], strerror (errno));
           close (ns_fd[i]);
         }
     }

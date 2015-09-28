@@ -70,13 +70,13 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
 
   if (!xdg_app_is_valid_name (runtime))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid runtime name", runtime);
+      xdg_app_fail (error, "'%s' is not a valid runtime name", runtime);
       goto out;
     }
 
   if (!xdg_app_is_valid_branch (branch))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
+      xdg_app_fail (error, "'%s' is not a valid branch name", branch);
       goto out;
     }
 
@@ -85,7 +85,7 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Runtime %s branch %s already installed", runtime, branch);
+      xdg_app_fail (error, "Runtime %s branch %s already installed", runtime, branch);
       goto out;
     }
 
@@ -148,13 +148,13 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
 
   if (!xdg_app_is_valid_name (app))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid application name", app);
+      xdg_app_fail (error, "'%s' is not a valid application name", app);
       goto out;
     }
 
   if (!xdg_app_is_valid_branch (branch))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "'%s' is not a valid branch name", branch);
+      xdg_app_fail (error, "'%s' is not a valid branch name", branch);
       goto out;
     }
 
@@ -163,7 +163,7 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "App %s branch %s already installed", app, branch);
+      xdg_app_fail (error, "App %s branch %s already installed", app, branch);
       goto out;
     }
 
