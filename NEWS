@@ -1,3 +1,9 @@
+Major changes in 0.4.3
+======================
+* Build with older ostree
+* Add --nofilesystem flag to e.g. xdg-app run
+* Add xdg-app dump-runtime command
+
 Major changes in 0.4.2.1
 ======================
 * Fix dbus proxy
