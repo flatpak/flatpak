@@ -120,9 +120,14 @@ import_keys (XdgAppDir *dir,
       if (!open_source_stream (&input_stream, cancellable, error))
         return FALSE;
 
+#ifdef HAVE_OSTREE_REPO_REMOTE_GPG_IMPORT
       if (!ostree_repo_remote_gpg_import (xdg_app_dir_get_repo (dir), remote_name, input_stream,
                                           NULL, &imported, cancellable, error))
         return FALSE;
+#else
+      if (FALSE)
+        return xdg_app_fail (error, "gpg key import not supported by libostree, use --no-gpg-verify");
+#endif
 
       /* XXX If we ever add internationalization, use ngettext() here. */
       g_print ("Imported %u GPG key%s to remote \"%s\"\n",
