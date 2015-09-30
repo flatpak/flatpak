@@ -92,6 +92,16 @@ commit_filter (OstreeRepo *repo,
                GFileInfo *file_info,
                gpointer user_data)
 {
+  guint current_mode;
+
+  /* No user info */
+  g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
+  g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
+
+  /* No setuid */
+  current_mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", current_mode & ~07000);
+
   if (g_str_equal (path, "/") ||
       g_str_equal (path, "/metadata") ||
       g_str_has_prefix (path, "/files") ||
@@ -229,7 +239,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   mtree = ostree_mutable_tree_new ();
   arg = g_file_new_for_commandline_arg (directory);
 
-  modifier = ostree_repo_commit_modifier_new (0, commit_filter, NULL, NULL);
+  modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS, commit_filter, NULL, NULL);
   if (!ostree_repo_write_directory_to_mtree (repo, arg, mtree, modifier, cancellable, error))
     goto out;
 
