@@ -42,8 +42,8 @@ libxdgapp_la_SOURCES = \
 	$(systemd_dbus_built_sources)	\
 	$(NULL)
 
-libxdgapp_la_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) -I$(srcdir)/dbus-proxy
-libxdgapp_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS)
+libxdgapp_la_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(XAUTH_CFLAGS) -I$(srcdir)/dbus-proxy
+libxdgapp_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(XAUTH_LIBS)
 
 bin_PROGRAMS += \
 	xdg-app-helper \

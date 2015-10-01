@@ -2278,19 +2278,24 @@ main (int argc,
 
       if (stat (x11_socket, &st) == 0 && S_ISSOCK (st.st_mode))
         {
+          char *xauth_path = strdup_printf ("/run/user/%d/Xauthority", uid);
           if (bind_mount (x11_socket, "tmp/.X11-unix/X99", 0))
             die ("can't bind X11 socket");
 
           xsetenv ("DISPLAY", ":99.0", 1);
+          xsetenv ("XAUTHORITY", xauth_path, 1);
+          free (xauth_path);
         }
       else
         {
           xunsetenv ("DISPLAY");
+          xunsetenv ("XAUTHORITY");
         }
     }
   else
     {
       xunsetenv ("DISPLAY");
+      xunsetenv ("XAUTHORITY");
     }
 
   /* Bind mount in the Wayland socket */

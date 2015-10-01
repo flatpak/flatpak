@@ -24,6 +24,9 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/utsname.h>
+
+#include <X11/Xauth.h>
 
 #include <gio/gio.h>
 #include "libgsystem.h"
@@ -33,6 +36,7 @@
 #include "xdg-app-proxy.h"
 #include "xdg-app-utils.h"
 #include "xdg-app-systemd-dbus.h"
+
 
 typedef enum {
   XDG_APP_CONTEXT_SHARED_NETWORK   = 1 << 0,
@@ -974,6 +978,58 @@ extract_unix_path_from_dbus_address (const char *address)
   return g_strndup (path, path_end - path);
 }
 
+static gboolean auth_streq (char *str,
+                            char *au_str,
+                            int au_len)
+{
+  return au_len == strlen (str) && memcmp (str, au_str, au_len) == 0;
+}
+
+static void
+write_xauth (char *number, FILE *output)
+{
+  Xauth *xa, local_xa;
+  char *filename;
+  FILE *f;
+  struct utsname unames;
+
+  if (uname (&unames))
+    {
+      g_warning ("uname failed");
+      return;
+    }
+
+  filename = XauFileName ();
+  f = fopen (filename, "rb");
+  if (f == NULL)
+    return;
+
+  while (TRUE)
+    {
+      xa = XauReadAuth (f);
+      if (xa == NULL)
+        break;
+      if (xa->family == FamilyLocal &&
+          auth_streq (unames.nodename, xa->address, xa->address_length) &&
+          (xa->number == NULL || auth_streq (number, xa->number, xa->number_length)))
+        {
+          local_xa = *xa;
+          if (local_xa.number)
+            {
+              local_xa.number = "99";
+              local_xa.number_length = 2;
+            }
+
+          if (!XauWriteAuth(output, &local_xa))
+            g_warning ("xauth write error");
+        }
+
+      XauDisposeAuth(xa);
+    }
+
+  fclose (f);
+}
+
 static void
 xdg_app_run_add_x11_args (GPtrArray *argv_array)
 {
@@ -985,6 +1041,10 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
       const char *display_nr = &display[1];
       const char *display_nr_end = display_nr;
       g_autofree char *d = NULL;
+      g_autofree char *tmp_path = NULL;
+      g_autofree char *path = NULL;
+      int fd;
+      FILE *output;
 
       while (g_ascii_isdigit (*display_nr_end))
         display_nr_end++;
@@ -994,6 +1054,22 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
 
       g_ptr_array_add (argv_array, g_strdup ("-x"));
       g_ptr_array_add (argv_array, x11_socket);
+
+      fd = g_file_open_tmp ("xdg-app-xauth-XXXXXX", &tmp_path, NULL);
+      if (fd >= 0)
+        {
+          output = fdopen (fd, "wb");
+          if (output != NULL)
+            {
+              write_xauth (d, output);
+              fclose (output);
+
+              g_ptr_array_add (argv_array, g_strdup ("-M"));
+              g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/Xauthority=%s", getuid(), tmp_path));
+            }
+          else
+            close (fd);
+        }
     }
 }
 
