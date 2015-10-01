@@ -94,7 +94,11 @@ get_attr_cache_time (int st_mode)
 static double
 get_entry_cache_time (fuse_ino_t inode)
 {
-  return 60.0;
+  /* We have to disable entry caches because otherwise we have a race
+     on rename. The kernel set the target inode as NOEXIST after a
+     rename, which breaks in the tmp over real case due to us reusing
+     the old non-temp inode. */
+  return 0.0;
 }
 
 /******************************* XdpTmp *******************************
