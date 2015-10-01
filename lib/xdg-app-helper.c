@@ -792,6 +792,34 @@ str_has_prefix (const char *str,
 }
 
 static char *
+unescape_string (const char *escaped, size_t len)
+{
+  char *unescaped, *res;
+  const char *end;
+
+  if (len < 0)
+    len = strlen (escaped);
+  end = escaped + len;
+
+  unescaped = res = xmalloc (len + 1);
+  while (escaped < end)
+    {
+      if (*escaped == '\\')
+	{
+	  *unescaped++ =
+	    ((escaped[1] - '0')  << 6) |
+	    ((escaped[2] - '0')  << 3) |
+	    ((escaped[3] - '0')  << 0);
+	  escaped += 4;
+	}
+      else
+	*unescaped++ = *escaped++;
+    }
+  *unescaped = 0;
+  return res;
+}
+
+static char *
 get_mountinfo (const char *mountpoint)
 {
   char *line_mountpoint, *line_mountpoint_end;
@@ -819,6 +847,8 @@ get_mountinfo (const char *mountpoint)
 
   while (*line != 0)
     {
+      char *unescaped;
+
       line_start = line;
       for (i = 0; i < 4; i++)
         line = skip_token (line, TRUE);
@@ -827,13 +857,15 @@ get_mountinfo (const char *mountpoint)
       line_mountpoint_end = line;
       line = skip_line (line);
 
-      if (strlen (mountpoint) == (line_mountpoint_end - line_mountpoint) &&
-          strncmp (mountpoint, line_mountpoint, line_mountpoint_end - line_mountpoint) == 0)
+      unescaped = unescape_string (line_mountpoint, line_mountpoint_end - line_mountpoint);
+      if (strcmp (mountpoint, unescaped) == 0)
         {
+	  free (unescaped);
           res = line_start;
           line[-1] = 0;
           break;
         }
+      free (unescaped);
     }
 
   if (free_me)
@@ -918,6 +950,7 @@ get_submounts (const char *parent_mount)
 
   while (*line != 0)
     {
+      char *unescaped;
       for (i = 0; i < 4; i++)
         line = skip_token (line, TRUE);
       mountpoint = line;
@@ -926,17 +959,20 @@ get_submounts (const char *parent_mount)
       line = skip_line (line);
       *mountpoint_end = 0;
 
-      if (*mountpoint == '/' &&
-          str_has_prefix (mountpoint + 1, parent_mount) &&
-          *(mountpoint + 1 + strlen (parent_mount)) == '/')
+      unescaped = unescape_string (mountpoint, -1);
+
+      if (*unescaped == '/' &&
+          str_has_prefix (unescaped + 1, parent_mount) &&
+          *(unescaped + 1 + strlen (parent_mount)) == '/')
         {
           if (n_submounts + 1 >= submounts_size)
             {
               submounts_size *= 2;
               submounts = xrealloc (submounts, sizeof (char *) * submounts_size);
             }
-          submounts[n_submounts++] = xstrdup (mountpoint + 1);
+          submounts[n_submounts++] = xstrdup (unescaped + 1);
         }
+      free (unescaped);
     }
 
   submounts[n_submounts] = NULL;
@@ -985,7 +1021,7 @@ bind_mount (const char *src, const char *dest, bind_option_t options)
 
       for (i = 0; submounts[i] != NULL; i++)
         {
-          current_flags = get_mountflags (dest);
+          current_flags = get_mountflags (submounts[i]);
           if (mount ("none", submounts[i],
                      NULL, MS_MGC_VAL|MS_BIND|MS_REMOUNT|current_flags|(devices?0:MS_NODEV)|MS_NOSUID|(readonly?MS_RDONLY:0), NULL) != 0)
             return 5;
@@ -1445,7 +1481,7 @@ mount_extra_root_dirs (int readonly)
 
           path = strconcat ("/", dirent->d_name);
 
-          if (stat (path, &st) != 0)
+          if (lstat (path, &st) != 0)
             {
               free (path);
               continue;
