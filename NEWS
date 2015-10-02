@@ -1,3 +1,10 @@
+Major changes in 0.4.4
+======================
+* Fix race condition in fuse fs
+* Don't save uid/gid/xattrs in build-export
+* run: Handle existing mounts with spaces in them
+* propagate xauth cookies to sandbox
+
 Major changes in 0.4.3
 ======================
 * Build with older ostree
