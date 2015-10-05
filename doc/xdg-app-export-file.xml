@@ -101,7 +101,7 @@
                   Also grant write access to the applications specified with --app.
                 </para></listitem>
             </varlistentry>
-            
+
             <varlistentry>
                 <term><option>--allow-delete</option></term>
 
@@ -109,7 +109,7 @@
                   Also grant the ability to delete a document id to the applications specified with --app.
                 </para></listitem>
             </varlistentry>
-            
+
             <varlistentry>
                 <term><option>--allow-grant-permission</option></term>
 
@@ -117,7 +117,7 @@
                   Also grant the ability further grant permissions to the applications specified with --app.
                 </para></listitem>
             </varlistentry>
-            
+
             <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
