@@ -278,6 +278,12 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
     goto out;
 
+  if (!ostree_repo_regenerate_summary (repo,
+                                       NULL,
+                                       cancellable,
+                                       error))
+    goto out;
+
   g_print ("Commit: %s\n", commit_checksum);
   g_print ("Metadata Total: %u\n", stats.metadata_objects_total);
   g_print ("Metadata Written: %u\n", stats.metadata_objects_written);
