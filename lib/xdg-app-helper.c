@@ -1433,9 +1433,10 @@ link_extra_etc_dirs ()
               ssize_t r;
 
               target = xmalloc (st.st_size + 1);
-              r = readlink (dst_path, target, st.st_size + 1);
+              r = readlink (dst_path, target, st.st_size);
               if (r == -1)
                 die_with_error ("readlink %s", dst_path);
+              target[r] = 0;
             }
           else
             target = strconcat ("/usr/etc/", dirent->d_name);
