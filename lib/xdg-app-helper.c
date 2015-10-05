@@ -1496,6 +1496,20 @@ mount_extra_root_dirs (int readonly)
               if (bind_mount (path, dirent->d_name, BIND_RECURSIVE | (readonly ? BIND_READONLY : 0)))
                 die_with_error ("mount root subdir %s", dirent->d_name);
             }
+          else if (S_ISLNK(st.st_mode))
+            {
+              ssize_t r;
+              char *target;
+
+              target = xmalloc (st.st_size + 1);
+              r = readlink (path, target, st.st_size);
+              if (r == -1)
+                die_with_error ("readlink %s", path);
+              target[r] = 0;
+
+              if (symlink (target, dirent->d_name) != 0)
+                die_with_error ("symlink %s %s", target, dirent->d_name);
+            }
 
           free (path);
         }
