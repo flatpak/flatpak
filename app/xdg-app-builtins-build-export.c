@@ -33,10 +33,14 @@
 
 static char *opt_subject;
 static char *opt_body;
+static char **opt_key_ids;
+static char *opt_gpg_homedir;
 
 static GOptionEntry options[] = {
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, "One line subject", "SUBJECT" },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description", "BODY" },
+  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
+  { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
 
   { NULL }
 };
@@ -250,6 +254,24 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
                                  OSTREE_REPO_FILE (root),
                                  &commit_checksum, cancellable, error))
     goto out;
+
+  if (opt_key_ids)
+    {
+      char **iter;
+
+      for (iter = opt_key_ids; iter && *iter; iter++)
+        {
+          const char *keyid = *iter;
+
+          if (!ostree_repo_sign_commit (repo,
+                                        commit_checksum,
+                                        keyid,
+                                        opt_gpg_homedir,
+                                        cancellable,
+                                        error))
+            goto out;
+        }
+    }
 
   ostree_repo_transaction_set_ref (repo, NULL, full_branch, commit_checksum);
 
