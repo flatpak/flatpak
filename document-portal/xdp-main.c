@@ -762,4 +762,6 @@ main (int    argc,
   g_dbus_node_info_unref (introspection_data);
 
   do_exit (final_exit_status);
+
+  return 0;
 }
