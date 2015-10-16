@@ -92,9 +92,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   if (!g_file_query_exists (deploy_base, cancellable))
     return xdg_app_fail (error, "Nothing to uninstall");
 
-  repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
-  if (repository == NULL)
-    return FALSE;
+  repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
 
   g_debug ("dropping active ref");
   if (!xdg_app_dir_set_active (dir, ref, NULL, cancellable, error))
@@ -202,9 +200,7 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   if (!g_file_query_exists (deploy_base, cancellable))
     return xdg_app_fail (error, "Nothing to uninstall");
 
-  repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
-  if (repository == NULL)
-    return FALSE;
+  repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
 
   g_debug ("dropping active ref");
   if (!xdg_app_dir_set_active (dir, ref, NULL, cancellable, error))
