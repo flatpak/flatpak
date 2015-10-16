@@ -251,6 +251,46 @@ xdg_app_is_valid_branch (const char *string)
   return ret;
 }
 
+char **
+xdg_app_decompose_ref (const char *full_ref,
+                       GError **error)
+{
+  g_auto(GStrv) parts = NULL;
+
+  parts = g_strsplit (full_ref, "/", 0);
+  if (g_strv_length (parts) != 4)
+    {
+      xdg_app_fail (error, "Wrong number of components in %s", full_ref);
+      return NULL;
+    }
+
+  if (strcmp (parts[0], "app") != 0 && strcmp (parts[0], "runtime") != 0)
+    {
+      xdg_app_fail (error, "Not application or runtime");
+      return NULL;
+    }
+
+  if (!xdg_app_is_valid_name (parts[1]))
+    {
+      xdg_app_fail (error, "Invalid name %s", parts[1]);
+      return NULL;
+    }
+
+  if (strlen (parts[2]) == 0)
+    {
+      xdg_app_fail (error, "Invalid arch %s", parts[2]);
+      return NULL;
+    }
+
+  if (!xdg_app_is_valid_branch (parts[3]))
+    {
+      xdg_app_fail (error, "Invalid branch %s", parts[3]);
+      return NULL;
+    }
+
+  return g_steal_pointer (&parts);
+}
+
 char *
 xdg_app_build_untyped_ref (const char *runtime,
                            const char *branch,

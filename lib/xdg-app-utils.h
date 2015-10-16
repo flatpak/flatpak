@@ -39,6 +39,9 @@ gboolean xdg_app_has_name_prefix (const char *string,
 gboolean xdg_app_is_valid_name (const char *string);
 gboolean xdg_app_is_valid_branch (const char *string);
 
+char **xdg_app_decompose_ref (const char *ref,
+                              GError **error);
+
 char * xdg_app_build_untyped_ref (const char *runtime,
                                   const char *branch,
                                   const char *arch);
