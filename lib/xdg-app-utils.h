@@ -164,6 +164,7 @@ void                xdg_app_table_printer_print             (XdgAppTablePrinter 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeRepo, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeMutableTree, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeAsyncProgress, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeGpgVerifyResult, g_object_unref)
 
 #ifndef SOUP_AUTOCLEANUPS_H
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupSession, g_object_unref)

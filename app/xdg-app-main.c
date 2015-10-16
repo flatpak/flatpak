@@ -55,6 +55,7 @@ static XdgAppCommand commands[] = {
   { "make-app-current", xdg_app_builtin_make_current_app },
   { "uninstall-app", xdg_app_builtin_uninstall_app },
   { "list-apps", xdg_app_builtin_list_apps },
+  { "install-bundle", xdg_app_builtin_install_bundle },
   { "run", xdg_app_builtin_run },
   { "enter", xdg_app_builtin_enter },
   { "override", xdg_app_builtin_override },

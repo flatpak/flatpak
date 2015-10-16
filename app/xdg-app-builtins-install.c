@@ -25,18 +25,74 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <gio/gunixinputstream.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
+#include "xdg-app-chain-input-stream.h"
 
 static char *opt_arch;
+static char **opt_gpg_file;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to install for", "ARCH" },
   { NULL }
 };
+
+static GOptionEntry options_bundle[] = {
+  { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, "Check signatures with GPG key from FILE (- for stdin)", "FILE" },
+  { NULL }
+};
+
+static GBytes *
+read_gpg_data (GCancellable *cancellable,
+               GError **error)
+{
+  g_autoptr(GInputStream) source_stream = NULL;
+  g_autoptr(GOutputStream) mem_stream = NULL;
+  guint n_keyrings = 0;
+  g_autoptr(GPtrArray) streams = NULL;
+
+  if (opt_gpg_file != NULL)
+    n_keyrings = g_strv_length (opt_gpg_file);
+
+  guint ii;
+
+  streams = g_ptr_array_new_with_free_func (g_object_unref);
+
+  for (ii = 0; ii < n_keyrings; ii++)
+    {
+      GInputStream *input_stream = NULL;
+
+      if (strcmp (opt_gpg_file[ii], "-") == 0)
+        {
+          input_stream = g_unix_input_stream_new (STDIN_FILENO, FALSE);
+        }
+      else
+        {
+          g_autoptr(GFile) file = g_file_new_for_path (opt_gpg_file[ii]);
+          input_stream = G_INPUT_STREAM(g_file_read (file, cancellable, error));
+
+          if (input_stream == NULL)
+            return NULL;
+        }
+
+      /* Takes ownership. */
+      g_ptr_array_add (streams, input_stream);
+    }
+
+  /* Chain together all the --keyring options as one long stream. */
+  source_stream = (GInputStream *) xdg_app_chain_input_stream_new (streams);
+
+  mem_stream = g_memory_output_stream_new_resizable ();
+  if (g_output_stream_splice (mem_stream, source_stream, G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET, cancellable, error) < 0)
+    return NULL;
+
+  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (mem_stream));
+}
 
 gboolean
 xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
@@ -196,6 +252,244 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
  out:
   if (created_deploy_base && !ret)
     gs_shutil_rm_rf (deploy_base, cancellable, NULL);
+
+  return ret;
+}
+
+#define OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "(uayttay)"
+#define OSTREE_STATIC_DELTA_FALLBACK_FORMAT "(yaytt)"
+#define OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT "(a{sv}tayay" OSTREE_COMMIT_GVARIANT_STRING "aya" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "a" OSTREE_STATIC_DELTA_FALLBACK_FORMAT ")"
+
+gboolean
+xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  gboolean ret = FALSE;
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GFile) gpg_tmp_file = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  const char *filename;
+  g_autofree char *ref = NULL;
+  g_autofree char *origin = NULL;
+  g_autofree char *checksum = NULL;
+  gboolean created_deploy_base = FALSE;
+  gboolean added_remote = FALSE;
+  g_autofree char *to_checksum = NULL;
+  g_auto(GStrv) parts = NULL;
+  g_autoptr(GBytes) gpg_data = NULL;
+  g_autofree char *remote = NULL;
+  OstreeRepo *repo;
+  g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
+  g_autoptr(GError) my_error = NULL;
+
+  context = g_option_context_new ("BUNDLE - Install a application or runtime from a bundle");
+
+  if (!xdg_app_option_context_parse (context, options_bundle, &argc, &argv, 0, &dir, cancellable, error))
+    return FALSE;
+
+  if (argc < 2)
+    return usage_error (context, "BUNDLE must be specified", error);
+
+  filename = argv[1];
+
+  repo = xdg_app_dir_get_repo (dir);
+
+  if (!xdg_app_supports_bundles (repo))
+    return xdg_app_fail (error, "Your version of ostree is too old to support single-file bundles");
+
+  file = g_file_new_for_commandline_arg (filename);
+
+  {
+    g_autoptr(GVariant) delta = NULL;
+    g_autoptr(GVariant) metadata = NULL;
+    g_autoptr(GBytes) bytes = NULL;
+    g_autoptr(GVariant) to_csum_v = NULL;
+    g_autoptr(GVariant) gpg_value = NULL;
+
+    GMappedFile *mfile = g_mapped_file_new (gs_file_get_path_cached (file), FALSE, error);
+
+    if (mfile == NULL)
+      return FALSE;
+
+    bytes = g_mapped_file_get_bytes (mfile);
+    g_mapped_file_unref (mfile);
+
+    delta = g_variant_new_from_bytes (G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT), bytes, FALSE);
+    g_variant_ref_sink (delta);
+
+    to_csum_v = g_variant_get_child_value (delta, 3);
+    if (!ostree_validate_structureof_csum_v (to_csum_v, error))
+      return FALSE;
+
+    to_checksum = ostree_checksum_from_bytes_v (to_csum_v);
+
+    metadata = g_variant_get_child_value (delta, 0);
+
+    if (!g_variant_lookup (metadata, "ref", "s", &ref))
+      return xdg_app_fail (error, "Invalid bundle, no ref in metadata");
+
+    if (!g_variant_lookup (metadata, "origin", "s", &origin))
+      origin = NULL;
+
+    gpg_value = g_variant_lookup_value (metadata, "gpg-keys", G_VARIANT_TYPE("ay"));
+    if (gpg_value)
+      {
+        gsize n_elements;
+        const char *data = g_variant_get_fixed_array (gpg_value, &n_elements, 1);
+
+        gpg_data = g_bytes_new (data, n_elements);
+      }
+  }
+
+  parts = xdg_app_decompose_ref (ref, error);
+  if (parts == NULL)
+    return FALSE;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
+  if (g_file_query_exists (deploy_base, cancellable))
+    return xdg_app_fail (error, "%s branch %s already installed", parts[1], parts[3]);
+
+  if (opt_gpg_file != NULL)
+    {
+      /* Override gpg_data from file */
+      gpg_data = read_gpg_data (cancellable, error);
+      if (gpg_data == NULL)
+        return FALSE;
+    }
+
+  /* Add a remote for later updates */
+  if (origin != NULL)
+    {
+      g_auto(GStrv) remotes = ostree_repo_remote_list (repo, NULL);
+      int version = 0;
+
+      do
+        {
+          g_autofree char *name = NULL;
+          if (version == 0)
+            name = g_strdup_printf ("%s-origin", parts[1]);
+          else
+            name = g_strdup_printf ("%s-%d-origin", parts[1], version);
+          version++;
+
+          if (remotes == NULL ||
+              !g_strv_contains ((const char * const *) remotes, name))
+            remote = g_steal_pointer (&name);
+        }
+      while (remote == NULL);
+    }
+
+  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+    return FALSE;
+
+  ostree_repo_transaction_set_ref (repo, remote, ref, to_checksum);
+
+  if (!ostree_repo_static_delta_execute_offline (repo,
+                                                 file,
+                                                 FALSE,
+                                                 cancellable,
+                                                 error))
+    return FALSE;
+
+  if (gpg_data)
+    {
+      g_autoptr(GFileIOStream) stream;
+      GOutputStream *o;
+
+      gpg_tmp_file = g_file_new_tmp (".xdg-app-XXXXXX", &stream, error);
+      if (gpg_tmp_file == NULL)
+        return FALSE;
+      o = g_io_stream_get_output_stream (G_IO_STREAM (stream));
+      if (!g_output_stream_write_all (o, g_bytes_get_data (gpg_data, NULL), g_bytes_get_size (gpg_data), NULL, cancellable, error))
+        return FALSE;
+    }
+
+  gpg_result = ostree_repo_verify_commit_ext (repo,
+                                              to_checksum,
+                                              NULL, gpg_tmp_file, cancellable, &my_error);
+
+  if (gpg_tmp_file)
+    g_file_delete (gpg_tmp_file, cancellable, NULL);
+
+  if (gpg_result == NULL)
+    {
+      /* NOT_FOUND means no gpg signature, we ignore this *if* there
+       * is no gpg key specified in the bundle or by the user */
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
+          gpg_data == NULL)
+        g_clear_error (&my_error);
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
+    }
+  else
+    {
+      /* If there is no valid gpg signature we fail, unless there is no gpg
+         key specified (on the command line or in the file) because then we
+         trust the source bundle. */
+      if (ostree_gpg_verify_result_count_valid (gpg_result) == 0  &&
+          gpg_data != NULL)
+        return xdg_app_fail (error, "GPG signatures found, but none are in trusted keyring");
+    }
+
+  if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
+    return FALSE;
+
+  if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
+    return FALSE;
+
+  /* From here we need to goto out on error, to clean up */
+  created_deploy_base = TRUE;
+
+  if (remote)
+    {
+      if (!ostree_repo_remote_add (repo,
+                                   remote, origin, /* options */ NULL, cancellable, error))
+        goto out;
+
+      added_remote = TRUE;
+
+      if (gpg_data)
+        {
+          g_autoptr(GInputStream) gpg_data_as_stream = g_memory_input_stream_new_from_bytes (gpg_data);
+
+          if (!ostree_repo_remote_gpg_import (repo, remote, gpg_data_as_stream,
+                                              NULL, NULL, cancellable, error))
+            goto out;
+        }
+
+      g_autoptr(GFile) origin_file = g_file_get_child (deploy_base, "origin");
+      if (!g_file_replace_contents (origin_file, remote, strlen (remote), NULL, FALSE,
+                                    G_FILE_CREATE_NONE, NULL, cancellable, error))
+        goto out;
+    }
+
+  if (!xdg_app_dir_deploy (dir, ref, to_checksum, cancellable, error))
+    goto out;
+
+  if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
+    goto out;
+
+  if (strcmp (parts[0], "app") == 0)
+    {
+      if (!xdg_app_dir_update_exports (dir, parts[1], cancellable, error))
+        goto out;
+    }
+
+  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+
+  ret = TRUE;
+
+ out:
+  if (created_deploy_base && !ret)
+    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
+
+  if (added_remote && !ret)
+    ostree_repo_remote_delete (repo, remote, NULL, NULL);
 
   return ret;
 }
