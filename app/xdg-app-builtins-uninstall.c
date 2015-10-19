@@ -59,6 +59,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   g_auto(GStrv) deployed = NULL;
   int i;
   GError *temp_error = NULL;
+  gboolean was_deployed;
 
   context = g_option_context_new ("RUNTIME [BRANCH] - Uninstall a runtime");
 
@@ -88,10 +89,6 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
 
   ref = g_build_filename ("runtime", name, arch, branch, NULL);
 
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
-    return xdg_app_fail (error, "Nothing to uninstall");
-
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
 
   g_debug ("dropping active ref");
@@ -108,13 +105,19 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
         return FALSE;
     }
 
-  g_debug ("removing deploy base");
-  if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
-    return FALSE;
+  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
+  was_deployed = g_file_query_exists (deploy_base, cancellable);
+  if (was_deployed)
+    {
+      g_debug ("removing deploy base");
+      if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
+        return FALSE;
+    }
 
   g_debug ("cleaning up empty directories");
   arch_dir = g_file_get_parent (deploy_base);
-  if (!g_file_delete (arch_dir, cancellable, &temp_error))
+  if (g_file_query_exists (arch_dir, cancellable) &&
+      !g_file_delete (arch_dir, cancellable, &temp_error))
     {
       if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
@@ -125,7 +128,8 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
     }
 
   top_dir = g_file_get_parent (arch_dir);
-  if (!g_file_delete (top_dir, cancellable, &temp_error))
+  if (g_file_query_exists (top_dir, cancellable) &&
+      !g_file_delete (top_dir, cancellable, &temp_error))
     {
       if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
@@ -148,6 +152,9 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
+  if (!was_deployed)
+    return xdg_app_fail (error, "Nothing to uninstall");
+
   return TRUE;
 }
 
@@ -169,6 +176,7 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   g_auto(GStrv) deployed = NULL;
   int i;
   GError *temp_error = NULL;
+  gboolean was_deployed;
 
   context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
 
@@ -196,10 +204,6 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
 
   ref = g_build_filename ("app", name, arch, branch, NULL);
 
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
-    return xdg_app_fail (error, "Nothing to uninstall");
-
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
 
   g_debug ("dropping active ref");
@@ -224,16 +228,22 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
         return FALSE;
     }
 
-  g_debug ("removing deploy base");
-  if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
-    return FALSE;
+  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
+  was_deployed = g_file_query_exists (deploy_base, cancellable);
+  if (was_deployed)
+    {
+      g_debug ("removing deploy base");
+      if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
+        return FALSE;
+    }
 
   if (!xdg_app_dir_update_exports (dir, name, cancellable, error))
     return FALSE;
 
   g_debug ("cleaning up empty directories");
   arch_dir = g_file_get_parent (deploy_base);
-  if (!g_file_delete (arch_dir, cancellable, &temp_error))
+  if (g_file_query_exists (arch_dir, cancellable) &&
+      !g_file_delete (arch_dir, cancellable, &temp_error))
     {
       if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
@@ -244,7 +254,8 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
     }
 
   top_dir = g_file_get_parent (arch_dir);
-  if (!g_file_delete (top_dir, cancellable, &temp_error))
+  if (g_file_query_exists (top_dir, cancellable) &&
+      !g_file_delete (top_dir, cancellable, &temp_error))
     {
       if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
         {
@@ -266,6 +277,9 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
     }
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+
+  if (!was_deployed)
+    return xdg_app_fail (error, "Nothing to uninstall");
 
   return TRUE;
 }

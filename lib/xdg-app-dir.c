@@ -1638,6 +1638,7 @@ xdg_app_dir_list_deployed (XdgAppDir *self,
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFile) child = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
+  g_autoptr(GError) my_error = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
 
@@ -1646,9 +1647,15 @@ xdg_app_dir_list_deployed (XdgAppDir *self,
   dir_enum = g_file_enumerate_children (deploy_base, OSTREE_GIO_FAST_QUERYINFO,
                                         G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                         cancellable,
-                                        error);
+                                        &my_error);
   if (!dir_enum)
-    goto out;
+    {
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        ret = TRUE; /* Success, but empty */
+      else
+        g_propagate_error (error, g_steal_pointer (&my_error));
+      goto out;
+    }
 
   while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)) != NULL)
     {
@@ -1673,12 +1680,15 @@ xdg_app_dir_list_deployed (XdgAppDir *self,
       goto out;
     }
 
-  g_ptr_array_add (checksums, NULL);
-  *deployed_checksums = (char **)g_ptr_array_free (checksums, FALSE);
-  checksums = NULL;
-
   ret = TRUE;
+
  out:
+  if (ret)
+    {
+      g_ptr_array_add (checksums, NULL);
+      *deployed_checksums = (char **)g_ptr_array_free (g_steal_pointer (&checksums), FALSE);
+    }
+
   return ret;
 
 }
