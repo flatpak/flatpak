@@ -36,7 +36,7 @@ dist_triggers_SCRIPTS = \
 	triggers/desktop-database.trigger \
 	$(NULL)
 
-EXTRA_DIST = data/org.freedesktop.portal.documents.xml  data/org.freedesktop.systemd1.xml  data/org.freedesktop.XdgApp.xml
+EXTRA_DIST = data/org.freedesktop.portal.Documents.xml  data/org.freedesktop.systemd1.xml  data/org.freedesktop.XdgApp.xml
 
 noinst_LTLIBRARIES = libglnx.la
 libglnx_srcpath := $(srcdir)/libglnx

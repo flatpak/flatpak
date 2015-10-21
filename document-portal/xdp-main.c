@@ -739,7 +739,7 @@ main (int    argc,
       do_exit (5);
     }
 
-  introspection_bytes = g_resources_lookup_data ("/org/freedesktop/portal/Documents/org.freedesktop.portal.documents.xml", 0, NULL);
+  introspection_bytes = g_resources_lookup_data ("/org/freedesktop/portal/Documents/org.freedesktop.portal.Documents.xml", 0, NULL);
   g_assert (introspection_bytes != NULL);
 
   introspection_data = g_dbus_node_info_new_for_xml (g_bytes_get_data (introspection_bytes, NULL), NULL);

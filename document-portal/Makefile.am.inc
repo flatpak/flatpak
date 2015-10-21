@@ -5,12 +5,12 @@ libexec_PROGRAMS += \
 xdp_dbus_built_sources = document-portal/xdp-dbus.c document-portal/xdp-dbus.h
 BUILT_SOURCES += $(xdp_dbus_built_sources)
 
-$(xdp_dbus_built_sources) : data/org.freedesktop.portal.documents.xml
+$(xdp_dbus_built_sources) : data/org.freedesktop.portal.Documents.xml
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.portal.	\
 		--c-namespace XdpDbus				\
 		--generate-c-code $(builddir)/document-portal/xdp-dbus	\
-		$(srcdir)/data/org.freedesktop.portal.documents.xml	\
+		$(srcdir)/data/org.freedesktop.portal.Documents.xml	\
 		$(NULL)
 
 xdp_resource_files = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/document-portal/xdg-document-portal.gresource.xml)
