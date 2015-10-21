@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+datarootdir=@datarootdir@
+datadir=@datadir@
+
+interfaces_dir=${datadir}/dbus-1/interfaces/
+
+Name: xdg-app
+Description: Application sandboxing framework
+Version: @VERSION@

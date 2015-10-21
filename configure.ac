@@ -173,5 +173,6 @@ AM_CONDITIONAL(BUILD_DOCUMENTATION, test x$enable_documentation = xyes)
 AC_CONFIG_FILES([
 Makefile
 doc/Makefile
+xdg-app.pc
 ])
 AC_OUTPUT

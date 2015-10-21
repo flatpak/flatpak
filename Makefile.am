@@ -74,3 +74,7 @@ DISTCLEANFILES += xdg-app.env
 xdg-app.env: env.d/xdg-app.env.in
 	$(AM_V_GEN) $(SED) -e "s|\@localstatedir\@|$(localstatedir)|" \
 		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = xdg-app.pc
+EXTRA_DIST += xdg-app.pc.in
