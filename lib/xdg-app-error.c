@@ -31,6 +31,8 @@ static const GDBusErrorEntry xdg_app_error_entries[] = {
   {XDG_APP_ERROR_NOT_FOUND,                        "org.freedesktop.XdgApp.NotFound"},
   {XDG_APP_ERROR_EXISTS,                           "org.freedesktop.XdgApp.Exists"},
   {XDG_APP_ERROR_NOT_ALLOWED,                      "org.freedesktop.XdgApp.NotAllowed"},
+  {XDG_APP_ERROR_CANCELLED,                        "org.freedesktop.XdgApp.Cancelled"},
+  {XDG_APP_ERROR_WINDOW_DESTROYED,                 "org.freedesktop.XdgApp.WindowDestroyed"},
 };
 
 GQuark
