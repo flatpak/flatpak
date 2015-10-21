@@ -32,6 +32,7 @@ flatpak-session-helper
 xdg-document-portal
 xdg-permission-store
 flatpak-builder
+xdg-desktop-portal
 testdb
 doc/*.1
 *~
@@ -84,3 +85,5 @@ system-helper/org.freedesktop.Flatpak.policy
 system-helper/org.freedesktop.Flatpak.rules
 flatpak-bwrap
 py-compile
+data/org.freedesktop.impl.portal.*.xml
+desktop-portal/xdg-desktop-resources.c

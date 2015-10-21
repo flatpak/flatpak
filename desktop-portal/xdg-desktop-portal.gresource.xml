@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<gresources>
+  <gresource prefix='/org/freedesktop/portal/desktop'>
+    <file alias="org.freedesktop.portal.FileChooser.xml">data/org.freedesktop.portal.FileChooser.xml</file>
+  </gresource>
+</gresources>

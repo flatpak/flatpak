@@ -76,6 +76,7 @@ include system-helper/Makefile.am.inc
 include dbus-proxy/Makefile.am.inc
 include permission-store/Makefile.am.inc
 include document-portal/Makefile.am.inc
+include desktop-portal/Makefile.am.inc
 include tests/Makefile.am.inc
 
 bwrap_PROGRAMS = flatpak-bwrap
