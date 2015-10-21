@@ -36,7 +36,7 @@ dist_triggers_SCRIPTS = \
 	triggers/desktop-database.trigger \
 	$(NULL)
 
-EXTRA_DIST = data/org.freedesktop.portal.Documents.xml  data/org.freedesktop.systemd1.xml  data/org.freedesktop.XdgApp.xml
+EXTRA_DIST =
 
 noinst_LTLIBRARIES = libglnx.la
 libglnx_srcpath := $(srcdir)/libglnx
@@ -45,6 +45,7 @@ libglnx_libs := $(BASE_LIBS)
 include libglnx/Makefile-libglnx.am.inc
 
 include lib/Makefile.am.inc
+include data/Makefile.am.inc
 include app/Makefile.am.inc
 include session-helper/Makefile.am.inc
 include dbus-proxy/Makefile.am.inc
