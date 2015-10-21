@@ -312,7 +312,7 @@ xdg_app_context_set_env_var (XdgAppContext            *context,
   g_hash_table_insert (context->env_vars, g_strdup (name), g_strdup (value));
 }
 
-static void
+void
 xdg_app_context_set_session_bus_policy (XdgAppContext            *context,
                                         const char               *name,
                                         XdgAppPolicy              policy)

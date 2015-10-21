@@ -22,6 +22,7 @@
 #define __XDG_APP_RUN_H__
 
 #include "libglnx/libglnx.h"
+#include "dbus-proxy/xdg-app-proxy.h"
 
 void xdg_app_run_in_transient_unit (const char *app_id);
 
@@ -47,6 +48,9 @@ gboolean       xdg_app_context_load_metadata          (XdgAppContext            
 void           xdg_app_context_save_metadata          (XdgAppContext            *context,
                                                        GKeyFile                 *metakey);
 void           xdg_app_context_allow_host_fs          (XdgAppContext            *context);
+void           xdg_app_context_set_session_bus_policy (XdgAppContext            *context,
+                                                       const char               *name,
+                                                       XdgAppPolicy              policy);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppContext, xdg_app_context_free)
 
