@@ -79,6 +79,18 @@ gboolean ostree_repo_load_summary (const char *repository_url,
                                    GCancellable *cancellable,
                                    GError **error);
 
+
+void  xdg_app_invocation_lookup_app_id        (GDBusMethodInvocation  *invocation,
+                                               GCancellable           *cancellable,
+                                               GAsyncReadyCallback     callback,
+                                               gpointer                user_data);
+
+char *xdg_app_invocation_lookup_app_id_finish (GDBusMethodInvocation  *invocation,
+                                               GAsyncResult           *result,
+                                               GError                **error);
+
+void  xdg_app_connection_track_name_owners    (GDBusConnection        *connection);
+
 #if !GLIB_CHECK_VERSION(2,40,0)
 static inline gboolean
 g_key_file_save_to_file (GKeyFile     *key_file,

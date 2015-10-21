@@ -471,7 +471,7 @@ got_app_id_cb (GObject *source_object,
   g_autofree char *app_id = NULL;
   PortalMethod portal_method = user_data;
 
-  app_id = xdp_invocation_lookup_app_id_finish (invocation, res, &error);
+  app_id = xdg_app_invocation_lookup_app_id_finish (invocation, res, &error);
 
   if (app_id == NULL)
     g_dbus_method_invocation_return_gerror (invocation, error);
@@ -483,7 +483,7 @@ static gboolean
 handle_method (GCallback method_callback,
                GDBusMethodInvocation *invocation)
 {
-  xdp_invocation_lookup_app_id (invocation, NULL, got_app_id_cb, method_callback);
+  xdg_app_invocation_lookup_app_id (invocation, NULL, got_app_id_cb, method_callback);
 
   return TRUE;
 }
@@ -511,7 +511,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect_swapped (helper, "handle-revoke-permissions", G_CALLBACK (handle_method), portal_revoke_permissions);
   g_signal_connect_swapped (helper, "handle-delete", G_CALLBACK (handle_method), portal_delete);
 
-  xdp_connection_track_name_owners (connection);
+  xdg_app_connection_track_name_owners (connection);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
                                          connection,
