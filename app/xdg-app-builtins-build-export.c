@@ -143,6 +143,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autofree char *parent = NULL;
   g_autofree char *commit_checksum = NULL;
   g_autofree char *metadata_contents = NULL;
+  g_autofree char *format_size = NULL;
   g_autoptr(OstreeMutableTree) mtree = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   gsize metadata_size;
@@ -284,12 +285,14 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
                                        error))
     goto out;
 
+  format_size = g_format_size (stats.content_bytes_written);
+
   g_print ("Commit: %s\n", commit_checksum);
   g_print ("Metadata Total: %u\n", stats.metadata_objects_total);
   g_print ("Metadata Written: %u\n", stats.metadata_objects_written);
   g_print ("Content Total: %u\n", stats.content_objects_total);
   g_print ("Content Written: %u\n", stats.content_objects_written);
-  g_print ("Content Bytes Written: %" G_GUINT64_FORMAT "\n", stats.content_bytes_written);
+  g_print ("Content Bytes Written: %" G_GUINT64_FORMAT " (%s)\n", stats.content_bytes_written, format_size);
 
   ret = TRUE;
 
