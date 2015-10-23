@@ -600,6 +600,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "dev", 0755},
   { FILE_TYPE_DIR, "dev/pts", 0755},
   { FILE_TYPE_MOUNT, "dev/pts"},
+  { FILE_TYPE_SYMLINK, "dev/ptmx", 0666, "pts/ptmx"},
   { FILE_TYPE_DIR, "dev/shm", 0755},
   { FILE_TYPE_SHM, "dev/shm"},
   { FILE_TYPE_DEVICE, "dev/null", 0666},
