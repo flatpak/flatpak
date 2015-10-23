@@ -475,7 +475,7 @@ usage (char **argv)
            "	-e		 Make /app/exports writable\n"
            "	-E		 Make /etc a pure symlink to /usr/etc\n"
            "	-f		 Mount the host filesystems\n"
-	   "    -g               Allow use of direct rendering graphics\n"
+           "	-g               Allow use of direct rendering graphics\n"
            "	-F		 Mount the host filesystems read-only\n"
            "	-H		 Mount the users home directory (implied by -f)\n"
            "	-i		 Share IPC namespace with session\n"
