@@ -1740,6 +1740,18 @@ block_sigchild (void)
     die_with_error ("sigprocmask");
 }
 
+static void
+unblock_sigchild (void)
+{
+  sigset_t mask;
+
+  sigemptyset (&mask);
+  sigaddset (&mask, SIGCHLD);
+
+  if (sigprocmask (SIG_UNBLOCK, &mask, NULL) == -1)
+    die_with_error ("sigprocmask");
+}
+
 static int
 close_extra_fds (void *data, int fd)
 {
@@ -2521,6 +2533,8 @@ main (int argc,
 
       if (sync_fd != -1)
 	close (sync_fd);
+
+      unblock_sigchild ();
 
       if (execvp (args[0], args) == -1)
         die_with_error ("execvp %s", args[0]);
