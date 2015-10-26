@@ -48,6 +48,8 @@
 #include <sys/prctl.h>
 #include <sys/utsname.h>
 #include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 
 #ifdef ENABLE_SECCOMP
 #include <seccomp.h>
@@ -516,6 +518,8 @@ typedef enum {
   FILE_TYPE_REMOUNT,
   FILE_TYPE_DEVICE,
   FILE_TYPE_SHM,
+  FILE_TYPE_ETC_PASSWD,
+  FILE_TYPE_ETC_GROUP,
 } file_type_t;
 
 typedef enum {
@@ -573,8 +577,8 @@ static const create_table_t create[] = {
   { FILE_TYPE_SYSTEM_SYMLINK, "sbin", 0755, "usr/sbin"},
   { FILE_TYPE_SYMLINK, "etc", 0755, "usr/etc", 0, &create_etc_symlink},
   { FILE_TYPE_DIR, "etc", 0755, NULL, 0, &create_etc_dir},
-  { FILE_TYPE_REGULAR, "etc/passwd", 0755, NULL, 0, &create_etc_dir},
-  { FILE_TYPE_REGULAR, "etc/group", 0755, NULL, 0, &create_etc_dir},
+  { FILE_TYPE_ETC_PASSWD, "etc/passwd", 0755, NULL, 0, &create_etc_dir},
+  { FILE_TYPE_ETC_GROUP, "etc/group", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_REGULAR, "etc/resolv.conf", 0755, NULL, 0, &bind_resolv_conf},
   { FILE_TYPE_SYMLINK, "etc/resolv.conf", 0755, "/run/user/%1$d/xdg-app-monitor/resolv.conf", 0, &create_monitor_links},
   { FILE_TYPE_REGULAR, "etc/machine-id", 0755, NULL, 0, &create_etc_dir},
@@ -618,8 +622,6 @@ static const create_table_t create[] = {
 /* warning: Don't create any actual files here, as we could potentially
    write over bind mounts to the system */
 static const create_table_t create_post[] = {
-  { FILE_TYPE_BIND_RO, "etc/passwd", 0444, "/etc/passwd", 0},
-  { FILE_TYPE_BIND_RO, "etc/group", 0444, "/etc/group", 0},
   { FILE_TYPE_BIND_RO, "etc/machine-id", 0444, "/etc/machine-id", FILE_FLAGS_NON_FATAL},
   { FILE_TYPE_BIND_RO, "etc/machine-id", 0444, "/var/lib/dbus/machine-id", FILE_FLAGS_NON_FATAL | FILE_FLAGS_IF_LAST_FAILED},
   { FILE_TYPE_BIND_RO, "etc/resolv.conf", 0444, "/etc/resolv.conf", 0, &bind_resolv_conf},
@@ -1271,6 +1273,51 @@ create_files (const create_table_t *create, int n_create, int ignore_shm, const 
         case FILE_TYPE_DIR:
           if (mkdir (name, mode) != 0)
             die_with_error ("creating dir %s", name);
+          break;
+
+        case FILE_TYPE_ETC_PASSWD:
+          {
+            char *content = NULL;
+            struct passwd *p = getpwuid (uid);
+            if (p)
+              {
+                content = strdup_printf ("%s:x:%d:%d:%s:%s:%s\n"
+                                         "nfsnobody:x:65534:65534:Unmapped user:/:/sbin/nologin\n",
+                                         p->pw_name,
+                                         uid, gid,
+                                         p->pw_gecos,
+                                         p->pw_dir,
+                                         p->pw_shell);
+
+              }
+
+            if (!create_file (name, mode, content))
+              die_with_error ("creating file %s", name);
+
+            if (content)
+              free (content);
+          }
+          break;
+
+        case FILE_TYPE_ETC_GROUP:
+          {
+            char *content = NULL;
+            struct group *g = getgrgid (gid);
+            struct passwd *p = getpwuid (uid);
+            if (p && g)
+              {
+                content = strdup_printf ("%s:x:%d:%s\n"
+                                         "nfsnobody:x:65534:\n",
+                                         g->gr_name,
+                                         gid, p->pw_name);
+              }
+
+            if (!create_file (name, mode, content))
+              die_with_error ("creating file %s", name);
+
+            if (content)
+              free (content);
+          }
           break;
 
         case FILE_TYPE_REGULAR:
