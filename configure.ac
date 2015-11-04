@@ -1,6 +1,6 @@
 AC_PREREQ([2.63])
 
-AC_INIT([xdg-app],[0.4.4])
+AC_INIT([xdg-app],[0.4.5])
 
 AC_USE_SYSTEM_EXTENSIONS
 

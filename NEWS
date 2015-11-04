@@ -1,3 +1,15 @@
+Major changes in 0.4.5
+======================
+* Support signing commits in build-export
+* Correctly handle symlinks in host root when app has host-fs access
+* Always regenerate summary after build-export
+* Make uninstall a bit more robust
+* Install the dbus introspection files
+* Add human readable size to build-export report
+* Add /dev/ptmx symlink in app
+* Fix apps not getting SIGCHILD
+* Only expose minimal /etc/[passwd|group] in app
+
 Major changes in 0.4.4
 ======================
 * Fix race condition in fuse fs
