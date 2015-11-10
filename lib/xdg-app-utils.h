@@ -79,6 +79,7 @@ gboolean ostree_repo_load_summary (const char *repository_url,
                                    GCancellable *cancellable,
                                    GError **error);
 
+gboolean xdg_app_supports_bundles (OstreeRepo *repo);
 
 void  xdg_app_invocation_lookup_app_id        (GDBusMethodInvocation  *invocation,
                                                GCancellable           *cancellable,

@@ -1091,3 +1091,31 @@ xdg_app_connection_track_name_owners (GDBusConnection *connection)
                                       name_owner_changed,
                                       NULL, NULL);
 }
+
+gboolean
+xdg_app_supports_bundles (OstreeRepo *repo)
+{
+  g_autofree char *tmpfile = g_build_filename (g_get_tmp_dir (), ".xdg-app-test-ostree-XXXXXX", NULL);
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GError) error = NULL;
+  int fd;
+  gboolean res;
+
+  fd = g_mkstemp (tmpfile);
+  if (fd == -1)
+    return FALSE;
+
+  close (fd);
+
+  res = TRUE;
+
+  file = g_file_new_for_path (tmpfile);
+  if (!ostree_repo_static_delta_execute_offline (repo, file, FALSE, NULL, &error))
+    {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_DIRECTORY))
+        res = FALSE;
+    }
+
+  unlink (tmpfile);
+  return res;
+}
