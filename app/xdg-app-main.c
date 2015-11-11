@@ -65,7 +65,6 @@ static XdgAppCommand commands[] = {
   { "build-finish", xdg_app_builtin_build_finish },
   { "build-export", xdg_app_builtin_build_export },
   { "build-bundle", xdg_app_builtin_build_bundle },
-  { "dump-runtime", xdg_app_builtin_dump_runtime },
   { "repo-update", xdg_app_builtin_repo_update },
   { NULL }
 };

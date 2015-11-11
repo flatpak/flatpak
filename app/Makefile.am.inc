@@ -17,7 +17,6 @@ xdg_app_SOURCES = \
 	app/xdg-app-builtins-list.c \
 	app/xdg-app-builtins-run.c \
 	app/xdg-app-builtins-enter.c \
-	app/xdg-app-builtins-dump.c \
 	app/xdg-app-builtins-build-init.c \
 	app/xdg-app-builtins-build.c \
 	app/xdg-app-builtins-build-finish.c \

@@ -23,8 +23,8 @@ _xdg-app() {
         local file dir cmd sdk loc
 
         local -A VERBS=(
-                [ALL]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app install-bundle list-apps run override enter export-file build-init build build-finish build-export build-bundle repo-update make-app-current dump-runtime'
-                [MODE]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app install-bundle list-apps make-app-current dump-runtime'
+                [ALL]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app install-bundle list-apps run override enter export-file build-init build build-finish build-export build-bundle repo-update make-app-current'
+                [MODE]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app install-bundle list-apps make-app-current'
                 [PERMS]='run override build build-finish'
                 [UNINSTALL]='uninstall-runtime uninstall-app'
                 [ARCH]='build-init install-runtime build-bundle install-app run uninstall-runtime uninstall-app update-runtime update-app make-app-current'
@@ -260,7 +260,7 @@ _xdg-app() {
                         comps=''
                         ;;
 
-                update-runtime|uninstall-runtime|dump-runtime)
+                update-runtime|uninstall-runtime)
                         if [[ -z $name ]]; then
                                 comps=$(xdg-app $mode list-runtimes)
                         else

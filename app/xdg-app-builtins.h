@@ -73,7 +73,6 @@ BUILTINPROTO(build_bundle);
 BUILTINPROTO(repo_update);
 BUILTINPROTO(export_file);
 BUILTINPROTO(override);
-BUILTINPROTO(dump_runtime);
 
 #undef BUILTINPROTO
 
