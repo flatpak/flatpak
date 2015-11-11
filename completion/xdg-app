@@ -20,14 +20,14 @@ _xdg-app() {
 
         local i verb comps mode
         local remote name
-        local dir cmd sdk loc
+        local file dir cmd sdk loc
 
         local -A VERBS=(
-                [ALL]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps run override enter export-file build-init build build-finish build-export repo-update make-app-current dump-runtime'
-                [MODE]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app list-apps make-app-current dump-runtime'
+                [ALL]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app install-bundle list-apps run override enter export-file build-init build build-finish build-export build-bundle repo-update make-app-current dump-runtime'
+                [MODE]='add-remote modify-remote delete-remote ls-remote list-remotes install-runtime update-runtime uninstall-runtime list-runtimes install-app update-app uninstall-app install-bundle list-apps make-app-current dump-runtime'
                 [PERMS]='run override build build-finish'
                 [UNINSTALL]='uninstall-runtime uninstall-app'
-                [ARCH]='build-init install-runtime install-app run uninstall-runtime uninstall-app update-runtime update-app make-app-current'
+                [ARCH]='build-init install-runtime build-bundle install-app run uninstall-runtime uninstall-app update-runtime update-app make-app-current'
                 [USER_AND_SYSTEM]='run list-remotes list-apps list-runtimes'
         )
 
@@ -41,6 +41,8 @@ _xdg-app() {
                 [LIST_REMOTES]='--show-details'
                 [LS_REMOTE]='--show-details --runtimes --apps --updates'
                 [UNINSTALL]='--keep-ref --force-remove'
+                [INSTALL_BUNDLE]='--gpg-file='
+                [BUILD_BUNDLE]='--gpg-keys= --runtime --arch= --repo-url='
                 [RUN]='--command= --branch= --devel --runtime='
                 [BUILD_INIT]='--arch= --var='
                 [BUILD]='--runtime'
@@ -123,6 +125,10 @@ _xdg-app() {
                 if __contains_word "${COMP_WORDS[i]}" ${VERBS[*]} &&
                    test -z $verb; then
                         verb=${COMP_WORDS[i]}
+                elif [[ $verb = install-bundle ]]; then
+                        if [[ -z $file ]]; then
+                                file=${COMP_WORDS[i]}
+                        fi
                 elif [[ $verb = install-* ]]; then
                         if [[ -z $remote ]]; then
                                 remote=${COMP_WORDS[i]}
@@ -156,6 +162,14 @@ _xdg-app() {
                                 loc=${COMP_WORDS[i]}
                         elif [[ -z $dir ]]; then
                                 dir=${COMP_WORDS[i]}
+                        elif [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build-bundle ]]; then
+                        if [[ -z $loc ]]; then
+                                loc=${COMP_WORDS[i]}
+                        elif [[ -z $file ]]; then
+                                file=${COMP_WORDS[i]}
                         elif [[ -z $name ]]; then
                                 name=${COMP_WORDS[i]}
                         fi
@@ -207,6 +221,12 @@ _xdg-app() {
                 fi
                 if [ "$verb" = "build-finish" ]; then
                         comps="$comps ${OPTS[BUILD_FINISH]}"
+                fi
+                if [ "$verb" = "build-bundle" ]; then
+                        comps="$comps ${OPTS[BUILD_BUNDLE]}"
+                fi
+                if [ "$verb" = "install-bundle" ]; then
+                        comps="$comps ${OPTS[INSTALL_BUNDLE]}"
                 fi
                 if [ "$verb" = "build-export" ]; then
                         comps="$comps ${OPTS[BUILD_EXPORT]}"
@@ -310,6 +330,25 @@ _xdg-app() {
                         elif [[ -z $dir ]]; then
                                 comps=''
                                 compopt -o dirnames
+                        fi
+                        ;;
+
+                build-bundle)
+                        if [[ -z $loc ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        elif [[ -z $file ]]; then
+                                comps=''
+                                compopt -o filenames
+                        else
+                                comps='' # FIXME: list apps/runtimes
+                        fi
+                        ;;
+
+                install-bundle)
+                        if [[ -z $file ]]; then
+                                comps=''
+                                compopt -o filenames
                         fi
                         ;;
 
