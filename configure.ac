@@ -75,6 +75,10 @@ PKG_CHECK_MODULES(FUSE, [fuse])
 AC_SUBST(FUSE_CFLAGS)
 AC_SUBST(FUSE_LIBS)
 
+PKG_CHECK_MODULES(JSON, [json-glib-1.0])
+AC_SUBST(JSON_CFLAGS)
+AC_SUBST(JSON_LIBS)
+
 AC_ARG_ENABLE([seccomp],
               AC_HELP_STRING([--disable-seccomp],
                              [Disable seccomp]),

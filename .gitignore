@@ -29,6 +29,7 @@ xdg-app
 xdg-app-helper
 xdg-app-session-helper
 xdg-document-portal
+xdg-app-builder
 testdb
 doc/*.1
 *~

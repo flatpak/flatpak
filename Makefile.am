@@ -47,6 +47,7 @@ include libglnx/Makefile-libglnx.am.inc
 include lib/Makefile.am.inc
 include data/Makefile.am.inc
 include app/Makefile.am.inc
+include builder/Makefile.am.inc
 include session-helper/Makefile.am.inc
 include dbus-proxy/Makefile.am.inc
 include document-portal/Makefile.am.inc
