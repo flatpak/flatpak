@@ -1454,14 +1454,27 @@ xdg_app_dir_deploy (XdgAppDir *self,
 
   if (checksum == NULL)
     {
-      g_debug ("No checksum specified, getting tip of %s", ref);
-      if (!ostree_repo_resolve_rev (self->repo, ref, FALSE, &resolved_ref, error))
+      g_autofree char *origin = xdg_app_dir_get_origin (self, ref, NULL, NULL);
+      g_autofree char *origin_and_ref = NULL;
+
+      /* There may be several remotes with the same branch (if we for
+       * instance changed the origin, so prepend the current origin to
+       * make sure we get the right one */
+
+      if (origin)
+        origin_and_ref = g_strdup_printf ("%s:%s", origin, ref);
+      else
+        origin_and_ref = g_strdup (ref);
+
+      g_debug ("No checksum specified, getting tip of %s", origin_and_ref);
+      if (!ostree_repo_resolve_rev (self->repo, origin_and_ref, FALSE, &resolved_ref, error))
         {
           g_prefix_error (error, "While trying to resolve ref %s: ", ref);
           goto out;
         }
 
       checksum = resolved_ref;
+      g_debug ("tip resolved to: %s", checksum);
     }
   else
     {
