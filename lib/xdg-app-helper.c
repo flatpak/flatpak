@@ -2026,7 +2026,7 @@ main (int argc,
   bool writable = FALSE;
   bool writable_app = FALSE;
   bool writable_exports = FALSE;
-  char old_cwd[256];
+  char *old_cwd = NULL;
   int c, i;
   pid_t pid;
   int event_fd;
@@ -2281,7 +2281,7 @@ main (int argc,
   if (mount ("", newroot, "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID, NULL) != 0)
     die_with_error ("Failed to mount tmpfs");
 
-  getcwd (old_cwd, sizeof (old_cwd));
+  old_cwd = get_current_dir_name ();
 
   if (chdir (newroot) != 0)
       die_with_error ("chdir");
@@ -2517,12 +2517,21 @@ main (int argc,
   drop_caps ();
 #endif
 
-  if (chdir (old_cwd) < 0)
+  if (chdir (old_cwd) == 0)
+    {
+      xsetenv ("PWD", old_cwd, 1);
+    }
+  else
     {
       /* If the old cwd is not mapped, go to home */
       const char *home = getenv("HOME");
+      if (home == NULL)
+        home = "/";
+
       chdir (home);
+      xsetenv ("PWD", home, 1);
     }
+  free (old_cwd);
 
   /* We can't pass regular LD_LIBRARY_PATH, as it would affect the
      setuid helper aspect, so we use _LD_LIBRARY_PATH */

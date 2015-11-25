@@ -955,7 +955,6 @@ xdg_app_context_allow_host_fs (XdgAppContext            *context)
   xdg_app_context_add_filesystem (context, "host");
 }
 
-
 static char *
 extract_unix_path_from_dbus_address (const char *address)
 {
@@ -1534,6 +1533,7 @@ xdg_app_run_get_minimal_env (gboolean devel)
 {
   GPtrArray *env_array;
   static const char * const copy[] = {
+    "PWD",
     "GDMSESSION",
     "XDG_CURRENT_DESKTOP",
     "XDG_SESSION_DESKTOP",
