@@ -1400,7 +1400,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
             continue;
 
           path = g_build_filename (g_get_home_dir(), filesystem+2, NULL);
-          if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
+          if (g_file_test (path, G_FILE_TEST_EXISTS))
             {
               g_ptr_array_add (argv_array, g_strdup ("-B"));
               g_ptr_array_add (argv_array, g_strdup (path));
