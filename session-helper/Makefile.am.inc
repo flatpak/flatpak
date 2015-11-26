@@ -26,5 +26,5 @@ xdg_app_session_helper_SOURCES = \
 	session-helper/xdg-app-resources.c	\
 	$(NULL)
 
-xdg_app_session_helper_LDADD = $(BASE_LIBS) libxdgapp.la
+xdg_app_session_helper_LDADD = $(BASE_LIBS) libxdgapp-common.la
 xdg_app_session_helper_CFLAGS = $(BASE_CFLAGS)

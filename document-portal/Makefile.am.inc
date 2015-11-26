@@ -41,5 +41,5 @@ xdg_document_portal_SOURCES = \
 	document-portal/xdp-fuse.c		\
 	$(NULL)
 
-xdg_document_portal_LDADD = $(BASE_LIBS) $(FUSE_LIBS) libxdgapp.la
+xdg_document_portal_LDADD = $(BASE_LIBS) $(FUSE_LIBS) libxdgapp-common.la
 xdg_document_portal_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(XAUTH_LIBS) $(FUSE_CFLAGS) -I$(srcdir)/document-portal -I$(builddir)/document-portal

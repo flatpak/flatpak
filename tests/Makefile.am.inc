@@ -4,7 +4,7 @@ testdb_LDADD = \
              $(BASE_LIBS) \
              $(OSTREE_LIBS) \
              libglnx.la \
-             libxdgapp.la \
+             libxdgapp-common.la \
              $(NULL)
 testdb_SOURCES = tests/testdb.c
 
@@ -13,7 +13,7 @@ test_doc_portal_LDADD = \
              $(BASE_LIBS) \
              $(OSTREE_LIBS) \
              libglnx.la \
-             libxdgapp.la \
+             libxdgapp-common.la \
              $(NULL)
 test_doc_portal_SOURCES = tests/test-doc-portal.c $(xdp_dbus_built_sources)
 

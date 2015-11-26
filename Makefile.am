@@ -25,8 +25,8 @@ AM_CPPFLAGS =						\
 	-DHELPER=\"$(bindir)/xdg-app-helper\"		\
 	-DDBUSPROXY=\"$(libexecdir)/xdg-dbus-proxy\"	\
 	-I$(srcdir)/libglnx 				\
-	-I$(srcdir)/lib					\
-	-I$(builddir)/lib				\
+	-I$(srcdir)/common				\
+	-I$(builddir)/common				\
 	$(NULL)
 
 triggersdir = $(pkgdatadir)/triggers
@@ -44,7 +44,7 @@ libglnx_cflags := $(BASE_CFLAGS) "-I$(libglnx_srcpath)"
 libglnx_libs := $(BASE_LIBS)
 include libglnx/Makefile-libglnx.am.inc
 
-include lib/Makefile.am.inc
+include common/Makefile.am.inc
 include data/Makefile.am.inc
 include app/Makefile.am.inc
 include builder/Makefile.am.inc
