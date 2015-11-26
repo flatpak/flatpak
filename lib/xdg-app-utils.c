@@ -966,7 +966,8 @@ got_credentials_cb (GObject *source_object,
                           info->app_id = g_strdup (name);
                         }
                     }
-                  else
+                  else if (g_str_has_prefix (scope, "session-") &&
+                           g_str_has_suffix (scope, ".scope"))
                     info->app_id = g_strdup ("");
                 }
             }
