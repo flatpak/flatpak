@@ -408,10 +408,29 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--disable-download</option></term>
+                <term><option>--download-only</option></term>
 
                 <listitem><para>
                      Exit successfully after downloading the required sources.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--build-only</option></term>
+
+                <listitem><para>
+                     Don't do the cleanup and finish stages, which is useful if you
+                     want to build more things into the app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--require-changes</option></term>
+
+                <listitem><para>
+                    Do nothing, leaving a non-existiant <arg choice="plain">DIRECTORY</arg> if nothing changes since
+                    last cached build. If this is not specified, the latest version from the cache will be put
+                    into <arg choice="plain">DIRECTORY</arg>.
                 </para></listitem>
             </varlistentry>
 
