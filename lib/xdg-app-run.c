@@ -929,26 +929,6 @@ xdg_app_context_save_metadata (XdgAppContext            *context,
     }
 }
 
-
-gboolean
-xdg_app_run_verify_environment_keys (const char **keys,
-				     GError **error)
-{
-  const char *key;
-  const char *environment_keys[] = {
-    "x11", "wayland", "ipc", "pulseaudio", "system-dbus", "session-dbus",
-    "network", "host-fs", "homedir", "dri", NULL
-  };
-
-  if (keys == NULL)
-    return TRUE;
-
-  if ((key = g_strv_subset (environment_keys, keys)) != NULL)
-    return xdg_app_fail (error, "Unknown Environment key %s", key);
-
-  return TRUE;
-}
-
 void
 xdg_app_context_allow_host_fs (XdgAppContext            *context)
 {
