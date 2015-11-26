@@ -43,6 +43,12 @@ typedef enum {
   XDG_APP_CONTEXT_SHARED_IPC       = 1 << 1,
 } XdgAppContextShares;
 
+typedef enum {
+  XDG_APP_FILESYSTEM_MODE_READ_WRITE   = 1,
+  XDG_APP_FILESYSTEM_MODE_READ_ONLY    = 2,
+} XdgAppFilesystemMode;
+
+
 /* Same order as enum */
 static const char *xdg_app_context_shares[] = {
   "network",
@@ -376,10 +382,36 @@ get_user_dir_from_string (const char *filesystem)
   return -1;
 }
 
+static char *
+parse_filesystem_flags (const char *filesystem, XdgAppFilesystemMode *mode)
+{
+  gsize len = strlen (filesystem);
+
+  if (mode)
+    *mode = XDG_APP_FILESYSTEM_MODE_READ_WRITE;
+
+  if (g_str_has_suffix (filesystem, ":ro"))
+    {
+      len -= 3;
+      if (mode)
+        *mode = XDG_APP_FILESYSTEM_MODE_READ_ONLY;
+    }
+  else if (g_str_has_suffix (filesystem, ":rw"))
+    {
+      len -= 3;
+      if (mode)
+        *mode = XDG_APP_FILESYSTEM_MODE_READ_WRITE;
+    }
+
+  return g_strndup (filesystem, len);
+}
+
 static gboolean
-xdg_app_context_verify_filesystem (const char *filesystem,
+xdg_app_context_verify_filesystem (const char *filesystem_and_mode,
                                    GError **error)
 {
+  char *filesystem = parse_filesystem_flags (filesystem_and_mode, NULL);
+
   if (strcmp (filesystem, "host") == 0)
     return TRUE;
   if (strcmp (filesystem, "home") == 0)
@@ -400,14 +432,19 @@ static void
 xdg_app_context_add_filesystem (XdgAppContext            *context,
                                 const char               *what)
 {
-  g_hash_table_insert (context->filesystems, g_strdup (what), GINT_TO_POINTER (1));
+  XdgAppFilesystemMode mode;
+  char *fs = parse_filesystem_flags (what, &mode);
+
+  g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
 }
 
 static void
 xdg_app_context_remove_filesystem (XdgAppContext            *context,
                                    const char               *what)
 {
-  g_hash_table_insert (context->filesystems, g_strdup (what), NULL);
+  g_hash_table_insert (context->filesystems,
+                       parse_filesystem_flags (what, NULL),
+                       NULL);
 }
 
 void
@@ -650,7 +687,7 @@ static GOptionEntry context_options[] = {
   { "nosocket", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nosocket_cb, "Don't expose socket to app", "SOCKET" },
   { "device", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_device_cb, "Expose device to app", "DEVICE" },
   { "nodevice", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nodevice_cb, "Don't expose device to app", "DEVICE" },
-  { "filesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_filesystem_cb, "Expose filesystem to app", "FILESYSTEM" },
+  { "filesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_filesystem_cb, "Expose filesystem to app (:ro for read-only)", "FILESYSTEM[:ro]" },
   { "nofilesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nofilesystem_cb, "Don't expose filesystem to app", "FILESYSTEM" },
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, "Set environment variable", "VAR=VALUE" },
   { "own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_own_name_cb, "Allow app to own name on the session bus", "DBUS_NAME" },
@@ -873,13 +910,17 @@ xdg_app_context_save_metadata (XdgAppContext            *context,
 
   if (g_hash_table_size (context->filesystems) > 0)
     {
-      GPtrArray *array = g_ptr_array_new ();
+      g_autoptr(GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
 
       g_hash_table_iter_init (&iter, context->filesystems);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          if (value != NULL)
-            g_ptr_array_add (array, key);
+          XdgAppFilesystemMode mode = GPOINTER_TO_INT (value);
+
+          if (mode == XDG_APP_FILESYSTEM_MODE_READ_ONLY)
+            g_ptr_array_add (array, g_strconcat (key, ":ro", NULL));
+          else if (value != NULL)
+            g_ptr_array_add (array, g_strdup (key));
         }
 
       g_key_file_set_string_list (metakey,
@@ -1287,6 +1328,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
   gboolean home_access = FALSE;
   GString *xdg_dirs_conf = NULL;
   char opts[16];
+  XdgAppFilesystemMode fs_mode, home_mode;
   int i;
 
   i = 0;
@@ -1310,19 +1352,29 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       opts[i++] = 'g';
     }
 
-  if (g_hash_table_lookup (context->filesystems, "host"))
+  fs_mode = (XdgAppFilesystemMode)g_hash_table_lookup (context->filesystems, "host");
+  if (fs_mode != 0)
     {
       g_debug ("Allowing host-fs access");
-      opts[i++] = 'f';
+      if (fs_mode == XDG_APP_FILESYSTEM_MODE_READ_WRITE)
+        opts[i++] = 'F';
+      else
+        opts[i++] = 'f';
       home_access = TRUE;
     }
-  else if (g_hash_table_lookup (context->filesystems, "home"))
+
+  home_mode = (XdgAppFilesystemMode)g_hash_table_lookup (context->filesystems, "home");
+  if (home_mode != 0)
     {
       g_debug ("Allowing homedir access");
-      opts[i++] = 'H';
+      if (home_mode == XDG_APP_FILESYSTEM_MODE_READ_WRITE)
+        opts[i++] = 'H';
+      else
+        opts[i++] = 'h';
       home_access = TRUE;
     }
-  else
+
+  if (!home_access)
     {
       /* Enable persistant mapping only if no access to real home dir */
 
@@ -1351,19 +1403,23 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       const char *filesystem = key;
+      XdgAppFilesystemMode mode = GPOINTER_TO_INT(value);
+      const char *mode_arg;
 
       if (value == NULL ||
           strcmp (filesystem, "host") == 0 ||
           strcmp (filesystem, "home") == 0)
         continue;
 
+      if (mode == XDG_APP_FILESYSTEM_MODE_READ_WRITE)
+        mode_arg = "-B";
+      else
+        mode_arg = "-b";
+
       if (g_str_has_prefix (filesystem, "xdg-"))
         {
           const char *path;
           int dir = get_user_dir_from_string (filesystem);
-
-          if (home_access)
-            continue;
 
           if (dir < 0)
             {
@@ -1388,7 +1444,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
 
               g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n", get_user_dir_config_key (dir), path);
 
-              g_ptr_array_add (argv_array, g_strdup ("-B"));
+              g_ptr_array_add (argv_array, g_strdup (mode_arg));
               g_ptr_array_add (argv_array, g_strdup_printf ("%s", path));
             }
         }
@@ -1396,13 +1452,10 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
         {
           g_autofree char *path = NULL;
 
-          if (home_access)
-            continue;
-
           path = g_build_filename (g_get_home_dir(), filesystem+2, NULL);
           if (g_file_test (path, G_FILE_TEST_EXISTS))
             {
-              g_ptr_array_add (argv_array, g_strdup ("-B"));
+              g_ptr_array_add (argv_array, g_strdup (mode_arg));
               g_ptr_array_add (argv_array, g_strdup (path));
             }
         }
@@ -1410,7 +1463,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
         {
           if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
             {
-              g_ptr_array_add (argv_array, g_strdup ("-B"));
+              g_ptr_array_add (argv_array, g_strdup (mode_arg));
               g_ptr_array_add (argv_array, g_strdup_printf ("%s", filesystem));
             }
         }

@@ -469,17 +469,18 @@ usage (char **argv)
 
   fprintf (stderr,
            "	-a		 Specify path for application (mounted at /app)\n"
-           "	-b DEST[=SOURCE] Bind extra source path readonly into DEST\n"
+           "	-b DEST[=SOURCE] Bind extra source path read-only into DEST\n"
            "	-B DEST[=SOURCE] Bind extra source path into DEST\n"
            "	-M DEST[=SOURCE] Bind extra source path into DEST and remove original\n"
            "	-d SOCKETPATH	 Use SOCKETPATH as dbus session bus\n"
            "	-D SOCKETPATH	 Use SOCKETPATH as dbus system bus\n"
            "	-e		 Make /app/exports writable\n"
            "	-E		 Make /etc a pure symlink to /usr/etc\n"
-           "	-f		 Mount the host filesystems\n"
+           "	-F		 Mount the host filesystems\n"
+           "	-f		 Mount the host filesystems read-only\n"
            "	-g               Allow use of direct rendering graphics\n"
-           "	-F		 Mount the host filesystems read-only\n"
-           "	-H		 Mount the users home directory (implied by -f)\n"
+           "	-H		 Mount the users home directory\n"
+           "	-h		 Mount the users home directory read-only\n"
            "	-i		 Share IPC namespace with session\n"
            "	-I APPID	 Set app id (used to find app data)\n"
            "	-l		 Lock .ref files in all mounts\n"
@@ -1565,7 +1566,7 @@ mount_extra_root_dirs (int readonly)
 }
 
 static void
-create_homedir (int mount_real_home, const char *app_id)
+create_homedir (int mount_real_home, int mount_home_ro, const char *app_id)
 {
   const char *home;
   const char *relative_home;
@@ -1586,10 +1587,12 @@ create_homedir (int mount_real_home, const char *app_id)
   if (mount_real_home)
     {
       writable_home = home;
-      if (bind_mount (writable_home, relative_home, BIND_RECURSIVE))
+      if (bind_mount (writable_home, relative_home, BIND_RECURSIVE  | (mount_home_ro ? BIND_READONLY : 0)))
 	die_with_error ("unable to mount %s", home);
     }
-  else if (app_id != NULL)
+
+  if (app_id != NULL &&
+      (!mount_real_home || mount_home_ro))
     {
       app_id_dir = strconcat3 (home, "/.var/app/", app_id);
       if (stat (app_id_dir, &st) == 0 && S_ISDIR (st.st_mode))
@@ -2022,6 +2025,7 @@ main (int argc,
   bool mount_host_fs = FALSE;
   bool mount_host_fs_ro = FALSE;
   bool mount_home = FALSE;
+  bool mount_home_ro = FALSE;
   bool lock_files = FALSE;
   bool writable = FALSE;
   bool writable_app = FALSE;
@@ -2044,7 +2048,7 @@ main (int argc,
 
   clean_argv (argc, argv);
 
-  while ((c =  getopt (argc, argv, "+inWwceEsfFHra:m:M:b:B:p:x:ly:d:D:v:I:gS:")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWwceEsfFHhra:m:M:b:B:p:x:ly:d:D:v:I:gS:")) >= 0)
     {
       switch (c)
         {
@@ -2110,11 +2114,11 @@ main (int argc,
           create_etc_dir = FALSE;
           break;
 
-        case 'f':
+        case 'F':
           mount_host_fs = TRUE;
           break;
 
-        case 'F':
+        case 'f':
           mount_host_fs = TRUE;
           mount_host_fs_ro = TRUE;
           break;
@@ -2125,6 +2129,11 @@ main (int argc,
 
         case 'H':
           mount_home = TRUE;
+          break;
+
+        case 'h':
+          mount_home = TRUE;
+          mount_home_ro = TRUE;
           break;
 
         case 'i':
@@ -2439,8 +2448,8 @@ main (int argc,
       bind_mount ("/run/media", "run/media", BIND_RECURSIVE | (mount_host_fs_ro ? BIND_READONLY : 0));
     }
 
-  if (!mount_host_fs)
-    create_homedir (mount_home, app_id);
+  if (!mount_host_fs || mount_host_fs_ro)
+    create_homedir (mount_home, mount_home_ro, app_id);
 
   if (mount_host_fs || mount_home)
     {
@@ -2461,7 +2470,7 @@ main (int argc,
         }
 
       /* If the user has homedir access, also allow dconf run dir access */
-      bind_mount (dconf_run_path, get_relative_path (dconf_run_path), 0);
+      bind_mount (dconf_run_path, get_relative_path (dconf_run_path), BIND_READONLY);
       free (dconf_run_path);
     }
 
