@@ -35,6 +35,7 @@ static gboolean opt_verbose;
 static gboolean opt_version;
 static gboolean opt_disable_cache;
 static gboolean opt_download_only;
+static gboolean opt_build_only;
 static gboolean opt_disable_download;
 static gboolean opt_require_changes;
 
@@ -44,6 +45,7 @@ static GOptionEntry entries[] = {
   { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache", NULL },
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
+  { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir if no changes", NULL },
   { NULL }
 };
@@ -203,16 +205,19 @@ main (int    argc,
       return 1;
     }
 
-  if (!builder_manifest_cleanup (manifest, cache, build_context, &error))
+  if (!opt_build_only)
     {
-      g_print ("error: %s\n", error->message);
-      return 1;
-    }
+      if (!builder_manifest_cleanup (manifest, cache, build_context, &error))
+        {
+          g_print ("error: %s\n", error->message);
+          return 1;
+        }
 
-  if (!builder_manifest_finish (manifest, cache, build_context, &error))
-    {
-      g_print ("error: %s\n", error->message);
-      return 1;
+      if (!builder_manifest_finish (manifest, cache, build_context, &error))
+        {
+          g_print ("error: %s\n", error->message);
+          return 1;
+        }
     }
 
   if (!opt_require_changes)
