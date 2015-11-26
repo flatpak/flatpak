@@ -45,3 +45,7 @@ document-portal/xdp-dbus.[ch]
 document-portal/xdp-resources.[ch]
 .dirstamp
 test-suite*.log
+lib/xdg-app-version-macros.h
+xdg-app.pc
+lib/xdg-app-enum-types.c
+lib/xdg-app-enum-types.h
