@@ -176,6 +176,33 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   xdg_app_context_merge (app_context, arg_context);
 
+    {
+      g_autofree char *tmp_path = NULL;
+      g_autofree char *path = NULL;
+      int fd;
+
+      fd = g_file_open_tmp ("xdg-app-context-XXXXXX", &tmp_path, NULL);
+      if (fd >= 0)
+        {
+          g_autoptr(GKeyFile) keyfile = NULL;
+
+          close (fd);
+
+          keyfile = g_key_file_new ();
+
+          g_key_file_set_string (keyfile, "Application", "name", app);
+          g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
+
+          xdg_app_context_save_metadata (app_context, keyfile);
+
+          if (!g_key_file_save_to_file (keyfile, tmp_path, error))
+            return FALSE;
+
+          g_ptr_array_add (argv_array, g_strdup ("-M"));
+          g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/xdg-app-info=%s", getuid(), tmp_path));
+        }
+    }
+
   if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
