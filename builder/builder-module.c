@@ -43,6 +43,8 @@ struct BuilderModule {
   char **make_install_args;
   gboolean rm_configure;
   gboolean no_autogen;
+  gboolean cmake;
+  gboolean builddir;
   BuilderOptions *build_options;
   GPtrArray *changes;
   char **cleanup;
@@ -63,6 +65,8 @@ enum {
   PROP_NAME,
   PROP_RM_CONFIGURE,
   PROP_NO_AUTOGEN,
+  PROP_CMAKE,
+  PROP_BUILDDIR,
   PROP_CONFIG_OPTS,
   PROP_MAKE_ARGS,
   PROP_MAKE_INSTALL_ARGS,
@@ -112,6 +116,14 @@ builder_module_get_property (GObject    *object,
 
     case PROP_NO_AUTOGEN:
       g_value_set_boolean (value, self->no_autogen);
+      break;
+
+    case PROP_CMAKE:
+      g_value_set_boolean (value, self->cmake);
+      break;
+
+    case PROP_BUILDDIR:
+      g_value_set_boolean (value, self->builddir);
       break;
 
     case PROP_CONFIG_OPTS:
@@ -165,6 +177,14 @@ builder_module_set_property (GObject      *object,
 
     case PROP_NO_AUTOGEN:
       self->no_autogen = g_value_get_boolean (value);
+      break;
+
+    case PROP_CMAKE:
+      self->cmake = g_value_get_boolean (value);
+      break;
+
+    case PROP_BUILDDIR:
+      self->builddir = g_value_get_boolean (value);
       break;
 
     case PROP_CONFIG_OPTS:
@@ -232,6 +252,20 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_NO_AUTOGEN,
                                    g_param_spec_boolean ("no-autogen",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_CMAKE,
+                                   g_param_spec_boolean ("cmake",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_BUILDDIR,
+                                   g_param_spec_boolean ("builddir",
                                                          "",
                                                          "",
                                                          FALSE,
@@ -498,6 +532,7 @@ builder_module_build (BuilderModule *self,
   g_autofree char *make_l = NULL;
   g_autofree char *makefile_content = NULL;
   g_autoptr(GFile) configure_file = NULL;
+  g_autoptr(GFile) cmake_file = NULL;
   const char *makefile_names[] =  {"Makefile", "makefile", "GNUmakefile", NULL};
   g_autoptr(GFile) build_dir = NULL;
   gboolean has_configure;
@@ -543,12 +578,25 @@ builder_module_build (BuilderModule *self,
   if (cxxflags)
     env = g_environ_setenv (env, "CXXFLAGS", cxxflags, TRUE);
 
-  configure_file = g_file_get_child (source_dir, "configure");
-
-  if (self->rm_configure)
+  if (self->cmake)
     {
-      if (!g_file_delete (configure_file, NULL, error))
-        return FALSE;
+      cmake_file = g_file_get_child (source_dir, "CMakeLists.txt");
+      if (g_file_query_exists (cmake_file, NULL))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't find CMakeLists.txt");
+          return FALSE;
+        }
+      configure_file = g_object_ref (cmake_file);
+    }
+  else
+    {
+      configure_file = g_file_get_child (source_dir, "configure");
+
+      if (self->rm_configure)
+        {
+          if (!g_file_delete (configure_file, NULL, error))
+            return FALSE;
+        }
     }
 
   has_configure = g_file_query_exists (configure_file, NULL);
@@ -592,27 +640,48 @@ builder_module_build (BuilderModule *self,
   if (has_configure)
     {
       const char *configure_cmd;
+      const char *configure_final_arg = skip_arg;
+      const char *configure_prefix_arg = skip_arg;
       g_autofree char *configure_content = NULL;
 
       if (!g_file_load_contents (configure_file, NULL, &configure_content, NULL, NULL, error))
         return FALSE;
 
       var_require_builddir = strstr (configure_content, "buildapi-variable-require-builddir") != NULL;
-      use_builddir = var_require_builddir;
+      use_builddir = var_require_builddir || self->builddir;
 
       if (use_builddir)
         {
           build_dir = g_file_get_child (source_dir, "_build");
-          configure_cmd = "../configure";
+          if (self->cmake)
+            {
+              configure_cmd = "cmake";
+              configure_final_arg = "..";
+            }
+          else
+            {
+              configure_cmd = "../configure";
+            }
         }
       else
         {
           build_dir = g_object_ref (source_dir);
-          configure_cmd = "./configure";
+          if (self->cmake)
+            {
+              configure_cmd = "cmake";
+              configure_final_arg = ".";
+            }
+          else
+            configure_cmd = "./configure";
         }
 
+      if (self->cmake)
+        configure_prefix_arg = "-DCMAKE_INSTALL_PREFIX:PATH='/app'";
+      else
+        configure_prefix_arg = "--prefix=/app";
+
       if (!build (app_dir, source_dir, build_dir, build_args, env, error,
-                  configure_cmd, "--prefix=/app", strv_arg, self->config_opts, NULL))
+                  configure_cmd, configure_prefix_arg, strv_arg, self->config_opts, configure_final_arg, NULL))
         return FALSE;
     }
   else
@@ -673,6 +742,8 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_strv (cache, self->make_install_args);
   builder_cache_checksum_boolean (cache, self->rm_configure);
   builder_cache_checksum_boolean (cache, self->no_autogen);
+  builder_cache_checksum_boolean (cache, self->cmake);
+  builder_cache_checksum_boolean (cache, self->builddir);
 
   for (l = self->sources; l != NULL; l = l->next)
     {

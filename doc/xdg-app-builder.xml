@@ -231,6 +231,14 @@
                     <listitem><para>Ignore the existance of an autogen script</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>cmake</option></term>
+                    <listitem><para>Use cmake instead of configure</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>builddir</option></term>
+                    <listitem><para>Force the use of a build dirrectory separated from the source directory.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>build-options</option></term>
                     <listitem><para>A build options object that can override global options</para></listitem>
                 </varlistentry>
