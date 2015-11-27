@@ -562,7 +562,9 @@ builder_module_build (BuilderModule *self,
 
   source_dir = g_file_new_for_path (source_dir_path);
 
+  g_print ("========================================================================\n");
   g_print ("Building module %s in %s\n", self->name, source_dir_path);
+  g_print ("========================================================================\n");
 
   if (!builder_module_extract_sources (self, source_dir, context, error))
     return FALSE;
