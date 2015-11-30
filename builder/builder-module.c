@@ -552,7 +552,7 @@ builder_module_build (BuilderModule *self,
 
   source_dir_template = g_file_get_child (builder_context_get_state_dir (context),
                                           buildname);
-  source_dir_path = g_file_get_path (source_dir_template);;
+  source_dir_path = g_file_get_path (source_dir_template);
 
   if (g_mkdtemp (source_dir_path) == NULL)
     {
