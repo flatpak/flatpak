@@ -28,6 +28,7 @@
 #include <sys/statfs.h>
 
 #include "builder-utils.h"
+#include "libgsystem.h"
 
 #include "builder-source-git.h"
 #include "builder-utils.h"
@@ -51,6 +52,12 @@ enum {
   PROP_BRANCH,
   LAST_PROP
 };
+
+static gboolean git_mirror_repo (const char *repo_url,
+                                 const char *ref,
+                                 BuilderContext *context,
+                                 GError **error);
+
 
 static void
 builder_source_git_finalize (GObject *object)
@@ -246,7 +253,8 @@ git (GFile        *dir,
 }
 
 static GFile *
-get_mirror_dir (BuilderSourceGit *self, BuilderContext *context)
+git_get_mirror_dir (const char *url,
+                    BuilderContext *context)
 {
   g_autoptr(GFile) git_dir = NULL;
   g_autofree char *filename = NULL;
@@ -258,7 +266,7 @@ get_mirror_dir (BuilderSourceGit *self, BuilderContext *context)
   git_dir_path = g_file_get_path (git_dir);
   g_mkdir_with_parents (git_dir_path, 0755);
 
-  filename = builder_uri_to_filename (self->url);
+  filename = builder_uri_to_filename (url);
   return g_file_get_child (git_dir, filename);
 }
 
@@ -272,18 +280,179 @@ get_branch (BuilderSourceGit *self)
 }
 
 static char *
-get_current_commit (BuilderSourceGit *self, BuilderContext *context, GError **error)
+git_get_current_commit (GFile *repo_dir,
+                        const char *branch,
+                        BuilderContext *context,
+                        GError **error)
 {
-  g_autoptr(GFile) mirror_dir = NULL;
   char *output = NULL;
 
-  mirror_dir = get_mirror_dir (self, context);
-
-  if (!git (mirror_dir, &output, error,
-            "rev-parse", get_branch (self), NULL))
+  if (!git (repo_dir, &output, error,
+            "rev-parse", branch, NULL))
     return NULL;
 
+  /* Trim trailing whitespace */
+  g_strchomp (output);
+
   return output;
+}
+
+char *
+make_absolute_url (const char *orig_parent, const char *orig_relpath, GError **error)
+{
+  g_autofree char *parent = g_strdup (orig_parent);
+  const char *relpath = orig_relpath;
+  char *method;
+  char *parent_path;
+
+  if (!g_str_has_prefix (relpath, "../"))
+    return g_strdup (orig_relpath);
+
+  if (parent[strlen(parent) - 1] == '/')
+    parent[strlen(parent) - 1] = 0;
+
+  method = strstr (parent, "://");
+  if (method == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid uri %s", orig_parent);
+      return NULL;
+    }
+
+  parent_path = strchr (method + 3, '/');
+  if (parent_path == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid uri %s", orig_parent);
+      return NULL;
+    }
+
+  while (g_str_has_prefix (relpath, "../"))
+    {
+      char *last_slash = strrchr (parent_path, '/');
+      if (last_slash == NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid relative path %s for uri %s", orig_relpath, orig_parent);
+          return NULL;
+        }
+      relpath += 3;
+      *last_slash = 0;
+    }
+
+  return g_strconcat (parent, "/", relpath, NULL);
+}
+
+static gboolean
+git_mirror_submodules (const char *repo_url,
+                       GFile *mirror_dir,
+                       const char *revision,
+                       BuilderContext *context,
+                       GError **error)
+{
+  g_autofree char *mirror_dir_path = NULL;
+  g_autoptr(GFile) checkout_dir_template = NULL;
+  g_autoptr(GFile) checkout_dir = NULL;
+  g_autofree char *checkout_dir_path = NULL;
+  g_autofree char *submodule_status = NULL;
+
+  mirror_dir_path = g_file_get_path (mirror_dir);
+
+  checkout_dir_template = g_file_get_child (builder_context_get_state_dir (context),
+                                            "tmp-checkout-XXXXXX");
+  checkout_dir_path = g_file_get_path (checkout_dir_template);
+
+  if (g_mkdtemp (checkout_dir_path) == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create temporary checkout directory");
+      return FALSE;
+    }
+
+  checkout_dir = g_file_new_for_path (checkout_dir_path);
+
+  if (!git (NULL, NULL, error,
+            "clone", "-q", "--no-checkout", mirror_dir_path, checkout_dir_path, NULL))
+    return FALSE;
+
+  if (!git (checkout_dir, NULL, error, "checkout", "-q", "-f", revision, NULL))
+    return FALSE;
+
+  if (!git (checkout_dir, &submodule_status, error,
+            "submodule", "status", NULL))
+    return FALSE;
+
+  if (submodule_status)
+    {
+      int i;
+      g_auto(GStrv) lines = g_strsplit (submodule_status, "\n", -1);
+      for (i = 0; lines[i] != NULL; i++)
+        {
+          g_autofree char *url = NULL;
+          g_autofree char *option = NULL;
+          g_autofree char *old = NULL;
+          g_auto(GStrv) words = NULL;
+          if (*lines[i] == 0)
+            continue;
+          words = g_strsplit (lines[i] + 1, " ", 3);
+
+          option = g_strdup_printf ("submodule.%s.url", words[1]);
+          if (!git (checkout_dir, &url, error,
+                    "config", "-f", ".gitmodules", option, NULL))
+            return FALSE;
+          /* Trim trailing whitespace */
+          g_strchomp (url);
+
+          old = url;
+          url = make_absolute_url (repo_url, old, error);
+          if (url == NULL)
+            return FALSE;
+
+          if (!git_mirror_repo (url, words[0], context, error))
+            return FALSE;
+        }
+    }
+
+  if (!gs_shutil_rm_rf (checkout_dir, NULL, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+git_mirror_repo (const char *repo_url,
+                 const char *ref,
+                 BuilderContext *context,
+                 GError **error)
+{
+  g_autoptr(GFile) mirror_dir = NULL;
+  g_autofree char *current_commit = NULL;
+
+  mirror_dir = git_get_mirror_dir (repo_url, context);
+
+  if (!g_file_query_exists (mirror_dir, NULL))
+    {
+      g_autofree char *filename = g_file_get_basename (mirror_dir);
+      g_autoptr(GFile) parent = g_file_get_parent (mirror_dir);
+      g_autofree char *filename_tmp = g_strconcat (filename, ".clone_tmp", NULL);
+      g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
+
+      if (!git (parent, NULL, error,
+                "clone", "--mirror", repo_url,  filename_tmp, NULL) ||
+          !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
+        return FALSE;
+    }
+  else
+    {
+      if (!git (mirror_dir, NULL, error,
+                "fetch", NULL))
+        return FALSE;
+    }
+
+  current_commit = git_get_current_commit (mirror_dir, ref, context, error);
+  if (current_commit == NULL)
+    return FALSE;
+
+  if (!git_mirror_submodules (repo_url, mirror_dir, current_commit, context, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 static gboolean
@@ -297,28 +466,78 @@ builder_source_git_download (BuilderSource *source,
   if (self->url == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "URL not specified");
-      return NULL;
+      return FALSE;
     }
 
-  mirror_dir = get_mirror_dir (self, context);
+  if (!git_mirror_repo (self->url,
+                        get_branch (self),
+                        context,
+                        error))
+    return FALSE;
 
-  if (!g_file_query_exists (mirror_dir, NULL))
-    {
-      g_autofree char *filename = g_file_get_basename (mirror_dir);
-      g_autoptr(GFile) parent = g_file_get_parent (mirror_dir);
-      g_autofree char *filename_tmp = g_strconcat (filename, ".clone_tmp", NULL);
-      g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
+  return TRUE;
+}
 
-      if (!git (parent, NULL, error,
-                "clone", "--mirror", self->url,  filename_tmp, NULL) ||
-          !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
-        return FALSE;
-    }
-  else
+static gboolean
+git_extract_submodule (const char *repo_url,
+                       GFile *checkout_dir,
+                       BuilderContext *context,
+                       GError **error)
+{
+  g_autofree char *submodule_status = NULL;
+
+  if (!git (checkout_dir, &submodule_status, error,
+            "submodule", "status", NULL))
+    return FALSE;
+
+  if (submodule_status)
     {
-      if (!git (mirror_dir, NULL, error,
-                "fetch", NULL))
-        return FALSE;
+      int i;
+      g_auto(GStrv) lines = g_strsplit (submodule_status, "\n", -1);
+      for (i = 0; lines[i] != NULL; i++)
+        {
+          g_autoptr(GFile) mirror_dir = NULL;
+          g_autoptr(GFile) child_dir = NULL;
+          g_autofree char *child_url = NULL;
+          g_autofree char *option = NULL;
+          g_autofree char *child_relative_url = NULL;
+          g_autofree char *mirror_dir_as_url = NULL;
+          g_auto(GStrv) words = NULL;
+          if (*lines[i] == 0)
+            continue;
+          words = g_strsplit (lines[i] + 1, " ", 3);
+
+          option = g_strdup_printf ("submodule.%s.url", words[1]);
+          if (!git (checkout_dir, &child_relative_url, error,
+                    "config", "-f", ".gitmodules", option, NULL))
+            return FALSE;
+
+          /* Trim trailing whitespace */
+          g_strchomp (child_relative_url);
+
+          g_print ("processing submodule %s\n", words[1]);
+
+          child_url = make_absolute_url (repo_url, child_relative_url, error);
+          if (child_url == NULL)
+            return FALSE;
+
+          mirror_dir = git_get_mirror_dir (child_url, context);
+
+          mirror_dir_as_url = g_file_get_uri (mirror_dir);
+
+          if (!git (checkout_dir, NULL, error,
+                    "config", option, mirror_dir_as_url, NULL))
+            return FALSE;
+
+          if (!git (checkout_dir, NULL, error,
+                    "submodule", "update", "--init", words[1], NULL))
+            return FALSE;
+
+          child_dir = g_file_resolve_relative_path (checkout_dir, words[1]);
+
+          if (!git_extract_submodule (child_url, child_dir, context, error))
+            return FALSE;
+        }
     }
 
   return TRUE;
@@ -335,13 +554,16 @@ builder_source_git_extract (BuilderSource *source,
   g_autofree char *mirror_dir_path = NULL;
   g_autofree char *dest_path = NULL;
 
-  mirror_dir = get_mirror_dir (self, context);
+  mirror_dir = git_get_mirror_dir (self->url, context);
 
   mirror_dir_path = g_file_get_path (mirror_dir);
   dest_path = g_file_get_path (dest);
 
   if (!git (NULL, NULL, error,
-            "clone", "--branch", get_branch (self), "--recursive", mirror_dir_path, dest_path, NULL))
+            "clone", "--branch", get_branch (self), mirror_dir_path, dest_path, NULL))
+    return FALSE;
+
+  if (!git_extract_submodule (self->url, dest, context, error))
     return FALSE;
 
   return TRUE;
@@ -353,13 +575,16 @@ builder_source_git_checksum (BuilderSource  *source,
                              BuilderContext *context)
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
+  g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *current_commit;
   g_autoptr(GError) error = NULL;
 
   builder_cache_checksum_str (cache, self->url);
   builder_cache_checksum_str (cache, self->branch);
 
-  current_commit = get_current_commit (self, context, &error);
+  mirror_dir = git_get_mirror_dir (self->url, context);
+
+  current_commit = git_get_current_commit (mirror_dir, get_branch (self), context, &error);
   if (current_commit)
     builder_cache_checksum_str (cache, current_commit);
   else if (error)
