@@ -583,7 +583,7 @@ builder_module_build (BuilderModule *self,
   if (self->cmake)
     {
       cmake_file = g_file_get_child (source_dir, "CMakeLists.txt");
-      if (g_file_query_exists (cmake_file, NULL))
+      if (!g_file_query_exists (cmake_file, NULL))
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't find CMakeLists.txt");
           return FALSE;
