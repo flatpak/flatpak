@@ -243,6 +243,12 @@
                     <listitem><para>A build options object that can override global options</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>post-install</option></term>
+                    <listitem><para>An array of shell command that are run after the install phase. Can for example
+                    clean up the install dir, or install extra files.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>cleanup</option></term>
                     <listitem><para>An array of file patterns that should be removed at the end.
                     Patterns starting with / are taken to be full pathnames, otherwise they just match
