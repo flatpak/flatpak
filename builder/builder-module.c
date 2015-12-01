@@ -38,6 +38,7 @@ struct BuilderModule {
   GObject parent;
 
   char *name;
+  char *subdir;
   char **post_install;
   char **config_opts;
   char **make_args;
@@ -64,6 +65,7 @@ G_DEFINE_TYPE_WITH_CODE (BuilderModule, builder_module, G_TYPE_OBJECT,
 enum {
   PROP_0,
   PROP_NAME,
+  PROP_SUBDIR,
   PROP_RM_CONFIGURE,
   PROP_NO_AUTOGEN,
   PROP_CMAKE,
@@ -85,6 +87,7 @@ builder_module_finalize (GObject *object)
   BuilderModule *self = (BuilderModule *)object;
 
   g_free (self->name);
+  g_free (self->subdir);
   g_strfreev (self->post_install);
   g_strfreev (self->config_opts);
   g_strfreev (self->make_args);
@@ -111,6 +114,10 @@ builder_module_get_property (GObject    *object,
     {
     case PROP_NAME:
       g_value_set_string (value, self->name);
+      break;
+
+    case PROP_SUBDIR:
+      g_value_set_string (value, self->subdir);
       break;
 
     case PROP_RM_CONFIGURE:
@@ -176,6 +183,11 @@ builder_module_set_property (GObject      *object,
     case PROP_NAME:
       g_clear_pointer (&self->name, g_free);
       self->name = g_value_dup_string (value);
+      break;
+
+    case PROP_SUBDIR:
+      g_clear_pointer (&self->subdir, g_free);
+      self->subdir = g_value_dup_string (value);
       break;
 
     case PROP_RM_CONFIGURE:
@@ -251,6 +263,13 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_NAME,
                                    g_param_spec_string ("name",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_SUBDIR,
+                                   g_param_spec_string ("subdir",
                                                         "",
                                                         "",
                                                         NULL,
@@ -565,6 +584,7 @@ builder_module_build (BuilderModule *self,
   const char *cflags, *cxxflags;
   g_autofree char *buildname = NULL;
   g_autoptr(GFile) source_dir = NULL;
+  g_autoptr(GFile) source_subdir = NULL;
   g_autoptr(GFile) source_dir_template = NULL;
   g_autofree char *source_dir_path = NULL;
 
@@ -589,6 +609,11 @@ builder_module_build (BuilderModule *self,
   if (!builder_module_extract_sources (self, source_dir, context, error))
     return FALSE;
 
+  if (self->subdir != NULL && self->subdir[0] != 0)
+    source_subdir = g_file_resolve_relative_path (source_dir, self->subdir);
+  else
+    source_subdir = g_object_ref (source_dir);
+
   env = builder_options_get_env (self->build_options, context);
   build_args = builder_options_get_build_args (self->build_options, context);
 
@@ -602,7 +627,7 @@ builder_module_build (BuilderModule *self,
 
   if (self->cmake)
     {
-      cmake_file = g_file_get_child (source_dir, "CMakeLists.txt");
+      cmake_file = g_file_get_child (source_subdir, "CMakeLists.txt");
       if (!g_file_query_exists (cmake_file, NULL))
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't find CMakeLists.txt");
@@ -612,7 +637,7 @@ builder_module_build (BuilderModule *self,
     }
   else
     {
-      configure_file = g_file_get_child (source_dir, "configure");
+      configure_file = g_file_get_child (source_subdir, "configure");
 
       if (self->rm_configure)
         {
@@ -631,7 +656,7 @@ builder_module_build (BuilderModule *self,
 
       for (i = 0; autogen_names[i] != NULL; i++)
         {
-          g_autoptr(GFile) autogen_file = g_file_get_child (source_dir, autogen_names[i]);
+          g_autoptr(GFile) autogen_file = g_file_get_child (source_subdir, autogen_names[i]);
           if (g_file_query_exists (autogen_file, NULL))
             {
               autogen_cmd = g_strdup_printf ("./%s", autogen_names[i]);
@@ -646,7 +671,7 @@ builder_module_build (BuilderModule *self,
         }
 
       env_with_noconfigure = g_environ_setenv (g_strdupv (env), "NOCONFIGURE", "1", TRUE);
-      if (!build (app_dir, source_dir, NULL, build_args, env_with_noconfigure, error,
+      if (!build (app_dir, source_dir, source_subdir, build_args, env_with_noconfigure, error,
                   autogen_cmd, NULL))
         return FALSE;
 
@@ -674,7 +699,7 @@ builder_module_build (BuilderModule *self,
 
       if (use_builddir)
         {
-          build_dir = g_file_get_child (source_dir, "_xdg_app_build");
+          build_dir = g_file_get_child (source_subdir, "_xdg_app_build");
 
           if (!g_file_make_directory (build_dir, NULL, error))
             return FALSE;
@@ -691,7 +716,7 @@ builder_module_build (BuilderModule *self,
         }
       else
         {
-          build_dir = g_object_ref (source_dir);
+          build_dir = g_object_ref (source_subdir);
           if (self->cmake)
             {
               configure_cmd = "cmake";
@@ -711,7 +736,7 @@ builder_module_build (BuilderModule *self,
         return FALSE;
     }
   else
-    build_dir = g_object_ref (source_dir);
+    build_dir = g_object_ref (source_subdir);
 
   for (i = 0; makefile_names[i] != NULL; i++)
     {
@@ -773,6 +798,7 @@ builder_module_checksum (BuilderModule  *self,
 
   builder_cache_checksum_str (cache, BUILDER_MODULE_CHECKSUM_VERSION);
   builder_cache_checksum_str (cache, self->name);
+  builder_cache_checksum_str (cache, self->subdir);
   builder_cache_checksum_strv (cache, self->post_install);
   builder_cache_checksum_strv (cache, self->config_opts);
   builder_cache_checksum_strv (cache, self->make_args);

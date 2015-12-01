@@ -239,6 +239,10 @@
                     <listitem><para>Force the use of a build dirrectory separated from the source directory.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>subdir</option></term>
+                    <listitem><para>Do building inside this subdirectory of the extracted sources.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>build-options</option></term>
                     <listitem><para>A build options object that can override global options</para></listitem>
                 </varlistentry>
