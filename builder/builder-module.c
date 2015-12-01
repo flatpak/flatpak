@@ -38,6 +38,7 @@ struct BuilderModule {
   GObject parent;
 
   char *name;
+  char **post_install;
   char **config_opts;
   char **make_args;
   char **make_install_args;
@@ -73,6 +74,7 @@ enum {
   PROP_SOURCES,
   PROP_BUILD_OPTIONS,
   PROP_CLEANUP,
+  PROP_POST_INSTALL,
   LAST_PROP
 };
 
@@ -83,6 +85,7 @@ builder_module_finalize (GObject *object)
   BuilderModule *self = (BuilderModule *)object;
 
   g_free (self->name);
+  g_strfreev (self->post_install);
   g_strfreev (self->config_opts);
   g_strfreev (self->make_args);
   g_strfreev (self->make_install_args);
@@ -136,6 +139,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_MAKE_INSTALL_ARGS:
       g_value_set_boxed (value, self->make_install_args);
+      break;
+
+    case PROP_POST_INSTALL:
+      g_value_set_boxed (value, self->post_install);
       break;
 
     case PROP_BUILD_OPTIONS:
@@ -202,6 +209,12 @@ builder_module_set_property (GObject      *object,
     case PROP_MAKE_INSTALL_ARGS:
       tmp = self->make_install_args;
       self->make_install_args = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_POST_INSTALL:
+      tmp = self->post_install;
+      self->post_install = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -293,6 +306,13 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_MAKE_INSTALL_ARGS,
                                    g_param_spec_boxed ("make-install-args",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_POST_INSTALL,
+                                   g_param_spec_boxed ("post-install",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -728,6 +748,16 @@ builder_module_build (BuilderModule *self,
               "make", "install", strv_arg, self->make_install_args, NULL))
     return FALSE;
 
+  if (self->post_install)
+    {
+      for (i = 0; self->post_install[i] != NULL; i++)
+        {
+          if (!build (app_dir, source_dir, build_dir, build_args, env, error,
+                      "/bin/sh", "-c", self->post_install[i], NULL))
+            return FALSE;
+        }
+    }
+
   if (!gs_shutil_rm_rf (source_dir, NULL, error))
     return FALSE;
 
@@ -743,6 +773,7 @@ builder_module_checksum (BuilderModule  *self,
 
   builder_cache_checksum_str (cache, BUILDER_MODULE_CHECKSUM_VERSION);
   builder_cache_checksum_str (cache, self->name);
+  builder_cache_checksum_strv (cache, self->post_install);
   builder_cache_checksum_strv (cache, self->config_opts);
   builder_cache_checksum_strv (cache, self->make_args);
   builder_cache_checksum_strv (cache, self->make_install_args);
