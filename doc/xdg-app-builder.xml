@@ -348,6 +348,30 @@
                 </variablelist>
             </refsect3>
             <refsect3>
+                <title>Script sources</title>
+                <para>
+                    This is a way to create a shell (/bin/sh) script from an inline set of commands.
+                </para>
+                <variablelist>
+                    <varlistentry>
+                        <term><option>type</option></term>
+                        <listitem><para>"script"</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>commands</option></term>
+                        <listitem><para>An array of shell commands that will be put in a shellscript file</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>dest-filename</option></term>
+                        <listitem><para>Filename to use inside the source dir, default to the basename of path.</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>dest</option></term>
+                        <listitem><para>Directory inside the source dir where the file will be copied.</para></listitem>
+                    </varlistentry>
+                </variablelist>
+            </refsect3>
+            <refsect3>
                 <title>Patch sources</title>
                 <variablelist>
                     <varlistentry>

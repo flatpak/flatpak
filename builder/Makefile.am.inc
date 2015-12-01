@@ -20,6 +20,8 @@ xdg_app_builder_SOURCES = \
 	builder/builder-source-bzr.h \
 	builder/builder-source-file.c \
 	builder/builder-source-file.h \
+	builder/builder-source-script.c \
+	builder/builder-source-script.h \
 	builder/builder-source-patch.c \
 	builder/builder-source-patch.h \
 	builder/builder-context.c \

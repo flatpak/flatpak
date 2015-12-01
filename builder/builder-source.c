@@ -34,6 +34,7 @@
 #include "builder-source-git.h"
 #include "builder-source-bzr.h"
 #include "builder-source-file.h"
+#include "builder-source-script.h"
 
 static void serializable_iface_init (JsonSerializableIface *serializable_iface);
 
@@ -160,6 +161,8 @@ builder_source_from_json (JsonNode *node)
     return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_ARCHIVE, node);
   if (strcmp (type, "file") == 0)
     return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_FILE, node);
+  if (strcmp (type, "script") == 0)
+    return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_SCRIPT, node);
   if (strcmp (type, "patch") == 0)
     return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_PATCH, node);
   if (strcmp (type, "git") == 0)
