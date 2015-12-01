@@ -22,6 +22,7 @@
 #define __BUILDER_CACHE_H__
 
 #include <gio/gio.h>
+#include <libglnx/libglnx.h>
 
 G_BEGIN_DECLS
 
