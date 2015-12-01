@@ -38,4 +38,24 @@ glnx_strv_contains (const gchar * const *strv,
 
   return FALSE;
 }
+
+gboolean
+glnx_set_object (GObject **object_ptr,
+                 GObject  *new_object)
+{
+  GObject *old_object = *object_ptr;
+
+  if (old_object == new_object)
+    return FALSE;
+
+  if (new_object != NULL)
+    g_object_ref (new_object);
+
+  *object_ptr = new_object;
+
+  if (old_object != NULL)
+    g_object_unref (old_object);
+
+  return TRUE;
+}
 #endif

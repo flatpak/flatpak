@@ -28,9 +28,19 @@
 G_BEGIN_DECLS
 
 #if !GLIB_CHECK_VERSION(2, 44, 0)
+
 #define g_strv_contains glnx_strv_contains
 gboolean              glnx_strv_contains  (const gchar * const *strv,
                                            const gchar         *str);
+
+#define g_set_object(object_ptr, new_object) \
+ (/* Check types match. */ \
+  0 ? *(object_ptr) = (new_object), FALSE : \
+  glnx_set_object ((GObject **) (object_ptr), (GObject *) (new_object)) \
+ )
+gboolean              glnx_set_object  (GObject **object_ptr,
+                                        GObject  *new_object);
+
 #endif /* !GLIB_CHECK_VERSION(2, 44, 0) */
 
 G_END_DECLS
