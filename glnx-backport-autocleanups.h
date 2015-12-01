@@ -86,6 +86,8 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GVariantIter, g_variant_iter_free)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GVariantDict, g_variant_dict_unref)
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GVariantDict, g_variant_dict_clear)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GVariantType, g_variant_type_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GSubprocess, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GSubprocessLauncher, g_object_unref)
 
 /* Add GObject-based types as needed. */
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GCancellable, g_object_unref)
