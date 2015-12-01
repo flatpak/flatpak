@@ -766,7 +766,7 @@ builder_module_build (BuilderModule *self,
     }
 
   if (!build (app_dir, source_dir, build_dir, build_args, env, error,
-              "make", "all", make_j?make_j:skip_arg, make_l?make_l:skip_arg, strv_arg, self->make_args, NULL))
+              "make", make_j?make_j:skip_arg, make_l?make_l:skip_arg, strv_arg, self->make_args, NULL))
     return FALSE;
 
   if (!build (app_dir, source_dir, build_dir, build_args, env, error,
