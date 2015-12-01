@@ -1148,7 +1148,7 @@ copy_file_data (int     sfd,
           if (errno == EINTR)
             continue;
 
-          return FALSE;;
+          return FALSE;
         }
 
       if (bytes_read == 0)

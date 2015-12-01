@@ -449,7 +449,7 @@ strip_components_into (GFile *dest,
                                         G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                         NULL, error);
   if (!dir_enum)
-    return FALSE;;
+    return FALSE;
 
   while ((child_info = g_file_enumerator_next_file (dir_enum, NULL, &temp_error)))
     {
@@ -524,7 +524,7 @@ builder_source_archive_extract (BuilderSource *source,
       if (self->strip_components > 0)
         {
           g_autoptr(GFile) tmp_dir_template = g_file_get_child (dest, ".uncompressXXXXXX");
-          g_autofree char *tmp_dir_path = g_file_get_path (tmp_dir_template);;
+          g_autofree char *tmp_dir_path = g_file_get_path (tmp_dir_template);
 
           if (g_mkdtemp (tmp_dir_path) == NULL)
             {
