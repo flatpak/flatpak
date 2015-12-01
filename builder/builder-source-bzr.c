@@ -276,7 +276,7 @@ builder_source_bzr_download (BuilderSource *source,
   if (self->url == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "URL not specified");
-      return NULL;
+      return FALSE;
     }
 
   mirror_dir = get_mirror_dir (self, context);

@@ -494,21 +494,21 @@ builder_manifest_init_app_dir (BuilderManifest *self,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "app id not specified");
-      return NULL;
+      return FALSE;
     }
 
   if (self->runtime == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "runtime not specified");
-      return NULL;
+      return FALSE;
     }
 
   if (self->sdk == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "sdk not specified");
-      return NULL;
+      return FALSE;
     }
 
   subp =
