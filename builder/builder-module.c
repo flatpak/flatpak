@@ -808,6 +808,9 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_boolean (cache, self->cmake);
   builder_cache_checksum_boolean (cache, self->builddir);
 
+  if (self->build_options)
+    builder_options_checksum (self->build_options, cache, context);
+
   for (l = self->sources; l != NULL; l = l->next)
     {
       BuilderSource *source = l->data;
