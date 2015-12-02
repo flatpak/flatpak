@@ -42,3 +42,12 @@ APIs not defined in GLib yet, such as `glnx_fd_close`.
 
 `gs_transfer_out_value` is replaced by `g_steal_pointer`.
 
+Contributing
+------------
+
+Currently there is not a Bugzilla product - one may be created
+in the future.  You can submit PRs against the Github mirror:
+
+https://github.com/GNOME/libglnx/pulls
+
+Or alternatively, email one of the maintainers directly.
