@@ -742,6 +742,7 @@ typedef gboolean (*ForeachFileFunc) (BuilderManifest *self,
                                      const char    *full_dir,
                                      const char    *rel_dir,
                                      struct stat   *stbuf,
+                                     gboolean      *found,
                                      int            depth,
                                      GError       **error);
 
@@ -752,15 +753,23 @@ foreach_file_helper (BuilderManifest *self,
                      const char    *source_name,
                      const char    *full_dir,
                      const char    *rel_dir,
+                     gboolean      *found,
                      int            depth,
                      GError       **error)
 {
   g_auto(GLnxDirFdIterator) source_iter = {0};
   glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
+  g_autoptr(GError) my_error = NULL;
 
-  if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, error))
-    return FALSE;
+  if (!glnx_dirfd_iterator_init_at (source_parent_fd, source_name, FALSE, &source_iter, &my_error))
+    {
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        return TRUE;
+
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      return FALSE;
+    }
 
   while (TRUE)
     {
@@ -788,11 +797,11 @@ foreach_file_helper (BuilderManifest *self,
         {
           g_autofree char *child_dir = g_build_filename (full_dir, dent->d_name, NULL);
           g_autofree char *child_rel_dir = g_build_filename (rel_dir, dent->d_name, NULL);
-          if (!foreach_file_helper (self, func, source_iter.fd, dent->d_name, child_dir, child_rel_dir, depth + 1, error))
+          if (!foreach_file_helper (self, func, source_iter.fd, dent->d_name, child_dir, child_rel_dir, found, depth + 1, error))
             return FALSE;
         }
 
-      if (!func (self, source_iter.fd, dent->d_name, full_dir, rel_dir, &stbuf, depth, error))
+      if (!func (self, source_iter.fd, dent->d_name, full_dir, rel_dir, &stbuf, found, depth, error))
         return FALSE;
     }
 
@@ -802,6 +811,7 @@ foreach_file_helper (BuilderManifest *self,
 static gboolean
 foreach_file (BuilderManifest *self,
               ForeachFileFunc func,
+              gboolean      *found,
               GFile         *root,
               GError       **error)
 {
@@ -809,7 +819,7 @@ foreach_file (BuilderManifest *self,
                               gs_file_get_path_cached (root),
                               gs_file_get_path_cached (root),
                               "",
-                              0,
+                              found, 0,
                               error);
 }
 
@@ -820,6 +830,7 @@ strip_file_cb (BuilderManifest *self,
               const char    *full_dir,
               const char    *rel_dir,
               struct stat   *stbuf,
+              gboolean      *found,
               int            depth,
               GError       **error)
 {
@@ -862,6 +873,7 @@ rename_icon_cb (BuilderManifest *self,
                 const char    *full_dir,
                 const char    *rel_dir,
                 struct stat   *stbuf,
+                gboolean      *found,
                 int            depth,
                 GError       **error)
 {
@@ -873,6 +885,8 @@ rename_icon_cb (BuilderManifest *self,
       const char *extension = source_name + strlen (self->rename_icon);
       g_autofree char *new_name = g_strconcat (self->app_id, extension, NULL);
       int res;
+
+      *found = TRUE;
 
       g_print ("%s icon %s/%s to %s/%s\n", self->copy_icon ? "copying" : "renaming", rel_dir, source_name, rel_dir, new_name);
 
@@ -945,7 +959,7 @@ builder_manifest_cleanup (BuilderManifest *self,
 
       if (self->strip)
         {
-          if (!foreach_file (self, strip_file_cb, app_root, error))
+          if (!foreach_file (self, strip_file_cb, NULL, app_root, error))
             return FALSE;
         }
 
@@ -963,10 +977,18 @@ builder_manifest_cleanup (BuilderManifest *self,
 
       if (self->rename_icon)
         {
+          gboolean found_icon = FALSE;
           g_autoptr(GFile) icons_dir = g_file_resolve_relative_path (app_root, "share/icons");
 
-          if (!foreach_file (self, rename_icon_cb, icons_dir, error))
+          if (!foreach_file (self, rename_icon_cb, &found_icon, icons_dir, error))
             return FALSE;
+
+          if (!found_icon)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "icon %s not found", self->rename_icon);
+              return FALSE;
+            }
         }
 
       if (self->rename_icon ||
