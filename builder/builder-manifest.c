@@ -45,6 +45,7 @@ struct BuilderManifest {
   char **finish_args;
   char *rename_desktop_file;
   char *rename_icon;
+  gboolean copy_icon;
   char *desktop_file_name_prefix;
   char *desktop_file_name_suffix;
   gboolean strip;
@@ -77,6 +78,7 @@ enum {
   PROP_FINISH_ARGS,
   PROP_RENAME_DESKTOP_FILE,
   PROP_RENAME_ICON,
+  PROP_COPY_ICON,
   PROP_DESKTOP_FILE_NAME_PREFIX,
   PROP_DESKTOP_FILE_NAME_SUFFIX,
   LAST_PROP
@@ -157,6 +159,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_STRIP:
       g_value_set_boolean (value, self->strip);
+      break;
+
+    case PROP_COPY_ICON:
+      g_value_set_boolean (value, self->copy_icon);
       break;
 
     case PROP_RENAME_DESKTOP_FILE:
@@ -245,6 +251,10 @@ builder_manifest_set_property (GObject       *object,
 
     case PROP_STRIP:
       self->strip = g_value_get_boolean (value);
+      break;
+
+    case PROP_COPY_ICON:
+      self->copy_icon = g_value_get_boolean (value);
       break;
 
     case PROP_RENAME_DESKTOP_FILE:
@@ -371,6 +381,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                         "",
                                                         NULL,
                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_COPY_ICON,
+                                   g_param_spec_boolean ("copy-icon",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_DESKTOP_FILE_NAME_PREFIX,
                                    g_param_spec_string ("desktop-file-name-prefix",
@@ -557,6 +574,7 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
   builder_cache_checksum_strv (cache, self->cleanup);
   builder_cache_checksum_str (cache, self->rename_desktop_file);
   builder_cache_checksum_str (cache, self->rename_icon);
+  builder_cache_checksum_boolean (cache, self->copy_icon);
   builder_cache_checksum_str (cache, self->desktop_file_name_prefix);
   builder_cache_checksum_str (cache, self->desktop_file_name_suffix);
   builder_cache_checksum_boolean (cache, self->strip);
@@ -854,9 +872,16 @@ rename_icon_cb (BuilderManifest *self,
     {
       const char *extension = source_name + strlen (self->rename_icon);
       g_autofree char *new_name = g_strconcat (self->app_id, extension, NULL);
-      g_print ("renaming icon %s/%s to %s/%s\n", rel_dir, source_name, rel_dir, new_name);
+      int res;
 
-      if (renameat (source_parent_fd, source_name, source_parent_fd, new_name) != 0)
+      g_print ("%s icon %s/%s to %s/%s\n", self->copy_icon ? "copying" : "renaming", rel_dir, source_name, rel_dir, new_name);
+
+      if (self->copy_icon)
+        res = linkat (source_parent_fd, source_name, source_parent_fd, new_name, AT_SYMLINK_FOLLOW);
+      else
+        res = renameat (source_parent_fd, source_name, source_parent_fd, new_name);
+
+      if (res != 0)
         {
           g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Can't rename icon %s/%s", rel_dir, source_name);
           return FALSE;

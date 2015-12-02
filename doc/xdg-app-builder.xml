@@ -154,6 +154,10 @@
                     <listitem><para>Any icon with this name will be renamed to a name based on app-id during the cleanup phase.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>copy-icon</option></term>
+                    <listitem><para>If rename-icon is set, keep a copy of the old icon file.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>desktop-file-name-prefix</option></term>
                     <listitem><para>This string will be prefixed to the Name key in the main application desktop file.</para></listitem>
                 </varlistentry>
