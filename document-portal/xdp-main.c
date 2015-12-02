@@ -457,6 +457,101 @@ portal_add (GDBusMethodInvocation *invocation,
                                          g_variant_new ("(s)", id));
 }
 
+static void
+portal_add_named (GDBusMethodInvocation *invocation,
+                  GVariant *parameters,
+                  const char *app_id)
+{
+  GDBusMessage *message;
+  GUnixFDList *fd_list;
+  g_autofree char *id = NULL;
+  g_autofree char *proc_path = NULL;
+  int parent_fd_id, parent_fd, fds_len, fd_flags;
+  const int *fds;
+  char parent_path_buffer[PATH_MAX+1];
+  g_autofree char *path = NULL;
+  ssize_t symlink_size;
+  struct stat parent_st_buf;
+  const char *filename;
+  gboolean reuse_existing, persistent;
+  g_autoptr(GVariant) filename_v = NULL;
+
+  g_variant_get (parameters, "(h@aybb)", &parent_fd_id, &filename_v, &reuse_existing, &persistent);
+  filename = g_variant_get_bytestring (filename_v);
+
+  /* This is only allowed from the host, or else we could leak existance of files */
+  if (*app_id != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
+                                             "Not enough permissions");
+      return;
+    }
+
+  message = g_dbus_method_invocation_get_message (invocation);
+  fd_list = g_dbus_message_get_unix_fd_list (message);
+
+  parent_fd = -1;
+  if (fd_list != NULL)
+    {
+      fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
+      if (parent_fd_id < fds_len)
+        parent_fd = fds[parent_fd_id];
+    }
+
+  if (strchr (filename, '/') != NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             "Invalid filename passed");
+      return;
+    }
+
+  proc_path = g_strdup_printf ("/proc/self/fd/%d", parent_fd);
+
+  if (parent_fd == -1 ||
+      /* Must be able to get fd flags */
+      (fd_flags = fcntl (parent_fd, F_GETFL)) == -1 ||
+      /* Must be O_PATH */
+      ((fd_flags & O_PATH) != O_PATH) ||
+      /* Must not be O_NOFOLLOW (because we want the target file) */
+      ((fd_flags & O_NOFOLLOW) == O_PATH) ||
+      /* Must be able to fstat */
+      fstat (parent_fd, &parent_st_buf) < 0 ||
+      /* Must be a directory file */
+      (parent_st_buf.st_mode & S_IFMT) != S_IFDIR ||
+      /* Must be able to read path from /proc/self/fd */
+      /* This is an absolute and (at least at open time) symlink-expanded path */
+      (symlink_size = readlink (proc_path, parent_path_buffer, sizeof (parent_path_buffer) - 1)) < 0)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             "Invalid fd passed");
+      return;
+    }
+
+  if (parent_st_buf.st_dev == fuse_dev)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             "Invalid fd passed");
+      return;
+    }
+
+  parent_path_buffer[symlink_size] = 0;
+
+  path = g_build_filename (parent_path_buffer, filename, NULL);
+
+  g_debug ("portal_add_named %s\n", path);
+
+  AUTOLOCK(db);
+
+  id = do_create_doc (&parent_st_buf, path, reuse_existing, persistent);
+
+  g_dbus_method_invocation_return_value (invocation,
+                                         g_variant_new ("(s)", id));
+}
+
+
 typedef void (*PortalMethod) (GDBusMethodInvocation *invocation,
                               GVariant *parameters,
                               const char *app_id);
@@ -507,6 +602,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   g_signal_connect_swapped (helper, "handle-get-mount-point", G_CALLBACK (handle_get_mount_point), NULL);
   g_signal_connect_swapped (helper, "handle-add", G_CALLBACK (handle_method), portal_add);
+  g_signal_connect_swapped (helper, "handle-add-named", G_CALLBACK (handle_method), portal_add_named);
   g_signal_connect_swapped (helper, "handle-grant-permissions", G_CALLBACK (handle_method), portal_grant_permissions);
   g_signal_connect_swapped (helper, "handle-revoke-permissions", G_CALLBACK (handle_method), portal_revoke_permissions);
   g_signal_connect_swapped (helper, "handle-delete", G_CALLBACK (handle_method), portal_delete);

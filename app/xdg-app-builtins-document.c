@@ -40,12 +40,14 @@ gboolean opt_unique = FALSE;
 gboolean opt_allow_write = FALSE;
 gboolean opt_allow_delete = FALSE;
 gboolean opt_transient = FALSE;
+gboolean opt_noexist = FALSE;
 gboolean opt_allow_grant_permissions = FALSE;
 char **opt_apps = NULL;
 
 static GOptionEntry options[] = {
   { "unique", 'u', 0, G_OPTION_ARG_NONE, &opt_unique, "Create a unique document reference", NULL },
   { "transient", 't', 0, G_OPTION_ARG_NONE, &opt_transient, "Make the document transient for the current session", NULL },
+  { "noexist", 'n', 0, G_OPTION_ARG_NONE, &opt_noexist, "Don't require the file to exist already", NULL },
   { "allow-write", 'w', 0, G_OPTION_ARG_NONE, &opt_allow_write, "Give the app write permissions", NULL },
   { "allow-delete", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_delete, "Give the app permissions to delete the document id", NULL },
   { "allow-grant-permission", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_grant_permissions, "Give the app permissions to grant furthern permissions", NULL },
@@ -65,6 +67,7 @@ xdg_app_builtin_export_file (int argc, char **argv,
   const char *file;
   g_autofree char  *mountpoint = NULL;
   g_autofree char  *basename = NULL;
+  g_autofree char  *dirname = NULL;
   g_autofree char  *doc_path = NULL;
   XdpDbusDocuments *documents;
   int fd, fd_id;
@@ -83,6 +86,8 @@ xdg_app_builtin_export_file (int argc, char **argv,
     return usage_error (context, "FILE must be specified", error);
 
   file = argv[1];
+  dirname = g_path_get_dirname (file);
+  basename = g_path_get_basename (file);
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
   if (session_bus == NULL)
@@ -99,7 +104,11 @@ xdg_app_builtin_export_file (int argc, char **argv,
                                                      NULL, error))
     return FALSE;
 
-  fd = open (file, O_PATH | O_CLOEXEC);
+  if (opt_noexist)
+    fd = open (dirname, O_PATH | O_CLOEXEC);
+  else
+    fd = open (file, O_PATH | O_CLOEXEC);
+
   if (fd == -1)
     {
       glnx_set_error_from_errno (error);
@@ -110,18 +119,32 @@ xdg_app_builtin_export_file (int argc, char **argv,
   fd_id = g_unix_fd_list_append (fd_list, fd, error);
   close (fd);
 
-  reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
-                                                         "org.freedesktop.portal.Documents",
-                                                         "/org/freedesktop/portal/documents",
-                                                         "org.freedesktop.portal.Documents",
-                                                         "Add",
-                                                         g_variant_new ("(hbb)", fd_id, !opt_unique, !opt_transient),
-                                                         G_VARIANT_TYPE ("(s)"),
-                                                         G_DBUS_CALL_FLAGS_NONE,
-                                                         30000,
-                                                         fd_list, NULL,
-                                                         NULL,
-                                                         error);
+  if (opt_noexist)
+    reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
+                                                           "org.freedesktop.portal.Documents",
+                                                           "/org/freedesktop/portal/documents",
+                                                           "org.freedesktop.portal.Documents",
+                                                           "AddNamed",
+                                                           g_variant_new ("(h^aybb)", fd_id, basename, !opt_unique, !opt_transient),
+                                                           G_VARIANT_TYPE ("(s)"),
+                                                           G_DBUS_CALL_FLAGS_NONE,
+                                                           30000,
+                                                           fd_list, NULL,
+                                                           NULL,
+                                                           error);
+  else
+    reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
+                                                           "org.freedesktop.portal.Documents",
+                                                           "/org/freedesktop/portal/documents",
+                                                           "org.freedesktop.portal.Documents",
+                                                           "Add",
+                                                           g_variant_new ("(hbb)", fd_id, !opt_unique, !opt_transient),
+                                                           G_VARIANT_TYPE ("(s)"),
+                                                           G_DBUS_CALL_FLAGS_NONE,
+                                                           30000,
+                                                           fd_list, NULL,
+                                                           NULL,
+                                                           error);
   g_object_unref (fd_list);
 
   if (reply == NULL)
@@ -152,7 +175,6 @@ xdg_app_builtin_export_file (int argc, char **argv,
 
     }
 
-  basename = g_path_get_basename (file);
   doc_path = g_build_filename (mountpoint, doc_id, basename, NULL);
   g_print ("%s\n", doc_path);
 

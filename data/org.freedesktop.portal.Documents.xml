@@ -34,6 +34,13 @@
       <arg type='b' name='persistent' direction='in'/>
       <arg type='s' name='doc_id' direction='out'/>
     </method>
+    <method name="AddNamed">
+      <arg type='h' name='o_path_parent_fd' direction='in'/>
+      <arg type='ay' name='filename' direction='in'/>
+      <arg type='b' name='reuse_existing' direction='in'/>
+      <arg type='b' name='persistent' direction='in'/>
+      <arg type='s' name='doc_id' direction='out'/>
+    </method>
     <method name="GrantPermissions">
       <arg type='s' name='doc_id' direction='in'/>
       <arg type='s' name='app_id' direction='in'/>
