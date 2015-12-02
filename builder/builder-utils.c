@@ -30,23 +30,19 @@ builder_uri_to_filename (const char *uri)
 {
   GString *s;
   const char *p;
-  gboolean saw_slash = FALSE;
-  gboolean saw_after_slash = FALSE;
 
   s = g_string_new ("");
 
   for (p = uri; *p != 0; p++)
     {
-      if (*p == '/')
+      if (*p == '/' || *p == ':')
         {
-          saw_slash = TRUE;
-          if (saw_after_slash) /* Skip first slashes */
-            g_string_append_c (s, '_');
-          continue;
+          while (p[1] == '/' || p[1] == ':')
+            p++;
+          g_string_append_c (s, '_');
         }
-      else if (saw_slash)
-        saw_after_slash = TRUE;
-      g_string_append_c (s, *p);
+      else
+        g_string_append_c (s, *p);
     }
 
   return g_string_free (s, FALSE);
