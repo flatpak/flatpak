@@ -53,7 +53,7 @@
             does not adhere to the API you can make it do so by adding patches and extra files.
         </para>
         <para>
-            A invocation of <command>xdg-app-builder</command> proceeds in these stages, each being specified
+            An invocation of <command>xdg-app-builder</command> proceeds in these stages, each being specified
             in detail in json format in <arg choice="plain">MANIFEST</arg>:
             <itemizedlist mark='bullet'>
                 <listitem>
