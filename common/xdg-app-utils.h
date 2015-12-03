@@ -159,6 +159,13 @@ void                xdg_app_table_printer_append_with_comma (XdgAppTablePrinter 
 void                xdg_app_table_printer_finish_row        (XdgAppTablePrinter *printer);
 void                xdg_app_table_printer_print             (XdgAppTablePrinter *printer);
 
+gboolean            xdg_app_spawn (GFile        *dir,
+                                   char        **output,
+                                   GError      **error,
+                                   const gchar  *argv0,
+                                   va_list       args);
+
+
 #define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup(xdg_app_auto_unlock_helper))) GMutex * G_PASTE(auto_unlock, __LINE__) = xdg_app_auto_lock_helper (&G_LOCK_NAME (name))
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeRepo, g_object_unref)

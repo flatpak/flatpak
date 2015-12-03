@@ -29,6 +29,7 @@
 
 #include "builder-manifest.h"
 #include "builder-utils.h"
+#include "xdg-app-utils.h"
 
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
@@ -658,34 +659,16 @@ builder_manifest_build (BuilderManifest *self,
 
 static gboolean
 strip (GError **error,
-       const gchar            *argv1,
        ...)
 {
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
-  GPtrArray *args;
-  const gchar *arg;
+  gboolean res;
   va_list ap;
 
-  args = g_ptr_array_new ();
-  g_ptr_array_add (args, "strip");
-  va_start (ap, argv1);
-  g_ptr_array_add (args, (gchar *) argv1);
-  while ((arg = va_arg (ap, const gchar *)))
-    g_ptr_array_add (args, (gchar *) arg);
-  g_ptr_array_add (args, NULL);
+  va_start (ap, error);
+  res = xdg_app_spawn (NULL, NULL, error, "strip", ap);
   va_end (ap);
 
-  launcher = g_subprocess_launcher_new (0);
-
-  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
-  g_ptr_array_free (args, TRUE);
-
-  if (subp == NULL ||
-      !g_subprocess_wait_check (subp, NULL, error))
-    return FALSE;
-
-  return TRUE;
+  return res;
 }
 
 guint16

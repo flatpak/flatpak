@@ -32,6 +32,7 @@
 
 #include "builder-source-git.h"
 #include "builder-utils.h"
+#include "xdg-app-utils.h"
 
 struct BuilderSourceGit {
   BuilderSource parent;
@@ -118,138 +119,20 @@ builder_source_git_set_property (GObject      *object,
     }
 }
 
-typedef struct
-{
-  GError *error;
-  GError *splice_error;
-  GMainLoop *loop;
-  int refs;
-} GitData;
-
-static gboolean git (GFile *dir,
-                     char **output,
-                     GError **error,
-                     const gchar            *argv1,
-                     ...) G_GNUC_NULL_TERMINATED;
-
-
-static void
-git_data_exit (GitData *data)
-{
-  data->refs--;
-  if (data->refs == 0)
-    g_main_loop_quit (data->loop);
-}
-
-static void
-git_output_spliced_cb (GObject    *obj,
-                       GAsyncResult  *result,
-                       gpointer       user_data)
-{
-  GitData *data = user_data;
-
-  g_output_stream_splice_finish (G_OUTPUT_STREAM (obj), result, &data->splice_error);
-  git_data_exit (data);
-}
-
-static void
-git_exit_cb (GObject    *obj,
-             GAsyncResult  *result,
-             gpointer       user_data)
-{
-  GitData *data = user_data;
-
-  g_subprocess_wait_check_finish (G_SUBPROCESS (obj), result, &data->error);
-  git_data_exit (data);
-}
-
 static gboolean
 git (GFile        *dir,
      char        **output,
      GError      **error,
-     const gchar  *argv1,
      ...)
 {
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
-  GPtrArray *args;
-  const gchar *arg;
-  GInputStream *in;
-  g_autoptr(GOutputStream) out = NULL;
-  g_autoptr(GMainLoop) loop = NULL;
+  gboolean res;
   va_list ap;
-  GitData data = {0};
 
-  args = g_ptr_array_new ();
-  g_ptr_array_add (args, "git");
-  va_start (ap, argv1);
-  g_ptr_array_add (args, (gchar *) argv1);
-  while ((arg = va_arg (ap, const gchar *)))
-    g_ptr_array_add (args, (gchar *) arg);
-  g_ptr_array_add (args, NULL);
+  va_start (ap, error);
+  res = xdg_app_spawn (dir, output, error, "git", ap);
   va_end (ap);
 
-  launcher = g_subprocess_launcher_new (0);
-
-  if (output)
-    g_subprocess_launcher_set_flags (launcher, G_SUBPROCESS_FLAGS_STDOUT_PIPE);
-
-  if (dir)
-    {
-      g_autofree char *path = g_file_get_path (dir);
-      g_subprocess_launcher_set_cwd (launcher, path);
-    }
-
-  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
-  g_ptr_array_free (args, TRUE);
-
-  if (subp == NULL)
-    return FALSE;
-
-  loop = g_main_loop_new (NULL, FALSE);
-
-  data.loop = loop;
-  data.refs = 1;
-
-  if (output)
-    {
-      data.refs++;
-      in = g_subprocess_get_stdout_pipe (subp);
-      out = g_memory_output_stream_new_resizable ();
-      g_output_stream_splice_async  (out,
-                                     in,
-                                     G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
-                                     0,
-                                     NULL,
-                                     git_output_spliced_cb,
-                                     &data);
-    }
-
-  g_subprocess_wait_async (subp, NULL, git_exit_cb, &data);
-
-  g_main_loop_run (loop);
-
-  if (data.error)
-    {
-      g_propagate_error (error, data.error);
-      g_clear_error (&data.splice_error);
-      return FALSE;
-    }
-
-  if (out)
-    {
-      if (data.splice_error)
-        {
-          g_propagate_error (error, data.splice_error);
-          return FALSE;
-        }
-
-      /* Null terminate */
-      g_output_stream_write (out, "\0", 1, NULL, NULL);
-      *output = g_memory_output_stream_steal_data (G_MEMORY_OUTPUT_STREAM (out));
-    }
-
-  return TRUE;
+  return res;
 }
 
 static GFile *

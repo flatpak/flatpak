@@ -313,81 +313,32 @@ builder_source_archive_download (BuilderSource *source,
 static gboolean
 tar (GFile *dir,
      GError **error,
-     const gchar            *argv1,
      ...)
 {
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
-  GPtrArray *args;
-  const gchar *arg;
+  gboolean res;
   va_list ap;
 
-  args = g_ptr_array_new ();
-  g_ptr_array_add (args, "tar");
-  va_start (ap, argv1);
-  g_ptr_array_add (args, (gchar *) argv1);
-  while ((arg = va_arg (ap, const gchar *)))
-    g_ptr_array_add (args, (gchar *) arg);
-  g_ptr_array_add (args, NULL);
+  va_start (ap, error);
+  res = xdg_app_spawn (dir, NULL, error, "tar", ap);
   va_end (ap);
 
-  launcher = g_subprocess_launcher_new (0);
-
-  if (dir)
-    {
-      g_autofree char *path = g_file_get_path (dir);
-      g_subprocess_launcher_set_cwd (launcher, path);
-    }
-
-  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
-  g_ptr_array_free (args, TRUE);
-
-  if (subp == NULL ||
-      !g_subprocess_wait_check (subp, NULL, error))
-    return FALSE;
-
-  return TRUE;
+  return res;
 }
 
 static gboolean
 unzip (GFile *dir,
        GError **error,
-       const gchar            *argv1,
-     ...)
+       ...)
 {
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
-  GPtrArray *args;
-  const gchar *arg;
+  gboolean res;
   va_list ap;
 
-  args = g_ptr_array_new ();
-  g_ptr_array_add (args, "unzip");
-  va_start (ap, argv1);
-  g_ptr_array_add (args, (gchar *) argv1);
-  while ((arg = va_arg (ap, const gchar *)))
-    g_ptr_array_add (args, (gchar *) arg);
-  g_ptr_array_add (args, NULL);
+  va_start (ap, error);
+  res = xdg_app_spawn (dir, NULL, error, "unzip", ap);
   va_end (ap);
 
-  launcher = g_subprocess_launcher_new (0);
-
-  if (dir)
-    {
-      g_autofree char *path = g_file_get_path (dir);
-      g_subprocess_launcher_set_cwd (launcher, path);
-    }
-
-  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
-  g_ptr_array_free (args, TRUE);
-
-  if (subp == NULL ||
-      !g_subprocess_wait_check (subp, NULL, error))
-    return FALSE;
-
-  return TRUE;
+  return res;
 }
-
 
 BuilderArchiveType
 get_type (GFile *archivefile)
