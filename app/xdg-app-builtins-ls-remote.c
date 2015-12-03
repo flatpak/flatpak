@@ -82,18 +82,10 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   g_hash_table_iter_init (&iter, refs);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      const char *refspec = key;
+      const char *ref = key;
       const char *checksum = value;
-      g_autofree char *remote = NULL;
-      g_autofree char *ref = NULL;
       char *name = NULL;
       char *p;
-
-      if (!ostree_parse_refspec (refspec, &remote, &ref, error))
-        return FALSE;
-
-      if (remote != NULL && !g_str_equal (remote, repository))
-        continue;
 
       if (opt_only_updates)
         {
