@@ -171,6 +171,8 @@ builder_source_bzr_download (BuilderSource *source,
       g_autofree char *filename_tmp = g_strconcat ("./", filename, ".clone_tmp", NULL);
       g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
 
+      g_print ("Getting bzr repo %s\n", self->url);
+
       if (!bzr (parent, NULL, error,
                 "branch", self->url,  filename_tmp, NULL) ||
           !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
@@ -178,6 +180,8 @@ builder_source_bzr_download (BuilderSource *source,
     }
   else
     {
+      g_print ("Updating bzr repo %s\n", self->url);
+
       if (!bzr (mirror_dir, NULL, error,
                 "pull", NULL))
         return FALSE;

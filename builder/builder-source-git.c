@@ -316,6 +316,8 @@ git_mirror_repo (const char *repo_url,
       g_autofree char *filename_tmp = g_strconcat (filename, ".clone_tmp", NULL);
       g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
 
+      g_print ("Cloning git repo %s\n", repo_url);
+
       if (!git (parent, NULL, error,
                 "clone", "--mirror", repo_url,  filename_tmp, NULL) ||
           !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
@@ -323,6 +325,7 @@ git_mirror_repo (const char *repo_url,
     }
   else
     {
+      g_print ("Fetching git repo %s\n", repo_url);
       if (!git (mirror_dir, NULL, error,
                 "fetch", NULL))
         return FALSE;
