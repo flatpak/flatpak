@@ -192,6 +192,8 @@ if test x$enable_documentation = xyes; then
 fi
 AM_CONDITIONAL(BUILD_DOCUMENTATION, test x$enable_documentation = xyes)
 
+GOBJECT_INTROSPECTION_CHECK([1.40.0])
+
 ##################################################
 # Visibility handling
 ##################################################

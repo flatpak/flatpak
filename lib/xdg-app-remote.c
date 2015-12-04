@@ -198,6 +198,17 @@ get_ref (XdgAppRemote *self,
                        NULL);
 }
 
+/**
+ * xdg_app_remote_list_refs:
+ * @self: a #XdgAppRemove
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists all the refs in a #XdgAppRemote.
+ *
+ * Returns: (transfer full) (array zero-terminated=1): a %NULL-terminated array
+ *   of #XdgAppRef instances
+ */
 XdgAppRef **
 xdg_app_remote_list_refs (XdgAppRemote *self,
                           GCancellable *cancellable,
