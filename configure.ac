@@ -194,6 +194,14 @@ AM_CONDITIONAL(BUILD_DOCUMENTATION, test x$enable_documentation = xyes)
 
 GOBJECT_INTROSPECTION_CHECK([1.40.0])
 
+# gtkdocize greps for ^GTK_DOC_CHECK, so we need to put it on its own line
+m4_ifdef([GTK_DOC_CHECK], [
+GTK_DOC_CHECK([1.20], [--flavour no-tmpl])
+],[
+enable_gtk_doc="disabled (no gtk-doc)"
+AM_CONDITIONAL([ENABLE_GTK_DOC], [false])
+])
+
 ##################################################
 # Visibility handling
 ##################################################
@@ -253,6 +261,7 @@ AC_SUBST(LT_CURRENT_MINUS_AGE)
 AC_CONFIG_FILES([
 Makefile
 doc/Makefile
+doc/reference/Makefile
 xdg-app.pc
 lib/xdg-app-version-macros.h
 ])

@@ -1,5 +1,7 @@
 NULL =
 
+SUBDIRS = reference
+
 XSLTPROC_FLAGS = \
 	--nonet 					\
 	--stringparam man.output.quietly 1 		\

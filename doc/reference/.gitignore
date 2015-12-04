@@ -1,0 +1,16 @@
+html/
+xml/
+*.stamp
+*.bak
+xdg-app-decl-list.txt
+xdg-app-decl.txt
+xdg-app-overrides.txt
+xdg-app-undeclared.txt
+xdg-app-undocumented.txt
+xdg-app-unused.txt
+xdg-app.args
+xdg-app.hierarchy
+xdg-app.interfaces
+xdg-app.prerequisites
+xdg-app.signals
+xdg-app.types

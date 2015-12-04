@@ -24,6 +24,21 @@ fi
 # Workaround automake bug with subdir-objects and computed paths
 sed -e 's,$(libglnx_srcpath),'${srcdir}/libglnx,g < libglnx/Makefile-libglnx.am >libglnx/Makefile-libglnx.am.inc
 
+GTKDOCIZE=$(which gtkdocize 2>/dev/null)
+if test -z $GTKDOCIZE; then
+    echo "*** You don't have gtk-doc installed, and thus won't be able to generate the documentation. ***"
+    rm -f gtk-doc.make
+    cat > gtk-doc.make <<EOF
+EXTRA_DIST =
+CLEANFILES =
+EOF
+else
+    # gtkdocize needs the macro directory to exist before
+    # we call autoreconf
+    mkdir m4
+    gtkdocize || exit $?
+fi
+
 autoreconf --force --install --verbose || exit $?
 
 cd "$olddir"
