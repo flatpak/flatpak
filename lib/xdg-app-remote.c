@@ -33,7 +33,7 @@ struct _XdgAppRemotePrivate
   char *name;
   char *url;
   char *title;
-  OstreeRepo *repo;
+  XdgAppDir *dir;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (XdgAppRemote, xdg_app_remote, G_TYPE_OBJECT)
@@ -53,8 +53,8 @@ xdg_app_remote_finalize (GObject *object)
   g_free (priv->name);
   g_free (priv->url);
   g_free (priv->title);
-  g_object_unref (priv->repo);
-  
+  g_object_unref (priv->dir);
+
   G_OBJECT_CLASS (xdg_app_remote_parent_class)->finalize (object);
 }
 
@@ -136,9 +136,10 @@ const char *
 xdg_app_remote_get_url (XdgAppRemote *self)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
+  OstreeRepo *repo = xdg_app_dir_get_repo (priv->dir);
 
   if (priv->url == NULL)
-    ostree_repo_remote_get_url (priv->repo, priv->name, &priv->url, NULL);
+    ostree_repo_remote_get_url (repo, priv->name, &priv->url, NULL);
 
   return priv->url;
 }
@@ -147,14 +148,9 @@ const char *
 xdg_app_remote_get_title (XdgAppRemote *self)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
-  GKeyFile *config;
 
   if (priv->title == NULL)
-    {
-      g_autofree char *group = g_strdup_printf ("remote \"%s\"", priv->name);
-      config = ostree_repo_get_config (priv->repo);
-      priv->title = g_key_file_get_string (config, group, "xa.title", NULL);
-    }
+    priv->title = xdg_app_dir_get_remote_title (priv->dir, priv->name);
 
   return priv->title ? priv->title : priv->name;
 }
@@ -163,9 +159,10 @@ gboolean
 xdg_app_remote_get_gpg_verify (XdgAppRemote *self)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
+  OstreeRepo *repo = xdg_app_dir_get_repo (priv->dir);
   gboolean res;
 
-  if (ostree_repo_remote_get_gpg_verify (priv->repo, priv->name, &res, NULL))
+  if (ostree_repo_remote_get_gpg_verify (repo, priv->name, &res, NULL))
     return res;
 
   return FALSE;
@@ -198,30 +195,28 @@ xdg_app_remote_list_refs (XdgAppRemote *self,
                           GCancellable *cancellable,
                           GError **error)
 {
+  XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GHashTable) ht = NULL;
-  const char *url;
-  g_autofree char *title = NULL;
   GHashTableIter iter;
   gpointer key;
   gpointer value;
 
-  url = xdg_app_remote_get_url (self);
-  g_print ("url: %s\n", url);
-  if (url)
+  if (!xdg_app_dir_list_remote_refs (priv->dir,
+                                     priv->name,
+                                     &ht,
+                                     cancellable,
+                                     error))
+    return NULL;
+
+  g_hash_table_iter_init (&iter, ht);
+  while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      if (!ostree_repo_load_summary (url, &ht, &title, cancellable, error))
-        return FALSE;
+      const char *refspec = key;
+      const char *checksum = value;
 
-      g_hash_table_iter_init (&iter, ht);
-      while (g_hash_table_iter_next (&iter, &key, &value))
-        {
-          const char *refspec = key;
-          const char *checksum = value;
-
-          g_ptr_array_add (refs,
-                           get_ref (self, refspec, checksum));
-        }
+      g_ptr_array_add (refs,
+                       get_ref (self, refspec, checksum));
     }
 
   g_ptr_array_add (refs, NULL);
@@ -230,16 +225,16 @@ xdg_app_remote_list_refs (XdgAppRemote *self,
 
 
 XdgAppRemote *
-xdg_app_remote_new (OstreeRepo *repo,
+xdg_app_remote_new (XdgAppDir *dir,
                     const char *name)
 {
   XdgAppRemotePrivate *priv;
   XdgAppRemote *self = g_object_new (XDG_APP_TYPE_REMOTE,
-                                       "name", name,
-                                       NULL);
+                                     "name", name,
+                                     NULL);
 
   priv = xdg_app_remote_get_instance_private (self);
-  priv->repo = g_object_ref (repo);
+  priv->dir = g_object_ref (dir);
 
   return self;
 }

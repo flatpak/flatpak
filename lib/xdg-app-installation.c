@@ -251,10 +251,8 @@ xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
     return NULL;
 
   for (i = 0; raw_refs[i] != NULL; i++)
-    {
-      g_ptr_array_add (refs,
-                       get_ref (self, raw_refs[i], cancellable));
-    }
+    g_ptr_array_add (refs,
+                     get_ref (self, raw_refs[i], cancellable));
 
   g_ptr_array_add (refs, NULL);
   return (XdgAppInstalledRef **)g_ptr_array_free (g_steal_pointer (&refs), FALSE);
@@ -268,24 +266,15 @@ xdg_app_installation_list_remotes (XdgAppInstallation  *self,
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_auto(GStrv) remote_names = NULL;
   g_autoptr(GPtrArray) remotes = g_ptr_array_new_with_free_func (g_object_unref);
-  guint n_remotes;
-  OstreeRepo *repo;
   int i;
 
-  if (!xdg_app_dir_ensure_repo (priv->dir, cancellable, error))
-    return FALSE;
+  remote_names = xdg_app_dir_list_remotes (priv->dir, cancellable, error);
+  if (remote_names == NULL)
+    return NULL;
 
-  repo = xdg_app_dir_get_repo (priv->dir);
-  remote_names = ostree_repo_remote_list (repo, &n_remotes);
-
-  if (remote_names)
-    {
-      for (i = 0; remote_names[i] != NULL; i++)
-        {
-          g_ptr_array_add (remotes,
-                           xdg_app_remote_new (repo, remote_names[i]));
-        }
-    }
+  for (i = 0; remote_names[i] != NULL; i++)
+    g_ptr_array_add (remotes,
+                     xdg_app_remote_new (priv->dir, remote_names[i]));
 
   g_ptr_array_add (remotes, NULL);
   return (XdgAppRemote **)g_ptr_array_free (g_steal_pointer (&remotes), FALSE);

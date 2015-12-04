@@ -26,8 +26,9 @@
 #define __XDG_APP_REMOTE_PRIVATE_H__
 
 #include <xdg-app-remote.h>
+#include <xdg-app-dir.h>
 #include <ostree.h>
 
-XdgAppRemote *xdg_app_remote_new (OstreeRepo *repo, const char *name);
+XdgAppRemote *xdg_app_remote_new (XdgAppDir *dir, const char *name);
 
 #endif /* __XDG_APP_REMOTE_PRIVATE_H__ */
