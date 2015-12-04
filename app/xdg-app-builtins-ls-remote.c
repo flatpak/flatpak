@@ -49,9 +49,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
-  OstreeRepo *repo = NULL;
   g_autoptr(GHashTable) refs = NULL;
-  g_autofree char *title = NULL;
   GHashTableIter iter;
   gpointer key;
   gpointer value;
@@ -70,11 +68,11 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
   repository = argv[1];
 
-  repo = xdg_app_dir_get_repo (dir);
-  if (!ostree_repo_remote_get_url (repo, repository, &url, error))
-    return FALSE;
 
-  if (!ostree_repo_load_summary (url, &refs, &title, cancellable, error))
+  if (!xdg_app_dir_list_remote_refs (dir,
+                                     repository,
+                                     &refs,
+                                     cancellable, error))
     return FALSE;
 
   names = g_ptr_array_new_with_free_func (g_free);
@@ -131,19 +129,19 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
       if (name)
         {
-	  gboolean found = FALSE;
+          gboolean found = FALSE;
 
           for (i = 0; i < names->len; i++)
             {
               if (strcmp (name, g_ptr_array_index (names, i)) == 0)
-		found = TRUE;
+                found = TRUE;
               break;
             }
 
-	  if (!found)
+          if (!found)
             g_ptr_array_add (names, name);
-	  else
-	    g_free (name);
+          else
+            g_free (name);
         }
     }
 

@@ -49,7 +49,7 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(XdgAppDir) user_dir = NULL;
   g_autoptr(XdgAppDir) system_dir = NULL;
   XdgAppDir *dirs[2] = { 0 };
-  guint ii, n_remotes = 0, n_dirs = 0, j;
+  guint i = 0, n_dirs = 0, j;
   XdgAppTablePrinter *printer;
 
   context = g_option_context_new (" - List remote repositories");
@@ -80,30 +80,25 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   for (j = 0; j < n_dirs; j++)
     {
       XdgAppDir *dir = dirs[j];
-      GKeyFile *config;
       g_auto(GStrv) remotes = NULL;
 
-      if (!xdg_app_dir_ensure_repo (dir, cancellable, NULL))
-        continue;
+      remotes = xdg_app_dir_list_remotes (dir, cancellable, error);
+      if (remotes == NULL)
+        return FALSE;
 
-      config = ostree_repo_get_config (xdg_app_dir_get_repo (dir));
-      remotes = ostree_repo_remote_list (xdg_app_dir_get_repo (dir), &n_remotes);
-
-      for (ii = 0; ii < n_remotes; ii++)
+      for (i = 0; remotes[i] != NULL; i++)
         {
+          char *remote_name = remotes[i];
+
           if (opt_show_details)
             {
-              char *remote_name = remotes[ii];
               g_autofree char *remote_url = NULL;
-              g_autofree char *group = NULL;
               g_autofree char *title = NULL;
               gboolean gpg_verify = TRUE;
 
-              group = g_strdup_printf ("remote \"%s\"", remote_name);
-
               xdg_app_table_printer_add_column (printer, remote_name);
 
-              title = g_key_file_get_string (config, group, "xa.title", NULL);
+              title = xdg_app_dir_get_remote_title (dir, remote_name);
               if (title)
                 xdg_app_table_printer_add_column (printer, title);
               else
@@ -124,7 +119,7 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
                 xdg_app_table_printer_append_with_comma (printer, dir == user_dir ? "user" : "system");
             }
           else
-            xdg_app_table_printer_add_column (printer, remotes[ii]);
+            xdg_app_table_printer_add_column (printer, remote_name);
 
           xdg_app_table_printer_finish_row (printer);
         }
