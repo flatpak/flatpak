@@ -172,9 +172,6 @@ xdg_app_builtin_add_remote (int argc, char **argv,
 
   optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
-  if (!ostree_repo_load_summary (remote_url, &refs, &title, cancellable, error))
-    return FALSE;
-
   if (opt_no_gpg_verify)
     g_variant_builder_add (optbuilder, "{s@v}",
                            "gpg-verify",
@@ -198,6 +195,25 @@ xdg_app_builtin_add_remote (int argc, char **argv,
                                   g_variant_builder_end (optbuilder),
                                   cancellable, error))
     return FALSE;
+
+  if (title == NULL)
+    {
+      title = xdg_app_dir_fetch_remote_title (dir,
+                                              remote_name,
+                                              NULL,
+                                              NULL);
+      if (title)
+        {
+          g_autoptr(GKeyFile) config = NULL;
+          g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
+
+          config = ostree_repo_copy_config (xdg_app_dir_get_repo (dir));
+          g_key_file_set_string (config, group, "xa.title", title);
+
+          if (!ostree_repo_write_config (xdg_app_dir_get_repo (dir), config, error))
+            return FALSE;
+        }
+    }
 
   if (!import_keys (dir, remote_name, cancellable, error))
     return FALSE;

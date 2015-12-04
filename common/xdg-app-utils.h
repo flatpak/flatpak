@@ -73,12 +73,6 @@ gboolean xdg_app_remove_dangling_symlinks (GFile    *dir,
                                            GCancellable  *cancellable,
                                            GError       **error);
 
-gboolean ostree_repo_load_summary (const char *repository_url,
-                                   GHashTable **refs,
-                                   gchar **title,
-                                   GCancellable *cancellable,
-                                   GError **error);
-
 gboolean xdg_app_supports_bundles (OstreeRepo *repo);
 
 void  xdg_app_invocation_lookup_app_id        (GDBusMethodInvocation  *invocation,

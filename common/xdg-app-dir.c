@@ -2015,3 +2015,52 @@ xdg_app_dir_list_remote_refs (XdgAppDir *self,
 
   return TRUE;
 }
+
+char *
+xdg_app_dir_fetch_remote_title (XdgAppDir *self,
+                                const char *remote,
+                                GCancellable *cancellable,
+                                GError **error)
+{
+  g_autoptr(GError) my_error = NULL;
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) extensions = NULL;
+  GVariantDict dict;
+  g_autofree char *title = NULL;
+
+  if (error == NULL)
+    error = &my_error;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  if (!ostree_repo_remote_fetch_summary (self->repo, remote,
+                                         &summary_bytes, NULL,
+                                         cancellable, error))
+    return FALSE;
+
+  if (summary_bytes == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Remote title not available; server has no summary file");
+      return FALSE;
+    }
+
+  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                      summary_bytes, FALSE);
+  extensions = g_variant_get_child_value (summary, 1);
+
+  g_variant_dict_init (&dict, extensions);
+  g_variant_dict_lookup (&dict, "xa.title", "s", &title);
+  g_variant_dict_end (&dict);
+
+  if (title == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Remote title not set");
+      return FALSE;
+    }
+
+  return g_steal_pointer (&title);
+}

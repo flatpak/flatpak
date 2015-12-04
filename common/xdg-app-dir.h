@@ -181,5 +181,9 @@ gboolean   xdg_app_dir_list_remote_refs (XdgAppDir *self,
                                          GHashTable **refs,
                                          GCancellable *cancellable,
                                          GError **error);
+char *   xdg_app_dir_fetch_remote_title (XdgAppDir *self,
+                                         const char *remote,
+                                         GCancellable *cancellable,
+                                         GError **error);
 
 #endif /* __XDG_APP_DIR_H__ */
