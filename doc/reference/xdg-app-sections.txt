@@ -21,6 +21,17 @@ XDG_APP_TYPE_INSTALLED_REF
 </SECTION>
 
 <SECTION>
+<FILE>xdg-app-remote-ref</FILE>
+<TITLE>XdgAppRemoteRef</TITLE>
+XdgAppRemoteRef
+XdgAppRemoteRefClass
+<SUBSECTION Standard>
+XDG_APP_IS_REMOTE_REF
+XDG_APP_REMOTE_REF
+XDG_APP_TYPE_REMOTE_REF
+</SECTION>
+
+<SECTION>
 <FILE>xdg-app-ref</FILE>
 <TITLE>XdgAppRef</TITLE>
 XdgAppRef
