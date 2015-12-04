@@ -327,7 +327,7 @@ git_mirror_repo (const char *repo_url,
     {
       g_print ("Fetching git repo %s\n", repo_url);
       if (!git (mirror_dir, NULL, error,
-                "fetch", NULL))
+                "fetch", "-p", NULL))
         return FALSE;
     }
 
