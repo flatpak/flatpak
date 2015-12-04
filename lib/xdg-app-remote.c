@@ -31,8 +31,6 @@ typedef struct _XdgAppRemotePrivate XdgAppRemotePrivate;
 struct _XdgAppRemotePrivate
 {
   char *name;
-  char *url;
-  char *title;
   XdgAppDir *dir;
 };
 
@@ -51,8 +49,6 @@ xdg_app_remote_finalize (GObject *object)
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
 
   g_free (priv->name);
-  g_free (priv->url);
-  g_free (priv->title);
   g_object_unref (priv->dir);
 
   G_OBJECT_CLASS (xdg_app_remote_parent_class)->finalize (object);
@@ -132,27 +128,25 @@ xdg_app_remote_get_name (XdgAppRemote *self)
   return priv->name;
 }
 
-const char *
+char *
 xdg_app_remote_get_url (XdgAppRemote *self)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
   OstreeRepo *repo = xdg_app_dir_get_repo (priv->dir);
+  char *url;
 
-  if (priv->url == NULL)
-    ostree_repo_remote_get_url (repo, priv->name, &priv->url, NULL);
+  if (ostree_repo_remote_get_url (repo, priv->name, &url, NULL))
+    return url;
 
-  return priv->url;
+  return NULL;
 }
 
-const char *
+char *
 xdg_app_remote_get_title (XdgAppRemote *self)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
 
-  if (priv->title == NULL)
-    priv->title = xdg_app_dir_get_remote_title (priv->dir, priv->name);
-
-  return priv->title ? priv->title : priv->name;
+  return xdg_app_dir_get_remote_title (priv->dir, priv->name);
 }
 
 gboolean
