@@ -174,6 +174,20 @@ get_ref (XdgAppInstallation *self,
                                     is_current);
 }
 
+/**
+ * xdg_app_installation_get_installed_ref:
+ * @self: a #XdgAppInstallation
+ * @kind: ...
+ * @name: ...
+ * @arch: ...
+ * @version: ...
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * ...
+ *
+ * Returns: (transfer full): ...
+ */
 XdgAppInstalledRef *
 xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
                                         XdgAppRefKind kind,
@@ -208,6 +222,17 @@ xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
   return get_ref (self, ref, cancellable);
 }
 
+/**
+ * xdg_app_installation_get_current_installed_app:
+ * @self: a #XdgAppInstallation
+ * @name: the name of the app
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * ...
+ *
+ * Returns: (transfer full): ...
+ */
 XdgAppInstalledRef *
 xdg_app_installation_get_current_installed_app (XdgAppInstallation *self,
                                                 const char *name,
@@ -233,6 +258,18 @@ xdg_app_installation_get_current_installed_app (XdgAppInstallation *self,
   return get_ref (self, current, cancellable);
 }
 
+/**
+ * xdg_app_installation_list_installed_refs:
+ * @self: a #XdgAppInstallation
+ * @kind: the kind of installation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the installed references.
+ *
+ * Returns: (transfer full) (array zero-terminated=1): an array of
+ *   #XdgAppInstalledRef instances
+ */
 XdgAppInstalledRef **
 xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
                                           XdgAppRefKind kind,
@@ -260,6 +297,17 @@ xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
   return (XdgAppInstalledRef **)g_ptr_array_free (g_steal_pointer (&refs), FALSE);
 }
 
+/**
+ * xdg_app_installation_list_remotes:
+ * @self: a #XdgAppInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the remotes.
+ *
+ * Returns: (transfer full) (array zero-terminated=1): an array of
+ *   #XdgAppRemote instances
+ */
 XdgAppRemote **
 xdg_app_installation_list_remotes (XdgAppInstallation  *self,
                                    GCancellable        *cancellable,
