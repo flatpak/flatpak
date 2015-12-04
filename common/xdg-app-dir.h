@@ -171,9 +171,15 @@ gboolean    xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
 					       GHashTable *hash,
 					       GCancellable *cancellable,
 					       GError **error);
-
-
-
-
+char     **xdg_app_dir_list_remotes     (XdgAppDir *self,
+                                         GCancellable *cancellable,
+                                         GError **error);
+char      *xdg_app_dir_get_remote_title (XdgAppDir *self,
+                                         const char *remote_name);
+gboolean   xdg_app_dir_list_remote_refs (XdgAppDir *self,
+                                         const char *remote,
+                                         GHashTable **refs,
+                                         GCancellable *cancellable,
+                                         GError **error);
 
 #endif /* __XDG_APP_DIR_H__ */

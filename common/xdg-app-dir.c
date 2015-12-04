@@ -1963,3 +1963,55 @@ xdg_app_dir_get (gboolean user)
   else
     return xdg_app_dir_get_system ();
 }
+
+char *
+xdg_app_dir_get_remote_title (XdgAppDir *self,
+                              const char *remote_name)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+  g_autofree char *group = NULL;
+
+  group = g_strdup_printf ("remote \"%s\"", remote_name);
+  if (config)
+    return g_key_file_get_string (config, group, "xa.title", NULL);
+
+  return NULL;
+}
+
+char **
+xdg_app_dir_list_remotes (XdgAppDir *self,
+                          GCancellable *cancellable,
+                          GError **error)
+{
+  char **res;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  res = ostree_repo_remote_list (self->repo, NULL);
+  if (res == NULL)
+    res = g_new0 (char *, 1); /* Return empty array, not error */
+
+  return res;
+}
+
+gboolean
+xdg_app_dir_list_remote_refs (XdgAppDir *self,
+                              const char *remote,
+                              GHashTable **refs,
+                              GCancellable *cancellable,
+                              GError **error)
+{
+  g_autoptr(GError) my_error = NULL;
+  if (error == NULL)
+    error = &my_error;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_remote_list_refs (self->repo, remote,
+                                     refs, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
