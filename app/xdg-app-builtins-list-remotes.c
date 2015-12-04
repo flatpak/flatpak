@@ -115,6 +115,9 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
               if (!gpg_verify)
                 xdg_app_table_printer_append_with_comma (printer, "no-gpg-verify");
 
+              if (xdg_app_dir_get_remote_noenumerate (dir, remote_name))
+                xdg_app_table_printer_append_with_comma (printer, "no-enumerate");
+
               if (opt_user && opt_system)
                 xdg_app_table_printer_append_with_comma (printer, dir == user_dir ? "user" : "system");
             }

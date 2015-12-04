@@ -447,8 +447,20 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
 
   if (remote)
     {
+      g_autoptr(GVariantBuilder) optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+      g_autofree char *basename = g_file_get_basename (file);
+      g_autofree char *title = g_strdup_printf ("Origin from bundle %s", basename);
+
+      g_variant_builder_add (optbuilder, "{s@v}",
+                             "xa.title",
+                             g_variant_new_variant (g_variant_new_string (title)));
+
+      g_variant_builder_add (optbuilder, "{s@v}",
+                             "xa.noenumerate",
+                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
       if (!ostree_repo_remote_add (repo,
-                                   remote, origin, /* options */ NULL, cancellable, error))
+                                   remote, origin, g_variant_builder_end (optbuilder), cancellable, error))
         goto out;
 
       added_remote = TRUE;

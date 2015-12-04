@@ -98,6 +98,26 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-enumerate</option></term>
+
+                <listitem><para>
+                    Mark the remote as not enumerated. This means the remote will
+                    not be used to list applications, for instance in graphical
+                    installation tools.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--enumerate</option></term>
+
+                <listitem><para>
+                    Mark the remote as enumerated. This means the remote will
+                    be used to list applications, for instance in graphical
+                    installation tools.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--title=TITLE</option></term>
 
                 <listitem><para>

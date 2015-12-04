@@ -36,6 +36,8 @@
 
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
+static gboolean opt_do_enumerate;
+static gboolean opt_no_enumerate;
 static gboolean opt_if_not_exists;
 static char *opt_title;
 static char *opt_url;
@@ -49,12 +51,14 @@ static GOptionEntry add_options[] = {
 
 static GOptionEntry modify_options[] = {
   { "gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_do_gpg_verify, "Enable GPG verification", NULL },
+  { "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, "Mark the remote as enumerate", NULL },
   { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url, "Set a new url", NULL },
   { NULL }
 };
 
 static GOptionEntry common_options[] = {
   { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, "Disable GPG verification", NULL },
+  { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, "Mark the remote as don't enumerate", NULL },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this remote", "TITLE" },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, "Import GPG key from FILE (- for stdin)", "FILE" },
   { "gpg-key", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_import, "Optionally only import the named key(s) from the keyring files", "KEY" },
@@ -177,6 +181,11 @@ xdg_app_builtin_add_remote (int argc, char **argv,
                            "gpg-verify",
                            g_variant_new_variant (g_variant_new_boolean (FALSE)));
 
+  if (opt_no_gpg_verify)
+    g_variant_builder_add (optbuilder, "{s@v}",
+                           "xa.noenumerate",
+                           g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
   if (opt_title)
     {
       g_free (title);
@@ -263,6 +272,12 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   if (opt_title)
     g_key_file_set_string (config, group, "xa.title", opt_title);
+
+  if (opt_no_enumerate)
+    g_key_file_set_boolean (config, group, "xa.noenumerate", TRUE);
+
+  if (opt_do_enumerate)
+    g_key_file_set_boolean (config, group, "xa.noenumerate", FALSE);
 
   if (!ostree_repo_write_config (xdg_app_dir_get_repo (dir), config, error))
     return FALSE;

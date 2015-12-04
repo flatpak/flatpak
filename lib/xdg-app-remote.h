@@ -52,6 +52,7 @@ XDG_APP_EXTERN const char *  xdg_app_remote_get_url        (XdgAppRemote *self);
 XDG_APP_EXTERN const char *  xdg_app_remote_get_name       (XdgAppRemote *self);
 XDG_APP_EXTERN const char *  xdg_app_remote_get_title      (XdgAppRemote *self);
 XDG_APP_EXTERN gboolean      xdg_app_remote_get_gpg_verify (XdgAppRemote *self);
+XDG_APP_EXTERN gboolean      xdg_app_remote_get_noenumerate (XdgAppRemote *self);
 
 XDG_APP_EXTERN XdgAppRef **  xdg_app_remote_list_refs      (XdgAppRemote *self,
                                                             GCancellable *cancellable,

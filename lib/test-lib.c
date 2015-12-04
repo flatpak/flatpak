@@ -84,11 +84,12 @@ main (int argc, char *argv[])
 
   for (i = 0; remotes[i] != NULL; i++)
     {
-      g_print ("%s %s %s %d\n",
+      g_print ("%s %s %s %d %d\n",
                xdg_app_remote_get_name (remotes[i]),
                xdg_app_remote_get_url (remotes[i]),
                xdg_app_remote_get_title (remotes[i]),
-               xdg_app_remote_get_gpg_verify (remotes[i]));
+               xdg_app_remote_get_gpg_verify (remotes[i]),
+               xdg_app_remote_get_noenumerate (remotes[i]));
 
       refs = xdg_app_remote_list_refs (remotes[i],
                                        NULL, NULL);

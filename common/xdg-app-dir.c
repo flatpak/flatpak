@@ -1964,18 +1964,36 @@ xdg_app_dir_get (gboolean user)
     return xdg_app_dir_get_system ();
 }
 
+static char *
+get_group (const char *remote_name)
+{
+  return g_strdup_printf ("remote \"%s\"", remote_name);
+}
+
 char *
 xdg_app_dir_get_remote_title (XdgAppDir *self,
                               const char *remote_name)
 {
   GKeyFile *config = ostree_repo_get_config (self->repo);
-  g_autofree char *group = NULL;
+  g_autofree char *group = get_group (remote_name);
 
-  group = g_strdup_printf ("remote \"%s\"", remote_name);
   if (config)
     return g_key_file_get_string (config, group, "xa.title", NULL);
 
   return NULL;
+}
+
+gboolean
+xdg_app_dir_get_remote_noenumerate (XdgAppDir *self,
+                                    const char *remote_name)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_boolean (config, group, "xa.noenumerate", NULL);
+
+  return TRUE;
 }
 
 char **
