@@ -25,6 +25,7 @@ missing
 stamp-h1
 config.h.in
 stamp-*
+gtk-doc.make
 xdg-app
 xdg-app-helper
 xdg-app-session-helper
