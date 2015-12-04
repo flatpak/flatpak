@@ -53,7 +53,8 @@ libxdg_app_la_SOURCES = \
 libxdg_app_la_CFLAGS = \
 	$(HIDDEN_VISIBILITY_CFLAGS)		\
 	-DXDG_APP_COMPILATION \
-	-I$(srcdir)/lib \
+	-I$(top_srcdir)/lib \
+	-I$(top_builddir)/lib \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
@@ -79,7 +80,8 @@ test_libxdg_app_SOURCES = \
 
 test_libxdg_app_CFLAGS = \
 	$(BASE_CFLAGS) \
-	-I$(srcdir)/lib \
+	-I$(top_srcdir)/lib \
+	-I$(top_builddir)/lib \
 	$(NULL)
 
 test_libxdg_app_LDADD = \
