@@ -18,21 +18,16 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __XDG_APP_H__
-#define __XDG_APP_H__
+#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#error "Only <xdg-app.h> can be included remote_refectly."
+#endif
 
-#define __XDG_APP_H_INSIDE__
+#ifndef __XDG_APP_REMOTE_REF_PRIVATE_H__
+#define __XDG_APP_REMOTE_REF_PRIVATE_H__
 
-#include <gio/gio.h>
-
-#include <xdg-app-version-macros.h>
-#include <xdg-app-enum-types.h>
-#include <xdg-app-ref.h>
-#include <xdg-app-installed-ref.h>
 #include <xdg-app-remote-ref.h>
-#include <xdg-app-remote.h>
-#include <xdg-app-installation.h>
 
-#undef __XDG_APP_H_INSIDE__
+XdgAppRemoteRef *xdg_app_remote_ref_new (const char *full_ref,
+                                         const char *commit);
 
-#endif /* __XDG_APP_H__ */
+#endif /* __XDG_APP_REMOTE_REF_PRIVATE_H__ */

@@ -5,7 +5,7 @@ main (int argc, char *argv[])
 {
   XdgAppInstallation *installation;
   XdgAppInstalledRef **apps;
-  XdgAppRef **refs;
+  XdgAppRemoteRef **refs;
   XdgAppInstalledRef *app1;
   XdgAppInstalledRef *app2;
   XdgAppInstalledRef **runtimes;
@@ -98,11 +98,11 @@ main (int argc, char *argv[])
           for (j = 0; refs[j] != NULL; j++)
             {
               g_print ("%d %s %s %s %s\n",
-                       xdg_app_ref_get_kind (refs[j]),
-                       xdg_app_ref_get_name (refs[j]),
-                       xdg_app_ref_get_arch (refs[j]),
-                       xdg_app_ref_get_version (refs[j]),
-                       xdg_app_ref_get_commit (refs[j]));
+                       xdg_app_ref_get_kind (XDG_APP_REF(refs[j])),
+                       xdg_app_ref_get_name (XDG_APP_REF(refs[j])),
+                       xdg_app_ref_get_arch (XDG_APP_REF(refs[j])),
+                       xdg_app_ref_get_version (XDG_APP_REF(refs[j])),
+                       xdg_app_ref_get_commit (XDG_APP_REF(refs[j])));
             }
         }
     }

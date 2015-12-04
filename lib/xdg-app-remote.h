@@ -28,7 +28,7 @@
 typedef struct XdgAppRemote XdgAppRemote;
 
 #include <gio/gio.h>
-#include <xdg-app-ref.h>
+#include <xdg-app-remote-ref.h>
 
 #define XDG_APP_TYPE_REMOTE xdg_app_remote_get_type()
 #define XDG_APP_REMOTE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_REMOTE, XdgAppRemote))
@@ -54,7 +54,7 @@ XDG_APP_EXTERN char *        xdg_app_remote_get_title      (XdgAppRemote *self);
 XDG_APP_EXTERN gboolean      xdg_app_remote_get_gpg_verify (XdgAppRemote *self);
 XDG_APP_EXTERN gboolean      xdg_app_remote_get_noenumerate (XdgAppRemote *self);
 
-XDG_APP_EXTERN XdgAppRef **  xdg_app_remote_list_refs      (XdgAppRemote *self,
+XDG_APP_EXTERN XdgAppRemoteRef **xdg_app_remote_list_refs  (XdgAppRemote *self,
                                                             GCancellable *cancellable,
                                                             GError **error);
 

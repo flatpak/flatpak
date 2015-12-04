@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "xdg-app-remote-private.h"
+#include "xdg-app-remote-ref-private.h"
 #include "xdg-app-enum-types.h"
 #include "xdg-app-utils.h"
 
@@ -170,28 +171,6 @@ xdg_app_remote_get_gpg_verify (XdgAppRemote *self)
   return FALSE;
 }
 
-static XdgAppRef *
-get_ref (XdgAppRemote *self,
-         const char *full_ref,
-         const char *commit)
-{
-  g_auto(GStrv) parts = NULL;
-  XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
-
-  parts = g_strsplit (full_ref, "/", -1);
-
-  if (strcmp (parts[0], "app") != 0)
-    kind = XDG_APP_REF_KIND_RUNTIME;
-
-  return g_object_new (XDG_APP_TYPE_REF,
-                       "kind", kind,
-                       "name", parts[1],
-                       "arch", parts[2],
-                       "version", parts[3],
-                       "commit", commit,
-                       NULL);
-}
-
 /**
  * xdg_app_remote_list_refs:
  * @self: a #XdgAppRemove
@@ -201,9 +180,9 @@ get_ref (XdgAppRemote *self,
  * Lists all the refs in a #XdgAppRemote.
  *
  * Returns: (transfer full) (array zero-terminated=1): a %NULL-terminated array
- *   of #XdgAppRef instances
+ *   of #XdgAppRemoteRef instances
  */
-XdgAppRef **
+XdgAppRemoteRef **
 xdg_app_remote_list_refs (XdgAppRemote *self,
                           GCancellable *cancellable,
                           GError **error)
@@ -229,11 +208,11 @@ xdg_app_remote_list_refs (XdgAppRemote *self,
       const char *checksum = value;
 
       g_ptr_array_add (refs,
-                       get_ref (self, refspec, checksum));
+                       xdg_app_remote_ref_new (refspec, checksum));
     }
 
   g_ptr_array_add (refs, NULL);
-  return (XdgAppRef **)g_ptr_array_free (g_steal_pointer (&refs), FALSE);
+  return (XdgAppRemoteRef **)g_ptr_array_free (g_steal_pointer (&refs), FALSE);
 }
 
 
