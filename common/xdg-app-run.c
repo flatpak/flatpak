@@ -1062,7 +1062,6 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
       const char *display_nr_end = display_nr;
       g_autofree char *d = NULL;
       g_autofree char *tmp_path = NULL;
-      g_autofree char *path = NULL;
       int fd;
       FILE *output;
 
