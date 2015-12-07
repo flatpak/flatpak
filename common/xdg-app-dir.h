@@ -23,10 +23,7 @@
 
 #include <ostree.h>
 
-#include <xdg-app-run.h>
-
-typedef struct XdgAppDir XdgAppDir;
-typedef struct XdgAppDeploy XdgAppDeploy;
+#include <xdg-app-common-types.h>
 
 #define XDG_APP_TYPE_DIR xdg_app_dir_get_type()
 #define XDG_APP_DIR(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_DIR, XdgAppDir))

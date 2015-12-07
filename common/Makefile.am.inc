@@ -21,6 +21,7 @@ $(systemd_dbus_built_sources) : data/org.freedesktop.systemd1.xml
 		$(NULL)
 
 libxdgapp_common_la_SOURCES = \
+	common/xdg-app-common-types.h \
 	common/xdg-app-dir.c \
 	common/xdg-app-dir.h \
 	common/xdg-app-run.c \

@@ -30,6 +30,7 @@
 
 #include "xdg-app-dir.h"
 #include "xdg-app-utils.h"
+#include "xdg-app-run.h"
 
 #include "errno.h"
 
