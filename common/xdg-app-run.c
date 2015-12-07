@@ -1316,7 +1316,6 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
 void
 xdg_app_run_add_environment_args (GPtrArray *argv_array,
 				  GPtrArray *dbus_proxy_argv,
-                                  const char  *doc_mount_path,
                                   const char *app_id,
                                   XdgAppContext *context,
                                   GFile *app_id_dir)
@@ -1389,13 +1388,6 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
           g_ptr_array_add (argv_array, g_strdup ("-B"));
           g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", dest, src));
         }
-    }
-
-  if (doc_mount_path && app_id)
-    {
-      g_ptr_array_add (argv_array, g_strdup ("-b"));
-      g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/doc=%s/by-app/%s",
-                                                    getuid(), doc_mount_path, app_id));
     }
 
   g_hash_table_iter_init (&iter, context->filesystems);
@@ -1840,10 +1832,239 @@ xdg_app_run_in_transient_unit (const char *appid)
 }
 
 static void
+add_font_path_args (GPtrArray *argv_array)
+{
+  g_autoptr(GFile) home = NULL;
+  g_autoptr(GFile) user_font1 = NULL;
+  g_autoptr(GFile) user_font2 = NULL;
+
+  g_ptr_array_add (argv_array, g_strdup ("-b"));
+  g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/fonts=%s", SYSTEM_FONTS_DIR));
+
+  home = g_file_new_for_path (g_get_home_dir ());
+  user_font1 = g_file_resolve_relative_path (home, ".local/share/fonts");
+  user_font2 = g_file_resolve_relative_path (home, ".fonts");
+
+  if (g_file_query_exists (user_font1, NULL))
+    {
+      g_autofree char *path = g_file_get_path (user_font1);
+      g_ptr_array_add (argv_array, g_strdup ("-b"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/user-fonts=%s", path));
+    }
+  else if (g_file_query_exists (user_font2, NULL))
+    {
+      g_autofree char *path = g_file_get_path (user_font2);
+      g_ptr_array_add (argv_array, g_strdup ("-b"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/user-fonts=%s", path));
+    }
+}
+
+static void
+add_default_permissions (XdgAppContext *app_context)
+{
+  xdg_app_context_set_session_bus_policy (app_context,
+                                          "org.freedesktop.portal.Documents",
+                                          XDG_APP_POLICY_TALK);
+}
+
+static XdgAppContext *
+compute_permissions (GKeyFile *app_metadata,
+                     GKeyFile *runtime_metadata,
+                     GError **error)
+{
+  g_autoptr(XdgAppContext) app_context = NULL;
+
+  app_context = xdg_app_context_new ();
+
+  add_default_permissions (app_context);
+
+  if (!xdg_app_context_load_metadata (app_context, runtime_metadata, error))
+    return NULL;
+
+  if (!xdg_app_context_load_metadata (app_context, app_metadata, error))
+    return NULL;
+
+  return g_steal_pointer (&app_context);
+}
+
+static gboolean
+add_app_info_args (GPtrArray *argv_array,
+                   const char *app_id,
+                   const char *runtime_ref,
+                   XdgAppContext *final_app_context,
+                   GError **error)
+{
+  g_autofree char *tmp_path = NULL;
+  int fd;
+
+  fd = g_file_open_tmp ("xdg-app-context-XXXXXX", &tmp_path, NULL);
+  if (fd >= 0)
+    {
+      g_autoptr(GKeyFile) keyfile = NULL;
+
+      close (fd);
+
+      keyfile = g_key_file_new ();
+
+      g_key_file_set_string (keyfile, "Application", "name", app_id);
+      g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
+
+      xdg_app_context_save_metadata (final_app_context, keyfile);
+
+      if (!g_key_file_save_to_file (keyfile, tmp_path, error))
+        return FALSE;
+
+      g_ptr_array_add (argv_array, g_strdup ("-M"));
+      g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/xdg-app-info=%s", getuid(), tmp_path));
+    }
+
+  return TRUE;
+}
+
+static void
+add_app_id_dir_links_args (GPtrArray *argv_array,
+                           GFile *app_id_dir)
+{
+  g_autoptr(GFile) app_cache_dir = NULL;
+  g_autoptr(GFile) app_data_dir = NULL;
+  g_autoptr(GFile) app_config_dir = NULL;
+
+  app_cache_dir = g_file_get_child (app_id_dir, "cache");
+  g_ptr_array_add (argv_array, g_strdup ("-B"));
+  g_ptr_array_add (argv_array, g_strdup_printf ("/var/cache=%s", gs_file_get_path_cached (app_cache_dir)));
+
+  app_data_dir = g_file_get_child (app_id_dir, "data");
+  g_ptr_array_add (argv_array, g_strdup ("-B"));
+  g_ptr_array_add (argv_array, g_strdup_printf ("/var/data=%s", gs_file_get_path_cached (app_data_dir)));
+
+  app_config_dir = g_file_get_child (app_id_dir, "config");
+  g_ptr_array_add (argv_array, g_strdup ("-B"));
+  g_ptr_array_add (argv_array, g_strdup_printf ("/var/config=%s", gs_file_get_path_cached (app_config_dir)));
+}
+
+static void
+add_monitor_path_args (GPtrArray *argv_array)
+{
+  g_autoptr(XdgAppSessionHelper) session_helper = NULL;
+  g_autofree char *monitor_path = NULL;
+
+  session_helper =
+    xdg_app_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+                                                   G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                   "org.freedesktop.XdgApp",
+                                                   "/org/freedesktop/XdgApp/SessionHelper",
+                                                   NULL, NULL);
+  if (session_helper &&
+      xdg_app_session_helper_call_request_monitor_sync (session_helper,
+                                                        &monitor_path,
+                                                        NULL, NULL))
+    {
+      g_ptr_array_add (argv_array, g_strdup ("-m"));
+      g_ptr_array_add (argv_array, g_strdup (monitor_path));
+    }
+  else
+    g_ptr_array_add (argv_array, g_strdup ("-r"));
+}
+
+static void
+add_document_portal_args (GPtrArray *argv_array,
+                          const char *app_id)
+{
+  g_autoptr(GDBusConnection) session_bus = NULL;
+  g_autofree char *doc_mount_path = NULL;
+
+  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+  if (session_bus)
+    {
+      g_autoptr (GError) local_error = NULL;
+      g_autoptr (GDBusMessage) reply = NULL;
+      g_autoptr (GDBusMessage) msg =
+        g_dbus_message_new_method_call ("org.freedesktop.portal.Documents",
+                                        "/org/freedesktop/portal/documents",
+                                        "org.freedesktop.portal.Documents",
+                                        "GetMountPoint");
+      g_dbus_message_set_body (msg, g_variant_new ("()"));
+      reply =
+        g_dbus_connection_send_message_with_reply_sync (session_bus, msg,
+                                                        G_DBUS_SEND_MESSAGE_FLAGS_NONE,
+                                                        30000,
+                                                        NULL,
+                                                        NULL,
+                                                        NULL);
+      if (reply)
+        {
+          if (g_dbus_message_to_gerror (reply, &local_error))
+            g_warning ("Can't get document portal: %s\n", local_error->message);
+          else
+            {
+              g_variant_get (g_dbus_message_get_body (reply),
+                             "(^ay)", &doc_mount_path);
+
+              g_ptr_array_add (argv_array, g_strdup ("-b"));
+              g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/doc=%s/by-app/%s",
+                                                            getuid(), doc_mount_path, app_id));
+            }
+        }
+    }
+}
+
+static void
 dbus_spawn_child_setup (gpointer user_data)
 {
   int fd = GPOINTER_TO_INT (user_data);
   fcntl (fd, F_SETFD, 0);
+}
+
+static gboolean
+add_dbus_proxy_args (GPtrArray *argv_array,
+                     GPtrArray *dbus_proxy_argv,
+                     GError **error)
+{
+  int sync_proxy_pipes[2];
+  char x = 'x';
+
+  if (dbus_proxy_argv->len == 0)
+    return TRUE;
+
+  if (pipe (sync_proxy_pipes) < 0)
+    {
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to create sync pipe");
+      return FALSE;
+    }
+
+  g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (DBUSPROXY));
+  g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_proxy_pipes[1]));
+
+  g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
+
+  if (!g_spawn_async (NULL,
+                      (char **)dbus_proxy_argv->pdata,
+                      NULL,
+                      G_SPAWN_SEARCH_PATH,
+                      dbus_spawn_child_setup,
+                      GINT_TO_POINTER (sync_proxy_pipes[1]),
+                      NULL, error))
+    {
+      close (sync_proxy_pipes[0]);
+      close (sync_proxy_pipes[1]);
+      return FALSE;
+    }
+
+  close (sync_proxy_pipes[1]);
+
+  /* Sync with proxy, i.e. wait until its listening on the sockets */
+  if (read (sync_proxy_pipes[0], &x, 1) != 1)
+    {
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to sync with dbus proxy");
+
+      close (sync_proxy_pipes[0]);
+      return FALSE;
+    }
+
+  g_ptr_array_add (argv_array, g_strdup ("-S"));
+  g_ptr_array_add (argv_array, g_strdup_printf ("%d", sync_proxy_pipes[0]));
+
+  return TRUE;
 }
 
 gboolean
@@ -1862,29 +2083,18 @@ xdg_app_run_app (const char *app_ref,
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
-  g_autoptr(GFile) app_cache_dir = NULL;
-  g_autoptr(GFile) app_data_dir = NULL;
-  g_autoptr(GFile) app_config_dir = NULL;
-  g_autoptr(GFile) home = NULL;
-  g_autoptr(GFile) user_font1 = NULL;
-  g_autoptr(GFile) user_font2 = NULL;
-  g_autoptr(XdgAppSessionHelper) session_helper = NULL;
   g_autofree char *runtime = NULL;
   g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;
-  g_autofree char *doc_mount_path = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
   g_auto(GStrv) envp = NULL;
   g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
-  g_autofree char *monitor_path = NULL;
   const char *command = "/bin/sh";
   int i;
-  int sync_proxy_pipes[2];
   g_autoptr(XdgAppContext) app_context = NULL;
   g_autoptr(XdgAppContext) overrides = NULL;
-  g_autoptr(GDBusConnection) session_bus = NULL;
   g_auto(GStrv) app_ref_parts = NULL;
 
   app_ref_parts = xdg_app_decompose_ref (app_ref, error);
@@ -1920,12 +2130,8 @@ xdg_app_run_app (const char *app_ref,
 
   runtime_metakey = xdg_app_deploy_get_metadata (runtime_deploy);
 
-  app_context = xdg_app_context_new ();
-  xdg_app_context_set_session_bus_policy (app_context, "org.freedesktop.portal.Documents", XDG_APP_POLICY_TALK);
-
-  if (!xdg_app_context_load_metadata (app_context, runtime_metakey, error))
-    return FALSE;
-  if (!xdg_app_context_load_metadata (app_context, metakey, error))
+  app_context = compute_permissions (metakey, runtime_metakey, error);
+  if (app_context == NULL)
     return FALSE;
 
   overrides = xdg_app_deploy_get_overrides (app_deploy);
@@ -1933,31 +2139,8 @@ xdg_app_run_app (const char *app_ref,
 
   xdg_app_context_merge (app_context, extra_context);
 
-    {
-      g_autofree char *tmp_path = NULL;
-      int fd;
-
-      fd = g_file_open_tmp ("xdg-app-context-XXXXXX", &tmp_path, NULL);
-      if (fd >= 0)
-        {
-          g_autoptr(GKeyFile) keyfile = NULL;
-
-          close (fd);
-
-          keyfile = g_key_file_new ();
-
-          g_key_file_set_string (keyfile, "Application", "name", app_ref_parts[1]);
-          g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
-
-          xdg_app_context_save_metadata (app_context, keyfile);
-
-          if (!g_key_file_save_to_file (keyfile, tmp_path, error))
-            return FALSE;
-
-          g_ptr_array_add (argv_array, g_strdup ("-M"));
-          g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/xdg-app-info=%s", getuid(), tmp_path));
-        }
-    }
+  if (!add_app_info_args (argv_array, app_ref_parts[1], runtime_ref, app_context, error))
+    return FALSE;
 
   if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
@@ -1965,20 +2148,35 @@ xdg_app_run_app (const char *app_ref,
   if ((app_id_dir = xdg_app_ensure_data_dir (app_ref_parts[1], cancellable, error)) == NULL)
       return FALSE;
 
-  app_cache_dir = g_file_get_child (app_id_dir, "cache");
-  g_ptr_array_add (argv_array, g_strdup ("-B"));
-  g_ptr_array_add (argv_array, g_strdup_printf ("/var/cache=%s", gs_file_get_path_cached (app_cache_dir)));
+  add_app_id_dir_links_args (argv_array, app_id_dir);
 
-  app_data_dir = g_file_get_child (app_id_dir, "data");
-  g_ptr_array_add (argv_array, g_strdup ("-B"));
-  g_ptr_array_add (argv_array, g_strdup_printf ("/var/data=%s", gs_file_get_path_cached (app_data_dir)));
+  add_monitor_path_args (argv_array);
 
-  app_config_dir = g_file_get_child (app_id_dir, "config");
-  g_ptr_array_add (argv_array, g_strdup ("-B"));
-  g_ptr_array_add (argv_array, g_strdup_printf ("/var/config=%s", gs_file_get_path_cached (app_config_dir)));
+  add_document_portal_args (argv_array, app_ref_parts[1]);
+
+  xdg_app_run_add_environment_args (argv_array, dbus_proxy_argv,
+                                    app_ref_parts[1], app_context, app_id_dir);
+
+  if ((flags & XDG_APP_RUN_FLAG_DEVEL) != 0)
+    g_ptr_array_add (argv_array, g_strdup ("-c"));
+
+  add_font_path_args (argv_array);
+
+  /* Must run this before spawning the dbus proxy, to ensure it
+     ends up in the app cgroup */
+  xdg_app_run_in_transient_unit (app_ref_parts[1]);
+
+  if (!add_dbus_proxy_args (argv_array, dbus_proxy_argv, error))
+    return FALSE;
 
   app_files = xdg_app_deploy_get_files (app_deploy);
+  g_ptr_array_add (argv_array, g_strdup ("-a"));
+  g_ptr_array_add (argv_array, g_file_get_path (app_files));
+
   runtime_files = xdg_app_deploy_get_files (runtime_deploy);
+  g_ptr_array_add (argv_array, g_strdup ("-I"));
+  g_ptr_array_add (argv_array, g_strdup (app_ref_parts[1]));
+  g_ptr_array_add (argv_array, g_file_get_path (runtime_files));
 
   default_command = g_key_file_get_string (metakey, "Application", "command", error);
   if (*error)
@@ -1987,124 +2185,6 @@ xdg_app_run_app (const char *app_ref,
     command = custom_command;
   else
     command = default_command;
-
-  session_helper =
-    xdg_app_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
-                                                   G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
-                                                   "org.freedesktop.XdgApp",
-                                                   "/org/freedesktop/XdgApp/SessionHelper",
-                                                   NULL, NULL);
-  if (session_helper &&
-      xdg_app_session_helper_call_request_monitor_sync (session_helper,
-                                                        &monitor_path,
-                                                        NULL, NULL))
-    {
-      g_ptr_array_add (argv_array, g_strdup ("-m"));
-      g_ptr_array_add (argv_array, monitor_path);
-    }
-  else
-    g_ptr_array_add (argv_array, g_strdup ("-r"));
-
-  session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
-  if (session_bus)
-    {
-      g_autoptr (GError) local_error = NULL;
-      g_autoptr (GDBusMessage) reply = NULL;
-      g_autoptr (GDBusMessage) msg =
-        g_dbus_message_new_method_call ("org.freedesktop.portal.Documents",
-                                        "/org/freedesktop/portal/documents",
-                                        "org.freedesktop.portal.Documents",
-                                        "GetMountPoint");
-      g_dbus_message_set_body (msg, g_variant_new ("()"));
-      reply =
-        g_dbus_connection_send_message_with_reply_sync (session_bus, msg,
-                                                        G_DBUS_SEND_MESSAGE_FLAGS_NONE,
-                                                        30000,
-                                                        NULL,
-                                                        NULL,
-                                                        NULL);
-      if (reply)
-        {
-          if (g_dbus_message_to_gerror (reply, &local_error))
-            g_warning ("Can't get document portal: %s\n", local_error->message);
-          else
-            g_variant_get (g_dbus_message_get_body (reply),
-                           "(^ay)", &doc_mount_path);
-        }
-    }
-
-  xdg_app_run_add_environment_args (argv_array, dbus_proxy_argv, doc_mount_path,
-                                    app_ref_parts[1], app_context, app_id_dir);
-
-  g_ptr_array_add (argv_array, g_strdup ("-b"));
-  g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/fonts=%s", SYSTEM_FONTS_DIR));
-
-  if ((flags & XDG_APP_RUN_FLAG_DEVEL) != 0)
-    g_ptr_array_add (argv_array, g_strdup ("-c"));
-
-  home = g_file_new_for_path (g_get_home_dir ());
-  user_font1 = g_file_resolve_relative_path (home, ".local/share/fonts");
-  user_font2 = g_file_resolve_relative_path (home, ".fonts");
-
-  if (g_file_query_exists (user_font1, NULL))
-    {
-      g_autofree char *path = g_file_get_path (user_font1);
-      g_ptr_array_add (argv_array, g_strdup ("-b"));
-      g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/user-fonts=%s", path));
-    }
-  else if (g_file_query_exists (user_font2, NULL))
-    {
-      g_autofree char *path = g_file_get_path (user_font2);
-      g_ptr_array_add (argv_array, g_strdup ("-b"));
-      g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/user-fonts=%s", path));
-    }
-
-  /* Must run this before spawning the dbus proxy, to ensure it
-     ends up in the app cgroup */
-  xdg_app_run_in_transient_unit (app_ref_parts[1]);
-
-  if (dbus_proxy_argv->len > 0)
-    {
-      char x;
-
-      if (pipe (sync_proxy_pipes) < 0)
-        {
-          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to create sync pipe");
-          return FALSE;
-        }
-
-      g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (DBUSPROXY));
-      g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_proxy_pipes[1]));
-
-      g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
-
-      if (!g_spawn_async (NULL,
-                          (char **)dbus_proxy_argv->pdata,
-                          NULL,
-                          G_SPAWN_SEARCH_PATH,
-                          dbus_spawn_child_setup,
-                          GINT_TO_POINTER (sync_proxy_pipes[1]),
-                          NULL, error))
-        return FALSE;
-
-      close (sync_proxy_pipes[1]);
-
-      /* Sync with proxy, i.e. wait until its listening on the sockets */
-      if (read (sync_proxy_pipes[0], &x, 1) != 1)
-        {
-          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to sync with dbus proxy");
-          return FALSE;
-        }
-
-      g_ptr_array_add (argv_array, g_strdup ("-S"));
-      g_ptr_array_add (argv_array, g_strdup_printf ("%d", sync_proxy_pipes[0]));
-    }
-
-  g_ptr_array_add (argv_array, g_strdup ("-a"));
-  g_ptr_array_add (argv_array, g_file_get_path (app_files));
-  g_ptr_array_add (argv_array, g_strdup ("-I"));
-  g_ptr_array_add (argv_array, g_strdup (app_ref_parts[1]));
-  g_ptr_array_add (argv_array, g_file_get_path (runtime_files));
 
   g_ptr_array_add (argv_array, g_strdup (command));
   for (i = 0; i < n_args; i++)

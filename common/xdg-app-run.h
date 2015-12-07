@@ -60,7 +60,6 @@ gboolean  xdg_app_run_add_extension_args     (GPtrArray   *argv_array,
                                               GError     **error);
 void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,
 					      GPtrArray   *dbus_proxy_argv,
-                                              const char  *doc_mount_path,
                                               const char  *app_id,
                                               XdgAppContext *context,
                                               GFile       *app_id_dir);
