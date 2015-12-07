@@ -54,15 +54,18 @@ main (int argc, char *argv[])
                                                  "org.gnome.gedit",
                                                  NULL, "master", NULL, NULL);
   if (app1)
-    g_print ("gedit master: %d %s %s %s %s %s %s %d\n",
-             xdg_app_ref_get_kind (XDG_APP_REF(app1)),
-             xdg_app_ref_get_name (XDG_APP_REF(app1)),
-             xdg_app_ref_get_arch (XDG_APP_REF(app1)),
-             xdg_app_ref_get_version (XDG_APP_REF(app1)),
-             xdg_app_ref_get_commit (XDG_APP_REF(app1)),
-             xdg_app_installed_ref_get_origin (app1),
-             xdg_app_installed_ref_get_deploy_dir (app1),
-             xdg_app_installed_ref_get_current (app1));
+    {
+      g_print ("gedit master: %d %s %s %s %s %s %s %d\n",
+               xdg_app_ref_get_kind (XDG_APP_REF(app1)),
+               xdg_app_ref_get_name (XDG_APP_REF(app1)),
+               xdg_app_ref_get_arch (XDG_APP_REF(app1)),
+               xdg_app_ref_get_version (XDG_APP_REF(app1)),
+               xdg_app_ref_get_commit (XDG_APP_REF(app1)),
+               xdg_app_installed_ref_get_origin (app1),
+               xdg_app_installed_ref_get_deploy_dir (app1),
+               xdg_app_installed_ref_get_current (app1));
+      xdg_app_installed_ref_launch (app1, NULL, NULL);
+    }
 
   app2 = xdg_app_installation_get_current_installed_app (installation, 
                                                          "org.gnome.gedit",

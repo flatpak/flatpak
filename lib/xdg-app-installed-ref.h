@@ -54,5 +54,8 @@ XDG_APP_EXTERN gboolean     xdg_app_installed_ref_get_current    (XdgAppInstalle
 XDG_APP_EXTERN const char * xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
                                                                   GCancellable *cancellable,
                                                                   GError **error);
+XDG_APP_EXTERN gboolean     xdg_app_installed_ref_launch         (XdgAppInstalledRef *self,
+                                                                  GCancellable *cancellable,
+                                                                  GError **error);
 
 #endif /* __XDG_APP_INSTALLED_REF_H__ */

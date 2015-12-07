@@ -25,6 +25,9 @@
 #include "xdg-app-installed-ref.h"
 #include "xdg-app-enum-types.h"
 #include "xdg-app-error.h"
+#include "xdg-app-utils.h"
+#include "xdg-app-run.h"
+#include "xdg-app-dir.h"
 
 typedef struct _XdgAppInstalledRefPrivate XdgAppInstalledRefPrivate;
 
@@ -34,6 +37,7 @@ struct _XdgAppInstalledRefPrivate
   char *origin;
   char *deploy_dir;
 
+  XdgAppDir *dir;
   char *metadata;
 };
 
@@ -56,6 +60,7 @@ xdg_app_installed_ref_finalize (GObject *object)
   g_free (priv->origin);
   g_free (priv->deploy_dir);
   g_free (priv->metadata);
+  g_object_unref (priv->dir);
 
   G_OBJECT_CLASS (xdg_app_installed_ref_parent_class)->finalize (object);
 }
@@ -206,14 +211,50 @@ xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
   return priv->metadata;
 }
 
+gboolean
+xdg_app_installed_ref_launch (XdgAppInstalledRef *self,
+                              GCancellable *cancellable,
+                              GError **error)
+{
+  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  g_autofree char *app_ref = NULL;
+  g_autoptr(XdgAppDeploy) app_deploy = NULL;
+
+  app_ref =
+    xdg_app_build_app_ref (xdg_app_ref_get_name (XDG_APP_REF (self)),
+                           xdg_app_ref_get_version (XDG_APP_REF (self)),
+                           xdg_app_ref_get_arch (XDG_APP_REF (self)));
+
+
+  app_deploy =
+    xdg_app_dir_load_deployed (priv->dir, app_ref,
+                               xdg_app_ref_get_commit (XDG_APP_REF (self)),
+                               cancellable, error);
+  if (app_deploy == NULL)
+    return FALSE;
+
+  return xdg_app_run_app (app_ref,
+                          app_deploy,
+                          NULL,
+                          NULL,
+                          XDG_APP_RUN_FLAG_BACKGROUND,
+                          NULL,
+                          NULL, 0,
+                          cancellable, error);
+
+}
+
 XdgAppInstalledRef *
 xdg_app_installed_ref_new (const char *full_ref,
                            const char *commit,
                            const char *origin,
                            const char *deploy_dir,
+                           XdgAppDir *dir,
                            gboolean current)
 {
   XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
+  XdgAppInstalledRefPrivate *priv;
+  XdgAppInstalledRef *ref;
   g_auto(GStrv) parts = NULL;
 
   parts = g_strsplit (full_ref, "/", -1);
@@ -221,14 +262,19 @@ xdg_app_installed_ref_new (const char *full_ref,
   if (strcmp (parts[0], "app") != 0)
     kind = XDG_APP_REF_KIND_RUNTIME;
 
-  return g_object_new (XDG_APP_TYPE_INSTALLED_REF,
-                       "kind", kind,
-                       "name", parts[1],
-                       "arch", parts[2],
-                       "version", parts[3],
-                       "commit", commit,
-                       "origin", origin,
-                       "current", current,
-                       "deploy-dir", deploy_dir,
-                       NULL);
+  ref = g_object_new (XDG_APP_TYPE_INSTALLED_REF,
+                      "kind", kind,
+                      "name", parts[1],
+                      "arch", parts[2],
+                      "version", parts[3],
+                      "commit", commit,
+                      "origin", origin,
+                      "current", current,
+                      "deploy-dir", deploy_dir,
+                      NULL);
+
+  priv = xdg_app_installed_ref_get_instance_private (ref);
+  priv->dir = g_object_ref (dir);
+
+  return ref;
 }

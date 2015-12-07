@@ -56,7 +56,7 @@ xdg_app_ref_finalize (GObject *object)
   g_free (priv->arch);
   g_free (priv->version);
   g_free (priv->commit);
-  
+
   G_OBJECT_CLASS (xdg_app_ref_parent_class)->finalize (object);
 }
 
@@ -208,7 +208,7 @@ xdg_app_ref_get_arch (XdgAppRef *self)
 
   return priv->arch;
 }
-  
+
 const char *
 xdg_app_ref_get_version (XdgAppRef *self)
 {
@@ -216,7 +216,7 @@ xdg_app_ref_get_version (XdgAppRef *self)
 
   return priv->version;
 }
-  
+
 const char *
 xdg_app_ref_get_commit (XdgAppRef *self)
 {
@@ -224,7 +224,7 @@ xdg_app_ref_get_commit (XdgAppRef *self)
 
   return priv->commit;
 }
-  
+
 XdgAppRefKind
 xdg_app_ref_get_kind (XdgAppRef *self)
 {
@@ -232,4 +232,3 @@ xdg_app_ref_get_kind (XdgAppRef *self)
 
   return priv->kind;
 }
-  

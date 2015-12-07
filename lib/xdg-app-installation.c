@@ -142,7 +142,6 @@ get_ref (XdgAppInstallation *self,
   g_auto(GStrv) parts = NULL;
   g_autofree char *origin = NULL;
   g_autofree char *commit = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) deploy_subdir = NULL;
   g_autofree char *deploy_path = NULL;
@@ -171,6 +170,7 @@ get_ref (XdgAppInstallation *self,
                                     commit,
                                     origin,
                                     deploy_path,
+                                    priv->dir,
                                     is_current);
 }
 
