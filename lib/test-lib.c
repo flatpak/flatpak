@@ -94,18 +94,20 @@ main (int argc, char *argv[])
                xdg_app_remote_get_gpg_verify (remotes[i]),
                xdg_app_remote_get_noenumerate (remotes[i]));
 
-      refs = xdg_app_remote_list_refs (remotes[i],
-                                       NULL, NULL);
+      g_print ("\n**** Listing remote refs on %s\n", xdg_app_remote_get_name (remotes[i]));
+      refs = xdg_app_remote_list_refs_sync (remotes[i],
+                                            NULL, NULL);
       if (refs)
         {
           for (j = 0; refs[j] != NULL; j++)
             {
-              g_print ("%d %s %s %s %s\n",
+              g_print ("%d %s %s %s %s %s\n",
                        xdg_app_ref_get_kind (XDG_APP_REF(refs[j])),
                        xdg_app_ref_get_name (XDG_APP_REF(refs[j])),
                        xdg_app_ref_get_arch (XDG_APP_REF(refs[j])),
                        xdg_app_ref_get_version (XDG_APP_REF(refs[j])),
-                       xdg_app_ref_get_commit (XDG_APP_REF(refs[j])));
+                       xdg_app_ref_get_commit (XDG_APP_REF(refs[j])),
+                       xdg_app_remote_ref_get_remote_name (refs[j]));
             }
         }
     }

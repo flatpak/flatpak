@@ -172,7 +172,7 @@ xdg_app_remote_get_gpg_verify (XdgAppRemote *self)
 }
 
 /**
- * xdg_app_remote_list_refs:
+ * xdg_app_remote_list_refs_sync:
  * @self: a #XdgAppRemove
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
@@ -183,9 +183,9 @@ xdg_app_remote_get_gpg_verify (XdgAppRemote *self)
  *   of #XdgAppRemoteRef instances
  */
 XdgAppRemoteRef **
-xdg_app_remote_list_refs (XdgAppRemote *self,
-                          GCancellable *cancellable,
-                          GError **error)
+xdg_app_remote_list_refs_sync (XdgAppRemote *self,
+                               GCancellable *cancellable,
+                               GError **error)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
