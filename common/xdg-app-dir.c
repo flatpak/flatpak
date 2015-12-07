@@ -81,8 +81,8 @@ xdg_app_deploy_finalize (GObject *object)
 
   g_clear_object (&self->dir);
   g_clear_pointer (&self->metadata, g_key_file_unref);
-  g_clear_pointer (&self->system_overrides, g_object_unref);
-  g_clear_pointer (&self->user_overrides, g_object_unref);
+  g_clear_pointer (&self->system_overrides, g_key_file_unref);
+  g_clear_pointer (&self->user_overrides, g_key_file_unref);
 
   G_OBJECT_CLASS (xdg_app_deploy_parent_class)->finalize (object);
 }
