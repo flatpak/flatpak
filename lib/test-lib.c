@@ -9,6 +9,7 @@ main (int argc, char *argv[])
   XdgAppInstalledRef *app1;
   XdgAppInstalledRef *app2;
   XdgAppInstalledRef **runtimes;
+  XdgAppRemoteRef *remote_ref;
   XdgAppRemote **remotes;
   int i, j;
 
@@ -115,6 +116,27 @@ main (int argc, char *argv[])
                        xdg_app_ref_get_commit (XDG_APP_REF(refs[j])),
                        xdg_app_remote_ref_get_remote_name (refs[j]));
             }
+        }
+
+      g_print ("\n**** Getting remote gedit master on %s\n", xdg_app_remote_get_name (remotes[i]));
+      remote_ref = xdg_app_remote_fetch_ref_sync (remotes[i],
+                                                  XDG_APP_REF_KIND_APP,
+                                                  "org.gnome.gedit", NULL, "master",
+                                                  NULL, &error);
+      if (remote_ref)
+        {
+          g_print ("%d %s %s %s %s %s\n",
+                   xdg_app_ref_get_kind (XDG_APP_REF(remote_ref)),
+                   xdg_app_ref_get_name (XDG_APP_REF(remote_ref)),
+                   xdg_app_ref_get_arch (XDG_APP_REF(remote_ref)),
+                   xdg_app_ref_get_version (XDG_APP_REF(remote_ref)),
+                   xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)),
+                   xdg_app_remote_ref_get_remote_name (remote_ref));
+        }
+      else
+        {
+          g_print ("error: %s\n", error->message);
+          g_clear_error (&error);
         }
     }
 

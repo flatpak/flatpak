@@ -215,6 +215,61 @@ xdg_app_remote_list_refs_sync (XdgAppRemote *self,
   return (XdgAppRemoteRef **)g_ptr_array_free (g_steal_pointer (&refs), FALSE);
 }
 
+/**
+ * xdg_app_remote_fetch_ref_sync:
+ * @self: a #XdgAppRemove
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Gets the current remote version of a ref in the #XdgAppRemote.
+ *
+ * Returns: (transfer full): a #XdgAppRemoteRef instance, or %NULL
+ */
+XdgAppRemoteRef *
+xdg_app_remote_fetch_ref_sync (XdgAppRemote *self,
+                               XdgAppRefKind kind,
+                               const char   *name,
+                               const char   *arch,
+                               const char   *version,
+                               GCancellable *cancellable,
+                               GError **error)
+{
+  XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
+  g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
+  g_autoptr(GHashTable) ht = NULL;
+  g_autofree char *ref = NULL;
+  const char *checksum;
+
+  if (version == NULL)
+    version = "master";
+
+  if (!xdg_app_dir_list_remote_refs (priv->dir,
+                                     priv->name,
+                                     &ht,
+                                     cancellable,
+                                     error))
+    return NULL;
+
+  if (kind == XDG_APP_REF_KIND_APP)
+    ref = xdg_app_build_app_ref (name,
+                                 version,
+                                 arch);
+  else
+    ref = xdg_app_build_runtime_ref (name,
+                                     version,
+                                     arch);
+
+  checksum = g_hash_table_lookup (ht, ref);
+
+  if (checksum != NULL)
+    return xdg_app_remote_ref_new (ref, checksum, priv->name);
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+               "Reference %s doesn't exist in remote\n", ref);
+  return NULL;
+}
+
+
 
 XdgAppRemote *
 xdg_app_remote_new (XdgAppDir *dir,
