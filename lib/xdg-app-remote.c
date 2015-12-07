@@ -208,7 +208,7 @@ xdg_app_remote_list_refs (XdgAppRemote *self,
       const char *checksum = value;
 
       g_ptr_array_add (refs,
-                       xdg_app_remote_ref_new (refspec, checksum));
+                       xdg_app_remote_ref_new (refspec, checksum, priv->name));
     }
 
   g_ptr_array_add (refs, NULL);

@@ -28,6 +28,7 @@
 #include <xdg-app-remote-ref.h>
 
 XdgAppRemoteRef *xdg_app_remote_ref_new (const char *full_ref,
-                                         const char *commit);
+                                         const char *commit,
+                                         const char *remote_name);
 
 #endif /* __XDG_APP_REMOTE_REF_PRIVATE_H__ */

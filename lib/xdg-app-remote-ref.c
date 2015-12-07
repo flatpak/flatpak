@@ -30,7 +30,7 @@ typedef struct _XdgAppRemoteRefPrivate XdgAppRemoteRefPrivate;
 
 struct _XdgAppRemoteRefPrivate
 {
-  int dummy;
+  char *remote_name;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (XdgAppRemoteRef, xdg_app_remote_ref, XDG_APP_TYPE_REF)
@@ -38,11 +38,17 @@ G_DEFINE_TYPE_WITH_PRIVATE (XdgAppRemoteRef, xdg_app_remote_ref, XDG_APP_TYPE_RE
 enum {
   PROP_0,
 
+  PROP_REMOTE_NAME,
 };
 
 static void
 xdg_app_remote_ref_finalize (GObject *object)
 {
+  XdgAppRemoteRef *self = XDG_APP_REMOTE_REF (object);
+  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
+
+  g_free (priv->remote_name);
+
   G_OBJECT_CLASS (xdg_app_remote_ref_parent_class)->finalize (object);
 }
 
@@ -52,8 +58,15 @@ xdg_app_remote_ref_set_property (GObject         *object,
                                     const GValue    *value,
                                     GParamSpec      *pspec)
 {
+  XdgAppRemoteRef *self = XDG_APP_REMOTE_REF (object);
+  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
+
   switch (prop_id)
     {
+    case PROP_REMOTE_NAME:
+      g_clear_pointer (&priv->remote_name, g_free);
+      priv->remote_name = g_value_dup_string (value);
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -67,8 +80,14 @@ xdg_app_remote_ref_get_property (GObject         *object,
                                     GValue          *value,
                                     GParamSpec      *pspec)
 {
+  XdgAppRemoteRef *self = XDG_APP_REMOTE_REF (object);
+  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
+
   switch (prop_id)
     {
+    case PROP_REMOTE_NAME:
+      g_value_set_string (value, priv->remote_name);
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -84,6 +103,14 @@ xdg_app_remote_ref_class_init (XdgAppRemoteRefClass *klass)
   object_class->get_property = xdg_app_remote_ref_get_property;
   object_class->set_property = xdg_app_remote_ref_set_property;
   object_class->finalize = xdg_app_remote_ref_finalize;
+
+  g_object_class_install_property (object_class,
+                                   PROP_REMOTE_NAME,
+                                   g_param_spec_string ("remote-name",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
 }
 
 static void
@@ -91,9 +118,18 @@ xdg_app_remote_ref_init (XdgAppRemoteRef *self)
 {
 }
 
+const char *
+xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self)
+{
+  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
+
+  return priv->remote_name;
+}
+
 XdgAppRemoteRef *
 xdg_app_remote_ref_new (const char *full_ref,
-                        const char *commit)
+                        const char *commit,
+                        const char *remote_name)
 {
   XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
   g_auto(GStrv) parts = NULL;
@@ -109,5 +145,6 @@ xdg_app_remote_ref_new (const char *full_ref,
                        "arch", parts[2],
                        "version", parts[3],
                        "commit", commit,
+                       "remote-name", remote_name,
                        NULL);
 }

@@ -44,6 +44,8 @@ typedef struct {
   XdgAppRefClass parent_class;
 } XdgAppRemoteRefClass;
 
+XDG_APP_EXTERN const char * xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self);
+
 #if !GLIB_CHECK_VERSION(2, 43, 4)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppRemoteRef, g_object_unref)
 #endif
