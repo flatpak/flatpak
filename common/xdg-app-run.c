@@ -2115,11 +2115,15 @@ xdg_app_run_app (const char *app_ref,
     runtime = g_strdup (custom_runtime);
   else
     {
+      g_autoptr(GError) my_error = NULL;
       runtime = g_key_file_get_string (metakey, "Application",
                                        (flags & XDG_APP_RUN_FLAG_DEVEL) != 0 ? "sdk" : "runtime",
-                                       error);
-      if (*error)
-        return FALSE;
+                                       &my_error);
+      if (my_error)
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
     }
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
@@ -2137,7 +2141,8 @@ xdg_app_run_app (const char *app_ref,
   overrides = xdg_app_deploy_get_overrides (app_deploy);
   xdg_app_context_merge (app_context, overrides);
 
-  xdg_app_context_merge (app_context, extra_context);
+  if (extra_context)
+    xdg_app_context_merge (app_context, extra_context);
 
   if (!add_app_info_args (argv_array, app_ref_parts[1], runtime_ref, app_context, error))
     return FALSE;
@@ -2178,13 +2183,21 @@ xdg_app_run_app (const char *app_ref,
   g_ptr_array_add (argv_array, g_strdup (app_ref_parts[1]));
   g_ptr_array_add (argv_array, g_file_get_path (runtime_files));
 
-  default_command = g_key_file_get_string (metakey, "Application", "command", error);
-  if (*error)
-    return FALSE;
   if (custom_command)
     command = custom_command;
   else
-    command = default_command;
+    {
+      g_autoptr(GError) my_error = NULL;
+
+      default_command = g_key_file_get_string (metakey, "Application", "command", &my_error);
+      if (my_error)
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
+
+      command = default_command;
+    }
 
   g_ptr_array_add (argv_array, g_strdup (command));
   for (i = 0; i < n_args; i++)
