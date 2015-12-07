@@ -51,7 +51,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppInstalledRef, g_object_unref)
 XDG_APP_EXTERN const char * xdg_app_installed_ref_get_origin     (XdgAppInstalledRef *self);
 XDG_APP_EXTERN const char * xdg_app_installed_ref_get_deploy_dir (XdgAppInstalledRef *self);
 XDG_APP_EXTERN gboolean     xdg_app_installed_ref_get_current    (XdgAppInstalledRef *self);
-XDG_APP_EXTERN const char * xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
+XDG_APP_EXTERN char       * xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
                                                                   GCancellable *cancellable,
                                                                   GError **error);
 XDG_APP_EXTERN gboolean     xdg_app_installed_ref_launch         (XdgAppInstalledRef *self,
