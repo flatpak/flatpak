@@ -2470,7 +2470,7 @@ main (int argc,
         }
 
       /* If the user has homedir access, also allow dconf run dir access */
-      bind_mount (dconf_run_path, get_relative_path (dconf_run_path), BIND_READONLY);
+      bind_mount (dconf_run_path, get_relative_path (dconf_run_path), 0);
       free (dconf_run_path);
     }
 
