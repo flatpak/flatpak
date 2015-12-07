@@ -38,7 +38,6 @@ struct _XdgAppInstalledRefPrivate
   char *deploy_dir;
 
   XdgAppDir *dir;
-  char *metadata;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (XdgAppInstalledRef, xdg_app_installed_ref, XDG_APP_TYPE_REF)
@@ -59,7 +58,6 @@ xdg_app_installed_ref_finalize (GObject *object)
 
   g_free (priv->origin);
   g_free (priv->deploy_dir);
-  g_free (priv->metadata);
   g_object_unref (priv->dir);
 
   G_OBJECT_CLASS (xdg_app_installed_ref_parent_class)->finalize (object);
@@ -186,29 +184,27 @@ xdg_app_installed_ref_get_current (XdgAppInstalledRef *self)
   return priv->current;
 }
 
-const char *
+char *
 xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
                                       GCancellable *cancellable,
                                       GError **error)
 {
   XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  g_autofree char *path = NULL;
+  char *metadata;
 
-  if (priv->metadata == NULL)
+  if (priv->deploy_dir == NULL)
     {
-      g_autofree char *path = NULL;
-      if (priv->deploy_dir == NULL)
-        {
-          g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
-                       "Unknown deploy directory");
-          return NULL;
-        }
-
-      path = g_build_filename (priv->deploy_dir, "metadata", NULL);
-      if (!g_file_get_contents (path, &priv->metadata, NULL, error))
-        return NULL;
+      g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+                   "Unknown deploy directory");
+      return NULL;
     }
 
-  return priv->metadata;
+  path = g_build_filename (priv->deploy_dir, "metadata", NULL);
+  if (!g_file_get_contents (path, &metadata, NULL, error))
+    return NULL;
+
+  return metadata;
 }
 
 gboolean
