@@ -185,4 +185,5 @@ char *   xdg_app_dir_fetch_remote_title (XdgAppDir *self,
                                          GCancellable *cancellable,
                                          GError **error);
 
+
 #endif /* __XDG_APP_DIR_H__ */

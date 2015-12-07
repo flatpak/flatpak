@@ -76,4 +76,21 @@ GFile *xdg_app_ensure_data_dir (const char *app_id,
 				GCancellable  *cancellable,
 				GError **error);
 
+typedef enum {
+  XDG_APP_RUN_FLAG_DEVEL       = (1<<0),
+  XDG_APP_RUN_FLAG_BACKGROUND  = (1<<1),
+} XdgAppRunFlags;
+
+gboolean xdg_app_run_app (const char *app_ref,
+                          XdgAppDeploy *app_deploy,
+                          XdgAppContext *extra_context,
+                          const char *custom_runtime,
+                          XdgAppRunFlags flags,
+                          const char *custom_command,
+                          char *args[],
+                          int n_args,
+                          GCancellable *cancellable,
+                          GError **error);
+
+
 #endif /* __XDG_APP_RUN_H__ */
