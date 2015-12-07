@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "xdg-app-remote-ref-private.h"
 #include "xdg-app-remote-ref.h"
 #include "xdg-app-enum-types.h"
 #include "xdg-app-error.h"
@@ -31,6 +32,7 @@ typedef struct _XdgAppRemoteRefPrivate XdgAppRemoteRefPrivate;
 struct _XdgAppRemoteRefPrivate
 {
   char *remote_name;
+  XdgAppDir *dir;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (XdgAppRemoteRef, xdg_app_remote_ref, XDG_APP_TYPE_REF)
@@ -48,6 +50,7 @@ xdg_app_remote_ref_finalize (GObject *object)
   XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
 
   g_free (priv->remote_name);
+  g_object_unref (priv->dir);
 
   G_OBJECT_CLASS (xdg_app_remote_ref_parent_class)->finalize (object);
 }
@@ -129,22 +132,30 @@ xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self)
 XdgAppRemoteRef *
 xdg_app_remote_ref_new (const char *full_ref,
                         const char *commit,
-                        const char *remote_name)
+                        const char *remote_name,
+                        XdgAppDir *dir)
 {
   XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
   g_auto(GStrv) parts = NULL;
+  XdgAppRemoteRef *ref;
+  XdgAppRemoteRefPrivate *priv;
 
   parts = g_strsplit (full_ref, "/", -1);
 
   if (strcmp (parts[0], "app") != 0)
     kind = XDG_APP_REF_KIND_RUNTIME;
 
-  return g_object_new (XDG_APP_TYPE_REMOTE_REF,
-                       "kind", kind,
-                       "name", parts[1],
-                       "arch", parts[2],
-                       "version", parts[3],
-                       "commit", commit,
-                       "remote-name", remote_name,
-                       NULL);
+  ref = g_object_new (XDG_APP_TYPE_REMOTE_REF,
+                      "kind", kind,
+                      "name", parts[1],
+                      "arch", parts[2],
+                      "version", parts[3],
+                      "commit", commit,
+                      "remote-name", remote_name,
+                      NULL);
+
+  priv = xdg_app_remote_ref_get_instance_private (ref);
+  priv->dir = g_object_ref (dir);
+
+  return ref;
 }

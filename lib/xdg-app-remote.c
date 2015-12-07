@@ -208,7 +208,7 @@ xdg_app_remote_list_refs_sync (XdgAppRemote *self,
       const char *checksum = value;
 
       g_ptr_array_add (refs,
-                       xdg_app_remote_ref_new (refspec, checksum, priv->name));
+                       xdg_app_remote_ref_new (refspec, checksum, priv->name, priv->dir));
     }
 
   g_ptr_array_add (refs, NULL);
@@ -262,7 +262,7 @@ xdg_app_remote_fetch_ref_sync (XdgAppRemote *self,
   checksum = g_hash_table_lookup (ht, ref);
 
   if (checksum != NULL)
-    return xdg_app_remote_ref_new (ref, checksum, priv->name);
+    return xdg_app_remote_ref_new (ref, checksum, priv->name, priv->dir);
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                "Reference %s doesn't exist in remote\n", ref);

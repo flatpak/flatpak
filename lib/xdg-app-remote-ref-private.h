@@ -26,9 +26,11 @@
 #define __XDG_APP_REMOTE_REF_PRIVATE_H__
 
 #include <xdg-app-remote-ref.h>
+#include <xdg-app-dir.h>
 
 XdgAppRemoteRef *xdg_app_remote_ref_new (const char *full_ref,
                                          const char *commit,
-                                         const char *remote_name);
+                                         const char *remote_name,
+                                         XdgAppDir  *dir);
 
 #endif /* __XDG_APP_REMOTE_REF_PRIVATE_H__ */
