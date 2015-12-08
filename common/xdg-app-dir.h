@@ -184,6 +184,16 @@ char *   xdg_app_dir_fetch_remote_title (XdgAppDir *self,
                                          const char *remote,
                                          GCancellable *cancellable,
                                          GError **error);
-
+GBytes * xdg_app_dir_fetch_remote_object (XdgAppDir *self,
+                                          const char *remote,
+                                          const char *checksum,
+                                          const char *type,
+                                          GCancellable *cancellable,
+                                          GError **error);
+GBytes * xdg_app_dir_fetch_metadata      (XdgAppDir *self,
+                                          const char *remote_name,
+                                          const char *commit,
+                                          GCancellable *cancellable,
+                                          GError **error);
 
 #endif /* __XDG_APP_DIR_H__ */

@@ -129,6 +129,28 @@ xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self)
   return priv->remote_name;
 }
 
+
+GBytes *
+xdg_app_remote_ref_fetch_metadata_sync (XdgAppRemoteRef *self,
+                                        GCancellable *cancellable,
+                                        GError **error)
+{
+  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
+  const char *commit;
+  g_autoptr(GBytes) bytes = NULL;
+
+  commit = xdg_app_ref_get_commit (XDG_APP_REF (self));
+  bytes = xdg_app_dir_fetch_metadata (priv->dir,
+                                      priv->remote_name,
+                                      commit,
+                                      cancellable,
+                                      error);
+  if (bytes == NULL)
+    return NULL;
+
+  return g_steal_pointer (&bytes);
+}
+
 XdgAppRemoteRef *
 xdg_app_remote_ref_new (const char *full_ref,
                         const char *commit,

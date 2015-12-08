@@ -119,12 +119,15 @@ main (int argc, char *argv[])
         }
 
       g_print ("\n**** Getting remote gedit master on %s\n", xdg_app_remote_get_name (remotes[i]));
+      error = NULL;
       remote_ref = xdg_app_remote_fetch_ref_sync (remotes[i],
                                                   XDG_APP_REF_KIND_APP,
                                                   "org.gnome.gedit", NULL, "master",
                                                   NULL, &error);
       if (remote_ref)
         {
+          GBytes *metadata;
+
           g_print ("%d %s %s %s %s %s\n",
                    xdg_app_ref_get_kind (XDG_APP_REF(remote_ref)),
                    xdg_app_ref_get_name (XDG_APP_REF(remote_ref)),
@@ -132,6 +135,18 @@ main (int argc, char *argv[])
                    xdg_app_ref_get_version (XDG_APP_REF(remote_ref)),
                    xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)),
                    xdg_app_remote_ref_get_remote_name (remote_ref));
+
+          metadata = xdg_app_remote_ref_fetch_metadata_sync (remote_ref, NULL, &error);
+          if (metadata)
+            {
+              g_print ("metadata: %s\n", (char *)g_bytes_get_data (metadata, NULL));
+            }
+          else
+            {
+              g_print ("fetch error\n");
+              g_print ("error: %s\n", error->message);
+              g_clear_error (&error);
+            }
         }
       else
         {

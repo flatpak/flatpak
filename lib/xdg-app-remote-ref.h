@@ -46,6 +46,11 @@ typedef struct {
 
 XDG_APP_EXTERN const char * xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self);
 
+XDG_APP_EXTERN GBytes *xdg_app_remote_ref_fetch_metadata_sync (XdgAppRemoteRef *self,
+                                                               GCancellable *cancellable,
+                                                               GError **error);
+
+
 #if !GLIB_CHECK_VERSION(2, 43, 4)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppRemoteRef, g_object_unref)
 #endif
