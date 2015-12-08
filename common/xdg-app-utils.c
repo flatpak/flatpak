@@ -22,7 +22,7 @@
 
 #include "xdg-app-utils.h"
 #include "xdg-app-dir.h"
-#include "xdg-app-error.h"
+#include "xdg-app-portal-error.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -874,7 +874,7 @@ got_credentials_cb (GObject *source_object,
       GTask *task = l->data;
 
       if (info->app_id == NULL)
-        g_task_return_new_error (task, XDG_APP_ERROR, XDG_APP_ERROR_FAILED,
+        g_task_return_new_error (task, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED,
                                  "Can't find app id");
       else
         g_task_return_pointer (task, g_strdup (info->app_id), g_free);

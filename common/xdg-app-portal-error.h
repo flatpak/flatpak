@@ -19,8 +19,8 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef XDG_APP_ERROR_H
-#define XDG_APP_ERROR_H
+#ifndef XDG_APP_PORTAL_ERROR_H
+#define XDG_APP_PORTAL_ERROR_H
 
 #include <glib.h>
 
@@ -30,20 +30,20 @@ G_BEGIN_DECLS
  * XdpErrorEnum:
  */
 typedef enum {
-  XDG_APP_ERROR_FAILED     = 0,
-  XDG_APP_ERROR_INVALID_ARGUMENT,
-  XDG_APP_ERROR_NOT_FOUND,
-  XDG_APP_ERROR_EXISTS,
-  XDG_APP_ERROR_NOT_ALLOWED,
-  XDG_APP_ERROR_CANCELLED,
-  XDG_APP_ERROR_WINDOW_DESTROYED,
+  XDG_APP_PORTAL_ERROR_FAILED     = 0,
+  XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
+  XDG_APP_PORTAL_ERROR_NOT_FOUND,
+  XDG_APP_PORTAL_ERROR_EXISTS,
+  XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
+  XDG_APP_PORTAL_ERROR_CANCELLED,
+  XDG_APP_PORTAL_ERROR_WINDOW_DESTROYED,
 } XdgAppErrorEnum;
 
 
-#define XDG_APP_ERROR xdg_app_error_quark()
+#define XDG_APP_PORTAL_ERROR xdg_app_error_quark()
 
 GQuark  xdg_app_error_quark      (void);
 
 G_END_DECLS
 
-#endif /* XDG_APP_ERROR_H */
+#endif /* XDG_APP_PORTAL_ERROR_H */

@@ -21,18 +21,18 @@
 
 #include "config.h"
 
-#include "xdg-app-error.h"
+#include "xdg-app-portal-error.h"
 
 #include <gio/gio.h>
 
 static const GDBusErrorEntry xdg_app_error_entries[] = {
-  {XDG_APP_ERROR_FAILED,                           "org.freedesktop.XdgApp.Failed"},
-  {XDG_APP_ERROR_INVALID_ARGUMENT,                 "org.freedesktop.XdgApp.InvalidArgument"},
-  {XDG_APP_ERROR_NOT_FOUND,                        "org.freedesktop.XdgApp.NotFound"},
-  {XDG_APP_ERROR_EXISTS,                           "org.freedesktop.XdgApp.Exists"},
-  {XDG_APP_ERROR_NOT_ALLOWED,                      "org.freedesktop.XdgApp.NotAllowed"},
-  {XDG_APP_ERROR_CANCELLED,                        "org.freedesktop.XdgApp.Cancelled"},
-  {XDG_APP_ERROR_WINDOW_DESTROYED,                 "org.freedesktop.XdgApp.WindowDestroyed"},
+  {XDG_APP_PORTAL_ERROR_FAILED,                           "org.freedesktop.XdgApp.Failed"},
+  {XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,                 "org.freedesktop.XdgApp.InvalidArgument"},
+  {XDG_APP_PORTAL_ERROR_NOT_FOUND,                        "org.freedesktop.XdgApp.NotFound"},
+  {XDG_APP_PORTAL_ERROR_EXISTS,                           "org.freedesktop.XdgApp.Exists"},
+  {XDG_APP_PORTAL_ERROR_NOT_ALLOWED,                      "org.freedesktop.XdgApp.NotAllowed"},
+  {XDG_APP_PORTAL_ERROR_CANCELLED,                        "org.freedesktop.XdgApp.Cancelled"},
+  {XDG_APP_PORTAL_ERROR_WINDOW_DESTROYED,                 "org.freedesktop.XdgApp.WindowDestroyed"},
 };
 
 GQuark

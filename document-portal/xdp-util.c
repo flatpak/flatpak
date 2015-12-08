@@ -2,7 +2,7 @@
 #include <string.h>
 #include <errno.h>
 #include <gio/gio.h>
-#include "xdg-app-error.h"
+#include "xdg-app-portal-error.h"
 #include "xdp-util.h"
 
 const char **

@@ -16,7 +16,7 @@
 #include "xdg-app-db.h"
 #include "xdg-app-dbus.h"
 #include "xdg-app-utils.h"
-#include "xdg-app-error.h"
+#include "xdg-app-portal-error.h"
 #include "xdp-fuse.h"
 
 #include <sys/eventfd.h>
@@ -139,14 +139,14 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
   entry = xdg_app_db_lookup (db, id);
   if (entry == NULL)
     {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
                                              "No such document: %s", id);
       return;
     }
 
   if (!xdg_app_is_valid_name (target_app_id))
     {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
                                              "Invalid app name: %s", target_app_id);
       return;
     }
@@ -157,7 +157,7 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
   if (!xdp_entry_has_permissions (entry, app_id,
                                   XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS | perms))
     {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
                                              "Not enough permissions");
       return;
     }
@@ -186,14 +186,14 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
   entry = xdg_app_db_lookup (db, id);
   if (entry == NULL)
     {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
                                              "No such document: %s", id);
       return;
     }
 
   if (!xdg_app_is_valid_name (target_app_id))
     {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
                                              "Invalid app name: %s", target_app_id);
       return;
     }
@@ -205,7 +205,7 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
                                   XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS) ||
       strcmp (app_id, target_app_id) == 0)
     {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
                                              "Not enough permissions");
       return;
     }
@@ -233,14 +233,14 @@ portal_delete (GDBusMethodInvocation *invocation,
   entry = xdg_app_db_lookup (db, id);
   if (entry == NULL)
     {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
                                              "No such document: %s", id);
       return;
     }
 
   if (!xdp_entry_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_DELETE))
     {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
                                              "Not enough permissions");
       return;
     }
@@ -369,7 +369,7 @@ portal_add (GDBusMethodInvocation *invocation,
       (symlink_size = readlink (proc_path, path_buffer, sizeof (path_buffer) - 1)) < 0)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
                                              "Invalid fd passed");
       return;
     }
@@ -390,7 +390,7 @@ portal_add (GDBusMethodInvocation *invocation,
     {
       /* Don't leak any info about real file path existance, etc */
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
                                              "Invalid fd passed");
       return;
     }
@@ -410,7 +410,7 @@ portal_add (GDBusMethodInvocation *invocation,
       if (old_id == 0)
         {
           g_dbus_method_invocation_return_error (invocation,
-                                                 XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                                 XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
                                                  "Invalid fd passed");
           return;
         }
@@ -426,7 +426,7 @@ portal_add (GDBusMethodInvocation *invocation,
           !reuse_existing)
         {
           g_dbus_method_invocation_return_error (invocation,
-                                                 XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                                 XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
                                                  "Invalid fd passed");
           return;
         }
@@ -482,7 +482,7 @@ portal_add_named (GDBusMethodInvocation *invocation,
   /* This is only allowed from the host, or else we could leak existance of files */
   if (*app_id != 0)
     {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_NOT_ALLOWED,
+      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
                                              "Not enough permissions");
       return;
     }
@@ -501,7 +501,7 @@ portal_add_named (GDBusMethodInvocation *invocation,
   if (strchr (filename, '/') != NULL)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
                                              "Invalid filename passed");
       return;
     }
@@ -524,7 +524,7 @@ portal_add_named (GDBusMethodInvocation *invocation,
       (symlink_size = readlink (proc_path, parent_path_buffer, sizeof (parent_path_buffer) - 1)) < 0)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
                                              "Invalid fd passed");
       return;
     }
@@ -532,7 +532,7 @@ portal_add_named (GDBusMethodInvocation *invocation,
   if (parent_st_buf.st_dev == fuse_dev)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_INVALID_ARGUMENT,
+                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
                                              "Invalid fd passed");
       return;
     }

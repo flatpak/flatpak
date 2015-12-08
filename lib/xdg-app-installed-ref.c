@@ -24,7 +24,6 @@
 
 #include "xdg-app-installed-ref.h"
 #include "xdg-app-enum-types.h"
-#include "xdg-app-error.h"
 #include "xdg-app-utils.h"
 #include "xdg-app-run.h"
 #include "xdg-app-dir.h"
@@ -195,7 +194,7 @@ xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
 
   if (priv->deploy_dir == NULL)
     {
-      g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                    "Unknown deploy directory");
       return NULL;
     }

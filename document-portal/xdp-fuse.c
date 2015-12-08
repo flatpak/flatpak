@@ -15,7 +15,7 @@
 #include <gio/gio.h>
 #include <pthread.h>
 
-#include "xdg-app-error.h"
+#include "xdg-app-portal-error.h"
 #include "xdp-fuse.h"
 #include "xdp-util.h"
 #include "xdg-app-utils.h"
@@ -2206,7 +2206,7 @@ xdp_fuse_init (GError **error)
 
   if (g_mkdir_with_parents  (mount_path, 0700))
     {
-      g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_FAILED,
+      g_set_error (error, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED,
                    "Unable to create dir %s\n", mount_path);
       return FALSE;
     }
@@ -2214,7 +2214,7 @@ xdp_fuse_init (GError **error)
   main_ch = fuse_mount (mount_path, &args);
   if (main_ch == NULL)
     {
-      g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_FAILED, "Can't mount fuse fs");
+      g_set_error (error, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED, "Can't mount fuse fs");
       return FALSE;
     }
 
@@ -2222,7 +2222,7 @@ xdp_fuse_init (GError **error)
                                sizeof (xdp_fuse_oper), NULL);
   if (session == NULL)
     {
-      g_set_error (error, XDG_APP_ERROR, XDG_APP_ERROR_FAILED,
+      g_set_error (error, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED,
                    "Can't create fuse session");
       return FALSE;
     }

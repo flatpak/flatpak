@@ -26,8 +26,8 @@ libxdgapp_common_la_SOURCES = \
 	common/xdg-app-dir.h \
 	common/xdg-app-run.c \
 	common/xdg-app-run.h \
-	common/xdg-app-error.c \
-	common/xdg-app-error.h \
+	common/xdg-app-portal-error.c \
+	common/xdg-app-portal-error.h \
 	common/xdg-app-utils.c \
 	common/xdg-app-utils.h \
 	common/xdg-app-chain-input-stream.c \

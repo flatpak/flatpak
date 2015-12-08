@@ -26,7 +26,7 @@
 #include <gio/gio.h>
 #include "xdg-app-permission-store.h"
 #include "xdg-app-db.h"
-#include "xdg-app-error.h"
+#include "xdg-app-portal-error.h"
 
 GHashTable *tables = NULL;
 
@@ -70,7 +70,7 @@ lookup_table (const char *name,
   if (db == NULL)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_FAILED,
+                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED,
                                              "Unable to load db file: %s", error->message);
       return NULL;
     }
@@ -105,7 +105,7 @@ writeout_done (GObject *source_object,
                                                g_variant_new ("()"));
       else
         g_dbus_method_invocation_return_error (invocation,
-                                               XDG_APP_ERROR, XDG_APP_ERROR_FAILED,
+                                               XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED,
                                                "Unable to write db: %s", error->message);
     }
 
@@ -180,7 +180,7 @@ handle_lookup (XdgAppPermissionStore *object,
   if (entry == NULL)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
                                              "No entry for %s", id);
       return TRUE;
     }
@@ -224,7 +224,7 @@ handle_delete (XdgAppPermissionStore *object,
   if (entry == NULL)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
                                              "No entry for %s", id);
       return TRUE;
     }
@@ -260,7 +260,7 @@ handle_set (XdgAppPermissionStore *object,
   if (old_entry == NULL && !create)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
                                              "Id %s not found", id);
       return TRUE;
     }
@@ -317,7 +317,7 @@ handle_set_permission (XdgAppPermissionStore *object,
       else
         {
           g_dbus_method_invocation_return_error (invocation,
-                                                 XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+                                                 XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
                                                  "Id %s not found", id);
           return TRUE;
         }
@@ -355,7 +355,7 @@ handle_set_value (XdgAppPermissionStore *object,
       else
         {
           g_dbus_method_invocation_return_error (invocation,
-                                                 XDG_APP_ERROR, XDG_APP_ERROR_NOT_FOUND,
+                                                 XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
                                                  "Id %s not found", id);
           return TRUE;
         }

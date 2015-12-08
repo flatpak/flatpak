@@ -25,7 +25,6 @@
 #include "xdg-app-remote-ref-private.h"
 #include "xdg-app-remote-ref.h"
 #include "xdg-app-enum-types.h"
-#include "xdg-app-error.h"
 
 typedef struct _XdgAppRemoteRefPrivate XdgAppRemoteRefPrivate;
 
