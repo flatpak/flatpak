@@ -2122,29 +2122,33 @@ ensure_soup_session (XdgAppDir *self)
 {
   const char *http_proxy;
 
-  if (self->soup_session != NULL)
-    return;
-
-  self->soup_session =
-    soup_session_new_with_options (SOUP_SESSION_USER_AGENT, "ostree ",
-                                   SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE,
-                                   SOUP_SESSION_USE_THREAD_CONTEXT, TRUE,
-                                   SOUP_SESSION_TIMEOUT, 60,
-                                   SOUP_SESSION_IDLE_TIMEOUT, 60,
-                                   NULL);
-  http_proxy = g_getenv ("http_proxy");
-  if (http_proxy)
+  if (g_once_init_enter (&self->soup_session))
     {
-      g_autoptr(SoupURI) proxy_uri = soup_uri_new (http_proxy);
+      SoupSession *soup_session;
 
-      if (!proxy_uri)
-        g_warning ("Invalid proxy URI '%s'", http_proxy);
-      else
-        g_object_set (self->soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
+      soup_session =
+        soup_session_new_with_options (SOUP_SESSION_USER_AGENT, "ostree ",
+                                       SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE,
+                                       SOUP_SESSION_USE_THREAD_CONTEXT, TRUE,
+                                       SOUP_SESSION_TIMEOUT, 60,
+                                       SOUP_SESSION_IDLE_TIMEOUT, 60,
+                                       NULL);
+      http_proxy = g_getenv ("http_proxy");
+      if (http_proxy)
+        {
+          g_autoptr(SoupURI) proxy_uri = soup_uri_new (http_proxy);
+
+          if (!proxy_uri)
+            g_warning ("Invalid proxy URI '%s'", http_proxy);
+          else
+            g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
+        }
+
+      if (g_getenv ("OSTREE_DEBUG_HTTP"))
+        soup_session_add_feature (soup_session, (SoupSessionFeature*)soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
+
+      g_once_init_leave (&self->soup_session, soup_session);
     }
-
-  if (g_getenv ("OSTREE_DEBUG_HTTP"))
-    soup_session_add_feature (self->soup_session, (SoupSessionFeature*)soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
 }
 
 static GBytes *
