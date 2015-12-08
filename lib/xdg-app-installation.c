@@ -53,9 +53,9 @@ xdg_app_installation_finalize (GObject *object)
 
 static void
 xdg_app_installation_set_property (GObject         *object,
-                          guint            prop_id,
-                          const GValue    *value,
-                          GParamSpec      *pspec)
+                                   guint            prop_id,
+                                   const GValue    *value,
+                                   GParamSpec      *pspec)
 {
 
   switch (prop_id)
@@ -326,4 +326,22 @@ xdg_app_installation_list_remotes (XdgAppInstallation  *self,
 
   g_ptr_array_add (remotes, NULL);
   return (XdgAppRemote **)g_ptr_array_free (g_steal_pointer (&remotes), FALSE);
+}
+
+char *
+xdg_app_installation_load_app_overrides  (XdgAppInstallation *self,
+                                          const char *app_id,
+                                          GCancellable *cancellable,
+                                          GError **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autoptr(GBytes) bytes = NULL;
+  g_autofree char *metadata_contents = NULL;
+  gsize metadata_size;
+
+  metadata_contents = xdg_app_dir_load_override (priv->dir, app_id, &metadata_size, error);
+  if (metadata_contents == NULL)
+    return NULL;
+
+  return metadata_contents;
 }

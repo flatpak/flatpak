@@ -92,6 +92,10 @@ XdgAppDeploy *xdg_app_dir_load_deployed (XdgAppDir      *self,
                                          const char     *checksum,
                                          GCancellable   *cancellable,
                                          GError        **error);
+char *    xdg_app_dir_load_override     (XdgAppDir      *dir,
+                                         const char     *app_id,
+                                         gsize          *length,
+                                         GError        **error);
 OstreeRepo *xdg_app_dir_get_repo        (XdgAppDir      *self);
 gboolean    xdg_app_dir_ensure_path     (XdgAppDir      *self,
                                          GCancellable   *cancellable,

@@ -262,6 +262,30 @@ xdg_app_dir_get_path (XdgAppDir *self)
   return self->basedir;
 }
 
+char *
+xdg_app_dir_load_override (XdgAppDir *self,
+                           const char *app_id,
+                           gsize   *length,
+                           GError **error)
+{
+  g_autoptr(GFile) override_dir = NULL;
+  g_autoptr(GFile) file = NULL;
+  char *metadata_contents;
+
+  override_dir = g_file_get_child (self->basedir, "overrides");
+  file = g_file_get_child (override_dir, app_id);
+
+  if (!g_file_load_contents (file, NULL,
+                            &metadata_contents, length, NULL, NULL))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "No overrides found for %s", app_id);
+      return NULL;
+    }
+
+  return metadata_contents;
+}
+
 GKeyFile *
 xdg_app_load_override_keyfile (const char *app_id, gboolean user, GError **error)
 {
@@ -271,24 +295,19 @@ xdg_app_load_override_keyfile (const char *app_id, gboolean user, GError **error
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
+  g_autoptr(XdgAppDir) dir = NULL;
 
-  if (user)
-    base_dir = xdg_app_get_user_base_dir_location ();
-  else
-    base_dir = xdg_app_get_system_base_dir_location ();
+  dir = xdg_app_dir_get (user);
 
-  override_dir = g_file_get_child (base_dir, "overrides");
-  file = g_file_get_child (override_dir, app_id);
+  metadata_contents = xdg_app_dir_load_override (dir, app_id, &metadata_size, error);
+  if (metadata_contents == NULL)
+    return NULL;
 
-  if (g_file_load_contents (file, NULL,
-                            &metadata_contents, &metadata_size, NULL, NULL))
-    {
-
-      if (!g_key_file_load_from_data (metakey,
-                                      metadata_contents, metadata_size,
-                                      0, error))
-        return NULL;
-    }
+  if (!g_key_file_load_from_data (metakey,
+                                  metadata_contents,
+                                  metadata_size,
+                                  0, error))
+    return NULL;
 
   return g_steal_pointer (&metakey);
 }
@@ -298,13 +317,22 @@ xdg_app_load_override_file (const char *app_id, gboolean user, GError **error)
 {
   XdgAppContext *overrides = xdg_app_context_new ();
   g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr(GError) my_error = NULL;
 
-  metakey = xdg_app_load_override_keyfile (app_id, user, error);
+  metakey = xdg_app_load_override_keyfile (app_id, user, &my_error);
   if (metakey == NULL)
-    return NULL;
-
-  if (!xdg_app_context_load_metadata (overrides, metakey, error))
-    return NULL;
+    {
+      if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&error));
+          return NULL;
+        }
+    }
+  else
+    {
+      if (!xdg_app_context_load_metadata (overrides, metakey, error))
+        return NULL;
+    }
 
   return g_steal_pointer (&overrides);
 }
