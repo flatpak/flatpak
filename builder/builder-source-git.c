@@ -163,6 +163,32 @@ get_branch (BuilderSourceGit *self)
 }
 
 static char *
+get_url (BuilderSourceGit *self,
+         BuilderContext *context,
+         GError **error)
+{
+  g_autofree char *scheme = NULL;
+
+  if (self->url == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "URL not specified");
+      return NULL;
+    }
+
+  scheme = g_uri_parse_scheme (self->url);
+  if (scheme == NULL)
+    {
+      g_autoptr(GFile) repo =
+        g_file_resolve_relative_path (builder_context_get_base_dir (context),
+                                      self->url);
+      return g_file_get_uri (repo);
+    }
+
+  return g_strdup (self->url);
+}
+
+
+static char *
 git_get_current_commit (GFile *repo_dir,
                         const char *branch,
                         BuilderContext *context,
@@ -348,14 +374,13 @@ builder_source_git_download (BuilderSource *source,
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
   g_autoptr(GFile) mirror_dir = NULL;
+  g_autofree char *url = NULL;
 
-  if (self->url == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "URL not specified");
-      return FALSE;
-    }
+  url = get_url (self, context, error);
+  if (url == NULL)
+    return FALSE;
 
-  if (!git_mirror_repo (self->url,
+  if (!git_mirror_repo (url,
                         get_branch (self),
                         context,
                         error))
@@ -439,8 +464,13 @@ builder_source_git_extract (BuilderSource *source,
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *mirror_dir_path = NULL;
   g_autofree char *dest_path = NULL;
+  g_autofree char *url = NULL;
 
-  mirror_dir = git_get_mirror_dir (self->url, context);
+  url = get_url (self, context, error);
+  if (url == NULL)
+    return FALSE;
+
+  mirror_dir = git_get_mirror_dir (url, context);
 
   mirror_dir_path = g_file_get_path (mirror_dir);
   dest_path = g_file_get_path (dest);
@@ -449,7 +479,7 @@ builder_source_git_extract (BuilderSource *source,
             "clone", "--branch", get_branch (self), mirror_dir_path, dest_path, NULL))
     return FALSE;
 
-  if (!git_extract_submodule (self->url, dest, context, error))
+  if (!git_extract_submodule (url, dest, context, error))
     return FALSE;
 
   return TRUE;
@@ -462,19 +492,26 @@ builder_source_git_checksum (BuilderSource  *source,
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
   g_autoptr(GFile) mirror_dir = NULL;
-  g_autofree char *current_commit;
+  g_autofree char *current_commit = NULL;
   g_autoptr(GError) error = NULL;
+  g_autofree char *url = NULL;
 
   builder_cache_checksum_str (cache, self->url);
   builder_cache_checksum_str (cache, self->branch);
 
-  mirror_dir = git_get_mirror_dir (self->url, context);
+  url = get_url (self, context, &error);
+  if (url != NULL)
+    {
+      mirror_dir = git_get_mirror_dir (url, context);
 
-  current_commit = git_get_current_commit (mirror_dir, get_branch (self), context, &error);
-  if (current_commit)
-    builder_cache_checksum_str (cache, current_commit);
-  else if (error)
-    g_warning ("Failed to get current git checksum: %s", error->message);
+      current_commit = git_get_current_commit (mirror_dir, get_branch (self), context, &error);
+      if (current_commit)
+        builder_cache_checksum_str (cache, current_commit);
+      else if (error)
+        g_warning ("Failed to get current git checksum: %s", error->message);
+    }
+  else
+    g_warning ("No url");
 }
 
 static void
