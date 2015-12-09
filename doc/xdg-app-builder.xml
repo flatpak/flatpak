@@ -346,6 +346,14 @@
                         <listitem><para>The path of a local file that will be copied into the source dir</para></listitem>
                     </varlistentry>
                     <varlistentry>
+                        <term><option>url</option></term>
+                        <listitem><para>The url of a remote file that will be downloaded and copied into the source dir. This overrides path if both are specified.</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>sha256</option></term>
+                        <listitem><para>The sha256 checksum of the file, verified after download. This is optional for local files.</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
                         <term><option>dest-filename</option></term>
                         <listitem><para>Filename to use inside the source dir, default to the basename of path.</para></listitem>
                     </varlistentry>

@@ -34,6 +34,8 @@ struct BuilderSourceFile {
   BuilderSource parent;
 
   char *path;
+  char *url;
+  char *sha256;
   char *dest_filename;
 };
 
@@ -46,6 +48,8 @@ G_DEFINE_TYPE (BuilderSourceFile, builder_source_file, BUILDER_TYPE_SOURCE);
 enum {
   PROP_0,
   PROP_PATH,
+  PROP_URL,
+  PROP_SHA256,
   PROP_DEST_FILENAME,
   LAST_PROP
 };
@@ -56,6 +60,8 @@ builder_source_file_finalize (GObject *object)
   BuilderSourceFile *self = (BuilderSourceFile *)object;
 
   g_free (self->path);
+  g_free (self->url);
+  g_free (self->sha256);
   g_free (self->dest_filename);
 
   G_OBJECT_CLASS (builder_source_file_parent_class)->finalize (object);
@@ -73,6 +79,14 @@ builder_source_file_get_property (GObject    *object,
     {
     case PROP_PATH:
       g_value_set_string (value, self->path);
+      break;
+
+    case PROP_URL:
+      g_value_set_string (value, self->url);
+      break;
+
+    case PROP_SHA256:
+      g_value_set_string (value, self->sha256);
       break;
 
     case PROP_DEST_FILENAME:
@@ -99,6 +113,16 @@ builder_source_file_set_property (GObject      *object,
       self->path = g_value_dup_string (value);
       break;
 
+    case PROP_URL:
+      g_free (self->url);
+      self->url = g_value_dup_string (value);
+      break;
+
+    case PROP_SHA256:
+      g_free (self->sha256);
+      self->sha256 = g_value_dup_string (value);
+      break;
+
     case PROP_DEST_FILENAME:
       g_free (self->dest_filename);
       self->dest_filename = g_value_dup_string (value);
@@ -109,20 +133,133 @@ builder_source_file_set_property (GObject      *object,
     }
 }
 
+static SoupURI *
+get_uri (BuilderSourceFile *self,
+         GError **error)
+{
+  SoupURI *uri;
+
+  if (self->url == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "URL not specified");
+      return NULL;
+    }
+
+  uri = soup_uri_new (self->url);
+  if (uri == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid URL '%s'", self->url);
+      return NULL;
+    }
+  return uri;
+}
+
+static GFile *
+get_download_location (BuilderSourceFile *self,
+                       BuilderContext *context,
+                       GError **error)
+{
+  g_autoptr(SoupURI) uri = NULL;
+  const char *path;
+  g_autofree char *base_name = NULL;
+  GFile *download_dir = NULL;
+  g_autoptr(GFile) sha256_dir = NULL;
+  g_autoptr(GFile) file = NULL;
+
+  uri = get_uri (self, error);
+  if (uri == NULL)
+    return FALSE;
+
+  path = soup_uri_get_path (uri);
+
+  base_name = g_path_get_basename (path);
+
+  if (self->sha256 == NULL || *self->sha256 == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Sha256 not specified");
+      return FALSE;
+    }
+
+  download_dir = builder_context_get_download_dir (context);
+  sha256_dir = g_file_get_child (download_dir, self->sha256);
+  file = g_file_get_child (sha256_dir, base_name);
+
+  return g_steal_pointer (&file);
+}
+
 static GFile *
 get_source_file (BuilderSourceFile *self,
                  BuilderContext *context,
+                 gboolean *is_local,
                  GError **error)
 {
   GFile *base_dir = builder_context_get_base_dir (context);
 
-  if (self->path == NULL || self->path[0] == 0)
+  if (self->url != NULL && self->url[0] != 0)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "path not specified");
-      return NULL;
+      *is_local = FALSE;
+      return get_download_location (self, context, error);
     }
 
-  return g_file_resolve_relative_path (base_dir, self->path);
+  if (self->path != NULL && self->path[0] != 0)
+    {
+      *is_local = TRUE;
+      return g_file_resolve_relative_path (base_dir, self->path);
+    }
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "source file path or url not specified");
+  return NULL;
+}
+
+static GBytes *
+download_uri (const char *orig_url,
+              const char *base_name,
+              BuilderContext *context,
+              GError **error)
+{
+  SoupSession *session;
+  g_autoptr(SoupMessage) msg = NULL;
+  g_autofree char *url = g_strdup (orig_url);
+
+  session = builder_context_get_soup_session (context);
+
+  while (TRUE)
+    {
+      g_clear_object (&msg);
+      msg = soup_message_new ("GET", url);
+      g_debug ("GET %s", url);
+      g_print ("Downloading %s...", base_name);
+      soup_session_send_message (session, msg);
+      g_print ("done\n");
+
+      g_debug ("response: %d %s", msg->status_code, msg->reason_phrase);
+
+      if (SOUP_STATUS_IS_REDIRECTION (msg->status_code))
+        {
+          const char *header = soup_message_headers_get_one (msg->response_headers, "Location");
+          if (header)
+            {
+              g_autoptr(SoupURI) new_uri = soup_uri_new_with_base (soup_message_get_uri (msg), header);
+              g_free (url);
+              url = soup_uri_to_string (new_uri, FALSE);
+              g_debug ("  -> %s", header);
+              continue;
+            }
+        }
+      else if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Failed to download %s (error %d): %s", base_name, msg->status_code, msg->reason_phrase);
+          return NULL;
+        }
+
+      break; /* No redirection */
+    }
+
+  return g_bytes_new_with_free_func (msg->response_body->data,
+                                     msg->response_body->length,
+                                     g_object_unref,
+                                     g_object_ref (msg));
 }
 
 static gboolean
@@ -131,17 +268,75 @@ builder_source_file_download (BuilderSource *source,
                               GError **error)
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
-  g_autoptr(GFile) src = NULL;
+  g_autoptr(GFile) file = NULL;
+  gboolean is_local;
+  g_autoptr (GFile) dir = NULL;
+  g_autofree char *dir_path = NULL;
+  g_autofree char *sha256 = NULL;
+  g_autofree char *base_name = NULL;
+  g_autoptr(GBytes) content = NULL;
 
-  src = get_source_file (self, context, error);
-  if (src == NULL)
+  file = get_source_file (self, context, &is_local, error);
+  if (file == NULL)
     return FALSE;
 
-  if (!g_file_query_exists (src, NULL))
+  base_name = g_file_get_basename (file);
+
+  if (g_file_query_exists (file, NULL))
+    {
+      if (is_local && self->sha256 != NULL && *self->sha256 != 0)
+        {
+          g_autofree char *data = NULL;
+          gsize len;
+
+          if (!g_file_load_contents (file, NULL, &data, &len, NULL, error))
+            return FALSE;
+
+          sha256 = g_compute_checksum_for_string (G_CHECKSUM_SHA256, data, len);
+          if (strcmp (sha256, self->sha256) != 0)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Wrong sha256 for %s, expected %s, was %s", base_name, self->sha256, sha256);
+              return FALSE;
+            }
+        }
+      return TRUE;
+    }
+
+  if (is_local)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't find file at %s", self->path);
       return FALSE;
     }
+
+  content = download_uri (self->url,
+                          base_name,
+                          context,
+                          error);
+  if (content == NULL)
+    return FALSE;
+
+  sha256 = g_compute_checksum_for_string (G_CHECKSUM_SHA256,
+                                          g_bytes_get_data (content, NULL),
+                                          g_bytes_get_size (content));
+
+  if (strcmp (sha256, self->sha256) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Wrong sha256 for %s, expected %s, was %s", base_name, self->sha256, sha256);
+      return FALSE;
+    }
+
+  dir = g_file_get_parent (file);
+  dir_path = g_file_get_path (dir);
+  g_mkdir_with_parents (dir_path, 0755);
+
+  if (!g_file_replace_contents (file,
+                                g_bytes_get_data (content, NULL),
+                                g_bytes_get_size (content),
+                                NULL, FALSE, G_FILE_CREATE_NONE, NULL,
+                                NULL, error))
+    return FALSE;
 
   return TRUE;
 }
@@ -156,8 +351,9 @@ builder_source_file_extract (BuilderSource *source,
   g_autoptr(GFile) src = NULL;
   g_autoptr(GFile) dest_file = NULL;
   g_autofree char *dest_filename = NULL;
+  gboolean is_local;
 
-  src = get_source_file (self, context, error);
+  src = get_source_file (self, context, &is_local, error);
   if (src == NULL)
     return FALSE;
 
@@ -187,8 +383,9 @@ builder_source_file_checksum (BuilderSource  *source,
   g_autoptr(GFile) src = NULL;
   g_autofree char *data = NULL;
   gsize len;
+  gboolean is_local;
 
-  src = get_source_file (self, context, NULL);
+  src = get_source_file (self, context, &is_local, NULL);
   if (src == NULL)
     return;
 
@@ -196,6 +393,8 @@ builder_source_file_checksum (BuilderSource  *source,
     builder_cache_checksum_data (cache, (guchar *)data, len);
 
   builder_cache_checksum_str (cache, self->path);
+  builder_cache_checksum_str (cache, self->url);
+  builder_cache_checksum_str (cache, self->sha256);
   builder_cache_checksum_str (cache, self->dest_filename);
 }
 
@@ -216,6 +415,20 @@ builder_source_file_class_init (BuilderSourceFileClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_PATH,
                                    g_param_spec_string ("path",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_URL,
+                                   g_param_spec_string ("url",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_SHA256,
+                                   g_param_spec_string ("sha256",
                                                         "",
                                                         "",
                                                         NULL,
