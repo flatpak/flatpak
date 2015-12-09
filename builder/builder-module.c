@@ -357,6 +357,43 @@ builder_module_init (BuilderModule *self)
 {
 }
 
+static JsonNode *
+builder_module_serialize_property (JsonSerializable *serializable,
+                                   const gchar      *property_name,
+                                   const GValue     *value,
+                                   GParamSpec       *pspec)
+{
+  if (strcmp (property_name, "sources") == 0)
+    {
+      BuilderModule *self = BUILDER_MODULE (serializable);
+      JsonNode *retval = NULL;
+      GList *l;
+
+      if (self->sources)
+        {
+          JsonArray *array;
+
+          array = json_array_sized_new (g_list_length (self->sources));
+
+          for (l = self->sources; l != NULL; l = l->next)
+            {
+              JsonNode *child = builder_source_to_json (BUILDER_SOURCE (l->data));
+              json_array_add_element (array, child);
+            }
+
+          retval = json_node_init_array (json_node_alloc (), array);
+          json_array_unref (array);
+        }
+
+      return retval;
+    }
+  else
+    return json_serializable_default_serialize_property (serializable,
+                                                         property_name,
+                                                         value,
+                                                         pspec);
+}
+
 static gboolean
 builder_module_deserialize_property (JsonSerializable *serializable,
                                      const gchar      *property_name,
@@ -415,6 +452,7 @@ builder_module_deserialize_property (JsonSerializable *serializable,
 static void
 serializable_iface_init (JsonSerializableIface *serializable_iface)
 {
+  serializable_iface->serialize_property = builder_module_serialize_property;
   serializable_iface->deserialize_property = builder_module_deserialize_property;
 }
 

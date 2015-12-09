@@ -61,6 +61,7 @@ typedef struct {
 GType builder_source_get_type (void);
 
 BuilderSource * builder_source_from_json (JsonNode *node);
+JsonNode *      builder_source_to_json   (BuilderSource *self);
 
 gboolean builder_source_download (BuilderSource *self,
                                   BuilderContext *context,

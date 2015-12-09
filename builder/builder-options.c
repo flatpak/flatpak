@@ -206,6 +206,84 @@ builder_options_init (BuilderOptions *self)
   self->arch = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
 }
 
+static JsonNode *
+builder_options_serialize_property (JsonSerializable *serializable,
+                                    const gchar      *property_name,
+                                    const GValue     *value,
+                                    GParamSpec       *pspec)
+{
+  if (strcmp (property_name, "arch") == 0)
+    {
+      BuilderOptions *self = BUILDER_OPTIONS (serializable);
+      JsonNode *retval = NULL;
+
+      if (self->arch && g_hash_table_size (self->arch) > 0)
+        {
+          JsonObject *object;
+          GHashTableIter iter;
+          gpointer key, value;
+
+          object = json_object_new ();
+
+          g_hash_table_iter_init (&iter, self->arch);
+          while (g_hash_table_iter_next (&iter, &key, &value))
+            {
+              JsonNode *child = json_gobject_serialize (value);
+              json_object_set_member (object, (char *)key, child);
+            }
+
+          retval = json_node_init_object (json_node_alloc (), object);
+          json_object_unref (object);
+        }
+
+      return retval;
+    }
+  else if (strcmp (property_name, "env") == 0)
+    {
+      BuilderOptions *self = BUILDER_OPTIONS (serializable);
+      JsonNode *retval = NULL;
+
+      if (self->env && g_strv_length (self->env) > 0)
+        {
+          JsonObject *object;
+          int i;
+
+          object = json_object_new ();
+
+          for (i = 0; self->env[i] != NULL; i++)
+            {
+              JsonNode *str = json_node_new (JSON_NODE_VALUE);
+              const char *equal;
+              g_autofree char *member = NULL;
+
+              equal = strchr (self->env[i], '=');
+              if (equal)
+                {
+                  json_node_set_string (str, equal + 1);
+                  member = g_strndup (self->env[i], equal - self->env[i]);
+                }
+              else
+                {
+                  json_node_set_string (str, "");
+                  member = g_strdup (self->env[i]);
+                }
+
+              json_object_set_member (object, member, str);
+            }
+
+          retval = json_node_init_object (json_node_alloc (), object);
+          json_object_unref (object);
+        }
+
+      return retval;
+    }
+  else
+    return json_serializable_default_serialize_property (serializable,
+                                                         property_name,
+                                                         value,
+                                                         pspec);
+}
+
 static gboolean
 builder_options_deserialize_property (JsonSerializable *serializable,
                                        const gchar      *property_name,
@@ -295,6 +373,7 @@ builder_options_deserialize_property (JsonSerializable *serializable,
 static void
 serializable_iface_init (JsonSerializableIface *serializable_iface)
 {
+  serializable_iface->serialize_property = builder_options_serialize_property;
   serializable_iface->deserialize_property = builder_options_deserialize_property;
 }
 

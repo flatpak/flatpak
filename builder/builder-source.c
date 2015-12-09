@@ -149,6 +149,37 @@ serializable_iface_init (JsonSerializableIface *serializable_iface)
 {
 }
 
+JsonNode *
+builder_source_to_json (BuilderSource *self)
+{
+  JsonNode *node;
+  JsonObject *object;
+  const gchar *type = NULL;
+
+  node = json_gobject_serialize (G_OBJECT (self));
+  object = json_node_get_object (node);
+
+  if (BUILDER_IS_SOURCE_ARCHIVE (self))
+    type = "archive";
+  else if (BUILDER_IS_SOURCE_FILE (self))
+    type = "file";
+  else if (BUILDER_IS_SOURCE_SCRIPT (self))
+    type = "script";
+  else if (BUILDER_IS_SOURCE_PATCH (self))
+    type = "patch";
+  else if (BUILDER_IS_SOURCE_GIT (self))
+    type = "git";
+  else if (BUILDER_IS_SOURCE_BZR (self))
+    type = "bzr";
+  else
+    g_warning ("Unknown source type");
+
+  if (type)
+    json_object_set_string_member (object, "type", type);
+
+  return node;
+}
+
 BuilderSource *
 builder_source_from_json (JsonNode *node)
 {
