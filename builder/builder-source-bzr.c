@@ -252,6 +252,24 @@ builder_source_bzr_checksum (BuilderSource  *source,
     g_warning ("Failed to get current bzr checksum: %s", error->message);
 }
 
+static gboolean
+builder_source_bzr_update (BuilderSource  *source,
+                           BuilderContext *context,
+                           GError **error)
+{
+  BuilderSourceBzr *self = BUILDER_SOURCE_BZR (source);
+  char *current_commit;
+
+  current_commit = get_current_commit (self, context, NULL);
+  if (current_commit)
+    {
+      g_free (self->revision);
+      self->revision = current_commit;
+    }
+
+  return TRUE;
+}
+
 static void
 builder_source_bzr_class_init (BuilderSourceBzrClass *klass)
 {
@@ -264,6 +282,7 @@ builder_source_bzr_class_init (BuilderSourceBzrClass *klass)
 
   source_class->download = builder_source_bzr_download;
   source_class->extract = builder_source_bzr_extract;
+  source_class->update = builder_source_bzr_update;
   source_class->checksum = builder_source_bzr_checksum;
 
   g_object_class_install_property (object_class,

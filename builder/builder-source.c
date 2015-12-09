@@ -118,6 +118,14 @@ builder_source_real_extract (BuilderSource *self,
   return FALSE;
 }
 
+static gboolean
+builder_source_real_update (BuilderSource *self,
+                            BuilderContext *context,
+                            GError **error)
+{
+  return TRUE;
+}
+
 static void
 builder_source_class_init (BuilderSourceClass *klass)
 {
@@ -129,6 +137,7 @@ builder_source_class_init (BuilderSourceClass *klass)
 
   klass->download = builder_source_real_download;
   klass->extract = builder_source_real_extract;
+  klass->update = builder_source_real_update;
 
   g_object_class_install_property (object_class,
                                    PROP_DEST,
@@ -244,6 +253,16 @@ builder_source_extract  (BuilderSource *self,
 
 
   return class->extract (self, real_dest, context, error);
+}
+
+gboolean
+builder_source_update  (BuilderSource *self,
+                        BuilderContext *context,
+                        GError **error)
+{
+  BuilderSourceClass *class = BUILDER_SOURCE_GET_CLASS (self);
+
+  return class->update (self, context, error);
 }
 
 void

@@ -53,6 +53,9 @@ typedef struct {
                         GFile *dest,
                         BuilderContext *context,
                         GError **error);
+  gboolean (* update) (BuilderSource *self,
+                       BuilderContext *context,
+                       GError **error);
   void     (* checksum) (BuilderSource *self,
                          BuilderCache   *cache,
                          BuilderContext *context);
@@ -70,6 +73,9 @@ gboolean builder_source_extract  (BuilderSource *self,
                                   GFile *dest,
                                   BuilderContext *context,
                                   GError **error);
+gboolean builder_source_update  (BuilderSource *self,
+                                 BuilderContext *context,
+                                 GError **error);
 
 void     builder_source_checksum (BuilderSource  *self,
                                   BuilderCache   *cache,

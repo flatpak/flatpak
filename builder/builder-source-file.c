@@ -381,12 +381,68 @@ builder_source_file_extract (BuilderSource *source,
     }
   else
     {
+      if (is_local)
+        {
+          g_autofree char *data = NULL;
+          g_autofree char *base64 = NULL;
+          gsize len;
+
+          if (!g_file_load_contents (src, NULL, &data, &len, NULL, error))
+            return FALSE;
+
+          base64 = g_base64_encode ((const guchar *)data, len);
+          g_free (self->url);
+          self->url = g_strdup_printf ("data:text/plain;charset=utf8;base64,%s", base64);
+          if (self->dest_filename == NULL || *self->dest_filename == 0)
+            {
+              g_free (self->dest_filename);
+              self->dest_filename = g_file_get_basename (src);
+            }
+        }
+
       if (!g_file_copy (src, dest_file,
                         G_FILE_COPY_OVERWRITE,
                         NULL,
                         NULL, NULL,
                         error))
         return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+builder_source_file_update (BuilderSource *source,
+                            BuilderContext *context,
+                            GError **error)
+{
+  BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
+  g_autoptr(GFile) src = NULL;
+  g_autoptr(GFile) dest_file = NULL;
+  g_autofree char *dest_filename = NULL;
+  gboolean is_local, is_inline;
+
+  src = get_source_file (self, context, &is_local, &is_inline, error);
+  if (src == NULL)
+    return FALSE;
+
+  if (is_local)
+    {
+      g_autofree char *data = NULL;
+      g_autofree char *base64 = NULL;
+      gsize len;
+
+      if (!g_file_load_contents (src, NULL, &data, &len, NULL, error))
+        return FALSE;
+
+      base64 = g_base64_encode ((const guchar *)data, len);
+      g_free (self->url);
+      self->url = g_strdup_printf ("data:text/plain;charset=utf8;base64,%s", base64);
+      if (self->dest_filename == NULL || *self->dest_filename == 0)
+        {
+          g_free (self->dest_filename);
+          self->dest_filename = g_file_get_basename (src);
+        }
     }
 
   return TRUE;
@@ -429,6 +485,7 @@ builder_source_file_class_init (BuilderSourceFileClass *klass)
 
   source_class->download = builder_source_file_download;
   source_class->extract = builder_source_file_extract;
+  source_class->update = builder_source_file_update;
   source_class->checksum = builder_source_file_checksum;
 
   g_object_class_install_property (object_class,

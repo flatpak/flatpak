@@ -690,6 +690,8 @@ builder_manifest_build (BuilderManifest *self,
         return FALSE;
 
       builder_module_set_changes (m, changes);
+
+      builder_module_update (m, context, error);
     }
 
   return TRUE;
@@ -1095,10 +1097,14 @@ builder_manifest_finish (BuilderManifest *self,
                          GError **error)
 {
   GFile *app_dir = builder_context_get_app_dir (context);
+  g_autoptr(GFile) manifest_file = NULL;
   g_autofree char *app_dir_path = g_file_get_path (app_dir);
+  g_autofree char *json = NULL;
   g_autoptr(GPtrArray) args = NULL;
   g_autoptr(GSubprocess) subp = NULL;
   int i;
+  JsonNode *node;
+  JsonGenerator *generator;
 
   builder_manifest_checksum_for_finish (self, cache, context);
   if (!builder_cache_lookup (cache))
@@ -1127,6 +1133,19 @@ builder_manifest_finish (BuilderManifest *self,
 
       if (subp == NULL ||
           !g_subprocess_wait_check (subp, NULL, error))
+        return FALSE;
+
+      node = json_gobject_serialize (G_OBJECT (self));
+      generator = json_generator_new ();
+      json_generator_set_pretty (generator, TRUE);
+      json_generator_set_root (generator, node);
+      json = json_generator_to_data (generator, NULL);
+      g_object_unref (generator);
+      json_node_free (node);
+      manifest_file = g_file_resolve_relative_path (app_dir, "files/manifest.json");
+
+      if (!g_file_replace_contents (manifest_file, json, strlen (json), NULL, FALSE,
+                                    0, NULL, NULL, error))
         return FALSE;
 
       if (!builder_cache_commit (cache, "Finish", error))

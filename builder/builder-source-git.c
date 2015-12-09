@@ -518,6 +518,33 @@ builder_source_git_checksum (BuilderSource  *source,
     g_warning ("No url");
 }
 
+static gboolean
+builder_source_git_update (BuilderSource  *source,
+                           BuilderContext *context,
+                           GError **error)
+{
+  BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
+  g_autoptr(GFile) mirror_dir = NULL;
+  char *current_commit;
+  g_autofree char *url = NULL;
+
+  url = get_url (self, context, error);
+  if (url == NULL)
+    return FALSE;
+
+  mirror_dir = git_get_mirror_dir (url, context);
+
+  current_commit = git_get_current_commit (mirror_dir, get_branch (self), context, NULL);
+  g_print ("current commit %s\n", current_commit);
+  if (current_commit)
+    {
+      g_free (self->branch);
+      self->branch = current_commit;
+    }
+
+  return TRUE;
+}
+
 static void
 builder_source_git_class_init (BuilderSourceGitClass *klass)
 {
@@ -530,6 +557,7 @@ builder_source_git_class_init (BuilderSourceGitClass *klass)
 
   source_class->download = builder_source_git_download;
   source_class->extract = builder_source_git_extract;
+  source_class->update = builder_source_git_update;
   source_class->checksum = builder_source_git_checksum;
 
   g_object_class_install_property (object_class,

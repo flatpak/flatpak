@@ -827,6 +827,24 @@ builder_module_build (BuilderModule *self,
   return TRUE;
 }
 
+gboolean
+builder_module_update (BuilderModule   *self,
+                       BuilderContext  *context,
+                       GError         **error)
+{
+  GList *l;
+
+  for (l = self->sources; l != NULL; l = l->next)
+    {
+      BuilderSource *source = l->data;
+
+      if (!builder_source_update  (source, context, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 void
 builder_module_checksum (BuilderModule  *self,
                          BuilderCache   *cache,

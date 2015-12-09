@@ -55,6 +55,9 @@ gboolean builder_module_extract_sources  (BuilderModule   *self,
 gboolean builder_module_build            (BuilderModule   *self,
                                           BuilderContext  *context,
                                           GError         **error);
+gboolean builder_module_update           (BuilderModule   *self,
+                                          BuilderContext  *context,
+                                          GError         **error);
 
 void     builder_module_checksum         (BuilderModule  *self,
                                           BuilderCache   *cache,
