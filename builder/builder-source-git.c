@@ -535,7 +535,6 @@ builder_source_git_update (BuilderSource  *source,
   mirror_dir = git_get_mirror_dir (url, context);
 
   current_commit = git_get_current_commit (mirror_dir, get_branch (self), context, NULL);
-  g_print ("current commit %s\n", current_commit);
   if (current_commit)
     {
       g_free (self->branch);
