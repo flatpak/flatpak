@@ -37,6 +37,7 @@ struct BuilderSourceBzr {
   BuilderSource parent;
 
   char *url;
+  char *revision;
 };
 
 typedef struct {
@@ -48,6 +49,7 @@ G_DEFINE_TYPE (BuilderSourceBzr, builder_source_bzr, BUILDER_TYPE_SOURCE);
 enum {
   PROP_0,
   PROP_URL,
+  PROP_REVISION,
   LAST_PROP
 };
 
@@ -57,6 +59,7 @@ builder_source_bzr_finalize (GObject *object)
   BuilderSourceBzr *self = (BuilderSourceBzr *)object;
 
   g_free (self->url);
+  g_free (self->revision);
 
   G_OBJECT_CLASS (builder_source_bzr_parent_class)->finalize (object);
 }
@@ -73,6 +76,10 @@ builder_source_bzr_get_property (GObject    *object,
     {
     case PROP_URL:
       g_value_set_string (value, self->url);
+      break;
+
+    case PROP_REVISION:
+      g_value_set_string (value, self->revision);
       break;
 
     default:
@@ -93,6 +100,11 @@ builder_source_bzr_set_property (GObject      *object,
     case PROP_URL:
       g_free (self->url);
       self->url = g_value_dup_string (value);
+      break;
+
+    case PROP_REVISION:
+      g_free (self->revision);
+      self->revision = g_value_dup_string (value);
       break;
 
     default:
@@ -210,6 +222,14 @@ builder_source_bzr_extract (BuilderSource *source,
             "branch", "--stacked", mirror_dir_path, dest_path, "--use-existing-dir", NULL))
     return FALSE;
 
+  if (self->revision)
+    {
+      g_autofree char *revarg = g_strdup_printf ("-r%s", self->revision);
+      if (!bzr (dest, NULL, error,
+                "revert", revarg, NULL))
+        return FALSE;
+    }
+
   return TRUE;
 }
 
@@ -223,6 +243,7 @@ builder_source_bzr_checksum (BuilderSource  *source,
   g_autoptr(GError) error = NULL;
 
   builder_cache_checksum_str (cache, self->url);
+  builder_cache_checksum_str (cache, self->revision);
 
   current_commit = get_current_commit (self, context, &error);
   if (current_commit)
@@ -248,6 +269,13 @@ builder_source_bzr_class_init (BuilderSourceBzrClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_URL,
                                    g_param_spec_string ("url",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_REVISION,
+                                   g_param_spec_string ("revision",
                                                         "",
                                                         "",
                                                         NULL,

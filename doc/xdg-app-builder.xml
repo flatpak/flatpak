@@ -329,6 +329,10 @@
                         <listitem><para>URL of the bzr repostiory</para></listitem>
                     </varlistentry>
                     <varlistentry>
+                        <term><option>revision</option></term>
+                        <listitem><para>A specific revision to use in the branch</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
                         <term><option>dest</option></term>
                         <listitem><para>Directory inside the source dir where the repository will be checked out.</para></listitem>
                     </varlistentry>
