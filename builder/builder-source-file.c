@@ -212,54 +212,34 @@ get_source_file (BuilderSourceFile *self,
 }
 
 static GBytes *
-download_uri (const char *orig_url,
-              const char *base_name,
+download_uri (const char *url,
               BuilderContext *context,
               GError **error)
 {
   SoupSession *session;
-  g_autoptr(SoupMessage) msg = NULL;
-  g_autofree char *url = g_strdup (orig_url);
+  g_autoptr(SoupRequest) req = NULL;
+  g_autoptr(GInputStream) input = NULL;
+  g_autoptr(GOutputStream) out = NULL;
 
   session = builder_context_get_soup_session (context);
 
-  while (TRUE)
-    {
-      g_clear_object (&msg);
-      msg = soup_message_new ("GET", url);
-      g_debug ("GET %s", url);
-      g_print ("Downloading %s...", base_name);
-      soup_session_send_message (session, msg);
-      g_print ("done\n");
+  req = soup_session_request (session, url, error);
+  if (req == NULL)
+    return NULL;
 
-      g_debug ("response: %d %s", msg->status_code, msg->reason_phrase);
+  input = soup_request_send (req, NULL, error);
+  if (input == NULL)
+    return NULL;
 
-      if (SOUP_STATUS_IS_REDIRECTION (msg->status_code))
-        {
-          const char *header = soup_message_headers_get_one (msg->response_headers, "Location");
-          if (header)
-            {
-              g_autoptr(SoupURI) new_uri = soup_uri_new_with_base (soup_message_get_uri (msg), header);
-              g_free (url);
-              url = soup_uri_to_string (new_uri, FALSE);
-              g_debug ("  -> %s", header);
-              continue;
-            }
-        }
-      else if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "Failed to download %s (error %d): %s", base_name, msg->status_code, msg->reason_phrase);
-          return NULL;
-        }
+  out = g_memory_output_stream_new_resizable ();
+  if (!g_output_stream_splice  (out,
+                                input,
+                                G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET | G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                                NULL,
+                                error))
+    return NULL;
 
-      break; /* No redirection */
-    }
-
-  return g_bytes_new_with_free_func (msg->response_body->data,
-                                     msg->response_body->length,
-                                     g_object_unref,
-                                     g_object_ref (msg));
+  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
 }
 
 static gboolean
@@ -310,7 +290,6 @@ builder_source_file_download (BuilderSource *source,
     }
 
   content = download_uri (self->url,
-                          base_name,
                           context,
                           error);
   if (content == NULL)

@@ -170,6 +170,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(OstreeGpgVerifyResult, g_object_unref)
 #ifndef SOUP_AUTOCLEANUPS_H
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupSession, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupMessage, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupRequest, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupURI, soup_uri_free)
 #endif
 
