@@ -53,6 +53,7 @@ gboolean builder_module_extract_sources  (BuilderModule   *self,
                                           BuilderContext  *context,
                                           GError         **error);
 gboolean builder_module_build            (BuilderModule   *self,
+                                          gboolean         keep_build_dir,
                                           BuilderContext  *context,
                                           GError         **error);
 gboolean builder_module_update           (BuilderModule   *self,

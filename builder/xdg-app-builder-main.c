@@ -38,6 +38,7 @@ static gboolean opt_download_only;
 static gboolean opt_build_only;
 static gboolean opt_disable_download;
 static gboolean opt_require_changes;
+static gboolean opt_keep_build_dirs;
 
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
@@ -47,6 +48,7 @@ static GOptionEntry entries[] = {
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir if no changes", NULL },
+  { "keep-build-dirs", 0, 0, G_OPTION_ARG_NONE, &opt_keep_build_dirs, "Don't remove build directories after install", NULL },
   { NULL }
 };
 
@@ -199,7 +201,7 @@ main (int    argc,
         }
     }
 
-  if (!builder_manifest_build (manifest, cache, build_context, &error))
+  if (!builder_manifest_build (manifest, opt_keep_build_dirs, cache, build_context, &error))
     {
       g_print ("error: %s\n", error->message);
       return 1;

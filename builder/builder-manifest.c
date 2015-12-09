@@ -656,6 +656,7 @@ builder_manifest_download (BuilderManifest *self,
 
 gboolean
 builder_manifest_build (BuilderManifest *self,
+                        gboolean keep_build_dir,
                         BuilderCache *cache,
                         BuilderContext *context,
                         GError **error)
@@ -676,7 +677,7 @@ builder_manifest_build (BuilderManifest *self,
         {
           g_autofree char *body =
             g_strdup_printf ("Built %s\n", builder_module_get_name (m));
-          if (!builder_module_build (m, context, error))
+          if (!builder_module_build (m, keep_build_dir, context, error))
             return FALSE;
           if (!builder_cache_commit (cache, body, error))
             return FALSE;

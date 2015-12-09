@@ -601,6 +601,7 @@ build (GFile *app_dir,
 
 gboolean
 builder_module_build (BuilderModule *self,
+                      gboolean keep_build_dir,
                       BuilderContext *context,
                       GError **error)
 {
@@ -821,8 +822,31 @@ builder_module_build (BuilderModule *self,
         }
     }
 
-  if (!gs_shutil_rm_rf (source_dir, NULL, error))
-    return FALSE;
+  if (keep_build_dir)
+    {
+      g_autofree char *buildname_link = g_strdup_printf ("build-%s", self->name);
+      g_autoptr(GFile) build_link = g_file_get_child (builder_context_get_state_dir (context),
+                                                      buildname_link);
+      g_autoptr(GError) my_error = NULL;
+      g_autofree char *buildname_target = g_path_get_basename (source_dir_path);
+
+      if (!g_file_delete (build_link, NULL, &my_error) &&
+          !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
+
+      if (!g_file_make_symbolic_link (build_link,
+                                      buildname_target,
+                                      NULL, error))
+        return FALSE;
+    }
+  else
+    {
+      if (!gs_shutil_rm_rf (source_dir, NULL, error))
+        return FALSE;
+    }
 
   return TRUE;
 }
