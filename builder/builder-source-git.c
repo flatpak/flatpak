@@ -476,7 +476,11 @@ builder_source_git_extract (BuilderSource *source,
   dest_path = g_file_get_path (dest);
 
   if (!git (NULL, NULL, error,
-            "clone", "--branch", get_branch (self), mirror_dir_path, dest_path, NULL))
+            "clone", mirror_dir_path, dest_path, NULL))
+    return FALSE;
+
+  if (!git (dest, NULL, error,
+            "checkout", get_branch (self), NULL))
     return FALSE;
 
   if (!git_extract_submodule (url, dest, context, error))
