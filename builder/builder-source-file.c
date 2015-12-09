@@ -156,6 +156,7 @@ get_uri (BuilderSourceFile *self,
 
 static GFile *
 get_download_location (BuilderSourceFile *self,
+                       gboolean *is_inline,
                        BuilderContext *context,
                        GError **error)
 {
@@ -172,6 +173,12 @@ get_download_location (BuilderSourceFile *self,
 
   path = soup_uri_get_path (uri);
 
+  if (g_str_has_prefix (self->url, "data:"))
+    {
+      *is_inline = TRUE;
+      return g_file_new_for_path ("inline data");
+    }
+
   base_name = g_path_get_basename (path);
 
   if (self->sha256 == NULL || *self->sha256 == 0)
@@ -184,6 +191,7 @@ get_download_location (BuilderSourceFile *self,
   sha256_dir = g_file_get_child (download_dir, self->sha256);
   file = g_file_get_child (sha256_dir, base_name);
 
+  *is_inline = FALSE;
   return g_steal_pointer (&file);
 }
 
@@ -191,6 +199,7 @@ static GFile *
 get_source_file (BuilderSourceFile *self,
                  BuilderContext *context,
                  gboolean *is_local,
+                 gboolean *is_inline,
                  GError **error)
 {
   GFile *base_dir = builder_context_get_base_dir (context);
@@ -198,7 +207,7 @@ get_source_file (BuilderSourceFile *self,
   if (self->url != NULL && self->url[0] != 0)
     {
       *is_local = FALSE;
-      return get_download_location (self, context, error);
+      return get_download_location (self, is_inline, context, error);
     }
 
   if (self->path != NULL && self->path[0] != 0)
@@ -249,14 +258,14 @@ builder_source_file_download (BuilderSource *source,
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
   g_autoptr(GFile) file = NULL;
-  gboolean is_local;
+  gboolean is_local, is_inline;
   g_autoptr (GFile) dir = NULL;
   g_autofree char *dir_path = NULL;
   g_autofree char *sha256 = NULL;
   g_autofree char *base_name = NULL;
   g_autoptr(GBytes) content = NULL;
 
-  file = get_source_file (self, context, &is_local, error);
+  file = get_source_file (self, context, &is_local, &is_inline, error);
   if (file == NULL)
     return FALSE;
 
@@ -299,7 +308,9 @@ builder_source_file_download (BuilderSource *source,
                                           g_bytes_get_data (content, NULL),
                                           g_bytes_get_size (content));
 
-  if (strcmp (sha256, self->sha256) != 0)
+  /* sha256 is optional for inline data */
+  if (((self->sha256 != NULL && *self->sha256 != 0) || !is_inline) &&
+      strcmp (sha256, self->sha256) != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Wrong sha256 for %s, expected %s, was %s", base_name, self->sha256, sha256);
@@ -330,25 +341,53 @@ builder_source_file_extract (BuilderSource *source,
   g_autoptr(GFile) src = NULL;
   g_autoptr(GFile) dest_file = NULL;
   g_autofree char *dest_filename = NULL;
-  gboolean is_local;
+  gboolean is_local, is_inline;
 
-  src = get_source_file (self, context, &is_local, error);
+  src = get_source_file (self, context, &is_local, &is_inline, error);
   if (src == NULL)
     return FALSE;
 
   if (self->dest_filename)
     dest_filename = g_strdup (self->dest_filename);
   else
-    dest_filename = g_file_get_basename (src);
+    {
+      if (is_inline)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "No dest-filename set for inline file data");
+          return FALSE;
+        }
+      dest_filename = g_file_get_basename (src);
+    }
 
   dest_file = g_file_get_child (dest, dest_filename);
 
-  if (!g_file_copy (src, dest_file,
-                    G_FILE_COPY_OVERWRITE,
-                    NULL,
-                    NULL, NULL,
-                    error))
-    return FALSE;
+  if (is_inline)
+    {
+      g_autoptr(GBytes) content = NULL;
+
+      content = download_uri (self->url,
+                              context,
+                              error);
+      if (content == NULL)
+        return FALSE;
+
+      if (!g_file_replace_contents (dest_file,
+                                    g_bytes_get_data (content, NULL),
+                                    g_bytes_get_size (content),
+                                    NULL, FALSE, G_FILE_CREATE_NONE, NULL,
+                                    NULL, error))
+        return FALSE;
+    }
+  else
+    {
+      if (!g_file_copy (src, dest_file,
+                        G_FILE_COPY_OVERWRITE,
+                        NULL,
+                        NULL, NULL,
+                        error))
+        return FALSE;
+    }
 
   return TRUE;
 }
@@ -362,13 +401,14 @@ builder_source_file_checksum (BuilderSource  *source,
   g_autoptr(GFile) src = NULL;
   g_autofree char *data = NULL;
   gsize len;
-  gboolean is_local;
+  gboolean is_local, is_inline;
 
-  src = get_source_file (self, context, &is_local, NULL);
+  src = get_source_file (self, context, &is_local, &is_inline, NULL);
   if (src == NULL)
     return;
 
-  if (g_file_load_contents (src, NULL, &data, &len, NULL, NULL))
+  if (is_local &&
+      g_file_load_contents (src, NULL, &data, &len, NULL, NULL))
     builder_cache_checksum_data (cache, (guchar *)data, len);
 
   builder_cache_checksum_str (cache, self->path);
