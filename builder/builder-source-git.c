@@ -486,6 +486,10 @@ builder_source_git_extract (BuilderSource *source,
   if (!git_extract_submodule (url, dest, context, error))
     return FALSE;
 
+  if (!git (dest, NULL, error,
+            "config", "--local", "remote.origin.url", url, NULL))
+    return FALSE;
+
   return TRUE;
 }
 
