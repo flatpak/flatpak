@@ -287,8 +287,9 @@ _xdg-app() {
                         ;;
 
                 run|override)
+                        # run doesn't take --user or --system, so don't use mode here
                         if [[ -z $name ]]; then
-                                comps=$(xdg-app $mode list-apps)
+                                comps=$(xdg-app list-apps)
                         fi
                         ;;
 
