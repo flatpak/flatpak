@@ -250,7 +250,7 @@ _xdg-app() {
                         if [[ -z $remote ]]; then
                                 comps=$(xdg-app $mode list-remotes)
                         elif [[ -z $name ]]; then
-                                comps=$(xdg-app $mode repo-contents $remote --runtimes)
+                                comps=$(xdg-app $mode ls-remote $remote --runtimes)
                         else
                                 comps='' # FIXME: branches
                         fi
@@ -272,7 +272,7 @@ _xdg-app() {
                         if [[ -z $remote ]]; then
                                 comps=$(xdg-app $mode list-remotes)
                         elif [[ -z $name ]]; then
-                                comps=$(xdg-app $mode repo-contents $remote --apps)
+                                comps=$(xdg-app $mode ls-remote $remote --apps)
                         else
                                 comps='' # FIXME: branches
                         fi
