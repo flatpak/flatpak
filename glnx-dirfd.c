@@ -226,3 +226,80 @@ glnx_fdrel_abspath (int         dfd,
     return g_strdup (path);
   return g_strdup_printf ("/proc/self/fd/%d/%s", dfd, path);
 }
+
+/**
+ * glnx_mkdtempat:
+ * @dfd: Directory fd
+ * @tmpl: (type filename): template directory name
+ * @mode: permissions to create the temporary directory with
+ * @error: Error
+ *
+ * Similar to g_mkdtemp_full, but using openat.
+ */
+gboolean
+glnx_mkdtempat (int dfd,
+                gchar *tmpl,
+                int mode,
+                GError **error)
+{
+  char *XXXXXX;
+  int count;
+  static const char letters[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  static const int NLETTERS = sizeof (letters) - 1;
+  glong value;
+  GTimeVal tv;
+  static int counter = 0;
+
+  g_return_val_if_fail (tmpl != NULL, -1);
+
+  /* find the last occurrence of "XXXXXX" */
+  XXXXXX = g_strrstr (tmpl, "XXXXXX");
+
+  if (!XXXXXX || strncmp (XXXXXX, "XXXXXX", 6))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                   "Invalid temporary directory template '%s'", tmpl);
+      return FALSE;
+    }
+
+  /* Get some more or less random data.  */
+  g_get_current_time (&tv);
+  value = (tv.tv_usec ^ tv.tv_sec) + counter++;
+
+  for (count = 0; count < 100; value += 7777, ++count)
+    {
+      glong v = value;
+
+      /* Fill in the random bits.  */
+      XXXXXX[0] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[1] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[2] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[3] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[4] = letters[v % NLETTERS];
+      v /= NLETTERS;
+      XXXXXX[5] = letters[v % NLETTERS];
+
+      if (mkdirat (dfd, tmpl, mode) == -1)
+        {
+          if (errno == EEXIST)
+            continue;
+
+          /* Any other error will apply also to other names we might
+           *  try, and there are 2^32 or so of them, so give up now.
+           */
+          glnx_set_prefix_error_from_errno (error, "%s", "mkdirat");
+          return FALSE;
+        }
+
+      return TRUE;
+    }
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_EXISTS,
+               "mkstempat ran out of combinations to try.");
+  return FALSE;
+}

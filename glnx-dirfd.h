@@ -77,4 +77,9 @@ gboolean glnx_opendirat (int             dfd,
 char *glnx_fdrel_abspath (int         dfd,
                           const char *path);
 
+gboolean glnx_mkdtempat (int dfd,
+                         gchar *tmpl,
+                         int mode,
+                         GError **error);
+
 G_END_DECLS
