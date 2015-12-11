@@ -211,4 +211,12 @@ glnx_cleanup_close_fdp (int *fdp)
  */
 #define glnx_fd_close __attribute__((cleanup(glnx_cleanup_close_fdp)))
 
+static inline int
+glnx_steal_fd (int *fdp)
+{
+  int fd = *fdp;
+  *fdp = -1;
+  return fd;
+}
+
 G_END_DECLS
