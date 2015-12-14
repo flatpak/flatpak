@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <sys/statfs.h>
 
+#include "xdg-app-utils.h"
+
 #include "builder-utils.h"
 #include "builder-source-file.h"
 
