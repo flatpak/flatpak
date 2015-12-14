@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "xdg-app-utils.h"
 #include "xdg-app-remote-ref-private.h"
 #include "xdg-app-remote-ref.h"
 #include "xdg-app-enum-types.h"

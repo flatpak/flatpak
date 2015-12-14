@@ -1,3 +1,7 @@
+#include "config.h"
+
+#include "libglnx/libglnx.h"
+
 #include <xdg-app.h>
 
 int

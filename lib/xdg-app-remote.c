@@ -20,10 +20,10 @@
 
 #include "config.h"
 
+#include "xdg-app-utils.h"
 #include "xdg-app-remote-private.h"
 #include "xdg-app-remote-ref-private.h"
 #include "xdg-app-enum-types.h"
-#include "xdg-app-utils.h"
 
 #include <string.h>
 

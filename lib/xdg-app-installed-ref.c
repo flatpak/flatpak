@@ -22,9 +22,9 @@
 
 #include <string.h>
 
+#include "xdg-app-utils.h"
 #include "xdg-app-installed-ref.h"
 #include "xdg-app-enum-types.h"
-#include "xdg-app-utils.h"
 #include "xdg-app-run.h"
 #include "xdg-app-dir.h"
 

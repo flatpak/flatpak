@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include "xdg-app-utils.h"
 #include "xdg-app-ref.h"
 #include "xdg-app-enum-types.h"
 

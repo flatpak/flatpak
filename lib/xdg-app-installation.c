@@ -20,12 +20,12 @@
 
 #include "config.h"
 
+#include "xdg-app-utils.h"
 #include "xdg-app-installation.h"
 #include "xdg-app-installed-ref-private.h"
 #include "xdg-app-remote-private.h"
 #include "xdg-app-enum-types.h"
 #include "xdg-app-dir.h"
-#include "xdg-app-utils.h"
 
 typedef struct _XdgAppInstallationPrivate XdgAppInstallationPrivate;
 
