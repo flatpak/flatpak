@@ -40,6 +40,7 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+#ifndef DISABLE_USERNS
 static gboolean
 write_to_file (int fd, const char *content, ssize_t len)
 {
@@ -80,6 +81,7 @@ write_file (const char *path, const char *content)
 
   return res;
 }
+#endif
 
 static uid_t uid;
 static gid_t gid;
