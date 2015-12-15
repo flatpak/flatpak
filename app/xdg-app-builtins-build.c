@@ -46,6 +46,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDeploy) runtime_deploy = NULL;
   g_autoptr(GFile) var = NULL;
+  g_autoptr(GFile) usr = NULL;
   g_autoptr(GFile) app_deploy = NULL;
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
@@ -125,10 +126,18 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   app_files = g_file_get_child (app_deploy, "files");
-  runtime_files = xdg_app_deploy_get_files (runtime_deploy);
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (argv_array, g_strdup (HELPER));
+
+  usr = g_file_get_child (app_deploy, "usr");
+  if (g_file_query_exists (usr, cancellable))
+    {
+      runtime_files = g_object_ref (usr);
+      g_ptr_array_add (argv_array, g_strdup ("-W"));
+    }
+  else
+    runtime_files = xdg_app_deploy_get_files (runtime_deploy);
 
   g_ptr_array_add (argv_array, g_strdup ("-wrc"));
 

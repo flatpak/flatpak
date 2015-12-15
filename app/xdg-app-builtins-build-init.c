@@ -33,10 +33,12 @@
 
 static char *opt_arch;
 static char *opt_var;
+static gboolean opt_writable_sdk;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
   { "var", 'v', 0, G_OPTION_ARG_STRING, &opt_var, "Initialize var from named runtime", "RUNTIME" },
+  { "writable-sdk", 'w', 0, G_OPTION_ARG_NONE, &opt_writable_sdk, "Initialize /usr with a writable copy of the sdk",  },
   { NULL }
 };
 
@@ -46,8 +48,11 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) var_deploy_base = NULL;
   g_autoptr(GFile) var_deploy_files = NULL;
+  g_autoptr(GFile) sdk_deploy_base = NULL;
+  g_autoptr(GFile) sdk_deploy_files = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files_dir = NULL;
+  g_autoptr(GFile) usr_dir = NULL;
   g_autoptr(GFile) var_dir = NULL;
   g_autoptr(GFile) var_tmp_dir = NULL;
   g_autoptr(GFile) var_run_dir = NULL;
@@ -98,6 +103,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     return FALSE;
 
   files_dir = g_file_get_child (base, "files");
+  usr_dir = g_file_get_child (base, "usr");
   var_dir = g_file_get_child (base, "var");
   var_tmp_dir = g_file_get_child (var_dir, "tmp");
   var_run_dir = g_file_get_child (var_dir, "run");
@@ -105,6 +111,20 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   if (g_file_query_exists (files_dir, cancellable))
     return xdg_app_fail (error, "Build directory %s already initialized", directory);
+
+  if (opt_writable_sdk)
+    {
+      g_autofree char *full_sdk_ref = g_strconcat ("runtime/", sdk_ref, NULL);
+
+      sdk_deploy_base = xdg_app_find_deploy_dir_for_ref (full_sdk_ref, cancellable, error);
+      if (sdk_deploy_base == NULL)
+        return FALSE;
+
+      sdk_deploy_files = g_file_get_child (sdk_deploy_base, "files");
+
+      if (!gs_shutil_cp_a (sdk_deploy_files, usr_dir, cancellable, error))
+        return FALSE;
+    }
 
   if (opt_var)
     {

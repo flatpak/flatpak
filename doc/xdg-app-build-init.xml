@@ -97,6 +97,18 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-w</option></term>
+                <term><option>--writable-sdk</option></term>
+
+                <listitem><para>
+                    Initialize /usr with a copy of the sdk, which is writable during xdg-app build. This can be used
+                    if you need to install build tools in /usr during the build. This is stored in the
+                    <filename>usr</filename> subdirectory of the app dir, but will not be part of the final
+                    app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--verbose</option></term>
 
                 <listitem><para>
