@@ -103,7 +103,7 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
   g_autoptr(GFile) deploy_base = NULL;
   const char *repository;
   const char *runtime;
-  const char *branch = "master";
+  const char *branch = NULL;
   g_autofree char *ref = NULL;
   gboolean created_deploy_base = FALSE;
 
@@ -123,19 +123,9 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
   if (argc >= 4)
     branch = argv[3];
 
-  if (!xdg_app_is_valid_name (runtime))
-    {
-      xdg_app_fail (error, "'%s' is not a valid runtime name", runtime);
-      goto out;
-    }
-
-  if (!xdg_app_is_valid_branch (branch))
-    {
-      xdg_app_fail (error, "'%s' is not a valid branch name", branch);
-      goto out;
-    }
-
-  ref = xdg_app_build_runtime_ref (runtime, branch, opt_arch);
+  ref = xdg_app_compose_ref (FALSE, runtime, branch, opt_arch, error);
+  if (ref == NULL)
+    goto out;
 
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
@@ -178,7 +168,7 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
   g_autoptr(GFile) deploy_base = NULL;
   const char *repository;
   const char *app;
-  const char *branch = "master";
+  const char *branch = NULL;
   g_autofree char *ref = NULL;
   gboolean created_deploy_base = FALSE;
 
@@ -198,19 +188,9 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
   if (argc >= 4)
     branch = argv[3];
 
-  if (!xdg_app_is_valid_name (app))
-    {
-      xdg_app_fail (error, "'%s' is not a valid application name", app);
-      goto out;
-    }
-
-  if (!xdg_app_is_valid_branch (branch))
-    {
-      xdg_app_fail (error, "'%s' is not a valid branch name", branch);
-      goto out;
-    }
-
-  ref = xdg_app_build_app_ref (app, branch, opt_arch);
+  ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
+  if (ref == NULL)
+    goto out;
 
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))

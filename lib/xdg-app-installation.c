@@ -483,28 +483,9 @@ xdg_app_installation_install (XdgAppInstallation  *self,
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   XdgAppInstalledRef *result = NULL;
 
-  if (version == NULL)
-    version = "master";
-
-  if (arch == NULL)
-    arch = xdg_app_get_arch ();
-
-  if (!xdg_app_is_valid_name (name))
-    {
-      xdg_app_fail (error, "'%s' is not a valid name", name);
-      return NULL;
-    }
-
-  if (!xdg_app_is_valid_branch (version))
-    {
-      xdg_app_fail (error, "'%s' is not a valid branch name", version);
-      return NULL;
-    }
-
-  if (kind == XDG_APP_REF_KIND_APP)
-    ref = xdg_app_build_app_ref (name, version, arch);
-  else
-    ref = xdg_app_build_runtime_ref (name, version, arch);
+  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
+  if (ref == NULL)
+    return NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
@@ -596,28 +577,9 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   XdgAppInstalledRef *result = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  if (version == NULL)
-    version = "master";
-
-  if (arch == NULL)
-    arch = xdg_app_get_arch ();
-
-  if (!xdg_app_is_valid_name (name))
-    {
-      xdg_app_fail (error, "'%s' is not a valid name", name);
-      return NULL;
-    }
-
-  if (!xdg_app_is_valid_branch (version))
-    {
-      xdg_app_fail (error, "'%s' is not a valid branch name", version);
-      return NULL;
-    }
-
-  if (kind == XDG_APP_REF_KIND_APP)
-    ref = xdg_app_build_app_ref (name, version, arch);
-  else
-    ref = xdg_app_build_runtime_ref (name, version, arch);
+  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
+  if (ref == NULL)
+    return NULL;
 
   remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
   if (remote_name == NULL)

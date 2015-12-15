@@ -48,7 +48,7 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   const char *runtime;
-  const char *branch = "master";
+  const char *branch = NULL;
   g_autofree char *previous_deployment = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
@@ -66,13 +66,9 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   if (argc >= 3)
     branch = argv[2];
 
-  if (!xdg_app_is_valid_name (runtime))
-    return xdg_app_fail (error, "'%s' is not a valid runtime name", runtime);
-
-  if (!xdg_app_is_valid_branch (branch))
-    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
-
-  ref = xdg_app_build_runtime_ref (runtime, branch, opt_arch);
+  ref = xdg_app_compose_ref (FALSE, runtime, branch, opt_arch, error);
+  if (ref == NULL)
+    return FALSE;
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
@@ -120,7 +116,7 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   const char *app;
-  const char *branch = "master";
+  const char *branch = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   g_autofree char *previous_deployment = NULL;
@@ -138,13 +134,9 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   if (argc >= 3)
     branch = argv[2];
 
-  if (!xdg_app_is_valid_name (app))
-    return xdg_app_fail (error, "'%s' is not a valid application name", app);
-
-  if (!xdg_app_is_valid_branch (branch))
-    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
-
-  ref = xdg_app_build_app_ref (app, branch, opt_arch);
+  ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
+  if (ref == NULL)
+    return FALSE;
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)

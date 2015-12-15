@@ -47,9 +47,8 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
-  const char *name;
-  const char *arch;
-  const char *branch;
+  const char *name = NULL;
+  const char *branch = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   gboolean was_deployed;
@@ -65,22 +64,12 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   name = argv[1];
   if (argc > 2)
     branch = argv[2];
-  else
-    branch = "master";
-  if (opt_arch)
-    arch = opt_arch;
-  else
-    arch = xdg_app_get_arch ();
 
-  if (!xdg_app_is_valid_name (name))
-    return xdg_app_fail (error, "'%s' is not a valid runtime name", name);
-
-  if (!xdg_app_is_valid_branch (branch))
-    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
+  ref = xdg_app_compose_ref (FALSE, name, branch, opt_arch, error);
+  if (ref == NULL)
+    return FALSE;
 
   /* TODO: look for apps, require --force */
-
-  ref = g_build_filename ("runtime", name, arch, branch, NULL);
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
 
@@ -113,9 +102,8 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
-  const char *name;
-  const char *arch;
-  const char *branch;
+  const char *name = NULL;
+  const char *branch = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   g_autofree char *current_ref = NULL;
@@ -132,20 +120,10 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   name = argv[1];
   if (argc > 2)
     branch = argv[2];
-  else
-    branch = "master";
-  if (opt_arch)
-    arch = opt_arch;
-  else
-    arch = xdg_app_get_arch ();
 
-  if (!xdg_app_is_valid_name (name))
-    return xdg_app_fail (error, "'%s' is not a valid application name", name);
-
-  if (!xdg_app_is_valid_branch (branch))
-    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
-
-  ref = g_build_filename ("app", name, arch, branch, NULL);
+  ref = xdg_app_compose_ref (TRUE, name, branch, opt_arch, error);
+  if (ref == NULL)
+    return FALSE;
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
 

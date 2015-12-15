@@ -59,13 +59,9 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   app  = argv[1];
   branch = argv[2];
 
-  if (!xdg_app_is_valid_name (app))
-    return xdg_app_fail (error, "'%s' is not a valid application name", app);
-
-  if (!xdg_app_is_valid_branch (branch))
-    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
-
-  ref = xdg_app_build_app_ref (app, branch, opt_arch);
+  ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
+  if (ref == NULL)
+    return FALSE;
 
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))

@@ -91,13 +91,9 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (opt_branch)
     branch = opt_branch;
 
-  if (!xdg_app_is_valid_name (app))
-    return xdg_app_fail (error, "'%s' is not a valid application name", app);
-
-  if (!xdg_app_is_valid_branch (branch))
-    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
-
-  app_ref = xdg_app_build_app_ref (app, branch, opt_arch);
+  app_ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
+  if (app_ref == NULL)
+    return FALSE;
 
   app_deploy = xdg_app_find_deploy_for_ref (app_ref, cancellable, error);
   if (app_deploy == NULL)
