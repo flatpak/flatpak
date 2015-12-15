@@ -458,7 +458,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists the remotes.
+ * Install a new ref.
  *
  * Returns: (transfer full): The ref for the newly installed app or %null on failure
  */
@@ -494,7 +494,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
       goto out;
     }
 
-  /* Pull, etc are not threadsafe, so we work on a copy */
+  /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = xdg_app_dir_clone (priv->dir);
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
@@ -546,15 +546,15 @@ xdg_app_installation_install (XdgAppInstallation  *self,
 }
 
 /**
- * xdg_app_installation_install:
+ * xdg_app_installation_update:
  * @self: a #XdgAppInstallation
  * @progress: (scope call): the callback
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists the remotes.
+ * Update a ref.
  *
- * Returns: (transfer full): The ref for the newly installed app or %null on failure
+ * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %null on failure
  */
 XdgAppInstalledRef *
 xdg_app_installation_update (XdgAppInstallation  *self,
@@ -585,7 +585,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   if (remote_name == NULL)
     return NULL;
 
-  /* Pull, etc are not threadsafe, so we work on a copy */
+  /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = xdg_app_dir_clone (priv->dir);
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
@@ -642,4 +642,76 @@ xdg_app_installation_update (XdgAppInstallation  *self,
     g_main_context_pop_thread_default (main_context);
 
   return result;
+}
+
+/**
+ * xdg_app_installation_uninstall:
+ * @self: a #XdgAppInstallation
+ * @progress: (scope call): the callback
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Update a ref.
+ *
+ * Returns: %true on success
+ */
+XDG_APP_EXTERN gboolean
+xdg_app_installation_uninstall (XdgAppInstallation  *self,
+                                XdgAppRefKind        kind,
+                                const char          *name,
+                                const char          *arch,
+                                const char          *version,
+                                XdgAppProgressCallback  progress,
+                                gpointer             progress_data,
+                                GCancellable        *cancellable,
+                                GError             **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autofree char *ref = NULL;
+  g_autofree char *remote_name = NULL;
+  g_autofree char *current_ref = NULL;
+  g_autoptr(XdgAppDir) dir_clone = NULL;
+  gboolean was_deployed = FALSE;
+
+  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
+  if (ref == NULL)
+    return NULL;
+
+  remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
+  if (remote_name == NULL)
+    return FALSE;
+
+  /* prune, etc are not threadsafe, so we work on a copy */
+  dir_clone = xdg_app_dir_clone (priv->dir);
+
+  if (kind == XDG_APP_REF_KIND_APP)
+    {
+      g_debug ("dropping active ref");
+      if (!xdg_app_dir_set_active (dir_clone, ref, NULL, cancellable, error))
+        return FALSE;
+
+      current_ref = xdg_app_dir_current_ref (dir_clone, name, cancellable);
+      if (current_ref != NULL && strcmp (ref, current_ref) == 0)
+        {
+          g_debug ("dropping current ref");
+          if (!xdg_app_dir_drop_current_ref (dir_clone, name, cancellable, error))
+            return FALSE;
+        }
+    }
+
+  if (!xdg_app_dir_undeploy_all (dir_clone, ref, FALSE, &was_deployed, cancellable, error))
+    return FALSE;
+
+  if (!xdg_app_dir_remove_ref (dir_clone, remote_name, ref, cancellable, error))
+    return FALSE;
+
+  if (!xdg_app_dir_prune (dir_clone, cancellable, error))
+    return FALSE;
+
+  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
+
+  if (!was_deployed)
+    return xdg_app_fail (error, "Nothing to uninstall");
+
+  return TRUE;
 }
