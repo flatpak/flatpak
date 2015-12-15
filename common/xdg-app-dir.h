@@ -161,6 +161,17 @@ gboolean    xdg_app_dir_undeploy        (XdgAppDir      *self,
 					 gboolean        force_remove,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_undeploy_all    (XdgAppDir      *self,
+                                         const char     *ref,
+					 gboolean        force_remove,
+                                         gboolean       *was_deployed_out,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
+gboolean    xdg_app_dir_remove_ref      (XdgAppDir      *self,
+                                         const char     *remote_name,
+                                         const char     *ref,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 gboolean    xdg_app_dir_update_exports  (XdgAppDir      *self,
                                          const char     *app,
                                          GCancellable   *cancellable,

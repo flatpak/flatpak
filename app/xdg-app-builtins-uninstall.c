@@ -47,18 +47,11 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) arch_dir = NULL;
-  g_autoptr(GFile) top_dir = NULL;
-  g_autoptr(OstreeRepo) repo = NULL;
   const char *name;
   const char *arch;
   const char *branch;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
-  g_auto(GStrv) deployed = NULL;
-  int i;
-  GError *temp_error = NULL;
   gboolean was_deployed;
 
   context = g_option_context_new ("RUNTIME [BRANCH] - Uninstall a runtime");
@@ -95,55 +88,12 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   if (!xdg_app_dir_set_active (dir, ref, NULL, cancellable, error))
     return FALSE;
 
-  if (!xdg_app_dir_list_deployed (dir, ref, &deployed, cancellable, error))
+  if (!xdg_app_dir_undeploy_all (dir, ref, opt_force_remove, &was_deployed, cancellable, error))
     return FALSE;
-
-  for (i = 0; deployed[i] != NULL; i++)
-    {
-      g_debug ("undeploying %s", deployed[i]);
-      if (!xdg_app_dir_undeploy (dir, ref, deployed[i], opt_force_remove, cancellable, error))
-        return FALSE;
-    }
-
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
-  was_deployed = g_file_query_exists (deploy_base, cancellable);
-  if (was_deployed)
-    {
-      g_debug ("removing deploy base");
-      if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
-        return FALSE;
-    }
-
-  g_debug ("cleaning up empty directories");
-  arch_dir = g_file_get_parent (deploy_base);
-  if (g_file_query_exists (arch_dir, cancellable) &&
-      !g_file_delete (arch_dir, cancellable, &temp_error))
-    {
-      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
-        {
-          g_propagate_error (error, temp_error);
-          return FALSE;
-        }
-      g_clear_error (&temp_error);
-    }
-
-  top_dir = g_file_get_parent (arch_dir);
-  if (g_file_query_exists (top_dir, cancellable) &&
-      !g_file_delete (top_dir, cancellable, &temp_error))
-    {
-      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
-        {
-          g_propagate_error (error, temp_error);
-          return FALSE;
-        }
-      g_clear_error (&temp_error);
-    }
 
   if (!opt_keep_ref)
     {
-      repo = xdg_app_dir_get_repo (dir);
-
-      if (!ostree_repo_set_ref_immediate (repo, repository, ref, NULL, cancellable, error))
+      if (!xdg_app_dir_remove_ref (dir, repository, ref, cancellable, error))
         return FALSE;
 
       if (!xdg_app_dir_prune (dir, cancellable, error))
@@ -163,19 +113,12 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) arch_dir = NULL;
-  g_autoptr(GFile) top_dir = NULL;
-  g_autoptr(OstreeRepo) repo = NULL;
   const char *name;
   const char *arch;
   const char *branch;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   g_autofree char *current_ref = NULL;
-  g_auto(GStrv) deployed = NULL;
-  int i;
-  GError *temp_error = NULL;
   gboolean was_deployed;
 
   context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
@@ -218,58 +161,12 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
         return FALSE;
     }
 
-  if (!xdg_app_dir_list_deployed (dir, ref, &deployed, cancellable, error))
+  if (!xdg_app_dir_undeploy_all (dir, ref, opt_force_remove, &was_deployed, cancellable, error))
     return FALSE;
-
-  for (i = 0; deployed[i] != NULL; i++)
-    {
-      g_debug ("undeploying %s", deployed[i]);
-      if (!xdg_app_dir_undeploy (dir, ref, deployed[i], opt_force_remove, cancellable, error))
-        return FALSE;
-    }
-
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
-  was_deployed = g_file_query_exists (deploy_base, cancellable);
-  if (was_deployed)
-    {
-      g_debug ("removing deploy base");
-      if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
-        return FALSE;
-    }
-
-  if (!xdg_app_dir_update_exports (dir, name, cancellable, error))
-    return FALSE;
-
-  g_debug ("cleaning up empty directories");
-  arch_dir = g_file_get_parent (deploy_base);
-  if (g_file_query_exists (arch_dir, cancellable) &&
-      !g_file_delete (arch_dir, cancellable, &temp_error))
-    {
-      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
-        {
-          g_propagate_error (error, temp_error);
-          return FALSE;
-        }
-      g_clear_error (&temp_error);
-    }
-
-  top_dir = g_file_get_parent (arch_dir);
-  if (g_file_query_exists (top_dir, cancellable) &&
-      !g_file_delete (top_dir, cancellable, &temp_error))
-    {
-      if (!g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_EMPTY))
-        {
-          g_propagate_error (error, temp_error);
-          return FALSE;
-        }
-      g_clear_error (&temp_error);
-    }
 
   if (!opt_keep_ref)
     {
-      repo = xdg_app_dir_get_repo (dir);
-
-      if (!ostree_repo_set_ref_immediate (repo, repository, ref, NULL, cancellable, error))
+      if (!xdg_app_dir_remove_ref (dir, repository, ref, cancellable, error))
         return FALSE;
 
       if (!xdg_app_dir_prune (dir, cancellable, error))
