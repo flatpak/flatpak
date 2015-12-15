@@ -27,6 +27,7 @@
 
 #include <xdg-app-version-macros.h>
 #include <xdg-app-enum-types.h>
+#include <xdg-app-error.h>
 #include <xdg-app-ref.h>
 #include <xdg-app-installed-ref.h>
 #include <xdg-app-remote-ref.h>

@@ -40,7 +40,7 @@ xdg_app_error_quark (void)
 {
   static volatile gsize quark_volatile = 0;
 
-  g_dbus_error_register_error_domain ("xdg-app--error-quark",
+  g_dbus_error_register_error_domain ("xdg-app-portal-error-quark",
                                       &quark_volatile,
                                       xdg_app_error_entries,
                                       G_N_ELEMENTS (xdg_app_error_entries));

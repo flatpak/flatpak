@@ -5,6 +5,7 @@ noinst_PROGRAMS += test-libxdg-app
 public_headers = \
 	lib/xdg-app.h \
 	lib/xdg-app-ref.h \
+	lib/xdg-app-error.h \
 	lib/xdg-app-installed-ref.h \
 	lib/xdg-app-remote-ref.h \
 	lib/xdg-app-installation.h \
@@ -47,6 +48,7 @@ sources = \
 	lib/xdg-app-remote-ref.c \
 	lib/xdg-app-remote-private.h \
 	lib/xdg-app-remote.c \
+	lib/xdg-app-error.c \
 	lib/xdg-app-installation.c \
 	$(NULL)
 
