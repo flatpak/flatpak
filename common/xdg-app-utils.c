@@ -293,6 +293,37 @@ xdg_app_decompose_ref (const char *full_ref,
 }
 
 char *
+xdg_app_compose_ref (gboolean app,
+                     const char *name,
+                     const char *branch,
+                     const char *arch,
+                     GError **error)
+{
+  if (branch == NULL)
+    branch = "master";
+
+  if (!xdg_app_is_valid_name (name))
+    {
+      if (app)
+        xdg_app_fail (error, "'%s' is not a valid app name", name);
+      else
+        xdg_app_fail (error, "'%s' is not a valid runtime name", name);
+      return NULL;
+    }
+
+  if (!xdg_app_is_valid_branch (branch))
+    {
+      xdg_app_fail (error, "'%s' is not a valid version name", branch);
+      return NULL;
+    }
+
+  if (app)
+    return xdg_app_build_app_ref (name, branch, arch);
+  else
+    return xdg_app_build_runtime_ref (name, branch, arch);
+}
+
+char *
 xdg_app_build_untyped_ref (const char *runtime,
                            const char *branch,
                            const char *arch)
