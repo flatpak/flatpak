@@ -46,7 +46,7 @@ typedef struct {
 } XdgAppInstallationClass;
 
 
-#if !GLIB_CHECK_VERSION(2, 43, 4)
+#ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppInstallation, g_object_unref)
 #endif
 

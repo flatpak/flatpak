@@ -51,7 +51,7 @@ XDG_APP_EXTERN GBytes *xdg_app_remote_ref_fetch_metadata_sync (XdgAppRemoteRef *
                                                                GError **error);
 
 
-#if !GLIB_CHECK_VERSION(2, 43, 4)
+#ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppRemoteRef, g_object_unref)
 #endif
 
