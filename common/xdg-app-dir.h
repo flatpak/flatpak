@@ -81,6 +81,11 @@ char *      xdg_app_dir_get_origin      (XdgAppDir      *self,
                                          const char     *ref,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_set_origin      (XdgAppDir      *self,
+                                         const char     *ref,
+                                         const char     *remote,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 GFile *     xdg_app_dir_get_exports_dir (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_removed_dir (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_if_deployed (XdgAppDir      *self,

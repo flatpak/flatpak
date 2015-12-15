@@ -101,7 +101,6 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) origin = NULL;
   const char *repository;
   const char *runtime;
   const char *branch = "master";
@@ -153,9 +152,7 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
     goto out;
   created_deploy_base = TRUE;
 
-  origin = g_file_get_child (deploy_base, "origin");
-  if (!g_file_replace_contents (origin, repository, strlen (repository), NULL, FALSE,
-                                G_FILE_CREATE_NONE, NULL, cancellable, error))
+  if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
     goto out;
 
   if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
@@ -179,7 +176,6 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) origin = NULL;
   const char *repository;
   const char *app;
   const char *branch = "master";
@@ -231,9 +227,7 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
     goto out;
   created_deploy_base = TRUE;
 
-  origin = g_file_get_child (deploy_base, "origin");
-  if (!g_file_replace_contents (origin, repository, strlen (repository), NULL, FALSE,
-                                G_FILE_CREATE_NONE, NULL, cancellable, error))
+  if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
     goto out;
 
   if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
@@ -474,9 +468,7 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
             goto out;
         }
 
-      g_autoptr(GFile) origin_file = g_file_get_child (deploy_base, "origin");
-      if (!g_file_replace_contents (origin_file, remote, strlen (remote), NULL, FALSE,
-                                    G_FILE_CREATE_NONE, NULL, cancellable, error))
+      if (!xdg_app_dir_set_origin (dir, ref, remote, cancellable, error))
         goto out;
     }
 

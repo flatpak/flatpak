@@ -473,6 +473,31 @@ xdg_app_dir_get_origin (XdgAppDir      *self,
 }
 
 gboolean
+xdg_app_dir_set_origin (XdgAppDir      *self,
+                        const char     *ref,
+                        const char     *remote,
+                        GCancellable   *cancellable,
+                        GError        **error)
+{
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) origin = NULL;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+  if (!g_file_query_exists (deploy_base, cancellable))
+    {
+      xdg_app_fail (error, "%s is not installed", ref);
+      return FALSE;
+    }
+
+  origin = g_file_get_child (deploy_base, "origin");
+  if (!g_file_replace_contents (origin, remote, strlen (remote), NULL, FALSE,
+                                G_FILE_CREATE_NONE, NULL, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
 xdg_app_dir_ensure_path (XdgAppDir     *self,
                          GCancellable  *cancellable,
                          GError       **error)
