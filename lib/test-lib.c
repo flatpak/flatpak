@@ -158,5 +158,5 @@ main (int argc, char *argv[])
           g_clear_error (&error);
         }
     }
-
+  return 0;
 }
