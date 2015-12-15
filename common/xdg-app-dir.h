@@ -155,6 +155,12 @@ gboolean    xdg_app_dir_deploy          (XdgAppDir      *self,
                                          const char     *checksum,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_deploy_update   (XdgAppDir      *self,
+                                         const char     *ref,
+                                         const char     *checksum,
+                                         gboolean       *was_updated,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 gboolean    xdg_app_dir_undeploy        (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,

@@ -573,9 +573,8 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autofree char *remote_name = NULL;
-  g_autofree char *previous_deployment = NULL;
   XdgAppInstalledRef *result = NULL;
-  g_autoptr(GError) my_error = NULL;
+  gboolean was_updated;
 
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
   if (ref == NULL)
@@ -603,39 +602,24 @@ xdg_app_installation_update (XdgAppInstallation  *self,
                          ostree_progress, cancellable, error))
     goto out;
 
-  previous_deployment = xdg_app_dir_read_active (dir_clone, ref, cancellable);
+  if (!xdg_app_dir_deploy_update (dir_clone, ref, NULL, &was_updated, cancellable, error))
+    return FALSE;
 
-  if (!xdg_app_dir_deploy (dir_clone, ref, NULL, cancellable, &my_error))
+  if (was_updated && kind == XDG_APP_REF_KIND_APP)
     {
-      if (!g_error_matches (my_error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_ALREADY_DEPLOYED))
-        {
-          g_propagate_error (error, my_error);
-          goto out;
-        }
+      if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
+        goto out;
     }
-  else
+
+  result = get_ref (self, ref, cancellable);
+
+  if (was_updated)
     {
-      if (previous_deployment != NULL)
-        {
-          if (!xdg_app_dir_undeploy (dir_clone, ref, previous_deployment,
-                                     FALSE,
-                                     cancellable, error))
-            goto out;
-
-          if (!xdg_app_dir_prune (dir_clone, cancellable, error))
-            goto out;
-        }
-
-      if (kind == XDG_APP_REF_KIND_APP)
-        {
-          if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
-            goto out;
-        }
+      if (!xdg_app_dir_prune (dir_clone, cancellable, error))
+        goto out;
     }
 
   xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
-
-  result = get_ref (self, ref, cancellable);
 
  out:
   if (main_context)
@@ -675,7 +659,7 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
 
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
   if (ref == NULL)
-    return NULL;
+    return FALSE;
 
   remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
   if (remote_name == NULL)

@@ -49,10 +49,9 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   g_autoptr(XdgAppDir) dir = NULL;
   const char *runtime;
   const char *branch = NULL;
-  g_autofree char *previous_deployment = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
-  GError *my_error;
+  gboolean was_updated;
 
   context = g_option_context_new ("RUNTIME [BRANCH] - Update a runtime");
 
@@ -78,31 +77,13 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
                          cancellable, error))
     return FALSE;
 
-  previous_deployment = xdg_app_dir_read_active (dir, ref, cancellable);
+  if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
+    return FALSE;
 
-  my_error = NULL;
-  if (!xdg_app_dir_deploy (dir, ref, opt_commit, cancellable, &my_error))
+  if (was_updated)
     {
-      if (g_error_matches (my_error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_ALREADY_DEPLOYED))
-        g_error_free (my_error);
-      else
-        {
-          g_propagate_error (error, my_error);
-          return FALSE;
-        }
-    }
-  else
-    {
-      if (previous_deployment != NULL)
-        {
-          if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
-                                     opt_force_remove,
-                                     cancellable, error))
-            return FALSE;
-
-          if (!xdg_app_dir_prune (dir, cancellable, error))
-            return FALSE;
-        }
+      if (!xdg_app_dir_prune (dir, cancellable, error))
+        return FALSE;
     }
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
@@ -119,8 +100,7 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   const char *branch = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
-  g_autofree char *previous_deployment = NULL;
-  GError *my_error;
+  gboolean was_updated;
 
   context = g_option_context_new ("APP [BRANCH] - Update an application");
 
@@ -146,33 +126,18 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
                          cancellable, error))
     return FALSE;
 
-  previous_deployment = xdg_app_dir_read_active (dir, ref, cancellable);
+  if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
+    return FALSE;
 
-  my_error = NULL;
-  if (!xdg_app_dir_deploy (dir, ref, opt_commit, cancellable, &my_error))
+  if (was_updated)
     {
-      if (g_error_matches (my_error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_ALREADY_DEPLOYED))
-        g_error_free (my_error);
-      else
-        {
-          g_propagate_error (error, my_error);
-          return FALSE;
-        }
-    }
-  else
-    {
-      if (previous_deployment != NULL)
-        {
-          if (!xdg_app_dir_undeploy (dir, ref, previous_deployment,
-                                     opt_force_remove,
-                                     cancellable, error))
-            return FALSE;
-
-          if (!xdg_app_dir_prune (dir, cancellable, error))
-            return FALSE;
-        }
-
       if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
+        return FALSE;
+    }
+
+  if (was_updated)
+    {
+      if (!xdg_app_dir_prune (dir, cancellable, error))
         return FALSE;
     }
 

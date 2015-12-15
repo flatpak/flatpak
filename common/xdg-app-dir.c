@@ -1642,6 +1642,49 @@ xdg_app_dir_deploy (XdgAppDir *self,
 }
 
 gboolean
+xdg_app_dir_deploy_update (XdgAppDir      *self,
+                           const char     *ref,
+                           const char     *checksum_or_latest,
+                           gboolean       *was_updated,
+                           GCancellable   *cancellable,
+                           GError        **error)
+{
+  g_autofree char *previous_deployment = NULL;
+  g_autoptr(GError) my_error = NULL;
+
+  previous_deployment = xdg_app_dir_read_active (self, ref, cancellable);
+
+  if (!xdg_app_dir_deploy (self, ref, checksum_or_latest, cancellable, &my_error))
+    {
+      if (g_error_matches (my_error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_ALREADY_DEPLOYED))
+        {
+          if (was_updated)
+            *was_updated = FALSE;
+          return TRUE;
+        }
+
+      g_propagate_error (error, my_error);
+      return FALSE;
+    }
+  else
+    {
+      if (was_updated)
+        *was_updated = TRUE;
+
+      if (previous_deployment != NULL)
+        {
+          if (!xdg_app_dir_undeploy (self, ref, previous_deployment,
+                                     FALSE,
+                                     cancellable, error))
+            return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
+
+gboolean
 xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
 				   const char *type,
 				   const char *name_prefix,
