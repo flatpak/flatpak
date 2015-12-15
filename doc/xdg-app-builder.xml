@@ -187,6 +187,10 @@
                     <listitem><para>This is set in the environment variable CXXFLAGS during the build.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>prefix</option></term>
+                    <listitem><para>The build prefix for the modules (defaults to <filename>/app</filename>).</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>env</option></term>
                     <listitem><para>This is a dictionary defining environment variables to be set during the build.</para></listitem>
                 </varlistentry>

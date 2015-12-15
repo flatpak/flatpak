@@ -37,6 +37,7 @@ struct BuilderOptions {
 
   char *cflags;
   char *cxxflags;
+  char *prefix;
   char **env;
   char **build_args;
   GHashTable *arch;
@@ -55,6 +56,7 @@ enum {
   PROP_0,
   PROP_CFLAGS,
   PROP_CXXFLAGS,
+  PROP_PREFIX,
   PROP_ENV,
   PROP_ARCH,
   PROP_BUILD_ARGS,
@@ -69,6 +71,7 @@ builder_options_finalize (GObject *object)
 
   g_free (self->cflags);
   g_free (self->cxxflags);
+  g_free (self->prefix);
   g_strfreev (self->env);
   g_strfreev (self->build_args);
 
@@ -91,6 +94,10 @@ builder_options_get_property (GObject    *object,
 
     case PROP_CXXFLAGS:
       g_value_set_string (value, self->cxxflags);
+      break;
+
+    case PROP_PREFIX:
+      g_value_set_string (value, self->prefix);
       break;
 
     case PROP_ENV:
@@ -129,6 +136,11 @@ builder_options_set_property (GObject      *object,
     case PROP_CXXFLAGS:
       g_clear_pointer (&self->cxxflags, g_free);
       self->cxxflags = g_value_dup_string (value);
+      break;
+
+    case PROP_PREFIX:
+      g_clear_pointer (&self->prefix, g_free);
+      self->prefix = g_value_dup_string (value);
       break;
 
     case PROP_ENV:
@@ -173,6 +185,13 @@ builder_options_class_init (BuilderOptionsClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_CXXFLAGS,
                                    g_param_spec_string ("cxxflags",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_PREFIX,
+                                   g_param_spec_string ("prefix",
                                                         "",
                                                         "",
                                                         NULL,
@@ -439,6 +458,22 @@ builder_options_get_cxxflags (BuilderOptions *self, BuilderContext *context)
   return NULL;
 }
 
+const char *
+builder_options_get_prefix (BuilderOptions *self, BuilderContext *context)
+{
+  g_autoptr(GList) options = get_all_options (self, context);
+  GList *l;
+
+  for (l = options; l != NULL; l = l->next)
+    {
+      BuilderOptions *o = l->data;
+      if (o->prefix)
+        return o->prefix;
+    }
+
+  return "/app";
+}
+
 char **
 builder_options_get_env (BuilderOptions *self, BuilderContext *context)
 {
@@ -514,6 +549,7 @@ builder_options_checksum (BuilderOptions *self,
   builder_cache_checksum_str (cache, BUILDER_OPTION_CHECKSUM_VERSION);
   builder_cache_checksum_str (cache, self->cflags);
   builder_cache_checksum_str (cache, self->cxxflags);
+  builder_cache_checksum_str (cache, self->prefix);
   builder_cache_checksum_strv (cache, self->env);
   builder_cache_checksum_strv (cache, self->build_args);
 

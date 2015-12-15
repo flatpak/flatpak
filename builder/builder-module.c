@@ -727,7 +727,7 @@ builder_module_build (BuilderModule *self,
     {
       const char *configure_cmd;
       const char *configure_final_arg = skip_arg;
-      const char *configure_prefix_arg = skip_arg;
+      g_autofree char *configure_prefix_arg = NULL;
       g_autofree char *configure_content = NULL;
 
       if (!g_file_load_contents (configure_file, NULL, &configure_content, NULL, NULL, error))
@@ -766,9 +766,11 @@ builder_module_build (BuilderModule *self,
         }
 
       if (self->cmake)
-        configure_prefix_arg = "-DCMAKE_INSTALL_PREFIX:PATH='/app'";
+        configure_prefix_arg = g_strdup_printf ("-DCMAKE_INSTALL_PREFIX:PATH='%s'",
+                                                builder_options_get_prefix (self->build_options, context));
       else
-        configure_prefix_arg = "--prefix=/app";
+        configure_prefix_arg = g_strdup_printf ("--prefix=%s",
+                                                builder_options_get_prefix (self->build_options, context));
 
       if (!build (app_dir, source_dir, build_dir, build_args, env, error,
                   configure_cmd, configure_prefix_arg, strv_arg, self->config_opts, configure_final_arg, NULL))
