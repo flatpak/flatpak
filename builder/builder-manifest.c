@@ -541,10 +541,7 @@ builder_manifest_init_app_dir (BuilderManifest *self,
 {
   GFile *app_dir = builder_context_get_app_dir (context);
   g_autofree char *app_dir_path = g_file_get_path (app_dir);
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
   g_autoptr(GSubprocess) subp = NULL;
-  g_autofree char *cwd = NULL;
-  g_autoptr(GPtrArray) args = NULL;
 
   if (self->app_id == NULL)
     {
@@ -782,7 +779,6 @@ foreach_file_helper (BuilderManifest *self,
                      GError       **error)
 {
   g_auto(GLnxDirFdIterator) source_iter = {0};
-  glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
   g_autoptr(GError) my_error = NULL;
 
@@ -798,7 +794,6 @@ foreach_file_helper (BuilderManifest *self,
   while (TRUE)
     {
       struct stat stbuf;
-      g_autofree char *source_printable = NULL;
 
       if (!glnx_dirfd_iterator_next_dent (&source_iter, &dent, NULL, error))
         return FALSE;

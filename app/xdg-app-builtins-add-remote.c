@@ -148,7 +148,6 @@ xdg_app_builtin_add_remote (int argc, char **argv,
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GVariantBuilder) optbuilder = NULL;
-  g_autoptr(GHashTable) refs = NULL;
   g_autoptr(GFile) file = NULL;
   g_autofree char *title = NULL;
   g_autofree char *remote_url = NULL;

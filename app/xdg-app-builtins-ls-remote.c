@@ -56,7 +56,6 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   g_autoptr(GPtrArray) names = NULL;
   int i;
   const char *repository;
-  g_autofree char *url = NULL;
 
   context = g_option_context_new (" REMOTE - Show available runtimes and applications");
 

@@ -235,7 +235,6 @@ xdg_app_remote_fetch_ref_sync (XdgAppRemote *self,
                                GError **error)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
-  g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GHashTable) ht = NULL;
   g_autofree char *ref = NULL;
   const char *checksum;

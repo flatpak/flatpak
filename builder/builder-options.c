@@ -301,7 +301,6 @@ builder_options_deserialize_property (JsonSerializable *serializable,
       else if (JSON_NODE_TYPE (property_node) == JSON_NODE_OBJECT)
         {
           JsonObject *object = json_node_get_object (property_node);
-          g_autoptr(GPtrArray) env = g_ptr_array_new_with_free_func (g_free);
           g_autoptr(GHashTable) hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
           g_autoptr(GList) members = NULL;
           GList *l;

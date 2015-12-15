@@ -263,11 +263,9 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) file = NULL;
   g_autoptr(GFile) gpg_tmp_file = NULL;
-  g_autoptr(GBytes) bytes = NULL;
   const char *filename;
   g_autofree char *ref = NULL;
   g_autofree char *origin = NULL;
-  g_autofree char *checksum = NULL;
   gboolean created_deploy_base = FALSE;
   gboolean added_remote = FALSE;
   g_autofree char *to_checksum = NULL;

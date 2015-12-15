@@ -373,7 +373,6 @@ builder_source_git_download (BuilderSource *source,
                              GError **error)
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
-  g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *url = NULL;
 
   url = get_url (self, context, error);

@@ -289,9 +289,6 @@ xdg_app_dir_load_override (XdgAppDir *self,
 GKeyFile *
 xdg_app_load_override_keyfile (const char *app_id, gboolean user, GError **error)
 {
-  g_autoptr(GFile) base_dir = NULL;
-  g_autoptr(GFile) override_dir = NULL;
-  g_autoptr(GFile) file = NULL;
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();

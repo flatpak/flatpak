@@ -336,7 +336,6 @@ xdg_app_installation_load_app_overrides  (XdgAppInstallation *self,
                                           GError **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
-  g_autoptr(GBytes) bytes = NULL;
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
 

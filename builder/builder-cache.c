@@ -376,7 +376,6 @@ builder_cache_get_changes (BuilderCache  *self,
   g_autoptr(GFile) parent_root = NULL;
   g_autoptr(GFile) parent_files = NULL;
   g_autoptr(GVariant) variant = NULL;
-  g_autoptr(GHashTable) owned = NULL;
   g_autofree char *parent_commit = NULL;
   int i;
 

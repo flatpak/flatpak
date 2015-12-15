@@ -420,8 +420,6 @@ builder_source_file_update (BuilderSource *source,
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
   g_autoptr(GFile) src = NULL;
-  g_autoptr(GFile) dest_file = NULL;
-  g_autofree char *dest_filename = NULL;
   gboolean is_local, is_inline;
 
   src = get_source_file (self, context, &is_local, &is_inline, error);
