@@ -48,6 +48,23 @@ main (int argc, char *argv[])
       return 0;
     }
 
+  if (argc == 2)
+    {
+      app1 = xdg_app_installation_update (installation,
+                                          XDG_APP_REF_KIND_APP,
+                                          argv[1],
+                                          NULL, NULL,
+                                          progress_cb, (gpointer)0xdeadbeef,
+                                          NULL, &error);
+      if (app1 == NULL)
+        g_print ("Error: %s\n", error->message);
+      else
+        g_print ("Updated %s: %s\n", argv[1],
+                 xdg_app_ref_get_commit (XDG_APP_REF (app1)));
+
+      return 0;
+    }
+
   g_print ("**** Listing all installed apps\n");
   apps = xdg_app_installation_list_installed_refs (installation,
                                                    XDG_APP_REF_KIND_APP,

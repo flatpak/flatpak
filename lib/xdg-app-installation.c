@@ -536,22 +536,22 @@ xdg_app_installation_install (XdgAppInstallation  *self,
     goto out;
   created_deploy_base = TRUE;
 
-  if (!xdg_app_dir_set_origin (priv->dir, ref, remote_name, cancellable, error))
+  if (!xdg_app_dir_set_origin (dir_clone, ref, remote_name, cancellable, error))
     goto out;
 
-  if (!xdg_app_dir_deploy (priv->dir, ref, NULL, cancellable, error))
+  if (!xdg_app_dir_deploy (dir_clone, ref, NULL, cancellable, error))
     goto out;
 
   if (kind == XDG_APP_REF_KIND_APP)
     {
-      if (!xdg_app_dir_make_current_ref (priv->dir, ref, cancellable, error))
+      if (!xdg_app_dir_make_current_ref (dir_clone, ref, cancellable, error))
         goto out;
 
-      if (!xdg_app_dir_update_exports (priv->dir, name, cancellable, error))
+      if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
         goto out;
     }
 
-  xdg_app_dir_cleanup_removed (priv->dir, cancellable, NULL);
+  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
 
   result = get_ref (self, ref, cancellable);
 
@@ -561,6 +561,124 @@ xdg_app_installation_install (XdgAppInstallation  *self,
 
   if (created_deploy_base && result == NULL)
     gs_shutil_rm_rf (deploy_base, cancellable, NULL);
+
+  return result;
+}
+
+/**
+ * xdg_app_installation_install:
+ * @self: a #XdgAppInstallation
+ * @progress: (scope call): the callback
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the remotes.
+ *
+ * Returns: (transfer full): The ref for the newly installed app or %null on failure
+ */
+XdgAppInstalledRef *
+xdg_app_installation_update (XdgAppInstallation  *self,
+                             XdgAppRefKind        kind,
+                             const char          *name,
+                             const char          *arch,
+                             const char          *version,
+                             XdgAppProgressCallback progress,
+                             gpointer             progress_data,
+                             GCancellable        *cancellable,
+                             GError             **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autofree char *ref = NULL;
+  g_autoptr(XdgAppDir) dir_clone = NULL;
+  g_autoptr(GMainContext) main_context = NULL;
+  g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
+  g_autofree char *remote_name = NULL;
+  g_autofree char *previous_deployment = NULL;
+  XdgAppInstalledRef *result = NULL;
+  g_autoptr(GError) my_error = NULL;
+
+  if (version == NULL)
+    version = "master";
+
+  if (arch == NULL)
+    arch = xdg_app_get_arch ();
+
+  if (!xdg_app_is_valid_name (name))
+    {
+      xdg_app_fail (error, "'%s' is not a valid name", name);
+      return NULL;
+    }
+
+  if (!xdg_app_is_valid_branch (version))
+    {
+      xdg_app_fail (error, "'%s' is not a valid branch name", version);
+      return NULL;
+    }
+
+  if (kind == XDG_APP_REF_KIND_APP)
+    ref = xdg_app_build_app_ref (name, version, arch);
+  else
+    ref = xdg_app_build_runtime_ref (name, version, arch);
+
+  remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
+  if (remote_name == NULL)
+    return NULL;
+
+  /* Pull, etc are not threadsafe, so we work on a copy */
+  dir_clone = xdg_app_dir_clone (priv->dir);
+
+  /* Work around ostree-pull spinning the default main context for the sync calls */
+  main_context = g_main_context_new ();
+  g_main_context_push_thread_default (main_context);
+
+  if (progress)
+    {
+      ostree_progress = ostree_async_progress_new_and_connect (progress_cb, progress_data);
+      g_object_set_data (G_OBJECT (ostree_progress), "callback", progress);
+      g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER(0));
+    }
+
+  if (!xdg_app_dir_pull (dir_clone, remote_name, ref,
+                         ostree_progress, cancellable, error))
+    goto out;
+
+  previous_deployment = xdg_app_dir_read_active (dir_clone, ref, cancellable);
+
+  if (!xdg_app_dir_deploy (dir_clone, ref, NULL, cancellable, &my_error))
+    {
+      if (!g_error_matches (my_error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_ALREADY_DEPLOYED))
+        {
+          g_propagate_error (error, my_error);
+          goto out;
+        }
+    }
+  else
+    {
+      if (previous_deployment != NULL)
+        {
+          if (!xdg_app_dir_undeploy (dir_clone, ref, previous_deployment,
+                                     FALSE,
+                                     cancellable, error))
+            goto out;
+
+          if (!xdg_app_dir_prune (dir_clone, cancellable, error))
+            goto out;
+        }
+
+      if (kind == XDG_APP_REF_KIND_APP)
+        {
+          if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
+            goto out;
+        }
+    }
+
+  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
+
+  result = get_ref (self, ref, cancellable);
+
+ out:
+  if (main_context)
+    g_main_context_pop_thread_default (main_context);
 
   return result;
 }

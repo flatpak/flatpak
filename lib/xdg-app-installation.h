@@ -93,5 +93,14 @@ XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_install                
                                                                                     gpointer             progress_data,
                                                                                     GCancellable        *cancellable,
                                                                                     GError             **error);
+XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_update                    (XdgAppInstallation  *self,
+                                                                                    XdgAppRefKind        kind,
+                                                                                    const char          *name,
+                                                                                    const char          *arch,
+                                                                                    const char          *version,
+                                                                                    XdgAppProgressCallback  progress,
+                                                                                    gpointer             progress_data,
+                                                                                    GCancellable        *cancellable,
+                                                                                    GError             **error);
 
 #endif /* __XDG_APP_INSTALLATION_H__ */
