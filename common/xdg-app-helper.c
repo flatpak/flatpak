@@ -796,7 +796,7 @@ str_has_prefix (const char *str,
 }
 
 static char *
-unescape_string (const char *escaped, size_t len)
+unescape_string (const char *escaped, ssize_t len)
 {
   char *unescaped, *res;
   const char *end;
