@@ -49,6 +49,7 @@ struct BuilderManifest {
   gboolean copy_icon;
   char *desktop_file_name_prefix;
   char *desktop_file_name_suffix;
+  gboolean writable_sdk;
   gboolean strip;
   char *command;
   BuilderOptions *build_options;
@@ -76,6 +77,7 @@ enum {
   PROP_MODULES,
   PROP_CLEANUP,
   PROP_STRIP,
+  PROP_WRITABLE_SDK,
   PROP_FINISH_ARGS,
   PROP_RENAME_DESKTOP_FILE,
   PROP_RENAME_ICON,
@@ -160,6 +162,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_STRIP:
       g_value_set_boolean (value, self->strip);
+      break;
+
+    case PROP_WRITABLE_SDK:
+      g_value_set_boolean (value, self->writable_sdk);
       break;
 
     case PROP_COPY_ICON:
@@ -252,6 +258,10 @@ builder_manifest_set_property (GObject       *object,
 
     case PROP_STRIP:
       self->strip = g_value_get_boolean (value);
+      break;
+
+    case PROP_WRITABLE_SDK:
+      self->writable_sdk = g_value_get_boolean (value);
       break;
 
     case PROP_COPY_ICON:
@@ -367,6 +377,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                          "",
                                                          "",
                                                          TRUE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_WRITABLE_SDK,
+                                   g_param_spec_boolean ("writable-sdk",
+                                                         "",
+                                                         "",
+                                                         FALSE,
                                                          G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_RENAME_DESKTOP_FILE,
@@ -574,6 +591,7 @@ builder_manifest_init_app_dir (BuilderManifest *self,
                       self->sdk,
                       self->runtime,
                       builder_manifest_get_runtime_version (self),
+                      self->writable_sdk ? "-w" : NULL,
                       NULL);
 
   if (subp == NULL ||
@@ -614,6 +632,7 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
   builder_cache_checksum_str (cache, self->desktop_file_name_prefix);
   builder_cache_checksum_str (cache, self->desktop_file_name_suffix);
   builder_cache_checksum_boolean (cache, self->strip);
+  builder_cache_checksum_boolean (cache, self->writable_sdk);
 
   for (l = self->modules; l != NULL; l = l->next)
     {
