@@ -27,6 +27,7 @@
 #include "xdg-app-remote-private.h"
 #include "xdg-app-enum-types.h"
 #include "xdg-app-dir.h"
+#include "xdg-app-error.h"
 
 typedef struct _XdgAppInstallationPrivate XdgAppInstallationPrivate;
 
@@ -490,7 +491,9 @@ xdg_app_installation_install (XdgAppInstallation  *self,
   deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
     {
-      xdg_app_fail (error, "%s branch %s already installed", name, version);
+      g_set_error (error,
+                   XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
+                   "%s branch %s already installed", name, version ? version : "master");
       goto out;
     }
 
@@ -569,6 +572,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
@@ -579,6 +583,15 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
   if (ref == NULL)
     return NULL;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
+  if (!g_file_query_exists (deploy_base, cancellable))
+    {
+      g_set_error (error,
+                   XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
+                   "%s branch %s is not installed", name, version ? version : "master");
+      return NULL;
+    }
 
   remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
   if (remote_name == NULL)
@@ -654,12 +667,22 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
   g_autofree char *ref = NULL;
   g_autofree char *remote_name = NULL;
   g_autofree char *current_ref = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDir) dir_clone = NULL;
   gboolean was_deployed = FALSE;
 
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
   if (ref == NULL)
     return FALSE;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
+  if (!g_file_query_exists (deploy_base, cancellable))
+    {
+      g_set_error (error,
+                   XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
+                   "%s branch %s is not installed", name, version ? version : "master");
+      return NULL;
+    }
 
   remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
   if (remote_name == NULL)
