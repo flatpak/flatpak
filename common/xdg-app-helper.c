@@ -1189,6 +1189,7 @@ copy_file (const char *src_path, const char *dst_path, mode_t mode)
   return res;
 }
 
+#ifndef DISABLE_USERNS
 static bool
 write_file (const char *path, const char *content)
 {
@@ -1210,6 +1211,7 @@ write_file (const char *path, const char *content)
 
   return res;
 }
+#endif
 
 static bool
 create_file (const char *path, mode_t mode, const char *content)
