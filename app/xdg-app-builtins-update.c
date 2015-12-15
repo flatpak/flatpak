@@ -109,6 +109,8 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
         }
     }
 
+  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+
   return TRUE;
 }
 
@@ -181,6 +183,8 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
       if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
         return FALSE;
     }
+
+  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
   return  TRUE;
 }
