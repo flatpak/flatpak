@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include "libgsystem.h"
 #include "xdg-app-utils.h"
 #include "xdg-app-installation.h"
 #include "xdg-app-installed-ref-private.h"
@@ -344,4 +345,222 @@ xdg_app_installation_load_app_overrides  (XdgAppInstallation *self,
     return NULL;
 
   return metadata_contents;
+}
+
+static void
+progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
+{
+  XdgAppProgressCallback progress_cb = g_object_get_data (G_OBJECT (progress), "callback");
+  guint last_progress = GPOINTER_TO_UINT(g_object_get_data (G_OBJECT (progress), "last_progress"));
+  GString *buf;
+  g_autofree char *status = NULL;
+  guint outstanding_fetches;
+  guint outstanding_metadata_fetches;
+  guint outstanding_writes;
+  guint n_scanned_metadata;
+  guint fetched_delta_parts;
+  guint total_delta_parts;
+  guint64 bytes_transferred;
+  guint64 total_delta_part_size;
+  guint fetched;
+  guint metadata_fetched;
+  guint requested;
+  guint64 ellapsed_time;
+  guint new_progress = 0;
+  gboolean estimating = FALSE;
+
+  buf = g_string_new ("");
+
+  status = ostree_async_progress_get_status (progress);
+  outstanding_fetches = ostree_async_progress_get_uint (progress, "outstanding-fetches");
+  outstanding_metadata_fetches = ostree_async_progress_get_uint (progress, "outstanding-metadata-fetches");
+  outstanding_writes = ostree_async_progress_get_uint (progress, "outstanding-writes");
+  n_scanned_metadata = ostree_async_progress_get_uint (progress, "scanned-metadata");
+  fetched_delta_parts = ostree_async_progress_get_uint (progress, "fetched-delta-parts");
+  total_delta_parts = ostree_async_progress_get_uint (progress, "total-delta-parts");
+  total_delta_part_size = ostree_async_progress_get_uint64 (progress, "total-delta-part-size");
+  bytes_transferred = ostree_async_progress_get_uint64 (progress, "bytes-transferred");
+  fetched = ostree_async_progress_get_uint (progress, "fetched");
+  metadata_fetched = ostree_async_progress_get_uint (progress, "metadata-fetched");
+  requested = ostree_async_progress_get_uint (progress, "requested");
+  ellapsed_time = (g_get_monotonic_time () - ostree_async_progress_get_uint64 (progress, "start-time")) / G_USEC_PER_SEC;
+
+  if (status)
+    {
+      g_string_append (buf, status);
+    }
+  else if (outstanding_fetches)
+    {
+      guint64 bytes_sec = bytes_transferred / ellapsed_time;
+      g_autofree char *formatted_bytes_transferred =
+        g_format_size_full (bytes_transferred, 0);
+      g_autofree char *formatted_bytes_sec = NULL;
+
+      if (!bytes_sec) // Ignore first second
+        formatted_bytes_sec = g_strdup ("-");
+      else
+        {
+          formatted_bytes_sec = g_format_size (bytes_sec);
+        }
+
+      if (total_delta_parts > 0)
+        {
+          g_autofree char *formatted_total =
+            g_format_size (total_delta_part_size);
+          g_string_append_printf (buf, "Receiving delta parts: %u/%u %s/s %s/%s",
+                                  fetched_delta_parts, total_delta_parts,
+                                  formatted_bytes_sec, formatted_bytes_transferred,
+                                  formatted_total);
+
+          new_progress = (100 * bytes_transferred) / total_delta_part_size;
+        }
+      else if (outstanding_metadata_fetches)
+        {
+          /* At this point we don't really know how much data there is, so we have to make a guess.
+           * Since its really hard to figure out early how much data there is we report 1% until
+           * all objects are scanned. */
+
+          new_progress = 1;
+          estimating = TRUE;
+
+          g_string_append_printf (buf, "Receiving metadata objects: %u/(estimating) %s/s %s",
+                                  metadata_fetched, formatted_bytes_sec, formatted_bytes_transferred);
+        }
+      else
+        {
+          new_progress = (100 * fetched) / requested;
+          g_string_append_printf (buf, "Receiving objects: %u%% (%u/%u) %s/s %s",
+                                  (guint)((((double)fetched) / requested) * 100),
+                                  fetched, requested, formatted_bytes_sec, formatted_bytes_transferred);
+        }
+    }
+  else if (outstanding_writes)
+    {
+      g_string_append_printf (buf, "Writing objects: %u", outstanding_writes);
+    }
+  else
+    {
+      g_string_append_printf (buf, "Scanning metadata: %u", n_scanned_metadata);
+    }
+
+  if (new_progress < last_progress)
+    new_progress = last_progress;
+  g_object_set_data (G_OBJECT (progress), "last_progress", GUINT_TO_POINTER(new_progress));
+
+  progress_cb (buf->str, new_progress, estimating, user_data);
+
+  g_string_free (buf, TRUE);
+}
+
+/**
+ * xdg_app_installation_install:
+ * @self: a #XdgAppInstallation
+ * @progress: (scope call): the callback
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the remotes.
+ *
+ * Returns: (transfer full): The ref for the newly installed app or %null on failure
+ */
+XdgAppInstalledRef *
+xdg_app_installation_install (XdgAppInstallation  *self,
+                              const char          *remote_name,
+                              XdgAppRefKind        kind,
+                              const char          *name,
+                              const char          *arch,
+                              const char          *version,
+                              XdgAppProgressCallback progress,
+                              gpointer             progress_data,
+                              GCancellable        *cancellable,
+                              GError             **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autofree char *ref = NULL;
+  gboolean created_deploy_base = FALSE;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(XdgAppDir) dir_clone = NULL;
+  g_autoptr(GMainContext) main_context = NULL;
+  g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
+  XdgAppInstalledRef *result = NULL;
+
+  if (version == NULL)
+    version = "master";
+
+  if (arch == NULL)
+    arch = xdg_app_get_arch ();
+
+  if (!xdg_app_is_valid_name (name))
+    {
+      xdg_app_fail (error, "'%s' is not a valid name", name);
+      return NULL;
+    }
+
+  if (!xdg_app_is_valid_branch (version))
+    {
+      xdg_app_fail (error, "'%s' is not a valid branch name", version);
+      return NULL;
+    }
+
+  if (kind == XDG_APP_REF_KIND_APP)
+    ref = xdg_app_build_app_ref (name, version, arch);
+  else
+    ref = xdg_app_build_runtime_ref (name, version, arch);
+
+  deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
+  if (g_file_query_exists (deploy_base, cancellable))
+    {
+      xdg_app_fail (error, "%s branch %s already installed", name, version);
+      goto out;
+    }
+
+  /* Pull, etc are not threadsafe, so we work on a copy */
+  dir_clone = xdg_app_dir_clone (priv->dir);
+
+  /* Work around ostree-pull spinning the default main context for the sync calls */
+  main_context = g_main_context_new ();
+  g_main_context_push_thread_default (main_context);
+
+  if (progress)
+    {
+      ostree_progress = ostree_async_progress_new_and_connect (progress_cb, progress_data);
+      g_object_set_data (G_OBJECT (ostree_progress), "callback", progress);
+      g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER(0));
+    }
+
+  if (!xdg_app_dir_pull (dir_clone, remote_name, ref,
+                         ostree_progress, cancellable, error))
+    goto out;
+
+  if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
+    goto out;
+  created_deploy_base = TRUE;
+
+  if (!xdg_app_dir_set_origin (priv->dir, ref, remote_name, cancellable, error))
+    goto out;
+
+  if (!xdg_app_dir_deploy (priv->dir, ref, NULL, cancellable, error))
+    goto out;
+
+  if (kind == XDG_APP_REF_KIND_APP)
+    {
+      if (!xdg_app_dir_make_current_ref (priv->dir, ref, cancellable, error))
+        goto out;
+
+      if (!xdg_app_dir_update_exports (priv->dir, name, cancellable, error))
+        goto out;
+    }
+
+  xdg_app_dir_cleanup_removed (priv->dir, cancellable, NULL);
+
+  result = get_ref (self, ref, cancellable);
+
+ out:
+  if (main_context)
+    g_main_context_pop_thread_default (main_context);
+
+  if (created_deploy_base && result == NULL)
+    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
+
+  return result;
 }

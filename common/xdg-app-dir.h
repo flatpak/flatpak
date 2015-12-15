@@ -70,6 +70,7 @@ GKeyFile *     xdg_app_deploy_get_metadata  (XdgAppDeploy *deploy);
 
 XdgAppDir*  xdg_app_dir_new             (GFile          *basedir,
                                          gboolean        user);
+XdgAppDir*  xdg_app_dir_clone           (XdgAppDir      *self);
 XdgAppDir  *xdg_app_dir_get             (gboolean        user);
 XdgAppDir  *xdg_app_dir_get_system      (void);
 XdgAppDir  *xdg_app_dir_get_user        (void);
@@ -111,6 +112,7 @@ gboolean    xdg_app_dir_ensure_repo     (XdgAppDir      *self,
 gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          const char     *repository,
                                          const char     *ref,
+                                         OstreeAsyncProgress *progress,
                                          GCancellable   *cancellable,
                                          GError        **error);
 gboolean    xdg_app_dir_list_refs_for_name (XdgAppDir      *self,

@@ -78,7 +78,7 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   if (repository == NULL)
     return FALSE;
 
-  if (!xdg_app_dir_pull (dir, repository, ref,
+  if (!xdg_app_dir_pull (dir, repository, ref, NULL,
                          cancellable, error))
     return FALSE;
 
@@ -148,7 +148,7 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   if (repository == NULL)
     return FALSE;
 
-  if (!xdg_app_dir_pull (dir, repository, ref,
+  if (!xdg_app_dir_pull (dir, repository, ref, NULL,
                          cancellable, error))
     return FALSE;
 

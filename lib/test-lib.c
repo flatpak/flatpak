@@ -4,6 +4,16 @@
 
 #include <xdg-app.h>
 
+
+static void
+progress_cb (const char *status,
+             guint progress,
+             gboolean estimating,
+             gpointer user_data)
+{
+  g_print ("status: %s, progress: %d estimating: %d, user_data: %p\n", status, progress, estimating, user_data);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -15,9 +25,28 @@ main (int argc, char *argv[])
   XdgAppInstalledRef **runtimes;
   XdgAppRemoteRef *remote_ref;
   XdgAppRemote **remotes;
+  GError *error = NULL;
   int i, j;
 
   installation = xdg_app_installation_new_user ();
+
+  if (argc == 3)
+    {
+      app1 = xdg_app_installation_install (installation,
+                                           argv[1],
+                                           XDG_APP_REF_KIND_APP,
+                                           argv[2],
+                                           NULL, NULL,
+                                           progress_cb, (gpointer)0xdeadbeef,
+                                           NULL, &error);
+      if (app1 == NULL)
+        g_print ("Error: %s\n", error->message);
+      else
+        g_print ("Installed %s: %s\n", argv[2],
+                 xdg_app_ref_get_commit (XDG_APP_REF (app1)));
+
+      return 0;
+    }
 
   g_print ("**** Listing all installed apps\n");
   apps = xdg_app_installation_list_installed_refs (installation,
@@ -97,7 +126,6 @@ main (int argc, char *argv[])
 
   for (i = 0; remotes[i] != NULL; i++)
     {
-      GError *error = NULL;
       g_print ("\nRemote: %s %s %s %d %d\n",
                xdg_app_remote_get_name (remotes[i]),
                xdg_app_remote_get_url (remotes[i]),

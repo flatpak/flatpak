@@ -144,7 +144,7 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
       goto out;
     }
 
-  if (!xdg_app_dir_pull (dir, repository, ref,
+  if (!xdg_app_dir_pull (dir, repository, ref, NULL,
                          cancellable, error))
     goto out;
 
@@ -219,7 +219,7 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
       goto out;
     }
 
-  if (!xdg_app_dir_pull (dir, repository, ref,
+  if (!xdg_app_dir_pull (dir, repository, ref, NULL,
                          cancellable, error))
     goto out;
 

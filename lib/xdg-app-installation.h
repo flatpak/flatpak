@@ -55,6 +55,11 @@ XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_user (void);
 XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_for_path (GFile *path,
                                                                       gboolean user);
 
+typedef void (*XdgAppProgressCallback)(const char *status,
+                                       guint progress,
+                                       gboolean estimating,
+                                       gpointer user_data);
+
 XDG_APP_EXTERN gboolean             xdg_app_installation_get_is_user               (XdgAppInstallation  *self);
 XDG_APP_EXTERN XdgAppInstalledRef **xdg_app_installation_list_installed_refs       (XdgAppInstallation  *self,
                                                                                     XdgAppRefKind        kind,
@@ -78,5 +83,15 @@ XDG_APP_EXTERN char *              xdg_app_installation_load_app_overrides      
                                                                                     const char         *app_id,
                                                                                     GCancellable       *cancellable,
                                                                                     GError            **error);
+XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_install                   (XdgAppInstallation  *self,
+                                                                                    const char          *remote_name,
+                                                                                    XdgAppRefKind        kind,
+                                                                                    const char          *name,
+                                                                                    const char          *arch,
+                                                                                    const char          *version,
+                                                                                    XdgAppProgressCallback  progress,
+                                                                                    gpointer             progress_data,
+                                                                                    GCancellable        *cancellable,
+                                                                                    GError             **error);
 
 #endif /* __XDG_APP_INSTALLATION_H__ */

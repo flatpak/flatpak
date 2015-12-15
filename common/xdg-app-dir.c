@@ -556,22 +556,27 @@ gboolean
 xdg_app_dir_pull (XdgAppDir *self,
                   const char *repository,
                   const char *ref,
+                  OstreeAsyncProgress *progress,
                   GCancellable *cancellable,
                   GError **error)
 {
   gboolean ret = FALSE;
   GSConsole *console = NULL;
-  g_autoptr(OstreeAsyncProgress) progress = NULL;
+  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   const char *refs[2];
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
 
-  console = gs_console_get ();
-  if (console)
+  if (progress == NULL)
     {
-      gs_console_begin_status_line (console, "", NULL, NULL);
-      progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, console);
+      console = gs_console_get ();
+      if (console)
+        {
+          gs_console_begin_status_line (console, "", NULL, NULL);
+          console_progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, console);
+          progress = console_progress;
+        }
     }
 
   refs[0] = ref;
@@ -1984,6 +1989,12 @@ XdgAppDir*
 xdg_app_dir_new (GFile *path, gboolean user)
 {
   return g_object_new (XDG_APP_TYPE_DIR, "path", path, "user", user, NULL);
+}
+
+XdgAppDir*
+xdg_app_dir_clone (XdgAppDir *self)
+{
+  return xdg_app_dir_new (self->basedir, self->user);
 }
 
 XdgAppDir *
