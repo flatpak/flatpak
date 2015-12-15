@@ -52,6 +52,7 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   gboolean was_updated;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("RUNTIME [BRANCH] - Update a runtime");
 
@@ -77,8 +78,14 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
                          cancellable, error))
     return FALSE;
 
+  if (!xdg_app_dir_lock (dir, &lock,
+                         cancellable, error))
+    return FALSE;
+
   if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
     return FALSE;
+
+  glnx_release_lock_file (&lock);
 
   if (was_updated)
     {
@@ -101,6 +108,7 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   gboolean was_updated;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("APP [BRANCH] - Update an application");
 
@@ -126,6 +134,10 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
                          cancellable, error))
     return FALSE;
 
+  if (!xdg_app_dir_lock (dir, &lock,
+                         cancellable, error))
+    return FALSE;
+
   if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
     return FALSE;
 
@@ -134,6 +146,8 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
       if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
         return FALSE;
     }
+
+  glnx_release_lock_file (&lock);
 
   if (was_updated)
     {

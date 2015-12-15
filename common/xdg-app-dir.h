@@ -150,6 +150,10 @@ gboolean    xdg_app_dir_list_deployed   (XdgAppDir      *self,
                                          char         ***deployed_checksums,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_lock            (XdgAppDir      *self,
+                                         GLnxLockFile   *lockfile,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 gboolean    xdg_app_dir_deploy          (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,

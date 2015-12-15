@@ -23,6 +23,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <sys/file.h>
 
 #include <gio/gio.h>
 #include <libsoup/soup.h>
@@ -443,6 +444,26 @@ OstreeRepo *
 xdg_app_dir_get_repo (XdgAppDir *self)
 {
   return self->repo;
+}
+
+
+/* This is an exclusive per xdg-app installation file lock that is taken
+ * whenever any config in the directory outside the repo is to be changed. For
+ * instance deployements, overrides or active commit changes.
+ *
+ * For concurrency protection of the actual repository we rely on ostree
+ * to do the right thing.
+ */
+gboolean
+xdg_app_dir_lock (XdgAppDir      *self,
+                  GLnxLockFile   *lockfile,
+                  GCancellable   *cancellable,
+                  GError        **error)
+{
+  g_autoptr(GFile) lock_file = g_file_get_child (xdg_app_dir_get_path (self), "lock");
+  g_autofree char *lock_path = g_file_get_path (lock_file);
+
+  return glnx_make_lock_file (AT_FDCWD, lock_path, LOCK_EX, lockfile, error);
 }
 
 char *

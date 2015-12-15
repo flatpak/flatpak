@@ -52,6 +52,7 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   gboolean was_deployed;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("RUNTIME [BRANCH] - Uninstall a runtime");
 
@@ -71,6 +72,10 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
 
   /* TODO: look for apps, require --force */
 
+  if (!xdg_app_dir_lock (dir, &lock,
+                         cancellable, error))
+    return FALSE;
+
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
 
   g_debug ("dropping active ref");
@@ -84,7 +89,12 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
     {
       if (!xdg_app_dir_remove_ref (dir, repository, ref, cancellable, error))
         return FALSE;
+    }
 
+  glnx_release_lock_file (&lock);
+
+  if (!opt_keep_ref)
+    {
       if (!xdg_app_dir_prune (dir, cancellable, error))
         return FALSE;
     }
@@ -108,6 +118,7 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
   g_autofree char *repository = NULL;
   g_autofree char *current_ref = NULL;
   gboolean was_deployed;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
 
@@ -123,6 +134,10 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
 
   ref = xdg_app_compose_ref (TRUE, name, branch, opt_arch, error);
   if (ref == NULL)
+    return FALSE;
+
+  if (!xdg_app_dir_lock (dir, &lock,
+                         cancellable, error))
     return FALSE;
 
   repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
@@ -146,7 +161,12 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
     {
       if (!xdg_app_dir_remove_ref (dir, repository, ref, cancellable, error))
         return FALSE;
+    }
 
+  glnx_release_lock_file (&lock);
+
+  if (!opt_keep_ref)
+    {
       if (!xdg_app_dir_prune (dir, cancellable, error))
         return FALSE;
     }

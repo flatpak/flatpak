@@ -483,6 +483,8 @@ xdg_app_installation_install (XdgAppInstallation  *self,
   g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   XdgAppInstalledRef *result = NULL;
+  g_autoptr(GError) local_error = NULL;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
   if (ref == NULL)
@@ -515,8 +517,20 @@ xdg_app_installation_install (XdgAppInstallation  *self,
                          ostree_progress, cancellable, error))
     goto out;
 
-  if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
+  if (!xdg_app_dir_lock (dir_clone, &lock,
+                         cancellable, error))
     goto out;
+
+  if (!g_file_make_directory_with_parents (deploy_base, cancellable, &local_error))
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+        g_set_error (error,
+                     XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
+                     "%s branch %s already installed", name, version ? version : "master");
+      else
+        g_propagate_error (error, g_steal_pointer (&local_error));
+      goto out;
+    }
   created_deploy_base = TRUE;
 
   if (!xdg_app_dir_set_origin (dir_clone, ref, remote_name, cancellable, error))
@@ -534,9 +548,11 @@ xdg_app_installation_install (XdgAppInstallation  *self,
         goto out;
     }
 
-  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
-
   result = get_ref (self, ref, cancellable);
+
+  glnx_release_lock_file (&lock);
+
+  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
 
  out:
   if (main_context)
@@ -579,6 +595,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   g_autofree char *remote_name = NULL;
   XdgAppInstalledRef *result = NULL;
   gboolean was_updated;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
   if (ref == NULL)
@@ -615,6 +632,18 @@ xdg_app_installation_update (XdgAppInstallation  *self,
                          ostree_progress, cancellable, error))
     goto out;
 
+  if (!xdg_app_dir_lock (dir_clone, &lock,
+                         cancellable, error))
+    goto out;
+
+  if (!g_file_query_exists (deploy_base, cancellable))
+    {
+      g_set_error (error,
+                   XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
+                   "%s branch %s is not installed", name, version ? version : "master");
+      return NULL;
+    }
+
   if (!xdg_app_dir_deploy_update (dir_clone, ref, NULL, &was_updated, cancellable, error))
     return FALSE;
 
@@ -625,6 +654,8 @@ xdg_app_installation_update (XdgAppInstallation  *self,
     }
 
   result = get_ref (self, ref, cancellable);
+
+  glnx_release_lock_file (&lock);
 
   if (was_updated)
     {
@@ -670,10 +701,15 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDir) dir_clone = NULL;
   gboolean was_deployed = FALSE;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
   if (ref == NULL)
     return FALSE;
+
+  if (!xdg_app_dir_lock (dir_clone, &lock,
+                         cancellable, error))
+    return NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
@@ -712,13 +748,20 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
   if (!xdg_app_dir_remove_ref (dir_clone, remote_name, ref, cancellable, error))
     return FALSE;
 
+  glnx_release_lock_file (&lock);
+
   if (!xdg_app_dir_prune (dir_clone, cancellable, error))
     return FALSE;
 
   xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
 
   if (!was_deployed)
-    return xdg_app_fail (error, "Nothing to uninstall");
+    {
+      g_set_error (error,
+                   XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
+                   "%s branch %s is not installed", name, version ? version : "master");
+      return FALSE;
+    }
 
   return TRUE;
 }

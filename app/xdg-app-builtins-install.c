@@ -106,6 +106,7 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
   const char *branch = NULL;
   g_autofree char *ref = NULL;
   gboolean created_deploy_base = FALSE;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("REPOSITORY RUNTIME [BRANCH] - Install a runtime");
 
@@ -138,6 +139,10 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
                          cancellable, error))
     goto out;
 
+  if (!xdg_app_dir_lock (dir, &lock,
+                         cancellable, error))
+    goto out;
+
   if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
     goto out;
   created_deploy_base = TRUE;
@@ -147,6 +152,8 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
 
   if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
     goto out;
+
+  glnx_release_lock_file (&lock);
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
@@ -171,6 +178,7 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
   const char *branch = NULL;
   g_autofree char *ref = NULL;
   gboolean created_deploy_base = FALSE;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("REPOSITORY APP [BRANCH] - Install an application");
 
@@ -203,6 +211,10 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
                          cancellable, error))
     goto out;
 
+  if (!xdg_app_dir_lock (dir, &lock,
+                         cancellable, error))
+    goto out;
+
   if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
     goto out;
   created_deploy_base = TRUE;
@@ -218,6 +230,8 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
 
   if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
     goto out;
+
+  glnx_release_lock_file (&lock);
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
@@ -255,6 +269,7 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
   OstreeRepo *repo;
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
   g_autoptr(GError) my_error = NULL;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("BUNDLE - Install a application or runtime from a bundle");
 
@@ -270,6 +285,10 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
 
   if (!xdg_app_supports_bundles (repo))
     return xdg_app_fail (error, "Your version of ostree is too old to support single-file bundles");
+
+  if (!xdg_app_dir_lock (dir, &lock,
+                         cancellable, error))
+    goto out;
 
   file = g_file_new_for_commandline_arg (filename);
 
@@ -461,6 +480,8 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
       if (!xdg_app_dir_update_exports (dir, parts[1], cancellable, error))
         goto out;
     }
+
+  glnx_release_lock_file (&lock);
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 

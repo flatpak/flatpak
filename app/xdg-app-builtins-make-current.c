@@ -47,6 +47,7 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   const char *app;
   const char *branch = "master";
   g_autofree char *ref = NULL;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("APP BRANCH - Make branch of application current");
 
@@ -63,6 +64,10 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   if (ref == NULL)
     return FALSE;
 
+  if (!xdg_app_dir_lock (dir, &lock,
+                         cancellable, error))
+    return FALSE;
+
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
     return xdg_app_fail (error, "App %s branch %s is not installed", app, branch);
@@ -72,6 +77,8 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
 
   if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
     return FALSE;
+
+  glnx_release_lock_file (&lock);
 
   return TRUE;
 }
