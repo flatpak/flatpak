@@ -7,11 +7,16 @@ AC_PREREQ([2.63])
 # if any functions have been added, set XDG_APP_INTERFACE_AGE to 0.
 # if backwards compatibility has been broken,
 # set XDG_APP_BINARY_AGE and XDG_APP_INTERFACE_AGE to 0.
+#
+# in easier to understand terms:
+#
+# on the stable branch, interface age == micro
+# on the unstable (ie master), interface age = 0
 
 m4_define([xdg_app_major_version], [0])
 m4_define([xdg_app_minor_version], [4])
-m4_define([xdg_app_micro_version], [5])
-m4_define([xdg_app_interface_age], [0])
+m4_define([xdg_app_micro_version], [6])
+m4_define([xdg_app_interface_age], [6])
 m4_define([xdg_app_binary_age],
           [m4_eval(100 * xdg_app_minor_version + xdg_app_micro_version)])
 m4_define([xdg_app_version],
