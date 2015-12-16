@@ -36,6 +36,8 @@ lib/xdg-app-enum-types.c: $(public_headers) lib/xdg-app-enum-types.c.template
 	$(AM_V_GEN) $(GLIB_MKENUMS) --template $(filter %.template,$^) $(filter-out %.template,$^) > \
 	    lib/xdg-app-enum-types.c.tmp && mv lib/xdg-app-enum-types.c.tmp lib/xdg-app-enum-types.c
 
+EXTRA_DIST += lib/xdg-app-enum-types.c.template lib/xdg-app-enum-types.h.template
+
 xdgappincludedir = $(includedir)/xdg-app
 xdgappinclude_HEADERS = $(public_headers) $(generated_public_headers)
 
@@ -46,6 +48,7 @@ sources = \
 	lib/xdg-app-installed-ref.c \
 	lib/xdg-app-installed-ref-private.h \
 	lib/xdg-app-remote-ref.c \
+	lib/xdg-app-remote-ref-private.h \
 	lib/xdg-app-remote-private.h \
 	lib/xdg-app-remote.c \
 	lib/xdg-app-error.c \
