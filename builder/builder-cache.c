@@ -195,6 +195,10 @@ builder_cache_open (BuilderCache *self,
 {
   self->repo = ostree_repo_new (self->cache_dir);
 
+  /* We don't need fsync on checkouts as they are transient, and we
+     rely on the syncfs() in the transaction commit for commits. */
+  ostree_repo_set_disable_fsync (self->repo, TRUE);
+
   if (!g_file_query_exists (self->cache_dir, NULL))
     {
       if (!ostree_repo_create (self->repo, OSTREE_REPO_MODE_BARE, NULL, error))
