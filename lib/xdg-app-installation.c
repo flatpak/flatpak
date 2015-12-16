@@ -709,7 +709,7 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
 
   if (!xdg_app_dir_lock (dir_clone, &lock,
                          cancellable, error))
-    return NULL;
+    return FALSE;
 
   deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
@@ -717,7 +717,7 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
       g_set_error (error,
                    XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
                    "%s branch %s is not installed", name, version ? version : "master");
-      return NULL;
+      return FALSE;
     }
 
   remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
