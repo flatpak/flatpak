@@ -1,6 +1,9 @@
 NULL =
 
-SUBDIRS = reference
+if BUILDOPT_INSTALL_LIB
+  LIB_DOCS = reference
+endif
+SUBDIRS = $(LIB_DOCS)
 
 XSLTPROC_FLAGS = \
 	--nonet 					\

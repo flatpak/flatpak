@@ -1,5 +1,8 @@
+if BUILDOPT_INSTALL_LIB
 lib_LTLIBRARIES += libxdg-app.la
-
+else
+noinst_LTLIBRARIES += libxdg-app.la
+endif
 noinst_PROGRAMS += test-libxdg-app
 
 public_headers = \
@@ -39,7 +42,9 @@ lib/xdg-app-enum-types.c: $(public_headers) lib/xdg-app-enum-types.c.template
 EXTRA_DIST += lib/xdg-app-enum-types.c.template lib/xdg-app-enum-types.h.template
 
 xdgappincludedir = $(includedir)/xdg-app
+if BUILDOPT_INSTALL_LIB
 xdgappinclude_HEADERS = $(public_headers) $(generated_public_headers)
+endif
 
 sources = \
 	lib/xdg-app.c \
@@ -124,6 +129,8 @@ XdgApp_1_0_gir_SCANNERFLAGS = \
 
 INTROSPECTION_GIRS += XdgApp-1.0.gir
 
+if BUILDOPT_INSTALL_LIB
+
 girdir = $(datadir)/gir-1.0
 nodist_gir_DATA = $(INTROSPECTION_GIRS)
 CLEANFILES += $(nodist_gir_DATA)
@@ -131,5 +138,7 @@ CLEANFILES += $(nodist_gir_DATA)
 typelibdir = $(libdir)/girepository-1.0
 nodist_typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 CLEANFILES += $(nodist_typelib_DATA)
+
+endif
 
 endif # HAVE_INTROSPECTION

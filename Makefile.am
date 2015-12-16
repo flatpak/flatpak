@@ -83,3 +83,9 @@ xdg-app.env: env.d/xdg-app.env.in
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xdg-app.pc
 EXTRA_DIST += xdg-app.pc.in
+
+DISTCHECK_CONFIGURE_FLAGS =		\
+	--enable-documentation		\
+	--enable-libxdgapp		\
+	--disable-maintainer-mode	\
+	--enable-introspection
