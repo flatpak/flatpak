@@ -142,6 +142,10 @@
                     the basename.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>cleanup-commands</option></term>
+                    <listitem><para>An array of commandlines that are run during the cleanup phase.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>finish-args</option></term>
                     <listitem><para>An array of arguments passed to the <command>xdg-app build-finish</command> command</para></listitem>
                 </varlistentry>

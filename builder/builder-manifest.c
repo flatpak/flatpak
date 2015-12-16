@@ -43,6 +43,7 @@ struct BuilderManifest {
   char *runtime_version;
   char *sdk;
   char **cleanup;
+  char **cleanup_commands;
   char **finish_args;
   char *rename_desktop_file;
   char *rename_icon;
@@ -76,6 +77,7 @@ enum {
   PROP_COMMAND,
   PROP_MODULES,
   PROP_CLEANUP,
+  PROP_CLEANUP_COMMANDS,
   PROP_STRIP,
   PROP_WRITABLE_SDK,
   PROP_FINISH_ARGS,
@@ -101,6 +103,7 @@ builder_manifest_finalize (GObject *object)
   g_clear_object (&self->build_options);
   g_list_free_full (self->modules, g_object_unref);
   g_strfreev (self->cleanup);
+  g_strfreev (self->cleanup_commands);
   g_strfreev (self->finish_args);
   g_free (self->rename_desktop_file);
   g_free (self->rename_icon);
@@ -154,6 +157,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_CLEANUP:
       g_value_set_boxed (value, self->cleanup);
+      break;
+
+    case PROP_CLEANUP_COMMANDS:
+      g_value_set_boxed (value, self->cleanup_commands);
       break;
 
     case PROP_FINISH_ARGS:
@@ -247,6 +254,12 @@ builder_manifest_set_property (GObject       *object,
     case PROP_CLEANUP:
       tmp = self->cleanup;
       self->cleanup = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_CLEANUP_COMMANDS:
+      tmp = self->cleanup_commands;
+      self->cleanup_commands = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -360,6 +373,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_CLEANUP,
                                    g_param_spec_boxed ("cleanup",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_CLEANUP_COMMANDS,
+                                   g_param_spec_boxed ("cleanup-commands",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -626,6 +646,7 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
 
   builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_VERSION);
   builder_cache_checksum_strv (cache, self->cleanup);
+  builder_cache_checksum_strv (cache, self->cleanup_commands);
   builder_cache_checksum_str (cache, self->rename_desktop_file);
   builder_cache_checksum_str (cache, self->rename_icon);
   builder_cache_checksum_boolean (cache, self->copy_icon);
@@ -726,6 +747,50 @@ strip (GError **error,
   va_end (ap);
 
   return res;
+}
+
+static gboolean
+command (GFile *app_dir,
+         char **env_vars,
+         const char *commandline,
+         GError **error)
+{
+  g_autoptr(GSubprocessLauncher) launcher = NULL;
+  g_autoptr(GSubprocess) subp = NULL;
+  g_autoptr(GPtrArray) args = NULL;
+  int i;
+
+  args = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("build"));
+
+  g_ptr_array_add (args, g_strdup ("--nofilesystem=host"));
+
+  if (env_vars)
+    {
+      for (i = 0; env_vars[i] != NULL; i++)
+        g_ptr_array_add (args, g_strdup_printf ("--env=%s", env_vars[i]));
+    }
+
+  g_ptr_array_add (args, g_file_get_path (app_dir));
+
+  g_ptr_array_add (args, g_strdup ("/bin/sh"));
+  g_ptr_array_add (args, g_strdup ("-c"));
+  g_ptr_array_add (args, g_strdup (commandline));
+  g_ptr_array_add (args, NULL);
+
+  g_print ("Running: %s\n", commandline);
+
+  launcher = g_subprocess_launcher_new (0);
+
+  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
+  g_ptr_array_free (args, TRUE);
+
+  if (subp == NULL ||
+      !g_subprocess_wait_check (subp, NULL, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 guint16
@@ -955,19 +1020,31 @@ builder_manifest_cleanup (BuilderManifest *self,
                           BuilderContext *context,
                           GError **error)
 {
+  GFile *app_dir = builder_context_get_app_dir (context);
   g_autoptr(GFile) app_root = NULL;
   g_autoptr(GHashTable) to_remove_ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   GList *l;
   g_autofree char **keys = NULL;
+  g_auto(GStrv) env = NULL;
   guint n_keys;
   int i;
 
   builder_manifest_checksum_for_cleanup (self, cache, context);
   if (!builder_cache_lookup (cache))
     {
-      app_root = g_file_get_child (builder_context_get_app_dir (context), "files");
+      app_root = g_file_get_child (app_dir, "files");
 
       g_print ("Cleaning up\n");
+
+      if (self->cleanup_commands)
+        {
+          env = builder_options_get_env (self->build_options, context);
+          for (i = 0; self->cleanup_commands[i] != NULL; i++)
+            {
+              if (!command (app_dir, env, self->cleanup_commands[i], error))
+                return FALSE;
+            }
+        }
 
       for (l = self->modules; l != NULL; l = l->next)
         {
