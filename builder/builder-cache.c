@@ -201,7 +201,7 @@ builder_cache_open (BuilderCache *self,
 
   if (!g_file_query_exists (self->cache_dir, NULL))
     {
-      if (!ostree_repo_create (self->repo, OSTREE_REPO_MODE_BARE, NULL, error))
+      if (!ostree_repo_create (self->repo, OSTREE_REPO_MODE_BARE_USER, NULL, error))
         return FALSE;
     }
 
@@ -234,6 +234,11 @@ builder_cache_checkout (BuilderCache *self, const char *commit)
   if (file_info == NULL)
     return FALSE;
 
+  /* We check out without user mode, not necessarily because we care
+     about uids not owned by the user (they are all from the build,
+     so should be creatable by the user, but because we want to
+     force the checkout to not use hardlinks. Hard links into the
+     cache are not safe, as the build could mutate these. */
   if (!ostree_repo_checkout_tree (self->repo,
                                   OSTREE_REPO_CHECKOUT_MODE_NONE,
                                   OSTREE_REPO_CHECKOUT_OVERWRITE_NONE,
