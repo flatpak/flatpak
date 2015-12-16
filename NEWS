@@ -1,3 +1,21 @@
+Major changes in 0.4.6
+======================
+* Added an initial version of libxdg-app, a highlevel library
+  intended to be used by user interface frontends to xdg-app.
+  It is not yet API stable, so it is disabled by default.
+  Enable with --enable-libxdgapp
+* Added xdg-app-builder, a separate tool that makes it easier to build
+  applications with external dependencies.
+* Add support for single-file bundles, which can be a useful way
+  to distribute apps on e.g. a usb stick. Only works with the
+  latest version of ostree.
+* Always allow apps to talk to the built-in portals
+* Support granting read-only access to the filesystem with e.g. --filesystem=host:ro
+* Add /run/user/$uid/xdg-app-info file that contains the current permissions of the app
+* Add --writable-sdk option to xdg-app build-init
+* Add file locking to better handle concurrent xdg-app operations like update and install
+* Various fixes
+
 Major changes in 0.4.5
 ======================
 * Support signing commits in build-export
