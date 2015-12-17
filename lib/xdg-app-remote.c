@@ -179,10 +179,10 @@ xdg_app_remote_get_gpg_verify (XdgAppRemote *self)
  *
  * Lists all the refs in a #XdgAppRemote.
  *
- * Returns: (transfer full) (array zero-terminated=1): a %NULL-terminated array
- *   of #XdgAppRemoteRef instances
+ * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
+ *   #XdgAppRemoteRef instances
  */
-XdgAppRemoteRef **
+GPtrArray *
 xdg_app_remote_list_refs_sync (XdgAppRemote *self,
                                GCancellable *cancellable,
                                GError **error)
@@ -211,8 +211,7 @@ xdg_app_remote_list_refs_sync (XdgAppRemote *self,
                        xdg_app_remote_ref_new (refspec, checksum, priv->name, priv->dir));
     }
 
-  g_ptr_array_add (refs, NULL);
-  return (XdgAppRemoteRef **)g_ptr_array_free (g_steal_pointer (&refs), FALSE);
+  return g_steal_pointer (&refs);
 }
 
 /**

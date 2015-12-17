@@ -18,7 +18,6 @@ int
 main (int argc, char *argv[])
 {
   XdgAppInstallation *installation;
-  XdgAppRemoteRef **refs;
   XdgAppInstalledRef *app1;
   XdgAppInstalledRef *app2;
   XdgAppRemoteRef *remote_ref;
@@ -174,6 +173,7 @@ main (int argc, char *argv[])
 
   for (i = 0; remotes[i] != NULL; i++)
     {
+      g_autoptr(GPtrArray) refs = NULL;
       g_print ("\nRemote: %s %s %s %d %d\n",
                xdg_app_remote_get_name (remotes[i]),
                xdg_app_remote_get_url (remotes[i]),
@@ -182,19 +182,19 @@ main (int argc, char *argv[])
                xdg_app_remote_get_noenumerate (remotes[i]));
 
       g_print ("\n**** Listing remote refs on %s\n", xdg_app_remote_get_name (remotes[i]));
-      refs = xdg_app_remote_list_refs_sync (remotes[i],
-                                            NULL, NULL);
+      refs = xdg_app_remote_list_refs_sync (remotes[i], NULL, NULL);
       if (refs)
         {
-          for (j = 0; refs[j] != NULL; j++)
+          for (j = 0; j < refs->len; j++)
             {
+              XdgAppRemoteRef *ref = g_ptr_array_index(refs,j);
               g_print ("%d %s %s %s %s %s\n",
-                       xdg_app_ref_get_kind (XDG_APP_REF(refs[j])),
-                       xdg_app_ref_get_name (XDG_APP_REF(refs[j])),
-                       xdg_app_ref_get_arch (XDG_APP_REF(refs[j])),
-                       xdg_app_ref_get_version (XDG_APP_REF(refs[j])),
-                       xdg_app_ref_get_commit (XDG_APP_REF(refs[j])),
-                       xdg_app_remote_ref_get_remote_name (refs[j]));
+                       xdg_app_ref_get_kind (XDG_APP_REF(ref)),
+                       xdg_app_ref_get_name (XDG_APP_REF(ref)),
+                       xdg_app_ref_get_arch (XDG_APP_REF(ref)),
+                       xdg_app_ref_get_version (XDG_APP_REF(ref)),
+                       xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+                       xdg_app_remote_ref_get_remote_name (ref));
             }
         }
 
