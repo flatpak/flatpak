@@ -30,7 +30,7 @@ struct _XdgAppRefPrivate
 {
   char *name;
   char *arch;
-  char *version;
+  char *branch;
   char *commit;
   XdgAppRefKind kind;
 };
@@ -42,7 +42,7 @@ enum {
 
   PROP_NAME,
   PROP_ARCH,
-  PROP_VERSION,
+  PROP_BRANCH,
   PROP_COMMIT,
   PROP_KIND
 };
@@ -55,7 +55,7 @@ xdg_app_ref_finalize (GObject *object)
 
   g_free (priv->name);
   g_free (priv->arch);
-  g_free (priv->version);
+  g_free (priv->branch);
   g_free (priv->commit);
 
   G_OBJECT_CLASS (xdg_app_ref_parent_class)->finalize (object);
@@ -82,9 +82,9 @@ xdg_app_ref_set_property (GObject         *object,
       priv->arch = g_value_dup_string (value);
       break;
 
-    case PROP_VERSION:
-      g_clear_pointer (&priv->version, g_free);
-      priv->version = g_value_dup_string (value);
+    case PROP_BRANCH:
+      g_clear_pointer (&priv->branch, g_free);
+      priv->branch = g_value_dup_string (value);
       break;
 
     case PROP_COMMIT:
@@ -121,8 +121,8 @@ xdg_app_ref_get_property (GObject         *object,
       g_value_set_string (value, priv->arch);
       break;
 
-    case PROP_VERSION:
-      g_value_set_string (value, priv->version);
+    case PROP_BRANCH:
+      g_value_set_string (value, priv->branch);
       break;
 
     case PROP_COMMIT:
@@ -163,8 +163,8 @@ xdg_app_ref_class_init (XdgAppRefClass *klass)
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
-                                   PROP_VERSION,
-                                   g_param_spec_string ("version",
+                                   PROP_BRANCH,
+                                   g_param_spec_string ("branch",
                                                         "",
                                                         "",
                                                         NULL,
@@ -211,11 +211,11 @@ xdg_app_ref_get_arch (XdgAppRef *self)
 }
 
 const char *
-xdg_app_ref_get_version (XdgAppRef *self)
+xdg_app_ref_get_branch (XdgAppRef *self)
 {
   XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
 
-  return priv->version;
+  return priv->branch;
 }
 
 const char *

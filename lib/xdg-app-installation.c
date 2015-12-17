@@ -182,7 +182,7 @@ get_ref (XdgAppInstallation *self,
  * @kind: ...
  * @name: ...
  * @arch: ...
- * @version: ...
+ * @branch: ...
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -195,7 +195,7 @@ xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
                                         XdgAppRefKind kind,
                                         const char *name,
                                         const char *arch,
-                                        const char *version,
+                                        const char *branch,
                                         GCancellable *cancellable,
                                         GError **error)
 {
@@ -207,9 +207,9 @@ xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
     arch = xdg_app_get_arch ();
 
   if (kind == XDG_APP_REF_KIND_APP)
-    ref = xdg_app_build_app_ref (name, version, arch);
+    ref = xdg_app_build_app_ref (name, branch, arch);
   else
-    ref = xdg_app_build_runtime_ref (name, version, arch);
+    ref = xdg_app_build_runtime_ref (name, branch, arch);
 
 
   deploy = xdg_app_dir_get_if_deployed (priv->dir,
@@ -513,7 +513,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
                               XdgAppRefKind        kind,
                               const char          *name,
                               const char          *arch,
-                              const char          *version,
+                              const char          *branch,
                               XdgAppProgressCallback progress,
                               gpointer             progress_data,
                               GCancellable        *cancellable,
@@ -530,7 +530,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
   g_autoptr(GError) local_error = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
+  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
     return NULL;
 
@@ -539,7 +539,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
     {
       g_set_error (error,
                    XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
-                   "%s branch %s already installed", name, version ? version : "master");
+                   "%s branch %s already installed", name, branch ? branch : "master");
       goto out;
     }
 
@@ -570,7 +570,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
       if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
         g_set_error (error,
                      XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
-                     "%s branch %s already installed", name, version ? version : "master");
+                     "%s branch %s already installed", name, branch ? branch : "master");
       else
         g_propagate_error (error, g_steal_pointer (&local_error));
       goto out;
@@ -624,7 +624,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
                              XdgAppRefKind        kind,
                              const char          *name,
                              const char          *arch,
-                             const char          *version,
+                             const char          *branch,
                              XdgAppProgressCallback progress,
                              gpointer             progress_data,
                              GCancellable        *cancellable,
@@ -641,7 +641,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   gboolean was_updated;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
+  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
     return NULL;
 
@@ -650,7 +650,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
     {
       g_set_error (error,
                    XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
-                   "%s branch %s is not installed", name, version ? version : "master");
+                   "%s branch %s is not installed", name, branch ? branch : "master");
       return NULL;
     }
 
@@ -684,7 +684,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
     {
       g_set_error (error,
                    XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
-                   "%s branch %s is not installed", name, version ? version : "master");
+                   "%s branch %s is not installed", name, branch ? branch : "master");
       return NULL;
     }
 
@@ -732,7 +732,7 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
                                 XdgAppRefKind        kind,
                                 const char          *name,
                                 const char          *arch,
-                                const char          *version,
+                                const char          *branch,
                                 XdgAppProgressCallback  progress,
                                 gpointer             progress_data,
                                 GCancellable        *cancellable,
@@ -747,7 +747,7 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
   gboolean was_deployed = FALSE;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, version, arch, error);
+  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
     return FALSE;
 
@@ -760,7 +760,7 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
     {
       g_set_error (error,
                    XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
-                   "%s branch %s is not installed", name, version ? version : "master");
+                   "%s branch %s is not installed", name, branch ? branch : "master");
       return FALSE;
     }
 
@@ -803,7 +803,7 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
     {
       g_set_error (error,
                    XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
-                   "%s branch %s is not installed", name, version ? version : "master");
+                   "%s branch %s is not installed", name, branch ? branch : "master");
       return FALSE;
     }
 

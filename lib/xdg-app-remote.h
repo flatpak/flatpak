@@ -61,7 +61,7 @@ XDG_APP_EXTERN XdgAppRemoteRef  *xdg_app_remote_fetch_ref_sync (XdgAppRemote   *
                                                                 XdgAppRefKind   kind,
                                                                 const char     *name,
                                                                 const char     *arch,
-                                                                const char     *version,
+                                                                const char     *branch,
                                                                 GCancellable   *cancellable,
                                                                 GError        **error);
 

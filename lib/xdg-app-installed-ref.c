@@ -217,7 +217,7 @@ xdg_app_installed_ref_launch (XdgAppInstalledRef *self,
 
   app_ref =
     xdg_app_build_app_ref (xdg_app_ref_get_name (XDG_APP_REF (self)),
-                           xdg_app_ref_get_version (XDG_APP_REF (self)),
+                           xdg_app_ref_get_branch (XDG_APP_REF (self)),
                            xdg_app_ref_get_arch (XDG_APP_REF (self)));
 
 
@@ -261,7 +261,7 @@ xdg_app_installed_ref_new (const char *full_ref,
                       "kind", kind,
                       "name", parts[1],
                       "arch", parts[2],
-                      "version", parts[3],
+                      "branch", parts[3],
                       "commit", commit,
                       "origin", origin,
                       "current", current,

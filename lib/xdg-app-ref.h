@@ -55,7 +55,7 @@ typedef enum {
 
 XDG_APP_EXTERN const char *  xdg_app_ref_get_name    (XdgAppRef      *self);
 XDG_APP_EXTERN const char *  xdg_app_ref_get_arch    (XdgAppRef      *self);
-XDG_APP_EXTERN const char *  xdg_app_ref_get_version (XdgAppRef      *self);
+XDG_APP_EXTERN const char *  xdg_app_ref_get_branch (XdgAppRef      *self);
 XDG_APP_EXTERN const char *  xdg_app_ref_get_commit  (XdgAppRef      *self);
 XDG_APP_EXTERN XdgAppRefKind xdg_app_ref_get_kind    (XdgAppRef      *self);
 

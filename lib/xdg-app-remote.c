@@ -220,7 +220,7 @@ xdg_app_remote_list_refs_sync (XdgAppRemote *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Gets the current remote version of a ref in the #XdgAppRemote.
+ * Gets the current remote branch of a ref in the #XdgAppRemote.
  *
  * Returns: (transfer full): a #XdgAppRemoteRef instance, or %NULL
  */
@@ -229,7 +229,7 @@ xdg_app_remote_fetch_ref_sync (XdgAppRemote *self,
                                XdgAppRefKind kind,
                                const char   *name,
                                const char   *arch,
-                               const char   *version,
+                               const char   *branch,
                                GCancellable *cancellable,
                                GError **error)
 {
@@ -238,8 +238,8 @@ xdg_app_remote_fetch_ref_sync (XdgAppRemote *self,
   g_autofree char *ref = NULL;
   const char *checksum;
 
-  if (version == NULL)
-    version = "master";
+  if (branch == NULL)
+    branch = "master";
 
   if (!xdg_app_dir_list_remote_refs (priv->dir,
                                      priv->name,
@@ -250,11 +250,11 @@ xdg_app_remote_fetch_ref_sync (XdgAppRemote *self,
 
   if (kind == XDG_APP_REF_KIND_APP)
     ref = xdg_app_build_app_ref (name,
-                                 version,
+                                 branch,
                                  arch);
   else
     ref = xdg_app_build_runtime_ref (name,
-                                     version,
+                                     branch,
                                      arch);
 
   checksum = g_hash_table_lookup (ht, ref);

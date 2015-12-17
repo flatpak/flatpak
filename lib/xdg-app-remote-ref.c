@@ -171,7 +171,7 @@ xdg_app_remote_ref_new (const char *full_ref,
                       "kind", kind,
                       "name", parts[1],
                       "arch", parts[2],
-                      "version", parts[3],
+                      "branch", parts[3],
                       "commit", commit,
                       "remote-name", remote_name,
                       NULL);
