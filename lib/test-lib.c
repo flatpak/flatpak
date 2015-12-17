@@ -133,7 +133,7 @@ main (int argc, char *argv[])
   }
 
   g_print ("\n**** Getting installed gedit master\n");
-  app1 = xdg_app_installation_get_installed_ref (installation, 
+  app1 = xdg_app_installation_get_installed_ref (installation,
                                                  XDG_APP_REF_KIND_APP,
                                                  "org.gnome.gedit",
                                                  NULL, "master", NULL, NULL);
@@ -148,7 +148,14 @@ main (int argc, char *argv[])
                xdg_app_installed_ref_get_origin (app1),
                xdg_app_installed_ref_get_deploy_dir (app1),
                xdg_app_installed_ref_get_is_current (app1));
-      xdg_app_installed_ref_launch (app1, NULL, NULL);
+    }
+  if (!xdg_app_installation_launch (installation,
+                                    "org.gnome.gedit",
+                                    NULL, NULL, NULL,
+                                    NULL, &error))
+    {
+      g_print ("launch gedit error: %s\n", error->message);
+      g_clear_error (&error);
     }
 
   g_print ("\n**** Getting current installed gedit\n");

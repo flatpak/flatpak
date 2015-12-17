@@ -27,6 +27,7 @@
 #include "xdg-app-remote-private.h"
 #include "xdg-app-enum-types.h"
 #include "xdg-app-dir.h"
+#include "xdg-app-run.h"
 #include "xdg-app-error.h"
 
 typedef struct _XdgAppInstallationPrivate XdgAppInstallationPrivate;
@@ -135,6 +136,53 @@ xdg_app_installation_get_is_user (XdgAppInstallation *self)
   return xdg_app_dir_is_user (priv->dir);
 }
 
+/**
+ * xdg_app_installation_launch:
+ * @self: a #XdgAppInstallation
+ * @name: ...
+ * @arch: (nullable):...
+ * @branch: (nullable): ...
+ * @commit: (nullable): ...
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * ...
+ *
+ */
+gboolean
+xdg_app_installation_launch (XdgAppInstallation  *self,
+                             const char          *name,
+                             const char          *arch,
+                             const char          *branch,
+                             const char          *commit,
+                             GCancellable        *cancellable,
+                             GError             **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autofree char *app_ref = NULL;
+  g_autoptr(XdgAppDeploy) app_deploy = NULL;
+
+  app_ref =
+    xdg_app_build_app_ref (name, branch, arch);
+
+  app_deploy =
+    xdg_app_dir_load_deployed (priv->dir, app_ref,
+                               commit,
+                               cancellable, error);
+  if (app_deploy == NULL)
+    return FALSE;
+
+  return xdg_app_run_app (app_ref,
+                          app_deploy,
+                          NULL,
+                          NULL,
+                          XDG_APP_RUN_FLAG_BACKGROUND,
+                          NULL,
+                          NULL, 0,
+                          cancellable, error);
+}
+
+
 static XdgAppInstalledRef *
 get_ref (XdgAppInstallation *self,
          const char *full_ref,
@@ -172,7 +220,6 @@ get_ref (XdgAppInstallation *self,
                                     commit,
                                     origin,
                                     deploy_path,
-                                    priv->dir,
                                     is_current);
 }
 
@@ -181,8 +228,8 @@ get_ref (XdgAppInstallation *self,
  * @self: a #XdgAppInstallation
  * @kind: ...
  * @name: ...
- * @arch: ...
- * @branch: ...
+ * @arch: (nullable): ...
+ * @branch: (nullable): ...
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *

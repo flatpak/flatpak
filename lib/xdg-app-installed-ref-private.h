@@ -32,7 +32,6 @@ XdgAppInstalledRef *xdg_app_installed_ref_new (const char *full_ref,
                                                const char *commit,
                                                const char *origin,
                                                const char *deploy_dir,
-                                               XdgAppDir *dir,
                                                gboolean current);
 
 #endif /* __XDG_APP_INSTALLED_REF_PRIVATE_H__ */

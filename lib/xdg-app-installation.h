@@ -61,6 +61,13 @@ typedef void (*XdgAppProgressCallback)(const char *status,
                                        gpointer user_data);
 
 XDG_APP_EXTERN gboolean             xdg_app_installation_get_is_user               (XdgAppInstallation  *self);
+XDG_APP_EXTERN gboolean             xdg_app_installation_launch                    (XdgAppInstallation  *self,
+                                                                                    const char          *name,
+                                                                                    const char          *arch,
+                                                                                    const char          *branch,
+                                                                                    const char          *commit, 
+                                                                                   GCancellable        *cancellable,
+                                                                                    GError             **error);
 XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_installed_refs       (XdgAppInstallation  *self,
                                                                                     GCancellable        *cancellable,
                                                                                     GError             **error);

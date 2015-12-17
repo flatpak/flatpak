@@ -299,9 +299,6 @@ xdg_app_compose_ref (gboolean app,
                      const char *arch,
                      GError **error)
 {
-  if (branch == NULL)
-    branch = "master";
-
   if (!xdg_app_is_valid_name (name))
     {
       if (app)
@@ -311,7 +308,7 @@ xdg_app_compose_ref (gboolean app,
       return NULL;
     }
 
-  if (!xdg_app_is_valid_branch (branch))
+  if (branch && !xdg_app_is_valid_branch (branch))
     {
       xdg_app_fail (error, "'%s' is not a valid branch name", branch);
       return NULL;
@@ -339,6 +336,9 @@ xdg_app_build_runtime_ref (const char *runtime,
                            const char *branch,
                            const char *arch)
 {
+  if (branch == NULL)
+    branch = "master";
+
   if (arch == NULL)
     arch = xdg_app_get_arch ();
 
@@ -350,6 +350,9 @@ xdg_app_build_app_ref (const char *app,
                        const char *branch,
                        const char *arch)
 {
+  if (branch == NULL)
+    branch = "master";
+
   if (arch == NULL)
     arch = xdg_app_get_arch ();
 
