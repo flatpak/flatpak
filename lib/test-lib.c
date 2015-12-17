@@ -18,11 +18,9 @@ int
 main (int argc, char *argv[])
 {
   XdgAppInstallation *installation;
-  XdgAppInstalledRef **apps;
   XdgAppRemoteRef **refs;
   XdgAppInstalledRef *app1;
   XdgAppInstalledRef *app2;
-  XdgAppInstalledRef **runtimes;
   XdgAppRemoteRef *remote_ref;
   XdgAppRemote **remotes;
   GError *error = NULL;
@@ -65,42 +63,75 @@ main (int argc, char *argv[])
       return 0;
     }
 
-  g_print ("**** Listing all installed apps\n");
-  apps = xdg_app_installation_list_installed_refs (installation,
-                                                   XDG_APP_REF_KIND_APP,
-                                                   NULL, NULL);
+  g_print ("\n**** Listing all installed refs\n");
+  {
+    g_autoptr(GPtrArray) refs = NULL;
 
-  for (i = 0; apps[i] != NULL; i++)
-    {
-      g_print ("%d %s %s %s %s %s %s %d\n",
-               xdg_app_ref_get_kind (XDG_APP_REF(apps[i])),
-               xdg_app_ref_get_name (XDG_APP_REF(apps[i])),
-               xdg_app_ref_get_arch (XDG_APP_REF(apps[i])),
-               xdg_app_ref_get_version (XDG_APP_REF(apps[i])),
-               xdg_app_ref_get_commit (XDG_APP_REF(apps[i])),
-               xdg_app_installed_ref_get_origin (apps[i]),
-               xdg_app_installed_ref_get_deploy_dir (apps[i]),
-               xdg_app_installed_ref_get_current (apps[i]));
-      g_print ("metadata:\n%s\n", xdg_app_installed_ref_load_metadata (apps[i], NULL, NULL));
-    }
+    refs = xdg_app_installation_list_installed_refs (installation,
+                                                     NULL, NULL);
+
+    for (i = 0; i < refs->len; i++)
+      {
+        XdgAppInstalledRef *ref = g_ptr_array_index(refs,i);
+        g_print ("%d %s %s %s %s %s %s %d\n",
+                 xdg_app_ref_get_kind (XDG_APP_REF(ref)),
+                 xdg_app_ref_get_name (XDG_APP_REF(ref)),
+                 xdg_app_ref_get_arch (XDG_APP_REF(ref)),
+                 xdg_app_ref_get_version (XDG_APP_REF(ref)),
+                 xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+                 xdg_app_installed_ref_get_origin (ref),
+                 xdg_app_installed_ref_get_deploy_dir (ref),
+                 xdg_app_installed_ref_get_current (ref));
+      }
+  }
+
+  g_print ("**** Listing all installed apps\n");
+  {
+    g_autoptr(GPtrArray) apps = NULL;
+
+    apps = xdg_app_installation_list_installed_refs_by_kind (installation,
+                                                             XDG_APP_REF_KIND_APP,
+                                                             NULL, NULL);
+
+    for (i = 0; i < apps->len; i++)
+      {
+        XdgAppInstalledRef *app = g_ptr_array_index(apps,i);
+
+        g_print ("%d %s %s %s %s %s %s %d\n",
+                 xdg_app_ref_get_kind (XDG_APP_REF(app)),
+                 xdg_app_ref_get_name (XDG_APP_REF(app)),
+                 xdg_app_ref_get_arch (XDG_APP_REF(app)),
+                 xdg_app_ref_get_version (XDG_APP_REF(app)),
+                 xdg_app_ref_get_commit (XDG_APP_REF(app)),
+                 xdg_app_installed_ref_get_origin (app),
+                 xdg_app_installed_ref_get_deploy_dir (app),
+                 xdg_app_installed_ref_get_current (app));
+        g_print ("metadata:\n%s\n", xdg_app_installed_ref_load_metadata (app, NULL, NULL));
+      }
+  }
 
   g_print ("\n**** Listing all installed runtimes\n");
-  runtimes = xdg_app_installation_list_installed_refs (installation,
-                                                       XDG_APP_REF_KIND_RUNTIME,
-                                                       NULL, NULL);
+  {
+    g_autoptr(GPtrArray) runtimes = NULL;
 
-  for (i = 0; runtimes[i] != NULL; i++)
-    {
-      g_print ("%d %s %s %s %s %s %s %d\n",
-               xdg_app_ref_get_kind (XDG_APP_REF(runtimes[i])),
-               xdg_app_ref_get_name (XDG_APP_REF(runtimes[i])),
-               xdg_app_ref_get_arch (XDG_APP_REF(runtimes[i])),
-               xdg_app_ref_get_version (XDG_APP_REF(runtimes[i])),
-               xdg_app_ref_get_commit (XDG_APP_REF(runtimes[i])),
-               xdg_app_installed_ref_get_origin (runtimes[i]),
-               xdg_app_installed_ref_get_deploy_dir (runtimes[i]),
-               xdg_app_installed_ref_get_current (runtimes[i]));
-    }
+    runtimes = xdg_app_installation_list_installed_refs_by_kind (installation,
+                                                                 XDG_APP_REF_KIND_RUNTIME,
+                                                                 NULL, NULL);
+
+    for (i = 0; i < runtimes->len; i++)
+      {
+        XdgAppInstalledRef *runtime = g_ptr_array_index(runtimes,i);
+        g_print ("%d %s %s %s %s %s %s %d\n",
+                 xdg_app_ref_get_kind (XDG_APP_REF(runtime)),
+                 xdg_app_ref_get_name (XDG_APP_REF(runtime)),
+                 xdg_app_ref_get_arch (XDG_APP_REF(runtime)),
+                 xdg_app_ref_get_version (XDG_APP_REF(runtime)),
+                 xdg_app_ref_get_commit (XDG_APP_REF(runtime)),
+                 xdg_app_installed_ref_get_origin (runtime),
+                 xdg_app_installed_ref_get_deploy_dir (runtime),
+                 xdg_app_installed_ref_get_current (runtime));
+      }
+  }
 
   g_print ("\n**** Getting installed gedit master\n");
   app1 = xdg_app_installation_get_installed_ref (installation, 

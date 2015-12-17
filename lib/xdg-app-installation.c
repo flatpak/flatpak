@@ -263,20 +263,65 @@ xdg_app_installation_get_current_installed_app (XdgAppInstallation *self,
 /**
  * xdg_app_installation_list_installed_refs:
  * @self: a #XdgAppInstallation
- * @kind: the kind of installation
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
  * Lists the installed references.
  *
- * Returns: (transfer full) (array zero-terminated=1): an array of
+ * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
  *   #XdgAppInstalledRef instances
  */
-XdgAppInstalledRef **
+GPtrArray *
 xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
-                                          XdgAppRefKind kind,
                                           GCancellable *cancellable,
                                           GError **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_auto(GStrv) raw_refs_app = NULL;
+  g_auto(GStrv) raw_refs_runtime = NULL;
+  g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
+  int i;
+
+  if (!xdg_app_dir_list_refs (priv->dir,
+                              "app",
+                              &raw_refs_app,
+                              cancellable, error))
+    return NULL;
+
+  for (i = 0; raw_refs_app[i] != NULL; i++)
+    g_ptr_array_add (refs,
+                     get_ref (self, raw_refs_app[i], cancellable));
+
+  if (!xdg_app_dir_list_refs (priv->dir,
+                              "runtime",
+                              &raw_refs_runtime,
+                              cancellable, error))
+    return NULL;
+
+  for (i = 0; raw_refs_runtime[i] != NULL; i++)
+    g_ptr_array_add (refs,
+                     get_ref (self, raw_refs_runtime[i], cancellable));
+  
+  return g_steal_pointer (&refs);
+}
+
+/**
+ * xdg_app_installation_list_installed_refs_by_kind:
+ * @self: a #XdgAppInstallation
+ * @kind: the kind of installation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the installed references of a specific kind.
+ *
+ * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
+ *   #XdgAppInstalledRef instances
+ */
+GPtrArray *
+xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
+                                                  XdgAppRefKind kind,
+                                                  GCancellable *cancellable,
+                                                  GError **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_auto(GStrv) raw_refs = NULL;
@@ -293,8 +338,7 @@ xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
     g_ptr_array_add (refs,
                      get_ref (self, raw_refs[i], cancellable));
 
-  g_ptr_array_add (refs, NULL);
-  return (XdgAppInstalledRef **)g_ptr_array_free (g_steal_pointer (&refs), FALSE);
+  return g_steal_pointer (&refs);
 }
 
 /**
