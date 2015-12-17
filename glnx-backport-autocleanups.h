@@ -31,13 +31,6 @@ g_autoptr_cleanup_generic_gfree (void *p)
     g_free (*pp);
 }
 
-static inline void
-g_autoptr_cleanup_gstring_free (GString *string)
-{
-  if (string)
-    g_string_free (string, TRUE);
-}
-
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GAsyncQueue, g_async_queue_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GBookmarkFile, g_bookmark_file_free)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GBytes, g_bytes_unref)
@@ -55,7 +48,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GPtrArray, g_ptr_array_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GMainContext, g_main_context_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GMainLoop, g_main_loop_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GSource, g_source_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GString, g_autoptr_cleanup_gstring_free)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GMappedFile, g_mapped_file_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GMarkupParseContext, g_markup_parse_context_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(gchar, g_free)
@@ -113,5 +105,18 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GTlsDatabase, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GTlsInteraction, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GDBusConnection, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(GDBusMessage, g_object_unref)
+
+#endif
+
+#if !GLIB_CHECK_VERSION(2, 45, 8)
+
+static inline void
+g_autoptr_cleanup_gstring_free (GString *string)
+{
+  if (string)
+    g_string_free (string, TRUE);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(GString, g_autoptr_cleanup_gstring_free)
 
 #endif
