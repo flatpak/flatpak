@@ -233,3 +233,18 @@ xdg_app_ref_get_kind (XdgAppRef *self)
 
   return priv->kind;
 }
+
+char *
+xdg_app_ref_format_ref  (XdgAppRef *self)
+{
+  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+
+  if (priv->kind == XDG_APP_REF_KIND_APP)
+    return xdg_app_build_app_ref (priv->name,
+                                  priv->branch,
+                                  priv->arch);
+  else
+    return xdg_app_build_runtime_ref (priv->name,
+                                      priv->branch,
+                                      priv->arch);
+}
