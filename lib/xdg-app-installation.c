@@ -25,6 +25,7 @@
 #include "xdg-app-installation.h"
 #include "xdg-app-installed-ref-private.h"
 #include "xdg-app-remote-private.h"
+#include "xdg-app-remote-ref-private.h"
 #include "xdg-app-enum-types.h"
 #include "xdg-app-dir.h"
 #include "xdg-app-run.h"
@@ -855,4 +856,125 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
     }
 
   return TRUE;
+}
+
+
+GBytes *
+xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
+                                                 const char *remote_name,
+                                                 const char *commit,
+                                                 GCancellable *cancellable,
+                                                 GError **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autoptr(GBytes) bytes = NULL;
+
+  bytes = xdg_app_dir_fetch_metadata (priv->dir,
+                                      remote_name,
+                                      commit,
+                                      cancellable,
+                                      error);
+  if (bytes == NULL)
+    return NULL;
+
+  return g_steal_pointer (&bytes);
+}
+
+
+/**
+ * xdg_app_installation_list_remote_refs_sync:
+ * @self: a #XdgAppInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists all the refs in a remote.
+ *
+ * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
+ *   #XdgAppRemoteRef instances
+ */
+GPtrArray *
+xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
+                                            const char     *remote_name,
+                                            GCancellable *cancellable,
+                                            GError **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
+  g_autoptr(GHashTable) ht = NULL;
+  GHashTableIter iter;
+  gpointer key;
+  gpointer value;
+
+  if (!xdg_app_dir_list_remote_refs (priv->dir,
+                                     remote_name,
+                                     &ht,
+                                     cancellable,
+                                     error))
+    return NULL;
+
+  g_hash_table_iter_init (&iter, ht);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *refspec = key;
+      const char *checksum = value;
+
+      g_ptr_array_add (refs,
+                       xdg_app_remote_ref_new (refspec, checksum, remote_name));
+    }
+
+  return g_steal_pointer (&refs);
+}
+
+/**
+ * xdg_app_installation_fetch_remote_ref_sync:
+ * @self: a #XdgAppRemove
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Gets the current remote branch of a ref in the remote.
+ *
+ * Returns: (transfer full): a #XdgAppRemoteRef instance, or %NULL
+ */
+XdgAppRemoteRef *
+xdg_app_installation_fetch_remote_ref_sync (XdgAppInstallation *self,
+                                            const char   *remote_name,
+                                            XdgAppRefKind kind,
+                                            const char   *name,
+                                            const char   *arch,
+                                            const char   *branch,
+                                            GCancellable *cancellable,
+                                            GError **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autoptr(GHashTable) ht = NULL;
+  g_autofree char *ref = NULL;
+  const char *checksum;
+
+  if (branch == NULL)
+    branch = "master";
+
+  if (!xdg_app_dir_list_remote_refs (priv->dir,
+                                     remote_name,
+                                     &ht,
+                                     cancellable,
+                                     error))
+    return NULL;
+
+  if (kind == XDG_APP_REF_KIND_APP)
+    ref = xdg_app_build_app_ref (name,
+                                 branch,
+                                 arch);
+  else
+    ref = xdg_app_build_runtime_ref (name,
+                                     branch,
+                                     arch);
+
+  checksum = g_hash_table_lookup (ht, ref);
+
+  if (checksum != NULL)
+    return xdg_app_remote_ref_new (ref, checksum, remote_name);
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+               "Reference %s doesn't exist in remote\n", ref);
+  return NULL;
 }

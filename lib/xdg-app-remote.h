@@ -54,20 +54,4 @@ XDG_APP_EXTERN char *        xdg_app_remote_get_title      (XdgAppRemote *self);
 XDG_APP_EXTERN gboolean      xdg_app_remote_get_gpg_verify (XdgAppRemote *self);
 XDG_APP_EXTERN gboolean      xdg_app_remote_get_noenumerate (XdgAppRemote *self);
 
-XDG_APP_EXTERN GBytes        *xdg_app_remote_fetch_metadata_sync (XdgAppRemote *self,
-                                                                  const char *commit,
-                                                                  GCancellable *cancellable,
-                                                                  GError **error);
-
-XDG_APP_EXTERN GPtrArray    *xdg_app_remote_list_refs_sync (XdgAppRemote   *self,
-                                                            GCancellable   *cancellable,
-                                                            GError        **error);
-XDG_APP_EXTERN XdgAppRemoteRef  *xdg_app_remote_fetch_ref_sync (XdgAppRemote   *self,
-                                                                XdgAppRefKind   kind,
-                                                                const char     *name,
-                                                                const char     *arch,
-                                                                const char     *branch,
-                                                                GCancellable   *cancellable,
-                                                                GError        **error);
-
 #endif /* __XDG_APP_REMOTE_H__ */

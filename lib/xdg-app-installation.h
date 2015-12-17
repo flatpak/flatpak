@@ -122,4 +122,22 @@ XDG_APP_EXTERN gboolean             xdg_app_installation_uninstall              
                                                                                     GCancellable        *cancellable,
                                                                                     GError             **error);
 
+XDG_APP_EXTERN GBytes        *   xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation  *self,
+                                                                                  const char          *remote_name,
+                                                                                  const char          *commit,
+                                                                                  GCancellable        *cancellable,
+                                                                                  GError             **error);
+XDG_APP_EXTERN GPtrArray    *    xdg_app_installation_list_remote_refs_sync      (XdgAppInstallation  *self,
+                                                                                  const char          *remote_name,
+                                                                                  GCancellable        *cancellable,
+                                                                                  GError             **error);
+XDG_APP_EXTERN XdgAppRemoteRef  *xdg_app_installation_fetch_remote_ref_sync      (XdgAppInstallation  *self,
+                                                                                  const char          *remote_name,
+                                                                                  XdgAppRefKind        kind,
+                                                                                  const char          *name,
+                                                                                  const char          *arch,
+                                                                                  const char          *branch,
+                                                                                  GCancellable        *cancellable,
+                                                                                  GError             **error);
+
 #endif /* __XDG_APP_INSTALLATION_H__ */

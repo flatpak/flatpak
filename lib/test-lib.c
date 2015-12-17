@@ -189,7 +189,8 @@ main (int argc, char *argv[])
                xdg_app_remote_get_noenumerate (remotes[i]));
 
       g_print ("\n**** Listing remote refs on %s\n", xdg_app_remote_get_name (remotes[i]));
-      refs = xdg_app_remote_list_refs_sync (remotes[i], NULL, NULL);
+      refs = xdg_app_installation_list_remote_refs_sync (installation, xdg_app_remote_get_name (remotes[i]),
+                                                         NULL, NULL);
       if (refs)
         {
           for (j = 0; j < refs->len; j++)
@@ -207,10 +208,10 @@ main (int argc, char *argv[])
 
       g_print ("\n**** Getting remote gedit master on %s\n", xdg_app_remote_get_name (remotes[i]));
       error = NULL;
-      remote_ref = xdg_app_remote_fetch_ref_sync (remotes[i],
-                                                  XDG_APP_REF_KIND_APP,
-                                                  "org.gnome.gedit", NULL, "master",
-                                                  NULL, &error);
+      remote_ref = xdg_app_installation_fetch_remote_ref_sync (installation, xdg_app_remote_get_name (remotes[i]),
+                                                               XDG_APP_REF_KIND_APP,
+                                                               "org.gnome.gedit", NULL, "master",
+                                                               NULL, &error);
       if (remote_ref)
         {
           GBytes *metadata;
@@ -223,7 +224,8 @@ main (int argc, char *argv[])
                    xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)),
                    xdg_app_remote_ref_get_remote_name (remote_ref));
 
-          metadata = xdg_app_remote_fetch_metadata_sync (remotes[i], xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)), NULL, &error);
+          metadata = xdg_app_installation_fetch_remote_metadata_sync (installation, xdg_app_remote_get_name (remotes[i]),
+                                                                      xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)), NULL, &error);
           if (metadata)
             {
               g_print ("metadata: %s\n", (char *)g_bytes_get_data (metadata, NULL));
