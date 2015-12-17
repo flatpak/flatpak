@@ -80,7 +80,7 @@ main (int argc, char *argv[])
                  xdg_app_ref_get_commit (XDG_APP_REF(ref)),
                  xdg_app_installed_ref_get_origin (ref),
                  xdg_app_installed_ref_get_deploy_dir (ref),
-                 xdg_app_installed_ref_get_current (ref));
+                 xdg_app_installed_ref_get_is_current (ref));
       }
   }
 
@@ -104,7 +104,7 @@ main (int argc, char *argv[])
                  xdg_app_ref_get_commit (XDG_APP_REF(app)),
                  xdg_app_installed_ref_get_origin (app),
                  xdg_app_installed_ref_get_deploy_dir (app),
-                 xdg_app_installed_ref_get_current (app));
+                 xdg_app_installed_ref_get_is_current (app));
         g_print ("metadata:\n%s\n", xdg_app_installed_ref_load_metadata (app, NULL, NULL));
       }
   }
@@ -128,7 +128,7 @@ main (int argc, char *argv[])
                  xdg_app_ref_get_commit (XDG_APP_REF(runtime)),
                  xdg_app_installed_ref_get_origin (runtime),
                  xdg_app_installed_ref_get_deploy_dir (runtime),
-                 xdg_app_installed_ref_get_current (runtime));
+                 xdg_app_installed_ref_get_is_current (runtime));
       }
   }
 
@@ -147,12 +147,12 @@ main (int argc, char *argv[])
                xdg_app_ref_get_commit (XDG_APP_REF(app1)),
                xdg_app_installed_ref_get_origin (app1),
                xdg_app_installed_ref_get_deploy_dir (app1),
-               xdg_app_installed_ref_get_current (app1));
+               xdg_app_installed_ref_get_is_current (app1));
       xdg_app_installed_ref_launch (app1, NULL, NULL);
     }
 
   g_print ("\n**** Getting current installed gedit\n");
-  app2 = xdg_app_installation_get_current_installed_app (installation, 
+  app2 = xdg_app_installation_get_current_installed_app (installation,
                                                          "org.gnome.gedit",
                                                          NULL, NULL);
   if (app2)
@@ -164,7 +164,7 @@ main (int argc, char *argv[])
              xdg_app_ref_get_commit (XDG_APP_REF(app2)),
              xdg_app_installed_ref_get_origin (app2),
              xdg_app_installed_ref_get_deploy_dir (app2),
-             xdg_app_installed_ref_get_current (app2));
+             xdg_app_installed_ref_get_is_current (app2));
 
 
   g_print ("\n**** Listing remotes\n");

@@ -32,7 +32,7 @@ typedef struct _XdgAppInstalledRefPrivate XdgAppInstalledRefPrivate;
 
 struct _XdgAppInstalledRefPrivate
 {
-  gboolean current;
+  gboolean is_current;
   char *origin;
   char *deploy_dir;
 
@@ -44,7 +44,7 @@ G_DEFINE_TYPE_WITH_PRIVATE (XdgAppInstalledRef, xdg_app_installed_ref, XDG_APP_T
 enum {
   PROP_0,
 
-  PROP_CURRENT,
+  PROP_IS_CURRENT,
   PROP_ORIGIN,
   PROP_DEPLOY_DIR
 };
@@ -73,8 +73,8 @@ xdg_app_installed_ref_set_property (GObject         *object,
 
   switch (prop_id)
     {
-    case PROP_CURRENT:
-      priv->current = g_value_get_boolean (value);
+    case PROP_IS_CURRENT:
+      priv->is_current = g_value_get_boolean (value);
       break;
 
     case PROP_ORIGIN:
@@ -104,8 +104,8 @@ xdg_app_installed_ref_get_property (GObject         *object,
 
   switch (prop_id)
     {
-    case PROP_CURRENT:
-      g_value_set_boolean (value, priv->current);
+    case PROP_IS_CURRENT:
+      g_value_set_boolean (value, priv->is_current);
       break;
 
     case PROP_ORIGIN:
@@ -132,8 +132,8 @@ xdg_app_installed_ref_class_init (XdgAppInstalledRefClass *klass)
   object_class->finalize = xdg_app_installed_ref_finalize;
 
   g_object_class_install_property (object_class,
-                                   PROP_CURRENT,
-                                   g_param_spec_boolean ("current",
+                                   PROP_IS_CURRENT,
+                                   g_param_spec_boolean ("is-current",
                                                          "",
                                                          "",
                                                          FALSE,
@@ -176,11 +176,11 @@ xdg_app_installed_ref_get_deploy_dir (XdgAppInstalledRef *self)
 }
 
 gboolean
-xdg_app_installed_ref_get_current (XdgAppInstalledRef *self)
+xdg_app_installed_ref_get_is_current (XdgAppInstalledRef *self)
 {
   XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
 
-  return priv->current;
+  return priv->is_current;
 }
 
 char *
@@ -245,7 +245,7 @@ xdg_app_installed_ref_new (const char *full_ref,
                            const char *origin,
                            const char *deploy_dir,
                            XdgAppDir *dir,
-                           gboolean current)
+                           gboolean is_current)
 {
   XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
   XdgAppInstalledRefPrivate *priv;
@@ -264,7 +264,7 @@ xdg_app_installed_ref_new (const char *full_ref,
                       "branch", parts[3],
                       "commit", commit,
                       "origin", origin,
-                      "current", current,
+                      "is-current", is_current,
                       "deploy-dir", deploy_dir,
                       NULL);
 
