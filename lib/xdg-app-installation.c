@@ -397,10 +397,10 @@ xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
  *
  * Lists the remotes.
  *
- * Returns: (transfer full) (array zero-terminated=1): an array of
+ * Returns: (transfer container) (element-type XdgAppRemote): an GPtrArray of
  *   #XdgAppRemote instances
  */
-XdgAppRemote **
+GPtrArray *
 xdg_app_installation_list_remotes (XdgAppInstallation  *self,
                                    GCancellable        *cancellable,
                                    GError             **error)
@@ -418,8 +418,7 @@ xdg_app_installation_list_remotes (XdgAppInstallation  *self,
     g_ptr_array_add (remotes,
                      xdg_app_remote_new (priv->dir, remote_names[i]));
 
-  g_ptr_array_add (remotes, NULL);
-  return (XdgAppRemote **)g_ptr_array_free (g_steal_pointer (&remotes), FALSE);
+  return g_steal_pointer (&remotes);
 }
 
 char *

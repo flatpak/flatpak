@@ -21,7 +21,7 @@ main (int argc, char *argv[])
   XdgAppInstalledRef *app1;
   XdgAppInstalledRef *app2;
   XdgAppRemoteRef *remote_ref;
-  XdgAppRemote **remotes;
+  g_autoptr(GPtrArray) remotes = NULL;
   GError *error = NULL;
   int i, j;
 
@@ -178,18 +178,19 @@ main (int argc, char *argv[])
   remotes = xdg_app_installation_list_remotes (installation,
                                                NULL, NULL);
 
-  for (i = 0; remotes[i] != NULL; i++)
+  for (i = 0; i < remotes->len; i++)
     {
+      XdgAppRemote *remote = g_ptr_array_index(remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
       g_print ("\nRemote: %s %s %s %d %d\n",
-               xdg_app_remote_get_name (remotes[i]),
-               xdg_app_remote_get_url (remotes[i]),
-               xdg_app_remote_get_title (remotes[i]),
-               xdg_app_remote_get_gpg_verify (remotes[i]),
-               xdg_app_remote_get_noenumerate (remotes[i]));
+               xdg_app_remote_get_name (remote),
+               xdg_app_remote_get_url (remote),
+               xdg_app_remote_get_title (remote),
+               xdg_app_remote_get_gpg_verify (remote),
+               xdg_app_remote_get_noenumerate (remote));
 
-      g_print ("\n**** Listing remote refs on %s\n", xdg_app_remote_get_name (remotes[i]));
-      refs = xdg_app_installation_list_remote_refs_sync (installation, xdg_app_remote_get_name (remotes[i]),
+      g_print ("\n**** Listing remote refs on %s\n", xdg_app_remote_get_name (remote));
+      refs = xdg_app_installation_list_remote_refs_sync (installation, xdg_app_remote_get_name (remote),
                                                          NULL, NULL);
       if (refs)
         {
@@ -206,9 +207,9 @@ main (int argc, char *argv[])
             }
         }
 
-      g_print ("\n**** Getting remote gedit master on %s\n", xdg_app_remote_get_name (remotes[i]));
+      g_print ("\n**** Getting remote gedit master on %s\n", xdg_app_remote_get_name (remote));
       error = NULL;
-      remote_ref = xdg_app_installation_fetch_remote_ref_sync (installation, xdg_app_remote_get_name (remotes[i]),
+      remote_ref = xdg_app_installation_fetch_remote_ref_sync (installation, xdg_app_remote_get_name (remote),
                                                                XDG_APP_REF_KIND_APP,
                                                                "org.gnome.gedit", NULL, "master",
                                                                NULL, &error);
@@ -224,7 +225,7 @@ main (int argc, char *argv[])
                    xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)),
                    xdg_app_remote_ref_get_remote_name (remote_ref));
 
-          metadata = xdg_app_installation_fetch_remote_metadata_sync (installation, xdg_app_remote_get_name (remotes[i]),
+          metadata = xdg_app_installation_fetch_remote_metadata_sync (installation, xdg_app_remote_get_name (remote),
                                                                       xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)), NULL, &error);
           if (metadata)
             {
