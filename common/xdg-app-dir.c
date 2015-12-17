@@ -1604,7 +1604,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
     {
       g_set_error (error, XDG_APP_DIR_ERROR,
                    XDG_APP_DIR_ERROR_ALREADY_DEPLOYED,
-                   "%s version %s already deployed", ref, checksum);
+                   "%s branch %s already deployed", ref, checksum);
       goto out;
     }
 
@@ -1882,7 +1882,7 @@ xdg_app_dir_undeploy (XdgAppDir *self,
     {
       g_set_error (error, XDG_APP_DIR_ERROR,
                    XDG_APP_DIR_ERROR_ALREADY_UNDEPLOYED,
-                   "%s version %s already undeployed", ref, checksum);
+                   "%s branch %s already undeployed", ref, checksum);
       goto out;
     }
 

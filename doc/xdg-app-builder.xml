@@ -103,8 +103,8 @@
                     <listitem><para>A string defining the application id.</para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>version</option></term>
-                    <listitem><para>The version of the application, defaults to master.</para></listitem>
+                    <term><option>branch</option></term>
+                    <listitem><para>The branch of the application, defaults to master.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>runtime</option></term>

@@ -38,7 +38,7 @@ struct BuilderManifest {
   GObject parent;
 
   char *app_id;
-  char *version;
+  char *branch;
   char *runtime;
   char *runtime_version;
   char *sdk;
@@ -69,7 +69,7 @@ G_DEFINE_TYPE_WITH_CODE (BuilderManifest, builder_manifest, G_TYPE_OBJECT,
 enum {
   PROP_0,
   PROP_APP_ID,
-  PROP_VERSION,
+  PROP_BRANCH,
   PROP_RUNTIME,
   PROP_RUNTIME_VERSION,
   PROP_SDK,
@@ -95,7 +95,7 @@ builder_manifest_finalize (GObject *object)
   BuilderManifest *self = (BuilderManifest *)object;
 
   g_free (self->app_id);
-  g_free (self->version);
+  g_free (self->branch);
   g_free (self->runtime);
   g_free (self->runtime_version);
   g_free (self->sdk);
@@ -127,8 +127,8 @@ builder_manifest_get_property (GObject    *object,
       g_value_set_string (value, self->app_id);
       break;
 
-    case PROP_VERSION:
-      g_value_set_string (value, self->version);
+    case PROP_BRANCH:
+      g_value_set_string (value, self->branch);
       break;
 
     case PROP_RUNTIME:
@@ -216,9 +216,9 @@ builder_manifest_set_property (GObject       *object,
       self->app_id = g_value_dup_string (value);
       break;
 
-    case PROP_VERSION:
-      g_free (self->version);
-      self->version = g_value_dup_string (value);
+    case PROP_BRANCH:
+      g_free (self->branch);
+      self->branch = g_value_dup_string (value);
       break;
 
     case PROP_RUNTIME:
@@ -323,8 +323,8 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
-                                   PROP_VERSION,
-                                   g_param_spec_string ("version",
+                                   PROP_BRANCH,
+                                   g_param_spec_string ("branch",
                                                         "",
                                                         "",
                                                         NULL,

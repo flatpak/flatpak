@@ -313,7 +313,7 @@ xdg_app_compose_ref (gboolean app,
 
   if (!xdg_app_is_valid_branch (branch))
     {
-      xdg_app_fail (error, "'%s' is not a valid version name", branch);
+      xdg_app_fail (error, "'%s' is not a valid branch name", branch);
       return NULL;
     }
 
