@@ -62,6 +62,35 @@ main (int argc, char *argv[])
       return 0;
     }
 
+  g_print ("\n**** Checking for updates\n");
+  {
+    g_autoptr(GPtrArray) updates =
+      xdg_app_installation_list_installed_refs_for_update (installation,
+                                                           NULL, &error);
+
+    if (updates == NULL)
+      {
+        g_print ("check for updates error: %s\n", error->message);
+        g_clear_error (&error);
+      }
+    else
+      {
+        for (i = 0; i < updates->len; i++)
+          {
+            XdgAppInstalledRef *ref = g_ptr_array_index(updates,i);
+            g_print ("%d %s %s %s %s %s %s %d\n",
+                     xdg_app_ref_get_kind (XDG_APP_REF(ref)),
+                     xdg_app_ref_get_name (XDG_APP_REF(ref)),
+                     xdg_app_ref_get_arch (XDG_APP_REF(ref)),
+                     xdg_app_ref_get_branch (XDG_APP_REF(ref)),
+                     xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+                     xdg_app_installed_ref_get_origin (ref),
+                     xdg_app_installed_ref_get_deploy_dir (ref),
+                     xdg_app_installed_ref_get_is_current (ref));
+          }
+      }
+  }
+
   g_print ("\n**** Listing all installed refs\n");
   {
     g_autoptr(GPtrArray) refs = NULL;

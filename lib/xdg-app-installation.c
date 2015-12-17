@@ -20,6 +20,8 @@
 
 #include "config.h"
 
+#include <string.h>
+
 #include "libgsystem.h"
 #include "xdg-app-utils.h"
 #include "xdg-app-installation.h"
@@ -388,6 +390,88 @@ xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
 
   return g_steal_pointer (&refs);
 }
+
+/**
+ * xdg_app_installation_list_installed_refs_for_update:
+ * @self: a #XdgAppInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the installed references that has a remote update
+ *
+ * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
+ *   #XdgAppInstalledRef instances
+ */
+GPtrArray *
+xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
+                                                     GCancellable *cancellable,
+                                                     GError **error)
+{
+  g_autoptr(GPtrArray) updates = NULL;
+  g_autoptr(GPtrArray) installed = NULL;
+  g_autoptr(GPtrArray) remotes = NULL;
+  g_autoptr(GHashTable) ht = NULL;
+  int i, j;
+
+  ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  remotes = xdg_app_installation_list_remotes (self, cancellable, error);
+  if (remotes == NULL)
+    return NULL;
+
+  for (i = 0; i < remotes->len; i++)
+    {
+      XdgAppRemote *remote = g_ptr_array_index (remotes, i);
+      g_autoptr(GPtrArray) refs = NULL;
+      g_autoptr(GError) local_error = NULL;
+
+      /* We ignore errors here. we don't want one remote to fail us */
+      refs = xdg_app_installation_list_remote_refs_sync (self,
+                                                         xdg_app_remote_get_name (remote),
+                                                         cancellable, &local_error);
+      if (refs != NULL)
+        {
+          for (j = 0; j < refs->len; j++)
+            {
+              XdgAppRemoteRef *remote_ref = g_ptr_array_index (refs, j);
+              g_autofree char *full_ref = xdg_app_ref_format_ref (XDG_APP_REF (remote_ref));
+              g_autofree char *key = g_strdup_printf ("%s:%s", xdg_app_remote_get_name (remote),
+                                                      full_ref);
+
+              g_hash_table_insert (ht, g_steal_pointer (&key),
+                                   g_strdup (xdg_app_ref_get_commit (XDG_APP_REF (remote_ref))));
+            }
+        }
+      else
+        {
+          g_debug ("Update: Failed to read remote %s: %s\n",
+                   xdg_app_remote_get_name (remote),
+                   local_error->message);
+        }
+    }
+
+  installed = xdg_app_installation_list_installed_refs (self, cancellable, error);
+  if (installed == NULL)
+    return NULL;
+
+  updates = g_ptr_array_new_with_free_func (g_object_unref);
+
+  for (i = 0; i < installed->len; i++)
+    {
+      XdgAppInstalledRef *installed_ref = g_ptr_array_index (installed, i);
+      g_autofree char *full_ref = xdg_app_ref_format_ref (XDG_APP_REF (installed_ref));
+      g_autofree char *key = g_strdup_printf ("%s:%s", xdg_app_installed_ref_get_origin (installed_ref),
+                                              full_ref);
+      const char *remote_ref = g_hash_table_lookup (ht, key);
+
+      if (remote_ref != NULL &&
+          strcmp (remote_ref,
+                  xdg_app_ref_get_commit (XDG_APP_REF (installed_ref))) != 0)
+        g_ptr_array_add (updates, g_object_ref (installed_ref));
+    }
+
+  return g_steal_pointer (&updates);
+}
+
 
 /**
  * xdg_app_installation_list_remotes:

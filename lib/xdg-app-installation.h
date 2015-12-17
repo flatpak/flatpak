@@ -75,6 +75,9 @@ XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_installed_refs_by_
                                                                                     XdgAppRefKind        kind,
                                                                                     GCancellable        *cancellable,
                                                                                     GError             **error);
+XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation  *self,
+                                                                                         GCancellable        *cancellable,
+                                                                                         GError             **error);
 XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_get_installed_ref         (XdgAppInstallation  *self,
                                                                                     XdgAppRefKind        kind,
                                                                                     const char          *name,
