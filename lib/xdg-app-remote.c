@@ -171,6 +171,27 @@ xdg_app_remote_get_gpg_verify (XdgAppRemote *self)
   return FALSE;
 }
 
+GBytes *
+xdg_app_remote_fetch_metadata_sync (XdgAppRemote *self,
+                                    const char *commit,
+                                    GCancellable *cancellable,
+                                    GError **error)
+{
+  XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
+  g_autoptr(GBytes) bytes = NULL;
+
+  bytes = xdg_app_dir_fetch_metadata (priv->dir,
+                                      priv->name,
+                                      commit,
+                                      cancellable,
+                                      error);
+  if (bytes == NULL)
+    return NULL;
+
+  return g_steal_pointer (&bytes);
+}
+
+
 /**
  * xdg_app_remote_list_refs_sync:
  * @self: a #XdgAppRemove
@@ -208,7 +229,7 @@ xdg_app_remote_list_refs_sync (XdgAppRemote *self,
       const char *checksum = value;
 
       g_ptr_array_add (refs,
-                       xdg_app_remote_ref_new (refspec, checksum, priv->name, priv->dir));
+                       xdg_app_remote_ref_new (refspec, checksum, priv->name));
     }
 
   return g_steal_pointer (&refs);
@@ -260,7 +281,7 @@ xdg_app_remote_fetch_ref_sync (XdgAppRemote *self,
   checksum = g_hash_table_lookup (ht, ref);
 
   if (checksum != NULL)
-    return xdg_app_remote_ref_new (ref, checksum, priv->name, priv->dir);
+    return xdg_app_remote_ref_new (ref, checksum, priv->name);
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                "Reference %s doesn't exist in remote\n", ref);

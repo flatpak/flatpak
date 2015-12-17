@@ -46,11 +46,6 @@ typedef struct {
 
 XDG_APP_EXTERN const char * xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self);
 
-XDG_APP_EXTERN GBytes *xdg_app_remote_ref_fetch_metadata_sync (XdgAppRemoteRef *self,
-                                                               GCancellable *cancellable,
-                                                               GError **error);
-
-
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppRemoteRef, g_object_unref)
 #endif

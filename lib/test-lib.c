@@ -216,7 +216,7 @@ main (int argc, char *argv[])
                    xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)),
                    xdg_app_remote_ref_get_remote_name (remote_ref));
 
-          metadata = xdg_app_remote_ref_fetch_metadata_sync (remote_ref, NULL, &error);
+          metadata = xdg_app_remote_fetch_metadata_sync (remotes[i], xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)), NULL, &error);
           if (metadata)
             {
               g_print ("metadata: %s\n", (char *)g_bytes_get_data (metadata, NULL));

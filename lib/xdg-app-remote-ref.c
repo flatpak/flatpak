@@ -32,7 +32,6 @@ typedef struct _XdgAppRemoteRefPrivate XdgAppRemoteRefPrivate;
 struct _XdgAppRemoteRefPrivate
 {
   char *remote_name;
-  XdgAppDir *dir;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (XdgAppRemoteRef, xdg_app_remote_ref, XDG_APP_TYPE_REF)
@@ -50,7 +49,6 @@ xdg_app_remote_ref_finalize (GObject *object)
   XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
 
   g_free (priv->remote_name);
-  g_object_unref (priv->dir);
 
   G_OBJECT_CLASS (xdg_app_remote_ref_parent_class)->finalize (object);
 }
@@ -130,37 +128,14 @@ xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self)
 }
 
 
-GBytes *
-xdg_app_remote_ref_fetch_metadata_sync (XdgAppRemoteRef *self,
-                                        GCancellable *cancellable,
-                                        GError **error)
-{
-  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
-  const char *commit;
-  g_autoptr(GBytes) bytes = NULL;
-
-  commit = xdg_app_ref_get_commit (XDG_APP_REF (self));
-  bytes = xdg_app_dir_fetch_metadata (priv->dir,
-                                      priv->remote_name,
-                                      commit,
-                                      cancellable,
-                                      error);
-  if (bytes == NULL)
-    return NULL;
-
-  return g_steal_pointer (&bytes);
-}
-
 XdgAppRemoteRef *
 xdg_app_remote_ref_new (const char *full_ref,
                         const char *commit,
-                        const char *remote_name,
-                        XdgAppDir *dir)
+                        const char *remote_name)
 {
   XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
   g_auto(GStrv) parts = NULL;
   XdgAppRemoteRef *ref;
-  XdgAppRemoteRefPrivate *priv;
 
   parts = g_strsplit (full_ref, "/", -1);
 
@@ -175,9 +150,6 @@ xdg_app_remote_ref_new (const char *full_ref,
                       "commit", commit,
                       "remote-name", remote_name,
                       NULL);
-
-  priv = xdg_app_remote_ref_get_instance_private (ref);
-  priv->dir = g_object_ref (dir);
 
   return ref;
 }
