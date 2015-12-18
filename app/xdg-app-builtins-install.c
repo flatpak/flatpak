@@ -36,9 +36,13 @@
 
 static char *opt_arch;
 static char **opt_gpg_file;
+static gboolean opt_no_pull;
+static gboolean opt_no_deploy;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to install for", "ARCH" },
+  { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, "Don't pull, only install from local cache", },
+  { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, "Don't deploy, only download to local cache", },
   { NULL }
 };
 
@@ -135,25 +139,31 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
       goto out;
     }
 
-  if (!xdg_app_dir_pull (dir, repository, ref, NULL,
-                         cancellable, error))
-    goto out;
+  if (!opt_no_pull)
+    {
+      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
+                             cancellable, error))
+        goto out;
+    }
 
-  if (!xdg_app_dir_lock (dir, &lock,
-                         cancellable, error))
-    goto out;
+  if (!opt_no_deploy)
+    {
+      if (!xdg_app_dir_lock (dir, &lock,
+                             cancellable, error))
+        goto out;
 
-  if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
-    goto out;
-  created_deploy_base = TRUE;
+      if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
+        goto out;
+      created_deploy_base = TRUE;
 
-  if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
-    goto out;
+      if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
+        goto out;
 
-  if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
-    goto out;
+      if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
+        goto out;
 
-  glnx_release_lock_file (&lock);
+      glnx_release_lock_file (&lock);
+    }
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
@@ -207,31 +217,37 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
       goto out;
     }
 
-  if (!xdg_app_dir_pull (dir, repository, ref, NULL,
-                         cancellable, error))
-    goto out;
+  if (!opt_no_pull)
+    {
+      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
+                             cancellable, error))
+        goto out;
+    }
 
-  if (!xdg_app_dir_lock (dir, &lock,
-                         cancellable, error))
-    goto out;
+  if (!opt_no_deploy)
+    {
+      if (!xdg_app_dir_lock (dir, &lock,
+                             cancellable, error))
+        goto out;
 
-  if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
-    goto out;
-  created_deploy_base = TRUE;
+      if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
+        goto out;
+      created_deploy_base = TRUE;
 
-  if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
-    goto out;
+      if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
+        goto out;
 
-  if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
-    goto out;
+      if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
+        goto out;
 
-  if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
-    goto out;
+      if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
+        goto out;
 
-  if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
-    goto out;
+      if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
+        goto out;
 
-  glnx_release_lock_file (&lock);
+      glnx_release_lock_file (&lock);
+    }
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 

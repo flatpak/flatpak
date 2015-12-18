@@ -34,11 +34,15 @@
 static char *opt_arch;
 static char *opt_commit;
 static gboolean opt_force_remove;
+static gboolean opt_no_pull;
+static gboolean opt_no_deploy;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to update for", "ARCH" },
   { "commit", 0, 0, G_OPTION_ARG_STRING, &opt_commit, "Commit to deploy", "COMMIT" },
   { "force-remove", 0, 0, G_OPTION_ARG_NONE, &opt_force_remove, "Remove old files even if running", NULL },
+  { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, "Don't pull, only update from local cache", },
+  { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, "Don't deploy, only download to local cache", },
   { NULL }
 };
 
@@ -74,18 +78,24 @@ xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable
   if (repository == NULL)
     return FALSE;
 
-  if (!xdg_app_dir_pull (dir, repository, ref, NULL,
-                         cancellable, error))
-    return FALSE;
+  if (!opt_no_pull)
+    {
+      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
+                             cancellable, error))
+        return FALSE;
+    }
 
-  if (!xdg_app_dir_lock (dir, &lock,
-                         cancellable, error))
-    return FALSE;
+  if (!opt_no_deploy)
+    {
+      if (!xdg_app_dir_lock (dir, &lock,
+                             cancellable, error))
+        return FALSE;
 
-  if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
-    return FALSE;
+      if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
+        return FALSE;
 
-  glnx_release_lock_file (&lock);
+      glnx_release_lock_file (&lock);
+    }
 
   if (was_updated)
     {
@@ -130,16 +140,22 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   if (repository == NULL)
     return FALSE;
 
-  if (!xdg_app_dir_pull (dir, repository, ref, NULL,
-                         cancellable, error))
-    return FALSE;
+  if (!opt_no_pull)
+    {
+      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
+                             cancellable, error))
+        return FALSE;
+    }
 
-  if (!xdg_app_dir_lock (dir, &lock,
-                         cancellable, error))
-    return FALSE;
+  if (!opt_no_deploy)
+    {
+      if (!xdg_app_dir_lock (dir, &lock,
+                             cancellable, error))
+        return FALSE;
 
-  if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
-    return FALSE;
+      if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
+        return FALSE;
+    }
 
   if (was_updated)
     {

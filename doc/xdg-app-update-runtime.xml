@@ -116,6 +116,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-deploy</option></term>
+
+                <listitem><para>
+                    Download the latest version, but don't deploy it.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-pull</option></term>
+
+                <listitem><para>
+                    Don't download the latest version, deploy it whatever is locally availiable.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

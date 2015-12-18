@@ -55,24 +55,32 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
       g_autoptr(XdgAppDir) dir = NULL;
 
       dir = xdg_app_dir_get (TRUE);
-      if (!xdg_app_dir_list_refs (dir, kind, &user, cancellable, error))
-        return FALSE;
+
+      if (xdg_app_dir_ensure_repo (dir, cancellable, NULL))
+        {
+          if (!xdg_app_dir_list_refs (dir, kind, &user, cancellable, error))
+            return FALSE;
+        }
     }
-  else
-    user = g_new0 (char *, 1);
 
   if (print_system)
     {
       g_autoptr(XdgAppDir) dir = NULL;
 
       dir = xdg_app_dir_get (FALSE);
-      if (!xdg_app_dir_list_refs (dir, kind, &system, cancellable, error))
-        return FALSE;
+      if (xdg_app_dir_ensure_repo (dir, cancellable, NULL))
+        {
+          if (!xdg_app_dir_list_refs (dir, kind, &system, cancellable, error))
+            return FALSE;
+        }
     }
-  else
-    system = g_new0 (char *, 1);
 
   XdgAppTablePrinter *printer = xdg_app_table_printer_new ();
+
+  if (user == NULL)
+    user = g_new0 (char *, 1);
+  if (system == NULL)
+    system = g_new0 (char *, 1);
 
   for (s = 0, u = 0; system[s] != NULL || user[u] != NULL; )
     {
@@ -81,6 +89,7 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
       g_autofree char *repo = NULL;
       gboolean is_user;
       g_autoptr(XdgAppDir) dir = NULL;
+      g_autoptr(GError) error = NULL;
 
       if (system[s] == NULL)
         is_user = TRUE;
@@ -105,12 +114,31 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
       if (opt_show_details)
         {
           g_autofree char *active = xdg_app_dir_read_active (dir, ref, NULL);
+          g_autofree char *latest = NULL;
+
+          if (ostree_repo_resolve_rev (xdg_app_dir_get_repo (dir),
+                                       ref,
+                                       FALSE,
+                                       &latest,
+                                       NULL))
+            {
+              if (strcmp (active, latest) == 0)
+                {
+                  g_free (latest);
+                  latest = g_strdup ("-");
+                }
+              else
+                latest[MIN(strlen(latest), 12)] = 0;
+            }
+          else
+            latest = g_strdup ("?");
 
           xdg_app_table_printer_add_column (printer, partial_ref);
           xdg_app_table_printer_add_column (printer, repo);
 
           active[MIN(strlen(active), 12)] = 0;
           xdg_app_table_printer_add_column (printer, active);
+          xdg_app_table_printer_add_column (printer, latest);
 
           xdg_app_table_printer_add_column (printer, ""); /* Options */
 
