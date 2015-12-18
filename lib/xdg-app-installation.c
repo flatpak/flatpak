@@ -104,31 +104,42 @@ xdg_app_installation_init (XdgAppInstallation *self)
 }
 
 static XdgAppInstallation *
-xdg_app_installation_new_for_dir (XdgAppDir *dir)
+xdg_app_installation_new_for_dir (XdgAppDir *dir,
+                                  GError **error)
 {
-  XdgAppInstallation *self = g_object_new (XDG_APP_TYPE_INSTALLATION, NULL);
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  XdgAppInstallation *self;
+  XdgAppInstallationPrivate *priv;
+
+  if (!xdg_app_dir_ensure_repo (dir, NULL, error))
+    {
+      g_object_unref (dir);
+      return NULL;
+    }
+
+  self = g_object_new (XDG_APP_TYPE_INSTALLATION, NULL);
+  priv = xdg_app_installation_get_instance_private (self);
 
   priv->dir = dir;
+
   return self;
 }
 
 XdgAppInstallation *
-xdg_app_installation_new_system (void)
+xdg_app_installation_new_system (GError **error)
 {
-  return xdg_app_installation_new_for_dir (xdg_app_dir_get_system ());
+  return xdg_app_installation_new_for_dir (xdg_app_dir_get_system (), error);
 }
 
 XdgAppInstallation *
-xdg_app_installation_new_user (void)
+xdg_app_installation_new_user (GError **error)
 {
-  return xdg_app_installation_new_for_dir (xdg_app_dir_get_user ());
+  return xdg_app_installation_new_for_dir (xdg_app_dir_get_user (), error);
 }
 
 XdgAppInstallation *
-xdg_app_installation_new_for_path (GFile *path, gboolean user)
+xdg_app_installation_new_for_path (GFile *path, gboolean user, GError **error)
 {
-  return xdg_app_installation_new_for_dir (xdg_app_dir_new (path, user));
+  return xdg_app_installation_new_for_dir (xdg_app_dir_new (path, user), error);
 }
 
 gboolean

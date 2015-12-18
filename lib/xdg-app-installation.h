@@ -56,10 +56,11 @@ typedef enum {
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppInstallation, g_object_unref)
 #endif
 
-XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_system (void);
-XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_user (void);
+XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_system (GError **error);
+XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_user (GError **error);
 XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_for_path (GFile *path,
-                                                                      gboolean user);
+                                                                      gboolean user,
+                                                                      GError **error);
 
 typedef void (*XdgAppProgressCallback)(const char *status,
                                        guint progress,
