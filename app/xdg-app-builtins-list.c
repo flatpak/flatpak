@@ -108,8 +108,9 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
           xdg_app_table_printer_add_column (printer, partial_ref);
           xdg_app_table_printer_add_column (printer, repo);
-          xdg_app_table_printer_add_column (printer, active);
 
+          active[MIN(strlen(active), 12)] = 0;
+          xdg_app_table_printer_add_column (printer, active);
 
           xdg_app_table_printer_add_column (printer, ""); /* Options */
 
