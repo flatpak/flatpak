@@ -144,7 +144,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
         }
     }
 
-  g_ptr_array_sort (names, (GCompareFunc)strcmp);
+  g_ptr_array_sort (names, (GCompareFunc)xdg_app_strcmp0_ptr);
 
   for (i = 0; i < names->len; i++)
     g_print ("%s\n", (char *)g_ptr_array_index (names, i));

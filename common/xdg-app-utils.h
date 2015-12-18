@@ -32,6 +32,9 @@
 
 gboolean xdg_app_fail (GError **error, const char *format, ...);
 
+gint xdg_app_strcmp0_ptr (gconstpointer  a,
+                          gconstpointer  b);
+
 const char * xdg_app_get_arch (void);
 
 gboolean xdg_app_has_name_prefix (const char *string,

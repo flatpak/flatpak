@@ -696,12 +696,6 @@ xdg_app_dir_make_current_ref (XdgAppDir *self,
   return ret;
 }
 
-static int
-strvcmp(char **a, char **b)
-{
-  return strcmp (*a, *b);
-}
-
 gboolean
 xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
                                 const char     *kind,
@@ -783,7 +777,7 @@ xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
   if (temp_error != NULL)
     goto out;
 
-  g_ptr_array_sort (refs, (GCompareFunc)strvcmp);
+  g_ptr_array_sort (refs, xdg_app_strcmp0_ptr);
 
   ret = TRUE;
 
@@ -860,7 +854,7 @@ xdg_app_dir_list_refs (XdgAppDir      *self,
 
   ret = TRUE;
 
-  g_ptr_array_sort (refs, (GCompareFunc)strvcmp);
+  g_ptr_array_sort (refs, xdg_app_strcmp0_ptr);
 
 out:
   if (ret)

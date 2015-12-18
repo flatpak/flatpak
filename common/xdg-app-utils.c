@@ -38,6 +38,13 @@
 #include "libglnx/libglnx.h"
 #include <libsoup/soup.h>
 
+gint
+xdg_app_strcmp0_ptr (gconstpointer  a,
+                     gconstpointer  b)
+{
+  return g_strcmp0 (* (char * const *) a, * (char * const *) b);
+}
+
 gboolean
 xdg_app_fail (GError **error, const char *format, ...)
 {
@@ -395,7 +402,7 @@ xdg_app_list_deployed_refs (const char *type,
   while (g_hash_table_iter_next (&iter, (gpointer *)&key, NULL))
     g_ptr_array_add (names, g_strdup (key));
 
-  g_ptr_array_sort (names, (GCompareFunc)g_strcmp0);
+  g_ptr_array_sort (names, xdg_app_strcmp0_ptr);
   g_ptr_array_add (names, NULL);
 
   ret = (char **)g_ptr_array_free (names, FALSE);
