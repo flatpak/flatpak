@@ -25,7 +25,7 @@ main (int argc, char *argv[])
   GError *error = NULL;
   int i, j;
 
-  installation = xdg_app_installation_new_user (&error);
+  installation = xdg_app_installation_new_user (NULL, &error);
   if (installation == NULL)
     {
       g_print ("error: %s\n", error->message);

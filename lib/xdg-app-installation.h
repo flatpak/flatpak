@@ -56,10 +56,13 @@ typedef enum {
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppInstallation, g_object_unref)
 #endif
 
-XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_system (GError **error);
-XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_user (GError **error);
+XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_system (GCancellable *cancellable,
+                                                                    GError **error);
+XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_user (GCancellable *cancellable,
+                                                                  GError **error);
 XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_for_path (GFile *path,
                                                                       gboolean user,
+                                                                      GCancellable *cancellable,
                                                                       GError **error);
 
 typedef void (*XdgAppProgressCallback)(const char *status,
@@ -72,8 +75,8 @@ XDG_APP_EXTERN gboolean             xdg_app_installation_launch                 
                                                                                     const char          *name,
                                                                                     const char          *arch,
                                                                                     const char          *branch,
-                                                                                    const char          *commit, 
-                                                                                   GCancellable        *cancellable,
+                                                                                    const char          *commit,
+                                                                                    GCancellable        *cancellable,
                                                                                     GError             **error);
 XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_installed_refs       (XdgAppInstallation  *self,
                                                                                     GCancellable        *cancellable,

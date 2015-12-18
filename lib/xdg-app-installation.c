@@ -105,6 +105,7 @@ xdg_app_installation_init (XdgAppInstallation *self)
 
 static XdgAppInstallation *
 xdg_app_installation_new_for_dir (XdgAppDir *dir,
+                                  GCancellable  *cancellable,
                                   GError **error)
 {
   XdgAppInstallation *self;
@@ -125,21 +126,25 @@ xdg_app_installation_new_for_dir (XdgAppDir *dir,
 }
 
 XdgAppInstallation *
-xdg_app_installation_new_system (GError **error)
+xdg_app_installation_new_system (GCancellable *cancellable,
+                                 GError **error)
 {
-  return xdg_app_installation_new_for_dir (xdg_app_dir_get_system (), error);
+  return xdg_app_installation_new_for_dir (xdg_app_dir_get_system (), cancellable, error);
 }
 
 XdgAppInstallation *
-xdg_app_installation_new_user (GError **error)
+xdg_app_installation_new_user (GCancellable *cancellable,
+                               GError **error)
 {
-  return xdg_app_installation_new_for_dir (xdg_app_dir_get_user (), error);
+  return xdg_app_installation_new_for_dir (xdg_app_dir_get_user (), cancellable, error);
 }
 
 XdgAppInstallation *
-xdg_app_installation_new_for_path (GFile *path, gboolean user, GError **error)
+xdg_app_installation_new_for_path (GFile *path, gboolean user,
+                                   GCancellable *cancellable,
+                                   GError **error)
 {
-  return xdg_app_installation_new_for_dir (xdg_app_dir_new (path, user), error);
+  return xdg_app_installation_new_for_dir (xdg_app_dir_new (path, user), cancellable, error);
 }
 
 gboolean
