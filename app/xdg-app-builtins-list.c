@@ -104,8 +104,12 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
       if (opt_show_details)
         {
+          g_autofree char *active = xdg_app_dir_read_active (dir, ref, NULL);
+
           xdg_app_table_printer_add_column (printer, partial_ref);
           xdg_app_table_printer_add_column (printer, repo);
+          xdg_app_table_printer_add_column (printer, active);
+
 
           xdg_app_table_printer_add_column (printer, ""); /* Options */
 
