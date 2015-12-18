@@ -126,6 +126,11 @@ gboolean    xdg_app_dir_list_refs       (XdgAppDir      *self,
                                          char          ***refs,
                                          GCancellable   *cancellable,
                                          GError        **error);
+char *      xdg_app_dir_read_latest     (XdgAppDir      *self,
+                                         const char     *remote,
+                                         const char     *ref,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 char *      xdg_app_dir_read_active     (XdgAppDir      *self,
                                          const char     *ref,
                                          GCancellable   *cancellable);

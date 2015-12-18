@@ -871,6 +871,32 @@ out:
 }
 
 char *
+xdg_app_dir_read_latest (XdgAppDir      *self,
+                         const char     *remote,
+                         const char     *ref,
+                         GCancellable   *cancellable,
+                         GError        **error)
+{
+  g_autofree char *remote_and_ref = NULL;
+  char *res = NULL;
+
+  /* There may be several remotes with the same branch (if we for
+   * instance changed the origin, so prepend the current origin to
+   * make sure we get the right one */
+
+  if (remote)
+    remote_and_ref = g_strdup_printf ("%s:%s", remote, ref);
+  else
+    remote_and_ref = g_strdup (ref);
+
+  if (!ostree_repo_resolve_rev (self->repo, remote_and_ref, FALSE, &res, error))
+    return NULL;
+
+  return res;
+}
+
+
+char *
 xdg_app_dir_read_active (XdgAppDir *self,
                          const char *ref,
                          GCancellable *cancellable)
@@ -1531,19 +1557,11 @@ xdg_app_dir_deploy (XdgAppDir *self,
   if (checksum == NULL)
     {
       g_autofree char *origin = xdg_app_dir_get_origin (self, ref, NULL, NULL);
-      g_autofree char *origin_and_ref = NULL;
 
-      /* There may be several remotes with the same branch (if we for
-       * instance changed the origin, so prepend the current origin to
-       * make sure we get the right one */
+      g_debug ("No checksum specified, getting tip of %s", ref);
 
-      if (origin)
-        origin_and_ref = g_strdup_printf ("%s:%s", origin, ref);
-      else
-        origin_and_ref = g_strdup (ref);
-
-      g_debug ("No checksum specified, getting tip of %s", origin_and_ref);
-      if (!ostree_repo_resolve_rev (self->repo, origin_and_ref, FALSE, &resolved_ref, error))
+      resolved_ref = xdg_app_dir_read_latest (self, origin, ref, cancellable, error);
+      if (resolved_ref == NULL)
         {
           g_prefix_error (error, "While trying to resolve ref %s: ", ref);
           goto out;

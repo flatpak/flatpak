@@ -116,11 +116,8 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
           g_autofree char *active = xdg_app_dir_read_active (dir, ref, NULL);
           g_autofree char *latest = NULL;
 
-          if (ostree_repo_resolve_rev (xdg_app_dir_get_repo (dir),
-                                       ref,
-                                       FALSE,
-                                       &latest,
-                                       NULL))
+          latest = xdg_app_dir_read_latest (dir, repo, ref, NULL, NULL);
+          if (latest)
             {
               if (strcmp (active, latest) == 0)
                 {
