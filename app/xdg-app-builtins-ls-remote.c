@@ -135,7 +135,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   for (i = 0; i < n_keys; i++)
     {
       if (opt_show_details)
-        g_print ("%s\t%.12s\n", keys[i], (char *)g_hash_table_lookup (names, keys[i]));
+        g_print ("%s %.12s\n", keys[i], (char *)g_hash_table_lookup (names, keys[i]));
       else
         g_print ("%s\n", keys[i]);
     }

@@ -823,7 +823,7 @@ xdg_app_table_printer_print (XdgAppTablePrinter *printer)
       char **row = g_ptr_array_index (printer->rows,i);
 
       for (j = 0; row[j] != NULL; j++)
-        g_print ("%s%-*s", (j == 0) ? "" : "\t", widths[j], row[j]);
+        g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], row[j]);
       g_print ("\n");
     }
 }
