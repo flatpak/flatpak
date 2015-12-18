@@ -53,9 +53,12 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   GHashTableIter iter;
   gpointer key;
   gpointer value;
-  g_autoptr(GPtrArray) names = NULL;
+  g_autoptr(GHashTable) names = NULL;
+  guint n_keys;
+  g_autofree const char **keys = NULL;
   int i;
   const char *repository;
+  const char *arch;
 
   context = g_option_context_new (" REMOTE - Show available runtimes and applications");
 
@@ -74,15 +77,24 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
                                      cancellable, error))
     return FALSE;
 
-  names = g_ptr_array_new_with_free_func (g_free);
+  names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+  arch = xdg_app_get_arch ();
 
   g_hash_table_iter_init (&iter, refs);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       const char *ref = key;
       const char *checksum = value;
-      char *name = NULL;
-      char *p;
+      const char *name = NULL;
+      g_auto(GStrv) parts = NULL;
+
+      parts = xdg_app_decompose_ref (ref, NULL);
+      if (parts == NULL)
+        {
+          g_debug ("Invalid remote ref %s\n", ref);
+          continue;
+        }
 
       if (opt_only_updates)
         {
@@ -96,58 +108,37 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
             continue;
         }
 
-      if (g_str_has_prefix (ref, "runtime/") && !opt_only_apps)
+      if (!opt_show_details)
         {
-          if (!opt_show_details)
-            {
-              name = g_strdup (ref + strlen ("runtime/"));
-              p = strchr (name, '/');
-              if (p)
-                *p = 0;
-            }
-          else
-            {
-              name = g_strdup (ref);
-            }
+          if (strcmp (arch, parts[2]) != 0)
+            continue;
         }
 
-      if (g_str_has_prefix (ref, "app/") && !opt_only_runtimes)
-        {
-          if (!opt_show_details)
-            {
-              name = g_strdup (ref + strlen ("app/"));
-              p = strchr (name, '/');
-              if (p)
-                *p = 0;
-            }
-          else
-            {
-              name = g_strdup (ref);
-            }
-        }
+      if (strcmp (parts[0], "runtime") == 0 && opt_only_apps)
+        continue;
 
-      if (name)
-        {
-          gboolean found = FALSE;
+      if (strcmp (parts[0], "app") == 0 && opt_only_runtimes)
+        continue;
 
-          for (i = 0; i < names->len; i++)
-            {
-              if (strcmp (name, g_ptr_array_index (names, i)) == 0)
-                found = TRUE;
-              break;
-            }
+      if (!opt_show_details)
+        name = parts[1];
+      else
+        name = ref;
 
-          if (!found)
-            g_ptr_array_add (names, name);
-          else
-            g_free (name);
-        }
+      if (g_hash_table_lookup (names, name) == NULL)
+        g_hash_table_insert (names, g_strdup (name), g_strdup (checksum));
     }
 
-  g_ptr_array_sort (names, (GCompareFunc)xdg_app_strcmp0_ptr);
+  keys = (const char **)g_hash_table_get_keys_as_array (names, &n_keys);
+  g_qsort_with_data (keys, n_keys, sizeof(char *), (GCompareDataFunc)xdg_app_strcmp0_ptr, NULL);
 
-  for (i = 0; i < names->len; i++)
-    g_print ("%s\n", (char *)g_ptr_array_index (names, i));
+  for (i = 0; i < n_keys; i++)
+    {
+      if (opt_show_details)
+        g_print ("%s\t%s\n", keys[i], (char *)g_hash_table_lookup (names, keys[i]));
+      else
+        g_print ("%s\n", keys[i]);
+    }
 
   return TRUE;
 }

@@ -83,10 +83,11 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-d</option></term>
                 <term><option>--show-details</option></term>
 
                 <listitem><para>
-                    Show arches and branches, in addition to the names.
+                    Show arches, branches and commit ids, in addition to the names.
                 </para></listitem>
             </varlistentry>
 
