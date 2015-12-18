@@ -32,6 +32,7 @@ struct _XdgAppInstalledRefPrivate
 {
   gboolean is_current;
   char *origin;
+  char *latest_commit;
   char *deploy_dir;
 };
 
@@ -42,6 +43,7 @@ enum {
 
   PROP_IS_CURRENT,
   PROP_ORIGIN,
+  PROP_LATEST_COMMIT,
   PROP_DEPLOY_DIR
 };
 
@@ -77,6 +79,11 @@ xdg_app_installed_ref_set_property (GObject         *object,
       priv->origin = g_value_dup_string (value);
       break;
 
+    case PROP_LATEST_COMMIT:
+      g_clear_pointer (&priv->latest_commit, g_free);
+      priv->latest_commit = g_value_dup_string (value);
+      break;
+
     case PROP_DEPLOY_DIR:
       g_clear_pointer (&priv->deploy_dir, g_free);
       priv->deploy_dir = g_value_dup_string (value);
@@ -105,6 +112,10 @@ xdg_app_installed_ref_get_property (GObject         *object,
 
     case PROP_ORIGIN:
       g_value_set_string (value, priv->origin);
+      break;
+
+    case PROP_LATEST_COMMIT:
+      g_value_set_string (value, priv->latest_commit);
       break;
 
     case PROP_DEPLOY_DIR:
@@ -141,6 +152,13 @@ xdg_app_installed_ref_class_init (XdgAppInstalledRefClass *klass)
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
+                                   PROP_LATEST_COMMIT,
+                                   g_param_spec_string ("latest-commit",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
                                    PROP_DEPLOY_DIR,
                                    g_param_spec_string ("deploy-dir",
                                                         "",
@@ -160,6 +178,14 @@ xdg_app_installed_ref_get_origin (XdgAppInstalledRef *self)
   XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
 
   return priv->origin;
+}
+
+const char *
+xdg_app_installed_ref_get_latest_commit (XdgAppInstalledRef *self)
+{
+  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+
+  return priv->latest_commit;
 }
 
 const char *
@@ -204,6 +230,7 @@ xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
 XdgAppInstalledRef *
 xdg_app_installed_ref_new (const char *full_ref,
                            const char *commit,
+                           const char *latest_commit,
                            const char *origin,
                            const char *deploy_dir,
                            gboolean is_current)
@@ -223,6 +250,7 @@ xdg_app_installed_ref_new (const char *full_ref,
                       "arch", parts[2],
                       "branch", parts[3],
                       "commit", commit,
+                      "latest-commit", latest_commit,
                       "origin", origin,
                       "is-current", is_current,
                       "deploy-dir", deploy_dir,

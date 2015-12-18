@@ -30,6 +30,7 @@
 
 XdgAppInstalledRef *xdg_app_installed_ref_new (const char *full_ref,
                                                const char *commit,
+                                               const char *latest_commit,
                                                const char *origin,
                                                const char *deploy_dir,
                                                gboolean current);

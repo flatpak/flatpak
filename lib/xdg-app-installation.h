@@ -45,6 +45,12 @@ typedef struct {
   GObjectClass parent_class;
 } XdgAppInstallationClass;
 
+typedef enum {
+  XDG_APP_UPDATE_FLAGS_NONE      = 0,
+  XDG_APP_UPDATE_FLAGS_NO_DEPLOY = (1<<0),
+  XDG_APP_UPDATE_FLAGS_NO_PULL   = (1<<1),
+} XdgAppUpdateFlags;
+
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppInstallation, g_object_unref)
@@ -107,6 +113,7 @@ XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_install                
                                                                                     GCancellable        *cancellable,
                                                                                     GError             **error);
 XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_update                    (XdgAppInstallation  *self,
+                                                                                    XdgAppUpdateFlags    flags,
                                                                                     XdgAppRefKind        kind,
                                                                                     const char          *name,
                                                                                     const char          *arch,

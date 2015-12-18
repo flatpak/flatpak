@@ -48,6 +48,7 @@ main (int argc, char *argv[])
   if (argc == 2)
     {
       app1 = xdg_app_installation_update (installation,
+                                          XDG_APP_UPDATE_FLAGS_NONE,
                                           XDG_APP_REF_KIND_APP,
                                           argv[1],
                                           NULL, NULL,
@@ -78,12 +79,13 @@ main (int argc, char *argv[])
         for (i = 0; i < updates->len; i++)
           {
             XdgAppInstalledRef *ref = g_ptr_array_index(updates,i);
-            g_print ("%d %s %s %s %s %s %s %d\n",
+            g_print ("%d %s %s %s %s %s %s %s %d\n",
                      xdg_app_ref_get_kind (XDG_APP_REF(ref)),
                      xdg_app_ref_get_name (XDG_APP_REF(ref)),
                      xdg_app_ref_get_arch (XDG_APP_REF(ref)),
                      xdg_app_ref_get_branch (XDG_APP_REF(ref)),
                      xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+                     xdg_app_installed_ref_get_latest_commit (ref),
                      xdg_app_installed_ref_get_origin (ref),
                      xdg_app_installed_ref_get_deploy_dir (ref),
                      xdg_app_installed_ref_get_is_current (ref));
@@ -101,12 +103,13 @@ main (int argc, char *argv[])
     for (i = 0; i < refs->len; i++)
       {
         XdgAppInstalledRef *ref = g_ptr_array_index(refs,i);
-        g_print ("%d %s %s %s %s %s %s %d\n",
+        g_print ("%d %s %s %s %s %s %s %s %d\n",
                  xdg_app_ref_get_kind (XDG_APP_REF(ref)),
                  xdg_app_ref_get_name (XDG_APP_REF(ref)),
                  xdg_app_ref_get_arch (XDG_APP_REF(ref)),
                  xdg_app_ref_get_branch (XDG_APP_REF(ref)),
                  xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+                 xdg_app_installed_ref_get_latest_commit (ref),
                  xdg_app_installed_ref_get_origin (ref),
                  xdg_app_installed_ref_get_deploy_dir (ref),
                  xdg_app_installed_ref_get_is_current (ref));
@@ -125,12 +128,13 @@ main (int argc, char *argv[])
       {
         XdgAppInstalledRef *app = g_ptr_array_index(apps,i);
 
-        g_print ("%d %s %s %s %s %s %s %d\n",
+        g_print ("%d %s %s %s %s %s %s %s %d\n",
                  xdg_app_ref_get_kind (XDG_APP_REF(app)),
                  xdg_app_ref_get_name (XDG_APP_REF(app)),
                  xdg_app_ref_get_arch (XDG_APP_REF(app)),
                  xdg_app_ref_get_branch (XDG_APP_REF(app)),
                  xdg_app_ref_get_commit (XDG_APP_REF(app)),
+                 xdg_app_installed_ref_get_latest_commit (app),
                  xdg_app_installed_ref_get_origin (app),
                  xdg_app_installed_ref_get_deploy_dir (app),
                  xdg_app_installed_ref_get_is_current (app));

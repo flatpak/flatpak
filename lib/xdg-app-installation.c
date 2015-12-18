@@ -198,6 +198,7 @@ get_ref (XdgAppInstallation *self,
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) deploy_subdir = NULL;
   g_autofree char *deploy_path = NULL;
+  g_autofree char *latest_commit = NULL;
   gboolean is_current = FALSE;
 
   parts = g_strsplit (full_ref, "/", -1);
@@ -219,8 +220,11 @@ get_ref (XdgAppInstallation *self,
         is_current = TRUE;
     }
 
+  latest_commit = xdg_app_dir_read_latest (priv->dir, origin, full_ref, NULL, NULL);
+
   return xdg_app_installed_ref_new (full_ref,
                                     commit,
+                                    latest_commit,
                                     origin,
                                     deploy_path,
                                     is_current);
@@ -397,7 +401,10 @@ xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists the installed references that has a remote update
+ * Lists the installed references that has a remote update that is not
+ * locally available. However, even though an app is not returned by this
+ * it can have local updates available that has not been deployed. Look
+ * at commit vs latest_commit on installed apps for this.
  *
  * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
  *   #XdgAppInstalledRef instances
@@ -464,8 +471,8 @@ xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
       const char *remote_ref = g_hash_table_lookup (ht, key);
 
       if (remote_ref != NULL &&
-          strcmp (remote_ref,
-                  xdg_app_ref_get_commit (XDG_APP_REF (installed_ref))) != 0)
+          g_strcmp0 (remote_ref,
+                     xdg_app_installed_ref_get_latest_commit (installed_ref)) != 0)
         g_ptr_array_add (updates, g_object_ref (installed_ref));
     }
 
@@ -752,6 +759,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
  */
 XdgAppInstalledRef *
 xdg_app_installation_update (XdgAppInstallation  *self,
+                             XdgAppUpdateFlags    flags,
                              XdgAppRefKind        kind,
                              const char          *name,
                              const char          *arch,
@@ -803,29 +811,35 @@ xdg_app_installation_update (XdgAppInstallation  *self,
       g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER(0));
     }
 
-  if (!xdg_app_dir_pull (dir_clone, remote_name, ref,
-                         ostree_progress, cancellable, error))
-    goto out;
-
-  if (!xdg_app_dir_lock (dir_clone, &lock,
-                         cancellable, error))
-    goto out;
-
-  if (!g_file_query_exists (deploy_base, cancellable))
+  if ((flags & XDG_APP_UPDATE_FLAGS_NO_PULL) == 0)
     {
-      g_set_error (error,
-                   XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
-                   "%s branch %s is not installed", name, branch ? branch : "master");
-      return NULL;
+      if (!xdg_app_dir_pull (dir_clone, remote_name, ref,
+                             ostree_progress, cancellable, error))
+        goto out;
     }
 
-  if (!xdg_app_dir_deploy_update (dir_clone, ref, NULL, &was_updated, cancellable, error))
-    return FALSE;
-
-  if (was_updated && kind == XDG_APP_REF_KIND_APP)
+  if ((flags & XDG_APP_UPDATE_FLAGS_NO_DEPLOY) == 0)
     {
-      if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
+      if (!xdg_app_dir_lock (dir_clone, &lock,
+                             cancellable, error))
         goto out;
+
+      if (!g_file_query_exists (deploy_base, cancellable))
+        {
+          g_set_error (error,
+                       XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
+                       "%s branch %s is not installed", name, branch ? branch : "master");
+          return NULL;
+        }
+
+      if (!xdg_app_dir_deploy_update (dir_clone, ref, NULL, &was_updated, cancellable, error))
+        return FALSE;
+
+      if (was_updated && kind == XDG_APP_REF_KIND_APP)
+        {
+          if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
+            goto out;
+        }
     }
 
   result = get_ref (self, ref, cancellable);
