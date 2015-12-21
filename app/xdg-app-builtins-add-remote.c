@@ -59,7 +59,7 @@ static GOptionEntry modify_options[] = {
 
 static GOptionEntry common_options[] = {
   { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, "Disable GPG verification", NULL },
-  { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, "Mark the remote as don't enumerate", NULL },
+  { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_no_enumerate, "Mark the remote as don't enumerate", NULL },
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, "Set priority (default 1, higher is more prioritized)", NULL },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this remote", "TITLE" },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, "Import GPG key from FILE (- for stdin)", "FILE" },
@@ -183,7 +183,7 @@ xdg_app_builtin_add_remote (int argc, char **argv,
                            "gpg-verify",
                            g_variant_new_variant (g_variant_new_boolean (FALSE)));
 
-  if (opt_no_gpg_verify)
+  if (opt_no_enumerate)
     g_variant_builder_add (optbuilder, "{s@v}",
                            "xa.noenumerate",
                            g_variant_new_variant (g_variant_new_boolean (TRUE)));
