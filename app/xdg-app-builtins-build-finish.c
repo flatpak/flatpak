@@ -34,9 +34,11 @@
 #include "xdg-app-run.h"
 
 static char *opt_command;
+static gboolean opt_no_exports;
 
 static GOptionEntry options[] = {
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to set", "COMMAND" },
+  { "no-exports", 0, 0, G_OPTION_ARG_NONE, &opt_no_exports, "Don't process exports" },
   { NULL }
 };
 
@@ -179,6 +181,9 @@ collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GEr
 
   if (!gs_file_ensure_directory (export, TRUE, cancellable, error))
     return FALSE;
+
+  if (opt_no_exports)
+    return TRUE;
 
   for (i = 0; paths[i]; i++)
     {

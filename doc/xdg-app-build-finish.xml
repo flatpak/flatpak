@@ -210,6 +210,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-exports</option></term>
+
+                <listitem><para>
+                    Don't look for exports in the build.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
