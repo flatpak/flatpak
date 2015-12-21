@@ -585,12 +585,10 @@ xdg_app_dir_mark_changed (XdgAppDir *self,
 {
   g_autoptr(GFile) changed_file = NULL;
 
-  g_print ("mark changed\n");
   changed_file = xdg_app_dir_get_changed_path (self);
   if (!g_file_replace_contents (changed_file, "", 0, NULL, FALSE,
                                 G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, error))
     return FALSE;
-  g_print ("OK\n");
 
   return TRUE;
 }
