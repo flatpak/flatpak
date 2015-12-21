@@ -60,7 +60,7 @@ metadata_get_arch (GFile *file, char **out_arch, GError **error)
   if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
     return FALSE;
 
-  runtime = g_key_file_get_string (keyfile, "Application", "runtime", error);
+  runtime = g_key_file_get_string (keyfile, opt_runtime ? "Runtime" : "Application", "runtime", error);
   if (*error)
     return FALSE;
 
@@ -208,7 +208,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     goto out;
 
-  app_id = g_key_file_get_string (metakey, "Application", "name", error);
+  app_id = g_key_file_get_string (metakey, opt_runtime ? "Runtime" : "Application", "name", error);
   if (app_id == NULL)
     goto out;
 
