@@ -167,6 +167,9 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
+  if (!xdg_app_dir_mark_changed (dir, error))
+    goto out;
+
   ret = TRUE;
 
  out:
@@ -250,6 +253,9 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
     }
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+
+  if (!xdg_app_dir_mark_changed (dir, error))
+    goto out;
 
   ret = TRUE;
 
@@ -503,6 +509,9 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
   glnx_release_lock_file (&lock);
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+
+  if (!xdg_app_dir_mark_changed (dir, error))
+    goto out;
 
   ret = TRUE;
 

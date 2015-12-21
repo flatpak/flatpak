@@ -237,6 +237,9 @@ xdg_app_builtin_add_remote (int argc, char **argv,
   if (!import_keys (dir, remote_name, cancellable, error))
     return FALSE;
 
+  if (!xdg_app_dir_mark_changed (dir, error))
+    return FALSE;
+
   return TRUE;
 }
 
@@ -299,6 +302,9 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
     return FALSE;
 
   if (!import_keys (dir, remote_name, cancellable, error))
+    return FALSE;
+
+  if (!xdg_app_dir_mark_changed (dir, error))
     return FALSE;
 
   return TRUE;

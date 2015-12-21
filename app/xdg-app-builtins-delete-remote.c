@@ -54,5 +54,8 @@ xdg_app_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
                                   cancellable, error))
     return FALSE;
 
+  if (!xdg_app_dir_mark_changed (dir, error))
+    return FALSE;
+
   return TRUE;
 }

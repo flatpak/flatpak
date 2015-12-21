@@ -753,6 +753,9 @@ xdg_app_installation_install (XdgAppInstallation  *self,
 
   xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
 
+  if (!xdg_app_dir_mark_changed (dir_clone, error))
+    goto out;
+
  out:
   if (main_context)
     g_main_context_pop_thread_default (main_context);
@@ -867,6 +870,9 @@ xdg_app_installation_update (XdgAppInstallation  *self,
     {
       if (!xdg_app_dir_prune (dir_clone, cancellable, error))
         goto out;
+
+      if (!xdg_app_dir_mark_changed (dir_clone, error))
+        goto out;
     }
 
   xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
@@ -960,6 +966,9 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
     return FALSE;
 
   xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
+
+  if (!xdg_app_dir_mark_changed (dir_clone, error))
+    return FALSE;
 
   if (!was_deployed)
     {

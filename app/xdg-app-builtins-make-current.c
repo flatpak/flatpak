@@ -80,5 +80,8 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
 
   glnx_release_lock_file (&lock);
 
+  if (!xdg_app_dir_mark_changed (dir, error))
+    return FALSE;
+
   return TRUE;
 }

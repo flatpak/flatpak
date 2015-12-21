@@ -76,6 +76,7 @@ XdgAppDir  *xdg_app_dir_get_system      (void);
 XdgAppDir  *xdg_app_dir_get_user        (void);
 gboolean    xdg_app_dir_is_user         (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_path        (XdgAppDir      *self);
+GFile *     xdg_app_dir_get_changed_path (XdgAppDir *self);
 GFile *     xdg_app_dir_get_deploy_dir  (XdgAppDir      *self,
                                          const char     *ref);
 char *      xdg_app_dir_get_origin      (XdgAppDir      *self,
@@ -108,6 +109,8 @@ gboolean    xdg_app_dir_ensure_path     (XdgAppDir      *self,
                                          GError        **error);
 gboolean    xdg_app_dir_ensure_repo     (XdgAppDir      *self,
                                          GCancellable   *cancellable,
+                                         GError        **error);
+gboolean    xdg_app_dir_mark_changed    (XdgAppDir      *self,
                                          GError        **error);
 gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          const char     *repository,

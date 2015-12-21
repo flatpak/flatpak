@@ -101,6 +101,9 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
+  if (!xdg_app_dir_mark_changed (dir, error))
+    return FALSE;
+
   if (!was_deployed)
     return xdg_app_fail (error, "Nothing to uninstall");
 
@@ -172,6 +175,9 @@ xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable,
     }
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+
+  if (!xdg_app_dir_mark_changed (dir, error))
+    return FALSE;
 
   if (!was_deployed)
     return xdg_app_fail (error, "Nothing to uninstall");

@@ -263,6 +263,12 @@ xdg_app_dir_get_path (XdgAppDir *self)
   return self->basedir;
 }
 
+GFile *
+xdg_app_dir_get_changed_path (XdgAppDir *self)
+{
+  return g_file_get_child (self->basedir, ".changed");
+}
+
 char *
 xdg_app_dir_load_override (XdgAppDir *self,
                            const char *app_id,
@@ -549,6 +555,9 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
               gs_shutil_rm_rf (repodir, cancellable, NULL);
               goto out;
             }
+
+          /* Create .changes file early to avoid polling non-existing file in monitor */
+          xdg_app_dir_mark_changed (self, NULL);
         }
       else
         {
@@ -568,6 +577,22 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
   ret = TRUE;
  out:
   return ret;
+}
+
+gboolean
+xdg_app_dir_mark_changed (XdgAppDir *self,
+                          GError **error)
+{
+  g_autoptr(GFile) changed_file = NULL;
+
+  g_print ("mark changed\n");
+  changed_file = xdg_app_dir_get_changed_path (self);
+  if (!g_file_replace_contents (changed_file, "", 0, NULL, FALSE,
+                                G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, error))
+    return FALSE;
+  g_print ("OK\n");
+
+  return TRUE;
 }
 
 gboolean
