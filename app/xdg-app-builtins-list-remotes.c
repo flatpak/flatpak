@@ -59,7 +59,6 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
   if (!opt_user && !opt_system)
     {
-      opt_user = TRUE;
       opt_system = TRUE;
     }
 
