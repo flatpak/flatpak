@@ -14,6 +14,16 @@ progress_cb (const char *status,
   g_print ("status: %s, progress: %d estimating: %d, user_data: %p\n", status, progress, estimating, user_data);
 }
 
+static gboolean
+monitor_callback (GFileMonitor* monitor,
+                  GFile* child,
+                  GFile* other_file,
+                  GFileMonitorEvent eflags)
+{
+  g_print ("Database changed\n");
+  return TRUE;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -30,6 +40,16 @@ main (int argc, char *argv[])
     {
       g_print ("error: %s\n", error->message);
       return 1;
+    }
+
+  if (argc == 4)
+    {
+      GFileMonitor * monitor = xdg_app_installation_create_monitor (installation, NULL, NULL);
+      GMainLoop *main_loop;
+
+      g_signal_connect (monitor, "changed", (GCallback)monitor_callback, NULL);
+      main_loop = g_main_loop_new (NULL, FALSE);
+      g_main_loop_run (main_loop);
     }
 
   if (argc == 3)

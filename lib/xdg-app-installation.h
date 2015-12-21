@@ -78,6 +78,9 @@ XDG_APP_EXTERN gboolean             xdg_app_installation_launch                 
                                                                                     const char          *commit,
                                                                                     GCancellable        *cancellable,
                                                                                     GError             **error);
+XDG_APP_EXTERN GFileMonitor        *xdg_app_installation_create_monitor            (XdgAppInstallation  *self,
+                                                                                    GCancellable        *cancellable,
+                                                                                    GError             **error);
 XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_installed_refs       (XdgAppInstallation  *self,
                                                                                     GCancellable        *cancellable,
                                                                                     GError             **error);

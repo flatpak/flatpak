@@ -1050,7 +1050,7 @@ xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
 
 /**
  * xdg_app_installation_fetch_remote_ref_sync:
- * @self: a #XdgAppRemove
+ * @self: a #XdgAppInstallation
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1100,4 +1100,28 @@ xdg_app_installation_fetch_remote_ref_sync (XdgAppInstallation *self,
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                "Reference %s doesn't exist in remote\n", ref);
   return NULL;
+}
+
+/**
+ * xdg_app_installation_create_monitor:
+ * @self: a #XdgAppInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Gets the current remote branch of a ref in the remote.
+ *
+ * Returns: (transfer full): a new #GFileMonitor instance, or %NULL on error
+ */
+GFileMonitor *
+xdg_app_installation_create_monitor (XdgAppInstallation  *self,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autoptr(GFile) path = NULL;
+
+  path = xdg_app_dir_get_changed_path (priv->dir);
+
+  return g_file_monitor_file (path, G_FILE_MONITOR_NONE,
+                              cancellable, error);
 }
