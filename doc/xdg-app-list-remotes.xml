@@ -39,7 +39,7 @@
         <title>Description</title>
 
         <para>
-            Lists the known remote repositories.
+            Lists the known remote repositories, in priority order.
         </para>
         <para>
             By default, both per-user and system-wide installations

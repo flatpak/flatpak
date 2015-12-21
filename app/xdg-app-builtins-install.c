@@ -465,6 +465,10 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
                              "xa.noenumerate",
                              g_variant_new_variant (g_variant_new_boolean (TRUE)));
 
+      g_variant_builder_add (optbuilder, "{s@v}",
+                             "xa.prio",
+                             g_variant_new_variant (g_variant_new_string ("0")));
+
       if (!ostree_repo_remote_add (repo,
                                    remote, origin, g_variant_builder_end (optbuilder), cancellable, error))
         goto out;

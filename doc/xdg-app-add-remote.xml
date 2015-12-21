@@ -92,6 +92,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--prio=PRIO</option></term>
+
+                <listitem><para>
+                    Set the priority for the remote. Default is 1, higher is more prioritized. This is
+                    mainly used for graphical installation tools.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--no-enumerate</option></term>
 
                 <listitem><para>

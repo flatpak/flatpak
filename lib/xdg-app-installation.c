@@ -502,7 +502,8 @@ xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists the remotes.
+ * Lists the remotes, in priority (highest first) order. For same priority,
+ * earlier added remote comes before a later added one.
  *
  * Returns: (transfer container) (element-type XdgAppRemote): an GPtrArray of
  *   #XdgAppRemote instances

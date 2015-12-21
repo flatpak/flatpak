@@ -93,6 +93,8 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
             {
               g_autofree char *remote_url = NULL;
               g_autofree char *title = NULL;
+              int prio;
+              g_autofree char *prio_as_string = NULL;
               gboolean gpg_verify = TRUE;
 
               xdg_app_table_printer_add_column (printer, remote_name);
@@ -106,6 +108,10 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
               ostree_repo_remote_get_url (xdg_app_dir_get_repo (dir), remote_name, &remote_url, NULL);
 
               xdg_app_table_printer_add_column (printer, remote_url);
+
+              prio = xdg_app_dir_get_remote_prio (dir, remote_name);
+              prio_as_string = g_strdup_printf ("%d", prio);
+              xdg_app_table_printer_add_column (printer, prio_as_string);
 
               xdg_app_table_printer_add_column (printer, ""); /* Options */
 

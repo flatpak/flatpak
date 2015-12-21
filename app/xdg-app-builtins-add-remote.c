@@ -39,6 +39,7 @@ static gboolean opt_do_gpg_verify;
 static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
 static gboolean opt_if_not_exists;
+static int opt_prio = -11;
 static char *opt_title;
 static char *opt_url;
 static char **opt_gpg_import;
@@ -59,6 +60,7 @@ static GOptionEntry modify_options[] = {
 static GOptionEntry common_options[] = {
   { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, "Disable GPG verification", NULL },
   { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, "Mark the remote as don't enumerate", NULL },
+  { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, "Set priority (default 1, higher is more prioritized)", NULL },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this remote", "TITLE" },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, "Import GPG key from FILE (- for stdin)", "FILE" },
   { "gpg-key", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_import, "Optionally only import the named key(s) from the keyring files", "KEY" },
@@ -153,6 +155,7 @@ xdg_app_builtin_add_remote (int argc, char **argv,
   g_autofree char *remote_url = NULL;
   const char *remote_name;
   const char *url_or_path;
+  g_autofree char *prio_as_string = NULL;
 
   context = g_option_context_new ("NAME LOCATION - Add a remote repository");
 
@@ -184,6 +187,14 @@ xdg_app_builtin_add_remote (int argc, char **argv,
     g_variant_builder_add (optbuilder, "{s@v}",
                            "xa.noenumerate",
                            g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
+  if (opt_prio != -1)
+    {
+      prio_as_string = g_strdup_printf ("%d", opt_prio);
+      g_variant_builder_add (optbuilder, "{s@v}",
+                             "xa.prio",
+                             g_variant_new_variant (g_variant_new_string (prio_as_string)));
+    }
 
   if (opt_title)
     {
@@ -277,6 +288,12 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   if (opt_do_enumerate)
     g_key_file_set_boolean (config, group, "xa.noenumerate", FALSE);
+
+  if (opt_prio != -1)
+    {
+      g_autofree char *prio_as_string = g_strdup_printf ("%d", opt_prio);
+      g_key_file_set_string (config, group, "xa.prio", prio_as_string);
+    }
 
   if (!ostree_repo_write_config (xdg_app_dir_get_repo (dir), config, error))
     return FALSE;

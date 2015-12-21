@@ -210,6 +210,8 @@ char     **xdg_app_dir_list_remotes     (XdgAppDir *self,
                                          GError **error);
 char      *xdg_app_dir_get_remote_title (XdgAppDir *self,
                                          const char *remote_name);
+int        xdg_app_dir_get_remote_prio  (XdgAppDir *self,
+                                         const char *remote_name);
 gboolean   xdg_app_dir_get_remote_noenumerate (XdgAppDir *self,
                                                const char *remote_name);
 gboolean   xdg_app_dir_list_remote_refs (XdgAppDir *self,

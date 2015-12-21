@@ -220,8 +220,9 @@ main (int argc, char *argv[])
     {
       XdgAppRemote *remote = g_ptr_array_index(remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
-      g_print ("\nRemote: %s %s %s %d %d\n",
+      g_print ("\nRemote: %s %d %s %s %d %d\n",
                xdg_app_remote_get_name (remote),
+               xdg_app_remote_get_prio (remote),
                xdg_app_remote_get_url (remote),
                xdg_app_remote_get_title (remote),
                xdg_app_remote_get_gpg_verify (remote),

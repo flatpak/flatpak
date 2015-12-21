@@ -158,6 +158,14 @@ xdg_app_remote_get_noenumerate (XdgAppRemote *self)
   return xdg_app_dir_get_remote_noenumerate (priv->dir, priv->name);
 }
 
+int
+xdg_app_remote_get_prio (XdgAppRemote *self)
+{
+  XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
+
+  return xdg_app_dir_get_remote_prio (priv->dir, priv->name);
+}
+
 gboolean
 xdg_app_remote_get_gpg_verify (XdgAppRemote *self)
 {

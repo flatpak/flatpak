@@ -2205,6 +2205,19 @@ xdg_app_dir_get_remote_title (XdgAppDir *self,
   return NULL;
 }
 
+int
+xdg_app_dir_get_remote_prio (XdgAppDir *self,
+                             const char *remote_name)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config && g_key_file_has_key (config, group, "xa.prio", NULL))
+    return g_key_file_get_integer (config, group, "xa.prio", NULL);
+
+  return 1;
+}
+
 gboolean
 xdg_app_dir_get_remote_noenumerate (XdgAppDir *self,
                                     const char *remote_name)
@@ -2217,6 +2230,23 @@ xdg_app_dir_get_remote_noenumerate (XdgAppDir *self,
 
   return TRUE;
 }
+
+gint
+cmp_remote (gconstpointer  a,
+            gconstpointer  b,
+            gpointer       user_data)
+{
+  XdgAppDir *self = user_data;
+  const char *a_name = *(const char **)a;
+  const char *b_name = *(const char **)b;
+  int prio_a, prio_b;
+
+  prio_a = xdg_app_dir_get_remote_prio (self, a_name);
+  prio_b = xdg_app_dir_get_remote_prio (self, b_name);
+
+  return prio_b - prio_a;
+}
+
 
 char **
 xdg_app_dir_list_remotes (XdgAppDir *self,
@@ -2231,6 +2261,9 @@ xdg_app_dir_list_remotes (XdgAppDir *self,
   res = ostree_repo_remote_list (self->repo, NULL);
   if (res == NULL)
     res = g_new0 (char *, 1); /* Return empty array, not error */
+
+  g_qsort_with_data (res, g_strv_length (res), sizeof (char *),
+                     cmp_remote, self);
 
   return res;
 }
