@@ -33,12 +33,14 @@
 
 static char *opt_subject;
 static char *opt_body;
+static gboolean opt_runtime;
 static char **opt_key_ids;
 static char *opt_gpg_homedir;
 
 static GOptionEntry options[] = {
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, "One line subject", "SUBJECT" },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description", "BODY" },
+  { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Commit runtime (/usr), not /app" },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
 
@@ -90,6 +92,11 @@ is_empty_directory (GFile *file, GCancellable *cancellable)
   return TRUE;
 }
 
+enum {
+  ALLOW_EXPORT = 1<<1,
+  ALLOW_ALL = 1<<2,
+};
+
 static OstreeRepoCommitFilterResult
 commit_filter (OstreeRepo *repo,
                const char *path,
@@ -97,6 +104,7 @@ commit_filter (OstreeRepo *repo,
                gpointer user_data)
 {
   guint current_mode;
+  guint allow = GPOINTER_TO_UINT(user_data);
 
   /* No user info */
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
@@ -106,10 +114,10 @@ commit_filter (OstreeRepo *repo,
   current_mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", current_mode & ~07000);
 
-  if (g_str_equal (path, "/") ||
-      g_str_equal (path, "/metadata") ||
-      g_str_has_prefix (path, "/files") ||
-      g_str_has_prefix (path, "/export"))
+  if ((allow & ALLOW_ALL) ||
+      (g_str_equal (path, "/") ||
+       g_str_equal (path, "/metadata") ||
+       ((allow & ALLOW_EXPORT) &&  g_str_has_prefix (path, "/export"))))
     {
       g_debug ("commit filter, allow: %s", path);
       return OSTREE_REPO_COMMIT_FILTER_ALLOW;
@@ -128,6 +136,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files = NULL;
+  g_autoptr(GFile) usr = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autoptr(GFile) export = NULL;
   g_autoptr(GFile) repofile = NULL;
@@ -145,12 +154,14 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autofree char *metadata_contents = NULL;
   g_autofree char *format_size = NULL;
   g_autoptr(OstreeMutableTree) mtree = NULL;
+  g_autoptr(OstreeMutableTree) files_mtree = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   gsize metadata_size;
   g_autofree char *subject = NULL;
   g_autofree char *body = NULL;
   OstreeRepoTransactionStats stats;
-  OstreeRepoCommitModifier *modifier = NULL;
+  g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
+  g_autoptr(OstreeRepoCommitModifier) files_modifier = NULL;
 
   context = g_option_context_new ("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory");
 
@@ -179,6 +190,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   base = g_file_new_for_commandline_arg (directory);
   files = g_file_get_child (base, "files");
+  usr = g_file_get_child (base, "usr");
   metadata = g_file_get_child (base, "metadata");
   export = g_file_get_child (base, "export");
 
@@ -200,7 +212,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (app_id == NULL)
     goto out;
 
-  if (!g_file_query_exists (export, cancellable))
+  if (!opt_runtime && !g_file_query_exists (export, cancellable))
     {
       xdg_app_fail (error, "Build directory %s not finalized", directory);
       goto out;
@@ -218,7 +230,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   else
     body = g_strconcat ("Name: ", app_id, "\nArch: ", arch, "\nBranch: ", branch, NULL);
 
-  full_branch = g_strconcat ("app/", app_id, "/", arch, "/", branch, NULL);
+  full_branch = g_strconcat (opt_runtime ? "runtime/" : "app/", app_id, "/", arch, "/", branch, NULL);
 
   repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);
@@ -242,11 +254,29 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     goto out;
 
   mtree = ostree_mutable_tree_new ();
-  arg = g_file_new_for_commandline_arg (directory);
 
-  modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS, commit_filter, NULL, NULL);
-  if (!ostree_repo_write_directory_to_mtree (repo, arg, mtree, modifier, cancellable, error))
+  modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS, commit_filter,
+                                              GUINT_TO_POINTER(opt_runtime ? 0 : ALLOW_EXPORT),
+                                              NULL);
+  files_modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS, commit_filter,
+                                                    GUINT_TO_POINTER(ALLOW_ALL),
+                                                    NULL);
+  if (!ostree_repo_write_directory_to_mtree (repo, base, mtree, modifier, cancellable, error))
     goto out;
+
+  if (!ostree_mutable_tree_ensure_dir (mtree, "files", &files_mtree, error))
+    goto out;
+
+  if (opt_runtime)
+    {
+      if (!ostree_repo_write_directory_to_mtree (repo, usr, files_mtree, files_modifier, cancellable, error))
+        goto out;
+    }
+  else
+    {
+      if (!ostree_repo_write_directory_to_mtree (repo, files, files_mtree, files_modifier, cancellable, error))
+        goto out;
+    }
 
   if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
     goto out;
@@ -299,8 +329,6 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
  out:
   if (repo)
     ostree_repo_abort_transaction (repo, cancellable, NULL);
-  if (modifier)
-    ostree_repo_commit_modifier_unref (modifier);
 
   return ret;
 }
