@@ -456,11 +456,10 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
     {
       g_autoptr(GVariantBuilder) optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
       g_autofree char *basename = g_file_get_basename (file);
-      g_autofree char *title = g_strdup_printf ("Origin from bundle %s", basename);
 
       g_variant_builder_add (optbuilder, "{s@v}",
                              "xa.title",
-                             g_variant_new_variant (g_variant_new_string (title)));
+                             g_variant_new_variant (g_variant_new_string (basename)));
 
       g_variant_builder_add (optbuilder, "{s@v}",
                              "xa.noenumerate",
