@@ -252,6 +252,7 @@ download_uri (const char *url,
 
 static gboolean
 builder_source_archive_download (BuilderSource *source,
+                                 gboolean update_vcs,
                                  BuilderContext *context,
                                  GError **error)
 {

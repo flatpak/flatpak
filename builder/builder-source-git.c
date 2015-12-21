@@ -55,6 +55,7 @@ enum {
 };
 
 static gboolean git_mirror_repo (const char *repo_url,
+                                 gboolean update,
                                  const char *ref,
                                  BuilderContext *context,
                                  GError **error);
@@ -251,6 +252,7 @@ make_absolute_url (const char *orig_parent, const char *orig_relpath, GError **e
 
 static gboolean
 git_mirror_submodules (const char *repo_url,
+                       gboolean update,
                        GFile *mirror_dir,
                        const char *revision,
                        BuilderContext *context,
@@ -313,7 +315,7 @@ git_mirror_submodules (const char *repo_url,
           if (url == NULL)
             return FALSE;
 
-          if (!git_mirror_repo (url, words[0], context, error))
+          if (!git_mirror_repo (url, update, words[0], context, error))
             return FALSE;
         }
     }
@@ -326,6 +328,7 @@ git_mirror_submodules (const char *repo_url,
 
 static gboolean
 git_mirror_repo (const char *repo_url,
+                 gboolean update,
                  const char *ref,
                  BuilderContext *context,
                  GError **error)
@@ -349,7 +352,7 @@ git_mirror_repo (const char *repo_url,
           !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
         return FALSE;
     }
-  else
+  else if (update)
     {
       g_print ("Fetching git repo %s\n", repo_url);
       if (!git (mirror_dir, NULL, error,
@@ -361,7 +364,7 @@ git_mirror_repo (const char *repo_url,
   if (current_commit == NULL)
     return FALSE;
 
-  if (!git_mirror_submodules (repo_url, mirror_dir, current_commit, context, error))
+  if (!git_mirror_submodules (repo_url, update, mirror_dir, current_commit, context, error))
     return FALSE;
 
   return TRUE;
@@ -369,6 +372,7 @@ git_mirror_repo (const char *repo_url,
 
 static gboolean
 builder_source_git_download (BuilderSource *source,
+                             gboolean update_vcs,
                              BuilderContext *context,
                              GError **error)
 {
@@ -380,6 +384,7 @@ builder_source_git_download (BuilderSource *source,
     return FALSE;
 
   if (!git_mirror_repo (url,
+                        update_vcs,
                         get_branch (self),
                         context,
                         error))

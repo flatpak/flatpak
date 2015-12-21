@@ -113,6 +113,7 @@ builder_source_script_set_property (GObject      *object,
 
 static gboolean
 builder_source_script_download (BuilderSource *source,
+                                gboolean update_vcs,
                                 BuilderContext *context,
                                 GError **error)
 {

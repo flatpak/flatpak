@@ -47,6 +47,7 @@ typedef struct {
   GObjectClass parent_class;
 
   gboolean (* download) (BuilderSource *self,
+                         gboolean update_vcs,
                          BuilderContext *context,
                          GError **error);
   gboolean (* extract) (BuilderSource *self,
@@ -67,6 +68,7 @@ BuilderSource * builder_source_from_json (JsonNode *node);
 JsonNode *      builder_source_to_json   (BuilderSource *self);
 
 gboolean builder_source_download (BuilderSource *self,
+                                  gboolean update_vcs,
                                   BuilderContext *context,
                                   GError **error);
 gboolean builder_source_extract  (BuilderSource *self,

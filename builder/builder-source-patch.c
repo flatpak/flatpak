@@ -125,6 +125,7 @@ get_source_file (BuilderSourcePatch *self,
 
 static gboolean
 builder_source_patch_download (BuilderSource *source,
+                               gboolean update_vcs,
                                BuilderContext *context,
                                GError **error)
 {

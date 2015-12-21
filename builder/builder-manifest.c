@@ -674,6 +674,7 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
 
 gboolean
 builder_manifest_download (BuilderManifest *self,
+                           gboolean update_vcs,
                            BuilderContext *context,
                            GError **error)
 {
@@ -684,7 +685,7 @@ builder_manifest_download (BuilderManifest *self,
     {
       BuilderModule *m = l->data;
 
-      if (! builder_module_download_sources (m, context, error))
+      if (! builder_module_download_sources (m, update_vcs, context, error))
         return FALSE;
     }
 

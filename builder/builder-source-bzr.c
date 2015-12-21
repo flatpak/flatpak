@@ -162,6 +162,7 @@ get_current_commit (BuilderSourceBzr *self, BuilderContext *context, GError **er
 
 static gboolean
 builder_source_bzr_download (BuilderSource *source,
+                             gboolean update_vcs,
                              BuilderContext *context,
                              GError **error)
 {
@@ -190,7 +191,7 @@ builder_source_bzr_download (BuilderSource *source,
           !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
         return FALSE;
     }
-  else
+  else if (update_vcs)
     {
       g_print ("Updating bzr repo %s\n", self->url);
 

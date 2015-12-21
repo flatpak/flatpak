@@ -46,6 +46,7 @@ void         builder_module_set_changes (BuilderModule  *self,
                                          GPtrArray      *changes);
 
 gboolean builder_module_download_sources (BuilderModule   *self,
+                                          gboolean        update_vcs,
                                           BuilderContext  *context,
                                           GError         **error);
 gboolean builder_module_extract_sources  (BuilderModule   *self,

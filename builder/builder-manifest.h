@@ -48,6 +48,7 @@ gboolean        builder_manifest_init_app_dir      (BuilderManifest  *self,
                                                     BuilderContext   *context,
                                                     GError          **error);
 gboolean        builder_manifest_download          (BuilderManifest  *self,
+                                                    gboolean          update_vcs,
                                                     BuilderContext   *context,
                                                     GError          **error);
 gboolean        builder_manifest_build             (BuilderManifest  *self,

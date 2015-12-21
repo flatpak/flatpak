@@ -37,6 +37,7 @@ static gboolean opt_disable_cache;
 static gboolean opt_download_only;
 static gboolean opt_build_only;
 static gboolean opt_disable_download;
+static gboolean opt_disable_updates;
 static gboolean opt_require_changes;
 static gboolean opt_keep_build_dirs;
 
@@ -45,6 +46,7 @@ static GOptionEntry entries[] = {
   { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version information and exit", NULL },
   { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache", NULL },
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
+  { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir if no changes", NULL },
@@ -159,7 +161,7 @@ main (int    argc,
 
   if (!opt_disable_download)
     {
-      if (!builder_manifest_download (manifest, build_context, &error))
+      if (!builder_manifest_download (manifest, !opt_disable_updates, build_context, &error))
         {
           g_print ("error: %s\n", error->message);
           return 1;

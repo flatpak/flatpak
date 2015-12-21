@@ -472,8 +472,17 @@
 
                 <listitem><para>
                      Don't download any sources. This only works if some version of all sources are downloaded
-                     already. This is useful to rebuild things but without updating git or bzr repositories
-                     from the remote repository.
+                     already. This is useful if you want to guarantee that no network i/o is done. However, the
+                     build will fail if some source is not locally available.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--disable-updates</option></term>
+
+                <listitem><para>
+                  Download missing sources, but don't update local mirrors of version control repos. This is useful
+                  to rebuild things but without updating git or bzr repositories from the remote repository.
                 </para></listitem>
             </varlistentry>
 

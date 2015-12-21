@@ -470,6 +470,7 @@ builder_module_get_sources (BuilderModule  *self)
 
 gboolean
 builder_module_download_sources (BuilderModule *self,
+                                 gboolean update_vcs,
                                  BuilderContext *context,
                                  GError **error)
 {
@@ -479,7 +480,7 @@ builder_module_download_sources (BuilderModule *self,
     {
       BuilderSource *source = l->data;
 
-      if (!builder_source_download (source, context, error))
+      if (!builder_source_download (source, update_vcs, context, error))
         return FALSE;
     }
 

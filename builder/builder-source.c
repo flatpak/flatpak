@@ -99,6 +99,7 @@ builder_source_set_property (GObject      *object,
 
 static gboolean
 builder_source_real_download (BuilderSource *self,
+                              gboolean update_vcs,
                               BuilderContext *context,
                               GError **error)
 {
@@ -219,6 +220,7 @@ builder_source_from_json (JsonNode *node)
 
 gboolean
 builder_source_download (BuilderSource *self,
+                         gboolean update_vcs,
                          BuilderContext *context,
                          GError **error)
 {
@@ -226,7 +228,7 @@ builder_source_download (BuilderSource *self,
 
   class = BUILDER_SOURCE_GET_CLASS (self);
 
-  return class->download (self, context, error);
+  return class->download (self, update_vcs, context, error);
 }
 
 gboolean
