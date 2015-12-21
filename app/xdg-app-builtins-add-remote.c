@@ -39,7 +39,7 @@ static gboolean opt_do_gpg_verify;
 static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
 static gboolean opt_if_not_exists;
-static int opt_prio = -11;
+static int opt_prio = -1;
 static char *opt_title;
 static char *opt_url;
 static char **opt_gpg_import;
