@@ -255,10 +255,14 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   mtree = ostree_mutable_tree_new ();
 
-  modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS, commit_filter,
+  modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
+                                              OSTREE_REPO_COMMIT_MODIFIER_FLAGS_GENERATE_SIZES,
+                                              commit_filter,
                                               GUINT_TO_POINTER(opt_runtime ? 0 : ALLOW_EXPORT),
                                               NULL);
-  files_modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS, commit_filter,
+  files_modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
+                                                    OSTREE_REPO_COMMIT_MODIFIER_FLAGS_GENERATE_SIZES,
+                                                    commit_filter,
                                                     GUINT_TO_POINTER(ALLOW_ALL),
                                                     NULL);
   if (!ostree_repo_write_directory_to_mtree (repo, base, mtree, modifier, cancellable, error))
