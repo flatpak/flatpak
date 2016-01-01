@@ -168,6 +168,8 @@ glnx_dirfd_iterator_next_dent (GLnxDirFdIterator  *dfd_iter,
   gboolean ret = FALSE;
   GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
 
+  g_return_val_if_fail (out_dent, FALSE);
+
   if (g_cancellable_set_error_if_cancelled (cancellable, error))
     goto out;
 
@@ -183,6 +185,53 @@ glnx_dirfd_iterator_next_dent (GLnxDirFdIterator  *dfd_iter,
     } while (*out_dent &&
              (strcmp ((*out_dent)->d_name, ".") == 0 ||
               strcmp ((*out_dent)->d_name, "..") == 0));
+
+  ret = TRUE;
+ out:
+  return ret;
+}
+
+/**
+ * glnx_dirfd_iterator_next_dent_ensure_dtype:
+ * @dfd_iter: A directory iterator
+ * @out_dent: (out) (transfer none): Pointer to dirent; do not free
+ * @cancellable: Cancellable
+ * @error: Error
+ *
+ * A variant of @glnx_dirfd_iterator_next_dent, which will ensure the
+ * `dent->d_type` member is filled in by calling `fstatat`
+ * automatically if the underlying filesystem type sets `DT_UNKNOWN`.
+ */
+gboolean
+glnx_dirfd_iterator_next_dent_ensure_dtype (GLnxDirFdIterator  *dfd_iter,
+                                            struct dirent     **out_dent,
+                                            GCancellable       *cancellable,
+                                            GError            **error)
+{
+  gboolean ret = FALSE;
+  struct dirent *ret_dent;
+
+  g_return_val_if_fail (out_dent, FALSE);
+
+  if (!glnx_dirfd_iterator_next_dent (dfd_iter, out_dent, cancellable, error))
+    goto out;
+
+  ret_dent = *out_dent;
+
+  if (ret_dent)
+    {
+
+      if (ret_dent->d_type == DT_UNKNOWN)
+        {
+          struct stat stbuf;
+          if (TEMP_FAILURE_RETRY (fstatat (dfd_iter->fd, ret_dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW)) != 0)
+            {
+              glnx_set_error_from_errno (error);
+              goto out;
+            }
+          ret_dent->d_type = IFTODT (stbuf.st_mode);
+        }
+    }
 
   ret = TRUE;
  out:
