@@ -33,6 +33,13 @@ char *builder_uri_to_filename (const char *uri);
 const char *path_prefix_match (const char *pattern,
                                const char *string);
 
+gboolean strip (GError **error,
+                ...);
+
+gboolean is_elf_file (const char *path,
+                      gboolean *is_shared,
+                      gboolean *is_stripped);
+
 G_END_DECLS
 
 #endif /* __BUILDER_UTILS_H__ */

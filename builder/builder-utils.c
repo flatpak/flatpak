@@ -21,8 +21,13 @@
 
 #include "config.h"
 
+#include <libelf.h>
+#include <gelf.h>
+#include <sys/mman.h>
+
 #include <string.h>
 
+#include "xdg-app-utils.h"
 #include "builder-utils.h"
 
 char *
@@ -112,4 +117,90 @@ path_prefix_match (const char *pattern,
         }
     }
   return NULL; /* Should not be reached */
+}
+
+gboolean
+strip (GError **error,
+       ...)
+{
+  gboolean res;
+  va_list ap;
+
+  va_start (ap, error);
+  res = xdg_app_spawn (NULL, NULL, error, "strip", ap);
+  va_end (ap);
+
+  return res;
+}
+
+static gboolean elf_has_symtab (Elf *elf)
+{
+  Elf_Scn *scn;
+  GElf_Shdr shdr;
+
+  scn = NULL;
+  while ((scn = elf_nextscn(elf, scn)) != NULL)
+    {
+      if (gelf_getshdr (scn, &shdr) == NULL)
+        continue;
+
+      if (shdr.sh_type != SHT_SYMTAB)
+        continue;
+
+      return TRUE;
+    }
+
+  return FALSE;
+}
+
+gboolean is_elf_file (const char *path,
+                      gboolean *is_shared,
+                      gboolean *is_stripped)
+{
+  g_autofree char *filename = g_path_get_basename (path);
+  struct stat stbuf;
+
+  if (lstat (path, &stbuf) == -1)
+    return FALSE;
+
+  if (!S_ISREG (stbuf.st_mode))
+    return FALSE;
+
+  if ((strstr (filename, ".so.") != NULL ||
+       g_str_has_suffix (filename, ".so")) ||
+      (stbuf.st_mode & 0111) != 0)
+    {
+      glnx_fd_close int fd = -1;
+
+      fd = open (path, O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
+      if (fd >= 0)
+        {
+          Elf *elf;
+          GElf_Ehdr ehdr;
+          gboolean res = FALSE;
+
+          if (elf_version (EV_CURRENT) == EV_NONE )
+            return FALSE;
+
+          elf = elf_begin (fd, ELF_C_READ, NULL);
+          if (elf == NULL)
+            return FALSE;
+
+          if (elf_kind (elf) == ELF_K_ELF &&
+              gelf_getehdr (elf, &ehdr))
+            {
+              if (is_shared)
+                *is_shared = ehdr.e_type == ET_DYN;
+              if (is_stripped)
+                *is_stripped = !elf_has_symtab (elf);
+
+              res = TRUE;
+            }
+
+          elf_end (elf);
+          return res;
+        }
+    }
+
+  return FALSE;
 }

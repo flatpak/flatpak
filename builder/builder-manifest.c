@@ -737,20 +737,6 @@ builder_manifest_build (BuilderManifest *self,
 }
 
 static gboolean
-strip (GError **error,
-       ...)
-{
-  gboolean res;
-  va_list ap;
-
-  va_start (ap, error);
-  res = xdg_app_spawn (NULL, NULL, error, "strip", ap);
-  va_end (ap);
-
-  return res;
-}
-
-static gboolean
 command (GFile *app_dir,
          char **env_vars,
          const char *commandline,
@@ -790,54 +776,6 @@ command (GFile *app_dir,
   if (subp == NULL ||
       !g_subprocess_wait_check (subp, NULL, error))
     return FALSE;
-
-  return TRUE;
-}
-
-guint16
-read_elf_16(guchar *ptr, guint16 endianness)
-{
-  guint16 lo, hi;
-  if (endianness == 1)
-    {
-      lo = ptr[0];
-      hi = ptr[1];
-    }
-  else
-    {
-      lo = ptr[1];
-      hi = ptr[0];
-    }
-  return lo  | (hi << 8);
-}
-
-static gboolean
-is_elf (int fd, gboolean *is_shared)
-{
-  guchar elf_magic[4] = { 0x7f, 'E', 'L', 'F' };
-  guchar header[64];
-  gssize r;
-  guint8 endianness;
-  guint16 e_type;
-
-  r = read (fd, header, sizeof (header));
-  if (r != sizeof (header))
-    return FALSE;
-
-  if (memcmp (header, elf_magic, 4) != 0)
-    return FALSE;
-
-  endianness = header[0x5];
-  if (endianness != 1 && endianness != 2) /* 1 == little, 2 == big endian */
-    return FALSE;
-
-  e_type = read_elf_16 (&header[0x10], endianness);
-
-  /* Only handle executable (2) or shared (3) */
-  if (e_type != 2 && e_type != 3)
-    return FALSE;
-
-  *is_shared = (e_type == 3);
 
   return TRUE;
 }
@@ -929,40 +867,33 @@ foreach_file (BuilderManifest *self,
 
 static gboolean
 strip_file_cb (BuilderManifest *self,
-              int            source_parent_fd,
-              const char    *source_name,
-              const char    *full_dir,
-              const char    *rel_dir,
-              struct stat   *stbuf,
-              gboolean      *found,
-              int            depth,
-              GError       **error)
+               int            source_parent_fd,
+               const char    *source_name,
+               const char    *full_dir,
+               const char    *rel_dir,
+               struct stat   *stbuf,
+               gboolean      *found,
+               int            depth,
+               GError       **error)
 {
-  if (S_ISREG (stbuf->st_mode) &&
-      ((strstr (source_name, ".so.") != NULL || g_str_has_suffix (source_name, ".so")) ||
-       (stbuf->st_mode & 0111) != 0))
+  if (S_ISREG (stbuf->st_mode))
     {
-      glnx_fd_close int fd = -1;
+      g_autofree char *path = g_strconcat (full_dir, "/", source_name, NULL);
+      gboolean is_shared, is_stripped;
 
-      fd = openat (source_parent_fd, source_name, O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
-      if (fd >= 0)
+      if (is_elf_file (path, &is_shared, &is_stripped) && !is_stripped)
         {
-          gboolean is_shared;
-          if (is_elf (fd, &is_shared))
+          g_autofree char *rel_path = g_strconcat (rel_dir, "/", source_name, NULL);
+          g_print ("stripping: %s\n", rel_path);
+          if (is_shared)
             {
-              g_autofree char *path = g_strconcat (full_dir, "/", source_name, NULL);
-              g_autofree char *rel_path = g_strconcat (rel_dir, "/", source_name, NULL);
-              g_print ("stripping: %s\n", rel_path);
-              if (is_shared)
-                {
-                  if (!strip (error, "--remove-section=.comment", "--remove-section=.note", "--strip-unneeded", path, NULL))
-                    return FALSE;
-                }
-              else
-                {
-                  if (!strip (error, "--remove-section=.comment", "--remove-section=.note", path, NULL))
-                    return FALSE;
-                }
+              if (!strip (error, "--remove-section=.comment", "--remove-section=.note", "--strip-unneeded", path, NULL))
+                return FALSE;
+            }
+          else
+            {
+              if (!strip (error, "--remove-section=.comment", "--remove-section=.note", path, NULL))
+                return FALSE;
             }
         }
     }

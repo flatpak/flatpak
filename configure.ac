@@ -177,7 +177,27 @@ AS_IF([ test x$with_libarchive != xno ], [
 ], [ with_libarchive=no ])
 AM_CONDITIONAL(USE_LIBARCHIVE, test $with_libarchive != no)
 
+dnl ************************
+dnl *** check for libelf ***
+dnl ************************
+PKG_CHECK_MODULES([LIBELF], [libelf >= 0.8.12], [have_libelf=yes], [have_libelf=maybe])
+AS_IF([ test $have_libelf = maybe ], [
+  save_LIBS=$LIBS
+  AC_CHECK_LIB([elf], [elf_begin], [:], [have_libelf=no])
+  AC_CHECK_LIB([elf], [elf_getshdrstrndx], [:], [have_libelf=no])
+  AC_CHECK_LIB([elf], [elf_getshdrnum], [:], [have_libelf=no])
+  AC_CHECK_HEADER([libelf.h], [:], [have_libelf=no])
+  LIBS=$save_LIBS
 
+  if test $have_libelf != no; then
+    LIBELF_LIBS=-lelf
+    have_libelf=yes
+  fi
+])
+
+if test x$have_libelf != xyes; then
+  AC_MSG_ERROR([libelf not found])
+fi
 AC_ARG_ENABLE(documentation,
               AC_HELP_STRING([--enable-documentation], [Build documentation]),,
               enable_documentation=yes)

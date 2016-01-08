@@ -32,6 +32,6 @@ xdg_app_builder_SOURCES = \
 	builder/builder-utils.h \
 	$(NULL)
 
-xdg_app_builder_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(JSON_LIBS) $(SOUP_LIBS) $(LIBARCHIVE_LIBS) libglnx.la libxdgapp-common.la
+xdg_app_builder_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(JSON_LIBS) $(SOUP_LIBS) $(LIBARCHIVE_LIBS) $(LIBELF_LIBS) \
+			libglnx.la libxdgapp-common.la
 xdg_app_builder_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(JSON_CFLAGS) $(SOUP_CFLAGS) $(LIBARCHIVE_CFLAGS)
-
