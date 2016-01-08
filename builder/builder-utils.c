@@ -133,6 +133,20 @@ strip (GError **error,
   return res;
 }
 
+gboolean
+eu_strip (GError **error,
+       ...)
+{
+  gboolean res;
+  va_list ap;
+
+  va_start (ap, error);
+  res = xdg_app_spawn (NULL, NULL, error, "eu-strip", ap);
+  va_end (ap);
+
+  return res;
+}
+
 static gboolean elf_has_symtab (Elf *elf)
 {
   Elf_Scn *scn;

@@ -33,8 +33,8 @@ char *builder_uri_to_filename (const char *uri);
 const char *path_prefix_match (const char *pattern,
                                const char *string);
 
-gboolean strip (GError **error,
-                ...);
+gboolean strip (GError **error, ...);
+gboolean eu_strip (GError **error, ...);
 
 gboolean is_elf_file (const char *path,
                       gboolean *is_shared,

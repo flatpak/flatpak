@@ -372,6 +372,73 @@ builder_cache_commit (BuilderCache  *self,
   return res;
 }
 
+gboolean
+builder_cache_get_outstanding_changes (BuilderCache  *self,
+                                       GPtrArray    **added_out,
+                                       GPtrArray    **modified_out,
+                                       GPtrArray    **removed_out,
+                                       GError       **error)
+{
+  g_autoptr(GPtrArray) added = g_ptr_array_new_with_free_func (g_object_unref);
+  g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify)ostree_diff_item_unref);
+  g_autoptr(GPtrArray) removed = g_ptr_array_new_with_free_func (g_object_unref);
+  g_autoptr(GPtrArray) added_paths = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) modified_paths = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) removed_paths = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GFile) last_root = NULL;
+  g_autoptr(GVariant) variant = NULL;
+  int i;
+
+  if (!ostree_repo_read_commit (self->repo, self->last_parent, &last_root, NULL, NULL, error))
+    return FALSE;
+
+  if (!ostree_repo_load_variant (self->repo, OSTREE_OBJECT_TYPE_COMMIT, self->last_parent,
+                                 &variant, NULL))
+    return FALSE;
+
+  if (!ostree_diff_dirs (OSTREE_DIFF_FLAGS_IGNORE_XATTRS,
+                         last_root,
+                         self->app_dir,
+                         modified,
+                         removed,
+                         added,
+                         NULL, error))
+    return FALSE;
+
+  for (i = 0; i < added->len; i++)
+    {
+      GFile *added_file = g_ptr_array_index (added, i);
+      char *path = g_file_get_relative_path (self->app_dir, added_file);
+      g_ptr_array_add (added_paths, path);
+    }
+
+  for (i = 0; i < modified->len; i++)
+    {
+      OstreeDiffItem *modified_item = g_ptr_array_index (modified, i);
+      char *path = g_file_get_relative_path (self->app_dir, modified_item->target);
+      g_ptr_array_add (modified_paths, path);
+    }
+
+  for (i = 0; i < removed->len; i++)
+    {
+      GFile *removed_file = g_ptr_array_index (removed, i);
+      char *path = g_file_get_relative_path (self->app_dir, removed_file);
+      g_ptr_array_add (removed_paths, path);
+    }
+
+  if (added_out)
+    *added_out = g_steal_pointer (&added_paths);
+
+  if (modified_out)
+    *modified_out = g_steal_pointer (&modified_paths);
+
+  if (removed_out)
+    *removed_out = g_steal_pointer (&removed_paths);
+
+  return TRUE;
+}
+
+
 GPtrArray *
 builder_cache_get_changes (BuilderCache  *self,
                            GError       **error)

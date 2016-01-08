@@ -51,7 +51,6 @@ struct BuilderManifest {
   char *desktop_file_name_prefix;
   char *desktop_file_name_suffix;
   gboolean writable_sdk;
-  gboolean strip;
   char *command;
   BuilderOptions *build_options;
   GList *modules;
@@ -78,7 +77,6 @@ enum {
   PROP_MODULES,
   PROP_CLEANUP,
   PROP_CLEANUP_COMMANDS,
-  PROP_STRIP,
   PROP_WRITABLE_SDK,
   PROP_FINISH_ARGS,
   PROP_RENAME_DESKTOP_FILE,
@@ -165,10 +163,6 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_FINISH_ARGS:
       g_value_set_boxed (value, self->finish_args);
-      break;
-
-    case PROP_STRIP:
-      g_value_set_boolean (value, self->strip);
       break;
 
     case PROP_WRITABLE_SDK:
@@ -267,10 +261,6 @@ builder_manifest_set_property (GObject       *object,
       tmp = self->finish_args;
       self->finish_args = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
-      break;
-
-    case PROP_STRIP:
-      self->strip = g_value_get_boolean (value);
       break;
 
     case PROP_WRITABLE_SDK:
@@ -392,13 +382,6 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                        G_TYPE_STRV,
                                                        G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
-                                   PROP_STRIP,
-                                   g_param_spec_boolean ("strip",
-                                                         "",
-                                                         "",
-                                                         TRUE,
-                                                         G_PARAM_READWRITE));
-  g_object_class_install_property (object_class,
                                    PROP_WRITABLE_SDK,
                                    g_param_spec_boolean ("writable-sdk",
                                                          "",
@@ -445,7 +428,6 @@ builder_manifest_class_init (BuilderManifestClass *klass)
 static void
 builder_manifest_init (BuilderManifest *self)
 {
-  self->strip = TRUE;
 }
 
 static JsonNode *
@@ -652,7 +634,6 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
   builder_cache_checksum_boolean (cache, self->copy_icon);
   builder_cache_checksum_str (cache, self->desktop_file_name_prefix);
   builder_cache_checksum_str (cache, self->desktop_file_name_suffix);
-  builder_cache_checksum_boolean (cache, self->strip);
   builder_cache_checksum_boolean (cache, self->writable_sdk);
 
   for (l = self->modules; l != NULL; l = l->next)
@@ -715,7 +696,7 @@ builder_manifest_build (BuilderManifest *self,
         {
           g_autofree char *body =
             g_strdup_printf ("Built %s\n", builder_module_get_name (m));
-          if (!builder_module_build (m, keep_build_dir, context, error))
+          if (!builder_module_build (m, keep_build_dir, cache, context, error))
             return FALSE;
           if (!builder_cache_commit (cache, body, error))
             return FALSE;
@@ -866,42 +847,6 @@ foreach_file (BuilderManifest *self,
 }
 
 static gboolean
-strip_file_cb (BuilderManifest *self,
-               int            source_parent_fd,
-               const char    *source_name,
-               const char    *full_dir,
-               const char    *rel_dir,
-               struct stat   *stbuf,
-               gboolean      *found,
-               int            depth,
-               GError       **error)
-{
-  if (S_ISREG (stbuf->st_mode))
-    {
-      g_autofree char *path = g_strconcat (full_dir, "/", source_name, NULL);
-      gboolean is_shared, is_stripped;
-
-      if (is_elf_file (path, &is_shared, &is_stripped) && !is_stripped)
-        {
-          g_autofree char *rel_path = g_strconcat (rel_dir, "/", source_name, NULL);
-          g_print ("stripping: %s\n", rel_path);
-          if (is_shared)
-            {
-              if (!strip (error, "--remove-section=.comment", "--remove-section=.note", "--strip-unneeded", path, NULL))
-                return FALSE;
-            }
-          else
-            {
-              if (!strip (error, "--remove-section=.comment", "--remove-section=.note", path, NULL))
-                return FALSE;
-            }
-        }
-    }
-
-  return TRUE;
-}
-
-static gboolean
 rename_icon_cb (BuilderManifest *self,
                 int            source_parent_fd,
                 const char    *source_name,
@@ -1003,12 +948,6 @@ builder_manifest_cleanup (BuilderManifest *self,
                   return FALSE;
                 }
             }
-        }
-
-      if (self->strip)
-        {
-          if (!foreach_file (self, strip_file_cb, NULL, app_root, error))
-            return FALSE;
         }
 
       if (self->rename_desktop_file != NULL)

@@ -46,6 +46,11 @@ void          builder_cache_ensure_checkout (BuilderCache *self);
 gboolean      builder_cache_commit          (BuilderCache  *self,
                                              const char    *body,
                                              GError       **error);
+gboolean      builder_cache_get_outstanding_changes (BuilderCache  *self,
+                                                     GPtrArray    **added_out,
+                                                     GPtrArray    **modified_out,
+                                                     GPtrArray    **removed_out,
+                                                     GError       **error);
 GPtrArray   *builder_cache_get_changes      (BuilderCache  *self,
                                              GError       **error);
 gboolean      builder_gc                    (BuilderCache  *self,

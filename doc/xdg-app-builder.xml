@@ -150,10 +150,6 @@
                     <listitem><para>An array of arguments passed to the <command>xdg-app build-finish</command> command</para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>strip</option></term>
-                    <listitem><para>If this is true (the default) then all ELF files will be stripped during the cleanup phase.</para></listitem>
-                </varlistentry>
-                <varlistentry>
                     <term><option>rename-desktop-file</option></term>
                     <listitem><para>Any desktop file with this name will be renamed to a name based on app-id during the cleanup phase.</para></listitem>
                 </varlistentry>
@@ -201,6 +197,14 @@
                 <varlistentry>
                     <term><option>env</option></term>
                     <listitem><para>This is a dictionary defining environment variables to be set during the build.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>strip</option></term>
+                    <listitem><para>If this is true (the default is false) then all ELF files will be stripped after install.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>no-debuginfo</option></term>
+                    <listitem><para>If this is true (the default is false) and strip is not set then all ELF files will have their debug info extracted to a separate file.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>arch</option></term>

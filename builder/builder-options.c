@@ -35,6 +35,8 @@
 struct BuilderOptions {
   GObject parent;
 
+  gboolean strip;
+  gboolean no_debuginfo;
   char *cflags;
   char *cxxflags;
   char *prefix;
@@ -58,6 +60,8 @@ enum {
   PROP_CXXFLAGS,
   PROP_PREFIX,
   PROP_ENV,
+  PROP_STRIP,
+  PROP_NO_DEBUGINFO,
   PROP_ARCH,
   PROP_BUILD_ARGS,
   LAST_PROP
@@ -112,6 +116,14 @@ builder_options_get_property (GObject    *object,
       g_value_set_boxed (value, self->build_args);
       break;
 
+    case PROP_STRIP:
+      g_value_set_boolean (value, self->strip);
+      break;
+
+    case PROP_NO_DEBUGINFO:
+      g_value_set_boolean (value, self->no_debuginfo);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -159,6 +171,14 @@ builder_options_set_property (GObject      *object,
       tmp = self->build_args;
       self->build_args = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
+      break;
+
+    case PROP_STRIP:
+      self->strip = g_value_get_boolean (value);
+      break;
+
+    case PROP_NO_DEBUGINFO:
+      self->no_debuginfo = g_value_get_boolean (value);
       break;
 
     default:
@@ -217,6 +237,20 @@ builder_options_class_init (BuilderOptionsClass *klass)
                                                        "",
                                                        G_TYPE_STRV,
                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_STRIP,
+                                   g_param_spec_boolean ("strip",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_STRIP,
+                                   g_param_spec_boolean ("no-debuginfo",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
 }
 
 static void
@@ -474,6 +508,38 @@ builder_options_get_prefix (BuilderOptions *self, BuilderContext *context)
   return "/app";
 }
 
+gboolean
+builder_options_get_strip (BuilderOptions *self, BuilderContext *context)
+{
+  g_autoptr(GList) options = get_all_options (self, context);
+  GList *l;
+
+  for (l = options; l != NULL; l = l->next)
+    {
+      BuilderOptions *o = l->data;
+      if (o->strip)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+gboolean
+builder_options_get_no_debuginfo (BuilderOptions *self, BuilderContext *context)
+{
+  g_autoptr(GList) options = get_all_options (self, context);
+  GList *l;
+
+  for (l = options; l != NULL; l = l->next)
+    {
+      BuilderOptions *o = l->data;
+      if (o->no_debuginfo)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
 char **
 builder_options_get_env (BuilderOptions *self, BuilderContext *context)
 {
@@ -552,6 +618,8 @@ builder_options_checksum (BuilderOptions *self,
   builder_cache_checksum_str (cache, self->prefix);
   builder_cache_checksum_strv (cache, self->env);
   builder_cache_checksum_strv (cache, self->build_args);
+  builder_cache_checksum_boolean (cache, self->strip);
+  builder_cache_checksum_boolean (cache, self->no_debuginfo);
 
   arch_options = g_hash_table_lookup (self->arch, builder_context_get_arch (context));
   if (arch_options)

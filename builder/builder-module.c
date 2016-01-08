@@ -31,6 +31,7 @@
 #include "libglnx/libglnx.h"
 #include "libgsystem.h"
 
+#include "xdg-app-utils.h"
 #include "builder-utils.h"
 #include "builder-module.h"
 
@@ -600,9 +601,102 @@ build (GFile *app_dir,
   return TRUE;
 }
 
+static gboolean
+builder_module_handle_debuginfo (BuilderModule *self,
+                                 GFile *app_dir,
+                                 BuilderCache *cache,
+                                 BuilderContext *context,
+                                 GError **error)
+{
+  g_autofree char *app_dir_path = g_file_get_path (app_dir);
+  int i;
+  g_autoptr(GPtrArray) added = NULL;
+  g_autoptr(GPtrArray) modified = NULL;
+  g_autoptr(GPtrArray) added_or_modified = g_ptr_array_new ();
+
+  if (!builder_cache_get_outstanding_changes (cache, &added, &modified, NULL, error))
+    return FALSE;
+
+  for (i = 0; i < added->len; i++)
+    g_ptr_array_add (added_or_modified, g_ptr_array_index (added, i));
+
+  for (i = 0; i < modified->len; i++)
+    g_ptr_array_add (added_or_modified, g_ptr_array_index (modified, i));
+
+  g_ptr_array_sort (added_or_modified, xdg_app_strcmp0_ptr);
+
+  for (i = 0; i < added_or_modified->len; i++)
+    {
+      const char *rel_path = (char *)g_ptr_array_index (added_or_modified, i);
+      g_autoptr(GFile) file = g_file_resolve_relative_path (app_dir, rel_path);
+      g_autofree char *path = g_file_get_path (file);
+      g_autofree char *debug_path = NULL;
+      g_autofree char *real_debug_path = NULL;
+      gboolean is_shared, is_stripped;
+
+      if (is_elf_file (path, &is_shared, &is_stripped))
+        {
+          if (builder_options_get_strip (self->build_options, context))
+            {
+              g_print ("stripping: %s\n", rel_path);
+              if (is_shared)
+                {
+                  if (!strip (error, "--remove-section=.comment", "--remove-section=.note", "--strip-unneeded", path, NULL))
+                    return FALSE;
+                }
+              else
+                {
+                  if (!strip (error, "--remove-section=.comment", "--remove-section=.note", path, NULL))
+                    return FALSE;
+                }
+            }
+          else if (!builder_options_get_no_debuginfo (self->build_options, context))
+            {
+              g_autofree char *rel_path_dir = g_path_get_dirname (rel_path);
+              g_autofree char *filename = g_path_get_basename (rel_path);
+              g_autofree char *filename_debug = g_strconcat (filename, ".debug", NULL);
+              g_autofree char *debug_dir = NULL;
+              g_autofree char *real_debug_dir = NULL;
+
+              if (g_str_has_prefix (rel_path_dir, "files/"))
+                {
+                  debug_dir = g_build_filename (app_dir_path, "files/lib/debug", rel_path_dir + strlen("files/"), NULL);
+                  real_debug_dir = g_build_filename ("/app/lib/debug", rel_path_dir + strlen("files/"), NULL);
+                }
+              else if (g_str_has_prefix (rel_path_dir, "usr/"))
+                {
+                  debug_dir = g_build_filename (app_dir_path, "usr/lib/debug", rel_path_dir + strlen("usr/"), NULL);
+                  real_debug_dir = g_build_filename ("/usr/lib/debug", rel_path_dir + strlen("usr/"), NULL);
+                }
+
+              if (debug_dir)
+                {
+                  if (g_mkdir_with_parents (debug_dir, 0755) != 0)
+                    {
+                      glnx_set_error_from_errno (error);
+                      return FALSE;
+                    }
+
+                  debug_path = g_build_filename (debug_dir, filename_debug, NULL);
+                  real_debug_path = g_build_filename (real_debug_dir, filename_debug, NULL);
+
+                  g_print ("stripping %s to %s\n", path, debug_path);
+                  eu_strip (error, "--remove-comment", "--reloc-debug-sections",
+                            "-f", debug_path,
+                            "-F", real_debug_path,
+                            path, NULL);
+                }
+            }
+        }
+    }
+
+  return TRUE;
+}
+
 gboolean
 builder_module_build (BuilderModule *self,
                       gboolean keep_build_dir,
+                      BuilderCache *cache,
                       BuilderContext *context,
                       GError **error)
 {
@@ -807,6 +901,8 @@ builder_module_build (BuilderModule *self,
       make_l = g_strdup_printf ("-l%d", 2*builder_context_get_n_cpu (context));
     }
 
+  /* Build and install */
+
   if (!build (app_dir, source_dir, build_dir, build_args, env, error,
               "make", make_j?make_j:skip_arg, make_l?make_l:skip_arg, strv_arg, self->make_args, NULL))
     return FALSE;
@@ -814,6 +910,8 @@ builder_module_build (BuilderModule *self,
   if (!build (app_dir, source_dir, build_dir, build_args, env, error,
               "make", "install", strv_arg, self->make_install_args, NULL))
     return FALSE;
+
+  /* Post installation scripts */
 
   if (self->post_install)
     {
@@ -824,6 +922,11 @@ builder_module_build (BuilderModule *self,
             return FALSE;
         }
     }
+
+  if (!builder_module_handle_debuginfo (self, app_dir, cache, context, error))
+    return FALSE;
+
+  /* Clean up build dir */
 
   if (keep_build_dir)
     {
