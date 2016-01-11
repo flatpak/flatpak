@@ -54,7 +54,7 @@ builder_uri_to_filename (const char *uri)
 }
 
 /* Returns end of matching path prefix, or NULL if no match */
-const char *
+static const char *
 path_prefix_match (const char *pattern,
                    const char *string)
 {
@@ -117,6 +117,76 @@ path_prefix_match (const char *pattern,
         }
     }
   return NULL; /* Should not be reached */
+}
+
+/* If pattern starts with a slash, then match on the entire
+ * path, otherwise just the basename.
+ * Note: Return value points into path.
+ */
+static const char *
+path_prefix_match_full (const char *pattern,
+                        const char *path,
+                        char **prefix_out)
+{
+  const char *rest;
+  const char *last_slash;
+
+  if (pattern[0] == '/')
+    {
+      /* Absolute path match */
+      rest = path_prefix_match (pattern+1, path);
+    }
+  else
+    {
+      /* Basename match */
+      last_slash = strrchr (path, '/');
+      if (last_slash && prefix_out)
+        {
+          *prefix_out = g_strndup (path, last_slash - path);
+          path = last_slash + 1;
+        }
+      rest = path_prefix_match (pattern, path);
+    }
+
+  return rest;
+}
+
+/* Adds all matches of path to prefix. There can be multiple, because
+   e.g matching "a/b/c" against "/a" matches both "a/b" and "a/b/c" */
+void
+xdg_app_collect_matches_for_path_pattern (const char *path,
+                                          const char *pattern,
+                                          GHashTable *to_remove_ht)
+{
+  const char *rest;
+  g_autofree char *dir = NULL;
+
+  rest = path_prefix_match_full (pattern, path, &dir);
+
+  while (rest != NULL)
+    {
+      const char *slash;
+      g_autofree char *prefix = g_strndup (path, rest-path);
+      g_autofree char *to_remove = NULL;
+      if (dir)
+        to_remove = g_strconcat (dir, "/", prefix, NULL);
+      else
+        to_remove = g_strdup (prefix);
+      g_hash_table_insert (to_remove_ht, g_steal_pointer (&to_remove), GINT_TO_POINTER (1));
+      while (*rest == '/')
+        rest++;
+      if (*rest == 0)
+        break;
+      slash = strchr (rest, '/');
+      rest = slash ? slash : rest + strlen (rest);
+    }
+}
+
+gboolean
+xdg_app_matches_path_pattern (const char *path,
+                              const char *pattern)
+{
+  return path_prefix_match_full (pattern, path, NULL) != NULL;
 }
 
 gboolean

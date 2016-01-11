@@ -1033,52 +1033,6 @@ builder_module_set_changes (BuilderModule  *self,
     }
 }
 
-static void
-collect_for_pattern (BuilderModule *self,
-                     const char *pattern,
-                     const char *path,
-                     GHashTable *to_remove_ht)
-{
-  const char *rest;
-  const char *last_slash;
-  g_autofree char *dir = NULL;
-
-  if (pattern[0] == '/')
-    {
-      /* Absolute path match */
-      rest = path_prefix_match (pattern+1, path);
-    }
-  else
-    {
-      /* Basename match */
-      last_slash = strrchr (path, '/');
-      if (last_slash)
-        {
-          dir = g_strndup (path, last_slash - path);
-          path = last_slash + 1;
-        }
-      rest = path_prefix_match (pattern, path);
-    }
-
-  while (rest != NULL)
-    {
-      const char *slash;
-      g_autofree char *prefix = g_strndup (path, rest-path);
-      g_autofree char *to_remove = NULL;
-      if (dir)
-        to_remove = g_strconcat (dir, "/", prefix, NULL);
-      else
-        to_remove = g_strdup (prefix);
-      g_hash_table_insert (to_remove_ht, g_steal_pointer (&to_remove), GINT_TO_POINTER (1));
-      while (*rest == '/')
-        rest++;
-      if (*rest == 0)
-        break;
-      slash = strchr (rest, '/');
-      rest = slash ? slash : rest + strlen (rest);
-    }
-}
-
 void
 builder_module_cleanup_collect (BuilderModule *self,
                                 char **global_patterns,
@@ -1095,13 +1049,13 @@ builder_module_cleanup_collect (BuilderModule *self,
       if (global_patterns)
         {
           for (j = 0; global_patterns[j] != NULL; j++)
-            collect_for_pattern (self, global_patterns[j], path, to_remove_ht);
+            xdg_app_collect_matches_for_path_pattern (path, global_patterns[j], to_remove_ht);
         }
 
       if (self->cleanup)
         {
           for (j = 0; self->cleanup[j] != NULL; j++)
-            collect_for_pattern (self, self->cleanup[j], path, to_remove_ht);
+            xdg_app_collect_matches_for_path_pattern (path, self->cleanup[j], to_remove_ht);
         }
     }
 }
