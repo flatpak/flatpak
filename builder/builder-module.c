@@ -1032,13 +1032,45 @@ builder_module_set_changes (BuilderModule  *self,
     }
 }
 
+static void
+collect_cleanup_for_path (const char **patterns,
+                          const char *path,
+                          GHashTable *to_remove_ht)
+{
+  int i;
+
+  if (patterns == NULL)
+    return;
+
+  for (i = 0; patterns[i] != NULL; i++)
+    xdg_app_collect_matches_for_path_pattern (path, patterns[i], to_remove_ht);
+}
+
+static gboolean
+matches_cleanup_for_path (const char **patterns,
+                          const char *path)
+{
+  int i;
+
+  if (patterns == NULL)
+    return FALSE;
+
+  for (i = 0; patterns[i] != NULL; i++)
+    {
+      if (xdg_app_matches_path_pattern (path, patterns[i]))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
 void
 builder_module_cleanup_collect (BuilderModule *self,
                                 BuilderContext  *context,
                                 GHashTable *to_remove_ht)
 {
   GPtrArray *changed_files;
-  int i, j;
+  int i;
   const char **global_patterns = builder_context_get_global_cleanup (context);
 
   changed_files = self->changes;
@@ -1046,16 +1078,38 @@ builder_module_cleanup_collect (BuilderModule *self,
     {
       const char *path = g_ptr_array_index (changed_files, i);
 
-      if (global_patterns)
-        {
-          for (j = 0; global_patterns[j] != NULL; j++)
-            xdg_app_collect_matches_for_path_pattern (path, global_patterns[j], to_remove_ht);
-        }
+      collect_cleanup_for_path (global_patterns, path, to_remove_ht);
+      collect_cleanup_for_path ((const char **)self->cleanup, path, to_remove_ht);
 
-      if (self->cleanup)
+      if (g_str_has_prefix (path, "lib/debug/") &&
+          g_str_has_suffix (path, ".debug"))
         {
-          for (j = 0; self->cleanup[j] != NULL; j++)
-            xdg_app_collect_matches_for_path_pattern (path, self->cleanup[j], to_remove_ht);
+          g_autofree char *real_path = g_strdup (path);
+          g_autofree char *real_parent = NULL;
+          g_autofree char *parent = NULL;
+          g_autofree char *debug_path = NULL;
+
+          debug_path = g_strdup (path + strlen ("lib/debug/"));
+          debug_path[strlen (debug_path) - strlen (".debug")] = 0;
+
+          while (TRUE)
+            {
+              if (matches_cleanup_for_path (global_patterns, debug_path) ||
+                  matches_cleanup_for_path ((const char **)self->cleanup, debug_path))
+                {
+                  g_hash_table_insert (to_remove_ht, g_strdup (real_path), GINT_TO_POINTER (1));
+                }
+
+              real_parent = g_path_get_dirname (real_path);
+              if (strcmp (real_parent, ".") == 0)
+                break;
+              g_free (real_path);
+              real_path = g_steal_pointer (&real_parent);
+
+              parent = g_path_get_dirname (debug_path);
+              g_free (debug_path);
+              debug_path = g_steal_pointer (&parent);
+            }
         }
     }
 }
