@@ -1229,7 +1229,7 @@ xdg_app_add_bus_filters (GPtrArray *dbus_proxy_argv,
 
 static void
 add_extension_arg (const char *directory,
-                   const char *type,
+                   gboolean is_app,
                    const char *extension,
                    const char *arch,
                    const char *branch,
@@ -1239,13 +1239,11 @@ add_extension_arg (const char *directory,
   g_autofree char *extension_ref;
   g_autoptr(GFile) deploy = NULL;
   g_autofree char *full_directory = NULL;
-  gboolean is_app;
 
-  is_app = strcmp (type, "app") == 0;
 
   full_directory = g_build_filename (is_app ? "/app" : "/usr", directory, NULL);
 
-  extension_ref = g_build_filename (type, extension, arch, branch, NULL);
+  extension_ref = g_build_filename ("runtime", extension, arch, branch, NULL);
   deploy = xdg_app_find_deploy_dir_for_ref (extension_ref, cancellable, NULL);
   if (deploy != NULL)
     {
@@ -1266,10 +1264,13 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
   g_auto(GStrv) groups = NULL;
   g_auto(GStrv) parts = NULL;
   int i;
+  gboolean is_app;
 
   parts = g_strsplit (full_ref, "/", 0);
   if (g_strv_length (parts) != 4)
     return xdg_app_fail (error, "Failed to determine parts from ref: %s", full_ref);
+
+  is_app = strcmp (parts[0], "app") == 0;
 
   groups = g_key_file_get_groups (metakey, NULL);
   for (i = 0; groups[i] != NULL; i++)
@@ -1292,7 +1293,7 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
               g_auto(GStrv) refs = NULL;
               int i;
 
-              refs = xdg_app_list_deployed_refs (parts[0], prefix, parts[2], parts[3],
+              refs = xdg_app_list_deployed_refs ("runtime", prefix, parts[2], parts[3],
                                                  cancellable, error);
               if (refs == NULL)
                 return FALSE;
@@ -1300,12 +1301,12 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
               for (i = 0; refs[i] != NULL; i++)
                 {
                   g_autofree char *extended_dir = g_build_filename (directory, refs[i] + strlen (prefix), NULL);
-                  add_extension_arg (extended_dir, parts[0], refs[i], parts[2], parts[3],
+                  add_extension_arg (extended_dir, is_app, refs[i], parts[2], parts[3],
                                      argv_array, cancellable);
                 }
             }
           else
-            add_extension_arg (directory, parts[0], extension, parts[2], version ? version : parts[3],
+            add_extension_arg (directory, is_app, extension, parts[2], version ? version : parts[3],
                                argv_array, cancellable);
         }
     }
