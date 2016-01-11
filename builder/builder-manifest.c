@@ -1062,6 +1062,7 @@ builder_manifest_cleanup (BuilderManifest *self,
         {
           g_autoptr(GError) my_error = NULL;
           g_autoptr(GFile) f = g_file_resolve_relative_path (app_root, keys[i]);
+          g_print ("Removing %s\n", keys[i]);
           if (!g_file_delete (f, NULL, &my_error))
             {
               if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
