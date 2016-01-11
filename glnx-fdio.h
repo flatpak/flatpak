@@ -102,6 +102,9 @@ glnx_readlinkat_malloc (int            dfd,
                         GCancellable  *cancellable,
                         GError       **error);
 
+int
+glnx_loop_write (int fd, const void *buf, size_t nbytes);
+
 typedef enum {
   GLNX_FILE_COPY_OVERWRITE,
   GLNX_FILE_COPY_NOXATTRS,

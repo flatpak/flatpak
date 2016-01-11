@@ -354,7 +354,7 @@ static int btrfs_reflink(int infd, int outfd) {
         return 0;
 }
 
-static int loop_write(int fd, const void *buf, size_t nbytes) {
+int glnx_loop_write(int fd, const void *buf, size_t nbytes) {
         const uint8_t *p = buf;
 
         g_return_val_if_fail(fd >= 0, -1);
@@ -437,7 +437,7 @@ static int copy_bytes(int fdf, int fdt, off_t max_bytes, bool try_reflink) {
                         if (n == 0) /* EOF */
                                 break;
 
-                        r = loop_write(fdt, buf, (size_t) n);
+                        r = glnx_loop_write(fdt, buf, (size_t) n);
                         if (r < 0)
                                 return r;
                 }
@@ -685,7 +685,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
       goto out;
     }
 
-  if ((r = loop_write (fd, buf, len)) != 0)
+  if ((r = glnx_loop_write (fd, buf, len)) != 0)
     {
       errno = -r;
       glnx_set_error_from_errno (error);
