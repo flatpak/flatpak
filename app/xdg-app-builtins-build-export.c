@@ -92,19 +92,13 @@ is_empty_directory (GFile *file, GCancellable *cancellable)
   return TRUE;
 }
 
-enum {
-  ALLOW_EXPORT = 1<<1,
-  ALLOW_ALL = 1<<2,
-};
-
 static OstreeRepoCommitFilterResult
 commit_filter (OstreeRepo *repo,
                const char *path,
                GFileInfo *file_info,
-               gpointer user_data)
+               gpointer commit_data)
 {
   guint current_mode;
-  guint allow = GPOINTER_TO_UINT(user_data);
 
   /* No user info */
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
@@ -114,19 +108,55 @@ commit_filter (OstreeRepo *repo,
   current_mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", current_mode & ~07000);
 
-  if ((allow & ALLOW_ALL) ||
-      (g_str_equal (path, "/") ||
-       g_str_equal (path, "/metadata") ||
-       ((allow & ALLOW_EXPORT) &&  g_str_has_prefix (path, "/export"))))
-    {
-      g_debug ("commit filter, allow: %s", path);
-      return OSTREE_REPO_COMMIT_FILTER_ALLOW;
-    }
-  else
-    {
-      g_debug ("commit filter, skip: %s", path);
-      return OSTREE_REPO_COMMIT_FILTER_SKIP;
-    }
+  return OSTREE_REPO_COMMIT_FILTER_ALLOW;
+}
+
+gboolean
+add_file_to_mtree (GFile *file,
+                   const char *name,
+                   OstreeRepo *repo,
+                   OstreeMutableTree *mtree,
+                   GCancellable *cancellable,
+                   GError **error)
+{
+  g_autoptr (GFileInfo) file_info = NULL;
+  g_autoptr(GInputStream) raw_input = NULL;
+  g_autoptr(GInputStream) input = NULL;
+  guint64 length;
+  g_autofree guchar *child_file_csum = NULL;
+  char *tmp_checksum = NULL;
+
+  file_info = g_file_query_info (file,
+                                 "standard::size",
+                                 0, cancellable, error);
+  if (file_info == NULL)
+    return FALSE;
+
+  g_file_info_set_name (file_info, name);
+  g_file_info_set_file_type (file_info, G_FILE_TYPE_REGULAR);
+  g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
+  g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100644);
+
+  raw_input = (GInputStream*)g_file_read (file, cancellable, error);
+  if (raw_input == NULL)
+    return FALSE;
+
+  if (!ostree_raw_file_to_content_stream (raw_input,
+                                          file_info, NULL,
+                                          &input, &length,
+                                          cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_write_content (repo, NULL, input, length,
+                                  &child_file_csum, cancellable, error))
+    return FALSE;
+
+  tmp_checksum = ostree_checksum_from_bytes (child_file_csum);
+  if (!ostree_mutable_tree_replace_file (mtree, name, tmp_checksum, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 gboolean
@@ -155,13 +185,13 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autofree char *format_size = NULL;
   g_autoptr(OstreeMutableTree) mtree = NULL;
   g_autoptr(OstreeMutableTree) files_mtree = NULL;
+  g_autoptr(OstreeMutableTree) export_mtree = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   gsize metadata_size;
   g_autofree char *subject = NULL;
   g_autofree char *body = NULL;
   OstreeRepoTransactionStats stats;
   g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
-  g_autoptr(OstreeRepoCommitModifier) files_modifier = NULL;
 
   context = g_option_context_new ("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory");
 
@@ -255,32 +285,53 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   mtree = ostree_mutable_tree_new ();
 
-  modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
-                                              OSTREE_REPO_COMMIT_MODIFIER_FLAGS_GENERATE_SIZES,
-                                              commit_filter,
-                                              GUINT_TO_POINTER(opt_runtime ? 0 : ALLOW_EXPORT),
-                                              NULL);
-  files_modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
-                                                    OSTREE_REPO_COMMIT_MODIFIER_FLAGS_GENERATE_SIZES,
-                                                    commit_filter,
-                                                    GUINT_TO_POINTER(ALLOW_ALL),
-                                                    NULL);
-  if (!ostree_repo_write_directory_to_mtree (repo, base, mtree, modifier, cancellable, error))
-    goto out;
+  {
+    g_autoptr(GVariant) dirmeta = NULL;
+    g_autoptr(GFileInfo) file_info = g_file_info_new ();
+    g_autofree guchar *csum;
+    g_autofree char *checksum = NULL;
+
+    g_file_info_set_name (file_info, "/");
+    g_file_info_set_file_type (file_info, G_FILE_TYPE_DIRECTORY);
+    g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
+    g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
+    g_file_info_set_attribute_uint32 (file_info, "unix::mode", 040755);
+
+    dirmeta = ostree_create_directory_metadata (file_info, NULL);
+    if (!ostree_repo_write_metadata (repo, OSTREE_OBJECT_TYPE_DIR_META, NULL,
+                                     dirmeta, &csum, cancellable, error))
+      goto out;
+
+    checksum = ostree_checksum_from_bytes (csum);
+    ostree_mutable_tree_set_metadata_checksum (mtree, checksum);
+  }
 
   if (!ostree_mutable_tree_ensure_dir (mtree, "files", &files_mtree, error))
     goto out;
 
+  modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
+                                              OSTREE_REPO_COMMIT_MODIFIER_FLAGS_GENERATE_SIZES,
+                                              (OstreeRepoCommitFilter)commit_filter, NULL, NULL);
+
   if (opt_runtime)
     {
-      if (!ostree_repo_write_directory_to_mtree (repo, usr, files_mtree, files_modifier, cancellable, error))
+      if (!ostree_repo_write_directory_to_mtree (repo, usr, files_mtree, modifier, cancellable, error))
         goto out;
     }
   else
     {
-      if (!ostree_repo_write_directory_to_mtree (repo, files, files_mtree, files_modifier, cancellable, error))
+      if (!ostree_repo_write_directory_to_mtree (repo, files, files_mtree, modifier, cancellable, error))
+        goto out;
+
+      if (!ostree_mutable_tree_ensure_dir (mtree, "export", &export_mtree, error))
+        goto out;
+
+      if (!ostree_repo_write_directory_to_mtree (repo, export, export_mtree, modifier, cancellable, error))
         goto out;
     }
+
+  if (!add_file_to_mtree (metadata, "metadata", repo, mtree, cancellable, error))
+    goto out;
 
   if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
     goto out;
