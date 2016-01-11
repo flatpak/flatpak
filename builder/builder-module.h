@@ -54,7 +54,6 @@ gboolean builder_module_extract_sources  (BuilderModule   *self,
                                           BuilderContext  *context,
                                           GError         **error);
 gboolean builder_module_build            (BuilderModule   *self,
-                                          gboolean         keep_build_dir,
                                           BuilderCache    *cache,
                                           BuilderContext  *context,
                                           GError         **error);

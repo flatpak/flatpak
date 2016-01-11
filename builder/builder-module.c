@@ -695,7 +695,6 @@ builder_module_handle_debuginfo (BuilderModule *self,
 
 gboolean
 builder_module_build (BuilderModule *self,
-                      gboolean keep_build_dir,
                       BuilderCache *cache,
                       BuilderContext *context,
                       GError **error)
@@ -928,7 +927,7 @@ builder_module_build (BuilderModule *self,
 
   /* Clean up build dir */
 
-  if (keep_build_dir)
+  if (builder_context_get_keep_build_dirs (context))
     {
       g_autofree char *buildname_link = g_strdup_printf ("build-%s", self->name);
       g_autoptr(GFile) build_link = g_file_get_child (builder_context_get_state_dir (context),

@@ -45,6 +45,9 @@ const char *    builder_context_get_arch         (BuilderContext *self);
 void            builder_context_set_arch         (BuilderContext *self,
                                                   const char     *arch);
 int             builder_context_get_n_cpu        (BuilderContext *self);
+void            builder_context_set_keep_build_dirs (BuilderContext *self,
+                                                     gboolean        keep_build_dirs);
+gboolean        builder_context_get_keep_build_dirs (BuilderContext *self);
 BuilderOptions *builder_context_get_options      (BuilderContext *self);
 void            builder_context_set_options      (BuilderContext *self,
                                                   BuilderOptions *option);

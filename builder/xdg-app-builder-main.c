@@ -159,6 +159,8 @@ main (int    argc,
 
   build_context = builder_context_new (base_dir, app_dir);
 
+  builder_context_set_keep_build_dirs (build_context, opt_keep_build_dirs);
+
   if (!opt_disable_download)
     {
       if (!builder_manifest_download (manifest, !opt_disable_updates, build_context, &error))
@@ -203,7 +205,7 @@ main (int    argc,
         }
     }
 
-  if (!builder_manifest_build (manifest, opt_keep_build_dirs, cache, build_context, &error))
+  if (!builder_manifest_build (manifest, cache, build_context, &error))
     {
       g_print ("error: %s\n", error->message);
       return 1;

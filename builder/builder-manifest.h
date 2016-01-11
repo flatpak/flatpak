@@ -52,7 +52,6 @@ gboolean        builder_manifest_download          (BuilderManifest  *self,
                                                     BuilderContext   *context,
                                                     GError          **error);
 gboolean        builder_manifest_build             (BuilderManifest  *self,
-                                                    gboolean          keep_build_dir,
                                                     BuilderCache     *cache,
                                                     BuilderContext   *context,
                                                     GError          **error);

@@ -43,6 +43,7 @@ struct BuilderContext {
   GFile *cache_dir;
 
   BuilderOptions *options;
+  gboolean keep_build_dirs;
 };
 
 typedef struct {
@@ -251,6 +252,19 @@ int
 builder_context_get_n_cpu (BuilderContext *self)
 {
   return (int)sysconf (_SC_NPROCESSORS_ONLN);
+}
+
+void
+builder_context_set_keep_build_dirs (BuilderContext *self,
+                                     gboolean        keep_build_dirs)
+{
+  self->keep_build_dirs = keep_build_dirs;
+}
+
+gboolean
+builder_context_get_keep_build_dirs (BuilderContext *self)
+{
+  return self->keep_build_dirs;
 }
 
 BuilderContext *
