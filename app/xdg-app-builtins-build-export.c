@@ -37,11 +37,15 @@ static gboolean opt_runtime;
 static char **opt_key_ids;
 static char **opt_exclude;
 static char *opt_gpg_homedir;
+static char *opt_files;
+static char *opt_metadata;
 
 static GOptionEntry options[] = {
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, "One line subject", "SUBJECT" },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description", "BODY" },
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Commit runtime (/usr), not /app" },
+  { "files", 0, 0, G_OPTION_ARG_STRING, &opt_files, "Use alternative directory for the files", "SUBDIR"},
+  { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, "Use alternative file for the metadata", "FILE"},
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
   { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, "Files to exclude", "PATTERN"},
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
@@ -185,6 +189,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files = NULL;
+  g_autoptr(GFile) alt_files = NULL;
   g_autoptr(GFile) usr = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autoptr(GFile) export = NULL;
@@ -239,9 +244,18 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     }
 
   base = g_file_new_for_commandline_arg (directory);
-  files = g_file_get_child (base, "files");
-  usr = g_file_get_child (base, "usr");
-  metadata = g_file_get_child (base, "metadata");
+  if (opt_files)
+    files = g_file_resolve_relative_path (base, opt_files);
+  else
+    files = g_file_get_child (base, "files");
+  if (opt_files)
+    usr = g_file_resolve_relative_path (base, opt_files);
+  else
+    usr = g_file_get_child (base, "usr");
+  if (opt_metadata)
+    metadata = g_file_resolve_relative_path (base, opt_metadata);
+  else
+    metadata = g_file_get_child (base, "metadata");
   export = g_file_get_child (base, "export");
 
   if (!g_file_query_exists (files, cancellable) ||
