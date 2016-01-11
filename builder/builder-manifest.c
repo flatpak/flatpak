@@ -1119,12 +1119,30 @@ builder_manifest_finish (BuilderManifest *self,
       if (g_file_query_exists (debuginfo_dir, NULL))
         {
           g_autoptr(GFile) metadata_file = NULL;
+          g_autoptr(GFile) metadata_debuginfo_file = NULL;
           g_autofree char *metadata_contents = NULL;
+          g_autofree char *extension_contents = NULL;
+          g_autoptr(GFileOutputStream) output = NULL;
 
-          metadata_file = g_file_get_child (app_dir, "metadata.debuginfo");
+          metadata_file = g_file_get_child (app_dir, "metadata");
+          metadata_debuginfo_file = g_file_get_child (app_dir, "metadata.debuginfo");
+
+          extension_contents = g_strdup_printf("\n"
+                                               "[Extension %s.Debug]\n"
+                                               "directory=lib/debug\n",
+                                               self->app_id);
+
+          output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
+          if (output == NULL)
+            return FALSE;
+
+          if (!g_output_stream_write_all (G_OUTPUT_STREAM (output), extension_contents, strlen (extension_contents),
+                                          NULL, NULL, error))
+            return FALSE;
+
           metadata_contents = g_strdup_printf("[Runtime]\n"
                                               "name=%s.Debug\n", self->app_id);
-          if (!g_file_replace_contents (metadata_file,
+          if (!g_file_replace_contents (metadata_debuginfo_file,
                                         metadata_contents, strlen (metadata_contents), NULL, FALSE,
                                         G_FILE_CREATE_REPLACE_DESTINATION,
                                         NULL, NULL, error))

@@ -40,6 +40,7 @@ static gboolean opt_disable_download;
 static gboolean opt_disable_updates;
 static gboolean opt_require_changes;
 static gboolean opt_keep_build_dirs;
+static char *opt_repo;
 
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
@@ -49,8 +50,9 @@ static GOptionEntry entries[] = {
   { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
-  { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir if no changes", NULL },
+  { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir or export if no changes", NULL },
   { "keep-build-dirs", 0, 0, G_OPTION_ARG_NONE, &opt_keep_build_dirs, "Don't remove build directories after install", NULL },
+  { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo, "Repo to export into", "DIR"},
   { NULL }
 };
 
@@ -75,6 +77,40 @@ usage (GOptionContext *context, const char *message)
   g_printerr ("%s", help);
   return 1;
 }
+
+static gboolean
+do_export (GError      **error,
+           ...)
+{
+  va_list ap;
+  const char *arg;
+
+  g_autoptr(GPtrArray) args = NULL;
+  g_autoptr(GSubprocess) subp = NULL;
+
+  args = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("build-export"));
+
+  va_start (ap, error);
+  while ((arg = va_arg (ap, const gchar *)))
+    g_ptr_array_add (args, g_strdup ((gchar *) arg));
+  va_end (ap);
+
+  g_ptr_array_add (args, NULL);
+
+  subp =
+    g_subprocess_newv ((const gchar * const *) args->pdata,
+                       G_SUBPROCESS_FLAGS_NONE,
+                       error);
+
+  if (subp == NULL ||
+      !g_subprocess_wait_check (subp, NULL, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 
 int
 main (int    argc,
@@ -227,7 +263,30 @@ main (int    argc,
     }
 
   if (!opt_require_changes)
-    builder_cache_ensure_checkout (cache);
+    {
+      builder_cache_ensure_checkout (cache);
+    }
+
+  if (opt_repo && builder_cache_has_checkout (cache))
+    {
+      g_autoptr(GFile) debuginfo_metadata = NULL;
+
+      if (!do_export (&error,"--exclude=/lib/debug/*", opt_repo, app_dir_path, NULL))
+        {
+          g_print ("Export failed: %s\n", error->message);
+          return 1;
+        }
+
+      debuginfo_metadata = g_file_get_child (app_dir, "metadata.debuginfo");
+      if (g_file_query_exists (debuginfo_metadata, NULL))
+        {
+          if (!do_export (&error, "--runtime", "--metadata=metadata.debuginfo", "--files=files/lib/debug", opt_repo, app_dir_path, NULL))
+            {
+              g_print ("Export failed: %s\n", error->message);
+              return 1;
+            }
+        }
+    }
 
   if (!builder_gc (cache, &error))
     {

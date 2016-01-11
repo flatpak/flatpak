@@ -43,6 +43,7 @@ gboolean      builder_cache_open            (BuilderCache  *self,
 GChecksum *   builder_cache_get_checksum    (BuilderCache  *self);
 gboolean      builder_cache_lookup          (BuilderCache  *self);
 void          builder_cache_ensure_checkout (BuilderCache *self);
+gboolean      builder_cache_has_checkout    (BuilderCache *self);
 gboolean      builder_cache_commit          (BuilderCache  *self,
                                              const char    *body,
                                              GError       **error);

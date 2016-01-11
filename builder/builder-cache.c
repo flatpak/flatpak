@@ -250,10 +250,16 @@ builder_cache_checkout (BuilderCache *self, const char *commit)
   return TRUE;
 }
 
+gboolean
+builder_cache_has_checkout (BuilderCache *self)
+{
+  return self->disabled;
+}
+
 void
 builder_cache_ensure_checkout (BuilderCache *self)
 {
-  if (self->disabled)
+  if (builder_cache_has_checkout (self))
     return;
 
   if (self->last_parent)
@@ -263,6 +269,8 @@ builder_cache_ensure_checkout (BuilderCache *self)
       if (!builder_cache_checkout (self, self->last_parent))
         g_error ("Failed to check out cache");
     }
+
+  self->disabled = TRUE;
 }
 
 gboolean

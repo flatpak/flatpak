@@ -66,9 +66,14 @@ metadata_get_arch (GFile *file, char **out_arch, GError **error)
   if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
     return FALSE;
 
-  runtime = g_key_file_get_string (keyfile, opt_runtime ? "Runtime" : "Application", "runtime", error);
-  if (*error)
-    return FALSE;
+  runtime = g_key_file_get_string (keyfile,
+                                   opt_runtime ? "Runtime" : "Application",
+                                   "runtime", NULL);
+  if (runtime == NULL)
+    {
+      *out_arch = g_strdup (xdg_app_get_arch ());
+      return TRUE;
+    }
 
   parts = g_strsplit (runtime, "/", 0);
   if (g_strv_length (parts) != 3)
