@@ -1062,6 +1062,7 @@ builder_manifest_finish (BuilderManifest *self,
 {
   GFile *app_dir = builder_context_get_app_dir (context);
   g_autoptr(GFile) manifest_file = NULL;
+  g_autoptr(GFile) debuginfo_dir = NULL;
   g_autofree char *app_dir_path = g_file_get_path (app_dir);
   g_autofree char *json = NULL;
   g_autoptr(GPtrArray) args = NULL;
@@ -1111,6 +1112,24 @@ builder_manifest_finish (BuilderManifest *self,
       if (!g_file_replace_contents (manifest_file, json, strlen (json), NULL, FALSE,
                                     0, NULL, NULL, error))
         return FALSE;
+
+
+      debuginfo_dir = g_file_resolve_relative_path (app_dir, "files/lib/debug");
+
+      if (g_file_query_exists (debuginfo_dir, NULL))
+        {
+          g_autoptr(GFile) metadata_file = NULL;
+          g_autofree char *metadata_contents = NULL;
+
+          metadata_file = g_file_get_child (app_dir, "metadata.debuginfo");
+          metadata_contents = g_strdup_printf("[Runtime]\n"
+                                              "name=%s.Debug\n", self->app_id);
+          if (!g_file_replace_contents (metadata_file,
+                                        metadata_contents, strlen (metadata_contents), NULL, FALSE,
+                                        G_FILE_CREATE_REPLACE_DESTINATION,
+                                        NULL, NULL, error))
+            return FALSE;
+        }
 
       if (!builder_cache_commit (cache, "Finish", error))
         return FALSE;
