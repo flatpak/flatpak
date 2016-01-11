@@ -682,6 +682,7 @@ builder_manifest_build (BuilderManifest *self,
   GList *l;
 
   builder_context_set_options (context, self->build_options);
+  builder_context_set_global_cleanup (context, (const char **)self->cleanup);
 
   g_print ("Starting build of %s\n", self->app_id ? self->app_id : "app");
   for (l = self->modules; l != NULL; l = l->next)
@@ -926,7 +927,7 @@ builder_manifest_cleanup (BuilderManifest *self,
         {
           BuilderModule *m = l->data;
 
-          builder_module_cleanup_collect (m, self->cleanup, to_remove_ht);
+          builder_module_cleanup_collect (m, context, to_remove_ht);
         }
 
       keys = (char **)g_hash_table_get_keys_as_array (to_remove_ht, &n_keys);

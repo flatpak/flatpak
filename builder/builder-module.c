@@ -1034,11 +1034,12 @@ builder_module_set_changes (BuilderModule  *self,
 
 void
 builder_module_cleanup_collect (BuilderModule *self,
-                                char **global_patterns,
+                                BuilderContext  *context,
                                 GHashTable *to_remove_ht)
 {
   GPtrArray *changed_files;
   int i, j;
+  const char **global_patterns = builder_context_get_global_cleanup (context);
 
   changed_files = self->changes;
   for (i = 0; i < changed_files->len; i++)

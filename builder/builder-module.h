@@ -45,32 +45,30 @@ GPtrArray *  builder_module_get_changes (BuilderModule  *self);
 void         builder_module_set_changes (BuilderModule  *self,
                                          GPtrArray      *changes);
 
-gboolean builder_module_download_sources (BuilderModule   *self,
-                                          gboolean        update_vcs,
-                                          BuilderContext  *context,
-                                          GError         **error);
-gboolean builder_module_extract_sources  (BuilderModule   *self,
-                                          GFile           *dest,
-                                          BuilderContext  *context,
-                                          GError         **error);
-gboolean builder_module_build            (BuilderModule   *self,
-                                          BuilderCache    *cache,
-                                          BuilderContext  *context,
-                                          GError         **error);
-gboolean builder_module_update           (BuilderModule   *self,
-                                          BuilderContext  *context,
-                                          GError         **error);
-
-void     builder_module_checksum         (BuilderModule  *self,
-                                          BuilderCache   *cache,
-                                          BuilderContext *context);
-void     builder_module_checksum_for_cleanup (BuilderModule  *self,
-                                              BuilderCache   *cache,
-                                              BuilderContext *context);
-void     builder_module_cleanup_collect  (BuilderModule  *self,
-                                          char **global_patterns,
-                                          GHashTable *to_remove_ht);
-
+gboolean builder_module_download_sources     (BuilderModule   *self,
+                                              gboolean         update_vcs,
+                                              BuilderContext  *context,
+                                              GError         **error);
+gboolean builder_module_extract_sources      (BuilderModule   *self,
+                                              GFile           *dest,
+                                              BuilderContext  *context,
+                                              GError         **error);
+gboolean builder_module_build                (BuilderModule   *self,
+                                              BuilderCache    *cache,
+                                              BuilderContext  *context,
+                                              GError         **error);
+gboolean builder_module_update               (BuilderModule   *self,
+                                              BuilderContext  *context,
+                                              GError         **error);
+void     builder_module_checksum             (BuilderModule   *self,
+                                              BuilderCache    *cache,
+                                              BuilderContext  *context);
+void     builder_module_checksum_for_cleanup (BuilderModule   *self,
+                                              BuilderCache    *cache,
+                                              BuilderContext  *context);
+void     builder_module_cleanup_collect      (BuilderModule   *self,
+                                              BuilderContext  *context,
+                                              GHashTable      *to_remove_ht);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderModule, g_object_unref)
 

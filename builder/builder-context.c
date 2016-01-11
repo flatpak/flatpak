@@ -44,6 +44,7 @@ struct BuilderContext {
 
   BuilderOptions *options;
   gboolean keep_build_dirs;
+  char **cleanup;
 };
 
 typedef struct {
@@ -70,6 +71,7 @@ builder_context_finalize (GObject *object)
   g_clear_object (&self->soup_session);
   g_clear_object (&self->options);
   g_free (self->arch);
+  g_strfreev (self->cleanup);
 
   G_OBJECT_CLASS (builder_context_parent_class)->finalize (object);
 }
@@ -259,6 +261,20 @@ builder_context_set_keep_build_dirs (BuilderContext *self,
                                      gboolean        keep_build_dirs)
 {
   self->keep_build_dirs = keep_build_dirs;
+}
+
+void
+builder_context_set_global_cleanup  (BuilderContext  *self,
+                                     const char     **cleanup)
+{
+  g_strfreev (self->cleanup);
+  self->cleanup = g_strdupv ((char **)cleanup);
+}
+
+const char **
+builder_context_get_global_cleanup  (BuilderContext  *self)
+{
+  return (const char **)self->cleanup;
 }
 
 gboolean

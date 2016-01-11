@@ -35,22 +35,26 @@ G_BEGIN_DECLS
 
 GType builder_context_get_type (void);
 
-GFile *         builder_context_get_app_dir      (BuilderContext *self);
-GFile *         builder_context_get_base_dir     (BuilderContext *self);
-GFile *         builder_context_get_state_dir    (BuilderContext *self);
-GFile *         builder_context_get_cache_dir    (BuilderContext *self);
-GFile *         builder_context_get_download_dir (BuilderContext *self);
-SoupSession *   builder_context_get_soup_session (BuilderContext *self);
-const char *    builder_context_get_arch         (BuilderContext *self);
-void            builder_context_set_arch         (BuilderContext *self,
-                                                  const char     *arch);
-int             builder_context_get_n_cpu        (BuilderContext *self);
-void            builder_context_set_keep_build_dirs (BuilderContext *self,
-                                                     gboolean        keep_build_dirs);
-gboolean        builder_context_get_keep_build_dirs (BuilderContext *self);
-BuilderOptions *builder_context_get_options      (BuilderContext *self);
-void            builder_context_set_options      (BuilderContext *self,
-                                                  BuilderOptions *option);
+GFile *         builder_context_get_app_dir         (BuilderContext  *self);
+GFile *         builder_context_get_base_dir        (BuilderContext  *self);
+GFile *         builder_context_get_state_dir       (BuilderContext  *self);
+GFile *         builder_context_get_cache_dir       (BuilderContext  *self);
+GFile *         builder_context_get_download_dir    (BuilderContext  *self);
+SoupSession *   builder_context_get_soup_session    (BuilderContext  *self);
+const char *    builder_context_get_arch            (BuilderContext  *self);
+void            builder_context_set_arch            (BuilderContext  *self,
+                                                     const char      *arch);
+int             builder_context_get_n_cpu           (BuilderContext  *self);
+void            builder_context_set_keep_build_dirs (BuilderContext  *self,
+                                                     gboolean         keep_build_dirs);
+gboolean        builder_context_get_keep_build_dirs (BuilderContext  *self);
+void            builder_context_set_global_cleanup  (BuilderContext  *self,
+                                                     const char     **cleanup);
+const char **   builder_context_get_global_cleanup  (BuilderContext  *self);
+BuilderOptions *builder_context_get_options         (BuilderContext  *self);
+void            builder_context_set_options         (BuilderContext  *self,
+                                                     BuilderOptions  *option);
+
 
 BuilderContext *builder_context_new              (GFile          *base_dir,
                                                   GFile          *app_dir);
