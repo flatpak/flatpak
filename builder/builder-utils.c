@@ -53,71 +53,6 @@ builder_uri_to_filename (const char *uri)
   return g_string_free (s, FALSE);
 }
 
-/* Returns end of matching path prefix, or NULL if no match */
-static const char *
-path_prefix_match (const char *pattern,
-                   const char *string)
-{
-  char c, test;
-  const char *tmp;
-
-  while (TRUE)
-    {
-      switch (c = *pattern++)
-        {
-        case 0:
-          if (*string == '/' || *string == 0)
-            return string;
-          return NULL;
-
-        case '?':
-          if (*string == '/' || *string == 0)
-            return NULL;
-          string++;
-          break;
-
-        case '*':
-          c = *pattern;
-
-          while (c == '*')
-            c = *++pattern;
-
-          /* special case * at end */
-          if (c == 0)
-            {
-              char *tmp = strchr (string, '/');
-              if (tmp != NULL)
-                return tmp;
-              return string + strlen (string);
-            }
-          else if (c == '/')
-            {
-              string = strchr (string, '/');
-              if (string == NULL)
-                return NULL;
-              break;
-            }
-
-          while ((test = *string) != 0)
-            {
-              tmp = path_prefix_match (pattern, string);
-              if (tmp != NULL)
-                return tmp;
-              if (test == '/')
-                break;
-              string++;
-            }
-          return NULL;
-
-        default:
-          if (c != *string)
-            return NULL;
-          string++;
-          break;
-        }
-    }
-  return NULL; /* Should not be reached */
-}
 
 /* If pattern starts with a slash, then match on the entire
  * path, otherwise just the basename.
@@ -134,7 +69,7 @@ path_prefix_match_full (const char *pattern,
   if (pattern[0] == '/')
     {
       /* Absolute path match */
-      rest = path_prefix_match (pattern+1, path);
+      rest = xdg_app_path_match_prefix (pattern, path);
     }
   else
     {
@@ -145,7 +80,7 @@ path_prefix_match_full (const char *pattern,
           *prefix_out = g_strndup (path, last_slash - path);
           path = last_slash + 1;
         }
-      rest = path_prefix_match (pattern, path);
+      rest = xdg_app_path_match_prefix (pattern, path);
     }
 
   return rest;

@@ -45,6 +45,78 @@ xdg_app_strcmp0_ptr (gconstpointer  a,
   return g_strcmp0 (* (char * const *) a, * (char * const *) b);
 }
 
+/* Returns end of matching path prefix, or NULL if no match */
+const char *
+xdg_app_path_match_prefix (const char *pattern,
+                           const char *string)
+{
+  char c, test;
+  const char *tmp;
+
+  while (*pattern == '/')
+    pattern++;
+
+  while (*string == '/')
+    string++;
+
+  while (TRUE)
+    {
+      switch (c = *pattern++)
+        {
+        case 0:
+          if (*string == '/' || *string == 0)
+            return string;
+          return NULL;
+
+        case '?':
+          if (*string == '/' || *string == 0)
+            return NULL;
+          string++;
+          break;
+
+        case '*':
+          c = *pattern;
+
+          while (c == '*')
+            c = *++pattern;
+
+          /* special case * at end */
+          if (c == 0)
+            {
+              char *tmp = strchr (string, '/');
+              if (tmp != NULL)
+                return tmp;
+              return string + strlen (string);
+            }
+          else if (c == '/')
+            {
+              string = strchr (string, '/');
+              if (string == NULL)
+                return NULL;
+              break;
+            }
+
+          while ((test = *string) != 0)
+            {
+              tmp = xdg_app_path_match_prefix (pattern, string);
+              if (tmp != NULL)
+                return tmp;
+              if (test == '/')
+                break;
+              string++;
+            }
+          return NULL;
+
+        default:
+          if (c != *string)
+            return NULL;
+          string++;
+          break;
+        }
+    }
+  return NULL; /* Should not be reached */
+}
+
 gboolean
 xdg_app_fail (GError **error, const char *format, ...)
 {
