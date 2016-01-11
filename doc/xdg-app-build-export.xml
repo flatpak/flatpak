@@ -103,6 +103,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--exclude=PATTERN</option></term>
+
+                <listitem><para>
+                    Exclude files matching PATTERN from the commit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--gpg-sign=KEYID</option></term>
 
                 <listitem><para>

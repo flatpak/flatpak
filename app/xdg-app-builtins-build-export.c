@@ -35,6 +35,7 @@ static char *opt_subject;
 static char *opt_body;
 static gboolean opt_runtime;
 static char **opt_key_ids;
+static char **opt_exclude;
 static char *opt_gpg_homedir;
 
 static GOptionEntry options[] = {
@@ -42,6 +43,7 @@ static GOptionEntry options[] = {
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description", "BODY" },
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Commit runtime (/usr), not /app" },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
+  { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, "Files to exclude", "PATTERN"},
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
 
   { NULL }
@@ -92,13 +94,18 @@ is_empty_directory (GFile *file, GCancellable *cancellable)
   return TRUE;
 }
 
+typedef struct {
+  const char **exclude;
+} CommitData;
+
 static OstreeRepoCommitFilterResult
 commit_filter (OstreeRepo *repo,
                const char *path,
                GFileInfo *file_info,
-               gpointer commit_data)
+               CommitData *commit_data)
 {
   guint current_mode;
+  int i;
 
   /* No user info */
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
@@ -107,6 +114,18 @@ commit_filter (OstreeRepo *repo,
   /* No setuid */
   current_mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", current_mode & ~07000);
+
+  if (commit_data->exclude)
+    {
+      for (i = 0; commit_data->exclude[i] != NULL; i++)
+        {
+          if (xdg_app_path_match_prefix (opt_exclude[i], path) != NULL)
+            {
+              g_debug ("Excluding %s", path);
+              return OSTREE_REPO_COMMIT_FILTER_SKIP;
+            }
+        }
+    }
 
   return OSTREE_REPO_COMMIT_FILTER_ALLOW;
 }
@@ -192,6 +211,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autofree char *body = NULL;
   OstreeRepoTransactionStats stats;
   g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
+  CommitData commit_data = {0};
 
   context = g_option_context_new ("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory");
 
@@ -311,17 +331,21 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
                                               OSTREE_REPO_COMMIT_MODIFIER_FLAGS_GENERATE_SIZES,
-                                              (OstreeRepoCommitFilter)commit_filter, NULL, NULL);
+                                              (OstreeRepoCommitFilter)commit_filter, &commit_data, NULL);
 
   if (opt_runtime)
     {
+      commit_data.exclude = (const char **)opt_exclude;
       if (!ostree_repo_write_directory_to_mtree (repo, usr, files_mtree, modifier, cancellable, error))
         goto out;
+      commit_data.exclude = NULL;
     }
   else
     {
+      commit_data.exclude = (const char **)opt_exclude;
       if (!ostree_repo_write_directory_to_mtree (repo, files, files_mtree, modifier, cancellable, error))
         goto out;
+      commit_data.exclude = NULL;
 
       if (!ostree_mutable_tree_ensure_dir (mtree, "export", &export_mtree, error))
         goto out;
