@@ -488,6 +488,7 @@ usage (char **argv)
            "	-m PATH		 Set path to xdg-app-session-helper output\n"
            "	-n		 Share network namespace with session\n"
            "	-p SOCKETPATH	 Use SOCKETPATH as pulseaudio connection\n"
+           "	-P PATH	         Chdir into PATH before running\n"
            "    -r               Bind mount /etc/resolv.conf\n"
            "	-s		 Share Shm namespace with session\n"
            "    -S FD            Pass fd into app to detect when it dies\n"
@@ -2010,6 +2011,7 @@ main (int argc,
   char *newroot;
   char *runtime_path = NULL;
   char *app_path = NULL;
+  char *chdir_path = NULL;
   char *monitor_path = NULL;
   char *app_id = NULL;
   char *var_path = NULL;
@@ -2053,7 +2055,7 @@ main (int argc,
 
   clean_argv (argc, argv);
 
-  while ((c =  getopt (argc, argv, "+inWwceEsfFHhra:m:M:b:B:p:x:ly:d:D:v:I:gS:")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWwceEsfFHhra:m:M:b:B:p:x:ly:d:D:v:I:gS:P:")) >= 0)
     {
       switch (c)
         {
@@ -2163,6 +2165,10 @@ main (int argc,
 
         case 'p':
           pulseaudio_socket = optarg;
+          break;
+
+        case 'P':
+          chdir_path = optarg;
           break;
 
         case 'r':
@@ -2540,7 +2546,13 @@ main (int argc,
   drop_caps ();
 #endif
 
-  if (chdir (old_cwd) == 0)
+  if (chdir_path)
+    {
+      if (chdir (chdir_path))
+        die_with_error ("Can't chdir to %s", chdir_path);
+      xsetenv ("PWD", chdir_path, 1);
+    }
+  else if (chdir (old_cwd) == 0)
     {
       xsetenv ("PWD", old_cwd, 1);
     }
