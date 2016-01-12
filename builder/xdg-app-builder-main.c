@@ -299,6 +299,8 @@ main (int    argc,
     {
       g_autoptr(GFile) debuginfo_metadata = NULL;
 
+      g_print ("exporting %s to repo\n", builder_manifest_get_app_id (manifest));
+
       if (!do_export (&error,"--exclude=/lib/debug/*", opt_repo, app_dir_path, NULL))
         {
           g_print ("Export failed: %s\n", error->message);
@@ -308,6 +310,8 @@ main (int    argc,
       debuginfo_metadata = g_file_get_child (app_dir, "metadata.debuginfo");
       if (g_file_query_exists (debuginfo_metadata, NULL))
         {
+          g_print ("exporting %s.Debug to repo\n", builder_manifest_get_app_id (manifest));
+
           if (!do_export (&error, "--runtime", "--metadata=metadata.debuginfo", "--files=files/lib/debug", opt_repo, app_dir_path, NULL))
             {
               g_print ("Export failed: %s\n", error->message);
