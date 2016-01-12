@@ -193,7 +193,7 @@ xdg_app_installation_launch (XdgAppInstallation  *self,
 
   return xdg_app_run_app (app_ref,
                           app_deploy,
-                          NULL,
+                          NULL, NULL,
                           NULL,
                           XDG_APP_RUN_FLAG_BACKGROUND,
                           NULL,

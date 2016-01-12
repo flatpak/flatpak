@@ -112,7 +112,19 @@
                 <term><option>--runtime=RUNTIME</option></term>
 
                 <listitem><para>
-                    Use this runtime instead of the one that is specified in the application metadata.
+                  Use this runtime instead of the one that is specified in the application metadata.
+                  This is a full tuple, like for example <arg choice="plain">org.freedesktop.Sdk/x86_64/1.2</arg>, but
+                  partial tuples are allowed. Any empty or missing parts are filled in with the corresponding
+                  values specified by the app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime-version=VERSION</option></term>
+
+                <listitem><para>
+                  Use this version of the runtime instead of the one that is specified in the application metadata.
+                  This overrides any version specified with the --runtime option.
                 </para></listitem>
             </varlistentry>
 

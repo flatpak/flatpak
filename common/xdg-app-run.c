@@ -2073,6 +2073,7 @@ xdg_app_run_app (const char *app_ref,
                  XdgAppDeploy *app_deploy,
                  XdgAppContext *extra_context,
                  const char *custom_runtime,
+                 const char *custom_runtime_version,
                  XdgAppRunFlags flags,
                  const char *custom_command,
                  char *args[],
@@ -2085,6 +2086,7 @@ xdg_app_run_app (const char *app_ref,
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
   g_autofree char *runtime = NULL;
+  g_autofree char *default_runtime = NULL;
   g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
@@ -2093,6 +2095,8 @@ xdg_app_run_app (const char *app_ref,
   g_auto(GStrv) envp = NULL;
   g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
   const char *command = "/bin/sh";
+  g_autoptr(GError) my_error = NULL;
+  g_auto(GStrv) runtime_parts = NULL;
   int i;
   g_autoptr(XdgAppContext) app_context = NULL;
   g_autoptr(XdgAppContext) overrides = NULL;
@@ -2112,22 +2116,47 @@ xdg_app_run_app (const char *app_ref,
   if (!xdg_app_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
     return FALSE;
 
-  if (custom_runtime)
-    runtime = g_strdup (custom_runtime);
-  else
+
+  default_runtime = g_key_file_get_string (metakey, "Application",
+                                           (flags & XDG_APP_RUN_FLAG_DEVEL) != 0 ? "sdk" : "runtime",
+                                           &my_error);
+  if (my_error)
     {
-      g_autoptr(GError) my_error = NULL;
-      runtime = g_key_file_get_string (metakey, "Application",
-                                       (flags & XDG_APP_RUN_FLAG_DEVEL) != 0 ? "sdk" : "runtime",
-                                       &my_error);
-      if (my_error)
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      return FALSE;
+    }
+
+  runtime_parts = g_strsplit (default_runtime, "/", 0);
+  if (g_strv_length (runtime_parts) != 3)
+    return xdg_app_fail (error, "Wrong number of components in runtime %s", default_runtime);
+
+  if (custom_runtime)
+    {
+      g_auto(GStrv) custom_runtime_parts = g_strsplit (custom_runtime, "/", 0);
+
+      for (i = 0; i < 3 && custom_runtime_parts[i] != NULL; i++)
         {
-          g_propagate_error (error, g_steal_pointer (&my_error));
-          return FALSE;
+          if (strlen (custom_runtime_parts[i]) > 0)
+            {
+              g_free (runtime_parts[i]);
+              runtime_parts[i] = g_steal_pointer (&custom_runtime_parts[i]);
+            }
         }
     }
 
-  runtime_ref = g_build_filename ("runtime", runtime, NULL);
+  if (custom_runtime_version)
+    {
+      g_free (runtime_parts[2]);
+      runtime_parts[2] = g_strdup (custom_runtime_version);
+    }
+
+  runtime_ref = xdg_app_compose_ref (FALSE,
+                                     runtime_parts[0],
+                                     runtime_parts[2],
+                                     runtime_parts[1],
+                                     error);
+  if (runtime_ref == NULL)
+    return FALSE;
 
   runtime_deploy = xdg_app_find_deploy_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
@@ -2188,8 +2217,6 @@ xdg_app_run_app (const char *app_ref,
     command = custom_command;
   else
     {
-      g_autoptr(GError) my_error = NULL;
-
       default_command = g_key_file_get_string (metakey, "Application", "command", &my_error);
       if (my_error)
         {

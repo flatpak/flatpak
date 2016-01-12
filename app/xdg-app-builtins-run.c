@@ -40,6 +40,7 @@ static char *opt_branch;
 static char *opt_command;
 static gboolean opt_devel;
 static char *opt_runtime;
+static char *opt_runtime_version;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
@@ -47,6 +48,7 @@ static GOptionEntry options[] = {
   { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to use", "BRANCH" },
   { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, "Runtime to use", "RUNTIME" },
+  { "runtime-version", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_version, "Runtime version to use", "VERSION" },
   { NULL }
 };
 
@@ -102,6 +104,7 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (!xdg_app_run_app (app_ref, app_deploy,
                         arg_context,
                         opt_runtime,
+                        opt_runtime_version,
                         opt_devel ? XDG_APP_RUN_FLAG_DEVEL : 0,
                         opt_command,
                         &argv[rest_argv_start + 1],
