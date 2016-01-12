@@ -135,7 +135,7 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
     {
-      xdg_app_fail (error, "Runtime %s branch %s already installed", runtime, branch);
+      xdg_app_fail (error, "Runtime %s branch %s already installed", runtime, branch ? branch : "master");
       goto out;
     }
 
@@ -216,7 +216,7 @@ xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, G
   deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
     {
-      xdg_app_fail (error, "App %s branch %s already installed", app, branch);
+      xdg_app_fail (error, "App %s branch %s already installed", app, branch ? branch : "master");
       goto out;
     }
 
