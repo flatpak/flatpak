@@ -574,7 +574,7 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
         }
     }
 
-  return envp;
+  return builder_context_extend_env (context, envp);
 }
 
 char **

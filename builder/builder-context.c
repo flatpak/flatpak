@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/statfs.h>
+#include <unistd.h>
 
 #include "builder-context.h"
 #include "xdg-app-utils.h"
@@ -41,10 +42,12 @@ struct BuilderContext {
   GFile *download_dir;
   GFile *state_dir;
   GFile *cache_dir;
+  GFile *ccache_dir;
 
   BuilderOptions *options;
   gboolean keep_build_dirs;
   char **cleanup;
+  gboolean use_ccache;
 };
 
 typedef struct {
@@ -130,6 +133,7 @@ builder_context_constructed (GObject *object)
   self->state_dir = g_file_get_child (self->base_dir, ".xdg-app-builder");
   self->download_dir = g_file_get_child (self->state_dir, "downloads");
   self->cache_dir = g_file_get_child (self->state_dir, "cache");
+  self->ccache_dir = g_file_get_child (self->state_dir, "ccache");
 }
 
 static void
@@ -191,6 +195,12 @@ GFile *
 builder_context_get_cache_dir (BuilderContext  *self)
 {
   return self->cache_dir;
+}
+
+GFile *
+builder_context_get_ccache_dir (BuilderContext  *self)
+{
+  return self->ccache_dir;
 }
 
 SoupSession *
@@ -281,6 +291,60 @@ gboolean
 builder_context_get_keep_build_dirs (BuilderContext *self)
 {
   return self->keep_build_dirs;
+}
+
+gboolean
+builder_context_enable_ccache (BuilderContext  *self,
+                               GError         **error)
+{
+  g_autofree char *ccache_path = g_file_get_path (self->ccache_dir);
+  g_autofree char *ccache_bin_path = g_build_filename (ccache_path, "bin", NULL);
+  int i;
+  static const char *compilers[] = {
+    "cc",
+    "c++",
+    "gcc",
+    "g++"
+  };
+
+  if (g_mkdir_with_parents (ccache_bin_path, 0755) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  for (i = 0; i < G_N_ELEMENTS (compilers); i++)
+    {
+      const char *symlink_path = g_build_filename (ccache_bin_path, compilers[i], NULL);
+      if (symlink ("/usr/bin/ccache", symlink_path) && errno != EEXIST)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+    }
+
+  self->use_ccache = TRUE;
+
+  return TRUE;
+}
+
+char **
+builder_context_extend_env (BuilderContext  *self,
+                            char           **envp)
+{
+  if (self->use_ccache)
+    {
+      const char *old_path = g_environ_getenv (envp, "PATH");
+      g_autofree char *new_path = NULL;
+      if (old_path == NULL)
+        old_path = "/app/bin:/usr/bin"; /* This is the xdg-app default PATH */
+
+      new_path = g_strdup_printf ("/run/ccache/bin:%s", old_path);
+      envp = g_environ_setenv (envp, "PATH", new_path, TRUE);
+      envp = g_environ_setenv (envp, "CCACHE_DIR", "/run/ccache", TRUE);
+    }
+
+  return envp;
 }
 
 BuilderContext *

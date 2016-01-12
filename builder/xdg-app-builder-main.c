@@ -38,6 +38,7 @@ static gboolean opt_download_only;
 static gboolean opt_build_only;
 static gboolean opt_disable_download;
 static gboolean opt_disable_updates;
+static gboolean opt_ccache;
 static gboolean opt_require_changes;
 static gboolean opt_keep_build_dirs;
 static char *opt_repo;
@@ -45,6 +46,7 @@ static char *opt_repo;
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
   { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version information and exit", NULL },
+  { "ccache", 0, 0, G_OPTION_ARG_NONE, &opt_ccache, "Use ccache", NULL },
   { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache", NULL },
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
   { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
@@ -197,13 +199,18 @@ main (int    argc,
 
   builder_context_set_keep_build_dirs (build_context, opt_keep_build_dirs);
 
-  if (!opt_disable_download)
+  if (opt_ccache &&
+      !builder_context_enable_ccache (build_context, &error))
     {
-      if (!builder_manifest_download (manifest, !opt_disable_updates, build_context, &error))
-        {
-          g_print ("error: %s\n", error->message);
-          return 1;
-        }
+      g_printerr ("Can't initialize ccache use: %s\n", error->message);
+      return 1;
+    }
+
+  if (!opt_disable_download &&
+      !builder_manifest_download (manifest, !opt_disable_updates, build_context, &error))
+    {
+      g_print ("Failed to download sources: %s\n", error->message);
+      return 1;
     }
 
   if (opt_download_only)

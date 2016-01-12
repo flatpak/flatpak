@@ -517,6 +517,7 @@ static const char strv_arg[] = "strv";
 static gboolean
 build (GFile *app_dir,
        const char *module_name,
+       BuilderContext *context,
        GFile *source_dir,
        const char *cwd_subdir,
        char **xdg_app_opts,
@@ -535,6 +536,7 @@ build (GFile *app_dir,
   g_autofree char *source_dir_path_canonical = NULL;
   g_autofree char *cwd_dir_path = NULL;
   g_autofree char *cwd_dir_path_canonical = NULL;
+  g_autofree char *ccache_dir_path = NULL;
   va_list ap;
   int i;
 
@@ -552,6 +554,9 @@ build (GFile *app_dir,
     g_ptr_array_add (args, g_strdup_printf ("--build-dir=/run/build/%s/%s", module_name, cwd_subdir));
   else
     g_ptr_array_add (args, g_strdup_printf ("--build-dir=/run/build/%s", module_name));
+
+  ccache_dir_path = g_file_get_path (builder_context_get_ccache_dir (context));
+  g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/ccache=%s", ccache_dir_path));
 
   if (xdg_app_opts)
     {
@@ -809,7 +814,7 @@ builder_module_build (BuilderModule *self,
         }
 
       env_with_noconfigure = g_environ_setenv (g_strdupv (env), "NOCONFIGURE", "1", TRUE);
-      if (!build (app_dir, self->name, source_dir, source_subdir_relative, build_args, env_with_noconfigure, error,
+      if (!build (app_dir, self->name, context, source_dir, source_subdir_relative, build_args, env_with_noconfigure, error,
                   autogen_cmd, NULL))
         return FALSE;
 
@@ -873,7 +878,7 @@ builder_module_build (BuilderModule *self,
         configure_prefix_arg = g_strdup_printf ("--prefix=%s",
                                                 builder_options_get_prefix (self->build_options, context));
 
-      if (!build (app_dir, self->name, source_dir, build_dir_relative, build_args, env, error,
+      if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
                   configure_cmd, configure_prefix_arg, strv_arg, self->config_opts, configure_final_arg, NULL))
         return FALSE;
     }
@@ -912,11 +917,11 @@ builder_module_build (BuilderModule *self,
 
   /* Build and install */
 
-  if (!build (app_dir, self->name, source_dir, build_dir_relative, build_args, env, error,
+  if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
               "make", make_j?make_j:skip_arg, make_l?make_l:skip_arg, strv_arg, self->make_args, NULL))
     return FALSE;
 
-  if (!build (app_dir, self->name, source_dir, build_dir_relative, build_args, env, error,
+  if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
               "make", "install", strv_arg, self->make_install_args, NULL))
     return FALSE;
 
@@ -926,7 +931,7 @@ builder_module_build (BuilderModule *self,
     {
       for (i = 0; self->post_install[i] != NULL; i++)
         {
-          if (!build (app_dir, self->name, source_dir, build_dir_relative, build_args, env, error,
+          if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
                       "/bin/sh", "-c", self->post_install[i], NULL))
             return FALSE;
         }

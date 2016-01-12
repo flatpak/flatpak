@@ -39,6 +39,7 @@ GFile *         builder_context_get_app_dir         (BuilderContext  *self);
 GFile *         builder_context_get_base_dir        (BuilderContext  *self);
 GFile *         builder_context_get_state_dir       (BuilderContext  *self);
 GFile *         builder_context_get_cache_dir       (BuilderContext  *self);
+GFile *         builder_context_get_ccache_dir      (BuilderContext  *self);
 GFile *         builder_context_get_download_dir    (BuilderContext  *self);
 SoupSession *   builder_context_get_soup_session    (BuilderContext  *self);
 const char *    builder_context_get_arch            (BuilderContext  *self);
@@ -55,9 +56,12 @@ BuilderOptions *builder_context_get_options         (BuilderContext  *self);
 void            builder_context_set_options         (BuilderContext  *self,
                                                      BuilderOptions  *option);
 
-
 BuilderContext *builder_context_new              (GFile          *base_dir,
                                                   GFile          *app_dir);
+gboolean        builder_context_enable_ccache    (BuilderContext  *self,
+                                                  GError         **error);
+char **         builder_context_extend_env       (BuilderContext  *self,
+                                                  char           **envp);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderContext, g_object_unref)
 
