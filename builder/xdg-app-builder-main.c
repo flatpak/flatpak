@@ -42,6 +42,10 @@ static gboolean opt_ccache;
 static gboolean opt_require_changes;
 static gboolean opt_keep_build_dirs;
 static char *opt_repo;
+static char *opt_subject;
+static char *opt_body;
+static char *opt_gpg_homedir;
+static char **opt_key_ids;
 
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
@@ -55,6 +59,10 @@ static GOptionEntry entries[] = {
   { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir or export if no changes", NULL },
   { "keep-build-dirs", 0, 0, G_OPTION_ARG_NONE, &opt_keep_build_dirs, "Don't remove build directories after install", NULL },
   { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo, "Repo to export into", "DIR"},
+  { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, "One line subject (passed to build-export)", "SUBJECT" },
+  { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description (passed to build-export)", "BODY" },
+  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
+  { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
   { NULL }
 };
 
@@ -86,6 +94,7 @@ do_export (GError      **error,
 {
   va_list ap;
   const char *arg;
+  int i;
 
   g_autoptr(GPtrArray) args = NULL;
   g_autoptr(GSubprocess) subp = NULL;
@@ -93,6 +102,18 @@ do_export (GError      **error,
   args = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (args, g_strdup ("xdg-app"));
   g_ptr_array_add (args, g_strdup ("build-export"));
+
+  if (opt_subject)
+    g_ptr_array_add (args, g_strdup_printf ("--subject=%s", opt_subject));
+
+  if (opt_body)
+    g_ptr_array_add (args, g_strdup_printf ("--body=%s", opt_body));
+
+  if (opt_gpg_homedir)
+    g_ptr_array_add (args, g_strdup_printf ("--gpg-homedir=%s", opt_gpg_homedir));
+
+  for (i = 0; opt_key_ids != NULL && opt_key_ids[i] != NULL; i++)
+    g_ptr_array_add (args, g_strdup_printf ("--gpg-sign=%s", opt_key_ids[i]));
 
   va_start (ap, error);
   while ((arg = va_arg (ap, const gchar *)))
