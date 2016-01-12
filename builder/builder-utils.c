@@ -53,75 +53,70 @@ builder_uri_to_filename (const char *uri)
   return g_string_free (s, FALSE);
 }
 
-
-/* If pattern starts with a slash, then match on the entire
- * path, otherwise just the basename.
- * Note: Return value points into path.
- */
-static const char *
-path_prefix_match_full (const char *pattern,
-                        const char *path,
-                        char **prefix_out)
+const char *
+inplace_basename (const char *path)
 {
-  const char *rest;
   const char *last_slash;
 
-  if (pattern[0] == '/')
-    {
-      /* Absolute path match */
-      rest = xdg_app_path_match_prefix (pattern, path);
-    }
-  else
-    {
-      /* Basename match */
-      last_slash = strrchr (path, '/');
-      if (last_slash && prefix_out)
-        {
-          *prefix_out = g_strndup (path, last_slash - path);
-          path = last_slash + 1;
-        }
-      rest = xdg_app_path_match_prefix (pattern, path);
-    }
+  last_slash = strrchr (path, '/');
+  if (last_slash)
+    path = last_slash + 1;
 
-  return rest;
+  return path;
 }
 
+
 /* Adds all matches of path to prefix. There can be multiple, because
-   e.g matching "a/b/c" against "/a" matches both "a/b" and "a/b/c" */
+ * e.g matching "a/b/c" against "/a" matches both "a/b" and "a/b/c"
+ *
+ * If pattern starts with a slash, then match on the entire
+ * path, otherwise just the basename.
+ */
 void
 xdg_app_collect_matches_for_path_pattern (const char *path,
                                           const char *pattern,
                                           GHashTable *to_remove_ht)
 {
   const char *rest;
-  g_autofree char *dir = NULL;
 
-  rest = path_prefix_match_full (pattern, path, &dir);
-
-  while (rest != NULL)
+  if (pattern[0] != '/')
     {
-      const char *slash;
-      g_autofree char *prefix = g_strndup (path, rest-path);
-      g_autofree char *to_remove = NULL;
-      if (dir)
-        to_remove = g_strconcat (dir, "/", prefix, NULL);
-      else
-        to_remove = g_strdup (prefix);
-      g_hash_table_insert (to_remove_ht, g_steal_pointer (&to_remove), GINT_TO_POINTER (1));
-      while (*rest == '/')
-        rest++;
-      if (*rest == 0)
-        break;
-      slash = strchr (rest, '/');
-      rest = slash ? slash : rest + strlen (rest);
+      rest = xdg_app_path_match_prefix (pattern, inplace_basename (path));
+      if (rest != NULL)
+        g_hash_table_insert (to_remove_ht, g_strdup (path), GINT_TO_POINTER (1));
     }
+  else
+    {
+      /* Absolute pathname match. This can actually match multiple
+       * files, as a prefix match should remove all files below that
+       * (in this module) */
+
+      rest = xdg_app_path_match_prefix (pattern, path);
+      while (rest != NULL)
+        {
+          const char *slash;
+          g_autofree char *prefix = g_strndup (path, rest-path);
+          g_hash_table_insert (to_remove_ht, g_steal_pointer (&prefix), GINT_TO_POINTER (1));
+          while (*rest == '/')
+            rest++;
+          if (*rest == 0)
+            break;
+          slash = strchr (rest, '/');
+          rest = slash ? slash : rest + strlen (rest);
+        }
+    }
+
+
 }
 
 gboolean
 xdg_app_matches_path_pattern (const char *path,
                               const char *pattern)
 {
-  return path_prefix_match_full (pattern, path, NULL) != NULL;
+  if (pattern[0] != '/')
+    path = inplace_basename (path);
+
+  return xdg_app_path_match_prefix (pattern, path) != NULL;
 }
 
 gboolean
