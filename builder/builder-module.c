@@ -845,7 +845,10 @@ builder_module_build (BuilderModule *self,
 
       if (use_builddir)
         {
-          build_dir_relative = g_build_filename (source_subdir_relative, "_xdg_app_build", NULL);
+          if (source_subdir_relative)
+            build_dir_relative = g_build_filename (source_subdir_relative, "_xdg_app_build", NULL);
+          else
+            build_dir_relative = g_strdup ("_xdg_app_build");
           build_dir = g_file_get_child (source_subdir, "_xdg_app_build");
 
           if (!g_file_make_directory (build_dir, NULL, error))
