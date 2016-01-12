@@ -555,8 +555,11 @@ build (GFile *app_dir,
   else
     g_ptr_array_add (args, g_strdup_printf ("--build-dir=/run/build/%s", module_name));
 
-  ccache_dir_path = g_file_get_path (builder_context_get_ccache_dir (context));
-  g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/ccache=%s", ccache_dir_path));
+  if (g_file_query_exists (builder_context_get_ccache_dir (context), NULL))
+    {
+      ccache_dir_path = g_file_get_path (builder_context_get_ccache_dir (context));
+      g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/ccache=%s", ccache_dir_path));
+    }
 
   if (xdg_app_opts)
     {
