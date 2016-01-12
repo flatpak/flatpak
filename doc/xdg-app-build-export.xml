@@ -111,6 +111,26 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--metadata=FILENAME</option></term>
+
+                <listitem><para>
+                  Use the specified filename as metadata in the exported app instead of
+                  the default file (called <filename>metadata</filename>). This is useful
+                  if you want to commit multiple things from a single build tree, typically
+                  used in combination with --files and --exclude.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--files=SUBDIR</option></term>
+
+                <listitem><para>
+                  Use the files in the specified subdirectory as the file contents, rather
+                  than the regular <filename>files</filename> directory.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--gpg-sign=KEYID</option></term>
 
                 <listitem><para>
