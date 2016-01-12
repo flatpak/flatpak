@@ -2248,7 +2248,16 @@ main (int argc,
 		   (ipc ? 0 : CLONE_NEWIPC),
 		   NULL);
   if (pid == -1)
-    die_with_error ("Creating new namespace failed");
+    {
+#ifndef DISABLE_USERNS
+      if (errno == EINVAL)
+        die ("Creating new namespace failed, likely because the kernel does not support user namespaces. Recompile xdg-app with --disable-userns, or switch to a kernel with user namespace support.");
+      else if (errno == EPERM)
+        die ("No permissions to creating new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.");
+      else
+#endif
+        die_with_error ("Creating new namespace failed");
+    }
 
   if (pid != 0)
     {
