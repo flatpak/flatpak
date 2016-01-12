@@ -139,6 +139,20 @@ export_dir (int            source_parent_fd,
         }
     }
 
+  /* Try to remove the directory, as we don't want to export empty directories.
+   * However, don't fail if the unlink fails due to the directory not being empty */
+  do
+    res = unlinkat (destination_parent_fd, destination_name, AT_REMOVEDIR);
+  while (G_UNLIKELY (res == -1 && errno == EINTR));
+  if (res == -1)
+    {
+      if (errno != ENOTEMPTY)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+    }
+
   return TRUE;
 }
 
