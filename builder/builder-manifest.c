@@ -46,6 +46,7 @@ struct BuilderManifest {
   char **cleanup_commands;
   char **finish_args;
   char *rename_desktop_file;
+  char *rename_appdata_file;
   char *rename_icon;
   gboolean copy_icon;
   char *desktop_file_name_prefix;
@@ -80,6 +81,7 @@ enum {
   PROP_WRITABLE_SDK,
   PROP_FINISH_ARGS,
   PROP_RENAME_DESKTOP_FILE,
+  PROP_RENAME_APPDATA_FILE,
   PROP_RENAME_ICON,
   PROP_COPY_ICON,
   PROP_DESKTOP_FILE_NAME_PREFIX,
@@ -104,6 +106,7 @@ builder_manifest_finalize (GObject *object)
   g_strfreev (self->cleanup_commands);
   g_strfreev (self->finish_args);
   g_free (self->rename_desktop_file);
+  g_free (self->rename_appdata_file);
   g_free (self->rename_icon);
   g_free (self->desktop_file_name_prefix);
   g_free (self->desktop_file_name_suffix);
@@ -175,6 +178,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_RENAME_DESKTOP_FILE:
       g_value_set_string (value, self->rename_desktop_file);
+      break;
+
+    case PROP_RENAME_APPDATA_FILE:
+      g_value_set_string (value, self->rename_appdata_file);
       break;
 
     case PROP_RENAME_ICON:
@@ -274,6 +281,11 @@ builder_manifest_set_property (GObject       *object,
     case PROP_RENAME_DESKTOP_FILE:
       g_free (self->rename_desktop_file);
       self->rename_desktop_file = g_value_dup_string (value);
+      break;
+
+    case PROP_RENAME_APPDATA_FILE:
+      g_free (self->rename_appdata_file);
+      self->rename_appdata_file = g_value_dup_string (value);
       break;
 
     case PROP_RENAME_ICON:
@@ -391,6 +403,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_RENAME_DESKTOP_FILE,
                                    g_param_spec_string ("rename-desktop-file",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_RENAME_APPDATA_FILE,
+                                   g_param_spec_string ("rename-appdata-file",
                                                         "",
                                                         "",
                                                         NULL,
@@ -630,6 +649,7 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
   builder_cache_checksum_strv (cache, self->cleanup);
   builder_cache_checksum_strv (cache, self->cleanup_commands);
   builder_cache_checksum_str (cache, self->rename_desktop_file);
+  builder_cache_checksum_str (cache, self->rename_appdata_file);
   builder_cache_checksum_str (cache, self->rename_icon);
   builder_cache_checksum_boolean (cache, self->copy_icon);
   builder_cache_checksum_str (cache, self->desktop_file_name_prefix);
@@ -904,6 +924,10 @@ builder_manifest_cleanup (BuilderManifest *self,
   g_autofree char **keys = NULL;
   g_auto(GStrv) env = NULL;
   guint n_keys;
+  g_autoptr(GFile) appdata_dir = NULL;
+  g_autofree char *appdata_basename = NULL;
+  g_autoptr(GFile) appdata_file = NULL;
+
   int i;
 
   builder_manifest_checksum_for_cleanup (self, cache, context);
@@ -950,16 +974,63 @@ builder_manifest_cleanup (BuilderManifest *self,
             }
         }
 
+      appdata_dir = g_file_resolve_relative_path (app_root, "share/appdata");
+      appdata_basename = g_strdup_printf ("%s.appdata.xml", self->app_id);
+      appdata_file = g_file_get_child (appdata_dir, appdata_basename);
+
+      if (self->rename_appdata_file != NULL)
+        {
+          g_autoptr(GFile) src = g_file_get_child (appdata_dir, self->rename_appdata_file);
+
+          g_print ("Renaming %s to %s\n", self->rename_appdata_file, appdata_basename);
+          if (!g_file_move (src, appdata_file, 0, NULL, NULL, NULL, error))
+            return FALSE;
+        }
+
       if (self->rename_desktop_file != NULL)
         {
           g_autoptr(GFile) applications_dir = g_file_resolve_relative_path (app_root, "share/applications");
           g_autoptr(GFile) src = g_file_get_child (applications_dir, self->rename_desktop_file);
-          g_autofree char *dest_basename = g_strdup_printf ("%s.desktop", self->app_id);
-          g_autoptr(GFile) dest = g_file_get_child (applications_dir, dest_basename);
+          g_autofree char *desktop_basename = g_strdup_printf ("%s.desktop", self->app_id);
+          g_autoptr(GFile) dest = g_file_get_child (applications_dir, desktop_basename);
 
-          g_print ("Renaming %s to %s\n", self->rename_desktop_file, dest_basename);
+          g_print ("Renaming %s to %s\n", self->rename_desktop_file, desktop_basename);
           if (!g_file_move (src, dest, 0, NULL, NULL, NULL, error))
             return FALSE;
+
+          if (g_file_query_exists (appdata_file, NULL))
+            {
+              g_autofree char *contents;
+              const char *to_replace;
+              const char *match;
+              g_autoptr(GString) new_contents = NULL;
+
+              if (!g_file_load_contents (appdata_file, NULL, &contents, NULL, NULL, error))
+                return FALSE;
+
+              new_contents = g_string_sized_new (strlen (contents));
+
+              to_replace = contents;
+
+              while ( (match = strstr (to_replace, self->rename_desktop_file)) != NULL)
+                {
+                  g_string_append_len (new_contents, to_replace, match - to_replace);
+                  g_string_append (new_contents, desktop_basename);
+                  to_replace = match + strlen (self->rename_desktop_file);
+                }
+
+              g_string_append (new_contents, to_replace);
+
+              if (!g_file_replace_contents (appdata_file,
+                                            new_contents->str,
+                                            new_contents->len,
+                                            NULL,
+                                            FALSE,
+                                            G_FILE_CREATE_NONE,
+                                            NULL,
+                                            NULL, error))
+                return FALSE;
+            }
         }
 
       if (self->rename_icon)

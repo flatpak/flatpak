@@ -154,6 +154,10 @@
                     <listitem><para>Any desktop file with this name will be renamed to a name based on app-id during the cleanup phase.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>rename-appdata-file</option></term>
+                    <listitem><para>Any appdata file with this name will be renamed to a name based on app-id during the cleanup phase.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>rename-icon</option></term>
                     <listitem><para>Any icon with this name will be renamed to a name based on app-id during the cleanup phase.</para></listitem>
                 </varlistentry>
