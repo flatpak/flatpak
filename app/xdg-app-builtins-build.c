@@ -34,9 +34,13 @@
 #include "xdg-app-run.h"
 
 static gboolean opt_runtime;
+static char *opt_build_dir;
+static char **opt_bind_mounts;
 
 static GOptionEntry options[] = {
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Use non-devel runtime", NULL },
+  { "bind-mount", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_bind_mounts, "Add bind mount", "DEST=SRC" },
+  { "build-dir", 0, 0, G_OPTION_ARG_STRING, &opt_build_dir, "Start build in this directory", "DIR" },
   { NULL }
 };
 
@@ -154,6 +158,24 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
+
+  for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
+    {
+      if (strchr (opt_bind_mounts[i], '=') == NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Missing '=' in bind mount option '%s'", opt_bind_mounts[i]);
+          return FALSE;
+        }
+
+      g_ptr_array_add (argv_array, g_strdup ("-B"));
+      g_ptr_array_add (argv_array, g_strdup (opt_bind_mounts[i]));
+    }
+
+  if (opt_build_dir != NULL)
+    {
+      g_ptr_array_add (argv_array, g_strdup ("-P"));
+      g_ptr_array_add (argv_array, g_strdup (opt_build_dir));
+    }
 
   g_ptr_array_add (argv_array, g_strdup ("-a"));
   g_ptr_array_add (argv_array, g_file_get_path (app_files));

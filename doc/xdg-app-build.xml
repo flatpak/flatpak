@@ -79,6 +79,22 @@
             </varlistentry>
 
            <varlistentry>
+                <term><option>--bind-mount=DEST=SOURCE</option></term>
+
+                <listitem><para>
+                    Add a custom bind mount in the build namespace. Can be specified multiple times.
+                </para></listitem>
+            </varlistentry>
+
+           <varlistentry>
+                <term><option>--build-dir=PATH</option></term>
+
+                <listitem><para>
+                    Start the build in this directory (default is in the current directory).
+                </para></listitem>
+            </varlistentry>
+
+           <varlistentry>
                 <term><option>--share=SUBSYSTEM</option></term>
 
                 <listitem><para>
