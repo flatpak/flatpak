@@ -183,6 +183,7 @@ collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GEr
   g_autoptr(GFile) export = NULL;
   const char *paths[] = {
     "share/applications",                 /* Copy desktop files */
+    "share/appdata",                      /* Copy appdata files */
     "share/icons/hicolor",                /* Icons */
     "share/dbus-1/services",              /* D-Bus service files */
     "share/gnome-shell/search-providers", /* Search providers */
