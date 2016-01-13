@@ -38,26 +38,24 @@ static gboolean opt_user;
 typedef struct {
   const char *name;
   gboolean (*fn) (int argc, char **argv, GCancellable *cancellable, GError **error);
+  gboolean deprecated;
 } XdgAppCommand;
 
 static XdgAppCommand commands[] = {
+  { "run", xdg_app_builtin_run },
+  { "install", xdg_app_builtin_install },
+  { "update", xdg_app_builtin_update },
+  { "uninstall", xdg_app_builtin_uninstall },
+  { "make-current", xdg_app_builtin_make_current_app },
+  { "enter", xdg_app_builtin_enter },
+
   { "add-remote", xdg_app_builtin_add_remote },
   { "delete-remote", xdg_app_builtin_delete_remote },
   { "modify-remote", xdg_app_builtin_modify_remote },
   { "ls-remote", xdg_app_builtin_ls_remote },
   { "list-remotes", xdg_app_builtin_list_remotes },
-  { "install-runtime", xdg_app_builtin_install_runtime },
-  { "update-runtime", xdg_app_builtin_update_runtime },
-  { "uninstall-runtime", xdg_app_builtin_uninstall_runtime },
   { "list-runtimes", xdg_app_builtin_list_runtimes },
-  { "install-app", xdg_app_builtin_install_app },
-  { "update-app", xdg_app_builtin_update_app },
-  { "make-app-current", xdg_app_builtin_make_current_app },
-  { "uninstall-app", xdg_app_builtin_uninstall_app },
   { "list-apps", xdg_app_builtin_list_apps },
-  { "install-bundle", xdg_app_builtin_install_bundle },
-  { "run", xdg_app_builtin_run },
-  { "enter", xdg_app_builtin_enter },
   { "override", xdg_app_builtin_override },
   { "export-file", xdg_app_builtin_export_file },
   { "build-init", xdg_app_builtin_build_init },
@@ -66,6 +64,16 @@ static XdgAppCommand commands[] = {
   { "build-export", xdg_app_builtin_build_export },
   { "build-bundle", xdg_app_builtin_build_bundle },
   { "repo-update", xdg_app_builtin_repo_update },
+
+  /* Deprecated */
+  { "install-runtime", xdg_app_builtin_install_runtime, TRUE },
+  { "install-app", xdg_app_builtin_install_app, TRUE },
+  { "update-app", xdg_app_builtin_update_app, TRUE },
+  { "update-runtime", xdg_app_builtin_update_runtime, TRUE },
+  { "uninstall-runtime", xdg_app_builtin_uninstall_runtime },
+  { "uninstall-app", xdg_app_builtin_uninstall_app, TRUE },
+  { "install-bundle", xdg_app_builtin_install_bundle, TRUE },
+  { "make-app-current", xdg_app_builtin_make_current_app, TRUE },
   { NULL }
 };
 
@@ -106,7 +114,8 @@ xdg_app_option_context_new_with_commands (XdgAppCommand *commands)
 
   while (commands->name != NULL)
     {
-      g_string_append_printf (summary, "\n  %s", commands->name);
+      if (!commands->deprecated)
+        g_string_append_printf (summary, "\n  %s", commands->name);
       commands++;
     }
 
@@ -202,7 +211,6 @@ usage_error (GOptionContext *context, const char *message, GError **error)
 int
 xdg_app_run (int    argc,
              char **argv,
-             XdgAppCommand *commands,
              GError **res_error)
 {
   XdgAppCommand *command;
@@ -315,7 +323,7 @@ main (int    argc,
   else
     g_unsetenv ("GIO_USE_VFS");
 
-  ret = xdg_app_run (argc, argv, commands, &error);
+  ret = xdg_app_run (argc, argv, &error);
   if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED))
     xdg_app_usage (commands, TRUE);
 

@@ -63,7 +63,6 @@ typedef struct {
   GObjectClass parent_class;
 } XdgAppDeployClass;
 
-
 G_DEFINE_TYPE (XdgAppDir, xdg_app_dir, G_TYPE_OBJECT)
 G_DEFINE_TYPE (XdgAppDeploy, xdg_app_deploy, G_TYPE_OBJECT)
 
@@ -2157,6 +2156,137 @@ xdg_app_dir_get_if_deployed (XdgAppDir     *self,
 
   if (g_file_query_file_type (deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
     return g_object_ref (deploy_dir);
+  return NULL;
+}
+
+char *
+xdg_app_dir_find_remote_ref (XdgAppDir      *self,
+                             const char     *remote,
+                             const char     *name,
+                             const char     *opt_branch,
+                             const char     *opt_arch,
+                             gboolean        app,
+                             gboolean        runtime,
+                             gboolean       *is_app,
+                             GCancellable   *cancellable,
+                             GError        **error)
+{
+  g_autofree char *app_ref = NULL;
+  g_autofree char *runtime_ref = NULL;
+  g_autofree char *app_ref_with_remote = NULL;
+  g_autofree char *runtime_ref_with_remote = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) refs = NULL;
+  g_autoptr(GBytes) summary_bytes = NULL;
+  int pos;
+
+  if (!xdg_app_dir_ensure_repo (self, NULL, error))
+    return NULL;
+
+  if (app)
+    {
+      app_ref = xdg_app_compose_ref (TRUE, name, opt_branch, opt_arch, error);
+      if (app_ref == NULL)
+        return NULL;
+      app_ref_with_remote = g_strconcat (remote, ":", app_ref, NULL);
+    }
+
+  if (runtime)
+    {
+      runtime_ref = xdg_app_compose_ref (FALSE, name, opt_branch, opt_arch, error);
+      if (runtime_ref == NULL)
+        return NULL;
+      runtime_ref_with_remote = g_strconcat (remote, ":", app_ref, NULL);
+    }
+
+  /* First look for a local ref */
+
+  if (app_ref &&
+      ostree_repo_resolve_rev (self->repo, app_ref_with_remote,
+                               FALSE, NULL, NULL))
+    return g_steal_pointer (&app_ref);
+
+  if (runtime_ref &&
+      ostree_repo_resolve_rev (self->repo, runtime_ref_with_remote,
+                               FALSE, NULL, NULL))
+    return g_steal_pointer (&runtime_ref);
+
+  if (!ostree_repo_remote_fetch_summary (self->repo, remote,
+                                         &summary_bytes, NULL,
+                                         cancellable, error))
+    return FALSE;
+
+  if (summary_bytes == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Can't find %s in remote %s; server has no summary file", name, remote);
+      return NULL;
+    }
+
+  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE);
+  refs = g_variant_get_child_value (summary, 0);
+
+  if (app_ref && xdg_app_variant_bsearch_str (refs, app_ref, &pos))
+    return g_steal_pointer (&app_ref);
+
+  if (runtime_ref && xdg_app_variant_bsearch_str (refs, runtime_ref, &pos))
+    return g_steal_pointer (&runtime_ref);
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+               "Can't find %s %s in remote %s", name, opt_branch ? opt_branch : "master", remote);
+
+  return NULL;
+}
+
+char *
+xdg_app_dir_find_installed_ref (XdgAppDir      *self,
+                                const char     *name,
+                                const char     *opt_branch,
+                                const char     *opt_arch,
+                                gboolean        app,
+                                gboolean        runtime,
+                                gboolean       *is_app,
+                                GError        **error)
+{
+  if (app)
+    {
+      g_autofree char *app_ref = NULL;
+      g_autoptr(GFile) deploy_base = NULL;
+
+      app_ref = xdg_app_compose_ref (TRUE, name, opt_branch, opt_arch, error);
+      if (app_ref == NULL)
+        return NULL;
+
+
+      deploy_base = xdg_app_dir_get_deploy_dir (self, app_ref);
+      if (g_file_query_exists (deploy_base, NULL))
+        {
+          if (is_app)
+            *is_app = TRUE;
+          return g_steal_pointer (&app_ref);
+        }
+    }
+
+  if (runtime)
+    {
+      g_autofree char *runtime_ref = NULL;
+      g_autoptr(GFile) deploy_base = NULL;
+
+      runtime_ref = xdg_app_compose_ref (FALSE, name, opt_branch, opt_arch, error);
+      if (runtime_ref == NULL)
+        return NULL;
+
+      deploy_base = xdg_app_dir_get_deploy_dir (self, runtime_ref);
+      if (g_file_query_exists (deploy_base, NULL))
+        {
+          if (is_app)
+            *is_app = FALSE;
+          return g_steal_pointer (&runtime_ref);
+        }
+    }
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+               "%s %s not installed", name, opt_branch ? opt_branch : "master");
   return NULL;
 }
 

@@ -380,10 +380,7 @@ xdg_app_compose_ref (gboolean app,
 {
   if (!xdg_app_is_valid_name (name))
     {
-      if (app)
-        xdg_app_fail (error, "'%s' is not a valid app name", name);
-      else
-        xdg_app_fail (error, "'%s' is not a valid runtime name", name);
+      xdg_app_fail (error, "'%s' is not a valid name", name);
       return NULL;
     }
 
@@ -1249,4 +1246,50 @@ xdg_app_spawn (GFile        *dir,
     }
 
   return TRUE;
+}
+
+gboolean
+xdg_app_variant_bsearch_str (GVariant   *array,
+                             const char *str,
+                             int        *out_pos)
+{
+  gsize imax, imin;
+  gsize imid;
+  gsize n;
+
+  n = g_variant_n_children (array);
+  if (n == 0)
+    return FALSE;
+
+  imax = n - 1;
+  imin = 0;
+  while (imax >= imin)
+    {
+      g_autoptr(GVariant) child = NULL;
+      const char *cur;
+      int cmp;
+
+      imid = (imin + imax) / 2;
+
+      child = g_variant_get_child_value (array, imid);
+      g_variant_get_child (child, 0, "&s", &cur, NULL);      
+
+      cmp = strcmp (cur, str);
+      if (cmp < 0)
+        imin = imid + 1;
+      else if (cmp > 0)
+        {
+          if (imid == 0)
+            break;
+          imax = imid - 1;
+        }
+      else
+        {
+          *out_pos = imid;
+          return TRUE;
+        }
+    }
+
+  *out_pos = imid;
+  return FALSE;
 }

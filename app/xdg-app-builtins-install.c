@@ -38,16 +38,18 @@ static char *opt_arch;
 static char **opt_gpg_file;
 static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
+static gboolean opt_runtime;
+static gboolean opt_app;
+static gboolean opt_bundle;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to install for", "ARCH" },
   { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, "Don't pull, only install from local cache", },
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, "Don't deploy, only download to local cache", },
-  { NULL }
-};
-
-static GOptionEntry options_bundle[] = {
-  { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, "Check signatures with GPG key from FILE (- for stdin)", "FILE" },
+  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
+  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
+  { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, "Install from local bundle file", },
+  { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, "Check bundle signatures with GPG key from FILE (- for stdin)", "FILE" },
   { NULL }
 };
 
@@ -98,184 +100,18 @@ read_gpg_data (GCancellable *cancellable,
   return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (mem_stream));
 }
 
-gboolean
-xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  gboolean ret = FALSE;
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
-  const char *repository;
-  const char *runtime;
-  const char *branch = NULL;
-  g_autofree char *ref = NULL;
-  gboolean created_deploy_base = FALSE;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
-
-  context = g_option_context_new ("REPOSITORY RUNTIME [BRANCH] - Install a runtime");
-
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
-
-  if (argc < 3)
-    {
-      usage_error (context, "REPOSITORY and RUNTIME must be specified", error);
-      goto out;
-    }
-
-  repository = argv[1];
-  runtime  = argv[2];
-  if (argc >= 4)
-    branch = argv[3];
-
-  ref = xdg_app_compose_ref (FALSE, runtime, branch, opt_arch, error);
-  if (ref == NULL)
-    goto out;
-
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
-  if (g_file_query_exists (deploy_base, cancellable))
-    {
-      xdg_app_fail (error, "Runtime %s branch %s already installed", runtime, branch ? branch : "master");
-      goto out;
-    }
-
-  if (!opt_no_pull)
-    {
-      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
-                             cancellable, error))
-        goto out;
-    }
-
-  if (!opt_no_deploy)
-    {
-      if (!xdg_app_dir_lock (dir, &lock,
-                             cancellable, error))
-        goto out;
-
-      if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
-        goto out;
-      created_deploy_base = TRUE;
-
-      if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
-        goto out;
-
-      glnx_release_lock_file (&lock);
-    }
-
-  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
-
-  if (!xdg_app_dir_mark_changed (dir, error))
-    goto out;
-
-  ret = TRUE;
-
- out:
-  if (created_deploy_base && !ret)
-    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
-
-  return ret;
-}
-
-gboolean
-xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  gboolean ret = FALSE;
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
-  const char *repository;
-  const char *app;
-  const char *branch = NULL;
-  g_autofree char *ref = NULL;
-  gboolean created_deploy_base = FALSE;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
-
-  context = g_option_context_new ("REPOSITORY APP [BRANCH] - Install an application");
-
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    goto out;
-
-  if (argc < 3)
-    {
-      usage_error (context, "REPOSITORY and APP must be specified", error);
-      goto out;
-    }
-
-  repository = argv[1];
-  app  = argv[2];
-  if (argc >= 4)
-    branch = argv[3];
-
-  ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
-  if (ref == NULL)
-    goto out;
-
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
-  if (g_file_query_exists (deploy_base, cancellable))
-    {
-      xdg_app_fail (error, "App %s branch %s already installed", app, branch ? branch : "master");
-      goto out;
-    }
-
-  if (!opt_no_pull)
-    {
-      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
-                             cancellable, error))
-        goto out;
-    }
-
-  if (!opt_no_deploy)
-    {
-      if (!xdg_app_dir_lock (dir, &lock,
-                             cancellable, error))
-        goto out;
-
-      if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
-        goto out;
-      created_deploy_base = TRUE;
-
-      if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
-        goto out;
-
-      glnx_release_lock_file (&lock);
-    }
-
-  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
-
-  if (!xdg_app_dir_mark_changed (dir, error))
-    goto out;
-
-  ret = TRUE;
-
- out:
-  if (created_deploy_base && !ret)
-    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
-
-  return ret;
-}
-
 #define OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "(uayttay)"
 #define OSTREE_STATIC_DELTA_FALLBACK_FORMAT "(yaytt)"
 #define OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT "(a{sv}tayay" OSTREE_COMMIT_GVARIANT_STRING "aya" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "a" OSTREE_STATIC_DELTA_FALLBACK_FORMAT ")"
 
 gboolean
-xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable, GError **error)
+install_bundle (XdgAppDir *dir,
+                GOptionContext *context,
+                int argc, char **argv,
+                GCancellable *cancellable,
+                GError **error)
 {
   gboolean ret = FALSE;
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) file = NULL;
   g_autoptr(GFile) gpg_tmp_file = NULL;
@@ -293,13 +129,8 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
   g_autoptr(GError) my_error = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  context = g_option_context_new ("BUNDLE - Install a application or runtime from a bundle");
-
-  if (!xdg_app_option_context_parse (context, options_bundle, &argc, &argv, 0, &dir, cancellable, error))
-    return FALSE;
-
   if (argc < 2)
-    return usage_error (context, "BUNDLE must be specified", error);
+    return usage_error (context, "bundle filename must be specified", error);
 
   filename = argv[1];
 
@@ -523,4 +354,144 @@ xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable
     ostree_repo_remote_delete (repo, remote, NULL, NULL);
 
   return ret;
+}
+
+gboolean
+xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  gboolean ret = FALSE;
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  const char *repository;
+  const char *name;
+  const char *branch = NULL;
+  g_autofree char *ref = NULL;
+  g_autofree char *installed_ref = NULL;
+  gboolean is_app;
+  gboolean created_deploy_base = FALSE;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_autoptr(GError) my_error = NULL;
+
+  context = g_option_context_new ("REPOSITORY NAME [BRANCH] - Install an application or runtime");
+
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+    return FALSE;
+
+  if (opt_bundle)
+    return install_bundle (dir, context, argc, argv, cancellable, error);
+
+  if (argc < 3)
+    return usage_error (context, "REPOSITORY and NAME must be specified", error);
+
+  repository = argv[1];
+  name  = argv[2];
+  if (argc >= 4)
+    branch = argv[3];
+
+  if (!opt_app && !opt_runtime)
+    opt_app = opt_runtime = TRUE;
+
+  installed_ref = xdg_app_dir_find_installed_ref (dir,
+                                                  name,
+                                                  branch,
+                                                  opt_arch,
+                                                  opt_app, opt_runtime, &is_app,
+                                                  &my_error);
+  if (installed_ref != NULL)
+    {
+      return xdg_app_fail (error, "%s %s, branch %s is already installed",
+                           is_app ? "App" : "Runtime", name, branch ? branch : "master");
+    }
+
+  if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    {
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      return FALSE;
+    }
+
+  ref = xdg_app_dir_find_remote_ref (dir, repository, name, branch, opt_arch,
+                                     opt_app, opt_runtime, &is_app, cancellable, error);
+  if (ref == NULL)
+    return FALSE;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
+  if (g_file_query_exists (deploy_base, cancellable))
+    return xdg_app_fail (error, "Ref %s already deployed", ref);
+
+  if (!opt_no_pull)
+    {
+      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
+                             cancellable, error))
+        return FALSE;
+    }
+
+  /* After we create the deploy base we must goto out on errors */
+
+  if (!opt_no_deploy)
+    {
+      if (!xdg_app_dir_lock (dir, &lock,
+                             cancellable, error))
+        goto out;
+
+      if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
+        goto out;
+      created_deploy_base = TRUE;
+
+      if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
+        goto out;
+
+      if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
+        goto out;
+
+      if (is_app)
+        {
+          if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
+            goto out;
+
+          if (!xdg_app_dir_update_exports (dir, name, cancellable, error))
+            goto out;
+        }
+
+      glnx_release_lock_file (&lock);
+    }
+
+  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+
+  if (!xdg_app_dir_mark_changed (dir, error))
+    goto out;
+
+  ret = TRUE;
+
+ out:
+  if (created_deploy_base && !ret)
+    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
+
+  return ret;
+}
+
+gboolean
+xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  opt_runtime = TRUE;
+  opt_app = FALSE;
+
+  return xdg_app_builtin_install (argc, argv, cancellable, error);
+}
+
+gboolean
+xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  opt_runtime = TRUE;
+  opt_app = FALSE;
+
+  return xdg_app_builtin_install (argc, argv, cancellable, error);
+}
+
+gboolean
+xdg_app_builtin_install_bundle (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  opt_bundle = TRUE;
+
+  return xdg_app_builtin_install (argc, argv, cancellable, error);
 }

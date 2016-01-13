@@ -36,6 +36,8 @@ static char *opt_commit;
 static gboolean opt_force_remove;
 static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
+static gboolean opt_runtime;
+static gboolean opt_app;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to update for", "ARCH" },
@@ -43,84 +45,22 @@ static GOptionEntry options[] = {
   { "force-remove", 0, 0, G_OPTION_ARG_NONE, &opt_force_remove, "Remove old files even if running", NULL },
   { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, "Don't pull, only update from local cache", },
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, "Don't deploy, only download to local cache", },
+  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
+  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
   { NULL }
 };
 
 gboolean
-xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
+xdg_app_builtin_update (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
-  const char *runtime;
+  const char *name;
   const char *branch = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   gboolean was_updated;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
-
-  context = g_option_context_new ("RUNTIME [BRANCH] - Update a runtime");
-
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    return FALSE;
-
-  if (argc < 2)
-    return usage_error (context, "RUNTIME must be specified", error);
-
-  runtime = argv[1];
-  if (argc >= 3)
-    branch = argv[2];
-
-  ref = xdg_app_compose_ref (FALSE, runtime, branch, opt_arch, error);
-  if (ref == NULL)
-    return FALSE;
-
-  repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
-  if (repository == NULL)
-    return FALSE;
-
-  if (!opt_no_pull)
-    {
-      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
-                             cancellable, error))
-        return FALSE;
-    }
-
-  if (!opt_no_deploy)
-    {
-      if (!xdg_app_dir_lock (dir, &lock,
-                             cancellable, error))
-        return FALSE;
-
-      if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
-        return FALSE;
-
-      glnx_release_lock_file (&lock);
-    }
-
-  if (was_updated)
-    {
-      if (!xdg_app_dir_prune (dir, cancellable, error))
-        return FALSE;
-    }
-
-  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
-
-  if (!xdg_app_dir_mark_changed (dir, error))
-    return FALSE;
-
-  return TRUE;
-}
-
-gboolean
-xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
-  const char *app;
-  const char *branch = NULL;
-  g_autofree char *ref = NULL;
-  g_autofree char *repository = NULL;
-  gboolean was_updated;
+  gboolean is_app;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("APP [BRANCH] - Update an application");
@@ -131,11 +71,19 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
   if (argc < 2)
     return usage_error (context, "APP must be specified", error);
 
-  app = argv[1];
+  name = argv[1];
   if (argc >= 3)
     branch = argv[2];
 
-  ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
+  if (!opt_app && !opt_runtime)
+    opt_app = opt_runtime = TRUE;
+
+  ref = xdg_app_dir_find_installed_ref (dir,
+                                        name,
+                                        branch,
+                                        opt_arch,
+                                        opt_app, opt_runtime, &is_app,
+                                        error);
   if (ref == NULL)
     return FALSE;
 
@@ -158,26 +106,44 @@ xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GE
 
       if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
         return FALSE;
-    }
 
-  if (was_updated)
-    {
-      if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
-        return FALSE;
-    }
+      if (was_updated && is_app)
+        {
+          if (!xdg_app_dir_update_exports (dir, name, cancellable, error))
+            return FALSE;
+        }
 
-  glnx_release_lock_file (&lock);
+      glnx_release_lock_file (&lock);
+    }
 
   if (was_updated)
     {
       if (!xdg_app_dir_prune (dir, cancellable, error))
         return FALSE;
+
+      if (!xdg_app_dir_mark_changed (dir, error))
+        return FALSE;
     }
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
-  if (!xdg_app_dir_mark_changed (dir, error))
-    return FALSE;
-
   return  TRUE;
+}
+
+gboolean
+xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  opt_runtime = TRUE;
+  opt_app = FALSE;
+
+  return xdg_app_builtin_update (argc, argv, cancellable, error);
+}
+
+gboolean
+xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  opt_runtime = FALSE;
+  opt_app = TRUE;
+
+  return xdg_app_builtin_update (argc, argv, cancellable, error);
 }

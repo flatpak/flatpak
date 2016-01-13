@@ -53,14 +53,11 @@ BUILTINPROTO(modify_remote);
 BUILTINPROTO(delete_remote);
 BUILTINPROTO(ls_remote);
 BUILTINPROTO(list_remotes);
-BUILTINPROTO(install_runtime);
-BUILTINPROTO(update_runtime);
-BUILTINPROTO(uninstall_runtime);
+BUILTINPROTO(install);
+BUILTINPROTO(update);
 BUILTINPROTO(list_runtimes);
-BUILTINPROTO(install_app);
 BUILTINPROTO(make_current_app);
-BUILTINPROTO(update_app);
-BUILTINPROTO(uninstall_app);
+BUILTINPROTO(uninstall);
 BUILTINPROTO(install_bundle);
 BUILTINPROTO(list_apps);
 BUILTINPROTO(run);
@@ -73,6 +70,14 @@ BUILTINPROTO(build_bundle);
 BUILTINPROTO(repo_update);
 BUILTINPROTO(export_file);
 BUILTINPROTO(override);
+
+/* Deprecated */
+BUILTINPROTO(install_runtime);
+BUILTINPROTO(install_app);
+BUILTINPROTO(update_runtime);
+BUILTINPROTO(update_app);
+BUILTINPROTO(uninstall_runtime);
+BUILTINPROTO(uninstall_app);
 
 #undef BUILTINPROTO
 

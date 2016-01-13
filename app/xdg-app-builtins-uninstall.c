@@ -34,16 +34,20 @@
 static char *opt_arch;
 static gboolean opt_keep_ref;
 static gboolean opt_force_remove;
+static gboolean opt_runtime;
+static gboolean opt_app;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to uninstall", "ARCH" },
   { "keep-ref", 0, 0, G_OPTION_ARG_NONE, &opt_keep_ref, "Keep ref in local repository", NULL },
   { "force-remove", 0, 0, G_OPTION_ARG_NONE, &opt_force_remove, "Remove files even if running", NULL },
+  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
+  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
   { NULL }
 };
 
 gboolean
-xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
+xdg_app_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
@@ -51,26 +55,36 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   const char *branch = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
+  g_autofree char *current_ref = NULL;
   gboolean was_deployed;
+  gboolean is_app;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  context = g_option_context_new ("RUNTIME [BRANCH] - Uninstall a runtime");
+  context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "RUNTIME must be specified", error);
+    return usage_error (context, "APP must be specified", error);
 
   name = argv[1];
   if (argc > 2)
     branch = argv[2];
 
-  ref = xdg_app_compose_ref (FALSE, name, branch, opt_arch, error);
+  if (!opt_app && !opt_runtime)
+    opt_app = opt_runtime = TRUE;
+
+  ref = xdg_app_dir_find_installed_ref (dir,
+                                        name,
+                                        branch,
+                                        opt_arch,
+                                        opt_app, opt_runtime, &is_app,
+                                        error);
   if (ref == NULL)
     return FALSE;
 
-  /* TODO: look for apps, require --force */
+  /* TODO: when removing runtimes, look for apps that use it, require --force */
 
   if (!xdg_app_dir_lock (dir, &lock,
                          cancellable, error))
@@ -81,6 +95,17 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
   g_debug ("dropping active ref");
   if (!xdg_app_dir_set_active (dir, ref, NULL, cancellable, error))
     return FALSE;
+
+  if (is_app)
+    {
+      current_ref = xdg_app_dir_current_ref (dir, name, cancellable);
+      if (current_ref != NULL && strcmp (ref, current_ref) == 0)
+        {
+          g_debug ("dropping current ref");
+          if (!xdg_app_dir_drop_current_ref (dir, name, cancellable, error))
+            return FALSE;
+        }
+    }
 
   if (!xdg_app_dir_undeploy_all (dir, ref, opt_force_remove, &was_deployed, cancellable, error))
     return FALSE;
@@ -111,76 +136,19 @@ xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancella
 }
 
 gboolean
+xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  opt_runtime = TRUE;
+  opt_app = FALSE;
+
+  return xdg_app_builtin_uninstall (argc, argv, cancellable, error);
+}
+
+gboolean
 xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
-  const char *name = NULL;
-  const char *branch = NULL;
-  g_autofree char *ref = NULL;
-  g_autofree char *repository = NULL;
-  g_autofree char *current_ref = NULL;
-  gboolean was_deployed;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  opt_runtime = FALSE;
+  opt_app = TRUE;
 
-  context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
-
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    return FALSE;
-
-  if (argc < 2)
-    return usage_error (context, "APP must be specified", error);
-
-  name = argv[1];
-  if (argc > 2)
-    branch = argv[2];
-
-  ref = xdg_app_compose_ref (TRUE, name, branch, opt_arch, error);
-  if (ref == NULL)
-    return FALSE;
-
-  if (!xdg_app_dir_lock (dir, &lock,
-                         cancellable, error))
-    return FALSE;
-
-  repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
-
-  g_debug ("dropping active ref");
-  if (!xdg_app_dir_set_active (dir, ref, NULL, cancellable, error))
-    return FALSE;
-
-  current_ref = xdg_app_dir_current_ref (dir, name, cancellable);
-  if (current_ref != NULL && strcmp (ref, current_ref) == 0)
-    {
-      g_debug ("dropping current ref");
-      if (!xdg_app_dir_drop_current_ref (dir, name, cancellable, error))
-        return FALSE;
-    }
-
-  if (!xdg_app_dir_undeploy_all (dir, ref, opt_force_remove, &was_deployed, cancellable, error))
-    return FALSE;
-
-  if (!opt_keep_ref)
-    {
-      if (!xdg_app_dir_remove_ref (dir, repository, ref, cancellable, error))
-        return FALSE;
-    }
-
-  glnx_release_lock_file (&lock);
-
-  if (!opt_keep_ref)
-    {
-      if (!xdg_app_dir_prune (dir, cancellable, error))
-        return FALSE;
-    }
-
-  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
-
-  if (!xdg_app_dir_mark_changed (dir, error))
-    return FALSE;
-
-  if (!was_deployed)
-    return xdg_app_fail (error, "Nothing to uninstall");
-
-  return TRUE;
+  return xdg_app_builtin_uninstall (argc, argv, cancellable, error);
 }

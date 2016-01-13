@@ -76,7 +76,7 @@ XdgAppDir  *xdg_app_dir_get_system      (void);
 XdgAppDir  *xdg_app_dir_get_user        (void);
 gboolean    xdg_app_dir_is_user         (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_path        (XdgAppDir      *self);
-GFile *     xdg_app_dir_get_changed_path (XdgAppDir *self);
+GFile *     xdg_app_dir_get_changed_path (XdgAppDir     *self);
 GFile *     xdg_app_dir_get_deploy_dir  (XdgAppDir      *self,
                                          const char     *ref);
 char *      xdg_app_dir_get_origin      (XdgAppDir      *self,
@@ -94,6 +94,24 @@ GFile *     xdg_app_dir_get_if_deployed (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,
                                          GCancellable   *cancellable);
+char *      xdg_app_dir_find_remote_ref (XdgAppDir      *self,
+                                         const char     *remote,
+                                         const char     *name,
+                                         const char     *opt_branch,
+                                         const char     *opt_arch,
+                                         gboolean        app,
+                                         gboolean        runtime,
+                                         gboolean       *is_app,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
+char *      xdg_app_dir_find_installed_ref (XdgAppDir      *self,
+                                            const char     *name,
+                                            const char     *opt_branch,
+                                            const char     *opt_arch,
+                                            gboolean        app,
+                                            gboolean        runtime,
+                                            gboolean       *is_app,
+                                            GError        **error);
 XdgAppDeploy *xdg_app_dir_load_deployed (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *checksum,

@@ -844,14 +844,6 @@ xdg_app_installation_update (XdgAppInstallation  *self,
                              cancellable, error))
         goto out;
 
-      if (!g_file_query_exists (deploy_base, cancellable))
-        {
-          g_set_error (error,
-                       XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
-                       "%s branch %s is not installed", name, branch ? branch : "master");
-          return NULL;
-        }
-
       if (!xdg_app_dir_deploy_update (dir_clone, ref, NULL, &was_updated, cancellable, error))
         return FALSE;
 
@@ -939,12 +931,12 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
   /* prune, etc are not threadsafe, so we work on a copy */
   dir_clone = xdg_app_dir_clone (priv->dir);
 
+  g_debug ("dropping active ref");
+  if (!xdg_app_dir_set_active (dir_clone, ref, NULL, cancellable, error))
+    return FALSE;
+
   if (kind == XDG_APP_REF_KIND_APP)
     {
-      g_debug ("dropping active ref");
-      if (!xdg_app_dir_set_active (dir_clone, ref, NULL, cancellable, error))
-        return FALSE;
-
       current_ref = xdg_app_dir_current_ref (dir_clone, name, cancellable);
       if (current_ref != NULL && strcmp (ref, current_ref) == 0)
         {
