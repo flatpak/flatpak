@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-list-remotes">
+<refentry id="xdg-app-build-update-repo">
 
     <refentryinfo>
-        <title>xdg-app list-remotes</title>
+        <title>xdg-app build-update-repo</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,19 +19,20 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app list-remotes</refentrytitle>
+        <refentrytitle>xdg-app build-update-repo</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-list-remotes</refname>
-        <refpurpose>List remote repositories</refpurpose>
+        <refname>xdg-app-build-update-repo</refname>
+        <refpurpose>Create a repository from a build directory</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app list-remotes</command>
+                <command>xdg-app build-update-repo</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">LOCATION</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -39,14 +40,17 @@
         <title>Description</title>
 
         <para>
-            Lists the known remote repositories, in priority order.
+            Updates repository metadata for the repository at
+            <arg choice="plain">LOCATION</arg>. This command generates
+            an OSTree summary file that lists the contents of the repository.
+            The summary is used by xdg-app repo-contents and other commands
+            to display the contents of remote repositories.
         </para>
         <para>
-            By default, both per-user and system-wide installations
-            are shown. Use the --user or --system options to change
-            this.
+            After this command, <arg choice="plain">LOCATION</arg> can be
+            used as the repository location for xdg-app add-repo, either by
+            exporting it over http, or directly with a file: url.
         </para>
-
     </refsect1>
 
     <refsect1>
@@ -65,26 +69,11 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--user</option></term>
+                <term><option>--title=TITLE</option></term>
 
                 <listitem><para>
-                    Show the per-user configuration.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--system</option></term>
-
-                <listitem><para>
-                    Show the system-wide configuration.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--show-details</option></term>
-
-                <listitem><para>
-                    Show more information each repository in addition to the name.
+                    A title for the repository, e.g. for display in a UI.
+                    The title is stored in the repository summary.
                 </para></listitem>
             </varlistentry>
 
@@ -108,24 +97,15 @@
     </refsect1>
 
     <refsect1>
-        <title>Examples</title>
-
-        <para>
-            <command>$ xdg-app list-remotes --user --show-details</command>
-        </para>
-<programlisting>
-testrepo	Test Repository	 http://209.132.179.91/repo/ no-gpg-verify
-</programlisting>
-    </refsect1>
-
-    <refsect1>
         <title>See also</title>
 
-            <para>
-                <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>xdg-app-add-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>xdg-app-delete-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-            </para>
+        <para>
+            <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-repo-contents</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
     </refsect1>
 
 </refentry>

@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-update-app">
+<refentry id="xdg-app-update">
 
     <refentryinfo>
-        <title>xdg-app update-app</title>
+        <title>xdg-app update</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,20 +19,20 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app update-app</refentrytitle>
+        <refentrytitle>xdg-app update</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-update-app</refname>
+        <refname>xdg-app-update</refname>
         <refpurpose>Update a runtime</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app update-app</command>
+                <command>xdg-app update</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">APP</arg>
+                <arg choice="plain">NAME</arg>
                 <arg choice="opt">BRANCH</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
@@ -41,10 +41,15 @@
         <title>Description</title>
 
         <para>
-            Updates an application. <arg choice="plain">APP</arg> is the
-            name of an installed application. Optionally,
+            Updates an application or runtime. <arg choice="plain">NAME</arg> is the
+            name of an installed application or runtime. Optionally,
             <arg choice="plain">BRANCH</arg> can be specified to update a
             branch other than the default "master" branch.
+        </para>
+        <para>
+            By default this looks for both installed apps and runtime
+            with the given <arg choice="plain">NAME</arg>, but you can
+            limit this by using the --app or --runtime option.
         </para>
         <para>
             Normally, this command updates the application to the tip
@@ -52,8 +57,8 @@
             with the --commit option.
         </para>
         <para>
-            Note that updating a runtime is different from installing
-            a newer branch, and application updates are expected to keep
+            Note that updating a is different from installing
+            a different branch, and runtime updates are expected to keep
             strict compatibility. If an application update does cause
             a problem, it is possible to go back to the previous
             version, with the --commit option.
@@ -129,6 +134,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--app</option></term>
+
+                <listitem><para>
+                    Only look for an app with the given name.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    Only look for an runtime with the given name.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
@@ -151,7 +172,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app --user update-app org.gnome.GEdit</command>
+            <command>$ xdg-app --user update org.gnome.GEdit</command>
         </para>
 
     </refsect1>

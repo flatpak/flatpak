@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-uninstall-app">
+<refentry id="xdg-app-remote-delete">
 
     <refentryinfo>
-        <title>dxg-app uninstall-app</title>
+        <title>xdg-app remote-delete</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,21 +19,20 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app uninstall-app</refentrytitle>
+        <refentrytitle>xdg-app remote-delete</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-uninstall-app</refname>
-        <refpurpose>Uninstall an application</refpurpose>
+        <refname>xdg-app-remote-delete</refname>
+        <refpurpose>Delete a remote repository</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app uninstall-app</command>
+                <command>xdg-app remote-delete</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">APP</arg>
-                <arg choice="opt">BRANCH</arg>
+                <arg choice="plain">NAME</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -41,22 +40,12 @@
         <title>Description</title>
 
         <para>
-            Uninstalls an application. The <arg choice="plain">APP</arg>,
-            <arg choice="plain">ARCH</arg> and <arg choice="plain">BRANCH</arg>
-            arguments must identify an installed application.
-            If <arg choice="plain">BRANCH</arg> is not specified, it defaults
-            to "master".
+            Removes a remote repository from the xdg-app repository configuration.
+            <arg choice="plain">NAME</arg> is the name of an existing remote.
         </para>
         <para>
-            Normally, this command removes the ref for this application from the
-            local OSTree repository and purges and objects that are no longer
-            needed to free up disk space. If the same application is later
-            reinstalled, the objects will be pulled from the remote repository
-            again. The --keep-ref option can be used to prevent this.
-        </para>
-        <para>
-            If all branches of the application are removed, this command
-            also purges the data directory for the application.
+            Unless overridden with the --user option, this command changes
+            the system-wide configuration.
         </para>
 
     </refsect1>
@@ -77,19 +66,10 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--keep-ref</option></term>
-
-                <listitem><para>
-                    Keep the ref for the application and the objects belonging to it
-                    in the local repository.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Remove a per-user installation.
+                    Modify the per-user configuration.
                 </para></listitem>
             </varlistentry>
 
@@ -97,16 +77,7 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Remove a system-wide installation.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--arch=ARCH</option></term>
-
-                <listitem><para>
-                    The architecture to uninstall, instead of the architecture of
-                    the host system.
+                    Modify the system-wide configuration.
                 </para></listitem>
             </varlistentry>
 
@@ -133,9 +104,19 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app --user uninstall-app org.gnome.GEdit</command>
+            <command>$ xdg-app --user remote-delete dried-raisins</command>
         </para>
+    </refsect1>
 
+    <refsect1>
+        <title>See also</title>
+
+            <para>
+                <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-add-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-modify-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-list-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            </para>
     </refsect1>
 
 </refentry>

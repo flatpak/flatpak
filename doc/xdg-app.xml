@@ -107,35 +107,35 @@
 
         <variablelist>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-add-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Add a remote repository.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-modify-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Modify remote repository properties.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-delete-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-remote-delete</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Delete a remote repository.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-list-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-remote-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Lists remote repositories.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-ls-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-remote-ls</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Show available runtimes and applications.
@@ -143,28 +143,28 @@
             </varlistentry>
         </variablelist>
 
-        <para>Commands for handling installed runtimes:</para>
+        <para>Commands for handling installed runtimes and applications:</para>
 
         <variablelist>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-install-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-install</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Install a runtime.
+                    Install an application or a runtime.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-update-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-update</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Update a runtime.
+                    Update an application or a runtime.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-uninstall-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-uninstall</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Uninstall a runtime.
+                    Uninstall an application or a runtime.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
@@ -172,32 +172,6 @@
 
                 <listitem><para>
                     List installed runtimes.
-                </para></listitem>
-            </varlistentry>
-        </variablelist>
-
-        <para>Commands for handling installed applications:</para>
-
-        <variablelist>
-            <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-install-app</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    Install an application.
-                </para></listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-update-app</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    Update an application.
-                </para></listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-uninstall-app</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    Uninstall an application.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
@@ -208,6 +182,7 @@
                 </para></listitem>
             </varlistentry>
         </variablelist>
+
 
         <para>Commands for running applications:</para>
 
@@ -267,7 +242,7 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-repo-contents</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-build-update-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
                     Update repository metadata.

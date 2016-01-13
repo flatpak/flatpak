@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-install-runtime">
+<refentry id="xdg-app-remote-list">
 
     <refentryinfo>
-        <title>xdg-app install-runtime</title>
+        <title>xdg-app remote-list</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,22 +19,19 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app install-runtime</refentrytitle>
+        <refentrytitle>xdg-app remote-list</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-install-runtime</refname>
-        <refpurpose>Install a runtime</refpurpose>
+        <refname>xdg-app-remote-list</refname>
+        <refpurpose>List remote repositories</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app install-runtime</command>
+                <command>xdg-app remote-list</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">REPOSITORY</arg>
-                <arg choice="plain">RUNTIME</arg>
-                <arg choice="opt">BRANCH</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -42,19 +39,12 @@
         <title>Description</title>
 
         <para>
-            Installs a runtime. <arg choice="plain">REPOSITORY</arg> must name an
-            existing remote and <arg choice="plain">RUNTIME</arg> is the name of
-            the runtime to install. Optionally, <arg choice="plain">BRANCH</arg>
-            can be specified to install a branch other than the default "master"
-            branch.
+            Lists the known remote repositories, in priority order.
         </para>
         <para>
-            Note that xdg-app allows having multiple branches of a runtime
-            installed and used at the same time.
-        </para>
-        <para>
-            Unless overridden with the --user option, this command creates a
-            system-wide installation.
+            By default, both per-user and system-wide installations
+            are shown. Use the --user or --system options to change
+            this.
         </para>
 
     </refsect1>
@@ -78,7 +68,7 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Create a per-user installation.
+                    Show the per-user configuration.
                 </para></listitem>
             </varlistentry>
 
@@ -86,32 +76,15 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Create a system-wide installation.
+                    Show the system-wide configuration.
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>--arch=ARCH</option></term>
+                <term><option>--show-details</option></term>
 
                 <listitem><para>
-                    The architecture to install, instead of the architecture
-                    of the host system.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--no-deploy</option></term>
-
-                <listitem><para>
-                    Download the latest version, but don't deploy it.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--no-pull</option></term>
-
-                <listitem><para>
-                    Don't download the latest version, deploy it whatever is locally availiable.
+                    Show more information each repository in addition to the name.
                 </para></listitem>
             </varlistentry>
 
@@ -138,20 +111,21 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app --user install-runtime test-repo org.gnome.Platform 3.14</command>
+            <command>$ xdg-app remote-list --user --show-details</command>
         </para>
-
+<programlisting>
+testrepo	Test Repository	 http://209.132.179.91/repo/ no-gpg-verify
+</programlisting>
     </refsect1>
 
     <refsect1>
         <title>See also</title>
 
-        <para>
-            <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>xdg-app-update-runtime</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>xdg-app-list-runtimes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-        </para>
-
+            <para>
+                <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-add-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-delete-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            </para>
     </refsect1>
 
 </refentry>

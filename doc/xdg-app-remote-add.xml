@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-modify-remote">
+<refentry id="xdg-app-remote-add">
 
     <refentryinfo>
-        <title>xdg-app modify-remote</title>
+        <title>xdg-app remote-add</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,20 +19,21 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app modify-remote</refentrytitle>
+        <refentrytitle>xdg-app remote-add</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-modify-remote</refname>
-        <refpurpose>Modify a remote repository</refpurpose>
+        <refname>xdg-app-remote-add</refname>
+        <refpurpose>Add a remote repository</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app modify-remote</command>
+                <command>xdg-app remote-add</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">NAME</arg>
+                <arg choice="plain">LOCATION</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -40,8 +41,9 @@
         <title>Description</title>
 
         <para>
-            Modifies options for an existing remote repository in the xdg-app repository configuration.
-            <arg choice="plain">NAME</arg> is the name for the remote.
+            Adds a remote repository to the xdg-app repository configuration.
+            <arg choice="plain">NAME</arg> is the name for the new remote, and
+            <arg choice="plain">LOCATION</arg> is the url or pathname for the repository.
         </para>
         <para>
             Unless overridden with the --user option, this command changes
@@ -90,14 +92,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--gpg-verify</option></term>
-
-                <listitem><para>
-                    Enable GPG verification for the added remote.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>--prio=PRIO</option></term>
 
                 <listitem><para>
@@ -117,12 +111,10 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--enumerate</option></term>
+                <term><option>--if-not-exists</option></term>
 
                 <listitem><para>
-                    Mark the remote as enumerated. This means the remote will
-                    be used to list applications, for instance in graphical
-                    installation tools.
+                    Do nothing if the provided remote already exists.
                 </para></listitem>
             </varlistentry>
 
@@ -177,7 +169,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app --user modify-remote --no-gpg-verify test-repo</command>
+            <command>$ xdg-app --user remote-add --no-gpg-verify test-repo https://people.gnome.org/~alexl/gnome-sdk/repo/</command>
         </para>
     </refsect1>
 
@@ -186,7 +178,7 @@
 
             <para>
                 <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>xdg-app-add-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>xdg-app-modify-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>xdg-app-delete-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>xdg-app-list-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             </para>

@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-uninstall-runtime">
+<refentry id="xdg-app-uninstall">
 
     <refentryinfo>
-        <title>dxg-app uninstall-runtime</title>
+        <title>dxg-app uninstall</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,20 +19,20 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app uninstall-runtime</refentrytitle>
+        <refentrytitle>xdg-app uninstall</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-uninstall-runtime</refname>
-        <refpurpose>Uninstall a runtime</refpurpose>
+        <refname>xdg-app-uninstall</refname>
+        <refpurpose>Uninstall an application or runtime</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app uninstall-runtime</command>
+                <command>xdg-app uninstall</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">RUNTIME</arg>
+                <arg choice="plain">NAME</arg>
                 <arg choice="opt">BRANCH</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
@@ -41,18 +41,31 @@
         <title>Description</title>
 
         <para>
-            Uninstalls a runtime. The <arg choice="plain">RUNTIME</arg>,
+            Uninstalls an application or runtime. The <arg choice="plain">NAME</arg>,
             <arg choice="plain">ARCH</arg> and <arg choice="plain">BRANCH</arg>
-            arguments must specify an installed runtime.
+            arguments must identify an installed application.
             If <arg choice="plain">BRANCH</arg> is not specified, it defaults
             to "master".
         </para>
         <para>
-            Normally, this command removes the ref for this runtime from the
+            By default this looks for both installed apps and runtime
+            with the given <arg choice="plain">NAME</arg>, but you can
+            limit this by using the --app or --runtime option.
+        </para>
+        <para>
+            Normally, this command removes the ref for this application/runtime from the
             local OSTree repository and purges and objects that are no longer
-            needed to free up disk space. If the same runtime is later reinstalled,
-            the objects will be pulled from the remote repository again. The
-            --keep-ref option can be used to prevent this.
+            needed to free up disk space. If the same application is later
+            reinstalled, the objects will be pulled from the remote repository
+            again. The --keep-ref option can be used to prevent this.
+        </para>
+        <para>
+            If all branches of the application/runtime are removed, this command
+            also purges the data directory for the application.
+        </para>
+        <para>
+            Unless overridden with the --user option, this command updates
+            a system-wide installation.
         </para>
 
     </refsect1>
@@ -76,7 +89,7 @@
                 <term><option>--keep-ref</option></term>
 
                 <listitem><para>
-                    Keep the ref for the runtime and the objects belonging to it
+                    Keep the ref for the application and the objects belonging to it
                     in the local repository.
                 </para></listitem>
             </varlistentry>
@@ -107,6 +120,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--app</option></term>
+
+                <listitem><para>
+                    Only look for an app with the given name.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    Only look for an runtime with the given name.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
@@ -129,7 +158,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app --user uninstall-runtime --arch x86_64 org.gnome.Platform 3.14</command>
+            <command>$ xdg-app --user uninstall org.gnome.GEdit</command>
         </para>
 
     </refsect1>
