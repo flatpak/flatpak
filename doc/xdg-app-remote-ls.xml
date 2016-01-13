@@ -92,7 +92,7 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--runtimes</option></term>
+                <term><option>--runtime</option></term>
 
                 <listitem><para>
                     Show only runtimes, omit applications.
@@ -100,7 +100,7 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--apps</option></term>
+                <term><option>--app</option></term>
 
                 <listitem><para>
                     Show only applications, omit runtimes.

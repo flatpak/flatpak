@@ -32,14 +32,14 @@
 #include "xdg-app-utils.h"
 
 static gboolean opt_show_details;
-static gboolean opt_only_runtimes;
-static gboolean opt_only_apps;
+static gboolean opt_runtime;
+static gboolean opt_app;
 static gboolean opt_only_updates;
 
 static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show arches and branches", NULL },
-  { "runtimes", 0, 0, G_OPTION_ARG_NONE, &opt_only_runtimes, "Show only runtimes", NULL },
-  { "apps", 0, 0, G_OPTION_ARG_NONE, &opt_only_apps, "Show only apps", NULL },
+  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Show only runtimes", NULL },
+  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Show only apps", NULL },
   { "updates", 0, 0, G_OPTION_ARG_NONE, &opt_only_updates, "Show only those where updates are available", NULL },
   { NULL }
 };
@@ -64,6 +64,9 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
+
+  if (!opt_app && !opt_runtime)
+    opt_app = opt_runtime = TRUE;
 
   if (argc < 2)
     return usage_error (context, "REMOTE must be specified", error);
@@ -114,10 +117,10 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
             continue;
         }
 
-      if (strcmp (parts[0], "runtime") == 0 && opt_only_apps)
+      if (strcmp (parts[0], "runtime") == 0 && !opt_runtime)
         continue;
 
-      if (strcmp (parts[0], "app") == 0 && opt_only_runtimes)
+      if (strcmp (parts[0], "app") == 0 && !opt_app)
         continue;
 
       if (!opt_show_details)
