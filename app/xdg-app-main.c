@@ -47,8 +47,7 @@ static XdgAppCommand commands[] = {
   { "install", xdg_app_builtin_install, "Install an application or runtime from a remote"},
   { "update", xdg_app_builtin_update, "Update an installed application or runtime"},
   { "uninstall", xdg_app_builtin_uninstall, "Uninstall an installed application or runtime" },
-  { "list-runtimes", xdg_app_builtin_list_runtimes, "List installed runtimes" },
-  { "list-apps", xdg_app_builtin_list_apps, "List installed applications" },
+  { "list", xdg_app_builtin_list, "List installed apps and/or runtimes" },
 
   { "\n Running applications" },
   { "run", xdg_app_builtin_run, "Run an application" },
@@ -86,6 +85,8 @@ static XdgAppCommand commands[] = {
   { "modify-remote", xdg_app_builtin_modify_remote, NULL, TRUE },
   { "ls-remote", xdg_app_builtin_ls_remote, NULL, TRUE },
   { "list-remotes", xdg_app_builtin_list_remotes, NULL, TRUE },
+  { "list-runtimes", xdg_app_builtin_list_runtimes, NULL, TRUE },
+  { "list-apps", xdg_app_builtin_list_apps, NULL, TRUE },
   { NULL }
 };
 

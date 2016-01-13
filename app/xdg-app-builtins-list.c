@@ -34,20 +34,53 @@
 static gboolean opt_show_details;
 static gboolean opt_user;
 static gboolean opt_system;
+static gboolean opt_runtime;
+static gboolean opt_app;
 
 static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Show user installations", NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Show system-wide installations", NULL },
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show arches and branches", NULL },
+  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "List installed runtimes", },
+  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "List installed applications", },
   { NULL }
 };
 
+static char **
+join_strv (char **a, char **b)
+{
+  gsize len = 1, i, j;
+  char **res;
+
+  if (a)
+    len += g_strv_length (a);
+  if (b)
+    len += g_strv_length (b);
+
+  res = g_new (char *, len);
+
+  i = 0;
+
+  for (j = 0; a != NULL && a[j] != NULL; j++)
+    res[i++] = g_strdup (a[j]);
+
+  for (j = 0; b != NULL && b[j] != NULL; j++)
+    res[i++] = g_strdup (b[j]);
+
+  res[i++] = NULL;
+  return res;
+}
+
 static gboolean
-print_installed_refs (const char *kind, gboolean print_system, gboolean print_user, GCancellable *cancellable, GError **error)
+print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gboolean print_user, GCancellable *cancellable, GError **error)
 {
   g_autofree char *last = NULL;
   g_auto(GStrv) system = NULL;
+  g_auto(GStrv) system_app = NULL;
+  g_auto(GStrv) system_runtime = NULL;
   g_auto(GStrv) user = NULL;
+  g_auto(GStrv) user_app = NULL;
+  g_auto(GStrv) user_runtime = NULL;
   int s, u;
 
   if (print_user)
@@ -58,7 +91,9 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 
       if (xdg_app_dir_ensure_repo (dir, cancellable, NULL))
         {
-          if (!xdg_app_dir_list_refs (dir, kind, &user, cancellable, error))
+          if (app && !xdg_app_dir_list_refs (dir, "app", &user_app, cancellable, error))
+            return FALSE;
+          if (runtime && !xdg_app_dir_list_refs (dir, "runtime", &user_runtime, cancellable, error))
             return FALSE;
         }
     }
@@ -70,17 +105,17 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
       dir = xdg_app_dir_get (FALSE);
       if (xdg_app_dir_ensure_repo (dir, cancellable, NULL))
         {
-          if (!xdg_app_dir_list_refs (dir, kind, &system, cancellable, error))
+          if (app && !xdg_app_dir_list_refs (dir, "app", &system_app, cancellable, error))
+            return FALSE;
+          if (runtime && !xdg_app_dir_list_refs (dir, "runtime", &system_runtime, cancellable, error))
             return FALSE;
         }
     }
 
   XdgAppTablePrinter *printer = xdg_app_table_printer_new ();
 
-  if (user == NULL)
-    user = g_new0 (char *, 1);
-  if (system == NULL)
-    system = g_new0 (char *, 1);
+  user = join_strv (user_app, user_runtime);
+  system = join_strv (system_app, system_runtime);
 
   for (s = 0, u = 0; system[s] != NULL || user[u] != NULL; )
     {
@@ -142,13 +177,18 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
           if (print_user && print_system)
             xdg_app_table_printer_append_with_comma (printer, is_user ? "user" : "system");
 
-          if (strcmp (kind, "app") == 0)
+          if (strcmp (parts[0], "app") == 0)
             {
               g_autofree char *current;
 
               current = xdg_app_dir_current_ref (dir, parts[1], cancellable);
               if (current && strcmp (ref, current) == 0)
                 xdg_app_table_printer_append_with_comma (printer, "current");
+            }
+          else
+            {
+              if (app)
+                xdg_app_table_printer_append_with_comma (printer, "runtime");
             }
         }
       else
@@ -170,16 +210,19 @@ print_installed_refs (const char *kind, gboolean print_system, gboolean print_us
 }
 
 gboolean
-xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable, GError **error)
+xdg_app_builtin_list (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
 
-  context = g_option_context_new (" - List installed runtimes");
+  context = g_option_context_new (" - List installed apps and/or runtimes");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
-  if (!print_installed_refs ("runtime",
+  if (!opt_app && !opt_runtime)
+    opt_app = TRUE;
+
+  if (!print_installed_refs (opt_app, opt_runtime,
                              opt_system || (!opt_user && !opt_system),
                              opt_user || (!opt_user && !opt_system),
                              cancellable, error))
@@ -189,20 +232,15 @@ xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable,
 }
 
 gboolean
+xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  opt_runtime = TRUE;
+  return xdg_app_builtin_list (argc, argv, cancellable, error);
+}
+
+gboolean
 xdg_app_builtin_list_apps (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  g_autoptr(GOptionContext) context = NULL;
-
-  context = g_option_context_new (" - List installed applications");
-
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
-    return FALSE;
-
-  if (!print_installed_refs ("app",
-                             opt_system || (!opt_user && !opt_system),
-                             opt_user || (!opt_user && !opt_system),
-                             cancellable, error))
-    return FALSE;
-
-  return TRUE;
+  opt_app = TRUE;
+  return xdg_app_builtin_list (argc, argv, cancellable, error);
 }

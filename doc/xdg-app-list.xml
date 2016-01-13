@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-list-apps">
+<refentry id="xdg-app-list">
 
     <refentryinfo>
-        <title>xdg-app list-apps</title>
+        <title>xdg-app list</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,18 +19,18 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app list-apps</refentrytitle>
+        <refentrytitle>xdg-app list</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-list-apps</refname>
-        <refpurpose>List installed applications</refpurpose>
+        <refname>xdg-app-list</refname>
+        <refpurpose>List installed applications and/or runtimes</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app list-apps</command>
+                <command>xdg-app list</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
@@ -39,12 +39,16 @@
         <title>Description</title>
 
         <para>
-            Lists the names of the installed applications.
+            Lists the names of the installed applications and/or runtime.
         </para>
         <para>
             By default, both per-user and system-wide installations
             are shown. Use the --user or --system options to change
             this.
+        </para>
+        <para>
+            By default this lists the installed apps, but you can
+            change this by using the --app or --runtime option.
         </para>
 
     </refsect1>
@@ -89,6 +93,21 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--app</option></term>
+
+                <listitem><para>
+                    List applications.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    List runtimes.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
@@ -111,7 +130,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ xdg-app --user list-apps</command>
+            <command>$ xdg-app --user list</command>
         </para>
 <programlisting>
 org.gnome.Builder

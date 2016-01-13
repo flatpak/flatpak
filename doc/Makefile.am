@@ -27,8 +27,7 @@ man_MANS = \
 	xdg-app-install.1		\
 	xdg-app-update.1		\
 	xdg-app-uninstall.1		\
-	xdg-app-list-runtimes.1		\
-	xdg-app-list-apps.1		\
+	xdg-app-list.1			\
 	xdg-app-make-current.1		\
 	xdg-app-run.1			\
 	xdg-app-override.1		\

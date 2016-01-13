@@ -55,11 +55,10 @@ BUILTINPROTO(ls_remote);
 BUILTINPROTO(list_remotes);
 BUILTINPROTO(install);
 BUILTINPROTO(update);
-BUILTINPROTO(list_runtimes);
 BUILTINPROTO(make_current_app);
 BUILTINPROTO(uninstall);
 BUILTINPROTO(install_bundle);
-BUILTINPROTO(list_apps);
+BUILTINPROTO(list);
 BUILTINPROTO(run);
 BUILTINPROTO(enter);
 BUILTINPROTO(build_init);
@@ -78,6 +77,8 @@ BUILTINPROTO(update_runtime);
 BUILTINPROTO(update_app);
 BUILTINPROTO(uninstall_runtime);
 BUILTINPROTO(uninstall_app);
+BUILTINPROTO(list_apps);
+BUILTINPROTO(list_runtimes);
 
 #undef BUILTINPROTO
 
