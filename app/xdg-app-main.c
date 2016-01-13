@@ -38,42 +38,54 @@ static gboolean opt_user;
 typedef struct {
   const char *name;
   gboolean (*fn) (int argc, char **argv, GCancellable *cancellable, GError **error);
+  const char *description;
   gboolean deprecated;
 } XdgAppCommand;
 
 static XdgAppCommand commands[] = {
-  { "run", xdg_app_builtin_run },
-  { "install", xdg_app_builtin_install },
-  { "update", xdg_app_builtin_update },
-  { "uninstall", xdg_app_builtin_uninstall },
-  { "make-current", xdg_app_builtin_make_current_app },
-  { "enter", xdg_app_builtin_enter },
+  { " Manage installed apps and runtimes" },
+  { "install", xdg_app_builtin_install, "Install an application or runtime from a remote"},
+  { "update", xdg_app_builtin_update, "Update an installed application or runtime"},
+  { "uninstall", xdg_app_builtin_uninstall, "Uninstall an installed application or runtime" },
+  { "list-runtimes", xdg_app_builtin_list_runtimes, "List installed runtimes" },
+  { "list-apps", xdg_app_builtin_list_apps, "List installed applications" },
 
-  { "add-remote", xdg_app_builtin_add_remote },
-  { "delete-remote", xdg_app_builtin_delete_remote },
-  { "modify-remote", xdg_app_builtin_modify_remote },
-  { "ls-remote", xdg_app_builtin_ls_remote },
-  { "list-remotes", xdg_app_builtin_list_remotes },
-  { "list-runtimes", xdg_app_builtin_list_runtimes },
-  { "list-apps", xdg_app_builtin_list_apps },
-  { "override", xdg_app_builtin_override },
-  { "export-file", xdg_app_builtin_export_file },
-  { "build-init", xdg_app_builtin_build_init },
-  { "build", xdg_app_builtin_build },
-  { "build-finish", xdg_app_builtin_build_finish },
-  { "build-export", xdg_app_builtin_build_export },
-  { "build-bundle", xdg_app_builtin_build_bundle },
-  { "repo-update", xdg_app_builtin_repo_update },
+  { "\n Running applications" },
+  { "run", xdg_app_builtin_run, "Run an application" },
+  { "override", xdg_app_builtin_override, "Override permissions for an application" },
+  { "export-file", xdg_app_builtin_export_file, "Grant an application access to a specific file" },
+  { "make-current", xdg_app_builtin_make_current_app, "Specify default version to run" },
+  { "enter", xdg_app_builtin_enter, "Enter the namespace of a running application" },
 
-  /* Deprecated */
-  { "install-runtime", xdg_app_builtin_install_runtime, TRUE },
-  { "install-app", xdg_app_builtin_install_app, TRUE },
-  { "update-app", xdg_app_builtin_update_app, TRUE },
-  { "update-runtime", xdg_app_builtin_update_runtime, TRUE },
-  { "uninstall-runtime", xdg_app_builtin_uninstall_runtime },
-  { "uninstall-app", xdg_app_builtin_uninstall_app, TRUE },
-  { "install-bundle", xdg_app_builtin_install_bundle, TRUE },
-  { "make-app-current", xdg_app_builtin_make_current_app, TRUE },
+  { "\n Manage remote repositories" },
+  { "remote-add", xdg_app_builtin_add_remote, "Add a new remote repository (by URL)" },
+  { "remote-modify", xdg_app_builtin_modify_remote, "Modify properties of a configured remote" },
+  { "remote-delete", xdg_app_builtin_delete_remote, "Delete a configured remote" },
+  { "remote-list", xdg_app_builtin_list_remotes, "List all configured remotes"  },
+  { "remote-ls", xdg_app_builtin_ls_remote, "List contents of a configured remote" },
+
+  { "\n Build applications" },
+  { "build-init", xdg_app_builtin_build_init, "Initialize a directory for building" },
+  { "build", xdg_app_builtin_build, "Run a build command inside the build dir" },
+  { "build-finish", xdg_app_builtin_build_finish, "Finish a build dir for export" },
+  { "build-export", xdg_app_builtin_build_export, "Export a build dir to a repository" },
+  { "build-bundle", xdg_app_builtin_build_bundle, "Create a bundle file from a build directory" },
+  { "build-update-repo", xdg_app_builtin_build_update_repo, "Update the summary file in a repository" },
+
+  /* Deprecated old names */
+  { "install-runtime", xdg_app_builtin_install_runtime, NULL, TRUE },
+  { "install-app", xdg_app_builtin_install_app, NULL, TRUE },
+  { "update-app", xdg_app_builtin_update_app, NULL, TRUE },
+  { "update-runtime", xdg_app_builtin_update_runtime, NULL, TRUE },
+  { "uninstall-runtime", xdg_app_builtin_uninstall_runtime, NULL, TRUE },
+  { "uninstall-app", xdg_app_builtin_uninstall_app, NULL, TRUE },
+  { "install-bundle", xdg_app_builtin_install_bundle, NULL, TRUE },
+  { "make-app-current", xdg_app_builtin_make_current_app, NULL, TRUE },
+  { "add-remote", xdg_app_builtin_add_remote, NULL, TRUE },
+  { "delete-remote", xdg_app_builtin_delete_remote, NULL, TRUE },
+  { "modify-remote", xdg_app_builtin_modify_remote, NULL, TRUE },
+  { "ls-remote", xdg_app_builtin_ls_remote, NULL, TRUE },
+  { "list-remotes", xdg_app_builtin_list_remotes, NULL, TRUE },
   { NULL }
 };
 
@@ -115,7 +127,16 @@ xdg_app_option_context_new_with_commands (XdgAppCommand *commands)
   while (commands->name != NULL)
     {
       if (!commands->deprecated)
-        g_string_append_printf (summary, "\n  %s", commands->name);
+        {
+          if (commands->fn != NULL)
+            {
+              g_string_append_printf (summary, "\n  %s", commands->name);
+              if (commands->description)
+                g_string_append_printf (summary, "%*s%s", (int)(20 - strlen (commands->name)), "", commands->description);
+            }
+          else
+            g_string_append_printf (summary, "\n%s", commands->name);
+        }
       commands++;
     }
 
@@ -247,7 +268,8 @@ xdg_app_run (int    argc,
   command = commands;
   while (command->name)
     {
-      if (g_strcmp0 (command_name, command->name) == 0)
+      if (command->fn != NULL &&
+          g_strcmp0 (command_name, command->name) == 0)
         break;
       command++;
     }

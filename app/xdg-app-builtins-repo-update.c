@@ -40,7 +40,7 @@ static GOptionEntry options[] = {
 
 
 gboolean
-xdg_app_builtin_repo_update (int argc, char **argv, GCancellable *cancellable, GError **error)
+xdg_app_builtin_build_update_repo (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) repofile = NULL;

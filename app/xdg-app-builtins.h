@@ -67,7 +67,7 @@ BUILTINPROTO(build);
 BUILTINPROTO(build_finish);
 BUILTINPROTO(build_export);
 BUILTINPROTO(build_bundle);
-BUILTINPROTO(repo_update);
+BUILTINPROTO(build_update_repo);
 BUILTINPROTO(export_file);
 BUILTINPROTO(override);
 
