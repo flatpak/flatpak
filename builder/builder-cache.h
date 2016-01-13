@@ -41,7 +41,8 @@ void          builder_cache_disable_lookups (BuilderCache  *self);
 gboolean      builder_cache_open            (BuilderCache  *self,
                                              GError       **error);
 GChecksum *   builder_cache_get_checksum    (BuilderCache  *self);
-gboolean      builder_cache_lookup          (BuilderCache  *self);
+gboolean      builder_cache_lookup          (BuilderCache  *self,
+                                             const char    *stage);
 void          builder_cache_ensure_checkout (BuilderCache *self);
 gboolean      builder_cache_has_checkout    (BuilderCache *self);
 gboolean      builder_cache_commit          (BuilderCache  *self,

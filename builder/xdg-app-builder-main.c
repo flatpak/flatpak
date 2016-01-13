@@ -251,7 +251,7 @@ main (int    argc,
 
   builder_manifest_checksum (manifest, cache, build_context);
 
-  if (!builder_cache_lookup (cache))
+  if (!builder_cache_lookup (cache, "init"))
     {
       g_autofree char *body =
         g_strdup_printf ("Initialized %s\n",

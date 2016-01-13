@@ -42,6 +42,8 @@ struct BuilderCache {
   GFile *cache_dir;
   GFile *app_dir;
   char *branch;
+  char *stage;
+  GHashTable *unused_stages;
   char *last_parent;
   OstreeRepo *repo;
   gboolean disabled;
@@ -74,6 +76,8 @@ builder_cache_finalize (GObject *object)
   g_checksum_free (self->checksum);
   g_free (self->branch);
   g_free (self->last_parent);
+  if (self->unused_stages)
+    g_hash_table_unref (self->unused_stages);
 
   G_OBJECT_CLASS (builder_cache_parent_class)->finalize (object);
 }
@@ -189,10 +193,18 @@ builder_cache_get_checksum (BuilderCache *self)
   return self->checksum;
 }
 
+static char *
+get_ref (BuilderCache *self, const char *stage)
+{
+  return g_strdup_printf ("%s/%s", self->branch, stage);
+}
+
 gboolean
 builder_cache_open (BuilderCache *self,
                     GError **error)
 {
+  g_autoptr(GHashTable) all_refs = NULL;
+
   self->repo = ostree_repo_new (self->cache_dir);
 
   /* We don't need fsync on checkouts as they are transient, and we
@@ -206,6 +218,21 @@ builder_cache_open (BuilderCache *self,
     }
 
   if (!ostree_repo_open (self->repo, NULL, error))
+    return FALSE;
+
+  /* At one point we used just the branch name as a ref, make sure to
+   * remove this to handle using the branch as a subdir */
+  ostree_repo_set_ref_immediate (self->repo,
+                                 NULL,
+                                 self->branch,
+                                 NULL,
+                                 NULL, NULL);
+
+  /* List all stages first so we can purge unused ones at the end */
+  if (!ostree_repo_list_refs (self->repo,
+                              self->branch,
+                              &self->unused_stages,
+                              NULL, error))
     return FALSE;
 
   return TRUE;
@@ -273,21 +300,35 @@ builder_cache_ensure_checkout (BuilderCache *self)
   self->disabled = TRUE;
 }
 
+static char *
+builder_cache_get_current_ref (BuilderCache *self)
+{
+  return get_ref (self, self->stage);
+}
+
 gboolean
-builder_cache_lookup (BuilderCache *self)
+builder_cache_lookup (BuilderCache *self,
+                      const char *stage)
 {
   g_autofree char *current = NULL;
   g_autofree char *commit = NULL;
+  g_autofree char *ref = NULL;
+
+  g_free (self->stage);
+  self->stage = g_strdup (stage);
+
+  g_hash_table_remove (self->unused_stages, stage);
 
   if (self->disabled)
     return FALSE;
 
-  if (!ostree_repo_resolve_rev (self->repo, self->branch, TRUE, &commit, NULL))
+  ref = builder_cache_get_current_ref (self);
+  if (!ostree_repo_resolve_rev (self->repo, ref, TRUE, &commit, NULL))
     goto checkout;
 
   current = builder_cache_get_current (self);
 
-  while (commit != NULL)
+  if (commit != NULL)
     {
       g_autoptr(GVariant) variant = NULL;
       const gchar *subject;
@@ -306,9 +347,6 @@ builder_cache_lookup (BuilderCache *self)
 
           return TRUE;
         }
-
-      g_free (commit);
-      commit = ostree_commit_get_parent (variant);
     }
 
  checkout:
@@ -336,6 +374,7 @@ builder_cache_commit (BuilderCache  *self,
   g_autoptr(GFile) root = NULL;
   g_autofree char *commit_checksum = NULL;
   gboolean res = FALSE;
+  g_autofree char *ref = NULL;
 
   if (!ostree_repo_prepare_transaction (self->repo, NULL, NULL, error))
     return FALSE;
@@ -358,7 +397,8 @@ builder_cache_commit (BuilderCache  *self,
                                  &commit_checksum, NULL, error))
     goto out;
 
-  ostree_repo_transaction_set_ref (self->repo, NULL, self->branch, commit_checksum);
+  ref = builder_cache_get_current_ref (self);
+  ostree_repo_transaction_set_ref (self->repo, NULL, ref, commit_checksum);
 
   if (!ostree_repo_commit_transaction (self->repo, NULL, NULL, error))
     goto out;
@@ -511,7 +551,26 @@ builder_gc (BuilderCache  *self,
   gint objects_total;
   gint objects_pruned;
   guint64 pruned_object_size_total;
+  GHashTableIter iter;
+  gpointer key, value;
 
+  g_hash_table_iter_init (&iter, self->unused_stages);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *unused_stage = (const char *)key;
+      g_autofree char *unused_ref = get_ref (self, unused_stage);
+
+      g_debug ("Removing unused ref %s", unused_ref);
+
+      if (!ostree_repo_set_ref_immediate (self->repo,
+                                          NULL,
+                                          unused_ref,
+                                          NULL,
+                                          NULL, error))
+        return FALSE;
+    }
+
+  g_print ("Pruning cache");
   return ostree_repo_prune (self->repo,
                             OSTREE_REPO_PRUNE_FLAGS_REFS_ONLY, -1,
                             &objects_total,

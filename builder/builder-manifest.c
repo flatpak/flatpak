@@ -709,10 +709,11 @@ builder_manifest_build (BuilderManifest *self,
     {
       BuilderModule *m = l->data;
       g_autoptr(GPtrArray) changes = NULL;
+      g_autofree char *stage = g_strdup_printf ("build-%s", builder_module_get_name (m));
 
       builder_module_checksum (m, cache, context);
 
-      if (!builder_cache_lookup (cache))
+      if (!builder_cache_lookup (cache, stage))
         {
           g_autofree char *body =
             g_strdup_printf ("Built %s\n", builder_module_get_name (m));
@@ -931,7 +932,7 @@ builder_manifest_cleanup (BuilderManifest *self,
   int i;
 
   builder_manifest_checksum_for_cleanup (self, cache, context);
-  if (!builder_cache_lookup (cache))
+  if (!builder_cache_lookup (cache, "cleanup"))
     {
       app_root = g_file_get_child (app_dir, "files");
 
@@ -1143,7 +1144,7 @@ builder_manifest_finish (BuilderManifest *self,
   JsonGenerator *generator;
 
   builder_manifest_checksum_for_finish (self, cache, context);
-  if (!builder_cache_lookup (cache))
+  if (!builder_cache_lookup (cache, "finish"))
     {
       g_print ("Finishing app\n");
 
