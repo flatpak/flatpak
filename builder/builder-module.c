@@ -1056,6 +1056,7 @@ builder_module_set_changes (BuilderModule  *self,
 static void
 collect_cleanup_for_path (const char **patterns,
                           const char *path,
+                          const char *add_prefix,
                           GHashTable *to_remove_ht)
 {
   int i;
@@ -1064,7 +1065,7 @@ collect_cleanup_for_path (const char **patterns,
     return;
 
   for (i = 0; patterns[i] != NULL; i++)
-    xdg_app_collect_matches_for_path_pattern (path, patterns[i], to_remove_ht);
+    xdg_app_collect_matches_for_path_pattern (path, patterns[i], add_prefix, to_remove_ht);
 }
 
 static gboolean
@@ -1098,28 +1099,37 @@ builder_module_cleanup_collect (BuilderModule *self,
   for (i = 0; i < changed_files->len; i++)
     {
       const char *path = g_ptr_array_index (changed_files, i);
+      const char *unprefixed_path;
+      const char *prefix;
 
-      collect_cleanup_for_path (global_patterns, path, to_remove_ht);
-      collect_cleanup_for_path ((const char **)self->cleanup, path, to_remove_ht);
+      if (g_str_has_prefix (path, "files/"))
+        prefix = "files/";
+      else if (g_str_has_prefix (path, "usr/"))
+        prefix = "usr/";
+      else
+        continue;
 
-      if (g_str_has_prefix (path, "lib/debug/") &&
-          g_str_has_suffix (path, ".debug"))
+      unprefixed_path = path + strlen (prefix);
+
+      collect_cleanup_for_path (global_patterns, unprefixed_path, prefix, to_remove_ht);
+      collect_cleanup_for_path ((const char **)self->cleanup, unprefixed_path, prefix, to_remove_ht);
+
+      if (g_str_has_prefix (unprefixed_path, "lib/debug/") &&
+          g_str_has_suffix (unprefixed_path, ".debug"))
         {
-          g_autofree char *real_path = g_strdup (path);
+          g_autofree char *real_path = g_strdup (unprefixed_path);
           g_autofree char *real_parent = NULL;
           g_autofree char *parent = NULL;
           g_autofree char *debug_path = NULL;
 
-          debug_path = g_strdup (path + strlen ("lib/debug/"));
+          debug_path = g_strdup (unprefixed_path + strlen ("lib/debug/"));
           debug_path[strlen (debug_path) - strlen (".debug")] = 0;
 
           while (TRUE)
             {
               if (matches_cleanup_for_path (global_patterns, debug_path) ||
                   matches_cleanup_for_path ((const char **)self->cleanup, debug_path))
-                {
-                  g_hash_table_insert (to_remove_ht, g_strdup (real_path), GINT_TO_POINTER (1));
-                }
+                g_hash_table_insert (to_remove_ht, g_strconcat (prefix, real_path, NULL), GINT_TO_POINTER (1));
 
               real_parent = g_path_get_dirname (real_path);
               if (strcmp (real_parent, ".") == 0)

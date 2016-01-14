@@ -75,6 +75,7 @@ inplace_basename (const char *path)
 void
 xdg_app_collect_matches_for_path_pattern (const char *path,
                                           const char *pattern,
+                                          const char *add_prefix,
                                           GHashTable *to_remove_ht)
 {
   const char *rest;
@@ -83,7 +84,7 @@ xdg_app_collect_matches_for_path_pattern (const char *path,
     {
       rest = xdg_app_path_match_prefix (pattern, inplace_basename (path));
       if (rest != NULL)
-        g_hash_table_insert (to_remove_ht, g_strdup (path), GINT_TO_POINTER (1));
+        g_hash_table_insert (to_remove_ht, g_strconcat (add_prefix ? add_prefix : "", path, NULL), GINT_TO_POINTER (1));
     }
   else
     {
@@ -96,7 +97,7 @@ xdg_app_collect_matches_for_path_pattern (const char *path,
         {
           const char *slash;
           g_autofree char *prefix = g_strndup (path, rest-path);
-          g_hash_table_insert (to_remove_ht, g_steal_pointer (&prefix), GINT_TO_POINTER (1));
+          g_hash_table_insert (to_remove_ht, g_strconcat (add_prefix ? add_prefix : "", prefix, NULL), GINT_TO_POINTER (1));
           while (*rest == '/')
             rest++;
           if (*rest == 0)

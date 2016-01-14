@@ -962,7 +962,7 @@ builder_manifest_cleanup (BuilderManifest *self,
       for (i = n_keys - 1; i >= 0; i--)
         {
           g_autoptr(GError) my_error = NULL;
-          g_autoptr(GFile) f = g_file_resolve_relative_path (app_root, keys[i]);
+          g_autoptr(GFile) f = g_file_resolve_relative_path (app_dir, keys[i]);
           g_print ("Removing %s\n", keys[i]);
           if (!g_file_delete (f, NULL, &my_error))
             {
