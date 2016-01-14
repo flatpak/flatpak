@@ -263,6 +263,25 @@ main (int argc, char *argv[])
                        xdg_app_ref_get_branch (XDG_APP_REF(ref)),
                        xdg_app_ref_get_commit (XDG_APP_REF(ref)),
                        xdg_app_remote_ref_get_remote_name (ref));
+
+              if (j == 0)
+                {
+                  guint64 download_size;
+                  guint64 installed_size;
+                  if (!xdg_app_installation_fetch_remote_size_sync (installation,
+                                                                    xdg_app_remote_get_name (remote),
+                                                                    xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+                                                                    &download_size,
+                                                                    &installed_size,
+                                                                    NULL, &error))
+                    {
+                      g_print ("error fetching sizes: %s\n", error->message);
+                      g_clear_error (&error);
+                    }
+                  else
+                    g_print ("Download size: %"G_GUINT64_FORMAT" Installed size: %"G_GUINT64_FORMAT"\n",
+                             download_size, installed_size);
+                }
             }
         }
 

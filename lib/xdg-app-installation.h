@@ -139,6 +139,13 @@ XDG_APP_EXTERN gboolean             xdg_app_installation_uninstall              
                                                                                     GCancellable        *cancellable,
                                                                                     GError             **error);
 
+XDG_APP_EXTERN gboolean          xdg_app_installation_fetch_remote_size_sync     (XdgAppInstallation  *self,
+                                                                                  const char          *remote_name,
+                                                                                  const char          *commit,
+                                                                                  guint64             *download_size,
+                                                                                  guint64             *installed_size,
+                                                                                  GCancellable        *cancellable,
+                                                                                  GError             **error);
 XDG_APP_EXTERN GBytes        *   xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation  *self,
                                                                                   const char          *remote_name,
                                                                                   const char          *commit,

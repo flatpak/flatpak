@@ -974,6 +974,26 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
 }
 
 
+gboolean
+xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation  *self,
+                                             const char          *remote_name,
+                                             const char          *commit,
+                                             guint64             *download_size,
+                                             guint64             *installed_size,
+                                             GCancellable        *cancellable,
+                                             GError             **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
+  return xdg_app_dir_fetch_sizes (priv->dir, remote_name, commit,
+                                  download_size,
+                                  NULL,
+                                  NULL,
+                                  installed_size,
+                                  cancellable,
+                                  error);
+}
+
 GBytes *
 xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
                                                  const char *remote_name,
