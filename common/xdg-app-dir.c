@@ -2624,6 +2624,163 @@ xdg_app_dir_fetch_remote_object (XdgAppDir *self,
   return g_steal_pointer (&bytes);
 }
 
+typedef struct
+{
+  guint64 unpacked;
+  guint64 archived;
+} SizeEntry;
+
+static const int max_varint_bytes = 10;
+
+static gboolean
+_ostree_read_varuint64 (const guint8   *buf,
+                        gsize           buflen,
+                        guint64        *out_value,
+                        gsize          *bytes_read)
+{
+  guint64 result = 0;
+  int count = 0;
+  guint8 b;
+
+  do
+    {
+      if (count == max_varint_bytes)
+        return FALSE;
+      if (buflen == 0)
+        return FALSE;
+
+      b = *buf;
+      result |= ((guint64)(b & 0x7F)) << (7 * count);
+      buf++;
+      buflen--;
+      ++count;
+  } while (b & 0x80);
+
+  *bytes_read = count;
+  *out_value = result;
+
+  return TRUE;
+}
+
+static gboolean
+unpack_sizes (GVariant  *entry,
+              SizeEntry *sizes,
+              char      *csum)
+{
+  const guchar *buffer;
+  gsize bytes_read = 0;
+  gsize object_size = g_variant_get_size (entry);
+
+  if (object_size <= 32)
+    return FALSE;
+
+  buffer = g_variant_get_data (entry);
+  if (!buffer)
+    return FALSE;
+
+  ostree_checksum_inplace_from_bytes (buffer, csum);
+  buffer += 32;
+  object_size -= 32;
+
+  if (!_ostree_read_varuint64 (buffer, object_size, &(sizes->archived), &bytes_read))
+    return FALSE;
+
+  buffer += bytes_read;
+  object_size -= bytes_read;
+
+  if (!_ostree_read_varuint64 (buffer, object_size, &(sizes->unpacked), &bytes_read))
+    return FALSE;
+
+  buffer += bytes_read;
+  object_size -= bytes_read;
+
+  return TRUE;
+}
+
+gboolean
+xdg_app_dir_fetch_sizes (XdgAppDir *self,
+                         const char *remote_name,
+                         const char *commit,
+                         guint64 *new_archived,
+                         guint64 *new_unpacked,
+                         guint64 *total_archived,
+                         guint64 *total_unpacked,
+                         GCancellable *cancellable,
+                         GError **error)
+{
+  g_autoptr(GBytes) commit_bytes = NULL;
+  g_autoptr(GVariant) commit_variant = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(GVariant) sizes = NULL;
+  g_autoptr(GVariant) object = NULL;
+  GVariantIter obj_iter;
+  guint64 n_archived = 0;
+  guint64 n_unpacked = 0;
+  guint64 t_archived = 0;
+  guint64 t_unpacked = 0;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  commit_bytes = xdg_app_dir_fetch_remote_object (self, remote_name,
+                                                  commit, "commit",
+                                                  cancellable, error);
+  if (commit_bytes == NULL)
+    return FALSE;
+
+  commit_variant = g_variant_new_from_bytes (OSTREE_COMMIT_GVARIANT_FORMAT,
+                                             commit_bytes, FALSE);
+
+  if (!ostree_validate_structureof_commit (commit_variant, error))
+    return FALSE;
+
+  metadata = g_variant_get_child_value (commit_variant, 0);
+
+  sizes = g_variant_lookup_value (metadata, "ostree.sizes", G_VARIANT_TYPE("aay"));
+  if (!sizes)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED, "No size information available");
+      return FALSE;
+    }
+
+  g_variant_iter_init (&obj_iter, sizes);
+  while ((object = g_variant_iter_next_value (&obj_iter)))
+    {
+      SizeEntry entry;
+      char csum[65];
+      gboolean exists;
+
+      if (!unpack_sizes (object, &entry, csum))
+        return xdg_app_fail (error, "Invalid object size metadata");
+
+      g_variant_unref (g_steal_pointer (&object));
+
+      t_archived += entry.archived;
+      t_unpacked += entry.unpacked;
+
+      if (!ostree_repo_has_object (self->repo, OSTREE_OBJECT_TYPE_FILE,
+                                   csum, &exists, cancellable, error))
+        return FALSE;
+
+      if (!exists)
+        {
+          n_archived += entry.archived;
+          n_unpacked += entry.unpacked;
+        }
+    }
+
+  if (new_archived)
+    *new_archived = n_archived;
+  if (new_unpacked)
+    *new_unpacked = n_unpacked;
+  if (total_archived)
+    *total_archived = t_archived;
+  if (total_unpacked)
+    *total_unpacked = t_unpacked;
+
+  return TRUE;
+}
+
 GBytes *
 xdg_app_dir_fetch_metadata (XdgAppDir *self,
                             const char *remote_name,

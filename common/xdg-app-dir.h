@@ -255,5 +255,14 @@ GBytes * xdg_app_dir_fetch_metadata      (XdgAppDir *self,
                                           const char *commit,
                                           GCancellable *cancellable,
                                           GError **error);
+gboolean xdg_app_dir_fetch_sizes         (XdgAppDir *self,
+                                          const char *remote_name,
+                                          const char *commit,
+                                          guint64    *new_archived,
+                                          guint64    *new_unpacked,
+                                          guint64    *total_archived,
+                                          guint64    *total_unpacked,
+                                          GCancellable *cancellable,
+                                          GError **error);
 
 #endif /* __XDG_APP_DIR_H__ */
