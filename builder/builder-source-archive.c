@@ -271,6 +271,7 @@ builder_source_archive_download (BuilderSource *source,
   if (g_file_query_exists (file, NULL))
     return TRUE;
 
+  g_print ("Downloading %s\n", self->url);
   content = download_uri (self->url,
                           context,
                           error);
