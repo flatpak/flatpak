@@ -46,7 +46,6 @@ xdg_app_builtin_build_update_repo (int argc, char **argv, GCancellable *cancella
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   const char *location;
-  GVariant *extra = NULL;
 
   context = g_option_context_new ("LOCATION - Update repository metadata");
 
@@ -64,19 +63,12 @@ xdg_app_builtin_build_update_repo (int argc, char **argv, GCancellable *cancella
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
-  if (opt_title)
-    {
-      GVariantBuilder builder;
-
-      g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
-      g_variant_builder_add (&builder, "{sv}", "xa.title", g_variant_new_string (opt_title));
-      extra = g_variant_builder_end (&builder);
-    }
-
-  if (!ostree_repo_regenerate_summary (repo, extra, cancellable, error))
+  if (opt_title &&
+      !xdg_app_repo_set_title (repo, opt_title, error))
     return FALSE;
 
-  /* TODO: appstream data */
+  if (!xdg_app_repo_update (repo, cancellable, error))
+    return FALSE;
 
   return TRUE;
 }

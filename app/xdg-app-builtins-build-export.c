@@ -407,10 +407,9 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
     goto out;
 
-  if (!ostree_repo_regenerate_summary (repo,
-                                       NULL,
-                                       cancellable,
-                                       error))
+  if (!xdg_app_repo_update (repo,
+                            cancellable,
+                            error))
     goto out;
 
   format_size = g_format_size (stats.content_bytes_written);

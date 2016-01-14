@@ -1293,3 +1293,54 @@ xdg_app_variant_bsearch_str (GVariant   *array,
   *out_pos = imid;
   return FALSE;
 }
+
+gboolean
+xdg_app_repo_set_title (OstreeRepo *repo,
+                        const char *title,
+                        GError **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  if (title)
+    g_key_file_set_string (config, "xdg-app", "title", title);
+  else
+    g_key_file_remove_key (config, "xdg-app", "title", NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+xdg_app_repo_update (OstreeRepo *repo,
+                     GCancellable *cancellable,
+                     GError **error)
+{
+  GVariantBuilder builder;
+  GKeyFile *config;
+  g_autofree char *title = NULL;
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
+
+  config = ostree_repo_get_config (repo);
+
+  if (config)
+    {
+      title = g_key_file_get_string (config, "xdg-app", "title", NULL);
+    }
+
+  if (title)
+    g_variant_builder_add (&builder, "{sv}", "xa.title",
+                           g_variant_new_string (title));
+
+  if (!ostree_repo_regenerate_summary (repo, g_variant_builder_end (&builder),
+                                       cancellable, error))
+    return FALSE;
+
+  /* TODO: appstream data */
+
+  return TRUE;
+}

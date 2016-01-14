@@ -169,6 +169,13 @@ void                xdg_app_table_printer_append_with_comma (XdgAppTablePrinter 
 void                xdg_app_table_printer_finish_row        (XdgAppTablePrinter *printer);
 void                xdg_app_table_printer_print             (XdgAppTablePrinter *printer);
 
+gboolean xdg_app_repo_set_title (OstreeRepo    *repo,
+                                 const char    *title,
+                                 GError       **error);
+gboolean xdg_app_repo_update    (OstreeRepo    *repo,
+                                 GCancellable  *cancellable,
+                                 GError       **error);
+
 gboolean            xdg_app_spawn (GFile        *dir,
                                    char        **output,
                                    GError      **error,
