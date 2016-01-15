@@ -2803,6 +2803,13 @@ unpack_sizes (GVariant  *entry,
   return TRUE;
 }
 
+/** xdg_app_dir_fetch_sizes
+ * @self: a #XdgAppDir
+ * @new_archived: total size of new (to be downloaded) objects in compressed form
+ * @new_unpacked: total size of new (to be downloaded) objects in uncompressed form
+ * @total_archived: total size of all objects in compressed form
+ * @total_unpacked: total size of all objects in uncompressed form
+ */
 gboolean
 xdg_app_dir_fetch_sizes (XdgAppDir *self,
                          const char *remote_name,
