@@ -46,6 +46,7 @@ xdg_app_builtin_build_update_repo (int argc, char **argv, GCancellable *cancella
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   const char *location;
+  g_autoptr(GError) my_error = NULL;
 
   context = g_option_context_new ("LOCATION - Update repository metadata");
 
@@ -67,6 +68,19 @@ xdg_app_builtin_build_update_repo (int argc, char **argv, GCancellable *cancella
       !xdg_app_repo_set_title (repo, opt_title, error))
     return FALSE;
 
+  g_print ("Updating appdata branch\n");
+  if (!xdg_app_repo_generate_appdata (repo, cancellable, &my_error))
+    {
+      if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
+        g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
+    }
+
+  g_print ("Updating summary\n");
   if (!xdg_app_repo_update (repo, cancellable, error))
     return FALSE;
 

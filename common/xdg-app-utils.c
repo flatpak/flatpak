@@ -1344,3 +1344,151 @@ xdg_app_repo_update (OstreeRepo *repo,
 
   return TRUE;
 }
+
+static gboolean
+appstream_builder (GError **error,
+                   ...)
+{
+  gboolean res;
+  va_list ap;
+
+  va_start (ap, error);
+  res = xdg_app_spawn (NULL, NULL, error, "appstream-builder", ap);
+  va_end (ap);
+
+  return res;
+}
+
+static OstreeRepoCommitFilterResult
+commit_filter (OstreeRepo *repo,
+               const char *path,
+               GFileInfo *file_info,
+               gpointer user_data)
+{
+  guint current_mode;
+
+  /* No user info */
+  g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
+  g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
+
+  /* No setuid */
+  current_mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", current_mode & ~07000);
+
+  return OSTREE_REPO_COMMIT_FILTER_ALLOW;
+}
+
+gboolean
+xdg_app_repo_generate_appdata (OstreeRepo    *repo,
+                               GCancellable  *cancellable,
+                               GError       **error)
+{
+  g_autoptr(GHashTable) all_refs = NULL;
+  g_autoptr(GHashTable) arches = NULL;
+  GHashTableIter iter;
+  gpointer key;
+  gpointer value;
+
+  arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  if (!ostree_repo_list_refs (repo,
+                              NULL,
+                              &all_refs,
+                              cancellable,
+                              error))
+    return FALSE;
+
+  g_hash_table_iter_init (&iter, all_refs);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *ref = key;
+      const char *arch;
+      g_auto(GStrv) split = NULL;
+
+      if (!g_str_has_prefix (ref, "app/") &&
+          !g_str_has_prefix (ref, "runtime/"))
+        continue;
+
+      split = xdg_app_decompose_ref (ref, NULL);
+      if (split)
+        {
+          arch = split[2];
+          if (!g_hash_table_contains (arches, arch))
+            g_hash_table_insert (arches, g_strdup (arch), GINT_TO_POINTER(1));
+        }
+    }
+
+  g_hash_table_iter_init (&iter, arches);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *arch = key;
+      g_autofree char *tmpdir = g_strdup ("/tmp/xdg-app-appdata-XXXXXX");
+      g_autoptr(XdgAppTempDir) tmpdir_file = NULL;
+      g_autofree char *repo_path = NULL;
+      g_autofree char *repo_arg = NULL;
+      g_autofree char *arch_arg = NULL;
+      g_autofree char *output_arg = NULL;
+      g_autofree char *icon_arg = NULL;
+      g_autoptr(GFile) root = NULL;
+      g_autoptr(OstreeMutableTree) mtree = NULL;
+      g_autofree char *commit_checksum = NULL;
+      OstreeRepoTransactionStats stats;
+      g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
+      g_autofree char *parent = NULL;
+      g_autofree char *branch = NULL;
+
+      if (g_mkdtemp (tmpdir) == NULL)
+        return xdg_app_fail (error, "Can't create temporary directory");
+
+      tmpdir_file = g_file_new_for_path (tmpdir);
+
+      repo_path = g_file_get_path (ostree_repo_get_path (repo));
+      repo_arg = g_strdup_printf ("--ostree-repo=%s", repo_path);
+      arch_arg = g_strdup_printf ("--ostree-arch=%s", arch);
+      output_arg = g_strdup_printf ("--output-dir=%s", tmpdir);
+      icon_arg = g_strdup_printf ("--icons-dir=%s/icons", tmpdir);
+
+      if (!appstream_builder (error,
+                              "--basename=appdata",
+                              "--origin=xdg-app",
+                              "--uncompressed-icons",
+                              "--enable-hidpi",
+                              repo_arg,
+                              arch_arg,
+                              output_arg,
+                              icon_arg,
+                              NULL))
+        return FALSE;
+
+      if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+        return FALSE;
+
+      branch = g_strdup_printf ("appdata/%s", arch);
+
+      if (!ostree_repo_resolve_rev (repo, branch, TRUE, &parent, error))
+        return FALSE;
+
+      mtree = ostree_mutable_tree_new ();
+
+      modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS,
+                                                  (OstreeRepoCommitFilter)commit_filter, NULL, NULL);
+
+      if (!ostree_repo_write_directory_to_mtree (repo, G_FILE (tmpdir_file), mtree, modifier, cancellable, error))
+        return FALSE;
+
+      if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
+        return FALSE;
+
+      if (!ostree_repo_write_commit (repo, parent, "Update", NULL, NULL,
+                                     OSTREE_REPO_FILE (root),
+                                     &commit_checksum, cancellable, error))
+        return FALSE;
+
+      ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
+
+      if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
