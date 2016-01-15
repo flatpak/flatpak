@@ -130,6 +130,13 @@ gboolean    xdg_app_dir_ensure_repo     (XdgAppDir      *self,
                                          GError        **error);
 gboolean    xdg_app_dir_mark_changed    (XdgAppDir      *self,
                                          GError        **error);
+gboolean    xdg_app_dir_update_appdata  (XdgAppDir      *self,
+                                         const char     *remote,
+                                         const char     *arch,
+                                         gboolean       *out_changed,
+                                         OstreeAsyncProgress *progress,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          const char     *repository,
                                          const char     *ref,

@@ -593,6 +593,112 @@ xdg_app_dir_mark_changed (XdgAppDir *self,
 }
 
 gboolean
+xdg_app_dir_update_appdata (XdgAppDir *self,
+                            const char *remote,
+                            const char *arch,
+                            gboolean *out_changed,
+                            OstreeAsyncProgress *progress,
+                            GCancellable *cancellable,
+                            GError **error)
+{
+  g_autofree char *branch = NULL;
+  g_autofree char *remote_and_branch = NULL;
+  g_autofree char *old_checksum = NULL;
+  g_autofree char *new_checksum = NULL;
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) appdata_dir = NULL;
+  g_autoptr(GFile) remote_dir = NULL;
+  g_autoptr(GFile) arch_dir = NULL;
+  g_autoptr(GFile) checkout_dir = NULL;
+  g_autoptr(GFile) old_checkout_dir = NULL;
+  g_autoptr(GFileInfo) file_info = NULL;
+  g_autofree char *arch_path = NULL;
+  g_autofree char *tmpname = NULL;
+  g_autoptr(GFile) active_tmp_link = NULL;
+  g_autoptr(GFile) active_link = NULL;
+  g_autoptr(GError) tmp_error = NULL;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (arch == NULL)
+    arch = xdg_app_get_arch ();
+
+  branch = g_strdup_printf ("appdata/%s", arch);
+  remote_and_branch = g_strdup_printf ("%s:%s", remote, branch);
+
+  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &old_checksum, error))
+    return FALSE;
+
+  if (!xdg_app_dir_pull (self, remote, branch, progress,
+                         cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
+    return FALSE;
+
+  appdata_dir = g_file_get_child (xdg_app_dir_get_path (self), "appdata");
+  remote_dir = g_file_get_child (appdata_dir, remote);
+  arch_dir = g_file_get_child (remote_dir, arch);
+  checkout_dir = g_file_get_child (arch_dir, new_checksum);
+  old_checkout_dir = g_file_get_child (arch_dir, old_checksum);
+
+  if (old_checksum != NULL && new_checksum != NULL &&
+      strcmp (old_checksum, new_checksum) == 0 &&
+      g_file_query_exists (checkout_dir, NULL))
+    {
+      if (out_changed)
+        *out_changed = FALSE;
+
+      return TRUE; /* No changes, don't checkout */
+    }
+
+  if (!ostree_repo_read_commit (self->repo, new_checksum, &root, NULL, cancellable, error))
+    return FALSE;
+
+  file_info = g_file_query_info (root, OSTREE_GIO_FAST_QUERYINFO,
+                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                 cancellable, error);
+  if (file_info == NULL)
+    return FALSE;
+
+  arch_path = g_file_get_path (arch_dir);
+  if (g_mkdir_with_parents (arch_path, 0755) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  if (!ostree_repo_checkout_tree (self->repo,
+                                  self->user ? OSTREE_REPO_CHECKOUT_MODE_USER : OSTREE_REPO_CHECKOUT_MODE_NONE,
+                                  OSTREE_REPO_CHECKOUT_OVERWRITE_NONE,
+                                  checkout_dir,
+                                  OSTREE_REPO_FILE (root), file_info,
+                                  cancellable, error))
+    return FALSE;
+
+  tmpname = gs_fileutil_gen_tmp_name (".active-", NULL);
+  active_tmp_link = g_file_get_child (arch_dir, tmpname);
+  active_link = g_file_get_child (arch_dir, "active");
+
+  if (!g_file_make_symbolic_link (active_tmp_link, new_checksum, cancellable, error))
+    return FALSE;
+
+  if (!gs_file_rename (active_tmp_link,
+                       active_link,
+                       cancellable, error))
+    return FALSE;
+
+  if (g_strcmp0 (old_checksum, new_checksum) != 0 &&
+      !gs_shutil_rm_rf (old_checkout_dir, cancellable, &tmp_error))
+    g_warning ("Unable to remove old appdata checkout: %s\n", tmp_error->message);
+
+  if (out_changed)
+    *out_changed = TRUE;
+  return TRUE;
+}
+
+gboolean
 xdg_app_dir_pull (XdgAppDir *self,
                   const char *repository,
                   const char *ref,

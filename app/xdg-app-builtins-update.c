@@ -38,6 +38,7 @@ static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
 static gboolean opt_runtime;
 static gboolean opt_app;
+static gboolean opt_appdata;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to update for", "ARCH" },
@@ -47,8 +48,20 @@ static GOptionEntry options[] = {
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, "Don't deploy, only download to local cache", },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
+  { "appdata", 0, 0, G_OPTION_ARG_NONE, &opt_appdata, "Update appdata for remote", },
   { NULL }
 };
+
+static gboolean
+update_appdata (XdgAppDir *dir, const char *remote, GCancellable *cancellable, GError **error)
+{
+  gboolean changed;
+  if (!xdg_app_dir_update_appdata (dir, remote, opt_arch, &changed,
+                                   NULL, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
 
 gboolean
 xdg_app_builtin_update (int argc, char **argv, GCancellable *cancellable, GError **error)
@@ -63,13 +76,13 @@ xdg_app_builtin_update (int argc, char **argv, GCancellable *cancellable, GError
   gboolean is_app;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  context = g_option_context_new ("APP [BRANCH] - Update an application");
+  context = g_option_context_new ("NAME [BRANCH] - Update an application or runtime");
 
   if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "APP must be specified", error);
+    return usage_error (context, "NAME must be specified", error);
 
   name = argv[1];
   if (argc >= 3)
@@ -77,6 +90,9 @@ xdg_app_builtin_update (int argc, char **argv, GCancellable *cancellable, GError
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
+
+  if (opt_appdata)
+    return update_appdata (dir, name, cancellable, error);
 
   ref = xdg_app_dir_find_installed_ref (dir,
                                         name,
