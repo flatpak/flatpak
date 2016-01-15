@@ -23,6 +23,7 @@
 
 #include <string.h>
 
+#include "libgsystem.h"
 #include "libglnx/libglnx.h"
 #include <gio/gio.h>
 #include <libsoup/soup.h>
@@ -182,6 +183,23 @@ gboolean            xdg_app_spawn (GFile        *dir,
                                    const gchar  *argv0,
                                    va_list       args);
 
+#define xdg_app_autorm_rf _GLIB_CLEANUP(g_autoptr_cleanup_generic_gfree)
+
+static inline void
+xdg_app_temp_dir_destroy (void *p)
+{
+  GFile *dir = p;
+
+  if (dir)
+    {
+      gs_shutil_rm_rf (dir, NULL, NULL);
+      g_object_unref (dir);
+    }
+}
+
+typedef GFile XdgAppTempDir;
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppTempDir, xdg_app_temp_dir_destroy)
 
 #define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup(xdg_app_auto_unlock_helper))) GMutex * G_PASTE(auto_unlock, __LINE__) = xdg_app_auto_lock_helper (&G_LOCK_NAME (name))
 
