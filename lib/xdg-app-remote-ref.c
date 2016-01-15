@@ -137,7 +137,9 @@ xdg_app_remote_ref_new (const char *full_ref,
   g_auto(GStrv) parts = NULL;
   XdgAppRemoteRef *ref;
 
-  parts = g_strsplit (full_ref, "/", -1);
+  parts = xdg_app_decompose_ref (full_ref, NULL);
+  if (parts == NULL)
+    return NULL;
 
   if (strcmp (parts[0], "app") != 0)
     kind = XDG_APP_REF_KIND_RUNTIME;

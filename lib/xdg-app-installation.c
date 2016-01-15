@@ -1052,9 +1052,12 @@ xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
     {
       const char *refspec = key;
       const char *checksum = value;
+      XdgAppRemoteRef *ref;
 
-      g_ptr_array_add (refs,
-                       xdg_app_remote_ref_new (refspec, checksum, remote_name));
+      ref = xdg_app_remote_ref_new (refspec, checksum, remote_name);
+
+      if (ref)
+        g_ptr_array_add (refs, ref);
     }
 
   return g_steal_pointer (&refs);
