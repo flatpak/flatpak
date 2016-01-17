@@ -37,6 +37,8 @@ gboolean is_elf_file (const char *path,
                       gboolean *is_shared,
                       gboolean *is_stripped);
 
+gboolean directory_is_empty (const char *path);
+
 gboolean xdg_app_matches_path_pattern             (const char *path,
                                                    const char *pattern);
 void     xdg_app_collect_matches_for_path_pattern (const char *path,

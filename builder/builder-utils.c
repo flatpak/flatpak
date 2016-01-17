@@ -219,3 +219,19 @@ gboolean is_elf_file (const char *path,
 
   return FALSE;
 }
+
+gboolean directory_is_empty (const char *path)
+{
+  GDir *dir;
+  gboolean empty;
+
+  dir = g_dir_open (path, 0, NULL);
+  if (g_dir_read_name (dir) == NULL)
+    empty = TRUE;
+  else
+    empty = FALSE;
+
+  g_dir_close (dir);
+
+  return empty;
+}
