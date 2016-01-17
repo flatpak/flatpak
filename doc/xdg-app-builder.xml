@@ -570,7 +570,7 @@
                 <term><option>--gpg-sign=KEYID</option></term>
 
                 <listitem><para>
-                    Sign the commit with this GPG key
+                    Sign the commit with this GPG key.
                     Used when exporting the build results.
                 </para></listitem>
             </varlistentry>
@@ -579,7 +579,7 @@
                 <term><option>--gpg-homedir=PATH</option></term>
 
                 <listitem><para>
-                    GPG Homedir to use when looking for keyrings
+                    GPG Homedir to use when looking for keyrings.
                     Used when exporting the build results.
                 </para></listitem>
             </varlistentry>
