@@ -261,6 +261,9 @@ builder_cache_checkout (BuilderCache *self, const char *commit)
   if (file_info == NULL)
     return FALSE;
 
+  if (!g_file_delete (self->app_dir, NULL, NULL))
+    return FALSE;
+
   /* We check out without user mode, not necessarily because we care
      about uids not owned by the user (they are all from the build,
      so should be creatable by the user, but because we want to
