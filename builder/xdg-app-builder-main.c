@@ -30,6 +30,7 @@
 #include "libgsystem.h"
 
 #include "builder-manifest.h"
+#include "builder-utils.h"
 
 static gboolean opt_verbose;
 static gboolean opt_version;
@@ -210,9 +211,10 @@ main (int    argc,
   base_dir = g_file_new_for_path (g_get_current_dir ());
   app_dir = g_file_new_for_path (app_dir_path);
 
-  if (!gs_shutil_rm_rf (app_dir, NULL, &error))
+  if (g_file_query_exists (app_dir, NULL) && !directory_is_empty (app_dir_path))
     {
-      g_print ("error removing old app dir '%s': %s\n", app_dir_path, error->message);
+      g_printerr ("App dir '%s' is not empty. Please delete "
+                  "the existing contents.\n", app_dir_path);
       return 1;
     }
 
