@@ -174,9 +174,13 @@ gboolean xdg_app_repo_set_title (OstreeRepo    *repo,
                                  const char    *title,
                                  GError       **error);
 gboolean xdg_app_repo_update    (OstreeRepo    *repo,
+                                 const char   **gpg_key_ids,
+                                 const char    *gpg_homedir,
                                  GCancellable  *cancellable,
                                  GError       **error);
 gboolean xdg_app_repo_generate_appstream (OstreeRepo    *repo,
+                                          const char   **gpg_key_ids,
+                                          const char    *gpg_homedir,
                                           GCancellable  *cancellable,
                                           GError       **error);
 

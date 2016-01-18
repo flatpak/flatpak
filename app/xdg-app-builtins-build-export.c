@@ -34,7 +34,8 @@
 static char *opt_subject;
 static char *opt_body;
 static gboolean opt_runtime;
-static char **opt_key_ids;
+static gboolean opt_update_appstream;
+static char **opt_gpg_key_ids;
 static char **opt_exclude;
 static char **opt_include;
 static char *opt_gpg_homedir;
@@ -45,9 +46,10 @@ static GOptionEntry options[] = {
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, "One line subject", "SUBJECT" },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description", "BODY" },
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Commit runtime (/usr), not /app" },
+  { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Update the appstream branch" },
   { "files", 0, 0, G_OPTION_ARG_STRING, &opt_files, "Use alternative directory for the files", "SUBDIR"},
   { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, "Use alternative file for the metadata", "FILE"},
-  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
+  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
   { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, "Files to exclude", "PATTERN"},
   { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, "Excluded files to include", "PATTERN"},
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
@@ -402,11 +404,11 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
                                  &commit_checksum, cancellable, error))
     goto out;
 
-  if (opt_key_ids)
+  if (opt_gpg_key_ids)
     {
       char **iter;
 
-      for (iter = opt_key_ids; iter && *iter; iter++)
+      for (iter = opt_gpg_key_ids; iter && *iter; iter++)
         {
           const char *keyid = *iter;
 
@@ -425,7 +427,25 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
     goto out;
 
+  if (opt_update_appstream)
+    {
+      g_autoptr(GError) my_error = NULL;
+
+      if (!xdg_app_repo_generate_appstream (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
+        {
+          if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
+            g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&my_error));
+              return FALSE;
+            }
+        }
+    }
+
   if (!xdg_app_repo_update (repo,
+                            (const char **)opt_gpg_key_ids,
+                            opt_gpg_homedir,
                             cancellable,
                             error))
     goto out;

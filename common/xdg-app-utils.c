@@ -1272,7 +1272,7 @@ xdg_app_variant_bsearch_str (GVariant   *array,
       imid = (imin + imax) / 2;
 
       child = g_variant_get_child_value (array, imid);
-      g_variant_get_child (child, 0, "&s", &cur, NULL);      
+      g_variant_get_child (child, 0, "&s", &cur, NULL);
 
       cmp = strcmp (cur, str);
       if (cmp < 0)
@@ -1315,9 +1315,11 @@ xdg_app_repo_set_title (OstreeRepo *repo,
 }
 
 gboolean
-xdg_app_repo_update (OstreeRepo *repo,
+xdg_app_repo_update (OstreeRepo   *repo,
+                     const char  **gpg_key_ids,
+                     const char   *gpg_homedir,
                      GCancellable *cancellable,
-                     GError **error)
+                     GError      **error)
 {
   GVariantBuilder builder;
   GKeyFile *config;
@@ -1340,7 +1342,15 @@ xdg_app_repo_update (OstreeRepo *repo,
                                        cancellable, error))
     return FALSE;
 
-  /* TODO: appstream data */
+  if (gpg_key_ids)
+    {
+      if (!ostree_repo_add_gpg_signature_summary (repo,
+                                                  gpg_key_ids,
+                                                  gpg_homedir,
+                                                  cancellable,
+                                                  error))
+        return FALSE;
+    }
 
   return TRUE;
 }
@@ -1380,6 +1390,8 @@ commit_filter (OstreeRepo *repo,
 
 gboolean
 xdg_app_repo_generate_appstream (OstreeRepo    *repo,
+                                 const char   **gpg_key_ids,
+                                 const char    *gpg_homedir,
                                  GCancellable  *cancellable,
                                  GError       **error)
 {
@@ -1466,7 +1478,7 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
       branch = g_strdup_printf ("appstream/%s", arch);
 
       if (!ostree_repo_resolve_rev (repo, branch, TRUE, &parent, error))
-        return FALSE;
+        goto out;
 
       mtree = ostree_mutable_tree_new ();
 
@@ -1474,21 +1486,43 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
                                                   (OstreeRepoCommitFilter)commit_filter, NULL, NULL);
 
       if (!ostree_repo_write_directory_to_mtree (repo, G_FILE (tmpdir_file), mtree, modifier, cancellable, error))
-        return FALSE;
+        goto out;
 
       if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
-        return FALSE;
+        goto out;
 
       if (!ostree_repo_write_commit (repo, parent, "Update", NULL, NULL,
                                      OSTREE_REPO_FILE (root),
                                      &commit_checksum, cancellable, error))
-        return FALSE;
+        goto out;
+
+      if (gpg_key_ids)
+        {
+          int i;
+
+          for (i = 0; gpg_key_ids[i] != NULL; i++)
+            {
+              const char *keyid = gpg_key_ids[i];
+
+              if (!ostree_repo_sign_commit (repo,
+                                            commit_checksum,
+                                            keyid,
+                                            gpg_homedir,
+                                            cancellable,
+                                            error))
+                goto out;
+            }
+        }
 
       ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
 
       if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
-        return FALSE;
+        goto out;
     }
 
   return TRUE;
+
+ out:
+  ostree_repo_abort_transaction (repo, cancellable, NULL);
+  return FALSE;
 }

@@ -32,15 +32,20 @@
 #include "xdg-app-utils.h"
 
 static char *opt_title;
+static char *opt_gpg_homedir;
+static char **opt_gpg_key_ids;
 
 static GOptionEntry options[] = {
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this repository", "TITLE" },
+  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
+  { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
   { NULL }
 };
 
 
 gboolean
-xdg_app_builtin_build_update_repo (int argc, char **argv, GCancellable *cancellable, GError **error)
+xdg_app_builtin_build_update_repo (int argc, char **argv,
+                                   GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) repofile = NULL;
@@ -69,7 +74,7 @@ xdg_app_builtin_build_update_repo (int argc, char **argv, GCancellable *cancella
     return FALSE;
 
   g_print ("Updating appstream branch\n");
-  if (!xdg_app_repo_generate_appstream (repo, cancellable, &my_error))
+  if (!xdg_app_repo_generate_appstream (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
     {
       if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
         g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");
@@ -81,7 +86,7 @@ xdg_app_builtin_build_update_repo (int argc, char **argv, GCancellable *cancella
     }
 
   g_print ("Updating summary\n");
-  if (!xdg_app_repo_update (repo, cancellable, error))
+  if (!xdg_app_repo_update (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
 
   return TRUE;
