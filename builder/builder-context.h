@@ -55,6 +55,9 @@ const char **   builder_context_get_global_cleanup  (BuilderContext  *self);
 BuilderOptions *builder_context_get_options         (BuilderContext  *self);
 void            builder_context_set_options         (BuilderContext  *self,
                                                      BuilderOptions  *option);
+gboolean        builder_context_get_build_runtime   (BuilderContext  *self);
+void            builder_context_set_build_runtime   (BuilderContext  *self,
+                                                     gboolean         build_runtime);
 
 BuilderContext *builder_context_new              (GFile          *base_dir,
                                                   GFile          *app_dir);

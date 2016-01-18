@@ -99,7 +99,7 @@
             </para>
             <variablelist>
                 <varlistentry>
-                    <term><option>app-id</option></term>
+                    <term><option>id</option></term>
                     <listitem><para>A string defining the application id.</para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -119,12 +119,21 @@
                     <listitem><para>The name of the development runtime that the application builds with.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>metadata</option></term>
+                    <listitem><para>Use this file as the base metadata file when finishing.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>command</option></term>
                     <listitem><para>The filename or path to the main binary of the application.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>build-runtime</option></term>
+                    <listitem><para>Build a new runtime instead of an application.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>writable-sdk</option></term>
-                    <listitem><para>If true, use a writable copy of the sdk for /usr.</para></listitem>
+                    <listitem><para>If true, use a writable copy of the sdk for /usr.
+                    Defaults to true if --build-runtime is specieied</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>build-options</option></term>
@@ -196,7 +205,8 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>prefix</option></term>
-                    <listitem><para>The build prefix for the modules (defaults to <filename>/app</filename>).</para></listitem>
+                    <listitem><para>The build prefix for the modules (defaults to <filename>/app</filename> for
+                    applications and <filename>/usr</filename> for runtimes).</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>env</option></term>

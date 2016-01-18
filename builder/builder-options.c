@@ -505,6 +505,9 @@ builder_options_get_prefix (BuilderOptions *self, BuilderContext *context)
         return o->prefix;
     }
 
+  if (builder_context_get_build_runtime (context))
+    return "/usr";
+
   return "/app";
 }
 

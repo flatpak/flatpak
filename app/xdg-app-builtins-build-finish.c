@@ -177,11 +177,11 @@ copy_exports (GFile    *source,
 }
 
 static gboolean
-collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GError **error)
+collect_exports (GFile *base, const char *app_id, gboolean is_runtime, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GFile) files = NULL;
   g_autoptr(GFile) export = NULL;
-  const char *paths[] = {
+  const char *app_paths[] = {
     "share/applications",                 /* Copy desktop files */
     "share/appdata",                      /* Copy appdata files */
     "share/icons/hicolor",                /* Icons */
@@ -189,9 +189,24 @@ collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GEr
     "share/gnome-shell/search-providers", /* Search providers */
     NULL,
   };
+  const char *runtime_paths[] = {
+    "share/appdata",                      /* Copy appdata files */
+    NULL,
+  };
+  const char **paths;
   int i;
 
-  files = g_file_get_child (base, "files");
+  if (is_runtime)
+    {
+      files = g_file_get_child (base, "usr");
+      paths = runtime_paths;
+    }
+  else
+    {
+      files = g_file_get_child (base, "files");
+      paths = app_paths;
+    }
+
   export = g_file_get_child (base, "export");
 
   if (!gs_file_ensure_directory (export, TRUE, cancellable, error))
@@ -325,7 +340,8 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GFile) export_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autofree char *metadata_contents = NULL;
-  g_autofree char *app_id = NULL;
+  g_autofree char *id = NULL;
+  gboolean is_runtime;
   gsize metadata_size;
   const char *directory;
   g_autoptr(GKeyFile) metakey = NULL;
@@ -361,15 +377,20 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     return FALSE;
 
-  app_id = g_key_file_get_string (metakey, "Application", "name", error);
-  if (app_id == NULL)
-    return FALSE;
+  id = g_key_file_get_string (metakey, "Application", "name", NULL);
+  if (id == NULL)
+    {
+      id = g_key_file_get_string (metakey, "Runtime", "name", NULL);
+      if (id == NULL)
+        return xdg_app_fail (error, "No name specified in the metadata");
+      is_runtime = TRUE;
+    }
 
   if (g_file_query_exists (export_dir, cancellable))
     return xdg_app_fail (error, "Build directory %s already finalized", directory);
 
   g_debug ("Collecting exports");
-  if (!collect_exports (base, app_id, cancellable, error))
+  if (!collect_exports (base, id, is_runtime, cancellable, error))
     return FALSE;
 
   g_debug ("Updating metadata");

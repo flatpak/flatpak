@@ -90,7 +90,8 @@ usage (GOptionContext *context, const char *message)
 }
 
 static gboolean
-do_export (GError      **error,
+do_export (GError   **error,
+           gboolean   runtime,
            ...)
 {
   va_list ap;
@@ -103,6 +104,9 @@ do_export (GError      **error,
   args = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (args, g_strdup ("xdg-app"));
   g_ptr_array_add (args, g_strdup ("build-export"));
+
+  if (runtime)
+    g_ptr_array_add (args, g_strdup ("--runtime"));
 
   if (opt_subject)
     g_ptr_array_add (args, g_strdup_printf ("--subject=%s", opt_subject));
@@ -257,7 +261,7 @@ main (int    argc,
     {
       g_autofree char *body =
         g_strdup_printf ("Initialized %s\n",
-                         builder_manifest_get_app_id (manifest));
+                         builder_manifest_get_id (manifest));
       if (!builder_manifest_init_app_dir (manifest, build_context, &error))
         {
           g_print ("error: %s\n", error->message);
@@ -301,9 +305,13 @@ main (int    argc,
     {
       g_autoptr(GFile) debuginfo_metadata = NULL;
 
-      g_print ("exporting %s to repo\n", builder_manifest_get_app_id (manifest));
+      g_print ("exporting %s to repo\n", builder_manifest_get_id (manifest));
 
-      if (!do_export (&error,"--exclude=/lib/debug/*", opt_repo, app_dir_path, NULL))
+      if (!do_export (&error,
+                      builder_context_get_build_runtime (build_context),
+                      "--exclude=/lib/debug/*",
+                      "--include=/lib/debug/app",
+                      opt_repo, app_dir_path, NULL))
         {
           g_print ("Export failed: %s\n", error->message);
           return 1;
@@ -312,9 +320,12 @@ main (int    argc,
       debuginfo_metadata = g_file_get_child (app_dir, "metadata.debuginfo");
       if (g_file_query_exists (debuginfo_metadata, NULL))
         {
-          g_print ("exporting %s.Debug to repo\n", builder_manifest_get_app_id (manifest));
+          g_print ("exporting %s.Debug to repo\n", builder_manifest_get_id (manifest));
 
-          if (!do_export (&error, "--runtime", "--metadata=metadata.debuginfo", "--files=files/lib/debug", opt_repo, app_dir_path, NULL))
+          if (!do_export (&error, TRUE,
+                          "--metadata=metadata.debuginfo",
+                          builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
+                          opt_repo, app_dir_path, NULL))
             {
               g_print ("Export failed: %s\n", error->message);
               return 1;

@@ -40,7 +40,7 @@ typedef struct BuilderManifest BuilderManifest;
 
 GType builder_manifest_get_type (void);
 
-const char *    builder_manifest_get_app_id        (BuilderManifest  *self);
+const char *    builder_manifest_get_id            (BuilderManifest  *self);
 BuilderOptions *builder_manifest_get_build_options (BuilderManifest  *self);
 GList *         builder_manifest_get_modules       (BuilderManifest  *self);
 

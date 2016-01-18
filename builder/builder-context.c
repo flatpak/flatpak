@@ -48,6 +48,7 @@ struct BuilderContext {
   gboolean keep_build_dirs;
   char **cleanup;
   gboolean use_ccache;
+  gboolean build_runtime;
 };
 
 typedef struct {
@@ -291,6 +292,19 @@ gboolean
 builder_context_get_keep_build_dirs (BuilderContext *self)
 {
   return self->keep_build_dirs;
+}
+
+gboolean
+builder_context_get_build_runtime (BuilderContext  *self)
+{
+  return self->build_runtime;
+}
+
+void
+builder_context_set_build_runtime (BuilderContext  *self,
+                                   gboolean         build_runtime)
+{
+  self->build_runtime = !!build_runtime;
 }
 
 gboolean

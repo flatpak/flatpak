@@ -37,11 +37,12 @@
 struct BuilderManifest {
   GObject parent;
 
-  char *app_id;
+  char *id;
   char *branch;
   char *runtime;
   char *runtime_version;
   char *sdk;
+  char *metadata;
   char **cleanup;
   char **cleanup_commands;
   char **finish_args;
@@ -51,6 +52,7 @@ struct BuilderManifest {
   gboolean copy_icon;
   char *desktop_file_name_prefix;
   char *desktop_file_name_suffix;
+  gboolean build_runtime;
   gboolean writable_sdk;
   char *command;
   BuilderOptions *build_options;
@@ -68,16 +70,19 @@ G_DEFINE_TYPE_WITH_CODE (BuilderManifest, builder_manifest, G_TYPE_OBJECT,
 
 enum {
   PROP_0,
-  PROP_APP_ID,
+  PROP_APP_ID, /* Backwards compat with early version, use id */
+  PROP_ID,
   PROP_BRANCH,
   PROP_RUNTIME,
   PROP_RUNTIME_VERSION,
   PROP_SDK,
+  PROP_METADATA,
   PROP_BUILD_OPTIONS,
   PROP_COMMAND,
   PROP_MODULES,
   PROP_CLEANUP,
   PROP_CLEANUP_COMMANDS,
+  PROP_BUILD_RUNTIME,
   PROP_WRITABLE_SDK,
   PROP_FINISH_ARGS,
   PROP_RENAME_DESKTOP_FILE,
@@ -94,11 +99,12 @@ builder_manifest_finalize (GObject *object)
 {
   BuilderManifest *self = (BuilderManifest *)object;
 
-  g_free (self->app_id);
+  g_free (self->id);
   g_free (self->branch);
   g_free (self->runtime);
   g_free (self->runtime_version);
   g_free (self->sdk);
+  g_free (self->metadata);
   g_free (self->command);
   g_clear_object (&self->build_options);
   g_list_free_full (self->modules, g_object_unref);
@@ -125,7 +131,11 @@ builder_manifest_get_property (GObject    *object,
   switch (prop_id)
     {
     case PROP_APP_ID:
-      g_value_set_string (value, self->app_id);
+      g_value_set_string (value, NULL);
+      break;
+
+    case PROP_ID:
+      g_value_set_string (value, self->id);
       break;
 
     case PROP_BRANCH:
@@ -142,6 +152,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_SDK:
       g_value_set_string (value, self->sdk);
+      break;
+
+    case PROP_METADATA:
+      g_value_set_string (value, self->metadata);
       break;
 
     case PROP_COMMAND:
@@ -166,6 +180,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_FINISH_ARGS:
       g_value_set_boxed (value, self->finish_args);
+      break;
+
+    case PROP_BUILD_RUNTIME:
+      g_value_set_boolean (value, self->build_runtime);
       break;
 
     case PROP_WRITABLE_SDK:
@@ -213,8 +231,13 @@ builder_manifest_set_property (GObject       *object,
   switch (prop_id)
     {
     case PROP_APP_ID:
-      g_free (self->app_id);
-      self->app_id = g_value_dup_string (value);
+      g_free (self->id);
+      self->id = g_value_dup_string (value);
+      break;
+
+    case PROP_ID:
+      g_free (self->id);
+      self->id = g_value_dup_string (value);
       break;
 
     case PROP_BRANCH:
@@ -235,6 +258,11 @@ builder_manifest_set_property (GObject       *object,
     case PROP_SDK:
       g_free (self->sdk);
       self->sdk = g_value_dup_string (value);
+      break;
+
+    case PROP_METADATA:
+      g_free (self->metadata);
+      self->metadata = g_value_dup_string (value);
       break;
 
     case PROP_COMMAND:
@@ -268,6 +296,10 @@ builder_manifest_set_property (GObject       *object,
       tmp = self->finish_args;
       self->finish_args = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
+      break;
+
+    case PROP_BUILD_RUNTIME:
+      self->build_runtime = g_value_get_boolean (value);
       break;
 
     case PROP_WRITABLE_SDK:
@@ -325,6 +357,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
+                                   PROP_ID,
+                                   g_param_spec_string ("id",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
                                    PROP_BRANCH,
                                    g_param_spec_string ("branch",
                                                         "",
@@ -348,6 +387,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_SDK,
                                    g_param_spec_string ("sdk",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_METADATA,
+                                   g_param_spec_string ("metadata",
                                                         "",
                                                         "",
                                                         NULL,
@@ -393,6 +439,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                        "",
                                                        G_TYPE_STRV,
                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_BUILD_RUNTIME,
+                                   g_param_spec_boolean ("build-runtime",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_WRITABLE_SDK,
                                    g_param_spec_boolean ("writable-sdk",
@@ -549,9 +602,9 @@ serializable_iface_init (JsonSerializableIface *serializable_iface)
 }
 
 const char *
-builder_manifest_get_app_id  (BuilderManifest *self)
+builder_manifest_get_id  (BuilderManifest *self)
 {
-  return self->app_id;
+  return self->id;
 }
 
 BuilderOptions *
@@ -581,10 +634,10 @@ builder_manifest_init_app_dir (BuilderManifest *self,
   g_autofree char *app_dir_path = g_file_get_path (app_dir);
   g_autoptr(GSubprocess) subp = NULL;
 
-  if (self->app_id == NULL)
+  if (self->id == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "app id not specified");
+                   "id not specified");
       return FALSE;
     }
 
@@ -608,11 +661,11 @@ builder_manifest_init_app_dir (BuilderManifest *self,
                       "xdg-app",
                       "build-init",
                       app_dir_path,
-                      self->app_id,
+                      self->id,
                       self->sdk,
                       self->runtime,
                       builder_manifest_get_runtime_version (self),
-                      self->writable_sdk ? "-w" : NULL,
+                      (self->writable_sdk || self->build_runtime) ? "-w" : NULL,
                       NULL);
 
   if (subp == NULL ||
@@ -629,11 +682,15 @@ builder_manifest_checksum (BuilderManifest *self,
                            BuilderContext *context)
 {
   builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_VERSION);
-  builder_cache_checksum_str (cache, self->app_id);
+  builder_cache_checksum_str (cache, self->id);
   /* No need to include version here, it doesn't affect the build */
   builder_cache_checksum_str (cache, self->runtime);
   builder_cache_checksum_str (cache, builder_manifest_get_runtime_version (self));
   builder_cache_checksum_str (cache, self->sdk);
+  builder_cache_checksum_str (cache, self->metadata);
+  builder_cache_checksum_boolean (cache, self->writable_sdk);
+  builder_cache_checksum_boolean (cache, self->build_runtime);
+
   if (self->build_options)
     builder_options_checksum (self->build_options, cache, context);
 }
@@ -654,7 +711,6 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
   builder_cache_checksum_boolean (cache, self->copy_icon);
   builder_cache_checksum_str (cache, self->desktop_file_name_prefix);
   builder_cache_checksum_str (cache, self->desktop_file_name_suffix);
-  builder_cache_checksum_boolean (cache, self->writable_sdk);
 
   for (l = self->modules; l != NULL; l = l->next)
     {
@@ -671,6 +727,20 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
   builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_VERSION " foo");
   builder_cache_checksum_strv (cache, self->finish_args);
   builder_cache_checksum_str (cache, self->command);
+
+  if (self->metadata)
+    {
+      GFile *base_dir = builder_context_get_base_dir (context);
+      g_autoptr(GFile) metadata = g_file_resolve_relative_path (base_dir, self->metadata);
+      g_autofree char *data = NULL;
+      g_autoptr(GError) my_error = NULL;
+      gsize len;
+
+      if (g_file_load_contents (metadata, NULL, &data, &len, NULL, &my_error))
+        builder_cache_checksum_data (cache, (guchar *)data, len);
+      else
+        g_warning ("Can't load metadata file %s: %s", self->metadata, my_error->message);
+    }
 }
 
 gboolean
@@ -703,8 +773,9 @@ builder_manifest_build (BuilderManifest *self,
 
   builder_context_set_options (context, self->build_options);
   builder_context_set_global_cleanup (context, (const char **)self->cleanup);
+  builder_context_set_build_runtime (context, self->build_runtime);
 
-  g_print ("Starting build of %s\n", self->app_id ? self->app_id : "app");
+  g_print ("Starting build of %s\n", self->id ? self->id : "app");
   for (l = self->modules; l != NULL; l = l->next)
     {
       BuilderModule *m = l->data;
@@ -884,7 +955,7 @@ rename_icon_cb (BuilderManifest *self,
       source_name[strlen (self->rename_icon)] == '.')
     {
       const char *extension = source_name + strlen (self->rename_icon);
-      g_autofree char *new_name = g_strconcat (self->app_id, extension, NULL);
+      g_autofree char *new_name = g_strconcat (self->id, extension, NULL);
       int res;
 
       *found = TRUE;
@@ -934,8 +1005,6 @@ builder_manifest_cleanup (BuilderManifest *self,
   builder_manifest_checksum_for_cleanup (self, cache, context);
   if (!builder_cache_lookup (cache, "cleanup"))
     {
-      app_root = g_file_get_child (app_dir, "files");
-
       g_print ("Cleaning up\n");
 
       if (self->cleanup_commands)
@@ -975,8 +1044,9 @@ builder_manifest_cleanup (BuilderManifest *self,
             }
         }
 
+      app_root = g_file_get_child (app_dir, "files");
       appdata_dir = g_file_resolve_relative_path (app_root, "share/appdata");
-      appdata_basename = g_strdup_printf ("%s.appdata.xml", self->app_id);
+      appdata_basename = g_strdup_printf ("%s.appdata.xml", self->id);
       appdata_file = g_file_get_child (appdata_dir, appdata_basename);
 
       if (self->rename_appdata_file != NULL)
@@ -992,7 +1062,7 @@ builder_manifest_cleanup (BuilderManifest *self,
         {
           g_autoptr(GFile) applications_dir = g_file_resolve_relative_path (app_root, "share/applications");
           g_autoptr(GFile) src = g_file_get_child (applications_dir, self->rename_desktop_file);
-          g_autofree char *desktop_basename = g_strdup_printf ("%s.desktop", self->app_id);
+          g_autofree char *desktop_basename = g_strdup_printf ("%s.desktop", self->id);
           g_autoptr(GFile) dest = g_file_get_child (applications_dir, desktop_basename);
 
           g_print ("Renaming %s to %s\n", self->rename_desktop_file, desktop_basename);
@@ -1055,7 +1125,7 @@ builder_manifest_cleanup (BuilderManifest *self,
           self->desktop_file_name_suffix)
         {
           g_autoptr(GFile) applications_dir = g_file_resolve_relative_path (app_root, "share/applications");
-          g_autofree char *desktop_basename = g_strdup_printf ("%s.desktop", self->app_id);
+          g_autofree char *desktop_basename = g_strdup_printf ("%s.desktop", self->id);
           g_autoptr(GFile) desktop = g_file_get_child (applications_dir, desktop_basename);
           g_autoptr(GKeyFile) keyfile = g_key_file_new ();
           g_autofree char *desktop_contents = NULL;
@@ -1076,7 +1146,7 @@ builder_manifest_cleanup (BuilderManifest *self,
             g_key_file_set_string (keyfile,
                                    G_KEY_FILE_DESKTOP_GROUP,
                                    G_KEY_FILE_DESKTOP_KEY_ICON,
-                                   self->app_id);
+                                   self->id);
 
           if (self->desktop_file_name_suffix ||
               self->desktop_file_name_prefix)
@@ -1148,6 +1218,18 @@ builder_manifest_finish (BuilderManifest *self,
     {
       g_print ("Finishing app\n");
 
+      if (self->metadata)
+        {
+          GFile *base_dir = builder_context_get_base_dir (context);
+          GFile *app_dir = builder_context_get_app_dir (context);
+          g_autoptr(GFile) dest_metadata = g_file_get_child (app_dir, "metadata");
+          g_autoptr(GFile) src_metadata = g_file_resolve_relative_path (base_dir, self->metadata);
+
+          if (!g_file_copy (src_metadata, dest_metadata, G_FILE_COPY_OVERWRITE, NULL,
+                            NULL, NULL, error))
+            return FALSE;
+        }
+
       args = g_ptr_array_new_with_free_func (g_free);
       g_ptr_array_add (args, g_strdup ("xdg-app"));
       g_ptr_array_add (args, g_strdup ("build-finish"));
@@ -1179,14 +1261,21 @@ builder_manifest_finish (BuilderManifest *self,
       json = json_generator_to_data (generator, NULL);
       g_object_unref (generator);
       json_node_free (node);
-      manifest_file = g_file_resolve_relative_path (app_dir, "files/manifest.json");
+
+      if (self->build_runtime)
+        manifest_file = g_file_resolve_relative_path (app_dir, "usr/manifest.json");
+      else
+        manifest_file = g_file_resolve_relative_path (app_dir, "files/manifest.json");
 
       if (!g_file_replace_contents (manifest_file, json, strlen (json), NULL, FALSE,
                                     0, NULL, NULL, error))
         return FALSE;
 
 
-      debuginfo_dir = g_file_resolve_relative_path (app_dir, "files/lib/debug");
+      if (self->build_runtime)
+        debuginfo_dir = g_file_resolve_relative_path (app_dir, "usr/lib/debug");
+      else
+        debuginfo_dir = g_file_resolve_relative_path (app_dir, "files/lib/debug");
 
       if (g_file_query_exists (debuginfo_dir, NULL))
         {
@@ -1202,7 +1291,7 @@ builder_manifest_finish (BuilderManifest *self,
           extension_contents = g_strdup_printf("\n"
                                                "[Extension %s.Debug]\n"
                                                "directory=lib/debug\n",
-                                               self->app_id);
+                                               self->id);
 
           output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
           if (output == NULL)
@@ -1213,7 +1302,7 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
 
           metadata_contents = g_strdup_printf("[Runtime]\n"
-                                              "name=%s.Debug\n", self->app_id);
+                                              "name=%s.Debug\n", self->id);
           if (!g_file_replace_contents (metadata_debuginfo_file,
                                         metadata_contents, strlen (metadata_contents), NULL, FALSE,
                                         G_FILE_CREATE_REPLACE_DESTINATION,
