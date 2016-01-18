@@ -215,6 +215,7 @@ get_source_file (BuilderSourceFile *self,
   if (self->path != NULL && self->path[0] != 0)
     {
       *is_local = TRUE;
+      *is_inline = FALSE;
       return g_file_resolve_relative_path (base_dir, self->path);
     }
 
