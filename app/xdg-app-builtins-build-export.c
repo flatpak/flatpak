@@ -36,6 +36,7 @@ static char *opt_body;
 static gboolean opt_runtime;
 static char **opt_key_ids;
 static char **opt_exclude;
+static char **opt_include;
 static char *opt_gpg_homedir;
 static char *opt_files;
 static char *opt_metadata;
@@ -48,6 +49,7 @@ static GOptionEntry options[] = {
   { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, "Use alternative file for the metadata", "FILE"},
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
   { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, "Files to exclude", "PATTERN"},
+  { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, "Excluded files to include", "PATTERN"},
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
 
   { NULL }
@@ -105,7 +107,25 @@ is_empty_directory (GFile *file, GCancellable *cancellable)
 
 typedef struct {
   const char **exclude;
+  const char **include;
 } CommitData;
+
+static gboolean
+matches_patterns (const char **patterns, const char *path)
+{
+  int i;
+
+  if (patterns == NULL)
+    return FALSE;
+
+  for (i = 0; patterns[i] != NULL; i++)
+    {
+      if (xdg_app_path_match_prefix (patterns[i], path) != NULL)
+        return TRUE;
+    }
+
+  return FALSE;
+}
 
 static OstreeRepoCommitFilterResult
 commit_filter (OstreeRepo *repo,
@@ -114,7 +134,6 @@ commit_filter (OstreeRepo *repo,
                CommitData *commit_data)
 {
   guint current_mode;
-  int i;
 
   /* No user info */
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
@@ -124,16 +143,11 @@ commit_filter (OstreeRepo *repo,
   current_mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", current_mode & ~07000);
 
-  if (commit_data->exclude)
+  if (matches_patterns (commit_data->exclude, path) &&
+      !matches_patterns (commit_data->include, path))
     {
-      for (i = 0; commit_data->exclude[i] != NULL; i++)
-        {
-          if (xdg_app_path_match_prefix (opt_exclude[i], path) != NULL)
-            {
-              g_debug ("Excluding %s", path);
-              return OSTREE_REPO_COMMIT_FILTER_SKIP;
-            }
-        }
+      g_debug ("Excluding %s", path);
+      return OSTREE_REPO_COMMIT_FILTER_SKIP;
     }
 
   return OSTREE_REPO_COMMIT_FILTER_ALLOW;
@@ -355,16 +369,20 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (opt_runtime)
     {
       commit_data.exclude = (const char **)opt_exclude;
+      commit_data.include = (const char **)opt_include;
       if (!ostree_repo_write_directory_to_mtree (repo, usr, files_mtree, modifier, cancellable, error))
         goto out;
       commit_data.exclude = NULL;
+      commit_data.include = NULL;
     }
   else
     {
       commit_data.exclude = (const char **)opt_exclude;
+      commit_data.include = (const char **)opt_include;
       if (!ostree_repo_write_directory_to_mtree (repo, files, files_mtree, modifier, cancellable, error))
         goto out;
       commit_data.exclude = NULL;
+      commit_data.include = NULL;
 
       if (!ostree_mutable_tree_ensure_dir (mtree, "export", &export_mtree, error))
         goto out;
