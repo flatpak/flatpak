@@ -47,6 +47,7 @@ struct BuilderContext {
   BuilderOptions *options;
   gboolean keep_build_dirs;
   char **cleanup;
+  char **cleanup_platform;
   gboolean use_ccache;
   gboolean build_runtime;
 };
@@ -76,6 +77,7 @@ builder_context_finalize (GObject *object)
   g_clear_object (&self->options);
   g_free (self->arch);
   g_strfreev (self->cleanup);
+  g_strfreev (self->cleanup_platform);
 
   G_OBJECT_CLASS (builder_context_parent_class)->finalize (object);
 }
@@ -286,6 +288,20 @@ const char **
 builder_context_get_global_cleanup  (BuilderContext  *self)
 {
   return (const char **)self->cleanup;
+}
+
+void
+builder_context_set_global_cleanup_platform  (BuilderContext  *self,
+                                              const char     **cleanup)
+{
+  g_strfreev (self->cleanup_platform);
+  self->cleanup_platform = g_strdupv ((char **)cleanup);
+}
+
+const char **
+builder_context_get_global_cleanup_platform (BuilderContext  *self)
+{
+  return (const char **)self->cleanup_platform;
 }
 
 gboolean

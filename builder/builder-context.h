@@ -52,6 +52,9 @@ gboolean        builder_context_get_keep_build_dirs (BuilderContext  *self);
 void            builder_context_set_global_cleanup  (BuilderContext  *self,
                                                      const char     **cleanup);
 const char **   builder_context_get_global_cleanup  (BuilderContext  *self);
+void            builder_context_set_global_cleanup_platform  (BuilderContext  *self,
+                                                              const char     **cleanup);
+const char **   builder_context_get_global_cleanup_platform  (BuilderContext  *self);
 BuilderOptions *builder_context_get_options         (BuilderContext  *self);
 void            builder_context_set_options         (BuilderContext  *self,
                                                      BuilderOptions  *option);

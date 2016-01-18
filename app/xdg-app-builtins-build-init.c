@@ -33,12 +33,16 @@
 
 static char *opt_arch;
 static char *opt_var;
+static char *opt_sdk_dir;
 static gboolean opt_writable_sdk;
+static gboolean opt_update;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
   { "var", 'v', 0, G_OPTION_ARG_STRING, &opt_var, "Initialize var from named runtime", "RUNTIME" },
   { "writable-sdk", 'w', 0, G_OPTION_ARG_NONE, &opt_writable_sdk, "Initialize /usr with a writable copy of the sdk",  },
+  { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, "Where to store sdk (defaults to 'usr')", "DIR" },
+  { "update", 0, 0, G_OPTION_ARG_NONE, &opt_update, "Re-initialize the sdk/var",  },
   { NULL }
 };
 
@@ -103,24 +107,40 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     return FALSE;
 
   files_dir = g_file_get_child (base, "files");
-  usr_dir = g_file_get_child (base, "usr");
+  if (opt_sdk_dir)
+    usr_dir = g_file_get_child (base, opt_sdk_dir);
+  else
+    usr_dir = g_file_get_child (base, "usr");
   var_dir = g_file_get_child (base, "var");
   var_tmp_dir = g_file_get_child (var_dir, "tmp");
   var_run_dir = g_file_get_child (var_dir, "run");
   metadata_file = g_file_get_child (base, "metadata");
 
-  if (g_file_query_exists (files_dir, cancellable))
+  if (!opt_update &&
+      g_file_query_exists (files_dir, cancellable))
     return xdg_app_fail (error, "Build directory %s already initialized", directory);
 
   if (opt_writable_sdk)
     {
       g_autofree char *full_sdk_ref = g_strconcat ("runtime/", sdk_ref, NULL);
+      g_autoptr(GError) my_error = NULL;
 
       sdk_deploy_base = xdg_app_find_deploy_dir_for_ref (full_sdk_ref, cancellable, error);
       if (sdk_deploy_base == NULL)
         return FALSE;
 
       sdk_deploy_files = g_file_get_child (sdk_deploy_base, "files");
+
+      if (!gs_shutil_rm_rf (usr_dir, NULL, &my_error))
+        {
+          if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+            {
+              g_propagate_error (error, g_steal_pointer (&error));
+              return FALSE;
+            }
+
+          g_clear_error (&my_error);
+        }
 
       if (!gs_shutil_cp_a (sdk_deploy_files, usr_dir, cancellable, error))
         return FALSE;
@@ -136,6 +156,9 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
       var_deploy_files = g_file_get_child (var_deploy_base, "files");
     }
+
+  if (opt_update)
+    return TRUE;
 
   if (!g_file_make_directory (files_dir, cancellable, error))
     return FALSE;

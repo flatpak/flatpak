@@ -109,6 +109,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--sdk-dir</option></term>
+
+                <listitem><para>
+                    Specify a custom subdirectory to use instead of <filename>usr</filename> for --writable-sdk.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--update</option></term>
+
+                <listitem><para>
+                    Re-initialize the sdk and var, don't fail if already initialized.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--verbose</option></term>
 
                 <listitem><para>

@@ -155,6 +155,7 @@ main (int    argc,
   g_autoptr(GFile) app_dir = NULL;
   g_autoptr(BuilderCache) cache = NULL;
   g_autofree char *cache_branch = NULL;
+  const char *platform_id = NULL;
 
   setlocale (LC_ALL, "");
 
@@ -294,6 +295,12 @@ main (int    argc,
           g_print ("error: %s\n", error->message);
           return 1;
         }
+
+      if (!builder_manifest_create_platform (manifest, cache, build_context, &error))
+        {
+          g_print ("error: %s\n", error->message);
+          return 1;
+        }
     }
 
   if (!opt_require_changes)
@@ -315,6 +322,22 @@ main (int    argc,
         {
           g_print ("Export failed: %s\n", error->message);
           return 1;
+        }
+
+      platform_id = builder_manifest_get_id_platform (manifest);
+      if (builder_context_get_build_runtime (build_context) &&
+          platform_id != NULL)
+        {
+          g_print ("exporting %s to repo\n", platform_id);
+
+            if (!do_export (&error, TRUE,
+                            "--metadata=metadata.platform",
+                            "--files=platform",
+                            opt_repo, app_dir_path, NULL))
+              {
+                g_print ("Export failed: %s\n", error->message);
+                return 1;
+              }
         }
 
       debuginfo_metadata = g_file_get_child (app_dir, "metadata.debuginfo");

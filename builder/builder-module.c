@@ -51,6 +51,7 @@ struct BuilderModule {
   BuilderOptions *build_options;
   GPtrArray *changes;
   char **cleanup;
+  char **cleanup_platform;
   GList *sources;
 };
 
@@ -77,6 +78,7 @@ enum {
   PROP_SOURCES,
   PROP_BUILD_OPTIONS,
   PROP_CLEANUP,
+  PROP_CLEANUP_PLATFORM,
   PROP_POST_INSTALL,
   LAST_PROP
 };
@@ -96,6 +98,7 @@ builder_module_finalize (GObject *object)
   g_clear_object (&self->build_options);
   g_list_free_full (self->sources, g_object_unref);
   g_strfreev (self->cleanup);
+  g_strfreev (self->cleanup_platform);
 
   if (self->changes)
     g_ptr_array_unref (self->changes);
@@ -163,6 +166,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_CLEANUP:
       g_value_set_boxed (value, self->cleanup);
+      break;
+
+    case PROP_CLEANUP_PLATFORM:
+      g_value_set_boxed (value, self->cleanup_platform);
       break;
 
     default:
@@ -244,6 +251,12 @@ builder_module_set_property (GObject      *object,
     case PROP_CLEANUP:
       tmp = self->cleanup;
       self->cleanup = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_CLEANUP_PLATFORM:
+      tmp = self->cleanup_platform;
+      self->cleanup_platform = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -347,6 +360,13 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_CLEANUP,
                                    g_param_spec_boxed ("cleanup",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_CLEANUP_PLATFORM,
+                                   g_param_spec_boxed ("cleanup-platform",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -1088,12 +1108,25 @@ matches_cleanup_for_path (const char **patterns,
 
 void
 builder_module_cleanup_collect (BuilderModule *self,
+                                gboolean platform,
                                 BuilderContext  *context,
                                 GHashTable *to_remove_ht)
 {
   GPtrArray *changed_files;
   int i;
-  const char **global_patterns = builder_context_get_global_cleanup (context);
+  const char **global_patterns;
+  const char **local_patterns;
+
+  if (platform)
+    {
+      global_patterns = builder_context_get_global_cleanup_platform (context);
+      local_patterns = (const char **)self->cleanup_platform;
+    }
+  else
+    {
+      global_patterns = builder_context_get_global_cleanup (context);
+      local_patterns = (const char **)self->cleanup;
+    }
 
   changed_files = self->changes;
   for (i = 0; i < changed_files->len; i++)
@@ -1112,7 +1145,7 @@ builder_module_cleanup_collect (BuilderModule *self,
       unprefixed_path = path + strlen (prefix);
 
       collect_cleanup_for_path (global_patterns, unprefixed_path, prefix, to_remove_ht);
-      collect_cleanup_for_path ((const char **)self->cleanup, unprefixed_path, prefix, to_remove_ht);
+      collect_cleanup_for_path (local_patterns, unprefixed_path, prefix, to_remove_ht);
 
       if (g_str_has_prefix (unprefixed_path, "lib/debug/") &&
           g_str_has_suffix (unprefixed_path, ".debug"))
@@ -1128,7 +1161,7 @@ builder_module_cleanup_collect (BuilderModule *self,
           while (TRUE)
             {
               if (matches_cleanup_for_path (global_patterns, debug_path) ||
-                  matches_cleanup_for_path ((const char **)self->cleanup, debug_path))
+                  matches_cleanup_for_path (local_patterns, debug_path))
                 g_hash_table_insert (to_remove_ht, g_strconcat (prefix, real_path, NULL), GINT_TO_POINTER (1));
 
               real_parent = g_path_get_dirname (real_path);

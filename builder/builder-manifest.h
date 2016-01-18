@@ -41,6 +41,7 @@ typedef struct BuilderManifest BuilderManifest;
 GType builder_manifest_get_type (void);
 
 const char *    builder_manifest_get_id            (BuilderManifest  *self);
+const char *    builder_manifest_get_id_platform   (BuilderManifest  *self);
 BuilderOptions *builder_manifest_get_build_options (BuilderManifest  *self);
 GList *         builder_manifest_get_modules       (BuilderManifest  *self);
 
@@ -63,6 +64,10 @@ gboolean        builder_manifest_cleanup           (BuilderManifest *self,
                                                     BuilderContext *context,
                                                     GError          **error);
 gboolean        builder_manifest_finish            (BuilderManifest *self,
+                                                    BuilderCache    *cache,
+                                                    BuilderContext *context,
+                                                    GError          **error);
+gboolean        builder_manifest_create_platform   (BuilderManifest *self,
                                                     BuilderCache    *cache,
                                                     BuilderContext *context,
                                                     GError          **error);

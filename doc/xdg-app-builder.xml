@@ -131,6 +131,14 @@
                     <listitem><para>Build a new runtime instead of an application.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>id-platform</option></term>
+                    <listitem><para>When building a runtime sdk, also create a platform based on it wit this id.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>metadata-platform</option></term>
+                    <listitem><para>The metadata file to use for the platform we create.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>writable-sdk</option></term>
                     <listitem><para>If true, use a writable copy of the sdk for /usr.
                     Defaults to true if --build-runtime is specieied</para></listitem>
@@ -153,6 +161,10 @@
                 <varlistentry>
                     <term><option>cleanup-commands</option></term>
                     <listitem><para>An array of commandlines that are run during the cleanup phase.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>cleanup-platform</option></term>
+                    <listitem><para>Extra files to clean up in the platform.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>finish-args</option></term>
@@ -292,6 +304,10 @@
                     Patterns starting with / are taken to be full pathnames, otherwise they just match
                     the basename. Note that any patterns will only match files installed by this module.
                     </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>cleanup-platform</option></term>
+                    <listitem><para>Extra files to clean up in the platform.</para></listitem>
                 </varlistentry>
             </variablelist>
         </refsect2>

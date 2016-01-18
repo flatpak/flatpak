@@ -38,13 +38,16 @@ struct BuilderManifest {
   GObject parent;
 
   char *id;
+  char *id_platform;
   char *branch;
   char *runtime;
   char *runtime_version;
   char *sdk;
   char *metadata;
+  char *metadata_platform;
   char **cleanup;
   char **cleanup_commands;
+  char **cleanup_platform;
   char **finish_args;
   char *rename_desktop_file;
   char *rename_appdata_file;
@@ -72,16 +75,19 @@ enum {
   PROP_0,
   PROP_APP_ID, /* Backwards compat with early version, use id */
   PROP_ID,
+  PROP_ID_PLATFORM,
   PROP_BRANCH,
   PROP_RUNTIME,
   PROP_RUNTIME_VERSION,
   PROP_SDK,
   PROP_METADATA,
+  PROP_METADATA_PLATFORM,
   PROP_BUILD_OPTIONS,
   PROP_COMMAND,
   PROP_MODULES,
   PROP_CLEANUP,
   PROP_CLEANUP_COMMANDS,
+  PROP_CLEANUP_PLATFORM,
   PROP_BUILD_RUNTIME,
   PROP_WRITABLE_SDK,
   PROP_FINISH_ARGS,
@@ -105,11 +111,13 @@ builder_manifest_finalize (GObject *object)
   g_free (self->runtime_version);
   g_free (self->sdk);
   g_free (self->metadata);
+  g_free (self->metadata_platform);
   g_free (self->command);
   g_clear_object (&self->build_options);
   g_list_free_full (self->modules, g_object_unref);
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_commands);
+  g_strfreev (self->cleanup_platform);
   g_strfreev (self->finish_args);
   g_free (self->rename_desktop_file);
   g_free (self->rename_appdata_file);
@@ -138,6 +146,10 @@ builder_manifest_get_property (GObject    *object,
       g_value_set_string (value, self->id);
       break;
 
+    case PROP_ID_PLATFORM:
+      g_value_set_string (value, self->id_platform);
+      break;
+
     case PROP_BRANCH:
       g_value_set_string (value, self->branch);
       break;
@@ -158,6 +170,10 @@ builder_manifest_get_property (GObject    *object,
       g_value_set_string (value, self->metadata);
       break;
 
+    case PROP_METADATA_PLATFORM:
+      g_value_set_string (value, self->metadata_platform);
+      break;
+
     case PROP_COMMAND:
       g_value_set_string (value, self->command);
       break;
@@ -176,6 +192,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_CLEANUP_COMMANDS:
       g_value_set_boxed (value, self->cleanup_commands);
+      break;
+
+    case PROP_CLEANUP_PLATFORM:
+      g_value_set_boxed (value, self->cleanup_platform);
       break;
 
     case PROP_FINISH_ARGS:
@@ -240,6 +260,11 @@ builder_manifest_set_property (GObject       *object,
       self->id = g_value_dup_string (value);
       break;
 
+    case PROP_ID_PLATFORM:
+      g_free (self->id_platform);
+      self->id_platform = g_value_dup_string (value);
+      break;
+
     case PROP_BRANCH:
       g_free (self->branch);
       self->branch = g_value_dup_string (value);
@@ -263,6 +288,11 @@ builder_manifest_set_property (GObject       *object,
     case PROP_METADATA:
       g_free (self->metadata);
       self->metadata = g_value_dup_string (value);
+      break;
+
+    case PROP_METADATA_PLATFORM:
+      g_free (self->metadata_platform);
+      self->metadata_platform = g_value_dup_string (value);
       break;
 
     case PROP_COMMAND:
@@ -289,6 +319,12 @@ builder_manifest_set_property (GObject       *object,
     case PROP_CLEANUP_COMMANDS:
       tmp = self->cleanup_commands;
       self->cleanup_commands = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_CLEANUP_PLATFORM:
+      tmp = self->cleanup_platform;
+      self->cleanup_platform = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -364,6 +400,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
+                                   PROP_ID_PLATFORM,
+                                   g_param_spec_string ("id-platform",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
                                    PROP_BRANCH,
                                    g_param_spec_string ("branch",
                                                         "",
@@ -399,6 +442,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
+                                   PROP_METADATA_PLATFORM,
+                                   g_param_spec_string ("metadata-platform",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
                                    PROP_COMMAND,
                                    g_param_spec_string ("command",
                                                         "",
@@ -428,6 +478,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_CLEANUP_COMMANDS,
                                    g_param_spec_boxed ("cleanup-commands",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_CLEANUP_PLATFORM,
+                                   g_param_spec_boxed ("cleanup-platform",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -607,6 +664,12 @@ builder_manifest_get_id  (BuilderManifest *self)
   return self->id;
 }
 
+const char *
+builder_manifest_get_id_platform  (BuilderManifest *self)
+{
+  return self->id_platform;
+}
+
 BuilderOptions *
 builder_manifest_get_build_options (BuilderManifest *self)
 {
@@ -724,7 +787,7 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
                                       BuilderCache *cache,
                                       BuilderContext *context)
 {
-  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_VERSION " foo");
+  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_VERSION);
   builder_cache_checksum_strv (cache, self->finish_args);
   builder_cache_checksum_str (cache, self->command);
 
@@ -741,6 +804,18 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
       else
         g_warning ("Can't load metadata file %s: %s", self->metadata, my_error->message);
     }
+}
+
+
+void
+builder_manifest_checksum_for_platform (BuilderManifest *self,
+                                        BuilderCache *cache,
+                                        BuilderContext *context)
+{
+  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_VERSION);
+  builder_cache_checksum_str (cache, self->id_platform);
+  builder_cache_checksum_str (cache, self->metadata);
+  builder_cache_checksum_strv (cache, self->cleanup_platform);
 }
 
 gboolean
@@ -773,6 +848,7 @@ builder_manifest_build (BuilderManifest *self,
 
   builder_context_set_options (context, self->build_options);
   builder_context_set_global_cleanup (context, (const char **)self->cleanup);
+  builder_context_set_global_cleanup_platform (context, (const char **)self->cleanup_platform);
   builder_context_set_build_runtime (context, self->build_runtime);
 
   g_print ("Starting build of %s\n", self->id ? self->id : "app");
@@ -991,20 +1067,20 @@ builder_manifest_cleanup (BuilderManifest *self,
 {
   GFile *app_dir = builder_context_get_app_dir (context);
   g_autoptr(GFile) app_root = NULL;
-  g_autoptr(GHashTable) to_remove_ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   GList *l;
-  g_autofree char **keys = NULL;
   g_auto(GStrv) env = NULL;
-  guint n_keys;
   g_autoptr(GFile) appdata_dir = NULL;
   g_autofree char *appdata_basename = NULL;
   g_autoptr(GFile) appdata_file = NULL;
-
   int i;
 
   builder_manifest_checksum_for_cleanup (self, cache, context);
   if (!builder_cache_lookup (cache, "cleanup"))
     {
+      g_autoptr(GHashTable) to_remove_ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+      g_autofree char **keys = NULL;
+      guint n_keys;
+
       g_print ("Cleaning up\n");
 
       if (self->cleanup_commands)
@@ -1021,7 +1097,7 @@ builder_manifest_cleanup (BuilderManifest *self,
         {
           BuilderModule *m = l->data;
 
-          builder_module_cleanup_collect (m, context, to_remove_ht);
+          builder_module_cleanup_collect (m, FALSE, context, to_remove_ht);
         }
 
       keys = (char **)g_hash_table_get_keys_as_array (to_remove_ht, &n_keys);
@@ -1221,7 +1297,6 @@ builder_manifest_finish (BuilderManifest *self,
       if (self->metadata)
         {
           GFile *base_dir = builder_context_get_base_dir (context);
-          GFile *app_dir = builder_context_get_app_dir (context);
           g_autoptr(GFile) dest_metadata = g_file_get_child (app_dir, "metadata");
           g_autoptr(GFile) src_metadata = g_file_resolve_relative_path (base_dir, self->metadata);
 
@@ -1315,6 +1390,162 @@ builder_manifest_finish (BuilderManifest *self,
     }
   else
     g_print ("Cache hit for finish, skipping\n");
+
+  return TRUE;
+}
+
+gboolean
+builder_manifest_create_platform (BuilderManifest *self,
+                                  BuilderCache    *cache,
+                                  BuilderContext *context,
+                                  GError          **error)
+{
+  GFile *app_dir = builder_context_get_app_dir (context);
+  int i;
+
+  if (!self->build_runtime ||
+      self->id_platform == NULL)
+    return TRUE;
+
+  builder_manifest_checksum_for_platform (self, cache, context);
+  if (!builder_cache_lookup (cache, "platform"))
+    {
+      g_autoptr(GHashTable) to_remove_ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+      g_autoptr(GPtrArray) changes = NULL;
+      GList *l;
+      g_autoptr(GFile) platform_dir = NULL;
+      g_autoptr(GSubprocess) subp = NULL;
+      g_autofree char *app_dir_path = g_file_get_path (app_dir);
+
+      g_print ("Creating platform based on %s\n", self->runtime);
+
+      platform_dir = g_file_get_child (app_dir, "platform");
+
+      subp =
+        g_subprocess_new (G_SUBPROCESS_FLAGS_NONE,
+                          error,
+                          "xdg-app",
+                          "build-init",
+                          "--update",
+                          "--writable-sdk",
+                          "--sdk-dir=platform",
+                          app_dir_path,
+                          self->id,
+                          self->runtime,
+                          self->runtime,
+                          builder_manifest_get_runtime_version (self),
+                          NULL);
+
+      if (subp == NULL ||
+          !g_subprocess_wait_check (subp, NULL, error))
+        return FALSE;
+
+      if (self->metadata_platform)
+        {
+          GFile *base_dir = builder_context_get_base_dir (context);
+          g_autoptr(GFile) dest_metadata = g_file_get_child (app_dir, "metadata.platform");
+          g_autoptr(GFile) src_metadata = g_file_resolve_relative_path (base_dir, self->metadata_platform);
+
+          if (!g_file_copy (src_metadata, dest_metadata, G_FILE_COPY_OVERWRITE, NULL,
+                            NULL, NULL, error))
+            return FALSE;
+        }
+
+      for (l = self->modules; l != NULL; l = l->next)
+        {
+          BuilderModule *m = l->data;
+
+          builder_module_cleanup_collect (m, TRUE, context, to_remove_ht);
+        }
+
+      changes = builder_cache_get_all_changes (cache, error);
+      if (changes == NULL)
+        return FALSE;
+
+      g_ptr_array_sort (changes, cmpstringp);
+
+      for (i = 0; i < changes->len; i++)
+        {
+          const char *changed = g_ptr_array_index (changes, i);
+          g_autoptr(GFile) src = NULL;
+          g_autoptr(GFile) dest = NULL;
+          g_autoptr(GFileInfo) info = NULL;
+          g_autoptr(GError) my_error = NULL;
+
+          if (!g_str_has_prefix (changed, "usr/"))
+            continue;
+
+          if (g_str_has_prefix (changed, "usr/lib/debug/") &&
+              !g_str_equal (changed, "usr/lib/debug/app"))
+            continue;
+
+          if (g_hash_table_contains (to_remove_ht, changed))
+            {
+              g_print ("Ignoring %s\n", changed);
+              continue;
+            }
+
+          src = g_file_resolve_relative_path (app_dir, changed);
+          dest = g_file_resolve_relative_path (platform_dir, changed + strlen ("usr/"));
+
+          info = g_file_query_info (src, "standard::type,standard::symlink-target",
+                                    G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                    NULL, &my_error);
+          if (info == NULL)
+            {
+              if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+                continue;
+
+              g_propagate_error (error, g_steal_pointer (&error));
+              return FALSE;
+            }
+
+          if (g_file_info_get_file_type (info) == G_FILE_TYPE_DIRECTORY)
+            {
+              if (!gs_file_ensure_directory (dest, TRUE, NULL, error))
+                return FALSE;
+            }
+          else
+            {
+              g_autoptr(GFile) dest_parent = g_file_get_parent (dest);
+
+              if (!gs_file_ensure_directory (dest_parent, TRUE, NULL, error))
+                return FALSE;
+
+              if (!g_file_delete (dest, NULL, &my_error) &&
+                  !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+                {
+                  g_propagate_error (error, g_steal_pointer (&my_error));
+                  return FALSE;
+                }
+              g_clear_error (&my_error);
+
+              if (g_file_info_get_file_type (info) == G_FILE_TYPE_SYMBOLIC_LINK)
+                {
+                  if (!g_file_make_symbolic_link (dest,
+                                                  g_file_info_get_symlink_target (info),
+                                                  NULL, error))
+                    return FALSE;
+                }
+              else
+                {
+                  g_autofree char *src_path = g_file_get_path (src);
+                  g_autofree char *dest_path = g_file_get_path (dest);
+
+                  if (link (src_path, dest_path))
+                    {
+                      glnx_set_error_from_errno (error);
+                      return FALSE;
+                    }
+                }
+            }
+        }
+
+      if (!builder_cache_commit (cache, "Created platform", error))
+        return FALSE;
+    }
+  else
+    g_print ("Cache hit for create platform, skipping\n");
 
   return TRUE;
 }

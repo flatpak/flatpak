@@ -55,6 +55,8 @@ gboolean      builder_cache_get_outstanding_changes (BuilderCache  *self,
                                                      GError       **error);
 GPtrArray   *builder_cache_get_changes      (BuilderCache  *self,
                                              GError       **error);
+GPtrArray   *builder_cache_get_all_changes  (BuilderCache  *self,
+                                             GError       **error);
 gboolean      builder_gc                    (BuilderCache  *self,
                                              GError       **error);
 
