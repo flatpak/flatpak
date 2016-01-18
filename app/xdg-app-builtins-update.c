@@ -38,7 +38,7 @@ static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
 static gboolean opt_runtime;
 static gboolean opt_app;
-static gboolean opt_appdata;
+static gboolean opt_appstream;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to update for", "ARCH" },
@@ -48,15 +48,15 @@ static GOptionEntry options[] = {
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, "Don't deploy, only download to local cache", },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
-  { "appdata", 0, 0, G_OPTION_ARG_NONE, &opt_appdata, "Update appdata for remote", },
+  { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, "Update appstream for remote", },
   { NULL }
 };
 
 static gboolean
-update_appdata (XdgAppDir *dir, const char *remote, GCancellable *cancellable, GError **error)
+update_appstream (XdgAppDir *dir, const char *remote, GCancellable *cancellable, GError **error)
 {
   gboolean changed;
-  if (!xdg_app_dir_update_appdata (dir, remote, opt_arch, &changed,
+  if (!xdg_app_dir_update_appstream (dir, remote, opt_arch, &changed,
                                    NULL, cancellable, error))
     return FALSE;
 
@@ -91,8 +91,8 @@ xdg_app_builtin_update (int argc, char **argv, GCancellable *cancellable, GError
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
 
-  if (opt_appdata)
-    return update_appdata (dir, name, cancellable, error);
+  if (opt_appstream)
+    return update_appstream (dir, name, cancellable, error);
 
   ref = xdg_app_dir_find_installed_ref (dir,
                                         name,

@@ -176,9 +176,9 @@ gboolean xdg_app_repo_set_title (OstreeRepo    *repo,
 gboolean xdg_app_repo_update    (OstreeRepo    *repo,
                                  GCancellable  *cancellable,
                                  GError       **error);
-gboolean xdg_app_repo_generate_appdata (OstreeRepo    *repo,
-                                        GCancellable  *cancellable,
-                                        GError       **error);
+gboolean xdg_app_repo_generate_appstream (OstreeRepo    *repo,
+                                          GCancellable  *cancellable,
+                                          GError       **error);
 
 gboolean            xdg_app_spawn (GFile        *dir,
                                    char        **output,

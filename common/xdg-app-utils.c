@@ -1379,9 +1379,9 @@ commit_filter (OstreeRepo *repo,
 }
 
 gboolean
-xdg_app_repo_generate_appdata (OstreeRepo    *repo,
-                               GCancellable  *cancellable,
-                               GError       **error)
+xdg_app_repo_generate_appstream (OstreeRepo    *repo,
+                                 GCancellable  *cancellable,
+                                 GError       **error)
 {
   g_autoptr(GHashTable) all_refs = NULL;
   g_autoptr(GHashTable) arches = NULL;
@@ -1422,7 +1422,7 @@ xdg_app_repo_generate_appdata (OstreeRepo    *repo,
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       const char *arch = key;
-      g_autofree char *tmpdir = g_strdup ("/tmp/xdg-app-appdata-XXXXXX");
+      g_autofree char *tmpdir = g_strdup ("/tmp/xdg-app-appstream-XXXXXX");
       g_autoptr(XdgAppTempDir) tmpdir_file = NULL;
       g_autofree char *repo_path = NULL;
       g_autofree char *repo_arg = NULL;
@@ -1449,7 +1449,7 @@ xdg_app_repo_generate_appdata (OstreeRepo    *repo,
       icon_arg = g_strdup_printf ("--icons-dir=%s/icons", tmpdir);
 
       if (!appstream_builder (error,
-                              "--basename=appdata",
+                              "--basename=appstream",
                               "--origin=xdg-app",
                               "--uncompressed-icons",
                               "--enable-hidpi",
@@ -1463,7 +1463,7 @@ xdg_app_repo_generate_appdata (OstreeRepo    *repo,
       if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
         return FALSE;
 
-      branch = g_strdup_printf ("appdata/%s", arch);
+      branch = g_strdup_printf ("appstream/%s", arch);
 
       if (!ostree_repo_resolve_rev (repo, branch, TRUE, &parent, error))
         return FALSE;

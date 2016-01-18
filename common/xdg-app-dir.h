@@ -130,7 +130,7 @@ gboolean    xdg_app_dir_ensure_repo     (XdgAppDir      *self,
                                          GError        **error);
 gboolean    xdg_app_dir_mark_changed    (XdgAppDir      *self,
                                          GError        **error);
-gboolean    xdg_app_dir_update_appdata  (XdgAppDir      *self,
+gboolean    xdg_app_dir_update_appstream(XdgAppDir      *self,
                                          const char     *remote,
                                          const char     *arch,
                                          gboolean       *out_changed,

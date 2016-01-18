@@ -68,8 +68,8 @@ xdg_app_builtin_build_update_repo (int argc, char **argv, GCancellable *cancella
       !xdg_app_repo_set_title (repo, opt_title, error))
     return FALSE;
 
-  g_print ("Updating appdata branch\n");
-  if (!xdg_app_repo_generate_appdata (repo, cancellable, &my_error))
+  g_print ("Updating appstream branch\n");
+  if (!xdg_app_repo_generate_appstream (repo, cancellable, &my_error))
     {
       if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
         g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");

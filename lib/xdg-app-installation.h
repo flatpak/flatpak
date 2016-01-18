@@ -163,7 +163,7 @@ XDG_APP_EXTERN XdgAppRemoteRef  *xdg_app_installation_fetch_remote_ref_sync     
                                                                                   const char          *branch,
                                                                                   GCancellable        *cancellable,
                                                                                   GError             **error);
-XDG_APP_EXTERN gboolean          xdg_app_installation_update_appdata_sync        (XdgAppInstallation  *self,
+XDG_APP_EXTERN gboolean          xdg_app_installation_update_appstream_sync      (XdgAppInstallation  *self,
                                                                                   const char          *remote_name,
                                                                                   const char          *arch,
                                                                                   gboolean            *out_changed,

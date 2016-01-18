@@ -1123,20 +1123,20 @@ no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 }
 
 /**
- * xdg_app_installation_update_appdata_sync:
+ * xdg_app_installation_update_appstream_sync:
  * @self: a #XdgAppInstallation
  * @remote_name: the name of the remote
  * @arch: Architecture to update, or %NULL for the local machine arch
- * @out_changed: (nullable): Set to %TRUE if the contents of the appdata changed, %FALSE if nothing changed
+ * @out_changed: (nullable): Set to %TRUE if the contents of the appstream changed, %FALSE if nothing changed
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Updates the local copy of appdata for @remote_name for the specified @arch.
+ * Updates the local copy of appstream for @remote_name for the specified @arch.
  *
  * Returns: %TRUE on success, or %FALSE on error
  */
 gboolean
-xdg_app_installation_update_appdata_sync (XdgAppInstallation  *self,
+xdg_app_installation_update_appstream_sync (XdgAppInstallation  *self,
                                           const char          *remote_name,
                                           const char          *arch,
                                           gboolean            *out_changed,
@@ -1151,13 +1151,13 @@ xdg_app_installation_update_appdata_sync (XdgAppInstallation  *self,
   dir_clone = xdg_app_dir_clone (priv->dir);
 
   ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
-  return xdg_app_dir_update_appdata (dir_clone,
-                                     remote_name,
-                                     arch,
-                                     out_changed,
-                                     ostree_progress,
-                                     cancellable,
-                                     error);
+  return xdg_app_dir_update_appstream (dir_clone,
+                                       remote_name,
+                                       arch,
+                                       out_changed,
+                                       ostree_progress,
+                                       cancellable,
+                                       error);
 }
 
 /**

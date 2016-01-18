@@ -593,20 +593,20 @@ xdg_app_dir_mark_changed (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_update_appdata (XdgAppDir *self,
-                            const char *remote,
-                            const char *arch,
-                            gboolean *out_changed,
-                            OstreeAsyncProgress *progress,
-                            GCancellable *cancellable,
-                            GError **error)
+xdg_app_dir_update_appstream (XdgAppDir *self,
+                              const char *remote,
+                              const char *arch,
+                              gboolean *out_changed,
+                              OstreeAsyncProgress *progress,
+                              GCancellable *cancellable,
+                              GError **error)
 {
   g_autofree char *branch = NULL;
   g_autofree char *remote_and_branch = NULL;
   g_autofree char *old_checksum = NULL;
   g_autofree char *new_checksum = NULL;
   g_autoptr(GFile) root = NULL;
-  g_autoptr(GFile) appdata_dir = NULL;
+  g_autoptr(GFile) appstream_dir = NULL;
   g_autoptr(GFile) remote_dir = NULL;
   g_autoptr(GFile) arch_dir = NULL;
   g_autoptr(GFile) checkout_dir = NULL;
@@ -624,7 +624,7 @@ xdg_app_dir_update_appdata (XdgAppDir *self,
   if (arch == NULL)
     arch = xdg_app_get_arch ();
 
-  branch = g_strdup_printf ("appdata/%s", arch);
+  branch = g_strdup_printf ("appstream/%s", arch);
   remote_and_branch = g_strdup_printf ("%s:%s", remote, branch);
 
   if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &old_checksum, error))
@@ -637,8 +637,8 @@ xdg_app_dir_update_appdata (XdgAppDir *self,
   if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
     return FALSE;
 
-  appdata_dir = g_file_get_child (xdg_app_dir_get_path (self), "appdata");
-  remote_dir = g_file_get_child (appdata_dir, remote);
+  appstream_dir = g_file_get_child (xdg_app_dir_get_path (self), "appstream");
+  remote_dir = g_file_get_child (appstream_dir, remote);
   arch_dir = g_file_get_child (remote_dir, arch);
   checkout_dir = g_file_get_child (arch_dir, new_checksum);
   old_checkout_dir = g_file_get_child (arch_dir, old_checksum);
@@ -691,7 +691,7 @@ xdg_app_dir_update_appdata (XdgAppDir *self,
 
   if (g_strcmp0 (old_checksum, new_checksum) != 0 &&
       !gs_shutil_rm_rf (old_checkout_dir, cancellable, &tmp_error))
-    g_warning ("Unable to remove old appdata checkout: %s\n", tmp_error->message);
+    g_warning ("Unable to remove old appstream checkout: %s\n", tmp_error->message);
 
   if (out_changed)
     *out_changed = TRUE;
