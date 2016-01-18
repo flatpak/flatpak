@@ -251,6 +251,7 @@ builder_cache_checkout (BuilderCache *self, const char *commit)
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFileInfo) file_info = NULL;
+  g_autoptr(GError) my_error = NULL;
 
   if (!ostree_repo_read_commit (self->repo, commit, &root, NULL, NULL, NULL))
     return FALSE;
@@ -261,7 +262,8 @@ builder_cache_checkout (BuilderCache *self, const char *commit)
   if (file_info == NULL)
     return FALSE;
 
-  if (!g_file_delete (self->app_dir, NULL, NULL))
+  if (!g_file_delete (self->app_dir, NULL, &my_error) &&
+      !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
     return FALSE;
 
   /* We check out without user mode, not necessarily because we care
@@ -568,7 +570,7 @@ builder_gc (BuilderCache  *self,
         return FALSE;
     }
 
-  g_print ("Pruning cache");
+  g_print ("Pruning cache\n");
   return ostree_repo_prune (self->repo,
                             OSTREE_REPO_PRUNE_FLAGS_REFS_ONLY, -1,
                             &objects_total,
