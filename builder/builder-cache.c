@@ -220,8 +220,6 @@ gboolean
 builder_cache_open (BuilderCache *self,
                     GError **error)
 {
-  g_autoptr(GHashTable) all_refs = NULL;
-
   self->repo = ostree_repo_new (self->cache_dir);
 
   /* We don't need fsync on checkouts as they are transient, and we
@@ -523,7 +521,6 @@ builder_cache_get_all_changes (BuilderCache  *self,
   g_autoptr(GPtrArray) all_paths = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GFile) init_root = NULL;
   g_autoptr(GFile) finish_root = NULL;
-  g_autoptr(GVariant) variant = NULL;
   g_autofree char *init_commit = NULL;
   g_autofree char *finish_commit = NULL;
   int i;

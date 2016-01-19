@@ -124,7 +124,6 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
       g_autofree char *repo = NULL;
       gboolean is_user;
       g_autoptr(XdgAppDir) dir = NULL;
-      g_autoptr(GError) error = NULL;
 
       if (system[s] == NULL)
         is_user = TRUE;

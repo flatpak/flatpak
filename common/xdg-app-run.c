@@ -2085,7 +2085,6 @@ xdg_app_run_app (const char *app_ref,
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
-  g_autofree char *runtime = NULL;
   g_autofree char *default_runtime = NULL;
   g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;

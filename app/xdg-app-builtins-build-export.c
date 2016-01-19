@@ -210,12 +210,10 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files = NULL;
-  g_autoptr(GFile) alt_files = NULL;
   g_autoptr(GFile) usr = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autoptr(GFile) export = NULL;
   g_autoptr(GFile) repofile = NULL;
-  g_autoptr(GFile) arg = NULL;
   g_autoptr(GFile) root = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   const char *location;

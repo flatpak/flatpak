@@ -554,8 +554,6 @@ build (GFile *app_dir,
   g_autofree char *commandline = NULL;
   g_autofree char *source_dir_path = g_file_get_path (source_dir);
   g_autofree char *source_dir_path_canonical = NULL;
-  g_autofree char *cwd_dir_path = NULL;
-  g_autofree char *cwd_dir_path_canonical = NULL;
   g_autofree char *ccache_dir_path = NULL;
   va_list ap;
   int i;
