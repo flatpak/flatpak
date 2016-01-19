@@ -48,11 +48,13 @@ typedef struct {
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppRemote, g_object_unref)
 #endif
 
-XDG_APP_EXTERN const char *  xdg_app_remote_get_name       (XdgAppRemote *self);
-XDG_APP_EXTERN char *        xdg_app_remote_get_url        (XdgAppRemote *self);
-XDG_APP_EXTERN char *        xdg_app_remote_get_title      (XdgAppRemote *self);
-XDG_APP_EXTERN gboolean      xdg_app_remote_get_gpg_verify (XdgAppRemote *self);
-XDG_APP_EXTERN gboolean      xdg_app_remote_get_noenumerate (XdgAppRemote *self);
-XDG_APP_EXTERN int           xdg_app_remote_get_prio        (XdgAppRemote *self);
+XDG_APP_EXTERN const char *  xdg_app_remote_get_name          (XdgAppRemote *self);
+XDG_APP_EXTERN GFile *       xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
+                                                               const char   *arch);
+XDG_APP_EXTERN char *        xdg_app_remote_get_url           (XdgAppRemote *self);
+XDG_APP_EXTERN char *        xdg_app_remote_get_title         (XdgAppRemote *self);
+XDG_APP_EXTERN gboolean      xdg_app_remote_get_gpg_verify    (XdgAppRemote *self);
+XDG_APP_EXTERN gboolean      xdg_app_remote_get_noenumerate   (XdgAppRemote *self);
+XDG_APP_EXTERN int           xdg_app_remote_get_prio          (XdgAppRemote *self);
 
 #endif /* __XDG_APP_REMOTE_H__ */

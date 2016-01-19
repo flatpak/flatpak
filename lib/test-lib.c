@@ -243,13 +243,14 @@ main (int argc, char *argv[])
     {
       XdgAppRemote *remote = g_ptr_array_index(remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
-      g_print ("\nRemote: %s %d %s %s %d %d\n",
+      g_print ("\nRemote: %s %d %s %s %d %d %s\n",
                xdg_app_remote_get_name (remote),
                xdg_app_remote_get_prio (remote),
                xdg_app_remote_get_url (remote),
                xdg_app_remote_get_title (remote),
                xdg_app_remote_get_gpg_verify (remote),
-               xdg_app_remote_get_noenumerate (remote));
+               xdg_app_remote_get_noenumerate (remote),
+               g_file_get_path (xdg_app_remote_get_appstream_dir (remote, NULL)));
 
       g_print ("\n**** Listing remote refs on %s\n", xdg_app_remote_get_name (remote));
       refs = xdg_app_installation_list_remote_refs_sync (installation, xdg_app_remote_get_name (remote),
