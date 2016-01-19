@@ -1133,7 +1133,7 @@ no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 /**
  * xdg_app_installation_update_appstream_sync:
  * @self: a #XdgAppInstallation
- * @remote_name: the name of the remote
+ * @remote_name: the name of the remote, or %NULL for all
  * @arch: Architecture to update, or %NULL for the local machine arch
  * @out_changed: (nullable): Set to %TRUE if the contents of the appstream changed, %FALSE if nothing changed
  * @cancellable: (nullable): a #GCancellable
@@ -1156,6 +1156,8 @@ xdg_app_installation_update_appstream_sync (XdgAppInstallation  *self,
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   gboolean res;
+  g_auto(GStrv) remote_names = NULL;
+
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = xdg_app_dir_clone (priv->dir);
@@ -1169,13 +1171,26 @@ xdg_app_installation_update_appstream_sync (XdgAppInstallation  *self,
 
   ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-  res = xdg_app_dir_update_appstream (dir_clone,
-                                      remote_name,
-                                      arch,
-                                      out_changed,
-                                      ostree_progress,
-                                      cancellable,
-                                      error);
+  if (remote_name)
+    {
+      remote_names = g_new0 (char *, 2);
+      remote_names[0] = g_strdup (remote_name);
+    }
+  else
+    {
+      remote_names = xdg_app_dir_list_remotes (priv->dir, cancellable, error);
+      if (remote_names == NULL)
+        return FALSE;
+    }
+
+  for (i = 0; remote_names[i] != NULL; i++)
+    res = xdg_app_dir_update_appstream (dir_clone,
+                                        remote_names[i],
+                                        arch,
+                                        out_changed,
+                                        ostree_progress,
+                                        cancellable,
+                                        error);
 
   g_main_context_pop_thread_default (main_context);
 
