@@ -647,7 +647,6 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
   remote_dir = g_file_get_child (appstream_dir, remote);
   arch_dir = g_file_get_child (remote_dir, arch);
   checkout_dir = g_file_get_child (arch_dir, new_checksum);
-  old_checkout_dir = g_file_get_child (arch_dir, old_checksum);
 
   if (old_checksum != NULL && new_checksum != NULL &&
       strcmp (old_checksum, new_checksum) == 0 &&
@@ -695,9 +694,13 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
                        cancellable, error))
     return FALSE;
 
-  if (g_strcmp0 (old_checksum, new_checksum) != 0 &&
-      !gs_shutil_rm_rf (old_checkout_dir, cancellable, &tmp_error))
-    g_warning ("Unable to remove old appstream checkout: %s\n", tmp_error->message);
+  if (old_checksum != NULL &&
+      g_strcmp0 (old_checksum, new_checksum) != 0)
+    {
+      old_checkout_dir = g_file_get_child (arch_dir, old_checksum);
+      if (!gs_shutil_rm_rf (old_checkout_dir, cancellable, &tmp_error))
+        g_warning ("Unable to remove old appstream checkout: %s\n", tmp_error->message);
+    }
 
   if (out_changed)
     *out_changed = TRUE;
