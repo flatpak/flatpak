@@ -120,7 +120,7 @@ do_export (GError   **error,
   for (i = 0; opt_key_ids != NULL && opt_key_ids[i] != NULL; i++)
     g_ptr_array_add (args, g_strdup_printf ("--gpg-sign=%s", opt_key_ids[i]));
 
-  va_start (ap, error);
+  va_start (ap, runtime);
   while ((arg = va_arg (ap, const gchar *)))
     g_ptr_array_add (args, g_strdup ((gchar *) arg));
   va_end (ap);
