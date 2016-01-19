@@ -47,6 +47,7 @@ xdg_app_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(XdgAppContext) overrides = NULL;
+  g_autoptr(GError) my_error = NULL;
 
   context = g_option_context_new ("APP - Override settings for application");
 
@@ -67,9 +68,16 @@ xdg_app_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
   if (!xdg_app_is_valid_name (app))
     return xdg_app_fail (error, "'%s' is not a valid application name", app);
 
-  metakey = xdg_app_load_override_keyfile (app, xdg_app_dir_is_user (dir), error);
+  metakey = xdg_app_load_override_keyfile (app, xdg_app_dir_is_user (dir), &my_error);
   if (metakey == NULL)
-    return FALSE;
+    {
+      if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
+      metakey = g_key_file_new ();
+    }
 
   overrides = xdg_app_context_new ();
   if (!xdg_app_context_load_metadata (overrides, metakey, error))
