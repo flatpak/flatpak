@@ -34,6 +34,7 @@ struct _XdgAppInstalledRefPrivate
   char *origin;
   char *latest_commit;
   char *deploy_dir;
+  guint64 installed_size;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (XdgAppInstalledRef, xdg_app_installed_ref, XDG_APP_TYPE_REF)
@@ -44,7 +45,8 @@ enum {
   PROP_IS_CURRENT,
   PROP_ORIGIN,
   PROP_LATEST_COMMIT,
-  PROP_DEPLOY_DIR
+  PROP_DEPLOY_DIR,
+  PROP_INSTALLED_SIZE
 };
 
 static void
@@ -72,6 +74,10 @@ xdg_app_installed_ref_set_property (GObject         *object,
     {
     case PROP_IS_CURRENT:
       priv->is_current = g_value_get_boolean (value);
+      break;
+
+    case PROP_INSTALLED_SIZE:
+      priv->installed_size = g_value_get_uint64 (value);
       break;
 
     case PROP_ORIGIN:
@@ -110,6 +116,10 @@ xdg_app_installed_ref_get_property (GObject         *object,
       g_value_set_boolean (value, priv->is_current);
       break;
 
+    case PROP_INSTALLED_SIZE:
+      g_value_set_uint64 (value, priv->installed_size);
+      break;
+
     case PROP_ORIGIN:
       g_value_set_string (value, priv->origin);
       break;
@@ -143,6 +153,13 @@ xdg_app_installed_ref_class_init (XdgAppInstalledRefClass *klass)
                                                          "",
                                                          "",
                                                          FALSE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_INSTALLED_SIZE,
+                                   g_param_spec_uint64 ("installed-size",
+                                                         "",
+                                                         "",
+                                                        0, G_MAXUINT64, 0,
                                                          G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_ORIGIN,
@@ -204,6 +221,14 @@ xdg_app_installed_ref_get_is_current (XdgAppInstalledRef *self)
   return priv->is_current;
 }
 
+guint64
+xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef *self)
+{
+  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+
+  return priv->installed_size;
+}
+
 char *
 xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
                                       GCancellable *cancellable,
@@ -233,7 +258,8 @@ xdg_app_installed_ref_new (const char *full_ref,
                            const char *latest_commit,
                            const char *origin,
                            const char *deploy_dir,
-                           gboolean is_current)
+                           guint64     installed_size,
+                           gboolean    is_current)
 {
   XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
   XdgAppInstalledRef *ref;
@@ -253,6 +279,7 @@ xdg_app_installed_ref_new (const char *full_ref,
                       "latest-commit", latest_commit,
                       "origin", origin,
                       "is-current", is_current,
+                      "installed-size", installed_size,
                       "deploy-dir", deploy_dir,
                       NULL);
 

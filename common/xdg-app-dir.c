@@ -2803,26 +2803,16 @@ unpack_sizes (GVariant  *entry,
   return TRUE;
 }
 
-/** xdg_app_dir_fetch_sizes
- * @self: a #XdgAppDir
- * @new_archived: total size of new (to be downloaded) objects in compressed form
- * @new_unpacked: total size of new (to be downloaded) objects in uncompressed form
- * @total_archived: total size of all objects in compressed form
- * @total_unpacked: total size of all objects in uncompressed form
- */
 gboolean
-xdg_app_dir_fetch_sizes (XdgAppDir *self,
-                         const char *remote_name,
-                         const char *commit,
-                         guint64 *new_archived,
-                         guint64 *new_unpacked,
-                         guint64 *total_archived,
-                         guint64 *total_unpacked,
-                         GCancellable *cancellable,
-                         GError **error)
+calc_sizes (XdgAppDir *self,
+            GVariant *commit_variant,
+            guint64 *new_archived,
+            guint64 *new_unpacked,
+            guint64 *total_archived,
+            guint64 *total_unpacked,
+            GCancellable *cancellable,
+            GError **error)
 {
-  g_autoptr(GBytes) commit_bytes = NULL;
-  g_autoptr(GVariant) commit_variant = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autoptr(GVariant) sizes = NULL;
   g_autoptr(GVariant) object = NULL;
@@ -2831,21 +2821,6 @@ xdg_app_dir_fetch_sizes (XdgAppDir *self,
   guint64 n_unpacked = 0;
   guint64 t_archived = 0;
   guint64 t_unpacked = 0;
-
-  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
-    return FALSE;
-
-  commit_bytes = xdg_app_dir_fetch_remote_object (self, remote_name,
-                                                  commit, "commit",
-                                                  cancellable, error);
-  if (commit_bytes == NULL)
-    return FALSE;
-
-  commit_variant = g_variant_new_from_bytes (OSTREE_COMMIT_GVARIANT_FORMAT,
-                                             commit_bytes, FALSE);
-
-  if (!ostree_validate_structureof_commit (commit_variant, error))
-    return FALSE;
 
   metadata = g_variant_get_child_value (commit_variant, 0);
 
@@ -2866,19 +2841,25 @@ xdg_app_dir_fetch_sizes (XdgAppDir *self,
       if (!unpack_sizes (object, &entry, csum))
         return xdg_app_fail (error, "Invalid object size metadata");
 
+      /* Round up to 4k, which is what most fs:es use. */
+      entry.unpacked = ((entry.unpacked + 4095) / 4096) * 4096;
+
       g_variant_unref (g_steal_pointer (&object));
 
       t_archived += entry.archived;
       t_unpacked += entry.unpacked;
 
-      if (!ostree_repo_has_object (self->repo, OSTREE_OBJECT_TYPE_FILE,
-                                   csum, &exists, cancellable, error))
-        return FALSE;
-
-      if (!exists)
+      if (new_archived != NULL || new_unpacked != NULL)
         {
-          n_archived += entry.archived;
-          n_unpacked += entry.unpacked;
+          if (!ostree_repo_has_object (self->repo, OSTREE_OBJECT_TYPE_FILE,
+                                       csum, &exists, cancellable, error))
+            return FALSE;
+
+          if (!exists)
+            {
+              n_archived += entry.archived;
+              n_unpacked += entry.unpacked;
+            }
         }
     }
 
@@ -2892,6 +2873,79 @@ xdg_app_dir_fetch_sizes (XdgAppDir *self,
     *total_unpacked = t_unpacked;
 
   return TRUE;
+}
+
+gboolean
+xdg_app_dir_get_installed_size (XdgAppDir *self,
+                                const char *commit,
+                                guint64 *installed_size,
+                                GCancellable *cancellable,
+                                GError **error)
+{
+  g_autoptr(GVariant) commit_variant = NULL;
+
+  if (!ostree_repo_load_variant (self->repo,
+                                 OSTREE_OBJECT_TYPE_COMMIT,
+                                 commit,
+                                 &commit_variant,
+                                 error))
+    return FALSE;
+
+  return calc_sizes (self,
+                     commit_variant,
+                     NULL,
+                     NULL,
+                     NULL,
+                     installed_size,
+                     cancellable,
+                     error);
+}
+
+/** xdg_app_dir_fetch_sizes
+ * @self: a #XdgAppDir
+ * @new_archived: total size of new (to be downloaded) objects in compressed form
+ * @new_unpacked: total size of new (to be downloaded) objects in uncompressed form
+ * @total_archived: total size of all objects in compressed form
+ * @total_unpacked: total size of all objects in uncompressed form
+ */
+gboolean
+xdg_app_dir_fetch_sizes (XdgAppDir *self,
+                         const char *remote_name,
+                         const char *commit,
+                         guint64 *new_archived,
+                         guint64 *new_unpacked,
+                         guint64 *total_archived,
+                         guint64 *total_unpacked,
+                         GCancellable *cancellable,
+                         GError **error)
+{
+  g_autoptr(GBytes) commit_bytes = NULL;
+  g_autoptr(GVariant) commit_variant = NULL;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  commit_bytes = xdg_app_dir_fetch_remote_object (self, remote_name,
+                                                  commit, "commit",
+                                                  cancellable, error);
+  if (commit_bytes == NULL)
+    return FALSE;
+
+  commit_variant = g_variant_new_from_bytes (OSTREE_COMMIT_GVARIANT_FORMAT,
+                                             commit_bytes, FALSE);
+
+
+  if (!ostree_validate_structureof_commit (commit_variant, error))
+    return FALSE;
+
+  return calc_sizes (self,
+                     commit_variant,
+                     new_archived,
+                     new_unpacked,
+                     total_archived,
+                     total_unpacked,
+                     cancellable,
+                     error);
 }
 
 GBytes *

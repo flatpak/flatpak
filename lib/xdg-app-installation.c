@@ -216,6 +216,7 @@ get_ref (XdgAppInstallation *self,
   g_autofree char *deploy_path = NULL;
   g_autofree char *latest_commit = NULL;
   gboolean is_current = FALSE;
+  guint64 installed_size = 0;
 
   parts = g_strsplit (full_ref, "/", -1);
 
@@ -238,11 +239,18 @@ get_ref (XdgAppInstallation *self,
 
   latest_commit = xdg_app_dir_read_latest (priv->dir, origin, full_ref, NULL, NULL);
 
+  if (!xdg_app_dir_get_installed_size (priv->dir,
+                                       commit, &installed_size,
+                                       cancellable,
+                                       NULL))
+    installed_size = 0;
+
   return xdg_app_installed_ref_new (full_ref,
                                     commit,
                                     latest_commit,
                                     origin,
                                     deploy_path,
+                                    installed_size,
                                     is_current);
 }
 
