@@ -196,7 +196,24 @@ builder_cache_get_checksum (BuilderCache *self)
 static char *
 get_ref (BuilderCache *self, const char *stage)
 {
-  return g_strdup_printf ("%s/%s", self->branch, stage);
+  GString *s = g_string_new (self->branch);
+
+  g_string_append_c (s, '/');
+
+  while (*stage)
+    {
+      char c = *stage++;
+      if (g_ascii_isalnum (c) ||
+          c == '-' ||
+          c == '_' ||
+          c == '.')
+        g_string_append_c (s, c);
+      else
+        g_string_append_printf (s, "%x", c);
+    }
+
+  g_print ("-> %s\n", s->str);
+  return g_string_free (s, FALSE);
 }
 
 gboolean
