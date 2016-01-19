@@ -765,7 +765,7 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
 {
   GList *l;
 
-  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_VERSION);
+  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_CLEANUP_VERSION);
   builder_cache_checksum_strv (cache, self->cleanup);
   builder_cache_checksum_strv (cache, self->cleanup_commands);
   builder_cache_checksum_str (cache, self->rename_desktop_file);
@@ -787,7 +787,7 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
                                       BuilderCache *cache,
                                       BuilderContext *context)
 {
-  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_VERSION);
+  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_FINISH_VERSION);
   builder_cache_checksum_strv (cache, self->finish_args);
   builder_cache_checksum_str (cache, self->command);
 
@@ -812,7 +812,7 @@ builder_manifest_checksum_for_platform (BuilderManifest *self,
                                         BuilderCache *cache,
                                         BuilderContext *context)
 {
-  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_VERSION);
+  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_PLATFORM_VERSION);
   builder_cache_checksum_str (cache, self->id_platform);
   builder_cache_checksum_str (cache, self->metadata);
   builder_cache_checksum_strv (cache, self->cleanup_platform);

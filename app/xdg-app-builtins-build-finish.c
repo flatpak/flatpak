@@ -341,7 +341,7 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GFile) metadata_file = NULL;
   g_autofree char *metadata_contents = NULL;
   g_autofree char *id = NULL;
-  gboolean is_runtime;
+  gboolean is_runtime = FALSE;
   gsize metadata_size;
   const char *directory;
   g_autoptr(GKeyFile) metakey = NULL;

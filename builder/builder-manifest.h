@@ -37,6 +37,9 @@ typedef struct BuilderManifest BuilderManifest;
 
 /* Bump this if format changes in incompatible ways to force rebuild */
 #define BUILDER_MANIFEST_CHECKSUM_VERSION "1"
+#define BUILDER_MANIFEST_CHECKSUM_CLEANUP_VERSION "1"
+#define BUILDER_MANIFEST_CHECKSUM_FINISH_VERSION "2"
+#define BUILDER_MANIFEST_CHECKSUM_PLATFORM_VERSION "1"
 
 GType builder_manifest_get_type (void);
 
