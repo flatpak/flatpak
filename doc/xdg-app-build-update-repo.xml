@@ -94,6 +94,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--prune</option></term>
+
+                <listitem><para>
+                    Remove unreferences objects in repo.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--prune-depth</option></term>
+
+                <listitem><para>
+                    Only keep at most this number of old versions for any particular ref. Default is -1 which means infinite.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

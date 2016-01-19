@@ -34,14 +34,17 @@
 static char *opt_title;
 static char *opt_gpg_homedir;
 static char **opt_gpg_key_ids;
+static gboolean opt_prune;
+static gint opt_prune_depth = -1;
 
 static GOptionEntry options[] = {
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this repository", "TITLE" },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
+  { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, "Prune unused objects", NULL },
+  { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, "Only traverse DEPTH parents for each commit (default: -1=infinite)", "DEPTH" },
   { NULL }
 };
-
 
 gboolean
 xdg_app_builtin_build_update_repo (int argc, char **argv,
@@ -88,6 +91,28 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
   g_print ("Updating summary\n");
   if (!xdg_app_repo_update (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
+
+  if (opt_prune)
+    {
+      gint n_objects_total;
+      gint n_objects_pruned;
+      guint64 objsize_total;
+      g_autofree char *formatted_freed_size = NULL;
+
+      if (!ostree_repo_prune (repo, OSTREE_REPO_PRUNE_FLAGS_REFS_ONLY, opt_prune_depth,
+                              &n_objects_total, &n_objects_pruned, &objsize_total,
+                              cancellable, error))
+        return FALSE;
+
+      formatted_freed_size = g_format_size_full (objsize_total, 0);
+
+      g_print ("Total objects: %u\n", n_objects_total);
+      if (n_objects_pruned == 0)
+        g_print ("No unreachable objects\n");
+      else
+        g_print ("Deleted %u objects, %s freed\n",
+                 n_objects_pruned, formatted_freed_size);
+    }
 
   return TRUE;
 }
