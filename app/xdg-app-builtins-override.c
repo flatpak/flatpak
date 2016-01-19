@@ -74,7 +74,7 @@ xdg_app_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
       if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
         {
           g_propagate_error (error, g_steal_pointer (&my_error));
-          return NULL;
+          return FALSE;
         }
       metakey = g_key_file_new ();
     }
