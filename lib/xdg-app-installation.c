@@ -1154,18 +1154,32 @@ xdg_app_installation_update_appstream_sync (XdgAppInstallation  *self,
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autoptr(XdgAppDir) dir_clone = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
+  g_autoptr(GMainContext) main_context = NULL;
+  gboolean res;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = xdg_app_dir_clone (priv->dir);
 
+  if (main_context)
+    g_main_context_pop_thread_default (main_context);
+
+  /* Work around ostree-pull spinning the default main context for the sync calls */
+  main_context = g_main_context_new ();
+  g_main_context_push_thread_default (main_context);
+
   ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
-  return xdg_app_dir_update_appstream (dir_clone,
-                                       remote_name,
-                                       arch,
-                                       out_changed,
-                                       ostree_progress,
-                                       cancellable,
-                                       error);
+
+  res = xdg_app_dir_update_appstream (dir_clone,
+                                      remote_name,
+                                      arch,
+                                      out_changed,
+                                      ostree_progress,
+                                      cancellable,
+                                      error);
+
+  g_main_context_pop_thread_default (main_context);
+
+  return res;
 }
 
 /**
