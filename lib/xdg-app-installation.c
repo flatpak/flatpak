@@ -797,7 +797,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autofree char *remote_name = NULL;
   XdgAppInstalledRef *result = NULL;
-  gboolean was_updated;
+  gboolean was_updated = FALSE;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, branch, arch, error);

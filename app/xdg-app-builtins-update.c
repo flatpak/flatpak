@@ -72,7 +72,7 @@ xdg_app_builtin_update (int argc, char **argv, GCancellable *cancellable, GError
   const char *branch = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
-  gboolean was_updated;
+  gboolean was_updated = FALSE;
   gboolean is_app;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
