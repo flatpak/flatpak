@@ -637,6 +637,12 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
   if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
     return FALSE;
 
+  if (new_checksum == NULL)
+    {
+      g_warning ("No appstream branch in remote %s\n", remote);
+      return TRUE;
+    }
+
   appstream_dir = g_file_get_child (xdg_app_dir_get_path (self), "appstream");
   remote_dir = g_file_get_child (appstream_dir, remote);
   arch_dir = g_file_get_child (remote_dir, arch);
