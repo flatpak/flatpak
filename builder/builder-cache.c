@@ -212,7 +212,6 @@ get_ref (BuilderCache *self, const char *stage)
         g_string_append_printf (s, "%x", c);
     }
 
-  g_print ("-> %s\n", s->str);
   return g_string_free (s, FALSE);
 }
 
