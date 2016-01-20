@@ -184,6 +184,19 @@ gboolean xdg_app_repo_generate_appstream (OstreeRepo    *repo,
                                           GCancellable  *cancellable,
                                           GError       **error);
 
+typedef struct {
+  char *id;
+  char *installed_id;
+  char *ref;
+  char *directory;
+} XdgAppExtension;
+
+void xdg_app_extension_free (XdgAppExtension *extension);
+
+GList *xdg_app_list_extensions (GKeyFile *metakey,
+                                const char *arch,
+                                const char *branch);
+
 gboolean            xdg_app_spawn (GFile        *dir,
                                    char        **output,
                                    GError      **error,

@@ -1526,3 +1526,93 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
   ostree_repo_abort_transaction (repo, cancellable, NULL);
   return FALSE;
 }
+
+void
+xdg_app_extension_free (XdgAppExtension *extension)
+{
+  g_free (extension->id);
+  g_free (extension->installed_id);
+  g_free (extension->ref);
+  g_free (extension->directory);
+  g_free (extension);
+}
+
+static XdgAppExtension *
+xdg_app_extension_new (const char *id,
+                       const char *extension,
+                       const char *arch,
+                       const char *branch,
+                       const char *directory)
+{
+  XdgAppExtension *ext = g_new0 (XdgAppExtension, 1);
+
+  ext->id = g_strdup (id);
+  ext->installed_id = g_strdup (extension);
+  ext->ref = g_build_filename ("runtime", extension, arch, branch, NULL);
+  ext->directory = g_strdup (directory);
+  return ext;
+}
+
+GList *
+xdg_app_list_extensions (GKeyFile *metakey,
+                         const char *arch,
+                         const char *default_branch)
+{
+  g_auto(GStrv) groups = NULL;
+  g_auto(GStrv) parts = NULL;
+  int i;
+  GList *res;
+
+  res = NULL;
+
+  if (arch == NULL)
+    arch = xdg_app_get_arch ();
+
+  groups = g_key_file_get_groups (metakey, NULL);
+  for (i = 0; groups[i] != NULL; i++)
+    {
+      XdgAppExtension *ext;
+      char *extension;
+
+      if (g_str_has_prefix (groups[i], "Extension ") &&
+          *(extension = (groups[i] + strlen ("Extension "))) != 0)
+        {
+          g_autofree char *directory = g_key_file_get_string (metakey, groups[i], "directory", NULL);
+          g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
+          const char *branch;
+
+          if (directory == NULL)
+            continue;
+
+          if (version)
+            branch = version;
+          else
+            branch = default_branch;
+
+          if (g_key_file_get_boolean (metakey, groups[i],
+                                      "subdirectories", NULL))
+            {
+              g_autofree char *prefix = g_strconcat (extension, ".", NULL);
+              g_auto(GStrv) refs = NULL;
+              int j;
+
+              refs = xdg_app_list_deployed_refs ("runtime", prefix, arch, branch,
+                                                 NULL, NULL);
+              for (j = 0; refs != NULL && refs[j] != NULL; j++)
+                {
+                  g_autofree char *extended_dir = g_build_filename (directory, refs[j] + strlen (prefix), NULL);
+
+                  ext = xdg_app_extension_new (extension, refs[j], arch, branch, extended_dir);
+                  res = g_list_prepend (res, ext);
+                }
+            }
+          else
+            {
+              ext = xdg_app_extension_new (extension, extension, arch, branch, directory);
+              res = g_list_prepend (res, ext);
+            }
+        }
+    }
+
+  return res;
+}
