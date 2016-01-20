@@ -141,7 +141,11 @@
                 <varlistentry>
                     <term><option>writable-sdk</option></term>
                     <listitem><para>If true, use a writable copy of the sdk for /usr.
-                    Defaults to true if --build-runtime is specieied</para></listitem>
+                    Defaults to true if --build-runtime is specified</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>sdk-extensions</option></term>
+                    <listitem><para>Install these extra sdk extensions in /usr</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>build-options</option></term>

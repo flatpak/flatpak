@@ -57,6 +57,7 @@ struct BuilderManifest {
   char *desktop_file_name_suffix;
   gboolean build_runtime;
   gboolean writable_sdk;
+  char **sdk_extensions;
   char *command;
   BuilderOptions *build_options;
   GList *modules;
@@ -90,6 +91,7 @@ enum {
   PROP_CLEANUP_PLATFORM,
   PROP_BUILD_RUNTIME,
   PROP_WRITABLE_SDK,
+  PROP_SDK_EXTENSIONS,
   PROP_FINISH_ARGS,
   PROP_RENAME_DESKTOP_FILE,
   PROP_RENAME_APPDATA_FILE,
@@ -208,6 +210,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_WRITABLE_SDK:
       g_value_set_boolean (value, self->writable_sdk);
+      break;
+
+    case PROP_SDK_EXTENSIONS:
+      g_value_set_boxed (value, self->sdk_extensions);
       break;
 
     case PROP_COPY_ICON:
@@ -340,6 +346,12 @@ builder_manifest_set_property (GObject       *object,
 
     case PROP_WRITABLE_SDK:
       self->writable_sdk = g_value_get_boolean (value);
+      break;
+
+    case PROP_SDK_EXTENSIONS:
+      tmp = self->sdk_extensions;
+      self->sdk_extensions = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
       break;
 
     case PROP_COPY_ICON:
@@ -510,6 +522,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                          "",
                                                          FALSE,
                                                          G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_SDK_EXTENSIONS,
+                                   g_param_spec_boxed ("sdk-extensions",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_RENAME_DESKTOP_FILE,
                                    g_param_spec_string ("rename-desktop-file",
@@ -694,8 +713,9 @@ builder_manifest_init_app_dir (BuilderManifest *self,
                                GError **error)
 {
   GFile *app_dir = builder_context_get_app_dir (context);
-  g_autofree char *app_dir_path = g_file_get_path (app_dir);
   g_autoptr(GSubprocess) subp = NULL;
+  GPtrArray *args;
+  int i;
 
   if (self->id == NULL)
     {
@@ -718,18 +738,31 @@ builder_manifest_init_app_dir (BuilderManifest *self,
       return FALSE;
     }
 
+  args = g_ptr_array_new_with_free_func (g_free);
+
+  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("build-init"));
+  if (self->writable_sdk || self->build_runtime)
+    {
+      g_ptr_array_add (args, g_strdup ("-w"));
+
+      for (i = 0; self->sdk_extensions != NULL && self->sdk_extensions[i] != NULL; i++)
+        {
+          const char *ext = self->sdk_extensions[i];
+          g_ptr_array_add (args, g_strdup_printf ("--sdk-extension=%s", ext));
+        }
+    }
+  g_ptr_array_add (args, g_file_get_path (app_dir));
+  g_ptr_array_add (args, g_strdup (self->id));
+  g_ptr_array_add (args, g_strdup (self->sdk));
+  g_ptr_array_add (args, g_strdup (self->runtime));
+  g_ptr_array_add (args, g_strdup (builder_manifest_get_runtime_version (self)));
+  g_ptr_array_add (args, NULL);
+
   subp =
-    g_subprocess_new (G_SUBPROCESS_FLAGS_NONE,
-                      error,
-                      "xdg-app",
-                      "build-init",
-                      app_dir_path,
-                      self->id,
-                      self->sdk,
-                      self->runtime,
-                      builder_manifest_get_runtime_version (self),
-                      (self->writable_sdk || self->build_runtime) ? "-w" : NULL,
-                      NULL);
+    g_subprocess_newv ((const gchar * const *) args->pdata,
+                       G_SUBPROCESS_FLAGS_NONE,
+                       error);
 
   if (subp == NULL ||
       !g_subprocess_wait_check (subp, NULL, error))
@@ -752,6 +785,7 @@ builder_manifest_checksum (BuilderManifest *self,
   builder_cache_checksum_str (cache, self->sdk);
   builder_cache_checksum_str (cache, self->metadata);
   builder_cache_checksum_boolean (cache, self->writable_sdk);
+  builder_cache_checksum_strv (cache, self->sdk_extensions);
   builder_cache_checksum_boolean (cache, self->build_runtime);
 
   if (self->build_options)
