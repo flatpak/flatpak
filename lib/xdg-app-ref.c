@@ -248,3 +248,32 @@ xdg_app_ref_format_ref  (XdgAppRef *self)
                                       priv->branch,
                                       priv->arch);
 }
+
+XdgAppRef *
+xdg_app_ref_parse (const char *ref, GError **error)
+{
+  g_auto(GStrv) parts = NULL;
+
+  parts = xdg_app_decompose_ref (ref, error);
+  if (parts == NULL)
+    return NULL;
+
+  XdgAppRefKind kind;
+  if (g_strcmp0 (parts[0], "app") == 0)
+    kind = XDG_APP_REF_KIND_APP;
+  else if (g_strcmp0 (parts[0], "runtime") == 0)
+    kind = XDG_APP_REF_KIND_RUNTIME;
+  else
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Invalid kind: %s", parts[0]);
+      return NULL;
+    }
+
+  return XDG_APP_REF (g_object_new (XDG_APP_TYPE_REF,
+                                    "kind", kind,
+                                    "name", parts[1],
+                                    "arch", parts[2],
+                                    "branch", parts[3],
+                                    NULL));
+}

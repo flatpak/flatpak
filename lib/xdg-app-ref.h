@@ -59,5 +59,7 @@ XDG_APP_EXTERN const char *  xdg_app_ref_get_branch (XdgAppRef      *self);
 XDG_APP_EXTERN const char *  xdg_app_ref_get_commit  (XdgAppRef      *self);
 XDG_APP_EXTERN XdgAppRefKind xdg_app_ref_get_kind    (XdgAppRef      *self);
 XDG_APP_EXTERN char *        xdg_app_ref_format_ref  (XdgAppRef      *self);
+XDG_APP_EXTERN XdgAppRef *   xdg_app_ref_parse       (const char     *ref,
+                                                      GError        **error);
 
 #endif /* __XDG_APP_REF_H__ */
