@@ -58,6 +58,7 @@ struct BuilderManifest {
   gboolean build_runtime;
   gboolean writable_sdk;
   char **sdk_extensions;
+  char **platform_extensions;
   char *command;
   BuilderOptions *build_options;
   GList *modules;
@@ -92,6 +93,7 @@ enum {
   PROP_BUILD_RUNTIME,
   PROP_WRITABLE_SDK,
   PROP_SDK_EXTENSIONS,
+  PROP_PLATFORM_EXTENSIONS,
   PROP_FINISH_ARGS,
   PROP_RENAME_DESKTOP_FILE,
   PROP_RENAME_APPDATA_FILE,
@@ -214,6 +216,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_SDK_EXTENSIONS:
       g_value_set_boxed (value, self->sdk_extensions);
+      break;
+
+    case PROP_PLATFORM_EXTENSIONS:
+      g_value_set_boxed (value, self->platform_extensions);
       break;
 
     case PROP_COPY_ICON:
@@ -351,6 +357,12 @@ builder_manifest_set_property (GObject       *object,
     case PROP_SDK_EXTENSIONS:
       tmp = self->sdk_extensions;
       self->sdk_extensions = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_PLATFORM_EXTENSIONS:
+      tmp = self->platform_extensions;
+      self->platform_extensions = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -525,6 +537,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_SDK_EXTENSIONS,
                                    g_param_spec_boxed ("sdk-extensions",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_PLATFORM_EXTENSIONS,
+                                   g_param_spec_boxed ("platform-extensions",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -714,7 +733,7 @@ builder_manifest_init_app_dir (BuilderManifest *self,
 {
   GFile *app_dir = builder_context_get_app_dir (context);
   g_autoptr(GSubprocess) subp = NULL;
-  GPtrArray *args;
+  g_autoptr(GPtrArray) args = NULL;
   int i;
 
   if (self->id == NULL)
@@ -850,6 +869,7 @@ builder_manifest_checksum_for_platform (BuilderManifest *self,
   builder_cache_checksum_str (cache, self->id_platform);
   builder_cache_checksum_str (cache, self->metadata);
   builder_cache_checksum_strv (cache, self->cleanup_platform);
+  builder_cache_checksum_strv (cache, self->platform_extensions);
 }
 
 gboolean
@@ -1449,26 +1469,38 @@ builder_manifest_create_platform (BuilderManifest *self,
       GList *l;
       g_autoptr(GFile) platform_dir = NULL;
       g_autoptr(GSubprocess) subp = NULL;
-      g_autofree char *app_dir_path = g_file_get_path (app_dir);
+      g_autoptr(GPtrArray) args = NULL;
 
       g_print ("Creating platform based on %s\n", self->runtime);
 
       platform_dir = g_file_get_child (app_dir, "platform");
 
+      args = g_ptr_array_new_with_free_func (g_free);
+
+      g_ptr_array_add (args, g_strdup ("xdg-app"));
+      g_ptr_array_add (args, g_strdup ("build-init"));
+      g_ptr_array_add (args, g_strdup ("--update"));
+      g_ptr_array_add (args, g_strdup ("--writable-sdk"));
+      g_ptr_array_add (args, g_strdup ("--sdk-dir=platform"));
+
+      for (i = 0; self->platform_extensions != NULL && self->platform_extensions[i] != NULL; i++)
+        {
+          const char *ext = self->platform_extensions[i];
+          g_ptr_array_add (args, g_strdup_printf ("--sdk-extension=%s", ext));
+        }
+
+      g_ptr_array_add (args, g_file_get_path (app_dir));
+      g_ptr_array_add (args, g_strdup (self->id));
+      g_ptr_array_add (args, g_strdup (self->runtime));
+      g_ptr_array_add (args, g_strdup (self->runtime));
+      g_ptr_array_add (args, g_strdup (builder_manifest_get_runtime_version (self)));
+
+      g_ptr_array_add (args, NULL);
+
       subp =
-        g_subprocess_new (G_SUBPROCESS_FLAGS_NONE,
-                          error,
-                          "xdg-app",
-                          "build-init",
-                          "--update",
-                          "--writable-sdk",
-                          "--sdk-dir=platform",
-                          app_dir_path,
-                          self->id,
-                          self->runtime,
-                          self->runtime,
-                          builder_manifest_get_runtime_version (self),
-                          NULL);
+        g_subprocess_newv ((const gchar * const *) args->pdata,
+                           G_SUBPROCESS_FLAGS_NONE,
+                           error);
 
       if (subp == NULL ||
           !g_subprocess_wait_check (subp, NULL, error))

@@ -148,6 +148,10 @@
                     <listitem><para>Install these extra sdk extensions in /usr</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>platform-extensions</option></term>
+                    <listitem><para>Install these extra sdk extensions when creating the platform</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>build-options</option></term>
                     <listitem><para>object specifying the build environment. See below for details.</para></listitem>
                 </varlistentry>
