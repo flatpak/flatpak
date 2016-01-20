@@ -691,8 +691,8 @@ builder_module_handle_debuginfo (BuilderModule *self,
                 }
               else if (g_str_has_prefix (rel_path_dir, "usr/"))
                 {
-                  debug_dir = g_build_filename (app_dir_path, "usr/lib/debug", rel_path_dir + strlen("usr/"), NULL);
-                  real_debug_dir = g_build_filename ("/usr/lib/debug", rel_path_dir + strlen("usr/"), NULL);
+                  debug_dir = g_build_filename (app_dir_path, "usr/lib/debug", rel_path_dir, NULL);
+                  real_debug_dir = g_build_filename ("/usr/lib/debug", rel_path_dir, NULL);
                 }
 
               if (debug_dir)
