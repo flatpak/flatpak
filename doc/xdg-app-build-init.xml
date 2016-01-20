@@ -109,6 +109,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--sdk-extension=EXTENSION</option></term>
+
+                <listitem><para>
+                    When using --writable-sdk, in addition to the sdk, also install the specified extension.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--sdk-dir</option></term>
 
                 <listitem><para>

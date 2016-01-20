@@ -34,6 +34,7 @@
 static char *opt_arch;
 static char *opt_var;
 static char *opt_sdk_dir;
+static char **opt_sdk_extensions;
 static gboolean opt_writable_sdk;
 static gboolean opt_update;
 
@@ -41,6 +42,7 @@ static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
   { "var", 'v', 0, G_OPTION_ARG_STRING, &opt_var, "Initialize var from named runtime", "RUNTIME" },
   { "writable-sdk", 'w', 0, G_OPTION_ARG_NONE, &opt_writable_sdk, "Initialize /usr with a writable copy of the sdk",  },
+  { "sdk-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sdk_extensions, "include this sdk extension in /usr",  "EXTENSION"},
   { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, "Where to store sdk (defaults to 'usr')", "DIR" },
   { "update", 0, 0, G_OPTION_ARG_NONE, &opt_update, "Re-initialize the sdk/var",  },
   { NULL }
@@ -52,8 +54,6 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) var_deploy_base = NULL;
   g_autoptr(GFile) var_deploy_files = NULL;
-  g_autoptr(GFile) sdk_deploy_base = NULL;
-  g_autoptr(GFile) sdk_deploy_files = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files_dir = NULL;
   g_autoptr(GFile) usr_dir = NULL;
@@ -70,6 +70,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autofree char *var_ref = NULL;
   g_autofree char *sdk_ref = NULL;
   g_autofree char *metadata_contents = NULL;
+  int i;
 
   context = g_option_context_new ("DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building");
 
@@ -124,12 +125,12 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     {
       g_autofree char *full_sdk_ref = g_strconcat ("runtime/", sdk_ref, NULL);
       g_autoptr(GError) my_error = NULL;
+      g_autoptr(GFile) sdk_deploy_files = NULL;
+      g_autoptr(XdgAppDeploy) sdk_deploy = NULL;
 
-      sdk_deploy_base = xdg_app_find_deploy_dir_for_ref (full_sdk_ref, cancellable, error);
-      if (sdk_deploy_base == NULL)
+      sdk_deploy = xdg_app_find_deploy_for_ref (full_sdk_ref, cancellable, error);
+      if (sdk_deploy == NULL)
         return FALSE;
-
-      sdk_deploy_files = g_file_get_child (sdk_deploy_base, "files");
 
       if (!gs_shutil_rm_rf (usr_dir, NULL, &my_error))
         {
@@ -142,8 +143,64 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
           g_clear_error (&my_error);
         }
 
+      sdk_deploy_files = xdg_app_deploy_get_files (sdk_deploy);
       if (!gs_shutil_cp_a (sdk_deploy_files, usr_dir, cancellable, error))
         return FALSE;
+
+      if (opt_sdk_extensions)
+        {
+          g_autoptr(GKeyFile) metakey = xdg_app_deploy_get_metadata (sdk_deploy);
+          GList *extensions = NULL, *l;
+
+          /* We leak this on failure, as we have no autoptr for deep lists.. */
+          extensions = xdg_app_list_extensions (metakey,
+                                                opt_arch,
+                                                branch);
+
+          for (i = 0; opt_sdk_extensions[i] != NULL; i++)
+            {
+              const char *requested_extension = opt_sdk_extensions[i];
+              gboolean found = FALSE;
+
+              for (l = extensions; l != NULL; l = l->next)
+                {
+                  XdgAppExtension *ext = l->data;
+
+                  if (strcmp (ext->installed_id, requested_extension) == 0 ||
+                      strcmp (ext->id, requested_extension) == 0)
+                    {
+                      g_autoptr(GFile) ext_deploy_dir = xdg_app_find_deploy_dir_for_ref (ext->ref, cancellable, NULL);
+                      if (ext_deploy_dir != NULL)
+                        {
+                          g_autoptr(GFile) ext_deploy_files = g_file_get_child (ext_deploy_dir, "files");
+                          g_autoptr(GFile) target = g_file_resolve_relative_path (usr_dir, ext->directory);
+                          g_autoptr(GFile) target_parent = g_file_get_parent (target);
+
+                          if (!gs_file_ensure_directory (target_parent, TRUE, cancellable, error))
+                            return FALSE;
+
+                          /* An extension overrides whatever is there before, so we clean up first */
+                          if (!gs_shutil_rm_rf (target, cancellable, error))
+                            return FALSE;
+
+                          if (!gs_shutil_cp_a (ext_deploy_files, target, cancellable, error))
+                            return FALSE;
+
+                            found = TRUE;
+                        }
+                      else
+                        {
+                          g_list_free_full (extensions, (GDestroyNotify)xdg_app_extension_free);
+                          return xdg_app_fail (error, "Requested extension %s not installed\n", requested_extension);
+                        }
+                    }
+                }
+
+              if (!found)
+                return xdg_app_fail (error, "No extension %s in sdk\n", requested_extension);
+            }
+          g_list_free_full (extensions, (GDestroyNotify)xdg_app_extension_free);
+        }
     }
 
   if (opt_var)
