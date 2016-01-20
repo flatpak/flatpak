@@ -616,6 +616,7 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
   g_autofree char *tmpname = NULL;
   g_autoptr(GFile) active_tmp_link = NULL;
   g_autoptr(GFile) active_link = NULL;
+  g_autoptr(GFile) timestamp_file = NULL;
   g_autoptr(GError) tmp_error = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
@@ -647,14 +648,25 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
   remote_dir = g_file_get_child (appstream_dir, remote);
   arch_dir = g_file_get_child (remote_dir, arch);
   checkout_dir = g_file_get_child (arch_dir, new_checksum);
+  timestamp_file = g_file_get_child (arch_dir, ".timestamp");
+
+  arch_path = g_file_get_path (arch_dir);
+  if (g_mkdir_with_parents (arch_path, 0755) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
 
   if (old_checksum != NULL && new_checksum != NULL &&
       strcmp (old_checksum, new_checksum) == 0 &&
       g_file_query_exists (checkout_dir, NULL))
     {
+      if (!g_file_replace_contents (timestamp_file, "", 0, NULL, FALSE,
+                                    G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, error))
+        return FALSE;
+
       if (out_changed)
         *out_changed = FALSE;
-
       return TRUE; /* No changes, don't checkout */
     }
 
@@ -666,13 +678,6 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
                                  cancellable, error);
   if (file_info == NULL)
     return FALSE;
-
-  arch_path = g_file_get_path (arch_dir);
-  if (g_mkdir_with_parents (arch_path, 0755) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      return FALSE;
-    }
 
   if (!ostree_repo_checkout_tree (self->repo,
                                   self->user ? OSTREE_REPO_CHECKOUT_MODE_USER : OSTREE_REPO_CHECKOUT_MODE_NONE,
@@ -701,6 +706,10 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
       if (!gs_shutil_rm_rf (old_checkout_dir, cancellable, &tmp_error))
         g_warning ("Unable to remove old appstream checkout: %s\n", tmp_error->message);
     }
+
+  if (!g_file_replace_contents (timestamp_file, "", 0, NULL, FALSE,
+                                G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, error))
+    return FALSE;
 
   if (out_changed)
     *out_changed = TRUE;

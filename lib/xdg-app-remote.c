@@ -145,6 +145,22 @@ xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
                                        subdir);
 }
 
+GFile *
+xdg_app_remote_get_appstream_timestamp (XdgAppRemote *self,
+                                        const char *arch)
+{
+  XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
+  g_autoptr(GFile) dir = NULL;
+  g_autofree char *subdir = NULL;
+
+  if (arch == NULL)
+    arch = xdg_app_get_arch ();
+
+  subdir = g_strdup_printf ("appstream/%s/%s/.timestamp", priv->name, arch);
+  return g_file_resolve_relative_path (xdg_app_dir_get_path (priv->dir),
+                                       subdir);
+}
+
 char *
 xdg_app_remote_get_url (XdgAppRemote *self)
 {
