@@ -1374,256 +1374,22 @@ commit_filter (OstreeRepo *repo,
   return OSTREE_REPO_COMMIT_FILTER_ALLOW;
 }
 
-typedef struct XmlNode XmlNode;
-
-struct XmlNode {
-  gchar *element_name; /* NULL == text */
-  char **attribute_names;
-  char **attribute_values;
-  char *text;
-  XmlNode *parent;
-  XmlNode *first_child;
-  XmlNode *last_child;
-  XmlNode *next_sibling;
-};
-
-typedef struct {
-  XmlNode *current;
-} XmlData;
-
-static XmlNode *
-xml_node_new (const gchar *element_name)
-{
-  XmlNode *node = g_new0 (XmlNode, 1);
-  node->element_name = g_strdup (element_name);
-  return node;
-}
-
-static XmlNode *
-xml_node_new_text (const gchar *text)
-{
-  XmlNode *node = g_new0 (XmlNode, 1);
-  node->text = g_strdup (text);
-  return node;
-}
-
-
-static void
-xml_add_node (XmlNode *parent, XmlNode *node)
-{
-  node->parent = parent;
-
-  if (parent->first_child == NULL)
-    parent->first_child = node;
-  else
-    parent->last_child->next_sibling = node;
-  parent->last_child = node;
-}
-
-static void
-xml_start_element (GMarkupParseContext *context,
-                   const gchar         *element_name,
-                   const gchar        **attribute_names,
-                   const gchar        **attribute_values,
-                   gpointer             user_data,
-                   GError             **error)
-{
-  XmlData *data = user_data;
-  XmlNode *node;
-
-  node = xml_node_new (element_name);
-  node->attribute_names = g_strdupv ((char **)attribute_names);
-  node->attribute_values = g_strdupv ((char **)attribute_values);
-
-  xml_add_node (data->current, node);
-  data->current = node;
-}
-
-/* Called for close tags </foo> */
-static void
-xml_end_element (GMarkupParseContext *context,
-                 const gchar         *element_name,
-                 gpointer             user_data,
-                 GError             **error)
-{
-  XmlData *data = user_data;
-  data->current = data->current->parent;
-}
-
-static void
-xml_text (GMarkupParseContext *context,
-          const gchar         *text,
-          gsize                text_len,
-          gpointer             user_data,
-          GError             **error)
-{
-  XmlData *data = user_data;
-  XmlNode *node;
-
-  node = xml_node_new (NULL);
-  node->text = g_strndup (text, text_len);
-  xml_add_node (data->current, node);
-}
-
-static void
-xml_passthrough (GMarkupParseContext *context,
-                 const gchar         *passthrough_text,
-                 gsize                text_len,
-                 gpointer             user_data,
-                 GError             **error)
-{
-}
-
-static GMarkupParser xml_parser = {
-  xml_start_element,
-  xml_end_element,
-  xml_text,
-  xml_passthrough,
-  NULL
-};
-
-static void
-xml_node_free (XmlNode *node)
-{
-  XmlNode *child;
-
-  if (node == NULL)
-    return;
-
-  child = node->first_child;
-  while (child != NULL)
-    {
-      XmlNode *next = child->next_sibling;
-      xml_node_free (child);
-      child = next;
-    }
-
-  g_free (node->element_name);
-  g_free (node->text);
-  g_strfreev (node->attribute_names);
-  g_strfreev (node->attribute_values);
-  g_free (node);
-}
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(XmlNode, xml_node_free);
-
-static void
-dump_xml (XmlNode *node, GString *res)
-{
-  int i;
-  XmlNode *child;
-
-  if (node->parent == NULL)
-    g_string_append (res, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-
-  if (node->element_name)
-    {
-      if (node->parent != NULL)
-        {
-          if (node->first_child == NULL)
-            g_string_append (res, "</");
-          else
-            g_string_append (res, "<");
-          g_string_append (res, node->element_name);
-          if (node->attribute_names)
-            {
-              for (i = 0; node->attribute_names[i] != NULL; i++)
-                {
-                  g_string_append_printf (res, " %s=\"%s\"",
-                                          node->attribute_names[i],
-                                          node->attribute_values[i]);
-                }
-            }
-          g_string_append (res, ">");
-        }
-
-      child = node->first_child;
-      while (child != NULL)
-        {
-          dump_xml (child, res);
-          child = child->next_sibling;
-        }
-      if (node->parent != NULL)
-        {
-          if (node->first_child != NULL)
-            g_string_append_printf (res, "</%s>", node->element_name);
-        }
-
-    }
-  else if (node->text)
-    {
-      g_string_append (res, node->text);
-    }
-}
-
-static XmlNode *
-unlink_node (XmlNode *node,
-             XmlNode *prev_sibling)
-{
-  XmlNode *parent = node->parent;
-
-  if (parent == NULL)
-    return node;
-
-  if (parent->first_child == node)
-    parent->first_child = node->next_sibling;
-
-  if (parent->last_child == node)
-    parent->last_child = prev_sibling;
-
-  if (prev_sibling)
-    prev_sibling->next_sibling = node->next_sibling;
-
-  node->parent = NULL;
-  node->next_sibling = NULL;
-
-  return node;
-}
-
-static XmlNode *
-xml_find_child (XmlNode *node,
-                const char *type,
-                XmlNode **prev_child_out)
-{
-  XmlNode *child = NULL;
-  XmlNode *prev_child = NULL;
-
-  child = node->first_child;
-  prev_child = NULL;
-  while (child != NULL)
-    {
-      XmlNode *next = child->next_sibling;
-
-      if (g_strcmp0 (child->element_name, type) == 0)
-        {
-          if (prev_child_out)
-            *prev_child_out = prev_child;
-          return child;
-        }
-
-      prev_child = child;
-      child = next;
-    }
-
-  return NULL;
-}
-
 static gboolean
-validate_component (XmlNode *component,
+validate_component (XdgAppXml *component,
                     const char *ref,
                     const char *id)
 {
-  XmlNode *bundle, *text, *prev, *id_node, *id_text_node;
+  XdgAppXml *bundle, *text, *prev, *id_node, *id_text_node;
   g_autofree char *id_text = NULL;
 
   if (g_strcmp0 (component->element_name, "component") != 0)
     return FALSE;
 
-  id_node = xml_find_child (component, "id", NULL);
+  id_node = xdg_app_xml_find (component, "id", NULL);
   if (id_node == NULL)
     return FALSE;
 
-  id_text_node = xml_find_child (id_node, NULL, NULL);
+  id_text_node = xdg_app_xml_find (id_node, NULL, NULL);
   if (id_text_node == NULL || id_text_node->text == NULL)
     return FALSE;
 
@@ -1635,36 +1401,36 @@ validate_component (XmlNode *component,
       return FALSE;
     }
 
-  while ((bundle = xml_find_child (component, "bundle", &prev)) != NULL)
-    xml_node_free (unlink_node (component, bundle));
+  while ((bundle = xdg_app_xml_find (component, "bundle", &prev)) != NULL)
+    xdg_app_xml_free (xdg_app_xml_unlink (component, bundle));
 
-  bundle = xml_node_new ("bundle");
+  bundle = xdg_app_xml_new ("bundle");
   bundle->attribute_names = g_new0 (char *, 2);
   bundle->attribute_values = g_new0 (char *, 2);
   bundle->attribute_names[0] = g_strdup ("type");
   bundle->attribute_values[0] = g_strdup ("xdg-app");
 
-  xml_add_node (component, xml_node_new_text ("  "));
-  xml_add_node (component, bundle);
-  xml_add_node (component, xml_node_new_text ("\n  "));
+  xdg_app_xml_add (component, xdg_app_xml_new_text ("  "));
+  xdg_app_xml_add (component, bundle);
+  xdg_app_xml_add (component, xdg_app_xml_new_text ("\n  "));
 
-  text = xml_node_new (NULL);
+  text = xdg_app_xml_new (NULL);
   text->text = g_strdup (ref);
 
-  xml_add_node (bundle, text);
+  xdg_app_xml_add (bundle, text);
 
   return TRUE;
 }
 
 static gboolean
-migrate_xml (XmlNode *root,
-             XmlNode *appstream,
+migrate_xml (XdgAppXml *root,
+             XdgAppXml *appstream,
              const char *ref,
              const char *id)
 {
-  XmlNode *components;
-  XmlNode *component;
-  XmlNode *prev_component;
+  XdgAppXml *components;
+  XdgAppXml *component;
+  XdgAppXml *prev_component;
   gboolean migrated = FALSE;
 
   if (root->first_child == NULL ||
@@ -1678,11 +1444,11 @@ migrate_xml (XmlNode *root,
   prev_component = NULL;
   while (component != NULL)
     {
-      XmlNode *next = component->next_sibling;
+      XdgAppXml *next = component->next_sibling;
 
       if (validate_component (component, ref, id))
         {
-          xml_add_node (appstream, unlink_node (component, prev_component));
+          xdg_app_xml_add (appstream, xdg_app_xml_unlink (component, prev_component));
           migrated = TRUE;
         }
       else
@@ -1738,7 +1504,7 @@ copy_icon (const char *id,
 
 static gboolean
 extract_appstream (OstreeRepo    *repo,
-                   XmlNode       *appstream_components,
+                   XdgAppXml       *appstream_components,
                    const char    *ref,
                    const char    *id,
                    GFile         *dest,
@@ -1749,15 +1515,8 @@ extract_appstream (OstreeRepo    *repo,
   g_autoptr(GFile) xmls_dir = NULL;
   g_autoptr(GFile) appstream_file = NULL;
   g_autofree char *appstream_basename = NULL;
-  g_autoptr(GInputStream) zin = NULL;
   g_autoptr(GInputStream) in = NULL;
-  g_autoptr(GZlibDecompressor) decompressor = NULL;
-  g_autoptr(GMarkupParseContext) ctx = NULL;
-  g_autoptr(XmlNode) xml_root = NULL;
-  g_autoptr(XmlNode) appstream_root = NULL;
-  XmlData data = { 0 };
-  char buffer[32*1024];
-  gssize len;
+  g_autoptr(XdgAppXml) xml_root = NULL;
 
   if (!ostree_repo_read_commit (repo, ref, &root, NULL, NULL, error))
     return FALSE;
@@ -1766,35 +1525,13 @@ extract_appstream (OstreeRepo    *repo,
   appstream_basename = g_strconcat (id, ".xml.gz", NULL);
   appstream_file = g_file_get_child (xmls_dir, appstream_basename);
 
-  zin = (GInputStream*)g_file_read (appstream_file, cancellable, error);
-  if (!zin)
+  in = (GInputStream*)g_file_read (appstream_file, cancellable, error);
+  if (!in)
     return FALSE;
 
-  decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
-
-  in = g_converter_input_stream_new (zin, G_CONVERTER (decompressor));
-
-  xml_root = xml_node_new ("root");
-  data.current = xml_root;
-
-  ctx = g_markup_parse_context_new (&xml_parser,
-                                    G_MARKUP_PREFIX_ERROR_POSITION,
-                                    &data,
-                                    NULL);
-
-  while ((len = g_input_stream_read (in, buffer, sizeof (buffer),
-                                     cancellable, error)) > 0)
-    {
-      if (!g_markup_parse_context_parse (ctx, buffer, len, error))
-        {
-          return FALSE;
-        }
-    }
-
-  if (len < 0)
-    {
-      return FALSE;
-    }
+  xml_root = xdg_app_xml_parse (in, TRUE, cancellable, error);
+  if (xml_root == NULL)
+    return FALSE;
 
   if (migrate_xml (xml_root, appstream_components, ref, id))
     {
@@ -1860,11 +1597,6 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
       g_autofree char *tmpdir = g_strdup ("/tmp/xdg-app-appstream-XXXXXX");
       g_autoptr(XdgAppTempDir) tmpdir_file = NULL;
       g_autoptr(GFile) appstream_file = NULL;
-      g_autofree char *repo_path = NULL;
-      g_autofree char *repo_arg = NULL;
-      g_autofree char *arch_arg = NULL;
-      g_autofree char *output_arg = NULL;
-      g_autofree char *icon_arg = NULL;
       g_autoptr(GFile) root = NULL;
       g_autoptr(OstreeMutableTree) mtree = NULL;
       g_autofree char *commit_checksum = NULL;
@@ -1872,8 +1604,8 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
       g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
       g_autofree char *parent = NULL;
       g_autofree char *branch = NULL;
-      g_autoptr(XmlNode) appstream_root = NULL;
-      XmlNode *appstream_components;
+      g_autoptr(XdgAppXml) appstream_root = NULL;
+      XdgAppXml *appstream_components;
       g_autoptr(GString) xml = NULL;
       g_autoptr(GZlibCompressor) compressor = NULL;
       g_autoptr(GOutputStream) out2 = NULL;
@@ -1884,10 +1616,10 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
 
       tmpdir_file = g_file_new_for_path (tmpdir);
 
-      appstream_root = xml_node_new ("root");
-      appstream_components = xml_node_new ("components");
-      xml_add_node (appstream_root, appstream_components);
-      xml_add_node (appstream_components, xml_node_new_text ("\n  "));
+      appstream_root = xdg_app_xml_new ("root");
+      appstream_components = xdg_app_xml_new ("components");
+      xdg_app_xml_add (appstream_root, appstream_components);
+      xdg_app_xml_add (appstream_components, xdg_app_xml_new_text ("\n  "));
 
       appstream_components->attribute_names = g_new0 (char *, 3);
       appstream_components->attribute_values = g_new0 (char *, 3);
@@ -1917,10 +1649,10 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
             }
         }
 
-      xml_add_node (appstream_components, xml_node_new_text ("\n"));
+      xdg_app_xml_add (appstream_components, xdg_app_xml_new_text ("\n"));
 
       xml = g_string_new ("");
-      dump_xml (appstream_root, xml);
+      xdg_app_xml_to_string (appstream_root, xml);
 
       compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
       out = g_memory_output_stream_new_resizable ();
@@ -2031,7 +1763,6 @@ xdg_app_list_extensions (GKeyFile *metakey,
                          const char *default_branch)
 {
   g_auto(GStrv) groups = NULL;
-  g_auto(GStrv) parts = NULL;
   int i;
   GList *res;
 
@@ -2087,4 +1818,268 @@ xdg_app_list_extensions (GKeyFile *metakey,
     }
 
   return res;
+}
+
+
+typedef struct {
+  XdgAppXml *current;
+} XmlData;
+
+XdgAppXml *
+xdg_app_xml_new (const gchar *element_name)
+{
+  XdgAppXml *node = g_new0 (XdgAppXml, 1);
+  node->element_name = g_strdup (element_name);
+  return node;
+}
+
+XdgAppXml *
+xdg_app_xml_new_text (const gchar *text)
+{
+  XdgAppXml *node = g_new0 (XdgAppXml, 1);
+  node->text = g_strdup (text);
+  return node;
+}
+
+void
+xdg_app_xml_add (XdgAppXml *parent, XdgAppXml *node)
+{
+  node->parent = parent;
+
+  if (parent->first_child == NULL)
+    parent->first_child = node;
+  else
+    parent->last_child->next_sibling = node;
+  parent->last_child = node;
+}
+
+static void
+xml_start_element (GMarkupParseContext *context,
+                   const gchar         *element_name,
+                   const gchar        **attribute_names,
+                   const gchar        **attribute_values,
+                   gpointer             user_data,
+                   GError             **error)
+{
+  XmlData *data = user_data;
+  XdgAppXml *node;
+
+  node = xdg_app_xml_new (element_name);
+  node->attribute_names = g_strdupv ((char **)attribute_names);
+  node->attribute_values = g_strdupv ((char **)attribute_values);
+
+  xdg_app_xml_add (data->current, node);
+  data->current = node;
+}
+
+static void
+xml_end_element (GMarkupParseContext *context,
+                 const gchar         *element_name,
+                 gpointer             user_data,
+                 GError             **error)
+{
+  XmlData *data = user_data;
+  data->current = data->current->parent;
+}
+
+static void
+xml_text (GMarkupParseContext *context,
+          const gchar         *text,
+          gsize                text_len,
+          gpointer             user_data,
+          GError             **error)
+{
+  XmlData *data = user_data;
+  XdgAppXml *node;
+
+  node = xdg_app_xml_new (NULL);
+  node->text = g_strndup (text, text_len);
+  xdg_app_xml_add (data->current, node);
+}
+
+static void
+xml_passthrough (GMarkupParseContext *context,
+                 const gchar         *passthrough_text,
+                 gsize                text_len,
+                 gpointer             user_data,
+                 GError             **error)
+{
+}
+
+static GMarkupParser xml_parser = {
+  xml_start_element,
+  xml_end_element,
+  xml_text,
+  xml_passthrough,
+  NULL
+};
+
+void
+xdg_app_xml_free (XdgAppXml *node)
+{
+  XdgAppXml *child;
+
+  if (node == NULL)
+    return;
+
+  child = node->first_child;
+  while (child != NULL)
+    {
+      XdgAppXml *next = child->next_sibling;
+      xdg_app_xml_free (child);
+      child = next;
+    }
+
+  g_free (node->element_name);
+  g_free (node->text);
+  g_strfreev (node->attribute_names);
+  g_strfreev (node->attribute_values);
+  g_free (node);
+}
+
+
+void
+xdg_app_xml_to_string (XdgAppXml *node, GString *res)
+{
+  int i;
+  XdgAppXml *child;
+
+  if (node->parent == NULL)
+    g_string_append (res, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+
+  if (node->element_name)
+    {
+      if (node->parent != NULL)
+        {
+          if (node->first_child == NULL)
+            g_string_append (res, "</");
+          else
+            g_string_append (res, "<");
+          g_string_append (res, node->element_name);
+          if (node->attribute_names)
+            {
+              for (i = 0; node->attribute_names[i] != NULL; i++)
+                {
+                  g_string_append_printf (res, " %s=\"%s\"",
+                                          node->attribute_names[i],
+                                          node->attribute_values[i]);
+                }
+            }
+          g_string_append (res, ">");
+        }
+
+      child = node->first_child;
+      while (child != NULL)
+        {
+          xdg_app_xml_to_string (child, res);
+          child = child->next_sibling;
+        }
+      if (node->parent != NULL)
+        {
+          if (node->first_child != NULL)
+            g_string_append_printf (res, "</%s>", node->element_name);
+        }
+
+    }
+  else if (node->text)
+    {
+      g_string_append (res, node->text);
+    }
+}
+
+XdgAppXml *
+xdg_app_xml_unlink (XdgAppXml *node,
+                    XdgAppXml *prev_sibling)
+{
+  XdgAppXml *parent = node->parent;
+
+  if (parent == NULL)
+    return node;
+
+  if (parent->first_child == node)
+    parent->first_child = node->next_sibling;
+
+  if (parent->last_child == node)
+    parent->last_child = prev_sibling;
+
+  if (prev_sibling)
+    prev_sibling->next_sibling = node->next_sibling;
+
+  node->parent = NULL;
+  node->next_sibling = NULL;
+
+  return node;
+}
+
+XdgAppXml *
+xdg_app_xml_find (XdgAppXml *node,
+                  const char *type,
+                  XdgAppXml **prev_child_out)
+{
+  XdgAppXml *child = NULL;
+  XdgAppXml *prev_child = NULL;
+
+  child = node->first_child;
+  prev_child = NULL;
+  while (child != NULL)
+    {
+      XdgAppXml *next = child->next_sibling;
+
+      if (g_strcmp0 (child->element_name, type) == 0)
+        {
+          if (prev_child_out)
+            *prev_child_out = prev_child;
+          return child;
+        }
+
+      prev_child = child;
+      child = next;
+    }
+
+  return NULL;
+}
+
+
+XdgAppXml *
+xdg_app_xml_parse (GInputStream *in,
+                   gboolean compressed,
+                   GCancellable *cancellable,
+                   GError **error)
+
+{
+  g_autoptr(GInputStream) real_in = NULL;
+  g_autoptr(XdgAppXml) xml_root = NULL;
+  XmlData data = { 0 };
+  char buffer[32*1024];
+  gssize len;
+  g_autoptr(GMarkupParseContext) ctx = NULL;
+  
+  if (compressed)
+    {
+      g_autoptr(GZlibDecompressor) decompressor = NULL;
+      decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+      real_in = g_converter_input_stream_new (in, G_CONVERTER (decompressor));
+    }
+  else
+    real_in = g_object_ref (in);
+
+  xml_root = xdg_app_xml_new ("root");
+  data.current = xml_root;
+
+  ctx = g_markup_parse_context_new (&xml_parser,
+                                    G_MARKUP_PREFIX_ERROR_POSITION,
+                                    &data,
+                                    NULL);
+
+  while ((len = g_input_stream_read (real_in, buffer, sizeof (buffer),
+                                     cancellable, error)) > 0)
+    {
+      if (!g_markup_parse_context_parse (ctx, buffer, len, error))
+        return NULL;
+    }
+
+  if (len < 0)
+    return NULL;
+
+  return g_steal_pointer (&xml_root);
 }

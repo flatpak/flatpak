@@ -238,4 +238,37 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupURI, soup_uri_free)
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppSessionHelper, g_object_unref)
 
+typedef struct XdgAppXml XdgAppXml;
+
+struct XdgAppXml {
+  gchar *element_name; /* NULL == text */
+  char **attribute_names;
+  char **attribute_values;
+  char *text;
+  XdgAppXml *parent;
+  XdgAppXml *first_child;
+  XdgAppXml *last_child;
+  XdgAppXml *next_sibling;
+};
+
+XdgAppXml *xdg_app_xml_new       (const gchar   *element_name);
+XdgAppXml *xdg_app_xml_new_text  (const gchar   *text);
+void       xdg_app_xml_add       (XdgAppXml     *parent,
+                                  XdgAppXml     *node);
+void       xdg_app_xml_free      (XdgAppXml     *node);
+XdgAppXml *xdg_app_xml_parse     (GInputStream  *in,
+                                  gboolean       compressed,
+                                  GCancellable  *cancellable,
+                                  GError       **error);
+void       xdg_app_xml_to_string (XdgAppXml     *node,
+                                  GString       *res);
+XdgAppXml *xdg_app_xml_unlink    (XdgAppXml     *node,
+                                  XdgAppXml     *prev_sibling);
+XdgAppXml *xdg_app_xml_find      (XdgAppXml     *node,
+                                  const char    *type,
+                                  XdgAppXml    **prev_child_out);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppXml, xdg_app_xml_free);
+
+
 #endif /* __XDG_APP_UTILS_H__ */
