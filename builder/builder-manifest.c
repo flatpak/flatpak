@@ -57,6 +57,7 @@ struct BuilderManifest {
   char *desktop_file_name_suffix;
   gboolean build_runtime;
   gboolean writable_sdk;
+  gboolean appstream_compose;
   char **sdk_extensions;
   char **platform_extensions;
   char *command;
@@ -92,6 +93,7 @@ enum {
   PROP_CLEANUP_PLATFORM,
   PROP_BUILD_RUNTIME,
   PROP_WRITABLE_SDK,
+  PROP_APPSTREAM_COMPOSE,
   PROP_SDK_EXTENSIONS,
   PROP_PLATFORM_EXTENSIONS,
   PROP_FINISH_ARGS,
@@ -212,6 +214,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_WRITABLE_SDK:
       g_value_set_boolean (value, self->writable_sdk);
+      break;
+
+    case PROP_APPSTREAM_COMPOSE:
+      g_value_set_boolean (value, self->appstream_compose);
       break;
 
     case PROP_SDK_EXTENSIONS:
@@ -352,6 +358,10 @@ builder_manifest_set_property (GObject       *object,
 
     case PROP_WRITABLE_SDK:
       self->writable_sdk = g_value_get_boolean (value);
+      break;
+
+    case PROP_APPSTREAM_COMPOSE:
+      self->appstream_compose = g_value_get_boolean (value);
       break;
 
     case PROP_SDK_EXTENSIONS:
@@ -535,6 +545,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                          FALSE,
                                                          G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
+                                   PROP_APPSTREAM_COMPOSE,
+                                   g_param_spec_boolean ("appstream-compose",
+                                                         "",
+                                                         "",
+                                                         TRUE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
                                    PROP_SDK_EXTENSIONS,
                                    g_param_spec_boxed ("sdk-extensions",
                                                        "",
@@ -595,6 +612,7 @@ builder_manifest_class_init (BuilderManifestClass *klass)
 static void
 builder_manifest_init (BuilderManifest *self)
 {
+  self->appstream_compose = TRUE;
 }
 
 static JsonNode *
@@ -829,6 +847,7 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
   builder_cache_checksum_boolean (cache, self->copy_icon);
   builder_cache_checksum_str (cache, self->desktop_file_name_prefix);
   builder_cache_checksum_str (cache, self->desktop_file_name_suffix);
+  builder_cache_checksum_boolean (cache, self->appstream_compose);
 
   for (l = self->modules; l != NULL; l = l->next)
     {
@@ -1115,6 +1134,47 @@ cmpstringp (const void *p1, const void *p2)
   return strcmp (* (char * const *) p1, * (char * const *) p2);
 }
 
+static gboolean
+appstream_compose (GFile *app_dir,
+                   GError **error,
+                   ...)
+{
+  g_autoptr(GSubprocessLauncher) launcher = NULL;
+  g_autoptr(GSubprocess) subp = NULL;
+  g_autoptr(GPtrArray) args = NULL;
+  const gchar *arg;
+  g_autofree char *commandline = NULL;
+  va_list ap;
+
+  args = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("build"));
+  g_ptr_array_add (args, g_strdup ("--nofilesystem=host"));
+  g_ptr_array_add (args, g_file_get_path (app_dir));
+  g_ptr_array_add (args, g_strdup ("appstream-compose"));
+  
+  va_start (ap, error);
+  while ((arg = va_arg (ap, const gchar *)))
+    g_ptr_array_add (args, g_strdup (arg));
+  g_ptr_array_add (args, NULL);
+  va_end (ap);
+
+  commandline = g_strjoinv (" ", (char **) args->pdata);
+  g_print ("Running: %s\n", commandline);
+
+  launcher = g_subprocess_launcher_new (0);
+
+  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
+  g_ptr_array_free (args, TRUE);
+
+  if (subp == NULL ||
+      !g_subprocess_wait_check (subp, NULL, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+
 gboolean
 builder_manifest_cleanup (BuilderManifest *self,
                           BuilderCache *cache,
@@ -1315,6 +1375,20 @@ builder_manifest_cleanup (BuilderManifest *self,
 
           if (!g_file_replace_contents (desktop, desktop_contents, desktop_size, NULL, FALSE,
                                         0, NULL, NULL, error))
+            return FALSE;
+        }
+
+      if (self->appstream_compose &&
+          g_file_query_exists (appdata_file, NULL))
+        {
+          g_autofree char *basename_arg = g_strdup_printf ("--basename=%s", self->id);
+          g_print ("Running appstream-compose\n");
+          if (!appstream_compose (app_dir, error,
+                                  self->build_runtime ?  "--prefix=/usr" : "--prefix=/app",
+                                  "--origin=xdg-app",
+                                  basename_arg,
+                                  self->id,
+                                  NULL))
             return FALSE;
         }
 
