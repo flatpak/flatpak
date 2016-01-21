@@ -8,7 +8,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
@@ -437,11 +437,11 @@ xdg_app_build_app_ref (const char *app,
 
 char **
 xdg_app_list_deployed_refs (const char *type,
-			    const char *name_prefix,
-			    const char *branch,
-			    const char *arch,
-			    GCancellable *cancellable,
-			    GError **error)
+                            const char *name_prefix,
+                            const char *branch,
+                            const char *arch,
+                            GCancellable *cancellable,
+                            GError **error)
 {
   gchar **ret = NULL;
   g_autoptr(GPtrArray) names = NULL;
@@ -457,13 +457,13 @@ xdg_app_list_deployed_refs (const char *type,
   system_dir = xdg_app_dir_get_system ();
 
   if (!xdg_app_dir_collect_deployed_refs (user_dir, type, name_prefix,
-					  branch, arch, hash, cancellable,
-					  error))
+                                          branch, arch, hash, cancellable,
+                                          error))
     goto out;
 
   if (!xdg_app_dir_collect_deployed_refs (system_dir, type, name_prefix,
-					  branch, arch, hash, cancellable,
-					  error))
+                                          branch, arch, hash, cancellable,
+                                          error))
     goto out;
 
   names = g_ptr_array_new ();
@@ -1355,20 +1355,6 @@ xdg_app_repo_update (OstreeRepo   *repo,
   return TRUE;
 }
 
-static gboolean
-appstream_builder (GError **error,
-                   ...)
-{
-  gboolean res;
-  va_list ap;
-
-  va_start (ap, error);
-  res = xdg_app_spawn (NULL, NULL, error, "appstream-builder", ap);
-  va_end (ap);
-
-  return res;
-}
-
 static OstreeRepoCommitFilterResult
 commit_filter (OstreeRepo *repo,
                const char *path,
@@ -1386,6 +1372,446 @@ commit_filter (OstreeRepo *repo,
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", current_mode & ~07000);
 
   return OSTREE_REPO_COMMIT_FILTER_ALLOW;
+}
+
+typedef struct XmlNode XmlNode;
+
+struct XmlNode {
+  gchar *element_name; /* NULL == text */
+  char **attribute_names;
+  char **attribute_values;
+  char *text;
+  XmlNode *parent;
+  XmlNode *first_child;
+  XmlNode *last_child;
+  XmlNode *next_sibling;
+};
+
+typedef struct {
+  XmlNode *current;
+} XmlData;
+
+static XmlNode *
+xml_node_new (const gchar *element_name)
+{
+  XmlNode *node = g_new0 (XmlNode, 1);
+  node->element_name = g_strdup (element_name);
+  return node;
+}
+
+static XmlNode *
+xml_node_new_text (const gchar *text)
+{
+  XmlNode *node = g_new0 (XmlNode, 1);
+  node->text = g_strdup (text);
+  return node;
+}
+
+
+static void
+xml_add_node (XmlNode *parent, XmlNode *node)
+{
+  node->parent = parent;
+
+  if (parent->first_child == NULL)
+    parent->first_child = node;
+  else
+    parent->last_child->next_sibling = node;
+  parent->last_child = node;
+}
+
+static void
+xml_start_element (GMarkupParseContext *context,
+                   const gchar         *element_name,
+                   const gchar        **attribute_names,
+                   const gchar        **attribute_values,
+                   gpointer             user_data,
+                   GError             **error)
+{
+  XmlData *data = user_data;
+  XmlNode *node;
+
+  node = xml_node_new (element_name);
+  node->attribute_names = g_strdupv ((char **)attribute_names);
+  node->attribute_values = g_strdupv ((char **)attribute_values);
+
+  xml_add_node (data->current, node);
+  data->current = node;
+}
+
+/* Called for close tags </foo> */
+static void
+xml_end_element (GMarkupParseContext *context,
+                 const gchar         *element_name,
+                 gpointer             user_data,
+                 GError             **error)
+{
+  XmlData *data = user_data;
+  data->current = data->current->parent;
+}
+
+static void
+xml_text (GMarkupParseContext *context,
+          const gchar         *text,
+          gsize                text_len,
+          gpointer             user_data,
+          GError             **error)
+{
+  XmlData *data = user_data;
+  XmlNode *node;
+
+  node = xml_node_new (NULL);
+  node->text = g_strndup (text, text_len);
+  xml_add_node (data->current, node);
+}
+
+static void
+xml_passthrough (GMarkupParseContext *context,
+                 const gchar         *passthrough_text,
+                 gsize                text_len,
+                 gpointer             user_data,
+                 GError             **error)
+{
+}
+
+static GMarkupParser xml_parser = {
+  xml_start_element,
+  xml_end_element,
+  xml_text,
+  xml_passthrough,
+  NULL
+};
+
+static void
+xml_node_free (XmlNode *node)
+{
+  XmlNode *child;
+
+  if (node == NULL)
+    return;
+
+  child = node->first_child;
+  while (child != NULL)
+    {
+      XmlNode *next = child->next_sibling;
+      xml_node_free (child);
+      child = next;
+    }
+
+  g_free (node->element_name);
+  g_free (node->text);
+  g_strfreev (node->attribute_names);
+  g_strfreev (node->attribute_values);
+  g_free (node);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XmlNode, xml_node_free);
+
+static void
+dump_xml (XmlNode *node, GString *res)
+{
+  int i;
+  XmlNode *child;
+
+  if (node->parent == NULL)
+    g_string_append (res, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+
+  if (node->element_name)
+    {
+      if (node->parent != NULL)
+        {
+          if (node->first_child == NULL)
+            g_string_append (res, "</");
+          else
+            g_string_append (res, "<");
+          g_string_append (res, node->element_name);
+          if (node->attribute_names)
+            {
+              for (i = 0; node->attribute_names[i] != NULL; i++)
+                {
+                  g_string_append_printf (res, " %s=\"%s\"",
+                                          node->attribute_names[i],
+                                          node->attribute_values[i]);
+                }
+            }
+          g_string_append (res, ">");
+        }
+
+      child = node->first_child;
+      while (child != NULL)
+        {
+          dump_xml (child, res);
+          child = child->next_sibling;
+        }
+      if (node->parent != NULL)
+        {
+          if (node->first_child != NULL)
+            g_string_append_printf (res, "</%s>", node->element_name);
+        }
+
+    }
+  else if (node->text)
+    {
+      g_string_append (res, node->text);
+    }
+}
+
+static XmlNode *
+unlink_node (XmlNode *node,
+             XmlNode *prev_sibling)
+{
+  XmlNode *parent = node->parent;
+
+  if (parent == NULL)
+    return node;
+
+  if (parent->first_child == node)
+    parent->first_child = node->next_sibling;
+
+  if (parent->last_child == node)
+    parent->last_child = prev_sibling;
+
+  if (prev_sibling)
+    prev_sibling->next_sibling = node->next_sibling;
+
+  node->parent = NULL;
+  node->next_sibling = NULL;
+
+  return node;
+}
+
+static XmlNode *
+xml_find_child (XmlNode *node,
+                const char *type,
+                XmlNode **prev_child_out)
+{
+  XmlNode *child = NULL;
+  XmlNode *prev_child = NULL;
+
+  child = node->first_child;
+  prev_child = NULL;
+  while (child != NULL)
+    {
+      XmlNode *next = child->next_sibling;
+
+      if (g_strcmp0 (child->element_name, type) == 0)
+        {
+          if (prev_child_out)
+            *prev_child_out = prev_child;
+          return child;
+        }
+
+      prev_child = child;
+      child = next;
+    }
+
+  return NULL;
+}
+
+static gboolean
+validate_component (XmlNode *component,
+                    const char *ref,
+                    const char *id)
+{
+  XmlNode *bundle, *text, *prev, *id_node, *id_text_node;
+  g_autofree char *id_text = NULL;
+
+  if (g_strcmp0 (component->element_name, "component") != 0)
+    return FALSE;
+
+  id_node = xml_find_child (component, "id", NULL);
+  if (id_node == NULL)
+    return FALSE;
+
+  id_text_node = xml_find_child (id_node, NULL, NULL);
+  if (id_text_node == NULL || id_text_node->text == NULL)
+    return FALSE;
+
+  id_text = g_strstrip (g_strdup (id_text_node->text));
+  if (!g_str_has_prefix (id_text, id) ||
+      !g_str_has_suffix (id_text, ".desktop"))
+    {
+      g_warning ("Invalid id %s", id_text);
+      return FALSE;
+    }
+
+  while ((bundle = xml_find_child (component, "bundle", &prev)) != NULL)
+    xml_node_free (unlink_node (component, bundle));
+
+  bundle = xml_node_new ("bundle");
+  bundle->attribute_names = g_new0 (char *, 2);
+  bundle->attribute_values = g_new0 (char *, 2);
+  bundle->attribute_names[0] = g_strdup ("type");
+  bundle->attribute_values[0] = g_strdup ("xdg-app");
+
+  xml_add_node (component, xml_node_new_text ("  "));
+  xml_add_node (component, bundle);
+  xml_add_node (component, xml_node_new_text ("\n  "));
+
+  text = xml_node_new (NULL);
+  text->text = g_strdup (ref);
+
+  xml_add_node (bundle, text);
+
+  return TRUE;
+}
+
+static gboolean
+migrate_xml (XmlNode *root,
+             XmlNode *appstream,
+             const char *ref,
+             const char *id)
+{
+  XmlNode *components;
+  XmlNode *component;
+  XmlNode *prev_component;
+  gboolean migrated = FALSE;
+
+  if (root->first_child == NULL ||
+      root->first_child->next_sibling != NULL ||
+      g_strcmp0 (root->first_child->element_name, "components") != 0)
+    return FALSE;
+
+  components = root->first_child;
+
+  component = components->first_child;
+  prev_component = NULL;
+  while (component != NULL)
+    {
+      XmlNode *next = component->next_sibling;
+
+      if (validate_component (component, ref, id))
+        {
+          xml_add_node (appstream, unlink_node (component, prev_component));
+          migrated = TRUE;
+        }
+      else
+        prev_component = component;
+
+      component = next;
+    }
+
+  return migrated;
+}
+
+static gboolean
+copy_icon (const char *id,
+           GFile *root,
+           GFile *dest,
+           const char *size,
+           GError **error)
+{
+  g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
+  g_autoptr(GFile) icons_dir =
+    g_file_resolve_relative_path (root,
+                                  "export/share/app-info/icons/xdg-app");
+  g_autoptr(GFile) size_dir =g_file_get_child (icons_dir, size);
+  g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
+  g_autoptr(GFile) dest_dir = g_file_get_child (dest, "icons");
+  g_autoptr(GFile) dest_size_dir = g_file_get_child (dest_dir, size);
+  g_autoptr(GFile) dest_file = g_file_get_child (dest_size_dir, icon_name);
+  g_autoptr(GInputStream) in = NULL;
+  g_autoptr(GOutputStream) out = NULL;
+  gssize n_bytes_written;
+
+  in = (GInputStream*)g_file_read (icon_file, NULL, error);
+  if (!in)
+    return FALSE;
+
+  if (!gs_file_ensure_directory (dest_size_dir, TRUE, NULL, error))
+    return FALSE;
+
+  out = (GOutputStream*)g_file_replace (dest_file, NULL, FALSE,
+                                        G_FILE_CREATE_REPLACE_DESTINATION,
+                                        NULL, error);
+  if (!out)
+    return FALSE;
+
+  n_bytes_written = g_output_stream_splice (out, in,
+                                            G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                                            NULL, error);
+  if (n_bytes_written < 0)
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+extract_appstream (OstreeRepo    *repo,
+                   XmlNode       *appstream_components,
+                   const char    *ref,
+                   const char    *id,
+                   GFile         *dest,
+                   GCancellable  *cancellable,
+                   GError       **error)
+{
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) xmls_dir = NULL;
+  g_autoptr(GFile) appstream_file = NULL;
+  g_autofree char *appstream_basename = NULL;
+  g_autoptr(GInputStream) zin = NULL;
+  g_autoptr(GInputStream) in = NULL;
+  g_autoptr(GZlibDecompressor) decompressor = NULL;
+  g_autoptr(GMarkupParseContext) ctx = NULL;
+  g_autoptr(XmlNode) xml_root = NULL;
+  g_autoptr(XmlNode) appstream_root = NULL;
+  XmlData data = { 0 };
+  char buffer[32*1024];
+  gssize len;
+
+  if (!ostree_repo_read_commit (repo, ref, &root, NULL, NULL, error))
+    return FALSE;
+
+  xmls_dir = g_file_resolve_relative_path (root, "export/share/app-info/xmls");
+  appstream_basename = g_strconcat (id, ".xml.gz", NULL);
+  appstream_file = g_file_get_child (xmls_dir, appstream_basename);
+
+  zin = (GInputStream*)g_file_read (appstream_file, cancellable, error);
+  if (!zin)
+    return FALSE;
+
+  decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+
+  in = g_converter_input_stream_new (zin, G_CONVERTER (decompressor));
+
+  xml_root = xml_node_new ("root");
+  data.current = xml_root;
+
+  ctx = g_markup_parse_context_new (&xml_parser,
+                                    G_MARKUP_PREFIX_ERROR_POSITION,
+                                    &data,
+                                    NULL);
+
+  while ((len = g_input_stream_read (in, buffer, sizeof (buffer),
+                                     cancellable, error)) > 0)
+    {
+      if (!g_markup_parse_context_parse (ctx, buffer, len, error))
+        {
+          return FALSE;
+        }
+    }
+
+  if (len < 0)
+    {
+      return FALSE;
+    }
+
+  if (migrate_xml (xml_root, appstream_components, ref, id))
+    {
+      g_autoptr(GError) my_error = NULL;
+      if (!copy_icon (id, root, dest, "64x64", &my_error))
+        {
+          g_print ("Error copying 64x64 icon: %s\n", my_error->message);
+          g_clear_error (&my_error);
+        }
+      if (!copy_icon (id, root, dest, "128x128", NULL))
+        {
+          g_print ("Error copying 128x12 icon: %s\n", my_error->message);
+          g_clear_error (&my_error);
+        }
+    }
+
+  return TRUE;
 }
 
 gboolean
@@ -1417,25 +1843,23 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
       const char *arch;
       g_auto(GStrv) split = NULL;
 
-      if (!g_str_has_prefix (ref, "app/") &&
-          !g_str_has_prefix (ref, "runtime/"))
+      split = xdg_app_decompose_ref (ref, NULL);
+      if (!split)
         continue;
 
-      split = xdg_app_decompose_ref (ref, NULL);
-      if (split)
-        {
-          arch = split[2];
-          if (!g_hash_table_contains (arches, arch))
-            g_hash_table_insert (arches, g_strdup (arch), GINT_TO_POINTER(1));
-        }
+      arch = split[2];
+      if (!g_hash_table_contains (arches, arch))
+        g_hash_table_insert (arches, g_strdup (arch), GINT_TO_POINTER(1));
     }
 
   g_hash_table_iter_init (&iter, arches);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
+      GHashTableIter iter2;
       const char *arch = key;
       g_autofree char *tmpdir = g_strdup ("/tmp/xdg-app-appstream-XXXXXX");
       g_autoptr(XdgAppTempDir) tmpdir_file = NULL;
+      g_autoptr(GFile) appstream_file = NULL;
       g_autofree char *repo_path = NULL;
       g_autofree char *repo_arg = NULL;
       g_autofree char *arch_arg = NULL;
@@ -1448,28 +1872,76 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
       g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
       g_autofree char *parent = NULL;
       g_autofree char *branch = NULL;
+      g_autoptr(XmlNode) appstream_root = NULL;
+      XmlNode *appstream_components;
+      g_autoptr(GString) xml = NULL;
+      g_autoptr(GZlibCompressor) compressor = NULL;
+      g_autoptr(GOutputStream) out2 = NULL;
+      g_autoptr(GOutputStream) out = NULL;
 
       if (g_mkdtemp (tmpdir) == NULL)
         return xdg_app_fail (error, "Can't create temporary directory");
 
       tmpdir_file = g_file_new_for_path (tmpdir);
 
-      repo_path = g_file_get_path (ostree_repo_get_path (repo));
-      repo_arg = g_strdup_printf ("--ostree-repo=%s", repo_path);
-      arch_arg = g_strdup_printf ("--ostree-arch=%s", arch);
-      output_arg = g_strdup_printf ("--output-dir=%s", tmpdir);
-      icon_arg = g_strdup_printf ("--icons-dir=%s/icons", tmpdir);
+      appstream_root = xml_node_new ("root");
+      appstream_components = xml_node_new ("components");
+      xml_add_node (appstream_root, appstream_components);
+      xml_add_node (appstream_components, xml_node_new_text ("\n  "));
 
-      if (!appstream_builder (error,
-                              "--basename=appstream",
-                              "--origin=xdg-app",
-                              "--uncompressed-icons",
-                              "--enable-hidpi",
-                              repo_arg,
-                              arch_arg,
-                              output_arg,
-                              icon_arg,
-                              NULL))
+      appstream_components->attribute_names = g_new0 (char *, 3);
+      appstream_components->attribute_values = g_new0 (char *, 3);
+      appstream_components->attribute_names[0] = g_strdup ("version");
+      appstream_components->attribute_values[0] = g_strdup ("0.8");
+      appstream_components->attribute_names[1] = g_strdup ("origin");
+      appstream_components->attribute_values[1] = g_strdup ("xdg-app");
+
+      g_hash_table_iter_init (&iter2, all_refs);
+      while (g_hash_table_iter_next (&iter2, &key, &value))
+        {
+          const char *ref = key;
+          g_auto(GStrv) split = NULL;
+          g_autoptr(GError) my_error = NULL;
+
+          split = xdg_app_decompose_ref (ref, NULL);
+          if (!split)
+            continue;
+
+          if (strcmp (split[2], arch) != 0)
+            continue;
+
+          if (!extract_appstream (repo, appstream_components, ref, split[1], tmpdir_file, cancellable, &my_error))
+            {
+              g_print ("No appstream data for %s\n", ref);
+              continue;
+            }
+        }
+
+      xml_add_node (appstream_components, xml_node_new_text ("\n"));
+
+      xml = g_string_new ("");
+      dump_xml (appstream_root, xml);
+
+      compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
+      out = g_memory_output_stream_new_resizable ();
+      out2 = g_converter_output_stream_new (out, G_CONVERTER (compressor));
+      if (!g_output_stream_write_all (out2, xml->str, xml->len,
+                                      NULL, NULL, error))
+        return FALSE;
+      if (!g_output_stream_close (out2, NULL, error))
+        return FALSE;
+
+      appstream_file = g_file_get_child (tmpdir_file, "appstream.xml.gz");
+
+      if (!g_file_replace_contents (appstream_file,
+                                    g_memory_output_stream_get_data (G_MEMORY_OUTPUT_STREAM (out)),
+                                    g_memory_output_stream_get_data_size (G_MEMORY_OUTPUT_STREAM (out)),
+                                    NULL,
+                                    FALSE,
+                                    G_FILE_CREATE_NONE,
+                                    NULL,
+                                    cancellable,
+                                    error))
         return FALSE;
 
       if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
