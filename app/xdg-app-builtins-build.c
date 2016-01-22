@@ -70,6 +70,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   int rest_argv_start, rest_argc;
   g_autoptr(XdgAppContext) arg_context = NULL;
   g_autoptr(XdgAppContext) app_context = NULL;
+  gboolean custom_usr;
 
   context = g_option_context_new ("DIRECTORY [COMMAND [args...]] - Build in directory");
 
@@ -134,9 +135,11 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (argv_array, g_strdup (HELPER));
 
+  custom_usr = FALSE;
   usr = g_file_get_child (app_deploy, "usr");
   if (g_file_query_exists (usr, cancellable))
     {
+      custom_usr = TRUE;
       runtime_files = g_object_ref (usr);
       g_ptr_array_add (argv_array, g_strdup ("-W"));
     }
@@ -156,7 +159,8 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   xdg_app_run_add_environment_args (argv_array, NULL, app_id,
                                     app_context, NULL);
 
-  if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
+  if (!custom_usr &&
+      !xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
