@@ -144,7 +144,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
         }
 
       sdk_deploy_files = xdg_app_deploy_get_files (sdk_deploy);
-      if (!gs_shutil_cp_a (sdk_deploy_files, usr_dir, cancellable, error))
+      if (!xdg_app_cp_a (sdk_deploy_files, usr_dir, XDG_APP_CP_FLAGS_NO_CHOWN, cancellable, error))
         return FALSE;
 
       if (opt_sdk_extensions)
