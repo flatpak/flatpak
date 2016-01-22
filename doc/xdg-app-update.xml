@@ -32,7 +32,7 @@
             <cmdsynopsis>
                 <command>xdg-app update</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">NAME</arg>
+                <arg choice="opt">NAME</arg>
                 <arg choice="opt">BRANCH</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
@@ -44,12 +44,14 @@
             Updates an application or runtime. <arg choice="plain">NAME</arg> is the
             name of an installed application or runtime. Optionally,
             <arg choice="plain">BRANCH</arg> can be specified to update a
-            branch other than the default "master" branch.
+            specific branch, otherwise all installed branches are updated. If
+            no <arg choice="plain">NAME</arg> is given, then everything installed
+            is updated.
         </para>
         <para>
-            By default this looks for both installed apps and runtime
-            with the given <arg choice="plain">NAME</arg>, but you can
-            limit this by using the --app or --runtime option.
+            By default this looks for both installed applications and
+            runtimes, but you can limit this by using the --app or
+            --runtime option.
         </para>
         <para>
             Normally, this command updates the application to the tip

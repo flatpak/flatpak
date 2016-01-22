@@ -63,42 +63,27 @@ update_appstream (XdgAppDir *dir, const char *remote, GCancellable *cancellable,
   return TRUE;
 }
 
-gboolean
-xdg_app_builtin_update (int argc, char **argv, GCancellable *cancellable, GError **error)
+static gboolean
+do_update (XdgAppDir* dir,
+           const char *name,
+           const char *branch,
+           const char *arch,
+           gboolean check_app,
+           gboolean check_runtime,
+           GCancellable *cancellable,
+           GError **error)
 {
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
-  const char *name;
-  const char *branch = NULL;
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   gboolean was_updated = FALSE;
   gboolean is_app;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  context = g_option_context_new ("NAME [BRANCH] - Update an application or runtime");
-
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    return FALSE;
-
-  if (argc < 2)
-    return usage_error (context, "NAME must be specified", error);
-
-  name = argv[1];
-  if (argc >= 3)
-    branch = argv[2];
-
-  if (!opt_app && !opt_runtime)
-    opt_app = opt_runtime = TRUE;
-
-  if (opt_appstream)
-    return update_appstream (dir, name, cancellable, error);
-
   ref = xdg_app_dir_find_installed_ref (dir,
                                         name,
                                         branch,
-                                        opt_arch,
-                                        opt_app, opt_runtime, &is_app,
+                                        arch,
+                                        check_app, check_runtime, &is_app,
                                         error);
   if (ref == NULL)
     return FALSE;
@@ -138,6 +123,126 @@ xdg_app_builtin_update (int argc, char **argv, GCancellable *cancellable, GError
         return FALSE;
 
       if (!xdg_app_dir_mark_changed (dir, error))
+        return FALSE;
+    }
+
+  return  TRUE;
+}
+
+gboolean
+xdg_app_builtin_update (int argc,
+                        char **argv,
+                        GCancellable *cancellable,
+                        GError **error)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(XdgAppDir) dir = NULL;
+  const char *name = NULL;
+  const char *branch = NULL;
+  const char *arch = opt_arch;
+  int i;
+
+  context = g_option_context_new ("[NAME [BRANCH]] - Update an application or runtime");
+
+  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+    return FALSE;
+
+  if (argc < 1)
+    return usage_error (context, "NAME must be specified", error);
+
+  if (argc >= 2)
+    name = argv[1];
+  if (argc >= 3)
+    branch = argv[2];
+
+  if (arch == NULL)
+    arch = xdg_app_get_arch ();
+
+  if (!opt_app && !opt_runtime)
+    opt_app = opt_runtime = TRUE;
+
+  if (opt_appstream)
+    return update_appstream (dir, name, cancellable, error);
+
+  if (branch == NULL || name == NULL)
+    {
+      if (opt_app)
+        {
+          g_auto(GStrv) refs = NULL;
+
+          if (!xdg_app_dir_list_refs (dir, "app", &refs,
+                                      cancellable,
+                                      error))
+            return FALSE;
+
+          for (i = 0; refs != NULL && refs[i] != NULL; i++)
+            {
+              g_auto(GStrv) parts = xdg_app_decompose_ref (refs[i], error);
+              if (parts == NULL)
+                return FALSE;
+
+              if (name != NULL && strcmp (parts[1], name) != 0)
+                continue;
+
+              if (strcmp (parts[2], arch) != 0)
+                continue;
+
+              g_print ("Updating application %s %s\n", parts[1], parts[3]);
+
+              if (!do_update (dir,
+                              parts[1],
+                              parts[3],
+                              arch,
+                              TRUE, FALSE,
+                              cancellable,
+                              error))
+                return FALSE;
+            }
+        }
+
+      if (opt_runtime)
+        {
+          g_auto(GStrv) refs = NULL;
+
+          if (!xdg_app_dir_list_refs (dir, "runtime", &refs,
+                                      cancellable,
+                                      error))
+            return FALSE;
+
+          for (i = 0; refs != NULL && refs[i] != NULL; i++)
+            {
+              g_auto(GStrv) parts = xdg_app_decompose_ref (refs[i], error);
+              if (parts == NULL)
+                return FALSE;
+
+              if (name != NULL && strcmp (parts[1], name) != 0)
+                continue;
+
+              if (strcmp (parts[2], arch) != 0)
+                continue;
+
+              g_print ("Updating runtime %s %s\n", parts[1], parts[3]);
+              if (!do_update (dir,
+                              parts[1],
+                              parts[3],
+                              arch,
+                              FALSE, TRUE,
+                              cancellable,
+                              error))
+                return FALSE;
+            }
+        }
+
+    }
+  else
+    {
+      if (!do_update (dir,
+                      name,
+                      branch,
+                      arch,
+                      opt_app, opt_runtime,
+                      cancellable,
+                      error))
         return FALSE;
     }
 
