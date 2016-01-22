@@ -117,12 +117,6 @@ if test "x$enable_seccomp" = "xyes"; then
 fi
 
 
-AC_ARG_ENABLE(libxdgapp,
-              AS_HELP_STRING([--enable-libxdgapp],
-                             [Install libxdg-app (default: no)]),,
-              [enable_libxdgapp=no])
-AM_CONDITIONAL(BUILDOPT_INSTALL_LIB, test x$enable_libxdgapp = xyes)
-
 AC_ARG_ENABLE([userns],
               AC_HELP_STRING([--disable-userns],
                              [Disable User namespaces (requires setuid/setcaps)]),
