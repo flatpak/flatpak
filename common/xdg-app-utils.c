@@ -1333,14 +1333,16 @@ xdg_app_cp_a (GFile         *src,
 
       if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
         {
-          if (!xdg_app_cp_a (src_child, dest_child, merge,
+          if (!xdg_app_cp_a (src_child, dest_child, flags,
                              cancellable, error))
             goto out;
         }
       else
         {
           (void) unlink (gs_file_get_path_cached (dest_child));
-          GFileCopyFlags copyflags = G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA;
+          GFileCopyFlags copyflags = G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS;
+          if (!no_chown)
+            copyflags |= G_FILE_COPY_ALL_METADATA;
           if (!g_file_copy (src_child, dest_child, copyflags,
                             cancellable, NULL, NULL, error))
             goto out;
