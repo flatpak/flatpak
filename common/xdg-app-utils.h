@@ -251,12 +251,6 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(SoupURI, soup_uri_free)
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppSessionHelper, g_object_unref)
 
-
-#if !GLIB_CHECK_VERSION(2, 43, 4)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GZlibCompressor, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(GZlibDecompressor, g_object_unref)
-#endif
-
 typedef struct XdgAppXml XdgAppXml;
 
 struct XdgAppXml {
