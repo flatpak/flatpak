@@ -135,15 +135,18 @@ commit_filter (OstreeRepo *repo,
                GFileInfo *file_info,
                CommitData *commit_data)
 {
-  guint current_mode;
+  guint mode;
 
   /* No user info */
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
 
+  mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
   /* No setuid */
-  current_mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
-  g_file_info_set_attribute_uint32 (file_info, "unix::mode", current_mode & ~07000);
+  mode = mode & ~07000;
+  /* All files readable */
+  mode = mode | 0444;
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", mode);
 
   if (matches_patterns (commit_data->exclude, path) &&
       !matches_patterns (commit_data->include, path))
