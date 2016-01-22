@@ -1248,6 +1248,115 @@ xdg_app_spawn (GFile        *dir,
   return TRUE;
 }
 
+
+gboolean
+xdg_app_cp_a (GFile         *src,
+              GFile         *dest,
+              XdgAppCpFlags  flags,
+              GCancellable  *cancellable,
+              GError       **error)
+{
+  gboolean ret = FALSE;
+  GFileEnumerator *enumerator = NULL;
+  GFileInfo *src_info = NULL;
+  GFile *dest_child = NULL;
+  int dest_dfd = -1;
+  gboolean merge = (flags & XDG_APP_CP_FLAGS_MERGE) != 0;
+  gboolean no_chown = (flags & XDG_APP_CP_FLAGS_NO_CHOWN) != 0;
+  int r;
+
+  enumerator = g_file_enumerate_children (src, "standard::type,standard::name,unix::uid,unix::gid,unix::mode",
+                                          G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                          cancellable, error);
+  if (!enumerator)
+    goto out;
+
+  src_info = g_file_query_info (src, "standard::name,unix::mode,unix::uid,unix::gid," \
+                                "time::modified,time::modified-usec,time::access,time::access-usec",
+                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                cancellable, error);
+  if (!src_info)
+    goto out;
+
+  do
+    r = mkdir (gs_file_get_path_cached (dest), 0755);
+  while (G_UNLIKELY (r == -1 && errno == EINTR));
+  if (r == -1 &&
+      (!merge || errno != EEXIST))
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
+
+  if (!gs_file_open_dir_fd (dest, &dest_dfd,
+                            cancellable, error))
+    goto out;
+
+
+  if (!no_chown)
+    {
+      do
+        r = fchown (dest_dfd,
+                    g_file_info_get_attribute_uint32 (src_info, "unix::uid"),
+                    g_file_info_get_attribute_uint32 (src_info, "unix::gid"));
+      while (G_UNLIKELY (r == -1 && errno == EINTR));
+      if (r == -1)
+        {
+          glnx_set_error_from_errno (error);
+          goto out;
+        }
+    }
+
+  do
+    r = fchmod (dest_dfd, g_file_info_get_attribute_uint32 (src_info, "unix::mode"));
+  while (G_UNLIKELY (r == -1 && errno == EINTR));
+
+  if (dest_dfd != -1)
+    {
+      (void) close (dest_dfd);
+      dest_dfd = -1;
+    }
+
+  while (TRUE)
+    {
+      GFileInfo *file_info = NULL;
+      GFile *src_child = NULL;
+
+      if (!gs_file_enumerator_iterate (enumerator, &file_info, &src_child,
+                                       cancellable, error))
+        goto out;
+      if (!file_info)
+        break;
+
+      if (dest_child) g_object_unref (dest_child);
+      dest_child = g_file_get_child (dest, g_file_info_get_name (file_info));
+
+      if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
+        {
+          if (!xdg_app_cp_a (src_child, dest_child, merge,
+                             cancellable, error))
+            goto out;
+        }
+      else
+        {
+          (void) unlink (gs_file_get_path_cached (dest_child));
+          GFileCopyFlags copyflags = G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS | G_FILE_COPY_ALL_METADATA;
+          if (!g_file_copy (src_child, dest_child, copyflags,
+                            cancellable, NULL, NULL, error))
+            goto out;
+        }
+    }
+
+  ret = TRUE;
+ out:
+  if (dest_dfd != -1)
+    (void) close (dest_dfd);
+  g_clear_object (&src_info);
+  g_clear_object (&enumerator);
+  g_clear_object (&dest_child);
+  return ret;
+}
+
 gboolean
 xdg_app_variant_bsearch_str (GVariant   *array,
                              const char *str,

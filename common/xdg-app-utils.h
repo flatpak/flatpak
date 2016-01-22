@@ -203,6 +203,19 @@ gboolean            xdg_app_spawn (GFile        *dir,
                                    const gchar  *argv0,
                                    va_list       args);
 
+typedef enum {
+  XDG_APP_CP_FLAGS_NONE = 0,
+  XDG_APP_CP_FLAGS_MERGE = 1<<0,
+  XDG_APP_CP_FLAGS_NO_CHOWN = 1<<1
+} XdgAppCpFlags;
+
+gboolean   xdg_app_cp_a (GFile         *src,
+                         GFile         *dest,
+                         XdgAppCpFlags  flags,
+                         GCancellable  *cancellable,
+                         GError       **error);
+
+
 #define xdg_app_autorm_rf _GLIB_CLEANUP(g_autoptr_cleanup_generic_gfree)
 
 static inline void
