@@ -745,6 +745,7 @@ xdg_app_dir_pull (XdgAppDir *self,
 
   refs[0] = ref;
   refs[1] = NULL;
+
   if (!ostree_repo_pull (self->repo, repository,
                          (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
                          progress,
@@ -758,7 +759,10 @@ xdg_app_dir_pull (XdgAppDir *self,
 
  out:
   if (console)
-    gs_console_end_status_line (console, NULL, NULL);
+    {
+      ostree_async_progress_finish (progress);
+      gs_console_end_status_line (console, NULL, NULL);
+    }
 
   return ret;
 }
@@ -1696,6 +1700,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
   g_autoptr(GFile) dotref = NULL;
   g_autoptr(GFile) export = NULL;
   GSConsole *console = NULL;
+  g_autoptr(OstreeAsyncProgress) progress = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -1726,7 +1731,6 @@ xdg_app_dir_deploy (XdgAppDir *self,
       g_debug ("Looking for checksum %s in local repo", checksum);
       if (!ostree_repo_read_commit (self->repo, checksum, &root, &commit, cancellable, NULL))
         {
-           g_autoptr(OstreeAsyncProgress) progress = NULL;
            const char *refs[2];
            g_autoptr(GFile) origin = NULL;
            g_autofree char *repository = NULL;
@@ -1820,7 +1824,10 @@ xdg_app_dir_deploy (XdgAppDir *self,
 
  out:
   if (console)
-    gs_console_end_status_line (console, NULL, NULL);
+    {
+      ostree_async_progress_finish (progress);
+      gs_console_end_status_line (console, NULL, NULL);
+    }
 
   return ret;
 }
