@@ -771,6 +771,9 @@ xdg_app_installation_install (XdgAppInstallation  *self,
   if (created_deploy_base && result == NULL)
     gs_shutil_rm_rf (deploy_base, cancellable, NULL);
 
+  if (ostree_progress)
+    ostree_async_progress_finish (ostree_progress);
+
   return result;
 }
 
@@ -880,6 +883,9 @@ xdg_app_installation_update (XdgAppInstallation  *self,
  out:
   if (main_context)
     g_main_context_pop_thread_default (main_context);
+
+  if (ostree_progress)
+    ostree_async_progress_finish (ostree_progress);
 
   return result;
 }
@@ -1178,6 +1184,9 @@ xdg_app_installation_update_appstream_sync (XdgAppInstallation  *self,
                                       error);
 
   g_main_context_pop_thread_default (main_context);
+
+  if (ostree_progress)
+    ostree_async_progress_finish (ostree_progress);
 
   return res;
 }
