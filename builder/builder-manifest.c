@@ -736,6 +736,8 @@ builder_manifest_init_app_dir (BuilderManifest *self,
   g_autoptr(GPtrArray) args = NULL;
   int i;
 
+  g_print ("Initializing build dir\n");
+
   if (self->id == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
