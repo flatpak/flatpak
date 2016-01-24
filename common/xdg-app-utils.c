@@ -1652,7 +1652,7 @@ extract_appstream (OstreeRepo    *repo,
           g_print ("Error copying 64x64 icon: %s\n", my_error->message);
           g_clear_error (&my_error);
         }
-      if (!copy_icon (id, root, dest, "128x128", NULL))
+      if (!copy_icon (id, root, dest, "128x128", &my_error))
         {
           g_print ("Error copying 128x12 icon: %s\n", my_error->message);
           g_clear_error (&my_error);
