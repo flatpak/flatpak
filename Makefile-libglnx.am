@@ -18,6 +18,7 @@
 EXTRA_DIST += $(libglnx_srcpath)/README.md $(libglnx_srcpath)/COPYING
 
 libglnx_la_SOURCES = \
+	$(libglnx_srcpath)/glnx-alloca.h \
 	$(libglnx_srcpath)/glnx-backport-autocleanups.h \
 	$(libglnx_srcpath)/glnx-backport-autoptr.h \
 	$(libglnx_srcpath)/glnx-backports.h \
