@@ -285,5 +285,5 @@ glnx_console_unlock (GLnxConsoleRef *console)
   if (console->is_tty)
     fputc ('\n', stdout);
       
-  locked = FALSE;
+  locked = console->locked = FALSE;
 }
