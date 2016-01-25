@@ -2094,7 +2094,8 @@ xdg_app_xml_to_string (XdgAppXml *node, GString *res)
     }
   else if (node->text)
     {
-      g_string_append (res, node->text);
+      g_autofree char *escaped = g_markup_escape_text (node->text, -1);
+      g_string_append (res, escaped);
     }
 }
 
