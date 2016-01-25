@@ -1,3 +1,24 @@
+Major changes in 0.4.7
+======================
+* Enabled build of libxdg-app by default, now the API is stable
+  enough for e.g. gnome-software to use it.
+* Restructured the command line interface to xdg-app, it is now
+  more streamlined and easy to use. For instance, to install
+  both apps or runtimes, now use "xdg-app install $name".
+  The old commands still work, but are deprecated and not
+  in the docs.
+* xdg-app-builder has gotten a bunch of new features that
+  makes it easier to build apps, and some initial work to
+  make it possible to create runtimes using it
+* build-export now finds and export any app-info installed by
+  the app, and build-update-repo collects all such exports
+  into a per-repo branch for appstream and icons.
+* The client (and libs) support for locally mirroring the appstream
+  branch for each remote. This allows use to create graphical appstores
+  with user-readable information and icons.
+* On the client side one can now specify priorities for each
+  remote.
+
 Major changes in 0.4.6
 ======================
 * Added an initial version of libxdg-app, a highlevel library
