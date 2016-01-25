@@ -45,7 +45,8 @@ guint    glnx_console_columns (void);
 static inline void
 glnx_console_ref_cleanup (GLnxConsoleRef *p)
 {
-  glnx_console_unlock (p);
+  if (p->locked)
+    glnx_console_unlock (p);
 }
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxConsoleRef, glnx_console_ref_cleanup)
 
