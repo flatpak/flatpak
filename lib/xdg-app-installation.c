@@ -681,7 +681,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
  *
  * Install a new ref.
  *
- * Returns: (transfer full): The ref for the newly installed app or %null on failure
+ * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
 XdgAppInstalledRef *
 xdg_app_installation_install (XdgAppInstallation  *self,
@@ -805,7 +805,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
  *
  * Update a ref.
  *
- * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %null on failure
+ * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %NULL on failure
  */
 XdgAppInstalledRef *
 xdg_app_installation_update (XdgAppInstallation  *self,
@@ -923,7 +923,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
  *
  * Update a ref.
  *
- * Returns: %true on success
+ * Returns: %TRUE on success
  */
 XDG_APP_EXTERN gboolean
 xdg_app_installation_uninstall (XdgAppInstallation  *self,
