@@ -45,6 +45,14 @@ typedef struct {
   GObjectClass parent_class;
 } XdgAppInstallationClass;
 
+/**
+ * XdgAppUpdateFlags:
+ * @XDG_APP_UPDATE_FLAGS_NONE: Fetch remote builds and install the latest one (default)
+ * @XDG_APP_UPDATE_FLAGS_NO_DEPLOY: Don't install any new builds that might be fetched
+ * @XDG_APP_UPDATE_FLAGS_NO_PULL: Don't try to fetch new builds from the remote repo
+ *
+ * Flags to alter the behavior of xdg_app_installation_update().
+ */
 typedef enum {
   XDG_APP_UPDATE_FLAGS_NONE      = 0,
   XDG_APP_UPDATE_FLAGS_NO_DEPLOY = (1<<0),

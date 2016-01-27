@@ -27,7 +27,9 @@
 G_BEGIN_DECLS
 
 /**
- * XdpErrorEnum:
+ * XdgAppError:
+ * @XDG_APP_ERROR_ALREADY_INSTALLED: App/runtime is already installed
+ * @XDG_APP_ERROR_NOT_INSTALLED: App/runtime is not installed
  */
 typedef enum {
   XDG_APP_ERROR_ALREADY_INSTALLED,

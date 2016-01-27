@@ -14,6 +14,7 @@
 
   <chapter>
     <title>XDG-App</title>
+    <xi:include href="xml/xdg-app-error.xml"/>
     <xi:include href="xml/xdg-app-installation.xml"/>
     <xi:include href="xml/xdg-app-installed-ref.xml"/>
     <xi:include href="xml/xdg-app-remote-ref.xml"/>
