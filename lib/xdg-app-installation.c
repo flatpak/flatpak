@@ -158,14 +158,18 @@ xdg_app_installation_get_is_user (XdgAppInstallation *self)
 /**
  * xdg_app_installation_launch:
  * @self: a #XdgAppInstallation
- * @name: ...
- * @arch: (nullable):...
- * @branch: (nullable): ...
- * @commit: (nullable): ...
+ * @name: name of the app to launch
+ * @arch: (nullable): which architecture to launch (default: current architecture)
+ * @branch: (nullable): which branch of the application (default: 'master')
+ * @commit: (nullable): the commit of @branch to launch
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * ...
+ * Launch an installed application.
+ *
+ * You can use xdg_app_installation_get_installed_ref() or
+ * xdg_app_installation_get_current_installed_app() to find out what builds
+ * are available, in order to get a value for @commit.
  *
  */
 gboolean
@@ -257,16 +261,17 @@ get_ref (XdgAppInstallation *self,
 /**
  * xdg_app_installation_get_installed_ref:
  * @self: a #XdgAppInstallation
- * @kind: ...
- * @name: ...
- * @arch: (nullable): ...
- * @branch: (nullable): ...
+ * @kind: whether this is an app or runtime
+ * @name: name of the app/runtime to fetch
+ * @arch: (nullable): which architecture to fetch (default: current architecture)
+ * @branch: (nullable): which branch to fetch (default: 'master')
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * ...
+ * Returns information about an installed app or runtime, such as the
+ * available builds, its size, location, etc.
  *
- * Returns: (transfer full): ...
+ * Returns: (transfer full): an #XdgAppInstalledRef
  */
 XdgAppInstalledRef *
 xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
@@ -309,9 +314,11 @@ xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * ...
+ * Get the last build of app @name that was installed with
+ * xdg_app_installation_install(), or %NULL if the app has never been installed
+ * locally.
  *
- * Returns: (transfer full): ...
+ * Returns: (transfer full): an #XdgAppInstalledRef
  */
 XdgAppInstalledRef *
 xdg_app_installation_get_current_installed_app (XdgAppInstallation *self,
@@ -662,7 +669,13 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 /**
  * xdg_app_installation_install:
  * @self: a #XdgAppInstallation
- * @progress: (scope call): the callback
+ * @remote_name: name of the remote to use
+ * @kind: what this ref contains (an #XdgAppRefKind)
+ * @name: name of the app/runtime to fetch
+ * @arch: (nullable): which architecture to fetch (default: current architecture)
+ * @branch: (nullable): which branch to fetch (default: 'master')
+ * @progress: (scope call): progress callback
+ * @progress_data: user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -780,7 +793,13 @@ xdg_app_installation_install (XdgAppInstallation  *self,
 /**
  * xdg_app_installation_update:
  * @self: a #XdgAppInstallation
+ * @flags: an #XdgAppUpdateFlags variable
+ * @kind: whether this is an app or runtime
+ * @name: name of the app or runtime to update
+ * @arch: (nullable): architecture of the app or runtime to update (default: current architecture)
+ * @branch: (nullable): name of the branch of the app or runtime to update (default: master)
  * @progress: (scope call): the callback
+ * @progress_data: user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -893,7 +912,12 @@ xdg_app_installation_update (XdgAppInstallation  *self,
 /**
  * xdg_app_installation_uninstall:
  * @self: a #XdgAppInstallation
+ * @kind: what this ref contains (an #XdgAppRefKind)
+ * @name: name of the app or runtime to uninstall
+ * @arch: architecture of the app or runtime to uninstall
+ * @branch: name of the branch of the app or runtime to uninstall
  * @progress: (scope call): the callback
+ * @progress_data: user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1033,6 +1057,7 @@ xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
 /**
  * xdg_app_installation_list_remote_refs_sync:
  * @self: a #XdgAppInstallation
+ * @remote_name: the name of the remote
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1080,6 +1105,11 @@ xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
 /**
  * xdg_app_installation_fetch_remote_ref_sync:
  * @self: a #XdgAppInstallation
+ * @remote_name: the name of the remote
+ * @kind: what this ref contains (an #XdgAppRefKind)
+ * @name: name of the app/runtime to fetch
+ * @arch: (nullable): which architecture to fetch (default: current architecture)
+ * @branch: (nullable): which branch to fetch (default: 'master')
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
