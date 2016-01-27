@@ -25,7 +25,7 @@
 #ifndef __XDG_APP_INSTALLATION_H__
 #define __XDG_APP_INSTALLATION_H__
 
-typedef struct XdgAppInstallation XdgAppInstallation;
+typedef struct _XdgAppInstallation XdgAppInstallation;
 
 #include <gio/gio.h>
 #include <xdg-app-installed-ref.h>
@@ -37,7 +37,7 @@ typedef struct XdgAppInstallation XdgAppInstallation;
 
 XDG_APP_EXTERN GType xdg_app_installation_get_type (void);
 
-struct XdgAppInstallation {
+struct _XdgAppInstallation {
   GObject parent;
 };
 

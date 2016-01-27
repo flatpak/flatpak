@@ -25,7 +25,7 @@
 #ifndef __XDG_APP_REMOTE_REF_H__
 #define __XDG_APP_REMOTE_REF_H__
 
-typedef struct XdgAppRemoteRef XdgAppRemoteRef;
+typedef struct _XdgAppRemoteRef XdgAppRemoteRef;
 
 #include <gio/gio.h>
 #include <xdg-app-ref.h>
@@ -36,7 +36,7 @@ typedef struct XdgAppRemoteRef XdgAppRemoteRef;
 
 XDG_APP_EXTERN GType xdg_app_remote_ref_get_type (void);
 
-struct XdgAppRemoteRef {
+struct _XdgAppRemoteRef {
   XdgAppRef parent;
 };
 

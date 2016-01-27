@@ -25,7 +25,7 @@
 #ifndef __XDG_APP_REF_H__
 #define __XDG_APP_REF_H__
 
-typedef struct XdgAppRef XdgAppRef;
+typedef struct _XdgAppRef XdgAppRef;
 
 #include <glib-object.h>
 
@@ -35,7 +35,7 @@ typedef struct XdgAppRef XdgAppRef;
 
 XDG_APP_EXTERN GType xdg_app_ref_get_type (void);
 
-struct XdgAppRef {
+struct _XdgAppRef {
   GObject parent;
 };
 

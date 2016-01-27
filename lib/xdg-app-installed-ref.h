@@ -25,7 +25,7 @@
 #ifndef __XDG_APP_INSTALLED_REF_H__
 #define __XDG_APP_INSTALLED_REF_H__
 
-typedef struct XdgAppInstalledRef XdgAppInstalledRef;
+typedef struct _XdgAppInstalledRef XdgAppInstalledRef;
 
 #include <gio/gio.h>
 #include <xdg-app-ref.h>
@@ -36,7 +36,7 @@ typedef struct XdgAppInstalledRef XdgAppInstalledRef;
 
 XDG_APP_EXTERN GType xdg_app_installed_ref_get_type (void);
 
-struct XdgAppInstalledRef {
+struct _XdgAppInstalledRef {
   XdgAppRef parent;
 };
 
