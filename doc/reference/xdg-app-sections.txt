@@ -3,6 +3,30 @@
 <TITLE>XdgAppInstallation</TITLE>
 XdgAppInstallation
 XdgAppInstallationClass
+xdg_app_installation_create_monitor
+xdg_app_installation_fetch_remote_metadata_sync
+xdg_app_installation_fetch_remote_ref_sync
+xdg_app_installation_fetch_remote_size_sync
+xdg_app_installation_get_current_installed_app
+xdg_app_installation_get_installed_ref
+xdg_app_installation_get_is_user
+xdg_app_installation_get_type
+xdg_app_installation_install
+xdg_app_installation_launch
+xdg_app_installation_list_installed_refs
+xdg_app_installation_list_installed_refs_by_kind
+xdg_app_installation_list_installed_refs_for_update
+xdg_app_installation_list_remote_refs_sync
+xdg_app_installation_list_remotes
+xdg_app_installation_load_app_overrides
+xdg_app_installation_new_for_path
+xdg_app_installation_new_system
+xdg_app_installation_new_user
+xdg_app_installation_uninstall
+xdg_app_installation_update
+xdg_app_installation_update_appstream_sync
+XdgAppProgressCallback
+XdgAppUpdateFlags
 <SUBSECTION Standard>
 XDG_APP_INSTALLATION
 XDG_APP_IS_INSTALLATION
@@ -14,6 +38,13 @@ XDG_APP_TYPE_INSTALLATION
 <TITLE>XdgAppInstalledRef</TITLE>
 XdgAppInstalledRef
 XdgAppInstalledRefClass
+xdg_app_installed_ref_get_deploy_dir
+xdg_app_installed_ref_get_installed_size
+xdg_app_installed_ref_get_is_current
+xdg_app_installed_ref_get_latest_commit
+xdg_app_installed_ref_get_origin
+xdg_app_installed_ref_get_type
+xdg_app_installed_ref_load_metadata
 <SUBSECTION Standard>
 XDG_APP_INSTALLED_REF
 XDG_APP_IS_INSTALLED_REF
@@ -25,6 +56,9 @@ XDG_APP_TYPE_INSTALLED_REF
 <TITLE>XdgAppRemoteRef</TITLE>
 XdgAppRemoteRef
 XdgAppRemoteRefClass
+xdg_app_remote_ref_get_remote_name
+xdg_app_remote_ref_get_type
+xdg_app_remote_ref_new
 <SUBSECTION Standard>
 XDG_APP_IS_REMOTE_REF
 XDG_APP_REMOTE_REF
@@ -37,6 +71,14 @@ XDG_APP_TYPE_REMOTE_REF
 XdgAppRef
 XdgAppRefClass
 XdgAppRefKind
+xdg_app_ref_format_ref
+xdg_app_ref_get_arch
+xdg_app_ref_get_branch
+xdg_app_ref_get_commit
+xdg_app_ref_get_kind
+xdg_app_ref_get_name
+xdg_app_ref_get_type
+xdg_app_ref_parse
 <SUBSECTION Standard>
 XDG_APP_IS_REF
 XDG_APP_REF
@@ -48,6 +90,15 @@ XDG_APP_TYPE_REF
 <TITLE>XdgAppRemote</TITLE>
 XdgAppRemote
 XdgAppRemoteClass
+xdg_app_remote_get_appstream_dir
+xdg_app_remote_get_appstream_timestamp
+xdg_app_remote_get_gpg_verify
+xdg_app_remote_get_name
+xdg_app_remote_get_noenumerate
+xdg_app_remote_get_prio
+xdg_app_remote_get_title
+xdg_app_remote_get_type
+xdg_app_remote_get_url
 <SUBSECTION Standard>
 XDG_APP_IS_REMOTE
 XDG_APP_REMOTE
@@ -62,3 +113,9 @@ XDG_APP_MICRO_VERSION
 XDG_APP_EXTERN
 </SECTION>
 
+<SECTION>
+<FILE>xdg-app-error</FILE>
+XDG_APP_ERROR
+XdgAppError
+xdg_app_error_quark
+</SECTION>

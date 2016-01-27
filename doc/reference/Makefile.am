@@ -2,7 +2,8 @@ DOC_MODULE = xdg-app
 DOC_MAIN_SGML_FILE = xdg-app-docs.xml
 DOC_SOURCE_DIR = $(top_srcdir)/lib $(top_builddir)/lib
 
-SCAN_OPTIONS = --rebuild-types
+SCAN_OPTIONS = --rebuild-types \
+    --ignore-decorators='XDG_APP_EXTERN'
 SCANGOBJ_OPTIONS =
 MKDB_OPTIONS = --output-format=xml --name-space=xdg_app
 FIXXREF_OPTIONS =
