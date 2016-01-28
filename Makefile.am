@@ -14,9 +14,12 @@ endif
 %.service: %.service.in config.log
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
 
-servicedir = $(DBUS_SERVICE_DIR)
+dbus_servicedir = $(DBUS_SERVICE_DIR)
 service_in_files = $(NULL)
-service_DATA = $(NULL)
+dbus_service_DATA = $(NULL)
+systemduserunit_DATA = $(NULL)
+CLEANFILES += $(dbus_service_DATA)
+CLEANFILES += $(systemduserunit_DATA)
 
 AM_CPPFLAGS =						\
 	-DXDG_APP_BINDIR=\"$(bindir)\"			\
@@ -64,7 +67,10 @@ EXTRA_DIST += $(completion_DATA)
 
 profiledir = $(sysconfdir)/profile.d
 profile_DATA = xdg-app.sh
-EXTRA_DIST += profile/xdg-app.sh.in $(service_in_files)
+EXTRA_DIST += \
+	$(dbus_service_in_files) \
+	profile/xdg-app.sh.in \
+	$(NULL)
 DISTCLEANFILES += xdg-app.sh
 
 xdg-app.sh: profile/xdg-app.sh.in
