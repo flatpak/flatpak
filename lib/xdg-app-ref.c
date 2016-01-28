@@ -257,7 +257,7 @@ xdg_app_ref_format_ref  (XdgAppRef *self)
  * Tries to parse a full ref name and return a #XdgAppRef (without a
  * commit set) or fail if the ref is invalid somehow.
  *
- * Returns: (transfer full): an #XdgAppRef
+ * Returns: (transfer full): an #XdgAppRef, or %NULL
  */
 XdgAppRef *
 xdg_app_ref_parse (const char *ref, GError **error)
