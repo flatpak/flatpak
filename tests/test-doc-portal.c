@@ -211,10 +211,9 @@ test_recursive_doc (void)
   g_assert_cmpstr (id, ==, id3);
 }
 
-int
-main (int argc, char **argv)
+static void
+global_setup (void)
 {
-  int res;
   gboolean inited;
   GError *error = NULL;
   gint exit_status;
@@ -251,13 +250,12 @@ main (int argc, char **argv)
   g_assert_no_error (error);
   g_assert (inited);
   g_assert (mountpoint != NULL);
+}
 
-  g_test_init (&argc, &argv, NULL);
-
-  g_test_add_func ("/db/create_doc", test_create_doc);
-  g_test_add_func ("/db/recursive_doc", test_recursive_doc);
-
-  res = g_test_run ();
+static void
+global_teardown (void)
+{
+  GError *error = NULL;
 
   g_free (mountpoint);
 
@@ -277,6 +275,23 @@ main (int argc, char **argv)
   sleep (1);
 
   glnx_shutil_rm_rf_at (-1, outdir, NULL, NULL);
+}
+
+int
+main (int argc, char **argv)
+{
+  int res;
+
+  g_test_init (&argc, &argv, NULL);
+
+  g_test_add_func ("/db/create_doc", test_create_doc);
+  g_test_add_func ("/db/recursive_doc", test_recursive_doc);
+
+  global_setup ();
+
+  res = g_test_run ();
+
+  global_teardown ();
 
   return res;
 }
