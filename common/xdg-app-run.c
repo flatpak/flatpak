@@ -998,6 +998,7 @@ extract_unix_path_from_dbus_address (const char *address)
   return g_strndup (path, path_end - path);
 }
 
+#ifdef ENABLE_XAUTH
 static gboolean auth_streq (char *str,
                             char *au_str,
                             int au_len)
@@ -1049,6 +1050,7 @@ write_xauth (char *number, FILE *output)
 
   fclose (f);
 }
+#endif /* ENABLE_XAUTH */
 
 static void
 xdg_app_run_add_x11_args (GPtrArray *argv_array)
@@ -1062,8 +1064,6 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
       const char *display_nr_end = display_nr;
       g_autofree char *d = NULL;
       g_autofree char *tmp_path = NULL;
-      int fd;
-      FILE *output;
 
       while (g_ascii_isdigit (*display_nr_end))
         display_nr_end++;
@@ -1074,10 +1074,12 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
       g_ptr_array_add (argv_array, g_strdup ("-x"));
       g_ptr_array_add (argv_array, x11_socket);
 
+#ifdef ENABLE_XAUTH
+      int fd;
       fd = g_file_open_tmp ("xdg-app-xauth-XXXXXX", &tmp_path, NULL);
       if (fd >= 0)
         {
-          output = fdopen (fd, "wb");
+          FILE *output = fdopen (fd, "wb");
           if (output != NULL)
             {
               write_xauth (d, output);
@@ -1089,6 +1091,7 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
           else
             close (fd);
         }
+#endif
     }
 }
 

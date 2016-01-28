@@ -82,9 +82,19 @@ AC_SUBST(BASE_LIBS)
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
 AC_SUBST(SOUP_CFLAGS)
 AC_SUBST(SOUP_LIBS)
-PKG_CHECK_MODULES(XAUTH, [xau])
-AC_SUBST(XAUTH_CFLAGS)
-AC_SUBST(XAUTH_LIBS)
+
+AC_ARG_ENABLE([xauth],
+              AC_HELP_STRING([--disable-xauth],
+                             [Disable Xauth use]),
+              [],
+              [enable_xauth=yes])
+if test "x$enable_xauth" = "xyes"; then
+   PKG_CHECK_MODULES(XAUTH, [xau])
+   AC_SUBST(XAUTH_CFLAGS)
+   AC_SUBST(XAUTH_LIBS)
+   AC_DEFINE([ENABLE_XAUTH], [1],
+      [Define if using xauth])
+fi
 
 PKG_CHECK_MODULES(OSTREE, [libgsystem >= 2015.1 ostree-1 >= 2015.3])
 AC_SUBST(OSTREE_CFLAGS)
