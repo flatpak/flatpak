@@ -2280,7 +2280,7 @@ main (int argc,
       if (!is_privileged)
         {
           if (errno == EINVAL)
-            die ("Creating new namespace failed, likely because the kernel does not support user namespaces. Recompile xdg-app with --disable-userns, or switch to a kernel with user namespace support.");
+            die ("Creating new namespace failed, likely because the kernel does not support user namespaces. Give the xdg-app-helper setuid root or cap_sys_admin+ep rights, or switch to a kernel with user namespace support.");
           else if (errno == EPERM)
             die ("No permissions to creating new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.");
         }
