@@ -1213,7 +1213,7 @@ xdg_app_spawn (GFile        *dir,
       out = g_memory_output_stream_new_resizable ();
       g_output_stream_splice_async  (out,
                                      in,
-                                     G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
+                                     G_OUTPUT_STREAM_SPLICE_NONE,
                                      0,
                                      NULL,
                                      spawn_output_spliced_cb,
@@ -1241,6 +1241,7 @@ xdg_app_spawn (GFile        *dir,
 
       /* Null terminate */
       g_output_stream_write (out, "\0", 1, NULL, NULL);
+      g_output_stream_close (out, NULL, NULL);
       *output = g_memory_output_stream_steal_data (G_MEMORY_OUTPUT_STREAM (out));
     }
 
