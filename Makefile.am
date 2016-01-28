@@ -43,7 +43,11 @@ EXTRA_DIST =
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES = libglnx.la
 libglnx_srcpath := $(srcdir)/libglnx
-libglnx_cflags := $(BASE_CFLAGS) "-I$(libglnx_srcpath)"
+libglnx_cflags := \
+	$(BASE_CFLAGS) \
+	"-I$(libglnx_srcpath)" \
+	$(HIDDEN_VISIBILITY_CFLAGS) \
+	$(NULL)
 libglnx_libs := $(BASE_LIBS)
 include libglnx/Makefile-libglnx.am.inc
 
