@@ -25,7 +25,8 @@
 #include "dbus-proxy/xdg-app-proxy.h"
 #include "xdg-app-common-types.h"
 
-void xdg_app_run_in_transient_unit (const char *app_id);
+gboolean xdg_app_run_in_transient_unit (const char *app_id,
+                                        GError **error);
 
 #define XDG_APP_METADATA_GROUP_CONTEXT "Context"
 #define XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
