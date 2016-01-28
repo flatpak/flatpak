@@ -423,17 +423,18 @@ git_extract_submodule (const char *repo_url,
             continue;
           words = g_strsplit (lines[i] + 1, " ", 3);
 
-          // Skip any submodules that are disabled (have the update method set to "none")
-          // Only check if the command succeeds. If it fails, the update method is not set.
-          option = g_strdup_printf("submodule.%s.update", words[1]);
-          if (git(checkout_dir, &update_method, NULL,
-                  "config", "-f", ".gitmodules", option, NULL)) {
-            /* Trim trailing whitespace */
-            g_strchomp(update_method);
+          /* Skip any submodules that are disabled (have the update method set to "none")
+             Only check if the command succeeds. If it fails, the update method is not set. */
+          option = g_strdup_printf ("submodule.%s.update", words[1]);
+          if (git (checkout_dir, &update_method, NULL,
+                  "config", "-f", ".gitmodules", option, NULL))
+            {
+              /* Trim trailing whitespace */
+              g_strchomp (update_method);
 
-            if (g_strcmp0(update_method, "none") == 0)
-              continue;
-          }
+              if (g_strcmp0 (update_method, "none") == 0)
+                continue;
+            }
 
           option = g_strdup_printf ("submodule.%s.url", words[1]);
           if (!git (checkout_dir, &child_relative_url, error,
