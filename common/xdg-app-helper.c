@@ -73,6 +73,7 @@ typedef int bool;
 /* Globals to avoid having to use getuid(), since the uid/gid changes during runtime */
 static uid_t uid;
 static gid_t gid;
+static bool is_privileged;
 
 static void
 die_with_error (const char *format, ...)
@@ -1193,7 +1194,6 @@ copy_file (const char *src_path, const char *dst_path, mode_t mode)
   return res;
 }
 
-#ifndef DISABLE_USERNS
 static bool
 write_file (const char *path, const char *content)
 {
@@ -1215,7 +1215,6 @@ write_file (const char *path, const char *content)
 
   return res;
 }
-#endif
 
 static bool
 create_file (const char *path, mode_t mode, const char *content)
@@ -1929,8 +1928,6 @@ do_init (int event_fd, pid_t initial_pid)
   return initial_exit_status;
 }
 
-#ifdef DISABLE_USERNS
-
 #define REQUIRED_CAPS (CAP_TO_MASK(CAP_SYS_ADMIN))
 
 static void
@@ -1938,6 +1935,16 @@ acquire_caps (void)
 {
   struct __user_cap_header_struct hdr;
   struct __user_cap_data_struct data;
+
+  memset (&hdr, 0, sizeof(hdr));
+  hdr.version = _LINUX_CAPABILITY_VERSION;
+
+  if (capget (&hdr, &data)  < 0)
+    die_with_error ("capget failed");
+
+  if (((data.effective & REQUIRED_CAPS) == REQUIRED_CAPS) &&
+      ((data.permitted & REQUIRED_CAPS) == REQUIRED_CAPS))
+    is_privileged = TRUE;
 
   if (getuid () != geteuid ())
     {
@@ -1950,15 +1957,19 @@ acquire_caps (void)
         die_with_error ("unable to drop privs");
     }
 
-  memset (&hdr, 0, sizeof(hdr));
-  hdr.version = _LINUX_CAPABILITY_VERSION;
+  if (is_privileged)
+    {
+      memset (&hdr, 0, sizeof(hdr));
+      hdr.version = _LINUX_CAPABILITY_VERSION;
 
-  /* Drop all non-require capabilities */
-  data.effective = REQUIRED_CAPS;
-  data.permitted = REQUIRED_CAPS;
-  data.inheritable = 0;
-  if (capset (&hdr, &data) < 0)
-    die_with_error ("capset failed");
+      /* Drop all non-require capabilities */
+      data.effective = REQUIRED_CAPS;
+      data.permitted = REQUIRED_CAPS;
+      data.inheritable = 0;
+      if (capset (&hdr, &data) < 0)
+        die_with_error ("capset failed");
+    }
+  /* Else, we try unprivileged user namespaces */
 }
 
 static void
@@ -1966,6 +1977,9 @@ drop_caps (void)
 {
   struct __user_cap_header_struct hdr;
   struct __user_cap_data_struct data;
+
+  if (!is_privileged)
+    return;
 
   memset (&hdr, 0, sizeof(hdr));
   hdr.version = _LINUX_CAPABILITY_VERSION;
@@ -1975,9 +1989,10 @@ drop_caps (void)
 
   if (capset (&hdr, &data) < 0)
     die_with_error ("capset failed");
-}
 
-#endif
+  if (prctl (PR_SET_DUMPABLE, 1, 0, 0, 0) < 0)
+    die_with_error ("prctl(PR_SET_DUMPABLE) failed");
+}
 
 static char *arg_space;
 size_t arg_space_size;
@@ -2037,17 +2052,19 @@ main (int argc,
   bool writable = FALSE;
   bool writable_app = FALSE;
   bool writable_exports = FALSE;
+  int clone_flags;
   char *old_cwd = NULL;
   int c, i;
   pid_t pid;
   int event_fd;
   int sync_fd = -1;
   char *endp;
+  char *uid_map, *gid_map;
+  uid_t ns_uid;
+  gid_t ns_gid;
 
-#ifdef DISABLE_USERNS
-  /* Get the capabilities we need, drop root */
+  /* Get the (optional) capabilities we need, drop root */
   acquire_caps ();
-#endif
 
   /* Never gain any more privs during exec */
   if (prctl (PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
@@ -2249,23 +2266,26 @@ main (int argc,
 
   block_sigchild (); /* Block before we clone to avoid races */
 
-  pid = raw_clone (SIGCHLD | CLONE_NEWNS | CLONE_NEWPID |
-#ifndef DISABLE_USERNS
-                   CLONE_NEWUSER |
-#endif
-		   (network ? 0 : CLONE_NEWNET) |
-		   (ipc ? 0 : CLONE_NEWIPC),
-		   NULL);
+  clone_flags = SIGCHLD | CLONE_NEWNS | CLONE_NEWPID;
+  if (!is_privileged)
+    clone_flags |= CLONE_NEWUSER;
+  if (!network)
+    clone_flags |= CLONE_NEWNET;
+  if (!ipc)
+    clone_flags |= CLONE_NEWIPC;
+
+  pid = raw_clone (clone_flags, NULL);
   if (pid == -1)
     {
-#ifndef DISABLE_USERNS
-      if (errno == EINVAL)
-        die ("Creating new namespace failed, likely because the kernel does not support user namespaces. Recompile xdg-app with --disable-userns, or switch to a kernel with user namespace support.");
-      else if (errno == EPERM)
-        die ("No permissions to creating new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.");
-      else
-#endif
-        die_with_error ("Creating new namespace failed");
+      if (!is_privileged)
+        {
+          if (errno == EINVAL)
+            die ("Creating new namespace failed, likely because the kernel does not support user namespaces. Recompile xdg-app with --disable-userns, or switch to a kernel with user namespace support.");
+          else if (errno == EPERM)
+            die ("No permissions to creating new namespace, likely because the kernel does not allow non-privileged user namespaces. On e.g. debian this can be enabled with 'sysctl kernel.unprivileged_userns_clone=1'.");
+        }
+
+      die_with_error ("Creating new namespace failed");
     }
 
   if (pid != 0)
@@ -2276,27 +2296,30 @@ main (int argc,
       exit (0); /* Should not be reached, but better safe... */
     }
 
-#ifndef DISABLE_USERNS
-  {
-    char *uid_map, *gid_map;
-    /* This is a bit hacky, but we need to first map the real uid/gid to
-       0, otherwise we can't mount the devpts filesystem because root is
-       not mapped. Later we will create another child user namespace and
-       map back to the real uid */
-    uid_map = strdup_printf ("0 %d 1\n", uid);
-    if (!write_file ("/proc/self/uid_map", uid_map))
-      die_with_error ("setting up uid map");
-    free (uid_map);
+  ns_uid = uid;
+  ns_gid = gid;
+  if (!is_privileged)
+    {
+      /* This is a bit hacky, but we need to first map the real uid/gid to
+         0, otherwise we can't mount the devpts filesystem because root is
+         not mapped. Later we will create another child user namespace and
+         map back to the real uid */
+      ns_uid = 0;
+      ns_gid = 0;
 
-    if (!write_file("/proc/self/setgroups", "deny\n"))
-      die_with_error ("error writing to setgroups");
+      uid_map = strdup_printf ("%d %d 1\n", ns_uid, uid);
+      if (!write_file ("/proc/self/uid_map", uid_map))
+        die_with_error ("setting up uid map");
+      free (uid_map);
 
-    gid_map = strdup_printf ("0 %d 1\n", gid);
-    if (!write_file ("/proc/self/gid_map", gid_map))
-      die_with_error ("setting up gid map");
-    free (gid_map);
-  }
-#endif
+      if (!write_file("/proc/self/setgroups", "deny\n"))
+        die_with_error ("error writing to setgroups");
+
+      gid_map = strdup_printf ("%d %d 1\n", ns_gid, gid);
+      if (!write_file ("/proc/self/gid_map", gid_map))
+        die_with_error ("setting up gid map");
+      free (gid_map);
+    }
 
   old_umask = umask (0);
 
@@ -2541,10 +2564,8 @@ main (int argc,
 
   umask (old_umask);
 
-#ifdef DISABLE_USERNS
   /* Now we have everything we need CAP_SYS_ADMIN for, so drop it */
   drop_caps ();
-#endif
 
   if (chdir_path)
     {
@@ -2598,26 +2619,24 @@ main (int argc,
     {
       __debug__(("launch executable %s\n", args[0]));
 
-#ifndef DISABLE_USERNS
-      {
-        char *uid_map, *gid_map;
-        /* Now that devpts is mounted we can create a new userspace and map
-           our uid 1:1 */
+      if (ns_uid != uid || ns_gid != gid)
+        {
+          /* Now that devpts is mounted we can create a new userspace
+             and map our uid 1:1 */
 
-        if (unshare (CLONE_NEWUSER))
-          die_with_error ("unshare user ns");
+          if (unshare (CLONE_NEWUSER))
+            die_with_error ("unshare user ns");
 
-        uid_map = strdup_printf ("%d 0 1\n", uid);
-        if (!write_file ("/proc/self/uid_map", uid_map))
-          die_with_error ("setting up uid map");
-        free (uid_map);
+          uid_map = strdup_printf ("%d 0 1\n", uid);
+          if (!write_file ("/proc/self/uid_map", uid_map))
+            die_with_error ("setting up uid map");
+          free (uid_map);
 
-        gid_map = strdup_printf ("%d 0 1\n", gid);
-        if (!write_file ("/proc/self/gid_map", gid_map))
-          die_with_error ("setting up gid map");
-        free (gid_map);
-      }
-#endif
+          gid_map = strdup_printf ("%d 0 1\n", gid);
+          if (!write_file ("/proc/self/gid_map", gid_map))
+            die_with_error ("setting up gid map");
+          free (gid_map);
+        }
 
       __debug__(("setting up seccomp in child\n"));
       setup_seccomp (devel);

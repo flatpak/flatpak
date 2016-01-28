@@ -40,7 +40,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-#ifndef DISABLE_USERNS
 static gboolean
 write_to_file (int fd, const char *content, ssize_t len)
 {
@@ -81,7 +80,6 @@ write_file (const char *path, const char *content)
 
   return res;
 }
-#endif
 
 static uid_t uid;
 static gid_t gid;
@@ -89,28 +87,33 @@ static gid_t gid;
 static void
 child_setup (gpointer user_data)
 {
-#ifndef DISABLE_USERNS
   g_autofree char *uid_map = NULL;
   g_autofree char *gid_map = NULL;
-        
-  /* Work around user namespace devpts issue by creating a new
-     userspace and map our uid like the helper does */
+  uid_t ns_uid;
+  gid_t ns_gid;
 
-  if (unshare (CLONE_NEWUSER))
+  ns_uid = getuid ();
+  ns_gid = getgid ();
+
+  if (ns_uid != uid || ns_gid != gid)
     {
-      g_warning ("Can't unshare user namespace: %s", strerror (errno));
-      return;
+      /* Work around user namespace devpts issue by creating a new
+         userspace and map our uid like the helper does */
+
+      if (unshare (CLONE_NEWUSER))
+        {
+          g_warning ("Can't unshare user namespace: %s", strerror (errno));
+          return;
+        }
+
+      uid_map = g_strdup_printf ("%d %d 1\n", uid, ns_uid);
+      if (!write_file ("/proc/self/uid_map", uid_map))
+        g_warning ("setting up uid map");
+
+      gid_map = g_strdup_printf ("%d %d 1\n", gid, ns_gid);
+      if (!write_file ("/proc/self/gid_map", gid_map))
+        g_warning ("setting up gid map");
     }
-
-  uid_map = g_strdup_printf ("%d 0 1\n", uid);
-  if (!write_file ("/proc/self/uid_map", uid_map))
-    g_warning ("setting up uid map");
-
-  gid_map = g_strdup_printf ("%d 0 1\n", gid);
-  if (!write_file ("/proc/self/gid_map", gid_map))
-    g_warning ("setting up gid map");
-
-#endif
 }
 
 gboolean

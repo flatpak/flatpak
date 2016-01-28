@@ -116,28 +116,14 @@ if test "x$enable_seccomp" = "xyes"; then
       [Define if using seccomp])
 fi
 
-
-AC_ARG_ENABLE([userns],
-              AC_HELP_STRING([--disable-userns],
-                             [Disable User namespaces (requires setuid/setcaps)]),
-              [],
-              [enable_userns=yes])
-
-AM_CONDITIONAL(DISABLE_USERNS, test "x$enable_userns" = "xno")
-if test "x$enable_userns" = "xno"; then
-  AC_DEFINE([DISABLE_USERNS], [1],
-      [Define if not using user namespaces])
-fi
-
 AC_ARG_WITH(priv-mode,
             AS_HELP_STRING([--with-priv-mode=setuid/caps/none],
-                           [How to set privilege-raising during install (only needed if userns disabled)]),
+                           [How to set privilege-raising during install (only needed if userns not working)]),
             [],
-            [with_priv_mode="setuid"])
+            [with_priv_mode="none"])
 
 AM_CONDITIONAL(PRIV_MODE_FILECAPS, test "x$with_priv_mode" = "xcaps")
 AM_CONDITIONAL(PRIV_MODE_SETUID, test "x$with_priv_mode" = "xsetuid")
-AM_CONDITIONAL(PRIV_MODE_FILECAPS, test "x$with_priv_mode" = "xcaps")
 
 AC_ARG_ENABLE(sudo,
               AS_HELP_STRING([--enable-sudo],[Use sudo to set setuid flags on binaries during install (only needed if userns disabled)]),

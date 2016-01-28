@@ -55,13 +55,11 @@ xdg_app_helper_LDADD = $(LIBSECCOMP_LIBS)
 xdg_app_helper_CFLAGS = $(LIBSECCOMP_CFLAGS)
 
 install-exec-hook:
-if DISABLE_USERNS
 if PRIV_MODE_SETUID
 	$(SUDO_BIN) chown root $(DESTDIR)$(bindir)/xdg-app-helper
 	$(SUDO_BIN) chmod u+s $(DESTDIR)$(bindir)/xdg-app-helper
 else
 if PRIV_MODE_FILECAPS
 	$(SUDO_BIN) setcap cap_sys_admin+ep $(DESTDIR)$(bindir)/xdg-app-helper
-endif
 endif
 endif
