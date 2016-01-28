@@ -26,7 +26,9 @@
 #include <unistd.h>
 #include <sys/utsname.h>
 
+#ifdef ENABLE_XAUTH
 #include <X11/Xauth.h>
+#endif
 
 #include <gio/gio.h>
 #include "libgsystem.h"
