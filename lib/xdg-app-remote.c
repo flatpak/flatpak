@@ -129,6 +129,16 @@ xdg_app_remote_get_name (XdgAppRemote *self)
   return priv->name;
 }
 
+/**
+ * xdg_app_remote_get_appstream_dir
+ * @self: a #XdgAppRemote
+ * @arch: (nullable): which architecture to fetch (default: current architecture)
+ *
+ * Returns the directory where this remote will store locally cached
+ * appstream information for the specified @arch.
+ *
+ * Returns: (transfer full): an #GFile
+ **/
 GFile *
 xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
                                   const char *arch)
@@ -145,6 +155,16 @@ xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
                                        subdir);
 }
 
+/**
+ * xdg_app_remote_get_appstream_timestamp
+ * @self: a #XdgAppRemote
+ * @arch: (nullable): which architecture to fetch (default: current architecture)
+ *
+ * Returns the timestamp file that will be updated whenever the appstream information
+ * has been updated (or tried to update) for the specified @arch.
+ *
+ * Returns: (transfer full): an #GFile
+ **/
 GFile *
 xdg_app_remote_get_appstream_timestamp (XdgAppRemote *self,
                                         const char *arch)

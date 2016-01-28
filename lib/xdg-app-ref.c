@@ -249,6 +249,16 @@ xdg_app_ref_format_ref  (XdgAppRef *self)
                                       priv->arch);
 }
 
+/**
+ * xdg_app_ref_parse
+ * @ref: A string ref name, such as "app/org.test.App/86_64/master"
+ * @error: return location for a #GError
+ *
+ * Tries to parse a full ref name and return a #XdgAppRef (without a
+ * commit set) or fail if the ref is invalid somehow.
+ *
+ * Returns: (transfer full): an #XdgAppRef
+ */
 XdgAppRef *
 xdg_app_ref_parse (const char *ref, GError **error)
 {
