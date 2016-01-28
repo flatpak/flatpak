@@ -26,7 +26,6 @@
 #include <sys/file.h>
 
 #include <gio/gio.h>
-#include <libsoup/soup.h>
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 

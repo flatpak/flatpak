@@ -28,8 +28,8 @@
 #include <sys/statfs.h>
 #include <unistd.h>
 
-#include "builder-context.h"
 #include "xdg-app-utils.h"
+#include "builder-context.h"
 
 struct BuilderContext {
   GObject parent;
