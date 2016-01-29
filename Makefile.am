@@ -6,6 +6,7 @@ libexec_PROGRAMS = $(NULL)
 CLEANFILES = $(NULL)
 DISTCLEANFILES= $(NULL)
 BUILT_SOURCES = $(NULL)
+EXTRA_DIST =
 
 if BUILD_DOCUMENTATION
 SUBDIRS = . doc
@@ -20,6 +21,7 @@ dbus_service_DATA = $(NULL)
 systemduserunit_DATA = $(NULL)
 CLEANFILES += $(dbus_service_DATA)
 CLEANFILES += $(systemduserunit_DATA)
+EXTRA_DIST += $(service_in_files)
 
 AM_CPPFLAGS =						\
 	-DXDG_APP_BINDIR=\"$(bindir)\"			\
@@ -40,8 +42,6 @@ dist_triggers_SCRIPTS = \
 	triggers/mime-database.trigger \
 	triggers/desktop-database.trigger \
 	$(NULL)
-
-EXTRA_DIST =
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES = libglnx.la
