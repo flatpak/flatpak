@@ -22,11 +22,11 @@ tests/services/org.freedesktop.portal.Documents.service: document-portal/org.fre
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
 
-tests/services/xdg-app-session.service: session-helper/xdg-app-session.service.in
+tests/services/org.freedesktop.XdgApp.service: session-helper/org.freedesktop.XdgApp.service.in
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
 
-test_doc_portal_DEPENDENCIES = tests/services/org.freedesktop.portal.Documents.service  tests/services/xdg-app-session.service
+test_doc_portal_DEPENDENCIES = tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.XdgApp.service
 
 check_PROGRAMS = $(TEST_PROGS)
 
@@ -35,4 +35,7 @@ TESTS=testdb test-doc-portal
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/xdg-app.supp
 EXTRA_DIST += tests/xdg-app.supp tests/dbs/no_tables
-DISTCLEANFILES += tests/services/xdg-app-session.service tests/services/org.freedesktop.portal.Documents.service
+CLEANFILES += \
+	tests/services/org.freedesktop.XdgApp.service \
+	tests/services/org.freedesktop.portal.Documents.service \
+	$(NULL)

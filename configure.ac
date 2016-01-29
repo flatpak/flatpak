@@ -226,10 +226,18 @@ GOBJECT_INTROSPECTION_CHECK([1.40.0])
 # gtkdocize greps for ^GTK_DOC_CHECK, so we need to put it on its own line
 m4_ifdef([GTK_DOC_CHECK], [
 GTK_DOC_CHECK([1.20], [--flavour no-tmpl])
+
+AC_ARG_ENABLE([gtk-doc-check],
+              [AS_HELP_STRING([--enable-gtk-doc-check],
+                              [Check completeness of documentation in 'make check'])],
+    [],
+    [enable_gtk_doc_check=no])
 ],[
 enable_gtk_doc="disabled (no gtk-doc)"
+enable_gtk_doc_check="disabled (no gtk-doc)"
 AM_CONDITIONAL([ENABLE_GTK_DOC], [false])
 ])
+AM_CONDITIONAL([ENABLE_GTK_DOC_CHECK], [test "x$enable_gtk_doc_check" = xyes])
 
 ##################################################
 # Visibility handling
