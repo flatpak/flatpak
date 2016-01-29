@@ -8,7 +8,7 @@ DISTCLEANFILES= $(NULL)
 BUILT_SOURCES = $(NULL)
 
 if BUILD_DOCUMENTATION
-SUBDIRS = doc
+SUBDIRS = . doc
 endif
 
 %.service: %.service.in config.log
