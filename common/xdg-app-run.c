@@ -95,7 +95,8 @@ struct XdgAppContext {
   GHashTable *env_vars;
   GHashTable *persistent;
   GHashTable *filesystems;
-  GHashTable *bus_policy;
+  GHashTable *session_bus_policy;
+  GHashTable *system_bus_policy;
 };
 
 XdgAppContext *
@@ -107,7 +108,8 @@ xdg_app_context_new (void)
   context->env_vars = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   context->persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  context->bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  context->session_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  context->system_bus_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   return context;
 }
@@ -118,7 +120,8 @@ xdg_app_context_free (XdgAppContext *context)
   g_hash_table_destroy (context->env_vars);
   g_hash_table_destroy (context->persistent);
   g_hash_table_destroy (context->filesystems);
-  g_hash_table_destroy (context->bus_policy);
+  g_hash_table_destroy (context->session_bus_policy);
+  g_hash_table_destroy (context->system_bus_policy);
   g_slice_free (XdgAppContext, context);
 }
 
@@ -207,7 +210,6 @@ xdg_app_policy_to_string (XdgAppPolicy policy)
 
   return "none";
 }
-
 
 static gboolean
 xdg_app_verify_dbus_name (const char *name, GError **error)
@@ -325,7 +327,15 @@ xdg_app_context_set_session_bus_policy (XdgAppContext            *context,
                                         const char               *name,
                                         XdgAppPolicy              policy)
 {
-  g_hash_table_insert (context->bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
+  g_hash_table_insert (context->session_bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
+}
+
+void
+xdg_app_context_set_system_bus_policy (XdgAppContext            *context,
+                                        const char               *name,
+                                        XdgAppPolicy              policy)
+{
+  g_hash_table_insert (context->system_bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
 }
 
 static void
@@ -478,9 +488,13 @@ xdg_app_context_merge (XdgAppContext            *context,
   while (g_hash_table_iter_next (&iter, &key, &value))
     g_hash_table_insert (context->filesystems, g_strdup (key), value);
 
-  g_hash_table_iter_init (&iter, other->bus_policy);
+  g_hash_table_iter_init (&iter, other->session_bus_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
-    g_hash_table_insert (context->bus_policy, g_strdup (key), value);
+    g_hash_table_insert (context->session_bus_policy, g_strdup (key), value);
+
+  g_hash_table_iter_init (&iter, other->system_bus_policy);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    g_hash_table_insert (context->system_bus_policy, g_strdup (key), value);
 }
 
 static gboolean
@@ -671,6 +685,36 @@ option_talk_name_cb (const gchar    *option_name,
 }
 
 static gboolean
+option_system_own_name_cb (const gchar    *option_name,
+                           const gchar    *value,
+                           gpointer        data,
+                           GError        **error)
+{
+  XdgAppContext *context = data;
+
+  if (!xdg_app_verify_dbus_name (value, error))
+    return FALSE;
+
+  xdg_app_context_set_system_bus_policy (context, value, XDG_APP_POLICY_OWN);
+  return TRUE;
+}
+
+static gboolean
+option_system_talk_name_cb (const gchar    *option_name,
+                            const gchar    *value,
+                            gpointer        data,
+                            GError        **error)
+{
+  XdgAppContext *context = data;
+
+  if (!xdg_app_verify_dbus_name (value, error))
+    return FALSE;
+
+  xdg_app_context_set_system_bus_policy (context, value, XDG_APP_POLICY_TALK);
+  return TRUE;
+}
+
+static gboolean
 option_persist_cb (const gchar    *option_name,
                    const gchar    *value,
                    gpointer        data,
@@ -694,6 +738,8 @@ static GOptionEntry context_options[] = {
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, "Set environment variable", "VAR=VALUE" },
   { "own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_own_name_cb, "Allow app to own name on the session bus", "DBUS_NAME" },
   { "talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_talk_name_cb, "Allow app to talk to name on the session bus", "DBUS_NAME" },
+  { "system-own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_own_name_cb, "Allow app to own name on the system bus", "DBUS_NAME" },
+  { "system-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_talk_name_cb, "Allow app to talk to name on the system bus", "DBUS_NAME" },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, "Persist home directory directory", "FILENAME" },
   { NULL }
 };
@@ -849,6 +895,29 @@ xdg_app_context_load_metadata (XdgAppContext            *context,
         }
     }
 
+  if (g_key_file_has_group (metakey, XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY))
+    {
+      g_auto(GStrv) keys = NULL;
+      gsize i, keys_count;
+
+      keys = g_key_file_get_keys (metakey, XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY, &keys_count, NULL);
+      for (i = 0; i < keys_count; i++)
+        {
+          const char *key = keys[i];
+          g_autofree char *value = g_key_file_get_string (metakey, XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY, key, NULL);
+          XdgAppPolicy policy;
+
+          if (!xdg_app_verify_dbus_name (key, error))
+            return FALSE;
+
+          policy = xdg_app_policy_from_string (value, error);
+          if ((int)policy == -1)
+            return FALSE;
+
+          xdg_app_context_set_system_bus_policy (context, key, policy);
+        }
+    }
+
   if (g_key_file_has_group (metakey, XDG_APP_METADATA_GROUP_ENVIRONMENT))
     {
       g_auto(GStrv) keys = NULL;
@@ -952,13 +1021,24 @@ xdg_app_context_save_metadata (XdgAppContext            *context,
                            NULL);
 
   g_key_file_remove_group (metakey, XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY, NULL);
-  g_hash_table_iter_init (&iter, context->bus_policy);
+  g_hash_table_iter_init (&iter, context->session_bus_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       XdgAppPolicy policy = GPOINTER_TO_INT (value);
       if (policy > 0)
         g_key_file_set_string (metakey,
                                XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY,
+                               (char *)key, xdg_app_policy_to_string (policy));
+    }
+
+  g_key_file_remove_group (metakey, XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY, NULL);
+  g_hash_table_iter_init (&iter, context->system_bus_policy);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      XdgAppPolicy policy = GPOINTER_TO_INT (value);
+      if (policy > 0)
+        g_key_file_set_string (metakey,
+                               XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY,
                                (char *)key, xdg_app_policy_to_string (policy));
     }
 
@@ -1140,11 +1220,14 @@ create_proxy_socket (char *template)
   return g_steal_pointer (&proxy_socket);
 }
 
-void
-xdg_app_run_add_system_dbus_args (GPtrArray *argv_array,
-				  GPtrArray *dbus_proxy_argv)
+gboolean
+xdg_app_run_add_system_dbus_args (XdgAppContext *context,
+                                  GPtrArray *argv_array,
+				  GPtrArray *dbus_proxy_argv,
+                                  gboolean unrestricted)
 {
   const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
+  g_autofree char *real_dbus_address = NULL;
   char *dbus_system_socket = NULL;
 
   if (dbus_address != NULL)
@@ -1152,24 +1235,35 @@ xdg_app_run_add_system_dbus_args (GPtrArray *argv_array,
   else if (g_file_test ("/var/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
     dbus_system_socket = g_strdup ("/var/run/dbus/system_bus_socket");
 
-  if (dbus_system_socket != NULL)
+  if (dbus_system_socket != NULL && unrestricted)
     {
       g_ptr_array_add (argv_array, g_strdup ("-D"));
       g_ptr_array_add (argv_array, dbus_system_socket);
+
+      return TRUE;
     }
-  else if (dbus_proxy_argv && dbus_address != NULL)
+  else if (dbus_proxy_argv &&
+           g_hash_table_size (context->system_bus_policy) > 0)
     {
       g_autofree char *proxy_socket = create_proxy_socket ("system-bus-proxy-XXXXXX");
 
       if (proxy_socket == NULL)
-	return;
+	return FALSE;
 
-      g_ptr_array_add (dbus_proxy_argv, g_strdup (dbus_address));
+      if (dbus_address)
+        real_dbus_address = g_strdup (dbus_address);
+      else
+        real_dbus_address = g_strdup_printf ("unix:path=%s", dbus_system_socket);
+
+      g_ptr_array_add (dbus_proxy_argv, g_strdup (real_dbus_address));
       g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
 
       g_ptr_array_add (argv_array, g_strdup ("-D"));
       g_ptr_array_add (argv_array, g_strdup (proxy_socket));
+
+      return TRUE;
     }
+  return FALSE;
 }
 
 gboolean
@@ -1212,6 +1306,7 @@ xdg_app_run_add_session_dbus_args (GPtrArray *argv_array,
 
 static void
 xdg_app_add_bus_filters (GPtrArray *dbus_proxy_argv,
+                         GHashTable *ht,
                          const char *app_id,
                          XdgAppContext *context)
 {
@@ -1219,10 +1314,13 @@ xdg_app_add_bus_filters (GPtrArray *dbus_proxy_argv,
   gpointer key, value;
 
   g_ptr_array_add (dbus_proxy_argv, g_strdup ("--filter"));
-  g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s", app_id));
-  g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s.*", app_id));
+  if (app_id)
+    {
+      g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s", app_id));
+      g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--own=%s.*", app_id));
+    }
 
-  g_hash_table_iter_init (&iter, context->bus_policy);
+  g_hash_table_iter_init (&iter, ht);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       XdgAppPolicy policy = GPOINTER_TO_INT (value);
@@ -1276,7 +1374,8 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
 
 void
 xdg_app_run_add_environment_args (GPtrArray *argv_array,
-				  GPtrArray *dbus_proxy_argv,
+				  GPtrArray *session_bus_proxy_argv,
+				  GPtrArray *system_bus_proxy_argv,
                                   const char *app_id,
                                   XdgAppContext *context,
                                   GFile *app_id_dir)
@@ -1284,6 +1383,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
   GHashTableIter iter;
   gpointer key, value;
   gboolean unrestricted_session_bus;
+  gboolean unrestricted_system_bus;
   gboolean home_access = FALSE;
   GString *xdg_dirs_conf = NULL;
   char opts[16];
@@ -1475,16 +1575,20 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
   unrestricted_session_bus = (context->sockets & XDG_APP_CONTEXT_SOCKET_SESSION_BUS) != 0;
   if (unrestricted_session_bus)
     g_debug ("Allowing session-dbus access");
-  if (xdg_app_run_add_session_dbus_args (argv_array, dbus_proxy_argv, unrestricted_session_bus) &&
-      !unrestricted_session_bus && dbus_proxy_argv)
+  if (xdg_app_run_add_session_dbus_args (argv_array, session_bus_proxy_argv, unrestricted_session_bus) &&
+      !unrestricted_session_bus && session_bus_proxy_argv)
     {
-      xdg_app_add_bus_filters (dbus_proxy_argv, app_id, context);
+      xdg_app_add_bus_filters (session_bus_proxy_argv, context->session_bus_policy, app_id, context);
     }
 
-  if (context->sockets & XDG_APP_CONTEXT_SOCKET_SYSTEM_BUS)
+  unrestricted_system_bus = (context->sockets & XDG_APP_CONTEXT_SOCKET_SYSTEM_BUS) != 0;
+  if (unrestricted_system_bus)
+    g_debug ("Allowing system-dbus access");
+  if (xdg_app_run_add_system_dbus_args (context, argv_array, system_bus_proxy_argv,
+                                        unrestricted_system_bus) &&
+      !unrestricted_system_bus && system_bus_proxy_argv)
     {
-      g_debug ("Allowing system-dbus access");
-      xdg_app_run_add_system_dbus_args (argv_array, dbus_proxy_argv);
+      xdg_app_add_bus_filters (system_bus_proxy_argv, context->system_bus_policy, NULL, context);
     }
 
   g_assert (sizeof(opts) > i);
@@ -2039,7 +2143,8 @@ xdg_app_run_app (const char *app_ref,
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
   g_auto(GStrv) envp = NULL;
-  g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
+  g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
+  g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
   const char *command = "/bin/sh";
   g_autoptr(GError) my_error = NULL;
   g_auto(GStrv) runtime_parts = NULL;
@@ -2055,7 +2160,8 @@ xdg_app_run_app (const char *app_ref,
   metakey = xdg_app_deploy_get_metadata (app_deploy);
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
-  dbus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
+  session_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
+  system_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (argv_array, g_strdup (HELPER));
   g_ptr_array_add (argv_array, g_strdup ("-l"));
 
@@ -2135,7 +2241,9 @@ xdg_app_run_app (const char *app_ref,
 
   add_document_portal_args (argv_array, app_ref_parts[1]);
 
-  xdg_app_run_add_environment_args (argv_array, dbus_proxy_argv,
+  xdg_app_run_add_environment_args (argv_array,
+                                    session_bus_proxy_argv,
+                                    system_bus_proxy_argv,
                                     app_ref_parts[1], app_context, app_id_dir);
 
   if ((flags & XDG_APP_RUN_FLAG_DEVEL) != 0)
@@ -2148,7 +2256,10 @@ xdg_app_run_app (const char *app_ref,
   if (!xdg_app_run_in_transient_unit (app_ref_parts[1], error))
     return FALSE;
 
-  if (!add_dbus_proxy_args (argv_array, dbus_proxy_argv, error))
+  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, error))
+    return FALSE;
+
+  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, error))
     return FALSE;
 
   app_files = xdg_app_deploy_get_files (app_deploy);

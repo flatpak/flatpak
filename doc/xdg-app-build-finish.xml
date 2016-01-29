@@ -198,6 +198,27 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--system-own-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to own the well known name NAME on the system bus.
+                    This updates the [System Bus Policy] group in the metadata.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system-talk-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to talk to the well known name NAME on the system bus.
+                    This updates the [System Bus Policy] group in the metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--persist=FILENAME</option></term>
 
                 <listitem><para>

@@ -156,7 +156,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   xdg_app_context_allow_host_fs (app_context);
   xdg_app_context_merge (app_context, arg_context);
 
-  xdg_app_run_add_environment_args (argv_array, NULL, app_id,
+  xdg_app_run_add_environment_args (argv_array, NULL, NULL, app_id,
                                     app_context, NULL);
 
   if (!custom_usr &&

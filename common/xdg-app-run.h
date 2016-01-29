@@ -30,6 +30,7 @@ gboolean xdg_app_run_in_transient_unit (const char *app_id,
 
 #define XDG_APP_METADATA_GROUP_CONTEXT "Context"
 #define XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
+#define XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
 #define XDG_APP_METADATA_GROUP_ENVIRONMENT "Environment"
 #define XDG_APP_METADATA_KEY_SHARED "shared"
 #define XDG_APP_METADATA_KEY_SOCKETS "sockets"
@@ -51,6 +52,9 @@ void           xdg_app_context_allow_host_fs          (XdgAppContext            
 void           xdg_app_context_set_session_bus_policy (XdgAppContext            *context,
                                                        const char               *name,
                                                        XdgAppPolicy              policy);
+void           xdg_app_context_set_system_bus_policy  (XdgAppContext            *context,
+                                                       const char               *name,
+                                                       XdgAppPolicy              policy);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppContext, xdg_app_context_free)
 
@@ -60,7 +64,8 @@ gboolean  xdg_app_run_add_extension_args     (GPtrArray   *argv_array,
                                               GCancellable *cancellable,
                                               GError     **error);
 void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,
-					      GPtrArray   *dbus_proxy_argv,
+					      GPtrArray   *session_bus_proxy_argv,
+					      GPtrArray   *system_bus_proxy_argv,
                                               const char  *app_id,
                                               XdgAppContext *context,
                                               GFile       *app_id_dir);
