@@ -328,11 +328,11 @@ install_bundle (XdgAppDir *dir,
   if (!xdg_app_dir_deploy (dir, ref, to_checksum, cancellable, error))
     goto out;
 
-  if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
-    goto out;
-
   if (strcmp (parts[0], "app") == 0)
     {
+      if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
+        goto out;
+
       if (!xdg_app_dir_update_exports (dir, parts[1], cancellable, error))
         goto out;
     }
