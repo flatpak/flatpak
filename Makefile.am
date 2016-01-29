@@ -20,7 +20,7 @@ service_DATA = $(NULL)
 
 AM_CPPFLAGS =						\
 	-DXDG_APP_BINDIR=\"$(bindir)\"			\
-	-DXDG_APP_SYSTEMDIR=\"$(localstatedir)/xdg-app\"\
+	-DXDG_APP_SYSTEMDIR=\"$(localstatedir)/lib/xdg-app\"\
 	-DXDG_APP_BASEDIR=\"$(pkgdatadir)\"		\
 	-DXDG_APP_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
 	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"	\
