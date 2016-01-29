@@ -1,3 +1,16 @@
+Major changes in 0.4.8
+======================
+* Changed global installation directory to /var/lib/xdg-app (not /var/xdg-app).
+* Add support for a dbus filtering on the system bus.
+* Choosing user namespaces or setuid is now a runtime option, not build time.
+* Fix xml-escaping in the appstream generation.
+* Various build fixes.
+* Added some more documentation for the library.
+* Disable support for running apps on systems without a systemd user session.
+* Fix uninitialized memory read in xdg-app-builder during git checkouts.
+* Correctly handle disabled git submodules in xdg-app-builder
+* Fix hiding of non-exported symbols in libxdgapp
+
 Major changes in 0.4.7
 ======================
 * Enabled build of libxdg-app by default, now the API is stable
