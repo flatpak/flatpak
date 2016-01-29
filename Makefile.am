@@ -72,7 +72,6 @@ EXTRA_DIST += $(completion_DATA)
 profiledir = $(sysconfdir)/profile.d
 profile_DATA = xdg-app.sh
 EXTRA_DIST += \
-	$(dbus_service_in_files) \
 	profile/xdg-app.sh.in \
 	$(NULL)
 DISTCLEANFILES += xdg-app.sh
