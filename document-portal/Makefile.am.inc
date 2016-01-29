@@ -23,9 +23,11 @@ document-portal/xdp-resources.c: document-portal/xdg-document-portal.gresource.x
 	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) $< \
 		--target=$@ --sourcedir=$(srcdir) --c-name _xdg_document --generate-source
 
+service_in_files += document-portal/xdg-document-portal.service.in
+systemduserunit_DATA += document-portal/xdg-document-portal.service
+
 service_in_files += document-portal/org.freedesktop.portal.Documents.service.in
-service_DATA += document-portal/org.freedesktop.portal.Documents.service
-DISTCLEANFILES += document-portal/org.freedesktop.portal.Documents.service
+dbus_service_DATA += document-portal/org.freedesktop.portal.Documents.service
 
 EXTRA_DIST += document-portal/xdg-document-portal.gresource.xml
 

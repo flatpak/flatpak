@@ -12,9 +12,11 @@ session-helper/xdg-app-resources.c: session-helper/xdg-app.gresource.xml $(resou
 	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) $< \
 		--target=$@ --sourcedir=$(srcdir) --c-name _gtk --generate-source
 
-service_in_files += session-helper/xdg-app-session.service.in
-service_DATA += session-helper/xdg-app-session.service
-DISTCLEANFILES += session-helper/xdg-app-session.service
+service_in_files += session-helper/xdg-app-session-helper.service.in
+systemduserunit_DATA += session-helper/xdg-app-session-helper.service
+
+service_in_files += session-helper/org.freedesktop.XdgApp.service.in
+dbus_service_DATA += session-helper/org.freedesktop.XdgApp.service
 
 EXTRA_DIST += session-helper/xdg-app.gresource.xml
 
