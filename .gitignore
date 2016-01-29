@@ -52,3 +52,11 @@ lib/xdg-app-enum-types.c
 lib/xdg-app-enum-types.h
 test-libxdg-app
 XdgApp-1.0.*
+/doc/reference/gtkdoc-check.log
+/doc/reference/gtkdoc-check.test
+/doc/reference/gtkdoc-check.trs
+/test-doc-portal
+/test-doc-portal.log
+/test-doc-portal.trs
+/testdb.log
+/testdb.trs

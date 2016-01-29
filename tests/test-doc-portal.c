@@ -21,6 +21,7 @@ GTestDBus *dbus;
 GDBusConnection *session_bus;
 XdpDbusDocuments *documents;
 char *mountpoint;
+static gboolean have_fuse;
 
 static char *
 make_doc_dir (const char *id, const char *app)
@@ -157,6 +158,12 @@ test_create_doc (void)
   const char *basename = "a-file";
   GError *error = NULL;
 
+  if (!have_fuse)
+    {
+      g_test_skip ("this test requires FUSE");
+      return;
+    }
+
   id = export_new_file (basename, "content", FALSE);
 
   assert_doc_has_contents (id, basename, NULL, "content");
@@ -191,6 +198,12 @@ test_recursive_doc (void)
   g_autofree char *path = NULL;
   g_autofree char *app_path = NULL;
 
+  if (!have_fuse)
+    {
+      g_test_skip ("this test requires FUSE");
+      return;
+    }
+
   id = export_new_file (basename, "recursive-content", FALSE);
 
   assert_doc_has_contents (id, basename, NULL, "recursive-content");
@@ -211,13 +224,22 @@ test_recursive_doc (void)
   g_assert_cmpstr (id, ==, id3);
 }
 
-int
-main (int argc, char **argv)
+static void
+global_setup (void)
 {
-  int res;
   gboolean inited;
+  g_autofree gchar *fusermount = NULL;
   GError *error = NULL;
   gint exit_status;
+
+  fusermount = g_find_program_in_path ("fusermount");
+  /* cache result so subsequent tests can be marked as skipped */
+  have_fuse = (access ("/dev/fuse", W_OK) == 0 &&
+               fusermount != NULL &&
+               g_file_test (fusermount, G_FILE_TEST_IS_EXECUTABLE));
+
+  if (!have_fuse)
+    return;
 
   g_mkdtemp (outdir);
   g_print ("outdir: %s\n", outdir);
@@ -251,13 +273,15 @@ main (int argc, char **argv)
   g_assert_no_error (error);
   g_assert (inited);
   g_assert (mountpoint != NULL);
+}
 
-  g_test_init (&argc, &argv, NULL);
+static void
+global_teardown (void)
+{
+  GError *error = NULL;
 
-  g_test_add_func ("/db/create_doc", test_create_doc);
-  g_test_add_func ("/db/recursive_doc", test_recursive_doc);
-
-  res = g_test_run ();
+  if (!have_fuse)
+    return;
 
   g_free (mountpoint);
 
@@ -277,6 +301,23 @@ main (int argc, char **argv)
   sleep (1);
 
   glnx_shutil_rm_rf_at (-1, outdir, NULL, NULL);
+}
+
+int
+main (int argc, char **argv)
+{
+  int res;
+
+  g_test_init (&argc, &argv, NULL);
+
+  g_test_add_func ("/db/create_doc", test_create_doc);
+  g_test_add_func ("/db/recursive_doc", test_recursive_doc);
+
+  global_setup ();
+
+  res = g_test_run ();
+
+  global_teardown ();
 
   return res;
 }
