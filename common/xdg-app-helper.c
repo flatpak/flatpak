@@ -2496,21 +2496,7 @@ main (int argc,
 
   if (mount_host_fs || mount_home)
     {
-      const char *home = getenv("HOME");
       char *dconf_run_path = strdup_printf ("/run/user/%d/dconf", uid);
-
-      /* There really is no need for an app to install or modify other
-         apps, so lets forbid it directly */
-      if (home)
-        {
-          char *xdg_app_dir;
-
-          xdg_app_dir = strconcat (home, "/.local/share/xdg-app");
-
-          if (bind_mount (xdg_app_dir, get_relative_path (xdg_app_dir), BIND_READONLY) && errno != ENOENT)
-            die_with_error ("Unable to remount xdg-app dir readonly\n");
-          free (xdg_app_dir);
-        }
 
       /* If the user has homedir access, also allow dconf run dir access */
       bind_mount (dconf_run_path, get_relative_path (dconf_run_path), 0);
