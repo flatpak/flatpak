@@ -285,6 +285,10 @@
                     <listitem><para>Ignore the existance of an autogen script</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>no-parallel-make</option></term>
+                    <listitem><para>Don't call make with arguments to build in parallel</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>cmake</option></term>
                     <listitem><para>Use cmake instead of configure</para></listitem>
                 </varlistentry>
