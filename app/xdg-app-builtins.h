@@ -59,6 +59,7 @@ BUILTINPROTO(make_current_app);
 BUILTINPROTO(uninstall);
 BUILTINPROTO(install_bundle);
 BUILTINPROTO(list);
+BUILTINPROTO(info);
 BUILTINPROTO(run);
 BUILTINPROTO(enter);
 BUILTINPROTO(build_init);

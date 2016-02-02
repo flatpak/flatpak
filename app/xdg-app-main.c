@@ -48,6 +48,7 @@ static XdgAppCommand commands[] = {
   { "update", xdg_app_builtin_update, "Update an installed application or runtime"},
   { "uninstall", xdg_app_builtin_uninstall, "Uninstall an installed application or runtime" },
   { "list", xdg_app_builtin_list, "List installed apps and/or runtimes" },
+  { "info", xdg_app_builtin_info, "Show info for installed app or runtime" },
 
   { "\n Running applications" },
   { "run", xdg_app_builtin_run, "Run an application" },

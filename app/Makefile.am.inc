@@ -15,6 +15,7 @@ xdg_app_SOURCES = \
 	app/xdg-app-builtins-update.c \
 	app/xdg-app-builtins-uninstall.c \
 	app/xdg-app-builtins-list.c \
+	app/xdg-app-builtins-info.c \
 	app/xdg-app-builtins-run.c \
 	app/xdg-app-builtins-enter.c \
 	app/xdg-app-builtins-build-init.c \
