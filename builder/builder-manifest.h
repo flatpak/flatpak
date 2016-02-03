@@ -48,6 +48,9 @@ const char *    builder_manifest_get_id_platform   (BuilderManifest  *self);
 BuilderOptions *builder_manifest_get_build_options (BuilderManifest  *self);
 GList *         builder_manifest_get_modules       (BuilderManifest  *self);
 
+gboolean        builder_manifest_start             (BuilderManifest  *self,
+                                                    BuilderContext   *context,
+                                                    GError          **error);
 gboolean        builder_manifest_init_app_dir      (BuilderManifest  *self,
                                                     BuilderContext   *context,
                                                     GError          **error);

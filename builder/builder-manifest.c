@@ -41,8 +41,10 @@ struct BuilderManifest {
   char *id_platform;
   char *branch;
   char *runtime;
+  char *runtime_commit;
   char *runtime_version;
   char *sdk;
+  char *sdk_commit;
   char *metadata;
   char *metadata_platform;
   char **cleanup;
@@ -83,6 +85,7 @@ enum {
   PROP_RUNTIME,
   PROP_RUNTIME_VERSION,
   PROP_SDK,
+  PROP_SDK_COMMIT,
   PROP_METADATA,
   PROP_METADATA_PLATFORM,
   PROP_BUILD_OPTIONS,
@@ -114,8 +117,10 @@ builder_manifest_finalize (GObject *object)
   g_free (self->id);
   g_free (self->branch);
   g_free (self->runtime);
+  g_free (self->runtime_commit);
   g_free (self->runtime_version);
   g_free (self->sdk);
+  g_free (self->sdk_commit);
   g_free (self->metadata);
   g_free (self->metadata_platform);
   g_free (self->command);
@@ -170,6 +175,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_SDK:
       g_value_set_string (value, self->sdk);
+      break;
+
+    case PROP_SDK_COMMIT:
+      g_value_set_string (value, self->sdk_commit);
       break;
 
     case PROP_METADATA:
@@ -301,6 +310,11 @@ builder_manifest_set_property (GObject       *object,
     case PROP_SDK:
       g_free (self->sdk);
       self->sdk = g_value_dup_string (value);
+      break;
+
+    case PROP_SDK_COMMIT:
+      g_free (self->sdk_commit);
+      self->sdk_commit = g_value_dup_string (value);
       break;
 
     case PROP_METADATA:
@@ -464,6 +478,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_SDK,
                                    g_param_spec_string ("sdk",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_SDK_COMMIT,
+                                   g_param_spec_string ("sdk-commit",
                                                         "",
                                                         "",
                                                         NULL,
@@ -744,6 +765,49 @@ builder_manifest_get_runtime_version (BuilderManifest *self)
   return self->runtime_version ? self->runtime_version : "master";
 }
 
+
+static char *
+xdg_app (GError      **error,
+         ...)
+{
+  gboolean res;
+  g_autofree char *output = NULL;
+  va_list ap;
+
+  va_start (ap, error);
+  res = xdg_app_spawn (NULL, &output, error, "xdg-app", ap);
+  va_end (ap);
+
+  if (res)
+    {
+      g_strchomp (output);
+      return g_steal_pointer (&output);
+    }
+  return NULL;
+}
+
+gboolean
+builder_manifest_start (BuilderManifest  *self,
+                        BuilderContext   *context,
+                        GError          **error)
+{
+  self->sdk_commit = xdg_app (NULL, "info", "--show-commit", self->sdk,
+                              builder_manifest_get_runtime_version (self), NULL);
+  if (self->sdk_commit == NULL)
+    return xdg_app_fail (error, "Unable to find sdk %s version %s",
+                         self->sdk,
+                         builder_manifest_get_runtime_version (self));
+
+  self->runtime_commit = xdg_app (NULL, "info", "--show-commit", self->runtime,
+                                  builder_manifest_get_runtime_version (self), NULL);
+  if (self->runtime_commit == NULL)
+    return xdg_app_fail (error, "Unable to find runtime %s version %s",
+                         self->runtime,
+                         builder_manifest_get_runtime_version (self));
+
+  return TRUE;
+}
+
 gboolean
 builder_manifest_init_app_dir (BuilderManifest *self,
                                BuilderContext *context,
@@ -822,6 +886,7 @@ builder_manifest_checksum (BuilderManifest *self,
   builder_cache_checksum_str (cache, self->runtime);
   builder_cache_checksum_str (cache, builder_manifest_get_runtime_version (self));
   builder_cache_checksum_str (cache, self->sdk);
+  builder_cache_checksum_str (cache, self->sdk_commit);
   builder_cache_checksum_str (cache, self->metadata);
   builder_cache_checksum_boolean (cache, self->writable_sdk);
   builder_cache_checksum_strv (cache, self->sdk_extensions);
@@ -888,6 +953,7 @@ builder_manifest_checksum_for_platform (BuilderManifest *self,
 {
   builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_PLATFORM_VERSION);
   builder_cache_checksum_str (cache, self->id_platform);
+  builder_cache_checksum_str (cache, self->runtime_commit);
   builder_cache_checksum_str (cache, self->metadata);
   builder_cache_checksum_strv (cache, self->cleanup_platform);
   builder_cache_checksum_strv (cache, self->platform_extensions);

@@ -234,6 +234,12 @@ main (int    argc,
       return 1;
     }
 
+  if (!builder_manifest_start (manifest, build_context, &error))
+    {
+      g_print ("Failed to init: %s\n", error->message);
+      return 1;
+    }
+
   if (!opt_disable_download &&
       !builder_manifest_download (manifest, !opt_disable_updates, build_context, &error))
     {
