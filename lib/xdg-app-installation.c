@@ -949,6 +949,9 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
   if (ref == NULL)
     return FALSE;
 
+  /* prune, etc are not threadsafe, so we work on a copy */
+  dir_clone = xdg_app_dir_clone (priv->dir);
+
   if (!xdg_app_dir_lock (dir_clone, &lock,
                          cancellable, error))
     return FALSE;
@@ -965,9 +968,6 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
   remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
   if (remote_name == NULL)
     return FALSE;
-
-  /* prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = xdg_app_dir_clone (priv->dir);
 
   g_debug ("dropping active ref");
   if (!xdg_app_dir_set_active (dir_clone, ref, NULL, cancellable, error))
