@@ -2287,7 +2287,29 @@ xdg_app_dir_get_if_deployed (XdgAppDir     *self,
   g_autoptr(GFile) deploy_dir = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
-  deploy_dir = g_file_get_child (deploy_base, checksum ? checksum : "active");
+
+  if (checksum != NULL)
+    deploy_dir = g_file_get_child (deploy_base, checksum);
+  else
+    {
+      g_autoptr(GFile) active_link = g_file_get_child (deploy_base, "active");
+      g_autoptr(GFileInfo) info = NULL;
+      const char *target;
+
+      info = g_file_query_info (active_link,
+                                G_FILE_ATTRIBUTE_STANDARD_TYPE "," G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                NULL,
+                                NULL);
+      if (info == NULL)
+        return NULL;
+
+      target = g_file_info_get_symlink_target (info);
+      if (target == NULL)
+        return NULL;
+
+      deploy_dir = g_file_get_child (deploy_base, target);
+    }
 
   if (g_file_query_file_type (deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
     return g_object_ref (deploy_dir);
