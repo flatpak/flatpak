@@ -482,8 +482,8 @@ xdg_app_builtin_install_runtime (int argc, char **argv, GCancellable *cancellabl
 gboolean
 xdg_app_builtin_install_app (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  opt_runtime = TRUE;
-  opt_app = FALSE;
+  opt_runtime = FALSE;
+  opt_app = TRUE;
 
   return xdg_app_builtin_install (argc, argv, cancellable, error);
 }
