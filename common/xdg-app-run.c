@@ -1941,6 +1941,7 @@ compute_permissions (GKeyFile *app_metadata,
 
 static gboolean
 add_app_info_args (GPtrArray *argv_array,
+                   XdgAppDeploy *deploy,
                    const char *app_id,
                    const char *runtime_ref,
                    XdgAppContext *final_app_context,
@@ -1953,6 +1954,8 @@ add_app_info_args (GPtrArray *argv_array,
   if (fd >= 0)
     {
       g_autoptr(GKeyFile) keyfile = NULL;
+      g_autoptr(GFile) files = NULL;
+      g_autofree char *files_path = NULL;
 
       close (fd);
 
@@ -1960,6 +1963,11 @@ add_app_info_args (GPtrArray *argv_array,
 
       g_key_file_set_string (keyfile, "Application", "name", app_id);
       g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
+
+      files = xdg_app_deploy_get_files (deploy);
+      files_path = g_file_get_path (files);
+
+      g_key_file_set_string (keyfile, "Application", "app-path", files_path);
 
       xdg_app_context_save_metadata (final_app_context, keyfile);
 
@@ -2226,7 +2234,7 @@ xdg_app_run_app (const char *app_ref,
   if (extra_context)
     xdg_app_context_merge (app_context, extra_context);
 
-  if (!add_app_info_args (argv_array, app_ref_parts[1], runtime_ref, app_context, error))
+  if (!add_app_info_args (argv_array, app_deploy, app_ref_parts[1], runtime_ref, app_context, error))
     return FALSE;
 
   if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
