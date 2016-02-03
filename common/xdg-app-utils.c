@@ -1654,7 +1654,7 @@ extract_appstream (OstreeRepo    *repo,
         }
       if (!copy_icon (id, root, dest, "128x128", &my_error))
         {
-          g_print ("Error copying 128x12 icon: %s\n", my_error->message);
+          g_print ("Error copying 128x128 icon: %s\n", my_error->message);
           g_clear_error (&my_error);
         }
     }
@@ -2165,7 +2165,7 @@ xdg_app_xml_parse (GInputStream *in,
   char buffer[32*1024];
   gssize len;
   g_autoptr(GMarkupParseContext) ctx = NULL;
-  
+
   if (compressed)
     {
       g_autoptr(GZlibDecompressor) decompressor = NULL;
