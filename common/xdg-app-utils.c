@@ -1581,7 +1581,7 @@ copy_icon (const char *id,
   g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
   g_autoptr(GFile) icons_dir =
     g_file_resolve_relative_path (root,
-                                  "export/share/app-info/icons/xdg-app");
+                                  "files/share/app-info/icons/xdg-app");
   g_autoptr(GFile) size_dir =g_file_get_child (icons_dir, size);
   g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
   g_autoptr(GFile) dest_dir = g_file_get_child (dest, "icons");
@@ -1632,7 +1632,7 @@ extract_appstream (OstreeRepo    *repo,
   if (!ostree_repo_read_commit (repo, ref, &root, NULL, NULL, error))
     return FALSE;
 
-  xmls_dir = g_file_resolve_relative_path (root, "export/share/app-info/xmls");
+  xmls_dir = g_file_resolve_relative_path (root, "files/share/app-info/xmls");
   appstream_basename = g_strconcat (id, ".xml.gz", NULL);
   appstream_file = g_file_get_child (xmls_dir, appstream_basename);
 

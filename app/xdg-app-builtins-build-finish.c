@@ -183,14 +183,12 @@ collect_exports (GFile *base, const char *app_id, gboolean is_runtime, GCancella
   g_autoptr(GFile) export = NULL;
   const char *app_paths[] = {
     "share/applications",                 /* Copy desktop files */
-    "share/app-info",                     /* Copy appstream files */
     "share/icons/hicolor",                /* Icons */
     "share/dbus-1/services",              /* D-Bus service files */
     "share/gnome-shell/search-providers", /* Search providers */
     NULL,
   };
   const char *runtime_paths[] = {
-    "share/app-info",                      /* Copy appstream files */
     NULL,
   };
   const char **paths;
