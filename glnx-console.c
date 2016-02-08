@@ -237,7 +237,7 @@ glnx_console_progress_text_percent (const char *text,
   }
 
   textlen = MIN (input_textlen, ncolumns - bar_min);
-  barlen = ncolumns - textlen;
+  barlen = ncolumns - (textlen + 1);
 
   if (textlen > 0)
     {
