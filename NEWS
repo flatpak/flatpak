@@ -1,3 +1,22 @@
+Major changes in 0.4.9
+======================
+* Fix crash at end of runtime install.
+* xdg-app-builder has a new source type "shell" which lets you run arbitrary
+  shell commands.
+* Allow apps with writable homedir access to modify the xdg-app repos.
+* New xdg-app info command gives you status of an installed app or runtime.
+* The xdg-app-builder cache now contains the sdk commit id, so that a new
+  version of the sdk invalidates the cache.
+* Fixed a regression in the xdg-app install-app backwards compatibility
+  handling.
+* xdg-app now gives the application access to the deployment path, which can
+  be used to give host-side services access to app files (such as help
+  documents).
+* build-export no longer exports appstream files, and when generating appstream
+  files we don't need them to be.
+* The default architecture tag used by xdg-app is now made canonical when needed
+  (i.e. on arm/x86/mips).
+
 Major changes in 0.4.8
 ======================
 * Changed global installation directory to /var/lib/xdg-app (not /var/xdg-app).
