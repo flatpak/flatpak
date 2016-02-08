@@ -1704,7 +1704,7 @@ builder_manifest_create_platform (BuilderManifest *self,
               if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
                 continue;
 
-              g_propagate_error (error, g_steal_pointer (&error));
+              g_propagate_error (error, g_steal_pointer (&my_error));
               return FALSE;
             }
 

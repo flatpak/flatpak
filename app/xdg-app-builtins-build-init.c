@@ -136,7 +136,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
         {
           if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
             {
-              g_propagate_error (error, g_steal_pointer (&error));
+              g_propagate_error (error, g_steal_pointer (&my_error));
               return FALSE;
             }
 
