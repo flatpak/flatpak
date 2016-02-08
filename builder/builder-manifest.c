@@ -1707,6 +1707,7 @@ builder_manifest_create_platform (BuilderManifest *self,
               g_propagate_error (error, g_steal_pointer (&my_error));
               return FALSE;
             }
+          g_clear_error (&my_error);
 
           if (g_file_info_get_file_type (info) == G_FILE_TYPE_DIRECTORY)
             {
