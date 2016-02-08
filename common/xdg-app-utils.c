@@ -134,18 +134,59 @@ xdg_app_fail (GError **error, const char *format, ...)
   return FALSE;
 }
 
+
+/* This maps the kernel-reported uname to a single string representing
+ * the cpu family, in the sense that all members of this family would
+ * be able to understand and link to a binary file with such cpu
+ * opcodes. That doesn't necessarily mean that all members of the
+ * family can run all opcodes, for instance for modern 32bit intel we
+ * report "i386", even though they support instructions that the
+ * original i386 cpu cannot run. Still, such an executable would
+ * at least try to execute a 386, wheras an arm binary would not.
+ */
 const char *
 xdg_app_get_arch (void)
 {
   static struct utsname buf;
   static char *arch = NULL;
+  char *m;
 
-  if (arch == NULL)
+  if (arch != NULL)
+    return arch;
+
+  if (uname (&buf))
     {
-      if (uname (&buf))
-        arch = "unknown";
+      arch = "unknown";
+      return arch;
+    }
+
+  /* By default, just pass on machine, good enough for most arches */
+  arch = buf.machine;
+
+  /* Override for some arches */
+
+  m = buf.machine;
+  /* i?86 */
+  if (strlen (m) == 4 && m[0] == 'i' && m[2] == '8'  && m[3] == '6')
+    arch = "i386";
+  else if (g_str_has_prefix (m, "arm"))
+    {
+      if (g_str_has_suffix (m, "b"))
+        arch = "armeb";
       else
-        arch = buf.machine;
+        arch = "arm";
+    }
+  else if (strcmp (m, "mips") == 0)
+    {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+      arch = "mipsel";
+#endif
+    }
+  else if (strcmp (m, "mips64") == 0)
+    {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+      arch = "mips64el";
+#endif
     }
 
   return arch;
