@@ -757,23 +757,33 @@ builder_module_build (BuilderModule *self,
   g_auto(GStrv) env = NULL;
   g_auto(GStrv) build_args = NULL;
   const char *cflags, *cxxflags;
-  g_autofree char *buildname = NULL;
   g_autoptr(GFile) source_dir = NULL;
   g_autoptr(GFile) source_subdir = NULL;
   const char *source_subdir_relative = NULL;
-  g_autoptr(GFile) source_dir_template = NULL;
   g_autofree char *source_dir_path = NULL;
+  int count;
 
-  buildname = g_strdup_printf ("build-%s-XXXXXX", self->name);
-
-  source_dir_template = g_file_get_child (builder_context_get_state_dir (context),
-                                          buildname);
-  source_dir_path = g_file_get_path (source_dir_template);
-
-  if (g_mkdtemp (source_dir_path) == NULL)
+  for (count = 1; source_dir_path == NULL; count++)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create build directory");
-      return FALSE;
+      g_autofree char *buildname = NULL;
+      g_autoptr(GFile) source_dir_count = NULL;
+      g_autoptr(GError) my_error = NULL;
+
+      buildname = g_strdup_printf ("build-%s-%d", self->name, count);
+
+      source_dir_count = g_file_get_child (builder_context_get_state_dir (context), buildname);
+
+      if (g_file_make_directory (source_dir_count, NULL, &my_error))
+        source_dir_path = g_file_get_path (source_dir_count);
+      else
+        {
+          if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+            {
+              g_propagate_error (error, g_steal_pointer (&my_error));
+              return FALSE;
+            }
+          /* Already exists, try again */
+        }
     }
 
   source_dir = g_file_new_for_path (source_dir_path);
