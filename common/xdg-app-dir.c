@@ -1158,6 +1158,7 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
 	  g_ptr_array_add (argv_array, g_strdup ("-F"));
 	  g_ptr_array_add (argv_array, g_strdup ("/usr"));
 	  g_ptr_array_add (argv_array, g_file_get_path (child));
+	  g_ptr_array_add (argv_array, g_strdup ("/app"));
 	  g_ptr_array_add (argv_array, NULL);
 
 	  if (!g_spawn_sync ("/",
