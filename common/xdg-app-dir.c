@@ -1151,6 +1151,10 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
 	  g_debug ("running trigger %s", name);
 
 	  argv_array = g_ptr_array_new_with_free_func (g_free);
+#ifdef DISABLE_SANDBOXED_TRIGGERS
+	  g_ptr_array_add (argv_array, g_file_get_path (child));
+	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
+#else
 	  g_ptr_array_add (argv_array, g_strdup (HELPER));
 	  g_ptr_array_add (argv_array, g_strdup ("-a"));
 	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
@@ -1159,6 +1163,7 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
 	  g_ptr_array_add (argv_array, g_strdup ("/usr"));
 	  g_ptr_array_add (argv_array, g_file_get_path (child));
 	  g_ptr_array_add (argv_array, g_strdup ("/app"));
+#endif
 	  g_ptr_array_add (argv_array, NULL);
 
 	  if (!g_spawn_sync ("/",

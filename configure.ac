@@ -104,6 +104,16 @@ if test "x$enable_xauth" = "xyes"; then
       [Define if using xauth])
 fi
 
+AC_ARG_ENABLE([sandboxed-triggers],
+              AC_HELP_STRING([--disable-sandboxed-triggers],
+                             [Disable sandboxed triggers]),
+              [],
+              [enable_sandboxed_triggers=yes])
+if test "x$enable_sandboxed_triggers" = "xno"; then
+   AC_DEFINE([DISABLE_SANDBOXED_TRIGGERS], [1],
+      [Define if sandboxed triggers are disabled])
+fi
+
 PKG_CHECK_MODULES(OSTREE, [libgsystem >= 2015.1 ostree-1 >= 2015.3])
 AC_SUBST(OSTREE_CFLAGS)
 AC_SUBST(OSTREE_LIBS)
