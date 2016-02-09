@@ -1,3 +1,7 @@
+Major changes in 0.4.11
+=======================
+* Fix assertion when installing runtime
+
 Major changes in 0.4.10
 =======================
 * App desktop files and icons were not being exported to the desktop
