@@ -1,3 +1,7 @@
+Major changes in 0.4.10
+=======================
+* App desktop files and icons were not being exported to the desktop
+
 Major changes in 0.4.9
 ======================
 * Fix crash at end of runtime install.
