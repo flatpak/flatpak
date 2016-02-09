@@ -2401,7 +2401,7 @@ xdg_app_dir_find_remote_ref (XdgAppDir      *self,
   if (runtime_ref && xdg_app_variant_bsearch_str (refs, runtime_ref, &pos))
     {
       if (is_app)
-        *is_app = TRUE;
+        *is_app = FALSE;
       return g_steal_pointer (&runtime_ref);
     }
 
