@@ -997,6 +997,12 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
 
   xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
 
+  if (kind == XDG_APP_REF_KIND_APP)
+    {
+      if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
+        return FALSE;
+    }
+
   if (!xdg_app_dir_mark_changed (dir_clone, error))
     return FALSE;
 
