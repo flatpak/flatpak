@@ -748,6 +748,7 @@ builder_module_build (BuilderModule *self,
   g_autoptr(GFile) configure_file = NULL;
   g_autoptr(GFile) cmake_file = NULL;
   const char *makefile_names[] =  {"Makefile", "makefile", "GNUmakefile", NULL};
+  g_autoptr(GFile) build_parent_dir = NULL;
   g_autoptr(GFile) build_dir = NULL;
   g_autofree char *build_dir_relative = NULL;
   gboolean has_configure;
@@ -763,15 +764,21 @@ builder_module_build (BuilderModule *self,
   g_autofree char *source_dir_path = NULL;
   int count;
 
+  build_parent_dir = g_file_get_child (builder_context_get_state_dir (context), "build");
+
+  if (!gs_file_ensure_directory (build_parent_dir, TRUE,
+                                 NULL, error))
+      return FALSE;
+
   for (count = 1; source_dir_path == NULL; count++)
     {
       g_autofree char *buildname = NULL;
       g_autoptr(GFile) source_dir_count = NULL;
       g_autoptr(GError) my_error = NULL;
 
-      buildname = g_strdup_printf ("build-%s-%d", self->name, count);
+      buildname = g_strdup_printf ("%s-%d", self->name, count);
 
-      source_dir_count = g_file_get_child (builder_context_get_state_dir (context), buildname);
+      source_dir_count = g_file_get_child (build_parent_dir, buildname);
 
       if (g_file_make_directory (source_dir_count, NULL, &my_error))
         source_dir_path = g_file_get_path (source_dir_count);
@@ -985,9 +992,7 @@ builder_module_build (BuilderModule *self,
 
   if (builder_context_get_keep_build_dirs (context))
     {
-      g_autofree char *buildname_link = g_strdup_printf ("build-%s", self->name);
-      g_autoptr(GFile) build_link = g_file_get_child (builder_context_get_state_dir (context),
-                                                      buildname_link);
+      g_autoptr(GFile) build_link = g_file_get_child (build_parent_dir, self->name);
       g_autoptr(GError) my_error = NULL;
       g_autofree char *buildname_target = g_path_get_basename (source_dir_path);
 
