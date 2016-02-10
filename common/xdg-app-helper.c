@@ -2340,6 +2340,24 @@ main (int argc,
 
   create_files (create, N_ELEMENTS (create), share_shm, runtime_path);
 
+  /* If stdout is a tty, that means the sandbox can write to the
+     outside-sandbox tty. In that case we also creata a /dev/console
+     that points to this tty device. This should not cause any more
+     access than we already have, and it makes ttyname() work in the
+     sandbox. */
+  if (isatty (1))
+    {
+      char *host_tty_dev = ttyname (1);
+      if (host_tty_dev != NULL && *host_tty_dev != 0)
+        {
+          if (!create_file ("dev/console", 0666, NULL))
+            die_with_error ("creating /dev/console");
+
+          if (bind_mount (host_tty_dev, "dev/console", BIND_DEVICES))
+            die_with_error ("mount /dev/console");
+        }
+    }
+
   if (share_shm)
     {
       if (bind_mount ("/dev/shm", "dev/shm", BIND_DEVICES))
