@@ -24,6 +24,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/file.h>
+#include <sys/types.h>
+#include <utime.h>
 
 #include <gio/gio.h>
 #include "libgsystem.h"
@@ -617,6 +619,7 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
   g_autoptr(GFile) active_link = NULL;
   g_autoptr(GFile) timestamp_file = NULL;
   g_autoptr(GError) tmp_error = NULL;
+  gboolean checkout_exists;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -656,9 +659,11 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
       return FALSE;
     }
 
+  checkout_exists = g_file_query_exists (checkout_dir, NULL);
+
   if (old_checksum != NULL && new_checksum != NULL &&
       strcmp (old_checksum, new_checksum) == 0 &&
-      g_file_query_exists (checkout_dir, NULL))
+      checkout_exists)
     {
       if (!g_file_replace_contents (timestamp_file, "", 0, NULL, FALSE,
                                     G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, error))
@@ -709,6 +714,14 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
   if (!g_file_replace_contents (timestamp_file, "", 0, NULL, FALSE,
                                 G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, error))
     return FALSE;
+
+  /* If we added a new checkout, touch the toplevel dir to tell people that they need
+     to re-scan */
+  if (!checkout_exists)
+    {
+      g_autofree char *appstream_dir_path = g_file_get_path (appstream_dir);
+      utime (appstream_dir_path, NULL);
+    }
 
   if (out_changed)
     *out_changed = TRUE;
