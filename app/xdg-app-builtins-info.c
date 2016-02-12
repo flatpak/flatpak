@@ -102,7 +102,7 @@ xdg_app_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (ref == NULL && opt_system)
     {
-      system_dir = xdg_app_dir_get_user ();
+      system_dir = xdg_app_dir_get_system ();
 
       ref = xdg_app_dir_find_installed_ref (system_dir,
                                             name,
