@@ -549,7 +549,7 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
       if (!g_file_query_exists (repodir, cancellable))
         {
           if (!ostree_repo_create (repo,
-                                   self->user ? OSTREE_REPO_MODE_BARE_USER : OSTREE_REPO_MODE_BARE,
+                                   OSTREE_REPO_MODE_BARE_USER,
                                    cancellable, error))
             {
               gs_shutil_rm_rf (repodir, cancellable, NULL);
@@ -684,7 +684,7 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
     return FALSE;
 
   if (!ostree_repo_checkout_tree (self->repo,
-                                  self->user ? OSTREE_REPO_CHECKOUT_MODE_USER : OSTREE_REPO_CHECKOUT_MODE_NONE,
+                                  OSTREE_REPO_CHECKOUT_MODE_USER,
                                   OSTREE_REPO_CHECKOUT_OVERWRITE_NONE,
                                   checkout_dir,
                                   OSTREE_REPO_FILE (root), file_info,
@@ -1802,7 +1802,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
     goto out;
 
   if (!ostree_repo_checkout_tree (self->repo,
-                                  self->user ? OSTREE_REPO_CHECKOUT_MODE_USER : OSTREE_REPO_CHECKOUT_MODE_NONE,
+                                  OSTREE_REPO_CHECKOUT_MODE_USER,
                                   OSTREE_REPO_CHECKOUT_OVERWRITE_NONE,
                                   checkoutdir,
                                   OSTREE_REPO_FILE (root), file_info,
