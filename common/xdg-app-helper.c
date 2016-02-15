@@ -2290,6 +2290,8 @@ main (int argc,
 
   if (pid != 0)
     {
+      /* We don't need any caps in the launcher, drop them immediately. */
+      drop_caps ();
       if (app_id)
         set_procname (strdup_printf ("xdg-app-helper %s launcher", app_id));
       monitor_child (event_fd);
