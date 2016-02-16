@@ -166,7 +166,7 @@ main (int argc, char *argv[])
                  xdg_app_installed_ref_get_deploy_dir (app),
                  xdg_app_installed_ref_get_is_current (app),
                  xdg_app_installed_ref_get_installed_size (app));
-        g_print ("metadata:\n%s\n", xdg_app_installed_ref_load_metadata (app, NULL, NULL));
+        g_print ("metadata:\n%s\n", (char *)g_bytes_get_data (xdg_app_installed_ref_load_metadata (app, NULL, NULL), NULL));
       }
   }
 

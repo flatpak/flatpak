@@ -229,7 +229,7 @@ xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef *self)
   return priv->installed_size;
 }
 
-char *
+GBytes *
 xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
                                       GCancellable *cancellable,
                                       GError **error)
@@ -237,6 +237,7 @@ xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
   XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
   g_autofree char *path = NULL;
   char *metadata;
+  gsize length;
 
   if (priv->deploy_dir == NULL)
     {
@@ -246,10 +247,10 @@ xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
     }
 
   path = g_build_filename (priv->deploy_dir, "metadata", NULL);
-  if (!g_file_get_contents (path, &metadata, NULL, error))
+  if (!g_file_get_contents (path, &metadata, &length, error))
     return NULL;
 
-  return metadata;
+  return g_bytes_new_take (metadata, length);
 }
 
 XdgAppInstalledRef *
