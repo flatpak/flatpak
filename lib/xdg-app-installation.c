@@ -156,6 +156,19 @@ xdg_app_installation_get_is_user (XdgAppInstallation *self)
 }
 
 /**
+ * xdg_app_installation_get_path
+ *
+ * Returns: (transfer full): an #GFile
+ */
+GFile *
+xdg_app_installation_get_path (XdgAppInstallation *self)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
+  return g_object_ref (xdg_app_dir_get_path (priv->dir));
+}
+
+/**
  * xdg_app_installation_launch:
  * @self: a #XdgAppInstallation
  * @name: name of the app to launch
