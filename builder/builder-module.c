@@ -724,10 +724,11 @@ builder_module_handle_debuginfo (BuilderModule *self,
                   real_debug_path = g_build_filename (real_debug_dir, filename_debug, NULL);
 
                   g_print ("stripping %s to %s\n", path, debug_path);
-                  eu_strip (error, "--remove-comment", "--reloc-debug-sections",
-                            "-f", debug_path,
-                            "-F", real_debug_path,
-                            path, NULL);
+                  if (!eu_strip (error, "--remove-comment", "--reloc-debug-sections",
+                                 "-f", debug_path,
+                                 "-F", real_debug_path,
+                                 path, NULL))
+                    return FALSE;
                 }
             }
         }
