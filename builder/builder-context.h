@@ -39,6 +39,7 @@ GFile *         builder_context_get_app_dir         (BuilderContext  *self);
 GFile *         builder_context_get_base_dir        (BuilderContext  *self);
 GFile *         builder_context_get_state_dir       (BuilderContext  *self);
 GFile *         builder_context_get_cache_dir       (BuilderContext  *self);
+GFile *         builder_context_get_build_dir       (BuilderContext  *self);
 GFile *         builder_context_get_ccache_dir      (BuilderContext  *self);
 GFile *         builder_context_get_download_dir    (BuilderContext  *self);
 SoupSession *   builder_context_get_soup_session    (BuilderContext  *self);

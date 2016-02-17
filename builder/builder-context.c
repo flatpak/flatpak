@@ -41,6 +41,7 @@ struct BuilderContext {
 
   GFile *download_dir;
   GFile *state_dir;
+  GFile *build_dir;
   GFile *cache_dir;
   GFile *ccache_dir;
 
@@ -135,6 +136,7 @@ builder_context_constructed (GObject *object)
 
   self->state_dir = g_file_get_child (self->base_dir, ".xdg-app-builder");
   self->download_dir = g_file_get_child (self->state_dir, "downloads");
+  self->build_dir = g_file_get_child (self->state_dir, "build");
   self->cache_dir = g_file_get_child (self->state_dir, "cache");
   self->ccache_dir = g_file_get_child (self->state_dir, "ccache");
 }
@@ -198,6 +200,12 @@ GFile *
 builder_context_get_cache_dir (BuilderContext  *self)
 {
   return self->cache_dir;
+}
+
+GFile *
+builder_context_get_build_dir (BuilderContext  *self)
+{
+  return self->build_dir;
 }
 
 GFile *

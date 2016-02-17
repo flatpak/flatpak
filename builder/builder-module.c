@@ -749,7 +749,7 @@ builder_module_build (BuilderModule *self,
   g_autoptr(GFile) configure_file = NULL;
   g_autoptr(GFile) cmake_file = NULL;
   const char *makefile_names[] =  {"Makefile", "makefile", "GNUmakefile", NULL};
-  g_autoptr(GFile) build_parent_dir = NULL;
+  GFile *build_parent_dir = NULL;
   g_autoptr(GFile) build_dir = NULL;
   g_autoptr(GFile) build_link = NULL;
   g_autofree char *build_dir_relative = NULL;
@@ -768,7 +768,7 @@ builder_module_build (BuilderModule *self,
   g_autoptr(GError) my_error = NULL;
   int count;
 
-  build_parent_dir = g_file_get_child (builder_context_get_state_dir (context), "build");
+  build_parent_dir = builder_context_get_build_dir (context);
 
   if (!gs_file_ensure_directory (build_parent_dir, TRUE,
                                  NULL, error))
