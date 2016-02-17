@@ -109,6 +109,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--tag=TAG</option></term>
+
+                <listitem><para>
+                    Add a tag to the metadata file.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--sdk-extension=EXTENSION</option></term>
 
                 <listitem><para>

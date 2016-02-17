@@ -35,6 +35,7 @@ static char *opt_arch;
 static char *opt_var;
 static char *opt_sdk_dir;
 static char **opt_sdk_extensions;
+static char **opt_tags;
 static gboolean opt_writable_sdk;
 static gboolean opt_update;
 
@@ -42,6 +43,7 @@ static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
   { "var", 'v', 0, G_OPTION_ARG_STRING, &opt_var, "Initialize var from named runtime", "RUNTIME" },
   { "writable-sdk", 'w', 0, G_OPTION_ARG_NONE, &opt_writable_sdk, "Initialize /usr with a writable copy of the sdk",  },
+  { "tag", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_tags, "Add a tag",  },
   { "sdk-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sdk_extensions, "include this sdk extension in /usr",  "EXTENSION"},
   { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, "Where to store sdk (defaults to 'usr')", "DIR" },
   { "update", 0, 0, G_OPTION_ARG_NONE, &opt_update, "Re-initialize the sdk/var",  },
@@ -61,6 +63,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GFile) var_tmp_dir = NULL;
   g_autoptr(GFile) var_run_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
+  g_autoptr(GString) metadata_contents = NULL;
   const char *app_id;
   const char *directory;
   const char *sdk;
@@ -69,7 +72,6 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autofree char *runtime_ref = NULL;
   g_autofree char *var_ref = NULL;
   g_autofree char *sdk_ref = NULL;
-  g_autofree char *metadata_contents = NULL;
   int i;
 
   context = g_option_context_new ("DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building");
@@ -238,13 +240,26 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
       !g_file_make_symbolic_link (var_run_dir, "/run", cancellable, error))
     return FALSE;
 
-  metadata_contents = g_strdup_printf("[Application]\n"
-                                      "name=%s\n"
-                                      "runtime=%s\n"
-                                      "sdk=%s\n",
-                                      app_id, runtime_ref, sdk_ref);
+
+  metadata_contents = g_string_new ("[Application]\n");
+  g_string_append_printf (metadata_contents,
+                           "name=%s\n"
+                           "runtime=%s\n"
+                           "sdk=%s\n",
+                           app_id, runtime_ref, sdk_ref);
+  if (opt_tags != NULL)
+    {
+      g_string_append (metadata_contents, "tags=");
+      for (i = 0; opt_tags[i] != NULL; i++)
+        {
+          g_string_append (metadata_contents, opt_tags[i]);
+          g_string_append_c (metadata_contents, ';');
+        }
+      g_string_append_c (metadata_contents, '\n');
+    }
+
   if (!g_file_replace_contents (metadata_file,
-                                metadata_contents, strlen (metadata_contents), NULL, FALSE,
+                                metadata_contents->str, metadata_contents->len, NULL, FALSE,
                                 G_FILE_CREATE_REPLACE_DESTINATION,
                                 NULL, cancellable, error))
     return FALSE;
