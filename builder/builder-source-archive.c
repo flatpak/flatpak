@@ -35,6 +35,7 @@
 struct BuilderSourceArchive {
   BuilderSource parent;
 
+  char *path;
   char *url;
   char *sha256;
   guint strip_components;
@@ -48,6 +49,7 @@ G_DEFINE_TYPE (BuilderSourceArchive, builder_source_archive, BUILDER_TYPE_SOURCE
 
 enum {
   PROP_0,
+  PROP_PATH,
   PROP_URL,
   PROP_SHA256,
   PROP_STRIP_COMPONENTS,
@@ -104,6 +106,7 @@ builder_source_archive_finalize (GObject *object)
   BuilderSourceArchive *self = (BuilderSourceArchive *)object;
 
   g_free (self->url);
+  g_free (self->path);
   g_free (self->sha256);
 
   G_OBJECT_CLASS (builder_source_archive_parent_class)->finalize (object);
@@ -119,6 +122,10 @@ builder_source_archive_get_property (GObject    *object,
 
   switch (prop_id)
     {
+    case PROP_PATH:
+      g_value_set_string (value, self->path);
+      break;
+
     case PROP_URL:
       g_value_set_string (value, self->url);
       break;
@@ -146,6 +153,11 @@ builder_source_archive_set_property (GObject      *object,
 
   switch (prop_id)
     {
+    case PROP_PATH:
+      g_free (self->path);
+      self->path = g_value_dup_string (value);
+      break;
+
     case PROP_URL:
       g_free (self->url);
       self->url = g_value_dup_string (value);
@@ -219,6 +231,30 @@ get_download_location (BuilderSourceArchive *self,
   return g_steal_pointer (&file);
 }
 
+static GFile *
+get_source_file (BuilderSourceArchive *self,
+                 BuilderContext *context,
+                 gboolean *is_local,
+                 GError **error)
+{
+  GFile *base_dir = builder_context_get_base_dir (context);
+
+  if (self->url != NULL && self->url[0] != 0)
+    {
+      *is_local = FALSE;
+      return get_download_location (self, context, error);
+    }
+
+  if (self->path != NULL && self->path[0] != 0)
+    {
+      *is_local = TRUE;
+      return g_file_resolve_relative_path (base_dir, self->path);
+    }
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "source file path or url not specified");
+  return NULL;
+}
+
 static GBytes *
 download_uri (const char *url,
               BuilderContext *context,
@@ -263,13 +299,40 @@ builder_source_archive_download (BuilderSource *source,
   g_autofree char *sha256 = NULL;
   g_autofree char *base_name = NULL;
   g_autoptr(GBytes) content = NULL;
+  gboolean is_local;
 
-  file = get_download_location (self, context, error);
+  file = get_source_file (self, context, &is_local, error);
   if (file == NULL)
     return FALSE;
 
+  base_name = g_file_get_basename (file);
+
   if (g_file_query_exists (file, NULL))
-    return TRUE;
+    {
+      if (is_local && self->sha256 != NULL && *self->sha256 != 0)
+        {
+          g_autofree char *data = NULL;
+          gsize len;
+
+          if (!g_file_load_contents (file, NULL, &data, &len, NULL, error))
+            return FALSE;
+
+          sha256 = g_compute_checksum_for_string (G_CHECKSUM_SHA256, data, len);
+          if (strcmp (sha256, self->sha256) != 0)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Wrong sha256 for %s, expected %s, was %s", base_name, self->sha256, sha256);
+              return FALSE;
+            }
+        }
+      return TRUE;
+    }
+
+  if (is_local)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't find file at %s", self->path);
+      return FALSE;
+    }
 
   g_print ("Downloading %s\n", self->url);
   content = download_uri (self->url,
@@ -445,8 +508,9 @@ builder_source_archive_extract (BuilderSource *source,
   g_autoptr(GFile) archivefile = NULL;
   g_autofree char *archive_path = NULL;
   BuilderArchiveType type;
+  gboolean is_local;
 
-  archivefile = get_download_location (self, context, error);
+  archivefile = get_source_file (self, context, &is_local, error);
   if (archivefile == NULL)
     return FALSE;
 
@@ -526,6 +590,13 @@ builder_source_archive_class_init (BuilderSourceArchiveClass *klass)
   source_class->extract = builder_source_archive_extract;
   source_class->checksum = builder_source_archive_checksum;
 
+  g_object_class_install_property (object_class,
+                                   PROP_PATH,
+                                   g_param_spec_string ("path",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_URL,
                                    g_param_spec_string ("url",

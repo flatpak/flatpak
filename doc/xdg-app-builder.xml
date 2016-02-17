@@ -337,8 +337,12 @@
                         <listitem><para>"archive"</para></listitem>
                     </varlistentry>
                     <varlistentry>
+                        <term><option>path</option></term>
+                        <listitem><para>The path of the archive</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
                         <term><option>url</option></term>
-                        <listitem><para>URL of the archive</para></listitem>
+                        <listitem><para>The url of a remote archive that will be downloaded. This overrides path if both are specified.</para></listitem>
                     </varlistentry>
                     <varlistentry>
                         <term><option>sha256</option></term>
