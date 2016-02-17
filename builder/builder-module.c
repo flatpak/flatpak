@@ -759,7 +759,6 @@ builder_module_build (BuilderModule *self,
   int i;
   g_auto(GStrv) env = NULL;
   g_auto(GStrv) build_args = NULL;
-  const char *cflags, *cxxflags;
   g_autoptr(GFile) source_dir = NULL;
   g_autoptr(GFile) source_subdir = NULL;
   const char *source_subdir_relative = NULL;
@@ -831,14 +830,6 @@ builder_module_build (BuilderModule *self,
 
   env = builder_options_get_env (self->build_options, context);
   build_args = builder_options_get_build_args (self->build_options, context);
-
-  cflags = builder_options_get_cflags (self->build_options, context);
-  if (cflags)
-    env = g_environ_setenv (env, "CFLAGS", cflags, TRUE);
-
-  cxxflags = builder_options_get_cxxflags (self->build_options, context);
-  if (cxxflags)
-    env = g_environ_setenv (env, "CXXFLAGS", cxxflags, TRUE);
 
   if (self->cmake)
     {

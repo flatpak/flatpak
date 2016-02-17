@@ -550,6 +550,7 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
   GList *l;
   int i;
   char **envp = NULL;
+  const char *cflags, *cxxflags;
 
   for (l = options; l != NULL; l = l->next)
     {
@@ -577,7 +578,17 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
         }
     }
 
-  return builder_context_extend_env (context, envp);
+  envp = builder_context_extend_env (context, envp);
+
+  cflags = builder_options_get_cflags (self, context);
+  if (cflags)
+    envp = g_environ_setenv (envp, "CFLAGS", cflags, TRUE);
+
+  cxxflags = builder_options_get_cxxflags (self, context);
+  if (cxxflags)
+    envp = g_environ_setenv (envp, "CXXFLAGS", cxxflags, TRUE);
+
+  return envp;
 }
 
 char **
