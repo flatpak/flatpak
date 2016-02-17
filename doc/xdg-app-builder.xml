@@ -533,6 +533,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--run</option></term>
+
+                <listitem><para>
+                  Run a command in a sandbox based on the build dir. This starts xdg-app build, with some extra
+                  arguments to give the same environment as the build, and the same permissions the final app
+                  will have.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--download-only</option></term>
 
                 <listitem><para>

@@ -62,6 +62,11 @@ gboolean        builder_manifest_build             (BuilderManifest  *self,
                                                     BuilderCache     *cache,
                                                     BuilderContext   *context,
                                                     GError          **error);
+gboolean        builder_manifest_run               (BuilderManifest  *self,
+                                                    BuilderContext   *context,
+                                                    char            **argv,
+                                                    int               argc,
+                                                    GError          **error);
 void            builder_manifest_checksum          (BuilderManifest *self,
                                                     BuilderCache    *cache,
                                                     BuilderContext *context);

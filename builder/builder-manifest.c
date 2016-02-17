@@ -1758,3 +1758,83 @@ builder_manifest_create_platform (BuilderManifest *self,
 
   return TRUE;
 }
+
+
+gboolean
+builder_manifest_run (BuilderManifest  *self,
+                      BuilderContext   *context,
+                      char            **argv,
+                      int               argc,
+                      GError          **error)
+{
+  g_autoptr(GSubprocessLauncher) launcher = NULL;
+  g_autoptr(GSubprocess) subp = NULL;
+  g_autoptr(GPtrArray) args = NULL;
+  g_autofree char *commandline = NULL;
+  g_autofree char *build_dir_path = NULL;
+  g_autofree char *ccache_dir_path = NULL;
+  g_auto(GStrv) env = NULL;
+  g_auto(GStrv) build_args = NULL;
+  int i;
+
+  if (!gs_file_ensure_directory (builder_context_get_build_dir (context), TRUE,
+                                 NULL, error))
+    return FALSE;
+
+  args = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("build"));
+
+  build_dir_path = g_file_get_path (builder_context_get_build_dir (context));
+  g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/build=%s", build_dir_path));
+
+  if (g_file_query_exists (builder_context_get_ccache_dir (context), NULL))
+    {
+      ccache_dir_path = g_file_get_path (builder_context_get_ccache_dir (context));
+      g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/ccache=%s", ccache_dir_path));
+    }
+
+  build_args = builder_options_get_build_args (self->build_options, context);
+
+  if (build_args)
+    {
+      for (i = 0; build_args[i] != NULL; i++)
+        g_ptr_array_add (args, g_strdup (build_args[i]));
+    }
+
+  env = builder_options_get_env (self->build_options, context);
+  if (env)
+    {
+      for (i = 0; env[i] != NULL; i++)
+        g_ptr_array_add (args, g_strdup_printf ("--env=%s", env[i]));
+    }
+
+  /* Inherit all finish args except the filesystem ones so the
+   * command gets the same access as the final app */
+  if (self->finish_args)
+    {
+      for (i = 0; self->finish_args[i] != NULL; i++)
+        {
+          const char *arg = self->finish_args[i];
+          if (!g_str_has_prefix (arg, "--filesystem"))
+            g_ptr_array_add (args, g_strdup (arg));
+        }
+    }
+
+  g_ptr_array_add (args, g_file_get_path (builder_context_get_app_dir (context)));
+
+  for (i = 0; i < argc; i++)
+    g_ptr_array_add (args, g_strdup (argv[i]));
+  g_ptr_array_add (args, NULL);
+
+  commandline = g_strjoinv (" ", (char **) args->pdata);
+
+  if (!execvp ((char *)args->pdata[0], (char **)args->pdata))
+    {
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start xdg-app build");
+      return FALSE;
+    }
+
+  /* Not reached */
+  return TRUE;
+}

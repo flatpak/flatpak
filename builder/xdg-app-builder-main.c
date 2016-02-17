@@ -34,6 +34,7 @@
 
 static gboolean opt_verbose;
 static gboolean opt_version;
+static gboolean opt_run;
 static gboolean opt_disable_cache;
 static gboolean opt_download_only;
 static gboolean opt_build_only;
@@ -51,6 +52,7 @@ static char **opt_key_ids;
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
   { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version information and exit", NULL },
+  { "run", 0, 0, G_OPTION_ARG_NONE, &opt_run, "Run a command in the build directory", NULL },
   { "ccache", 0, 0, G_OPTION_ARG_NONE, &opt_ccache, "Use ccache", NULL },
   { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache", NULL },
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
@@ -216,13 +218,6 @@ main (int    argc,
   base_dir = g_file_new_for_path (g_get_current_dir ());
   app_dir = g_file_new_for_path (app_dir_path);
 
-  if (g_file_query_exists (app_dir, NULL) && !directory_is_empty (app_dir_path))
-    {
-      g_printerr ("App dir '%s' is not empty. Please delete "
-                  "the existing contents.\n", app_dir_path);
-      return 1;
-    }
-
   build_context = builder_context_new (base_dir, app_dir);
 
   builder_context_set_keep_build_dirs (build_context, opt_keep_build_dirs);
@@ -231,6 +226,34 @@ main (int    argc,
       !builder_context_enable_ccache (build_context, &error))
     {
       g_printerr ("Can't initialize ccache use: %s\n", error->message);
+      return 1;
+    }
+
+  if (opt_run)
+    {
+      if (argc == 3)
+        return usage (context, "Program to run must be specified");
+
+      if (!g_file_query_exists (app_dir, NULL) ||
+          directory_is_empty (app_dir_path))
+        {
+          g_printerr ("App dir '%s' is empty or doesn't exist.\n", app_dir_path);
+          return 1;
+        }
+
+      if (!builder_manifest_run (manifest, build_context, argv + 3, argc - 3, &error))
+        {
+          g_printerr ("Error running %s: %s\n", argv[3], error->message);
+          return 1;
+        }
+
+      return 0;
+    }
+
+  if (g_file_query_exists (app_dir, NULL) && !directory_is_empty (app_dir_path))
+    {
+      g_printerr ("App dir '%s' is not empty. Please delete "
+                  "the existing contents.\n", app_dir_path);
       return 1;
     }
 
