@@ -1299,6 +1299,7 @@ static gboolean
 export_desktop_file (const char    *app,
                      const char    *branch,
                      const char    *arch,
+                     GKeyFile      *metadata,
                      int            parent_fd,
                      const char    *name,
                      struct stat   *stat_buf,
@@ -1347,6 +1348,21 @@ export_desktop_file (const char    *app,
           xdg_app_fail (error, "dbus service file %s has wrong name", name);
           return FALSE;
         }
+    }
+
+  if (g_str_has_suffix (name, ".desktop"))
+    {
+      gsize length;
+      g_auto(GStrv) tags = g_key_file_get_string_list (metadata,
+                                                       "Application",
+                                                       "tags", &length,
+                                                       NULL);
+
+      if (tags != NULL)
+        g_key_file_set_string_list (keyfile,
+                                    "Desktop Entry",
+                                    "X-XdgApp-Tags",
+                                    (const char * const *)tags, length);
     }
 
   groups = g_key_file_get_groups (keyfile, NULL);
@@ -1417,6 +1433,7 @@ static gboolean
 rewrite_export_dir (const char    *app,
                     const char    *branch,
                     const char    *arch,
+                    GKeyFile      *metadata,
                     int            source_parent_fd,
                     const char    *source_name,
                     GCancellable  *cancellable,
@@ -1461,7 +1478,7 @@ rewrite_export_dir (const char    *app,
 
       if (S_ISDIR (stbuf.st_mode))
         {
-          if (!rewrite_export_dir (app, branch, arch,
+          if (!rewrite_export_dir (app, branch, arch, metadata,
                                    source_iter.fd, dent->d_name,
                                    cancellable, error))
             goto out;
@@ -1478,11 +1495,13 @@ rewrite_export_dir (const char    *app,
                 }
             }
 
-          if (g_str_has_suffix (dent->d_name, ".desktop") || g_str_has_suffix (dent->d_name, ".service"))
+          if (g_str_has_suffix (dent->d_name, ".desktop") ||
+              g_str_has_suffix (dent->d_name, ".service"))
             {
               g_autofree gchar *new_name = NULL;
 
-              if (!export_desktop_file (app, branch, arch, source_iter.fd, dent->d_name, &stbuf, &new_name, cancellable, error))
+              if (!export_desktop_file (app, branch, arch, metadata,
+                                        source_iter.fd, dent->d_name, &stbuf, &new_name, cancellable, error))
                 goto out;
 
               g_hash_table_insert (visited_children, g_strdup (new_name), GINT_TO_POINTER(1));
@@ -1515,6 +1534,7 @@ gboolean
 xdg_app_rewrite_export_dir (const char *app,
                             const char *branch,
                             const char *arch,
+                            GKeyFile *metadata,
                             GFile    *source,
                             GCancellable  *cancellable,
                             GError       **error)
@@ -1522,7 +1542,7 @@ xdg_app_rewrite_export_dir (const char *app,
   gboolean ret = FALSE;
 
   /* The fds are closed by this call */
-  if (!rewrite_export_dir (app, branch, arch,
+  if (!rewrite_export_dir (app, branch, arch, metadata,
                            AT_FDCWD, gs_file_get_path_cached (source),
                            cancellable, error))
     goto out;
@@ -1716,9 +1736,11 @@ xdg_app_dir_deploy (XdgAppDir *self,
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) dotref = NULL;
+  g_autoptr(GFile) metadata = NULL;
   g_autoptr(GFile) export = NULL;
   GSConsole *console = NULL;
   g_autoptr(OstreeAsyncProgress) progress = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -1822,6 +1844,16 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                 G_FILE_CREATE_NONE, NULL, cancellable, error))
     goto out;
 
+  keyfile = g_key_file_new ();
+  metadata = g_file_get_child (checkoutdir, "metadata");
+  if (g_file_query_exists (metadata, cancellable))
+    {
+      g_autofree char *path = g_file_get_path (metadata);
+
+      if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
+        goto out;
+    }
+
   export = g_file_get_child (checkoutdir, "export");
   if (g_file_query_exists (export, cancellable))
     {
@@ -1829,7 +1861,8 @@ xdg_app_dir_deploy (XdgAppDir *self,
 
       ref_parts = g_strsplit (ref, "/", -1);
 
-      if (!xdg_app_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2], export,
+      if (!xdg_app_rewrite_export_dir (ref_parts[1], ref_parts[3], ref_parts[2],
+                                       keyfile, export,
                                        cancellable,
                                        error))
         goto out;
