@@ -751,6 +751,7 @@ builder_module_build (BuilderModule *self,
   const char *makefile_names[] =  {"Makefile", "makefile", "GNUmakefile", NULL};
   g_autoptr(GFile) build_parent_dir = NULL;
   g_autoptr(GFile) build_dir = NULL;
+  g_autoptr(GFile) build_link = NULL;
   g_autofree char *build_dir_relative = NULL;
   gboolean has_configure;
   gboolean var_require_builddir;
@@ -763,6 +764,8 @@ builder_module_build (BuilderModule *self,
   g_autoptr(GFile) source_subdir = NULL;
   const char *source_subdir_relative = NULL;
   g_autofree char *source_dir_path = NULL;
+  g_autofree char *buildname = NULL;
+  g_autoptr(GError) my_error = NULL;
   int count;
 
   build_parent_dir = g_file_get_child (builder_context_get_state_dir (context), "build");
@@ -773,10 +776,9 @@ builder_module_build (BuilderModule *self,
 
   for (count = 1; source_dir_path == NULL; count++)
     {
-      g_autofree char *buildname = NULL;
       g_autoptr(GFile) source_dir_count = NULL;
-      g_autoptr(GError) my_error = NULL;
 
+      g_free (buildname);
       buildname = g_strdup_printf ("%s-%d", self->name, count);
 
       source_dir_count = g_file_get_child (build_parent_dir, buildname);
@@ -790,11 +792,27 @@ builder_module_build (BuilderModule *self,
               g_propagate_error (error, g_steal_pointer (&my_error));
               return FALSE;
             }
+          g_clear_error (&my_error);
           /* Already exists, try again */
         }
     }
 
   source_dir = g_file_new_for_path (source_dir_path);
+
+  /* Make an unversioned symlink */
+  build_link = g_file_get_child (build_parent_dir, self->name);
+  if (!g_file_delete (build_link, NULL, &my_error) &&
+      !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    {
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      return FALSE;
+    }
+  g_clear_error (&my_error);
+
+  if (!g_file_make_symbolic_link (build_link,
+                                  buildname,
+                                  NULL, error))
+    return FALSE;
 
   g_print ("========================================================================\n");
   g_print ("Building module %s in %s\n", self->name, source_dir_path);
@@ -991,26 +1009,11 @@ builder_module_build (BuilderModule *self,
 
   /* Clean up build dir */
 
-  if (builder_context_get_keep_build_dirs (context))
+  if (!builder_context_get_keep_build_dirs (context))
     {
-      g_autoptr(GFile) build_link = g_file_get_child (build_parent_dir, self->name);
-      g_autoptr(GError) my_error = NULL;
-      g_autofree char *buildname_target = g_path_get_basename (source_dir_path);
-
-      if (!g_file_delete (build_link, NULL, &my_error) &&
-          !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        {
-          g_propagate_error (error, g_steal_pointer (&my_error));
-          return FALSE;
-        }
-
-      if (!g_file_make_symbolic_link (build_link,
-                                      buildname_target,
-                                      NULL, error))
+      if (!g_file_delete (build_link, NULL, error))
         return FALSE;
-    }
-  else
-    {
+
       if (!gs_shutil_rm_rf (source_dir, NULL, error))
         return FALSE;
     }
