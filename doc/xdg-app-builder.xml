@@ -152,6 +152,10 @@
                     <listitem><para>Install these extra sdk extensions when creating the platform</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>tags</option></term>
+                    <listitem><para>Add these tags to the metadata file</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>build-options</option></term>
                     <listitem><para>object specifying the build environment. See below for details.</para></listitem>
                 </varlistentry>

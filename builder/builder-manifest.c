@@ -51,6 +51,7 @@ struct BuilderManifest {
   char **cleanup_commands;
   char **cleanup_platform;
   char **finish_args;
+  char **tags;
   char *rename_desktop_file;
   char *rename_appdata_file;
   char *rename_icon;
@@ -100,6 +101,7 @@ enum {
   PROP_SDK_EXTENSIONS,
   PROP_PLATFORM_EXTENSIONS,
   PROP_FINISH_ARGS,
+  PROP_TAGS,
   PROP_RENAME_DESKTOP_FILE,
   PROP_RENAME_APPDATA_FILE,
   PROP_RENAME_ICON,
@@ -130,6 +132,7 @@ builder_manifest_finalize (GObject *object)
   g_strfreev (self->cleanup_commands);
   g_strfreev (self->cleanup_platform);
   g_strfreev (self->finish_args);
+  g_strfreev (self->tags);
   g_free (self->rename_desktop_file);
   g_free (self->rename_appdata_file);
   g_free (self->rename_icon);
@@ -215,6 +218,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_FINISH_ARGS:
       g_value_set_boxed (value, self->finish_args);
+      break;
+
+    case PROP_TAGS:
+      g_value_set_boxed (value, self->tags);
       break;
 
     case PROP_BUILD_RUNTIME:
@@ -363,6 +370,12 @@ builder_manifest_set_property (GObject       *object,
     case PROP_FINISH_ARGS:
       tmp = self->finish_args;
       self->finish_args = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_TAGS:
+      tmp = self->tags;
+      self->tags = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -582,6 +595,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_PLATFORM_EXTENSIONS,
                                    g_param_spec_boxed ("platform-extensions",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_TAGS,
+                                   g_param_spec_boxed ("tags",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -855,6 +875,11 @@ builder_manifest_init_app_dir (BuilderManifest *self,
           g_ptr_array_add (args, g_strdup_printf ("--sdk-extension=%s", ext));
         }
     }
+  if (self->tags)
+    {
+      for (i = 0; self->tags[i] != NULL; i++)
+        g_ptr_array_add (args, g_strdup_printf ("--tag=%s", self->tags[i]));
+    }
   g_ptr_array_add (args, g_file_get_path (app_dir));
   g_ptr_array_add (args, g_strdup (self->id));
   g_ptr_array_add (args, g_strdup (self->sdk));
@@ -888,6 +913,7 @@ builder_manifest_checksum (BuilderManifest *self,
   builder_cache_checksum_str (cache, self->sdk);
   builder_cache_checksum_str (cache, self->sdk_commit);
   builder_cache_checksum_str (cache, self->metadata);
+  builder_cache_checksum_strv (cache, self->tags);
   builder_cache_checksum_boolean (cache, self->writable_sdk);
   builder_cache_checksum_strv (cache, self->sdk_extensions);
   builder_cache_checksum_boolean (cache, self->build_runtime);
