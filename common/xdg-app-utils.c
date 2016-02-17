@@ -1529,10 +1529,14 @@ commit_filter (OstreeRepo *repo,
 static gboolean
 validate_component (XdgAppXml *component,
                     const char *ref,
-                    const char *id)
+                    const char *id,
+                    char **tags,
+                    const char *runtime,
+                    const char *sdk)
 {
-  XdgAppXml *bundle, *text, *prev, *id_node, *id_text_node;
+  XdgAppXml *bundle, *text, *prev, *id_node, *id_text_node, *metadata, *value;
   g_autofree char *id_text = NULL;
+  int i;
 
   if (g_strcmp0 (component->element_name, "component") != 0)
     return FALSE;
@@ -1557,19 +1561,62 @@ validate_component (XdgAppXml *component,
     xdg_app_xml_free (xdg_app_xml_unlink (component, bundle));
 
   bundle = xdg_app_xml_new ("bundle");
-  bundle->attribute_names = g_new0 (char *, 2);
-  bundle->attribute_values = g_new0 (char *, 2);
+  bundle->attribute_names = g_new0 (char *, 2 * 4);
+  bundle->attribute_values = g_new0 (char *, 2 * 4);
   bundle->attribute_names[0] = g_strdup ("type");
   bundle->attribute_values[0] = g_strdup ("xdg-app");
+
+  i = 1;
+  if (runtime)
+    {
+      bundle->attribute_names[i] = g_strdup ("runtime");
+      bundle->attribute_values[i] = g_strdup (runtime);
+      i++;
+    }
+
+  if (sdk)
+    {
+      bundle->attribute_names[i] = g_strdup ("sdk");
+      bundle->attribute_values[i] = g_strdup (sdk);
+      i++;
+    }
+
+  text = xdg_app_xml_new (NULL);
+  text->text = g_strdup (ref);
+  xdg_app_xml_add (bundle, text);
 
   xdg_app_xml_add (component, xdg_app_xml_new_text ("  "));
   xdg_app_xml_add (component, bundle);
   xdg_app_xml_add (component, xdg_app_xml_new_text ("\n  "));
 
-  text = xdg_app_xml_new (NULL);
-  text->text = g_strdup (ref);
+  if (tags != NULL && tags[0] != NULL)
+    {
+      metadata = xdg_app_xml_find (component, "metadata", NULL);
+      if (metadata == NULL)
+        {
+          metadata = xdg_app_xml_new ("metadata");
+          metadata->attribute_names = g_new0 (char *, 1);
+          metadata->attribute_values = g_new0 (char *, 1);
 
-  xdg_app_xml_add (bundle, text);
+          xdg_app_xml_add (component, xdg_app_xml_new_text ("  "));
+          xdg_app_xml_add (component, metadata);
+          xdg_app_xml_add (component, xdg_app_xml_new_text ("\n  "));
+        }
+
+      value = xdg_app_xml_new ("value");
+      value->attribute_names = g_new0 (char *, 2);
+      value->attribute_values = g_new0 (char *, 2);
+      value->attribute_names[0] = g_strdup ("key");
+      value->attribute_values[0] = g_strdup ("X-XdgApp-Tags");
+      xdg_app_xml_add (metadata, xdg_app_xml_new_text ("\n       "));
+      xdg_app_xml_add (metadata, value);
+      xdg_app_xml_add (metadata, xdg_app_xml_new_text ("\n    "));
+
+      text = xdg_app_xml_new (NULL);
+      text->text = g_strjoinv (",", tags);
+      xdg_app_xml_add (value, text);
+
+    }
 
   return TRUE;
 }
@@ -1578,17 +1625,31 @@ static gboolean
 migrate_xml (XdgAppXml *root,
              XdgAppXml *appstream,
              const char *ref,
-             const char *id)
+             const char *id,
+             GKeyFile *metadata)
 {
   XdgAppXml *components;
   XdgAppXml *component;
   XdgAppXml *prev_component;
   gboolean migrated = FALSE;
+  g_auto(GStrv) tags = NULL;
+  g_autofree const char *runtime = NULL;
+  g_autofree const char *sdk = NULL;
+  const char *group;
 
   if (root->first_child == NULL ||
       root->first_child->next_sibling != NULL ||
       g_strcmp0 (root->first_child->element_name, "components") != 0)
     return FALSE;
+
+  if (g_str_has_prefix (ref, "app/"))
+    group = "Application";
+  else
+    group = "Runtime";
+
+  tags = g_key_file_get_string_list (metadata, group, "tags", NULL, NULL);
+  runtime = g_key_file_get_string (metadata, group, "runtime", NULL);
+  sdk = g_key_file_get_string (metadata, group, "sdk", NULL);
 
   components = root->first_child;
 
@@ -1598,7 +1659,7 @@ migrate_xml (XdgAppXml *root,
     {
       XdgAppXml *next = component->next_sibling;
 
-      if (validate_component (component, ref, id))
+      if (validate_component (component, ref, id, tags, runtime, sdk))
         {
           xdg_app_xml_add (appstream, xdg_app_xml_unlink (component, prev_component));
           migrated = TRUE;
@@ -1666,12 +1727,28 @@ extract_appstream (OstreeRepo    *repo,
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) xmls_dir = NULL;
   g_autoptr(GFile) appstream_file = NULL;
+  g_autoptr(GFile) metadata = NULL;
   g_autofree char *appstream_basename = NULL;
   g_autoptr(GInputStream) in = NULL;
   g_autoptr(XdgAppXml) xml_root = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
 
   if (!ostree_repo_read_commit (repo, ref, &root, NULL, NULL, error))
     return FALSE;
+
+  keyfile = g_key_file_new ();
+  metadata = g_file_get_child (root, "metadata");
+  if (g_file_query_exists (metadata, cancellable))
+    {
+      g_autofree char *content = NULL;
+      gsize len;
+
+      if (!g_file_load_contents (metadata, cancellable, &content, &len, NULL, error))
+        return FALSE;
+
+      if (!g_key_file_load_from_data (keyfile, content, len, G_KEY_FILE_NONE, error))
+        return FALSE;
+    }
 
   xmls_dir = g_file_resolve_relative_path (root, "files/share/app-info/xmls");
   appstream_basename = g_strconcat (id, ".xml.gz", NULL);
@@ -1685,7 +1762,7 @@ extract_appstream (OstreeRepo    *repo,
   if (xml_root == NULL)
     return FALSE;
 
-  if (migrate_xml (xml_root, appstream_components, ref, id))
+  if (migrate_xml (xml_root, appstream_components, ref, id, keyfile))
     {
       g_autoptr(GError) my_error = NULL;
       if (!copy_icon (id, root, dest, "64x64", &my_error))
