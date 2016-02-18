@@ -47,6 +47,7 @@ struct BuilderManifest {
   char *sdk_commit;
   char *metadata;
   char *metadata_platform;
+  gboolean separate_locales;
   char **cleanup;
   char **cleanup_commands;
   char **cleanup_platform;
@@ -96,6 +97,7 @@ enum {
   PROP_CLEANUP_COMMANDS,
   PROP_CLEANUP_PLATFORM,
   PROP_BUILD_RUNTIME,
+  PROP_SEPARATE_LOCALES,
   PROP_WRITABLE_SDK,
   PROP_APPSTREAM_COMPOSE,
   PROP_SDK_EXTENSIONS,
@@ -226,6 +228,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_BUILD_RUNTIME:
       g_value_set_boolean (value, self->build_runtime);
+      break;
+
+    case PROP_SEPARATE_LOCALES:
+      g_value_set_boolean (value, self->separate_locales);
       break;
 
     case PROP_WRITABLE_SDK:
@@ -381,6 +387,10 @@ builder_manifest_set_property (GObject       *object,
 
     case PROP_BUILD_RUNTIME:
       self->build_runtime = g_value_get_boolean (value);
+      break;
+
+    case PROP_SEPARATE_LOCALES:
+      self->separate_locales = g_value_get_boolean (value);
       break;
 
     case PROP_WRITABLE_SDK:
@@ -572,6 +582,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                          FALSE,
                                                          G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
+                                   PROP_SEPARATE_LOCALES,
+                                   g_param_spec_boolean ("separate-locales",
+                                                         "",
+                                                         "",
+                                                         TRUE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
                                    PROP_WRITABLE_SDK,
                                    g_param_spec_boolean ("writable-sdk",
                                                          "",
@@ -654,6 +671,7 @@ static void
 builder_manifest_init (BuilderManifest *self)
 {
   self->appstream_compose = TRUE;
+  self->separate_locales = TRUE;
 }
 
 static JsonNode *
@@ -917,6 +935,7 @@ builder_manifest_checksum (BuilderManifest *self,
   builder_cache_checksum_boolean (cache, self->writable_sdk);
   builder_cache_checksum_strv (cache, self->sdk_extensions);
   builder_cache_checksum_boolean (cache, self->build_runtime);
+  builder_cache_checksum_boolean (cache, self->separate_locales);
 
   if (self->build_options)
     builder_options_checksum (self->build_options, cache, context);
@@ -1017,6 +1036,7 @@ builder_manifest_build (BuilderManifest *self,
   builder_context_set_global_cleanup (context, (const char **)self->cleanup);
   builder_context_set_global_cleanup_platform (context, (const char **)self->cleanup_platform);
   builder_context_set_build_runtime (context, self->build_runtime);
+  builder_context_set_separate_locales (context, self->separate_locales);
 
   g_print ("Starting build of %s\n", self->id ? self->id : "app");
   for (l = self->modules; l != NULL; l = l->next)
@@ -1503,6 +1523,7 @@ builder_manifest_finish (BuilderManifest *self,
   GFile *app_dir = builder_context_get_app_dir (context);
   g_autoptr(GFile) manifest_file = NULL;
   g_autoptr(GFile) debuginfo_dir = NULL;
+  g_autoptr(GFile) locale_parent_dir = NULL;
   g_autofree char *app_dir_path = g_file_get_path (app_dir);
   g_autofree char *json = NULL;
   g_autoptr(GPtrArray) args = NULL;
@@ -1570,9 +1591,70 @@ builder_manifest_finish (BuilderManifest *self,
 
 
       if (self->build_runtime)
-        debuginfo_dir = g_file_resolve_relative_path (app_dir, "usr/lib/debug");
+        {
+          debuginfo_dir = g_file_resolve_relative_path (app_dir, "usr/lib/debug");
+          locale_parent_dir = g_file_resolve_relative_path (app_dir, "usr/share/runtime/locale");
+        }
       else
-        debuginfo_dir = g_file_resolve_relative_path (app_dir, "files/lib/debug");
+        {
+          debuginfo_dir = g_file_resolve_relative_path (app_dir, "files/lib/debug");
+          locale_parent_dir = g_file_resolve_relative_path (app_dir, "files/share/runtime/locale");
+        }
+
+      if (self->separate_locales)
+        {
+          g_autoptr(GFile) metadata_file = NULL;
+          g_autofree char *extension_contents = NULL;
+          g_autoptr(GFileEnumerator) dir_enum = NULL;
+          g_autoptr(GFileOutputStream) output = NULL;
+          GFileInfo *next;
+
+          metadata_file = g_file_get_child (app_dir, "metadata");
+
+          extension_contents = g_strdup_printf("\n"
+                                               "[Extension %s.Locale]\n"
+                                               "directory=share/runtime/locale\n"
+                                               "subdirectories=true\n",
+                                               self->id);
+
+          output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
+          if (output == NULL)
+            return FALSE;
+
+          if (!g_output_stream_write_all (G_OUTPUT_STREAM (output),
+                                          extension_contents, strlen (extension_contents),
+                                          NULL, NULL, error))
+            return FALSE;
+
+          dir_enum = g_file_enumerate_children (locale_parent_dir, "standard::name,standard::type",
+                                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                                NULL, NULL);
+
+          while (dir_enum != NULL &&
+                 (next = g_file_enumerator_next_file (dir_enum, NULL, NULL)))
+            {
+              g_autoptr(GFileInfo) child_info = next;
+              const char *name = g_file_info_get_name (child_info);
+
+              if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY)
+                {
+                  g_autoptr(GFile) metadata_locale_file = NULL;
+                  g_autofree char *metadata_contents = NULL;
+                  g_autofree char *filename = g_strdup_printf ("metadata.locale.%s", name);
+
+                  metadata_locale_file = g_file_get_child (app_dir, filename);
+
+                  metadata_contents = g_strdup_printf("[Runtime]\n"
+                                                      "name=%s.Locale.%s\n", self->id, name);
+                  if (!g_file_replace_contents (metadata_locale_file,
+                                                metadata_contents, strlen (metadata_contents),
+                                                NULL, FALSE,
+                                                G_FILE_CREATE_REPLACE_DESTINATION,
+                                                NULL, NULL, error))
+                    return FALSE;
+                }
+            }
+        }
 
       if (g_file_query_exists (debuginfo_dir, NULL))
         {

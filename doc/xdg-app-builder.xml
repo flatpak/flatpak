@@ -131,6 +131,10 @@
                     <listitem><para>Build a new runtime instead of an application.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>separate-locales</option></term>
+                    <listitem><para>Separate out locale files and translations to an extention runtime. Defaults to true.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>id-platform</option></term>
                     <listitem><para>When building a runtime sdk, also create a platform based on it wit this id.</para></listitem>
                 </varlistentry>

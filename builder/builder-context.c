@@ -51,6 +51,7 @@ struct BuilderContext {
   char **cleanup_platform;
   gboolean use_ccache;
   gboolean build_runtime;
+  gboolean separate_locales;
 };
 
 typedef struct {
@@ -329,6 +330,19 @@ builder_context_set_build_runtime (BuilderContext  *self,
                                    gboolean         build_runtime)
 {
   self->build_runtime = !!build_runtime;
+}
+
+gboolean
+builder_context_get_separate_locales (BuilderContext  *self)
+{
+  return self->separate_locales;
+}
+
+void
+builder_context_set_separate_locales (BuilderContext  *self,
+                                      gboolean         separate_locales)
+{
+  self->separate_locales = !!separate_locales;
 }
 
 gboolean

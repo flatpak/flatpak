@@ -737,6 +737,103 @@ builder_module_handle_debuginfo (BuilderModule *self,
   return TRUE;
 }
 
+static gboolean
+migrate_locale_dir (GFile *source_dir,
+                    GFile *separate_dir,
+                    const char *subdir,
+                    GError **error)
+{
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  GFileInfo *next;
+  GError *temp_error = NULL;
+
+  dir_enum = g_file_enumerate_children (source_dir, "standard::name,standard::type",
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        NULL, NULL);
+  if (!dir_enum)
+    return TRUE;
+
+  while ((next = g_file_enumerator_next_file (dir_enum, NULL, &temp_error)))
+    {
+      g_autoptr(GFileInfo) child_info = next;
+      g_autoptr(GFile) child = NULL;
+      g_autoptr(GFile) locale_subdir = NULL;
+
+      child = g_file_get_child (source_dir, g_file_info_get_name (child_info));
+
+      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY)
+        {
+          g_autoptr(GFile) child = NULL;
+          const char *name = g_file_info_get_name (child_info);
+          g_autofree char *language = g_strdup (name);
+          g_autofree char *relative = NULL;
+          g_autofree char *target = NULL;
+          char *c;
+
+          c = strchr (language, '@');
+          if (c != NULL)
+            *c = 0;
+          c = strchr (language, '_');
+          if (c != NULL)
+            *c = 0;
+
+          /* We ship english and C locales always */
+          if (strcmp (language, "C") == 0 ||
+              strcmp (language, "en") == 0)
+            continue;
+
+          child = g_file_get_child (source_dir, g_file_info_get_name (child_info));
+
+          relative = g_build_filename (language, subdir, name, NULL);
+          locale_subdir = g_file_resolve_relative_path (separate_dir, relative);
+          if (!gs_file_ensure_directory (locale_subdir, TRUE,
+                                         NULL, error))
+            return FALSE;
+
+          if (!xdg_app_cp_a (child, locale_subdir,
+                             XDG_APP_CP_FLAGS_MERGE | XDG_APP_CP_FLAGS_MOVE,
+                             NULL, error))
+            return FALSE;
+
+          target = g_build_filename ("../../share/runtime/locale", relative, NULL);
+
+          if (!g_file_make_symbolic_link (child, target,
+                                          NULL, error))
+            return FALSE;
+
+        }
+    }
+
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+migrate_locale_dirs (GFile *root_dir,
+                     GError **error)
+{
+  g_autoptr(GFile) separate_dir = NULL;
+  g_autoptr(GFile) lib_locale_dir = NULL;
+  g_autoptr(GFile) share_locale_dir = NULL;
+
+  lib_locale_dir = g_file_resolve_relative_path (root_dir, "lib/locale");
+  share_locale_dir = g_file_resolve_relative_path (root_dir, "share/locale");
+  separate_dir = g_file_resolve_relative_path (root_dir, "share/runtime/locale");
+
+  if (!migrate_locale_dir (lib_locale_dir, separate_dir, "lib", error))
+    return FALSE;
+
+  if (!migrate_locale_dir (share_locale_dir, separate_dir, "share", error))
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 builder_module_build (BuilderModule *self,
                       BuilderCache *cache,
@@ -984,6 +1081,19 @@ builder_module_build (BuilderModule *self,
     return FALSE;
 
   /* Post installation scripts */
+
+  if (builder_context_get_separate_locales (context))
+    {
+      g_autoptr(GFile) root_dir = NULL;
+
+      if (builder_context_get_build_runtime (context))
+        root_dir = g_file_get_child (app_dir, "usr");
+      else
+        root_dir = g_file_get_child (app_dir, "files");
+
+      if (!migrate_locale_dirs (root_dir, error))
+        return FALSE;
+    }
 
   if (self->post_install)
     {
