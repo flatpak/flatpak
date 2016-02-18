@@ -47,6 +47,14 @@ xdg_app_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
 
   remote_name = argv[1];
 
+  if (!xdg_app_dir_remove_all_refs (dir, remote_name,
+                                    cancellable, error))
+    return FALSE;
+
+  if (!xdg_app_dir_remove_appstream (dir, remote_name,
+                                     cancellable, error))
+    return FALSE;
+
   if (!ostree_repo_remote_change (xdg_app_dir_get_repo (dir), NULL,
                                   OSTREE_REPO_REMOTE_CHANGE_DELETE,
                                   remote_name, NULL,

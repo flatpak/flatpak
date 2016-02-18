@@ -130,6 +130,10 @@ gboolean    xdg_app_dir_ensure_repo     (XdgAppDir      *self,
                                          GError        **error);
 gboolean    xdg_app_dir_mark_changed    (XdgAppDir      *self,
                                          GError        **error);
+gboolean    xdg_app_dir_remove_appstream(XdgAppDir      *self,
+                                         const char     *remote,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 gboolean    xdg_app_dir_update_appstream(XdgAppDir      *self,
                                          const char     *remote,
                                          const char     *arch,
@@ -208,6 +212,10 @@ gboolean    xdg_app_dir_undeploy_all    (XdgAppDir      *self,
                                          const char     *ref,
 					 gboolean        force_remove,
                                          gboolean       *was_deployed_out,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
+gboolean    xdg_app_dir_remove_all_refs (XdgAppDir      *self,
+                                         const char     *remote,
                                          GCancellable   *cancellable,
                                          GError        **error);
 gboolean    xdg_app_dir_remove_ref      (XdgAppDir      *self,

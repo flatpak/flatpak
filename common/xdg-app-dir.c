@@ -594,6 +594,67 @@ xdg_app_dir_mark_changed (XdgAppDir *self,
 }
 
 gboolean
+xdg_app_dir_remove_appstream (XdgAppDir      *self,
+                              const char     *remote,
+                              GCancellable   *cancellable,
+                              GError        **error)
+{
+  g_autoptr(GFile) appstream_dir = NULL;
+  g_autoptr(GFile) remote_dir = NULL;
+  g_autofree char *prefix = NULL;
+  g_autoptr(GHashTable) refs = NULL;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  appstream_dir = g_file_get_child (xdg_app_dir_get_path (self), "appstream");
+  remote_dir = g_file_get_child (appstream_dir, remote);
+
+  if (g_file_query_exists (remote_dir, cancellable) &&
+      !gs_shutil_rm_rf (remote_dir, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+xdg_app_dir_remove_all_refs (XdgAppDir      *self,
+                             const char     *remote,
+                             GCancellable   *cancellable,
+                             GError        **error)
+{
+  g_autoptr(GFile) appstream_dir = NULL;
+  g_autoptr(GFile) remote_dir = NULL;
+  g_autofree char *prefix = NULL;
+  g_autoptr(GHashTable) refs = NULL;
+  GHashTableIter hash_iter;
+  gpointer key;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  prefix = g_strdup_printf ("%s:", remote);
+
+  if (!ostree_repo_list_refs (self->repo,
+                              NULL,
+                              &refs,
+                              cancellable, error))
+    return FALSE;
+
+  g_hash_table_iter_init (&hash_iter, refs);
+  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+    {
+      const char *refspec = key;
+
+      if (g_str_has_prefix (refspec, prefix) &&
+          !xdg_app_dir_remove_ref (self, remote, refspec + strlen (prefix), cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
 xdg_app_dir_update_appstream (XdgAppDir *self,
                               const char *remote,
                               const char *arch,
