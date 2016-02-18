@@ -206,7 +206,8 @@ gboolean            xdg_app_spawn (GFile        *dir,
 typedef enum {
   XDG_APP_CP_FLAGS_NONE = 0,
   XDG_APP_CP_FLAGS_MERGE = 1<<0,
-  XDG_APP_CP_FLAGS_NO_CHOWN = 1<<1
+  XDG_APP_CP_FLAGS_NO_CHOWN = 1<<1,
+  XDG_APP_CP_FLAGS_MOVE = 1<<2,
 } XdgAppCpFlags;
 
 gboolean   xdg_app_cp_a (GFile         *src,

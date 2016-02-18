@@ -1304,6 +1304,7 @@ xdg_app_cp_a (GFile         *src,
   int dest_dfd = -1;
   gboolean merge = (flags & XDG_APP_CP_FLAGS_MERGE) != 0;
   gboolean no_chown = (flags & XDG_APP_CP_FLAGS_NO_CHOWN) != 0;
+  gboolean move = (flags & XDG_APP_CP_FLAGS_MOVE) != 0;
   int r;
 
   enumerator = g_file_enumerate_children (src, "standard::type,standard::name,unix::uid,unix::gid,unix::mode",
@@ -1384,11 +1385,24 @@ xdg_app_cp_a (GFile         *src,
           GFileCopyFlags copyflags = G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS;
           if (!no_chown)
             copyflags |= G_FILE_COPY_ALL_METADATA;
-          if (!g_file_copy (src_child, dest_child, copyflags,
-                            cancellable, NULL, NULL, error))
-            goto out;
+          if (move)
+            {
+              if (!g_file_move (src_child, dest_child, copyflags,
+                                cancellable, NULL, NULL, error))
+                goto out;
+            }
+          else
+            {
+              if (!g_file_copy (src_child, dest_child, copyflags,
+                                cancellable, NULL, NULL, error))
+                goto out;
+            }
         }
     }
+
+  if (move &&
+      !g_file_delete (src, NULL, error))
+    goto out;
 
   ret = TRUE;
  out:
