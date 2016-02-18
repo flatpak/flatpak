@@ -914,6 +914,16 @@ builder_manifest_init_app_dir (BuilderManifest *self,
       !g_subprocess_wait_check (subp, NULL, error))
     return FALSE;
 
+  if (self->build_runtime && self->separate_locales)
+    {
+      g_autoptr(GFile) root_dir = NULL;
+
+      root_dir = g_file_get_child (app_dir, "usr");
+
+      if (!builder_migrate_locale_dirs (root_dir, error))
+        return FALSE;
+    }
+
   return TRUE;
 }
 
