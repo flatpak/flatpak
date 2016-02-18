@@ -45,6 +45,8 @@ void     xdg_app_collect_matches_for_path_pattern (const char *path,
                                                    const char *pattern,
                                                    const char *add_prefix,
                                                    GHashTable *to_remove_ht);
+gboolean builder_migrate_locale_dirs (GFile *root_dir,
+                                      GError **error);
 
 G_END_DECLS
 
