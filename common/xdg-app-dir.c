@@ -1797,6 +1797,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) dotref = NULL;
+  g_autoptr(GFile) files_etc = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autoptr(GFile) export = NULL;
   GSConsole *console = NULL;
@@ -1904,6 +1905,37 @@ xdg_app_dir_deploy (XdgAppDir *self,
   if (!g_file_replace_contents (dotref, "", 0, NULL, FALSE,
                                 G_FILE_CREATE_NONE, NULL, cancellable, error))
     goto out;
+
+  /* Ensure that various files exists as regular files in /usr/etc, as we
+     want to bind-mount over them */
+  files_etc = g_file_resolve_relative_path (checkoutdir, "files/etc");
+  if (g_file_query_exists (files_etc, cancellable))
+    {
+      char *etcfiles[] = {"passwd", "group", "resolv.conf", "machine-id" };
+      int i;
+      for (i = 0; i < G_N_ELEMENTS(etcfiles); i++)
+        {
+          g_autoptr(GFile) etc_file = g_file_get_child (files_etc, etcfiles[i]);
+          GFileType type;
+
+          type = g_file_query_file_type (etc_file, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                         cancellable);
+          if (type == G_FILE_TYPE_REGULAR)
+            continue;
+
+          if (type != G_FILE_TYPE_UNKNOWN)
+            {
+              /* Already exists, but not regular, probably symlink. Remove it */
+              if (!g_file_delete (etc_file, cancellable, error))
+                goto out;
+            }
+
+          if (!g_file_replace_contents (etc_file, "", 0, NULL, FALSE,
+                                        G_FILE_CREATE_REPLACE_DESTINATION,
+                                        NULL, cancellable, error))
+            goto out;
+        }
+    }
 
   keyfile = g_key_file_new ();
   metadata = g_file_get_child (checkoutdir, "metadata");
