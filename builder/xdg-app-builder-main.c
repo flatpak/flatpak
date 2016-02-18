@@ -161,6 +161,7 @@ main (int    argc,
   g_autoptr(BuilderCache) cache = NULL;
   g_autofree char *cache_branch = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFileEnumerator) dir_enum2 = NULL;
   GFileInfo *next = NULL;
   const char *platform_id = NULL;
 
@@ -359,22 +360,7 @@ main (int    argc,
           return 1;
         }
 
-      platform_id = builder_manifest_get_id_platform (manifest);
-      if (builder_context_get_build_runtime (build_context) &&
-          platform_id != NULL)
-        {
-          g_print ("exporting %s to repo\n", platform_id);
-
-            if (!do_export (&error, TRUE,
-                            "--metadata=metadata.platform",
-                            "--files=platform",
-                            opt_repo, app_dir_path, NULL))
-              {
-                g_print ("Export failed: %s\n", error->message);
-                return 1;
-              }
-        }
-
+      /* Export regular locale extensions */
       dir_enum = g_file_enumerate_children (app_dir, "standard::name,standard::type",
                                             G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                             NULL, NULL);
@@ -407,6 +393,7 @@ main (int    argc,
             }
         }
 
+      /* Export debug extensions */
       debuginfo_metadata = g_file_get_child (app_dir, "metadata.debuginfo");
       if (g_file_query_exists (debuginfo_metadata, NULL))
         {
@@ -415,6 +402,55 @@ main (int    argc,
           if (!do_export (&error, TRUE,
                           "--metadata=metadata.debuginfo",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
+                          opt_repo, app_dir_path, NULL))
+            {
+              g_print ("Export failed: %s\n", error->message);
+              return 1;
+            }
+        }
+
+      /* Export platform */
+      platform_id = builder_manifest_get_id_platform (manifest);
+      if (builder_context_get_build_runtime (build_context) &&
+          platform_id != NULL)
+        {
+          g_print ("exporting %s to repo\n", platform_id);
+
+            if (!do_export (&error, TRUE,
+                            "--metadata=metadata.platform",
+                            "--files=platform",
+                            builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
+                            opt_repo, app_dir_path, NULL))
+              {
+                g_print ("Export failed: %s\n", error->message);
+                return 1;
+              }
+        }
+
+      /* Export platform locales */
+      dir_enum2 = g_file_enumerate_children (app_dir, "standard::name,standard::type",
+                                            G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                            NULL, NULL);
+      while (dir_enum2 != NULL &&
+             (next = g_file_enumerator_next_file (dir_enum2, NULL, NULL)))
+        {
+          g_autoptr(GFileInfo) child_info = next;
+          const char *name = g_file_info_get_name (child_info);
+          const char *language;
+          g_autofree char *metadata_arg = NULL;
+          g_autofree char *files_arg = NULL;
+
+          if (!g_str_has_prefix (name, "metadata.platform.locale."))
+            continue;
+          language = name + strlen ("metadata.platform.locale.");
+
+          g_print ("exporting %s.Locale.%s to repo\n", platform_id, language);
+
+          metadata_arg = g_strdup_printf ("--metadata=%s", name);
+          files_arg = g_strconcat ("--files=platform/share/runtime/locale/", language, NULL);
+          if (!do_export (&error, TRUE,
+                          metadata_arg,
+                          files_arg,
                           opt_repo, app_dir_path, NULL))
             {
               g_print ("Export failed: %s\n", error->message);

@@ -1766,6 +1766,16 @@ builder_manifest_create_platform (BuilderManifest *self,
           !g_subprocess_wait_check (subp, NULL, error))
         return FALSE;
 
+      if (self->separate_locales)
+        {
+          g_autoptr(GFile) root_dir = NULL;
+
+          root_dir = g_file_get_child (app_dir, "platform");
+
+          if (!builder_migrate_locale_dirs (root_dir, error))
+            return FALSE;
+        }
+
       if (self->metadata_platform)
         {
           GFile *base_dir = builder_context_get_base_dir (context);
@@ -1864,6 +1874,63 @@ builder_manifest_create_platform (BuilderManifest *self,
                       glnx_set_error_from_errno (error);
                       return FALSE;
                     }
+                }
+            }
+        }
+
+      if (self->separate_locales)
+        {
+          g_autoptr(GFile) metadata_file = NULL;
+          g_autofree char *extension_contents = NULL;
+          g_autoptr(GFileEnumerator) dir_enum = NULL;
+          g_autoptr(GFileOutputStream) output = NULL;
+          g_autoptr(GFile) locale_parent_dir = NULL;
+          GFileInfo *next;
+
+          metadata_file = g_file_get_child (app_dir, "metadata.platform");
+
+          extension_contents = g_strdup_printf("\n"
+                                               "[Extension %s.Locale]\n"
+                                               "directory=share/runtime/locale\n"
+                                               "subdirectories=true\n",
+                                               self->id_platform);
+
+          output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
+          if (output == NULL)
+            return FALSE;
+
+          if (!g_output_stream_write_all (G_OUTPUT_STREAM (output),
+                                          extension_contents, strlen (extension_contents),
+                                          NULL, NULL, error))
+            return FALSE;
+
+          locale_parent_dir = g_file_resolve_relative_path (platform_dir, "share/runtime/locale");
+          dir_enum = g_file_enumerate_children (locale_parent_dir, "standard::name,standard::type",
+                                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                                NULL, NULL);
+
+          while (dir_enum != NULL &&
+                 (next = g_file_enumerator_next_file (dir_enum, NULL, NULL)))
+            {
+              g_autoptr(GFileInfo) child_info = next;
+              const char *name = g_file_info_get_name (child_info);
+
+              if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY)
+                {
+                  g_autoptr(GFile) metadata_locale_file = NULL;
+                  g_autofree char *metadata_contents = NULL;
+                  g_autofree char *filename = g_strdup_printf ("metadata.platform.locale.%s", name);
+
+                  metadata_locale_file = g_file_get_child (app_dir, filename);
+
+                  metadata_contents = g_strdup_printf("[Runtime]\n"
+                                                      "name=%s.Locale.%s\n", self->id_platform, name);
+                  if (!g_file_replace_contents (metadata_locale_file,
+                                                metadata_contents, strlen (metadata_contents),
+                                                NULL, FALSE,
+                                                G_FILE_CREATE_REPLACE_DESTINATION,
+                                                NULL, NULL, error))
+                    return FALSE;
                 }
             }
         }
