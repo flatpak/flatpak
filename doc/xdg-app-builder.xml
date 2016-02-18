@@ -144,6 +144,10 @@
                     Defaults to true if --build-runtime is specified</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>appstream-compose</option></term>
+                    <listitem><para>Run appstream-compose during cleanup phase. Defaults to true.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>sdk-extensions</option></term>
                     <listitem><para>Install these extra sdk extensions in /usr</para></listitem>
                 </varlistentry>
