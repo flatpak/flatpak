@@ -114,6 +114,10 @@ XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_get_current_installed_a
 XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_remotes              (XdgAppInstallation  *self,
                                                                                     GCancellable        *cancellable,
                                                                                     GError             **error);
+XDG_APP_EXTERN XdgAppRemote        *xdg_app_installation_get_remote_by_name        (XdgAppInstallation *self,
+                                                                                    const gchar         *name,
+                                                                                    GCancellable        *cancellable,
+                                                                                    GError              **error);
 XDG_APP_EXTERN char *              xdg_app_installation_load_app_overrides         (XdgAppInstallation *self,
                                                                                     const char         *app_id,
                                                                                     GCancellable       *cancellable,

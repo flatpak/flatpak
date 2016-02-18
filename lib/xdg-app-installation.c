@@ -557,6 +557,42 @@ xdg_app_installation_list_remotes (XdgAppInstallation  *self,
   return g_steal_pointer (&remotes);
 }
 
+/**
+ * xdg_app_installation_get_remote_by_name:
+ * @self: a #XdgAppInstallation
+ * @name: a remote name
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Looks up a remote by name.
+ *
+ * Returns: (transfer full): a #XdgAppRemote instances, or %NULL error
+ */
+XdgAppRemote *
+xdg_app_installation_get_remote_by_name (XdgAppInstallation *self,
+                                         const gchar         *name,
+                                         GCancellable        *cancellable,
+                                         GError              **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_auto(GStrv) remote_names = NULL;
+  int i;
+
+  remote_names = xdg_app_dir_list_remotes (priv->dir, cancellable, error);
+  if (remote_names == NULL)
+    return NULL;
+
+  for (i = 0; remote_names[i] != NULL; i++)
+    {
+      if (strcmp (remote_names[i], name) == 0)
+        return xdg_app_remote_new (priv->dir, remote_names[i]);
+    }
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+               "No remote named '%s'", name);
+  return NULL;
+}
+
 char *
 xdg_app_installation_load_app_overrides  (XdgAppInstallation *self,
                                           const char *app_id,
