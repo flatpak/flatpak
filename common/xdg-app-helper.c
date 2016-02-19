@@ -565,13 +565,13 @@ static const create_table_t create[] = {
   { FILE_TYPE_DIR, "app", 0755},
   { FILE_TYPE_DIR, "run", 0755},
   { FILE_TYPE_DIR, "run/host", 0755},
+  { FILE_TYPE_DIR, "run/host/monitor", 0700, NULL},
   { FILE_TYPE_DIR, "run/dbus", 0755},
   { FILE_TYPE_DIR, "run/media", 0755},
   { FILE_TYPE_DIR, "run/user", 0755},
   { FILE_TYPE_DIR, "run/user/%1$d", 0700, NULL},
   { FILE_TYPE_DIR, "run/user/%1$d/pulse", 0700, NULL},
   { FILE_TYPE_DIR, "run/user/%1$d/dconf", 0700, NULL},
-  { FILE_TYPE_DIR, "run/user/%1$d/xdg-app-monitor", 0700, NULL},
   { FILE_TYPE_REGULAR, "run/user/%1$d/pulse/native", 0700, NULL},
   { FILE_TYPE_DIR, "var", 0755},
   { FILE_TYPE_SYMLINK, "var/tmp", 0755, "/tmp"},
@@ -586,7 +586,7 @@ static const create_table_t create[] = {
   { FILE_TYPE_ETC_PASSWD, "etc/passwd", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_ETC_GROUP, "etc/group", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_REGULAR, "etc/resolv.conf", 0755, NULL, 0, &bind_resolv_conf},
-  { FILE_TYPE_SYMLINK, "etc/resolv.conf", 0755, "/run/user/%1$d/xdg-app-monitor/resolv.conf", 0, &create_monitor_links},
+  { FILE_TYPE_SYMLINK, "etc/resolv.conf", 0755, "/run/host/monitor/resolv.conf", 0, &create_monitor_links},
   { FILE_TYPE_REGULAR, "etc/machine-id", 0755, NULL, 0, &create_etc_dir},
   { FILE_TYPE_DIR, "tmp/.X11-unix", 0755 },
   { FILE_TYPE_REGULAR, "tmp/.X11-unix/X99", 0755 },
@@ -2038,7 +2038,6 @@ main (int argc,
   char *system_dbus_socket = NULL;
   char *session_dbus_socket = NULL;
   char *xdg_runtime_dir;
-  char *tz_val;
   char **args;
   char *tmp;
   int n_args;
@@ -2406,12 +2405,8 @@ main (int argc,
 
   if (monitor_path)
     {
-      char *monitor_mount_path = strdup_printf ("run/user/%d/xdg-app-monitor", uid);
-
-      if (bind_mount (monitor_path, monitor_mount_path, BIND_READONLY))
-	die ("can't bind monitor dir");
-
-      free (monitor_mount_path);
+      if (bind_mount (monitor_path, "run/host/monitor", BIND_READONLY))
+        die ("can't bind monitor dir");
     }
 
   /* Bind mount in X socket
@@ -2611,11 +2606,7 @@ main (int argc,
   xsetenv ("XDG_RUNTIME_DIR", xdg_runtime_dir, 1);
   free (xdg_runtime_dir);
   if (monitor_path)
-    {
-      tz_val = strdup_printf (":/run/user/%d/xdg-app-monitor/localtime", uid);
-      xsetenv ("TZ", tz_val, 0);
-      free (tz_val);
-    }
+    xsetenv ("TZ", ":/run/host/monitor/localtime", 0);
 
   __debug__(("forking for child\n"));
 
