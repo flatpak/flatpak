@@ -879,11 +879,13 @@ get_mountinfo (const char *mountpoint)
 
   if (free_me)
     free (free_me);
-  free (mountinfo);
 
   if (res)
-    return xstrdup (res);
-  return NULL;
+    res = xstrdup (res);
+
+  free (mountinfo);
+
+  return res;
 }
 
 static unsigned long
