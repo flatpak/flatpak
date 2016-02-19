@@ -2194,10 +2194,7 @@ xdg_app_xml_to_string (XdgAppXml *node, GString *res)
     {
       if (node->parent != NULL)
         {
-          if (node->first_child == NULL)
-            g_string_append (res, "</");
-          else
-            g_string_append (res, "<");
+          g_string_append (res, "<");
           g_string_append (res, node->element_name);
           if (node->attribute_names)
             {
@@ -2208,7 +2205,10 @@ xdg_app_xml_to_string (XdgAppXml *node, GString *res)
                                           node->attribute_values[i]);
                 }
             }
-          g_string_append (res, ">");
+          if (node->first_child == NULL)
+            g_string_append (res, "/>");
+          else
+            g_string_append (res, ">");
         }
 
       child = node->first_child;
