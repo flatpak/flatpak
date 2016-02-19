@@ -1,3 +1,17 @@
+Major changes in 0.4.12
+=======================
+* Fix crashes.
+* Update exports when removing apps.
+* Remove appstream and repo refs when removing a remote.
+* Add some build options to make libxdg-app usable inside a sandbox.
+* xdg-app-builder builds are now in the .xdg-app-builder/build subdir.
+* Make system repo bare-user to avoid creating any setuid binaries.
+* Add xdg-app-builder --run operation that runs a command with the
+  build environment set up.
+* Support creating locale extensions with xdg-app-builder.
+* Add support for tags to metadata.
+* Put runtime info and tags in the appstream data
+
 Major changes in 0.4.11
 =======================
 * Fix assertion when installing runtime
