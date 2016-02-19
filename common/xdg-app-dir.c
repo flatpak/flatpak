@@ -1911,7 +1911,8 @@ xdg_app_dir_deploy (XdgAppDir *self,
   files_etc = g_file_resolve_relative_path (checkoutdir, "files/etc");
   if (g_file_query_exists (files_etc, cancellable))
     {
-      char *etcfiles[] = {"passwd", "group", "resolv.conf", "machine-id" };
+      char *etcfiles[] = {"passwd", "group", "machine-id" };
+      g_autoptr(GFile) etc_resolve_conf = g_file_get_child (files_etc, "resolv.conf");
       int i;
       for (i = 0; i < G_N_ELEMENTS(etcfiles); i++)
         {
@@ -1935,6 +1936,15 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                         NULL, cancellable, error))
             goto out;
         }
+
+      if (g_file_query_exists (etc_resolve_conf, cancellable) &&
+          !g_file_delete (etc_resolve_conf, cancellable, error))
+        goto out;
+
+      if (!g_file_make_symbolic_link (etc_resolve_conf,
+                                      "/run/host/monitor/resolv.conf",
+                                      cancellable, error))
+        goto out;
     }
 
   keyfile = g_key_file_new ();
