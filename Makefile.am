@@ -33,7 +33,8 @@ AM_CPPFLAGS =						\
 	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"	\
 	-DHELPER=\"$(bindir)/xdg-app-helper\"		\
 	-DDBUSPROXY=\"$(libexecdir)/xdg-dbus-proxy\"	\
-	-I$(srcdir)/libglnx 				\
+	-DG_LOG_DOMAIN=\"xdg-app\"			\
+	-I$(srcdir)/libglnx				\
 	-I$(srcdir)/common				\
 	-I$(builddir)/common				\
 	$(NULL)
