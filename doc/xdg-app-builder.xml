@@ -466,6 +466,22 @@
                 </variablelist>
             </refsect3>
             <refsect3>
+                <title>Shell sources</title>
+                <para>
+                    This is a to create/modify the sources by running shell commands.
+                </para>
+                <variablelist>
+                    <varlistentry>
+                        <term><option>type</option></term>
+                        <listitem><para>"shell"</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>commands</option></term>
+                        <listitem><para>An array of shell commands that will be run during source extraction</para></listitem>
+                    </varlistentry>
+                </variablelist>
+            </refsect3>
+            <refsect3>
                 <title>Patch sources</title>
                 <variablelist>
                     <varlistentry>
