@@ -572,6 +572,7 @@ build (GFile *app_dir,
   g_autofree char *source_dir_path = g_file_get_path (source_dir);
   g_autofree char *source_dir_path_canonical = NULL;
   g_autofree char *ccache_dir_path = NULL;
+  const char *builddir;
   va_list ap;
   int i;
 
@@ -581,14 +582,19 @@ build (GFile *app_dir,
 
   source_dir_path_canonical = canonicalize_file_name (source_dir_path);
 
+  if (builder_context_get_build_runtime (context))
+    builddir = "/run/build-runtime/";
+  else
+    builddir = "/run/build/";
+
   g_ptr_array_add (args, g_strdup ("--nofilesystem=host"));
   g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", source_dir_path_canonical));
 
-  g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/build/%s=%s", module_name, source_dir_path_canonical));
+  g_ptr_array_add (args, g_strdup_printf ("--bind-mount=%s%s=%s", builddir, module_name, source_dir_path_canonical));
   if (cwd_subdir)
-    g_ptr_array_add (args, g_strdup_printf ("--build-dir=/run/build/%s/%s", module_name, cwd_subdir));
+    g_ptr_array_add (args, g_strdup_printf ("--build-dir=%s%s/%s", builddir, module_name, cwd_subdir));
   else
-    g_ptr_array_add (args, g_strdup_printf ("--build-dir=/run/build/%s", module_name));
+    g_ptr_array_add (args, g_strdup_printf ("--build-dir=%s%s", builddir, module_name));
 
   if (g_file_query_exists (builder_context_get_ccache_dir (context), NULL))
     {

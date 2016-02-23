@@ -1971,7 +1971,9 @@ builder_manifest_run (BuilderManifest  *self,
   g_ptr_array_add (args, g_strdup ("build"));
 
   build_dir_path = g_file_get_path (builder_context_get_build_dir (context));
-  g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/build=%s", build_dir_path));
+  g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/%s=%s",
+                                          builder_context_get_build_runtime (context) ? "build-runtime" : "build",
+                                          build_dir_path));
 
   if (g_file_query_exists (builder_context_get_ccache_dir (context), NULL))
     {
