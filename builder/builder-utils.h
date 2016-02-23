@@ -37,6 +37,9 @@ gboolean is_elf_file (const char *path,
                       gboolean *is_shared,
                       gboolean *is_stripped);
 
+char ** builder_get_debuginfo_file_references (const char *filename,
+                                               GError **error);
+
 gboolean directory_is_empty (const char *path);
 
 gboolean xdg_app_matches_path_pattern             (const char *path,
