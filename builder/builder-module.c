@@ -705,29 +705,88 @@ builder_module_handle_debuginfo (BuilderModule *self,
               g_autofree char *filename = g_path_get_basename (rel_path);
               g_autofree char *filename_debug = g_strconcat (filename, ".debug", NULL);
               g_autofree char *debug_dir = NULL;
+              g_autofree char *source_dir_path = NULL;
+              g_autoptr(GFile) source_dir = NULL;
               g_autofree char *real_debug_dir = NULL;
 
               if (g_str_has_prefix (rel_path_dir, "files/"))
                 {
                   debug_dir = g_build_filename (app_dir_path, "files/lib/debug", rel_path_dir + strlen("files/"), NULL);
                   real_debug_dir = g_build_filename ("/app/lib/debug", rel_path_dir + strlen("files/"), NULL);
+                  source_dir_path = g_build_filename (app_dir_path, "files/lib/debug/source", NULL);
                 }
               else if (g_str_has_prefix (rel_path_dir, "usr/"))
                 {
                   debug_dir = g_build_filename (app_dir_path, "usr/lib/debug", rel_path_dir, NULL);
                   real_debug_dir = g_build_filename ("/usr/lib/debug", rel_path_dir, NULL);
+                  source_dir_path = g_build_filename (app_dir_path, "usr/lib/debug/source", NULL);
                 }
 
               if (debug_dir)
                 {
+                  const char *builddir;
+                  g_autoptr(GError) local_error = NULL;
+                  g_auto(GStrv) file_refs = NULL;
+
                   if (g_mkdir_with_parents (debug_dir, 0755) != 0)
                     {
                       glnx_set_error_from_errno (error);
                       return FALSE;
                     }
 
+                  source_dir = g_file_new_for_path (source_dir_path);
+                  if (g_mkdir_with_parents (source_dir_path, 0755) != 0)
+                    {
+                      glnx_set_error_from_errno (error);
+                      return FALSE;
+                    }
+
+                  if (builder_context_get_build_runtime (context))
+                    builddir = "/run/build-runtime/";
+                  else
+                    builddir = "/run/build/";
+
                   debug_path = g_build_filename (debug_dir, filename_debug, NULL);
                   real_debug_path = g_build_filename (real_debug_dir, filename_debug, NULL);
+
+                  file_refs = builder_get_debuginfo_file_references (path, &local_error);
+
+                  if (file_refs == NULL)
+                    g_warning (local_error->message);
+                  else
+                    {
+                      GFile *build_dir = builder_context_get_build_dir (context);
+                      int i;
+                      g_print ("Copying sources: \n");
+                      for (i = 0; file_refs[i] != NULL; i++)
+                        {
+                          if (g_str_has_prefix (file_refs[i], builddir))
+                            {
+                              const char *relative_path = file_refs[i] + strlen (builddir);
+                              g_autoptr(GFile) src = g_file_resolve_relative_path (build_dir, relative_path);
+                              g_autoptr(GFile) dst = g_file_resolve_relative_path (source_dir, relative_path);
+                              g_autoptr(GFile) dst_parent = g_file_get_parent (dst);
+                              GFileType file_type;
+
+                              if (!gs_file_ensure_directory (dst_parent, TRUE, NULL, error))
+                                return FALSE;
+
+                              file_type = g_file_query_file_type (src, 0, NULL);
+                              if (file_type == G_FILE_TYPE_DIRECTORY)
+                                {
+                                  if (!gs_file_ensure_directory (dst, FALSE, NULL, error))
+                                    return FALSE;
+                                }
+                              else if (file_type == G_FILE_TYPE_REGULAR)
+                                {
+                                  if (!g_file_copy (src, dst,
+                                                    G_FILE_COPY_OVERWRITE,
+                                                    NULL, NULL, NULL, error))
+                                    return FALSE;
+                                }
+                            }
+                        }
+                    }
 
                   g_print ("stripping %s to %s\n", path, debug_path);
                   if (!eu_strip (error, "--remove-comment", "--reloc-debug-sections",
