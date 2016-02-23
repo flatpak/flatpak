@@ -2063,6 +2063,7 @@ main (int argc,
   char *uid_map, *gid_map;
   uid_t ns_uid;
   gid_t ns_gid;
+  struct stat st_buf;
 
   /* Get the (optional) capabilities we need, drop root */
   acquire_caps ();
@@ -2549,6 +2550,16 @@ main (int argc,
             add_lock_dir (extra_files[i].dest);
         }
     }
+
+  if (app_path != NULL &&
+      lstat ("run/build", &st_buf) != 0 &&
+      errno == ENOENT)
+    symlink ("/app/lib/debug/source", "run/build");
+
+  if (app_path != NULL &&
+      lstat ("run/build-runtime", &st_buf) != 0 &&
+      errno == ENOENT)
+    symlink ("/usr/lib/debug/source", "run/build-runtime");
 
   if (!network)
     loopback_setup ();
