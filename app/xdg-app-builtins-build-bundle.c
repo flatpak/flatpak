@@ -158,6 +158,18 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
     return FALSE;
 
   g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
+
+  /* We add this first in the metadata, so this will become the file
+   * format header.  The first part is readable to make it easy to
+   * figure out the type. The uint32 is basically a random value, but
+   * it ensures we have both zero and high bits sets, so we don't get
+   * sniffed as text. Also, the last 01 can be used as a version
+   * later.  Furthermore, the use of an uint32 lets use detect
+   * byteorder issues.
+   */
+  g_variant_builder_add (&metadata_builder, "{sv}", "xdg-app",
+                         g_variant_new_uint32 (0xe5890001));
+
   g_variant_builder_add (&metadata_builder, "{sv}", "ref", g_variant_new_string (full_branch));
   if (opt_repo_url)
     g_variant_builder_add (&metadata_builder, "{sv}", "origin", g_variant_new_string (opt_repo_url));
