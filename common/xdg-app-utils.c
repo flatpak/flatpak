@@ -2341,7 +2341,6 @@ xdg_app_bundle_load (GFile *file,
   g_autoptr(GVariant) metadata = NULL;
   g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GVariant) to_csum_v = NULL;
-  g_autoptr(GVariant) gpg_value = NULL;
 
   GMappedFile *mfile = g_mapped_file_new (gs_file_get_path_cached (file), FALSE, error);
 
