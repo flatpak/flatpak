@@ -7,6 +7,7 @@ public_headers = \
 	lib/xdg-app-error.h \
 	lib/xdg-app-installed-ref.h \
 	lib/xdg-app-remote-ref.h \
+	lib/xdg-app-bundle-ref.h \
 	lib/xdg-app-installation.h \
 	lib/xdg-app-remote.h \
 	lib/xdg-app-version-macros.h \
@@ -47,6 +48,7 @@ sources = \
 	lib/xdg-app-installed-ref.c \
 	lib/xdg-app-installed-ref-private.h \
 	lib/xdg-app-remote-ref.c \
+	lib/xdg-app-bundle-ref.c \
 	lib/xdg-app-remote-ref-private.h \
 	lib/xdg-app-remote-private.h \
 	lib/xdg-app-remote.c \

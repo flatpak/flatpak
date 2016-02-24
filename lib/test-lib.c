@@ -88,6 +88,30 @@ main (int argc, char *argv[])
       return 0;
     }
 
+  g_print ("\n**** Loading bundle\n");
+  {
+    g_autoptr(GFile) f = g_file_new_for_commandline_arg ("tests/hello.xdgapp");
+    g_autoptr(XdgAppBundleRef) bundle = xdg_app_bundle_ref_new (f, &error);
+    if (bundle == NULL)
+      {
+        g_print ("Error loading bundle: %s\n", error->message);
+        g_clear_error (&error);
+      }
+    else
+      {
+        g_autofree char *path = g_file_get_path (xdg_app_bundle_ref_get_file (bundle));
+        g_autoptr(GBytes) metadata = xdg_app_bundle_ref_get_metadata (bundle);
+        g_print ("%d %s %s %s %s %s\n%s\n",
+                 xdg_app_ref_get_kind (XDG_APP_REF(bundle)),
+                 xdg_app_ref_get_name (XDG_APP_REF(bundle)),
+                 xdg_app_ref_get_arch (XDG_APP_REF(bundle)),
+                 xdg_app_ref_get_branch (XDG_APP_REF(bundle)),
+                 xdg_app_ref_get_commit (XDG_APP_REF(bundle)),
+                 path,
+                 (char *)g_bytes_get_data (metadata, NULL));
+      }
+  }
+
   g_print ("\n**** Checking for updates\n");
   {
     g_autoptr(GPtrArray) updates =

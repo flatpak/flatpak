@@ -31,6 +31,7 @@
 #include <xdg-app-ref.h>
 #include <xdg-app-installed-ref.h>
 #include <xdg-app-remote-ref.h>
+#include <xdg-app-bundle-ref.h>
 #include <xdg-app-remote.h>
 #include <xdg-app-installation.h>
 
