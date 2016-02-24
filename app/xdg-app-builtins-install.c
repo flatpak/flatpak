@@ -114,11 +114,15 @@ install_bundle (XdgAppDir *dir,
   const char *filename;
   g_autofree char *ref = NULL;
   g_autofree char *origin = NULL;
+  g_autofree char *metadata_contents = NULL;
   gboolean created_deploy_base = FALSE;
   gboolean added_remote = FALSE;
   g_autofree char *to_checksum = NULL;
   g_auto(GStrv) parts = NULL;
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
+  g_autoptr(GInputStream) in = NULL;
   g_autofree char *remote = NULL;
   OstreeRepo *repo;
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
@@ -126,6 +130,7 @@ install_bundle (XdgAppDir *dir,
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autoptr(GVariant) metadata = NULL;
   g_autoptr(GVariant) gpg_value = NULL;
+  gboolean metadata_valid;
 
   if (argc < 2)
     return usage_error (context, "bundle filename must be specified", error);
@@ -151,6 +156,8 @@ install_bundle (XdgAppDir *dir,
 
   if (!g_variant_lookup (metadata, "ref", "s", &ref))
     return xdg_app_fail (error, "Invalid bundle, no ref in metadata");
+
+  g_variant_lookup (metadata, "metadata", "s", &metadata_contents);
 
   if (!g_variant_lookup (metadata, "origin", "s", &origin))
     origin = NULL;
@@ -257,8 +264,40 @@ install_bundle (XdgAppDir *dir,
         return xdg_app_fail (error, "GPG signatures found, but none are in trusted keyring");
     }
 
+  if (!ostree_repo_read_commit (repo, to_checksum, &root, NULL, NULL, error))
+    return FALSE;
+
   if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
     return FALSE;
+
+  /* We ensure that the actual installed metadata matches the one in the
+     header, because you may have made decisions on wheter to install it or not
+     based on that data. */
+  metadata_file = g_file_resolve_relative_path (root, "metadata");
+  in = (GInputStream*)g_file_read (metadata_file, cancellable, NULL);
+  if (in != NULL)
+    {
+      g_autoptr(GMemoryOutputStream) data_stream = (GMemoryOutputStream*)g_memory_output_stream_new_resizable ();
+
+      if (g_output_stream_splice (G_OUTPUT_STREAM (data_stream), in,
+                                  G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                                  cancellable, error) < 0)
+        return FALSE;
+
+      /* Null terminate */
+      g_output_stream_write (G_OUTPUT_STREAM (data_stream), "\0", 1, NULL, NULL);
+
+      metadata_valid = strcmp (metadata_contents, g_memory_output_stream_get_data (data_stream)) == 0;
+    }
+  else
+    metadata_valid = (metadata_contents == NULL);
+
+  if (!metadata_valid)
+    {
+      /* Immediately remove this broken commit */
+      ostree_repo_set_ref_immediate (repo, remote, ref, NULL, cancellable, error);
+      return xdg_app_fail (error, "Metadata in header and app are inconsistent");
+    }
 
   if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
     return FALSE;
