@@ -103,6 +103,9 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) metadata_file = NULL;
+  g_autoptr(GInputStream) in = NULL;
   const char *location;
   const char *filename;
   const char *name;
@@ -157,6 +160,9 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_resolve_rev (repo, full_branch, FALSE, &commit_checksum, error))
     return FALSE;
 
+  if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
+    return FALSE;
+
   g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
 
   /* We add this first in the metadata, so this will become the file
@@ -171,6 +177,26 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
                          g_variant_new_uint32 (0xe5890001));
 
   g_variant_builder_add (&metadata_builder, "{sv}", "ref", g_variant_new_string (full_branch));
+
+  metadata_file = g_file_resolve_relative_path (root, "metadata");
+
+  in = (GInputStream*)g_file_read (metadata_file, cancellable, NULL);
+  if (in != NULL)
+    {
+      g_autoptr(GMemoryOutputStream) data_stream = (GMemoryOutputStream*)g_memory_output_stream_new_resizable ();
+
+      if (g_output_stream_splice (G_OUTPUT_STREAM (data_stream), in,
+                                  G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                                  cancellable, error) < 0)
+        return FALSE;
+
+      /* Null terminate */
+      g_output_stream_write (G_OUTPUT_STREAM (data_stream), "\0", 1, NULL, NULL);
+
+      g_variant_builder_add (&metadata_builder, "{sv}", "metadata",
+                             g_variant_new_string (g_memory_output_stream_get_data (data_stream)));
+    }
+
   if (opt_repo_url)
     g_variant_builder_add (&metadata_builder, "{sv}", "origin", g_variant_new_string (opt_repo_url));
 
