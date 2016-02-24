@@ -100,10 +100,6 @@ read_gpg_data (GCancellable *cancellable,
   return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (mem_stream));
 }
 
-#define OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "(uayttay)"
-#define OSTREE_STATIC_DELTA_FALLBACK_FORMAT "(yaytt)"
-#define OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT "(a{sv}tayay" OSTREE_COMMIT_GVARIANT_STRING "aya" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "a" OSTREE_STATIC_DELTA_FALLBACK_FORMAT ")"
-
 gboolean
 install_bundle (XdgAppDir *dir,
                 GOptionContext *context,
@@ -128,6 +124,8 @@ install_bundle (XdgAppDir *dir,
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
   g_autoptr(GError) my_error = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(GVariant) gpg_value = NULL;
 
   if (argc < 2)
     return usage_error (context, "bundle filename must be specified", error);
@@ -145,47 +143,26 @@ install_bundle (XdgAppDir *dir,
 
   file = g_file_new_for_commandline_arg (filename);
 
-  {
-    g_autoptr(GVariant) delta = NULL;
-    g_autoptr(GVariant) metadata = NULL;
-    g_autoptr(GBytes) bytes = NULL;
-    g_autoptr(GVariant) to_csum_v = NULL;
-    g_autoptr(GVariant) gpg_value = NULL;
 
-    GMappedFile *mfile = g_mapped_file_new (gs_file_get_path_cached (file), FALSE, error);
+  metadata = xdg_app_bundle_load (file, &to_checksum, error);
 
-    if (mfile == NULL)
-      return FALSE;
+  if (metadata == NULL)
+    goto out;
 
-    bytes = g_mapped_file_get_bytes (mfile);
-    g_mapped_file_unref (mfile);
+  if (!g_variant_lookup (metadata, "ref", "s", &ref))
+    return xdg_app_fail (error, "Invalid bundle, no ref in metadata");
 
-    delta = g_variant_new_from_bytes (G_VARIANT_TYPE (OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT), bytes, FALSE);
-    g_variant_ref_sink (delta);
+  if (!g_variant_lookup (metadata, "origin", "s", &origin))
+    origin = NULL;
 
-    to_csum_v = g_variant_get_child_value (delta, 3);
-    if (!ostree_validate_structureof_csum_v (to_csum_v, error))
-      return FALSE;
+  gpg_value = g_variant_lookup_value (metadata, "gpg-keys", G_VARIANT_TYPE("ay"));
+  if (gpg_value)
+    {
+      gsize n_elements;
+      const char *data = g_variant_get_fixed_array (gpg_value, &n_elements, 1);
 
-    to_checksum = ostree_checksum_from_bytes_v (to_csum_v);
-
-    metadata = g_variant_get_child_value (delta, 0);
-
-    if (!g_variant_lookup (metadata, "ref", "s", &ref))
-      return xdg_app_fail (error, "Invalid bundle, no ref in metadata");
-
-    if (!g_variant_lookup (metadata, "origin", "s", &origin))
-      origin = NULL;
-
-    gpg_value = g_variant_lookup_value (metadata, "gpg-keys", G_VARIANT_TYPE("ay"));
-    if (gpg_value)
-      {
-        gsize n_elements;
-        const char *data = g_variant_get_fixed_array (gpg_value, &n_elements, 1);
-
-        gpg_data = g_bytes_new (data, n_elements);
-      }
-  }
+      gpg_data = g_bytes_new (data, n_elements);
+    }
 
   parts = xdg_app_decompose_ref (ref, error);
   if (parts == NULL)

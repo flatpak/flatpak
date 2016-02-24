@@ -184,6 +184,11 @@ gboolean xdg_app_repo_generate_appstream (OstreeRepo    *repo,
                                           GCancellable  *cancellable,
                                           GError       **error);
 
+GVariant * xdg_app_bundle_load (GFile *file,
+                                char **commit,
+                                GError **error);
+
+
 typedef struct {
   char *id;
   char *installed_id;
