@@ -144,7 +144,6 @@ xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
                                   const char *arch)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
-  g_autoptr(GFile) dir = NULL;
   g_autofree char *subdir = NULL;
 
   if (arch == NULL)
@@ -170,7 +169,6 @@ xdg_app_remote_get_appstream_timestamp (XdgAppRemote *self,
                                         const char *arch)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
-  g_autoptr(GFile) dir = NULL;
   g_autofree char *subdir = NULL;
 
   if (arch == NULL)

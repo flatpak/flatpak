@@ -1952,8 +1952,6 @@ builder_manifest_run (BuilderManifest  *self,
                       int               argc,
                       GError          **error)
 {
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
   g_autoptr(GPtrArray) args = NULL;
   g_autofree char *commandline = NULL;
   g_autofree char *build_dir_path = NULL;

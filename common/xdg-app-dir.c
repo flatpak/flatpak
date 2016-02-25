@@ -601,8 +601,6 @@ xdg_app_dir_remove_appstream (XdgAppDir      *self,
 {
   g_autoptr(GFile) appstream_dir = NULL;
   g_autoptr(GFile) remote_dir = NULL;
-  g_autofree char *prefix = NULL;
-  g_autoptr(GHashTable) refs = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -623,8 +621,6 @@ xdg_app_dir_remove_all_refs (XdgAppDir      *self,
                              GCancellable   *cancellable,
                              GError        **error)
 {
-  g_autoptr(GFile) appstream_dir = NULL;
-  g_autoptr(GFile) remote_dir = NULL;
   g_autofree char *prefix = NULL;
   g_autoptr(GHashTable) refs = NULL;
   GHashTableIter hash_iter;

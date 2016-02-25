@@ -1337,7 +1337,6 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
                                 GCancellable *cancellable,
                                 GError     **error)
 {
-  g_auto(GStrv) groups = NULL;
   g_auto(GStrv) parts = NULL;
   gboolean is_app;
   GList *extensions, *l;

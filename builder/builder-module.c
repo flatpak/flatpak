@@ -752,7 +752,7 @@ builder_module_handle_debuginfo (BuilderModule *self,
                   file_refs = builder_get_debuginfo_file_references (path, &local_error);
 
                   if (file_refs == NULL)
-                    g_warning (local_error->message);
+                    g_warning ("%s", local_error->message);
                   else
                     {
                       GFile *build_dir = builder_context_get_build_dir (context);
