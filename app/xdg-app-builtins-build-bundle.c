@@ -101,6 +101,7 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GInputStream) in = NULL;
+  g_autoptr(GInputStream) xml_in = NULL;
   const char *location;
   const char *filename;
   const char *name;
@@ -109,6 +110,11 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   g_autofree char *commit_checksum = NULL;
   GVariantBuilder metadata_builder;
   GVariantBuilder param_builder;
+  g_autoptr(XdgAppXml) xml_root = NULL;
+  g_autoptr(GFile) appstream_file = NULL;
+  g_autoptr(GKeyFile) keyfile = NULL;
+  g_autoptr(GFile) xmls_dir = NULL;
+  g_autofree char *appstream_basename = NULL;
 
   context = g_option_context_new ("LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local repository");
 
@@ -175,21 +181,79 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
 
   metadata_file = g_file_resolve_relative_path (root, "metadata");
 
+  keyfile = g_key_file_new ();
+
   in = (GInputStream*)g_file_read (metadata_file, cancellable, NULL);
   if (in != NULL)
     {
-      g_autoptr(GMemoryOutputStream) data_stream = (GMemoryOutputStream*)g_memory_output_stream_new_resizable ();
+      g_autoptr(GBytes) bytes = xdg_app_read_stream (in, TRUE, error);
 
-      if (g_output_stream_splice (G_OUTPUT_STREAM (data_stream), in,
-                                  G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
-                                  cancellable, error) < 0)
+      if (bytes == NULL)
         return FALSE;
 
-      /* Null terminate */
-      g_output_stream_write (G_OUTPUT_STREAM (data_stream), "\0", 1, NULL, NULL);
+      if (!g_key_file_load_from_data (keyfile,
+                                      g_bytes_get_data (bytes, NULL),
+                                      g_bytes_get_size (bytes),
+                                      G_KEY_FILE_NONE, error))
+        return FALSE;
 
       g_variant_builder_add (&metadata_builder, "{sv}", "metadata",
-                             g_variant_new_string (g_memory_output_stream_get_data (data_stream)));
+                             g_variant_new_string (g_bytes_get_data (bytes, NULL)));
+    }
+
+  xmls_dir = g_file_resolve_relative_path (root, "files/share/app-info/xmls");
+  appstream_basename = g_strconcat (name, ".xml.gz", NULL);
+  appstream_file = g_file_get_child (xmls_dir, appstream_basename);
+
+  xml_in = (GInputStream*)g_file_read (appstream_file, cancellable, NULL);
+  if (xml_in)
+    {
+      g_autoptr(XdgAppXml) appstream_root = NULL;
+      g_autoptr(XdgAppXml) xml_root = xdg_app_xml_parse (xml_in, TRUE,
+                                                         cancellable, error);
+      if (xml_root == NULL)
+        return FALSE;
+
+      appstream_root = xdg_app_appstream_xml_new ();
+      if (xdg_app_appstream_xml_migrate (xml_root, appstream_root,
+                                         full_branch, name, keyfile))
+        {
+          g_autoptr(GBytes) xml_data = xdg_app_appstream_xml_root_to_data (appstream_root, error);
+          int i;
+          g_autoptr(GFile) icons_dir =
+            g_file_resolve_relative_path (root,
+                                          "files/share/app-info/icons/xdg-app");
+          const char *icon_sizes[] = { "64x64", "128x128" };
+          const char *icon_sizes_key[] = { "icon-64", "icon-128" };
+          g_autofree char *icon_name = g_strconcat (name, ".png", NULL);
+
+          if (xml_data == NULL)
+            return FALSE;
+
+          g_variant_builder_add (&metadata_builder, "{sv}", "appdata",
+                                 g_variant_new_from_bytes (G_VARIANT_TYPE_BYTESTRING,
+                                                           xml_data, TRUE));
+
+          for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
+            {
+              g_autoptr(GFile) size_dir =g_file_get_child (icons_dir, icon_sizes[i]);
+              g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
+              g_autoptr(GInputStream) png_in = NULL;
+
+              png_in = (GInputStream*)g_file_read (icon_file, cancellable, NULL);
+              if (png_in != NULL)
+                {
+                  g_autoptr(GBytes) png_data = xdg_app_read_stream (png_in, FALSE, error);
+                  if (png_data == NULL)
+                    return FALSE;
+
+                  g_variant_builder_add (&metadata_builder, "{sv}", icon_sizes_key[i],
+                                         g_variant_new_from_bytes (G_VARIANT_TYPE_BYTESTRING,
+                                                                   png_data, TRUE));
+                }
+            }
+        }
+
     }
 
   if (opt_repo_url)
