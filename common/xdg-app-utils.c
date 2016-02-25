@@ -1843,6 +1843,31 @@ xdg_app_appstream_xml_new (void)
   return appstream_root;
 }
 
+GBytes *
+xdg_app_appstream_xml_root_to_data (XdgAppXml *appstream_root,
+                                    GError **error)
+{
+  g_autoptr(GString) xml = NULL;
+  g_autoptr(GZlibCompressor) compressor = NULL;
+  g_autoptr(GOutputStream) out2 = NULL;
+  g_autoptr(GOutputStream) out = NULL;
+
+  xdg_app_xml_add (appstream_root->first_child, xdg_app_xml_new_text ("\n"));
+
+  xml = g_string_new ("");
+  xdg_app_xml_to_string (appstream_root, xml);
+
+  compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
+  out = g_memory_output_stream_new_resizable ();
+  out2 = g_converter_output_stream_new (out, G_CONVERTER (compressor));
+  if (!g_output_stream_write_all (out2, xml->str, xml->len,
+                                  NULL, NULL, error))
+    return NULL;
+  if (!g_output_stream_close (out2, NULL, error))
+    return NULL;
+
+  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
+}
 
 gboolean
 xdg_app_repo_generate_appstream (OstreeRepo    *repo,
@@ -1898,10 +1923,7 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
       g_autofree char *parent = NULL;
       g_autofree char *branch = NULL;
       g_autoptr(XdgAppXml) appstream_root = NULL;
-      g_autoptr(GString) xml = NULL;
-      g_autoptr(GZlibCompressor) compressor = NULL;
-      g_autoptr(GOutputStream) out2 = NULL;
-      g_autoptr(GOutputStream) out = NULL;
+      g_autoptr(GBytes) xml_data = NULL;
 
       if (g_mkdtemp (tmpdir) == NULL)
         return xdg_app_fail (error, "Can't create temporary directory");
@@ -1933,25 +1955,15 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
             }
         }
 
-      xdg_app_xml_add (appstream_root->first_child, xdg_app_xml_new_text ("\n"));
-
-      xml = g_string_new ("");
-      xdg_app_xml_to_string (appstream_root, xml);
-
-      compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
-      out = g_memory_output_stream_new_resizable ();
-      out2 = g_converter_output_stream_new (out, G_CONVERTER (compressor));
-      if (!g_output_stream_write_all (out2, xml->str, xml->len,
-                                      NULL, NULL, error))
-        return FALSE;
-      if (!g_output_stream_close (out2, NULL, error))
+      xml_data = xdg_app_appstream_xml_root_to_data (appstream_root, error);
+      if (xml_data == NULL)
         return FALSE;
 
       appstream_file = g_file_get_child (tmpdir_file, "appstream.xml.gz");
 
       if (!g_file_replace_contents (appstream_file,
-                                    g_memory_output_stream_get_data (G_MEMORY_OUTPUT_STREAM (out)),
-                                    g_memory_output_stream_get_data_size (G_MEMORY_OUTPUT_STREAM (out)),
+                                    g_bytes_get_data (xml_data, NULL),
+                                    g_bytes_get_size (xml_data),
                                     NULL,
                                     FALSE,
                                     G_FILE_CREATE_NONE,

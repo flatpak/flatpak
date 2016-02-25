@@ -298,6 +298,8 @@ gboolean   xdg_app_appstream_xml_migrate   (XdgAppXml     *source,
                                             const char    *ref,
                                             const char    *id,
                                             GKeyFile      *metadata);
+GBytes *xdg_app_appstream_xml_root_to_data (XdgAppXml     *appstream_root,
+                                            GError       **error);
 gboolean   xdg_app_repo_generate_appstream (OstreeRepo    *repo,
                                             const char   **gpg_key_ids,
                                             const char    *gpg_homedir,
