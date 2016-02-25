@@ -147,6 +147,13 @@ gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          OstreeAsyncProgress *progress,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean   xdg_app_dir_pull_from_bundle (XdgAppDir      *self,
+                                         GFile          *file,
+                                         const char     *remote,
+                                         const char     *ref,
+                                         gboolean        require_gpg_signature,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 gboolean    xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
                                             const char     *kind,
                                             const char     *name,
@@ -241,6 +248,13 @@ gboolean    xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
 					       GHashTable *hash,
 					       GCancellable *cancellable,
 					       GError **error);
+char      *xdg_app_dir_create_origin_remote (XdgAppDir *self,
+                                             const char *url,
+                                             const char *id,
+                                             const char *title,
+                                             GBytes *gpg_data,
+                                             GCancellable *cancellable,
+                                             GError **error);
 char     **xdg_app_dir_list_remotes     (XdgAppDir *self,
                                          GCancellable *cancellable,
                                          GError **error);

@@ -801,9 +801,19 @@ xdg_app_dir_pull (XdgAppDir *self,
   GSConsole *console = NULL;
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   const char *refs[2];
+  g_autofree char *url = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
+
+  if (!ostree_repo_remote_get_url (self->repo,
+                                   repository,
+                                   &url,
+                                   error))
+    goto out;
+
+  if (*url == 0)
+    return TRUE; /* Empty url, silently disables updates */
 
   if (progress == NULL)
     {
@@ -839,6 +849,115 @@ xdg_app_dir_pull (XdgAppDir *self,
 
   return ret;
 }
+
+gboolean
+xdg_app_dir_pull_from_bundle (XdgAppDir *self,
+                              GFile *file,
+                              const char *remote,
+                              const char *ref,
+                              gboolean require_gpg_signature,
+                              GCancellable *cancellable,
+                              GError **error)
+{
+  g_autofree char *metadata_contents = NULL;
+  g_autofree char *to_checksum = NULL;
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) metadata_file = NULL;
+  g_autoptr(GInputStream) in = NULL;
+  g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
+  g_autoptr(GError) my_error = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  gboolean metadata_valid;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (!xdg_app_supports_bundles (self->repo))
+    return xdg_app_fail (error, "Your version of ostree is too old to support single-file bundles");
+
+  metadata = xdg_app_bundle_load (file, &to_checksum, error);
+  if (metadata == NULL)
+    return FALSE;
+
+  g_variant_lookup (metadata, "metadata", "s", &metadata_contents);
+
+  if (!ostree_repo_prepare_transaction (self->repo, NULL, cancellable, error))
+    return FALSE;
+
+  ostree_repo_transaction_set_ref (self->repo, remote, ref, to_checksum);
+
+  if (!ostree_repo_static_delta_execute_offline (self->repo,
+                                                 file,
+                                                 FALSE,
+                                                 cancellable,
+                                                 error))
+    return FALSE;
+
+  gpg_result = ostree_repo_verify_commit_ext (self->repo, to_checksum,
+                                              NULL, NULL, cancellable, &my_error);
+  if (gpg_result == NULL)
+    {
+      /* NOT_FOUND means no gpg signature, we ignore this *if* there
+       * is no gpg key specified in the bundle or by the user */
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
+          !require_gpg_signature)
+        g_clear_error (&my_error);
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
+    }
+  else
+    {
+      /* If there is no valid gpg signature we fail, unless there is no gpg
+         key specified (on the command line or in the file) because then we
+         trust the source bundle. */
+      if (ostree_gpg_verify_result_count_valid (gpg_result) == 0  &&
+          require_gpg_signature)
+        return xdg_app_fail (error, "GPG signatures found, but none are in trusted keyring");
+    }
+
+  if (!ostree_repo_read_commit (self->repo, to_checksum, &root, NULL, NULL, error))
+    return FALSE;
+
+  if (!ostree_repo_commit_transaction (self->repo, NULL, cancellable, error))
+    return FALSE;
+
+  /* We ensure that the actual installed metadata matches the one in the
+     header, because you may have made decisions on wheter to install it or not
+     based on that data. */
+  metadata_file = g_file_resolve_relative_path (root, "metadata");
+  in = (GInputStream*)g_file_read (metadata_file, cancellable, NULL);
+  if (in != NULL)
+    {
+      g_autoptr(GMemoryOutputStream) data_stream = (GMemoryOutputStream*)g_memory_output_stream_new_resizable ();
+
+      if (g_output_stream_splice (G_OUTPUT_STREAM (data_stream), in,
+                                  G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                                  cancellable, error) < 0)
+        return FALSE;
+
+      /* Null terminate */
+      g_output_stream_write (G_OUTPUT_STREAM (data_stream), "\0", 1, NULL, NULL);
+
+      metadata_valid =
+        metadata_contents != NULL &&
+        strcmp (metadata_contents, g_memory_output_stream_get_data (data_stream)) == 0;
+    }
+  else
+    metadata_valid = (metadata_contents == NULL);
+
+  if (!metadata_valid)
+    {
+      /* Immediately remove this broken commit */
+      ostree_repo_set_ref_immediate (self->repo, remote, ref, NULL, cancellable, error);
+      return xdg_app_fail (error, "Metadata in header and app are inconsistent");
+    }
+
+  return TRUE;
+}
+
 
 char *
 xdg_app_dir_current_ref (XdgAppDir *self,
@@ -2726,6 +2845,72 @@ cmp_remote (gconstpointer  a,
   prio_b = xdg_app_dir_get_remote_prio (self, b_name);
 
   return prio_b - prio_a;
+}
+
+char *
+xdg_app_dir_create_origin_remote (XdgAppDir *self,
+                                  const char *url,
+                                  const char *id,
+                                  const char *title,
+                                  GBytes *gpg_data,
+                                  GCancellable *cancellable,
+                                  GError **error)
+{
+  g_autofree char *remote = NULL;
+  g_auto(GStrv) remotes = NULL;
+  int version = 0;
+  g_autoptr(GVariantBuilder) optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  remotes = ostree_repo_remote_list (self->repo, NULL);
+
+  do
+    {
+      g_autofree char *name = NULL;
+      if (version == 0)
+        name = g_strdup_printf ("%s-origin", id);
+      else
+        name = g_strdup_printf ("%s-%d-origin", id, version);
+      version++;
+
+      if (remotes == NULL ||
+          !g_strv_contains ((const char * const *) remotes, name))
+        remote = g_steal_pointer (&name);
+    }
+  while (remote == NULL);
+
+  g_variant_builder_add (optbuilder, "{s@v}",
+                         "xa.title",
+                         g_variant_new_variant (g_variant_new_string (title)));
+
+  g_variant_builder_add (optbuilder, "{s@v}",
+                         "xa.noenumerate",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
+  g_variant_builder_add (optbuilder, "{s@v}",
+                         "xa.prio",
+                         g_variant_new_variant (g_variant_new_string ("0")));
+
+  if (!ostree_repo_remote_add (self->repo,
+                               remote, url ? url : "", g_variant_builder_end (optbuilder), cancellable, error))
+    return NULL;
+
+  if (gpg_data)
+    {
+      g_autoptr(GInputStream) gpg_data_as_stream = g_memory_input_stream_new_from_bytes (gpg_data);
+
+      if (!ostree_repo_remote_gpg_import (self->repo, remote, gpg_data_as_stream,
+                                          NULL, NULL, cancellable, error))
+        {
+          ostree_repo_remote_delete (self->repo, remote,
+                                     NULL, NULL);
+          return NULL;
+        }
+    }
+
+  return g_steal_pointer (&remote);
 }
 
 
