@@ -372,13 +372,34 @@ get_user_dir_config_key (GUserDirectory dir)
 }
 
 static int
-get_user_dir_from_string (const char *filesystem)
+get_user_dir_from_string (const char *filesystem, const char **suffix)
 {
-  if (strcmp (filesystem, "xdg-desktop") == 0)
+  char *slash;
+  g_autofree char *prefix;
+  gsize len;
+
+  slash = strchr (filesystem, '/');
+
+  if (slash)
+    len = slash - filesystem;
+  else
+    len = strlen (filesystem);
+
+  if (suffix)
+    {
+      const char *rest = filesystem + len;
+      while (*rest == '/')
+        rest ++;
+      *suffix = rest;
+    }
+
+  prefix = g_strndup (filesystem, len);
+
+  if (strcmp (prefix, "xdg-desktop") == 0)
     return G_USER_DIRECTORY_DESKTOP;
-  if (strcmp (filesystem, "xdg-documents") == 0)
+  if (strcmp (prefix, "xdg-documents") == 0)
     return G_USER_DIRECTORY_DOCUMENTS;
-  if (strcmp (filesystem, "xdg-download") == 0)
+  if (strcmp (prefix, "xdg-download") == 0)
     return G_USER_DIRECTORY_DOWNLOAD;
   if (strcmp (filesystem, "xdg-music") == 0)
     return G_USER_DIRECTORY_MUSIC;
@@ -422,13 +443,13 @@ static gboolean
 xdg_app_context_verify_filesystem (const char *filesystem_and_mode,
                                    GError **error)
 {
-  char *filesystem = parse_filesystem_flags (filesystem_and_mode, NULL);
+  g_autofree char *filesystem = parse_filesystem_flags (filesystem_and_mode, NULL);
 
   if (strcmp (filesystem, "host") == 0)
     return TRUE;
   if (strcmp (filesystem, "home") == 0)
     return TRUE;
-  if (get_user_dir_from_string (filesystem) >= 0)
+  if (get_user_dir_from_string (filesystem, NULL) >= 0)
     return TRUE;
   if (g_str_has_prefix (filesystem, "~/"))
     return TRUE;
@@ -436,7 +457,7 @@ xdg_app_context_verify_filesystem (const char *filesystem_and_mode,
     return TRUE;
 
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               "Unknown filesystem location %s, valid types are: host,home,xdg-*,~/dir,/dir,\n", filesystem);
+               "Unknown filesystem location %s, valid types are: host,home,xdg-*[/...],~/dir,/dir,\n", filesystem);
   return FALSE;
 }
 
@@ -1469,8 +1490,9 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
 
       if (g_str_has_prefix (filesystem, "xdg-"))
         {
-          const char *path;
-          int dir = get_user_dir_from_string (filesystem);
+          const char *path, *rest = NULL;
+          g_autofree char *subpath = NULL;
+          int dir = get_user_dir_from_string (filesystem, &rest);
 
           if (dir < 0)
             {
@@ -1488,7 +1510,8 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
               continue;
             }
 
-          if (g_file_test (path, G_FILE_TEST_EXISTS))
+          subpath = g_build_filename (path, rest, NULL);
+          if (g_file_test (subpath, G_FILE_TEST_EXISTS))
             {
               if (xdg_dirs_conf == NULL)
                 xdg_dirs_conf = g_string_new ("");
@@ -1496,7 +1519,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
               g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n", get_user_dir_config_key (dir), path);
 
               g_ptr_array_add (argv_array, g_strdup (mode_arg));
-              g_ptr_array_add (argv_array, g_strdup_printf ("%s", path));
+              g_ptr_array_add (argv_array, g_strdup_printf ("%s", subpath));
             }
         }
       else if (g_str_has_prefix (filesystem, "~/"))
