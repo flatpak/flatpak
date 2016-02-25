@@ -346,35 +346,12 @@ xdg_app_context_set_persistent (XdgAppContext            *context,
 }
 
 static const char *
-get_user_dir_config_key (GUserDirectory dir)
-{
-  switch (dir)
-    {
-    case G_USER_DIRECTORY_DESKTOP:
-      return "XDG_DESKTOP_DIR";
-    case G_USER_DIRECTORY_DOCUMENTS:
-      return "XDG_DOCUMENTS_DIR";
-    case G_USER_DIRECTORY_DOWNLOAD:
-      return "XDG_DOWNLOAD_DIR";
-    case G_USER_DIRECTORY_MUSIC:
-      return "XDG_MUSIC_DIR";
-    case G_USER_DIRECTORY_PICTURES:
-      return "XDG_PICTURES_DIR";
-    case G_USER_DIRECTORY_PUBLIC_SHARE:
-      return "XDG_PUBLICSHARE_DIR";
-    case G_USER_DIRECTORY_TEMPLATES:
-      return "XDG_TEMPLATES_DIR";
-    case G_USER_DIRECTORY_VIDEOS:
-      return "XDG_VIDEOS_DIR";
-    default:
-      return NULL;
-    }
-}
-
-static int
-get_user_dir_from_string (const char *filesystem, const char **suffix)
+get_user_dir_from_string (const char *filesystem,
+                          const char **config_key,
+                          const char **suffix)
 {
   char *slash;
+  const char *rest;
   g_autofree char *prefix;
   gsize len;
 
@@ -385,34 +362,73 @@ get_user_dir_from_string (const char *filesystem, const char **suffix)
   else
     len = strlen (filesystem);
 
+  rest = filesystem + len;
+  while (*rest == '/')
+    rest ++;
+
   if (suffix)
-    {
-      const char *rest = filesystem + len;
-      while (*rest == '/')
-        rest ++;
-      *suffix = rest;
-    }
+    *suffix = rest;
 
   prefix = g_strndup (filesystem, len);
 
   if (strcmp (prefix, "xdg-desktop") == 0)
-    return G_USER_DIRECTORY_DESKTOP;
+    {
+      if (config_key)
+        *config_key = "XDG_DESKTOP_DIR";
+      return g_get_user_special_dir (G_USER_DIRECTORY_DESKTOP);
+    }
   if (strcmp (prefix, "xdg-documents") == 0)
-    return G_USER_DIRECTORY_DOCUMENTS;
+    {
+      if (config_key)
+        *config_key = "XDG_DOCUMENTS_DIR";
+      return g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS);
+    }
   if (strcmp (prefix, "xdg-download") == 0)
-    return G_USER_DIRECTORY_DOWNLOAD;
-  if (strcmp (filesystem, "xdg-music") == 0)
-    return G_USER_DIRECTORY_MUSIC;
-  if (strcmp (filesystem, "xdg-pictures") == 0)
-    return G_USER_DIRECTORY_PICTURES;
-  if (strcmp (filesystem, "xdg-public-share") == 0)
-    return G_USER_DIRECTORY_PUBLIC_SHARE;
-  if (strcmp (filesystem, "xdg-templates") == 0)
-    return G_USER_DIRECTORY_TEMPLATES;
-  if (strcmp (filesystem, "xdg-videos") == 0)
-    return G_USER_DIRECTORY_VIDEOS;
+    {
+      if (config_key)
+        *config_key = "XDG_DOWNLOAD_DIR";
+      return g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD);
+    }
+  if (strcmp (prefix, "xdg-music") == 0)
+    {
+      if (config_key)
+        *config_key = "XDG_MUSIC_DIR";
+      return g_get_user_special_dir (G_USER_DIRECTORY_MUSIC);
+    }
+  if (strcmp (prefix, "xdg-pictures") == 0)
+    {
+      if (config_key)
+        *config_key = "XDG_PICTURES_DIR";
+      return g_get_user_special_dir (G_USER_DIRECTORY_PICTURES);
+    }
+  if (strcmp (prefix, "xdg-public-share") == 0)
+    {
+      if (config_key)
+        *config_key = "XDG_PUBLICSHARE_DIR";
+      return g_get_user_special_dir (G_USER_DIRECTORY_PUBLIC_SHARE);
+    }
+  if (strcmp (prefix, "xdg-templates") == 0)
+    {
+      if (config_key)
+        *config_key = "XDG_TEMPLATES_DIR";
+      return g_get_user_special_dir (G_USER_DIRECTORY_TEMPLATES);
+    }
+  if (strcmp (prefix, "xdg-videos") == 0)
+    {
+      if (config_key)
+        *config_key = "XDG_VIDEOS_DIR";
+      return g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS);
+    }
+  /* Don't support xdg-run without suffix, because that doesn't work */
+  if (strcmp (prefix, "xdg-run") == 0 &&
+      *rest != 0)
+    {
+      if (config_key)
+        *config_key = NULL;
+      return g_get_user_runtime_dir ();
+    }
 
-  return -1;
+  return NULL;
 }
 
 static char *
@@ -449,7 +465,7 @@ xdg_app_context_verify_filesystem (const char *filesystem_and_mode,
     return TRUE;
   if (strcmp (filesystem, "home") == 0)
     return TRUE;
-  if (get_user_dir_from_string (filesystem, NULL) >= 0)
+  if (get_user_dir_from_string (filesystem, NULL, NULL) != NULL)
     return TRUE;
   if (g_str_has_prefix (filesystem, "~/"))
     return TRUE;
@@ -1491,16 +1507,17 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
       if (g_str_has_prefix (filesystem, "xdg-"))
         {
           const char *path, *rest = NULL;
+          const char *config_key = NULL;
           g_autofree char *subpath = NULL;
-          int dir = get_user_dir_from_string (filesystem, &rest);
 
-          if (dir < 0)
+          path = get_user_dir_from_string (filesystem, &config_key, &rest);
+
+          if (path == NULL)
             {
               g_warning ("Unsupported xdg dir %s\n", filesystem);
               continue;
             }
 
-         path = g_get_user_special_dir (dir);
           if (strcmp (path, g_get_home_dir ()) == 0)
             {
               /* xdg-user-dirs sets disabled dirs to $HOME, and its in general not a good
@@ -1513,10 +1530,13 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
           subpath = g_build_filename (path, rest, NULL);
           if (g_file_test (subpath, G_FILE_TEST_EXISTS))
             {
+
               if (xdg_dirs_conf == NULL)
                 xdg_dirs_conf = g_string_new ("");
 
-              g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n", get_user_dir_config_key (dir), path);
+              if (config_key)
+                g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n",
+                                        config_key, path);
 
               g_ptr_array_add (argv_array, g_strdup (mode_arg));
               g_ptr_array_add (argv_array, g_strdup_printf ("%s", subpath));
