@@ -141,10 +141,6 @@ install_bundle (XdgAppDir *dir,
   if (metadata == NULL)
     return FALSE;
 
-  if (!xdg_app_dir_lock (dir, &lock,
-                         cancellable, error))
-    return FALSE;
-
   if (!g_variant_lookup (metadata, "ref", "s", &ref))
     return xdg_app_fail (error, "Invalid bundle, no ref in metadata");
 
@@ -200,6 +196,10 @@ install_bundle (XdgAppDir *dir,
                                      cancellable,
                                      error))
     goto out;
+
+  if (!xdg_app_dir_lock (dir, &lock,
+                         cancellable, error))
+    return FALSE;
 
   if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
     goto out;
