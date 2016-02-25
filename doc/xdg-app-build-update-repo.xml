@@ -94,6 +94,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--generate-static-deltas</option></term>
+
+                <listitem><para>
+                  Generate static deltas for all references. This generates from-empty and
+                  delta static files that allow for faster download.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--prune</option></term>
 
                 <listitem><para>

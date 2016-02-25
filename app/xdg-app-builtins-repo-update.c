@@ -35,12 +35,14 @@ static char *opt_title;
 static char *opt_gpg_homedir;
 static char **opt_gpg_key_ids;
 static gboolean opt_prune;
+static gboolean opt_generate_deltas;
 static gint opt_prune_depth = -1;
 
 static GOptionEntry options[] = {
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this repository", "TITLE" },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
+  { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, "Generate delta files", NULL },
   { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, "Prune unused objects", NULL },
   { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, "Only traverse DEPTH parents for each commit (default: -1=infinite)", "DEPTH" },
   { NULL }
@@ -91,6 +93,96 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
   g_print ("Updating summary\n");
   if (!xdg_app_repo_update (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
+
+  if (opt_generate_deltas)
+    {
+      g_autoptr(GHashTable) all_refs = NULL;
+      g_autoptr(GHashTable) all_deltas_hash = NULL;
+      g_autoptr(GPtrArray) all_deltas = NULL;
+      int i;
+      GHashTableIter iter;
+      gpointer key, value;
+      g_autoptr(GVariantBuilder) parambuilder = NULL;
+      g_autoptr(GVariant) params = NULL;
+
+      parambuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+      /* Fall back for 1 meg files */
+      g_variant_builder_add (parambuilder, "{sv}",
+                             "min-fallback-size", g_variant_new_uint32 (1));
+      g_variant_builder_add (parambuilder, "{sv}", "verbose",
+                             g_variant_new_boolean (TRUE));
+      params = g_variant_ref_sink (g_variant_builder_end (parambuilder));
+
+      if (!ostree_repo_list_static_delta_names (repo, &all_deltas,
+                                                cancellable, error))
+        return FALSE;
+
+      all_deltas_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+      for (i = 0; i < all_deltas->len; i++)
+        g_hash_table_insert (all_deltas_hash,
+                             g_strdup (g_ptr_array_index (all_deltas, i)),
+                             NULL);
+
+      if (!ostree_repo_list_refs (repo, NULL, &all_refs,
+                                  cancellable, error))
+        return FALSE;
+
+      g_hash_table_iter_init (&iter, all_refs);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        {
+          const char *ref = key;
+          const char *commit = value;
+          const char *from_parent = NULL;
+          g_autoptr(GVariant) variant = NULL;
+          g_autoptr(GVariant) parent_variant = NULL;
+          g_autofree char *parent_commit = NULL;
+
+          if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
+                                         &variant, NULL))
+            return FALSE;
+
+          parent_commit = ostree_commit_get_parent (variant);
+
+          if (parent_commit != NULL)
+            ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, parent_commit,
+                                      &parent_variant, NULL);
+
+
+          /* From empty */
+          if (!g_hash_table_contains (all_deltas_hash, commit))
+            {
+              g_print ("Generating from-empty delta for %s (%s)\n", ref, commit);
+              if (!ostree_repo_static_delta_generate (repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
+                                                      NULL, commit, NULL,
+                                                      params,
+                                                      cancellable, error))
+                return FALSE;
+            }
+
+          /* Mark this one as wanted */
+          g_hash_table_insert (all_deltas_hash, g_strdup (commit), GINT_TO_POINTER(1));
+
+            /* From parent */
+          if (parent_variant != NULL)
+            {
+              from_parent = g_strdup_printf ("%s-%s", parent_commit, commit);
+
+
+              if (!g_hash_table_contains (all_deltas_hash, from_parent))
+                {
+                  g_print ("Generating from-parent delta for %s (%s)\n", ref, from_parent);
+                  if (!ostree_repo_static_delta_generate (repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
+                                                          parent_commit, commit, NULL,
+                                                          params,
+                                                          cancellable, error))
+                    return FALSE;
+                }
+
+              /* Mark this one as wanted */
+              g_hash_table_insert (all_deltas_hash, g_strdup (from_parent), GINT_TO_POINTER(1));
+            }
+        }
+    }
 
   if (opt_prune)
     {
