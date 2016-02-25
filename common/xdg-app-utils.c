@@ -2335,6 +2335,9 @@ xdg_app_xml_parse (GInputStream *in,
 GVariant *
 xdg_app_bundle_load (GFile *file,
                      char **commit,
+                     char **ref,
+                     char **origin,
+                     GBytes **gpg_keys,
                      GError **error)
 {
   g_autoptr(GVariant) delta = NULL;
@@ -2361,6 +2364,35 @@ xdg_app_bundle_load (GFile *file,
     *commit = ostree_checksum_from_bytes_v (to_csum_v);
 
   metadata = g_variant_get_child_value (delta, 0);
+
+  if (ref != NULL)
+    {
+      if (!g_variant_lookup (metadata, "ref", "s", ref))
+        {
+          xdg_app_fail (error, "Invalid bundle, no ref in metadata");
+          return NULL;
+        }
+    }
+
+  if (origin != NULL)
+    {
+      if (!g_variant_lookup (metadata, "origin", "s", origin))
+        *origin = NULL;
+    }
+
+  if (gpg_keys != NULL)
+    {
+        g_autoptr(GVariant) gpg_value = g_variant_lookup_value (metadata, "gpg-keys",
+                                                                G_VARIANT_TYPE("ay"));
+        if (gpg_value)
+          {
+            gsize n_elements;
+            const char *data = g_variant_get_fixed_array (gpg_value, &n_elements, 1);
+            *gpg_keys = g_bytes_new (data, n_elements);
+          }
+        else
+          *gpg_keys = NULL;
+    }
 
   /* Make a copy of the data so we can return it after freeing the file */
   return g_variant_new_from_bytes (g_variant_get_type (metadata),

@@ -186,6 +186,9 @@ gboolean xdg_app_repo_generate_appstream (OstreeRepo    *repo,
 
 GVariant * xdg_app_bundle_load (GFile *file,
                                 char **commit,
+                                char **ref,
+                                char **origin,
+                                GBytes **gpg_keys,
                                 GError **error);
 
 

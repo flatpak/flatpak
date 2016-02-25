@@ -163,15 +163,9 @@ xdg_app_bundle_ref_new (GFile *file,
   g_autofree char *full_ref = NULL;
   g_autofree char *metadata_contents = NULL;
 
-  metadata = xdg_app_bundle_load (file, &commit, error);
+  metadata = xdg_app_bundle_load (file, &commit, &full_ref, NULL, NULL, error);
   if (metadata == NULL)
     return NULL;
-
-  if (!g_variant_lookup (metadata, "ref", "s", &full_ref))
-    {
-      xdg_app_fail (error, "Invalid bundle, no ref in metadata");
-      return NULL;
-    }
 
   parts = xdg_app_decompose_ref (full_ref, error);
   if (parts == NULL)

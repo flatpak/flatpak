@@ -716,6 +716,144 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 }
 
 /**
+ * xdg_app_installation_install_bundle:
+ * @self: a #XdgAppInstallation
+ * @file: a #GFile that is an xdg-app bundle
+ * @progress: (scope call): progress callback
+ * @progress_data: user data passed to @progress
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Install a new ref from a bundle.
+ *
+ * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
+ */
+XdgAppInstalledRef *
+xdg_app_installation_install_bundle (XdgAppInstallation  *self,
+                                     GFile               *file,
+                                     XdgAppProgressCallback  progress,
+                                     gpointer             progress_data,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autofree char *ref = NULL;
+  gboolean created_deploy_base = FALSE;
+  gboolean added_remote = FALSE;
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(XdgAppDir) dir_clone = NULL;
+  XdgAppInstalledRef *result = NULL;
+  g_autoptr(GError) local_error = NULL;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autofree char *origin = NULL;
+  g_auto(GStrv) parts = NULL;
+  g_autofree char *basename = NULL;
+  g_autoptr(GBytes) gpg_data = NULL;
+  g_autofree char *to_checksum = NULL;
+  g_autofree char *remote = NULL;
+
+  metadata = xdg_app_bundle_load (file, &to_checksum,
+                                  &ref,
+                                  &origin,
+                                  &gpg_data,
+                                  error);
+  if (metadata == NULL)
+    return FALSE;
+
+  parts = xdg_app_decompose_ref (ref, error);
+  if (parts == NULL)
+    return FALSE;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
+
+  if (g_file_query_exists (deploy_base, cancellable))
+    {
+      g_set_error (error,
+                   XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
+                   "%s branch %s already installed", parts[1], parts[3]);
+      return NULL;
+    }
+
+  /* Add a remote for later updates */
+  basename = g_file_get_basename (file);
+  remote = xdg_app_dir_create_origin_remote (priv->dir,
+                                             origin,
+                                             parts[1],
+                                             basename,
+                                             gpg_data,
+                                             cancellable,
+                                             error);
+  if (remote == NULL)
+    return FALSE;
+
+  /* From here we need to goto out on error, to clean up */
+  added_remote = TRUE;
+
+  /* Pull, prune, etc are not threadsafe, so we work on a copy */
+  dir_clone = xdg_app_dir_clone (priv->dir);
+
+  if (!xdg_app_dir_pull_from_bundle (dir_clone,
+                                     file,
+                                     remote,
+                                     ref,
+                                     gpg_data != NULL,
+                                     cancellable,
+                                     error))
+    goto out;
+
+  if (!xdg_app_dir_lock (dir_clone, &lock,
+                         cancellable, error))
+    goto out;
+
+  if (!g_file_make_directory_with_parents (deploy_base, cancellable, &local_error))
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+        g_set_error (error,
+                     XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
+                     "%s branch %s already installed", parts[1], parts[3]);
+      else
+        g_propagate_error (error, g_steal_pointer (&local_error));
+      goto out;
+    }
+
+  created_deploy_base = TRUE;
+
+  if (!xdg_app_dir_set_origin (dir_clone, ref, remote, cancellable, error))
+    goto out;
+
+  if (!xdg_app_dir_deploy (dir_clone, ref, NULL, cancellable, error))
+    goto out;
+
+  if (strcmp (parts[0], "app") == 0)
+    {
+      if (!xdg_app_dir_make_current_ref (dir_clone, ref, cancellable, error))
+        goto out;
+
+      if (!xdg_app_dir_update_exports (dir_clone, parts[1], cancellable, error))
+        goto out;
+    }
+
+  result = get_ref (self, ref, cancellable);
+
+  glnx_release_lock_file (&lock);
+
+  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
+
+  if (!xdg_app_dir_mark_changed (dir_clone, error))
+    goto out;
+
+ out:
+  if (created_deploy_base && result == NULL)
+    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
+
+  if (added_remote && result == NULL)
+    ostree_repo_remote_delete (xdg_app_dir_get_repo (priv->dir), remote, NULL, NULL);
+
+  return result;
+}
+
+/**
  * xdg_app_installation_install:
  * @self: a #XdgAppInstallation
  * @remote_name: name of the remote to use

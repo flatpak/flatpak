@@ -122,7 +122,6 @@ install_bundle (XdgAppDir *dir,
   OstreeRepo *repo;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autoptr(GVariant) metadata = NULL;
-  g_autoptr(GVariant) gpg_value = NULL;
   g_autofree char *basename = NULL;
 
   if (argc < 2)
@@ -132,29 +131,15 @@ install_bundle (XdgAppDir *dir,
 
   repo = xdg_app_dir_get_repo (dir);
 
-  if (!xdg_app_supports_bundles (repo))
-    return xdg_app_fail (error, "Your version of ostree is too old to support single-file bundles");
-
   file = g_file_new_for_commandline_arg (filename);
 
-  metadata = xdg_app_bundle_load (file, &to_checksum, error);
+  metadata = xdg_app_bundle_load (file, &to_checksum,
+                                  &ref,
+                                  &origin,
+                                  &gpg_data,
+                                  error);
   if (metadata == NULL)
     return FALSE;
-
-  if (!g_variant_lookup (metadata, "ref", "s", &ref))
-    return xdg_app_fail (error, "Invalid bundle, no ref in metadata");
-
-  if (!g_variant_lookup (metadata, "origin", "s", &origin))
-    origin = NULL;
-
-  gpg_value = g_variant_lookup_value (metadata, "gpg-keys", G_VARIANT_TYPE("ay"));
-  if (gpg_value)
-    {
-      gsize n_elements;
-      const char *data = g_variant_get_fixed_array (gpg_value, &n_elements, 1);
-
-      gpg_data = g_bytes_new (data, n_elements);
-    }
 
   if (opt_gpg_file != NULL)
     {
