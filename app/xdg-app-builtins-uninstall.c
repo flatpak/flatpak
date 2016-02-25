@@ -132,6 +132,13 @@ xdg_app_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
         return FALSE;
     }
 
+  if (repository != NULL &&
+      g_str_has_suffix (repository, "-origin") &&
+      xdg_app_dir_get_remote_noenumerate (dir, repository))
+    {
+      ostree_repo_remote_delete (xdg_app_dir_get_repo (dir), repository, NULL, NULL);
+    }
+
   if (!xdg_app_dir_mark_changed (dir, error))
     return FALSE;
 
