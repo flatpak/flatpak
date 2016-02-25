@@ -1635,14 +1635,15 @@ validate_component (XdgAppXml *component,
   return TRUE;
 }
 
-static gboolean
-migrate_xml (XdgAppXml *root,
-             XdgAppXml *appstream,
-             const char *ref,
-             const char *id,
-             GKeyFile *metadata)
+gboolean
+xdg_app_appstream_xml_migrate (XdgAppXml *source,
+                               XdgAppXml *dest,
+                               const char *ref,
+                               const char *id,
+                               GKeyFile *metadata)
 {
-  XdgAppXml *components;
+  XdgAppXml *source_components;
+  XdgAppXml *dest_components;
   XdgAppXml *component;
   XdgAppXml *prev_component;
   gboolean migrated = FALSE;
@@ -1651,9 +1652,9 @@ migrate_xml (XdgAppXml *root,
   g_autofree const char *sdk = NULL;
   const char *group;
 
-  if (root->first_child == NULL ||
-      root->first_child->next_sibling != NULL ||
-      g_strcmp0 (root->first_child->element_name, "components") != 0)
+  if (source->first_child == NULL ||
+      source->first_child->next_sibling != NULL ||
+      g_strcmp0 (source->first_child->element_name, "components") != 0)
     return FALSE;
 
   if (g_str_has_prefix (ref, "app/"))
@@ -1665,9 +1666,10 @@ migrate_xml (XdgAppXml *root,
   runtime = g_key_file_get_string (metadata, group, "runtime", NULL);
   sdk = g_key_file_get_string (metadata, group, "sdk", NULL);
 
-  components = root->first_child;
+  source_components = source->first_child;
+  dest_components = dest->first_child;
 
-  component = components->first_child;
+  component = source_components->first_child;
   prev_component = NULL;
   while (component != NULL)
     {
@@ -1675,7 +1677,8 @@ migrate_xml (XdgAppXml *root,
 
       if (validate_component (component, ref, id, tags, runtime, sdk))
         {
-          xdg_app_xml_add (appstream, xdg_app_xml_unlink (component, prev_component));
+          xdg_app_xml_add (dest_components,
+                           xdg_app_xml_unlink (component, prev_component));
           migrated = TRUE;
         }
       else
@@ -1731,7 +1734,7 @@ copy_icon (const char *id,
 
 static gboolean
 extract_appstream (OstreeRepo    *repo,
-                   XdgAppXml       *appstream_components,
+                   XdgAppXml     *appstream_root,
                    const char    *ref,
                    const char    *id,
                    GFile         *dest,
@@ -1776,7 +1779,8 @@ extract_appstream (OstreeRepo    *repo,
   if (xml_root == NULL)
     return FALSE;
 
-  if (migrate_xml (xml_root, appstream_components, ref, id, keyfile))
+  if (xdg_app_appstream_xml_migrate (xml_root, appstream_root,
+                                     ref, id, keyfile))
     {
       g_autoptr(GError) my_error = NULL;
       if (!copy_icon (id, root, dest, "64x64", &my_error))
@@ -1793,6 +1797,28 @@ extract_appstream (OstreeRepo    *repo,
 
   return TRUE;
 }
+
+XdgAppXml *
+xdg_app_appstream_xml_new (void)
+{
+  XdgAppXml *appstream_root = NULL;
+  XdgAppXml *appstream_components;
+
+  appstream_root = xdg_app_xml_new ("root");
+  appstream_components = xdg_app_xml_new ("components");
+  xdg_app_xml_add (appstream_root, appstream_components);
+  xdg_app_xml_add (appstream_components, xdg_app_xml_new_text ("\n  "));
+
+  appstream_components->attribute_names = g_new0 (char *, 3);
+  appstream_components->attribute_values = g_new0 (char *, 3);
+  appstream_components->attribute_names[0] = g_strdup ("version");
+  appstream_components->attribute_values[0] = g_strdup ("0.8");
+  appstream_components->attribute_names[1] = g_strdup ("origin");
+  appstream_components->attribute_values[1] = g_strdup ("xdg-app");
+
+  return appstream_root;
+}
+
 
 gboolean
 xdg_app_repo_generate_appstream (OstreeRepo    *repo,
@@ -1848,7 +1874,6 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
       g_autofree char *parent = NULL;
       g_autofree char *branch = NULL;
       g_autoptr(XdgAppXml) appstream_root = NULL;
-      XdgAppXml *appstream_components;
       g_autoptr(GString) xml = NULL;
       g_autoptr(GZlibCompressor) compressor = NULL;
       g_autoptr(GOutputStream) out2 = NULL;
@@ -1859,17 +1884,7 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
 
       tmpdir_file = g_file_new_for_path (tmpdir);
 
-      appstream_root = xdg_app_xml_new ("root");
-      appstream_components = xdg_app_xml_new ("components");
-      xdg_app_xml_add (appstream_root, appstream_components);
-      xdg_app_xml_add (appstream_components, xdg_app_xml_new_text ("\n  "));
-
-      appstream_components->attribute_names = g_new0 (char *, 3);
-      appstream_components->attribute_values = g_new0 (char *, 3);
-      appstream_components->attribute_names[0] = g_strdup ("version");
-      appstream_components->attribute_values[0] = g_strdup ("0.8");
-      appstream_components->attribute_names[1] = g_strdup ("origin");
-      appstream_components->attribute_values[1] = g_strdup ("xdg-app");
+      appstream_root = xdg_app_appstream_xml_new ();
 
       g_hash_table_iter_init (&iter2, all_refs);
       while (g_hash_table_iter_next (&iter2, &key, &value))
@@ -1885,14 +1900,16 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
           if (strcmp (split[2], arch) != 0)
             continue;
 
-          if (!extract_appstream (repo, appstream_components, ref, split[1], tmpdir_file, cancellable, &my_error))
+          if (!extract_appstream (repo, appstream_root,
+                                  ref, split[1], tmpdir_file,
+                                  cancellable, &my_error))
             {
               g_print ("No appstream data for %s\n", ref);
               continue;
             }
         }
 
-      xdg_app_xml_add (appstream_components, xdg_app_xml_new_text ("\n"));
+      xdg_app_xml_add (appstream_root->first_child, xdg_app_xml_new_text ("\n"));
 
       xml = g_string_new ("");
       xdg_app_xml_to_string (appstream_root, xml);

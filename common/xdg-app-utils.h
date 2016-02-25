@@ -178,11 +178,6 @@ gboolean xdg_app_repo_update    (OstreeRepo    *repo,
                                  const char    *gpg_homedir,
                                  GCancellable  *cancellable,
                                  GError       **error);
-gboolean xdg_app_repo_generate_appstream (OstreeRepo    *repo,
-                                          const char   **gpg_key_ids,
-                                          const char    *gpg_homedir,
-                                          GCancellable  *cancellable,
-                                          GError       **error);
 
 GVariant * xdg_app_bundle_load (GFile *file,
                                 char **commit,
@@ -292,5 +287,17 @@ XdgAppXml *xdg_app_xml_find      (XdgAppXml     *node,
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppXml, xdg_app_xml_free);
 
+
+XdgAppXml *xdg_app_appstream_xml_new       (void);
+gboolean   xdg_app_appstream_xml_migrate   (XdgAppXml     *source,
+                                            XdgAppXml     *dest,
+                                            const char    *ref,
+                                            const char    *id,
+                                            GKeyFile      *metadata);
+gboolean   xdg_app_repo_generate_appstream (OstreeRepo    *repo,
+                                            const char   **gpg_key_ids,
+                                            const char    *gpg_homedir,
+                                            GCancellable  *cancellable,
+                                            GError       **error);
 
 #endif /* __XDG_APP_UTILS_H__ */
