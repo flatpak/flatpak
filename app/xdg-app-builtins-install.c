@@ -131,6 +131,7 @@ install_bundle (XdgAppDir *dir,
   metadata = xdg_app_bundle_load (file, &to_checksum,
                                   &ref,
                                   &origin,
+                                  NULL,
                                   &gpg_data,
                                   error);
   if (metadata == NULL)

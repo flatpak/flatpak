@@ -51,6 +51,7 @@ XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_metadata   (XdgAppBundleR
 XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_appdata    (XdgAppBundleRef  *self);
 XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_icon       (XdgAppBundleRef  *self,
                                                                    int               size);
+XDG_APP_EXTERN guint64          xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef  *self);
 
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC

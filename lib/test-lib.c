@@ -103,13 +103,14 @@ main (int argc, char *argv[])
         g_autofree char *path = g_file_get_path (xdg_app_bundle_ref_get_file (bundle));
         g_autoptr(GBytes) metadata = xdg_app_bundle_ref_get_metadata (bundle);
         g_autoptr(GBytes) appdata = xdg_app_bundle_ref_get_appdata (bundle);
-        g_print ("%d %s %s %s %s %s\n%s\n",
+        g_print ("%d %s %s %s %s %s %"G_GUINT64_FORMAT"\n%s\n",
                  xdg_app_ref_get_kind (XDG_APP_REF(bundle)),
                  xdg_app_ref_get_name (XDG_APP_REF(bundle)),
                  xdg_app_ref_get_arch (XDG_APP_REF(bundle)),
                  xdg_app_ref_get_branch (XDG_APP_REF(bundle)),
                  xdg_app_ref_get_commit (XDG_APP_REF(bundle)),
                  path,
+                 xdg_app_bundle_ref_get_installed_size (bundle),
                  (char *)g_bytes_get_data (metadata, NULL));
 
         if (appdata != NULL)

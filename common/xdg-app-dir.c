@@ -871,7 +871,7 @@ xdg_app_dir_pull_from_bundle (XdgAppDir *self,
   if (!xdg_app_supports_bundles (self->repo))
     return xdg_app_fail (error, "Your version of ostree is too old to support single-file bundles");
 
-  metadata = xdg_app_bundle_load (file, &to_checksum, NULL, NULL, NULL, error);
+  metadata = xdg_app_bundle_load (file, &to_checksum, NULL, NULL, NULL, NULL, error);
   if (metadata == NULL)
     return FALSE;
 

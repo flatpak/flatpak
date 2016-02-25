@@ -756,6 +756,7 @@ xdg_app_installation_install_bundle (XdgAppInstallation  *self,
   metadata = xdg_app_bundle_load (file, &to_checksum,
                                   &ref,
                                   &origin,
+                                  NULL,
                                   &gpg_data,
                                   error);
   if (metadata == NULL)

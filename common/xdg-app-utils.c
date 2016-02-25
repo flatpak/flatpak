@@ -2385,11 +2385,39 @@ xdg_app_xml_parse (GInputStream *in,
 #define OSTREE_STATIC_DELTA_FALLBACK_FORMAT "(yaytt)"
 #define OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT "(a{sv}tayay" OSTREE_COMMIT_GVARIANT_STRING "aya" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "a" OSTREE_STATIC_DELTA_FALLBACK_FORMAT ")"
 
+static guint64
+xdg_app_bundle_get_installed_size (GVariant *bundle)
+{
+  guint64 total_size = 0, total_usize = 0;
+  g_autoptr(GVariant) meta_entries = NULL;
+  guint i, n_parts;
+
+  g_variant_get_child (bundle, 6, "@a" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT, &meta_entries);
+  n_parts = g_variant_n_children (meta_entries);
+  g_print ("Number of parts: %u\n", n_parts);
+
+  for (i = 0; i < n_parts; i++)
+    {
+      guint32 version;
+      guint64 size, usize;
+      g_autoptr(GVariant) objects = NULL;
+
+      g_variant_get_child (meta_entries, i, "(u@aytt@ay)",
+                           &version, NULL, &size, &usize, &objects);
+
+      total_size += size;
+      total_usize += usize;
+    }
+
+  return total_usize;
+}
+
 GVariant *
 xdg_app_bundle_load (GFile *file,
                      char **commit,
                      char **ref,
                      char **origin,
+                     guint64 *installed_size,
                      GBytes **gpg_keys,
                      GError **error)
 {
@@ -2415,6 +2443,9 @@ xdg_app_bundle_load (GFile *file,
 
   if (commit)
     *commit = ostree_checksum_from_bytes_v (to_csum_v);
+
+  if (installed_size)
+    *installed_size = xdg_app_bundle_get_installed_size (delta);
 
   metadata = g_variant_get_child_value (delta, 0);
 

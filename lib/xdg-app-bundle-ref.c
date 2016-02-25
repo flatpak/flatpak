@@ -35,6 +35,7 @@ struct _XdgAppBundleRefPrivate
   GBytes *appdata;
   GBytes *icon_64;
   GBytes *icon_128;
+  guint64 installed_size;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (XdgAppBundleRef, xdg_app_bundle_ref, XDG_APP_TYPE_REF)
@@ -197,6 +198,15 @@ xdg_app_bundle_ref_get_icon (XdgAppBundleRef  *self,
   return NULL;
 }
 
+guint64
+xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef  *self)
+{
+  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+
+  return priv->installed_size;
+}
+
+
 XdgAppBundleRef *
 xdg_app_bundle_ref_new (GFile *file,
                         GError **error)
@@ -212,8 +222,10 @@ xdg_app_bundle_ref_new (GFile *file,
   g_autoptr(GVariant) appdata = NULL;
   g_autoptr(GVariant) icon_64 = NULL;
   g_autoptr(GVariant) icon_128 = NULL;
+  guint64 installed_size;
 
-  metadata = xdg_app_bundle_load (file, &commit, &full_ref, NULL, NULL, error);
+  metadata = xdg_app_bundle_load (file, &commit, &full_ref, NULL, &installed_size,
+                                  NULL, error);
   if (metadata == NULL)
     return NULL;
 
@@ -253,6 +265,8 @@ xdg_app_bundle_ref_new (GFile *file,
   icon_128 = g_variant_lookup_value (metadata, "icon-128", G_VARIANT_TYPE_BYTESTRING);
   if (icon_128)
     priv->icon_128 = g_variant_get_data_as_bytes (icon_128);
+
+  priv->installed_size = installed_size;
 
   return ref;
 }

@@ -187,6 +187,7 @@ GVariant * xdg_app_bundle_load (GFile *file,
                                 char **commit,
                                 char **ref,
                                 char **origin,
+                                guint64 *installed_size,
                                 GBytes **gpg_keys,
                                 GError **error);
 
