@@ -60,3 +60,9 @@ XdgApp-1.0.*
 /test-doc-portal.trs
 /testdb.log
 /testdb.trs
+/tests/test-keyring/.gpg-v21-migrated
+/tests/test-keyring/private-keys-v1.d/
+/tests/test-keyring/trustdb.gpg
+/tests/hello*.xdgapp
+/tests/platform*.xdgapp
+/tests/repo
