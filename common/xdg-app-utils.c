@@ -38,6 +38,30 @@
 #include "libglnx/libglnx.h"
 #include <libsoup/soup.h>
 
+GBytes *
+xdg_app_read_stream (GInputStream *in,
+                     gboolean null_terminate,
+                     GError **error)
+{
+  g_autoptr(GOutputStream) mem_stream = NULL;
+
+  mem_stream = g_memory_output_stream_new_resizable ();
+  if (g_output_stream_splice (mem_stream, in,
+                              0, NULL, error) < 0)
+    return NULL;
+
+  if (null_terminate)
+    {
+      if (!g_output_stream_write (G_OUTPUT_STREAM (mem_stream), "\0", 1, NULL, error))
+        return NULL;
+    }
+
+  if (!g_output_stream_close (G_OUTPUT_STREAM (mem_stream), NULL, error))
+    return NULL;
+
+  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (mem_stream));
+}
+
 gint
 xdg_app_strcmp0_ptr (gconstpointer  a,
                      gconstpointer  b)

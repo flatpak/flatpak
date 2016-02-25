@@ -58,7 +58,6 @@ read_gpg_data (GCancellable *cancellable,
                GError **error)
 {
   g_autoptr(GInputStream) source_stream = NULL;
-  g_autoptr(GOutputStream) mem_stream = NULL;
   guint n_keyrings = 0;
   g_autoptr(GPtrArray) streams = NULL;
 
@@ -93,11 +92,7 @@ read_gpg_data (GCancellable *cancellable,
   /* Chain together all the --keyring options as one long stream. */
   source_stream = (GInputStream *) xdg_app_chain_input_stream_new (streams);
 
-  mem_stream = g_memory_output_stream_new_resizable ();
-  if (g_output_stream_splice (mem_stream, source_stream, G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET, cancellable, error) < 0)
-    return NULL;
-
-  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (mem_stream));
+  return xdg_app_read_stream (source_stream, FALSE, error);
 }
 
 gboolean
