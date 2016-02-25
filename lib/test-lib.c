@@ -3,6 +3,7 @@
 #include "libglnx/libglnx.h"
 
 #include <xdg-app.h>
+#include <gio/gunixoutputstream.h>
 
 
 static void
@@ -101,6 +102,7 @@ main (int argc, char *argv[])
       {
         g_autofree char *path = g_file_get_path (xdg_app_bundle_ref_get_file (bundle));
         g_autoptr(GBytes) metadata = xdg_app_bundle_ref_get_metadata (bundle);
+        g_autoptr(GBytes) appdata = xdg_app_bundle_ref_get_appdata (bundle);
         g_print ("%d %s %s %s %s %s\n%s\n",
                  xdg_app_ref_get_kind (XDG_APP_REF(bundle)),
                  xdg_app_ref_get_name (XDG_APP_REF(bundle)),
@@ -109,6 +111,26 @@ main (int argc, char *argv[])
                  xdg_app_ref_get_commit (XDG_APP_REF(bundle)),
                  path,
                  (char *)g_bytes_get_data (metadata, NULL));
+
+        if (appdata != NULL)
+          {
+            g_autoptr(GZlibDecompressor) decompressor = NULL;
+            g_autoptr(GOutputStream) out2 = NULL;
+            g_autoptr(GOutputStream) out = NULL;
+
+            out = g_unix_output_stream_new (1, FALSE);
+            decompressor = g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP);
+            out2 = g_converter_output_stream_new (out, G_CONVERTER (decompressor));
+
+            if (!g_output_stream_write_all (out2,
+                                            g_bytes_get_data (appdata, NULL),
+                                            g_bytes_get_size (appdata),
+                                            NULL, NULL, &error))
+              {
+                g_print ("Error decompressing appdata: %s\n", error->message);
+                g_clear_error (&error);
+              }
+          }
       }
   }
 
