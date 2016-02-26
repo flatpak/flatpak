@@ -32,7 +32,7 @@ struct _XdgAppBundleRefPrivate
 {
   GFile *file;
   GBytes *metadata;
-  GBytes *appdata;
+  GBytes *appstream;
   GBytes *icon_64;
   GBytes *icon_128;
   guint64 installed_size;
@@ -157,20 +157,20 @@ xdg_app_bundle_ref_get_metadata (XdgAppBundleRef  *self)
 }
 
 /**
- * xdg_app_bundle_ref_get_appdata:
+ * xdg_app_bundle_ref_get_appstream:
  * @self: a #XdgAppInstallation
  *
- * Get the compressed appdata for the app/runtime
+ * Get the compressed appstream for the app/runtime
  *
- * Returns: (transfer full) : an #GBytes with the appdata contents, or %NULL
+ * Returns: (transfer full) : an #GBytes with the appstream contents, or %NULL
  */
 GBytes *
-xdg_app_bundle_ref_get_appdata (XdgAppBundleRef  *self)
+xdg_app_bundle_ref_get_appstream (XdgAppBundleRef  *self)
 {
   XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
 
-  if (priv->appdata)
-    return g_bytes_ref (priv->appdata);
+  if (priv->appstream)
+    return g_bytes_ref (priv->appstream);
   return NULL;
 }
 
@@ -219,7 +219,7 @@ xdg_app_bundle_ref_new (GFile *file,
   g_autofree char *commit = NULL;
   g_autofree char *full_ref = NULL;
   g_autofree char *metadata_contents = NULL;
-  g_autoptr(GVariant) appdata = NULL;
+  g_autoptr(GVariant) appstream = NULL;
   g_autoptr(GVariant) icon_64 = NULL;
   g_autoptr(GVariant) icon_128 = NULL;
   guint64 installed_size;
@@ -254,9 +254,9 @@ xdg_app_bundle_ref_new (GFile *file,
                                        strlen (metadata_contents));
   metadata_contents = NULL; /* Stolen */
 
-  appdata = g_variant_lookup_value (metadata, "appdata", G_VARIANT_TYPE_BYTESTRING);
-  if (appdata)
-    priv->appdata = g_variant_get_data_as_bytes (appdata);
+  appstream = g_variant_lookup_value (metadata, "appdata", G_VARIANT_TYPE_BYTESTRING);
+  if (appstream)
+    priv->appstream = g_variant_get_data_as_bytes (appstream);
 
   icon_64 = g_variant_lookup_value (metadata, "icon-64", G_VARIANT_TYPE_BYTESTRING);
   if (icon_64)

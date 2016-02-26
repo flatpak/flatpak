@@ -48,7 +48,7 @@ XDG_APP_EXTERN XdgAppBundleRef *xdg_app_bundle_ref_new            (GFile *file,
                                                                    GError **error);
 XDG_APP_EXTERN GFile           *xdg_app_bundle_ref_get_file       (XdgAppBundleRef *self);
 XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_metadata   (XdgAppBundleRef  *self);
-XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_appdata    (XdgAppBundleRef  *self);
+XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_appstream  (XdgAppBundleRef  *self);
 XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_icon       (XdgAppBundleRef  *self,
                                                                    int               size);
 XDG_APP_EXTERN guint64          xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef  *self);
