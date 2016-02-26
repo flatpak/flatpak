@@ -1,3 +1,14 @@
+Major changes in 0.4.13
+=======================
+* Fix misgeneration of appdata xml in some cases
+* Various improvements to bundles, and support in libxdgapp
+* Add sources to Debug extensions created by xdg-app-builder
+* Allow specifying subdirs of xdg-* dirs, for instance:
+   --filesystem=xdg-download/some-dir
+* Add support for --filesytem=xdg-run/subdir which means
+  XDG_RUNTIME_DIR dir, rather than xdg-user-dirs.
+* Add --generate-static-deltas option to build-update-repo.
+
 Major changes in 0.4.12
 =======================
 * Fix crashes.
