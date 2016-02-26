@@ -15,8 +15,8 @@ AC_PREREQ([2.63])
 
 m4_define([xdg_app_major_version], [0])
 m4_define([xdg_app_minor_version], [4])
-m4_define([xdg_app_micro_version], [13])
-m4_define([xdg_app_interface_age], [13])
+m4_define([xdg_app_micro_version], [14])
+m4_define([xdg_app_interface_age], [14])
 m4_define([xdg_app_binary_age],
           [m4_eval(100 * xdg_app_minor_version + xdg_app_micro_version)])
 m4_define([xdg_app_version],
