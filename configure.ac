@@ -206,6 +206,26 @@ AS_IF([ test $have_libelf = maybe ], [
 if test x$have_libelf != xyes; then
   AC_MSG_ERROR([libelf not found])
 fi
+
+dnl This only checks for the header, not the library.
+AC_ARG_WITH([dwarf-header],
+            [AS_HELP_STRING([--with-dwarf-header],
+                            [path containing dwarf.h])],
+            [AS_IF([test "x$with_dwarf_header" = "xno"],
+                   [AC_MSG_WARN([either a path containing dwarf.h must be
+provided, or it will be searched for in includedir])])],
+            [with_dwarf_header=yes])
+
+AS_IF([test "x$with_dwarf_header" = "xyes"],
+      [CPPFLAGS="$CPPFLAGS -I$(eval echo \"$includedir\")/libdwarf"
+       AC_CHECK_HEADER([dwarf.h])
+       AS_IF([test "x$ac_cv_header_dwarf_h" != "xyes"],
+             [AC_MSG_ERROR([dwarf.h is required but was not found; locate it using --with-dwarf-header=/path/containing/header])])],
+      [CPPFLAGS="$CPPFLAGS -I$with_dwarf_header"
+       AC_CHECK_HEADER([dwarf.h])
+       AS_IF([test "x$ac_cv_header_dwarf_h" != "xyes"],
+             [AC_MSG_ERROR([dwarf.h is required but was not found])])])
+
 AC_ARG_ENABLE(documentation,
               AC_HELP_STRING([--enable-documentation], [Build documentation]),,
               enable_documentation=yes)
