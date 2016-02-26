@@ -31,6 +31,7 @@ typedef struct _XdgAppBundleRefPrivate XdgAppBundleRefPrivate;
 struct _XdgAppBundleRefPrivate
 {
   GFile *file;
+  char *origin;
   GBytes *metadata;
   GBytes *appstream;
   GBytes *icon_64;
@@ -58,6 +59,7 @@ xdg_app_bundle_ref_finalize (GObject *object)
   g_bytes_unref (priv->appstream);
   g_bytes_unref (priv->icon_64);
   g_bytes_unref (priv->icon_128);
+  g_free (priv->origin);
 
   G_OBJECT_CLASS (xdg_app_bundle_ref_parent_class)->finalize (object);
 }
@@ -203,6 +205,22 @@ xdg_app_bundle_ref_get_icon (XdgAppBundleRef  *self,
   return NULL;
 }
 
+/**
+ * xdg_app_bundle_ref_get_origin:
+ * @self: a #XdgAppInstallation
+ *
+ * Get the origin url stored in the bundle
+ *
+ * Returns: (transfer full) : an url string, or %NULL
+ */
+char *
+xdg_app_bundle_ref_get_origin (XdgAppBundleRef  *self)
+{
+  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+
+  return g_strdup (priv->origin);
+}
+
 guint64
 xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef  *self)
 {
@@ -223,13 +241,14 @@ xdg_app_bundle_ref_new (GFile *file,
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *commit = NULL;
   g_autofree char *full_ref = NULL;
+  g_autofree char *origin = NULL;
   g_autofree char *metadata_contents = NULL;
   g_autoptr(GVariant) appstream = NULL;
   g_autoptr(GVariant) icon_64 = NULL;
   g_autoptr(GVariant) icon_128 = NULL;
   guint64 installed_size;
 
-  metadata = xdg_app_bundle_load (file, &commit, &full_ref, NULL, &installed_size,
+  metadata = xdg_app_bundle_load (file, &commit, &full_ref, &origin, &installed_size,
                                   NULL, error);
   if (metadata == NULL)
     return NULL;
@@ -272,6 +291,8 @@ xdg_app_bundle_ref_new (GFile *file,
     priv->icon_128 = g_variant_get_data_as_bytes (icon_128);
 
   priv->installed_size = installed_size;
+
+  priv->origin = g_steal_pointer (&origin);
 
   return ref;
 }
