@@ -2018,7 +2018,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
 
   dotref = g_file_resolve_relative_path (checkoutdir, "files/.ref");
   if (!g_file_replace_contents (dotref, "", 0, NULL, FALSE,
-                                G_FILE_CREATE_NONE, NULL, cancellable, error))
+                                G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
     goto out;
 
   /* Ensure that various files exists as regular files in /usr/etc, as we
