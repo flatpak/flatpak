@@ -24,12 +24,7 @@ char *             xdp_entry_dup_dirname     (XdgAppDbEntry      *entry);
 guint64            xdp_entry_get_device      (XdgAppDbEntry      *entry);
 guint64            xdp_entry_get_inode       (XdgAppDbEntry      *entry);
 guint32            xdp_entry_get_flags       (XdgAppDbEntry      *entry);
-int                xdp_entry_open_dir        (XdgAppDbEntry      *entry);
-int                xdp_entry_stat            (XdgAppDbEntry      *entry,
-                                              struct stat        *buf,
-                                              int                 flags);
 
-guint32 xdp_id_from_name (const char *name);
 char *  xdp_name_from_id (guint32     doc_id);
 
 

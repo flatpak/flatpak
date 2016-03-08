@@ -74,12 +74,6 @@ xdp_entry_has_permissions (XdgAppDbEntry *entry,
   return (current_perms & perms) == perms;
 }
 
-guint32
-xdp_id_from_name (const char *name)
-{
-  return g_ascii_strtoull (name, NULL, 16);
-}
-
 char *
 xdp_name_from_id (guint32 doc_id)
 {
@@ -132,51 +126,4 @@ xdp_entry_get_flags (XdgAppDbEntry *entry)
   g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
   g_autoptr(GVariant) c = g_variant_get_child_value (v, 3);
   return g_variant_get_uint32 (c);
-}
-
-int
-xdp_entry_open_dir (XdgAppDbEntry *entry)
-{
-  g_autofree char *dirname = xdp_entry_dup_dirname (entry);
-  struct stat st_buf;
-  int fd;
-
-  fd = open (dirname, O_CLOEXEC | O_PATH | O_DIRECTORY);
-  if (fd == -1)
-    return -1;
-
-  if (fstat (fd, &st_buf) < 0)
-    {
-      close (fd);
-      errno = ENOENT;
-      return -1;
-    }
-
-  if (st_buf.st_ino != xdp_entry_get_inode (entry) ||
-      st_buf.st_dev != xdp_entry_get_device (entry))
-    {
-      close (fd);
-      errno = ENOENT;
-      return -1;
-    }
-
-  return fd;
-}
-
-int
-xdp_entry_stat (XdgAppDbEntry *entry,
-                struct stat *buf,
-                int flags)
-{
-  glnx_fd_close int fd = -1;
-  g_autofree char *basename = xdp_entry_dup_basename (entry);
-
-  fd = xdp_entry_open_dir (entry);
-  if (fd < 0)
-    return -1;
-
-  if (fstatat (fd, basename, buf, flags) != 0)
-    return -1;
-
-  return 0;
 }
