@@ -177,22 +177,9 @@ printpad (const char *padbuf,
   fwrite (padbuf, 1, r, stdout);
 }
 
-/**
- * glnx_console_progress_text_percent:
- * @text: Show this text before the progress bar
- * @percentage: An integer in the range of 0 to 100
- *
- * On a tty, print to the console @text followed by an ASCII art
- * progress bar whose percentage is @percentage.  If stdout is not a
- * tty, a more basic line by line change will be printed.
- *
- * You must have called glnx_console_lock() before invoking this
- * function.
- *
- */
-void
-glnx_console_progress_text_percent (const char *text,
-                                    guint percentage)
+static void
+text_percent_internal (const char *text,
+                       int percentage)
 {
   static const char equals[] = "====================";
   const guint n_equals = sizeof (equals) - 1;
@@ -203,8 +190,6 @@ glnx_console_progress_text_percent (const char *text,
   const guint input_textlen = text ? strlen (text) : 0;
   guint textlen;
   guint barlen;
-
-  g_return_if_fail (percentage >= 0 && percentage <= 100);
 
   if (text && !*text)
     text = NULL;
@@ -264,6 +249,34 @@ glnx_console_progress_text_percent (const char *text,
   }
 
   fflush (stdout);
+}
+
+/**
+ * glnx_console_progress_text_percent:
+ * @text: Show this text before the progress bar
+ * @percentage: An integer in the range of 0 to 100
+ *
+ * On a tty, print to the console @text followed by an ASCII art
+ * progress bar whose percentage is @percentage.  If stdout is not a
+ * tty, a more basic line by line change will be printed.
+ *
+ * You must have called glnx_console_lock() before invoking this
+ * function.
+ *
+ */
+void
+glnx_console_progress_text_percent (const char *text,
+                                    guint percentage)
+{
+  g_return_if_fail (percentage >= 0 && percentage <= 100);
+
+  text_percent_internal (text, percentage);
+}
+
+void
+glnx_console_text (const char *text)
+{
+  text_percent_internal (text, -1);
 }
 
 /**
