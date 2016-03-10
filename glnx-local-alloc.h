@@ -21,6 +21,7 @@
 #pragma once
 
 #include <gio/gio.h>
+#include <errno.h>
 
 G_BEGIN_DECLS
 
@@ -195,13 +196,17 @@ GLNX_DEFINE_CLEANUP_FUNCTION0(GKeyFile*, glnx_local_keyfile_unref, g_key_file_un
 static inline void
 glnx_cleanup_close_fdp (int *fdp)
 {
-  int fd;
+  int fd, errsv;
 
   g_assert (fdp);
   
   fd = *fdp;
   if (fd != -1)
-    (void) close (fd);
+    {
+      errsv = errno;
+      (void) close (fd);
+      errno = errsv;
+    }
 }
 
 /**
