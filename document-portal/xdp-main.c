@@ -384,7 +384,7 @@ portal_add (GDBusMethodInvocation *invocation,
       g_autoptr(XdgAppDbEntry) old_entry = NULL;
 
       id = xdp_fuse_lookup_id_for_inode (st_buf.st_ino);
-      g_debug ("path on fuse, id %s\n", id);
+      g_debug ("path on fuse, id %s", id);
       if (id == NULL)
         {
           g_dbus_method_invocation_return_error (invocation,
