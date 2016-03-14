@@ -54,6 +54,7 @@ struct _XdpInode {
   char *doc_id;
 
   /* For doc dirs */
+  char *basename;
   char *dirname;
   dev_t dir_dev;
   ino_t dir_ino;
@@ -459,8 +460,7 @@ xdp_inode_unlink_child (XdpInode *dir, const char *filename)
 static int
 xdp_inode_rename_child (XdpInode *dir,
                         const char *src_filename,
-                        const char *dst_filename,
-                        const char *doc_basename)
+                        const char *dst_filename)
 {
   g_autoptr(XdpInode) src_inode = NULL;
   g_autoptr(XdpInode) dst_inode = NULL;
@@ -507,7 +507,7 @@ xdp_inode_rename_child (XdpInode *dir,
       errno = EACCES;
       res = -1;
     }
-  else if (strcmp (dst_filename, doc_basename) != 0)
+  else if (strcmp (dst_filename, dir->basename) != 0)
     {
       /* tmp -> tmp */
 
@@ -573,26 +573,24 @@ xdp_inode_get_filename (XdpInode *inode)
 }
 
 static XdpInode *
-xdp_inode_ensure_document_file (XdpInode *dir,
-                                XdgAppDbEntry *entry)
+xdp_inode_ensure_document_file (XdpInode *dir)
 {
-  g_autofree char *basename = xdp_entry_dup_basename (entry);
   XdpInode *inode;
 
   g_assert (dir->type == XDP_INODE_APP_DOC_DIR || dir->type == XDP_INODE_DOC_DIR);
 
   AUTOLOCK(inodes);
 
-  inode = xdp_inode_lookup_child_unlocked (dir, basename);
+  inode = xdp_inode_lookup_child_unlocked (dir, dir->basename);
   if (inode == NULL)
     {
       inode = xdp_inode_new_unlocked (allocate_inode_unlocked (),
                                       XDP_INODE_DOC_FILE,
                                       dir,
-                                      basename,
+                                      dir->basename,
                                       dir->app_id,
                                       dir->doc_id);
-      inode->backing_filename = g_steal_pointer (&basename);
+      inode->backing_filename = g_strdup (dir->basename);
       inode->is_doc = TRUE;
     }
 
@@ -600,10 +598,9 @@ xdp_inode_ensure_document_file (XdpInode *dir,
 }
 
 static char *
-create_tmp_for_doc (XdgAppDbEntry *entry, int dir_fd, int flags, mode_t mode, int *fd_out)
+create_tmp_for_doc (XdpInode *dir, int dir_fd, int flags, mode_t mode, int *fd_out)
 {
-  g_autofree char *basename = xdp_entry_dup_basename (entry);
-  g_autofree char *template = g_strconcat (".xdp_", basename, ".XXXXXX", NULL);
+  g_autofree char *template = g_strconcat (".xdp_", dir->basename, ".XXXXXX", NULL);
   int fd;
 
   fd = xdg_app_mkstempat (dir_fd, template, flags|O_CLOEXEC, mode);
@@ -618,14 +615,12 @@ create_tmp_for_doc (XdgAppDbEntry *entry, int dir_fd, int flags, mode_t mode, in
 /* sets errno */
 static XdpInode *
 xdp_inode_create_file (XdpInode *dir,
-                       XdgAppDbEntry *entry,
                        const char *filename,
                        mode_t mode,
                        gboolean truncate,
                        gboolean exclusive)
 {
   XdpInode *inode;
-  g_autofree char *basename = xdp_entry_dup_basename (entry);
   g_autofree char *backing_filename = NULL;
   g_autofree char *trunc_filename = NULL;
   gboolean is_doc;
@@ -661,7 +656,7 @@ xdp_inode_create_file (XdpInode *dir,
   if (dir_fd == -1)
     return NULL;
 
-  is_doc = strcmp (basename, filename) == 0;
+  is_doc = strcmp (dir->basename, filename) == 0;
 
   if (is_doc)
     {
@@ -671,18 +666,18 @@ xdp_inode_create_file (XdpInode *dir,
       if (exclusive)
         flags |= O_EXCL;
 
-      g_debug ("Creating doc file %s", basename);
-      fd = openat (dir_fd, basename, flags, mode & 0777);
+      g_debug ("Creating doc file %s", dir->basename);
+      fd = openat (dir_fd, dir->basename, flags, mode & 0777);
       if (fd < 0)
         return NULL;
 
-      trunc_filename = create_tmp_for_doc (entry, dir_fd, O_RDWR, mode & 0777, &trunc_fd);
+      trunc_filename = create_tmp_for_doc (dir, dir_fd, O_RDWR, mode & 0777, &trunc_fd);
       if (trunc_filename == NULL)
         return NULL;
     }
   else
     {
-      backing_filename = create_tmp_for_doc (entry, dir_fd, O_RDWR, mode & 0777, &fd);
+      backing_filename = create_tmp_for_doc (dir, dir_fd, O_RDWR, mode & 0777, &fd);
       if (backing_filename == NULL)
         return NULL;
     }
@@ -763,6 +758,7 @@ xdp_inode_get_dir_unlocked (const char *app_id, const char *doc_id, XdgAppDbEntr
 
   if (entry)
     {
+      inode->basename = xdp_entry_dup_basename (entry);
       inode->dirname = xdp_entry_dup_dirname (entry);
       inode->dir_ino = xdp_entry_get_inode (entry);
       inode->dir_dev = xdp_entry_get_device (entry);
@@ -993,7 +989,7 @@ xdp_fuse_lookup (fuse_req_t req,
           }
 
         /* Ensure it is alive at least during lookup_child () */
-        doc_inode = xdp_inode_ensure_document_file (parent_inode, entry);
+        doc_inode = xdp_inode_ensure_document_file (parent_inode);
 
         child_inode = xdp_inode_lookup_child (parent_inode, name);
 
@@ -1205,7 +1201,7 @@ xdp_fuse_opendir (fuse_req_t req,
         dirbuf_add (req, &b, "..", inode->parent->ino, S_IFDIR);
 
         /* Ensure it is alive at least during list_children () */
-        doc_inode = xdp_inode_ensure_document_file (inode, entry);
+        doc_inode = xdp_inode_ensure_document_file (inode);
 
         children = xdp_inode_list_children (inode);
 
@@ -1460,7 +1456,7 @@ xdp_inode_locked_ensure_fd_open (XdpInode *inode,
         mode = get_user_perms (&st_buf);
 
       g_assert (inode->trunc_filename == NULL);
-      inode->trunc_filename = create_tmp_for_doc (entry, inode->dir_fd, O_RDWR, mode,
+      inode->trunc_filename = create_tmp_for_doc (inode->parent, inode->dir_fd, O_RDWR, mode,
                                                   &inode->trunc_fd);
       if (inode->trunc_filename == NULL)
         return -1;
@@ -1608,7 +1604,7 @@ xdp_fuse_create (fuse_req_t req,
       return;
     }
 
-  inode = xdp_inode_create_file (parent_inode, entry, filename,
+  inode = xdp_inode_create_file (parent_inode, filename,
                                  mode,
                                  (fi->flags | O_TRUNC) != 0,
                                  (fi->flags | O_EXCL) != 0);
@@ -2011,7 +2007,6 @@ xdp_fuse_rename (fuse_req_t req,
 {
   g_autoptr(XdpInode) parent_inode = NULL;
   g_autoptr (XdgAppDbEntry) entry = NULL;
-  g_autofree char *basename = NULL;
   gboolean can_see, can_write;
 
   g_debug ("xdp_fuse_rename %lx/%s -> %lx/%s", parent, name, newparent, newname);
@@ -2072,13 +2067,12 @@ xdp_fuse_rename (fuse_req_t req,
       return;
     }
 
-  basename = xdp_entry_dup_basename (entry);
-
-  if (xdp_inode_rename_child (parent_inode, name, newname, basename) != 0)
+  if (xdp_inode_rename_child (parent_inode, name, newname) != 0)
     fuse_reply_err (req, errno);
   else
     fuse_reply_err (req, 0);
 }
+
 static struct fuse_lowlevel_ops xdp_fuse_oper = {
   .lookup       = xdp_fuse_lookup,
   .forget       = xdp_fuse_forget,
