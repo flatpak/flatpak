@@ -757,7 +757,6 @@ builder_module_handle_debuginfo (BuilderModule *self,
                     {
                       GFile *build_dir = builder_context_get_build_dir (context);
                       int i;
-                      g_print ("Copying sources: \n");
                       for (i = 0; file_refs[i] != NULL; i++)
                         {
                           if (g_str_has_prefix (file_refs[i], builddir))
