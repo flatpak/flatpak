@@ -2103,8 +2103,7 @@ static struct fuse_lowlevel_ops xdp_fuse_oper = {
    and with null opt_app_id when the doc is created/removed */
 void
 xdp_fuse_invalidate_doc_app (const char  *doc_id,
-                             const char  *opt_app_id,
-                             XdgAppDbEntry *entry)
+                             const char  *opt_app_id)
 {
   g_autoptr(XdpInode) inode = NULL;
   fuse_ino_t ino;

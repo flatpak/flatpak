@@ -87,8 +87,6 @@ do_set_permissions (XdgAppDbEntry *entry,
   new_entry = xdg_app_db_entry_set_app_permissions (entry, app_id, perms_s);
   xdg_app_db_set_entry (db, doc_id, new_entry);
 
-  xdp_fuse_invalidate_doc_app (doc_id, app_id, entry);
-
   if (persist_entry (new_entry))
     xdg_app_permission_store_call_set_permission (permission_store,
                                                   TABLE_NAME,
@@ -113,36 +111,41 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
 
   g_variant_get (parameters, "(&s&s^a&s)", &id, &target_app_id, &permissions);
 
-  AUTOLOCK(db);
+  {
+    AUTOLOCK(db);
 
-  entry = xdg_app_db_lookup (db, id);
-  if (entry == NULL)
-    {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
-                                             "No such document: %s", id);
-      return;
-    }
+    entry = xdg_app_db_lookup (db, id);
+    if (entry == NULL)
+      {
+        g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
+                                               "No such document: %s", id);
+        return;
+      }
 
-  if (!xdg_app_is_valid_name (target_app_id))
-    {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
-                                             "Invalid app name: %s", target_app_id);
-      return;
-    }
+    if (!xdg_app_is_valid_name (target_app_id))
+      {
+        g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
+                                               "Invalid app name: %s", target_app_id);
+        return;
+      }
 
-  perms = xdp_parse_permissions (permissions);
+    perms = xdp_parse_permissions (permissions);
 
-  /* Must have grant-permissions and all the newly granted permissions */
-  if (!xdp_entry_has_permissions (entry, app_id,
-                                  XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS | perms))
-    {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
-                                             "Not enough permissions");
-      return;
-    }
+    /* Must have grant-permissions and all the newly granted permissions */
+    if (!xdp_entry_has_permissions (entry, app_id,
+                                    XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS | perms))
+      {
+        g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
+                                               "Not enough permissions");
+        return;
+      }
 
-  do_set_permissions (entry, id, target_app_id,
-                      perms | xdp_entry_get_permissions (entry, target_app_id));
+    do_set_permissions (entry, id, target_app_id,
+                        perms | xdp_entry_get_permissions (entry, target_app_id));
+  }
+
+  /* Invalidate with lock dropped to avoid deadlock */
+  xdp_fuse_invalidate_doc_app (id, target_app_id);
 
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 }
@@ -160,37 +163,42 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
 
   g_variant_get (parameters, "(&s&s^a&s)", &id, &target_app_id, &permissions);
 
-  AUTOLOCK(db);
+  {
+    AUTOLOCK(db);
 
-  entry = xdg_app_db_lookup (db, id);
-  if (entry == NULL)
-    {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
-                                             "No such document: %s", id);
-      return;
-    }
+    entry = xdg_app_db_lookup (db, id);
+    if (entry == NULL)
+      {
+        g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
+                                               "No such document: %s", id);
+        return;
+      }
 
-  if (!xdg_app_is_valid_name (target_app_id))
-    {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
-                                             "Invalid app name: %s", target_app_id);
-      return;
-    }
+    if (!xdg_app_is_valid_name (target_app_id))
+      {
+        g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,
+                                               "Invalid app name: %s", target_app_id);
+        return;
+      }
 
-  perms = xdp_parse_permissions (permissions);
+    perms = xdp_parse_permissions (permissions);
 
-  /* Must have grant-permissions, or be itself */
-  if (!xdp_entry_has_permissions (entry, app_id,
-                                  XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS) ||
-      strcmp (app_id, target_app_id) == 0)
-    {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
-                                             "Not enough permissions");
-      return;
-    }
+    /* Must have grant-permissions, or be itself */
+    if (!xdp_entry_has_permissions (entry, app_id,
+                                    XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS) ||
+        strcmp (app_id, target_app_id) == 0)
+      {
+        g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
+                                               "Not enough permissions");
+        return;
+      }
 
-  do_set_permissions (entry, id, target_app_id,
-                      ~perms & xdp_entry_get_permissions (entry, target_app_id));
+    do_set_permissions (entry, id, target_app_id,
+                        ~perms & xdp_entry_get_permissions (entry, target_app_id));
+  }
+
+  /* Invalidate with lock dropped to avoid deadlock */
+  xdp_fuse_invalidate_doc_app (id, target_app_id);
 
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 }
@@ -207,36 +215,40 @@ portal_delete (GDBusMethodInvocation *invocation,
 
   g_variant_get (parameters, "(s)", &id);
 
-  AUTOLOCK(db);
+  {
+    AUTOLOCK(db);
 
-  entry = xdg_app_db_lookup (db, id);
-  if (entry == NULL)
-    {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
+    entry = xdg_app_db_lookup (db, id);
+    if (entry == NULL)
+      {
+        g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
                                              "No such document: %s", id);
-      return;
-    }
+        return;
+      }
 
-  if (!xdp_entry_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_DELETE))
-    {
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
-                                             "Not enough permissions");
-      return;
-    }
+    if (!xdp_entry_has_permissions (entry, app_id, XDP_PERMISSION_FLAGS_DELETE))
+      {
+        g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_ALLOWED,
+                                               "Not enough permissions");
+        return;
+      }
 
-  g_debug ("delete %s\n", id);
+    g_debug ("delete %s\n", id);
 
-  xdg_app_db_set_entry (db, id, NULL);
+    xdg_app_db_set_entry (db, id, NULL);
 
+    if (persist_entry (entry))
+      xdg_app_permission_store_call_delete (permission_store, TABLE_NAME,
+                                            id, NULL, NULL, NULL);
+  }
+
+  /* All i/o is done now, so drop the lock so we can invalidate the fuse caches */
   old_apps = xdg_app_db_entry_list_apps (entry);
   for (i = 0; old_apps[i] != NULL; i++)
-    xdp_fuse_invalidate_doc_app (id, old_apps[i], entry);
-  xdp_fuse_invalidate_doc_app (id, NULL, entry);
+    xdp_fuse_invalidate_doc_app (id, old_apps[i]);
+  xdp_fuse_invalidate_doc_app (id, NULL);
 
-  if (persist_entry (entry))
-    xdg_app_permission_store_call_delete (permission_store, TABLE_NAME,
-                                          id, NULL, NULL, NULL);
-
+  /* Now fuse view is up-to-date, so we can return the call */
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 }
 
@@ -283,8 +295,6 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
 
   entry = xdg_app_db_entry_new (data);
   xdg_app_db_set_entry (db, id, entry);
-
-  xdp_fuse_invalidate_doc_app (id, NULL, entry);
 
   if (persistent)
     xdg_app_permission_store_call_set (permission_store,
@@ -376,8 +386,6 @@ portal_add (GDBusMethodInvocation *invocation,
 
   g_debug ("portal_add %s\n", path_buffer);
 
-  AUTOLOCK(db);
-
   if (st_buf.st_dev == fuse_dev)
     {
       /* The passed in fd is on the fuse filesystem itself */
@@ -392,6 +400,11 @@ portal_add (GDBusMethodInvocation *invocation,
                                                  "Invalid fd passed");
           return;
         }
+
+      /* Don't lock the db before doing the fuse call above, because it takes takes a lock
+         that can block something calling back, causing a deadlock on the db lock */
+
+      AUTOLOCK(db);
 
       /* If the entry doesn't exist anymore, fail.  Also fail if not
          resuse_existing, because otherwise the user could use this to
@@ -409,24 +422,35 @@ portal_add (GDBusMethodInvocation *invocation,
     }
   else
     {
-      id = do_create_doc (&real_parent_st_buf, path_buffer, reuse_existing, persistent);
+      {
+        AUTOLOCK(db);
 
+        id = do_create_doc (&real_parent_st_buf, path_buffer, reuse_existing, persistent);
+
+        if (app_id[0] != '\0')
+          {
+            g_autoptr(XdgAppDbEntry) entry = NULL;
+            XdpPermissionFlags perms =
+              XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
+              XDP_PERMISSION_FLAGS_READ |
+              XDP_PERMISSION_FLAGS_WRITE;
+            {
+              entry = xdg_app_db_lookup (db, id);
+
+              /* If its a unique one its safe for the creator to
+                 delete it at will */
+              if (!reuse_existing)
+                perms |= XDP_PERMISSION_FLAGS_DELETE;
+
+              do_set_permissions (entry, id, app_id, perms);
+            }
+          }
+      }
+
+      /* Invalidate with lock dropped to avoid deadlock */
+      xdp_fuse_invalidate_doc_app (id, NULL);
       if (app_id[0] != '\0')
-        {
-          g_autoptr(XdgAppDbEntry) entry = NULL;
-          XdpPermissionFlags perms =
-            XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
-            XDP_PERMISSION_FLAGS_READ |
-            XDP_PERMISSION_FLAGS_WRITE;
-          entry = xdg_app_db_lookup (db, id);
-
-          /* If its a unique one its safe for the creator to
-             delete it at will */
-          if (!reuse_existing)
-            perms |= XDP_PERMISSION_FLAGS_DELETE;
-
-          do_set_permissions (entry, id, app_id, perms);
-        }
+        xdp_fuse_invalidate_doc_app (id, app_id);
     }
 
   g_dbus_method_invocation_return_value (invocation,
