@@ -933,7 +933,8 @@ xdg_app_db_print (XdgAppDb *self)
 XdgAppDbEntry  *
 xdg_app_db_entry_ref (XdgAppDbEntry  *entry)
 {
-  g_variant_ref ((GVariant *)entry);
+  if (entry != NULL)
+    g_variant_ref ((GVariant *)entry);
   return entry;
 }
 
