@@ -82,7 +82,7 @@ do_set_permissions (XdgAppDbEntry *entry,
   g_autofree const char **perms_s = xdg_unparse_permissions (perms);
   g_autoptr(XdgAppDbEntry) new_entry = NULL;
 
-  g_debug ("set_permissions %s %s %x\n", doc_id, app_id, perms);
+  g_debug ("set_permissions %s %s %x", doc_id, app_id, perms);
 
   new_entry = xdg_app_db_entry_set_app_permissions (entry, app_id, perms_s);
   xdg_app_db_set_entry (db, doc_id, new_entry);
@@ -233,7 +233,7 @@ portal_delete (GDBusMethodInvocation *invocation,
         return;
       }
 
-    g_debug ("delete %s\n", id);
+    g_debug ("delete %s", id);
 
     xdg_app_db_set_entry (db, id, NULL);
 
@@ -291,7 +291,7 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
         break;
     }
 
-  g_debug ("create_doc %s\n", id);
+  g_debug ("create_doc %s", id);
 
   entry = xdg_app_db_entry_new (data);
   xdg_app_db_set_entry (db, id, entry);
@@ -384,7 +384,7 @@ portal_add (GDBusMethodInvocation *invocation,
       return;
     }
 
-  g_debug ("portal_add %s\n", path_buffer);
+  g_debug ("portal_add %s", path_buffer);
 
   if (st_buf.st_dev == fuse_dev)
     {
@@ -541,7 +541,7 @@ portal_add_named (GDBusMethodInvocation *invocation,
 
   path = g_build_filename (parent_path_buffer, filename, NULL);
 
-  g_debug ("portal_add_named %s\n", path);
+  g_debug ("portal_add_named %s", path);
 
   AUTOLOCK(db);
 
@@ -614,7 +614,7 @@ on_bus_acquired (GDBusConnection *connection,
                                          "/org/freedesktop/portal/documents",
                                          &error))
     {
-      g_warning ("error: %s\n", error->message);
+      g_warning ("error: %s", error->message);
       g_error_free (error);
     }
 }
