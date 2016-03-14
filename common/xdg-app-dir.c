@@ -2930,6 +2930,15 @@ xdg_app_dir_list_remotes (XdgAppDir *self,
   return res;
 }
 
+static gboolean
+remove_unless_in_hash (gpointer  key,
+                       gpointer  value,
+                       gpointer  user_data)
+{
+  GHashTable *table = user_data;
+  return !g_hash_table_contains (table, key);
+}
+
 gboolean
 xdg_app_dir_list_remote_refs (XdgAppDir *self,
                               const char *remote,
@@ -2938,6 +2947,7 @@ xdg_app_dir_list_remote_refs (XdgAppDir *self,
                               GError **error)
 {
   g_autoptr(GError) my_error = NULL;
+
   if (error == NULL)
     error = &my_error;
 
@@ -2947,6 +2957,38 @@ xdg_app_dir_list_remote_refs (XdgAppDir *self,
   if (!ostree_repo_remote_list_refs (self->repo, remote,
                                      refs, cancellable, error))
     return FALSE;
+
+  if (xdg_app_dir_get_remote_noenumerate (self, remote))
+    {
+      g_autoptr(GHashTable) unprefixed_local_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+      g_autoptr(GHashTable) local_refs = NULL;
+      GHashTableIter hash_iter;
+      gpointer key;
+      g_autofree char *refspec_prefix = g_strconcat (remote, ":.", NULL);
+
+      /* For noenumerate remotes, only return data for already locally
+       * available refs */
+
+      if (!ostree_repo_list_refs (self->repo, refspec_prefix, &local_refs,
+                                 cancellable, error))
+        return FALSE;
+
+      /* First we need to unprefix the remote name from the local refs */
+      g_hash_table_iter_init (&hash_iter, local_refs);
+      while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+        {
+          char *ref = NULL;
+          ostree_parse_refspec (key, NULL, &ref, NULL);
+
+          if (ref)
+            g_hash_table_insert (unprefixed_local_refs, ref, NULL);
+        }
+
+      /* Then we remove all remote refs not in the local refs set */
+      g_hash_table_foreach_remove (*refs,
+                                   remove_unless_in_hash,
+                                   unprefixed_local_refs);
+    }
 
   return TRUE;
 }
