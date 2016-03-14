@@ -159,6 +159,28 @@ handle_list (XdgAppPermissionStore *object,
   return TRUE;
 }
 
+static GVariant *
+get_app_permissions (XdgAppDbEntry *entry)
+{
+  g_autofree const char **apps = NULL;
+  GVariantBuilder builder;
+  int i;
+
+  apps = xdg_app_db_entry_list_apps (entry);
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sas}"));
+
+  for (i = 0; apps[i] != NULL; i++)
+    {
+      g_autofree const char **permissions = xdg_app_db_entry_list_permissions (entry, apps[i]);
+      g_variant_builder_add_value (&builder,
+                                   g_variant_new ("{s@as}",
+                                                  apps[i],
+                                                  g_variant_new_strv (permissions, -1)));
+    }
+
+  return g_variant_ref_sink (g_variant_builder_end (&builder));
+}
+
 static gboolean
 handle_lookup (XdgAppPermissionStore *object,
                GDBusMethodInvocation *invocation,
@@ -167,10 +189,8 @@ handle_lookup (XdgAppPermissionStore *object,
 {
   Table *table;
   g_autoptr(GVariant) data = NULL;
+  g_autoptr(GVariant) permissions = NULL;
   g_autoptr(XdgAppDbEntry) entry = NULL;
-  g_autofree const char **apps = NULL;
-  GVariantBuilder builder;
-  int i;
 
   table = lookup_table (table_name, invocation);
   if (table == NULL)
@@ -186,26 +206,53 @@ handle_lookup (XdgAppPermissionStore *object,
     }
 
   data = xdg_app_db_entry_get_data (entry);
-  apps = xdg_app_db_entry_list_apps (entry);
-
-  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sas}"));
-
-  for (i = 0; apps[i] != NULL; i++)
-    {
-      g_autofree const char **permissions = xdg_app_db_entry_list_permissions (entry, apps[i]);
-      g_variant_builder_add_value (&builder,
-                                   g_variant_new ("{s@as}",
-                                                  apps[i],
-                                                  g_variant_new_strv (permissions, -1)));
-    }
+  permissions = get_app_permissions (entry);
 
   xdg_app_permission_store_complete_lookup (object, invocation,
-                                            g_variant_builder_end (&builder),
+                                            permissions,
                                             g_variant_new_variant (data));
 
   return TRUE;
 }
 
+static void
+emit_deleted (XdgAppPermissionStore *object,
+              const gchar *table_name,
+              const gchar *id,
+              XdgAppDbEntry *entry)
+{
+  g_autoptr(GVariant) data = NULL;
+  g_autoptr(GVariant) permissions = NULL;
+
+  data = xdg_app_db_entry_get_data (entry);
+  permissions = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sas}"), NULL, 0));
+
+  xdg_app_permission_store_emit_changed (object,
+                                         table_name, id,
+                                         TRUE,
+                                         g_variant_new_variant (data),
+                                         permissions);
+}
+
+
+static void
+emit_changed (XdgAppPermissionStore *object,
+              const gchar *table_name,
+              const gchar *id,
+              XdgAppDbEntry *entry)
+{
+  g_autoptr(GVariant) data = NULL;
+  g_autoptr(GVariant) permissions = NULL;
+
+  data = xdg_app_db_entry_get_data (entry);
+  permissions = get_app_permissions (entry);
+
+  xdg_app_permission_store_emit_changed (object,
+                                         table_name, id,
+                                         FALSE,
+                                         g_variant_new_variant (data),
+                                         permissions);
+}
 
 static gboolean
 handle_delete (XdgAppPermissionStore *object,
@@ -230,6 +277,7 @@ handle_delete (XdgAppPermissionStore *object,
     }
 
   xdg_app_db_set_entry (table->db, id, NULL);
+  emit_deleted (object, table_name, id, entry);
 
   ensure_writeout (table, invocation);
 
@@ -286,6 +334,7 @@ handle_set (XdgAppPermissionStore *object,
     }
 
   xdg_app_db_set_entry (table->db, id, new_entry);
+  emit_changed (object, table_name, id, new_entry);
 
   ensure_writeout (table, invocation);
 
@@ -325,6 +374,7 @@ handle_set_permission (XdgAppPermissionStore *object,
 
   new_entry = xdg_app_db_entry_set_app_permissions (entry, app, (const char **)permissions);
   xdg_app_db_set_entry (table->db, id, new_entry);
+  emit_changed (object, table_name, id, new_entry);
 
   ensure_writeout (table, invocation);
 
@@ -364,6 +414,7 @@ handle_set_value (XdgAppPermissionStore *object,
     new_entry = xdg_app_db_entry_modify_data (entry, data);
 
   xdg_app_db_set_entry (table->db, id, new_entry);
+  emit_changed (object, table_name, id, new_entry);
 
   ensure_writeout (table, invocation);
 
