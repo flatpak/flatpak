@@ -742,7 +742,7 @@ load_file (const char *path)
 
   do
     {
-      if (data_len >= data_read + 1)
+      if (data_len == data_read + 1)
         {
           data_len *= 2;
           data = xrealloc (data, data_len);
