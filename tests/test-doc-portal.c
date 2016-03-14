@@ -40,6 +40,20 @@ make_doc_path (const char *id, const char *basename, const char *app)
 }
 
 static void
+assert_host_has_contents (const char *basename, const char *expected_contents)
+{
+  g_autofree char *path = g_build_filename (outdir, basename, NULL);
+  g_autofree char *real_contents = NULL;
+  gsize real_contents_length;
+  GError *error = NULL;
+
+  g_file_get_contents (path, &real_contents, &real_contents_length, &error);
+  g_assert_no_error (error);
+  g_assert_cmpstr (real_contents, ==, expected_contents);
+  g_assert_cmpuint (real_contents_length, ==, strlen (expected_contents));
+}
+
+static void
 assert_doc_has_contents (const char *id, const char *basename, const char *app, const char *expected_contents)
 {
   g_autofree char *path = make_doc_path (id, basename, app);
@@ -131,6 +145,15 @@ update_doc (const char *id, const char *basename, const char *app, const char *c
   return g_file_set_contents (path, contents, -1, error);
 }
 
+static gboolean
+update_from_host (const char *basename, const char *contents, GError **error)
+{
+  g_autofree char *path = g_build_filename (outdir, basename, NULL);
+
+  return g_file_set_contents (path, contents, -1, error);
+}
+
+
 static void
 grant_permissions (const char *id, const char *app, gboolean write)
 {
@@ -154,7 +177,14 @@ grant_permissions (const char *id, const char *app, gboolean write)
 static void
 test_create_doc (void)
 {
+  g_autofree char *doc_path = NULL;
+  g_autofree char *doc_app_path = NULL;
+  g_autofree char *host_path = NULL;
   g_autofree char *id = NULL;
+  g_autofree char *id2 = NULL;
+  g_autofree char *id3 = NULL;
+  g_autofree char *id4 = NULL;
+  g_autofree char *id5 = NULL;
   const char *basename = "a-file";
   GError *error = NULL;
 
@@ -164,28 +194,102 @@ test_create_doc (void)
       return;
     }
 
+  /* Export a document */
   id = export_new_file (basename, "content", FALSE);
 
+  /* Ensure its there and not viewable by apps */
   assert_doc_has_contents (id, basename, NULL, "content");
+  assert_host_has_contents (basename, "content");
   assert_doc_not_exist (id, basename, "com.test.App1");
   assert_doc_not_exist (id, basename, "com.test.App2");
   assert_doc_not_exist (id, "another-file", NULL);
   assert_doc_not_exist ("anotherid", basename, NULL);
 
+  /* Create a tmp file in same dir, ensure it works and can't be seen by other apps */
+  assert_doc_not_exist (id, "tmp1", NULL);
+  update_doc (id, "tmp1", NULL, "tmpdata1", &error);
+  g_assert_no_error (error);
+  assert_doc_has_contents (id, "tmp1", NULL, "tmpdata1");
+  assert_doc_not_exist (id, "tmp1", "com.test.App1");
+
+  /* Let App 1 see the document (but not write) */
   grant_permissions (id, "com.test.App1", FALSE);
 
+  /* Ensure App 1 and only it can see the document and tmpfile */
   assert_doc_has_contents (id, basename, "com.test.App1", "content");
   assert_doc_not_exist (id, basename, "com.test.App2");
+  assert_doc_not_exist (id, "tmp1", "com.test.App1");
 
+  /* Make sure App 1 can't create a tmpfile */
+  assert_doc_not_exist (id, "tmp2", "com.test.App1");
+  update_doc (id, "tmp2", "com.test.App1", "tmpdata2", &error);
+  g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_ACCES);
+  g_clear_error (&error);
+  assert_doc_not_exist (id, "tmp2", "com.test.App1");
+
+  /* Update the document contents, ensure this is propagater */
   update_doc (id, basename, NULL, "content2", &error);
   g_assert_no_error (error);
+  assert_host_has_contents (basename, "content2");
   assert_doc_has_contents (id, basename, NULL, "content2");
   assert_doc_has_contents (id, basename, "com.test.App1", "content2");
   assert_doc_not_exist (id, basename, "com.test.App2");
+  assert_doc_not_exist (id, "tmp1", "com.test.App2");
 
-  update_doc (id, basename, "com.test.App1", "content3", &error);
+  /* Update the document contents outside fuse fd, ensure this is propagater */
+  update_from_host (basename, "content3", &error);
+  g_assert_no_error (error);
+  assert_host_has_contents (basename, "content3");
+  assert_doc_has_contents (id, basename, NULL, "content3");
+  assert_doc_has_contents (id, basename, "com.test.App1", "content3");
+  assert_doc_not_exist (id, basename, "com.test.App2");
+  assert_doc_not_exist (id, "tmp1", "com.test.App2");
+
+  /* Try to update the doc from an app that can't write to it */
+  update_doc (id, basename, "com.test.App1", "content4", &error);
   g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_ACCES);
   g_clear_error (&error);
+
+  /* Try to create a tmp file for an app that is not allowed */
+  assert_doc_not_exist (id, "tmp2", "com.test.App1");
+  update_doc (id, "tmp2", "com.test.App1", "tmpdata2", &error);
+  g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_ACCES);
+  g_clear_error (&error);
+  assert_doc_not_exist (id, "tmp2", "com.test.App1");
+  assert_doc_not_exist (id, "tmp2", NULL);
+
+  /* Grant write permissions to App1 */
+  grant_permissions (id, "com.test.App1", TRUE);
+
+  /* update the doc from an app with write access */
+  update_doc (id, basename, "com.test.App1", "content5", &error);
+  g_assert_no_error (error);
+  assert_host_has_contents (basename, "content5");
+  assert_doc_has_contents (id, basename, NULL, "content5");
+  assert_doc_has_contents (id, basename, "com.test.App1", "content5");
+  assert_doc_not_exist (id, basename, "com.test.App2");
+
+  /* Try to create a tmp file for an app */
+  assert_doc_not_exist (id, "tmp3", "com.test.App1");
+  update_doc (id, "tmp3", "com.test.App1", "tmpdata3", &error);
+  g_assert_no_error (error);
+  assert_doc_has_contents (id, "tmp3", "com.test.App1", "tmpdata3");
+  assert_doc_not_exist (id, "tmp3", NULL);
+
+  /* Re-Create a file from a fuse document file, in various ways */
+  doc_path = make_doc_path (id, basename, NULL);
+  doc_app_path = make_doc_path (id, basename, "com.test.App1");
+  host_path = g_build_filename (outdir, basename, NULL);
+  id2 = export_file (doc_path, FALSE);
+  g_assert_cmpstr (id, ==, id2);
+  id3 = export_file (doc_app_path, FALSE);
+  g_assert_cmpstr (id, ==, id3);
+  id4 = export_file (host_path, FALSE);
+  g_assert_cmpstr (id, ==, id4);
+
+  /* Ensure we can make a unique document */
+  id5 = export_file (host_path, TRUE);
+  g_assert_cmpstr (id, !=, id5);
 }
 
 static void
