@@ -179,9 +179,23 @@ xdg_app_builtin_add_remote (int argc, char **argv,
   optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
   if (opt_no_gpg_verify)
-    g_variant_builder_add (optbuilder, "{s@v}",
-                           "gpg-verify",
-                           g_variant_new_variant (g_variant_new_boolean (FALSE)));
+    {
+      g_variant_builder_add (optbuilder, "{s@v}",
+                             "gpg-verify",
+                             g_variant_new_variant (g_variant_new_boolean (FALSE)));
+      g_variant_builder_add (optbuilder, "{s@v}",
+                             "gpg-verify-summary",
+                             g_variant_new_variant (g_variant_new_boolean (FALSE)));
+    }
+  else
+    {
+      g_variant_builder_add (optbuilder, "{s@v}",
+                             "gpg-verify",
+                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
+      g_variant_builder_add (optbuilder, "{s@v}",
+                             "gpg-verify-summary",
+                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
+    }
 
   if (opt_no_enumerate)
     g_variant_builder_add (optbuilder, "{s@v}",
@@ -275,10 +289,16 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
   config = ostree_repo_copy_config (xdg_app_dir_get_repo (dir));
 
   if (opt_no_gpg_verify)
-    g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
+    {
+      g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
+      g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
+    }
 
   if (opt_do_gpg_verify)
-    g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
+    {
+      g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
+      g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
+    }
 
   if (opt_url)
     g_key_file_set_string (config, group, "url", opt_url);
