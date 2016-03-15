@@ -90,10 +90,6 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
         }
     }
 
-  g_print ("Updating summary\n");
-  if (!xdg_app_repo_update (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
-    return FALSE;
-
   if (opt_generate_deltas)
     {
       g_autoptr(GHashTable) all_refs = NULL;
@@ -183,6 +179,10 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
             }
         }
     }
+
+  g_print ("Updating summary\n");
+  if (!xdg_app_repo_update (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+    return FALSE;
 
   if (opt_prune)
     {
