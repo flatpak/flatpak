@@ -18,7 +18,7 @@ m4_define([xdg_app_minor_version], [5])
 m4_define([xdg_app_micro_version], [0])
 m4_define([xdg_app_interface_age], [0])
 m4_define([xdg_app_binary_age],
-          [m4_eval(100 * xdg_app_minor_version + xdg_app_micro_version)])
+          [m4_eval(10000 * xdg_app_major_version + 100 * xdg_app_minor_version + xdg_app_micro_version)])
 m4_define([xdg_app_version],
           [xdg_app_major_version.xdg_app_minor_version.xdg_app_micro_version])
 
@@ -317,7 +317,7 @@ AC_SUBST(XDG_APP_VERSION)
 #LT_AGE=`expr $XDG_APP_BINARY_AGE - $XDG_APP_INTERFACE_AGE`
 #LT_CURRENT_MINUS_AGE=`expr $LT_CURRENT - $LT_AGE`
 
-m4_define([lt_current], [m4_eval(100 * xdg_app_minor_version + xdg_app_micro_version - xdg_app_interface_age)])
+m4_define([lt_current], [m4_eval(10000 * xdg_app_major_version +  100 * xdg_app_minor_version + xdg_app_micro_version - xdg_app_interface_age)])
 m4_define([lt_revision], [xdg_app_interface_age])
 m4_define([lt_age], [m4_eval(xdg_app_binary_age - xdg_app_interface_age)])
 LT_VERSION_INFO="lt_current:lt_revision:lt_age"
