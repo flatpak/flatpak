@@ -1,3 +1,15 @@
+Major changes in 0.5.0
+=======================
+* Some libxdg-app API additions for handling bundles
+* Default to /bin/sh as user shell in sandbox
+* Fix detection of which apps are in use during uninstall
+* New implementation of fuse filesystem for document portal.
+  It is now cleaner and works on 32bit.
+* Honor the noenumerate flag on remotes in CLI and libxdg-app.
+* Add change notification for permissions store
+* Require signed summaries for gpg-signed remotes
+* Fix summary signatures of deltas in xdg-app build-update.
+
 Major changes in 0.4.13
 =======================
 * Fix misgeneration of appdata xml in some cases
