@@ -343,7 +343,7 @@ main (int    argc,
       builder_cache_ensure_checkout (cache);
     }
 
-  if (opt_repo && builder_cache_has_checkout (cache))
+  if (!opt_build_only && opt_repo && builder_cache_has_checkout (cache))
     {
       g_autoptr(GFile) debuginfo_metadata = NULL;
 
