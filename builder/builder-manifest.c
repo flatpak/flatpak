@@ -1617,6 +1617,7 @@ builder_manifest_finish (BuilderManifest *self,
           g_autofree char *extension_contents = NULL;
           g_autoptr(GFileEnumerator) dir_enum = NULL;
           g_autoptr(GFileOutputStream) output = NULL;
+          gboolean found_locale = FALSE;
           GFileInfo *next;
 
           metadata_file = g_file_get_child (app_dir, "metadata");
@@ -1662,9 +1663,27 @@ builder_manifest_finish (BuilderManifest *self,
                                                 G_FILE_CREATE_REPLACE_DESTINATION,
                                                 NULL, NULL, error))
                     return FALSE;
+                  found_locale = TRUE;
                 }
             }
+
+          if (found_locale)
+            {
+              g_autoptr(GFile) metadata_locale_file = NULL;
+              g_autofree char *metadata_contents = NULL;
+
+              metadata_locale_file = g_file_get_child (app_dir, "metadata.locale");
+              metadata_contents = g_strdup_printf("[Runtime]\n"
+                                                  "name=%s.Locale\n", self->id);
+              if (!g_file_replace_contents (metadata_locale_file,
+                                            metadata_contents, strlen (metadata_contents),
+                                            NULL, FALSE,
+                                            G_FILE_CREATE_REPLACE_DESTINATION,
+                                            NULL, NULL, error))
+                return FALSE;
+            }
         }
+
 
       if (g_file_query_exists (debuginfo_dir, NULL))
         {
@@ -1886,6 +1905,7 @@ builder_manifest_create_platform (BuilderManifest *self,
           g_autoptr(GFileOutputStream) output = NULL;
           g_autoptr(GFile) locale_parent_dir = NULL;
           GFileInfo *next;
+          gboolean found_locale = FALSE;
 
           metadata_file = g_file_get_child (app_dir, "metadata.platform");
 
@@ -1931,7 +1951,26 @@ builder_manifest_create_platform (BuilderManifest *self,
                                                 G_FILE_CREATE_REPLACE_DESTINATION,
                                                 NULL, NULL, error))
                     return FALSE;
+
+                  found_locale = TRUE;
                 }
+            }
+
+          if (found_locale)
+            {
+              g_autoptr(GFile) metadata_locale_file = NULL;
+              g_autofree char *metadata_contents = NULL;
+
+              metadata_locale_file = g_file_get_child (app_dir, "metadata.platform.locale");
+              metadata_contents = g_strdup_printf("[Runtime]\n"
+                                                  "name=%s.Locale\n", self->id_platform);
+              if (!g_file_replace_contents (metadata_locale_file,
+                                            metadata_contents, strlen (metadata_contents),
+                                            NULL, FALSE,
+                                            G_FILE_CREATE_REPLACE_DESTINATION,
+                                            NULL, NULL, error))
+                return FALSE;
+
             }
         }
 
