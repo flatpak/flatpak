@@ -2078,7 +2078,9 @@ xdg_app_list_extensions (GKeyFile *metakey,
         {
           g_autofree char *directory = g_key_file_get_string (metakey, groups[i], "directory", NULL);
           g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
+          g_autofree char *ref = NULL;
           const char *branch;
+          g_autoptr(GFile) deploy = NULL;
 
           if (directory == NULL)
             continue;
@@ -2088,8 +2090,17 @@ xdg_app_list_extensions (GKeyFile *metakey,
           else
             branch = default_branch;
 
-          if (g_key_file_get_boolean (metakey, groups[i],
-                                      "subdirectories", NULL))
+          ref = g_build_filename ("runtime", extension, arch, branch, NULL);
+
+          deploy = xdg_app_find_deploy_dir_for_ref (ref, NULL, NULL);
+          /* Prefer a full extension (org.freedesktop.Locale) over subdirectory ones (org.freedesktop.Locale.sv) */
+          if (deploy != NULL)
+            {
+              ext = xdg_app_extension_new (extension, extension, arch, branch, directory);
+              res = g_list_prepend (res, ext);
+            }
+          else if (g_key_file_get_boolean (metakey, groups[i],
+                                           "subdirectories", NULL))
             {
               g_autofree char *prefix = g_strconcat (extension, ".", NULL);
               g_auto(GStrv) refs = NULL;
@@ -2104,11 +2115,6 @@ xdg_app_list_extensions (GKeyFile *metakey,
                   ext = xdg_app_extension_new (extension, refs[j], arch, branch, extended_dir);
                   res = g_list_prepend (res, ext);
                 }
-            }
-          else
-            {
-              ext = xdg_app_extension_new (extension, extension, arch, branch, directory);
-              res = g_list_prepend (res, ext);
             }
         }
     }
