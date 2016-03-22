@@ -1807,15 +1807,45 @@ extract_appstream (OstreeRepo    *repo,
                                      ref, id, keyfile))
     {
       g_autoptr(GError) my_error = NULL;
-      if (!copy_icon (id, root, dest, "64x64", &my_error))
+      XdgAppXml *components = appstream_root->first_child;
+      XdgAppXml *component = components->first_child;
+
+      while (component != NULL)
         {
-          g_print ("Error copying 64x64 icon: %s\n", my_error->message);
-          g_clear_error (&my_error);
-        }
-      if (!copy_icon (id, root, dest, "128x128", &my_error))
-        {
-          g_print ("Error copying 128x128 icon: %s\n", my_error->message);
-          g_clear_error (&my_error);
+          XdgAppXml *component_id, *component_id_text_node;
+          g_autofree char *component_id_text = NULL;
+
+          if (g_strcmp0 (component->element_name, "component") != 0)
+            {
+              component = component->next_sibling;
+              continue;
+            }
+
+          component_id = xdg_app_xml_find (component, "id", NULL);
+          component_id_text_node = xdg_app_xml_find (component_id, NULL, NULL);
+
+          component_id_text = g_strstrip (g_strdup (component_id_text_node->text));
+          if (!g_str_has_suffix (component_id_text, ".desktop"))
+            {
+              component = component->next_sibling;
+              continue;
+            }
+
+          g_print ("Extracting icons for component %s\n", component_id_text);
+          component_id_text[strlen(component_id_text)-strlen(".desktop")] = 0;
+
+          if (!copy_icon (component_id_text, root, dest, "64x64", &my_error))
+            {
+              g_print ("Error copying 64x64 icon: %s\n", my_error->message);
+              g_clear_error (&my_error);
+            }
+          if (!copy_icon (component_id_text, root, dest, "128x128", &my_error))
+            {
+              g_print ("Error copying 128x128 icon: %s\n", my_error->message);
+              g_clear_error (&my_error);
+            }
+
+          component = component->next_sibling;
         }
     }
 
