@@ -134,6 +134,13 @@
                     List installed applications and/or runtimes.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-info</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Show information for an installed application or runtime.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
 
 
