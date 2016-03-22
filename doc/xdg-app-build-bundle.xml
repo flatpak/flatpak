@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="xdg-app-info">
+<refentry id="xdg-app-build-bundle">
 
     <refentryinfo>
-        <title>xdg-app info</title>
+        <title>xdg-app build-bundle</title>
         <productname>xdg-app</productname>
 
         <authorgroup>
@@ -19,19 +19,21 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>xdg-app info</refentrytitle>
+        <refentrytitle>xdg-app build-bundle</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>xdg-app-info</refname>
-        <refpurpose>Show information about installed application and/or runtime</refpurpose>
+        <refname>xdg-app-build-bundle</refname>
+        <refpurpose>Create a single file bundle from a local repository</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>xdg-app info</command>
+                <command>xdg-app build-bundle</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">LOCATION</arg>
+                <arg choice="plain">FILENAME</arg>
                 <arg choice="plain">NAME</arg>
                 <arg choice="opt">BRANCH</arg>
             </cmdsynopsis>
@@ -41,18 +43,17 @@
         <title>Description</title>
 
         <para>
-            Show info about and installed application and/or runtime.
+            Creates a single file named <arg choice="plain">FILENAME</arg>
+            for the application (or runtime) named <arg choice="plain">NAME</arg>
+            in the repository at <arg choice="plain">LOCATION</arg>. If
+            a <arg choice="plain">BRANCH</arg> is specified, this branch of
+            the application is used.
         </para>
         <para>
-            By default, both per-user and system-wide installations
-            are queried. Use the --user or --system options to change
-            this.
+            The format of the bundle file is that of an ostree static delta
+            (against an empty base) with some xdg-app specific metadata for
+            the application icons and appdata.
         </para>
-        <para>
-            By default this queries the installed apps and runtimes, but you can
-            limit this by using the --app or --runtime option.
-        </para>
-
     </refsect1>
 
     <refsect1>
@@ -71,61 +72,42 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--user</option></term>
-
-                <listitem><para>
-                    Query per-user installations.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--system</option></term>
-
-                <listitem><para>
-                    Query system-wide installations.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--app</option></term>
-
-                <listitem><para>
-                    Query for applications.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>--runtime</option></term>
 
                 <listitem><para>
-                    Query for runtimes.
+                    Export a runtime instead of an application.
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>-r</option></term>
-                <term><option>--show-ref</option></term>
+                <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    Show the installed ref.
+                    The arch to create a bundle for.
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>-o</option></term>
-                <term><option>--show-origin</option></term>
+                <term><option>--repo-url=URL</option></term>
 
                 <listitem><para>
-                    Show the remote the ref is installed from.
+                    The URL for the repository.
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>-c</option></term>
-                <term><option>--show-commit</option></term>
+                <term><option>--gpg-keys=FILE</option></term>
 
                 <listitem><para>
-                    Show the installed commit id.
+                    Add the GPG key from FILE (use - for stdin).
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-homedir=PATH</option></term>
+
+                <listitem><para>
+                    GPG Homedir to use when looking for keyrings
                 </para></listitem>
             </varlistentry>
 
@@ -149,27 +131,15 @@
     </refsect1>
 
     <refsect1>
-        <title>Examples</title>
-
-        <para>
-            <command>$ xdg-app --user list</command>
-        </para>
-<programlisting>
-org.gnome.Builder
-org.freedesktop.glxgears
-org.gnome.MyApp
-org.gnome.GEdit
-</programlisting>
-
-    </refsect1>
-
-    <refsect1>
         <title>See also</title>
 
         <para>
+            <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>xdg-app-install-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>xdg-app-update-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>xdg-app-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>xdg-app-repo-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

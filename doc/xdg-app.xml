@@ -103,82 +103,42 @@
     <refsect1>
         <title>Commands</title>
 
-        <para>Commands related to repository configuration:</para>
-
-        <variablelist>
-            <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    Add a remote repository.
-                </para></listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    Modify remote repository properties.
-                </para></listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-remote-delete</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    Delete a remote repository.
-                </para></listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-remote-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    Lists remote repositories.
-                </para></listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-remote-ls</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    Show available runtimes and applications.
-                </para></listitem>
-            </varlistentry>
-        </variablelist>
-
-        <para>Commands for handling installed runtimes and applications:</para>
+        <para>Commands for managing installed applications and runtimes:</para>
 
         <variablelist>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-install</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Install an application or a runtime.
+                    Install an application or a runtime from a remote.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-update</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Update an application or a runtime.
+                    Update an installed application or runtime.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-uninstall</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Uninstall an application or a runtime.
+                    Uninstall an installed application or runtime.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-list-runtimes</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    List installed runtimes.
+                    List installed applications and/or runtimes.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>xdg-app-list-apps</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>xdg-app-info</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    List installed applications.
+                    Show information for an installed application or runtime.
                 </para></listitem>
             </varlistentry>
         </variablelist>
@@ -198,14 +158,61 @@
                 <term><citerefentry><refentrytitle>xdg-app-override</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Override application requirements.
+                    Override permissions for an application.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-export-file</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Export a file to a sandboxed application.
+                    Grant an application access to a specific file.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-enter</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Enter the namespace of a running application.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+        <para>Commands for managing remote rempositories:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Add a new remote repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Modify properties of a configured remote repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-remote-delete</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Delete a configured remote repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-remote-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List all configured remote repositories.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-remote-ls</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List contents of a configured remote repository.
                 </para></listitem>
             </varlistentry>
         </variablelist>
@@ -231,21 +238,28 @@
                 <term><citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Finalizes a build directory.
+                    Finalizes a build directory for export.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Create a repository from a build directory.
+                    Export a build directory to a repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Create a bundle file from a build directory.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
                 <term><citerefentry><refentrytitle>xdg-app-build-update-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Update repository metadata.
+                    Update the summary file in a repository.
                 </para></listitem>
             </varlistentry>
         </variablelist>
