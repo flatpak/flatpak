@@ -144,7 +144,7 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
 
   file = g_file_new_for_commandline_arg (filename);
 
-  if (!xdg_app_is_valid_branch (name))
+  if (!xdg_app_is_valid_name (name))
     return xdg_app_fail (error, "'%s' is not a valid name", name);
 
   if (!xdg_app_is_valid_branch (branch))
