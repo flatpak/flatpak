@@ -32,6 +32,7 @@ man_MANS = \
 	xdg-app-export-file.1		\
 	xdg-app-build-init.1		\
 	xdg-app-build.1			\
+	xdg-app-build-bundle.1		\
 	xdg-app-build-finish.1		\
 	xdg-app-build-export.1		\
 	xdg-app-build-update-repo.1	\
