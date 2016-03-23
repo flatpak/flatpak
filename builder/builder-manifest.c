@@ -803,6 +803,11 @@ builder_manifest_get_runtime_version (BuilderManifest *self)
   return self->runtime_version ? self->runtime_version : "master";
 }
 
+const char *
+builder_manifest_get_branch (BuilderManifest *self)
+{
+  return self->branch ? self->branch : "master";
+}
 
 static char *
 xdg_app (GError      **error,

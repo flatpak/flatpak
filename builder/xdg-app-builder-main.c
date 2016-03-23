@@ -354,7 +354,7 @@ main (int    argc,
                       "--exclude=/lib/debug/*",
                       "--include=/lib/debug/app",
                       builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
-                      opt_repo, app_dir_path, NULL))
+                      opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
         {
           g_print ("Export failed: %s\n", error->message);
           return 1;
@@ -393,7 +393,7 @@ main (int    argc,
           if (!do_export (&error, TRUE,
                           metadata_arg,
                           files_arg,
-                          opt_repo, app_dir_path, NULL))
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
               g_print ("Export failed: %s\n", error->message);
               return 1;
@@ -409,7 +409,7 @@ main (int    argc,
           if (!do_export (&error, TRUE,
                           "--metadata=metadata.debuginfo",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
-                          opt_repo, app_dir_path, NULL))
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
               g_print ("Export failed: %s\n", error->message);
               return 1;
@@ -427,7 +427,7 @@ main (int    argc,
                             "--metadata=metadata.platform",
                             "--files=platform",
                             builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
-                            opt_repo, app_dir_path, NULL))
+                            opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
               {
                 g_print ("Export failed: %s\n", error->message);
                 return 1;
@@ -465,7 +465,7 @@ main (int    argc,
           if (!do_export (&error, TRUE,
                           metadata_arg,
                           files_arg,
-                          opt_repo, app_dir_path, NULL))
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
               g_print ("Export failed: %s\n", error->message);
               return 1;

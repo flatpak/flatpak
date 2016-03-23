@@ -47,6 +47,7 @@ const char *    builder_manifest_get_id            (BuilderManifest  *self);
 const char *    builder_manifest_get_id_platform   (BuilderManifest  *self);
 BuilderOptions *builder_manifest_get_build_options (BuilderManifest  *self);
 GList *         builder_manifest_get_modules       (BuilderManifest  *self);
+const char *    builder_manifest_get_branch        (BuilderManifest  *self);
 
 gboolean        builder_manifest_start             (BuilderManifest  *self,
                                                     BuilderContext   *context,
