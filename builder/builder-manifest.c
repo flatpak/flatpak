@@ -1012,6 +1012,20 @@ builder_manifest_checksum_for_platform (BuilderManifest *self,
   builder_cache_checksum_str (cache, self->metadata_platform);
   builder_cache_checksum_strv (cache, self->cleanup_platform);
   builder_cache_checksum_strv (cache, self->platform_extensions);
+
+  if (self->metadata_platform)
+    {
+      GFile *base_dir = builder_context_get_base_dir (context);
+      g_autoptr(GFile) metadata = g_file_resolve_relative_path (base_dir, self->metadata_platform);
+      g_autofree char *data = NULL;
+      g_autoptr(GError) my_error = NULL;
+      gsize len;
+
+      if (g_file_load_contents (metadata, NULL, &data, &len, NULL, &my_error))
+        builder_cache_checksum_data (cache, (guchar *)data, len);
+      else
+        g_warning ("Can't load metadata-platform file %s: %s", self->metadata_platform, my_error->message);
+    }
 }
 
 gboolean
