@@ -1009,7 +1009,7 @@ builder_manifest_checksum_for_platform (BuilderManifest *self,
   builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_PLATFORM_VERSION);
   builder_cache_checksum_str (cache, self->id_platform);
   builder_cache_checksum_str (cache, self->runtime_commit);
-  builder_cache_checksum_str (cache, self->metadata);
+  builder_cache_checksum_str (cache, self->metadata_platform);
   builder_cache_checksum_strv (cache, self->cleanup_platform);
   builder_cache_checksum_strv (cache, self->platform_extensions);
 }
