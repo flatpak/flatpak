@@ -2421,8 +2421,17 @@ xdg_app_xml_parse (GInputStream *in,
 #define OSTREE_STATIC_DELTA_FALLBACK_FORMAT "(yaytt)"
 #define OSTREE_STATIC_DELTA_SUPERBLOCK_FORMAT "(a{sv}tayay" OSTREE_COMMIT_GVARIANT_STRING "aya" OSTREE_STATIC_DELTA_META_ENTRY_FORMAT "a" OSTREE_STATIC_DELTA_FALLBACK_FORMAT ")"
 
+static inline guint64
+maybe_swap_endian_u64 (gboolean swap,
+                       guint64 v)
+{
+  if (!swap)
+    return v;
+  return GUINT64_SWAP_LE_BE (v);
+}
+
 static guint64
-xdg_app_bundle_get_installed_size (GVariant *bundle)
+xdg_app_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
 {
   guint64 total_size = 0, total_usize = 0;
   g_autoptr(GVariant) meta_entries = NULL;
@@ -2441,8 +2450,8 @@ xdg_app_bundle_get_installed_size (GVariant *bundle)
       g_variant_get_child (meta_entries, i, "(u@aytt@ay)",
                            &version, NULL, &size, &usize, &objects);
 
-      total_size += size;
-      total_usize += usize;
+      total_size += maybe_swap_endian_u64 (byte_swap, size);
+      total_usize += maybe_swap_endian_u64 (byte_swap, usize);
     }
 
   return total_usize;
@@ -2461,6 +2470,8 @@ xdg_app_bundle_load (GFile *file,
   g_autoptr(GVariant) metadata = NULL;
   g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GVariant) to_csum_v = NULL;
+  guint8 endianness_char;
+  gboolean byte_swap = FALSE;
 
   GMappedFile *mfile = g_mapped_file_new (gs_file_get_path_cached (file), FALSE, error);
 
@@ -2481,9 +2492,27 @@ xdg_app_bundle_load (GFile *file,
     *commit = ostree_checksum_from_bytes_v (to_csum_v);
 
   if (installed_size)
-    *installed_size = xdg_app_bundle_get_installed_size (delta);
+    *installed_size = xdg_app_bundle_get_installed_size (delta, byte_swap);
 
   metadata = g_variant_get_child_value (delta, 0);
+
+  if (g_variant_lookup (metadata, "ostree.endianness", "y", &endianness_char))
+    {
+      int file_byte_order = G_BYTE_ORDER;
+      switch (endianness_char)
+        {
+        case 'l':
+          file_byte_order = G_LITTLE_ENDIAN;
+          break;
+        case 'B':
+          file_byte_order = G_BIG_ENDIAN;
+          break;
+        default:
+          break;
+        }
+      byte_swap = (G_BYTE_ORDER != file_byte_order);
+    }
+
 
   if (ref != NULL)
     {
