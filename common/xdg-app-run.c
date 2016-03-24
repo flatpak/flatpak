@@ -2215,9 +2215,12 @@ xdg_app_run_app (const char *app_ref,
   g_ptr_array_add (argv_array, g_strdup (HELPER));
   g_ptr_array_add (argv_array, g_strdup ("-l"));
 
+  /* Pass the arch for seccomp */
+  g_ptr_array_add (argv_array, g_strdup ("-A"));
+  g_ptr_array_add (argv_array, g_strdup (app_ref_parts[2]));
+
   if (!xdg_app_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
     return FALSE;
-
 
   default_runtime = g_key_file_get_string (metakey, "Application",
                                            (flags & XDG_APP_RUN_FLAG_DEVEL) != 0 ? "sdk" : "runtime",

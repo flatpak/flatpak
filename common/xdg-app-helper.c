@@ -298,7 +298,7 @@ static inline int raw_clone(unsigned long flags, void *child_stack) {
 }
 
 static void
-setup_seccomp (bool devel)
+setup_seccomp (bool devel, const char *arch)
 {
 #ifdef ENABLE_SECCOMP
   scmp_filter_ctx seccomp;
@@ -395,21 +395,32 @@ setup_seccomp (bool devel)
   if (!seccomp)
     return die_oom ();
 
-  /* Add in all possible secondary archs we are aware of that
-   * this kernel might support. */
-#if defined(__i386__) || defined(__x86_64__)
-  r = seccomp_arch_add (seccomp, SCMP_ARCH_X86);
-  if (r < 0 && r != -EEXIST)
-    die_with_error ("Failed to add x86 architecture to seccomp filter");
+  if (arch != NULL)
+    {
+      uint32_t arch_id = 0;
 
-  r = seccomp_arch_add (seccomp, SCMP_ARCH_X86_64);
-  if (r < 0 && r != -EEXIST)
-    die_with_error ("Failed to add x86_64 architecture to seccomp filter");
+      if (strcmp (arch, "i386") == 0)
+        arch_id = SCMP_ARCH_X86;
+      else if (strcmp (arch, "x86_64") == 0)
+        arch_id = SCMP_ARCH_X86_64;
 
-  r = seccomp_arch_add (seccomp, SCMP_ARCH_X32);
-  if (r < 0 && r != -EEXIST)
-    die_with_error ("Failed to add x32 architecture to seccomp filter");
-#endif
+      /* We only really need to handle arches on multiarch systems.
+       * If only one arch is supported the default is fine */
+      if (arch_id != 0)
+        {
+          /* This *adds* the target arch, instead of replacing the
+             native one. This is not ideal, because we'd like to only
+             allow the target arch, but we can't really disallow the
+             native arch at this point, because then xdg-app-helper
+             couldn't continue runnning. */
+          r = seccomp_arch_add (seccomp, arch_id);
+          if (r < 0 && r != -EEXIST)
+            {
+              errno = -r;
+              die_with_error ("Failed to add architecture to seccomp filter");
+            }
+        }
+    }
 
   /* TODO: Should we filter the kernel keyring syscalls in some way?
    * We do want them to be used by desktop apps, but they could also perhaps
@@ -2044,6 +2055,7 @@ main (int argc,
   char *wayland_socket = NULL;
   char *system_dbus_socket = NULL;
   char *session_dbus_socket = NULL;
+  char *opt_arch = NULL;
   char *xdg_runtime_dir;
   char **args;
   char *tmp;
@@ -2081,10 +2093,14 @@ main (int argc,
 
   clean_argv (argc, argv);
 
-  while ((c =  getopt (argc, argv, "+inWwceEsfFHhra:m:M:b:B:p:x:ly:d:D:v:I:gS:P:")) >= 0)
+  while ((c =  getopt (argc, argv, "+inWwceEsfFHhrA:a:m:M:b:B:p:x:ly:d:D:v:I:gS:P:")) >= 0)
     {
       switch (c)
         {
+        case 'A':
+          opt_arch = optarg;
+          break;
+
         case 'a':
           app_path = optarg;
           break;
@@ -2656,7 +2672,7 @@ main (int argc,
         }
 
       __debug__(("setting up seccomp in child\n"));
-      setup_seccomp (devel);
+      setup_seccomp (devel, opt_arch);
 
       if (sync_fd != -1)
 	close (sync_fd);
@@ -2669,7 +2685,7 @@ main (int argc,
     }
 
   __debug__(("setting up seccomp in monitor\n"));
-  setup_seccomp (devel);
+  setup_seccomp (devel, opt_arch);
 
   /* Close all extra fds in pid 1.
      Any passed in fds have been passed on to the child anyway. */

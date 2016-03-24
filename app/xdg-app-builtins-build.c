@@ -71,6 +71,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(XdgAppContext) arg_context = NULL;
   g_autoptr(XdgAppContext) app_context = NULL;
   gboolean custom_usr;
+  g_auto(GStrv) runtime_ref_parts = NULL;
 
   context = g_option_context_new ("DIRECTORY [COMMAND [args...]] - Build in directory");
 
@@ -120,6 +121,10 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
 
+  runtime_ref_parts = xdg_app_decompose_ref (runtime_ref, error);
+  if (runtime_ref_parts == NULL)
+    return FALSE;
+
   runtime_deploy = xdg_app_find_deploy_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
     return FALSE;
@@ -147,6 +152,10 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     runtime_files = xdg_app_deploy_get_files (runtime_deploy);
 
   g_ptr_array_add (argv_array, g_strdup ("-wrc"));
+
+  /* Pass the arch for seccomp */
+  g_ptr_array_add (argv_array, g_strdup ("-A"));
+  g_ptr_array_add (argv_array, g_strdup (runtime_ref_parts[2]));
 
   app_context = xdg_app_context_new ();
   if (!xdg_app_context_load_metadata (app_context, runtime_metakey, error))
