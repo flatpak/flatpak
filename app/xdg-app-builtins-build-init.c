@@ -188,7 +188,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                           if (!xdg_app_cp_a (ext_deploy_files, target, XDG_APP_CP_FLAGS_NO_CHOWN, cancellable, error))
                             return FALSE;
 
-                            found = TRUE;
+                          found = TRUE;
                         }
                       else
                         {
