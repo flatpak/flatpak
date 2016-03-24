@@ -390,7 +390,6 @@ setup_seccomp (bool devel)
     AF_NETLINK + 1, /* Last gets CMP_GE, so order is important */
   };
   int i, r;
-  struct utsname uts;
 
   seccomp = seccomp_init(SCMP_ACT_ALLOW);
   if (!seccomp)
@@ -425,7 +424,10 @@ setup_seccomp (bool devel)
       else
         r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 0);
       if (r < 0 && r == -EFAULT /* unknown syscall */)
-        die_with_error ("Failed to block syscall %d", scall);
+        {
+          errno = -r;
+          die_with_error ("Failed to block syscall %d", scall);
+        }
     }
 
   if (!devel)
@@ -438,28 +440,31 @@ setup_seccomp (bool devel)
           else
             r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 0);
           if (r < 0 && r == -EFAULT /* unknown syscall */)
-            die_with_error ("Failed to block syscall %d", scall);
+            {
+              errno = -r;
+              die_with_error ("Failed to block syscall %d", scall);
+            }
         }
     }
 
-  /* Socket filtering doesn't work on x86 */
-  if (uname (&uts) == 0 && strcmp (uts.machine, "i686") != 0)
+  /* Socket filtering doesn't work on e.g. i386, so ignore failures here
+   * However, we need to user seccomp_rule_add_exact to avoid libseccomp doing
+   * something else: https://github.com/seccomp/libseccomp/issues/8 */
+  for (i = 0; i < N_ELEMENTS (socket_family_blacklist); i++)
     {
-      for (i = 0; i < N_ELEMENTS (socket_family_blacklist); i++)
-	{
-	  int family = socket_family_blacklist[i];
-	  if (i == N_ELEMENTS (socket_family_blacklist) - 1)
-	    r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_GE, family));
-	  else
-	    r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_EQ, family));
-	  if (r < 0)
-	    die_with_error ("Failed to block socket family %d", family);
-	}
+      int family = socket_family_blacklist[i];
+      if (i == N_ELEMENTS (socket_family_blacklist) - 1)
+        r = seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_GE, family));
+      else
+        r = seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_EQ, family));
     }
 
   r = seccomp_load (seccomp);
   if (r < 0)
-    die_with_error ("Failed to install seccomp audit filter: ");
+    {
+      errno = -r;
+      die_with_error ("Failed to install seccomp audit filter: ");
+    }
 
   seccomp_release (seccomp);
 #endif
