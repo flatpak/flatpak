@@ -27,6 +27,14 @@
 #include "xdg-app-remote-ref.h"
 #include "xdg-app-enum-types.h"
 
+/**
+ * SECTION:xdg-app-remote-ref
+ * @Title: XdgAppRemoteRef
+ * @Short_description: Remote application reference
+ *
+ * A XdgAppRemoteRef provides information about an application or runtime
+ * (in short: ref) that is available from a remote repository.
+ */
 typedef struct _XdgAppRemoteRefPrivate XdgAppRemoteRefPrivate;
 
 struct _XdgAppRemoteRefPrivate
@@ -108,8 +116,8 @@ xdg_app_remote_ref_class_init (XdgAppRemoteRefClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_REMOTE_NAME,
                                    g_param_spec_string ("remote-name",
-                                                        "",
-                                                        "",
+                                                        "Remote Name",
+                                                        "The name of the remote",
                                                         NULL,
                                                         G_PARAM_READWRITE));
 }
@@ -119,6 +127,14 @@ xdg_app_remote_ref_init (XdgAppRemoteRef *self)
 {
 }
 
+/**
+ * xdg_app_remote_ref_get_remote_name:
+ * @self: a #XdgAppRemoteRef
+ *
+ * Gets the remote name of the ref.
+ *
+ * Returns: (transfer none): the remote name
+ */
 const char *
 xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self)
 {
