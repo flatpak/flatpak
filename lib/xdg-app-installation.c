@@ -178,7 +178,7 @@ xdg_app_installation_new_user (GCancellable *cancellable,
  * xdg_app_installation_new_for_path:
  * @path: a #GFile
  * @user: whether this is a user-specific location
- * @cancellable: (nullable): a #GCancellabel
+ * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
  * Creates a new #XdgAppInstallation for the installation at the given @path.
