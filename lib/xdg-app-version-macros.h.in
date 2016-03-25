@@ -33,4 +33,9 @@
 #define XDG_APP_EXTERN extern
 #endif
 
+/**
+ * SECTION:xdg-app-version-macros
+ * @Title: Version information
+ */
+
 #endif /* __XDG_APP_VERSION_MACROS_H__ */
