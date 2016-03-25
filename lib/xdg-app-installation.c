@@ -794,7 +794,8 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Install an application or runtime from a bundle.
+ * Install an application or runtime from an xdg-app bundle file.
+ * See xdg-app-build-bundle(1) for how to create brundles.
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */

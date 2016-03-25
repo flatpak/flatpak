@@ -25,6 +25,7 @@ xdg_app_installation_fetch_remote_ref_sync
 xdg_app_installation_fetch_remote_size_sync
 xdg_app_installation_load_app_overrides
 xdg_app_installation_update_appstream_sync
+xdg_app_installation_install_bundle
 XdgAppProgressCallback
 XdgAppUpdateFlags
 <SUBSECTION Standard>
