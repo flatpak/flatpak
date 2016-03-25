@@ -1257,7 +1257,7 @@ xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
  *
  * Lists all the refs in a remote.
  *
- * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
+ * Returns: (transfer container) (element-type XdgAppRemoteRef): an GPtrArray of
  *   #XdgAppRemoteRef instances
  */
 GPtrArray *
