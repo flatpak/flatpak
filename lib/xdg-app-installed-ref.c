@@ -26,6 +26,16 @@
 #include "xdg-app-installed-ref.h"
 #include "xdg-app-enum-types.h"
 
+/**
+ * SECTION:xdg-app-installed-ref
+ * @Title: XdgAppInstalledRef
+ * @Short_description: Installed application reference
+ *
+ * A XdgAppInstalledRef provides information about an installed
+ * application or runtime (in short: ref), such as the available
+ * builds, its size, location, etc.
+ */
+
 typedef struct _XdgAppInstalledRefPrivate XdgAppInstalledRefPrivate;
 
 struct _XdgAppInstalledRefPrivate
@@ -150,36 +160,36 @@ xdg_app_installed_ref_class_init (XdgAppInstalledRefClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_IS_CURRENT,
                                    g_param_spec_boolean ("is-current",
-                                                         "",
-                                                         "",
+                                                         "Is Current",
+                                                         "Whether the application is current",
                                                          FALSE,
                                                          G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_INSTALLED_SIZE,
                                    g_param_spec_uint64 ("installed-size",
-                                                         "",
-                                                         "",
+                                                         "Installed Size",
+                                                         "The installed size of the application",
                                                         0, G_MAXUINT64, 0,
                                                          G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_ORIGIN,
                                    g_param_spec_string ("origin",
-                                                        "",
-                                                        "",
+                                                        "Origin",
+                                                        "The origin",
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_LATEST_COMMIT,
                                    g_param_spec_string ("latest-commit",
-                                                        "",
-                                                        "",
+                                                        "Latest Commit",
+                                                        "The latest commit",
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_DEPLOY_DIR,
                                    g_param_spec_string ("deploy-dir",
-                                                        "",
-                                                        "",
+                                                        "Deploy Dir",
+                                                        "Where the application is installed",
                                                         NULL,
                                                         G_PARAM_READWRITE));
 }
@@ -189,6 +199,14 @@ xdg_app_installed_ref_init (XdgAppInstalledRef *self)
 {
 }
 
+/**
+ * xdg_app_installed_ref_get_origin:
+ * @self: a #XdgAppInstalledRef
+ *
+ * Gets the origin of the ref.
+ *
+ * Returns: (transfer none): the origin
+ */
 const char *
 xdg_app_installed_ref_get_origin (XdgAppInstalledRef *self)
 {
@@ -197,6 +215,14 @@ xdg_app_installed_ref_get_origin (XdgAppInstalledRef *self)
   return priv->origin;
 }
 
+/**
+ * xdg_app_installed_ref_get_latest_commit:
+ * @self: a #XdgAppInstalledRef
+ *
+ * Gets the latest commit of the ref.
+ *
+ * Returns: (transfer none): the latest commit
+ */
 const char *
 xdg_app_installed_ref_get_latest_commit (XdgAppInstalledRef *self)
 {
@@ -205,6 +231,14 @@ xdg_app_installed_ref_get_latest_commit (XdgAppInstalledRef *self)
   return priv->latest_commit;
 }
 
+/**
+ * xdg_app_installed_ref_get_deploy_dir:
+ * @self: a #XdgAppInstalledRef
+ *
+ * Gets the deploy dir of the ref.
+ *
+ * Returns: (transfer none): the deploy dir
+ */
 const char *
 xdg_app_installed_ref_get_deploy_dir (XdgAppInstalledRef *self)
 {
@@ -213,6 +247,14 @@ xdg_app_installed_ref_get_deploy_dir (XdgAppInstalledRef *self)
   return priv->deploy_dir;
 }
 
+/**
+ * xdg_app_installed_ref_get_is_current:
+ * @self: a #XdgAppInstalledRef
+ *
+ * Returns whether the ref is current.
+ *
+ * Returns: %TRUE if the ref is current
+ */
 gboolean
 xdg_app_installed_ref_get_is_current (XdgAppInstalledRef *self)
 {
@@ -221,6 +263,14 @@ xdg_app_installed_ref_get_is_current (XdgAppInstalledRef *self)
   return priv->is_current;
 }
 
+/**
+ * xdg_app_installed_ref_get_installed_size:
+ * @self: a #XdgAppInstalledRef
+ *
+ * Returns the installed size of the ref.
+ *
+ * Returns: the installed size
+ */
 guint64
 xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef *self)
 {
@@ -229,6 +279,17 @@ xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef *self)
   return priv->installed_size;
 }
 
+/**
+ * xdg_app_installed_ref_load_metadata:
+ * @self: a #XdgAppInstalledRef
+ * @cancellable: (nullable): a #GCancellable
+ * @error: a return location for a #GError
+ *
+ * Loads the metadata file for this ref.
+ *
+ * Returns: (transfer full): a #GBytes containing the metadata file,
+ *     or %NULL if an error occurred
+ */
 GBytes *
 xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
                                       GCancellable *cancellable,
