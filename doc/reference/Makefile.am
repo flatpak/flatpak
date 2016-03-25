@@ -28,6 +28,8 @@ GTKDOC_LIBS = $(top_builddir)/libxdg-app.la $(BASE_LIBS)
 
 include $(top_srcdir)/gtk-doc.make
 
+EXTRA_DIST += version.xml.in
+
 if ENABLE_GTK_DOC_CHECK
 TESTS_ENVIRONMENT = \
 	DOC_MODULE=$(DOC_MODULE) DOC_MAIN_SGML_FILE=$(DOC_MAIN_SGML_FILE) \
