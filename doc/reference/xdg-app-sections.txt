@@ -56,12 +56,12 @@ xdg_app_installed_ref_get_type
 <FILE>xdg-app-remote-ref</FILE>
 <TITLE>XdgAppRemoteRef</TITLE>
 XdgAppRemoteRef
-XdgAppRemoteRefClass
 xdg_app_remote_ref_get_remote_name
 <SUBSECTION Standard>
 XDG_APP_IS_REMOTE_REF
 XDG_APP_REMOTE_REF
 XDG_APP_TYPE_REMOTE_REF
+XdgAppRemoteRefClass
 xdg_app_remote_ref_get_type
 </SECTION>
 
@@ -69,7 +69,6 @@ xdg_app_remote_ref_get_type
 <FILE>xdg-app-ref</FILE>
 <TITLE>XdgAppRef</TITLE>
 XdgAppRef
-XdgAppRefClass
 XdgAppRefKind
 xdg_app_ref_format_ref
 xdg_app_ref_get_arch
@@ -79,6 +78,7 @@ xdg_app_ref_get_kind
 xdg_app_ref_get_name
 xdg_app_ref_parse
 <SUBSECTION Standard>
+XdgAppRefClass
 XDG_APP_IS_REF
 XDG_APP_REF
 XDG_APP_TYPE_REF
@@ -89,7 +89,6 @@ xdg_app_ref_get_type
 <FILE>xdg-app-remote</FILE>
 <TITLE>XdgAppRemote</TITLE>
 XdgAppRemote
-XdgAppRemoteClass
 xdg_app_remote_get_appstream_dir
 xdg_app_remote_get_appstream_timestamp
 xdg_app_remote_get_gpg_verify
@@ -99,6 +98,7 @@ xdg_app_remote_get_prio
 xdg_app_remote_get_title
 xdg_app_remote_get_url
 <SUBSECTION Standard>
+XdgAppRemoteClass
 XDG_APP_IS_REMOTE
 XDG_APP_REMOTE
 XDG_APP_TYPE_REMOTE
