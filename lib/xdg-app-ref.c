@@ -24,6 +24,27 @@
 #include "xdg-app-ref.h"
 #include "xdg-app-enum-types.h"
 
+/**
+ * SECTION:xdg-app-ref
+ * @Title: XdgAppRef
+ * @Short_description: Application reference
+ *
+ * Currently xdg-app manages two types of binary artifacts: applications, and
+ * runtimes. Applications contain a program that desktop users can run, while
+ * runtimes contain only libraries and data. An XdgAppRef object (or short: ref)
+ * can refer to either of these.
+ *
+ * Both applications and runtimes are identified by a 4-tuple of strings: kind,
+ * name, arch and branch, e.g. app/org.gnome.evince/x86_64/master. The functions
+ * xdg_app_ref_parse() and xdg_app_ref_format_ref() can be used to convert
+ * XdgAppRef objects into this string representation and back.
+ *
+ * To uniquely identify a particular version of an application or runtime, you
+ * need a commit.
+ *
+ * The subclasses #XdgAppInstalledRef and #XdgAppRemoteRef provide more information
+ * for artifacts that are locally installed or available from a remote repository.
+ */
 typedef struct _XdgAppRefPrivate XdgAppRefPrivate;
 
 struct _XdgAppRefPrivate
@@ -151,36 +172,36 @@ xdg_app_ref_class_init (XdgAppRefClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_NAME,
                                    g_param_spec_string ("name",
-                                                        "",
-                                                        "",
+                                                        "Name",
+                                                        "The name of the application or runtime",
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_ARCH,
                                    g_param_spec_string ("arch",
-                                                        "",
-                                                        "",
+                                                        "Architecture",
+                                                        "The architecture of the application or runtime",
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_BRANCH,
                                    g_param_spec_string ("branch",
-                                                        "",
-                                                        "",
+                                                        "Branch",
+                                                        "The branch of the application or runtime",
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_COMMIT,
                                    g_param_spec_string ("commit",
-                                                        "",
-                                                        "",
+                                                        "Commit",
+                                                        "The commit",
                                                         NULL,
                                                         G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_KIND,
                                    g_param_spec_enum ("kind",
-                                                      "",
-                                                      "",
+                                                      "Kind",
+                                                      "The kind of artifact",
                                                       XDG_TYPE_APP_REF_KIND,
                                                       XDG_APP_REF_KIND_APP,
                                                       G_PARAM_READWRITE));
@@ -194,6 +215,14 @@ xdg_app_ref_init (XdgAppRef *self)
   priv->kind = XDG_APP_REF_KIND_APP;
 }
 
+/**
+ * xdg_app_ref_get_name:
+ * @self: a #XdgAppRef
+ *
+ * Gets the name of the ref.
+ *
+ * Returns: (transfer none): the name
+ */
 const char *
 xdg_app_ref_get_name (XdgAppRef *self)
 {
@@ -202,6 +231,14 @@ xdg_app_ref_get_name (XdgAppRef *self)
   return priv->name;
 }
 
+/**
+ * xdg_app_ref_get_arch:
+ * @self: a #XdgAppRef
+ *
+ * Gets the arch or the ref.
+ *
+ * Returns: (transfer none): the arch
+ */
 const char *
 xdg_app_ref_get_arch (XdgAppRef *self)
 {
@@ -210,6 +247,14 @@ xdg_app_ref_get_arch (XdgAppRef *self)
   return priv->arch;
 }
 
+/**
+ * xdg_app_ref_get_branch:
+ * @self: a #XdgAppRef
+ *
+ * Gets the branch of the ref.
+ *
+ * Returns: (transfer none): the branch
+ */
 const char *
 xdg_app_ref_get_branch (XdgAppRef *self)
 {
@@ -218,6 +263,14 @@ xdg_app_ref_get_branch (XdgAppRef *self)
   return priv->branch;
 }
 
+/**
+ * xdg_app_ref_get_commit:
+ * @self: a #XdgAppRef
+ *
+ * Gets the commit of the ref.
+ *
+ * Returns: (transfer none): the commit
+ */
 const char *
 xdg_app_ref_get_commit (XdgAppRef *self)
 {
@@ -226,6 +279,14 @@ xdg_app_ref_get_commit (XdgAppRef *self)
   return priv->commit;
 }
 
+/**
+ * xdg_app_ref_get_kind:
+ * @self: a #XdgAppRef
+ *
+ * Gets the kind of artifact that this ref refers to.
+ *
+ * Returns: the kind of artifact
+ */
 XdgAppRefKind
 xdg_app_ref_get_kind (XdgAppRef *self)
 {
@@ -234,6 +295,15 @@ xdg_app_ref_get_kind (XdgAppRef *self)
   return priv->kind;
 }
 
+/**
+ * xdg_app_ref_format_ref:
+ * @self: a #XdgAppRef
+ *
+ * Convert an XdgAppRef object into a string representation that
+ * can be parsed by xdg_app_ref_parse().
+ *
+ * Returns: (transfer full): string representation
+ */
 char *
 xdg_app_ref_format_ref  (XdgAppRef *self)
 {
@@ -250,7 +320,7 @@ xdg_app_ref_format_ref  (XdgAppRef *self)
 }
 
 /**
- * xdg_app_ref_parse
+ * xdg_app_ref_parse:
  * @ref: A string ref name, such as "app/org.test.App/86_64/master"
  * @error: return location for a #GError
  *

@@ -53,9 +53,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppRef, g_object_unref)
  * @XDG_APP_REF_KIND_APP: An application
  * @XDG_APP_REF_KIND_RUNTIME: A runtime that applications can use.
  *
- * Currently xdg-app manages two types of binary artifacts: applications, and
- * runtimes. Applications contain a program that desktop users can run, while
- * runtimes contain only libraries and data.
+ * The kind of artifact that a XdgAppRef refers to.
  */
 typedef enum {
   XDG_APP_REF_KIND_APP,
