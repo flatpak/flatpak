@@ -73,6 +73,19 @@ XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_for_path (GFile *pat
                                                                       GCancellable *cancellable,
                                                                       GError **error);
 
+/**
+ * XdgAppProgressCallback:
+ * @status: A status string, suitable for display
+ * @progress: percentage of completion
+ * @estimating: whether @progress is just an estimate
+ * @user_data: User data passed to the caller
+ *
+ * The progress callback is called repeatedly during long-running operations
+ * such as installations or updates, and can be used to update progress information
+ * in a user interface.
+ *
+ * The callback occurs in the thread-default context of the caller.
+ */
 typedef void (*XdgAppProgressCallback)(const char *status,
                                        guint progress,
                                        gboolean estimating,
