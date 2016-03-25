@@ -2,7 +2,6 @@
 <FILE>xdg-app-installation</FILE>
 <TITLE>XdgAppInstallation</TITLE>
 XdgAppInstallation
-XdgAppInstallationClass
 xdg_app_installation_new_system
 xdg_app_installation_new_user
 xdg_app_installation_new_for_path
@@ -32,6 +31,7 @@ XdgAppUpdateFlags
 XDG_APP_INSTALLATION
 XDG_APP_IS_INSTALLATION
 XDG_APP_TYPE_INSTALLATION
+XdgAppInstallationClass
 xdg_app_installation_get_type
 </SECTION>
 
@@ -39,7 +39,6 @@ xdg_app_installation_get_type
 <FILE>xdg-app-installed-ref</FILE>
 <TITLE>XdgAppInstalledRef</TITLE>
 XdgAppInstalledRef
-XdgAppInstalledRefClass
 xdg_app_installed_ref_get_deploy_dir
 xdg_app_installed_ref_get_installed_size
 xdg_app_installed_ref_get_is_current
@@ -47,6 +46,7 @@ xdg_app_installed_ref_get_latest_commit
 xdg_app_installed_ref_get_origin
 xdg_app_installed_ref_load_metadata
 <SUBSECTION Standard>
+XdgAppInstalledRefClass
 XDG_APP_INSTALLED_REF
 XDG_APP_IS_INSTALLED_REF
 XDG_APP_TYPE_INSTALLED_REF
