@@ -14,6 +14,7 @@ CFILE_GLOB = $(top_srcdir)/lib/*.c
 IGNORE_HFILES = \
 	xdg-app-enum-types.h \
 	xdg-app-installed-ref-private.h \
+	xdg-app-remote-ref-private.h \
 	xdg-app-remote-private.h
 
 EXTRA_HFILES =
