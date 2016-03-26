@@ -14,6 +14,7 @@ CFILE_GLOB = $(top_srcdir)/lib/*.c
 IGNORE_HFILES = \
 	xdg-app-enum-types.h \
 	xdg-app-installed-ref-private.h \
+	xdg-app-remote-ref-private.h \
 	xdg-app-remote-private.h
 
 EXTRA_HFILES =
@@ -27,6 +28,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/lib -I$(top_builddir)/lib $(BASE_CFLAGS)
 GTKDOC_LIBS = $(top_builddir)/libxdg-app.la $(BASE_LIBS)
 
 include $(top_srcdir)/gtk-doc.make
+
+EXTRA_DIST += version.xml.in
 
 if ENABLE_GTK_DOC_CHECK
 TESTS_ENVIRONMENT = \

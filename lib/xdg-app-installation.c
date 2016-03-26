@@ -33,6 +33,23 @@
 #include "xdg-app-run.h"
 #include "xdg-app-error.h"
 
+/**
+ * SECTION:xdg-app-installation
+ * @Title: XdgAppInstallation
+ * @Short_description: Installation information
+ *
+ * XdgAppInstallation is the toplevel object that software installers
+ * should use to operate on an xdg-apps.
+ *
+ * An XdgAppInstallation object provides information about an installation
+ * location for xdg-app applications. Typical installation locations are either
+ * system-wide (in /var/lib/xdg-app) or per-user (in ~/.local/share/xdg-app).
+ *
+ * XdgAppInstallation can list configured remotes as well as installed application
+ * and runtime references (in short: refs). It can also run, install, update and
+ * uninstall applications and runtimes.
+ */
+
 typedef struct _XdgAppInstallationPrivate XdgAppInstallationPrivate;
 
 struct _XdgAppInstallationPrivate
@@ -125,6 +142,15 @@ xdg_app_installation_new_for_dir (XdgAppDir *dir,
   return self;
 }
 
+/**
+ * xdg_app_installation_new_system:
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Creates a new #XdgAppInstallation for the system-wide installation.
+ *
+ * Returns: (transfer full): a new #XdgAppInstallation
+ */
 XdgAppInstallation *
 xdg_app_installation_new_system (GCancellable *cancellable,
                                  GError **error)
@@ -132,6 +158,15 @@ xdg_app_installation_new_system (GCancellable *cancellable,
   return xdg_app_installation_new_for_dir (xdg_app_dir_get_system (), cancellable, error);
 }
 
+/**
+ * xdg_app_installation_new_user:
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Creates a new #XdgAppInstallation for the per-user installation.
+ *
+ * Returns: (transfer full): a new #XdgAppInstallation
+ */
 XdgAppInstallation *
 xdg_app_installation_new_user (GCancellable *cancellable,
                                GError **error)
@@ -139,6 +174,17 @@ xdg_app_installation_new_user (GCancellable *cancellable,
   return xdg_app_installation_new_for_dir (xdg_app_dir_get_user (), cancellable, error);
 }
 
+/**
+ * xdg_app_installation_new_for_path:
+ * @path: a #GFile
+ * @user: whether this is a user-specific location
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Creates a new #XdgAppInstallation for the installation at the given @path.
+ *
+ * Returns: (transfer full): a new #XdgAppInstallation
+ */
 XdgAppInstallation *
 xdg_app_installation_new_for_path (GFile *path, gboolean user,
                                    GCancellable *cancellable,
@@ -147,6 +193,14 @@ xdg_app_installation_new_for_path (GFile *path, gboolean user,
   return xdg_app_installation_new_for_dir (xdg_app_dir_new (path, user), cancellable, error);
 }
 
+/**
+ * xdg_app_installation_get_is_user:
+ * @self: a #XdgAppInstallation
+ *
+ * Returns whether the installation is for a user-specific location.
+ *
+ * Returns: %TRUE if @self is a per-user installation
+ */
 gboolean
 xdg_app_installation_get_is_user (XdgAppInstallation *self)
 {
@@ -156,7 +210,10 @@ xdg_app_installation_get_is_user (XdgAppInstallation *self)
 }
 
 /**
- * xdg_app_installation_get_path
+ * xdg_app_installation_get_path:
+ * @self: a #XdgAppInstallation
+ *
+ * Returns the installation location for @self.
  *
  * Returns: (transfer full): an #GFile
  */
@@ -173,7 +230,7 @@ xdg_app_installation_get_path (XdgAppInstallation *self)
  * @self: a #XdgAppInstallation
  * @name: name of the app to launch
  * @arch: (nullable): which architecture to launch (default: current architecture)
- * @branch: (nullable): which branch of the application (default: 'master')
+ * @branch: (nullable): which branch of the application (default: "master")
  * @commit: (nullable): the commit of @branch to launch
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
@@ -184,6 +241,7 @@ xdg_app_installation_get_path (XdgAppInstallation *self)
  * xdg_app_installation_get_current_installed_app() to find out what builds
  * are available, in order to get a value for @commit.
  *
+ * Returns: %TRUE, unless an error occurred
  */
 gboolean
 xdg_app_installation_launch (XdgAppInstallation  *self,
@@ -277,14 +335,14 @@ get_ref (XdgAppInstallation *self,
  * @kind: whether this is an app or runtime
  * @name: name of the app/runtime to fetch
  * @arch: (nullable): which architecture to fetch (default: current architecture)
- * @branch: (nullable): which branch to fetch (default: 'master')
+ * @branch: (nullable): which branch to fetch (default: "master")
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Returns information about an installed app or runtime, such as the
- * available builds, its size, location, etc.
+ * Returns information about an installed ref, such as the available builds,
+ * its size, location, etc.
  *
- * Returns: (transfer full): an #XdgAppInstalledRef
+ * Returns: (transfer full): an #XdgAppInstalledRef, or %NULL if an error occurred
  */
 XdgAppInstalledRef *
 xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
@@ -327,9 +385,9 @@ xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Get the last build of app @name that was installed with
- * xdg_app_installation_install(), or %NULL if the app has never been installed
- * locally.
+ * Get the last build of reference @name that was installed with
+ * xdg_app_installation_install(), or %NULL if the reference has
+ * never been installed locally.
  *
  * Returns: (transfer full): an #XdgAppInstalledRef
  */
@@ -531,7 +589,7 @@ xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
  * @error: return location for a #GError
  *
  * Lists the remotes, in priority (highest first) order. For same priority,
- * earlier added remote comes before a later added one.
+ * an earlier added remote comes before a later added one.
  *
  * Returns: (transfer container) (element-type XdgAppRemote): an GPtrArray of
  *   #XdgAppRemote instances
@@ -593,6 +651,18 @@ xdg_app_installation_get_remote_by_name (XdgAppInstallation *self,
   return NULL;
 }
 
+/**
+ * xdg_app_installation_load_app_overrides:
+ * @self: a #XdgAppInstallation
+ * @app_id: an application id
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Loads the metadata overrides file for an application.
+ *
+ * Returns: (transfer full): the contents of the overrides files,
+ *    or %NULL if an error occurred
+ */
 char *
 xdg_app_installation_load_app_overrides  (XdgAppInstallation *self,
                                           const char *app_id,
@@ -724,7 +794,8 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Install a new ref from a bundle.
+ * Install an application or runtime from an xdg-app bundle file.
+ * See xdg-app-build-bundle(1) for how to create brundles.
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
@@ -867,7 +938,7 @@ xdg_app_installation_install_bundle (XdgAppInstallation  *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Install a new ref.
+ * Install a new application or runtime.
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
@@ -991,7 +1062,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Update a ref.
+ * Update an application or runtime.
  *
  * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %NULL on failure
  */
@@ -1109,7 +1180,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Update a ref.
+ * Uninstall an application or runtime.
  *
  * Returns: %TRUE on success
  */
@@ -1205,7 +1276,22 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
   return TRUE;
 }
 
-
+/**
+ * xdg_app_installation_fetch_remote_size_sync:
+ * @self: a #XdgAppInstallation
+ * @remote_name: the name of the remote
+ * @commit: the commit
+ * @download_size: (out): return location for the download size
+ * @installed_size: (out): return location for the installed size
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Gets information about the amount of data that needs to be transferred
+ * to pull a commit from a remote repository, and about the amount of
+ * local disk space that is required to check out this commit.
+ *
+ * Returns: %TRUE, unless an error occurred
+ */
 gboolean
 xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation  *self,
                                              const char          *remote_name,
@@ -1226,6 +1312,19 @@ xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation  *self,
                                   error);
 }
 
+/**
+ * xdg_app_installation_fetch_remote_metadata_sync:
+ * @self: a #XdgAppInstallation
+ * @remote_name: the name of the remote
+ * @commit: the commit
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Obtains the metadata file from a commit.
+ *
+ * Returns: (transfer full): a #GBytes containing the xdg-app metadata file,
+ *   or %NULL if an error occurred
+ */
 GBytes *
 xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
                                                  const char *remote_name,
@@ -1255,9 +1354,9 @@ xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Lists all the refs in a remote.
+ * Lists all the applications and runtimes in a remote.
  *
- * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
+ * Returns: (transfer container) (element-type XdgAppRemoteRef): an GPtrArray of
  *   #XdgAppRemoteRef instances
  */
 GPtrArray *
@@ -1421,7 +1520,9 @@ xdg_app_installation_update_appstream_sync (XdgAppInstallation  *self,
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Gets the current remote branch of a ref in the remote.
+ * Gets monitor object for the installation. The returned file monitor will
+ * emit the #GFileMonitor::changed signal whenever an application or runtime
+ * was installed, uninstalled or updated.
  *
  * Returns: (transfer full): a new #GFileMonitor instance, or %NULL on error
  */

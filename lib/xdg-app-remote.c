@@ -27,6 +27,25 @@
 
 #include <string.h>
 
+/**
+ * SECTION:xdg-app-remote
+ * @Short_description: Remote repository
+ * @Title: XdgAppRemote
+ *
+ * A #XdgAppRemote object provides information about a remote
+ * repository (or short: remote) that has been configured.
+ *
+ * At its most basic level, a remote has a name and the URL for
+ * the repository. In addition, they provide some additional
+ * information that can be useful when presenting repositories
+ * in a UI, such as a title, a priority or a "don't enumerate"
+ * flags.
+ *
+ * To obtain XdgAppRemote objects for the configured remotes
+ * on a system, use xdg_app_installation_list_remotes() or
+ * xdg_app_installation_get_remote_by_name().
+ */
+
 typedef struct _XdgAppRemotePrivate XdgAppRemotePrivate;
 
 struct _XdgAppRemotePrivate
@@ -110,8 +129,8 @@ xdg_app_remote_class_init (XdgAppRemoteClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_NAME,
                                    g_param_spec_string ("name",
-                                                        "",
-                                                        "",
+                                                        "Name",
+                                                        "The name of the remote",
                                                         NULL,
                                                         G_PARAM_READWRITE));
 }
@@ -121,6 +140,14 @@ xdg_app_remote_init (XdgAppRemote *self)
 {
 }
 
+/**
+ * xdg_app_remote_get_name:
+ * @self: a #XdgAppRemote
+ *
+ * Returns the name of the remote repository.
+ *
+ * Returns: (transfer none): the name
+ */
 const char *
 xdg_app_remote_get_name (XdgAppRemote *self)
 {
@@ -130,14 +157,14 @@ xdg_app_remote_get_name (XdgAppRemote *self)
 }
 
 /**
- * xdg_app_remote_get_appstream_dir
+ * xdg_app_remote_get_appstream_dir:
  * @self: a #XdgAppRemote
  * @arch: (nullable): which architecture to fetch (default: current architecture)
  *
  * Returns the directory where this remote will store locally cached
  * appstream information for the specified @arch.
  *
- * Returns: (transfer full): an #GFile
+ * Returns: (transfer full): a #GFile
  **/
 GFile *
 xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
@@ -155,14 +182,14 @@ xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
 }
 
 /**
- * xdg_app_remote_get_appstream_timestamp
+ * xdg_app_remote_get_appstream_timestamp:
  * @self: a #XdgAppRemote
  * @arch: (nullable): which architecture to fetch (default: current architecture)
  *
  * Returns the timestamp file that will be updated whenever the appstream information
  * has been updated (or tried to update) for the specified @arch.
  *
- * Returns: (transfer full): an #GFile
+ * Returns: (transfer full): a #GFile
  **/
 GFile *
 xdg_app_remote_get_appstream_timestamp (XdgAppRemote *self,
@@ -179,6 +206,14 @@ xdg_app_remote_get_appstream_timestamp (XdgAppRemote *self,
                                        subdir);
 }
 
+/**
+ * xdg_app_remote_get_url:
+ * @self: a #XdgAppRemote
+ *
+ * Returns the repository URL of this remote.
+ *
+ * Returns: (transfer full): the URL
+ */
 char *
 xdg_app_remote_get_url (XdgAppRemote *self)
 {
@@ -192,6 +227,14 @@ xdg_app_remote_get_url (XdgAppRemote *self)
   return NULL;
 }
 
+/**
+ * xdg_app_remote_get_title:
+ * @self: a #XdgAppRemote
+ *
+ * Returns the title of the remote.
+ *
+ * Returns: (transfer full): the title
+ */
 char *
 xdg_app_remote_get_title (XdgAppRemote *self)
 {
@@ -200,6 +243,14 @@ xdg_app_remote_get_title (XdgAppRemote *self)
   return xdg_app_dir_get_remote_title (priv->dir, priv->name);
 }
 
+/**
+ * xdg_app_remote_get_noenumerate:
+ * @self: a #XdgAppRemote
+ *
+ * Returns whether this remote should be used to list applications.
+ *
+ * Returns: whether the remote is marked as "don't enumerate"
+ */
 gboolean
 xdg_app_remote_get_noenumerate (XdgAppRemote *self)
 {
@@ -208,6 +259,14 @@ xdg_app_remote_get_noenumerate (XdgAppRemote *self)
   return xdg_app_dir_get_remote_noenumerate (priv->dir, priv->name);
 }
 
+/**
+ * xdg_app_remote_get_prio:
+ * @self: a #XdgAppRemote
+ *
+ * Returns the priority for the remote.
+ *
+ * Returns: the priority
+ */
 int
 xdg_app_remote_get_prio (XdgAppRemote *self)
 {
@@ -216,6 +275,14 @@ xdg_app_remote_get_prio (XdgAppRemote *self)
   return xdg_app_dir_get_remote_prio (priv->dir, priv->name);
 }
 
+/**
+ * xdg_app_remote_get_gpg_verify:
+ * @self: a #XdgAppRemote
+ *
+ * Returns whether GPG verification is enabled for the remote.
+ *
+ * Returns: whether GPG verification is enabled
+ */
 gboolean
 xdg_app_remote_get_gpg_verify (XdgAppRemote *self)
 {

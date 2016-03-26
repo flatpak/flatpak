@@ -25,4 +25,10 @@
 
 #include <gio/gio.h>
 
+/**
+ * SECTION:xdg-app-error
+ * @Title: Error codes
+ *
+ */
+
 G_DEFINE_QUARK (xdg-app-error-quark, g_io_error)

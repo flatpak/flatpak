@@ -331,5 +331,6 @@ doc/Makefile
 doc/reference/Makefile
 xdg-app.pc
 lib/xdg-app-version-macros.h
+doc/reference/version.xml
 ])
 AC_OUTPUT
