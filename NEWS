@@ -1,3 +1,14 @@
+Major changes in 0.5.1
+=======================
+* Make xdg-app-builder --build-only not export the results
+* Create all-in-one Locale extension that combines all the locale extensions
+* Extract icons for all appdata nodes when creating appstream
+* Documentation updates
+* Better handling of metadata in xdg-app-builder cache
+* Respect the specified branch when exporting in xdg-app-builder
+* Fix support for multi-arch with i386 userspace and 64bit kernel
+* Avoid deprecated 32bit capabilities syscalls
+
 Major changes in 0.5.0
 =======================
 * Some libxdg-app API additions for handling bundles
