@@ -1905,7 +1905,6 @@ xdg_app_dir_deploy (XdgAppDir *self,
                     GCancellable *cancellable,
                     GError **error)
 {
-  gboolean ret = FALSE;
   g_autofree char *resolved_ref = NULL;
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFileInfo) file_info = NULL;
@@ -1915,12 +1914,11 @@ xdg_app_dir_deploy (XdgAppDir *self,
   g_autoptr(GFile) files_etc = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autoptr(GFile) export = NULL;
-  GSConsole *console = NULL;
   g_autoptr(OstreeAsyncProgress) progress = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
-    goto out;
+    return FALSE;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
 
@@ -1934,7 +1932,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
       if (resolved_ref == NULL)
         {
           g_prefix_error (error, "While trying to resolve ref %s: ", ref);
-          goto out;
+          return FALSE;
         }
 
       checksum = resolved_ref;
@@ -1947,36 +1945,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
 
       g_debug ("Looking for checksum %s in local repo", checksum);
       if (!ostree_repo_read_commit (self->repo, checksum, &root, &commit, cancellable, NULL))
-        {
-           const char *refs[2];
-           g_autoptr(GFile) origin = NULL;
-           g_autofree char *repository = NULL;
-
-           refs[0] = checksum;
-           refs[1] = NULL;
-
-           origin = g_file_get_child (deploy_base, "origin");
-           if (!g_file_load_contents (origin, cancellable, &repository, NULL, NULL, error))
-             goto out;
-
-           g_debug ("Pulling checksum %s from remote %s", checksum, repository);
-
-           console = gs_console_get ();
-           if (console)
-             {
-               gs_console_begin_status_line (console, "", NULL, NULL);
-               progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, console);
-             }
-
-           if (!ostree_repo_pull (self->repo, repository,
-                                  (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
-                                  progress,
-                                  cancellable, error))
-             {
-               g_prefix_error (error, "Failed to pull %s from remote %s: ", checksum, repository);
-               goto out;
-             }
-        }
+        return xdg_app_fail (error, "%s is not available", ref);
     }
 
   checkoutdir = g_file_get_child (deploy_base, checksum);
@@ -1985,20 +1954,20 @@ xdg_app_dir_deploy (XdgAppDir *self,
       g_set_error (error, XDG_APP_DIR_ERROR,
                    XDG_APP_DIR_ERROR_ALREADY_DEPLOYED,
                    "%s branch %s already deployed", ref, checksum);
-      goto out;
+      return FALSE;
     }
 
   if (!ostree_repo_read_commit (self->repo, checksum, &root, NULL, cancellable, error))
     {
       g_prefix_error (error, "Failed to read commit %s: ", checksum);
-      goto out;
+      return FALSE;
     }
 
   file_info = g_file_query_info (root, OSTREE_GIO_FAST_QUERYINFO,
                                  G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                  cancellable, error);
   if (file_info == NULL)
-    goto out;
+    return FALSE;
 
   if (!ostree_repo_checkout_tree (self->repo,
                                   OSTREE_REPO_CHECKOUT_MODE_USER,
@@ -2013,13 +1982,13 @@ xdg_app_dir_deploy (XdgAppDir *self,
       rootpath = g_file_get_path (root);
       checkoutpath = g_file_get_path (checkoutdir);
       g_prefix_error (error, "While trying to checkout %s into %s: ", rootpath, checkoutpath);
-      goto out;
+      return FALSE;
     }
 
   dotref = g_file_resolve_relative_path (checkoutdir, "files/.ref");
   if (!g_file_replace_contents (dotref, "", 0, NULL, FALSE,
                                 G_FILE_CREATE_REPLACE_DESTINATION, NULL, cancellable, error))
-    goto out;
+    return TRUE;
 
   /* Ensure that various files exists as regular files in /usr/etc, as we
      want to bind-mount over them */
@@ -2043,23 +2012,23 @@ xdg_app_dir_deploy (XdgAppDir *self,
             {
               /* Already exists, but not regular, probably symlink. Remove it */
               if (!g_file_delete (etc_file, cancellable, error))
-                goto out;
+                return FALSE;
             }
 
           if (!g_file_replace_contents (etc_file, "", 0, NULL, FALSE,
                                         G_FILE_CREATE_REPLACE_DESTINATION,
                                         NULL, cancellable, error))
-            goto out;
+            return FALSE;
         }
 
       if (g_file_query_exists (etc_resolve_conf, cancellable) &&
           !g_file_delete (etc_resolve_conf, cancellable, error))
-        goto out;
+        return TRUE;
 
       if (!g_file_make_symbolic_link (etc_resolve_conf,
                                       "/run/host/monitor/resolv.conf",
                                       cancellable, error))
-        goto out;
+        return FALSE;
     }
 
   keyfile = g_key_file_new ();
@@ -2069,7 +2038,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
       g_autofree char *path = g_file_get_path (metadata);
 
       if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
-        goto out;
+        return FALSE;
     }
 
   export = g_file_get_child (checkoutdir, "export");
@@ -2083,22 +2052,13 @@ xdg_app_dir_deploy (XdgAppDir *self,
                                        keyfile, export,
                                        cancellable,
                                        error))
-        goto out;
+        return FALSE;
     }
 
   if (!xdg_app_dir_set_active (self, ref, checksum, cancellable, error))
-    goto out;
+    return FALSE;
 
-  ret = TRUE;
-
- out:
-  if (console)
-    {
-      ostree_async_progress_finish (progress);
-      gs_console_end_status_line (console, NULL, NULL);
-    }
-
-  return ret;
+  return TRUE;
 }
 
 gboolean
