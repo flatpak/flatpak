@@ -44,6 +44,7 @@ struct _XdgAppInstalledRefPrivate
   char *origin;
   char *latest_commit;
   char *deploy_dir;
+  char **subpaths;
   guint64 installed_size;
 };
 
@@ -56,7 +57,8 @@ enum {
   PROP_ORIGIN,
   PROP_LATEST_COMMIT,
   PROP_DEPLOY_DIR,
-  PROP_INSTALLED_SIZE
+  PROP_INSTALLED_SIZE,
+  PROP_SUBPATHS
 };
 
 static void
@@ -67,6 +69,7 @@ xdg_app_installed_ref_finalize (GObject *object)
 
   g_free (priv->origin);
   g_free (priv->deploy_dir);
+  g_strfreev (priv->subpaths);
 
   G_OBJECT_CLASS (xdg_app_installed_ref_parent_class)->finalize (object);
 }
@@ -105,6 +108,11 @@ xdg_app_installed_ref_set_property (GObject         *object,
       priv->deploy_dir = g_value_dup_string (value);
       break;
 
+    case PROP_SUBPATHS:
+      g_clear_pointer (&priv->subpaths, g_strfreev);
+      priv->subpaths = g_strdupv (g_value_get_boxed (value));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -140,6 +148,10 @@ xdg_app_installed_ref_get_property (GObject         *object,
 
     case PROP_DEPLOY_DIR:
       g_value_set_string (value, priv->deploy_dir);
+      break;
+
+    case PROP_SUBPATHS:
+      g_value_set_boxed (value, priv->subpaths);
       break;
 
     default:
@@ -192,6 +204,13 @@ xdg_app_installed_ref_class_init (XdgAppInstalledRefClass *klass)
                                                         "Where the application is installed",
                                                         NULL,
                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_SUBPATHS,
+                                   g_param_spec_boxed ("subpaths",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
 }
 
 static void
@@ -319,6 +338,7 @@ xdg_app_installed_ref_new (const char *full_ref,
                            const char *commit,
                            const char *latest_commit,
                            const char *origin,
+                           char      **subpaths,
                            const char *deploy_dir,
                            guint64     installed_size,
                            gboolean    is_current)
@@ -332,6 +352,10 @@ xdg_app_installed_ref_new (const char *full_ref,
   if (strcmp (parts[0], "app") != 0)
     kind = XDG_APP_REF_KIND_RUNTIME;
 
+  /* Canonicalize the "no subpaths" case */
+  if (subpaths && *subpaths == NULL)
+    subpaths = NULL;
+
   ref = g_object_new (XDG_APP_TYPE_INSTALLED_REF,
                       "kind", kind,
                       "name", parts[1],
@@ -340,6 +364,7 @@ xdg_app_installed_ref_new (const char *full_ref,
                       "commit", commit,
                       "latest-commit", latest_commit,
                       "origin", origin,
+                      "subpaths", subpaths,
                       "is-current", is_current,
                       "installed-size", installed_size,
                       "deploy-dir", deploy_dir,

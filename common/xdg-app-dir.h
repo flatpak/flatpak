@@ -88,6 +88,15 @@ gboolean    xdg_app_dir_set_origin      (XdgAppDir      *self,
                                          const char     *remote,
                                          GCancellable   *cancellable,
                                          GError        **error);
+char **     xdg_app_dir_get_subpaths    (XdgAppDir      *self,
+                                         const char     *ref,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
+gboolean    xdg_app_dir_set_subpaths     (XdgAppDir      *self,
+                                         const char     *ref,
+                                         const char    **subpaths,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 GFile *     xdg_app_dir_get_exports_dir (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_removed_dir (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_if_deployed (XdgAppDir      *self,
@@ -144,6 +153,7 @@ gboolean    xdg_app_dir_update_appstream(XdgAppDir      *self,
 gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          const char     *repository,
                                          const char     *ref,
+                                         char          **subpaths,
                                          OstreeAsyncProgress *progress,
                                          GCancellable   *cancellable,
                                          GError        **error);

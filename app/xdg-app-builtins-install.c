@@ -36,6 +36,7 @@
 
 static char *opt_arch;
 static char **opt_gpg_file;
+static char **opt_subpaths;
 static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
 static gboolean opt_runtime;
@@ -50,6 +51,7 @@ static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, "Install from local bundle file", },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, "Check bundle signatures with GPG key from FILE (- for stdin)", "FILE" },
+  { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, "Only install this subpath", "path" },
   { NULL }
 };
 
@@ -286,7 +288,7 @@ xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   if (!opt_no_pull)
     {
-      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
+      if (!xdg_app_dir_pull (dir, repository, ref, opt_subpaths, NULL,
                              cancellable, error))
         return FALSE;
     }
@@ -304,6 +306,10 @@ xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       created_deploy_base = TRUE;
 
       if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
+        goto out;
+
+      if (!xdg_app_dir_set_subpaths (dir, ref, (const char **)opt_subpaths,
+                                     cancellable, error))
         goto out;
 
       if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))

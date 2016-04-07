@@ -33,6 +33,7 @@
 
 static char *opt_arch;
 static char *opt_commit;
+static char **opt_subpaths;
 static gboolean opt_force_remove;
 static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
@@ -49,6 +50,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, "Update appstream for remote", },
+  { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, "Only update this subpath", "path" },
   { NULL }
 };
 
@@ -75,6 +77,7 @@ do_update (XdgAppDir* dir,
 {
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
+  g_auto(GStrv) subpaths = NULL;
   gboolean was_updated = FALSE;
   gboolean is_app;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
@@ -92,10 +95,14 @@ do_update (XdgAppDir* dir,
   if (repository == NULL)
     return FALSE;
 
+  subpaths = xdg_app_dir_get_subpaths (dir, ref, cancellable, error);
+  if (subpaths == NULL)
+    return FALSE;
+
   if (!opt_no_pull)
     {
-      if (!xdg_app_dir_pull (dir, repository, ref, NULL,
-                             cancellable, error))
+      if (!xdg_app_dir_pull (dir, repository, ref, opt_subpaths ? opt_subpaths : subpaths,
+                             NULL, cancellable, error))
         return FALSE;
     }
 

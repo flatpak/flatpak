@@ -48,12 +48,13 @@ typedef struct {
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppInstalledRef, g_object_unref)
 #endif
 
-XDG_APP_EXTERN const char *xdg_app_installed_ref_get_origin         (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN guint64     xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN const char *xdg_app_installed_ref_get_deploy_dir     (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN const char *xdg_app_installed_ref_get_latest_commit  (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN gboolean    xdg_app_installed_ref_get_is_current     (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN GBytes     *xdg_app_installed_ref_load_metadata      (XdgAppInstalledRef  *self,
+XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_origin         (XdgAppInstalledRef  *self);
+XDG_APP_EXTERN const char **xdg_app_installed_ref_get_subpaths       (XdgAppInstalledRef  *self);
+XDG_APP_EXTERN guint64      xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef  *self);
+XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_deploy_dir     (XdgAppInstalledRef  *self);
+XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_latest_commit  (XdgAppInstalledRef  *self);
+XDG_APP_EXTERN gboolean     xdg_app_installed_ref_get_is_current     (XdgAppInstalledRef  *self);
+XDG_APP_EXTERN GBytes      *xdg_app_installed_ref_load_metadata      (XdgAppInstalledRef  *self,
                                                                      GCancellable        *cancellable,
                                                                      GError             **error);
 

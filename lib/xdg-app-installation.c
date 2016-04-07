@@ -290,6 +290,7 @@ get_ref (XdgAppInstallation *self,
   g_autoptr(GFile) deploy_subdir = NULL;
   g_autofree char *deploy_path = NULL;
   g_autofree char *latest_commit = NULL;
+  g_auto(GStrv) subpaths = NULL;
   gboolean is_current = FALSE;
   guint64 installed_size = 0;
 
@@ -297,6 +298,8 @@ get_ref (XdgAppInstallation *self,
 
   origin = xdg_app_dir_get_origin (priv->dir, full_ref, NULL, NULL);
   commit = xdg_app_dir_read_active (priv->dir, full_ref, cancellable);
+  subpaths = xdg_app_dir_get_subpaths (priv->dir, full_ref, cancellable, NULL);
+
   deploy_dir = xdg_app_dir_get_deploy_dir  (priv->dir, full_ref);
   if (deploy_dir && commit)
     {
@@ -323,7 +326,7 @@ get_ref (XdgAppInstallation *self,
   return xdg_app_installed_ref_new (full_ref,
                                     commit,
                                     latest_commit,
-                                    origin,
+                                    origin, subpaths,
                                     deploy_path,
                                     installed_size,
                                     is_current);
@@ -992,7 +995,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
       g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER(0));
     }
 
-  if (!xdg_app_dir_pull (dir_clone, remote_name, ref,
+  if (!xdg_app_dir_pull (dir_clone, remote_name, ref, NULL,
                          ostree_progress, cancellable, error))
     goto out;
 
@@ -1088,6 +1091,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   XdgAppInstalledRef *result = NULL;
   gboolean was_updated = FALSE;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GStrv) subpaths = NULL;
 
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
@@ -1106,6 +1110,10 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   if (remote_name == NULL)
     return NULL;
 
+  subpaths = xdg_app_dir_get_subpaths (priv->dir, ref, cancellable, error);
+  if (subpaths == NULL)
+    return FALSE;
+
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = xdg_app_dir_clone (priv->dir);
 
@@ -1122,7 +1130,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
 
   if ((flags & XDG_APP_UPDATE_FLAGS_NO_PULL) == 0)
     {
-      if (!xdg_app_dir_pull (dir_clone, remote_name, ref,
+      if (!xdg_app_dir_pull (dir_clone, remote_name, ref, subpaths,
                              ostree_progress, cancellable, error))
         goto out;
     }

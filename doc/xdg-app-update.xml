@@ -112,6 +112,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--subpath=PATH</option></term>
+
+                <listitem><para>
+                  Install only a subpath of the ref. This is mainly used to install a subset of locales.
+                  This can be added multiple times to install multiple subpaths.
+                  If this is not specified the subpaths specified at install time are reused.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--commit=COMMIT</option></term>
 
                 <listitem><para>
