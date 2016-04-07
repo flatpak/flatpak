@@ -369,27 +369,19 @@ main (int    argc,
         {
           g_autoptr(GFileInfo) child_info = next;
           const char *name = g_file_info_get_name (child_info);
-          const char *language = NULL;
           g_autofree char *metadata_arg = NULL;
           g_autofree char *files_arg = NULL;
 
           if (strcmp (name, "metadata.locale") == 0)
             {
               g_print ("exporting %s.Locale to repo\n", builder_manifest_get_id (manifest));
-              language = NULL;
-            }
-          else if (g_str_has_prefix (name, "metadata.locale."))
-            {
-              language = name + strlen ("metadata.locale.");
-
-              g_print ("exporting %s.Locale.%s to repo\n", builder_manifest_get_id (manifest), language);
             }
           else
             continue;
 
           metadata_arg = g_strdup_printf ("--metadata=%s", name);
           files_arg = g_strconcat (builder_context_get_build_runtime (build_context) ? "--files=usr" : "--files=files",
-                                   "/share/runtime/locale/", language, NULL);
+                                   "/share/runtime/locale/", NULL);
           if (!do_export (&error, TRUE,
                           metadata_arg,
                           files_arg,
@@ -443,25 +435,18 @@ main (int    argc,
         {
           g_autoptr(GFileInfo) child_info = next;
           const char *name = g_file_info_get_name (child_info);
-          const char *language;
           g_autofree char *metadata_arg = NULL;
           g_autofree char *files_arg = NULL;
 
           if (strcmp (name, "metadata.platform.locale") == 0)
             {
               g_print ("exporting %s.Locale to repo\n", platform_id);
-              language = NULL;
-            }
-          else if (g_str_has_prefix (name, "metadata.platform.locale."))
-            {
-              language = name + strlen ("metadata.platform.locale.");
-              g_print ("exporting %s.Locale.%s to repo\n", platform_id, language);
             }
           else
             continue;
 
           metadata_arg = g_strdup_printf ("--metadata=%s", name);
-          files_arg = g_strconcat ("--files=platform/share/runtime/locale/", language, NULL);
+          files_arg = g_strconcat ("--files=platform/share/runtime/locale/", NULL);
           if (!do_export (&error, TRUE,
                           metadata_arg,
                           files_arg,
