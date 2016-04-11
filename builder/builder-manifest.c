@@ -1467,7 +1467,10 @@ builder_manifest_cleanup (BuilderManifest *self,
 
           if (!g_file_load_contents (desktop, NULL,
                                      &desktop_contents, &desktop_size, NULL, error))
-            return FALSE;
+            {
+              g_prefix_error (error, "Can't load desktop file %s: ", desktop_basename);
+              return FALSE;
+            }
 
           if (!g_key_file_load_from_data (keyfile,
                                           desktop_contents, desktop_size,
