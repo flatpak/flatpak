@@ -585,9 +585,15 @@ xdg_app_dir_set_subpaths (XdgAppDir      *self,
       return FALSE;
     }
 
-  data = g_strjoinv ("\n", (char **)subpaths);
-
   file = g_file_get_child (deploy_base, "subpaths");
+
+  if (subpaths == NULL || subpaths[0] == NULL)
+    {
+      g_file_delete (file, cancellable, NULL);
+      return TRUE;
+    }
+
+  data = g_strjoinv ("\n", (char **)subpaths);
   if (!g_file_replace_contents (file, data, strlen (data), NULL, FALSE,
                                 G_FILE_CREATE_NONE, NULL, cancellable, error))
     return FALSE;
