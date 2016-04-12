@@ -548,9 +548,10 @@ xdg_app_dir_get_subpaths (XdgAppDir      *self,
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
         data = g_strdup ("");
       else
-        g_propagate_error (error, g_steal_pointer (&my_error));
-
-      return NULL;
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
     }
 
   lines = g_strsplit (data, "\n", 0);
