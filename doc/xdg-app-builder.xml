@@ -112,7 +112,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>runtime-version</option></term>
-                    <listitem><para>The version of theruntime that the application uses, defaults to master.</para></listitem>
+                    <listitem><para>The version of the runtime that the application uses, defaults to master.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>sdk</option></term>
@@ -136,7 +136,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>id-platform</option></term>
-                    <listitem><para>When building a runtime sdk, also create a platform based on it wit this id.</para></listitem>
+                    <listitem><para>When building a runtime sdk, also create a platform based on it with this id.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>metadata-platform</option></term>
@@ -145,7 +145,7 @@
                 <varlistentry>
                     <term><option>writable-sdk</option></term>
                     <listitem><para>If true, use a writable copy of the sdk for /usr.
-                    Defaults to true if --build-runtime is specified</para></listitem>
+                    Defaults to true if --build-runtime is specified.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>appstream-compose</option></term>
@@ -153,19 +153,19 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>sdk-extensions</option></term>
-                    <listitem><para>Install these extra sdk extensions in /usr</para></listitem>
+                    <listitem><para>Install these extra sdk extensions in /usr.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>platform-extensions</option></term>
-                    <listitem><para>Install these extra sdk extensions when creating the platform</para></listitem>
+                    <listitem><para>Install these extra sdk extensions when creating the platform.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>tags</option></term>
-                    <listitem><para>Add these tags to the metadata file</para></listitem>
+                    <listitem><para>Add these tags to the metadata file.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>build-options</option></term>
-                    <listitem><para>object specifying the build environment. See below for details.</para></listitem>
+                    <listitem><para>Object specifying the build environment. See below for details.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>modules</option></term>
@@ -188,19 +188,19 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>finish-args</option></term>
-                    <listitem><para>An array of arguments passed to the <command>xdg-app build-finish</command> command</para></listitem>
+                    <listitem><para>An array of arguments passed to the <command>xdg-app build-finish</command> command.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>rename-desktop-file</option></term>
-                    <listitem><para>Any desktop file with this name will be renamed to a name based on app-id during the cleanup phase.</para></listitem>
+                    <listitem><para>Any desktop file with this name will be renamed to a name based on id during the cleanup phase.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>rename-appdata-file</option></term>
-                    <listitem><para>Any appdata file with this name will be renamed to a name based on app-id during the cleanup phase.</para></listitem>
+                    <listitem><para>Any appdata file with this name will be renamed to a name based on id during the cleanup phase.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>rename-icon</option></term>
-                    <listitem><para>Any icon with this name will be renamed to a name based on app-id during the cleanup phase.</para></listitem>
+                    <listitem><para>Any icon with this name will be renamed to a name based on id during the cleanup phase.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>copy-icon</option></term>
@@ -254,7 +254,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>arch</option></term>
-                    <listitem><para>This is a dictionary defining for each arch a separate build options object that override the main one</para></listitem>
+                    <listitem><para>This is a dictionary defining for each arch a separate build options object that override the main one.</para></listitem>
                 </varlistentry>
             </variablelist>
         </refsect2>
@@ -273,7 +273,7 @@
                     <listitem><para>The name of the module, used in e.g. build logs</para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option></option>sources</term>
+                    <term><option>sources</option></term>
                     <listitem><para>An array of objects defining sources that will be downloaded and extracted in order</para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -306,11 +306,11 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>builddir</option></term>
-                    <listitem><para>Force the use of a build dirrectory separated from the source directory.</para></listitem>
+                    <listitem><para>Use a build directory that is separate from the source directory</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>subdir</option></term>
-                    <listitem><para>Do building inside this subdirectory of the extracted sources.</para></listitem>
+                    <listitem><para>Build inside this subdirectory of the extracted sources</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>build-options</option></term>
@@ -679,7 +679,7 @@
         </para>
 <programlisting>
 {
-    "app-id": "org.test.TestApp",
+    "id": "org.test.TestApp",
     "runtime": "org.freedesktop.Platform",
     "runtime-version": "1.2",
     "sdk": "org.freedesktop.Sdk",
