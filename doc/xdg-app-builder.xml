@@ -245,6 +245,10 @@
                     <listitem><para>This is a dictionary defining environment variables to be set during the build.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>build-args</option></term>
+                    <listitem><para>This is an array containing extra options to pass to xdg-app build.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>strip</option></term>
                     <listitem><para>If this is true (the default is false) then all ELF files will be stripped after install.</para></listitem>
                 </varlistentry>
