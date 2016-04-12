@@ -32,8 +32,8 @@
             <cmdsynopsis>
                 <command>xdg-app build-init</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">APPNAME</arg>
                 <arg choice="plain">DIRECTORY</arg>
+                <arg choice="plain">APPNAME</arg>
                 <arg choice="plain">SDK</arg>
                 <arg choice="plain">RUNTIME</arg>
                 <arg choice="opt">BRANCH</arg>
