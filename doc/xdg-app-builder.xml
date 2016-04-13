@@ -672,6 +672,23 @@
     </refsect1>
 
     <refsect1>
+        <title>Caching</title>
+
+        <para>
+            xdg-app-builder caches sources and partial build results in
+            the .xdg-app-builder subdirectory of the current directory. If you
+            use <option>--keep-build-dirs</option>, build directories for each
+            module are also stored here.
+        </para>
+
+        <para>
+            It is safe to remove the contents of the .xdg-app-builder
+            directory. This will force a full build the next time you build.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
         <title>Examples</title>
 
         <para>
