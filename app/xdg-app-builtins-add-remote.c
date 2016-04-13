@@ -97,7 +97,10 @@ open_source_stream (GInputStream **out_source_stream,
           input_stream = G_INPUT_STREAM(g_file_read (file, cancellable, error));
 
           if (input_stream == NULL)
-            return FALSE;
+            {
+              g_prefix_error (error, "The file %s specified for --gpg-import was not found: ", opt_gpg_import[ii]);
+              return FALSE;
+            }
         }
 
       /* Takes ownership. */
