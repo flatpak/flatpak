@@ -37,6 +37,7 @@ man_MANS = \
 	xdg-app-build-finish.1		\
 	xdg-app-build-export.1		\
 	xdg-app-build-update-repo.1	\
+	xdg-app-build-sign.1		\
 	xdg-app-builder.1		\
 	$(NULL)
 

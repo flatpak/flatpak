@@ -23,6 +23,7 @@ xdg_app_SOURCES = \
 	app/xdg-app-builtins-build-finish.c \
 	app/xdg-app-builtins-build-export.c \
 	app/xdg-app-builtins-build-bundle.c \
+	app/xdg-app-builtins-build-sign.c \
 	app/xdg-app-builtins-repo-update.c \
 	app/xdg-app-builtins-document.c \
 	$(xdp_dbus_built_sources)	\

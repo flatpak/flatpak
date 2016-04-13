@@ -262,6 +262,13 @@
                     Update the summary file in a repository.
                 </para></listitem>
             </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>xdg-app-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Sign an application or runtime after its been exported.
+                </para></listitem>
+            </varlistentry>
         </variablelist>
     </refsect1>
 

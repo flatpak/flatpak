@@ -65,6 +65,7 @@ BUILTINPROTO(enter);
 BUILTINPROTO(build_init);
 BUILTINPROTO(build);
 BUILTINPROTO(build_finish);
+BUILTINPROTO(build_sign);
 BUILTINPROTO(build_export);
 BUILTINPROTO(build_bundle);
 BUILTINPROTO(build_update_repo);

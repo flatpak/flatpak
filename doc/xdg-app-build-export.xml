@@ -215,6 +215,7 @@ Content Bytes Written: 305
             <citerefentry><refentrytitle>xdg-app-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>xdg-app-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>xdg-app-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             <citerefentry><refentrytitle>xdg-app-repo-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 

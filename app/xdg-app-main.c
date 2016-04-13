@@ -70,6 +70,7 @@ static XdgAppCommand commands[] = {
   { "build-finish", xdg_app_builtin_build_finish, "Finish a build dir for export" },
   { "build-export", xdg_app_builtin_build_export, "Export a build dir to a repository" },
   { "build-bundle", xdg_app_builtin_build_bundle, "Create a bundle file from a build directory" },
+  { "build-sign", xdg_app_builtin_build_sign, "Sign an application or runtime" },
   { "build-update-repo", xdg_app_builtin_build_update_repo, "Update the summary file in a repository" },
 
   /* Deprecated old names */
