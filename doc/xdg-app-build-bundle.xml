@@ -91,7 +91,10 @@
                 <term><option>--repo-url=URL</option></term>
 
                 <listitem><para>
-                    The URL for the repository.
+                    The URL for the repository from which the
+                    application can be updated. Installing the
+                    bundle will automatically configure a remote
+                    for this URL.
                 </para></listitem>
             </varlistentry>
 
