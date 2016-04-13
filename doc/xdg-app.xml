@@ -110,7 +110,7 @@
                 <term><citerefentry><refentrytitle>xdg-app-install</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Install an application or a runtime from a remote.
+                    Install an application or a runtime from a remote or bundle.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
