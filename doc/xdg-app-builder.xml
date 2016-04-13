@@ -175,7 +175,7 @@
                 <varlistentry>
                     <term><option>cleanup</option></term>
                     <listitem><para>An array of file patterns that should be removed at the end.
-                    Patterns starting with / are taken to be full pathnames, otherwise they just match
+                    Patterns starting with / are taken to be full pathnames (without the /app prefix), otherwise they just match
                     the basename.</para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -329,7 +329,7 @@
                 <varlistentry>
                     <term><option>cleanup</option></term>
                     <listitem><para>An array of file patterns that should be removed at the end.
-                    Patterns starting with / are taken to be full pathnames, otherwise they just match
+                    Patterns starting with / are taken to be full pathnames (without the /app prefix), otherwise they just match
                     the basename. Note that any patterns will only match files installed by this module.
                     </para></listitem>
                 </varlistentry>
