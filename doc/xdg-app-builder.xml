@@ -609,7 +609,7 @@
                 <term><option>--keep-build-dirs</option></term>
 
                 <listitem><para>
-                    Don't remote the sources and build after having built and installed each module.
+                    Don't remove the sources and build after having built and installed each module.
                     This also creates a symlink to the build directory with a stable name ("build-modulename").
                 </para></listitem>
             </varlistentry>
