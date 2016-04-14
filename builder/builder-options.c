@@ -245,7 +245,7 @@ builder_options_class_init (BuilderOptionsClass *klass)
                                                          FALSE,
                                                          G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
-                                   PROP_STRIP,
+                                   PROP_NO_DEBUGINFO,
                                    g_param_spec_boolean ("no-debuginfo",
                                                          "",
                                                          "",
