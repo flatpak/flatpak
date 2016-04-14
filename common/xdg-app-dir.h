@@ -308,5 +308,13 @@ gboolean xdg_app_dir_fetch_sizes         (XdgAppDir *self,
                                           guint64    *total_unpacked,
                                           GCancellable *cancellable,
                                           GError **error);
+gboolean xdg_app_dir_fetch_ref_cache (XdgAppDir    *self,
+                                      const char   *remote_name,
+                                      const char   *ref,
+                                      guint64      *download_size,
+                                      guint64      *installed_size,
+                                      char        **metadata,
+                                      GCancellable *cancellable,
+                                      GError      **error);
 
 #endif /* __XDG_APP_DIR_H__ */

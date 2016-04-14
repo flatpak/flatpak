@@ -3556,6 +3556,81 @@ xdg_app_dir_fetch_sizes (XdgAppDir *self,
                      error);
 }
 
+gboolean
+xdg_app_dir_fetch_ref_cache (XdgAppDir    *self,
+                             const char   *remote_name,
+                             const char   *ref,
+                             guint64      *download_size,
+                             guint64      *installed_size,
+                             char        **metadata,
+                             GCancellable *cancellable,
+                             GError      **error)
+{
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GVariant) extensions = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) cache_v = NULL;
+  g_autoptr(GVariant) cache = NULL;
+  g_autoptr(GVariant) res = NULL;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_remote_fetch_summary (self->repo, remote_name,
+                                         &summary_bytes, NULL,
+                                         cancellable, error))
+    return NULL;
+
+  if (summary_bytes == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Data not available; server has no summary file");
+      return FALSE;
+    }
+
+  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                      summary_bytes, FALSE);
+  extensions = g_variant_get_child_value (summary, 1);
+
+  cache_v = g_variant_lookup_value (extensions, "xa.cache", NULL);
+  if (cache_v == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Data not found");
+      return FALSE;
+    }
+
+  cache = g_variant_get_child_value (cache_v, 0);
+  res = g_variant_lookup_value (cache, ref, NULL);
+  if (res == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Data not found for ref %s", ref);
+      return FALSE;
+    }
+
+  if (installed_size)
+    {
+      guint64 v;
+      g_variant_get_child (res, 0, "t", &v);
+      *installed_size = GUINT64_FROM_BE(v);
+    }
+
+  if (download_size)
+    {
+      guint64 v;
+      g_variant_get_child (res, 1, "t", &v);
+      *download_size = GUINT64_FROM_BE(v);
+    }
+
+  if (metadata)
+    {
+      g_variant_get_child (res, 2, "s", metadata);
+    }
+
+  return TRUE;
+}
+
 GBytes *
 xdg_app_dir_fetch_metadata (XdgAppDir *self,
                             const char *remote_name,

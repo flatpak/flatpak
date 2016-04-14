@@ -1298,6 +1298,8 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
  * to pull a commit from a remote repository, and about the amount of
  * local disk space that is required to check out this commit.
  *
+ * This is deprectated, use xdg_app_installation_fetch_remote_size_sync2 instead.
+ *
  * Returns: %TRUE, unless an error occurred
  */
 gboolean
@@ -1321,6 +1323,45 @@ xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation  *self,
 }
 
 /**
+ * xdg_app_installation_fetch_remote_size_sync2:
+ * @self: a #XdgAppInstallation
+ * @remote_name: the name of the remote
+ * @ref: the ref
+ * @download_size: (out): return location for the (maximum) download size
+ * @installed_size: (out): return location for the installed size
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Gets information about the maximum amount of data that needs to be transferred
+ * to pull the ref from a remote repository, and about the amount of
+ * local disk space that is required to check out this commit.
+ *
+ * Note that if there are locally available data that are in the ref, which is commong
+ * for instance if you're doing an update then the real download size may be smaller
+ * than what is returned here.
+ *
+ * Returns: %TRUE, unless an error occurred
+ */
+gboolean
+xdg_app_installation_fetch_remote_size_sync2 (XdgAppInstallation  *self,
+                                              const char          *remote_name,
+                                              XdgAppRef           *ref,
+                                              guint64             *download_size,
+                                              guint64             *installed_size,
+                                              GCancellable        *cancellable,
+                                              GError             **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autofree char *full_ref = xdg_app_ref_format_ref (ref);
+
+  return xdg_app_dir_fetch_ref_cache (priv->dir, remote_name, full_ref,
+                                      download_size, installed_size,
+                                      NULL,
+                                      cancellable,
+                                      error);
+}
+
+/**
  * xdg_app_installation_fetch_remote_metadata_sync:
  * @self: a #XdgAppInstallation
  * @remote_name: the name of the remote
@@ -1329,6 +1370,8 @@ xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation  *self,
  * @error: return location for a #GError
  *
  * Obtains the metadata file from a commit.
+ *
+ * This is deprecated, use xdg_app_installation_fetch_remote_metadata_sync2
  *
  * Returns: (transfer full): a #GBytes containing the xdg-app metadata file,
  *   or %NULL if an error occurred
@@ -1354,6 +1397,38 @@ xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
   return g_steal_pointer (&bytes);
 }
 
+/**
+ * xdg_app_installation_fetch_remote_metadata_sync2:
+ * @self: a #XdgAppInstallation
+ * @remote_name: the name of the remote
+ * @commit: the commit
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Obtains the metadata file from a commit.
+ *
+ * Returns: (transfer full): a #GBytes containing the xdg-app metadata file,
+ *   or %NULL if an error occurred
+ */
+GBytes *
+xdg_app_installation_fetch_remote_metadata_sync2 (XdgAppInstallation *self,
+                                                  const char *remote_name,
+                                                  XdgAppRef *ref,
+                                                  GCancellable *cancellable,
+                                                  GError **error)
+{
+  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  g_autofree char *full_ref = xdg_app_ref_format_ref (ref);
+  char *res = NULL;
+
+  if (!xdg_app_dir_fetch_ref_cache (priv->dir, remote_name, full_ref,
+                                    NULL, NULL,
+                                    &res,
+                                    cancellable, error))
+    return NULL;
+
+  return g_bytes_new_take (res, strlen (res));
+}
 
 /**
  * xdg_app_installation_list_remote_refs_sync:

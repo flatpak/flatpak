@@ -332,19 +332,35 @@ main (int argc, char *argv[])
                   else
                     g_print ("Download size: %"G_GUINT64_FORMAT" Installed size: %"G_GUINT64_FORMAT"\n",
                              download_size, installed_size);
+
+                  if (!xdg_app_installation_fetch_remote_size_sync2 (installation,
+                                                                     xdg_app_remote_get_name (remote),
+                                                                     XDG_APP_REF(ref),
+                                                                     &download_size,
+                                                                     &installed_size,
+                                                                     NULL, &error))
+                    {
+                      g_print ("error fetching sizes2: %s\n", error->message);
+                      g_clear_error (&error);
+                    }
+                  else
+                    g_print ("Download size2: %"G_GUINT64_FORMAT" Installed size2: %"G_GUINT64_FORMAT"\n",
+                             download_size, installed_size);
+
                 }
             }
         }
 
-      g_print ("\n**** Getting remote gedit master on %s\n", xdg_app_remote_get_name (remote));
+      g_print ("\n**** Getting remote platform 3.20 on %s\n", xdg_app_remote_get_name (remote));
       error = NULL;
       remote_ref = xdg_app_installation_fetch_remote_ref_sync (installation, xdg_app_remote_get_name (remote),
-                                                               XDG_APP_REF_KIND_APP,
-                                                               "org.gnome.gedit", NULL, "master",
+                                                               XDG_APP_REF_KIND_RUNTIME,
+                                                               "org.gnome.Platform", NULL, "3.20",
                                                                NULL, &error);
       if (remote_ref)
         {
           GBytes *metadata;
+          GBytes *metadata2;
 
           g_print ("%d %s %s %s %s %s\n",
                    xdg_app_ref_get_kind (XDG_APP_REF(remote_ref)),
@@ -359,6 +375,19 @@ main (int argc, char *argv[])
           if (metadata)
             {
               g_print ("metadata: %s\n", (char *)g_bytes_get_data (metadata, NULL));
+            }
+          else
+            {
+              g_print ("fetch error\n");
+              g_print ("error: %s\n", error->message);
+              g_clear_error (&error);
+            }
+
+          metadata2 = xdg_app_installation_fetch_remote_metadata_sync2 (installation, xdg_app_remote_get_name (remote),
+                                                                        XDG_APP_REF(remote_ref), NULL, &error);
+          if (metadata2)
+            {
+              g_print ("metadata2: %s\n", (char *)g_bytes_get_data (metadata2, NULL));
             }
           else
             {

@@ -178,9 +178,21 @@ XDG_APP_EXTERN gboolean          xdg_app_installation_fetch_remote_size_sync    
                                                                                   guint64             *installed_size,
                                                                                   GCancellable        *cancellable,
                                                                                   GError             **error);
+XDG_APP_EXTERN gboolean          xdg_app_installation_fetch_remote_size_sync2     (XdgAppInstallation  *self,
+                                                                                  const char          *remote_name,
+                                                                                  XdgAppRef           *ref,
+                                                                                  guint64             *download_size,
+                                                                                  guint64             *installed_size,
+                                                                                  GCancellable        *cancellable,
+                                                                                  GError             **error);
 XDG_APP_EXTERN GBytes        *   xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation  *self,
                                                                                   const char          *remote_name,
                                                                                   const char          *commit,
+                                                                                  GCancellable        *cancellable,
+                                                                                  GError             **error);
+XDG_APP_EXTERN GBytes        *   xdg_app_installation_fetch_remote_metadata_sync2 (XdgAppInstallation  *self,
+                                                                                  const char          *remote_name,
+                                                                                   XdgAppRef          *ref,
                                                                                   GCancellable        *cancellable,
                                                                                   GError             **error);
 XDG_APP_EXTERN GPtrArray    *    xdg_app_installation_list_remote_refs_sync      (XdgAppInstallation  *self,
