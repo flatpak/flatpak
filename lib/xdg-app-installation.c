@@ -1401,7 +1401,7 @@ xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
  * xdg_app_installation_fetch_remote_metadata_sync2:
  * @self: a #XdgAppInstallation
  * @remote_name: the name of the remote
- * @commit: the commit
+ * @ref: the ref
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
