@@ -35,6 +35,14 @@
                 <arg choice="plain">DIRECTORY</arg>
                 <arg choice="plain">MANIFEST</arg>
             </cmdsynopsis>
+            <cmdsynopsis>
+                <command>xdg-app-builder</command>
+                <arg choice="plain">--run</arg>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">DIRECTORY</arg>
+                <arg choice="plain">MANIFEST</arg>
+                <arg choice="plain">COMMAND</arg>
+            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -574,7 +582,8 @@
                 <listitem><para>
                   Run a command in a sandbox based on the build dir. This starts xdg-app build, with some extra
                   arguments to give the same environment as the build, and the same permissions the final app
-                  will have.
+                  will have. The command to run must be the last argument passed to
+                  xdg-app-builder, after the directory and the manifest.
                 </para></listitem>
             </varlistentry>
 
