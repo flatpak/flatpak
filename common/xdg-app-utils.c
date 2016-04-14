@@ -1911,6 +1911,7 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
   GHashTableIter iter;
   gpointer key;
   gpointer value;
+  gboolean skip_commit = FALSE;
 
   arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
@@ -2021,33 +2022,51 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
       if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
         goto out;
 
-      if (!ostree_repo_write_commit (repo, parent, "Update", NULL, NULL,
-                                     OSTREE_REPO_FILE (root),
-                                     &commit_checksum, cancellable, error))
-        goto out;
 
-      if (gpg_key_ids)
+      /* No need to commit if nothing changed */
+      if (parent)
         {
-          int i;
+          g_autoptr(GFile) parent_root;
 
-          for (i = 0; gpg_key_ids[i] != NULL; i++)
-            {
-              const char *keyid = gpg_key_ids[i];
+          if (!ostree_repo_read_commit (repo, parent, &parent_root, NULL, cancellable, error))
+            goto out;
 
-              if (!ostree_repo_sign_commit (repo,
-                                            commit_checksum,
-                                            keyid,
-                                            gpg_homedir,
-                                            cancellable,
-                                            error))
-                goto out;
-            }
+          if (g_file_equal (root, parent_root))
+            skip_commit = TRUE;
         }
 
-      ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
+      if (!skip_commit)
+        {
+          if (!ostree_repo_write_commit (repo, parent, "Update", NULL, NULL,
+                                         OSTREE_REPO_FILE (root),
+                                         &commit_checksum, cancellable, error))
+            goto out;
 
-      if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
-        goto out;
+          if (gpg_key_ids)
+            {
+              int i;
+
+              for (i = 0; gpg_key_ids[i] != NULL; i++)
+                {
+                  const char *keyid = gpg_key_ids[i];
+
+                  if (!ostree_repo_sign_commit (repo,
+                                                commit_checksum,
+                                                keyid,
+                                                gpg_homedir,
+                                                cancellable,
+                                                error))
+                    goto out;
+                }
+            }
+
+          ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
+
+          if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
+            goto out;
+        }
+      else
+        ostree_repo_abort_transaction (repo, cancellable, NULL);
     }
 
   return TRUE;
