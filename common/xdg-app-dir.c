@@ -2749,6 +2749,23 @@ xdg_app_dir_get_if_deployed (XdgAppDir     *self,
   return NULL;
 }
 
+static gboolean
+xdg_app_dir_remote_fetch_summary (XdgAppDir     *self,
+                                  const char    *name,
+                                  GBytes       **out_summary,
+                                  GCancellable  *cancellable,
+                                  GError       **error)
+{
+  /* TODO: Add in-memory cache here, also use for ostree_repo_list_refs */
+  if (!ostree_repo_remote_fetch_summary (self->repo, name,
+                                         out_summary, NULL,
+                                         cancellable,
+                                         error))
+    return FALSE;
+
+  return TRUE;
+}
+
 char *
 xdg_app_dir_find_remote_ref (XdgAppDir      *self,
                              const char     *remote,
@@ -2809,8 +2826,8 @@ xdg_app_dir_find_remote_ref (XdgAppDir      *self,
       return g_steal_pointer (&runtime_ref);
     }
 
-  if (!ostree_repo_remote_fetch_summary (self->repo, remote,
-                                         &summary_bytes, NULL,
+  if (!xdg_app_dir_remote_fetch_summary (self, remote,
+                                         &summary_bytes,
                                          cancellable, error))
     return NULL;
 
@@ -3175,8 +3192,8 @@ xdg_app_dir_fetch_remote_title (XdgAppDir *self,
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     return NULL;
 
-  if (!ostree_repo_remote_fetch_summary (self->repo, remote,
-                                         &summary_bytes, NULL,
+  if (!xdg_app_dir_remote_fetch_summary (self, remote,
+                                         &summary_bytes,
                                          cancellable, error))
     return FALSE;
 
@@ -3576,8 +3593,8 @@ xdg_app_dir_fetch_ref_cache (XdgAppDir    *self,
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
-  if (!ostree_repo_remote_fetch_summary (self->repo, remote_name,
-                                         &summary_bytes, NULL,
+  if (!xdg_app_dir_remote_fetch_summary (self, remote_name,
+                                         &summary_bytes,
                                          cancellable, error))
     return NULL;
 
