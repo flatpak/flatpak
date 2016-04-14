@@ -1560,17 +1560,6 @@ xdg_app_repo_collect_sizes (OstreeRepo *repo,
   return TRUE;
 }
 
-static GVariant *
-_gvariant_new_ay_bytes (GBytes *bytes)
-{
-  gsize size;
-  gconstpointer data;
-  data = g_bytes_get_data (bytes, &size);
-  g_bytes_ref (bytes);
-  return g_variant_new_from_data (G_VARIANT_TYPE ("ay"), data, size,
-                                  TRUE, (GDestroyNotify)g_bytes_unref, bytes);
-}
-
 gboolean
 xdg_app_repo_update (OstreeRepo   *repo,
                      const char  **gpg_key_ids,
