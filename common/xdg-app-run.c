@@ -2120,6 +2120,7 @@ dbus_spawn_child_setup (gpointer user_data)
 static gboolean
 add_dbus_proxy_args (GPtrArray *argv_array,
                      GPtrArray *dbus_proxy_argv,
+                     gboolean   enable_logging,
                      GError **error)
 {
   int sync_proxy_pipes[2];
@@ -2136,6 +2137,8 @@ add_dbus_proxy_args (GPtrArray *argv_array,
 
   g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (DBUSPROXY));
   g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_proxy_pipes[1]));
+  if (enable_logging)
+    g_ptr_array_add (dbus_proxy_argv, g_strdup ("--log"));
 
   g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
 
@@ -2309,10 +2312,10 @@ xdg_app_run_app (const char *app_ref,
   if (!xdg_app_run_in_transient_unit (app_ref_parts[1], error))
     return FALSE;
 
-  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, error))
+  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & XDG_APP_RUN_FLAG_LOG_SESSION_BUS) != 0, error))
     return FALSE;
 
-  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, error))
+  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & XDG_APP_RUN_FLAG_LOG_SYSTEM_BUS) != 0,  error))
     return FALSE;
 
   app_files = xdg_app_deploy_get_files (app_deploy);
