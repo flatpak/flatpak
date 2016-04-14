@@ -43,6 +43,7 @@ static gboolean opt_disable_updates;
 static gboolean opt_ccache;
 static gboolean opt_require_changes;
 static gboolean opt_keep_build_dirs;
+static gboolean opt_force_clean;
 static char *opt_repo;
 static char *opt_subject;
 static char *opt_body;
@@ -66,6 +67,7 @@ static GOptionEntry entries[] = {
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description (passed to build-export)", "BODY" },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
+  { "force-clean",0, 0, G_OPTION_ARG_NONE, &opt_force_clean, "Erase previous contents of DIRECTORY", NULL },
   { NULL }
 };
 
@@ -258,9 +260,22 @@ main (int    argc,
 
   if (g_file_query_exists (app_dir, NULL) && !directory_is_empty (app_dir_path))
     {
-      g_printerr ("App dir '%s' is not empty. Please delete "
-                  "the existing contents.\n", app_dir_path);
-      return 1;
+      if (opt_force_clean)
+        {
+          g_print ("Emptying app dir\n");
+          if (!gs_shutil_rm_rf (app_dir, NULL, &error))
+            {
+              g_printerr ("Couldn't empty app dir '%s': %s",
+                          app_dir_path, error->message);
+              return 1;
+            }
+        }
+      else
+        {
+          g_printerr ("App dir '%s' is not empty. Please delete "
+                      "the existing contents.\n", app_dir_path);
+          return 1;
+        }
     }
 
   if (!builder_manifest_start (manifest, build_context, &error))
