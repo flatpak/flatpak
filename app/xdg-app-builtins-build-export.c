@@ -365,8 +365,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_mutable_tree_ensure_dir (mtree, "files", &files_mtree, error))
     goto out;
 
-  modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
-                                              OSTREE_REPO_COMMIT_MODIFIER_FLAGS_GENERATE_SIZES,
+  modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS,
                                               (OstreeRepoCommitFilter)commit_filter, &commit_data, NULL);
 
   if (opt_runtime)
