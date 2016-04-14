@@ -115,9 +115,12 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
 
       all_deltas_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
       for (i = 0; i < all_deltas->len; i++)
-        g_hash_table_insert (all_deltas_hash,
-                             g_strdup (g_ptr_array_index (all_deltas, i)),
-                             NULL);
+        {
+          g_print ("adding %s\n", (char *)g_ptr_array_index (all_deltas, i));
+          g_hash_table_insert (all_deltas_hash,
+                               g_strdup (g_ptr_array_index (all_deltas, i)),
+                               NULL);
+        }
 
       if (!ostree_repo_list_refs (repo, NULL, &all_refs,
                                   cancellable, error))
@@ -145,6 +148,7 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
 
 
           /* From empty */
+          g_print ("looking for %s\n", commit);
           if (!g_hash_table_contains (all_deltas_hash, commit))
             {
               g_print ("Generating from-empty delta for %s (%s)\n", ref, commit);

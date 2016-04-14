@@ -3596,7 +3596,7 @@ xdg_app_dir_fetch_ref_cache (XdgAppDir    *self,
   if (!xdg_app_dir_remote_fetch_summary (self, remote_name,
                                          &summary_bytes,
                                          cancellable, error))
-    return NULL;
+    return FALSE;
 
   if (summary_bytes == NULL)
     {
