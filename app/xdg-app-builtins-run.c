@@ -93,9 +93,22 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (opt_branch)
     branch = opt_branch;
 
-  app_ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
+  if (opt_branch == NULL && opt_arch == NULL)
+    {
+      g_autoptr(XdgAppDir) user_dir = xdg_app_dir_get_user ();
+      g_autoptr(XdgAppDir) system_dir = xdg_app_dir_get_system ();
+
+      app_ref = xdg_app_dir_current_ref (user_dir, app, cancellable);
+      if (app_ref == NULL)
+        app_ref = xdg_app_dir_current_ref (system_dir, app, cancellable);
+    }
+
   if (app_ref == NULL)
-    return FALSE;
+    {
+      app_ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
+      if (app_ref == NULL)
+        return FALSE;
+    }
 
   app_deploy = xdg_app_find_deploy_for_ref (app_ref, cancellable, error);
   if (app_deploy == NULL)
