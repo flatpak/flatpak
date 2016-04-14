@@ -1600,7 +1600,7 @@ xdg_app_repo_update (OstreeRepo   *repo,
                            g_variant_new_string (title));
 
 
-  g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE("a{s(ttay)}"));
+  g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE("a{s(tts)}"));
 
   if (!ostree_repo_list_refs (repo, NULL, &refs, cancellable, error))
     return FALSE;
@@ -1617,9 +1617,7 @@ xdg_app_repo_update (OstreeRepo   *repo,
       g_autoptr(GFile) metadata = NULL;
       guint64 installed_size = 0;
       guint64 download_size = 0;
-      gsize metadata_size;
       g_autofree char *metadata_contents = NULL;
-      g_autoptr(GBytes) metadata_bytes = NULL;
 
       g_assert (commit);
 
@@ -1633,16 +1631,14 @@ xdg_app_repo_update (OstreeRepo   *repo,
         return FALSE;
 
       metadata = g_file_get_child (root, "metadata");
-      if (g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, NULL))
-        metadata_bytes = g_bytes_new (metadata_contents, metadata_size);
-      else
-        metadata_bytes = g_bytes_new ("", 0);
+      if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
+        metadata_contents = g_strdup ("");
 
-      g_variant_builder_add (&ref_data_builder, "{s(tt@ay)}",
+      g_variant_builder_add (&ref_data_builder, "{s(tts)}",
                              ref,
                              GUINT64_TO_BE (installed_size),
                              GUINT64_TO_BE (download_size),
-                             _gvariant_new_ay_bytes (metadata_bytes));
+                             metadata_contents);
     }
 
   g_variant_builder_add (&builder, "{sv}", "xa.cache",
