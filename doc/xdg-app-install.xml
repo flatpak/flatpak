@@ -36,6 +36,12 @@
                 <arg choice="plain">NAME</arg>
                 <arg choice="opt">BRANCH</arg>
             </cmdsynopsis>
+            <cmdsynopsis>
+                <command>xdg-app install</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">--bundle</arg>
+                <arg choice="plain">FILENAME</arg>
+            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -62,6 +68,11 @@
             Unless overridden with the --user option, this command creates a
             system-wide installation.
         </para>
+        <para>
+            The alternative form of the command installs an application from a
+            single-file bundle instead of a configured remote. Such bundles can
+            be created with the xdg-app build-bundle command.
+        </para>
 
     </refsect1>
 
@@ -80,6 +91,22 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--bundle</option></term>
+
+                <listitem><para>
+                    Install from a bundle file instead
+                    of a configured remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Create a per-user installation.
+                </para></listitem>
+            </varlistentry>
             <varlistentry>
                 <term><option>--user</option></term>
 
@@ -179,7 +206,8 @@
         <para>
             <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>xdg-app-update-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>xdg-app-list-apps</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>xdg-app-list-apps</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>xdg-app-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

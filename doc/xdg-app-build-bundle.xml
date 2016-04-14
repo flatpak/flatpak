@@ -91,7 +91,10 @@
                 <term><option>--repo-url=URL</option></term>
 
                 <listitem><para>
-                    The URL for the repository.
+                    The URL for the repository from which the
+                    application can be updated. Installing the
+                    bundle will automatically configure a remote
+                    for this URL.
                 </para></listitem>
             </varlistentry>
 
@@ -107,7 +110,7 @@
                 <term><option>--gpg-homedir=PATH</option></term>
 
                 <listitem><para>
-                    GPG Homedir to use when looking for keyrings
+                    GPG Homedir to use when looking for keyrings.
                 </para></listitem>
             </varlistentry>
 
@@ -138,7 +141,7 @@
             <citerefentry><refentrytitle>xdg-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>xdg-app-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>xdg-app-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>xdg-app-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>xdg-app-repo-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
