@@ -82,8 +82,10 @@ GFile *xdg_app_ensure_data_dir (const char *app_id,
 				GError **error);
 
 typedef enum {
-  XDG_APP_RUN_FLAG_DEVEL       = (1<<0),
-  XDG_APP_RUN_FLAG_BACKGROUND  = (1<<1),
+  XDG_APP_RUN_FLAG_DEVEL           = (1<<0),
+  XDG_APP_RUN_FLAG_BACKGROUND      = (1<<1),
+  XDG_APP_RUN_FLAG_LOG_SESSION_BUS = (1<<2),
+  XDG_APP_RUN_FLAG_LOG_SYSTEM_BUS  = (1<<3),
 } XdgAppRunFlags;
 
 gboolean xdg_app_run_app (const char *app_ref,

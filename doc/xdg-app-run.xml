@@ -76,6 +76,23 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
@@ -251,19 +268,20 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>-v</option></term>
-                <term><option>--verbose</option></term>
+                <term><option>--log-session-bus</option></term>
 
                 <listitem><para>
-                    Print debug information during command processing.
+                    Log session bus traffic. This can be useful to see what access you need to allow in
+                    your D-Bus policy.
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
-                <term><option>--version</option></term>
+                <term><option>--log-system-bus</option></term>
 
                 <listitem><para>
-                    Print version information and exit.
+                    Log system bus traffic. This can be useful to see what access you need to allow in
+                    your D-Bus policy.
                 </para></listitem>
             </varlistentry>
         </variablelist>
