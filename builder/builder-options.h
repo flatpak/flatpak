@@ -48,6 +48,9 @@ char **     builder_options_get_env          (BuilderOptions *self,
                                               BuilderContext *context);
 char **     builder_options_get_build_args   (BuilderOptions *self,
                                               BuilderContext *context);
+char **     builder_options_get_config_opts  (BuilderOptions *self,
+                                              BuilderContext *context,
+					      char          **base_opts);
 void        builder_options_checksum         (BuilderOptions *self,
                                               BuilderCache   *cache,
                                               BuilderContext *context);

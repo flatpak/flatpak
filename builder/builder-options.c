@@ -42,6 +42,7 @@ struct BuilderOptions {
   char *prefix;
   char **env;
   char **build_args;
+  char **config_opts;
   GHashTable *arch;
 };
 
@@ -64,6 +65,7 @@ enum {
   PROP_NO_DEBUGINFO,
   PROP_ARCH,
   PROP_BUILD_ARGS,
+  PROP_CONFIG_OPTS,
   LAST_PROP
 };
 
@@ -78,6 +80,7 @@ builder_options_finalize (GObject *object)
   g_free (self->prefix);
   g_strfreev (self->env);
   g_strfreev (self->build_args);
+  g_strfreev (self->config_opts);
 
   G_OBJECT_CLASS (builder_options_parent_class)->finalize (object);
 }
@@ -114,6 +117,10 @@ builder_options_get_property (GObject    *object,
 
     case PROP_BUILD_ARGS:
       g_value_set_boxed (value, self->build_args);
+      break;
+
+    case PROP_CONFIG_OPTS:
+      g_value_set_boxed (value, self->config_opts);
       break;
 
     case PROP_STRIP:
@@ -170,6 +177,12 @@ builder_options_set_property (GObject      *object,
     case PROP_BUILD_ARGS:
       tmp = self->build_args;
       self->build_args = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_CONFIG_OPTS:
+      tmp = self->config_opts;
+      self->config_opts = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -233,6 +246,13 @@ builder_options_class_init (BuilderOptionsClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_BUILD_ARGS,
                                    g_param_spec_boxed ("build-args",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_CONFIG_OPTS,
+                                   g_param_spec_boxed ("config-opts",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -619,6 +639,42 @@ builder_options_get_build_args (BuilderOptions *self,
   return (char **)g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
+char **
+builder_options_get_config_opts (BuilderOptions *self,
+				 BuilderContext *context,
+				 char **base_opts)
+{
+  g_autoptr(GList) options = get_all_options (self, context);
+  GList *l;
+  int i;
+  g_autoptr(GPtrArray) array = g_ptr_array_new_with_free_func (g_free);
+
+  /* Last argument wins, so reverse the list for per-module to win */
+  options = g_list_reverse (options);
+
+  /* Start by adding the base options */
+  if (base_opts)
+    {
+      for (i = 0; base_opts[i] != NULL; i++)
+	g_ptr_array_add (array, g_strdup (base_opts[i]));
+    }
+
+  for (l = options; l != NULL; l = l->next)
+    {
+      BuilderOptions *o = l->data;
+
+      if (o->config_opts)
+        {
+          for (i = 0; o->config_opts[i] != NULL; i++)
+            g_ptr_array_add (array, g_strdup (o->config_opts[i]));
+        }
+    }
+
+  g_ptr_array_add (array, NULL);
+
+  return (char **)g_ptr_array_free (g_steal_pointer (&array), FALSE);
+}
+
 void
 builder_options_checksum (BuilderOptions *self,
                           BuilderCache   *cache,
@@ -632,6 +688,7 @@ builder_options_checksum (BuilderOptions *self,
   builder_cache_checksum_str (cache, self->prefix);
   builder_cache_checksum_strv (cache, self->env);
   builder_cache_checksum_strv (cache, self->build_args);
+  builder_cache_checksum_strv (cache, self->config_opts);
   builder_cache_checksum_boolean (cache, self->strip);
   builder_cache_checksum_boolean (cache, self->no_debuginfo);
 
