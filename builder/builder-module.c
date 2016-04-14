@@ -823,6 +823,7 @@ builder_module_build (BuilderModule *self,
   int i;
   g_auto(GStrv) env = NULL;
   g_auto(GStrv) build_args = NULL;
+  g_auto(GStrv) config_opts = NULL;
   g_autoptr(GFile) source_dir = NULL;
   g_autoptr(GFile) source_subdir = NULL;
   const char *source_subdir_relative = NULL;
@@ -894,6 +895,7 @@ builder_module_build (BuilderModule *self,
 
   env = builder_options_get_env (self->build_options, context);
   build_args = builder_options_get_build_args (self->build_options, context);
+  config_opts = builder_options_get_config_opts (self->build_options, context, self->config_opts);
 
   if (self->cmake)
     {
@@ -1009,7 +1011,7 @@ builder_module_build (BuilderModule *self,
                                                 builder_options_get_prefix (self->build_options, context));
 
       if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
-                  configure_cmd, configure_prefix_arg, strv_arg, self->config_opts, configure_final_arg, NULL))
+                  configure_cmd, configure_prefix_arg, strv_arg, config_opts, configure_final_arg, NULL))
         return FALSE;
     }
   else
