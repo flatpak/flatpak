@@ -1,3 +1,25 @@
+Major changes in 0.5.2
+======================
+
+* The way locale extensions work has changed. Now we build a single extension
+  for all locales, but we allow you to specify a subset of it during installation
+  and update time using the --subpath commandline flag.
+  The main reason for this is that the many extensions didn't scale, both in
+  technical terms (large ostree summary file size), but also in terms of the
+  UI listing hundreds of uninteresting things.
+* We no longer use sizes in the commit objects to get installed and download size,
+  instead we store some extra metadata in the summary file. This allows us
+  to get much faster access to these, as with recent ostree versions we can
+  cache the summary file.
+* New command xdg-app build-sign that lets you sign a commit at any time.
+* New argument xdg-app build --force-clean that removes pre-existing build dirs.
+* xdg-app run now uses the "current" version as the default if you specify no
+  branch or arch. It used to default to the "master" branch. This will default
+  to the last installed version, but can be changed with xdg-app make-current.
+* Added config-opts to the build-options in xdg-app-builder. This allows you
+  to extend the configure flags in an arch dependent way.
+* Documentation updates
+
 Major changes in 0.5.1
 =======================
 * Make xdg-app-builder --build-only not export the results
