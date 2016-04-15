@@ -668,6 +668,15 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--force-clean</option></term>
+
+                <listitem><para>
+                    Erase the previous contents of DIRECTORY if it is
+                    not empty.
+                </para></listitem>
+            </varlistentry>
+
           </variablelist>
     </refsect1>
 
