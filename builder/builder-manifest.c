@@ -1980,14 +1980,16 @@ builder_manifest_run (BuilderManifest  *self,
         g_ptr_array_add (args, g_strdup_printf ("--env=%s", env[i]));
     }
 
-  /* Inherit all finish args except the filesystem ones so the
-   * command gets the same access as the final app */
+  /* Inherit all finish args except the filesystem and command
+   * ones so the command gets the same access as the final app
+   */
   if (self->finish_args)
     {
       for (i = 0; self->finish_args[i] != NULL; i++)
         {
           const char *arg = self->finish_args[i];
-          if (!g_str_has_prefix (arg, "--filesystem"))
+          if (!g_str_has_prefix (arg, "--filesystem") &&
+              !g_str_has_prefix (arg, "--command"))
             g_ptr_array_add (args, g_strdup (arg));
         }
     }
