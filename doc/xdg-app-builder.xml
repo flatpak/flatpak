@@ -738,7 +738,6 @@
     },
     "modules": [
         {
-        {
             "name": "pygobject",
             "config-opts": [ "--disable-introspection" ],
             "sources": [
