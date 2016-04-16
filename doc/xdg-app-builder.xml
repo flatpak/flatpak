@@ -140,7 +140,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>separate-locales</option></term>
-                    <listitem><para>Separate out locale files and translations to an extention runtime. Defaults to true.</para></listitem>
+                    <listitem><para>Separate out locale files and translations to an extension runtime. Defaults to true.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>id-platform</option></term>
