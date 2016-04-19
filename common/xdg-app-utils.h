@@ -191,6 +191,14 @@ GVariant * xdg_app_bundle_load (GFile *file,
                                 GBytes **gpg_keys,
                                 GError **error);
 
+gboolean xdg_app_pull_from_bundle (OstreeRepo *repo,
+                                   GFile *file,
+                                   const char *remote,
+                                   const char *ref,
+                                   gboolean require_gpg_signature,
+                                   GCancellable *cancellable,
+                                   GError **error);
+
 
 typedef struct {
   char *id;

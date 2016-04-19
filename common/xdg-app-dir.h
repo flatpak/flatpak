@@ -157,13 +157,6 @@ gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          OstreeAsyncProgress *progress,
                                          GCancellable   *cancellable,
                                          GError        **error);
-gboolean   xdg_app_dir_pull_from_bundle (XdgAppDir      *self,
-                                         GFile          *file,
-                                         const char     *remote,
-                                         const char     *ref,
-                                         gboolean        require_gpg_signature,
-                                         GCancellable   *cancellable,
-                                         GError        **error);
 gboolean    xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
                                             const char     *kind,
                                             const char     *name,

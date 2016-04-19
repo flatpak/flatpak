@@ -171,13 +171,16 @@ install_bundle (XdgAppDir *dir,
   /* From here we need to goto out on error, to clean up */
   added_remote = TRUE;
 
-  if (!xdg_app_dir_pull_from_bundle (dir,
-                                     file,
-                                     remote,
-                                     ref,
-                                     gpg_data != NULL,
-                                     cancellable,
-                                     error))
+  if (!xdg_app_dir_ensure_repo (dir, cancellable, error))
+    goto out;
+
+  if (!xdg_app_pull_from_bundle (xdg_app_dir_get_repo (dir),
+                                 file,
+                                 remote,
+                                 ref,
+                                 gpg_data != NULL,
+                                 cancellable,
+                                 error))
     goto out;
 
   if (!xdg_app_dir_lock (dir, &lock,

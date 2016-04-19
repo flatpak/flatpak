@@ -868,13 +868,16 @@ xdg_app_installation_install_bundle (XdgAppInstallation  *self,
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = xdg_app_dir_clone (priv->dir);
 
-  if (!xdg_app_dir_pull_from_bundle (dir_clone,
-                                     file,
-                                     remote,
-                                     ref,
-                                     gpg_data != NULL,
-                                     cancellable,
-                                     error))
+  if (!xdg_app_dir_ensure_repo (dir_clone, cancellable, error))
+    goto out;
+
+  if (!xdg_app_pull_from_bundle (xdg_app_dir_get_repo (dir_clone),
+                                 file,
+                                 remote,
+                                 ref,
+                                 gpg_data != NULL,
+                                 cancellable,
+                                 error))
     goto out;
 
   if (!xdg_app_dir_lock (dir_clone, &lock,
