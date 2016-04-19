@@ -1450,6 +1450,8 @@ validate_arg0_name (XdgAppProxyClient *client, Buffer *buffer, XdgAppPolicy requ
 
       if (name_policy >= required_policy)
         res = TRUE;
+      else if (client->proxy->log_messages)
+        g_print ("Filtering message due to arg0 %s, policy: %d (required %d)\n", name, name_policy, required_policy);
     }
 
   g_object_unref (message);
