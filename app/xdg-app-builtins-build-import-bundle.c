@@ -31,9 +31,45 @@
 #include "xdg-app-builtins.h"
 #include "xdg-app-utils.h"
 
+static char *opt_ref;
+
 static GOptionEntry options[] = {
+  { "ref", 0, 0, G_OPTION_ARG_STRING, &opt_ref, "Override the ref used for the imported bundle", "REF" },
   { NULL }
 };
+
+static gboolean
+import_bundle (OstreeRepo *repo, GFile *file,
+              GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GVariant) metadata = NULL;
+  g_autofree char *bundle_ref = NULL;
+  g_autofree char *to_checksum = NULL;
+  const char *ref;
+
+  metadata = xdg_app_bundle_load (file, &to_checksum,
+                                  &bundle_ref,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  error);
+  if (metadata == NULL)
+    return FALSE;
+
+  if (opt_ref != NULL)
+    ref = opt_ref;
+  else
+    ref = bundle_ref;
+
+  g_print ("Importing %s (%s)\n", ref, to_checksum);
+  if (!xdg_app_pull_from_bundle (repo, file,
+                                 NULL, ref, FALSE,
+                                 cancellable,
+                                 error))
+    return FALSE;
+
+  return TRUE;
+}
 
 gboolean
 xdg_app_builtin_build_import (int argc, char **argv, GCancellable *cancellable, GError **error)
@@ -45,9 +81,6 @@ xdg_app_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GBytes) gpg_data = NULL;
   const char *location;
   const char *filename;
-  g_autoptr(GVariant) metadata = NULL;
-  g_autofree char *ref = NULL;
-  g_autofree char *to_checksum = NULL;
 
   context = g_option_context_new ("LOCATION FILENAME - Import a file bundle into a local repository");
 
@@ -74,20 +107,7 @@ xdg_app_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
-  metadata = xdg_app_bundle_load (file, &to_checksum,
-                                  &ref,
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  error);
-  if (metadata == NULL)
-    return FALSE;
-
-  g_print ("Importing %s (%s)\n", ref, to_checksum);
-  if (!xdg_app_pull_from_bundle (repo, file,
-                                 NULL, ref, FALSE,
-                                 cancellable,
-                                 error))
+  if (!import_bundle (repo, file, cancellable, error))
     return FALSE;
 
   return TRUE;

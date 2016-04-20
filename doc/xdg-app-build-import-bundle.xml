@@ -74,6 +74,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--ref=REF</option></term>
+
+                <listitem><para>
+                    Override the ref specified in the bundle.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--version</option></term>
 
                 <listitem><para>
