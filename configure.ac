@@ -140,8 +140,18 @@ PKG_CHECK_MODULES(OSTREE, [libgsystem >= 2015.1 ostree-1 >= 2016.5])
 AC_SUBST(OSTREE_CFLAGS)
 AC_SUBST(OSTREE_LIBS)
 save_LIBS=$LIBS
+save_CFLAGS=$CFLAGS
 LIBS=$OSTREE_LIBS
+CFLAGS=$OSTREE_CFLAGS
+
+AC_CHECK_MEMBER([OstreeRepoExportArchiveOptions.path_prefix],
+                [AC_DEFINE([HAVE_OSTREE_EXPORT_PATH_PREFIX], 1,
+                          [Have OstreeRepoExportArchiveOptions.path_prefix])],
+               , [[#include <ostree.h>]])
+
 LIBS=$save_LIBS
+CFLAGS=$save_CFLAGS
+
 
 PKG_CHECK_MODULES(FUSE, [fuse])
 AC_SUBST(FUSE_CFLAGS)
