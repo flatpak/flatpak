@@ -345,10 +345,11 @@ xdg_app_context_set_persistent (XdgAppContext            *context,
   g_hash_table_insert (context->persistent, g_strdup (path), GINT_TO_POINTER (1));
 }
 
-static const char *
+static gboolean
 get_user_dir_from_string (const char *filesystem,
                           const char **config_key,
-                          const char **suffix)
+                          const char **suffix,
+                          const char **dir)
 {
   char *slash;
   const char *rest;
@@ -375,49 +376,65 @@ get_user_dir_from_string (const char *filesystem,
     {
       if (config_key)
         *config_key = "XDG_DESKTOP_DIR";
-      return g_get_user_special_dir (G_USER_DIRECTORY_DESKTOP);
+      if (dir)
+        *dir = g_get_user_special_dir (G_USER_DIRECTORY_DESKTOP);
+      return TRUE;
     }
   if (strcmp (prefix, "xdg-documents") == 0)
     {
       if (config_key)
         *config_key = "XDG_DOCUMENTS_DIR";
-      return g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS);
+      if (dir)
+        *dir = g_get_user_special_dir (G_USER_DIRECTORY_DOCUMENTS);
+      return TRUE;
     }
   if (strcmp (prefix, "xdg-download") == 0)
     {
       if (config_key)
         *config_key = "XDG_DOWNLOAD_DIR";
-      return g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD);
+      if (dir)
+        *dir = g_get_user_special_dir (G_USER_DIRECTORY_DOWNLOAD);
+      return TRUE;
     }
   if (strcmp (prefix, "xdg-music") == 0)
     {
       if (config_key)
         *config_key = "XDG_MUSIC_DIR";
-      return g_get_user_special_dir (G_USER_DIRECTORY_MUSIC);
+      if (dir)
+        *dir = g_get_user_special_dir (G_USER_DIRECTORY_MUSIC);
+      return TRUE;
     }
   if (strcmp (prefix, "xdg-pictures") == 0)
     {
       if (config_key)
         *config_key = "XDG_PICTURES_DIR";
-      return g_get_user_special_dir (G_USER_DIRECTORY_PICTURES);
+      if (dir)
+        *dir = g_get_user_special_dir (G_USER_DIRECTORY_PICTURES);
+      return TRUE;
     }
   if (strcmp (prefix, "xdg-public-share") == 0)
     {
       if (config_key)
         *config_key = "XDG_PUBLICSHARE_DIR";
-      return g_get_user_special_dir (G_USER_DIRECTORY_PUBLIC_SHARE);
+      if (dir)
+        *dir = g_get_user_special_dir (G_USER_DIRECTORY_PUBLIC_SHARE);
+      return TRUE;
     }
   if (strcmp (prefix, "xdg-templates") == 0)
     {
       if (config_key)
         *config_key = "XDG_TEMPLATES_DIR";
-      return g_get_user_special_dir (G_USER_DIRECTORY_TEMPLATES);
+      if (dir)
+        *dir = g_get_user_special_dir (G_USER_DIRECTORY_TEMPLATES);
+      return TRUE;
     }
   if (strcmp (prefix, "xdg-videos") == 0)
     {
       if (config_key)
         *config_key = "XDG_VIDEOS_DIR";
-      return g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS);
+      if (dir)
+        *dir = g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS);
+      return TRUE;
     }
   /* Don't support xdg-run without suffix, because that doesn't work */
   if (strcmp (prefix, "xdg-run") == 0 &&
@@ -425,7 +442,9 @@ get_user_dir_from_string (const char *filesystem,
     {
       if (config_key)
         *config_key = NULL;
-      return g_get_user_runtime_dir ();
+      if (dir)
+        *dir = g_get_user_runtime_dir ();
+      return TRUE;
     }
 
   return NULL;
@@ -465,7 +484,7 @@ xdg_app_context_verify_filesystem (const char *filesystem_and_mode,
     return TRUE;
   if (strcmp (filesystem, "home") == 0)
     return TRUE;
-  if (get_user_dir_from_string (filesystem, NULL, NULL) != NULL)
+  if (get_user_dir_from_string (filesystem, NULL, NULL, NULL))
     return TRUE;
   if (g_str_has_prefix (filesystem, "~/"))
     return TRUE;
@@ -1510,9 +1529,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
           const char *config_key = NULL;
           g_autofree char *subpath = NULL;
 
-          path = get_user_dir_from_string (filesystem, &config_key, &rest);
-
-          if (path == NULL)
+          if (!get_user_dir_from_string (filesystem, &config_key, &rest, &path))
             {
               g_warning ("Unsupported xdg dir %s\n", filesystem);
               continue;
