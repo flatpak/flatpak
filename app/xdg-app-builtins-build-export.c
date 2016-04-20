@@ -341,26 +341,8 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   mtree = ostree_mutable_tree_new ();
 
-  {
-    g_autoptr(GVariant) dirmeta = NULL;
-    g_autoptr(GFileInfo) file_info = g_file_info_new ();
-    g_autofree guchar *csum;
-    g_autofree char *checksum = NULL;
-
-    g_file_info_set_name (file_info, "/");
-    g_file_info_set_file_type (file_info, G_FILE_TYPE_DIRECTORY);
-    g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
-    g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
-    g_file_info_set_attribute_uint32 (file_info, "unix::mode", 040755);
-
-    dirmeta = ostree_create_directory_metadata (file_info, NULL);
-    if (!ostree_repo_write_metadata (repo, OSTREE_OBJECT_TYPE_DIR_META, NULL,
-                                     dirmeta, &csum, cancellable, error))
-      goto out;
-
-    checksum = ostree_checksum_from_bytes (csum);
-    ostree_mutable_tree_set_metadata_checksum (mtree, checksum);
-  }
+  if (!xdg_app_mtree_create_root (repo, mtree, cancellable, error))
+    goto out;
 
   if (!ostree_mutable_tree_ensure_dir (mtree, "files", &files_mtree, error))
     goto out;

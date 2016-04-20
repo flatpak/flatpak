@@ -183,6 +183,11 @@ gboolean xdg_app_repo_update    (OstreeRepo    *repo,
                                  GCancellable  *cancellable,
                                  GError       **error);
 
+gboolean xdg_app_mtree_create_root (OstreeRepo        *repo,
+                                    OstreeMutableTree *mtree,
+                                    GCancellable      *cancellable,
+                                    GError           **error);
+
 GVariant * xdg_app_bundle_load (GFile *file,
                                 char **commit,
                                 char **ref,

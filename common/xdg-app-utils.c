@@ -1650,6 +1650,34 @@ xdg_app_repo_update (OstreeRepo   *repo,
   return TRUE;
 }
 
+gboolean
+xdg_app_mtree_create_root (OstreeRepo        *repo,
+                           OstreeMutableTree *mtree,
+                           GCancellable      *cancellable,
+                           GError           **error)
+{
+  g_autoptr(GVariant) dirmeta = NULL;
+  g_autoptr(GFileInfo) file_info = g_file_info_new ();
+  g_autofree guchar *csum;
+  g_autofree char *checksum = NULL;
+
+  g_file_info_set_name (file_info, "/");
+  g_file_info_set_file_type (file_info, G_FILE_TYPE_DIRECTORY);
+  g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
+  g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 040755);
+
+  dirmeta = ostree_create_directory_metadata (file_info, NULL);
+  if (!ostree_repo_write_metadata (repo, OSTREE_OBJECT_TYPE_DIR_META, NULL,
+                                   dirmeta, &csum, cancellable, error))
+    return FALSE;
+
+  checksum = ostree_checksum_from_bytes (csum);
+  ostree_mutable_tree_set_metadata_checksum (mtree, checksum);
+
+  return TRUE;
+}
+
 static OstreeRepoCommitFilterResult
 commit_filter (OstreeRepo *repo,
                const char *path,
