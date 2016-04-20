@@ -34,6 +34,8 @@
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
+#define LOCALES_SEPARATE_DIR "share/runtime/locale"
+
 struct BuilderManifest {
   GObject parent;
 
@@ -1625,12 +1627,12 @@ builder_manifest_finish (BuilderManifest *self,
       if (self->build_runtime)
         {
           debuginfo_dir = g_file_resolve_relative_path (app_dir, "usr/lib/debug");
-          locale_parent_dir = g_file_resolve_relative_path (app_dir, "usr/share/runtime/locale");
+          locale_parent_dir = g_file_resolve_relative_path (app_dir, "usr/" LOCALES_SEPARATE_DIR);
         }
       else
         {
           debuginfo_dir = g_file_resolve_relative_path (app_dir, "files/lib/debug");
-          locale_parent_dir = g_file_resolve_relative_path (app_dir, "files/share/runtime/locale");
+          locale_parent_dir = g_file_resolve_relative_path (app_dir, "files/" LOCALES_SEPARATE_DIR);
         }
 
       if (self->separate_locales && g_file_query_exists (locale_parent_dir, NULL))
@@ -1645,9 +1647,10 @@ builder_manifest_finish (BuilderManifest *self,
 
           extension_contents = g_strdup_printf("\n"
                                                "[Extension %s.Locale]\n"
-                                               "directory=share/runtime/locale\n"
+                                               "directory=%s\n"
                                                "subdirectories=true\n",
-                                               self->id);
+                                               self->id,
+                                               LOCALES_SEPARATE_DIR);
 
           output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
           if (output == NULL)
@@ -1781,7 +1784,7 @@ builder_manifest_create_platform (BuilderManifest *self,
           if (!builder_migrate_locale_dirs (root_dir, error))
             return FALSE;
 
-          locale_dir = g_file_resolve_relative_path (root_dir, "share/runtime/locale");
+          locale_dir = g_file_resolve_relative_path (root_dir, LOCALES_SEPARATE_DIR);
         }
 
       if (self->metadata_platform)
@@ -1899,9 +1902,10 @@ builder_manifest_create_platform (BuilderManifest *self,
 
           extension_contents = g_strdup_printf("\n"
                                                "[Extension %s.Locale]\n"
-                                               "directory=share/runtime/locale\n"
+                                               "directory=%s\n"
                                                "subdirectories=true\n",
-                                               self->id_platform);
+                                               self->id_platform,
+                                               LOCALES_SEPARATE_DIR);
 
           output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
           if (output == NULL)
