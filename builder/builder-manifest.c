@@ -1633,7 +1633,7 @@ builder_manifest_finish (BuilderManifest *self,
           locale_parent_dir = g_file_resolve_relative_path (app_dir, "files/share/runtime/locale");
         }
 
-      if (self->separate_locales)
+      if (self->separate_locales && g_file_query_exists (locale_parent_dir, NULL))
         {
           g_autoptr(GFile) metadata_file = NULL;
           g_autofree char *extension_contents = NULL;
@@ -1720,6 +1720,7 @@ builder_manifest_create_platform (BuilderManifest *self,
                                   GError          **error)
 {
   GFile *app_dir = builder_context_get_app_dir (context);
+  g_autoptr(GFile) locale_dir = NULL;
   int i;
 
   if (!self->build_runtime ||
@@ -1779,6 +1780,8 @@ builder_manifest_create_platform (BuilderManifest *self,
 
           if (!builder_migrate_locale_dirs (root_dir, error))
             return FALSE;
+
+          locale_dir = g_file_resolve_relative_path (root_dir, "share/runtime/locale");
         }
 
       if (self->metadata_platform)
@@ -1883,7 +1886,7 @@ builder_manifest_create_platform (BuilderManifest *self,
             }
         }
 
-      if (self->separate_locales)
+      if (self->separate_locales && locale_dir && g_file_query_exists (locale_dir, NULL))
         {
           g_autoptr(GFile) metadata_file = NULL;
           g_autofree char *extension_contents = NULL;
