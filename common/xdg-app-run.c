@@ -447,7 +447,7 @@ get_user_dir_from_string (const char *filesystem,
       return TRUE;
     }
 
-  return NULL;
+  return FALSE;
 }
 
 static char *
