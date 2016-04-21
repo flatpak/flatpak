@@ -625,7 +625,12 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
         goto out;
 
       repodir = g_file_get_child (self->basedir, "repo");
-      repo = ostree_repo_new (repodir);
+      if (self->user)
+        repo = ostree_repo_new (repodir);
+      else
+        repo = g_object_new (OSTREE_TYPE_REPO, "path", repodir,
+                             "remotes-config-dir", XDG_APP_CONFIGDIR "/remotes.d",
+                             NULL);
 
       if (!g_file_query_exists (repodir, cancellable))
         {
