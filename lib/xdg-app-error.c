@@ -21,7 +21,7 @@
 
 #include "config.h"
 
-#include "xdg-app-portal-error.h"
+#include "xdg-app-error.h"
 
 #include <gio/gio.h>
 
@@ -31,4 +31,4 @@
  *
  */
 
-G_DEFINE_QUARK (xdg-app-error-quark, g_io_error)
+G_DEFINE_QUARK (xdg-app-error-quark, xdg_app_error)

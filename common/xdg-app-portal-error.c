@@ -36,7 +36,7 @@ static const GDBusErrorEntry xdg_app_error_entries[] = {
 };
 
 GQuark
-xdg_app_error_quark (void)
+xdg_app_portal_error_quark (void)
 {
   static volatile gsize quark_volatile = 0;
 

@@ -40,7 +40,7 @@ typedef enum {
 
 #define XDG_APP_ERROR xdg_app_error_quark()
 
-GQuark  xdg_app_error_quark      (void);
+XDG_APP_EXTERN GQuark  xdg_app_error_quark      (void);
 
 G_END_DECLS
 
