@@ -628,9 +628,30 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
       if (self->user)
         repo = ostree_repo_new (repodir);
       else
-        repo = g_object_new (OSTREE_TYPE_REPO, "path", repodir,
-                             "remotes-config-dir", XDG_APP_CONFIGDIR "/remotes.d",
-                             NULL);
+        {
+          g_autoptr(GFile) base_dir = NULL;
+          g_autoptr(GFile) cache_dir = NULL;
+          g_autofree char *cache_path = NULL;
+
+          repo = g_object_new (OSTREE_TYPE_REPO, "path", repodir,
+                               "remotes-config-dir", XDG_APP_CONFIGDIR "/remotes.d",
+                               NULL);
+
+          base_dir = xdg_app_get_user_base_dir_location ();
+          cache_dir = g_file_get_child (base_dir, "system-cache");
+          cache_path = g_file_get_path (cache_dir);
+
+          if (g_mkdir_with_parents (cache_path, 0755) != 0)
+            {
+              glnx_set_error_from_errno (error);
+              goto out;
+            }
+
+          if (!ostree_repo_set_cache_dir (repo,
+                                          AT_FDCWD, cache_path,
+                                          cancellable, error))
+            goto out;
+        }
 
       if (!g_file_query_exists (repodir, cancellable))
         {
