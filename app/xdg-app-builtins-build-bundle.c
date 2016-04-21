@@ -93,7 +93,6 @@ read_gpg_data (GCancellable *cancellable,
 static gboolean
 build_bundle (OstreeRepo *repo, GFile *file,
               const char *name, const char *full_branch,
-              GBytes *gpg_data,
               GCancellable *cancellable, GError **error)
 {
   GVariantBuilder metadata_builder;
@@ -101,13 +100,13 @@ build_bundle (OstreeRepo *repo, GFile *file,
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autoptr(GFile) xmls_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
-  g_autoptr(XdgAppXml) xml_root = NULL;
   g_autoptr(GFile) appstream_file = NULL;
   g_autofree char *appstream_basename = NULL;
   g_autoptr(GInputStream) in = NULL;
   g_autoptr(GInputStream) xml_in = NULL;
   g_autoptr(GFile) root = NULL;
   g_autofree char *commit_checksum = NULL;
+  g_autoptr(GBytes) gpg_data = NULL;
 
   if (!ostree_repo_resolve_rev (repo, full_branch, FALSE, &commit_checksum, error))
     return FALSE;
@@ -252,7 +251,6 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GFile) file = NULL;
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
-  g_autoptr(GBytes) gpg_data = NULL;
   const char *location;
   const char *filename;
   const char *name;
@@ -301,7 +299,7 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
-  if (!build_bundle (repo, file, name, full_branch, gpg_data, cancellable, error))
+  if (!build_bundle (repo, file, name, full_branch, cancellable, error))
     return FALSE;
 
   return TRUE;
