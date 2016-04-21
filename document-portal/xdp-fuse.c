@@ -1130,7 +1130,6 @@ xdp_fuse_opendir (fuse_req_t req,
 {
   g_autoptr(XdpInode) inode = NULL;
   struct dirbuf b = {0};
-  g_autoptr (XdgAppDbEntry) entry = NULL;
 
   g_debug ("xdp_fuse_opendir %lx", ino);
 
@@ -1553,7 +1552,6 @@ xdp_fuse_create (fuse_req_t req,
   g_autoptr (XdgAppDbEntry) entry = NULL;
   struct fuse_entry_param e = {0};
   gboolean can_see, can_write;
-  g_autofree char *tmpfile = NULL;
   int open_mode;
   XdpFile *file = NULL;
   XdpInode *inode;
@@ -1962,7 +1960,6 @@ xdp_fuse_unlink (fuse_req_t req,
                  const char *filename)
 {
   g_autoptr(XdpInode) parent_inode = NULL;
-  g_autoptr (XdgAppDbEntry) entry = NULL;
   g_autoptr(XdpInode) child_inode = NULL;
 
   g_debug ("xdp_fuse_unlink %lx/%s", parent, filename);

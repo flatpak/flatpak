@@ -1516,7 +1516,6 @@ xdg_app_repo_collect_sizes (OstreeRepo *repo,
                             GCancellable *cancellable,
                             GError **error)
 {
-  g_autoptr(GFileInfo) local_file_info = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   GFileInfo *child_info_tmp;
   GError *temp_error = NULL;

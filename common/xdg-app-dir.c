@@ -1954,7 +1954,6 @@ xdg_app_dir_deploy (XdgAppDir *self,
   g_autoptr(GFile) files_etc = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autoptr(GFile) export = NULL;
-  g_autoptr(OstreeAsyncProgress) progress = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
   g_auto(GStrv) subpaths = NULL;
 

@@ -1894,7 +1894,6 @@ builder_manifest_create_platform (BuilderManifest *self,
           g_autoptr(GFile) metadata_file = NULL;
           g_autofree char *extension_contents = NULL;
           g_autoptr(GFileOutputStream) output = NULL;
-          g_autoptr(GFile) locale_parent_dir = NULL;
           g_autoptr(GFile) metadata_locale_file = NULL;
           g_autofree char *metadata_contents = NULL;
 
