@@ -2934,29 +2934,15 @@ xdg_app_dir_clone (XdgAppDir *self)
 XdgAppDir *
 xdg_app_dir_get_system (void)
 {
-  static XdgAppDir *system = NULL;
-
-  if (system == NULL)
-    {
-      g_autoptr(GFile) path = xdg_app_get_system_base_dir_location ();
-      system = xdg_app_dir_new (path, FALSE);
-    }
-
-  return g_object_ref (system);
+  g_autoptr(GFile) path = xdg_app_get_system_base_dir_location ();
+  return xdg_app_dir_new (path, FALSE);
 }
 
 XdgAppDir *
 xdg_app_dir_get_user  (void)
 {
-  static XdgAppDir *user = NULL;
-
-  if (user == NULL)
-    {
-      g_autoptr(GFile) path = xdg_app_get_user_base_dir_location ();
-      user = xdg_app_dir_new (path, TRUE);
-    }
-
-  return g_object_ref (user);
+  g_autoptr(GFile) path = xdg_app_get_user_base_dir_location ();
+  return xdg_app_dir_new (path, TRUE);
 }
 
 XdgAppDir *

@@ -81,33 +81,31 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
   g_auto(GStrv) user = NULL;
   g_auto(GStrv) user_app = NULL;
   g_auto(GStrv) user_runtime = NULL;
+  g_autoptr(XdgAppDir) user_dir = NULL;
+  g_autoptr(XdgAppDir) system_dir = NULL;
   int s, u;
 
   if (print_user)
     {
-      g_autoptr(XdgAppDir) dir = NULL;
+      user_dir = xdg_app_dir_get (TRUE);
 
-      dir = xdg_app_dir_get (TRUE);
-
-      if (xdg_app_dir_ensure_repo (dir, cancellable, NULL))
+      if (xdg_app_dir_ensure_repo (user_dir, cancellable, NULL))
         {
-          if (app && !xdg_app_dir_list_refs (dir, "app", &user_app, cancellable, error))
+          if (app && !xdg_app_dir_list_refs (user_dir, "app", &user_app, cancellable, error))
             return FALSE;
-          if (runtime && !xdg_app_dir_list_refs (dir, "runtime", &user_runtime, cancellable, error))
+          if (runtime && !xdg_app_dir_list_refs (user_dir, "runtime", &user_runtime, cancellable, error))
             return FALSE;
         }
     }
 
   if (print_system)
     {
-      g_autoptr(XdgAppDir) dir = NULL;
-
-      dir = xdg_app_dir_get (FALSE);
-      if (xdg_app_dir_ensure_repo (dir, cancellable, NULL))
+      system_dir = xdg_app_dir_get (FALSE);
+      if (xdg_app_dir_ensure_repo (system_dir, cancellable, NULL))
         {
-          if (app && !xdg_app_dir_list_refs (dir, "app", &system_app, cancellable, error))
+          if (app && !xdg_app_dir_list_refs (system_dir, "app", &system_app, cancellable, error))
             return FALSE;
-          if (runtime && !xdg_app_dir_list_refs (dir, "runtime", &system_runtime, cancellable, error))
+          if (runtime && !xdg_app_dir_list_refs (system_dir, "runtime", &system_runtime, cancellable, error))
             return FALSE;
         }
     }
@@ -123,7 +121,7 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
       g_auto(GStrv) parts = NULL;
       g_autofree char *repo = NULL;
       gboolean is_user;
-      g_autoptr(XdgAppDir) dir = NULL;
+      XdgAppDir *dir = NULL;
 
       if (system[s] == NULL)
         is_user = TRUE;
@@ -135,14 +133,19 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
         is_user = TRUE;
 
       if (is_user)
-        ref = user[u++];
+        {
+          ref = user[u++];
+          dir = user_dir;
+        }
       else
-        ref = system[s++];
+        {
+          ref = system[s++];
+          dir = system_dir;
+        }
 
       parts = g_strsplit (ref, "/", -1);
       partial_ref = strchr(ref, '/') + 1;
 
-      dir = xdg_app_dir_get (is_user);
       repo = xdg_app_dir_get_origin (dir, ref, NULL, NULL);
 
       if (opt_show_details)
