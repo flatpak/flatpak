@@ -96,9 +96,6 @@ xdg_app_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);
 
-  if (!xdg_app_supports_bundles (repo))
-    return xdg_app_fail (error, "Your version of ostree is too old to support single-file bundles");
-
   if (!g_file_query_exists (repofile, cancellable))
     return xdg_app_fail (error, "'%s' is not a valid repository", location);
 

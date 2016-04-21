@@ -1161,34 +1161,6 @@ xdg_app_connection_track_name_owners (GDBusConnection *connection)
                                       NULL, NULL);
 }
 
-gboolean
-xdg_app_supports_bundles (OstreeRepo *repo)
-{
-  g_autofree char *tmpfile = g_build_filename (g_get_tmp_dir (), ".xdg-app-test-ostree-XXXXXX", NULL);
-  g_autoptr(GFile) file = NULL;
-  g_autoptr(GError) error = NULL;
-  int fd;
-  gboolean res;
-
-  fd = g_mkstemp (tmpfile);
-  if (fd == -1)
-    return FALSE;
-
-  close (fd);
-
-  res = TRUE;
-
-  file = g_file_new_for_path (tmpfile);
-  if (!ostree_repo_static_delta_execute_offline (repo, file, FALSE, NULL, &error))
-    {
-      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_DIRECTORY))
-        res = FALSE;
-    }
-
-  unlink (tmpfile);
-  return res;
-}
-
 typedef struct
 {
   GError *error;
@@ -2719,9 +2691,6 @@ xdg_app_pull_from_bundle (OstreeRepo *repo,
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GVariant) metadata = NULL;
   gboolean metadata_valid;
-
-  if (!xdg_app_supports_bundles (repo))
-    return xdg_app_fail (error, "Your version of ostree is too old to support single-file bundles");
 
   metadata = xdg_app_bundle_load (file, &to_checksum, NULL, NULL, NULL, NULL, error);
   if (metadata == NULL)
