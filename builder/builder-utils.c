@@ -749,8 +749,8 @@ handle_dwarf2_line (DebuginfoData *data, uint32_t off, char *comp_dir, GHashTabl
       if (s)
         g_hash_table_insert (files, s, NULL);
 
-      read_uleb128 (ptr);
-      read_uleb128 (ptr);
+      (void)read_uleb128 (ptr);
+      (void)read_uleb128 (ptr);
     }
   ++ptr;
 
@@ -865,7 +865,7 @@ handle_attributes (DebuginfoData *data, unsigned char *ptr, struct abbrev_tag *t
             case DW_FORM_sdata:
             case DW_FORM_ref_udata:
             case DW_FORM_udata:
-              read_uleb128 (ptr);
+              (void)read_uleb128 (ptr);
               break;
             case DW_FORM_strp:
               ptr += 4;
