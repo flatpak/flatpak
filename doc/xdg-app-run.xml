@@ -240,6 +240,7 @@
 
                 <listitem><para>
                     Allow the application to own the well known name NAME on the session bus.
+                    If NAME ends with .*, it allows the application to own all matching names.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
                 </para></listitem>
@@ -250,6 +251,29 @@
 
                 <listitem><para>
                     Allow the application to talk to the well known name NAME on the session bus.
+                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system-own-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to own the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to own all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system-talk-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to talk to the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to talk to all matching names.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
                 </para></listitem>
