@@ -2184,40 +2184,56 @@ gboolean
 xdg_app_dir_deploy_update (XdgAppDir      *self,
                            const char     *ref,
                            const char     *checksum_or_latest,
-                           gboolean       *was_updated,
                            GCancellable   *cancellable,
                            GError        **error)
 {
   g_autofree char *previous_deployment = NULL;
   g_autoptr(GError) my_error = NULL;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+
+  if (!xdg_app_dir_lock (self, &lock,
+                         cancellable, error))
+    return FALSE;
 
   previous_deployment = xdg_app_dir_read_active (self, ref, cancellable);
 
-  if (!xdg_app_dir_deploy (self, ref, checksum_or_latest, cancellable, &my_error))
+  if (!xdg_app_dir_deploy (self, ref, checksum_or_latest,
+                           cancellable, &my_error))
     {
-      if (g_error_matches (my_error, XDG_APP_DIR_ERROR, XDG_APP_DIR_ERROR_ALREADY_DEPLOYED))
-        {
-          if (was_updated)
-            *was_updated = FALSE;
-          return TRUE;
-        }
+      if (g_error_matches (my_error, XDG_APP_DIR_ERROR,
+                           XDG_APP_DIR_ERROR_ALREADY_DEPLOYED))
+        return TRUE;
 
       g_propagate_error (error, my_error);
       return FALSE;
     }
-  else
-    {
-      if (was_updated)
-        *was_updated = TRUE;
 
-      if (previous_deployment != NULL)
-        {
-          if (!xdg_app_dir_undeploy (self, ref, previous_deployment,
-                                     FALSE,
-                                     cancellable, error))
-            return FALSE;
-        }
+  if (previous_deployment != NULL)
+    {
+      if (!xdg_app_dir_undeploy (self, ref, previous_deployment,
+                                 FALSE,
+                                 cancellable, error))
+        return FALSE;
     }
+
+  if (g_str_has_prefix (ref, "app/"))
+    {
+      g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
+
+      if (!xdg_app_dir_update_exports (self, ref_parts[1], cancellable, error))
+        return FALSE;
+    }
+
+  /* Release lock before doing prune */
+  glnx_release_lock_file (&lock);
+
+  if (!xdg_app_dir_prune (self, cancellable, error))
+    return FALSE;
+
+  if (!xdg_app_dir_mark_changed (self, error))
+    return FALSE;
+
+  xdg_app_dir_cleanup_removed (self, cancellable, NULL);
 
   return TRUE;
 }

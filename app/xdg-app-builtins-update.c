@@ -78,9 +78,7 @@ do_update (XdgAppDir* dir,
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
   g_auto(GStrv) subpaths = NULL;
-  gboolean was_updated = FALSE;
   gboolean is_app;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   ref = xdg_app_dir_find_installed_ref (dir,
                                         name,
@@ -108,28 +106,7 @@ do_update (XdgAppDir* dir,
 
   if (!opt_no_deploy)
     {
-      if (!xdg_app_dir_lock (dir, &lock,
-                             cancellable, error))
-        return FALSE;
-
-      if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, &was_updated, cancellable, error))
-        return FALSE;
-
-      if (was_updated && is_app)
-        {
-          if (!xdg_app_dir_update_exports (dir, name, cancellable, error))
-            return FALSE;
-        }
-
-      glnx_release_lock_file (&lock);
-    }
-
-  if (was_updated)
-    {
-      if (!xdg_app_dir_prune (dir, cancellable, error))
-        return FALSE;
-
-      if (!xdg_app_dir_mark_changed (dir, error))
+      if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, cancellable, error))
         return FALSE;
     }
 

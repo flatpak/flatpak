@@ -1092,8 +1092,6 @@ xdg_app_installation_update (XdgAppInstallation  *self,
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autofree char *remote_name = NULL;
   XdgAppInstalledRef *result = NULL;
-  gboolean was_updated = FALSE;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_auto(GStrv) subpaths = NULL;
 
   ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, branch, arch, error);
@@ -1140,34 +1138,12 @@ xdg_app_installation_update (XdgAppInstallation  *self,
 
   if ((flags & XDG_APP_UPDATE_FLAGS_NO_DEPLOY) == 0)
     {
-      if (!xdg_app_dir_lock (dir_clone, &lock,
-                             cancellable, error))
+      if (!xdg_app_dir_deploy_update (dir_clone, ref, NULL,
+                                      cancellable, error))
         goto out;
-
-      if (!xdg_app_dir_deploy_update (dir_clone, ref, NULL, &was_updated, cancellable, error))
-        return FALSE;
-
-      if (was_updated && kind == XDG_APP_REF_KIND_APP)
-        {
-          if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
-            goto out;
-        }
     }
 
   result = get_ref (self, ref, cancellable);
-
-  glnx_release_lock_file (&lock);
-
-  if (was_updated)
-    {
-      if (!xdg_app_dir_prune (dir_clone, cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_mark_changed (dir_clone, error))
-        goto out;
-    }
-
-  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
 
  out:
   if (main_context)
