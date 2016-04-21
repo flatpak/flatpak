@@ -812,7 +812,6 @@ xdg_app_installation_install_bundle (XdgAppInstallation  *self,
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
-  gboolean created_deploy_base = FALSE;
   gboolean added_remote = FALSE;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDir) dir_clone = NULL;
@@ -880,50 +879,12 @@ xdg_app_installation_install_bundle (XdgAppInstallation  *self,
                                  error))
     goto out;
 
-  if (!xdg_app_dir_lock (dir_clone, &lock,
-                         cancellable, error))
+  if (!xdg_app_dir_deploy_install (dir_clone, ref, remote, NULL, cancellable, error))
     goto out;
-
-  if (!g_file_make_directory_with_parents (deploy_base, cancellable, &local_error))
-    {
-      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
-        g_set_error (error,
-                     XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
-                     "%s branch %s already installed", parts[1], parts[3]);
-      else
-        g_propagate_error (error, g_steal_pointer (&local_error));
-      goto out;
-    }
-
-  created_deploy_base = TRUE;
-
-  if (!xdg_app_dir_set_origin (dir_clone, ref, remote, cancellable, error))
-    goto out;
-
-  if (!xdg_app_dir_deploy (dir_clone, ref, NULL, cancellable, error))
-    goto out;
-
-  if (strcmp (parts[0], "app") == 0)
-    {
-      if (!xdg_app_dir_make_current_ref (dir_clone, ref, cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_update_exports (dir_clone, parts[1], cancellable, error))
-        goto out;
-    }
 
   result = get_ref (self, ref, cancellable);
 
-  glnx_release_lock_file (&lock);
-
-  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
-
-  if (!xdg_app_dir_mark_changed (dir_clone, error))
-    goto out;
-
  out:
-  if (created_deploy_base && result == NULL)
-    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
 
   if (added_remote && result == NULL)
     ostree_repo_remote_delete (xdg_app_dir_get_repo (priv->dir), remote, NULL, NULL);
@@ -962,7 +923,6 @@ xdg_app_installation_install (XdgAppInstallation  *self,
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
-  gboolean created_deploy_base = FALSE;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
@@ -1002,52 +962,15 @@ xdg_app_installation_install (XdgAppInstallation  *self,
                          ostree_progress, cancellable, error))
     goto out;
 
-  if (!xdg_app_dir_lock (dir_clone, &lock,
-                         cancellable, error))
+  if (!xdg_app_dir_deploy_install (dir_clone, ref, remote_name, NULL,
+                                   cancellable, error))
     goto out;
-
-  if (!g_file_make_directory_with_parents (deploy_base, cancellable, &local_error))
-    {
-      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
-        g_set_error (error,
-                     XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
-                     "%s branch %s already installed", name, branch ? branch : "master");
-      else
-        g_propagate_error (error, g_steal_pointer (&local_error));
-      goto out;
-    }
-  created_deploy_base = TRUE;
-
-  if (!xdg_app_dir_set_origin (dir_clone, ref, remote_name, cancellable, error))
-    goto out;
-
-  if (!xdg_app_dir_deploy (dir_clone, ref, NULL, cancellable, error))
-    goto out;
-
-  if (kind == XDG_APP_REF_KIND_APP)
-    {
-      if (!xdg_app_dir_make_current_ref (dir_clone, ref, cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
-        goto out;
-    }
 
   result = get_ref (self, ref, cancellable);
-
-  glnx_release_lock_file (&lock);
-
-  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
-
-  if (!xdg_app_dir_mark_changed (dir_clone, error))
-    goto out;
 
  out:
   if (main_context)
     g_main_context_pop_thread_default (main_context);
-
-  if (created_deploy_base && result == NULL)
-    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
 
   if (ostree_progress)
     ostree_async_progress_finish (ostree_progress);

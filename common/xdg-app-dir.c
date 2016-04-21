@@ -2181,6 +2181,80 @@ xdg_app_dir_deploy (XdgAppDir *self,
 }
 
 gboolean
+xdg_app_dir_deploy_install (XdgAppDir      *self,
+                            const char     *ref,
+                            const char     *origin,
+                            char          **subpaths,
+                            GCancellable   *cancellable,
+                            GError        **error)
+{
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_autoptr(GFile) deploy_base = NULL;
+  gboolean created_deploy_base = FALSE;
+  gboolean ret = FALSE;
+  g_autoptr(GError) local_error = NULL;
+  g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
+
+  if (!xdg_app_dir_lock (self, &lock,
+                         cancellable, error))
+    goto out;
+
+  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
+  if (!g_file_make_directory_with_parents (deploy_base, cancellable, &local_error))
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+        g_set_error (error,
+                     G_IO_ERROR, G_IO_ERROR_EXISTS,
+                     "%s branch %s already installed",
+                     ref_parts[1], ref_parts[3]);
+      else
+        g_propagate_error (error, g_steal_pointer (&local_error));
+
+      goto out;
+    }
+
+  /* After we create the deploy base we must goto out on errors */
+  created_deploy_base = TRUE;
+
+  if (!xdg_app_dir_set_origin (self, ref, origin, cancellable, error))
+    goto out;
+
+  if (!xdg_app_dir_set_subpaths (self, ref, (const char **)subpaths,
+                                 cancellable, error))
+    goto out;
+
+  if (!xdg_app_dir_deploy (self, ref, NULL, cancellable, error))
+    goto out;
+
+  if (g_str_has_prefix (ref, "app/"))
+    {
+
+      if (!xdg_app_dir_make_current_ref (self, ref, cancellable, error))
+        goto out;
+
+      if (!xdg_app_dir_update_exports (self, ref_parts[1], cancellable, error))
+        goto out;
+    }
+
+  /* Release lock before doing possibly slow prune */
+  glnx_release_lock_file (&lock);
+
+  xdg_app_dir_cleanup_removed (self, cancellable, NULL);
+
+  if (!xdg_app_dir_mark_changed (self, error))
+    goto out;
+
+  ret = TRUE;
+
+ out:
+  if (created_deploy_base && !ret)
+    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
+
+  return ret;
+}
+
+
+gboolean
 xdg_app_dir_deploy_update (XdgAppDir      *self,
                            const char     *ref,
                            const char     *checksum_or_latest,
@@ -2224,7 +2298,7 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
         return FALSE;
     }
 
-  /* Release lock before doing prune */
+  /* Release lock before doing possibly slow prune */
   glnx_release_lock_file (&lock);
 
   if (!xdg_app_dir_prune (self, cancellable, error))

@@ -110,14 +110,12 @@ install_bundle (XdgAppDir *dir,
   const char *filename;
   g_autofree char *ref = NULL;
   g_autofree char *origin = NULL;
-  gboolean created_deploy_base = FALSE;
   gboolean added_remote = FALSE;
   g_autofree char *to_checksum = NULL;
   g_auto(GStrv) parts = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   g_autofree char *remote = NULL;
   OstreeRepo *repo;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *basename = NULL;
 
@@ -183,43 +181,12 @@ install_bundle (XdgAppDir *dir,
                                  error))
     goto out;
 
-  if (!xdg_app_dir_lock (dir, &lock,
-                         cancellable, error))
-    return FALSE;
-
-  if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
-    goto out;
-
-  created_deploy_base = TRUE;
-
-  if (!xdg_app_dir_set_origin (dir, ref, remote, cancellable, error))
-    goto out;
-
-  if (!xdg_app_dir_deploy (dir, ref, to_checksum, cancellable, error))
-    goto out;
-
-  if (strcmp (parts[0], "app") == 0)
-    {
-      if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_update_exports (dir, parts[1], cancellable, error))
-        goto out;
-    }
-
-  glnx_release_lock_file (&lock);
-
-  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
-
-  if (!xdg_app_dir_mark_changed (dir, error))
+  if (!xdg_app_dir_deploy_install (dir, ref, remote, NULL, cancellable, error))
     goto out;
 
   ret = TRUE;
 
  out:
-  if (created_deploy_base && !ret)
-    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
-
   if (added_remote && !ret)
     ostree_repo_remote_delete (repo, remote, NULL, NULL);
 
@@ -229,7 +196,6 @@ install_bundle (XdgAppDir *dir,
 gboolean
 xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
@@ -239,8 +205,6 @@ xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autofree char *ref = NULL;
   g_autofree char *installed_ref = NULL;
   gboolean is_app;
-  gboolean created_deploy_base = FALSE;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autoptr(GError) my_error = NULL;
 
   context = g_option_context_new ("REPOSITORY NAME [BRANCH] - Install an application or runtime");
@@ -296,52 +260,14 @@ xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
         return FALSE;
     }
 
-  /* After we create the deploy base we must goto out on errors */
-
   if (!opt_no_deploy)
     {
-      if (!xdg_app_dir_lock (dir, &lock,
-                             cancellable, error))
-        goto out;
-
-      if (!g_file_make_directory_with_parents (deploy_base, cancellable, error))
-        goto out;
-      created_deploy_base = TRUE;
-
-      if (!xdg_app_dir_set_origin (dir, ref, repository, cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_set_subpaths (dir, ref, (const char **)opt_subpaths,
-                                     cancellable, error))
-        goto out;
-
-      if (!xdg_app_dir_deploy (dir, ref, NULL, cancellable, error))
-        goto out;
-
-      if (is_app)
-        {
-          if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
-            goto out;
-
-          if (!xdg_app_dir_update_exports (dir, name, cancellable, error))
-            goto out;
-        }
-
-      glnx_release_lock_file (&lock);
+      if (!xdg_app_dir_deploy_install (dir, ref, repository, opt_subpaths,
+                                       cancellable, error))
+        return FALSE;
     }
 
-  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
-
-  if (!xdg_app_dir_mark_changed (dir, error))
-    goto out;
-
-  ret = TRUE;
-
- out:
-  if (created_deploy_base && !ret)
-    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
-
-  return ret;
+  return TRUE;
 }
 
 gboolean
