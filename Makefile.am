@@ -64,6 +64,7 @@ include app/Makefile.am.inc
 include lib/Makefile.am.inc
 include builder/Makefile.am.inc
 include session-helper/Makefile.am.inc
+include system-helper/Makefile.am.inc
 include dbus-proxy/Makefile.am.inc
 include document-portal/Makefile.am.inc
 include Makefile.gtester

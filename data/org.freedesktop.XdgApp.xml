@@ -82,4 +82,10 @@
     </signal>
   </interface>
 
+  <interface name='org.freedesktop.XdgApp.SystemHelper'>
+    <method name="Deploy">
+      <arg type='ay' name='path' direction='in'/>
+    </method>
+  </interface>
+
 </node>

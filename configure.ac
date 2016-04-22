@@ -77,6 +77,15 @@ AC_ARG_WITH([systemduserunitdir],
     [with_systemduserunitdir='${prefix}/lib/systemd/user'])
 AC_SUBST([systemduserunitdir], [$with_systemduserunitdir])
 
+AC_ARG_WITH([systemdsystemunitdir],
+            [AS_HELP_STRING([--with-systemdsystemunitdir=DIR],
+                            [Directory for systemd system service files (default=PREFIX/lib/systemd/system)])],
+    [],
+    dnl This is deliberately not ${libdir}: systemd units always go in
+    dnl .../lib, never .../lib64 or .../lib/x86_64-linux-gnu
+    [with_systemdsystemunitdir='${prefix}/lib/systemd/system'])
+AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
+
 AC_ARG_WITH(system_fonts_dir,
 		AS_HELP_STRING([--with-system-fonts-dir=PATH],[Directory where system fonts are, [default=/usr/share/fonts]]),
             with_system_fonts_dir="$withval", with_system_fonts_dir=/usr/share/fonts)
