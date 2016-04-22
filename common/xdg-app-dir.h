@@ -23,6 +23,7 @@
 
 #include <ostree.h>
 
+#include "libglnx/libglnx.h"
 #include <xdg-app-common-types.h>
 
 #define XDG_APP_TYPE_DIR xdg_app_dir_get_type()
@@ -134,6 +135,9 @@ OstreeRepo *xdg_app_dir_get_repo        (XdgAppDir      *self);
 gboolean    xdg_app_dir_ensure_path     (XdgAppDir      *self,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_use_child_repo  (XdgAppDir     *self);
+gboolean    xdg_app_dir_ensure_system_child_repo (XdgAppDir *self,
+                                                  GError **error);
 gboolean    xdg_app_dir_ensure_repo     (XdgAppDir      *self,
                                          GCancellable   *cancellable,
                                          GError        **error);

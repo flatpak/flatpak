@@ -44,6 +44,9 @@ struct XdgAppDir {
   GFile *basedir;
   OstreeRepo *repo;
 
+  OstreeRepo *child_repo;
+  GLnxLockFile child_repo_lock;
+
   SoupSession *soup_session;
 };
 
@@ -163,6 +166,119 @@ xdg_app_get_user_base_dir_location (void)
   return g_file_new_for_path (base);
 }
 
+GFile *
+xdg_app_get_user_cache_dir_location (void)
+{
+  g_autoptr(GFile) base_dir = NULL;
+
+  base_dir = xdg_app_get_user_base_dir_location ();
+  return g_file_get_child (base_dir, "system-cache");
+}
+
+GFile *
+xdg_app_ensure_user_cache_dir_location (GError **error)
+{
+  g_autoptr(GFile) cache_dir = NULL;
+  g_autofree char *cache_path = NULL;
+
+  cache_dir = xdg_app_get_user_cache_dir_location ();
+  cache_path = g_file_get_path (cache_dir);
+
+  if (g_mkdir_with_parents (cache_path, 0755) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return NULL;
+    }
+
+  return g_steal_pointer (&cache_dir);
+}
+
+gboolean
+xdg_app_dir_use_child_repo (XdgAppDir *self)
+{
+  return !self->user && getuid () != 0;
+}
+
+static OstreeRepo *
+system_ostree_repo_new (GFile *repodir)
+{
+  return g_object_new (OSTREE_TYPE_REPO, "path", repodir,
+                       "remotes-config-dir", XDG_APP_CONFIGDIR "/remotes.d",
+                       NULL);
+}
+
+gboolean
+xdg_app_dir_ensure_system_child_repo (XdgAppDir *self,
+                                      GError **error)
+{
+  g_autoptr(GFile) cache_dir = NULL;
+  g_autoptr(GFile) repo_dir = NULL;
+  g_autoptr(GFile) repo_dir_config = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
+  g_autofree char *tmpdir_name = NULL;
+  g_auto(GLnxLockFile) file_lock = GLNX_LOCK_FILE_INIT;
+  GLnxLockFile empty_lockfile = GLNX_LOCK_FILE_INIT;
+  g_autoptr(OstreeRepo) new_repo = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+
+  g_assert (!self->user);
+
+  if (self->child_repo != NULL)
+    return TRUE;
+
+  if (!xdg_app_dir_ensure_repo (self, NULL, error))
+    return FALSE;
+
+  cache_dir = xdg_app_ensure_user_cache_dir_location (error);
+  if (cache_dir == NULL)
+    return FALSE;
+
+  if (!xdg_app_allocate_tmpdir (AT_FDCWD,
+                                gs_file_get_path_cached (cache_dir),
+                                "repo-", &tmpdir_name,
+                                NULL,
+                                &file_lock,
+                                NULL,
+                                NULL, error))
+    return FALSE;
+
+  repo_dir = g_file_get_child (cache_dir, tmpdir_name);
+
+  new_repo = ostree_repo_new (repo_dir);
+
+  repo_dir_config = g_file_get_child (repo_dir, "config");
+  if (!g_file_query_exists (repo_dir_config, NULL))
+    {
+      if (!ostree_repo_create (new_repo,
+                               OSTREE_REPO_MODE_BARE_USER,
+                               NULL, error))
+        return FALSE;
+    }
+  else
+    {
+      if (!ostree_repo_open (new_repo, NULL, error))
+        return FALSE;
+    }
+
+  /* Ensure the config is updated */
+  config = ostree_repo_copy_config (new_repo);
+  g_key_file_set_string (config, "core", "parent",
+                         gs_file_get_path_cached (ostree_repo_get_path (self->repo)));
+
+  if (!ostree_repo_write_config (new_repo, config, error))
+    return FALSE;
+
+  /* We need to reopen to apply the parent config */
+  repo = system_ostree_repo_new (repo_dir);
+  if (!ostree_repo_open (repo, NULL, error))
+    return FALSE;
+
+  self->child_repo = g_steal_pointer (&repo);
+  self->child_repo_lock = file_lock;
+  file_lock = empty_lockfile;
+  return TRUE;
+}
+
 static void
 xdg_app_dir_finalize (GObject *object)
 {
@@ -170,6 +286,9 @@ xdg_app_dir_finalize (GObject *object)
 
   g_clear_object (&self->repo);
   g_clear_object (&self->basedir);
+
+  g_clear_object (&self->child_repo);
+  glnx_release_lock_file (&self->child_repo_lock);
 
   g_clear_object (&self->soup_session);
 
@@ -249,6 +368,8 @@ xdg_app_dir_class_init (XdgAppDirClass *klass)
 static void
 xdg_app_dir_init (XdgAppDir *self)
 {
+  GLnxLockFile empty_lockfile = GLNX_LOCK_FILE_INIT;
+  self->child_repo_lock = empty_lockfile;
 }
 
 gboolean
@@ -629,24 +750,16 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
         repo = ostree_repo_new (repodir);
       else
         {
-          g_autoptr(GFile) base_dir = NULL;
           g_autoptr(GFile) cache_dir = NULL;
           g_autofree char *cache_path = NULL;
 
-          repo = g_object_new (OSTREE_TYPE_REPO, "path", repodir,
-                               "remotes-config-dir", XDG_APP_CONFIGDIR "/remotes.d",
-                               NULL);
+          repo = system_ostree_repo_new (repodir);
 
-          base_dir = xdg_app_get_user_base_dir_location ();
-          cache_dir = g_file_get_child (base_dir, "system-cache");
+          cache_dir = xdg_app_ensure_user_cache_dir_location (error);
+          if (cache_dir == NULL)
+            goto out;
+
           cache_path = g_file_get_path (cache_dir);
-
-          if (g_mkdir_with_parents (cache_path, 0755) != 0)
-            {
-              glnx_set_error_from_errno (error);
-              goto out;
-            }
-
           if (!ostree_repo_set_cache_dir (repo,
                                           AT_FDCWD, cache_path,
                                           cancellable, error))
@@ -940,6 +1053,8 @@ xdg_app_dir_pull (XdgAppDir *self,
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   const char *refs[2];
   g_autofree char *url = NULL;
+  OstreeRepo *repo;
+  OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_NONE;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -953,6 +1068,19 @@ xdg_app_dir_pull (XdgAppDir *self,
   if (*url == 0)
     return TRUE; /* Empty url, silently disables updates */
 
+  if (xdg_app_dir_use_child_repo (self))
+    {
+      if (!xdg_app_dir_ensure_system_child_repo (self, error))
+        return FALSE;
+
+      repo = self->child_repo;
+      flags |= OSTREE_REPO_PULL_FLAGS_MIRROR;
+    }
+  else
+    {
+      repo = self->repo;
+    }
+
   if (progress == NULL)
     {
       console = gs_console_get ();
@@ -964,13 +1092,14 @@ xdg_app_dir_pull (XdgAppDir *self,
         }
     }
 
+
   refs[0] = ref;
   refs[1] = NULL;
 
   if (subpaths == NULL || subpaths[0] == NULL)
     {
-      if (!ostree_repo_pull (self->repo, repository,
-                             (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
+      if (!ostree_repo_pull (repo, repository,
+                             (char **)refs, flags,
                              progress,
                              cancellable, error))
         {
@@ -982,9 +1111,9 @@ xdg_app_dir_pull (XdgAppDir *self,
     {
       int i;
 
-      if (!repo_pull_one_dir (self->repo, repository,
+      if (!repo_pull_one_dir (repo, repository,
                               "/metadata",
-                              (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
+                              (char **)refs, flags,
                               progress,
                               cancellable, error))
         {
@@ -996,9 +1125,9 @@ xdg_app_dir_pull (XdgAppDir *self,
       for (i = 0; subpaths[i] != NULL; i++)
         {
           g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
-          if (!repo_pull_one_dir (self->repo, repository,
+          if (!repo_pull_one_dir (repo, repository,
                                   subpath,
-                                  (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
+                                  (char **)refs, flags,
                                   progress,
                                   cancellable, error))
             {
