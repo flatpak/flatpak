@@ -48,6 +48,13 @@ typedef enum {
   XDG_APP_DIR_ERROR_NOT_DEPLOYED,
 } XdgAppDirErrorEnum;
 
+typedef enum {
+  XDG_APP_HELPER_DEPLOY_FLAGS_NONE = 0,
+  XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE = 1<<0,
+} XdgAppHelperDeployFlags;
+
+#define XDG_APP_HELPER_DEPLOY_FLAGS_ALL (XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE)
+
 GQuark       xdg_app_dir_error_quark      (void);
 
 GFile *  xdg_app_get_system_base_dir_location (void);
@@ -220,6 +227,7 @@ gboolean    xdg_app_dir_deploy          (XdgAppDir      *self,
                                          GError        **error);
 gboolean    xdg_app_dir_deploy_update   (XdgAppDir      *self,
                                          const char     *ref,
+                                         const char     *origin,
                                          const char     *checksum,
                                          GCancellable   *cancellable,
                                          GError        **error);

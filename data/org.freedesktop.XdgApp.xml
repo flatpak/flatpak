@@ -84,7 +84,11 @@
 
   <interface name='org.freedesktop.XdgApp.SystemHelper'>
     <method name="Deploy">
-      <arg type='ay' name='path' direction='in'/>
+      <arg type='ay' name='repo_path' direction='in'/>
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='ref' direction='in'/>
+      <arg type='s' name='origin' direction='in'/>
+      <arg type='as' name='subpaths' direction='in'/>
     </method>
   </interface>
 

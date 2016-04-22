@@ -106,7 +106,7 @@ do_update (XdgAppDir* dir,
 
   if (!opt_no_deploy)
     {
-      if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, cancellable, error))
+      if (!xdg_app_dir_deploy_update (dir, ref, repository, opt_commit, cancellable, error))
         return FALSE;
     }
 

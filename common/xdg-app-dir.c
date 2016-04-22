@@ -79,6 +79,8 @@ enum {
   PROP_PATH
 };
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppSystemHelper, g_object_unref)
+
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
 
@@ -2541,6 +2543,41 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
   g_autoptr(GError) local_error = NULL;
   g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
 
+  if (self->child_repo)
+    {
+      char *empty_subpaths[] = {NULL};
+      g_autoptr(XdgAppSystemHelper) helper = NULL;
+
+      helper = xdg_app_system_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                                             G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
+                                                             G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                             "org.freedesktop.XdgApp.SystemHelper",
+                                                             "/org/freedesktop/XdgApp/SystemHelper",
+                                                             cancellable,
+                                                             error);
+      if (helper == NULL)
+        return FALSE;
+
+      if (!xdg_app_system_helper_call_deploy_sync (helper,
+                                                   gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
+                                                   XDG_APP_HELPER_DEPLOY_FLAGS_NONE,
+                                                   ref,
+                                                   origin,
+                                                   (const char *const *)(subpaths ? subpaths : empty_subpaths),
+                                                   cancellable,
+                                                   error))
+        return FALSE;
+
+      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
+                                   gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
+                                   NULL, NULL);
+
+      g_clear_object (&self->child_repo);
+      glnx_release_lock_file (&self->child_repo_lock);
+
+      return TRUE;
+    }
+
   if (!xdg_app_dir_lock (self, &lock,
                          cancellable, error))
     goto out;
@@ -2603,6 +2640,7 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
 gboolean
 xdg_app_dir_deploy_update (XdgAppDir      *self,
                            const char     *ref,
+                           const char     *remote_name,
                            const char     *checksum_or_latest,
                            GCancellable   *cancellable,
                            GError        **error)
@@ -2610,6 +2648,54 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
   g_autofree char *previous_deployment = NULL;
   g_autoptr(GError) my_error = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+
+  if (self->child_repo)
+    {
+      char *empty_subpaths[] = {NULL};
+      g_autofree char *pulled_checksum = NULL;
+      g_autofree char *active_checksum = NULL;
+      g_autofree char *remote_and_ref = NULL;
+      g_autoptr(XdgAppSystemHelper) helper = NULL;
+
+      if (checksum_or_latest != NULL)
+        return xdg_app_fail (error, "Can't update to a specific commit without root permissions");
+
+      if (!ostree_repo_resolve_rev (self->child_repo, ref, FALSE, &pulled_checksum, error))
+        return FALSE;
+
+      active_checksum = xdg_app_dir_read_active (self, ref, NULL);
+      if (active_checksum == NULL || strcmp (active_checksum, pulled_checksum) != 0)
+        {
+          helper = xdg_app_system_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                                                 G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
+                                                                 G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                                 "org.freedesktop.XdgApp.SystemHelper",
+                                                                 "/org/freedesktop/XdgApp/SystemHelper",
+                                                                 cancellable,
+                                                                 error);
+          if (helper == NULL)
+            return FALSE;
+
+          if (!xdg_app_system_helper_call_deploy_sync (helper,
+                                                       gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
+                                                       XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE,
+                                                       ref,
+                                                       remote_name,
+                                                       (const char *const *)empty_subpaths,
+                                                       cancellable,
+                                                       error))
+            return FALSE;
+        }
+
+      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
+                                   gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
+                                   NULL, NULL);
+
+      g_clear_object (&self->child_repo);
+      glnx_release_lock_file (&self->child_repo_lock);
+
+      return TRUE;
+    }
 
   if (!xdg_app_dir_lock (self, &lock,
                          cancellable, error))
@@ -3189,7 +3275,7 @@ xdg_app_dir_find_remote_ref (XdgAppDir      *self,
       return NULL;
     }
 
-  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE);
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
   refs = g_variant_get_child_value (summary, 0);
 
   if (app_ref && xdg_app_summary_lookup_ref (summary, app_ref, NULL))

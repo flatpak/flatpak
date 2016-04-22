@@ -30,5 +30,5 @@ xdg_app_system_helper_SOURCES = \
 	system-helper/xdg-app-resources.c	\
 	$(NULL)
 
-xdg_app_system_helper_LDADD = $(BASE_LIBS) libxdgapp-common.la
-xdg_app_system_helper_CFLAGS = $(BASE_CFLAGS)
+xdg_app_system_helper_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) libxdgapp-common.la
+xdg_app_system_helper_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS)

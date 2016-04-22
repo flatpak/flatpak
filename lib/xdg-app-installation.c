@@ -1061,7 +1061,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
 
   if ((flags & XDG_APP_UPDATE_FLAGS_NO_DEPLOY) == 0)
     {
-      if (!xdg_app_dir_deploy_update (dir_clone, ref, NULL,
+      if (!xdg_app_dir_deploy_update (dir_clone, ref, remote_name, NULL,
                                       cancellable, error))
         goto out;
     }

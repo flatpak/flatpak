@@ -26,13 +26,115 @@
 #include <gio/gio.h>
 
 #include "xdg-app-dbus.h"
+#include "xdg-app-dir.h"
 
 static GDBusNodeInfo *introspection_data = NULL;
 
-void
-handle_deploy (void)
+static gboolean
+handle_deploy (XdgAppSystemHelper *object,
+               GDBusMethodInvocation *invocation,
+               const gchar *arg_repo_path,
+               guint32 arg_flags,
+               const gchar *arg_ref,
+               const gchar *arg_origin,
+               const gchar *const *arg_subpaths)
 {
-  g_print ("deploy!");
+  g_autoptr(XdgAppDir) system = xdg_app_dir_get_system ();
+  g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GFile) deploy_dir = NULL;
+  gboolean is_update;
+
+  is_update = (arg_flags & XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
+
+  if ((arg_flags & ~XDG_APP_HELPER_DEPLOY_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~XDG_APP_HELPER_DEPLOY_FLAGS_ALL));
+    }
+
+  if (!g_file_query_exists (path, NULL))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Path does not exist");
+      return TRUE;
+    }
+
+  deploy_dir = xdg_app_dir_get_if_deployed (system, arg_ref,
+                                            NULL, NULL);
+
+  if (deploy_dir)
+    {
+      g_autofree char *real_origin = NULL;
+      if (!is_update)
+        {
+          /* Can't install already installed app */
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "%s is already installed", arg_ref);
+          return TRUE;
+        }
+
+      real_origin = xdg_app_dir_get_origin (system, arg_ref, NULL, NULL);
+      if (real_origin == NULL || strcmp (real_origin, arg_origin) != 0)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Wrong origin %s for update", arg_origin);
+          return TRUE;
+        }
+    }
+  else if (!deploy_dir && is_update)
+    {
+      /* Can't update not installed app */
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "%s is not installed", arg_ref);
+      return TRUE;
+    }
+
+  if (!xdg_app_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Can't open system repo %s", error->message);
+      return TRUE;
+    }
+
+  if (!xdg_app_dir_pull_untrusted_local (system, arg_repo_path,
+                                         arg_origin,
+                                         arg_ref,
+                                         (char **)arg_subpaths,
+                                         NULL,
+                                         NULL, &error))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Error pulling from repo: %s", error->message);
+      return TRUE;
+    }
+
+  if (is_update)
+    {
+      /* TODO: This doesn't support a custom subpath */
+      if (!xdg_app_dir_deploy_update (system, arg_ref, arg_origin,
+                                       NULL,
+                                      NULL, &error))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Error deploying: %s", error->message);
+          return TRUE;
+        }
+    }
+  else
+    {
+      if (!xdg_app_dir_deploy_install (system, arg_ref, arg_origin,
+                                       (char **)arg_subpaths,
+                                       NULL, &error))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Error deploying: %s", error->message);
+          return TRUE;
+        }
+    }
+
+  xdg_app_system_helper_complete_deploy (object, invocation);
+
+  return TRUE;
 }
 
 static void
