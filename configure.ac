@@ -26,6 +26,8 @@ AC_INIT([xdg-app],[xdg_app_version])
 
 AC_USE_SYSTEM_EXTENSIONS
 
+IT_PROG_INTLTOOL([0.35.0])
+
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC
@@ -38,6 +40,12 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.11 no-define no-dist-gzip dist-xz tar-ustar foreign subdir-objects])
 AC_PROG_SED
+
+GETTEXT_PACKAGE=XdgApp
+AC_SUBST([GETTEXT_PACKAGE])
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
+
+AM_GLIB_GNU_GETTEXT
 
 # Enable silent rules is available
 AM_SILENT_RULES([yes])
@@ -331,5 +339,6 @@ doc/reference/Makefile
 xdg-app.pc
 lib/xdg-app-version-macros.h
 doc/reference/version.xml
+po/Makefile.in
 ])
 AC_OUTPUT
