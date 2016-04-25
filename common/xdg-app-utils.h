@@ -48,6 +48,9 @@ GBytes * xdg_app_read_stream (GInputStream *in,
 gboolean xdg_app_variant_bsearch_str (GVariant   *array,
                                       const char *str,
                                       int        *out_pos);
+gboolean xdg_app_summary_lookup_ref (GVariant *summary,
+                                     const char *ref,
+                                     char **out_checksum);
 
 gboolean xdg_app_has_name_prefix (const char *string,
                                   const char *name);

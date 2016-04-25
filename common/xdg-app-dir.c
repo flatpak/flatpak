@@ -2791,7 +2791,6 @@ xdg_app_dir_find_remote_ref (XdgAppDir      *self,
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) refs = NULL;
   g_autoptr(GBytes) summary_bytes = NULL;
-  int pos;
 
   if (!xdg_app_dir_ensure_repo (self, NULL, error))
     return NULL;
@@ -2847,14 +2846,14 @@ xdg_app_dir_find_remote_ref (XdgAppDir      *self,
   summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE);
   refs = g_variant_get_child_value (summary, 0);
 
-  if (app_ref && xdg_app_variant_bsearch_str (refs, app_ref, &pos))
+  if (app_ref && xdg_app_summary_lookup_ref (summary, app_ref, NULL))
     {
       if (is_app)
         *is_app = TRUE;
       return g_steal_pointer (&app_ref);
     }
 
-  if (runtime_ref && xdg_app_variant_bsearch_str (refs, runtime_ref, &pos))
+  if (runtime_ref && xdg_app_summary_lookup_ref (summary, runtime_ref, NULL))
     {
       if (is_app)
         *is_app = FALSE;

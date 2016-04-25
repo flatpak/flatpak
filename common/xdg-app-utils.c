@@ -1457,6 +1457,34 @@ xdg_app_variant_bsearch_str (GVariant   *array,
 }
 
 gboolean
+xdg_app_summary_lookup_ref (GVariant *summary, const char *ref, char **out_checksum)
+{
+  g_autoptr(GVariant) refs = g_variant_get_child_value (summary, 0);
+  int pos;
+  g_autoptr(GVariant) refdata = NULL;
+  g_autoptr(GVariant) reftargetdata = NULL;
+  g_autoptr(GVariant) commit_data = NULL;
+  guint64 commit_size;
+  g_autoptr(GVariant) commit_csum_v = NULL;
+  g_autoptr(GBytes) commit_bytes = NULL;
+
+  if (!xdg_app_variant_bsearch_str (refs, ref, &pos))
+    return FALSE;
+
+  refdata = g_variant_get_child_value (refs, pos);
+  reftargetdata = g_variant_get_child_value (refdata, 1);
+  g_variant_get (reftargetdata, "(t@ay@a{sv})", &commit_size, &commit_csum_v, NULL);
+
+  if (!ostree_validate_structureof_csum_v (commit_csum_v, NULL))
+    return FALSE;
+
+  if (out_checksum)
+    *out_checksum = ostree_checksum_from_bytes_v (commit_csum_v);
+
+  return TRUE;
+}
+
+gboolean
 xdg_app_repo_set_title (OstreeRepo *repo,
                         const char *title,
                         GError **error)
