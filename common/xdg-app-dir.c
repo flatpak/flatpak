@@ -47,6 +47,9 @@ struct XdgAppDir {
   OstreeRepo *child_repo;
   GLnxLockFile child_repo_lock;
 
+  gboolean initialized_system_helper;
+  XdgAppSystemHelper *system_helper;
+
   SoupSession *soup_session;
 };
 
@@ -195,10 +198,35 @@ xdg_app_ensure_user_cache_dir_location (GError **error)
   return g_steal_pointer (&cache_dir);
 }
 
+static void
+xdg_app_dir_init_system_helper (XdgAppDir *self)
+{
+  g_autoptr(GError) error = NULL;
+
+  if (self->initialized_system_helper)
+    return;
+
+  self->system_helper =
+    xdg_app_system_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                                  G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
+                                                  G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                  "org.freedesktop.XdgApp.SystemHelper",
+                                                  "/org/freedesktop/XdgApp/SystemHelper",
+                                                  NULL, error);
+  if (error != NULL)
+    g_warning ("Can't find org.freedesktop.XdgApp.SystemHelper: %s\n", error->message);
+  self->initialized_system_helper = TRUE;
+}
+
 gboolean
 xdg_app_dir_use_child_repo (XdgAppDir *self)
 {
-  return !self->user && getuid () != 0;
+  if (self->user || getuid () == 0)
+    return FALSE;
+
+  xdg_app_dir_init_system_helper (self);
+
+  return self->system_helper != NULL;
 }
 
 static OstreeRepo *
@@ -291,6 +319,8 @@ xdg_app_dir_finalize (GObject *object)
 
   g_clear_object (&self->child_repo);
   glnx_release_lock_file (&self->child_repo_lock);
+
+  g_clear_object (&self->system_helper);
 
   g_clear_object (&self->soup_session);
 
@@ -2546,19 +2576,10 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
   if (self->child_repo)
     {
       char *empty_subpaths[] = {NULL};
-      g_autoptr(XdgAppSystemHelper) helper = NULL;
 
-      helper = xdg_app_system_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
-                                                             G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
-                                                             G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
-                                                             "org.freedesktop.XdgApp.SystemHelper",
-                                                             "/org/freedesktop/XdgApp/SystemHelper",
-                                                             cancellable,
-                                                             error);
-      if (helper == NULL)
-        return FALSE;
+      g_assert (self->system_helper != NULL);
 
-      if (!xdg_app_system_helper_call_deploy_sync (helper,
+      if (!xdg_app_system_helper_call_deploy_sync (self->system_helper,
                                                    gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
                                                    XDG_APP_HELPER_DEPLOY_FLAGS_NONE,
                                                    ref,
