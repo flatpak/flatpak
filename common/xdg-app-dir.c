@@ -1021,6 +1021,223 @@ xdg_app_dir_pull (XdgAppDir *self,
   return ret;
 }
 
+static gboolean
+repo_pull_one_untrusted (OstreeRepo               *self,
+                         const char               *remote_name,
+                         const char               *url,
+                         const char               *dir_to_pull,
+                         const char               *ref,
+                         const char               *checksum,
+                         OstreeAsyncProgress      *progress,
+                         GCancellable             *cancellable,
+                         GError                  **error)
+{
+  OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED;
+  GVariantBuilder builder;
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  const char *refs[2] = { NULL, NULL };
+  const char *commits[2] = { NULL, NULL };
+
+  refs[0] = ref;
+  commits[0] = checksum;
+
+  g_variant_builder_add (&builder, "{s@v}", "flags",
+                         g_variant_new_variant (g_variant_new_int32 (flags)));
+  g_variant_builder_add (&builder, "{s@v}", "refs",
+                         g_variant_new_variant (g_variant_new_strv ((const char *const*) refs, -1)));
+  g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
+                         g_variant_new_variant (g_variant_new_strv ((const char *const*) commits, -1)));
+  g_variant_builder_add (&builder, "{s@v}", "override-remote-name",
+                         g_variant_new_variant (g_variant_new_string (remote_name)));
+  g_variant_builder_add (&builder, "{s@v}", "gpg-verify",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+  g_variant_builder_add (&builder, "{s@v}", "gpg-verify-summary",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
+  if (dir_to_pull)
+    {
+      g_variant_builder_add (&builder, "{s@v}", "subdir",
+                             g_variant_new_variant (g_variant_new_string (dir_to_pull)));
+      g_variant_builder_add (&builder, "{s@v}", "disable-static-deltas",
+                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
+    }
+
+  return ostree_repo_pull_with_options (self, url, g_variant_builder_end (&builder),
+                                        progress, cancellable, error);
+}
+
+gboolean
+xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
+                                  const char *src_path,
+                                  const char *remote_name,
+                                  const char *ref,
+                                  char **subpaths,
+                                  OstreeAsyncProgress *progress,
+                                  GCancellable *cancellable,
+                                  GError **error)
+{
+  gboolean ret = FALSE;
+  GSConsole *console = NULL;
+  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  g_autoptr(GFile) path_file = g_file_new_for_path (src_path);
+  g_autoptr(GFile) summary_file = g_file_get_child (path_file, "summary");
+  g_autoptr(GFile) summary_sig_file = g_file_get_child (path_file, "summary.sig");
+  g_autofree char *url = g_file_get_uri (path_file);
+  g_autofree char *checksum = NULL;
+  gboolean gpg_verify_summary;
+  gboolean gpg_verify;
+  char *summary_data = NULL;
+  char *summary_sig_data = NULL;
+  gsize summary_data_size, summary_sig_data_size;
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GBytes) summary_sig_bytes = NULL;
+  g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) old_commit = NULL;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote_name,
+                                                  &gpg_verify_summary, error))
+    return FALSE;
+
+  g_print ("verify summary: %d\n", gpg_verify_summary);
+
+  if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
+                                          &gpg_verify, error))
+    return FALSE;
+
+  g_print ("verify: %d\n", gpg_verify);
+
+  if (!gpg_verify_summary || !gpg_verify)
+    xdg_app_fail (error, "Can't pull from untrusted non-gpg verified remote");
+
+  /* We verify the summary manually before anything else to make sure
+     we've got something right before looking to hard at the repo and
+     so we can check for a downgrade before pulling and updating the
+     ref */
+
+  if (!g_file_load_contents (summary_sig_file, cancellable,
+                             &summary_sig_data, &summary_sig_data_size, NULL, error))
+    return xdg_app_fail (error, "GPG verification enabled, but no summary signatures found");
+  summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_data_size);
+
+  if (!g_file_load_contents (summary_file, cancellable,
+                             &summary_data, &summary_data_size, NULL, error))
+    return xdg_app_fail (error, "No summary found");
+  summary_bytes = g_bytes_new_take (summary_data, summary_data_size);
+
+  gpg_result = ostree_repo_verify_summary (self->repo,
+                                           remote_name,
+                                           summary_bytes,
+                                           summary_sig_bytes,
+                                           cancellable, error);
+  if (gpg_result == NULL)
+    return FALSE;
+
+  if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
+    return xdg_app_fail (error, "GPG signatures found, but none are in trusted keyring");
+
+  g_print ("summary: %p\n", summary_bytes);
+
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
+  g_print ("looking in summary for %s\n", ref);
+  if (!xdg_app_summary_lookup_ref (summary,
+                                   ref,
+                                   &checksum))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Can't find %sin remote %s", ref, remote_name);
+      return FALSE;
+    }
+
+  g_print ("Checksum is %s\n", checksum);
+
+  (void)ostree_repo_load_commit (self->repo, checksum, &old_commit, NULL, NULL);
+
+  if (old_commit)
+    {
+      g_autoptr(OstreeRepo) src_repo = ostree_repo_new (path_file);
+      g_autoptr(GVariant) new_commit = NULL;
+      guint64 old_timestamp;
+      guint64 new_timestamp;
+
+      if (!ostree_repo_open (src_repo, cancellable, error))
+        return FALSE;
+
+      if (!ostree_repo_load_commit (src_repo, checksum, &new_commit, NULL, error))
+        return FALSE;
+
+      old_timestamp = ostree_commit_get_timestamp (old_commit);
+      new_timestamp = ostree_commit_get_timestamp (new_commit);
+
+      if (new_timestamp < old_timestamp)
+        return xdg_app_fail (error, "Not allowed to downgrade %s", ref);
+    }
+
+
+  if (progress == NULL)
+    {
+      console = gs_console_get ();
+      if (console)
+        {
+          gs_console_begin_status_line (console, "", NULL, NULL);
+          console_progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, console);
+          progress = console_progress;
+        }
+    }
+
+  if (subpaths == NULL || subpaths[0] == NULL)
+    {
+      if (!repo_pull_one_untrusted (self->repo, remote_name,url,
+                                    NULL, ref, checksum, progress,
+                                    cancellable, error))
+        {
+          g_prefix_error (error, "While pulling %s from remote %s: ", ref, remote_name);
+          goto out;
+        }
+    }
+  else
+    {
+      int i;
+
+      if (!repo_pull_one_untrusted (self->repo, remote_name,url,
+                                    "/metadata", ref, checksum, progress,
+                                    cancellable, error))
+        {
+          g_prefix_error (error, "While pulling %s from remote %s, metadata: ",
+                          ref, remote_name);
+          goto out;
+        }
+
+      for (i = 0; subpaths[i] != NULL; i++)
+        {
+          g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
+          if (!repo_pull_one_untrusted (self->repo, remote_name,url,
+                                        subpath, ref, checksum, progress,
+                                        cancellable, error))
+            {
+              g_prefix_error (error, "While pulling %s from remote %s, subpath %s: ",
+                              ref, remote_name, subpaths[i]);
+              goto out;
+            }
+        }
+    }
+
+  ret = TRUE;
+
+ out:
+  if (console)
+    {
+      ostree_async_progress_finish (progress);
+      gs_console_end_status_line (console, NULL, NULL);
+    }
+
+  return ret;
+}
+
+
 char *
 xdg_app_dir_current_ref (XdgAppDir *self,
                          const char *name,
