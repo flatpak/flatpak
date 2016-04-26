@@ -86,7 +86,7 @@ handle_deploy (XdgAppSystemHelper *object,
         }
 
       real_origin = xdg_app_dir_get_origin (system, arg_ref, NULL, NULL);
-      if (real_origin == NULL || strcmp (real_origin, arg_origin) != 0)
+      if (g_strcmp0 (real_origin, arg_origin) != 0)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                                  "Wrong origin %s for update", arg_origin);
