@@ -223,8 +223,7 @@ xdg_app_authorize_method_handler (GDBusInterfaceSkeleton *interface,
           return FALSE;
         }
 
-      if (polkit_authorization_result_get_is_authorized (result))
-        authorized = TRUE;
+      authorized = polkit_authorization_result_get_is_authorized (result);
     }
 
   if (!authorized)
