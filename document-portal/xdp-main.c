@@ -37,7 +37,6 @@ typedef struct
 static GMainLoop *loop = NULL;
 static XdgAppDb *db = NULL;
 static XdgAppPermissionStore *permission_store;
-static GDBusNodeInfo *introspection_data = NULL;
 static int daemon_event_fd = -1;
 static int final_exit_status = 0;
 static dev_t fuse_dev = 0;
@@ -753,7 +752,6 @@ main (int    argc,
       char **argv)
 {
   guint owner_id;
-  GBytes *introspection_bytes;
   g_autoptr(GError) error = NULL;
   g_autofree char *path = NULL;
   GDBusConnection  *session_bus;
@@ -835,11 +833,6 @@ main (int    argc,
       do_exit (5);
     }
 
-  introspection_bytes = g_resources_lookup_data ("/org/freedesktop/portal/Documents/org.freedesktop.portal.Documents.xml", 0, NULL);
-  g_assert (introspection_bytes != NULL);
-
-  introspection_data = g_dbus_node_info_new_for_xml (g_bytes_get_data (introspection_bytes, NULL), NULL);
-
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
                              "org.freedesktop.portal.Documents",
                              G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT | (opt_replace ? G_BUS_NAME_OWNER_FLAGS_REPLACE : 0),
@@ -854,8 +847,6 @@ main (int    argc,
   xdp_fuse_exit ();
 
   g_bus_unown_name (owner_id);
-
-  g_dbus_node_info_unref (introspection_data);
 
   do_exit (final_exit_status);
 
