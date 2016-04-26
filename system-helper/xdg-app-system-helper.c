@@ -31,7 +31,6 @@
 #include "lib/xdg-app-error.h"
 
 static PolkitAuthority *authority = NULL;
-static GDBusNodeInfo *introspection_data = NULL;
 
 #ifndef glib_autoptr_cleanup_PolkitAuthorizationResult
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(PolkitAuthorizationResult, g_object_unref)
@@ -290,7 +289,6 @@ main (int    argc,
 {
   guint owner_id;
   GMainLoop *loop;
-  GBytes *introspection_bytes;
   g_autoptr(GError) error = NULL;
 
   setlocale (LC_ALL, "");
@@ -306,11 +304,6 @@ main (int    argc,
       return 1;
     }
 
-  introspection_bytes = g_resources_lookup_data ("/org/freedesktop/XdgApp/org.freedesktop.XdgApp.xml", 0, NULL);
-  g_assert (introspection_bytes != NULL);
-
-  introspection_data = g_dbus_node_info_new_for_xml (g_bytes_get_data (introspection_bytes, NULL), NULL);
-
   owner_id = g_bus_own_name (G_BUS_TYPE_SYSTEM,
                              "org.freedesktop.XdgApp.SystemHelper",
                              G_BUS_NAME_OWNER_FLAGS_NONE,
@@ -324,8 +317,6 @@ main (int    argc,
   g_main_loop_run (loop);
 
   g_bus_unown_name (owner_id);
-
-  g_dbus_node_info_unref (introspection_data);
 
   return 0;
 }
