@@ -2763,6 +2763,64 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
   return TRUE;
 }
 
+gboolean
+xdg_app_dir_install (XdgAppDir      *self,
+                     gboolean        no_pull,
+                     gboolean        no_deploy,
+                     const char     *ref,
+                     const char     *remote_name,
+                     char          **subpaths,
+                     OstreeAsyncProgress *progress,
+                     GCancellable   *cancellable,
+                     GError        **error)
+{
+  if (!no_pull)
+    {
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths, progress,
+                             cancellable, error))
+        return FALSE;
+    }
+
+  if (!no_deploy)
+    {
+      if (!xdg_app_dir_deploy_install (self, ref, remote_name, subpaths,
+                                       cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+xdg_app_dir_update (XdgAppDir      *self,
+                    gboolean        no_pull,
+                    gboolean        no_deploy,
+                    const char     *ref,
+                    const char     *remote_name,
+                    const char     *checksum_or_latest,
+                    char          **subpaths,
+                    OstreeAsyncProgress *progress,
+                    GCancellable   *cancellable,
+                    GError        **error)
+{
+  if (!no_pull)
+    {
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths, progress,
+                             cancellable, error))
+        return FALSE;
+    }
+
+  if (!no_deploy)
+    {
+      if (!xdg_app_dir_deploy_update (self, ref, remote_name, checksum_or_latest,
+                                       cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+
 
 gboolean
 xdg_app_dir_collect_deployed_refs (XdgAppDir *self,

@@ -253,19 +253,13 @@ xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (g_file_query_exists (deploy_base, cancellable))
     return xdg_app_fail (error, "Ref %s already deployed", ref);
 
-  if (!opt_no_pull)
-    {
-      if (!xdg_app_dir_pull (dir, repository, ref, opt_subpaths, NULL,
-                             cancellable, error))
-        return FALSE;
-    }
-
-  if (!opt_no_deploy)
-    {
-      if (!xdg_app_dir_deploy_install (dir, ref, repository, opt_subpaths,
-                                       cancellable, error))
-        return FALSE;
-    }
+  if (!xdg_app_dir_install (dir,
+                            opt_no_pull,
+                            opt_no_deploy,
+                            ref, repository, opt_subpaths,
+                            NULL,
+                            cancellable, error))
+    return FALSE;
 
   return TRUE;
 }

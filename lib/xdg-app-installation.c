@@ -958,12 +958,8 @@ xdg_app_installation_install (XdgAppInstallation  *self,
       g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER(0));
     }
 
-  if (!xdg_app_dir_pull (dir_clone, remote_name, ref, NULL,
-                         ostree_progress, cancellable, error))
-    goto out;
-
-  if (!xdg_app_dir_deploy_install (dir_clone, ref, remote_name, NULL,
-                                   cancellable, error))
+  if (!xdg_app_dir_install (dir_clone, FALSE, FALSE, ref, remote_name, NULL,
+                            ostree_progress, cancellable, error))
     goto out;
 
   result = get_ref (self, ref, cancellable);
@@ -1052,19 +1048,12 @@ xdg_app_installation_update (XdgAppInstallation  *self,
       g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER(0));
     }
 
-  if ((flags & XDG_APP_UPDATE_FLAGS_NO_PULL) == 0)
-    {
-      if (!xdg_app_dir_pull (dir_clone, remote_name, ref, subpaths,
-                             ostree_progress, cancellable, error))
-        goto out;
-    }
-
-  if ((flags & XDG_APP_UPDATE_FLAGS_NO_DEPLOY) == 0)
-    {
-      if (!xdg_app_dir_deploy_update (dir_clone, ref, remote_name, NULL,
-                                      cancellable, error))
-        goto out;
-    }
+  if (!xdg_app_dir_update (dir_clone,
+                           (flags & XDG_APP_UPDATE_FLAGS_NO_PULL) != 0,
+                           (flags & XDG_APP_UPDATE_FLAGS_NO_DEPLOY) != 0,
+                           remote_name, ref, NULL, subpaths,
+                           ostree_progress, cancellable, error))
+    goto out;
 
   result = get_ref (self, ref, cancellable);
 
