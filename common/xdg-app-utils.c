@@ -634,33 +634,14 @@ overlay_symlink_tree_dir (int            source_parent_fd,
 
   while (TRUE)
     {
-      gboolean is_dir = FALSE;
 
-      if (!glnx_dirfd_iterator_next_dent (&source_iter, &dent, cancellable, error))
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&source_iter, &dent, cancellable, error))
         goto out;
 
       if (dent == NULL)
         break;
 
       if (dent->d_type == DT_DIR)
-        is_dir = TRUE;
-      else if (dent->d_type == DT_UNKNOWN)
-        {
-          struct stat stbuf;
-          if (fstatat (source_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
-            {
-              if (errno == ENOENT)
-                continue;
-              else
-                {
-                  glnx_set_error_from_errno (error);
-                  goto out;
-                }
-            }
-          is_dir = S_ISDIR (stbuf.st_mode);
-        }
-
-      if (is_dir)
         {
           g_autofree gchar *target = g_build_filename ("..", source_symlink_prefix, dent->d_name, NULL);
           if (!overlay_symlink_tree_dir (source_iter.fd, dent->d_name, target, destination_dfd, dent->d_name,
@@ -731,42 +712,18 @@ remove_dangling_symlinks (int            parent_fd,
 
   while (TRUE)
     {
-      gboolean is_dir = FALSE;
-      gboolean is_link = FALSE;
-
-      if (!glnx_dirfd_iterator_next_dent (&iter, &dent, cancellable, error))
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&iter, &dent, cancellable, error))
         goto out;
 
       if (dent == NULL)
         break;
 
       if (dent->d_type == DT_DIR)
-        is_dir = TRUE;
-      else if (dent->d_type == DT_LNK)
-        is_link = TRUE;
-      else if (dent->d_type == DT_UNKNOWN)
-        {
-          struct stat stbuf;
-          if (fstatat (iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
-            {
-              if (errno == ENOENT)
-                continue;
-              else
-                {
-                  glnx_set_error_from_errno (error);
-                  goto out;
-                }
-            }
-          is_dir = S_ISDIR (stbuf.st_mode);
-          is_link = S_ISLNK (stbuf.st_mode);
-        }
-
-      if (is_dir)
         {
           if (!remove_dangling_symlinks (iter.fd, dent->d_name, cancellable, error))
             goto out;
         }
-      else if (is_link)
+      else if (dent->d_type == DT_LNK)
         {
           struct stat stbuf;
           if (fstatat (iter.fd, dent->d_name, &stbuf, 0) != 0 && errno == ENOENT)
