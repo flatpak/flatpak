@@ -2668,7 +2668,6 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
       g_autofree char *pulled_checksum = NULL;
       g_autofree char *active_checksum = NULL;
       g_autofree char *remote_and_ref = NULL;
-      g_autoptr(XdgAppSystemHelper) helper = NULL;
 
       if (checksum_or_latest != NULL)
         return xdg_app_fail (error, "Can't update to a specific commit without root permissions");
@@ -2679,17 +2678,9 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
       active_checksum = xdg_app_dir_read_active (self, ref, NULL);
       if (active_checksum == NULL || strcmp (active_checksum, pulled_checksum) != 0)
         {
-          helper = xdg_app_system_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
-                                                                 G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
-                                                                 G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
-                                                                 "org.freedesktop.XdgApp.SystemHelper",
-                                                                 "/org/freedesktop/XdgApp/SystemHelper",
-                                                                 cancellable,
-                                                                 error);
-          if (helper == NULL)
-            return FALSE;
+          g_assert (self->system_helper != NULL);
 
-          if (!xdg_app_system_helper_call_deploy_sync (helper,
+          if (!xdg_app_system_helper_call_deploy_sync (self->system_helper,
                                                        gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
                                                        XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE,
                                                        ref,
