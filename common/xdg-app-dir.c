@@ -212,7 +212,7 @@ xdg_app_dir_init_system_helper (XdgAppDir *self)
                                                   G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
                                                   "org.freedesktop.XdgApp.SystemHelper",
                                                   "/org/freedesktop/XdgApp/SystemHelper",
-                                                  NULL, error);
+                                                  NULL, &error);
   if (error != NULL)
     g_warning ("Can't find org.freedesktop.XdgApp.SystemHelper: %s\n", error->message);
   self->initialized_system_helper = TRUE;
