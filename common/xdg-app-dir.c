@@ -37,12 +37,16 @@
 
 #include "errno.h"
 
+#define NO_SYSTEM_HELPER ((XdgAppSystemHelper *)(gpointer)1)
+
 struct XdgAppDir {
   GObject parent;
 
   gboolean user;
   GFile *basedir;
   OstreeRepo *repo;
+
+  XdgAppSystemHelper *system_helper;
 
   SoupSession *soup_session;
 };
@@ -163,6 +167,83 @@ xdg_app_get_user_base_dir_location (void)
   return g_file_new_for_path (base);
 }
 
+GFile *
+xdg_app_get_user_cache_dir_location (void)
+{
+  g_autoptr(GFile) base_dir = NULL;
+
+  base_dir = xdg_app_get_user_base_dir_location ();
+  return g_file_get_child (base_dir, "system-cache");
+}
+
+GFile *
+xdg_app_ensure_user_cache_dir_location (GError **error)
+{
+  g_autoptr(GFile) cache_dir = NULL;
+  g_autofree char *cache_path = NULL;
+
+  cache_dir = xdg_app_get_user_cache_dir_location ();
+  cache_path = g_file_get_path (cache_dir);
+
+  if (g_mkdir_with_parents (cache_path, 0755) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return NULL;
+    }
+
+  return g_steal_pointer (&cache_dir);
+}
+
+static XdgAppSystemHelper *
+xdg_app_dir_get_system_helper (XdgAppDir *self)
+{
+  g_autoptr(GError) error = NULL;
+
+  if (g_once_init_enter (&self->system_helper))
+    {
+      XdgAppSystemHelper *system_helper;
+      system_helper =
+        xdg_app_system_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                                      G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
+                                                      G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                      "org.freedesktop.XdgApp.SystemHelper",
+                                                      "/org/freedesktop/XdgApp/SystemHelper",
+                                                      NULL, &error);
+      if (error != NULL)
+        {
+          g_warning ("Can't find org.freedesktop.XdgApp.SystemHelper: %s\n", error->message);
+          system_helper = NO_SYSTEM_HELPER;
+        }
+
+      g_once_init_leave (&self->system_helper, system_helper);
+    }
+
+  if (self->system_helper != NO_SYSTEM_HELPER)
+    return self->system_helper;
+  return NULL;
+}
+
+gboolean
+xdg_app_dir_use_child_repo (XdgAppDir *self)
+{
+  XdgAppSystemHelper *system_helper;
+
+  if (self->user || getuid () == 0)
+    return FALSE;
+
+  system_helper = xdg_app_dir_get_system_helper (self);
+
+  return system_helper != NULL;
+}
+
+static OstreeRepo *
+system_ostree_repo_new (GFile *repodir)
+{
+  return g_object_new (OSTREE_TYPE_REPO, "path", repodir,
+                       "remotes-config-dir", XDG_APP_CONFIGDIR "/remotes.d",
+                       NULL);
+}
+
 static void
 xdg_app_dir_finalize (GObject *object)
 {
@@ -170,6 +251,8 @@ xdg_app_dir_finalize (GObject *object)
 
   g_clear_object (&self->repo);
   g_clear_object (&self->basedir);
+
+  g_clear_object (&self->system_helper);
 
   g_clear_object (&self->soup_session);
 
@@ -629,24 +712,16 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
         repo = ostree_repo_new (repodir);
       else
         {
-          g_autoptr(GFile) base_dir = NULL;
           g_autoptr(GFile) cache_dir = NULL;
           g_autofree char *cache_path = NULL;
 
-          repo = g_object_new (OSTREE_TYPE_REPO, "path", repodir,
-                               "remotes-config-dir", XDG_APP_CONFIGDIR "/remotes.d",
-                               NULL);
+          repo = system_ostree_repo_new (repodir);
 
-          base_dir = xdg_app_get_user_base_dir_location ();
-          cache_dir = g_file_get_child (base_dir, "system-cache");
+          cache_dir = xdg_app_ensure_user_cache_dir_location (error);
+          if (cache_dir == NULL)
+            goto out;
+
           cache_path = g_file_get_path (cache_dir);
-
-          if (g_mkdir_with_parents (cache_path, 0755) != 0)
-            {
-              glnx_set_error_from_errno (error);
-              goto out;
-            }
-
           if (!ostree_repo_set_cache_dir (repo,
                                           AT_FDCWD, cache_path,
                                           cancellable, error))
@@ -797,7 +872,7 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
   if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &old_checksum, error))
     return FALSE;
 
-  if (!xdg_app_dir_pull (self, remote, branch, NULL, progress,
+  if (!xdg_app_dir_pull (self, remote, branch, NULL, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                          cancellable, error))
     return FALSE;
 
@@ -931,6 +1006,8 @@ xdg_app_dir_pull (XdgAppDir *self,
                   const char *repository,
                   const char *ref,
                   char **subpaths,
+                  OstreeRepo *repo,
+                  OstreeRepoPullFlags flags,
                   OstreeAsyncProgress *progress,
                   GCancellable *cancellable,
                   GError **error)
@@ -953,6 +1030,9 @@ xdg_app_dir_pull (XdgAppDir *self,
   if (*url == 0)
     return TRUE; /* Empty url, silently disables updates */
 
+  if (repo == NULL)
+    repo = self->repo;
+
   if (progress == NULL)
     {
       console = gs_console_get ();
@@ -964,13 +1044,14 @@ xdg_app_dir_pull (XdgAppDir *self,
         }
     }
 
+
   refs[0] = ref;
   refs[1] = NULL;
 
   if (subpaths == NULL || subpaths[0] == NULL)
     {
-      if (!ostree_repo_pull (self->repo, repository,
-                             (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
+      if (!ostree_repo_pull (repo, repository,
+                             (char **)refs, flags,
                              progress,
                              cancellable, error))
         {
@@ -982,9 +1063,9 @@ xdg_app_dir_pull (XdgAppDir *self,
     {
       int i;
 
-      if (!repo_pull_one_dir (self->repo, repository,
+      if (!repo_pull_one_dir (repo, repository,
                               "/metadata",
-                              (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
+                              (char **)refs, flags,
                               progress,
                               cancellable, error))
         {
@@ -996,9 +1077,9 @@ xdg_app_dir_pull (XdgAppDir *self,
       for (i = 0; subpaths[i] != NULL; i++)
         {
           g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
-          if (!repo_pull_one_dir (self->repo, repository,
+          if (!repo_pull_one_dir (repo, repository,
                                   subpath,
-                                  (char **)refs, OSTREE_REPO_PULL_FLAGS_NONE,
+                                  (char **)refs, flags,
                                   progress,
                                   cancellable, error))
             {
@@ -1020,6 +1101,215 @@ xdg_app_dir_pull (XdgAppDir *self,
 
   return ret;
 }
+
+static gboolean
+repo_pull_one_untrusted (OstreeRepo               *self,
+                         const char               *remote_name,
+                         const char               *url,
+                         const char               *dir_to_pull,
+                         const char               *ref,
+                         const char               *checksum,
+                         OstreeAsyncProgress      *progress,
+                         GCancellable             *cancellable,
+                         GError                  **error)
+{
+  OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED;
+  GVariantBuilder builder;
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  const char *refs[2] = { NULL, NULL };
+  const char *commits[2] = { NULL, NULL };
+
+  refs[0] = ref;
+  commits[0] = checksum;
+
+  g_variant_builder_add (&builder, "{s@v}", "flags",
+                         g_variant_new_variant (g_variant_new_int32 (flags)));
+  g_variant_builder_add (&builder, "{s@v}", "refs",
+                         g_variant_new_variant (g_variant_new_strv ((const char *const*) refs, -1)));
+  g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
+                         g_variant_new_variant (g_variant_new_strv ((const char *const*) commits, -1)));
+  g_variant_builder_add (&builder, "{s@v}", "override-remote-name",
+                         g_variant_new_variant (g_variant_new_string (remote_name)));
+  g_variant_builder_add (&builder, "{s@v}", "gpg-verify",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+  g_variant_builder_add (&builder, "{s@v}", "gpg-verify-summary",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
+  if (dir_to_pull)
+    {
+      g_variant_builder_add (&builder, "{s@v}", "subdir",
+                             g_variant_new_variant (g_variant_new_string (dir_to_pull)));
+      g_variant_builder_add (&builder, "{s@v}", "disable-static-deltas",
+                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
+    }
+
+  return ostree_repo_pull_with_options (self, url, g_variant_builder_end (&builder),
+                                        progress, cancellable, error);
+}
+
+gboolean
+xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
+                                  const char *src_path,
+                                  const char *remote_name,
+                                  const char *ref,
+                                  char **subpaths,
+                                  OstreeAsyncProgress *progress,
+                                  GCancellable *cancellable,
+                                  GError **error)
+{
+  gboolean ret = FALSE;
+  GSConsole *console = NULL;
+  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  g_autoptr(GFile) path_file = g_file_new_for_path (src_path);
+  g_autoptr(GFile) summary_file = g_file_get_child (path_file, "summary");
+  g_autoptr(GFile) summary_sig_file = g_file_get_child (path_file, "summary.sig");
+  g_autofree char *url = g_file_get_uri (path_file);
+  g_autofree char *checksum = NULL;
+  gboolean gpg_verify_summary;
+  gboolean gpg_verify;
+  char *summary_data = NULL;
+  char *summary_sig_data = NULL;
+  gsize summary_data_size, summary_sig_data_size;
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GBytes) summary_sig_bytes = NULL;
+  g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) old_commit = NULL;
+
+  if (!xdg_app_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote_name,
+                                                  &gpg_verify_summary, error))
+    return FALSE;
+
+  if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
+                                          &gpg_verify, error))
+    return FALSE;
+
+  if (!gpg_verify_summary || !gpg_verify)
+    return xdg_app_fail (error, "Can't pull from untrusted non-gpg verified remote");
+
+  /* We verify the summary manually before anything else to make sure
+     we've got something right before looking too hard at the repo and
+     so we can check for a downgrade before pulling and updating the
+     ref */
+
+  if (!g_file_load_contents (summary_sig_file, cancellable,
+                             &summary_sig_data, &summary_sig_data_size, NULL, NULL))
+    return xdg_app_fail (error, "GPG verification enabled, but no summary signatures found");
+
+  summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_data_size);
+
+  if (!g_file_load_contents (summary_file, cancellable,
+                             &summary_data, &summary_data_size, NULL, NULL))
+    return xdg_app_fail (error, "No summary found");
+  summary_bytes = g_bytes_new_take (summary_data, summary_data_size);
+
+  gpg_result = ostree_repo_verify_summary (self->repo,
+                                           remote_name,
+                                           summary_bytes,
+                                           summary_sig_bytes,
+                                           cancellable, error);
+  if (gpg_result == NULL)
+    return FALSE;
+
+  if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
+    return xdg_app_fail (error, "GPG signatures found, but none are in trusted keyring");
+
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
+  if (!xdg_app_summary_lookup_ref (summary,
+                                   ref,
+                                   &checksum))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Can't find %sin remote %s", ref, remote_name);
+      return FALSE;
+    }
+
+  (void)ostree_repo_load_commit (self->repo, checksum, &old_commit, NULL, NULL);
+
+  if (old_commit)
+    {
+      g_autoptr(OstreeRepo) src_repo = ostree_repo_new (path_file);
+      g_autoptr(GVariant) new_commit = NULL;
+      guint64 old_timestamp;
+      guint64 new_timestamp;
+
+      if (!ostree_repo_open (src_repo, cancellable, error))
+        return FALSE;
+
+      if (!ostree_repo_load_commit (src_repo, checksum, &new_commit, NULL, error))
+        return FALSE;
+
+      old_timestamp = ostree_commit_get_timestamp (old_commit);
+      new_timestamp = ostree_commit_get_timestamp (new_commit);
+
+      if (new_timestamp < old_timestamp)
+        return xdg_app_fail (error, "Not allowed to downgrade %s", ref);
+    }
+
+
+  if (progress == NULL)
+    {
+      console = gs_console_get ();
+      if (console)
+        {
+          gs_console_begin_status_line (console, "", NULL, NULL);
+          console_progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, console);
+          progress = console_progress;
+        }
+    }
+
+  if (subpaths == NULL || subpaths[0] == NULL)
+    {
+      if (!repo_pull_one_untrusted (self->repo, remote_name,url,
+                                    NULL, ref, checksum, progress,
+                                    cancellable, error))
+        {
+          g_prefix_error (error, "While pulling %s from remote %s: ", ref, remote_name);
+          goto out;
+        }
+    }
+  else
+    {
+      int i;
+
+      if (!repo_pull_one_untrusted (self->repo, remote_name,url,
+                                    "/metadata", ref, checksum, progress,
+                                    cancellable, error))
+        {
+          g_prefix_error (error, "While pulling %s from remote %s, metadata: ",
+                          ref, remote_name);
+          goto out;
+        }
+
+      for (i = 0; subpaths[i] != NULL; i++)
+        {
+          g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
+          if (!repo_pull_one_untrusted (self->repo, remote_name,url,
+                                        subpath, ref, checksum, progress,
+                                        cancellable, error))
+            {
+              g_prefix_error (error, "While pulling %s from remote %s, subpath %s: ",
+                              ref, remote_name, subpaths[i]);
+              goto out;
+            }
+        }
+    }
+
+  ret = TRUE;
+
+ out:
+  if (console)
+    {
+      ostree_async_progress_finish (progress);
+      gs_console_end_status_line (console, NULL, NULL);
+    }
+
+  return ret;
+}
+
 
 char *
 xdg_app_dir_current_ref (XdgAppDir *self,
@@ -2257,6 +2547,7 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
 gboolean
 xdg_app_dir_deploy_update (XdgAppDir      *self,
                            const char     *ref,
+                           const char     *remote_name,
                            const char     *checksum_or_latest,
                            GCancellable   *cancellable,
                            GError        **error)
@@ -2311,6 +2602,231 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
 
   return TRUE;
 }
+
+static OstreeRepo *
+xdg_app_dir_create_system_child_repo (XdgAppDir *self,
+                                      GLnxLockFile *file_lock,
+                                      GError **error)
+{
+  g_autoptr(GFile) cache_dir = NULL;
+  g_autoptr(GFile) repo_dir = NULL;
+  g_autoptr(GFile) repo_dir_config = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
+  g_autofree char *tmpdir_name = NULL;
+  g_autoptr(OstreeRepo) new_repo = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+
+  g_assert (!self->user);
+
+  if (!xdg_app_dir_ensure_repo (self, NULL, error))
+    return NULL;
+
+  cache_dir = xdg_app_ensure_user_cache_dir_location (error);
+  if (cache_dir == NULL)
+    return NULL;
+
+  if (!xdg_app_allocate_tmpdir (AT_FDCWD,
+                                gs_file_get_path_cached (cache_dir),
+                                "repo-", &tmpdir_name,
+                                NULL,
+                                file_lock,
+                                NULL,
+                                NULL, error))
+    return NULL;
+
+  repo_dir = g_file_get_child (cache_dir, tmpdir_name);
+
+  new_repo = ostree_repo_new (repo_dir);
+
+  repo_dir_config = g_file_get_child (repo_dir, "config");
+  if (!g_file_query_exists (repo_dir_config, NULL))
+    {
+      if (!ostree_repo_create (new_repo,
+                               OSTREE_REPO_MODE_BARE_USER,
+                               NULL, error))
+        return NULL;
+    }
+  else
+    {
+      if (!ostree_repo_open (new_repo, NULL, error))
+        return NULL;
+    }
+
+  /* Ensure the config is updated */
+  config = ostree_repo_copy_config (new_repo);
+  g_key_file_set_string (config, "core", "parent",
+                         gs_file_get_path_cached (ostree_repo_get_path (self->repo)));
+
+  if (!ostree_repo_write_config (new_repo, config, error))
+    return NULL;
+
+  /* We need to reopen to apply the parent config */
+  repo = system_ostree_repo_new (repo_dir);
+  if (!ostree_repo_open (repo, NULL, error))
+    return NULL;
+
+  return g_steal_pointer (&repo);
+}
+
+gboolean
+xdg_app_dir_install (XdgAppDir      *self,
+                     gboolean        no_pull,
+                     gboolean        no_deploy,
+                     const char     *ref,
+                     const char     *remote_name,
+                     char          **subpaths,
+                     OstreeAsyncProgress *progress,
+                     GCancellable   *cancellable,
+                     GError        **error)
+{
+  if (xdg_app_dir_use_child_repo (self))
+    {
+      g_autoptr(OstreeRepo) child_repo = NULL;
+      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      char *empty_subpaths[] = {NULL};
+      XdgAppSystemHelper *system_helper;
+
+      if (no_pull)
+        return xdg_app_fail (error, "No-pull install not supported without root permissions");
+
+      if (no_deploy)
+        return xdg_app_fail (error, "No-deploy install not supported without root permissions");
+
+      child_repo = xdg_app_dir_create_system_child_repo (self, &child_repo_lock, error);
+      if (child_repo == NULL)
+        return FALSE;
+
+      system_helper = xdg_app_dir_get_system_helper (self);
+
+      g_assert (system_helper != NULL);
+
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths,
+                             child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                             progress, cancellable, error))
+        return FALSE;
+
+      if (!xdg_app_system_helper_call_deploy_sync (system_helper,
+                                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                                   XDG_APP_HELPER_DEPLOY_FLAGS_NONE,
+                                                   ref,
+                                                   remote_name,
+                                                   (const char *const *)(subpaths ? subpaths : empty_subpaths),
+                                                   cancellable,
+                                                   error))
+        return FALSE;
+
+      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
+                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                   NULL, NULL);
+
+      return TRUE;
+    }
+
+
+  if (!no_pull)
+    {
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
+                             cancellable, error))
+        return FALSE;
+    }
+
+  if (!no_deploy)
+    {
+      if (!xdg_app_dir_deploy_install (self, ref, remote_name, subpaths,
+                                       cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+xdg_app_dir_update (XdgAppDir      *self,
+                    gboolean        no_pull,
+                    gboolean        no_deploy,
+                    const char     *ref,
+                    const char     *remote_name,
+                    const char     *checksum_or_latest,
+                    char          **subpaths,
+                    OstreeAsyncProgress *progress,
+                    GCancellable   *cancellable,
+                    GError        **error)
+{
+  if (xdg_app_dir_use_child_repo (self))
+    {
+      g_autoptr(OstreeRepo) child_repo = NULL;
+      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      char *empty_subpaths[] = {NULL};
+      g_autofree char *pulled_checksum = NULL;
+      g_autofree char *active_checksum = NULL;
+      XdgAppSystemHelper *system_helper;
+
+      if (no_pull)
+        return xdg_app_fail (error, "No-pull update not supported without root permissions");
+
+      if (no_deploy)
+        return xdg_app_fail (error, "No-deploy update not supported without root permissions");
+
+      if (checksum_or_latest != NULL)
+        return xdg_app_fail (error, "Can't update to a specific commit without root permissions");
+
+      child_repo = xdg_app_dir_create_system_child_repo (self, &child_repo_lock, error);
+      if (child_repo == NULL)
+        return FALSE;
+
+      system_helper = xdg_app_dir_get_system_helper (self);
+
+      g_assert (system_helper != NULL);
+
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths,
+                             child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                             progress, cancellable, error))
+        return FALSE;
+
+      if (!ostree_repo_resolve_rev (child_repo, ref, FALSE, &pulled_checksum, error))
+        return FALSE;
+
+      active_checksum = xdg_app_dir_read_active (self, ref, NULL);
+      if (g_strcmp0 (active_checksum, pulled_checksum) != 0)
+        {
+
+          if (!xdg_app_system_helper_call_deploy_sync (system_helper,
+                                                       gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                                       XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE,
+                                                       ref,
+                                                       remote_name,
+                                                       (const char *const *)empty_subpaths,
+                                                       cancellable,
+                                                       error))
+            return FALSE;
+        }
+
+      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
+                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                   NULL, NULL);
+
+      return TRUE;
+    }
+
+
+  if (!no_pull)
+    {
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths,
+                             NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
+                             cancellable, error))
+        return FALSE;
+    }
+
+  if (!no_deploy)
+    {
+      if (!xdg_app_dir_deploy_update (self, ref, remote_name, checksum_or_latest,
+                                       cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 
 
 gboolean
@@ -2843,7 +3359,7 @@ xdg_app_dir_find_remote_ref (XdgAppDir      *self,
       return NULL;
     }
 
-  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE);
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
   refs = g_variant_get_child_value (summary, 0);
 
   if (app_ref && xdg_app_summary_lookup_ref (summary, app_ref, NULL))

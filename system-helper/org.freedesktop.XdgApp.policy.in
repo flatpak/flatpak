@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
+
+  <!--
+    Policy definitions for XdgApp system actions.
+    Copyright (c) 2016 Alexander Larsson <alexl@redhat.com>
+  -->
+
+  <vendor>The XdgApp Project</vendor>
+  <vendor_url>https://cgit.freedesktop.org/xdg-app/xdg-app/</vendor_url>
+  <icon_name>package-x-generic</icon_name>
+
+  <action id="org.freedesktop.XdgApp.app-install">
+    <!-- SECURITY:
+          - Normal users do not need authentication to install signed applications
+            from signed repositories, as this cannot exploit a system.
+          - Paranoid users (or parents!) can change this to 'auth_admin' or
+            'auth_admin_keep'.
+     -->
+    <_description>Install signed application</_description>
+    <_message>Authentication is required to install software</_message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.XdgApp.runtime-install">
+    <!-- SECURITY:
+          - Normal users do not need authentication to install signed applications
+            from signed repositories, as this cannot exploit a system.
+          - Paranoid users (or parents!) can change this to 'auth_admin' or
+            'auth_admin_keep'.
+     -->
+    <_description>Install signed runtime</_description>
+    <_message>Authentication is required to install software</_message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.XdgApp.app-update">
+    <!-- SECURITY:
+          - Normal users do not require admin authentication to update an
+            app as the commit will be signed, and the action is required
+            to update the system when unattended.
+          - Changing this to anything other than 'yes' will break unattended
+            updates.
+     -->
+    <_description>Update signed application</_description>
+    <_message>Authentication is required to update software</_message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.XdgApp.runtime-update">
+    <!-- SECURITY:
+          - Normal users do not require admin authentication to update a
+            runtime as the commit will be signed, and the action is required
+            to update the system when unattended.
+          - Changing this to anything other than 'yes' will break unattended
+            updates.
+     -->
+    <_description>Update signed runtime</_description>
+    <_message>Authentication is required to update software</_message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
+</policyconfig>

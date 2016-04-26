@@ -77,6 +77,15 @@ AC_ARG_WITH([systemduserunitdir],
     [with_systemduserunitdir='${prefix}/lib/systemd/user'])
 AC_SUBST([systemduserunitdir], [$with_systemduserunitdir])
 
+AC_ARG_WITH([systemdsystemunitdir],
+            [AS_HELP_STRING([--with-systemdsystemunitdir=DIR],
+                            [Directory for systemd system service files (default=PREFIX/lib/systemd/system)])],
+    [],
+    dnl This is deliberately not ${libdir}: systemd units always go in
+    dnl .../lib, never .../lib64 or .../lib/x86_64-linux-gnu
+    [with_systemdsystemunitdir='${prefix}/lib/systemd/system'])
+AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
+
 AC_ARG_WITH(system_fonts_dir,
 		AS_HELP_STRING([--with-system-fonts-dir=PATH],[Directory where system fonts are, [default=/usr/share/fonts]]),
             with_system_fonts_dir="$withval", with_system_fonts_dir=/usr/share/fonts)
@@ -92,12 +101,17 @@ AC_SUBST([GLIB_MKENUMS], [`$PKG_CONFIG --variable glib_mkenums glib-2.0`])
 AC_SUBST([GLIB_COMPILE_RESOURCES], [`$PKG_CONFIG --variable glib_compile_resources gio-2.0`])
 AC_SUBST([GDBUS_CODEGEN], [`$PKG_CONFIG --variable gdbus_codegen gio-2.0`])
 
+POLKIT_GOBJECT_REQUIRED=0.98
+
 PKG_CHECK_MODULES(BASE, [glib-2.0 gio-2.0 gio-unix-2.0])
 AC_SUBST(BASE_CFLAGS)
 AC_SUBST(BASE_LIBS)
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
 AC_SUBST(SOUP_CFLAGS)
 AC_SUBST(SOUP_LIBS)
+
+PKG_CHECK_MODULES(POLKIT, \
+		  polkit-gobject-1 >= $POLKIT_GOBJECT_REQUIRED)
 
 AC_ARG_ENABLE([xauth],
               AC_HELP_STRING([--disable-xauth],

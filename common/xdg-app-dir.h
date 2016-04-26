@@ -23,6 +23,7 @@
 
 #include <ostree.h>
 
+#include "libglnx/libglnx.h"
 #include <xdg-app-common-types.h>
 
 #define XDG_APP_TYPE_DIR xdg_app_dir_get_type()
@@ -46,6 +47,13 @@ typedef enum {
   XDG_APP_DIR_ERROR_ALREADY_UNDEPLOYED,
   XDG_APP_DIR_ERROR_NOT_DEPLOYED,
 } XdgAppDirErrorEnum;
+
+typedef enum {
+  XDG_APP_HELPER_DEPLOY_FLAGS_NONE = 0,
+  XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE = 1<<0,
+} XdgAppHelperDeployFlags;
+
+#define XDG_APP_HELPER_DEPLOY_FLAGS_ALL (XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE)
 
 GQuark       xdg_app_dir_error_quark      (void);
 
@@ -134,6 +142,9 @@ OstreeRepo *xdg_app_dir_get_repo        (XdgAppDir      *self);
 gboolean    xdg_app_dir_ensure_path     (XdgAppDir      *self,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_use_child_repo  (XdgAppDir     *self);
+gboolean    xdg_app_dir_ensure_system_child_repo (XdgAppDir *self,
+                                                  GError **error);
 gboolean    xdg_app_dir_ensure_repo     (XdgAppDir      *self,
                                          GCancellable   *cancellable,
                                          GError        **error);
@@ -154,9 +165,19 @@ gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          const char     *repository,
                                          const char     *ref,
                                          char          **subpaths,
+                                         OstreeRepo     *repo,
+                                         OstreeRepoPullFlags flags,
                                          OstreeAsyncProgress *progress,
                                          GCancellable   *cancellable,
                                          GError        **error);
+gboolean    xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
+                                              const char *src_path,
+                                              const char *remote_name,
+                                              const char *ref,
+                                              char **subpaths,
+                                              OstreeAsyncProgress *progress,
+                                              GCancellable *cancellable,
+                                              GError **error);
 gboolean    xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
                                             const char     *kind,
                                             const char     *name,
@@ -208,6 +229,7 @@ gboolean    xdg_app_dir_deploy          (XdgAppDir      *self,
                                          GError        **error);
 gboolean    xdg_app_dir_deploy_update   (XdgAppDir      *self,
                                          const char     *ref,
+                                         const char     *origin,
                                          const char     *checksum,
                                          GCancellable   *cancellable,
                                          GError        **error);
@@ -215,6 +237,25 @@ gboolean   xdg_app_dir_deploy_install   (XdgAppDir      *self,
                                          const char     *ref,
                                          const char     *origin,
                                          char          **subpaths,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
+gboolean   xdg_app_dir_install          (XdgAppDir      *self,
+                                         gboolean        no_pull,
+                                         gboolean        no_deploy,
+                                         const char     *ref,
+                                         const char     *remote_name,
+                                         char          **subpaths,
+                                         OstreeAsyncProgress *progress,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
+gboolean   xdg_app_dir_update           (XdgAppDir      *self,
+                                         gboolean        no_pull,
+                                         gboolean        no_deploy,
+                                         const char     *ref,
+                                         const char     *remote_name,
+                                         const char     *checksum_or_latest,
+                                         char          **subpaths,
+                                         OstreeAsyncProgress *progress,
                                          GCancellable   *cancellable,
                                          GError        **error);
 gboolean    xdg_app_dir_undeploy        (XdgAppDir      *self,

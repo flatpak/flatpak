@@ -2759,3 +2759,134 @@ xdg_app_pull_from_bundle (OstreeRepo *repo,
 
   return TRUE;
 }
+
+/* This allocates and locks a subdir of the tmp dir, using an existing
+ * one with the same prefix if it is not in use already. */
+gboolean
+xdg_app_allocate_tmpdir (int tmpdir_dfd,
+                         const char *tmpdir_relpath,
+                         const char *tmpdir_prefix,
+                         char **tmpdir_name_out,
+                         int *tmpdir_fd_out,
+                         GLnxLockFile *file_lock_out,
+                         gboolean *reusing_dir_out,
+                         GCancellable *cancellable,
+                         GError **error)
+{
+  gboolean reusing_dir = FALSE;
+  g_autofree char *tmpdir_name = NULL;
+  glnx_fd_close int tmpdir_fd = -1;
+  g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
+
+  /* Look for existing tmpdir (with same prefix) to reuse */
+  if (!glnx_dirfd_iterator_init_at (tmpdir_dfd, tmpdir_relpath ? tmpdir_relpath : ".", FALSE, &dfd_iter, error))
+    return FALSE;
+
+  while (tmpdir_name == NULL)
+    {
+      gs_dirfd_iterator_cleanup GSDirFdIterator child_dfd_iter = { 0, };
+      struct dirent *dent;
+      glnx_fd_close int existing_tmpdir_fd = -1;
+      g_autoptr(GError) local_error = NULL;
+      g_autofree char *lock_name = NULL;
+
+      if (!glnx_dirfd_iterator_next_dent (&dfd_iter, &dent, cancellable, error))
+        return FALSE;
+
+      if (dent == NULL)
+        break;
+
+      if (!g_str_has_prefix (dent->d_name, tmpdir_prefix))
+        continue;
+
+      /* Quickly skip non-dirs, if unknown we ignore ENOTDIR when opening instead */
+      if (dent->d_type != DT_UNKNOWN &&
+          dent->d_type != DT_DIR)
+        continue;
+
+      if (!glnx_opendirat (dfd_iter.fd, dent->d_name, FALSE,
+                           &existing_tmpdir_fd, &local_error))
+        {
+          if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_DIRECTORY))
+            continue;
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+        }
+
+      lock_name = g_strconcat (dent->d_name, "-lock", NULL);
+
+      /* We put the lock outside the dir, so we can hold the lock
+       * until the directory is fully removed */
+      if (!glnx_make_lock_file (dfd_iter.fd, lock_name, LOCK_EX | LOCK_NB,
+                                file_lock_out, &local_error))
+        {
+          if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
+            continue;
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+        }
+
+      /* Touch the reused directory so that we don't accidentally
+       *   remove it due to being old when cleaning up the tmpdir
+       */
+      (void)futimens (existing_tmpdir_fd, NULL);
+
+      /* We found an existing tmpdir which we managed to lock */
+      tmpdir_name = g_strdup (dent->d_name);
+      tmpdir_fd = glnx_steal_fd (&existing_tmpdir_fd);
+      reusing_dir = TRUE;
+    }
+
+  while (tmpdir_name == NULL)
+    {
+      g_autofree char *tmpdir_name_template = g_strconcat (tmpdir_prefix, "XXXXXX", NULL);
+      glnx_fd_close int new_tmpdir_fd = -1;
+      g_autoptr(GError) local_error = NULL;
+      g_autofree char *lock_name = NULL;
+
+      /* No existing tmpdir found, create a new */
+
+      if (!glnx_mkdtempat (tmpdir_dfd, tmpdir_name_template, 0777, error))
+        return FALSE;
+
+      if (!glnx_opendirat (tmpdir_dfd, tmpdir_name_template, FALSE,
+                           &new_tmpdir_fd, error))
+        return FALSE;
+
+      lock_name = g_strconcat (tmpdir_name_template, "-lock", NULL);
+
+      /* Note, at this point we can race with another process that picks up this
+       * new directory. If that happens we need to retry, making a new directory. */
+      if (!glnx_make_lock_file (tmpdir_dfd, lock_name, LOCK_EX | LOCK_NB,
+                                file_lock_out, &local_error))
+        {
+          if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
+            continue;
+          else
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+        }
+
+      tmpdir_name = g_steal_pointer (&tmpdir_name_template);
+      tmpdir_fd = glnx_steal_fd (&new_tmpdir_fd);
+    }
+
+  if (tmpdir_name_out)
+    *tmpdir_name_out = g_steal_pointer (&tmpdir_name);
+
+  if (tmpdir_fd_out)
+    *tmpdir_fd_out = glnx_steal_fd (&tmpdir_fd);
+
+  if (reusing_dir_out)
+    *reusing_dir_out = reusing_dir;
+
+  return TRUE;
+}

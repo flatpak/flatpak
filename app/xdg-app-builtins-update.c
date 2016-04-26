@@ -97,18 +97,13 @@ do_update (XdgAppDir* dir,
   if (subpaths == NULL)
     return FALSE;
 
-  if (!opt_no_pull)
-    {
-      if (!xdg_app_dir_pull (dir, repository, ref, opt_subpaths ? opt_subpaths : subpaths,
-                             NULL, cancellable, error))
-        return FALSE;
-    }
-
-  if (!opt_no_deploy)
-    {
-      if (!xdg_app_dir_deploy_update (dir, ref, opt_commit, cancellable, error))
-        return FALSE;
-    }
+  if (!xdg_app_dir_update (dir,
+                           opt_no_pull,
+                           opt_no_deploy,
+                           ref, repository, opt_commit, opt_subpaths,
+                           NULL,
+                           cancellable, error))
+    return FALSE;
 
   return  TRUE;
 }

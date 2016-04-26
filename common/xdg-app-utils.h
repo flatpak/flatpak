@@ -321,4 +321,15 @@ gboolean   xdg_app_repo_generate_appstream (OstreeRepo    *repo,
                                             GCancellable  *cancellable,
                                             GError       **error);
 
+gboolean xdg_app_allocate_tmpdir (int tmpdir_dfd,
+                                  const char *tmpdir_relpath,
+                                  const char *tmpdir_prefix,
+                                  char **tmpdir_name_out,
+                                  int *tmpdir_fd_out,
+                                  GLnxLockFile *file_lock_out,
+                                  gboolean *reusing_dir_out,
+                                  GCancellable *cancellable,
+                                  GError **error);
+
+
 #endif /* __XDG_APP_UTILS_H__ */

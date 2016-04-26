@@ -1,0 +1,7 @@
+[Unit]
+Description=xdg-app system helper
+
+[Service]
+BusName=org.freedesktop.XdgApp.SystemHelper
+ExecStart=@libexecdir@/xdg-app-system-helper
+Type=dbus
