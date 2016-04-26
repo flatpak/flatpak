@@ -27,7 +27,6 @@
 #include "xdg-app-dbus.h"
 #include "xdg-app-permission-store.h"
 
-static GDBusNodeInfo *introspection_data = NULL;
 static char *monitor_dir;
 
 static gboolean
@@ -128,7 +127,6 @@ main (int    argc,
 {
   guint owner_id;
   GMainLoop *loop;
-  GBytes *introspection_bytes;
 
   setlocale (LC_ALL, "");
 
@@ -145,12 +143,7 @@ main (int    argc,
 
   setup_file_monitor ("/etc/resolv.conf");
   setup_file_monitor ("/etc/localtime");
-  
-  introspection_bytes = g_resources_lookup_data ("/org/freedesktop/XdgApp/org.freedesktop.XdgApp.xml", 0, NULL);
-  g_assert (introspection_bytes != NULL);
 
-  introspection_data = g_dbus_node_info_new_for_xml (g_bytes_get_data (introspection_bytes, NULL), NULL);
-  
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
                              "org.freedesktop.XdgApp",
                              G_BUS_NAME_OWNER_FLAGS_NONE,
@@ -164,8 +157,6 @@ main (int    argc,
   g_main_loop_run (loop);
 
   g_bus_unown_name (owner_id);
-
-  g_dbus_node_info_unref (introspection_data);
 
   return 0;
 }
