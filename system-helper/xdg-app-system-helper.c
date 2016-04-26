@@ -60,6 +60,7 @@ handle_deploy (XdgAppSystemHelper *object,
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
                                              "Unsupported flags enabled: 0x%x", (arg_flags & ~XDG_APP_HELPER_DEPLOY_FLAGS_ALL));
+      return TRUE;
     }
 
   if (!g_file_query_exists (path, NULL))
