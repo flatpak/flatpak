@@ -608,7 +608,7 @@
                 <term><option>--require-changes</option></term>
 
                 <listitem><para>
-                    Do nothing, leaving a non-existiant <arg choice="plain">DIRECTORY</arg> if nothing changes since
+                    Do nothing, leaving a non-existent <arg choice="plain">DIRECTORY</arg> if nothing changes since
                     last cached build. If this is not specified, the latest version from the cache will be put
                     into <arg choice="plain">DIRECTORY</arg>.
                 </para></listitem>
