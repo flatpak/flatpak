@@ -165,6 +165,8 @@ gboolean    xdg_app_dir_pull            (XdgAppDir      *self,
                                          const char     *repository,
                                          const char     *ref,
                                          char          **subpaths,
+                                         OstreeRepo     *repo,
+                                         OstreeRepoPullFlags flags,
                                          OstreeAsyncProgress *progress,
                                          GCancellable   *cancellable,
                                          GError        **error);

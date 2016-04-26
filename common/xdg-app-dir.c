@@ -46,9 +46,6 @@ struct XdgAppDir {
   GFile *basedir;
   OstreeRepo *repo;
 
-  OstreeRepo *child_repo;
-  GLnxLockFile child_repo_lock;
-
   XdgAppSystemHelper *system_helper;
 
   SoupSession *soup_session;
@@ -82,8 +79,6 @@ enum {
   PROP_USER,
   PROP_PATH
 };
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppSystemHelper, g_object_unref)
 
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
@@ -249,78 +244,6 @@ system_ostree_repo_new (GFile *repodir)
                        NULL);
 }
 
-gboolean
-xdg_app_dir_ensure_system_child_repo (XdgAppDir *self,
-                                      GError **error)
-{
-  g_autoptr(GFile) cache_dir = NULL;
-  g_autoptr(GFile) repo_dir = NULL;
-  g_autoptr(GFile) repo_dir_config = NULL;
-  g_autoptr(OstreeRepo) repo = NULL;
-  g_autofree char *tmpdir_name = NULL;
-  g_auto(GLnxLockFile) file_lock = GLNX_LOCK_FILE_INIT;
-  GLnxLockFile empty_lockfile = GLNX_LOCK_FILE_INIT;
-  g_autoptr(OstreeRepo) new_repo = NULL;
-  g_autoptr(GKeyFile) config = NULL;
-
-  g_assert (!self->user);
-
-  if (self->child_repo != NULL)
-    return TRUE;
-
-  if (!xdg_app_dir_ensure_repo (self, NULL, error))
-    return FALSE;
-
-  cache_dir = xdg_app_ensure_user_cache_dir_location (error);
-  if (cache_dir == NULL)
-    return FALSE;
-
-  if (!xdg_app_allocate_tmpdir (AT_FDCWD,
-                                gs_file_get_path_cached (cache_dir),
-                                "repo-", &tmpdir_name,
-                                NULL,
-                                &file_lock,
-                                NULL,
-                                NULL, error))
-    return FALSE;
-
-  repo_dir = g_file_get_child (cache_dir, tmpdir_name);
-
-  new_repo = ostree_repo_new (repo_dir);
-
-  repo_dir_config = g_file_get_child (repo_dir, "config");
-  if (!g_file_query_exists (repo_dir_config, NULL))
-    {
-      if (!ostree_repo_create (new_repo,
-                               OSTREE_REPO_MODE_BARE_USER,
-                               NULL, error))
-        return FALSE;
-    }
-  else
-    {
-      if (!ostree_repo_open (new_repo, NULL, error))
-        return FALSE;
-    }
-
-  /* Ensure the config is updated */
-  config = ostree_repo_copy_config (new_repo);
-  g_key_file_set_string (config, "core", "parent",
-                         gs_file_get_path_cached (ostree_repo_get_path (self->repo)));
-
-  if (!ostree_repo_write_config (new_repo, config, error))
-    return FALSE;
-
-  /* We need to reopen to apply the parent config */
-  repo = system_ostree_repo_new (repo_dir);
-  if (!ostree_repo_open (repo, NULL, error))
-    return FALSE;
-
-  self->child_repo = g_steal_pointer (&repo);
-  self->child_repo_lock = file_lock;
-  file_lock = empty_lockfile;
-  return TRUE;
-}
-
 static void
 xdg_app_dir_finalize (GObject *object)
 {
@@ -328,9 +251,6 @@ xdg_app_dir_finalize (GObject *object)
 
   g_clear_object (&self->repo);
   g_clear_object (&self->basedir);
-
-  g_clear_object (&self->child_repo);
-  glnx_release_lock_file (&self->child_repo_lock);
 
   g_clear_object (&self->system_helper);
 
@@ -412,8 +332,6 @@ xdg_app_dir_class_init (XdgAppDirClass *klass)
 static void
 xdg_app_dir_init (XdgAppDir *self)
 {
-  GLnxLockFile empty_lockfile = GLNX_LOCK_FILE_INIT;
-  self->child_repo_lock = empty_lockfile;
 }
 
 gboolean
@@ -954,7 +872,7 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
   if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &old_checksum, error))
     return FALSE;
 
-  if (!xdg_app_dir_pull (self, remote, branch, NULL, progress,
+  if (!xdg_app_dir_pull (self, remote, branch, NULL, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                          cancellable, error))
     return FALSE;
 
@@ -1088,6 +1006,8 @@ xdg_app_dir_pull (XdgAppDir *self,
                   const char *repository,
                   const char *ref,
                   char **subpaths,
+                  OstreeRepo *repo,
+                  OstreeRepoPullFlags flags,
                   OstreeAsyncProgress *progress,
                   GCancellable *cancellable,
                   GError **error)
@@ -1097,8 +1017,6 @@ xdg_app_dir_pull (XdgAppDir *self,
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   const char *refs[2];
   g_autofree char *url = NULL;
-  OstreeRepo *repo;
-  OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_NONE;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -1112,18 +1030,8 @@ xdg_app_dir_pull (XdgAppDir *self,
   if (*url == 0)
     return TRUE; /* Empty url, silently disables updates */
 
-  if (xdg_app_dir_use_child_repo (self))
-    {
-      if (!xdg_app_dir_ensure_system_child_repo (self, error))
-        return FALSE;
-
-      repo = self->child_repo;
-      flags |= OSTREE_REPO_PULL_FLAGS_MIRROR;
-    }
-  else
-    {
-      repo = self->repo;
-    }
+  if (repo == NULL)
+    repo = self->repo;
 
   if (progress == NULL)
     {
@@ -2577,33 +2485,6 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
   g_autoptr(GError) local_error = NULL;
   g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
 
-  if (self->child_repo)
-    {
-      char *empty_subpaths[] = {NULL};
-      XdgAppSystemHelper *system_helper = xdg_app_dir_get_system_helper (self);
-
-      g_assert (system_helper != NULL);
-
-      if (!xdg_app_system_helper_call_deploy_sync (system_helper,
-                                                   gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
-                                                   XDG_APP_HELPER_DEPLOY_FLAGS_NONE,
-                                                   ref,
-                                                   origin,
-                                                   (const char *const *)(subpaths ? subpaths : empty_subpaths),
-                                                   cancellable,
-                                                   error))
-        return FALSE;
-
-      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
-                                   gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
-                                   NULL, NULL);
-
-      g_clear_object (&self->child_repo);
-      glnx_release_lock_file (&self->child_repo_lock);
-
-      return TRUE;
-    }
-
   if (!xdg_app_dir_lock (self, &lock,
                          cancellable, error))
     goto out;
@@ -2675,47 +2556,6 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
   g_autoptr(GError) my_error = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  if (self->child_repo)
-    {
-      char *empty_subpaths[] = {NULL};
-      g_autofree char *pulled_checksum = NULL;
-      g_autofree char *active_checksum = NULL;
-      g_autofree char *remote_and_ref = NULL;
-
-      if (checksum_or_latest != NULL)
-        return xdg_app_fail (error, "Can't update to a specific commit without root permissions");
-
-      if (!ostree_repo_resolve_rev (self->child_repo, ref, FALSE, &pulled_checksum, error))
-        return FALSE;
-
-      active_checksum = xdg_app_dir_read_active (self, ref, NULL);
-      if (active_checksum == NULL || strcmp (active_checksum, pulled_checksum) != 0)
-        {
-          XdgAppSystemHelper *system_helper = xdg_app_dir_get_system_helper (self);
-
-          g_assert (system_helper != NULL);
-
-          if (!xdg_app_system_helper_call_deploy_sync (system_helper,
-                                                       gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
-                                                       XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE,
-                                                       ref,
-                                                       remote_name,
-                                                       (const char *const *)empty_subpaths,
-                                                       cancellable,
-                                                       error))
-            return FALSE;
-        }
-
-      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
-                                   gs_file_get_path_cached (ostree_repo_get_path (self->child_repo)),
-                                   NULL, NULL);
-
-      g_clear_object (&self->child_repo);
-      glnx_release_lock_file (&self->child_repo_lock);
-
-      return TRUE;
-    }
-
   if (!xdg_app_dir_lock (self, &lock,
                          cancellable, error))
     return FALSE;
@@ -2763,6 +2603,71 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
   return TRUE;
 }
 
+static OstreeRepo *
+xdg_app_dir_create_system_child_repo (XdgAppDir *self,
+                                      GLnxLockFile *file_lock,
+                                      GError **error)
+{
+  g_autoptr(GFile) cache_dir = NULL;
+  g_autoptr(GFile) repo_dir = NULL;
+  g_autoptr(GFile) repo_dir_config = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
+  g_autofree char *tmpdir_name = NULL;
+  g_autoptr(OstreeRepo) new_repo = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+
+  g_assert (!self->user);
+
+  if (!xdg_app_dir_ensure_repo (self, NULL, error))
+    return NULL;
+
+  cache_dir = xdg_app_ensure_user_cache_dir_location (error);
+  if (cache_dir == NULL)
+    return NULL;
+
+  if (!xdg_app_allocate_tmpdir (AT_FDCWD,
+                                gs_file_get_path_cached (cache_dir),
+                                "repo-", &tmpdir_name,
+                                NULL,
+                                file_lock,
+                                NULL,
+                                NULL, error))
+    return NULL;
+
+  repo_dir = g_file_get_child (cache_dir, tmpdir_name);
+
+  new_repo = ostree_repo_new (repo_dir);
+
+  repo_dir_config = g_file_get_child (repo_dir, "config");
+  if (!g_file_query_exists (repo_dir_config, NULL))
+    {
+      if (!ostree_repo_create (new_repo,
+                               OSTREE_REPO_MODE_BARE_USER,
+                               NULL, error))
+        return NULL;
+    }
+  else
+    {
+      if (!ostree_repo_open (new_repo, NULL, error))
+        return NULL;
+    }
+
+  /* Ensure the config is updated */
+  config = ostree_repo_copy_config (new_repo);
+  g_key_file_set_string (config, "core", "parent",
+                         gs_file_get_path_cached (ostree_repo_get_path (self->repo)));
+
+  if (!ostree_repo_write_config (new_repo, config, error))
+    return NULL;
+
+  /* We need to reopen to apply the parent config */
+  repo = system_ostree_repo_new (repo_dir);
+  if (!ostree_repo_open (repo, NULL, error))
+    return NULL;
+
+  return g_steal_pointer (&repo);
+}
+
 gboolean
 xdg_app_dir_install (XdgAppDir      *self,
                      gboolean        no_pull,
@@ -2774,9 +2679,53 @@ xdg_app_dir_install (XdgAppDir      *self,
                      GCancellable   *cancellable,
                      GError        **error)
 {
+  if (xdg_app_dir_use_child_repo (self))
+    {
+      g_autoptr(OstreeRepo) child_repo = NULL;
+      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      char *empty_subpaths[] = {NULL};
+      XdgAppSystemHelper *system_helper;
+
+      if (no_pull)
+        return xdg_app_fail (error, "No-pull install not supported without root permissions");
+
+      if (no_deploy)
+        return xdg_app_fail (error, "No-deploy install not supported without root permissions");
+
+      child_repo = xdg_app_dir_create_system_child_repo (self, &child_repo_lock, error);
+      if (child_repo == NULL)
+        return FALSE;
+
+      system_helper = xdg_app_dir_get_system_helper (self);
+
+      g_assert (system_helper != NULL);
+
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths,
+                             child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                             progress, cancellable, error))
+        return FALSE;
+
+      if (!xdg_app_system_helper_call_deploy_sync (system_helper,
+                                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                                   XDG_APP_HELPER_DEPLOY_FLAGS_NONE,
+                                                   ref,
+                                                   remote_name,
+                                                   (const char *const *)(subpaths ? subpaths : empty_subpaths),
+                                                   cancellable,
+                                                   error))
+        return FALSE;
+
+      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
+                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                   NULL, NULL);
+
+      return TRUE;
+    }
+
+
   if (!no_pull)
     {
-      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths, progress,
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                              cancellable, error))
         return FALSE;
     }
@@ -2803,9 +2752,67 @@ xdg_app_dir_update (XdgAppDir      *self,
                     GCancellable   *cancellable,
                     GError        **error)
 {
+  if (xdg_app_dir_use_child_repo (self))
+    {
+      g_autoptr(OstreeRepo) child_repo = NULL;
+      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      char *empty_subpaths[] = {NULL};
+      g_autofree char *pulled_checksum = NULL;
+      g_autofree char *active_checksum = NULL;
+      XdgAppSystemHelper *system_helper;
+
+      if (no_pull)
+        return xdg_app_fail (error, "No-pull update not supported without root permissions");
+
+      if (no_deploy)
+        return xdg_app_fail (error, "No-deploy update not supported without root permissions");
+
+      if (checksum_or_latest != NULL)
+        return xdg_app_fail (error, "Can't update to a specific commit without root permissions");
+
+      child_repo = xdg_app_dir_create_system_child_repo (self, &child_repo_lock, error);
+      if (child_repo == NULL)
+        return FALSE;
+
+      system_helper = xdg_app_dir_get_system_helper (self);
+
+      g_assert (system_helper != NULL);
+
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths,
+                             child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                             progress, cancellable, error))
+        return FALSE;
+
+      if (!ostree_repo_resolve_rev (child_repo, ref, FALSE, &pulled_checksum, error))
+        return FALSE;
+
+      active_checksum = xdg_app_dir_read_active (self, ref, NULL);
+      if (g_strcmp0 (active_checksum, pulled_checksum) != 0)
+        {
+
+          if (!xdg_app_system_helper_call_deploy_sync (system_helper,
+                                                       gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                                       XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE,
+                                                       ref,
+                                                       remote_name,
+                                                       (const char *const *)empty_subpaths,
+                                                       cancellable,
+                                                       error))
+            return FALSE;
+        }
+
+      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
+                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                   NULL, NULL);
+
+      return TRUE;
+    }
+
+
   if (!no_pull)
     {
-      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths, progress,
+      if (!xdg_app_dir_pull (self, remote_name, ref, subpaths,
+                             NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                              cancellable, error))
         return FALSE;
     }
