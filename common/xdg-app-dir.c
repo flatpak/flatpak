@@ -1263,29 +1263,26 @@ xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
                                                   &gpg_verify_summary, error))
     return FALSE;
 
-  g_print ("verify summary: %d\n", gpg_verify_summary);
-
   if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
                                           &gpg_verify, error))
     return FALSE;
 
-  g_print ("verify: %d\n", gpg_verify);
-
   if (!gpg_verify_summary || !gpg_verify)
-    xdg_app_fail (error, "Can't pull from untrusted non-gpg verified remote");
+    return xdg_app_fail (error, "Can't pull from untrusted non-gpg verified remote");
 
   /* We verify the summary manually before anything else to make sure
-     we've got something right before looking to hard at the repo and
+     we've got something right before looking too hard at the repo and
      so we can check for a downgrade before pulling and updating the
      ref */
 
   if (!g_file_load_contents (summary_sig_file, cancellable,
-                             &summary_sig_data, &summary_sig_data_size, NULL, error))
+                             &summary_sig_data, &summary_sig_data_size, NULL, NULL))
     return xdg_app_fail (error, "GPG verification enabled, but no summary signatures found");
+
   summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_data_size);
 
   if (!g_file_load_contents (summary_file, cancellable,
-                             &summary_data, &summary_data_size, NULL, error))
+                             &summary_data, &summary_data_size, NULL, NULL))
     return xdg_app_fail (error, "No summary found");
   summary_bytes = g_bytes_new_take (summary_data, summary_data_size);
 
@@ -1300,10 +1297,7 @@ xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
   if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
     return xdg_app_fail (error, "GPG signatures found, but none are in trusted keyring");
 
-  g_print ("summary: %p\n", summary_bytes);
-
   summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
-  g_print ("looking in summary for %s\n", ref);
   if (!xdg_app_summary_lookup_ref (summary,
                                    ref,
                                    &checksum))
@@ -1312,8 +1306,6 @@ xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
                    "Can't find %sin remote %s", ref, remote_name);
       return FALSE;
     }
-
-  g_print ("Checksum is %s\n", checksum);
 
   (void)ostree_repo_load_commit (self->repo, checksum, &old_commit, NULL, NULL);
 
