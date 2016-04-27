@@ -61,10 +61,11 @@ xdg_app_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(XdgAppDir) system_dir = NULL;
   XdgAppDir *dir = NULL;
   g_autoptr(GError) lookup_error = NULL;
+  g_autoptr(GVariant) deploy_data = NULL;
   const char *name;
   const char *branch = "master";
-  g_autofree char *commit = NULL;
-  g_autofree char *origin = NULL;
+  const char *commit = NULL;
+  const char *origin = NULL;
   gboolean is_app = FALSE;
   gboolean first = TRUE;
 
@@ -120,11 +121,12 @@ xdg_app_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       return FALSE;
     }
 
-  commit = xdg_app_dir_read_active (dir, ref, NULL);
-  if (commit == NULL)
+  deploy_data = xdg_app_dir_get_deploy_data (dir, ref, cancellable, error);
+  if (deploy_data == NULL)
     return FALSE;
 
-  origin = xdg_app_dir_get_origin (dir, ref, NULL, NULL);
+  commit = xdg_app_deploy_data_get_commit (deploy_data);
+  origin = xdg_app_deploy_data_get_origin (deploy_data);
 
   if (!opt_show_ref && !opt_show_origin && !opt_show_commit)
     opt_show_ref = opt_show_origin = opt_show_commit = TRUE;
