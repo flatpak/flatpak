@@ -3984,25 +3984,6 @@ xdg_app_dir_fetch_remote_object (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_get_installed_size (XdgAppDir *self,
-                                const char *commit,
-                                guint64 *installed_size,
-                                GCancellable *cancellable,
-                                GError **error)
-{
-  g_autoptr(GVariant) commit_variant = NULL;
-  g_autoptr(GFile) root = NULL;
-
-  if (!ostree_repo_read_commit (self->repo, commit, &root, NULL, cancellable, error))
-    return FALSE;
-
-  if (!xdg_app_repo_collect_sizes (self->repo, root, installed_size, NULL, cancellable, error))
-    return FALSE;
-
-  return TRUE;
-}
-
-gboolean
 xdg_app_dir_fetch_ref_cache (XdgAppDir    *self,
                              const char   *remote_name,
                              const char   *ref,
