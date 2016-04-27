@@ -119,9 +119,10 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
     {
       char *ref, *partial_ref;
       g_auto(GStrv) parts = NULL;
-      g_autofree char *repo = NULL;
+      const char *repo = NULL;
       gboolean is_user;
       XdgAppDir *dir = NULL;
+      g_autoptr(GVariant) deploy_data = NULL;
 
       if (system[s] == NULL)
         is_user = TRUE;
@@ -146,7 +147,11 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
       parts = g_strsplit (ref, "/", -1);
       partial_ref = strchr(ref, '/') + 1;
 
-      repo = xdg_app_dir_get_origin (dir, ref, NULL, NULL);
+      deploy_data = xdg_app_dir_get_deploy_data (dir, ref, cancellable, error);
+      if (deploy_data == NULL)
+        return FALSE;
+
+      repo = xdg_app_deploy_data_get_origin (deploy_data);
 
       if (opt_show_details)
         {
@@ -154,7 +159,7 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
           g_autofree char *latest = NULL;
           g_autofree char *size_s = NULL;
           guint64 size = 0;
-          g_auto(GStrv) subpaths = NULL;
+          g_autofree const char **subpaths = NULL;
 
           latest = xdg_app_dir_read_latest (dir, repo, ref, NULL, NULL);
           if (latest)
@@ -177,12 +182,9 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
           xdg_app_table_printer_add_column (printer, active);
           xdg_app_table_printer_add_column (printer, latest);
 
-          if (xdg_app_dir_get_installed_size (dir, active, &size, cancellable, NULL))
-            size_s = g_format_size (size);
-          else
-            size_s = g_strdup ("?");
+          size = xdg_app_deploy_data_get_installed_size (deploy_data);
+          size_s = g_format_size (size);
           xdg_app_table_printer_add_column (printer, size_s);
-
 
           xdg_app_table_printer_add_column (printer, ""); /* Options */
 
@@ -203,8 +205,8 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
                 xdg_app_table_printer_append_with_comma (printer, "runtime");
             }
 
-          subpaths = xdg_app_dir_get_subpaths (dir, ref, cancellable, NULL);
-          if (subpaths == NULL || subpaths[0] == NULL)
+          subpaths = xdg_app_deploy_data_get_subpaths (deploy_data);
+          if (subpaths[0] == NULL)
             xdg_app_table_printer_add_column (printer, "");
           else
             {
