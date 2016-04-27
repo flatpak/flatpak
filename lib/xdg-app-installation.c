@@ -1202,15 +1202,7 @@ xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation  *self,
                                              GCancellable        *cancellable,
                                              GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
-
-  return xdg_app_dir_fetch_sizes (priv->dir, remote_name, commit,
-                                  download_size,
-                                  NULL,
-                                  NULL,
-                                  installed_size,
-                                  cancellable,
-                                  error);
+  return xdg_app_fail (error, "Deprecated function call xdg_app_installation_fetch_remote_size_sync");
 }
 
 /**
