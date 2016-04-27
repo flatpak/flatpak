@@ -143,6 +143,19 @@ xdg_app_installation_new_for_dir (XdgAppDir *dir,
 }
 
 /**
+ * xdg_app_get_default_arch:
+ *
+ * Returns the canonical name for the arch of the current machine.
+ *
+ * Returns: an arch string
+ */
+const char  *
+xdg_app_get_default_arch (void)
+{
+  return xdg_app_get_arch ();
+}
+
+/**
  * xdg_app_installation_new_system:
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError

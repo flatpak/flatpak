@@ -64,6 +64,8 @@ typedef enum {
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppInstallation, g_object_unref)
 #endif
 
+XDG_APP_EXTERN const char  *xdg_app_get_default_arch (void);
+
 XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_system (GCancellable *cancellable,
                                                                     GError **error);
 XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_user (GCancellable *cancellable,
