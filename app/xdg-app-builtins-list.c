@@ -152,6 +152,9 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
         {
           g_autofree char *active = xdg_app_dir_read_active (dir, ref, NULL);
           g_autofree char *latest = NULL;
+          g_autofree char *size_s = NULL;
+          guint64 size = 0;
+          g_auto(GStrv) subpaths = NULL;
 
           latest = xdg_app_dir_read_latest (dir, repo, ref, NULL, NULL);
           if (latest)
@@ -174,6 +177,13 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
           xdg_app_table_printer_add_column (printer, active);
           xdg_app_table_printer_add_column (printer, latest);
 
+          if (xdg_app_dir_get_installed_size (dir, active, &size, cancellable, NULL))
+            size_s = g_format_size (size);
+          else
+            size_s = g_strdup ("?");
+          xdg_app_table_printer_add_column (printer, size_s);
+
+
           xdg_app_table_printer_add_column (printer, ""); /* Options */
 
           if (print_user && print_system)
@@ -191,6 +201,17 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
             {
               if (app)
                 xdg_app_table_printer_append_with_comma (printer, "runtime");
+            }
+
+          subpaths = xdg_app_dir_get_subpaths (dir, ref, cancellable, NULL);
+          if (subpaths == NULL || subpaths[0] == NULL)
+            xdg_app_table_printer_add_column (printer, "");
+          else
+            {
+              int i;
+              xdg_app_table_printer_add_column (printer, ""); /* subpaths */
+              for (i = 0; subpaths[i] != NULL; i++)
+                xdg_app_table_printer_append_with_comma (printer, subpaths[i]);
             }
         }
       else
