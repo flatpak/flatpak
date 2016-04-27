@@ -320,6 +320,8 @@ case "$host" in
 esac
 AC_SUBST(HIDDEN_VISIBILITY_CFLAGS)
 
+GLIB_TESTS
+
 XDG_APP_MAJOR_VERSION=xdg_app_major_version
 XDG_APP_MINOR_VERSION=xdg_app_minor_version
 XDG_APP_MICRO_VERSION=xdg_app_micro_version

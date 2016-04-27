@@ -1,0 +1,23 @@
+#! /bin/bash
+#
+# Run a test in tap mode, ensuring we have a temporary directory.  We
+# always use /var/tmp becuase we might want to use user xattrs, which
+# aren't available on tmpfs.
+#
+# The test binary is passed as $1
+
+srcd=$(cd $(dirname $1) && pwd)
+bn=$(basename $1)
+tempdir=$(mktemp -d /var/tmp/tap-test.XXXXXX)
+touch ${tempdir}/.testtmp
+function cleanup () {
+    if test -n "${TEST_SKIP_CLEANUP:-}"; then
+	echo "Skipping cleanup of ${tempdir}"
+    else if test -f ${tempdir}/.testtmp; then
+	rm "${tempdir}" -rf
+    fi
+    fi
+}
+trap cleanup EXIT
+cd ${tempdir}
+${srcd}/${bn} -k --tap

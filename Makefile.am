@@ -2,11 +2,14 @@ NULL =
 
 bin_PROGRAMS = $(NULL)
 noinst_PROGRAMS = $(NULL)
+noinst_LTLIBRARIES = $(NULL)
 libexec_PROGRAMS = $(NULL)
 CLEANFILES = $(NULL)
 DISTCLEANFILES= $(NULL)
 BUILT_SOURCES = $(NULL)
 EXTRA_DIST =
+
+include $(top_srcdir)/buildutil/glib-tap.mk
 
 if BUILD_DOCUMENTATION
 SUBDIRS = . doc
@@ -48,7 +51,7 @@ dist_triggers_SCRIPTS = \
 	$(NULL)
 
 lib_LTLIBRARIES =
-noinst_LTLIBRARIES = libglnx.la
+noinst_LTLIBRARIES += libglnx.la
 libglnx_srcpath := $(srcdir)/libglnx
 libglnx_cflags := \
 	$(BASE_CFLAGS) \

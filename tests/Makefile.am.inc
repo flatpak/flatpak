@@ -1,3 +1,9 @@
+TESTS_ENVIRONMENT += OT_TESTS_DEBUG=1 \
+	GI_TYPELIB_PATH=$$(cd $(top_builddir) && pwd) \
+	LD_LIBRARY_PATH=$$(cd $(top_builddir)/.libs && pwd) \
+	PATH=$$(cd $(top_builddir) && pwd):$${PATH} \
+	$(NULL)
+
 TEST_PROGS += testdb test-doc-portal
 testdb_CFLAGS = $(BASE_CFLAGS) -DDB_DIR=\"$(abs_srcdir)/tests/dbs\"
 testdb_LDADD = \
@@ -28,9 +34,9 @@ tests/services/org.freedesktop.XdgApp.service: session-helper/org.freedesktop.Xd
 
 test_doc_portal_DEPENDENCIES = tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.XdgApp.service
 
-check_PROGRAMS = $(TEST_PROGS)
+check_PROGRAMS += $(TEST_PROGS)
 
-TESTS=testdb test-doc-portal
+test_programs = testdb test-doc-portal
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/xdg-app.supp

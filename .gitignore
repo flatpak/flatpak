@@ -20,7 +20,8 @@ depcomp
 install-sh
 libtool
 ltmain.sh
-m4
+m4/*.m4
+!m4/glibtests.m4
 missing
 stamp-h1
 config.h.in
