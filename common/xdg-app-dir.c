@@ -2353,6 +2353,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
   g_autoptr(GFileInfo) file_info = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) checkoutdir = NULL;
+  g_autoptr(GFile) real_checkoutdir = NULL;
   g_autoptr(GFile) dotref = NULL;
   g_autoptr(GFile) files_etc = NULL;
   g_autoptr(GFile) metadata = NULL;
@@ -2362,6 +2363,8 @@ xdg_app_dir_deploy (XdgAppDir *self,
   g_autoptr(GKeyFile) keyfile = NULL;
   guint64 installed_size = 0;
   const char *checksum;
+  g_autoptr(GFile) tmp_dir_template = NULL;
+  g_autofree char *tmp_dir_path = NULL;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -2393,14 +2396,26 @@ xdg_app_dir_deploy (XdgAppDir *self,
         return xdg_app_fail (error, "%s is not available", ref);
     }
 
-  checkoutdir = g_file_get_child (deploy_base, checksum);
-  if (g_file_query_exists (checkoutdir, cancellable))
+  real_checkoutdir = g_file_get_child (deploy_base, checksum);
+  if (g_file_query_exists (real_checkoutdir, cancellable))
     {
       g_set_error (error, XDG_APP_DIR_ERROR,
                    XDG_APP_DIR_ERROR_ALREADY_DEPLOYED,
                    "%s branch %s already deployed", ref, checksum);
       return FALSE;
     }
+
+  g_autofree char *template = g_strdup_printf (".%s-XXXXXX", checksum);
+  tmp_dir_template = g_file_get_child (deploy_base, template);
+  tmp_dir_path = g_file_get_path (tmp_dir_template);
+
+  if (g_mkdtemp (tmp_dir_path) == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create deploy directory");
+      return FALSE;
+    }
+
+  checkoutdir = g_file_new_for_path (tmp_dir_path);
 
   if (!ostree_repo_read_commit (self->repo, checksum, &root, NULL, cancellable, error))
     {
@@ -2421,7 +2436,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
     {
       if (!ostree_repo_checkout_tree (self->repo,
                                       OSTREE_REPO_CHECKOUT_MODE_USER,
-                                      OSTREE_REPO_CHECKOUT_OVERWRITE_NONE,
+                                      OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES,
                                       checkoutdir,
                                       OSTREE_REPO_FILE (root), file_info,
                                       cancellable, error))
@@ -2560,6 +2575,10 @@ xdg_app_dir_deploy (XdgAppDir *self,
 
   deploy_data_file = g_file_get_child (checkoutdir, "deploy");
   if (!xdg_app_variant_save (deploy_data_file, deploy_data, cancellable, error))
+    return FALSE;
+
+  if (!g_file_move (checkoutdir, real_checkoutdir, G_FILE_COPY_NO_FALLBACK_FOR_MOVE,
+                    cancellable, NULL, NULL, error))
     return FALSE;
 
   if (!xdg_app_dir_set_active (self, ref, checksum, cancellable, error))
