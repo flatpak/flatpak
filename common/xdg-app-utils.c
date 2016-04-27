@@ -1483,14 +1483,18 @@ _xdg_app_repo_collect_sizes (OstreeRepo *repo,
       guint64 obj_size;
       guint64 file_size = g_file_info_get_size (file_info);
 
-      *installed_size += ((file_size + 511) / 512) * 512;
+      if (installed_size)
+        *installed_size += ((file_size + 511) / 512) * 512;
 
-      if (!ostree_repo_query_object_storage_size (repo,
-                                                  OSTREE_OBJECT_TYPE_FILE, checksum,
-                                                  &obj_size, cancellable, error))
-        return FALSE;
+      if (download_size)
+        {
+          if (!ostree_repo_query_object_storage_size (repo,
+                                                      OSTREE_OBJECT_TYPE_FILE, checksum,
+                                                      &obj_size, cancellable, error))
+            return FALSE;
 
-      *download_size += obj_size;
+          *download_size += obj_size;
+        }
     }
 
   if (file_info == NULL || g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
