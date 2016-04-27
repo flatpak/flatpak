@@ -112,18 +112,8 @@ char *      xdg_app_dir_get_origin      (XdgAppDir      *self,
                                          const char     *ref,
                                          GCancellable   *cancellable,
                                          GError        **error);
-gboolean    xdg_app_dir_set_origin      (XdgAppDir      *self,
-                                         const char     *ref,
-                                         const char     *remote,
-                                         GCancellable   *cancellable,
-                                         GError        **error);
 char **     xdg_app_dir_get_subpaths    (XdgAppDir      *self,
                                          const char     *ref,
-                                         GCancellable   *cancellable,
-                                         GError        **error);
-gboolean    xdg_app_dir_set_subpaths     (XdgAppDir      *self,
-                                         const char     *ref,
-                                         const char    **subpaths,
                                          GCancellable   *cancellable,
                                          GError        **error);
 GFile *     xdg_app_dir_get_exports_dir (XdgAppDir      *self);
@@ -244,13 +234,15 @@ gboolean    xdg_app_dir_lock            (XdgAppDir      *self,
                                          GCancellable   *cancellable,
                                          GError        **error);
 gboolean    xdg_app_dir_deploy          (XdgAppDir      *self,
+                                         const char     *origin,
                                          const char     *ref,
-                                         const char     *checksum,
+                                         const char     *checksum_or_latest,
+                                         const char * const * subpaths,
+                                         GVariant       *old_deploy_data,
                                          GCancellable   *cancellable,
                                          GError        **error);
 gboolean    xdg_app_dir_deploy_update   (XdgAppDir      *self,
                                          const char     *ref,
-                                         const char     *origin,
                                          const char     *checksum,
                                          GCancellable   *cancellable,
                                          GError        **error);

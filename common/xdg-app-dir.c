@@ -600,6 +600,13 @@ xdg_app_dir_new_deploy_data (const char *origin,
                              GVariant *metadata)
 {
   char *empty_subpaths[] = {NULL};
+  GVariantBuilder builder;
+
+  if (metadata == NULL)
+    {
+      g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+      metadata = g_variant_builder_end (&builder);
+    }
 
   return g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
                                             origin,
@@ -660,7 +667,6 @@ xdg_app_create_deploy_data_from_old (XdgAppDir *self,
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) origin = NULL;
   guint64 installed_size;
-  GVariantBuilder builder;
 
   deploy_base = g_file_get_parent (deploy_dir);
   commit = g_file_get_basename (deploy_dir);
@@ -676,9 +682,8 @@ xdg_app_create_deploy_data_from_old (XdgAppDir *self,
   /* For backwards compat we return a 0 installed size, its to slow to regenerate */
   installed_size = 0;
 
-  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
   return xdg_app_dir_new_deploy_data (old_origin, commit, old_subpaths,
-                                      installed_size, g_variant_builder_end (&builder));
+                                      installed_size, NULL);
 }
 
 GVariant *
@@ -701,7 +706,7 @@ xdg_app_dir_get_deploy_data (XdgAppDir      *self,
       return NULL;
     }
 
-  data_file = g_file_get_child (deploy_dir, "deploy_data");
+  data_file = g_file_get_child (deploy_dir, "deploy");
   if (!g_file_load_contents (data_file, cancellable, &data, &data_size, NULL, &my_error))
     {
       if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -726,47 +731,17 @@ xdg_app_dir_get_origin (XdgAppDir      *self,
                         GCancellable   *cancellable,
                         GError        **error)
 {
-  g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) origin = NULL;
-  char *repository = NULL;
+  g_autoptr(GVariant) deploy_data = NULL;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
+  deploy_data = xdg_app_dir_get_deploy_data (self, ref,
+                                             cancellable, error);
+  if (deploy_data == NULL)
     {
       xdg_app_fail (error, "%s is not installed", ref);
       return NULL;
     }
 
-  origin = g_file_get_child (deploy_base, "origin");
-  if (!g_file_load_contents (origin, cancellable, &repository, NULL, NULL, error))
-    return NULL;
-
-  return repository;
-}
-
-gboolean
-xdg_app_dir_set_origin (XdgAppDir      *self,
-                        const char     *ref,
-                        const char     *remote,
-                        GCancellable   *cancellable,
-                        GError        **error)
-{
-  g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) origin = NULL;
-
-  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
-    {
-      xdg_app_fail (error, "%s is not installed", ref);
-      return FALSE;
-    }
-
-  origin = g_file_get_child (deploy_base, "origin");
-  if (!g_file_replace_contents (origin, remote, strlen (remote), NULL, FALSE,
-                                G_FILE_CREATE_NONE, NULL, cancellable, error))
-    return FALSE;
-
-  return TRUE;
+  return g_strdup (xdg_app_deploy_data_get_origin (deploy_data));
 }
 
 char **
@@ -775,79 +750,23 @@ xdg_app_dir_get_subpaths (XdgAppDir      *self,
                           GCancellable   *cancellable,
                           GError        **error)
 {
-  g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) file = NULL;
-  g_autofree char *data = NULL;
-  g_autoptr(GError) my_error = NULL;
-  g_autoptr(GPtrArray) subpaths = NULL;
-  g_auto(GStrv) lines = NULL;
+  g_autoptr(GVariant) deploy_data = NULL;
+  char **subpaths;
   int i;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
+  deploy_data = xdg_app_dir_get_deploy_data (self, ref,
+                                             cancellable, error);
+  if (deploy_data == NULL)
     {
       xdg_app_fail (error, "%s is not installed", ref);
       return NULL;
     }
 
-  file = g_file_get_child (deploy_base, "subpaths");
-  if (!g_file_load_contents (file, cancellable, &data, NULL, NULL, &my_error))
-    {
-      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        data = g_strdup ("");
-      else
-        {
-          g_propagate_error (error, g_steal_pointer (&my_error));
-          return NULL;
-        }
-    }
+  subpaths = (char **)xdg_app_deploy_data_get_subpaths (deploy_data);
+  for (i = 0; subpaths[i] != NULL; i++)
+    subpaths[i] = g_strdup (subpaths[i]);
 
-  lines = g_strsplit (data, "\n", 0);
-
-  subpaths = g_ptr_array_new ();
-  for (i = 0; lines[i] != NULL; i++)
-    {
-      lines[i] = g_strstrip (lines[i]);
-      if (lines[i][0] == '/')
-        g_ptr_array_add (subpaths, g_strdup (lines[i]));
-    }
-
-  g_ptr_array_add (subpaths, NULL);
-  return (char **)g_ptr_array_free (subpaths, FALSE);
-}
-
-gboolean
-xdg_app_dir_set_subpaths (XdgAppDir      *self,
-                          const char     *ref,
-                          const char    **subpaths,
-                          GCancellable   *cancellable,
-                          GError        **error)
-{
-  g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GFile) file = NULL;
-  g_autofree char *data = NULL;
-
-  deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
-    {
-      xdg_app_fail (error, "%s is not installed", ref);
-      return FALSE;
-    }
-
-  file = g_file_get_child (deploy_base, "subpaths");
-
-  if (subpaths == NULL || subpaths[0] == NULL)
-    {
-      g_file_delete (file, cancellable, NULL);
-      return TRUE;
-    }
-
-  data = g_strjoinv ("\n", (char **)subpaths);
-  if (!g_file_replace_contents (file, data, strlen (data), NULL, FALSE,
-                                G_FILE_CREATE_NONE, NULL, cancellable, error))
-    return FALSE;
-
-  return TRUE;
+  return subpaths;
 }
 
 gboolean
@@ -2421,8 +2340,11 @@ xdg_app_dir_update_exports (XdgAppDir *self,
 
 gboolean
 xdg_app_dir_deploy (XdgAppDir *self,
+                    const char *origin,
                     const char *ref,
-                    const char *checksum,
+                    const char *checksum_or_latest,
+                    const char * const * subpaths,
+                    GVariant *old_deploy_data,
                     GCancellable *cancellable,
                     GError **error)
 {
@@ -2434,19 +2356,20 @@ xdg_app_dir_deploy (XdgAppDir *self,
   g_autoptr(GFile) dotref = NULL;
   g_autoptr(GFile) files_etc = NULL;
   g_autoptr(GFile) metadata = NULL;
+  g_autoptr(GFile) deploy_data_file = NULL;
+  g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(GFile) export = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
-  g_auto(GStrv) subpaths = NULL;
+  guint64 installed_size = 0;
+  const char *checksum;
 
   if (!xdg_app_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
 
-  if (checksum == NULL)
+  if (checksum_or_latest == NULL)
     {
-      g_autofree char *origin = xdg_app_dir_get_origin (self, ref, NULL, NULL);
-
       g_debug ("No checksum specified, getting tip of %s", ref);
 
       resolved_ref = xdg_app_dir_read_latest (self, origin, ref, cancellable, error);
@@ -2464,6 +2387,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
       g_autoptr(GFile) root = NULL;
       g_autofree char *commit = NULL;
 
+      checksum = checksum_or_latest;
       g_debug ("Looking for checksum %s in local repo", checksum);
       if (!ostree_repo_read_commit (self->repo, checksum, &root, &commit, cancellable, NULL))
         return xdg_app_fail (error, "%s is not available", ref);
@@ -2484,17 +2408,16 @@ xdg_app_dir_deploy (XdgAppDir *self,
       return FALSE;
     }
 
+  if (!xdg_app_repo_collect_sizes (self->repo, root, &installed_size, NULL, cancellable, error))
+    return FALSE;
+
   file_info = g_file_query_info (root, OSTREE_GIO_FAST_QUERYINFO,
                                  G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                  cancellable, error);
   if (file_info == NULL)
     return FALSE;
 
-  subpaths = xdg_app_dir_get_subpaths (self, ref, cancellable, error);
-  if (subpaths == NULL)
-    return FALSE;
-
-  if (*subpaths == NULL)
+  if (subpaths == NULL || *subpaths == NULL)
     {
       if (!ostree_repo_checkout_tree (self->repo,
                                       OSTREE_REPO_CHECKOUT_MODE_USER,
@@ -2629,6 +2552,16 @@ xdg_app_dir_deploy (XdgAppDir *self,
         return FALSE;
     }
 
+  deploy_data = xdg_app_dir_new_deploy_data (origin,
+                                             checksum,
+                                             (char **)subpaths,
+                                             installed_size,
+                                             NULL);
+
+  deploy_data_file = g_file_get_child (checkoutdir, "deploy");
+  if (!xdg_app_variant_save (deploy_data_file, deploy_data, cancellable, error))
+    return FALSE;
+
   if (!xdg_app_dir_set_active (self, ref, checksum, cancellable, error))
     return FALSE;
 
@@ -2671,14 +2604,7 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
   /* After we create the deploy base we must goto out on errors */
   created_deploy_base = TRUE;
 
-  if (!xdg_app_dir_set_origin (self, ref, origin, cancellable, error))
-    goto out;
-
-  if (!xdg_app_dir_set_subpaths (self, ref, (const char **)subpaths,
-                                 cancellable, error))
-    goto out;
-
-  if (!xdg_app_dir_deploy (self, ref, NULL, cancellable, error))
+  if (!xdg_app_dir_deploy (self, origin, ref, NULL, (const char * const *)subpaths, NULL, cancellable, error))
     goto out;
 
   if (g_str_has_prefix (ref, "app/"))
@@ -2712,22 +2638,36 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
 gboolean
 xdg_app_dir_deploy_update (XdgAppDir      *self,
                            const char     *ref,
-                           const char     *remote_name,
                            const char     *checksum_or_latest,
                            GCancellable   *cancellable,
                            GError        **error)
 {
   g_autofree char *previous_deployment = NULL;
   g_autoptr(GError) my_error = NULL;
+  g_autoptr(GVariant) old_deploy_data = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_autofree const char **old_subpaths = NULL;
+  const char *old_active;
+  const char *old_origin;
 
   if (!xdg_app_dir_lock (self, &lock,
                          cancellable, error))
     return FALSE;
 
-  previous_deployment = xdg_app_dir_read_active (self, ref, cancellable);
+  old_deploy_data = xdg_app_dir_get_deploy_data (self, ref,
+                                                 cancellable, error);
+  if (old_deploy_data == NULL)
+    return FALSE;
 
-  if (!xdg_app_dir_deploy (self, ref, checksum_or_latest,
+  old_origin = xdg_app_deploy_data_get_origin (old_deploy_data);
+  old_active = xdg_app_deploy_data_get_commit (old_deploy_data);
+  old_subpaths = xdg_app_deploy_data_get_subpaths (old_deploy_data);
+  if (!xdg_app_dir_deploy (self,
+                           old_origin,
+                           ref,
+                           checksum_or_latest,
+                           old_subpaths,
+                           old_deploy_data,
                            cancellable, &my_error))
     {
       if (g_error_matches (my_error, XDG_APP_DIR_ERROR,
@@ -2738,13 +2678,10 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
       return FALSE;
     }
 
-  if (previous_deployment != NULL)
-    {
-      if (!xdg_app_dir_undeploy (self, ref, previous_deployment,
-                                 FALSE,
-                                 cancellable, error))
-        return FALSE;
-    }
+  if (!xdg_app_dir_undeploy (self, ref, old_active,
+                             FALSE,
+                             cancellable, error))
+    return FALSE;
 
   if (g_str_has_prefix (ref, "app/"))
     {
@@ -2984,7 +2921,7 @@ xdg_app_dir_update (XdgAppDir      *self,
 
   if (!no_deploy)
     {
-      if (!xdg_app_dir_deploy_update (self, ref, remote_name, checksum_or_latest,
+      if (!xdg_app_dir_deploy_update (self, ref, checksum_or_latest,
                                        cancellable, error))
         return FALSE;
     }

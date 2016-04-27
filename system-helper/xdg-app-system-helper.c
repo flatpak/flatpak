@@ -130,7 +130,7 @@ handle_deploy (XdgAppSystemHelper *object,
   if (is_update)
     {
       /* TODO: This doesn't support a custom subpath */
-      if (!xdg_app_dir_deploy_update (system, arg_ref, arg_origin,
+      if (!xdg_app_dir_deploy_update (system, arg_ref,
                                        NULL,
                                       NULL, &error))
         {
