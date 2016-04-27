@@ -555,6 +555,171 @@ xdg_app_dir_lock (XdgAppDir      *self,
   return glnx_make_lock_file (AT_FDCWD, lock_path, LOCK_EX, lockfile, error);
 }
 
+const char *
+xdg_app_deploy_data_get_origin (GVariant *deploy_data)
+{
+  const char *origin;
+  g_variant_get_child (deploy_data, 0, "&s", &origin);
+  return origin;
+}
+
+const char *
+xdg_app_deploy_data_get_commit (GVariant *deploy_data)
+{
+  const char *commit;
+  g_variant_get_child (deploy_data, 1, "&s", &commit);
+  return commit;
+}
+
+/**
+ * xdg_app_deploy_data_get_subpaths:
+ *
+ * Returns: (array length=length zero-terminated=1) (transfer container): an array of constant strings
+ **/
+const char **
+xdg_app_deploy_data_get_subpaths (GVariant *deploy_data)
+{
+  const char **subpaths;
+  g_variant_get_child (deploy_data, 2, "^as", &subpaths);
+  return subpaths;
+}
+
+guint64
+xdg_app_deploy_data_get_installed_size (GVariant *deploy_data)
+{
+  guint64 size;
+  g_variant_get_child (deploy_data, 3, "t", &size);
+  return GUINT64_FROM_BE (size);
+}
+
+static GVariant *
+xdg_app_dir_new_deploy_data (const char *origin,
+                             const char *commit,
+                             char **subpaths,
+                             guint64 installed_size,
+                             GVariant *metadata)
+{
+  char *empty_subpaths[] = {NULL};
+
+  return g_variant_ref_sink (g_variant_new ("(ss^ast@a{sv})",
+                                            origin,
+                                            commit,
+                                            subpaths ? subpaths : empty_subpaths,
+                                            GUINT64_TO_BE (installed_size),
+                                            metadata));
+}
+
+static char **
+get_old_subpaths (GFile *deploy_base,
+                  GCancellable   *cancellable,
+                  GError        **error)
+{
+  g_autoptr(GFile) file = NULL;
+  g_autofree char *data = NULL;
+  g_autoptr(GError) my_error = NULL;
+  g_autoptr(GPtrArray) subpaths = NULL;
+  g_auto(GStrv) lines = NULL;
+  int i;
+
+  file = g_file_get_child (deploy_base, "subpaths");
+  if (!g_file_load_contents (file, cancellable, &data, NULL, NULL, &my_error))
+    {
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        data = g_strdup ("");
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
+    }
+
+  lines = g_strsplit (data, "\n", 0);
+
+  subpaths = g_ptr_array_new ();
+  for (i = 0; lines[i] != NULL; i++)
+    {
+      lines[i] = g_strstrip (lines[i]);
+      if (lines[i][0] == '/')
+        g_ptr_array_add (subpaths, g_strdup (lines[i]));
+    }
+
+  g_ptr_array_add (subpaths, NULL);
+  return (char **)g_ptr_array_free (subpaths, FALSE);
+}
+
+static GVariant *
+xdg_app_create_deploy_data_from_old (XdgAppDir *self,
+                                     GFile *deploy_dir,
+                                     GCancellable *cancellable,
+                                     GError **error)
+{
+  g_autoptr(GFile) deploy_base = NULL;
+  g_autofree char *old_origin = NULL;
+  g_autofree char *commit = NULL;
+  g_auto(GStrv) old_subpaths = NULL;
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) origin = NULL;
+  guint64 installed_size;
+  GVariantBuilder builder;
+
+  deploy_base = g_file_get_parent (deploy_dir);
+  commit = g_file_get_basename (deploy_dir);
+
+  origin = g_file_get_child (deploy_base, "origin");
+  if (!g_file_load_contents (origin, cancellable, &old_origin, NULL, NULL, error))
+    return NULL;
+
+  old_subpaths = get_old_subpaths (deploy_base, cancellable, error);
+  if (old_subpaths == NULL)
+    return NULL;
+
+  /* For backwards compat we return a 0 installed size, its to slow to regenerate */
+  installed_size = 0;
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  return xdg_app_dir_new_deploy_data (old_origin, commit, old_subpaths,
+                                      installed_size, g_variant_builder_end (&builder));
+}
+
+GVariant *
+xdg_app_dir_get_deploy_data (XdgAppDir      *self,
+                             const char     *ref,
+                             GCancellable   *cancellable,
+                             GError        **error)
+{
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GFile) data_file = NULL;
+  g_autoptr(GError) my_error = NULL;
+  char *data = NULL;
+  gsize data_size;
+  g_autofree char *active = NULL;
+
+  deploy_dir = xdg_app_dir_get_if_deployed (self, ref, NULL, cancellable);
+  if (deploy_dir == NULL)
+    {
+      xdg_app_fail (error, "%s is not installed", ref);
+      return NULL;
+    }
+
+  data_file = g_file_get_child (deploy_dir, "deploy_data");
+  if (!g_file_load_contents (data_file, cancellable, &data, &data_size, NULL, &my_error))
+    {
+      if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
+
+      return xdg_app_create_deploy_data_from_old (self, deploy_dir,
+                                                  cancellable, error);
+    }
+
+  return g_variant_ref_sink (g_variant_new_from_data (XDG_APP_DEPLOY_DATA_GVARIANT_FORMAT,
+                                                      data, data_size,
+                                                      FALSE, g_free, data));
+}
+
+
 char *
 xdg_app_dir_get_origin (XdgAppDir      *self,
                         const char     *ref,

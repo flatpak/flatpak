@@ -57,6 +57,18 @@ typedef enum {
 
 GQuark       xdg_app_dir_error_quark      (void);
 
+/**
+ * XDG_APP_DEPLOY_DATA_GVARIANT_FORMAT:
+ *
+ * s - origin
+ * s - commit
+ * as - subpaths
+ * t - installed size
+ * a{sv} - Metadata
+ */
+#define XDG_APP_DEPLOY_DATA_GVARIANT_STRING "(ssasta{sv})"
+#define XDG_APP_DEPLOY_DATA_GVARIANT_FORMAT G_VARIANT_TYPE (XDG_APP_DEPLOY_DATA_GVARIANT_STRING)
+
 GFile *  xdg_app_get_system_base_dir_location (void);
 GFile *  xdg_app_get_user_base_dir_location   (void);
 
@@ -70,6 +82,11 @@ gboolean       xdg_app_save_override_keyfile (GKeyFile    *metakey,
                                               const char  *app_id,
                                               gboolean     user,
                                               GError     **error);
+
+const char *        xdg_app_deploy_data_get_origin         (GVariant *deploy_data);
+const char *        xdg_app_deploy_data_get_commit         (GVariant *deploy_data);
+const char **       xdg_app_deploy_data_get_subpaths       (GVariant *deploy_data);
+guint64             xdg_app_deploy_data_get_installed_size (GVariant *deploy_data);
 
 GFile *        xdg_app_deploy_get_dir       (XdgAppDeploy *deploy);
 GFile *        xdg_app_deploy_get_files     (XdgAppDeploy *deploy);
@@ -87,6 +104,10 @@ GFile *     xdg_app_dir_get_path        (XdgAppDir      *self);
 GFile *     xdg_app_dir_get_changed_path (XdgAppDir     *self);
 GFile *     xdg_app_dir_get_deploy_dir  (XdgAppDir      *self,
                                          const char     *ref);
+GVariant *  xdg_app_dir_get_deploy_data (XdgAppDir      *dir,
+                                         const char     *ref,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
 char *      xdg_app_dir_get_origin      (XdgAppDir      *self,
                                          const char     *ref,
                                          GCancellable   *cancellable,
