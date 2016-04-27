@@ -45,6 +45,10 @@ GBytes * xdg_app_read_stream (GInputStream *in,
                               gboolean null_terminate,
                               GError **error);
 
+gboolean xdg_app_variant_save (GFile *dest,
+                               GVariant *variant,
+                               GCancellable *cancellable,
+                               GError  **error);
 gboolean xdg_app_variant_bsearch_str (GVariant   *array,
                                       const char *str,
                                       int        *out_pos);
