@@ -36,6 +36,17 @@ test_doc_portal_DEPENDENCIES = tests/services/org.freedesktop.portal.Documents.s
 
 check_PROGRAMS += $(TEST_PROGS)
 
+installed_test_data = \
+	tests/libtest.sh \
+	tests/make-test-app.sh \
+	tests/make-test-runtime.sh \
+	tests/make-test-bundles.sh \
+	$(NULL)
+
+test_scripts = \
+	tests/test-basic.sh \
+	$(NULL)
+
 test_programs = testdb test-doc-portal
 
 @VALGRIND_CHECK_RULES@

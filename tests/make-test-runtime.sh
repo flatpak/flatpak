@@ -11,10 +11,17 @@ sed -i s/Application/Runtime/ ${DIR}/metadata
 mkdir -p ${DIR}/usr/bin
 mkdir -p ${DIR}/usr/lib
 ln -s ../lib ${DIR}/usr/lib64
+ln -s ../lib ${DIR}/usr/lib32
 BASH=`which bash`
+LS=`which ls`
+CAT=`which cat`
+ECHO=`which echo`
 cp ${BASH} ${DIR}/usr/bin
+cp ${LS} ${DIR}/usr/bin
+cp ${CAT} ${DIR}/usr/bin
+cp ${ECHO} ${DIR}/usr/bin
 ln -s bash ${DIR}/usr/bin/sh
-for i in `ldd ${BASH}  | sed "s/.* => //" | awk '{ print $1}' | grep ^/`; do
+for i in `ldd ${BASH} ${LS} ${CAT} ${ECHO} | sed "s/.* => //" | awk '{ print $1}' | grep -v :$ | grep ^/ | sort -u`; do
     cp "$i" ${DIR}/usr/lib/
 done
 

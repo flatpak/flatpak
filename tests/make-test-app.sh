@@ -31,7 +31,7 @@ gzip -c > ${DIR}/files/share/app-info/xmls/org.test.Hello.xml.gz <<EOF
   </component>
 </components>
 EOF
-cp org.test.Hello.png ${DIR}/files/share/app-info/icons/xdg-app/64x64/
+cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/xdg-app/64x64/
 
 xdg-app build-finish --command=hello.sh ${DIR}
 xdg-app build-export repo ${DIR}

@@ -40,6 +40,8 @@ xdg-app-dbus.[ch]
 xdg-app-systemd-dbus.[ch]
 xdg-app-resources.[ch]
 xdg-dbus-proxy
+xdg-app-system-helper
+xdg-desktop-portal
 *.service
 xdg-app.env
 xdg-app.sh
@@ -67,3 +69,11 @@ XdgApp-1.0.*
 /tests/hello*.xdgapp
 /tests/platform*.xdgapp
 /tests/repo
+*.test
+/tests/*.sh.log
+/tests/*.sh.test
+/tests/*.sh.trs
+po/.intltool-merge-cache
+po/Makefile.in.in
+po/POTFILES
+system-helper/org.freedesktop.XdgApp.policy
