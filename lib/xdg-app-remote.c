@@ -260,6 +260,22 @@ xdg_app_remote_get_noenumerate (XdgAppRemote *self)
 }
 
 /**
+ * xdg_app_remote_get_disable:
+ * @self: a #XdgAppRemote
+ *
+ * Returns whether this remote is disabled.
+ *
+ * Returns: whether the remote is marked as "don't enumerate"
+ */
+gboolean
+xdg_app_remote_get_disabled (XdgAppRemote *self)
+{
+  XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
+
+  return xdg_app_dir_get_remote_disabled (priv->dir, priv->name);
+}
+
+/**
  * xdg_app_remote_get_prio:
  * @self: a #XdgAppRemote
  *

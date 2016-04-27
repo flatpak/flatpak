@@ -39,6 +39,8 @@ static gboolean opt_do_gpg_verify;
 static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
 static gboolean opt_if_not_exists;
+static gboolean opt_enable;
+static gboolean opt_disable;
 static int opt_prio = -1;
 static char *opt_title;
 static char *opt_url;
@@ -54,6 +56,7 @@ static GOptionEntry modify_options[] = {
   { "gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_do_gpg_verify, "Enable GPG verification", NULL },
   { "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, "Mark the remote as enumerate", NULL },
   { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url, "Set a new url", NULL },
+  { "enable", 0, 0, G_OPTION_ARG_NONE, &opt_enable, "Enable the remote",  },
   { NULL }
 };
 
@@ -64,6 +67,7 @@ static GOptionEntry common_options[] = {
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this remote", "TITLE" },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, "Import GPG key from FILE (- for stdin)", "FILE" },
   { "gpg-key", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_import, "Optionally only import the named key(s) from the keyring files", "KEY" },
+  { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, "Disable the remote",  },
   { NULL }
 };
 
@@ -200,6 +204,11 @@ xdg_app_builtin_add_remote (int argc, char **argv,
                            "xa.noenumerate",
                            g_variant_new_variant (g_variant_new_boolean (TRUE)));
 
+  if (opt_disable)
+    g_variant_builder_add (optbuilder, "{s@v}",
+                           "xa.disable",
+                           g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
   if (opt_prio != -1)
     {
       prio_as_string = g_strdup_printf ("%d", opt_prio);
@@ -309,6 +318,11 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   if (opt_do_enumerate)
     g_key_file_set_boolean (config, group, "xa.noenumerate", FALSE);
+
+  if (opt_disable)
+    g_key_file_set_boolean (config, group, "xa.disable", TRUE);
+  else if (opt_enable)
+    g_key_file_set_boolean (config, group, "xa.disable", FALSE);
 
   if (opt_prio != -1)
     {

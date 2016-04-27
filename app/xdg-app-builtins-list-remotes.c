@@ -34,11 +34,13 @@
 static gboolean opt_show_details;
 static gboolean opt_user;
 static gboolean opt_system;
+static gboolean opt_show_disabled;
 
 static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Show user installations", NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Show system-wide installations", NULL },
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show remote details", NULL },
+  { "show-disabled", 0, 0, G_OPTION_ARG_NONE, &opt_show_disabled, "Show disabled remotes", NULL },
   { NULL }
 };
 
@@ -88,6 +90,11 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
       for (i = 0; remotes[i] != NULL; i++)
         {
           char *remote_name = remotes[i];
+          gboolean disabled;
+
+          disabled = xdg_app_dir_get_remote_disabled (dir, remote_name);
+          if (disabled && !opt_show_disabled)
+            continue;
 
           if (opt_show_details)
             {
@@ -119,6 +126,8 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
                                                  &gpg_verify, NULL);
               if (!gpg_verify)
                 xdg_app_table_printer_append_with_comma (printer, "no-gpg-verify");
+              if (disabled)
+                xdg_app_table_printer_append_with_comma (printer, "disabled");
 
               if (xdg_app_dir_get_remote_noenumerate (dir, remote_name))
                 xdg_app_table_printer_append_with_comma (printer, "no-enumerate");

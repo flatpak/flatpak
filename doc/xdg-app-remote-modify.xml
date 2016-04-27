@@ -117,6 +117,22 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--disable</option></term>
+
+                <listitem><para>
+                    Disable the remote. Disabled remotes will not be automatically updated from.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--enable</option></term>
+
+                <listitem><para>
+                    Enable the remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--enumerate</option></term>
 
                 <listitem><para>

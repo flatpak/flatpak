@@ -3635,6 +3635,19 @@ xdg_app_dir_get_remote_noenumerate (XdgAppDir *self,
   return TRUE;
 }
 
+gboolean
+xdg_app_dir_get_remote_disabled (XdgAppDir *self,
+                                 const char *remote_name)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_boolean (config, group, "xa.disable", NULL);
+
+  return TRUE;
+}
+
 gint
 cmp_remote (gconstpointer  a,
             gconstpointer  b,

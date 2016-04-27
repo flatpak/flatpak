@@ -93,6 +93,9 @@ do_update (XdgAppDir* dir,
   if (repository == NULL)
     return FALSE;
 
+  if (xdg_app_dir_get_remote_disabled (dir, repository))
+    g_print ("Not updating %s due to disabled remote %s\n", ref, repository);
+
   subpaths = xdg_app_dir_get_subpaths (dir, ref, cancellable, error);
   if (subpaths == NULL)
     return FALSE;

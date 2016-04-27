@@ -326,6 +326,8 @@ int        xdg_app_dir_get_remote_prio  (XdgAppDir *self,
                                          const char *remote_name);
 gboolean   xdg_app_dir_get_remote_noenumerate (XdgAppDir *self,
                                                const char *remote_name);
+gboolean   xdg_app_dir_get_remote_disabled (XdgAppDir *self,
+                                            const char *remote_name);
 gboolean   xdg_app_dir_list_remote_refs (XdgAppDir *self,
                                          const char *remote,
                                          GHashTable **refs,

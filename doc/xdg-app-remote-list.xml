@@ -89,6 +89,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--show-disabled</option></term>
+
+                <listitem><para>
+                    Show disabled repos.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

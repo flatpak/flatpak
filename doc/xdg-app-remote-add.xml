@@ -119,6 +119,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--disable</option></term>
+
+                <listitem><para>
+                    Disable the added remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--title=TITLE</option></term>
 
                 <listitem><para>
