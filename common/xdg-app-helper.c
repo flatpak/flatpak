@@ -659,7 +659,7 @@ static const mount_table_t mount_table[] = {
 
 const char *dont_mount_in_root[] = {
   ".", "..", "lib", "lib32", "lib64", "bin", "sbin", "usr", "boot", "root",
-  "tmp", "etc", "app", "run", "proc", "sys", "dev", "var"
+  "tmp", "etc", "app", "run", "proc", "sys", "dev", "var", ".oldroot"
 };
 
 typedef enum {
