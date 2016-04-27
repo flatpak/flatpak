@@ -183,6 +183,12 @@ gboolean xdg_app_repo_update    (OstreeRepo    *repo,
                                  const char    *gpg_homedir,
                                  GCancellable  *cancellable,
                                  GError       **error);
+gboolean xdg_app_repo_collect_sizes (OstreeRepo *repo,
+                                     GFile *root,
+                                     guint64 *installed_size,
+                                     guint64 *download_size,
+                                     GCancellable *cancellable,
+                                     GError **error);
 
 gboolean xdg_app_mtree_create_root (OstreeRepo        *repo,
                                     OstreeMutableTree *mtree,

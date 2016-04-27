@@ -1465,13 +1465,13 @@ xdg_app_repo_set_title (OstreeRepo *repo,
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
 
 static gboolean
-xdg_app_repo_collect_sizes (OstreeRepo *repo,
-                            GFile *file,
-                            GFileInfo *file_info,
-                            guint64 *installed_size,
-                            guint64 *download_size,
-                            GCancellable *cancellable,
-                            GError **error)
+_xdg_app_repo_collect_sizes (OstreeRepo *repo,
+                             GFile *file,
+                             GFileInfo *file_info,
+                             guint64 *installed_size,
+                             guint64 *download_size,
+                             GCancellable *cancellable,
+                             GError **error)
 {
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   GFileInfo *child_info_tmp;
@@ -1508,12 +1508,23 @@ xdg_app_repo_collect_sizes (OstreeRepo *repo,
           const char *name = g_file_info_get_name (child_info);
           g_autoptr(GFile) child = g_file_get_child (file, name);
 
-          if (!xdg_app_repo_collect_sizes (repo, child, child_info, installed_size, download_size, cancellable, error))
+          if (!_xdg_app_repo_collect_sizes (repo, child, child_info, installed_size, download_size, cancellable, error))
             return FALSE;
         }
     }
 
   return TRUE;
+}
+
+gboolean
+xdg_app_repo_collect_sizes (OstreeRepo *repo,
+                            GFile *root,
+                            guint64 *installed_size,
+                            guint64 *download_size,
+                            GCancellable *cancellable,
+                            GError **error)
+{
+  return _xdg_app_repo_collect_sizes (repo, root, NULL, installed_size, download_size, cancellable, error);
 }
 
 gboolean
@@ -1556,23 +1567,16 @@ xdg_app_repo_update (OstreeRepo   *repo,
   for (l = ordered_keys; l; l = l->next)
     {
       const char *ref = l->data;
-      const char *commit = g_hash_table_lookup (refs, ref);
-      g_autoptr(GVariant) commit_obj = NULL;
       g_autoptr(GFile) root = NULL;
       g_autoptr(GFile) metadata = NULL;
       guint64 installed_size = 0;
       guint64 download_size = 0;
       g_autofree char *metadata_contents = NULL;
 
-      g_assert (commit);
-
-      if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit, &commit_obj, error))
-        return FALSE;
-
       if (!ostree_repo_read_commit (repo, ref, &root, NULL, NULL, error))
         return FALSE;
 
-      if (!xdg_app_repo_collect_sizes (repo, root, NULL, &installed_size, &download_size, cancellable, error))
+      if (!xdg_app_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
         return FALSE;
 
       metadata = g_file_get_child (root, "metadata");
