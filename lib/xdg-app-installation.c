@@ -284,28 +284,28 @@ get_ref (XdgAppInstallation *self,
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_auto(GStrv) parts = NULL;
-  g_autofree char *origin = NULL;
-  g_autofree char *commit = NULL;
+  const char *origin = NULL;
+  const char *commit = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) deploy_subdir = NULL;
   g_autofree char *deploy_path = NULL;
   g_autofree char *latest_commit = NULL;
-  g_auto(GStrv) subpaths = NULL;
+  g_autoptr(GVariant) deploy_data = NULL;
+  g_autofree const char **subpaths = NULL;
   gboolean is_current = FALSE;
   guint64 installed_size = 0;
 
   parts = g_strsplit (full_ref, "/", -1);
 
-  origin = xdg_app_dir_get_origin (priv->dir, full_ref, NULL, NULL);
-  commit = xdg_app_dir_read_active (priv->dir, full_ref, cancellable);
-  subpaths = xdg_app_dir_get_subpaths (priv->dir, full_ref, cancellable, NULL);
+  deploy_data = xdg_app_dir_get_deploy_data (priv->dir, full_ref, cancellable, NULL);
+  origin = xdg_app_deploy_data_get_origin (deploy_data);
+  commit = xdg_app_deploy_data_get_commit (deploy_data);
+  subpaths = xdg_app_deploy_data_get_subpaths (deploy_data);
+  installed_size = xdg_app_deploy_data_get_installed_size (deploy_data);
 
-  deploy_dir = xdg_app_dir_get_deploy_dir  (priv->dir, full_ref);
-  if (deploy_dir && commit)
-    {
-      deploy_subdir = g_file_get_child (deploy_dir, commit);
-      deploy_path = g_file_get_path (deploy_subdir);
-    }
+  deploy_dir = xdg_app_dir_get_deploy_dir (priv->dir, full_ref);
+  deploy_subdir = g_file_get_child (deploy_dir, commit);
+  deploy_path = g_file_get_path (deploy_subdir);
 
   if (strcmp (parts[0], "app") == 0)
     {
@@ -316,12 +316,6 @@ get_ref (XdgAppInstallation *self,
     }
 
   latest_commit = xdg_app_dir_read_latest (priv->dir, origin, full_ref, NULL, NULL);
-
-  if (!xdg_app_dir_get_installed_size (priv->dir,
-                                       commit, &installed_size,
-                                       cancellable,
-                                       NULL))
-    installed_size = 0;
 
   return xdg_app_installed_ref_new (full_ref,
                                     commit,
