@@ -99,10 +99,10 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (!ostree_repo_file_ensure_resolved ((OstreeRepoFile*)archive_root, error))
     return FALSE;
 
-  ref = g_file_get_child (archive_root, "ref");
-  metadata = g_file_get_child (archive_root, "metadata");
-  commit = g_file_get_child (archive_root, "commit");
-  commitmeta = g_file_get_child (archive_root, "commitmeta");
+  ref = g_file_resolve_relative_path (archive_root, "rootfs/ref");
+  metadata = g_file_resolve_relative_path (archive_root, "rootfs/metadata");
+  commit = g_file_resolve_relative_path (archive_root, "rootfs/commit");
+  commitmeta = g_file_resolve_relative_path (archive_root, "rootfs/commitmeta");
 
   if (!g_file_query_exists (ref, NULL))
     return xdg_app_fail (error, "Required file ref not in tarfile");
@@ -125,7 +125,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (!g_file_query_exists (files, NULL))
     return xdg_app_fail (error, "Required directory %s not in tarfile", files_source);
 
-  export = g_file_get_child (archive_root, "export");
+  export = g_file_resolve_relative_path (archive_root, "rootfs/export");
 
   if (!g_file_load_contents (commit, cancellable,
                              &commit_data, &commit_size,

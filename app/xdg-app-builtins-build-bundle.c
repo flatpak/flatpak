@@ -816,24 +816,24 @@ build_oci (OstreeRepo *repo, GFile *file,
 
   if (!opt_runtime && g_file_query_exists (export, NULL))
     {
-      opts.path_prefix = "export/";
+      opts.path_prefix = "rootfs/export/";
       if (!ostree_repo_export_tree_to_archive (repo, &opts, (OstreeRepoFile*)export, a,
                                                cancellable, error))
         return FALSE;
     }
 
   opts.path_prefix = NULL;
-  if (!add_file (a, "metadata", repo, metadata, &opts, cancellable, error))
+  if (!add_file (a, "rootfs/metadata", repo, metadata, &opts, cancellable, error))
     return FALSE;
 
-  if (!add_file_from_data (a, "ref",
+  if (!add_file_from_data (a, "rootfs/ref",
                            repo,
                            full_branch,
                            strlen (full_branch),
                            &opts, cancellable, error))
     return FALSE;
 
-  if (!add_file_from_data (a, "commit",
+  if (!add_file_from_data (a, "rootfs/commit",
                            repo,
                            g_variant_get_data (commit_data),
                            g_variant_get_size (commit_data),
@@ -842,7 +842,7 @@ build_oci (OstreeRepo *repo, GFile *file,
 
   if (commit_metadata != NULL)
     {
-      if (!add_file_from_data (a, "commitmeta",
+      if (!add_file_from_data (a, "rootfs/commitmeta",
                                repo,
                                g_variant_get_data (commit_metadata),
                                g_variant_get_size (commit_metadata),
