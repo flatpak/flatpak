@@ -19,13 +19,13 @@
 # Boston, MA 02111-1307, USA.
 
 if [ -n "${G_TEST_SRCDIR:-}" ]; then
-  test_srcdir="${G_TEST_SRCDIR}/tests"
+  test_srcdir="${G_TEST_SRCDIR}"
 else
   test_srcdir=$(dirname $0)
 fi
 
 if [ -n "${G_TEST_BUILDDIR:-}" ]; then
-  test_builddir="${G_TEST_BUILDDIR}/tests"
+  test_builddir="${G_TEST_BUILDDIR}"
 else
   test_builddir=$(dirname $0)
 fi
@@ -67,7 +67,10 @@ else
     CMD_PREFIX=""
 fi
 
-export XDG_DATA_HOME=${test_tmpdir}/share
+# We need this to be in /var/tmp because /tmp has no xattr support
+TEST_DATA_DIR=`mktemp -d /var/tmp/test-xdg-app-XXXXXX`
+
+export XDG_DATA_HOME=${TEST_DATA_DIR}/share
 
 export XDG_APP="${CMD_PREFIX} xdg-app"
 
@@ -126,8 +129,8 @@ assert_file_empty() {
 }
 
 setup_repo () {
-    . $(dirname $0)/make-test-runtime.sh
-    . $(dirname $0)/make-test-app.sh
+    . $(dirname $0)/make-test-runtime.sh > /dev/null
+    . $(dirname $0)/make-test-app.sh > /dev/null
     xdg-app remote-add --user --no-gpg-verify repo repo
 }
 
@@ -138,4 +141,10 @@ install_repo () {
 
 run () {
     ${CMD_PREFIX} xdg-app run "$@"
+
 }
+
+sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf
+eval `dbus-launch --config-file=session.conf --sh-syntax`
+
+trap "rm -rf $TEST_DATA_DIR; /bin/kill $DBUS_SESSION_BUS_PID" EXIT

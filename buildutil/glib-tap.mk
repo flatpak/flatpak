@@ -1,8 +1,8 @@
 # GLIB - Library of useful C routines
 
 TESTS_ENVIRONMENT= \
-	G_TEST_SRCDIR="$(abs_srcdir)" 		\
-	G_TEST_BUILDDIR="$(abs_builddir)" 	\
+	G_TEST_SRCDIR="$(abs_srcdir)/tests"	\
+	G_TEST_BUILDDIR="$(abs_builddir)/tests"	\
 	UNINSTALLEDTESTS=1                      \
 	G_DEBUG=gc-friendly 			\
 	MALLOC_CHECK_=2 			\
@@ -118,7 +118,8 @@ installed_test_meta_DATA = $(installed_testcases:=.test)
 %.test: %$(EXEEXT) Makefile
 	$(AM_V_GEN) (echo '[Test]' > $@.tmp; \
 	echo 'Type=session' >> $@.tmp; \
-	echo 'Exec=env G_TEST_SRCDIR=$(installed_testdir) G_TEST_BUILDDIR=$(installed_testdir) $(installed_testdir)/$(notdir $<)' >> $@.tmp; \
+	echo 'Exec=env G_TEST_SRCDIR=$(installed_testdir) G_TEST_BUILDDIR=$(installed_testdir)  $(installed_testdir)/$(notdir $<) --tap' >> $@.tmp; \
+	echo 'Output=TAP' >> $@.tmp; \
 	mv $@.tmp $@)
 
 CLEANFILES += $(installed_test_meta_DATA)
