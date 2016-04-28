@@ -41,8 +41,14 @@ install-data-hook:
 
 check_PROGRAMS += $(TEST_PROGS)
 
+tests/package_version.txt: Makefile
+	echo $(PACKAGE_VERSION) > tests/package_version.txt
+
+tests/test-basic.sh: tests/package_version.txt
+
 installed_test_SCRIPTS += \
 	buildutil/tap-driver.sh \
+	tests/package_version.txt \
 	tests/make-test-app.sh \
 	tests/make-test-runtime.sh \
 	tests/make-test-bundles.sh \
