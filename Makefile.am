@@ -73,6 +73,22 @@ include document-portal/Makefile.am.inc
 include Makefile.gtester
 include tests/Makefile.am.inc
 
+bwrap_PROGRAMS = bwrap
+bwrapdir = $(libdir)/xdg-app
+include bubblewrap/Makefile-bwrap.am.inc
+
+# NOTE: bwrap is install-bwrapPROGS which is run from install-data, not install-exec, this data-hook is used
+install-data-hook:
+	$(MAKE) $(AM_MAKEFLAGS) install-test-data-hook
+if PRIV_MODE_SETUID
+	$(SUDO_BIN) chown root $(DESTDIR)$(libdir)/xdg-app/bwrap
+	$(SUDO_BIN) chmod u+s $(DESTDIR)$(libdir)/xdg-app/bwrap
+else
+if PRIV_MODE_FILECAPS
+	$(SUDO_BIN) setcap cap_sys_admin,cap_net_admin,cap_sys_chroot+ep $(DESTDIR)$(libdir)/xdg-app/bwrap
+endif
+endif
+
 completiondir = $(datadir)/bash-completion/completions
 completion_DATA = completion/xdg-app
 EXTRA_DIST += $(completion_DATA)

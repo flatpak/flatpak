@@ -77,3 +77,4 @@ po/.intltool-merge-cache
 po/Makefile.in.in
 po/POTFILES
 system-helper/org.freedesktop.XdgApp.policy
+bwrap

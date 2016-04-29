@@ -34,7 +34,7 @@ tests/services/org.freedesktop.XdgApp.service: session-helper/org.freedesktop.Xd
 
 tests/libtest.sh: tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.XdgApp.service
 
-install-data-hook:
+install-test-data-hook:
 if ENABLE_INSTALLED_TESTS
 	mkdir -p $(DESTDIR)$(installed_testdir)/services
 	ln -sf $(dbus_servicedir)/org.freedesktop.XdgApp.service $(DESTDIR)$(installed_testdir)/services/
