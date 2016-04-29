@@ -628,7 +628,7 @@ generate_config_json (const char *arch)
   {
     json_writer_add_bool_property (&writer, "terminal", TRUE);
     json_writer_add_array_property (&writer, "args");
-    json_writer_add_array_item (&writer, "sh");
+    json_writer_add_array_item (&writer, "/bin/sh");
     json_writer_close_array (&writer);
     json_writer_add_array_property (&writer, "envs");
     json_writer_add_array_item (&writer, "PATH=/app/bin:/usr/bin");
