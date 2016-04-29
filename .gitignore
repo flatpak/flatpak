@@ -28,7 +28,6 @@ config.h.in
 stamp-*
 gtk-doc.make
 xdg-app
-xdg-app-helper
 xdg-app-session-helper
 xdg-document-portal
 xdg-app-builder
