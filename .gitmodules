@@ -1,3 +1,7 @@
 [submodule "libglnx"]
 	path = libglnx
 	url = https://git.gnome.org/browse/libglnx
+[submodule "bubblewrap"]
+	path = bubblewrap
+	url = https://github.com/projectatomic/bubblewrap.git
+	ignore = dirty
