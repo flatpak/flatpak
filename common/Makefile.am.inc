@@ -50,9 +50,10 @@ libxdgapp_common_la_CFLAGS = \
 	$(OSTREE_CFLAGS) \
 	$(SOUP_CFLAGS) \
 	$(XAUTH_CFLAGS) \
+	$(LIBSECCOMP_CFLAGS) \
 	-I$(srcdir)/dbus-proxy \
 	$(NULL)
-libxdgapp_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(XAUTH_LIBS)
+libxdgapp_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS)
 
 bin_PROGRAMS += \
 	xdg-app-helper \

@@ -35,7 +35,7 @@ AM_CPPFLAGS =						\
 	-DXDG_APP_BASEDIR=\"$(pkgdatadir)\"		\
 	-DXDG_APP_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
 	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"	\
-	-DHELPER=\"$(bindir)/xdg-app-helper\"		\
+	-DHELPER=\"$(libdir)/xdg-app/bwrap\"		\
 	-DDBUSPROXY=\"$(libexecdir)/xdg-dbus-proxy\"	\
 	-DG_LOG_DOMAIN=\"xdg-app\"			\
 	-I$(srcdir)/libglnx				\

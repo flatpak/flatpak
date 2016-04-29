@@ -44,6 +44,18 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+static void
+add_args (GPtrArray *argv_array, ...)
+{
+  va_list args;
+  const gchar *arg;
+
+  va_start (args, argv_array);
+  while ((arg = va_arg (args, const gchar *)))
+    g_ptr_array_add (argv_array, g_strdup (arg));
+  va_end (args);
+}
+
 gboolean
 xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -146,16 +158,22 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     {
       custom_usr = TRUE;
       runtime_files = g_object_ref (usr);
-      g_ptr_array_add (argv_array, g_strdup ("-W"));
     }
   else
     runtime_files = xdg_app_deploy_get_files (runtime_deploy);
 
-  g_ptr_array_add (argv_array, g_strdup ("-wrc"));
+  add_args (argv_array,
+            custom_usr ? "--bind" : "--ro-bind", gs_file_get_path_cached (runtime_files), "/usr",
+            "--bind", gs_file_get_path_cached (app_files), "/app",
+            NULL);
 
-  /* Pass the arch for seccomp */
-  g_ptr_array_add (argv_array, g_strdup ("-A"));
-  g_ptr_array_add (argv_array, g_strdup (runtime_ref_parts[2]));
+  if (!xdg_app_run_setup_base_argv (argv_array, runtime_files, NULL, runtime_ref_parts[2], XDG_APP_RUN_FLAG_DEVEL, error))
+    return FALSE;
+
+  /* After setup_base to avoid conflicts with /var symlinks */
+  add_args (argv_array,
+            "--bind", gs_file_get_path_cached (var), "/var",
+            NULL);
 
   app_context = xdg_app_context_new ();
   if (!xdg_app_context_load_metadata (app_context, runtime_metakey, error))
@@ -165,7 +183,9 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   xdg_app_context_allow_host_fs (app_context);
   xdg_app_context_merge (app_context, arg_context);
 
-  xdg_app_run_add_environment_args (argv_array, NULL, NULL, app_id,
+  envp = xdg_app_run_get_minimal_env (TRUE);
+  envp = xdg_app_run_apply_env_vars (envp, app_context);
+  xdg_app_run_add_environment_args (argv_array, &envp, NULL, NULL, app_id,
                                     app_context, NULL);
 
   if (!custom_usr &&
@@ -174,36 +194,31 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
     {
-      if (strchr (opt_bind_mounts[i], '=') == NULL)
+      char *split = strchr (opt_bind_mounts[i], '=');
+      if (split == NULL)
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Missing '=' in bind mount option '%s'", opt_bind_mounts[i]);
           return FALSE;
         }
 
-      g_ptr_array_add (argv_array, g_strdup ("-B"));
-      g_ptr_array_add (argv_array, g_strdup (opt_bind_mounts[i]));
+      *split++ = 0;
+      add_args (argv_array,
+                "--bind", split, opt_bind_mounts[i],
+                NULL);
     }
 
   if (opt_build_dir != NULL)
     {
-      g_ptr_array_add (argv_array, g_strdup ("-P"));
-      g_ptr_array_add (argv_array, g_strdup (opt_build_dir));
+      add_args (argv_array,
+                "--chdir", opt_build_dir,
+                NULL);
     }
-
-  g_ptr_array_add (argv_array, g_strdup ("-a"));
-  g_ptr_array_add (argv_array, g_file_get_path (app_files));
-  g_ptr_array_add (argv_array, g_strdup ("-v"));
-  g_ptr_array_add (argv_array, g_file_get_path (var));
-  g_ptr_array_add (argv_array, g_file_get_path (runtime_files));
 
   g_ptr_array_add (argv_array, g_strdup (command));
   for (i = 2; i < rest_argc; i++)
     g_ptr_array_add (argv_array, g_strdup (argv[rest_argv_start + i]));
 
   g_ptr_array_add (argv_array, NULL);
-
-  envp = xdg_app_run_get_minimal_env (TRUE);
-  envp = xdg_app_run_apply_env_vars (envp, app_context);
 
   if (!execve (HELPER, (char **)argv_array->pdata, envp))
     {

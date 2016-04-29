@@ -25,6 +25,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/utsname.h>
+#include <sys/socket.h>
+#include <grp.h>
+
+#ifdef ENABLE_SECCOMP
+#include <seccomp.h>
+#endif
 
 #ifdef ENABLE_XAUTH
 #include <X11/Xauth.h>
@@ -39,15 +45,17 @@
 #include "xdg-app-utils.h"
 #include "xdg-app-systemd-dbus.h"
 
+#define DEFAULT_SHELL "/bin/sh"
 
 typedef enum {
   XDG_APP_CONTEXT_SHARED_NETWORK   = 1 << 0,
   XDG_APP_CONTEXT_SHARED_IPC       = 1 << 1,
 } XdgAppContextShares;
 
+/* In numerical order of more privs */
 typedef enum {
-  XDG_APP_FILESYSTEM_MODE_READ_WRITE   = 1,
-  XDG_APP_FILESYSTEM_MODE_READ_ONLY    = 2,
+  XDG_APP_FILESYSTEM_MODE_READ_ONLY    = 1,
+  XDG_APP_FILESYSTEM_MODE_READ_WRITE   = 2,
 } XdgAppFilesystemMode;
 
 
@@ -74,6 +82,11 @@ static const char *xdg_app_context_sockets[] = {
   "session-bus",
   "system-bus",
   NULL
+};
+
+const char *dont_mount_in_root[] = {
+  ".", "..", "lib", "lib32", "lib64", "bin", "sbin", "usr", "boot", "root",
+  "tmp", "etc", "app", "run", "proc", "sys", "dev", "var", NULL
 };
 
 typedef enum {
@@ -1191,7 +1204,73 @@ write_xauth (char *number, FILE *output)
 #endif /* ENABLE_XAUTH */
 
 static void
-xdg_app_run_add_x11_args (GPtrArray *argv_array)
+add_args (GPtrArray *argv_array, ...)
+{
+  va_list args;
+  const gchar *arg;
+
+  va_start (args, argv_array);
+  while ((arg = va_arg (args, const gchar *)))
+    g_ptr_array_add (argv_array, g_strdup (arg));
+  va_end (args);
+}
+
+static int
+create_tmp_fd (const char *contents,
+               gssize length,
+               GError **error)
+{
+  char template[] = "/tmp/tmp_fd_XXXXXX";
+  int fd;
+
+  if (length < 0)
+    length = strlen (contents);
+
+  fd = g_mkstemp (template);
+  if (fd < 0)
+    {
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to create temporary file");
+      return -1;
+    }
+
+  if (unlink (template) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to unlink temporary file");
+      close (fd);
+      return -1;
+    }
+
+  while (length > 0)
+    {
+      gssize s;
+
+      s = write (fd, contents, length);
+
+      if (s < 0)
+        {
+          int saved_errno = errno;
+          if (saved_errno == EINTR)
+            continue;
+
+          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (saved_errno), "Failed to write to temporary file");
+          close (fd);
+          return -1;
+        }
+
+      g_assert (s <= length);
+
+      contents += s;
+      length -= s;
+    }
+
+  lseek (fd, 0, SEEK_SET);
+
+  return fd;
+}
+
+static void
+xdg_app_run_add_x11_args (GPtrArray *argv_array,
+                          char ***envp_p)
 {
   char *x11_socket = NULL;
   const char *display = g_getenv ("DISPLAY");
@@ -1209,8 +1288,10 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
       d = g_strndup (display_nr, display_nr_end - display_nr);
       x11_socket = g_strdup_printf ("/tmp/.X11-unix/X%s", d);
 
-      g_ptr_array_add (argv_array, g_strdup ("-x"));
-      g_ptr_array_add (argv_array, x11_socket);
+      add_args (argv_array,
+                "--bind", x11_socket, "/tmp/.X11-unix/X99",
+                NULL);
+      *envp_p = g_environ_setenv (*envp_p, "DISPLAY", ":99.0", TRUE);
 
 #ifdef ENABLE_XAUTH
       int fd;
@@ -1220,40 +1301,79 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array)
           FILE *output = fdopen (fd, "wb");
           if (output != NULL)
             {
-              write_xauth (d, output);
-              fclose (output);
+              int tmp_fd = dup (fd);
+              if (tmp_fd != -1)
+                {
+                  g_autofree char *tmp_fd_str = g_strdup_printf ("%d", tmp_fd);
+                  g_autofree char *dest = g_strdup_printf ("/run/user/%d/Xauthority", getuid());
 
-              g_ptr_array_add (argv_array, g_strdup ("-M"));
-              g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/Xauthority=%s", getuid(), tmp_path));
+                  write_xauth (d, output);
+                  add_args (argv_array,
+                            "--bind-data", tmp_fd_str, dest,
+                            NULL);
+                  *envp_p = g_environ_setenv (*envp_p, "XAUTHORITY", dest, TRUE);
+                }
+
+              fclose (output);
+              unlink (tmp_path);
+
+              lseek (tmp_fd, 0, SEEK_SET);
             }
           else
             close (fd);
         }
 #endif
     }
+  else
+    *envp_p = g_environ_unsetenv (*envp_p, "DISPLAY");
+
 }
 
 static void
-xdg_app_run_add_wayland_args (GPtrArray *argv_array)
+xdg_app_run_add_wayland_args (GPtrArray *argv_array,
+                              char ***envp_p)
 {
-  char *wayland_socket = g_build_filename (g_get_user_runtime_dir (), "wayland-0", NULL);
+  g_autofree char *wayland_socket = g_build_filename (g_get_user_runtime_dir (), "wayland-0", NULL);
+  g_autofree char *sandbox_wayland_socket = g_strdup_printf ("/run/user/%d/wayland-0", getuid ());
+
   if (g_file_test (wayland_socket, G_FILE_TEST_EXISTS))
     {
-      g_ptr_array_add (argv_array, g_strdup ("-y"));
-      g_ptr_array_add (argv_array, wayland_socket);
+      add_args (argv_array,
+                "--bind", wayland_socket, sandbox_wayland_socket,
+                NULL);
     }
-  else
-    g_free (wayland_socket);
 }
 
 static void
-xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array)
+xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array,
+                                 char ***envp_p)
 {
   char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
+
+  *envp_p = g_environ_unsetenv (*envp_p, "PULSE_SERVER");
   if (g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
     {
-      g_ptr_array_add (argv_array, g_strdup ("-p"));
-      g_ptr_array_add (argv_array, pulseaudio_socket);
+      gboolean share_shm = FALSE; /* TODO: When do we add this? */
+      g_autofree char *client_config = g_strdup_printf ("enable-shm=%s\n", share_shm ? "yes" : "no");
+      g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/pulse/native", getuid ());
+      g_autofree char *pulse_server = g_strdup_printf ("unix:/run/user/%d/pulse/native", getuid ());
+      g_autofree char *config_path = g_strdup_printf ("/run/user/%d/pulse/config", getuid ());
+      int fd;
+      g_autofree char *fd_str = NULL;
+
+      fd = create_tmp_fd (client_config, -1, NULL);
+      if (fd == -1)
+        return;
+
+      fd_str = g_strdup_printf ("%d", fd);
+
+      add_args (argv_array,
+                "--bind", pulseaudio_socket, sandbox_socket_path,
+                "--bind-data", fd_str, config_path,
+                NULL);
+
+      *envp_p = g_environ_setenv (*envp_p, "PULSE_SERVER", pulse_server, TRUE);
+      *envp_p = g_environ_setenv (*envp_p, "PULSE_CLIENTCONFIG", config_path, TRUE);
     }
 }
 
@@ -1278,8 +1398,9 @@ create_proxy_socket (char *template)
 
 gboolean
 xdg_app_run_add_system_dbus_args (XdgAppContext *context,
+                                  char ***envp_p,
                                   GPtrArray *argv_array,
-				  GPtrArray *dbus_proxy_argv,
+                                  GPtrArray *dbus_proxy_argv,
                                   gboolean unrestricted)
 {
   const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
@@ -1293,8 +1414,10 @@ xdg_app_run_add_system_dbus_args (XdgAppContext *context,
 
   if (dbus_system_socket != NULL && unrestricted)
     {
-      g_ptr_array_add (argv_array, g_strdup ("-D"));
-      g_ptr_array_add (argv_array, dbus_system_socket);
+      add_args (argv_array,
+                "--bind", dbus_system_socket, "/run/dbus/system_bus_socket",
+                NULL);
+      *envp_p = g_environ_setenv (*envp_p, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
 
       return TRUE;
     }
@@ -1304,7 +1427,7 @@ xdg_app_run_add_system_dbus_args (XdgAppContext *context,
       g_autofree char *proxy_socket = create_proxy_socket ("system-bus-proxy-XXXXXX");
 
       if (proxy_socket == NULL)
-	return FALSE;
+        return FALSE;
 
       if (dbus_address)
         real_dbus_address = g_strdup (dbus_address);
@@ -1314,8 +1437,11 @@ xdg_app_run_add_system_dbus_args (XdgAppContext *context,
       g_ptr_array_add (dbus_proxy_argv, g_strdup (real_dbus_address));
       g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
 
-      g_ptr_array_add (argv_array, g_strdup ("-D"));
-      g_ptr_array_add (argv_array, g_strdup (proxy_socket));
+
+      add_args (argv_array,
+                "--bind", proxy_socket, "/run/dbus/system_bus_socket",
+                NULL);
+      *envp_p = g_environ_setenv (*envp_p, "DBUS_SYSTEM_BUS_ADDRESS", "unix:path=/run/dbus/system_bus_socket", TRUE);
 
       return TRUE;
     }
@@ -1324,11 +1450,14 @@ xdg_app_run_add_system_dbus_args (XdgAppContext *context,
 
 gboolean
 xdg_app_run_add_session_dbus_args (GPtrArray *argv_array,
+                                   char ***envp_p,
                                    GPtrArray *dbus_proxy_argv,
                                    gboolean unrestricted)
 {
   const char *dbus_address = g_getenv ("DBUS_SESSION_BUS_ADDRESS");
   char *dbus_session_socket = NULL;
+  g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/bus", getuid ());
+  g_autofree char *sandbox_dbus_address = g_strdup_printf ("unix:path=/run/user/%d/bus", getuid ());
 
   if (dbus_address == NULL)
     return FALSE;
@@ -1336,8 +1465,11 @@ xdg_app_run_add_session_dbus_args (GPtrArray *argv_array,
   dbus_session_socket = extract_unix_path_from_dbus_address (dbus_address);
   if (dbus_session_socket != NULL && unrestricted)
     {
-      g_ptr_array_add (argv_array, g_strdup ("-d"));
-      g_ptr_array_add (argv_array, dbus_session_socket);
+
+      add_args (argv_array,
+                "--bind", dbus_session_socket, sandbox_socket_path,
+                NULL);
+      *envp_p = g_environ_setenv (*envp_p, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
       return TRUE;
     }
@@ -1346,13 +1478,15 @@ xdg_app_run_add_session_dbus_args (GPtrArray *argv_array,
       g_autofree char *proxy_socket = create_proxy_socket ("session-bus-proxy-XXXXXX");
 
       if (proxy_socket == NULL)
-	return FALSE;
+        return FALSE;
 
       g_ptr_array_add (dbus_proxy_argv, g_strdup (dbus_address));
       g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy_socket));
 
-      g_ptr_array_add (argv_array, g_strdup ("-d"));
-      g_ptr_array_add (argv_array, g_strdup (proxy_socket));
+      add_args (argv_array,
+                "--bind", proxy_socket, sandbox_socket_path,
+                NULL);
+      *envp_p = g_environ_setenv (*envp_p, "DBUS_SESSION_BUS_ADDRESS", sandbox_dbus_address, TRUE);
 
       return TRUE;
     }
@@ -1416,9 +1550,12 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
         {
           g_autoptr(GFile) files = g_file_get_child (deploy, "files");
           g_autofree char *full_directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
+          g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
 
-          g_ptr_array_add (argv_array, g_strdup ("-b"));
-          g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", full_directory, gs_file_get_path_cached (files)));
+          add_args (argv_array,
+                    "--bind", gs_file_get_path_cached (files), full_directory,
+                    "--lock-file", ref,
+                    NULL);
         }
     }
 
@@ -1427,10 +1564,30 @@ xdg_app_run_add_extension_args (GPtrArray   *argv_array,
   return TRUE;
 }
 
+static void
+add_file_arg (GPtrArray *argv_array,
+              XdgAppFilesystemMode mode,
+              const char *path)
+{
+  struct stat st;
+
+  if (stat (path, &st) != 0)
+    return;
+
+  if (S_ISDIR (st.st_mode) ||
+      S_ISREG (st.st_mode))
+    {
+      add_args (argv_array,
+                (mode == XDG_APP_FILESYSTEM_MODE_READ_WRITE) ? "--bind" : "--ro-bind",
+                path, path, NULL);
+    }
+}
+
 void
 xdg_app_run_add_environment_args (GPtrArray *argv_array,
-				  GPtrArray *session_bus_proxy_argv,
-				  GPtrArray *system_bus_proxy_argv,
+                                  char ***envp_p,
+                                  GPtrArray *session_bus_proxy_argv,
+                                  GPtrArray *system_bus_proxy_argv,
                                   const char *app_id,
                                   XdgAppContext *context,
                                   GFile *app_id_dir)
@@ -1441,51 +1598,66 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
   gboolean unrestricted_system_bus;
   gboolean home_access = FALSE;
   GString *xdg_dirs_conf = NULL;
-  char opts[16];
   XdgAppFilesystemMode fs_mode, home_mode;
-  int i;
 
-  i = 0;
-  opts[i++] = '-';
-
-  if (context->shares & XDG_APP_CONTEXT_SHARED_IPC)
+  if ((context->shares & XDG_APP_CONTEXT_SHARED_IPC) == 0)
     {
-      g_debug ("Allowing ipc access");
-      opts[i++] = 'i';
+      g_debug ("Disallowing ipc access");
+      add_args (argv_array, "--unshare-ipc", NULL);
     }
 
-  if (context->shares & XDG_APP_CONTEXT_SHARED_NETWORK)
+  if ((context->shares & XDG_APP_CONTEXT_SHARED_NETWORK) == 0)
     {
-      g_debug ("Allowing network access");
-      opts[i++] = 'n';
+      g_debug ("Disallowing network access");
+      add_args (argv_array, "--unshare-net", NULL);
     }
 
   if (context->devices & XDG_APP_CONTEXT_DEVICE_DRI)
     {
       g_debug ("Allowing dri access");
-      opts[i++] = 'g';
+      if (g_file_test ("/dev/dri", G_FILE_TEST_IS_DIR))
+        add_args (argv_array, "--dev-bind", "/dev/dri", "/dev/dri", NULL);
+      if (g_file_test ("/dev/nvidiactl", G_FILE_TEST_EXISTS))
+        add_args (argv_array,
+                  "--dev-bind", "/dev/nvidiactl", "/dev/nvidiactl",
+                  "--dev-bind", "/dev/nvidia0", "/dev/nvidia0",
+                  NULL);
     }
 
   fs_mode = (XdgAppFilesystemMode)g_hash_table_lookup (context->filesystems, "host");
   if (fs_mode != 0)
     {
+      DIR *dir;
+      struct dirent *dirent;
+
       g_debug ("Allowing host-fs access");
-      if (fs_mode == XDG_APP_FILESYSTEM_MODE_READ_WRITE)
-        opts[i++] = 'F';
-      else
-        opts[i++] = 'f';
       home_access = TRUE;
+
+      /* Bind mount most dirs in / into the new root */
+      dir = opendir ("/");
+      if (dir != NULL)
+        {
+          while ((dirent = readdir (dir)))
+            {
+              g_autofree char *path = NULL;
+
+              if (g_strv_contains (dont_mount_in_root, dirent->d_name))
+                continue;
+
+              path = g_build_filename ("/", dirent->d_name, NULL);
+              add_file_arg (argv_array, fs_mode, path);
+            }
+        }
+      add_file_arg (argv_array, fs_mode, "/run/media");
     }
 
   home_mode = (XdgAppFilesystemMode)g_hash_table_lookup (context->filesystems, "home");
   if (home_mode != 0)
     {
       g_debug ("Allowing homedir access");
-      if (home_mode == XDG_APP_FILESYSTEM_MODE_READ_WRITE)
-        opts[i++] = 'H';
-      else
-        opts[i++] = 'h';
       home_access = TRUE;
+
+      add_file_arg (argv_array, MAX (home_mode, fs_mode), g_get_home_dir ());
     }
 
   if (!home_access)
@@ -1501,8 +1673,9 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
 
           g_mkdir_with_parents (src, 0755);
 
-          g_ptr_array_add (argv_array, g_strdup ("-B"));
-          g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", dest, src));
+          add_args (argv_array,
+                    "--bind", src, dest,
+                    NULL);
         }
     }
 
@@ -1511,17 +1684,11 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
     {
       const char *filesystem = key;
       XdgAppFilesystemMode mode = GPOINTER_TO_INT(value);
-      const char *mode_arg;
 
       if (value == NULL ||
           strcmp (filesystem, "host") == 0 ||
           strcmp (filesystem, "home") == 0)
         continue;
-
-      if (mode == XDG_APP_FILESYSTEM_MODE_READ_WRITE)
-        mode_arg = "-B";
-      else
-        mode_arg = "-b";
 
       if (g_str_has_prefix (filesystem, "xdg-"))
         {
@@ -1547,7 +1714,6 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
           subpath = g_build_filename (path, rest, NULL);
           if (g_file_test (subpath, G_FILE_TEST_EXISTS))
             {
-
               if (xdg_dirs_conf == NULL)
                 xdg_dirs_conf = g_string_new ("");
 
@@ -1555,8 +1721,7 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
                 g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n",
                                         config_key, path);
 
-              g_ptr_array_add (argv_array, g_strdup (mode_arg));
-              g_ptr_array_add (argv_array, g_strdup_printf ("%s", subpath));
+              add_file_arg (argv_array, mode, subpath);
             }
         }
       else if (g_str_has_prefix (filesystem, "~/"))
@@ -1565,22 +1730,22 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
 
           path = g_build_filename (g_get_home_dir(), filesystem+2, NULL);
           if (g_file_test (path, G_FILE_TEST_EXISTS))
-            {
-              g_ptr_array_add (argv_array, g_strdup (mode_arg));
-              g_ptr_array_add (argv_array, g_strdup (path));
-            }
+            add_file_arg (argv_array, mode, path);
         }
       else if (g_str_has_prefix (filesystem, "/"))
         {
           if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
-            {
-              g_ptr_array_add (argv_array, g_strdup (mode_arg));
-              g_ptr_array_add (argv_array, g_strdup_printf ("%s", filesystem));
-            }
+            add_file_arg (argv_array, mode, filesystem);
         }
       else
         g_warning ("Unexpected filesystem arg %s\n", filesystem);
     }
+
+  /* Do this after setting up everything in the home dir, so its not overwritten */
+  if (app_id_dir)
+    add_args (argv_array,
+              "--bind", gs_file_get_path_cached (app_id_dir), gs_file_get_path_cached (app_id_dir),
+              NULL);
 
   if (home_access  && app_id_dir != NULL)
     {
@@ -1589,8 +1754,9 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
                                                     NULL);
       g_autofree char *path = g_build_filename (gs_file_get_path_cached (app_id_dir),
                                                 "config/user-dirs.dirs", NULL);
-      g_ptr_array_add (argv_array, g_strdup ("-b"));
-      g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", path, src_path));
+      add_args (argv_array,
+                "--ro-bind", src_path, path,
+                NULL);
     }
   else if (xdg_dirs_conf != NULL && app_id_dir != NULL)
     {
@@ -1604,10 +1770,16 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
           close (fd);
           if (g_file_set_contents (tmp_path, xdg_dirs_conf->str, xdg_dirs_conf->len, NULL))
             {
-              path = g_build_filename (gs_file_get_path_cached (app_id_dir),
-                                       "config/user-dirs.dirs", NULL);
-              g_ptr_array_add (argv_array, g_strdup ("-M"));
-              g_ptr_array_add (argv_array, g_strdup_printf ("%s=%s", path, tmp_path));
+              int tmp_fd = open (tmp_path, O_RDONLY);
+              unlink (tmp_path);
+              if (tmp_fd)
+                {
+                  g_autofree char *tmp_fd_str = g_strdup_printf ("%d", tmp_fd);
+                  path = g_build_filename (gs_file_get_path_cached (app_id_dir),
+                                           "config/user-dirs.dirs", NULL);
+
+                  add_args (argv_array, "--file", tmp_fd_str, path, NULL);
+                }
             }
         }
       g_string_free (xdg_dirs_conf, TRUE);
@@ -1616,25 +1788,25 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
   if (context->sockets & XDG_APP_CONTEXT_SOCKET_X11)
     {
       g_debug ("Allowing x11 access");
-      xdg_app_run_add_x11_args (argv_array);
+      xdg_app_run_add_x11_args (argv_array, envp_p);
     }
 
   if (context->sockets & XDG_APP_CONTEXT_SOCKET_WAYLAND)
     {
       g_debug ("Allowing wayland access");
-      xdg_app_run_add_wayland_args (argv_array);
+      xdg_app_run_add_wayland_args (argv_array, envp_p);
     }
 
   if (context->sockets & XDG_APP_CONTEXT_SOCKET_PULSEAUDIO)
     {
       g_debug ("Allowing pulseaudio access");
-      xdg_app_run_add_pulseaudio_args (argv_array);
+      xdg_app_run_add_pulseaudio_args (argv_array, envp_p);
     }
 
   unrestricted_session_bus = (context->sockets & XDG_APP_CONTEXT_SOCKET_SESSION_BUS) != 0;
   if (unrestricted_session_bus)
     g_debug ("Allowing session-dbus access");
-  if (xdg_app_run_add_session_dbus_args (argv_array, session_bus_proxy_argv, unrestricted_session_bus) &&
+  if (xdg_app_run_add_session_dbus_args (argv_array, envp_p, session_bus_proxy_argv, unrestricted_session_bus) &&
       !unrestricted_session_bus && session_bus_proxy_argv)
     {
       xdg_app_add_bus_filters (session_bus_proxy_argv, context->session_bus_policy, app_id, context);
@@ -1643,25 +1815,18 @@ xdg_app_run_add_environment_args (GPtrArray *argv_array,
   unrestricted_system_bus = (context->sockets & XDG_APP_CONTEXT_SOCKET_SYSTEM_BUS) != 0;
   if (unrestricted_system_bus)
     g_debug ("Allowing system-dbus access");
-  if (xdg_app_run_add_system_dbus_args (context, argv_array, system_bus_proxy_argv,
+  if (xdg_app_run_add_system_dbus_args (context, envp_p, argv_array, system_bus_proxy_argv,
                                         unrestricted_system_bus) &&
       !unrestricted_system_bus && system_bus_proxy_argv)
     {
       xdg_app_add_bus_filters (system_bus_proxy_argv, context->system_bus_policy, NULL, context);
     }
 
-  g_assert (sizeof(opts) > i);
-  if (i > 1)
-    {
-      opts[i++] = 0;
-      g_ptr_array_add (argv_array, g_strdup (opts));
-    }
 }
 
 static const struct {const char *env; const char *val;} default_exports[] = {
   {"PATH","/app/bin:/usr/bin"},
-  {"LD_LIBRARY_PATH", ""},
-  {"_LD_LIBRARY_PATH", "/app/lib"},
+  {"LD_LIBRARY_PATH", "/app/lib"},
   {"XDG_CONFIG_DIRS","/app/etc/xdg:/etc/xdg"},
   {"XDG_DATA_DIRS","/app/share:/usr/share"},
   {"SHELL","/bin/sh"},
@@ -1786,11 +1951,6 @@ xdg_app_run_apply_env_vars (char **envp, XdgAppContext *context)
     {
       const char *var = key;
       const char *val = value;
-
-      /* We special case LD_LIBRARY_PATH to avoid passing it top
-         the helper */
-      if (strcmp (var, "LD_LIBRARY_PATH") == 0)
-        var = "_LD_LIBRARY_PATH";
 
       if (val && val[0] != 0)
         envp = g_environ_setenv (envp, var, val, TRUE);
@@ -1949,8 +2109,9 @@ add_font_path_args (GPtrArray *argv_array)
   g_autoptr(GFile) user_font1 = NULL;
   g_autoptr(GFile) user_font2 = NULL;
 
-  g_ptr_array_add (argv_array, g_strdup ("-b"));
-  g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/fonts=%s", SYSTEM_FONTS_DIR));
+  add_args (argv_array,
+            "--bind", SYSTEM_FONTS_DIR, "/run/host/fonts",
+            NULL);
 
   home = g_file_new_for_path (g_get_home_dir ());
   user_font1 = g_file_resolve_relative_path (home, ".local/share/fonts");
@@ -1958,15 +2119,15 @@ add_font_path_args (GPtrArray *argv_array)
 
   if (g_file_query_exists (user_font1, NULL))
     {
-      g_autofree char *path = g_file_get_path (user_font1);
-      g_ptr_array_add (argv_array, g_strdup ("-b"));
-      g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/user-fonts=%s", path));
+      add_args (argv_array,
+                "--bind", gs_file_get_path_cached (user_font1), "/run/host/user-fonts",
+                NULL);
     }
   else if (g_file_query_exists (user_font2, NULL))
     {
-      g_autofree char *path = g_file_get_path (user_font2);
-      g_ptr_array_add (argv_array, g_strdup ("-b"));
-      g_ptr_array_add (argv_array, g_strdup_printf ("/run/host/user-fonts=%s", path));
+      add_args (argv_array,
+                "--bind", gs_file_get_path_cached (user_font2), "/run/host/user-fonts",
+                NULL);
     }
 }
 
@@ -2015,6 +2176,8 @@ add_app_info_args (GPtrArray *argv_array,
       g_autoptr(GKeyFile) keyfile = NULL;
       g_autoptr(GFile) files = NULL;
       g_autofree char *files_path = NULL;
+      g_autofree char *fd_str = NULL;
+      g_autofree char *dest = g_strdup_printf ("/run/user/%d/xdg-app-info", getuid ());
 
       close (fd);
 
@@ -2033,36 +2196,24 @@ add_app_info_args (GPtrArray *argv_array,
       if (!g_key_file_save_to_file (keyfile, tmp_path, error))
         return FALSE;
 
-      g_ptr_array_add (argv_array, g_strdup ("-M"));
-      g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/xdg-app-info=%s", getuid(), tmp_path));
+      fd = open (tmp_path, O_RDONLY);
+      if (fd == -1)
+        {
+          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to open temp file");
+          return FALSE;
+        }
+      unlink (tmp_path);
+      fd_str = g_strdup_printf ("%d", fd);
+
+      add_args (argv_array, "--file", fd_str, dest, NULL);
     }
 
   return TRUE;
 }
 
 static void
-add_app_id_dir_links_args (GPtrArray *argv_array,
-                           GFile *app_id_dir)
-{
-  g_autoptr(GFile) app_cache_dir = NULL;
-  g_autoptr(GFile) app_data_dir = NULL;
-  g_autoptr(GFile) app_config_dir = NULL;
-
-  app_cache_dir = g_file_get_child (app_id_dir, "cache");
-  g_ptr_array_add (argv_array, g_strdup ("-B"));
-  g_ptr_array_add (argv_array, g_strdup_printf ("/var/cache=%s", gs_file_get_path_cached (app_cache_dir)));
-
-  app_data_dir = g_file_get_child (app_id_dir, "data");
-  g_ptr_array_add (argv_array, g_strdup ("-B"));
-  g_ptr_array_add (argv_array, g_strdup_printf ("/var/data=%s", gs_file_get_path_cached (app_data_dir)));
-
-  app_config_dir = g_file_get_child (app_id_dir, "config");
-  g_ptr_array_add (argv_array, g_strdup ("-B"));
-  g_ptr_array_add (argv_array, g_strdup_printf ("/var/config=%s", gs_file_get_path_cached (app_config_dir)));
-}
-
-static void
-add_monitor_path_args (GPtrArray *argv_array)
+add_monitor_path_args (GPtrArray *argv_array,
+                       char ***envp_p)
 {
   g_autoptr(XdgAppSessionHelper) session_helper = NULL;
   g_autofree char *monitor_path = NULL;
@@ -2078,11 +2229,35 @@ add_monitor_path_args (GPtrArray *argv_array)
                                                         &monitor_path,
                                                         NULL, NULL))
     {
-      g_ptr_array_add (argv_array, g_strdup ("-m"));
-      g_ptr_array_add (argv_array, g_strdup (monitor_path));
+      add_args (argv_array,
+                "--bind", monitor_path, "/run/host/monitor",
+                NULL);
+      add_args (argv_array,
+                "--symlink", "/run/host/monitor/localtime", "/etc/localtime",
+                NULL);
     }
   else
-    g_ptr_array_add (argv_array, g_strdup ("-r"));
+    {
+      char localtime[PATH_MAX+1];
+      ssize_t symlink_size;
+
+      add_args (argv_array,
+                "--bind", "/etc/resolv.conf", "/run/host/monitor/resolv.conf",
+                NULL);
+
+      symlink_size = readlink ("/etc/localtime", localtime, sizeof (localtime) - 1);
+      if (symlink_size > 0)
+        {
+          localtime[symlink_size] = 0;
+          add_args (argv_array,
+                    "--symlink", localtime, "/etc/localtime",
+                    NULL);
+        }
+      else
+        add_args (argv_array,
+                  "--bind", "/etc/localtime", "/etc/localtime",
+                  NULL);
+    }
 }
 
 static void
@@ -2116,12 +2291,15 @@ add_document_portal_args (GPtrArray *argv_array,
             g_warning ("Can't get document portal: %s\n", local_error->message);
           else
             {
+              g_autofree char *src_path = NULL;
+              g_autofree char *dst_path = NULL;
               g_variant_get (g_dbus_message_get_body (reply),
                              "(^ay)", &doc_mount_path);
 
-              g_ptr_array_add (argv_array, g_strdup ("-b"));
-              g_ptr_array_add (argv_array, g_strdup_printf ("/run/user/%d/doc=%s/by-app/%s",
-                                                            getuid(), doc_mount_path, app_id));
+              src_path = g_strdup_printf ("%s/by-app/%s",
+                                          doc_mount_path, app_id);
+              dst_path = g_strdup_printf ("/run/user/%d/doc", getuid());
+              add_args (argv_array, "--bind", src_path, dst_path, NULL);
             }
         }
     }
@@ -2138,24 +2316,32 @@ static gboolean
 add_dbus_proxy_args (GPtrArray *argv_array,
                      GPtrArray *dbus_proxy_argv,
                      gboolean   enable_logging,
+                     int sync_fds[2],
                      GError **error)
 {
-  int sync_proxy_pipes[2];
   char x = 'x';
 
   if (dbus_proxy_argv->len == 0)
     return TRUE;
 
-  if (pipe (sync_proxy_pipes) < 0)
+  if (sync_fds[0] == -1)
     {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to create sync pipe");
-      return FALSE;
+      g_autofree char *fd_str = NULL;
+
+      if (pipe (sync_fds) < 0)
+        {
+          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to create sync pipe");
+          return FALSE;
+        }
+
+      fd_str = g_strdup_printf ("%d", sync_fds[0]);
+      add_args (argv_array, "--sync-fd", fd_str, NULL);
     }
 
   g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (DBUSPROXY));
-  g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_proxy_pipes[1]));
+  g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_fds[1]));
   if (enable_logging)
-    g_ptr_array_add (dbus_proxy_argv, g_strdup ("--log"));
+    g_ptr_array_insert (dbus_proxy_argv, 2, g_strdup ("--log"));
 
   g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
 
@@ -2164,29 +2350,416 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                       NULL,
                       G_SPAWN_SEARCH_PATH,
                       dbus_spawn_child_setup,
-                      GINT_TO_POINTER (sync_proxy_pipes[1]),
+                      GINT_TO_POINTER (sync_fds[1]),
                       NULL, error))
     {
-      close (sync_proxy_pipes[0]);
-      close (sync_proxy_pipes[1]);
+      close (sync_fds[0]);
+      close (sync_fds[1]);
       return FALSE;
     }
 
-  close (sync_proxy_pipes[1]);
-
   /* Sync with proxy, i.e. wait until its listening on the sockets */
-  if (read (sync_proxy_pipes[0], &x, 1) != 1)
+  if (read (sync_fds[0], &x, 1) != 1)
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to sync with dbus proxy");
 
-      close (sync_proxy_pipes[0]);
+      close (sync_fds[0]);
+      close (sync_fds[1]);
       return FALSE;
     }
 
-  g_ptr_array_add (argv_array, g_strdup ("-S"));
-  g_ptr_array_add (argv_array, g_strdup_printf ("%d", sync_proxy_pipes[0]));
+  return TRUE;
+}
+
+#ifdef ENABLE_SECCOMP
+static inline void
+cleanup_seccomp (void *p)
+{
+  scmp_filter_ctx *pp = (scmp_filter_ctx *)p;
+
+  if (*pp)
+    seccomp_release (*pp);
+}
+
+static gboolean
+setup_seccomp (GPtrArray *argv_array,
+               const char *arch,
+               gboolean devel,
+               GError **error)
+{
+  __attribute__ ((cleanup(cleanup_seccomp))) scmp_filter_ctx seccomp = NULL;
+
+  /**** BEGIN NOTE ON CODE SHARING
+   *
+   * There are today a number of different Linux container
+   * implementations.  That will likely continue for long into the
+   * future.  But we can still try to share code, and it's important
+   * to do so because it affects what library and application writers
+   * can do, and we should support code portability between different
+   * container tools.
+   *
+   * This syscall blacklist is copied from xdg-app, which was in turn
+   * clearly influenced by the Sandstorm.io blacklist.
+   *
+   * If you make any changes here, I suggest sending the changes along
+   * to other sandbox maintainers.  Using the libseccomp list is also
+   * an appropriate venue:
+   * https://groups.google.com/forum/#!topic/libseccomp
+   *
+   * A non-exhaustive list of links to container tooling that might
+   * want to share this blacklist:
+   *
+   *  https://github.com/sandstorm-io/sandstorm
+   *    in src/sandstorm/supervisor.c++
+   *  http://cgit.freedesktop.org/xdg-app/xdg-app/
+   *    in lib/xdg-app-helper.c
+   *  https://git.gnome.org/browse/linux-user-chroot
+   *    in src/setup-seccomp.c
+   *
+   **** END NOTE ON CODE SHARING
+   */
+  struct {
+    int scall;
+    struct scmp_arg_cmp *arg;
+  } syscall_blacklist[] = {
+    /* Block dmesg */
+    {SCMP_SYS(syslog)},
+    /* Useless old syscall */
+    {SCMP_SYS(uselib)},
+    /* Don't allow you to switch to bsd emulation or whatnot */
+    {SCMP_SYS(personality)},
+    /* Don't allow disabling accounting */
+    {SCMP_SYS(acct)},
+    /* 16-bit code is unnecessary in the sandbox, and modify_ldt is a
+       historic source of interesting information leaks. */
+    {SCMP_SYS(modify_ldt)},
+    /* Don't allow reading current quota use */
+    {SCMP_SYS(quotactl)},
+
+    /* Scary VM/NUMA ops */
+    {SCMP_SYS(move_pages)},
+    {SCMP_SYS(mbind)},
+    {SCMP_SYS(get_mempolicy)},
+    {SCMP_SYS(set_mempolicy)},
+    {SCMP_SYS(migrate_pages)},
+
+    /* Don't allow subnamespace setups: */
+    {SCMP_SYS(unshare)},
+    {SCMP_SYS(mount)},
+    {SCMP_SYS(pivot_root)},
+    {SCMP_SYS(clone), &SCMP_A0(SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+  };
+
+  struct {
+    int scall;
+    struct scmp_arg_cmp *arg;
+  } syscall_nondevel_blacklist[] = {
+    /* Profiling operations; we expect these to be done by tools from outside
+     * the sandbox.  In particular perf has been the source of many CVEs.
+     */
+    {SCMP_SYS(perf_event_open)},
+    {SCMP_SYS(ptrace)}
+  };
+  /* Blacklist all but unix, inet, inet6 and netlink */
+  int socket_family_blacklist[] = {
+    AF_AX25,
+    AF_IPX,
+    AF_APPLETALK,
+    AF_NETROM,
+    AF_BRIDGE,
+    AF_ATMPVC,
+    AF_X25,
+    AF_ROSE,
+    AF_DECnet,
+    AF_NETBEUI,
+    AF_SECURITY,
+    AF_KEY,
+    AF_NETLINK + 1, /* Last gets CMP_GE, so order is important */
+  };
+  int i, r;
+  glnx_fd_close int fd = -1;
+  g_autofree char *fd_str = NULL;
+  g_autofree char *path = NULL;
+
+  seccomp = seccomp_init (SCMP_ACT_ALLOW);
+  if (!seccomp)
+    return xdg_app_fail (error, "Initialize seccomp failed");
+
+  if (arch != NULL)
+    {
+      uint32_t arch_id = 0;
+
+      if (strcmp (arch, "i386") == 0)
+        arch_id = SCMP_ARCH_X86;
+      else if (strcmp (arch, "x86_64") == 0)
+        arch_id = SCMP_ARCH_X86_64;
+
+      /* We only really need to handle arches on multiarch systems.
+       * If only one arch is supported the default is fine */
+      if (arch_id != 0)
+        {
+          /* This *adds* the target arch, instead of replacing the
+             native one. This is not ideal, because we'd like to only
+             allow the target arch, but we can't really disallow the
+             native arch at this point, because then xdg-app-helper
+             couldn't continue runnning. */
+          r = seccomp_arch_add (seccomp, arch_id);
+          if (r < 0 && r != -EEXIST)
+            return xdg_app_fail (error, "Failed to add architecture to seccomp filter");
+        }
+    }
+
+  /* Add in all possible secondary archs we are aware of that
+   * this kernel might support. */
+#if defined(__i386__) || defined(__x86_64__)
+  r = seccomp_arch_add (seccomp, SCMP_ARCH_X86);
+  if (r < 0 && r != -EEXIST)
+    return xdg_app_fail (error, "Failed to add x86 architecture to seccomp filter");
+
+  r = seccomp_arch_add (seccomp, SCMP_ARCH_X86_64);
+  if (r < 0 && r != -EEXIST)
+    return xdg_app_fail (error, "Failed to add x86_64 architecture to seccomp filter");
+
+  r = seccomp_arch_add (seccomp, SCMP_ARCH_X32);
+  if (r < 0 && r != -EEXIST)
+    return xdg_app_fail (error, "Failed to add x32 architecture to seccomp filter");
+#endif
+
+  /* TODO: Should we filter the kernel keyring syscalls in some way?
+   * We do want them to be used by desktop apps, but they could also perhaps
+   * leak system stuff or secrets from other apps.
+   */
+
+  for (i = 0; i < G_N_ELEMENTS (syscall_blacklist); i++)
+    {
+      int scall = syscall_blacklist[i].scall;
+      if (syscall_blacklist[i].arg)
+        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 1, *syscall_blacklist[i].arg);
+      else
+        r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 0);
+      if (r < 0 && r == -EFAULT /* unknown syscall */)
+        return xdg_app_fail (error, "Failed to block syscall %d", scall);
+    }
+
+  if (!devel)
+    {
+      for (i = 0; i < G_N_ELEMENTS (syscall_nondevel_blacklist); i++)
+        {
+          int scall = syscall_nondevel_blacklist[i].scall;
+          if (syscall_nondevel_blacklist[i].arg)
+            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 1, *syscall_nondevel_blacklist[i].arg);
+          else
+            r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO(EPERM), scall, 0);
+
+          if (r < 0 && r == -EFAULT /* unknown syscall */)
+            return xdg_app_fail (error, "Failed to block syscall %d", scall);
+        }
+    }
+
+  /* Socket filtering doesn't work on e.g. i386, so ignore failures here
+   * However, we need to user seccomp_rule_add_exact to avoid libseccomp doing
+   * something else: https://github.com/seccomp/libseccomp/issues/8 */
+  for (i = 0; i < G_N_ELEMENTS (socket_family_blacklist); i++)
+    {
+      int family = socket_family_blacklist[i];
+      if (i == G_N_ELEMENTS (socket_family_blacklist) - 1)
+        r = seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_GE, family));
+      else
+        r = seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO(EAFNOSUPPORT), SCMP_SYS(socket), 1, SCMP_A0(SCMP_CMP_EQ, family));
+    }
+
+  fd = g_file_open_tmp ("xdg-app-seccomp-XXXXXX", &path, error);
+  if (fd == -1)
+    return FALSE;
+
+  unlink (path);
+
+  if (seccomp_export_bpf (seccomp, fd) != 0)
+    return xdg_app_fail (error, "Failed to export bpf");
+
+  lseek (fd, 0, SEEK_SET);
+
+  fd_str = g_strdup_printf ("%d", fd);
+
+  add_args (argv_array,
+            "--seccomp", fd_str,
+            NULL);
+
+  fd = -1; /* Don't close on success */
 
   return TRUE;
+}
+#endif
+
+gboolean
+xdg_app_run_setup_base_argv (GPtrArray *argv_array,
+                             GFile *runtime_files,
+                             GFile *app_id_dir,
+                             const char *arch,
+                             XdgAppRunFlags flags,
+                             GError **error)
+{
+  const char *usr_links[] = {"lib", "lib32", "lib64", "bin", "sbin"};
+  g_autofree char *run_dir = g_strdup_printf ("/run/user/%d", getuid ());
+  int i;
+  int passwd_fd = -1;
+  g_autofree char *passwd_fd_str = NULL;
+  g_autofree char *passwd_contents = NULL;
+  int group_fd = -1;
+  g_autofree char *group_fd_str = NULL;
+  g_autofree char *group_contents = NULL;
+  struct group *g = getgrgid (getgid ());
+  g_autoptr(GFile) etc = NULL;
+
+  passwd_contents = g_strdup_printf ("%s:x:%d:%d:%s:%s:%s\n"
+                                     "nfsnobody:x:65534:65534:Unmapped user:/:/sbin/nologin\n",
+                                     g_get_user_name (),
+                                     getuid (), getgid (),
+                                     g_get_real_name (),
+                                     g_get_home_dir (),
+                                     DEFAULT_SHELL);
+
+  if ((passwd_fd = create_tmp_fd (passwd_contents, -1, error)) < 0)
+    return FALSE;
+  passwd_fd_str = g_strdup_printf ("%d", passwd_fd);
+
+  group_contents = g_strdup_printf ("%s:x:%d:%s\n"
+                                   "nfsnobody:x:65534:\n",
+                                   g->gr_name,
+                                   getgid (), g_get_user_name ());
+  if ((group_fd = create_tmp_fd (group_contents, -1, error)) < 0)
+    return FALSE;
+  group_fd_str = g_strdup_printf ("%d", group_fd);
+
+  add_args (argv_array,
+            "--unshare-pid",
+            "--dev", "/dev",
+            "--proc", "/proc",
+            "--dir", "/tmp",
+            "--dir", "/run/host",
+            "--dir", run_dir,
+            "--setenv", "XDG_RUNTIME_DIR", run_dir,
+            "--symlink", "/tmp", "/var/tmp",
+            "--symlink", "/run", "/var/run",
+            "--ro-bind", "/sys/block", "/sys/block",
+            "--ro-bind", "/sys/bus", "/sys/bus",
+            "--ro-bind", "/sys/class", "/sys/class",
+            "--ro-bind", "/sys/dev", "/sys/dev",
+            "--ro-bind", "/sys/devices", "/sys/devices",
+            "--bind-data", passwd_fd_str, "/etc/passwd",
+            "--bind-data", group_fd_str, "/etc/group",
+            "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
+            /* Always create a homedir to start from, although it may be covered later */
+            "--dir", g_get_home_dir (),
+            NULL);
+
+  if (g_file_test ("/etc/machine-id", G_FILE_TEST_EXISTS))
+    add_args (argv_array, "--bind", "/etc/machine-id", "/etc/machine-id", NULL);
+  else if (g_file_test ("/var/lib/dbus/machine-id", G_FILE_TEST_EXISTS))
+    add_args (argv_array, "--bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
+
+  etc = g_file_get_child (runtime_files, "etc");
+  if (g_file_query_exists (etc, NULL))
+    {
+      g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
+      struct dirent *dent;
+      char path_buffer[PATH_MAX+1];
+      ssize_t symlink_size;
+
+      glnx_dirfd_iterator_init_at (AT_FDCWD, gs_file_get_path_cached (etc), FALSE, &dfd_iter, NULL);
+
+      while (TRUE)
+        {
+          g_autofree char *src = NULL;
+          g_autofree char *dest = NULL;
+
+          if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&dfd_iter, &dent, NULL, NULL) || dent == NULL)
+            break;
+
+          if (strcmp (dent->d_name, "passwd") == 0 ||
+              strcmp (dent->d_name, "group") == 0 ||
+              strcmp (dent->d_name, "machine-id") == 0 ||
+              strcmp (dent->d_name, "resolv.conf") == 0 ||
+              strcmp (dent->d_name, "localtime") == 0)
+            continue;
+
+          src = g_build_filename (gs_file_get_path_cached (etc), dent->d_name, NULL);
+          dest = g_build_filename ("/etc", dent->d_name, NULL);
+          if (dent->d_type == DT_LNK)
+            {
+              symlink_size = readlinkat (dfd_iter.fd, dent->d_name, path_buffer, sizeof (path_buffer) - 1);
+              if (symlink_size < 0)
+                {
+                  glnx_set_error_from_errno (error);
+                  return FALSE;
+                }
+              path_buffer[symlink_size] = 0;
+              add_args (argv_array, "--symlink", path_buffer, dest, NULL);
+            }
+          else
+            add_args (argv_array, "--bind", src, dest, NULL);
+        }
+    }
+
+  if (app_id_dir != NULL)
+    {
+      g_autoptr(GFile) app_cache_dir = g_file_get_child (app_id_dir, "cache");
+      g_autoptr(GFile) app_data_dir = g_file_get_child (app_id_dir, "data");
+      g_autoptr(GFile) app_config_dir = g_file_get_child (app_id_dir, "config");
+
+      add_args (argv_array,
+                /* These are nice to have as a fixed path */
+                "--bind", gs_file_get_path_cached (app_cache_dir), "/var/cache",
+                "--bind", gs_file_get_path_cached (app_data_dir), "/var/data",
+                "--bind", gs_file_get_path_cached (app_config_dir), "/var/config",
+                NULL);
+    }
+
+  for (i = 0; i < G_N_ELEMENTS(usr_links); i++)
+    {
+      const char *subdir = usr_links[i];
+      g_autoptr(GFile) runtime_subdir = g_file_get_child (runtime_files, subdir);
+      if (g_file_query_exists (runtime_subdir, NULL))
+        {
+          g_autofree char *link = g_strconcat ("usr/", subdir, NULL);
+          g_autofree char *dest = g_strconcat ("/", subdir, NULL);
+          add_args (argv_array,
+                    "--symlink", link, dest,
+                    NULL);
+        }
+    }
+
+
+#ifdef ENABLE_SECCOMP
+  if (!setup_seccomp (argv_array,
+                      arch,
+                      (flags & XDG_APP_RUN_FLAG_DEVEL) != 0,
+                      error))
+    return FALSE;
+#endif
+
+  return TRUE;
+}
+
+gchar*
+join_args (GPtrArray *argv_array, gsize *len_out)
+{
+  gchar *string;
+  gchar *ptr;
+  gint i;
+  gsize len = 0;
+
+  for (i = 0; i < argv_array->len; i++)
+    len +=  strlen (argv_array->pdata[i]) + 1;
+
+  string = g_new (gchar, len);
+  *string = 0;
+  ptr = string;
+  for (i = 0; i < argv_array->len; i++)
+    ptr = g_stpcpy (ptr, argv_array->pdata[i]) + 1;
+
+  *len_out = len;
+  return string;
 }
 
 gboolean
@@ -2209,9 +2782,11 @@ xdg_app_run_app (const char *app_ref,
   g_autofree char *default_runtime = NULL;
   g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;
+  int sync_fds[2] = {-1, -1};
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
+  g_autoptr(GPtrArray) real_argv_array = NULL;
   g_auto(GStrv) envp = NULL;
   g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
   g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
@@ -2232,15 +2807,6 @@ xdg_app_run_app (const char *app_ref,
   argv_array = g_ptr_array_new_with_free_func (g_free);
   session_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
   system_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (argv_array, g_strdup (HELPER));
-  g_ptr_array_add (argv_array, g_strdup ("-l"));
-
-  /* Pass the arch for seccomp */
-  g_ptr_array_add (argv_array, g_strdup ("-A"));
-  g_ptr_array_add (argv_array, g_strdup (app_ref_parts[2]));
-
-  if (!xdg_app_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
-    return FALSE;
 
   default_runtime = g_key_file_get_string (metakey, "Application",
                                            (flags & XDG_APP_RUN_FLAG_DEVEL) != 0 ? "sdk" : "runtime",
@@ -2299,28 +2865,44 @@ xdg_app_run_app (const char *app_ref,
   if (extra_context)
     xdg_app_context_merge (app_context, extra_context);
 
+  runtime_files = xdg_app_deploy_get_files (runtime_deploy);
+  app_files = xdg_app_deploy_get_files (app_deploy);
+
+  if ((app_id_dir = xdg_app_ensure_data_dir (app_ref_parts[1], cancellable, error)) == NULL)
+      return FALSE;
+
+  envp = g_get_environ ();
+  envp = xdg_app_run_apply_env_default (envp);
+  envp = xdg_app_run_apply_env_vars (envp, app_context);
+  envp = xdg_app_run_apply_env_appid (envp, app_id_dir);
+
+  add_args (argv_array,
+            "--ro-bind", gs_file_get_path_cached (runtime_files), "/usr",
+            "--lock-file", "/usr/.ref",
+            "--ro-bind", gs_file_get_path_cached (app_files), "/app",
+            "--lock-file", "/app/.ref",
+            NULL);
+
+  if (!xdg_app_run_setup_base_argv (argv_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
+    return FALSE;
+
   if (!add_app_info_args (argv_array, app_deploy, app_ref_parts[1], runtime_ref, app_context, error))
+    return FALSE;
+
+  if (!xdg_app_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
     return FALSE;
 
   if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
-  if ((app_id_dir = xdg_app_ensure_data_dir (app_ref_parts[1], cancellable, error)) == NULL)
-      return FALSE;
-
-  add_app_id_dir_links_args (argv_array, app_id_dir);
-
-  add_monitor_path_args (argv_array);
+  add_monitor_path_args (argv_array, &envp);
 
   add_document_portal_args (argv_array, app_ref_parts[1]);
 
-  xdg_app_run_add_environment_args (argv_array,
+  xdg_app_run_add_environment_args (argv_array, &envp,
                                     session_bus_proxy_argv,
                                     system_bus_proxy_argv,
                                     app_ref_parts[1], app_context, app_id_dir);
-
-  if ((flags & XDG_APP_RUN_FLAG_DEVEL) != 0)
-    g_ptr_array_add (argv_array, g_strdup ("-c"));
 
   add_font_path_args (argv_array);
 
@@ -2329,20 +2911,29 @@ xdg_app_run_app (const char *app_ref,
   if (!xdg_app_run_in_transient_unit (app_ref_parts[1], error))
     return FALSE;
 
-  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & XDG_APP_RUN_FLAG_LOG_SESSION_BUS) != 0, error))
+  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & XDG_APP_RUN_FLAG_LOG_SESSION_BUS) != 0, sync_fds, error))
     return FALSE;
 
-  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & XDG_APP_RUN_FLAG_LOG_SYSTEM_BUS) != 0,  error))
+  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & XDG_APP_RUN_FLAG_LOG_SYSTEM_BUS) != 0, sync_fds, error))
     return FALSE;
 
-  app_files = xdg_app_deploy_get_files (app_deploy);
-  g_ptr_array_add (argv_array, g_strdup ("-a"));
-  g_ptr_array_add (argv_array, g_file_get_path (app_files));
+  if (sync_fds[1] != -1)
+    close (sync_fds[1]);
 
-  runtime_files = xdg_app_deploy_get_files (runtime_deploy);
-  g_ptr_array_add (argv_array, g_strdup ("-I"));
-  g_ptr_array_add (argv_array, g_strdup (app_ref_parts[1]));
-  g_ptr_array_add (argv_array, g_file_get_path (runtime_files));
+  add_args (argv_array,
+            /* Not in base, because we don't want this for xdg-app build */
+            "--symlink", "/app/lib/debug/source", "/run/build",
+            "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
+            NULL);
+
+  if (g_environ_getenv (envp, "LD_LIBRARY_PATH") != NULL)
+    {
+      /* LD_LIBRARY_PATH is overridden for setuid helper, so pass it as cmdline arg */
+      add_args (argv_array,
+                "--setenv", "LD_LIBRARY_PATH", g_environ_getenv (envp, "LD_LIBRARY_PATH"),
+                NULL);
+      envp = g_environ_unsetenv (envp, "LD_LIBRARY_PATH");
+    }
 
   if (custom_command)
     command = custom_command;
@@ -2358,23 +2949,36 @@ xdg_app_run_app (const char *app_ref,
       command = default_command;
     }
 
-  g_ptr_array_add (argv_array, g_strdup (command));
+  real_argv_array = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (real_argv_array, g_strdup (HELPER));
+
+  {
+    gsize len;
+    int arg_fd;
+    g_autofree char *arg_fd_str = NULL;
+    g_autofree char *args = join_args (argv_array, &len);
+
+    arg_fd = create_tmp_fd (args, len, error);
+    if (arg_fd < 0)
+      return FALSE;
+
+    arg_fd_str = g_strdup_printf ("%d", arg_fd);
+
+    add_args (real_argv_array,
+              "--args", arg_fd_str,
+              NULL);
+  }
+
+  g_ptr_array_add (real_argv_array, g_strdup (command));
   for (i = 0; i < n_args; i++)
-    g_ptr_array_add (argv_array, g_strdup (args[i]));
+    g_ptr_array_add (real_argv_array, g_strdup (args[i]));
 
-  g_ptr_array_add (argv_array, NULL);
-
-  envp = g_get_environ ();
-  envp = xdg_app_run_apply_env_default (envp);
-
-  envp = xdg_app_run_apply_env_vars (envp, app_context);
-
-  envp = xdg_app_run_apply_env_appid (envp, app_id_dir);
+  g_ptr_array_add (real_argv_array, NULL);
 
   if ((flags & XDG_APP_RUN_FLAG_BACKGROUND) != 0)
     {
       if (!g_spawn_async (NULL,
-                          (char **)argv_array->pdata,
+                          (char **)real_argv_array->pdata,
                           envp,
                           G_SPAWN_DEFAULT,
                           NULL, NULL,
@@ -2384,7 +2988,7 @@ xdg_app_run_app (const char *app_ref,
     }
   else
     {
-      if (execvpe (HELPER, (char **)argv_array->pdata, envp) == -1)
+      if (execvpe (HELPER, (char **)real_argv_array->pdata, envp) == -1)
         {
           g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
           return FALSE;

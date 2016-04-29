@@ -1785,14 +1785,22 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
 	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
 #else
 	  g_ptr_array_add (argv_array, g_strdup (HELPER));
-	  g_ptr_array_add (argv_array, g_strdup ("-a"));
+	  g_ptr_array_add (argv_array, g_strdup ("--unshare-ipc"));
+	  g_ptr_array_add (argv_array, g_strdup ("--unshare-net"));
+	  g_ptr_array_add (argv_array, g_strdup ("--unshare-pid"));
+	  g_ptr_array_add (argv_array, g_strdup ("--ro-bind"));
+	  g_ptr_array_add (argv_array, g_strdup ("/"));
+	  g_ptr_array_add (argv_array, g_strdup ("/"));
+	  g_ptr_array_add (argv_array, g_strdup ("--proc"));
+	  g_ptr_array_add (argv_array, g_strdup ("/proc"));
+	  g_ptr_array_add (argv_array, g_strdup ("--dev"));
+	  g_ptr_array_add (argv_array, g_strdup ("/dev"));
+	  g_ptr_array_add (argv_array, g_strdup ("--bind"));
 	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
-	  g_ptr_array_add (argv_array, g_strdup ("-e"));
-	  g_ptr_array_add (argv_array, g_strdup ("-F"));
-	  g_ptr_array_add (argv_array, g_strdup ("/usr"));
-	  g_ptr_array_add (argv_array, g_file_get_path (child));
-	  g_ptr_array_add (argv_array, g_strdup ("/app"));
+	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
 #endif
+	  g_ptr_array_add (argv_array, g_file_get_path (child));
+	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
 	  g_ptr_array_add (argv_array, NULL);
 
 	  if (!g_spawn_sync ("/",

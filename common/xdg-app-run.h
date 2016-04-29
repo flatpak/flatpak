@@ -64,6 +64,7 @@ gboolean  xdg_app_run_add_extension_args     (GPtrArray   *argv_array,
                                               GCancellable *cancellable,
                                               GError     **error);
 void     xdg_app_run_add_environment_args    (GPtrArray   *argv_array,
+                                              char      ***envp_p,
 					      GPtrArray   *session_bus_proxy_argv,
 					      GPtrArray   *system_bus_proxy_argv,
                                               const char  *app_id,
@@ -88,6 +89,12 @@ typedef enum {
   XDG_APP_RUN_FLAG_LOG_SYSTEM_BUS  = (1<<3),
 } XdgAppRunFlags;
 
+gboolean xdg_app_run_setup_base_argv (GPtrArray *argv_array,
+                                      GFile *runtime_files,
+                                      GFile *app_id_dir,
+                                      const char *arch,
+                                      XdgAppRunFlags flags,
+                                      GError **error);
 gboolean xdg_app_run_app (const char *app_ref,
                           XdgAppDeploy *app_deploy,
                           XdgAppContext *extra_context,
