@@ -103,6 +103,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    Specify the architecture component of the branch to export. Only host compatible architectures can be specified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--exclude=PATTERN</option></term>
 
                 <listitem><para>

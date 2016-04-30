@@ -98,8 +98,9 @@ usage (GOptionContext *context, const char *message)
 static const char skip_arg[] = "skip";
 
 static gboolean
-do_export (GError   **error,
-           gboolean   runtime,
+do_export (BuilderContext *build_context,
+	   GError        **error,
+           gboolean        runtime,
            ...)
 {
   va_list ap;
@@ -112,6 +113,8 @@ do_export (GError   **error,
   args = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (args, g_strdup ("xdg-app"));
   g_ptr_array_add (args, g_strdup ("build-export"));
+
+  g_ptr_array_add (args, g_strdup_printf ("--arch=%s", builder_context_get_arch (build_context)));
 
   if (runtime)
     g_ptr_array_add (args, g_strdup ("--runtime"));
@@ -369,7 +372,7 @@ main (int    argc,
 
       g_print ("exporting %s to repo\n", builder_manifest_get_id (manifest));
 
-      if (!do_export (&error,
+      if (!do_export (build_context, &error,
                       builder_context_get_build_runtime (build_context),
                       "--exclude=/lib/debug/*",
                       "--include=/lib/debug/app",
@@ -402,7 +405,7 @@ main (int    argc,
           metadata_arg = g_strdup_printf ("--metadata=%s", name);
           files_arg = g_strconcat (builder_context_get_build_runtime (build_context) ? "--files=usr" : "--files=files",
                                    "/share/runtime/locale/", NULL);
-          if (!do_export (&error, TRUE,
+          if (!do_export (build_context, &error, TRUE,
                           metadata_arg,
                           files_arg,
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
@@ -418,7 +421,7 @@ main (int    argc,
         {
           g_print ("exporting %s.Debug to repo\n", builder_manifest_get_id (manifest));
 
-          if (!do_export (&error, TRUE,
+          if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.debuginfo",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
@@ -435,7 +438,7 @@ main (int    argc,
         {
           g_print ("exporting %s to repo\n", platform_id);
 
-            if (!do_export (&error, TRUE,
+            if (!do_export (build_context, &error, TRUE,
                             "--metadata=metadata.platform",
                             "--files=platform",
                             builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
@@ -467,7 +470,7 @@ main (int    argc,
 
           metadata_arg = g_strdup_printf ("--metadata=%s", name);
           files_arg = g_strconcat ("--files=platform/share/runtime/locale/", NULL);
-          if (!do_export (&error, TRUE,
+          if (!do_export (build_context, &error, TRUE,
                           metadata_arg,
                           files_arg,
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))

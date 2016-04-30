@@ -33,6 +33,7 @@
 
 static char *opt_subject;
 static char *opt_body;
+static char *opt_arch;
 static gboolean opt_runtime;
 static gboolean opt_update_appstream;
 static char **opt_gpg_key_ids;
@@ -45,6 +46,7 @@ static char *opt_metadata;
 static GOptionEntry options[] = {
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, "One line subject", "SUBJECT" },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description", "BODY" },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Architecture to export for (must be host compatible)", "ARCH" },
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Commit runtime (/usr), not /app" },
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Update the appstream branch" },
   { "files", 0, 0, G_OPTION_ARG_STRING, &opt_files, "Use alternative directory for the files", "SUBDIR"},
@@ -64,6 +66,12 @@ metadata_get_arch (GFile *file, char **out_arch, GError **error)
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime = NULL;
   g_auto(GStrv) parts = NULL;
+
+  if (opt_arch != NULL)
+    {
+      *out_arch = g_strdup (opt_arch);
+      return TRUE;
+    }
 
   keyfile = g_key_file_new ();
   path = g_file_get_path (file);
