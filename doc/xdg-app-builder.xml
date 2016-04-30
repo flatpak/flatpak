@@ -550,6 +550,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    Specify the machine architecture to build for. If no architecture is specified, the host architecture will be automatically detected. Only host compatible architectures can be specified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--disable-cache</option></term>
 
                 <listitem><para>

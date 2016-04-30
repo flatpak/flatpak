@@ -836,14 +836,18 @@ builder_manifest_start (BuilderManifest  *self,
                         BuilderContext   *context,
                         GError          **error)
 {
-  self->sdk_commit = xdg_app (NULL, "info", "--show-commit", self->sdk,
+  g_autofree char *arch_option;
+
+  arch_option = g_strdup_printf ("--arch=%s", builder_context_get_arch (context));
+
+  self->sdk_commit = xdg_app (NULL, "info", arch_option, "--show-commit", self->sdk,
                               builder_manifest_get_runtime_version (self), NULL);
   if (self->sdk_commit == NULL)
     return xdg_app_fail (error, "Unable to find sdk %s version %s",
                          self->sdk,
                          builder_manifest_get_runtime_version (self));
 
-  self->runtime_commit = xdg_app (NULL, "info", "--show-commit", self->runtime,
+  self->runtime_commit = xdg_app (NULL, "info", arch_option, "--show-commit", self->runtime,
                                   builder_manifest_get_runtime_version (self), NULL);
   if (self->runtime_commit == NULL)
     return xdg_app_fail (error, "Unable to find runtime %s version %s",
@@ -905,6 +909,7 @@ builder_manifest_init_app_dir (BuilderManifest *self,
       for (i = 0; self->tags[i] != NULL; i++)
         g_ptr_array_add (args, g_strdup_printf ("--tag=%s", self->tags[i]));
     }
+  g_ptr_array_add (args, g_strdup_printf ("--arch=%s", builder_context_get_arch (context)));
   g_ptr_array_add (args, g_file_get_path (app_dir));
   g_ptr_array_add (args, g_strdup (self->id));
   g_ptr_array_add (args, g_strdup (self->sdk));
@@ -1751,6 +1756,7 @@ builder_manifest_create_platform (BuilderManifest *self,
       g_ptr_array_add (args, g_strdup ("--update"));
       g_ptr_array_add (args, g_strdup ("--writable-sdk"));
       g_ptr_array_add (args, g_strdup ("--sdk-dir=platform"));
+      g_ptr_array_add (args, g_strdup_printf ("--arch=%s", builder_context_get_arch (context)));
 
       for (i = 0; self->platform_extensions != NULL && self->platform_extensions[i] != NULL; i++)
         {
