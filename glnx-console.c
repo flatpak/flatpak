@@ -188,8 +188,6 @@ text_percent_internal (const char *text,
   const guint ncolumns = glnx_console_columns ();
   const guint bar_min = 10;
   const guint input_textlen = text ? strlen (text) : 0;
-  guint textlen;
-  guint barlen;
 
   if (text && !*text)
     text = NULL;
@@ -221,32 +219,39 @@ text_percent_internal (const char *text,
     (void) fwrite (beginbuf, 1, sizeof (beginbuf), stdout);
   }
 
-  textlen = MIN (input_textlen, ncolumns - bar_min);
-  barlen = ncolumns - (textlen + 1);
-
-  if (textlen > 0)
+  if (percentage == -1)
     {
-      fwrite (text, 1, textlen, stdout);
-      fputc (' ', stdout);
+      fwrite (text, 1, input_textlen, stdout);
     }
+  else
+    {
+      const guint textlen = MIN (input_textlen, ncolumns - bar_min);
+      const guint barlen = ncolumns - (textlen + 1);;
+      
+      if (textlen > 0)
+        {
+          fwrite (text, 1, textlen, stdout);
+          fputc (' ', stdout);
+        }
   
-  { 
-    const guint nbraces = 2;
-    const guint textpercent_len = 5;
-    const guint bar_internal_len = barlen - nbraces - textpercent_len;
-    const guint eqlen = bar_internal_len * (percentage / 100.0);
-    const guint spacelen = bar_internal_len - eqlen; 
+      { 
+        const guint nbraces = 2;
+        const guint textpercent_len = 5;
+        const guint bar_internal_len = barlen - nbraces - textpercent_len;
+        const guint eqlen = bar_internal_len * (percentage / 100.0);
+        const guint spacelen = bar_internal_len - eqlen; 
 
-    fputc ('[', stdout);
-    printpad (equals, n_equals, eqlen);
-    printpad (spaces, n_spaces, spacelen);
-    fputc (']', stdout);
-    fprintf (stdout, " %3d%%", percentage);
-  }
+        fputc ('[', stdout);
+        printpad (equals, n_equals, eqlen);
+        printpad (spaces, n_spaces, spacelen);
+        fputc (']', stdout);
+        fprintf (stdout, " %3d%%", percentage);
+      }
 
-  { const guint spacelen = ncolumns - textlen - barlen;
-    printpad (spaces, n_spaces, spacelen);
-  }
+      { const guint spacelen = ncolumns - textlen - barlen;
+        printpad (spaces, n_spaces, spacelen);
+      }
+    }
 
   fflush (stdout);
 }
