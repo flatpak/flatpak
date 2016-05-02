@@ -72,6 +72,9 @@ TEST_DATA_DIR=`mktemp -d /var/tmp/test-xdg-app-XXXXXX`
 
 export XDG_DATA_HOME=${TEST_DATA_DIR}/share
 
+export USERDIR=${TEST_DATA_DIR}/share/xdg-app
+export ARCH=`xdg-app --default-arch`
+
 export XDG_APP="${CMD_PREFIX} xdg-app"
 
 assert_streq () {
@@ -84,6 +87,10 @@ assert_not_streq () {
 
 assert_has_file () {
     test -f "$1" || (echo 1>&2 "Couldn't find '$1'"; exit 1)
+}
+
+assert_has_symlink () {
+    test -L "$1" || (echo 1>&2 "Couldn't find '$1'"; exit 1)
 }
 
 assert_has_dir () {
@@ -120,6 +127,14 @@ assert_file_has_content () {
     fi
 }
 
+assert_symlink_has_content () {
+    if ! readlink "$1" | grep -q -e "$2"; then
+        readlink "$1" |sed -e 's/^/# /' >&2
+        echo 1>&2 "Symlink '$1' doesn't match regexp '$2'"
+        exit 1
+    fi
+}
+
 assert_file_empty() {
     if test -s "$1"; then
         sed -e 's/^/# /' < "$1" >&2
@@ -142,6 +157,10 @@ install_repo () {
 run () {
     ${CMD_PREFIX} xdg-app run "$@"
 
+}
+
+run_sh () {
+    ${CMD_PREFIX} xdg-app run --command=bash org.test.Hello -c "$*"
 }
 
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf

@@ -30,9 +30,11 @@
 #include "libgsystem.h"
 
 #include "xdg-app-builtins.h"
+#include "xdg-app-utils.h"
 
 static gboolean opt_verbose;
 static gboolean opt_version;
+static gboolean opt_default_arch;
 static gboolean opt_user;
 
 typedef struct {
@@ -80,6 +82,7 @@ static XdgAppCommand commands[] = {
 static GOptionEntry global_entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
   { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version information and exit", NULL },
+  { "default-arch", 0, 0, G_OPTION_ARG_NONE, &opt_default_arch, "Print default arch and exit", NULL },
   { NULL }
 };
 
@@ -184,6 +187,12 @@ xdg_app_option_context_parse (GOptionContext *context,
   if (opt_version)
     {
       g_print ("%s\n", PACKAGE_STRING);
+      exit (EXIT_SUCCESS);
+    }
+
+  if (opt_default_arch)
+    {
+      g_print ("%s\n", xdg_app_get_arch ());
       exit (EXIT_SUCCESS);
     }
 

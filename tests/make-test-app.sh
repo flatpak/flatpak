@@ -14,6 +14,20 @@ echo "Hello world, from a sandbox"
 EOF
 chmod a+x ${DIR}/files/bin/hello.sh
 
+mkdir -p ${DIR}/files/share/applications
+cat > ${DIR}/files/share/applications/org.test.Hello.desktop <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Exec=hello.sh
+Icon=org.test.Hello
+MimeType=x-test/Hello
+EOF
+
+mkdir -p ${DIR}/files/share/icons/hicolor/64x64/apps
+cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/
+
+
 mkdir -p ${DIR}/files/share/app-info/xmls
 mkdir -p ${DIR}/files/share/app-info/icons/xdg-app/64x64
 gzip -c > ${DIR}/files/share/app-info/xmls/org.test.Hello.xml.gz <<EOF

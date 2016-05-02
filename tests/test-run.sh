@@ -21,12 +21,41 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..1"
+echo "1..3"
 
 setup_repo
 install_repo
+
+# Verify that app is correctly installed
+
+assert_has_dir $USERDIR/app/org.test.Hello
+assert_has_symlink $USERDIR/app/org.test.Hello/current
+assert_symlink_has_content $USERDIR/app/org.test.Hello/current ^$ARCH/master$
+assert_has_dir $USERDIR/app/org.test.Hello/$ARCH/master
+assert_has_symlink $USERDIR/app/org.test.Hello/$ARCH/master/active
+assert_has_file $USERDIR/app/org.test.Hello/$ARCH/master/active/deploy
+assert_has_file $USERDIR/app/org.test.Hello/$ARCH/master/active/metadata
+assert_has_dir $USERDIR/app/org.test.Hello/$ARCH/master/active/files
+assert_has_dir $USERDIR/app/org.test.Hello/$ARCH/master/active/export
+assert_has_file $USERDIR/exports/share/applications/org.test.Hello.desktop
+# Ensure Exec key is rewritten
+assert_file_has_content $USERDIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*/xdg-app run --branch=master --arch=$ARCH --command=hello.sh org.test.Hello$"
+assert_has_file $USERDIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.png
+
+# Ensure triggers ran
+assert_has_file $USERDIR/exports/share/applications/mimeinfo.cache
+assert_file_has_content $USERDIR/exports/share/applications/mimeinfo.cache x-test/Hello
+assert_has_file $USERDIR/exports/share/icons/hicolor/icon-theme.cache
+assert_has_file $USERDIR/exports/share/icons/hicolor/index.theme
+
+echo "ok install"
 
 run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 echo "ok hello"
+
+run_sh cat /run/user/`id -u`/xdg-app-info > xai
+assert_file_has_content xai '^name=org.test.Hello$'
+
+echo "ok xdg-app-info"
