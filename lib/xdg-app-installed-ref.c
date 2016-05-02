@@ -283,6 +283,22 @@ xdg_app_installed_ref_get_is_current (XdgAppInstalledRef *self)
 }
 
 /**
+ * xdg_app_installed_ref_get_subpaths:
+ * @self: a #XdgAppInstalledRef
+ *
+ * Returns the subpaths that are installed, or %NULL if all files installed.
+ *
+ * Returns: (transfer none): A strv, or %NULL
+ */
+const char * const*
+xdg_app_installed_ref_get_subpaths (XdgAppInstalledRef *self)
+{
+  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+
+  return (const char * const *) priv->subpaths;
+}
+
+/**
  * xdg_app_installed_ref_get_installed_size:
  * @self: a #XdgAppInstalledRef
  *
