@@ -27,7 +27,7 @@
             "sources": [
                 {
                     "type": "file",
-                    "path": "configure.test",
+                    "path": "test-configure",
                     "dest-filename": "configure",
                     "sha256": "ce0a7014057cc45ac6cfa4b84fe848d46b1225f4ce03f1b52d5ab73521816cbf"
                 },

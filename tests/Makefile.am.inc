@@ -50,7 +50,7 @@ tests/test-basic.sh: tests/package_version.txt
 
 installed_test_SCRIPTS += \
 	buildutil/tap-driver.sh \
-	tests/configure.test \
+	tests/test-configure \
 	tests/package_version.txt \
 	tests/make-test-app.sh \
 	tests/make-test-runtime.sh \

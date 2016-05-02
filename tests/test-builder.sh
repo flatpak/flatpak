@@ -32,7 +32,7 @@ install_sdk_repo
 REPO=`pwd`/repo
 cd $TEST_DATA_DIR/
 
-cp -a $(dirname $0)/configure.test .
+cp -a $(dirname $0)/test-configure .
 echo "version1" > app-data
 xdg-app-builder --repo=$REPO --force-clean appdir $(dirname $0)/test.json > /dev/null
 
