@@ -146,12 +146,12 @@ assert_file_empty() {
 setup_repo () {
     . $(dirname $0)/make-test-runtime.sh > /dev/null
     . $(dirname $0)/make-test-app.sh > /dev/null
-    xdg-app remote-add --user --no-gpg-verify repo repo
+    xdg-app remote-add --user --no-gpg-verify test-repo repo
 }
 
 install_repo () {
-    ${XDG_APP} --user install repo org.test.Platform master
-    ${XDG_APP} --user install repo org.test.Hello master
+    ${XDG_APP} --user install test-repo org.test.Platform master
+    ${XDG_APP} --user install test-repo org.test.Hello master
 }
 
 run () {

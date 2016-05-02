@@ -33,6 +33,7 @@ assert_has_symlink $USERDIR/app/org.test.Hello/current
 assert_symlink_has_content $USERDIR/app/org.test.Hello/current ^$ARCH/master$
 assert_has_dir $USERDIR/app/org.test.Hello/$ARCH/master
 assert_has_symlink $USERDIR/app/org.test.Hello/$ARCH/master/active
+ID=`readlink $USERDIR/app/org.test.Hello/$ARCH/master/active`
 assert_has_file $USERDIR/app/org.test.Hello/$ARCH/master/active/deploy
 assert_has_file $USERDIR/app/org.test.Hello/$ARCH/master/active/metadata
 assert_has_dir $USERDIR/app/org.test.Hello/$ARCH/master/active/files
@@ -47,6 +48,15 @@ assert_has_file $USERDIR/exports/share/applications/mimeinfo.cache
 assert_file_has_content $USERDIR/exports/share/applications/mimeinfo.cache x-test/Hello
 assert_has_file $USERDIR/exports/share/icons/hicolor/icon-theme.cache
 assert_has_file $USERDIR/exports/share/icons/hicolor/index.theme
+
+$XDG_APP list --user | grep org.test.Hello
+$XDG_APP list --user -d | grep org.test.Hello | grep test-repo
+$XDG_APP list --user -d | grep org.test.Hello | grep current
+$XDG_APP list --user -d | grep org.test.Hello | grep ${ID:0:12}
+
+$XDG_APP info --user org.test.Hello
+$XDG_APP info --user org.test.Hello | grep test-repo
+$XDG_APP info --user org.test.Hello | grep $ID
 
 echo "ok install"
 
