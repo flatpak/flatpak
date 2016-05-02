@@ -1,0 +1,53 @@
+{
+    "app-id": "org.test.Hello2",
+    "runtime": "org.test.Platform",
+    "sdk": "org.test.Sdk",
+    "command": "hello2.sh",
+    "tags": ["test"],
+    "finish-args": [
+        "--share=network"
+    ],
+    "build-options" : {
+        "cflags": "-O2 -g",
+        "cxxflags": "-O2 -g",
+        "env": {
+            "FOO": "bar",
+            "V": "1"
+        }
+    },
+    "cleanup": ["/cleanup", "*.cleanup"],
+    "cleanup-commands": [ "touch /app/cleaned_up" ],
+    "modules": [
+        {
+            "name": "test",
+            "config-opts": ["--some-arg"],
+            "post-install": [ "touch /app/bin/file.cleanup" ],
+            "make-args": ["BAR=2" ],
+            "make-install-args": ["BAR=3" ],
+            "sources": [
+                {
+                    "type": "file",
+                    "path": "configure.test",
+                    "dest-filename": "configure",
+                    "sha256": "fb62c2826dbd2fda27e878490e3f1f9081b1b69a2211e125ae79cf552a7a2254"
+                },
+                {
+                    "type": "file",
+                    "path": "app-data"
+                },
+                {
+                    "type": "script",
+                    "dest-filename": "hello2.sh",
+                    "commands": [ "echo \"Hello world2, from a sandbox\"" ]
+                },
+                {
+                    "type": "shell",
+                    "commands": [
+                        "mkdir /app/cleanup/",
+                        "touch /app/cleanup/a_file"
+                    ]
+                }
+            ]
+        }
+    ]
+}

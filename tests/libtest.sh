@@ -149,9 +149,18 @@ setup_repo () {
     xdg-app remote-add --user --no-gpg-verify test-repo repo
 }
 
+setup_sdk_repo () {
+    . $(dirname $0)/make-test-runtime.sh org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
+}
+
+
 install_repo () {
     ${XDG_APP} --user install test-repo org.test.Platform master
     ${XDG_APP} --user install test-repo org.test.Hello master
+}
+
+install_sdk_repo () {
+    ${XDG_APP} --user install test-repo org.test.Sdk master
 }
 
 run () {

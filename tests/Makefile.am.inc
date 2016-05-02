@@ -59,12 +59,14 @@ installed_test_SCRIPTS += \
 
 installed_test_data = \
 	tests/org.test.Hello.png \
+	tests/configure.test \
 	tests/session.conf.in \
 	$(NULL)
 
 test_scripts = \
 	tests/test-basic.sh \
 	tests/test-run.sh \
+	tests/test-builder.sh \
 	$(NULL)
 
 test_programs = testdb test-doc-portal
