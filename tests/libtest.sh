@@ -144,7 +144,7 @@ assert_file_empty() {
 }
 
 setup_repo () {
-    . $(dirname $0)/make-test-runtime.sh > /dev/null
+    . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
     . $(dirname $0)/make-test-app.sh > /dev/null
     xdg-app remote-add --user --no-gpg-verify test-repo repo
 }
