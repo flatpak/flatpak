@@ -64,6 +64,7 @@ installed_test_data = \
 
 test_scripts = \
 	tests/test-basic.sh \
+	tests/test-run.sh \
 	$(NULL)
 
 test_programs = testdb test-doc-portal

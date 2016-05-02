@@ -21,17 +21,12 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..2"
+echo "1..1"
 
-${XDG_APP} --version > version_out
+setup_repo
+install_repo
 
-VERSION=`cat $(dirname $0)/package_version.txt`
-assert_file_has_content version_out "^xdg-app $VERSION$"
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
-echo "ok version"
-
-${XDG_APP} --help > help_out
-
-assert_file_has_content help_out "^Usage:$"
-
-echo "ok help"
+echo "ok hello"
