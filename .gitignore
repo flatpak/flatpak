@@ -68,6 +68,7 @@ XdgApp-1.0.*
 /tests/hello*.xdgapp
 /tests/platform*.xdgapp
 /tests/repo
+/tests/package_version.txt
 *.test
 /tests/*.sh.log
 /tests/*.sh.test
