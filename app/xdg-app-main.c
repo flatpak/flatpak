@@ -74,22 +74,6 @@ static XdgAppCommand commands[] = {
   { "build-sign", xdg_app_builtin_build_sign, "Sign an application or runtime" },
   { "build-update-repo", xdg_app_builtin_build_update_repo, "Update the summary file in a repository" },
 
-  /* Deprecated old names */
-  { "install-runtime", xdg_app_builtin_install_runtime, NULL, TRUE },
-  { "install-app", xdg_app_builtin_install_app, NULL, TRUE },
-  { "update-app", xdg_app_builtin_update_app, NULL, TRUE },
-  { "update-runtime", xdg_app_builtin_update_runtime, NULL, TRUE },
-  { "uninstall-runtime", xdg_app_builtin_uninstall_runtime, NULL, TRUE },
-  { "uninstall-app", xdg_app_builtin_uninstall_app, NULL, TRUE },
-  { "install-bundle", xdg_app_builtin_install_bundle, NULL, TRUE },
-  { "make-app-current", xdg_app_builtin_make_current_app, NULL, TRUE },
-  { "add-remote", xdg_app_builtin_add_remote, NULL, TRUE },
-  { "delete-remote", xdg_app_builtin_delete_remote, NULL, TRUE },
-  { "modify-remote", xdg_app_builtin_modify_remote, NULL, TRUE },
-  { "ls-remote", xdg_app_builtin_ls_remote, NULL, TRUE },
-  { "list-remotes", xdg_app_builtin_list_remotes, NULL, TRUE },
-  { "list-runtimes", xdg_app_builtin_list_runtimes, NULL, TRUE },
-  { "list-apps", xdg_app_builtin_list_apps, NULL, TRUE },
   { NULL }
 };
 

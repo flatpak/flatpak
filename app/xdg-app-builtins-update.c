@@ -232,21 +232,3 @@ xdg_app_builtin_update (int argc,
 
   return  TRUE;
 }
-
-gboolean
-xdg_app_builtin_update_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  opt_runtime = TRUE;
-  opt_app = FALSE;
-
-  return xdg_app_builtin_update (argc, argv, cancellable, error);
-}
-
-gboolean
-xdg_app_builtin_update_app (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  opt_runtime = FALSE;
-  opt_app = TRUE;
-
-  return xdg_app_builtin_update (argc, argv, cancellable, error);
-}

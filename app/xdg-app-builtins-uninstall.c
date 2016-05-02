@@ -147,21 +147,3 @@ xdg_app_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
   return TRUE;
 }
-
-gboolean
-xdg_app_builtin_uninstall_runtime (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  opt_runtime = TRUE;
-  opt_app = FALSE;
-
-  return xdg_app_builtin_uninstall (argc, argv, cancellable, error);
-}
-
-gboolean
-xdg_app_builtin_uninstall_app (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  opt_runtime = FALSE;
-  opt_app = TRUE;
-
-  return xdg_app_builtin_uninstall (argc, argv, cancellable, error);
-}

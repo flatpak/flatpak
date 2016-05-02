@@ -255,17 +255,3 @@ xdg_app_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
 
   return TRUE;
 }
-
-gboolean
-xdg_app_builtin_list_runtimes (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  opt_runtime = TRUE;
-  return xdg_app_builtin_list (argc, argv, cancellable, error);
-}
-
-gboolean
-xdg_app_builtin_list_apps (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  opt_app = TRUE;
-  return xdg_app_builtin_list (argc, argv, cancellable, error);
-}
