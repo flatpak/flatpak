@@ -36,6 +36,6 @@ assert_file_has_content help_out "^Usage:$"
 
 echo "ok help"
 
-${XDG_APP} --default-arch
+${XDG_APP} --default-arch > /dev/null
 
 echo "ok default arch"

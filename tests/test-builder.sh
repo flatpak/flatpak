@@ -28,9 +28,13 @@ install_repo
 setup_sdk_repo
 install_sdk_repo
 
+# Need /var/tmp cwd for xattrs
+REPO=`pwd`/repo
+cd $TEST_DATA_DIR/
+
 cp -a $(dirname $0)/configure.test .
 echo "version1" > app-data
-xdg-app-builder --repo=repo --force-clean appdir $(dirname $0)/test.json
+xdg-app-builder --repo=$REPO --force-clean appdir $(dirname $0)/test.json > /dev/null
 
 assert_file_has_content appdir/files/share/app-data version1
 assert_file_has_content appdir/metadata shared=network;
@@ -56,7 +60,7 @@ assert_file_has_content app_data_1 version1
 echo "ok install+run"
 
 echo "version2" > app-data
-xdg-app-builder --repo=repo --force-clean appdir $(dirname $0)/test.json
+xdg-app-builder --repo=$REPO --force-clean appdir $(dirname $0)/test.json > /dev/null
 assert_file_has_content appdir/files/share/app-data version2
 
 ${XDG_APP} --user update org.test.Hello2 master

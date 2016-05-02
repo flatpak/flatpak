@@ -49,14 +49,14 @@ assert_file_has_content $USERDIR/exports/share/applications/mimeinfo.cache x-tes
 assert_has_file $USERDIR/exports/share/icons/hicolor/icon-theme.cache
 assert_has_file $USERDIR/exports/share/icons/hicolor/index.theme
 
-$XDG_APP list --user | grep org.test.Hello
-$XDG_APP list --user -d | grep org.test.Hello | grep test-repo
-$XDG_APP list --user -d | grep org.test.Hello | grep current
-$XDG_APP list --user -d | grep org.test.Hello | grep ${ID:0:12}
+$XDG_APP list --user | grep org.test.Hello > /dev/null
+$XDG_APP list --user -d | grep org.test.Hello | grep test-repo > /dev/null
+$XDG_APP list --user -d | grep org.test.Hello | grep current > /dev/null
+$XDG_APP list --user -d | grep org.test.Hello | grep ${ID:0:12} > /dev/null
 
-$XDG_APP info --user org.test.Hello
-$XDG_APP info --user org.test.Hello | grep test-repo
-$XDG_APP info --user org.test.Hello | grep $ID
+$XDG_APP info --user org.test.Hello > /dev/null
+$XDG_APP info --user org.test.Hello | grep test-repo > /dev/null
+$XDG_APP info --user org.test.Hello | grep $ID > /dev/null
 
 echo "ok install"
 
@@ -80,7 +80,7 @@ ARGS="--share=ipc" run_sh readlink /proc/self/ns/ipc > shared_ipc_ns
 assert_not_streq `cat unshared_ipc_ns` `readlink /proc/self/ns/ipc`
 assert_streq `cat shared_ipc_ns` `readlink /proc/self/ns/ipc`
 
-if run_sh cat $(dirname $0)/package_version.txt; then
+if run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access file"
 fi
 
@@ -90,13 +90,13 @@ ARGS="--filesystem=host" run_sh cat $(dirname $0)/package_version.txt > /dev/nul
 echo "ok namespaces"
 
 $XDG_APP override --user --filesystem=host org.test.Hello
-run_sh cat $(dirname $0)/package_version.txt > /dev/null
-if ARGS="--nofilesystem=host" run_sh cat $(dirname $0)/package_version.txt > /dev/null; then
+run_sh cat $(dirname $0)/package_version.txt &> /dev/null
+if ARGS="--nofilesystem=host" run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access --nofilesystem=host file"
 fi
 $XDG_APP override --user --nofilesystem=host org.test.Hello
 
-if run_sh cat $(dirname $0)/package_version.txt > /dev/null; then
+if run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access file"
 fi
 

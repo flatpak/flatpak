@@ -50,6 +50,7 @@ tests/test-basic.sh: tests/package_version.txt
 
 installed_test_SCRIPTS += \
 	buildutil/tap-driver.sh \
+	tests/configure.test \
 	tests/package_version.txt \
 	tests/make-test-app.sh \
 	tests/make-test-runtime.sh \
@@ -59,7 +60,7 @@ installed_test_SCRIPTS += \
 
 installed_test_data = \
 	tests/org.test.Hello.png \
-	tests/configure.test \
+	tests/test.json \
 	tests/session.conf.in \
 	$(NULL)
 
