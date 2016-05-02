@@ -21,7 +21,7 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..3"
+echo "1..5"
 
 setup_repo
 install_repo
@@ -59,3 +59,35 @@ run_sh cat /run/user/`id -u`/xdg-app-info > xai
 assert_file_has_content xai '^name=org.test.Hello$'
 
 echo "ok xdg-app-info"
+
+run_sh readlink /proc/self/ns/net > unshared_net_ns
+ARGS="--share=network" run_sh readlink /proc/self/ns/net > shared_net_ns
+assert_not_streq `cat unshared_net_ns` `readlink /proc/self/ns/net`
+assert_streq `cat shared_net_ns` `readlink /proc/self/ns/net`
+
+run_sh readlink /proc/self/ns/ipc > unshared_ipc_ns
+ARGS="--share=ipc" run_sh readlink /proc/self/ns/ipc > shared_ipc_ns
+assert_not_streq `cat unshared_ipc_ns` `readlink /proc/self/ns/ipc`
+assert_streq `cat shared_ipc_ns` `readlink /proc/self/ns/ipc`
+
+if run_sh cat $(dirname $0)/package_version.txt; then
+    assert_not_reached "Unexpectedly allowed to access file"
+fi
+
+ARGS="--filesystem=$(dirname $0)" run_sh cat $(dirname $0)/package_version.txt > /dev/null
+ARGS="--filesystem=host" run_sh cat $(dirname $0)/package_version.txt > /dev/null
+
+echo "ok namespaces"
+
+$XDG_APP override --user --filesystem=host org.test.Hello
+run_sh cat $(dirname $0)/package_version.txt > /dev/null
+if ARGS="--nofilesystem=host" run_sh cat $(dirname $0)/package_version.txt > /dev/null; then
+    assert_not_reached "Unexpectedly allowed to access --nofilesystem=host file"
+fi
+$XDG_APP override --user --nofilesystem=host org.test.Hello
+
+if run_sh cat $(dirname $0)/package_version.txt > /dev/null; then
+    assert_not_reached "Unexpectedly allowed to access file"
+fi
+
+echo "ok overrides"

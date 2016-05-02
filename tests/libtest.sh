@@ -160,7 +160,7 @@ run () {
 }
 
 run_sh () {
-    ${CMD_PREFIX} xdg-app run --command=bash org.test.Hello -c "$*"
+    ${CMD_PREFIX} xdg-app run --command=bash ${ARGS-} org.test.Hello -c "$*"
 }
 
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf

@@ -16,12 +16,14 @@ BASH=`which bash`
 LS=`which ls`
 CAT=`which cat`
 ECHO=`which echo`
+READLINK=`which readlink`
 cp ${BASH} ${DIR}/usr/bin
 cp ${LS} ${DIR}/usr/bin
 cp ${CAT} ${DIR}/usr/bin
 cp ${ECHO} ${DIR}/usr/bin
+cp ${READLINK} ${DIR}/usr/bin
 ln -s bash ${DIR}/usr/bin/sh
-for i in `ldd ${BASH} ${LS} ${CAT} ${ECHO} | sed "s/.* => //" | awk '{ print $1}' | grep -v :$ | grep ^/ | sort -u`; do
+for i in `ldd ${BASH} ${LS} ${CAT} ${ECHO} ${READLINK} | sed "s/.* => //" | awk '{ print $1}' | grep -v :$ | grep ^/ | sort -u`; do
     cp "$i" ${DIR}/usr/lib/
 done
 
