@@ -274,6 +274,14 @@ glnx_libcontainer_run_chroot_private (const char  *dest,
   if (chdir ("/") != 0)
     _perror_fatal ("chdir: ");
 
+  /* Environment variables like PATH in the end are distribution
+   * specific.  The most correct thing would be to run through PAM,
+   * but that's a huge level of pain.  We'd like to drive towards a
+   * standard /usr/bin (i.e. unified sbin too), but for now this is
+   * pretty compatible.
+   */
+  setenv ("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", 1);
+
   if (binary[0] == '/')
     {
       if (execv (binary, argv) != 0)
@@ -281,9 +289,6 @@ glnx_libcontainer_run_chroot_private (const char  *dest,
     }
   else
     {
-      /* Set PATH to something sane. */
-      setenv ("PATH", "/usr/sbin:/usr/bin", 1);
-
       if (execvp (binary, argv) != 0)
         _perror_fatal ("execvp: ");
     }
