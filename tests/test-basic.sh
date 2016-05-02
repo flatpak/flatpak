@@ -21,7 +21,7 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..2"
+echo "1..3"
 
 ${XDG_APP} --version > version_out
 
@@ -35,3 +35,7 @@ ${XDG_APP} --help > help_out
 assert_file_has_content help_out "^Usage:$"
 
 echo "ok help"
+
+${XDG_APP} --default-arch
+
+echo "ok default arch"
