@@ -41,8 +41,6 @@ if ENABLE_INSTALLED_TESTS
 	ln -sf $(dbus_servicedir)/org.freedesktop.portal.Documents.service $(DESTDIR)$(installed_testdir)/services/
 endif
 
-check_PROGRAMS += $(TEST_PROGS)
-
 tests/package_version.txt: Makefile
 	echo $(PACKAGE_VERSION) > tests/package_version.txt
 

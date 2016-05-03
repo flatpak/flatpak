@@ -70,7 +70,6 @@ include session-helper/Makefile.am.inc
 include system-helper/Makefile.am.inc
 include dbus-proxy/Makefile.am.inc
 include document-portal/Makefile.am.inc
-include Makefile.gtester
 include tests/Makefile.am.inc
 
 bwrap_PROGRAMS = bwrap
