@@ -1752,10 +1752,15 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
   g_autoptr(GFileInfo) child_info = NULL;
   g_autoptr(GFile) triggersdir = NULL;
   GError *temp_error = NULL;
+  const char *triggerspath;
 
-  g_debug ("running triggers");
+  triggerspath = g_getenv ("XDG_APP_TRIGGERSDIR");
+  if (triggerspath == NULL)
+    triggerspath = XDG_APP_TRIGGERDIR;
 
-  triggersdir = g_file_new_for_path (XDG_APP_TRIGGERDIR);
+  g_debug ("running triggers from %s", triggerspath);
+
+  triggersdir = g_file_new_for_path (triggerspath);
 
   dir_enum = g_file_enumerate_children (triggersdir, "standard::type,standard::name",
                                         0, cancellable, error);
@@ -1784,7 +1789,7 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
 	  g_ptr_array_add (argv_array, g_file_get_path (child));
 	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
 #else
-	  g_ptr_array_add (argv_array, g_strdup (HELPER));
+	  g_ptr_array_add (argv_array, g_strdup (xdg_app_get_bwrap ()));
 	  g_ptr_array_add (argv_array, g_strdup ("--unshare-ipc"));
 	  g_ptr_array_add (argv_array, g_strdup ("--unshare-net"));
 	  g_ptr_array_add (argv_array, g_strdup ("--unshare-pid"));

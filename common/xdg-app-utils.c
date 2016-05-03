@@ -216,6 +216,15 @@ xdg_app_get_arch (void)
   return arch;
 }
 
+const char *
+xdg_app_get_bwrap (void)
+{
+  const char *e = g_getenv ("XDG_APP_BWRAP");
+  if (e != NULL)
+    return e;
+  return HELPER;
+}
+
 static gboolean
 is_valid_initial_name_character (gint c)
 {

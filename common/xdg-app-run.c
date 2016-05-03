@@ -2320,6 +2320,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      GError **error)
 {
   char x = 'x';
+  const char *proxy;
 
   if (dbus_proxy_argv->len == 0)
     return TRUE;
@@ -2338,7 +2339,11 @@ add_dbus_proxy_args (GPtrArray *argv_array,
       add_args (argv_array, "--sync-fd", fd_str, NULL);
     }
 
-  g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (DBUSPROXY));
+  proxy = g_getenv ("XDG_APP_DBUSPROXY");
+  if (proxy == NULL)
+    proxy = DBUSPROXY;
+
+  g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (proxy));
   g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_fds[1]));
   if (enable_logging)
     g_ptr_array_insert (dbus_proxy_argv, 2, g_strdup ("--log"));
@@ -2951,7 +2956,7 @@ xdg_app_run_app (const char *app_ref,
     }
 
   real_argv_array = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (real_argv_array, g_strdup (HELPER));
+  g_ptr_array_add (real_argv_array, g_strdup (xdg_app_get_bwrap ()));
 
   {
     gsize len;
@@ -2989,7 +2994,7 @@ xdg_app_run_app (const char *app_ref,
     }
   else
     {
-      if (execvpe (HELPER, (char **)real_argv_array->pdata, envp) == -1)
+      if (execvpe (xdg_app_get_bwrap (), (char **)real_argv_array->pdata, envp) == -1)
         {
           g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
           return FALSE;

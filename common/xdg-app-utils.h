@@ -41,6 +41,8 @@ const char * xdg_app_path_match_prefix (const char *pattern,
 
 const char * xdg_app_get_arch (void);
 
+const char * xdg_app_get_bwrap (void);
+
 GBytes * xdg_app_read_stream (GInputStream *in,
                               gboolean null_terminate,
                               GError **error);

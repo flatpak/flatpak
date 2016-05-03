@@ -150,7 +150,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   app_files = g_file_get_child (app_deploy, "files");
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (argv_array, g_strdup (HELPER));
+  g_ptr_array_add (argv_array, g_strdup (xdg_app_get_bwrap ()));
 
   custom_usr = FALSE;
   usr = g_file_get_child (app_deploy, "usr");
@@ -220,7 +220,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (argv_array, NULL);
 
-  if (!execve (HELPER, (char **)argv_array->pdata, envp))
+  if (!execve (xdg_app_get_bwrap (), (char **)argv_array->pdata, envp))
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
       return FALSE;
