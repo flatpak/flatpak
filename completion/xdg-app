@@ -335,7 +335,7 @@ _xdg-app() {
                         elif [[ -z $sdk ]]; then
                                 comps="$(xdg-app list --runtime) $(xdg-app --user list --runtime)"
                         elif [[ -z $name ]]; then
-                                comps="$(xdg-app list -.runtime) $(xdg-app --user list --runtime)"
+                                comps="$(xdg-app list --runtime) $(xdg-app --user list --runtime)"
                         else
                                 comps='' # FIXME: branches
                         fi
