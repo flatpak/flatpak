@@ -11,9 +11,14 @@ EXTRA_DIST =
 
 include $(top_srcdir)/buildutil/glib-tap.mk
 
+SUBDIRS =
+
+
 if BUILD_DOCUMENTATION
-SUBDIRS = . doc
+SUBDIRS += . doc
 endif
+
+SUBDIRS += po
 
 %.service: %.service.in config.log
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
@@ -118,6 +123,5 @@ EXTRA_DIST += xdg-app.pc.in
 
 DISTCHECK_CONFIGURE_FLAGS =		\
 	--enable-documentation		\
-	--enable-libxdgapp		\
 	--disable-maintainer-mode	\
 	--enable-introspection

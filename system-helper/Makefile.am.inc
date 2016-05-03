@@ -30,5 +30,5 @@ dist_polkit_policy_DATA =					\
 
 @INTLTOOL_POLICY_RULE@
 
-EXTRA_DIST += system-helper/org.freedesktop.XdgApp.policy.in
+EXTRA_DIST += system-helper/org.freedesktop.XdgApp.policy.in system-helper/org.freedesktop.XdgApp.SystemHelper.conf
 DISTCLEANFILES += system-helper/org.freedesktop.XdgApp.policy

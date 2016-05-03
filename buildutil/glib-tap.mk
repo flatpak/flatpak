@@ -26,6 +26,8 @@ check_PROGRAMS =
 check_SCRIPTS =
 check_DATA =
 
+EXTRA_DIST += buildutil/tap-driver.sh buildutil/tap-test
+
 # We support a fairly large range of possible variables.  It is expected that all types of files in a test suite
 # will belong in exactly one of the following variables.
 #

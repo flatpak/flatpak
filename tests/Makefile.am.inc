@@ -62,6 +62,8 @@ installed_test_data = \
 	tests/session.conf.in \
 	$(NULL)
 
+EXTRA_DIST += $(installed_test_SCRIPTS) $(installed_test_data)
+
 test_scripts = \
 	tests/test-basic.sh \
 	tests/test-run.sh \
