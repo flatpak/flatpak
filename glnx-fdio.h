@@ -21,6 +21,7 @@
 #pragma once
 
 #include <glnx-backport-autocleanups.h>
+#include <gio/gfiledescriptorbased.h>
 #include <limits.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -119,6 +120,11 @@ glnx_file_copy_at (int                   src_dfd,
                    const char           *dest_subpath,
                    GLnxFileCopyFlags     copyflags,
                    GCancellable         *cancellable,
+                   GError              **error);
+
+gboolean
+glnx_stream_fstat (GFileDescriptorBased *stream,
+                   struct stat          *stbuf,
                    GError              **error);
 
 G_END_DECLS
