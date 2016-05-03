@@ -287,7 +287,7 @@ _xdg-app() {
         else
                 case "$verb" in
                 remote-add|remote-modify|remote-delete|remote-ls)
-                        comps=$(xdg-app $mode list-remotes)
+                        comps=$(xdg-app $mode remote-list)
                 ;;
 
                 install)
@@ -323,7 +323,7 @@ _xdg-app() {
                 run|override)
                         # run doesn't take --user or --system, so don't use mode here
                         if [[ -z $name ]]; then
-                                comps=$(xdg-app list-apps)
+                                comps=$(xdg-app list --app)
                         fi
                         ;;
 
@@ -333,9 +333,9 @@ _xdg-app() {
                                 comps=''
                                 compopt -o dirnames
                         elif [[ -z $sdk ]]; then
-                                comps="$(xdg-app list-runtimes) $(xdg-app --user list-runtimes)"
+                                comps="$(xdg-app list --runtime) $(xdg-app --user list --runtime)"
                         elif [[ -z $name ]]; then
-                                comps="$(xdg-app list-runtimes) $(xdg-app --user list-runtimes)"
+                                comps="$(xdg-app list -.runtime) $(xdg-app --user list --runtime)"
                         else
                                 comps='' # FIXME: branches
                         fi
