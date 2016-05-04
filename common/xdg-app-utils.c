@@ -158,18 +158,8 @@ xdg_app_fail (GError **error, const char *format, ...)
   return FALSE;
 }
 
-
-/* This maps the kernel-reported uname to a single string representing
- * the cpu family, in the sense that all members of this family would
- * be able to understand and link to a binary file with such cpu
- * opcodes. That doesn't necessarily mean that all members of the
- * family can run all opcodes, for instance for modern 32bit intel we
- * report "i386", even though they support instructions that the
- * original i386 cpu cannot run. Still, such an executable would
- * at least try to execute a 386, wheras an arm binary would not.
- */
 const char *
-xdg_app_get_arch (void)
+xdg_app_get_kernel_arch (void)
 {
   static struct utsname buf;
   static char *arch = NULL;
@@ -214,6 +204,40 @@ xdg_app_get_arch (void)
     }
 
   return arch;
+}
+
+
+/* This maps the kernel-reported uname to a single string representing
+ * the cpu family, in the sense that all members of this family would
+ * be able to understand and link to a binary file with such cpu
+ * opcodes. That doesn't necessarily mean that all members of the
+ * family can run all opcodes, for instance for modern 32bit intel we
+ * report "i386", even though they support instructions that the
+ * original i386 cpu cannot run. Still, such an executable would
+ * at least try to execute a 386, wheras an arm binary would not.
+ */
+const char *
+xdg_app_get_arch (void)
+{
+  /* Avoid using uname on multiarch machines, because uname reports the kernels
+   * arch, and that may be different from userspace. If e.g. the kernel is 64bit and
+   * the userspace is 32bit we want to use 32bit by default. So, we take the current build
+   * arch as the default. */
+#if defined(__i386__)
+  return "i386";
+#elif defined(__x86_64__)
+  return "x86_64";
+#elif defined(__aarch64__)
+  return "aarch64";
+#elif defined(__arm__)
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+  return "arm";
+#else
+  return "armeb";
+#endif
+#else
+  return xdg_app_get_kernel_arch ();
+#endif
 }
 
 const char *
