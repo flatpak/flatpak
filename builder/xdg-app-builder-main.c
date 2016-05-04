@@ -164,6 +164,7 @@ main (int    argc,
   g_autofree gchar *json = NULL;
   g_autoptr(BuilderContext) build_context = NULL;
   g_autoptr(GFile) base_dir = NULL;
+  g_autoptr(GFile) manifest_file = NULL;
   g_autoptr(GFile) app_dir = NULL;
   g_autoptr(BuilderCache) cache = NULL;
   g_autofree char *cache_branch = NULL;
@@ -228,7 +229,8 @@ main (int    argc,
       return 1;
     }
 
-  base_dir = g_file_new_for_path (g_get_current_dir ());
+  manifest_file = g_file_new_for_path (manifest_path);
+  base_dir = g_file_get_parent (manifest_file);
   app_dir = g_file_new_for_path (app_dir_path);
 
   build_context = builder_context_new (base_dir, app_dir);
