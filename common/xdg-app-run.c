@@ -2215,7 +2215,7 @@ static void
 add_monitor_path_args (GPtrArray *argv_array,
                        char ***envp_p)
 {
-  g_autoptr(XdgAppSessionHelper) session_helper = NULL;
+  g_autoptr(AutoXdgAppSessionHelper) session_helper = NULL;
   g_autofree char *monitor_path = NULL;
 
   session_helper =
