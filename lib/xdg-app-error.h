@@ -38,9 +38,9 @@ typedef enum {
   XDG_APP_ERROR_NOT_INSTALLED,
 } XdgAppError;
 
-#define XDG_APP_ERROR xdg_app_error_quark()
+#define XDG_APP_ERROR xdg_app_error_quark ()
 
-XDG_APP_EXTERN GQuark  xdg_app_error_quark      (void);
+XDG_APP_EXTERN GQuark  xdg_app_error_quark (void);
 
 G_END_DECLS
 

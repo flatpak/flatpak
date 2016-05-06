@@ -22,7 +22,7 @@ xdg_unparse_permissions (XdpPermissionFlags permissions)
     g_ptr_array_add (array, "delete");
 
   g_ptr_array_add (array, NULL);
-  return (const char **)g_ptr_array_free (array, FALSE);
+  return (const char **) g_ptr_array_free (array, FALSE);
 }
 
 XdpPermissionFlags
@@ -51,7 +51,7 @@ xdp_parse_permissions (const char **permissions)
 
 XdpPermissionFlags
 xdp_entry_get_permissions (XdgAppDbEntry *entry,
-                           const char *app_id)
+                           const char    *app_id)
 {
   g_autofree const char **permissions = NULL;
 
@@ -63,8 +63,8 @@ xdp_entry_get_permissions (XdgAppDbEntry *entry,
 }
 
 gboolean
-xdp_entry_has_permissions (XdgAppDbEntry *entry,
-                           const char *app_id,
+xdp_entry_has_permissions (XdgAppDbEntry     *entry,
+                           const char        *app_id,
                            XdpPermissionFlags perms)
 {
   XdpPermissionFlags current_perms;

@@ -40,8 +40,8 @@
 
 GBytes *
 xdg_app_read_stream (GInputStream *in,
-                     gboolean null_terminate,
-                     GError **error)
+                     gboolean      null_terminate,
+                     GError      **error)
 {
   g_autoptr(GOutputStream) mem_stream = NULL;
 
@@ -63,10 +63,10 @@ xdg_app_read_stream (GInputStream *in,
 }
 
 gint
-xdg_app_strcmp0_ptr (gconstpointer  a,
-                     gconstpointer  b)
+xdg_app_strcmp0_ptr (gconstpointer a,
+                     gconstpointer b)
 {
-  return g_strcmp0 (* (char * const *) a, * (char * const *) b);
+  return g_strcmp0 (*(char * const *) a, *(char * const *) b);
 }
 
 /* Returns end of matching path prefix, or NULL if no match */
@@ -182,7 +182,9 @@ xdg_app_get_kernel_arch (void)
   m = buf.machine;
   /* i?86 */
   if (strlen (m) == 4 && m[0] == 'i' && m[2] == '8'  && m[3] == '6')
-    arch = "i386";
+    {
+      arch = "i386";
+    }
   else if (g_str_has_prefix (m, "arm"))
     {
       if (g_str_has_suffix (m, "b"))
@@ -244,6 +246,7 @@ const char *
 xdg_app_get_bwrap (void)
 {
   const char *e = g_getenv ("XDG_APP_BWRAP");
+
   if (e != NULL)
     return e;
   return HELPER;
@@ -311,10 +314,8 @@ xdg_app_is_valid_name (const char *string)
 
   s = string;
   if (G_UNLIKELY (*s == '.'))
-    {
-      /* can't start with a . */
-      goto out;
-    }
+    /* can't start with a . */
+    goto out;
   else if (G_UNLIKELY (!is_valid_initial_name_character (*s)))
     goto out;
 
@@ -330,7 +331,9 @@ xdg_app_is_valid_name (const char *string)
           dot_count++;
         }
       else if (G_UNLIKELY (!is_valid_name_character (*s)))
-        goto out;
+        {
+          goto out;
+        }
       s += 1;
     }
 
@@ -339,7 +342,7 @@ xdg_app_is_valid_name (const char *string)
 
   ret = TRUE;
 
- out:
+out:
   return ret;
 }
 
@@ -425,13 +428,13 @@ xdg_app_is_valid_branch (const char *string)
 
   ret = TRUE;
 
- out:
+out:
   return ret;
 }
 
 char **
 xdg_app_decompose_ref (const char *full_ref,
-                       GError **error)
+                       GError    **error)
 {
   g_auto(GStrv) parts = NULL;
 
@@ -470,11 +473,11 @@ xdg_app_decompose_ref (const char *full_ref,
 }
 
 char *
-xdg_app_compose_ref (gboolean app,
+xdg_app_compose_ref (gboolean    app,
                      const char *name,
                      const char *branch,
                      const char *arch,
-                     GError **error)
+                     GError    **error)
 {
   if (!xdg_app_is_valid_name (name))
     {
@@ -534,14 +537,15 @@ xdg_app_build_app_ref (const char *app,
 }
 
 char **
-xdg_app_list_deployed_refs (const char *type,
-                            const char *name_prefix,
-                            const char *branch,
-                            const char *arch,
+xdg_app_list_deployed_refs (const char   *type,
+                            const char   *name_prefix,
+                            const char   *branch,
+                            const char   *arch,
                             GCancellable *cancellable,
-                            GError **error)
+                            GError      **error)
 {
   gchar **ret = NULL;
+
   g_autoptr(GPtrArray) names = NULL;
   g_autoptr(GHashTable) hash = NULL;
   g_autoptr(XdgAppDir) user_dir = NULL;
@@ -566,23 +570,23 @@ xdg_app_list_deployed_refs (const char *type,
 
   names = g_ptr_array_new ();
   g_hash_table_iter_init (&iter, hash);
-  while (g_hash_table_iter_next (&iter, (gpointer *)&key, NULL))
+  while (g_hash_table_iter_next (&iter, (gpointer *) &key, NULL))
     g_ptr_array_add (names, g_strdup (key));
 
   g_ptr_array_sort (names, xdg_app_strcmp0_ptr);
   g_ptr_array_add (names, NULL);
 
-  ret = (char **)g_ptr_array_free (names, FALSE);
+  ret = (char **) g_ptr_array_free (names, FALSE);
   names = NULL;
 
- out:
+out:
   return ret;
 }
 
 GFile *
-xdg_app_find_deploy_dir_for_ref (const char *ref,
+xdg_app_find_deploy_dir_for_ref (const char   *ref,
                                  GCancellable *cancellable,
-                                 GError **error)
+                                 GError      **error)
 {
   g_autoptr(XdgAppDir) user_dir = NULL;
   g_autoptr(XdgAppDir) system_dir = NULL;
@@ -605,9 +609,9 @@ xdg_app_find_deploy_dir_for_ref (const char *ref,
 }
 
 XdgAppDeploy *
-xdg_app_find_deploy_for_ref (const char *ref,
+xdg_app_find_deploy_for_ref (const char   *ref,
                              GCancellable *cancellable,
-                             GError **error)
+                             GError      **error)
 {
   g_autoptr(XdgAppDir) user_dir = NULL;
   g_autoptr(XdgAppDir) system_dir = NULL;
@@ -631,16 +635,17 @@ xdg_app_find_deploy_for_ref (const char *ref,
 
 
 static gboolean
-overlay_symlink_tree_dir (int            source_parent_fd,
-                          const char    *source_name,
-                          const char    *source_symlink_prefix,
-                          int            destination_parent_fd,
-                          const char    *destination_name,
-                          GCancellable  *cancellable,
-                          GError       **error)
+overlay_symlink_tree_dir (int           source_parent_fd,
+                          const char   *source_name,
+                          const char   *source_symlink_prefix,
+                          int           destination_parent_fd,
+                          const char   *destination_name,
+                          GCancellable *cancellable,
+                          GError      **error)
 {
   gboolean ret = FALSE;
   int res;
+
   g_auto(GLnxDirFdIterator) source_iter = { 0 };
   glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
@@ -700,17 +705,17 @@ overlay_symlink_tree_dir (int            source_parent_fd,
     }
 
   ret = TRUE;
- out:
+out:
 
   return ret;
 }
 
 gboolean
-xdg_app_overlay_symlink_tree (GFile    *source,
-                              GFile    *destination,
-                              const char *symlink_prefix,
-                              GCancellable  *cancellable,
-                              GError       **error)
+xdg_app_overlay_symlink_tree (GFile        *source,
+                              GFile        *destination,
+                              const char   *symlink_prefix,
+                              GCancellable *cancellable,
+                              GError      **error)
 {
   gboolean ret = FALSE;
 
@@ -726,15 +731,15 @@ xdg_app_overlay_symlink_tree (GFile    *source,
 
   ret = TRUE;
 
- out:
+out:
   return ret;
 }
 
 static gboolean
-remove_dangling_symlinks (int            parent_fd,
-                          const char    *name,
-                          GCancellable  *cancellable,
-                          GError       **error)
+remove_dangling_symlinks (int           parent_fd,
+                          const char   *name,
+                          GCancellable *cancellable,
+                          GError      **error)
 {
   gboolean ret = FALSE;
   struct dirent *dent;
@@ -771,15 +776,15 @@ remove_dangling_symlinks (int            parent_fd,
     }
 
   ret = TRUE;
- out:
+out:
 
   return ret;
 }
 
 gboolean
-xdg_app_remove_dangling_symlinks (GFile    *dir,
-                                  GCancellable  *cancellable,
-                                  GError       **error)
+xdg_app_remove_dangling_symlinks (GFile        *dir,
+                                  GCancellable *cancellable,
+                                  GError      **error)
 {
   gboolean ret = FALSE;
 
@@ -790,17 +795,17 @@ xdg_app_remove_dangling_symlinks (GFile    *dir,
 
   ret = TRUE;
 
- out:
+out:
   return ret;
 }
 
 /* Based on g_mkstemp from glib */
 
 gint
-xdg_app_mkstempat (int dir_fd,
+xdg_app_mkstempat (int    dir_fd,
                    gchar *tmpl,
-                   int flags,
-                   int mode)
+                   int    flags,
+                   int    mode)
 {
   char *XXXXXX;
   int count, fd;
@@ -859,17 +864,19 @@ xdg_app_mkstempat (int dir_fd,
   return -1;
 }
 
-struct XdgAppTablePrinter {
+struct XdgAppTablePrinter
+{
   GPtrArray *rows;
   GPtrArray *current;
-  int n_columns;
+  int        n_columns;
 };
 
 XdgAppTablePrinter *
 xdg_app_table_printer_new (void)
 {
   XdgAppTablePrinter *printer = g_new0 (XdgAppTablePrinter, 1);
-  printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify)g_strfreev);
+
+  printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify) g_strfreev);
   printer->current = g_ptr_array_new_with_free_func (g_free);
 
   return printer;
@@ -885,14 +892,14 @@ xdg_app_table_printer_free (XdgAppTablePrinter *printer)
 
 void
 xdg_app_table_printer_add_column (XdgAppTablePrinter *printer,
-                                  const char *text)
+                                  const char         *text)
 {
   g_ptr_array_add (printer->current, text ? g_strdup (text) : g_strdup (""));
 }
 
 void
 xdg_app_table_printer_append_with_comma (XdgAppTablePrinter *printer,
-                                         const char *text)
+                                         const char         *text)
 {
   char *old, *new;
 
@@ -936,7 +943,7 @@ xdg_app_table_printer_print (XdgAppTablePrinter *printer)
 
   for (i = 0; i < printer->rows->len; i++)
     {
-      char **row = g_ptr_array_index (printer->rows,i);
+      char **row = g_ptr_array_index (printer->rows, i);
 
       for (j = 0; row[j] != NULL; j++)
         widths[j] = MAX (widths[j], strlen (row[j]));
@@ -944,7 +951,7 @@ xdg_app_table_printer_print (XdgAppTablePrinter *printer)
 
   for (i = 0; i < printer->rows->len; i++)
     {
-      char **row = g_ptr_array_index (printer->rows,i);
+      char **row = g_ptr_array_index (printer->rows, i);
 
       for (j = 0; row[j] != NULL; j++)
         g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], row[j]);
@@ -955,11 +962,12 @@ xdg_app_table_printer_print (XdgAppTablePrinter *printer)
 
 static GHashTable *app_ids;
 
-typedef struct {
-  char *name;
-  char *app_id;
+typedef struct
+{
+  char    *name;
+  char    *app_id;
   gboolean exited;
-  GList *pending;
+  GList   *pending;
 } AppIdInfo;
 
 static void
@@ -975,17 +983,18 @@ ensure_app_ids (void)
 {
   if (app_ids == NULL)
     app_ids = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                     NULL, (GDestroyNotify)app_id_info_free);
+                                     NULL, (GDestroyNotify) app_id_info_free);
 }
 
 static void
-got_credentials_cb (GObject *source_object,
+got_credentials_cb (GObject      *source_object,
                     GAsyncResult *res,
-                    gpointer user_data)
+                    gpointer      user_data)
 {
   AppIdInfo *info = user_data;
-  g_autoptr (GDBusMessage) reply = NULL;
-  g_autoptr (GError) error = NULL;
+
+  g_autoptr(GDBusMessage) reply = NULL;
+  g_autoptr(GError) error = NULL;
   GList *l;
 
   reply = g_dbus_connection_send_message_with_reply_finish (G_DBUS_CONNECTION (source_object),
@@ -1017,7 +1026,7 @@ got_credentials_cb (GObject *source_object,
                   if (g_str_has_prefix (scope, "xdg-app-") &&
                       g_str_has_suffix (scope, ".scope"))
                     {
-                      const char *name = scope + strlen("xdg-app-");
+                      const char *name = scope + strlen ("xdg-app-");
                       char *dash = strchr (name, '-');
                       if (dash != NULL)
                         {
@@ -1026,7 +1035,9 @@ got_credentials_cb (GObject *source_object,
                         }
                     }
                   else
-                    info->app_id = g_strdup ("");
+                    {
+                      info->app_id = g_strdup ("");
+                    }
                 }
             }
           g_strfreev (lines);
@@ -1059,6 +1070,7 @@ xdg_app_invocation_lookup_app_id (GDBusMethodInvocation *invocation,
 {
   GDBusConnection *connection = g_dbus_method_invocation_get_connection (invocation);
   const gchar *sender = g_dbus_method_invocation_get_sender (invocation);
+
   g_autoptr(GTask) task = NULL;
   AppIdInfo *info;
 
@@ -1076,15 +1088,17 @@ xdg_app_invocation_lookup_app_id (GDBusMethodInvocation *invocation,
     }
 
   if (info->app_id)
-    g_task_return_pointer (task, g_strdup (info->app_id), g_free);
+    {
+      g_task_return_pointer (task, g_strdup (info->app_id), g_free);
+    }
   else
     {
       if (info->pending == NULL)
         {
-          g_autoptr (GDBusMessage) msg = g_dbus_message_new_method_call ("org.freedesktop.DBus",
-                                                                         "/org/freedesktop/DBus",
-                                                                         "org.freedesktop.DBus",
-                                                                         "GetConnectionUnixProcessID");
+          g_autoptr(GDBusMessage) msg = g_dbus_message_new_method_call ("org.freedesktop.DBus",
+                                                                        "/org/freedesktop/DBus",
+                                                                        "org.freedesktop.DBus",
+                                                                        "GetConnectionUnixProcessID");
           g_dbus_message_set_body (msg, g_variant_new ("(s)", sender));
 
           g_dbus_connection_send_message_with_reply (connection, msg,
@@ -1102,8 +1116,8 @@ xdg_app_invocation_lookup_app_id (GDBusMethodInvocation *invocation,
 
 char *
 xdg_app_invocation_lookup_app_id_finish (GDBusMethodInvocation *invocation,
-                                         GAsyncResult    *result,
-                                         GError         **error)
+                                         GAsyncResult          *result,
+                                         GError               **error)
 {
   return g_task_propagate_pointer (G_TASK (result), error);
 }
@@ -1118,6 +1132,7 @@ name_owner_changed (GDBusConnection *connection,
                     gpointer         user_data)
 {
   const char *name, *from, *to;
+
   g_variant_get (parameters, "(sss)", &name, &from, &to);
 
   ensure_app_ids ();
@@ -1153,10 +1168,10 @@ xdg_app_connection_track_name_owners (GDBusConnection *connection)
 
 typedef struct
 {
-  GError *error;
-  GError *splice_error;
+  GError    *error;
+  GError    *splice_error;
   GMainLoop *loop;
-  int refs;
+  int        refs;
 } SpawnData;
 
 static void
@@ -1168,9 +1183,9 @@ spawn_data_exit (SpawnData *data)
 }
 
 static void
-spawn_output_spliced_cb (GObject    *obj,
-                       GAsyncResult  *result,
-                       gpointer       user_data)
+spawn_output_spliced_cb (GObject      *obj,
+                         GAsyncResult *result,
+                         gpointer      user_data)
 {
   SpawnData *data = user_data;
 
@@ -1179,9 +1194,9 @@ spawn_output_spliced_cb (GObject    *obj,
 }
 
 static void
-spawn_exit_cb (GObject    *obj,
-               GAsyncResult  *result,
-               gpointer       user_data)
+spawn_exit_cb (GObject      *obj,
+               GAsyncResult *result,
+               gpointer      user_data)
 {
   SpawnData *data = user_data;
 
@@ -1190,11 +1205,11 @@ spawn_exit_cb (GObject    *obj,
 }
 
 gboolean
-xdg_app_spawn (GFile        *dir,
-               char        **output,
-               GError      **error,
-               const gchar  *argv0,
-               va_list       ap)
+xdg_app_spawn (GFile       *dir,
+               char       **output,
+               GError     **error,
+               const gchar *argv0,
+               va_list      ap)
 {
   g_autoptr(GSubprocessLauncher) launcher = NULL;
   g_autoptr(GSubprocess) subp = NULL;
@@ -1238,13 +1253,13 @@ xdg_app_spawn (GFile        *dir,
       data.refs++;
       in = g_subprocess_get_stdout_pipe (subp);
       out = g_memory_output_stream_new_resizable ();
-      g_output_stream_splice_async  (out,
-                                     in,
-                                     G_OUTPUT_STREAM_SPLICE_NONE,
-                                     0,
-                                     NULL,
-                                     spawn_output_spliced_cb,
-                                     &data);
+      g_output_stream_splice_async (out,
+                                    in,
+                                    G_OUTPUT_STREAM_SPLICE_NONE,
+                                    0,
+                                    NULL,
+                                    spawn_output_spliced_cb,
+                                    &data);
     }
 
   g_subprocess_wait_async (subp, NULL, spawn_exit_cb, &data);
@@ -1277,11 +1292,11 @@ xdg_app_spawn (GFile        *dir,
 
 
 gboolean
-xdg_app_cp_a (GFile         *src,
-              GFile         *dest,
-              XdgAppCpFlags  flags,
-              GCancellable  *cancellable,
-              GError       **error)
+xdg_app_cp_a (GFile        *src,
+              GFile        *dest,
+              XdgAppCpFlags flags,
+              GCancellable *cancellable,
+              GError      **error)
 {
   gboolean ret = FALSE;
   GFileEnumerator *enumerator = NULL;
@@ -1300,7 +1315,7 @@ xdg_app_cp_a (GFile         *src,
     goto out;
 
   src_info = g_file_query_info (src, "standard::name,unix::mode,unix::uid,unix::gid," \
-                                "time::modified,time::modified-usec,time::access,time::access-usec",
+                                     "time::modified,time::modified-usec,time::access,time::access-usec",
                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
                                 cancellable, error);
   if (!src_info)
@@ -1356,7 +1371,8 @@ xdg_app_cp_a (GFile         *src,
       if (!file_info)
         break;
 
-      if (dest_child) g_object_unref (dest_child);
+      if (dest_child)
+        g_object_unref (dest_child);
       dest_child = g_file_get_child (dest, g_file_info_get_name (file_info));
 
       if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
@@ -1391,7 +1407,7 @@ xdg_app_cp_a (GFile         *src,
     goto out;
 
   ret = TRUE;
- out:
+out:
   if (dest_dfd != -1)
     (void) close (dest_dfd);
   g_clear_object (&src_info);
@@ -1401,17 +1417,17 @@ xdg_app_cp_a (GFile         *src,
 }
 
 gboolean
-xdg_app_variant_save (GFile *dest,
-                      GVariant *variant,
+xdg_app_variant_save (GFile        *dest,
+                      GVariant     *variant,
                       GCancellable *cancellable,
-                      GError  **error)
+                      GError      **error)
 {
   g_autoptr(GOutputStream) out = NULL;
   gsize bytes_written;
 
-  out = (GOutputStream*)g_file_replace (dest, NULL, FALSE,
-                                        G_FILE_CREATE_REPLACE_DESTINATION,
-                                        cancellable, error);
+  out = (GOutputStream *) g_file_replace (dest, NULL, FALSE,
+                                          G_FILE_CREATE_REPLACE_DESTINATION,
+                                          cancellable, error);
   if (out == NULL)
     return FALSE;
 
@@ -1458,7 +1474,9 @@ xdg_app_variant_bsearch_str (GVariant   *array,
 
       cmp = strcmp (cur, str);
       if (cmp < 0)
-        imin = imid + 1;
+        {
+          imin = imid + 1;
+        }
       else if (cmp > 0)
         {
           if (imid == 0)
@@ -1507,7 +1525,7 @@ xdg_app_summary_lookup_ref (GVariant *summary, const char *ref, char **out_check
 gboolean
 xdg_app_repo_set_title (OstreeRepo *repo,
                         const char *title,
-                        GError **error)
+                        GError    **error)
 {
   g_autoptr(GKeyFile) config = NULL;
 
@@ -1528,13 +1546,13 @@ xdg_app_repo_set_title (OstreeRepo *repo,
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
 
 static gboolean
-_xdg_app_repo_collect_sizes (OstreeRepo *repo,
-                             GFile *file,
-                             GFileInfo *file_info,
-                             guint64 *installed_size,
-                             guint64 *download_size,
+_xdg_app_repo_collect_sizes (OstreeRepo   *repo,
+                             GFile        *file,
+                             GFileInfo    *file_info,
+                             guint64      *installed_size,
+                             guint64      *download_size,
                              GCancellable *cancellable,
-                             GError **error)
+                             GError      **error)
 {
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   GFileInfo *child_info_tmp;
@@ -1584,12 +1602,12 @@ _xdg_app_repo_collect_sizes (OstreeRepo *repo,
 }
 
 gboolean
-xdg_app_repo_collect_sizes (OstreeRepo *repo,
-                            GFile *root,
-                            guint64 *installed_size,
-                            guint64 *download_size,
+xdg_app_repo_collect_sizes (OstreeRepo   *repo,
+                            GFile        *root,
+                            guint64      *installed_size,
+                            guint64      *download_size,
                             GCancellable *cancellable,
-                            GError **error)
+                            GError      **error)
 {
   return _xdg_app_repo_collect_sizes (repo, root, NULL, installed_size, download_size, cancellable, error);
 }
@@ -1605,6 +1623,7 @@ xdg_app_repo_update (OstreeRepo   *repo,
   GVariantBuilder ref_data_builder;
   GKeyFile *config;
   g_autofree char *title = NULL;
+
   g_autoptr(GHashTable) refs = NULL;
   GList *ordered_keys = NULL;
   GList *l = NULL;
@@ -1614,22 +1633,20 @@ xdg_app_repo_update (OstreeRepo   *repo,
   config = ostree_repo_get_config (repo);
 
   if (config)
-    {
-      title = g_key_file_get_string (config, "xdg-app", "title", NULL);
-    }
+    title = g_key_file_get_string (config, "xdg-app", "title", NULL);
 
   if (title)
     g_variant_builder_add (&builder, "{sv}", "xa.title",
                            g_variant_new_string (title));
 
 
-  g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE("a{s(tts)}"));
+  g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE ("a{s(tts)}"));
 
   if (!ostree_repo_list_refs (repo, NULL, &refs, cancellable, error))
     return FALSE;
 
   ordered_keys = g_hash_table_get_keys (refs);
-  ordered_keys = g_list_sort (ordered_keys, (GCompareFunc)strcmp);
+  ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
 
   for (l = ordered_keys; l; l = l->next)
     {
@@ -1708,8 +1725,8 @@ xdg_app_mtree_create_root (OstreeRepo        *repo,
 static OstreeRepoCommitFilterResult
 commit_filter (OstreeRepo *repo,
                const char *path,
-               GFileInfo *file_info,
-               gpointer user_data)
+               GFileInfo  *file_info,
+               gpointer    user_data)
 {
   guint current_mode;
 
@@ -1725,10 +1742,10 @@ commit_filter (OstreeRepo *repo,
 }
 
 static gboolean
-validate_component (XdgAppXml *component,
+validate_component (XdgAppXml  *component,
                     const char *ref,
                     const char *id,
-                    char **tags,
+                    char      **tags,
                     const char *runtime,
                     const char *sdk)
 {
@@ -1820,17 +1837,18 @@ validate_component (XdgAppXml *component,
 }
 
 gboolean
-xdg_app_appstream_xml_migrate (XdgAppXml *source,
-                               XdgAppXml *dest,
+xdg_app_appstream_xml_migrate (XdgAppXml  *source,
+                               XdgAppXml  *dest,
                                const char *ref,
                                const char *id,
-                               GKeyFile *metadata)
+                               GKeyFile   *metadata)
 {
   XdgAppXml *source_components;
   XdgAppXml *dest_components;
   XdgAppXml *component;
   XdgAppXml *prev_component;
   gboolean migrated = FALSE;
+
   g_auto(GStrv) tags = NULL;
   g_autofree const char *runtime = NULL;
   g_autofree const char *sdk = NULL;
@@ -1866,7 +1884,9 @@ xdg_app_appstream_xml_migrate (XdgAppXml *source,
           migrated = TRUE;
         }
       else
-        prev_component = component;
+        {
+          prev_component = component;
+        }
 
       component = next;
     }
@@ -1876,16 +1896,17 @@ xdg_app_appstream_xml_migrate (XdgAppXml *source,
 
 static gboolean
 copy_icon (const char *id,
-           GFile *root,
-           GFile *dest,
+           GFile      *root,
+           GFile      *dest,
            const char *size,
-           GError **error)
+           GError    **error)
 {
   g_autofree char *icon_name = g_strconcat (id, ".png", NULL);
+
   g_autoptr(GFile) icons_dir =
     g_file_resolve_relative_path (root,
                                   "files/share/app-info/icons/xdg-app");
-  g_autoptr(GFile) size_dir =g_file_get_child (icons_dir, size);
+  g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, size);
   g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
   g_autoptr(GFile) dest_dir = g_file_get_child (dest, "icons");
   g_autoptr(GFile) dest_size_dir = g_file_get_child (dest_dir, size);
@@ -1894,16 +1915,16 @@ copy_icon (const char *id,
   g_autoptr(GOutputStream) out = NULL;
   gssize n_bytes_written;
 
-  in = (GInputStream*)g_file_read (icon_file, NULL, error);
+  in = (GInputStream *) g_file_read (icon_file, NULL, error);
   if (!in)
     return FALSE;
 
   if (!gs_file_ensure_directory (dest_size_dir, TRUE, NULL, error))
     return FALSE;
 
-  out = (GOutputStream*)g_file_replace (dest_file, NULL, FALSE,
-                                        G_FILE_CREATE_REPLACE_DESTINATION,
-                                        NULL, error);
+  out = (GOutputStream *) g_file_replace (dest_file, NULL, FALSE,
+                                          G_FILE_CREATE_REPLACE_DESTINATION,
+                                          NULL, error);
   if (!out)
     return FALSE;
 
@@ -1917,13 +1938,13 @@ copy_icon (const char *id,
 }
 
 static gboolean
-extract_appstream (OstreeRepo    *repo,
-                   XdgAppXml     *appstream_root,
-                   const char    *ref,
-                   const char    *id,
-                   GFile         *dest,
-                   GCancellable  *cancellable,
-                   GError       **error)
+extract_appstream (OstreeRepo   *repo,
+                   XdgAppXml    *appstream_root,
+                   const char   *ref,
+                   const char   *id,
+                   GFile        *dest,
+                   GCancellable *cancellable,
+                   GError      **error)
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) xmls_dir = NULL;
@@ -1955,7 +1976,7 @@ extract_appstream (OstreeRepo    *repo,
   appstream_basename = g_strconcat (id, ".xml.gz", NULL);
   appstream_file = g_file_get_child (xmls_dir, appstream_basename);
 
-  in = (GInputStream*)g_file_read (appstream_file, cancellable, error);
+  in = (GInputStream *) g_file_read (appstream_file, cancellable, error);
   if (!in)
     return FALSE;
 
@@ -1992,7 +2013,7 @@ extract_appstream (OstreeRepo    *repo,
             }
 
           g_print ("Extracting icons for component %s\n", component_id_text);
-          component_id_text[strlen(component_id_text)-strlen(".desktop")] = 0;
+          component_id_text[strlen (component_id_text) - strlen (".desktop")] = 0;
 
           if (!copy_icon (component_id_text, root, dest, "64x64", &my_error))
             {
@@ -2035,7 +2056,7 @@ xdg_app_appstream_xml_new (void)
 
 GBytes *
 xdg_app_appstream_xml_root_to_data (XdgAppXml *appstream_root,
-                                    GError **error)
+                                    GError   **error)
 {
   g_autoptr(GString) xml = NULL;
   g_autoptr(GZlibCompressor) compressor = NULL;
@@ -2060,11 +2081,11 @@ xdg_app_appstream_xml_root_to_data (XdgAppXml *appstream_root,
 }
 
 gboolean
-xdg_app_repo_generate_appstream (OstreeRepo    *repo,
-                                 const char   **gpg_key_ids,
-                                 const char    *gpg_homedir,
-                                 GCancellable  *cancellable,
-                                 GError       **error)
+xdg_app_repo_generate_appstream (OstreeRepo   *repo,
+                                 const char  **gpg_key_ids,
+                                 const char   *gpg_homedir,
+                                 GCancellable *cancellable,
+                                 GError      **error)
 {
   g_autoptr(GHashTable) all_refs = NULL;
   g_autoptr(GHashTable) arches = NULL;
@@ -2095,7 +2116,7 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
 
       arch = split[2];
       if (!g_hash_table_contains (arches, arch))
-        g_hash_table_insert (arches, g_strdup (arch), GINT_TO_POINTER(1));
+        g_hash_table_insert (arches, g_strdup (arch), GINT_TO_POINTER (1));
     }
 
   g_hash_table_iter_init (&iter, arches);
@@ -2174,7 +2195,7 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
       mtree = ostree_mutable_tree_new ();
 
       modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS,
-                                                  (OstreeRepoCommitFilter)commit_filter, NULL, NULL);
+                                                  (OstreeRepoCommitFilter) commit_filter, NULL, NULL);
 
       if (!ostree_repo_write_directory_to_mtree (repo, G_FILE (tmpdir_file), mtree, modifier, cancellable, error))
         goto out;
@@ -2226,12 +2247,14 @@ xdg_app_repo_generate_appstream (OstreeRepo    *repo,
             goto out;
         }
       else
-        ostree_repo_abort_transaction (repo, cancellable, NULL);
+        {
+          ostree_repo_abort_transaction (repo, cancellable, NULL);
+        }
     }
 
   return TRUE;
 
- out:
+out:
   ostree_repo_abort_transaction (repo, cancellable, NULL);
   return FALSE;
 }
@@ -2263,7 +2286,7 @@ xdg_app_extension_new (const char *id,
 }
 
 GList *
-xdg_app_list_extensions (GKeyFile *metakey,
+xdg_app_list_extensions (GKeyFile   *metakey,
                          const char *arch,
                          const char *default_branch)
 {
@@ -2332,7 +2355,8 @@ xdg_app_list_extensions (GKeyFile *metakey,
 }
 
 
-typedef struct {
+typedef struct
+{
   XdgAppXml *current;
 } XmlData;
 
@@ -2340,6 +2364,7 @@ XdgAppXml *
 xdg_app_xml_new (const gchar *element_name)
 {
   XdgAppXml *node = g_new0 (XdgAppXml, 1);
+
   node->element_name = g_strdup (element_name);
   return node;
 }
@@ -2348,6 +2373,7 @@ XdgAppXml *
 xdg_app_xml_new_text (const gchar *text)
 {
   XdgAppXml *node = g_new0 (XdgAppXml, 1);
+
   node->text = g_strdup (text);
   return node;
 }
@@ -2376,8 +2402,8 @@ xml_start_element (GMarkupParseContext *context,
   XdgAppXml *node;
 
   node = xdg_app_xml_new (element_name);
-  node->attribute_names = g_strdupv ((char **)attribute_names);
-  node->attribute_values = g_strdupv ((char **)attribute_values);
+  node->attribute_names = g_strdupv ((char **) attribute_names);
+  node->attribute_values = g_strdupv ((char **) attribute_values);
 
   xdg_app_xml_add (data->current, node);
   data->current = node;
@@ -2390,6 +2416,7 @@ xml_end_element (GMarkupParseContext *context,
                  GError             **error)
 {
   XmlData *data = user_data;
+
   data->current = data->current->parent;
 }
 
@@ -2524,7 +2551,7 @@ xdg_app_xml_unlink (XdgAppXml *node,
 }
 
 XdgAppXml *
-xdg_app_xml_find (XdgAppXml *node,
+xdg_app_xml_find (XdgAppXml  *node,
                   const char *type,
                   XdgAppXml **prev_child_out)
 {
@@ -2554,15 +2581,14 @@ xdg_app_xml_find (XdgAppXml *node,
 
 XdgAppXml *
 xdg_app_xml_parse (GInputStream *in,
-                   gboolean compressed,
+                   gboolean      compressed,
                    GCancellable *cancellable,
-                   GError **error)
-
+                   GError      **error)
 {
   g_autoptr(GInputStream) real_in = NULL;
   g_autoptr(XdgAppXml) xml_root = NULL;
   XmlData data = { 0 };
-  char buffer[32*1024];
+  char buffer[32 * 1024];
   gssize len;
   g_autoptr(GMarkupParseContext) ctx = NULL;
 
@@ -2573,7 +2599,9 @@ xdg_app_xml_parse (GInputStream *in,
       real_in = g_converter_input_stream_new (in, G_CONVERTER (decompressor));
     }
   else
-    real_in = g_object_ref (in);
+    {
+      real_in = g_object_ref (in);
+    }
 
   xml_root = xdg_app_xml_new ("root");
   data.current = xml_root;
@@ -2602,7 +2630,7 @@ xdg_app_xml_parse (GInputStream *in,
 
 static inline guint64
 maybe_swap_endian_u64 (gboolean swap,
-                       guint64 v)
+                       guint64  v)
 {
   if (!swap)
     return v;
@@ -2613,6 +2641,7 @@ static guint64
 xdg_app_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
 {
   guint64 total_size = 0, total_usize = 0;
+
   g_autoptr(GVariant) meta_entries = NULL;
   guint i, n_parts;
 
@@ -2637,10 +2666,10 @@ xdg_app_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
 }
 
 GVariant *
-xdg_app_bundle_load (GFile *file,
-                     char **commit,
-                     char **ref,
-                     char **origin,
+xdg_app_bundle_load (GFile   *file,
+                     char   **commit,
+                     char   **ref,
+                     char   **origin,
                      guint64 *installed_size,
                      GBytes **gpg_keys,
                      GError **error)
@@ -2683,9 +2712,11 @@ xdg_app_bundle_load (GFile *file,
         case 'l':
           file_byte_order = G_LITTLE_ENDIAN;
           break;
+
         case 'B':
           file_byte_order = G_BIG_ENDIAN;
           break;
+
         default:
           break;
         }
@@ -2710,16 +2741,18 @@ xdg_app_bundle_load (GFile *file,
 
   if (gpg_keys != NULL)
     {
-        g_autoptr(GVariant) gpg_value = g_variant_lookup_value (metadata, "gpg-keys",
-                                                                G_VARIANT_TYPE("ay"));
-        if (gpg_value)
-          {
-            gsize n_elements;
-            const char *data = g_variant_get_fixed_array (gpg_value, &n_elements, 1);
-            *gpg_keys = g_bytes_new (data, n_elements);
-          }
-        else
+      g_autoptr(GVariant) gpg_value = g_variant_lookup_value (metadata, "gpg-keys",
+                                                              G_VARIANT_TYPE ("ay"));
+      if (gpg_value)
+        {
+          gsize n_elements;
+          const char *data = g_variant_get_fixed_array (gpg_value, &n_elements, 1);
+          *gpg_keys = g_bytes_new (data, n_elements);
+        }
+      else
+        {
           *gpg_keys = NULL;
+        }
     }
 
   /* Make a copy of the data so we can return it after freeing the file */
@@ -2730,16 +2763,17 @@ xdg_app_bundle_load (GFile *file,
 }
 
 gboolean
-xdg_app_pull_from_bundle (OstreeRepo *repo,
-                          GFile *file,
-                          const char *remote,
-                          const char *ref,
-                          gboolean require_gpg_signature,
+xdg_app_pull_from_bundle (OstreeRepo   *repo,
+                          GFile        *file,
+                          const char   *remote,
+                          const char   *ref,
+                          gboolean      require_gpg_signature,
                           GCancellable *cancellable,
-                          GError **error)
+                          GError      **error)
 {
   g_autofree char *metadata_contents = NULL;
   g_autofree char *to_checksum = NULL;
+
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GInputStream) in = NULL;
@@ -2774,7 +2808,9 @@ xdg_app_pull_from_bundle (OstreeRepo *repo,
        * is no gpg key specified in the bundle or by the user */
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
           !require_gpg_signature)
-        g_clear_error (&my_error);
+        {
+          g_clear_error (&my_error);
+        }
       else
         {
           g_propagate_error (error, g_steal_pointer (&my_error));
@@ -2801,10 +2837,10 @@ xdg_app_pull_from_bundle (OstreeRepo *repo,
      header, because you may have made decisions on wheter to install it or not
      based on that data. */
   metadata_file = g_file_resolve_relative_path (root, "metadata");
-  in = (GInputStream*)g_file_read (metadata_file, cancellable, NULL);
+  in = (GInputStream *) g_file_read (metadata_file, cancellable, NULL);
   if (in != NULL)
     {
-      g_autoptr(GMemoryOutputStream) data_stream = (GMemoryOutputStream*)g_memory_output_stream_new_resizable ();
+      g_autoptr(GMemoryOutputStream) data_stream = (GMemoryOutputStream *) g_memory_output_stream_new_resizable ();
 
       if (g_output_stream_splice (G_OUTPUT_STREAM (data_stream), in,
                                   G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
@@ -2819,7 +2855,9 @@ xdg_app_pull_from_bundle (OstreeRepo *repo,
         strcmp (metadata_contents, g_memory_output_stream_get_data (data_stream)) == 0;
     }
   else
-    metadata_valid = (metadata_contents == NULL);
+    {
+      metadata_valid = (metadata_contents == NULL);
+    }
 
   if (!metadata_valid)
     {
@@ -2834,19 +2872,20 @@ xdg_app_pull_from_bundle (OstreeRepo *repo,
 /* This allocates and locks a subdir of the tmp dir, using an existing
  * one with the same prefix if it is not in use already. */
 gboolean
-xdg_app_allocate_tmpdir (int tmpdir_dfd,
-                         const char *tmpdir_relpath,
-                         const char *tmpdir_prefix,
-                         char **tmpdir_name_out,
-                         int *tmpdir_fd_out,
+xdg_app_allocate_tmpdir (int           tmpdir_dfd,
+                         const char   *tmpdir_relpath,
+                         const char   *tmpdir_prefix,
+                         char        **tmpdir_name_out,
+                         int          *tmpdir_fd_out,
                          GLnxLockFile *file_lock_out,
-                         gboolean *reusing_dir_out,
+                         gboolean     *reusing_dir_out,
                          GCancellable *cancellable,
-                         GError **error)
+                         GError      **error)
 {
   gboolean reusing_dir = FALSE;
   g_autofree char *tmpdir_name = NULL;
   glnx_fd_close int tmpdir_fd = -1;
+
   g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
 
   /* Look for existing tmpdir (with same prefix) to reuse */
@@ -2879,7 +2918,9 @@ xdg_app_allocate_tmpdir (int tmpdir_dfd,
                            &existing_tmpdir_fd, &local_error))
         {
           if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_DIRECTORY))
-            continue;
+            {
+              continue;
+            }
           else
             {
               g_propagate_error (error, g_steal_pointer (&local_error));
@@ -2895,7 +2936,9 @@ xdg_app_allocate_tmpdir (int tmpdir_dfd,
                                 file_lock_out, &local_error))
         {
           if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
-            continue;
+            {
+              continue;
+            }
           else
             {
               g_propagate_error (error, g_steal_pointer (&local_error));
@@ -2906,7 +2949,7 @@ xdg_app_allocate_tmpdir (int tmpdir_dfd,
       /* Touch the reused directory so that we don't accidentally
        *   remove it due to being old when cleaning up the tmpdir
        */
-      (void)futimens (existing_tmpdir_fd, NULL);
+      (void) futimens (existing_tmpdir_fd, NULL);
 
       /* We found an existing tmpdir which we managed to lock */
       tmpdir_name = g_strdup (dent->d_name);
@@ -2938,7 +2981,9 @@ xdg_app_allocate_tmpdir (int tmpdir_dfd,
                                 file_lock_out, &local_error))
         {
           if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
-            continue;
+            {
+              continue;
+            }
           else
             {
               g_propagate_error (error, g_steal_pointer (&local_error));

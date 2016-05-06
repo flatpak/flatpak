@@ -99,31 +99,31 @@ builder_source_set_property (GObject      *object,
 }
 
 static gboolean
-builder_source_real_download (BuilderSource *self,
-                              gboolean update_vcs,
+builder_source_real_download (BuilderSource  *self,
+                              gboolean        update_vcs,
                               BuilderContext *context,
-                              GError **error)
+                              GError        **error)
 {
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-               "Download not implemented for type %s", g_type_name_from_instance ((GTypeInstance *)self));
+               "Download not implemented for type %s", g_type_name_from_instance ((GTypeInstance *) self));
   return FALSE;
 }
 
 static gboolean
-builder_source_real_extract (BuilderSource *self,
-                             GFile *dest,
+builder_source_real_extract (BuilderSource  *self,
+                             GFile          *dest,
                              BuilderContext *context,
-                             GError **error)
+                             GError        **error)
 {
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-               "Extract not implemented for type %s", g_type_name_from_instance ((GTypeInstance *)self));
+               "Extract not implemented for type %s", g_type_name_from_instance ((GTypeInstance *) self));
   return FALSE;
 }
 
 static gboolean
-builder_source_real_update (BuilderSource *self,
+builder_source_real_update (BuilderSource  *self,
                             BuilderContext *context,
-                            GError **error)
+                            GError        **error)
 {
   return TRUE;
 }
@@ -199,22 +199,22 @@ builder_source_from_json (JsonNode *node)
   JsonObject *object = json_node_get_object (node);
   const gchar *type;
 
-  type = json_object_get_string_member  (object, "type");
+  type = json_object_get_string_member (object, "type");
 
   if (strcmp (type, "archive") == 0)
-    return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_ARCHIVE, node);
+    return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_ARCHIVE, node);
   if (strcmp (type, "file") == 0)
-    return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_FILE, node);
+    return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_FILE, node);
   if (strcmp (type, "script") == 0)
-    return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_SCRIPT, node);
+    return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_SCRIPT, node);
   if (strcmp (type, "shell") == 0)
-    return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_SHELL, node);
+    return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_SHELL, node);
   if (strcmp (type, "patch") == 0)
-    return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_PATCH, node);
+    return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_PATCH, node);
   if (strcmp (type, "git") == 0)
-    return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_GIT, node);
+    return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_GIT, node);
   if (strcmp (type, "bzr") == 0)
-    return (BuilderSource *)json_gobject_deserialize (BUILDER_TYPE_SOURCE_BZR, node);
+    return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_BZR, node);
   else if (type == NULL)
     g_warning ("Missing source type");
   else
@@ -224,10 +224,10 @@ builder_source_from_json (JsonNode *node)
 }
 
 gboolean
-builder_source_download (BuilderSource *self,
-                         gboolean update_vcs,
+builder_source_download (BuilderSource  *self,
+                         gboolean        update_vcs,
                          BuilderContext *context,
-                         GError **error)
+                         GError        **error)
 {
   BuilderSourceClass *class;
 
@@ -237,12 +237,13 @@ builder_source_download (BuilderSource *self,
 }
 
 gboolean
-builder_source_extract  (BuilderSource *self,
-                         GFile *dest,
-                         BuilderContext *context,
-                         GError **error)
+builder_source_extract (BuilderSource  *self,
+                        GFile          *dest,
+                        BuilderContext *context,
+                        GError        **error)
 {
   BuilderSourceClass *class;
+
   g_autoptr(GFile) real_dest;
 
   class = BUILDER_SOURCE_GET_CLASS (self);
@@ -256,16 +257,18 @@ builder_source_extract  (BuilderSource *self,
         return FALSE;
     }
   else
-    real_dest = g_object_ref (dest);
+    {
+      real_dest = g_object_ref (dest);
+    }
 
 
   return class->extract (self, real_dest, context, error);
 }
 
 gboolean
-builder_source_update  (BuilderSource *self,
-                        BuilderContext *context,
-                        GError **error)
+builder_source_update (BuilderSource  *self,
+                       BuilderContext *context,
+                       GError        **error)
 {
   BuilderSourceClass *class = BUILDER_SOURCE_GET_CLASS (self);
 

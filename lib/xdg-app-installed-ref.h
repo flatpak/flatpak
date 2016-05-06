@@ -18,7 +18,7 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
@@ -30,32 +30,34 @@ typedef struct _XdgAppInstalledRef XdgAppInstalledRef;
 #include <gio/gio.h>
 #include <xdg-app-ref.h>
 
-#define XDG_APP_TYPE_INSTALLED_REF xdg_app_installed_ref_get_type()
+#define XDG_APP_TYPE_INSTALLED_REF xdg_app_installed_ref_get_type ()
 #define XDG_APP_INSTALLED_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_INSTALLED_REF, XdgAppInstalledRef))
 #define XDG_APP_IS_INSTALLED_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_INSTALLED_REF))
 
 XDG_APP_EXTERN GType xdg_app_installed_ref_get_type (void);
 
-struct _XdgAppInstalledRef {
+struct _XdgAppInstalledRef
+{
   XdgAppRef parent;
 };
 
-typedef struct {
+typedef struct
+{
   XdgAppRefClass parent_class;
 } XdgAppInstalledRefClass;
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppInstalledRef, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppInstalledRef, g_object_unref)
 #endif
 
-XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_origin         (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN const char * const*xdg_app_installed_ref_get_subpaths       (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN guint64      xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_deploy_dir     (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_latest_commit  (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN gboolean     xdg_app_installed_ref_get_is_current     (XdgAppInstalledRef  *self);
-XDG_APP_EXTERN GBytes      *xdg_app_installed_ref_load_metadata      (XdgAppInstalledRef  *self,
-                                                                     GCancellable        *cancellable,
-                                                                     GError             **error);
+XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_origin (XdgAppInstalledRef  * self);
+XDG_APP_EXTERN const char * const *xdg_app_installed_ref_get_subpaths (XdgAppInstalledRef *self);
+XDG_APP_EXTERN guint64      xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef *self);
+XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_deploy_dir (XdgAppInstalledRef *self);
+XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_latest_commit (XdgAppInstalledRef *self);
+XDG_APP_EXTERN gboolean     xdg_app_installed_ref_get_is_current (XdgAppInstalledRef *self);
+XDG_APP_EXTERN GBytes      *xdg_app_installed_ref_load_metadata (XdgAppInstalledRef *self,
+                                                                 GCancellable       *cancellable,
+                                                                 GError            **error);
 
 #endif /* __XDG_APP_INSTALLED_REF_H__ */

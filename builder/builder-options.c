@@ -32,21 +32,23 @@
 #include "builder-context.h"
 #include "builder-utils.h"
 
-struct BuilderOptions {
-  GObject parent;
+struct BuilderOptions
+{
+  GObject     parent;
 
-  gboolean strip;
-  gboolean no_debuginfo;
-  char *cflags;
-  char *cxxflags;
-  char *prefix;
-  char **env;
-  char **build_args;
-  char **config_opts;
+  gboolean    strip;
+  gboolean    no_debuginfo;
+  char       *cflags;
+  char       *cxxflags;
+  char       *prefix;
+  char      **env;
+  char      **build_args;
+  char      **config_opts;
   GHashTable *arch;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 } BuilderOptionsClass;
 
@@ -73,7 +75,7 @@ enum {
 static void
 builder_options_finalize (GObject *object)
 {
-  BuilderOptions *self = (BuilderOptions *)object;
+  BuilderOptions *self = (BuilderOptions *) object;
 
   g_free (self->cflags);
   g_free (self->cxxflags);
@@ -87,9 +89,9 @@ builder_options_finalize (GObject *object)
 
 static void
 builder_options_get_property (GObject    *object,
-                                guint       prop_id,
-                                GValue     *value,
-                                GParamSpec *pspec)
+                              guint       prop_id,
+                              GValue     *value,
+                              GParamSpec *pspec)
 {
   BuilderOptions *self = BUILDER_OPTIONS (object);
 
@@ -138,9 +140,9 @@ builder_options_get_property (GObject    *object,
 
 static void
 builder_options_set_property (GObject      *object,
-                                guint         prop_id,
-                                const GValue *value,
-                                GParamSpec   *pspec)
+                              guint         prop_id,
+                              const GValue *value,
+                              GParamSpec   *pspec)
 {
   BuilderOptions *self = BUILDER_OPTIONS (object);
   gchar **tmp;
@@ -302,7 +304,7 @@ builder_options_serialize_property (JsonSerializable *serializable,
           while (g_hash_table_iter_next (&iter, &key, &value))
             {
               JsonNode *child = json_gobject_serialize (value);
-              json_object_set_member (object, (char *)key, child);
+              json_object_set_member (object, (char *) key, child);
             }
 
           retval = json_node_init_object (json_node_alloc (), object);
@@ -351,18 +353,20 @@ builder_options_serialize_property (JsonSerializable *serializable,
       return retval;
     }
   else
-    return json_serializable_default_serialize_property (serializable,
-                                                         property_name,
-                                                         value,
-                                                         pspec);
+    {
+      return json_serializable_default_serialize_property (serializable,
+                                                           property_name,
+                                                           value,
+                                                           pspec);
+    }
 }
 
 static gboolean
 builder_options_deserialize_property (JsonSerializable *serializable,
-                                       const gchar      *property_name,
-                                       GValue           *value,
-                                       GParamSpec       *pspec,
-                                       JsonNode         *property_node)
+                                      const gchar      *property_name,
+                                      GValue           *value,
+                                      GParamSpec       *pspec,
+                                      JsonNode         *property_node)
 {
   if (strcmp (property_name, "arch") == 0)
     {
@@ -436,10 +440,12 @@ builder_options_deserialize_property (JsonSerializable *serializable,
       return FALSE;
     }
   else
-    return json_serializable_default_deserialize_property (serializable,
-                                                           property_name,
-                                                           value,
-                                                           pspec, property_node);
+    {
+      return json_serializable_default_deserialize_property (serializable,
+                                                             property_name,
+                                                             value,
+                                                             pspec, property_node);
+    }
 }
 
 static void
@@ -450,7 +456,7 @@ serializable_iface_init (JsonSerializableIface *serializable_iface)
 }
 
 static GList *
-get_arched_options (BuilderOptions  *self, BuilderContext *context)
+get_arched_options (BuilderOptions *self, BuilderContext *context)
 {
   GList *options = NULL;
   const char *arch = builder_context_get_arch (context);
@@ -466,7 +472,7 @@ get_arched_options (BuilderOptions  *self, BuilderContext *context)
 }
 
 static GList *
-get_all_options (BuilderOptions  *self, BuilderContext *context)
+get_all_options (BuilderOptions *self, BuilderContext *context)
 {
   GList *options = NULL;
   BuilderOptions *global_options = builder_context_get_options (context);
@@ -591,7 +597,9 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
                   value = eq + 1;
                 }
               else
-                key = g_strdup (key);
+                {
+                  key = g_strdup (key);
+                }
 
               envp = g_environ_setenv (envp, key, value, FALSE);
             }
@@ -636,13 +644,13 @@ builder_options_get_build_args (BuilderOptions *self,
 
   g_ptr_array_add (array, NULL);
 
-  return (char **)g_ptr_array_free (g_steal_pointer (&array), FALSE);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 char **
 builder_options_get_config_opts (BuilderOptions *self,
-				 BuilderContext *context,
-				 char **base_opts)
+                                 BuilderContext *context,
+                                 char          **base_opts)
 {
   g_autoptr(GList) options = get_all_options (self, context);
   GList *l;
@@ -672,7 +680,7 @@ builder_options_get_config_opts (BuilderOptions *self,
 
   g_ptr_array_add (array, NULL);
 
-  return (char **)g_ptr_array_free (g_steal_pointer (&array), FALSE);
+  return (char **) g_ptr_array_free (g_steal_pointer (&array), FALSE);
 }
 
 void

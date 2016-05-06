@@ -21,8 +21,8 @@
 #ifndef __XDG_APP_COMMON_TYPES_H__
 #define __XDG_APP_COMMON_TYPES_H__
 
-typedef struct XdgAppDir XdgAppDir;
-typedef struct XdgAppDeploy XdgAppDeploy;
+typedef struct XdgAppDir     XdgAppDir;
+typedef struct XdgAppDeploy  XdgAppDeploy;
 typedef struct XdgAppContext XdgAppContext;
 
 #endif /* __XDG_APP_COMMON_TYPES_H__ */

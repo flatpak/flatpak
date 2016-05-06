@@ -75,10 +75,10 @@ xdg_app_installation_finalize (GObject *object)
 }
 
 static void
-xdg_app_installation_set_property (GObject         *object,
-                                   guint            prop_id,
-                                   const GValue    *value,
-                                   GParamSpec      *pspec)
+xdg_app_installation_set_property (GObject      *object,
+                                   guint         prop_id,
+                                   const GValue *value,
+                                   GParamSpec   *pspec)
 {
 
   switch (prop_id)
@@ -90,10 +90,10 @@ xdg_app_installation_set_property (GObject         *object,
 }
 
 static void
-xdg_app_installation_get_property (GObject         *object,
-                                   guint            prop_id,
-                                   GValue          *value,
-                                   GParamSpec      *pspec)
+xdg_app_installation_get_property (GObject    *object,
+                                   guint       prop_id,
+                                   GValue     *value,
+                                   GParamSpec *pspec)
 {
 
   switch (prop_id)
@@ -121,9 +121,9 @@ xdg_app_installation_init (XdgAppInstallation *self)
 }
 
 static XdgAppInstallation *
-xdg_app_installation_new_for_dir (XdgAppDir *dir,
-                                  GCancellable  *cancellable,
-                                  GError **error)
+xdg_app_installation_new_for_dir (XdgAppDir    *dir,
+                                  GCancellable *cancellable,
+                                  GError      **error)
 {
   XdgAppInstallation *self;
   XdgAppInstallationPrivate *priv;
@@ -166,7 +166,7 @@ xdg_app_get_default_arch (void)
  */
 XdgAppInstallation *
 xdg_app_installation_new_system (GCancellable *cancellable,
-                                 GError **error)
+                                 GError      **error)
 {
   return xdg_app_installation_new_for_dir (xdg_app_dir_get_system (), cancellable, error);
 }
@@ -182,7 +182,7 @@ xdg_app_installation_new_system (GCancellable *cancellable,
  */
 XdgAppInstallation *
 xdg_app_installation_new_user (GCancellable *cancellable,
-                               GError **error)
+                               GError      **error)
 {
   return xdg_app_installation_new_for_dir (xdg_app_dir_get_user (), cancellable, error);
 }
@@ -257,16 +257,17 @@ xdg_app_installation_get_path (XdgAppInstallation *self)
  * Returns: %TRUE, unless an error occurred
  */
 gboolean
-xdg_app_installation_launch (XdgAppInstallation  *self,
-                             const char          *name,
-                             const char          *arch,
-                             const char          *branch,
-                             const char          *commit,
-                             GCancellable        *cancellable,
-                             GError             **error)
+xdg_app_installation_launch (XdgAppInstallation *self,
+                             const char         *name,
+                             const char         *arch,
+                             const char         *branch,
+                             const char         *commit,
+                             GCancellable       *cancellable,
+                             GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *app_ref = NULL;
+
   g_autoptr(XdgAppDeploy) app_deploy = NULL;
 
   app_ref =
@@ -292,10 +293,11 @@ xdg_app_installation_launch (XdgAppInstallation  *self,
 
 static XdgAppInstalledRef *
 get_ref (XdgAppInstallation *self,
-         const char *full_ref,
-         GCancellable *cancellable)
+         const char         *full_ref,
+         GCancellable       *cancellable)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_auto(GStrv) parts = NULL;
   const char *origin = NULL;
   const char *commit = NULL;
@@ -356,14 +358,15 @@ get_ref (XdgAppInstallation *self,
  */
 XdgAppInstalledRef *
 xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
-                                        XdgAppRefKind kind,
-                                        const char *name,
-                                        const char *arch,
-                                        const char *branch,
-                                        GCancellable *cancellable,
-                                        GError **error)
+                                        XdgAppRefKind       kind,
+                                        const char         *name,
+                                        const char         *arch,
+                                        const char         *branch,
+                                        GCancellable       *cancellable,
+                                        GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_autoptr(GFile) deploy = NULL;
   g_autofree char *ref = NULL;
 
@@ -403,11 +406,12 @@ xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
  */
 XdgAppInstalledRef *
 xdg_app_installation_get_current_installed_app (XdgAppInstallation *self,
-                                                const char *name,
-                                                GCancellable *cancellable,
-                                                GError **error)
+                                                const char         *name,
+                                                GCancellable       *cancellable,
+                                                GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_autoptr(GFile) deploy = NULL;
   g_autofree char *current =
     xdg_app_dir_current_ref (priv->dir, name, cancellable);
@@ -439,10 +443,11 @@ xdg_app_installation_get_current_installed_app (XdgAppInstallation *self,
  */
 GPtrArray *
 xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
-                                          GCancellable *cancellable,
-                                          GError **error)
+                                          GCancellable       *cancellable,
+                                          GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_auto(GStrv) raw_refs_app = NULL;
   g_auto(GStrv) raw_refs_runtime = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
@@ -467,7 +472,7 @@ xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
   for (i = 0; raw_refs_runtime[i] != NULL; i++)
     g_ptr_array_add (refs,
                      get_ref (self, raw_refs_runtime[i], cancellable));
-  
+
   return g_steal_pointer (&refs);
 }
 
@@ -485,18 +490,19 @@ xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
  */
 GPtrArray *
 xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
-                                                  XdgAppRefKind kind,
-                                                  GCancellable *cancellable,
-                                                  GError **error)
+                                                  XdgAppRefKind       kind,
+                                                  GCancellable       *cancellable,
+                                                  GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_auto(GStrv) raw_refs = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
 
   if (!xdg_app_dir_list_refs (priv->dir,
                               kind == XDG_APP_REF_KIND_APP ? "app" : "runtime",
-&raw_refs,
+                              &raw_refs,
                               cancellable, error))
     return NULL;
 
@@ -523,8 +529,8 @@ xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
  */
 GPtrArray *
 xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
-                                                     GCancellable *cancellable,
-                                                     GError **error)
+                                                     GCancellable       *cancellable,
+                                                     GError            **error)
 {
   g_autoptr(GPtrArray) updates = NULL;
   g_autoptr(GPtrArray) installed = NULL;
@@ -605,11 +611,12 @@ xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
  *   #XdgAppRemote instances
  */
 GPtrArray *
-xdg_app_installation_list_remotes (XdgAppInstallation  *self,
-                                   GCancellable        *cancellable,
-                                   GError             **error)
+xdg_app_installation_list_remotes (XdgAppInstallation *self,
+                                   GCancellable       *cancellable,
+                                   GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_auto(GStrv) remote_names = NULL;
   g_autoptr(GPtrArray) remotes = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
@@ -638,11 +645,12 @@ xdg_app_installation_list_remotes (XdgAppInstallation  *self,
  */
 XdgAppRemote *
 xdg_app_installation_get_remote_by_name (XdgAppInstallation *self,
-                                         const gchar         *name,
-                                         GCancellable        *cancellable,
-                                         GError              **error)
+                                         const gchar        *name,
+                                         GCancellable       *cancellable,
+                                         GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_auto(GStrv) remote_names = NULL;
   int i;
 
@@ -674,10 +682,10 @@ xdg_app_installation_get_remote_by_name (XdgAppInstallation *self,
  *    or %NULL if an error occurred
  */
 char *
-xdg_app_installation_load_app_overrides  (XdgAppInstallation *self,
-                                          const char *app_id,
-                                          GCancellable *cancellable,
-                                          GError **error)
+xdg_app_installation_load_app_overrides (XdgAppInstallation *self,
+                                         const char         *app_id,
+                                         GCancellable       *cancellable,
+                                         GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *metadata_contents = NULL;
@@ -694,7 +702,7 @@ static void
 progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 {
   XdgAppProgressCallback progress_cb = g_object_get_data (G_OBJECT (progress), "callback");
-  guint last_progress = GPOINTER_TO_UINT(g_object_get_data (G_OBJECT (progress), "last_progress"));
+  guint last_progress = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "last_progress"));
   GString *buf;
   g_autofree char *status = NULL;
   guint outstanding_fetches;
@@ -742,9 +750,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
       if (!bytes_sec) // Ignore first second
         formatted_bytes_sec = g_strdup ("-");
       else
-        {
-          formatted_bytes_sec = g_format_size (bytes_sec);
-        }
+        formatted_bytes_sec = g_format_size (bytes_sec);
 
       if (total_delta_parts > 0)
         {
@@ -773,7 +779,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
         {
           new_progress = (100 * fetched) / requested;
           g_string_append_printf (buf, "Receiving objects: %u%% (%u/%u) %s/s %s",
-                                  (guint)((((double)fetched) / requested) * 100),
+                                  (guint) ((((double) fetched) / requested) * 100),
                                   fetched, requested, formatted_bytes_sec, formatted_bytes_transferred);
         }
     }
@@ -788,7 +794,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 
   if (new_progress < last_progress)
     new_progress = last_progress;
-  g_object_set_data (G_OBJECT (progress), "last_progress", GUINT_TO_POINTER(new_progress));
+  g_object_set_data (G_OBJECT (progress), "last_progress", GUINT_TO_POINTER (new_progress));
 
   progress_cb (buf->str, new_progress, estimating, user_data);
 
@@ -810,16 +816,17 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
 XdgAppInstalledRef *
-xdg_app_installation_install_bundle (XdgAppInstallation  *self,
-                                     GFile               *file,
-                                     XdgAppProgressCallback  progress,
-                                     gpointer             progress_data,
-                                     GCancellable        *cancellable,
-                                     GError             **error)
+xdg_app_installation_install_bundle (XdgAppInstallation    *self,
+                                     GFile                 *file,
+                                     XdgAppProgressCallback progress,
+                                     gpointer               progress_data,
+                                     GCancellable          *cancellable,
+                                     GError               **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
   gboolean added_remote = FALSE;
+
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDir) dir_clone = NULL;
   XdgAppInstalledRef *result = NULL;
@@ -891,7 +898,7 @@ xdg_app_installation_install_bundle (XdgAppInstallation  *self,
 
   result = get_ref (self, ref, cancellable);
 
- out:
+out:
 
   if (added_remote && result == NULL)
     ostree_repo_remote_delete (xdg_app_dir_get_repo (priv->dir), remote, NULL, NULL);
@@ -917,19 +924,20 @@ xdg_app_installation_install_bundle (XdgAppInstallation  *self,
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
 XdgAppInstalledRef *
-xdg_app_installation_install (XdgAppInstallation  *self,
-                              const char          *remote_name,
-                              XdgAppRefKind        kind,
-                              const char          *name,
-                              const char          *arch,
-                              const char          *branch,
+xdg_app_installation_install (XdgAppInstallation    *self,
+                              const char            *remote_name,
+                              XdgAppRefKind          kind,
+                              const char            *name,
+                              const char            *arch,
+                              const char            *branch,
                               XdgAppProgressCallback progress,
-                              gpointer             progress_data,
-                              GCancellable        *cancellable,
-                              GError             **error)
+                              gpointer               progress_data,
+                              GCancellable          *cancellable,
+                              GError               **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
+
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
@@ -962,7 +970,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
     {
       ostree_progress = ostree_async_progress_new_and_connect (progress_cb, progress_data);
       g_object_set_data (G_OBJECT (ostree_progress), "callback", progress);
-      g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER(0));
+      g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER (0));
     }
 
   if (!xdg_app_dir_install (dir_clone, FALSE, FALSE, ref, remote_name, NULL,
@@ -971,7 +979,7 @@ xdg_app_installation_install (XdgAppInstallation  *self,
 
   result = get_ref (self, ref, cancellable);
 
- out:
+out:
   if (main_context)
     g_main_context_pop_thread_default (main_context);
 
@@ -999,19 +1007,20 @@ xdg_app_installation_install (XdgAppInstallation  *self,
  * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %NULL on failure
  */
 XdgAppInstalledRef *
-xdg_app_installation_update (XdgAppInstallation  *self,
-                             XdgAppUpdateFlags    flags,
-                             XdgAppRefKind        kind,
-                             const char          *name,
-                             const char          *arch,
-                             const char          *branch,
+xdg_app_installation_update (XdgAppInstallation    *self,
+                             XdgAppUpdateFlags      flags,
+                             XdgAppRefKind          kind,
+                             const char            *name,
+                             const char            *arch,
+                             const char            *branch,
                              XdgAppProgressCallback progress,
-                             gpointer             progress_data,
-                             GCancellable        *cancellable,
-                             GError             **error)
+                             gpointer               progress_data,
+                             GCancellable          *cancellable,
+                             GError               **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
+
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
@@ -1052,7 +1061,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
     {
       ostree_progress = ostree_async_progress_new_and_connect (progress_cb, progress_data);
       g_object_set_data (G_OBJECT (ostree_progress), "callback", progress);
-      g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER(0));
+      g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER (0));
     }
 
   if (!xdg_app_dir_update (dir_clone,
@@ -1064,7 +1073,7 @@ xdg_app_installation_update (XdgAppInstallation  *self,
 
   result = get_ref (self, ref, cancellable);
 
- out:
+out:
   if (main_context)
     g_main_context_pop_thread_default (main_context);
 
@@ -1091,20 +1100,21 @@ xdg_app_installation_update (XdgAppInstallation  *self,
  * Returns: %TRUE on success
  */
 XDG_APP_EXTERN gboolean
-xdg_app_installation_uninstall (XdgAppInstallation  *self,
-                                XdgAppRefKind        kind,
-                                const char          *name,
-                                const char          *arch,
-                                const char          *branch,
-                                XdgAppProgressCallback  progress,
-                                gpointer             progress_data,
-                                GCancellable        *cancellable,
-                                GError             **error)
+xdg_app_installation_uninstall (XdgAppInstallation    *self,
+                                XdgAppRefKind          kind,
+                                const char            *name,
+                                const char            *arch,
+                                const char            *branch,
+                                XdgAppProgressCallback progress,
+                                gpointer               progress_data,
+                                GCancellable          *cancellable,
+                                GError               **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
   g_autofree char *remote_name = NULL;
   g_autofree char *current_ref = NULL;
+
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(XdgAppDir) dir_clone = NULL;
   gboolean was_deployed = FALSE;
@@ -1201,13 +1211,13 @@ xdg_app_installation_uninstall (XdgAppInstallation  *self,
  * Returns: %TRUE, unless an error occurred
  */
 gboolean
-xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation  *self,
-                                             const char          *remote_name,
-                                             const char          *commit,
-                                             guint64             *download_size,
-                                             guint64             *installed_size,
-                                             GCancellable        *cancellable,
-                                             GError             **error)
+xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation *self,
+                                             const char         *remote_name,
+                                             const char         *commit,
+                                             guint64            *download_size,
+                                             guint64            *installed_size,
+                                             GCancellable       *cancellable,
+                                             GError            **error)
 {
   return xdg_app_fail (error, "Deprecated function call xdg_app_installation_fetch_remote_size_sync");
 }
@@ -1233,13 +1243,13 @@ xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation  *self,
  * Returns: %TRUE, unless an error occurred
  */
 gboolean
-xdg_app_installation_fetch_remote_size_sync2 (XdgAppInstallation  *self,
-                                              const char          *remote_name,
-                                              XdgAppRef           *ref,
-                                              guint64             *download_size,
-                                              guint64             *installed_size,
-                                              GCancellable        *cancellable,
-                                              GError             **error)
+xdg_app_installation_fetch_remote_size_sync2 (XdgAppInstallation *self,
+                                              const char         *remote_name,
+                                              XdgAppRef          *ref,
+                                              guint64            *download_size,
+                                              guint64            *installed_size,
+                                              GCancellable       *cancellable,
+                                              GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *full_ref = xdg_app_ref_format_ref (ref);
@@ -1268,12 +1278,13 @@ xdg_app_installation_fetch_remote_size_sync2 (XdgAppInstallation  *self,
  */
 GBytes *
 xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
-                                                 const char *remote_name,
-                                                 const char *commit,
-                                                 GCancellable *cancellable,
-                                                 GError **error)
+                                                 const char         *remote_name,
+                                                 const char         *commit,
+                                                 GCancellable       *cancellable,
+                                                 GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_autoptr(GBytes) bytes = NULL;
 
   bytes = xdg_app_dir_fetch_metadata (priv->dir,
@@ -1302,10 +1313,10 @@ xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
  */
 GBytes *
 xdg_app_installation_fetch_remote_metadata_sync2 (XdgAppInstallation *self,
-                                                  const char *remote_name,
-                                                  XdgAppRef *ref,
-                                                  GCancellable *cancellable,
-                                                  GError **error)
+                                                  const char         *remote_name,
+                                                  XdgAppRef          *ref,
+                                                  GCancellable       *cancellable,
+                                                  GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
   g_autofree char *full_ref = xdg_app_ref_format_ref (ref);
@@ -1334,11 +1345,12 @@ xdg_app_installation_fetch_remote_metadata_sync2 (XdgAppInstallation *self,
  */
 GPtrArray *
 xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
-                                            const char     *remote_name,
-                                            GCancellable *cancellable,
-                                            GError **error)
+                                            const char         *remote_name,
+                                            GCancellable       *cancellable,
+                                            GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GHashTable) ht = NULL;
   GHashTableIter iter;
@@ -1385,15 +1397,16 @@ xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
  */
 XdgAppRemoteRef *
 xdg_app_installation_fetch_remote_ref_sync (XdgAppInstallation *self,
-                                            const char   *remote_name,
-                                            XdgAppRefKind kind,
-                                            const char   *name,
-                                            const char   *arch,
-                                            const char   *branch,
-                                            GCancellable *cancellable,
-                                            GError **error)
+                                            const char         *remote_name,
+                                            XdgAppRefKind       kind,
+                                            const char         *name,
+                                            const char         *arch,
+                                            const char         *branch,
+                                            GCancellable       *cancellable,
+                                            GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_autoptr(GHashTable) ht = NULL;
   g_autofree char *ref = NULL;
   const char *checksum;
@@ -1446,14 +1459,15 @@ no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
  * Returns: %TRUE on success, or %FALSE on error
  */
 gboolean
-xdg_app_installation_update_appstream_sync (XdgAppInstallation  *self,
-                                          const char          *remote_name,
-                                          const char          *arch,
-                                          gboolean            *out_changed,
-                                          GCancellable        *cancellable,
-                                          GError             **error)
+xdg_app_installation_update_appstream_sync (XdgAppInstallation *self,
+                                            const char         *remote_name,
+                                            const char         *arch,
+                                            gboolean           *out_changed,
+                                            GCancellable       *cancellable,
+                                            GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_autoptr(XdgAppDir) dir_clone = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autoptr(GMainContext) main_context = NULL;
@@ -1500,11 +1514,12 @@ xdg_app_installation_update_appstream_sync (XdgAppInstallation  *self,
  * Returns: (transfer full): a new #GFileMonitor instance, or %NULL on error
  */
 GFileMonitor *
-xdg_app_installation_create_monitor (XdgAppInstallation  *self,
-                                     GCancellable        *cancellable,
-                                     GError             **error)
+xdg_app_installation_create_monitor (XdgAppInstallation *self,
+                                     GCancellable       *cancellable,
+                                     GError            **error)
 {
   XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+
   g_autoptr(GFile) path = NULL;
 
   path = xdg_app_dir_get_changed_path (priv->dir);

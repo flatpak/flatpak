@@ -62,10 +62,10 @@ xdg_app_remote_ref_finalize (GObject *object)
 }
 
 static void
-xdg_app_remote_ref_set_property (GObject         *object,
-                                 guint            prop_id,
-                                 const GValue    *value,
-                                 GParamSpec      *pspec)
+xdg_app_remote_ref_set_property (GObject      *object,
+                                 guint         prop_id,
+                                 const GValue *value,
+                                 GParamSpec   *pspec)
 {
   XdgAppRemoteRef *self = XDG_APP_REMOTE_REF (object);
   XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
@@ -84,10 +84,10 @@ xdg_app_remote_ref_set_property (GObject         *object,
 }
 
 static void
-xdg_app_remote_ref_get_property (GObject         *object,
-                                 guint            prop_id,
-                                 GValue          *value,
-                                 GParamSpec      *pspec)
+xdg_app_remote_ref_get_property (GObject    *object,
+                                 guint       prop_id,
+                                 GValue     *value,
+                                 GParamSpec *pspec)
 {
   XdgAppRemoteRef *self = XDG_APP_REMOTE_REF (object);
   XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
@@ -150,6 +150,7 @@ xdg_app_remote_ref_new (const char *full_ref,
                         const char *remote_name)
 {
   XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
+
   g_auto(GStrv) parts = NULL;
   XdgAppRemoteRef *ref;
 

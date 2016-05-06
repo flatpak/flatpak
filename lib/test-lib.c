@@ -8,17 +8,17 @@
 
 static void
 progress_cb (const char *status,
-             guint progress,
-             gboolean estimating,
-             gpointer user_data)
+             guint       progress,
+             gboolean    estimating,
+             gpointer    user_data)
 {
   g_print ("status: %s, progress: %d estimating: %d, user_data: %p\n", status, progress, estimating, user_data);
 }
 
 static gboolean
-monitor_callback (GFileMonitor* monitor,
-                  GFile* child,
-                  GFile* other_file,
+monitor_callback (GFileMonitor    * monitor,
+                  GFile           * child,
+                  GFile           * other_file,
                   GFileMonitorEvent eflags)
 {
   g_print ("Database changed\n");
@@ -32,6 +32,7 @@ main (int argc, char *argv[])
   XdgAppInstalledRef *app1;
   XdgAppInstalledRef *app2;
   XdgAppRemoteRef *remote_ref;
+
   g_autoptr(GPtrArray) remotes = NULL;
   GError *error = NULL;
   int i, j;
@@ -48,7 +49,7 @@ main (int argc, char *argv[])
       GFileMonitor * monitor = xdg_app_installation_create_monitor (installation, NULL, NULL);
       GMainLoop *main_loop;
 
-      g_signal_connect (monitor, "changed", (GCallback)monitor_callback, NULL);
+      g_signal_connect (monitor, "changed", (GCallback) monitor_callback, NULL);
       main_loop = g_main_loop_new (NULL, FALSE);
       g_main_loop_run (main_loop);
     }
@@ -60,7 +61,7 @@ main (int argc, char *argv[])
                                            XDG_APP_REF_KIND_APP,
                                            argv[2],
                                            NULL, NULL,
-                                           progress_cb, (gpointer)0xdeadbeef,
+                                           progress_cb, (gpointer) 0xdeadbeef,
                                            NULL, &error);
       if (app1 == NULL)
         g_print ("Error: %s\n", error->message);
@@ -78,7 +79,7 @@ main (int argc, char *argv[])
                                           XDG_APP_REF_KIND_APP,
                                           argv[1],
                                           NULL, NULL,
-                                          progress_cb, (gpointer)0xdeadbeef,
+                                          progress_cb, (gpointer) 0xdeadbeef,
                                           NULL, &error);
       if (app1 == NULL)
         g_print ("Error: %s\n", error->message);
@@ -103,15 +104,15 @@ main (int argc, char *argv[])
         g_autofree char *path = g_file_get_path (xdg_app_bundle_ref_get_file (bundle));
         g_autoptr(GBytes) metadata = xdg_app_bundle_ref_get_metadata (bundle);
         g_autoptr(GBytes) appdata = xdg_app_bundle_ref_get_appstream (bundle);
-        g_print ("%d %s %s %s %s %s %"G_GUINT64_FORMAT"\n%s\n",
-                 xdg_app_ref_get_kind (XDG_APP_REF(bundle)),
-                 xdg_app_ref_get_name (XDG_APP_REF(bundle)),
-                 xdg_app_ref_get_arch (XDG_APP_REF(bundle)),
-                 xdg_app_ref_get_branch (XDG_APP_REF(bundle)),
-                 xdg_app_ref_get_commit (XDG_APP_REF(bundle)),
+        g_print ("%d %s %s %s %s %s %"G_GUINT64_FORMAT "\n%s\n",
+                 xdg_app_ref_get_kind (XDG_APP_REF (bundle)),
+                 xdg_app_ref_get_name (XDG_APP_REF (bundle)),
+                 xdg_app_ref_get_arch (XDG_APP_REF (bundle)),
+                 xdg_app_ref_get_branch (XDG_APP_REF (bundle)),
+                 xdg_app_ref_get_commit (XDG_APP_REF (bundle)),
                  path,
                  xdg_app_bundle_ref_get_installed_size (bundle),
-                 (char *)g_bytes_get_data (metadata, NULL));
+                 (char *) g_bytes_get_data (metadata, NULL));
 
         if (appdata != NULL)
           {
@@ -150,13 +151,13 @@ main (int argc, char *argv[])
       {
         for (i = 0; i < updates->len; i++)
           {
-            XdgAppInstalledRef *ref = g_ptr_array_index(updates,i);
-            g_print ("%d %s %s %s %s %s %s %s %d %"G_GUINT64_FORMAT"\n",
-                     xdg_app_ref_get_kind (XDG_APP_REF(ref)),
-                     xdg_app_ref_get_name (XDG_APP_REF(ref)),
-                     xdg_app_ref_get_arch (XDG_APP_REF(ref)),
-                     xdg_app_ref_get_branch (XDG_APP_REF(ref)),
-                     xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+            XdgAppInstalledRef *ref = g_ptr_array_index (updates, i);
+            g_print ("%d %s %s %s %s %s %s %s %d %"G_GUINT64_FORMAT "\n",
+                     xdg_app_ref_get_kind (XDG_APP_REF (ref)),
+                     xdg_app_ref_get_name (XDG_APP_REF (ref)),
+                     xdg_app_ref_get_arch (XDG_APP_REF (ref)),
+                     xdg_app_ref_get_branch (XDG_APP_REF (ref)),
+                     xdg_app_ref_get_commit (XDG_APP_REF (ref)),
                      xdg_app_installed_ref_get_latest_commit (ref),
                      xdg_app_installed_ref_get_origin (ref),
                      xdg_app_installed_ref_get_deploy_dir (ref),
@@ -175,13 +176,13 @@ main (int argc, char *argv[])
 
     for (i = 0; i < refs->len; i++)
       {
-        XdgAppInstalledRef *ref = g_ptr_array_index(refs,i);
-        g_print ("%d %s %s %s %s %s %s %s %d %"G_GUINT64_FORMAT"\n",
-                 xdg_app_ref_get_kind (XDG_APP_REF(ref)),
-                 xdg_app_ref_get_name (XDG_APP_REF(ref)),
-                 xdg_app_ref_get_arch (XDG_APP_REF(ref)),
-                 xdg_app_ref_get_branch (XDG_APP_REF(ref)),
-                 xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+        XdgAppInstalledRef *ref = g_ptr_array_index (refs, i);
+        g_print ("%d %s %s %s %s %s %s %s %d %"G_GUINT64_FORMAT "\n",
+                 xdg_app_ref_get_kind (XDG_APP_REF (ref)),
+                 xdg_app_ref_get_name (XDG_APP_REF (ref)),
+                 xdg_app_ref_get_arch (XDG_APP_REF (ref)),
+                 xdg_app_ref_get_branch (XDG_APP_REF (ref)),
+                 xdg_app_ref_get_commit (XDG_APP_REF (ref)),
                  xdg_app_installed_ref_get_latest_commit (ref),
                  xdg_app_installed_ref_get_origin (ref),
                  xdg_app_installed_ref_get_deploy_dir (ref),
@@ -200,20 +201,20 @@ main (int argc, char *argv[])
 
     for (i = 0; i < apps->len; i++)
       {
-        XdgAppInstalledRef *app = g_ptr_array_index(apps,i);
+        XdgAppInstalledRef *app = g_ptr_array_index (apps, i);
 
-        g_print ("%d %s %s %s %s %s %s %s %d %"G_GUINT64_FORMAT"\n",
-                 xdg_app_ref_get_kind (XDG_APP_REF(app)),
-                 xdg_app_ref_get_name (XDG_APP_REF(app)),
-                 xdg_app_ref_get_arch (XDG_APP_REF(app)),
-                 xdg_app_ref_get_branch (XDG_APP_REF(app)),
-                 xdg_app_ref_get_commit (XDG_APP_REF(app)),
+        g_print ("%d %s %s %s %s %s %s %s %d %"G_GUINT64_FORMAT "\n",
+                 xdg_app_ref_get_kind (XDG_APP_REF (app)),
+                 xdg_app_ref_get_name (XDG_APP_REF (app)),
+                 xdg_app_ref_get_arch (XDG_APP_REF (app)),
+                 xdg_app_ref_get_branch (XDG_APP_REF (app)),
+                 xdg_app_ref_get_commit (XDG_APP_REF (app)),
                  xdg_app_installed_ref_get_latest_commit (app),
                  xdg_app_installed_ref_get_origin (app),
                  xdg_app_installed_ref_get_deploy_dir (app),
                  xdg_app_installed_ref_get_is_current (app),
                  xdg_app_installed_ref_get_installed_size (app));
-        g_print ("metadata:\n%s\n", (char *)g_bytes_get_data (xdg_app_installed_ref_load_metadata (app, NULL, NULL), NULL));
+        g_print ("metadata:\n%s\n", (char *) g_bytes_get_data (xdg_app_installed_ref_load_metadata (app, NULL, NULL), NULL));
       }
   }
 
@@ -227,13 +228,13 @@ main (int argc, char *argv[])
 
     for (i = 0; i < runtimes->len; i++)
       {
-        XdgAppInstalledRef *runtime = g_ptr_array_index(runtimes,i);
+        XdgAppInstalledRef *runtime = g_ptr_array_index (runtimes, i);
         g_print ("%d %s %s %s %s %s %s %d\n",
-                 xdg_app_ref_get_kind (XDG_APP_REF(runtime)),
-                 xdg_app_ref_get_name (XDG_APP_REF(runtime)),
-                 xdg_app_ref_get_arch (XDG_APP_REF(runtime)),
-                 xdg_app_ref_get_branch (XDG_APP_REF(runtime)),
-                 xdg_app_ref_get_commit (XDG_APP_REF(runtime)),
+                 xdg_app_ref_get_kind (XDG_APP_REF (runtime)),
+                 xdg_app_ref_get_name (XDG_APP_REF (runtime)),
+                 xdg_app_ref_get_arch (XDG_APP_REF (runtime)),
+                 xdg_app_ref_get_branch (XDG_APP_REF (runtime)),
+                 xdg_app_ref_get_commit (XDG_APP_REF (runtime)),
                  xdg_app_installed_ref_get_origin (runtime),
                  xdg_app_installed_ref_get_deploy_dir (runtime),
                  xdg_app_installed_ref_get_is_current (runtime));
@@ -248,11 +249,11 @@ main (int argc, char *argv[])
   if (app1)
     {
       g_print ("gedit master: %d %s %s %s %s %s %s %d\n",
-               xdg_app_ref_get_kind (XDG_APP_REF(app1)),
-               xdg_app_ref_get_name (XDG_APP_REF(app1)),
-               xdg_app_ref_get_arch (XDG_APP_REF(app1)),
-               xdg_app_ref_get_branch (XDG_APP_REF(app1)),
-               xdg_app_ref_get_commit (XDG_APP_REF(app1)),
+               xdg_app_ref_get_kind (XDG_APP_REF (app1)),
+               xdg_app_ref_get_name (XDG_APP_REF (app1)),
+               xdg_app_ref_get_arch (XDG_APP_REF (app1)),
+               xdg_app_ref_get_branch (XDG_APP_REF (app1)),
+               xdg_app_ref_get_commit (XDG_APP_REF (app1)),
                xdg_app_installed_ref_get_origin (app1),
                xdg_app_installed_ref_get_deploy_dir (app1),
                xdg_app_installed_ref_get_is_current (app1));
@@ -271,15 +272,17 @@ main (int argc, char *argv[])
                                                          "org.gnome.gedit",
                                                          NULL, NULL);
   if (app2)
-    g_print ("gedit current: %d %s %s %s %s %s %s %d\n",
-             xdg_app_ref_get_kind (XDG_APP_REF(app2)),
-             xdg_app_ref_get_name (XDG_APP_REF(app2)),
-             xdg_app_ref_get_arch (XDG_APP_REF(app2)),
-             xdg_app_ref_get_branch (XDG_APP_REF(app2)),
-             xdg_app_ref_get_commit (XDG_APP_REF(app2)),
-             xdg_app_installed_ref_get_origin (app2),
-             xdg_app_installed_ref_get_deploy_dir (app2),
-             xdg_app_installed_ref_get_is_current (app2));
+    {
+      g_print ("gedit current: %d %s %s %s %s %s %s %d\n",
+               xdg_app_ref_get_kind (XDG_APP_REF (app2)),
+               xdg_app_ref_get_name (XDG_APP_REF (app2)),
+               xdg_app_ref_get_arch (XDG_APP_REF (app2)),
+               xdg_app_ref_get_branch (XDG_APP_REF (app2)),
+               xdg_app_ref_get_commit (XDG_APP_REF (app2)),
+               xdg_app_installed_ref_get_origin (app2),
+               xdg_app_installed_ref_get_deploy_dir (app2),
+               xdg_app_installed_ref_get_is_current (app2));
+    }
 
 
   g_print ("\n**** Listing remotes\n");
@@ -288,7 +291,7 @@ main (int argc, char *argv[])
 
   for (i = 0; i < remotes->len; i++)
     {
-      XdgAppRemote *remote = g_ptr_array_index(remotes, i);
+      XdgAppRemote *remote = g_ptr_array_index (remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
       g_print ("\nRemote: %s %d %s %s %d %d %s\n",
                xdg_app_remote_get_name (remote),
@@ -306,13 +309,13 @@ main (int argc, char *argv[])
         {
           for (j = 0; j < refs->len; j++)
             {
-              XdgAppRemoteRef *ref = g_ptr_array_index(refs,j);
+              XdgAppRemoteRef *ref = g_ptr_array_index (refs, j);
               g_print ("%d %s %s %s %s %s\n",
-                       xdg_app_ref_get_kind (XDG_APP_REF(ref)),
-                       xdg_app_ref_get_name (XDG_APP_REF(ref)),
-                       xdg_app_ref_get_arch (XDG_APP_REF(ref)),
-                       xdg_app_ref_get_branch (XDG_APP_REF(ref)),
-                       xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+                       xdg_app_ref_get_kind (XDG_APP_REF (ref)),
+                       xdg_app_ref_get_name (XDG_APP_REF (ref)),
+                       xdg_app_ref_get_arch (XDG_APP_REF (ref)),
+                       xdg_app_ref_get_branch (XDG_APP_REF (ref)),
+                       xdg_app_ref_get_commit (XDG_APP_REF (ref)),
                        xdg_app_remote_ref_get_remote_name (ref));
 
               if (j == 0)
@@ -321,7 +324,7 @@ main (int argc, char *argv[])
                   guint64 installed_size;
                   if (!xdg_app_installation_fetch_remote_size_sync (installation,
                                                                     xdg_app_remote_get_name (remote),
-                                                                    xdg_app_ref_get_commit (XDG_APP_REF(ref)),
+                                                                    xdg_app_ref_get_commit (XDG_APP_REF (ref)),
                                                                     &download_size,
                                                                     &installed_size,
                                                                     NULL, &error))
@@ -330,12 +333,14 @@ main (int argc, char *argv[])
                       g_clear_error (&error);
                     }
                   else
-                    g_print ("Download size: %"G_GUINT64_FORMAT" Installed size: %"G_GUINT64_FORMAT"\n",
-                             download_size, installed_size);
+                    {
+                      g_print ("Download size: %"G_GUINT64_FORMAT " Installed size: %"G_GUINT64_FORMAT "\n",
+                               download_size, installed_size);
+                    }
 
                   if (!xdg_app_installation_fetch_remote_size_sync2 (installation,
                                                                      xdg_app_remote_get_name (remote),
-                                                                     XDG_APP_REF(ref),
+                                                                     XDG_APP_REF (ref),
                                                                      &download_size,
                                                                      &installed_size,
                                                                      NULL, &error))
@@ -344,8 +349,10 @@ main (int argc, char *argv[])
                       g_clear_error (&error);
                     }
                   else
-                    g_print ("Download size2: %"G_GUINT64_FORMAT" Installed size2: %"G_GUINT64_FORMAT"\n",
-                             download_size, installed_size);
+                    {
+                      g_print ("Download size2: %"G_GUINT64_FORMAT " Installed size2: %"G_GUINT64_FORMAT "\n",
+                               download_size, installed_size);
+                    }
 
                 }
             }
@@ -363,18 +370,18 @@ main (int argc, char *argv[])
           GBytes *metadata2;
 
           g_print ("%d %s %s %s %s %s\n",
-                   xdg_app_ref_get_kind (XDG_APP_REF(remote_ref)),
-                   xdg_app_ref_get_name (XDG_APP_REF(remote_ref)),
-                   xdg_app_ref_get_arch (XDG_APP_REF(remote_ref)),
-                   xdg_app_ref_get_branch (XDG_APP_REF(remote_ref)),
-                   xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)),
+                   xdg_app_ref_get_kind (XDG_APP_REF (remote_ref)),
+                   xdg_app_ref_get_name (XDG_APP_REF (remote_ref)),
+                   xdg_app_ref_get_arch (XDG_APP_REF (remote_ref)),
+                   xdg_app_ref_get_branch (XDG_APP_REF (remote_ref)),
+                   xdg_app_ref_get_commit (XDG_APP_REF (remote_ref)),
                    xdg_app_remote_ref_get_remote_name (remote_ref));
 
           metadata = xdg_app_installation_fetch_remote_metadata_sync (installation, xdg_app_remote_get_name (remote),
-                                                                      xdg_app_ref_get_commit (XDG_APP_REF(remote_ref)), NULL, &error);
+                                                                      xdg_app_ref_get_commit (XDG_APP_REF (remote_ref)), NULL, &error);
           if (metadata)
             {
-              g_print ("metadata: %s\n", (char *)g_bytes_get_data (metadata, NULL));
+              g_print ("metadata: %s\n", (char *) g_bytes_get_data (metadata, NULL));
             }
           else
             {
@@ -384,10 +391,10 @@ main (int argc, char *argv[])
             }
 
           metadata2 = xdg_app_installation_fetch_remote_metadata_sync2 (installation, xdg_app_remote_get_name (remote),
-                                                                        XDG_APP_REF(remote_ref), NULL, &error);
+                                                                        XDG_APP_REF (remote_ref), NULL, &error);
           if (metadata2)
             {
-              g_print ("metadata2: %s\n", (char *)g_bytes_get_data (metadata2, NULL));
+              g_print ("metadata2: %s\n", (char *) g_bytes_get_data (metadata2, NULL));
             }
           else
             {

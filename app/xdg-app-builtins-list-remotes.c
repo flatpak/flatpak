@@ -60,9 +60,7 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
     return FALSE;
 
   if (!opt_user && !opt_system)
-    {
-      opt_system = TRUE;
-    }
+    opt_system = TRUE;
 
   if (opt_user)
     {
@@ -136,7 +134,9 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
                 xdg_app_table_printer_append_with_comma (printer, dir == user_dir ? "user" : "system");
             }
           else
-            xdg_app_table_printer_add_column (printer, remote_name);
+            {
+              xdg_app_table_printer_add_column (printer, remote_name);
+            }
 
           xdg_app_table_printer_finish_row (printer);
         }

@@ -27,16 +27,16 @@
 
 G_BEGIN_DECLS
 
-#define XDG_APP_TYPE_CHAIN_INPUT_STREAM         (xdg_app_chain_input_stream_get_type ())
+#define XDG_APP_TYPE_CHAIN_INPUT_STREAM (xdg_app_chain_input_stream_get_type ())
 #define XDG_APP_CHAIN_INPUT_STREAM(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), XDG_APP_TYPE_CHAIN_INPUT_STREAM, XdgAppChainInputStream))
-#define XDG_APP_CHAIN_INPUT_STREAM_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST((k), XDG_APP_TYPE_CHAIN_INPUT_STREAM, XdgAppChainInputStreamClass))
+#define XDG_APP_CHAIN_INPUT_STREAM_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), XDG_APP_TYPE_CHAIN_INPUT_STREAM, XdgAppChainInputStreamClass))
 #define XDG_APP_IS_CHAIN_INPUT_STREAM(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), XDG_APP_TYPE_CHAIN_INPUT_STREAM))
 #define XDG_APP_IS_CHAIN_INPUT_STREAM_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), XDG_APP_TYPE_CHAIN_INPUT_STREAM))
 #define XDG_APP_CHAIN_INPUT_STREAM_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), XDG_APP_TYPE_CHAIN_INPUT_STREAM, XdgAppChainInputStreamClass))
 
-typedef struct _XdgAppChainInputStream         XdgAppChainInputStream;
-typedef struct _XdgAppChainInputStreamClass    XdgAppChainInputStreamClass;
-typedef struct _XdgAppChainInputStreamPrivate  XdgAppChainInputStreamPrivate;
+typedef struct _XdgAppChainInputStream        XdgAppChainInputStream;
+typedef struct _XdgAppChainInputStreamClass   XdgAppChainInputStreamClass;
+typedef struct _XdgAppChainInputStreamPrivate XdgAppChainInputStreamPrivate;
 
 struct _XdgAppChainInputStream
 {
@@ -59,9 +59,9 @@ struct _XdgAppChainInputStreamClass
   void (*_g_reserved5) (void);
 };
 
-GType          xdg_app_chain_input_stream_get_type     (void) G_GNUC_CONST;
+GType          xdg_app_chain_input_stream_get_type (void) G_GNUC_CONST;
 
-XdgAppChainInputStream * xdg_app_chain_input_stream_new          (GPtrArray *streams);
+XdgAppChainInputStream * xdg_app_chain_input_stream_new (GPtrArray *streams);
 
 G_END_DECLS
 

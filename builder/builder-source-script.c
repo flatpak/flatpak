@@ -30,14 +30,16 @@
 #include "builder-utils.h"
 #include "builder-source-script.h"
 
-struct BuilderSourceScript {
+struct BuilderSourceScript
+{
   BuilderSource parent;
 
-  char **commands;
-  char *dest_filename;
+  char        **commands;
+  char         *dest_filename;
 };
 
-typedef struct {
+typedef struct
+{
   BuilderSourceClass parent_class;
 } BuilderSourceScriptClass;
 
@@ -53,7 +55,7 @@ enum {
 static void
 builder_source_script_finalize (GObject *object)
 {
-  BuilderSourceScript *self = (BuilderSourceScript *)object;
+  BuilderSourceScript *self = (BuilderSourceScript *) object;
 
   g_strfreev (self->commands);
   g_free (self->dest_filename);
@@ -112,21 +114,22 @@ builder_source_script_set_property (GObject      *object,
 }
 
 static gboolean
-builder_source_script_download (BuilderSource *source,
-                                gboolean update_vcs,
+builder_source_script_download (BuilderSource  *source,
+                                gboolean        update_vcs,
                                 BuilderContext *context,
-                                GError **error)
+                                GError        **error)
 {
   return TRUE;
 }
 
 static gboolean
-builder_source_script_extract (BuilderSource *source,
-                               GFile *dest,
+builder_source_script_extract (BuilderSource  *source,
+                               GFile          *dest,
                                BuilderContext *context,
-                               GError **error)
+                               GError        **error)
 {
   BuilderSourceScript *self = BUILDER_SOURCE_SCRIPT (source);
+
   g_autoptr(GFile) dest_script = NULL;
   const char *dest_filename;
   g_autoptr(GString) script = NULL;
@@ -157,7 +160,7 @@ builder_source_script_extract (BuilderSource *source,
                                 NULL,
                                 FALSE,
                                 G_FILE_CREATE_REPLACE_DESTINATION,
-                                NULL, NULL,error))
+                                NULL, NULL, error))
     return FALSE;
 
   perms = 0755;

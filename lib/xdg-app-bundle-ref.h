@@ -18,7 +18,7 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
@@ -30,33 +30,35 @@ typedef struct _XdgAppBundleRef XdgAppBundleRef;
 #include <gio/gio.h>
 #include <xdg-app-ref.h>
 
-#define XDG_APP_TYPE_BUNDLE_REF xdg_app_bundle_ref_get_type()
+#define XDG_APP_TYPE_BUNDLE_REF xdg_app_bundle_ref_get_type ()
 #define XDG_APP_BUNDLE_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_BUNDLE_REF, XdgAppBundleRef))
 #define XDG_APP_IS_BUNDLE_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_BUNDLE_REF))
 
 XDG_APP_EXTERN GType xdg_app_bundle_ref_get_type (void);
 
-struct _XdgAppBundleRef {
+struct _XdgAppBundleRef
+{
   XdgAppRef parent;
 };
 
-typedef struct {
+typedef struct
+{
   XdgAppRefClass parent_class;
 } XdgAppBundleRefClass;
 
-XDG_APP_EXTERN XdgAppBundleRef *xdg_app_bundle_ref_new            (GFile *file,
-                                                                   GError **error);
-XDG_APP_EXTERN GFile           *xdg_app_bundle_ref_get_file       (XdgAppBundleRef *self);
-XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_metadata   (XdgAppBundleRef  *self);
-XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_appstream  (XdgAppBundleRef  *self);
-XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_icon       (XdgAppBundleRef  *self,
-                                                                   int               size);
-XDG_APP_EXTERN char            *xdg_app_bundle_ref_get_origin     (XdgAppBundleRef  *self);
-XDG_APP_EXTERN guint64          xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef  *self);
+XDG_APP_EXTERN XdgAppBundleRef *xdg_app_bundle_ref_new (GFile   *file,
+                                                        GError **error);
+XDG_APP_EXTERN GFile           *xdg_app_bundle_ref_get_file (XdgAppBundleRef *self);
+XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_metadata (XdgAppBundleRef *self);
+XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_appstream (XdgAppBundleRef *self);
+XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_icon (XdgAppBundleRef *self,
+                                                             int              size);
+XDG_APP_EXTERN char            *xdg_app_bundle_ref_get_origin (XdgAppBundleRef *self);
+XDG_APP_EXTERN guint64          xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef *self);
 
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppBundleRef, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppBundleRef, g_object_unref)
 #endif
 
 #endif /* __XDG_APP_BUNDLE_REF_H__ */

@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 
 typedef struct BuilderManifest BuilderManifest;
 
-#define BUILDER_TYPE_MANIFEST (builder_manifest_get_type())
+#define BUILDER_TYPE_MANIFEST (builder_manifest_get_type ())
 #define BUILDER_MANIFEST(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_MANIFEST, BuilderManifest))
 #define BUILDER_IS_MANIFEST(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BUILDER_TYPE_MANIFEST))
 
@@ -43,48 +43,48 @@ typedef struct BuilderManifest BuilderManifest;
 
 GType builder_manifest_get_type (void);
 
-const char *    builder_manifest_get_id            (BuilderManifest  *self);
-const char *    builder_manifest_get_id_platform   (BuilderManifest  *self);
-BuilderOptions *builder_manifest_get_build_options (BuilderManifest  *self);
-GList *         builder_manifest_get_modules       (BuilderManifest  *self);
-const char *    builder_manifest_get_branch        (BuilderManifest  *self);
+const char *    builder_manifest_get_id (BuilderManifest *self);
+const char *    builder_manifest_get_id_platform (BuilderManifest *self);
+BuilderOptions *builder_manifest_get_build_options (BuilderManifest *self);
+GList *         builder_manifest_get_modules (BuilderManifest *self);
+const char *    builder_manifest_get_branch (BuilderManifest *self);
 
-gboolean        builder_manifest_start             (BuilderManifest  *self,
-                                                    BuilderContext   *context,
-                                                    GError          **error);
-gboolean        builder_manifest_init_app_dir      (BuilderManifest  *self,
-                                                    BuilderContext   *context,
-                                                    GError          **error);
-gboolean        builder_manifest_download          (BuilderManifest  *self,
-                                                    gboolean          update_vcs,
-                                                    BuilderContext   *context,
-                                                    GError          **error);
-gboolean        builder_manifest_build             (BuilderManifest  *self,
-                                                    BuilderCache     *cache,
-                                                    BuilderContext   *context,
-                                                    GError          **error);
-gboolean        builder_manifest_run               (BuilderManifest  *self,
-                                                    BuilderContext   *context,
-                                                    char            **argv,
-                                                    int               argc,
-                                                    GError          **error);
-void            builder_manifest_checksum          (BuilderManifest *self,
-                                                    BuilderCache    *cache,
-                                                    BuilderContext *context);
-gboolean        builder_manifest_cleanup           (BuilderManifest *self,
-                                                    BuilderCache    *cache,
-                                                    BuilderContext *context,
-                                                    GError          **error);
-gboolean        builder_manifest_finish            (BuilderManifest *self,
-                                                    BuilderCache    *cache,
-                                                    BuilderContext *context,
-                                                    GError          **error);
-gboolean        builder_manifest_create_platform   (BuilderManifest *self,
-                                                    BuilderCache    *cache,
-                                                    BuilderContext *context,
-                                                    GError          **error);
+gboolean        builder_manifest_start (BuilderManifest *self,
+                                        BuilderContext  *context,
+                                        GError         **error);
+gboolean        builder_manifest_init_app_dir (BuilderManifest *self,
+                                               BuilderContext  *context,
+                                               GError         **error);
+gboolean        builder_manifest_download (BuilderManifest *self,
+                                           gboolean         update_vcs,
+                                           BuilderContext  *context,
+                                           GError         **error);
+gboolean        builder_manifest_build (BuilderManifest *self,
+                                        BuilderCache    *cache,
+                                        BuilderContext  *context,
+                                        GError         **error);
+gboolean        builder_manifest_run (BuilderManifest *self,
+                                      BuilderContext  *context,
+                                      char           **argv,
+                                      int              argc,
+                                      GError         **error);
+void            builder_manifest_checksum (BuilderManifest *self,
+                                           BuilderCache    *cache,
+                                           BuilderContext  *context);
+gboolean        builder_manifest_cleanup (BuilderManifest *self,
+                                          BuilderCache    *cache,
+                                          BuilderContext  *context,
+                                          GError         **error);
+gboolean        builder_manifest_finish (BuilderManifest *self,
+                                         BuilderCache    *cache,
+                                         BuilderContext  *context,
+                                         GError         **error);
+gboolean        builder_manifest_create_platform (BuilderManifest *self,
+                                                  BuilderCache    *cache,
+                                                  BuilderContext  *context,
+                                                  GError         **error);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderManifest, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderManifest, g_object_unref)
 
 G_END_DECLS
 

@@ -49,7 +49,9 @@ builder_uri_to_filename (const char *uri)
           g_string_append_c (s, '_');
         }
       else
-        g_string_append_c (s, *p);
+        {
+          g_string_append_c (s, *p);
+        }
     }
 
   return g_string_free (s, FALSE);
@@ -98,7 +100,7 @@ xdg_app_collect_matches_for_path_pattern (const char *path,
       while (rest != NULL)
         {
           const char *slash;
-          g_autofree char *prefix = g_strndup (path, rest-path);
+          g_autofree char *prefix = g_strndup (path, rest - path);
           g_hash_table_insert (to_remove_ht, g_strconcat (add_prefix ? add_prefix : "", prefix, NULL), GINT_TO_POINTER (1));
           while (*rest == '/')
             rest++;
@@ -138,7 +140,7 @@ strip (GError **error,
 
 gboolean
 eu_strip (GError **error,
-       ...)
+          ...)
 {
   gboolean res;
   va_list ap;
@@ -150,13 +152,14 @@ eu_strip (GError **error,
   return res;
 }
 
-static gboolean elf_has_symtab (Elf *elf)
+static gboolean
+elf_has_symtab (Elf *elf)
 {
   Elf_Scn *scn;
   GElf_Shdr shdr;
 
   scn = NULL;
-  while ((scn = elf_nextscn(elf, scn)) != NULL)
+  while ((scn = elf_nextscn (elf, scn)) != NULL)
     {
       if (gelf_getshdr (scn, &shdr) == NULL)
         continue;
@@ -170,9 +173,10 @@ static gboolean elf_has_symtab (Elf *elf)
   return FALSE;
 }
 
-gboolean is_elf_file (const char *path,
-                      gboolean *is_shared,
-                      gboolean *is_stripped)
+gboolean
+is_elf_file (const char *path,
+             gboolean   *is_shared,
+             gboolean   *is_stripped)
 {
   g_autofree char *filename = g_path_get_basename (path);
   struct stat stbuf;
@@ -189,7 +193,7 @@ gboolean is_elf_file (const char *path,
     {
       glnx_fd_close int fd = -1;
 
-      fd = open (path, O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
+      fd = open (path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
       if (fd >= 0)
         {
           Elf *elf;
@@ -222,7 +226,8 @@ gboolean is_elf_file (const char *path,
   return FALSE;
 }
 
-gboolean directory_is_empty (const char *path)
+gboolean
+directory_is_empty (const char *path)
 {
   GDir *dir;
   gboolean empty;
@@ -239,10 +244,10 @@ gboolean directory_is_empty (const char *path)
 }
 
 static gboolean
-migrate_locale_dir (GFile *source_dir,
-                    GFile *separate_dir,
+migrate_locale_dir (GFile      *source_dir,
+                    GFile      *separate_dir,
                     const char *subdir,
-                    GError **error)
+                    GError    **error)
 {
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   GFileInfo *next;
@@ -315,7 +320,7 @@ migrate_locale_dir (GFile *source_dir,
 }
 
 gboolean
-builder_migrate_locale_dirs (GFile *root_dir,
+builder_migrate_locale_dirs (GFile   *root_dir,
                              GError **error)
 {
   g_autoptr(GFile) separate_dir = NULL;
@@ -366,81 +371,82 @@ builder_migrate_locale_dirs (GFile *root_dir,
 #define DW_FORM_ref_sig8 0x20
 
 /* keep uptodate with changes to debug_sections */
-#define DEBUG_INFO      0
-#define DEBUG_ABBREV    1
-#define DEBUG_LINE      2
-#define DEBUG_ARANGES   3
-#define DEBUG_PUBNAMES  4
-#define DEBUG_PUBTYPES  5
-#define DEBUG_MACINFO   6
-#define DEBUG_LOC       7
-#define DEBUG_STR       8
-#define DEBUG_FRAME     9
-#define DEBUG_RANGES    10
-#define DEBUG_TYPES     11
-#define DEBUG_MACRO     12
-#define DEBUG_GDB_SCRIPT        13
+#define DEBUG_INFO 0
+#define DEBUG_ABBREV 1
+#define DEBUG_LINE 2
+#define DEBUG_ARANGES 3
+#define DEBUG_PUBNAMES 4
+#define DEBUG_PUBTYPES 5
+#define DEBUG_MACINFO 6
+#define DEBUG_LOC 7
+#define DEBUG_STR 8
+#define DEBUG_FRAME 9
+#define DEBUG_RANGES 10
+#define DEBUG_TYPES 11
+#define DEBUG_MACRO 12
+#define DEBUG_GDB_SCRIPT 13
 #define NUM_DEBUG_SECTIIONS 14
 
 static const char * debug_section_names[] = {
-    ".debug_info",
-    ".debug_abbrev",
-    ".debug_line",
-    ".debug_aranges",
-    ".debug_pubnames",
-    ".debug_pubtypes",
-    ".debug_macinfo",
-    ".debug_loc",
-    ".debug_str",
-    ".debug_frame",
-    ".debug_ranges",
-    ".debug_types",
-    ".debug_macro",
-    ".debug_gdb_scripts",
+  ".debug_info",
+  ".debug_abbrev",
+  ".debug_line",
+  ".debug_aranges",
+  ".debug_pubnames",
+  ".debug_pubtypes",
+  ".debug_macinfo",
+  ".debug_loc",
+  ".debug_str",
+  ".debug_frame",
+  ".debug_ranges",
+  ".debug_types",
+  ".debug_macro",
+  ".debug_gdb_scripts",
 };
 
 
-typedef struct  {
+typedef struct
+{
   unsigned char *data;
-  Elf_Data *elf_data;
-  size_t size;
-  int sec, relsec;
+  Elf_Data      *elf_data;
+  size_t         size;
+  int            sec, relsec;
 } debug_section_t;
 
 typedef struct
 {
-  Elf *elf;
-  GElf_Ehdr ehdr;
-  Elf_Scn **scns;
-  const char *filename;
-  int lastscn;
+  Elf            *elf;
+  GElf_Ehdr       ehdr;
+  Elf_Scn       **scns;
+  const char     *filename;
+  int             lastscn;
   debug_section_t debug_sections[NUM_DEBUG_SECTIIONS];
-  GElf_Shdr *shdr;
+  GElf_Shdr      *shdr;
 } DebuginfoData;
 
 typedef struct
 {
   unsigned char *ptr;
-  uint32_t addend;
+  uint32_t       addend;
 } REL;
 
 #define read_uleb128(ptr) ({            \
-  unsigned int ret = 0;                 \
-  unsigned int c;                       \
-  int shift = 0;                        \
-  do                                    \
+    unsigned int ret = 0;                 \
+    unsigned int c;                       \
+    int shift = 0;                        \
+    do                                    \
     {                                   \
       c = *ptr++;                       \
       ret |= (c & 0x7f) << shift;       \
       shift += 7;                       \
     } while (c & 0x80);                 \
                                         \
-  if (shift >= 35)                      \
-    ret = UINT_MAX;                     \
-  ret;                                  \
-})
+    if (shift >= 35)                      \
+      ret = UINT_MAX;                     \
+    ret;                                  \
+  })
 
-static uint16_t (*do_read_16) (unsigned char *ptr);
+static uint16_t (*do_read_16)(unsigned char *ptr);
 static uint32_t (*do_read_32) (unsigned char *ptr);
 
 static int ptr_size;
@@ -473,51 +479,53 @@ buf_read_ube32 (unsigned char *data)
 #define read_1(ptr) *ptr++
 
 #define read_16(ptr) ({                                 \
-  uint16_t ret = do_read_16 (ptr);                      \
-  ptr += 2;                                             \
-  ret;                                                  \
-})
+    uint16_t ret = do_read_16 (ptr);                      \
+    ptr += 2;                                             \
+    ret;                                                  \
+  })
 
 #define read_32(ptr) ({                                 \
-  uint32_t ret = do_read_32 (ptr);                      \
-  ptr += 4;                                             \
-  ret;                                                  \
-})
+    uint32_t ret = do_read_32 (ptr);                      \
+    ptr += 4;                                             \
+    ret;                                                  \
+  })
 
 REL *relptr, *relend;
 int reltype;
 
 #define do_read_32_relocated(ptr) ({                    \
-  uint32_t dret = do_read_32 (ptr);                     \
-  if (relptr)                                           \
+    uint32_t dret = do_read_32 (ptr);                     \
+    if (relptr)                                           \
     {                                                   \
       while (relptr < relend && relptr->ptr < ptr)      \
         ++relptr;                                       \
       if (relptr < relend && relptr->ptr == ptr)        \
-        {                                               \
-          if (reltype == SHT_REL)                       \
-            dret += relptr->addend;                     \
-          else                                          \
-            dret = relptr->addend;                      \
-        }                                               \
+      {                                               \
+        if (reltype == SHT_REL)                       \
+          dret += relptr->addend;                     \
+        else                                          \
+          dret = relptr->addend;                      \
+      }                                               \
     }                                                   \
-  dret;                                                 \
-})
+    dret;                                                 \
+  })
 
 #define read_32_relocated(ptr) ({                       \
-  uint32_t ret = do_read_32_relocated (ptr);            \
-  ptr += 4;                                             \
-  ret;                                                  \
-})
+    uint32_t ret = do_read_32_relocated (ptr);            \
+    ptr += 4;                                             \
+    ret;                                                  \
+  })
 
-struct abbrev_attr {
+struct abbrev_attr
+{
   unsigned int attr;
   unsigned int form;
 };
 
-struct abbrev_tag {
-  unsigned int tag;
-  int nattr;
+struct abbrev_tag
+{
+  unsigned int       tag;
+  int                nattr;
   struct abbrev_attr attr[0];
 };
 
@@ -556,13 +564,13 @@ read_abbrev (DebuginfoData *data, unsigned char *ptr)
         }
       if (read_uleb128 (ptr) != 0)
         g_warning ("%s: DWARF abbreviation does not end with 2 zeros", data->filename);
-      g_hash_table_insert (h, GINT_TO_POINTER(entry), t);
+      g_hash_table_insert (h, GINT_TO_POINTER (entry), t);
     }
 
   return h;
 }
 
-#define IS_DIR_SEPARATOR(c) ((c)=='/')
+#define IS_DIR_SEPARATOR(c) ((c) == '/')
 
 static char *
 canonicalize_path (const char *s, char *d)
@@ -574,10 +582,8 @@ canonicalize_path (const char *s, char *d)
     {
       *d++ = *s++;
       if (IS_DIR_SEPARATOR (*s) && !IS_DIR_SEPARATOR (s[1]))
-        {
-          /* Special case for "//foo" meaning a Posix namespace  escape.  */
-          *d++ = *s++;
-        }
+        /* Special case for "//foo" meaning a Posix namespace  escape.  */
+        *d++ = *s++;
       while (IS_DIR_SEPARATOR (*s))
         s++;
     }
@@ -594,16 +600,15 @@ canonicalize_path (const char *s, char *d)
             while (IS_DIR_SEPARATOR (*s))
               ++s;
         }
-
-      else if (s[0] == '.' && s[1] == '.'
-               && (s[2] == 0 || IS_DIR_SEPARATOR (s[2])))
+      else if (s[0] == '.' && s[1] == '.' &&
+               (s[2] == 0 || IS_DIR_SEPARATOR (s[2])))
         {
           char *pre = d - 1; /* includes slash */
           while (droot < pre && IS_DIR_SEPARATOR (*pre))
             pre--;
-          if (droot <= pre && ! IS_DIR_SEPARATOR (*pre))
+          if (droot <= pre && !IS_DIR_SEPARATOR (*pre))
             {
-              while (droot < pre && ! IS_DIR_SEPARATOR (*pre))
+              while (droot < pre && !IS_DIR_SEPARATOR (*pre))
                 pre--;
               /* pre now points to the slash */
               if (droot < pre)
@@ -630,7 +635,7 @@ canonicalize_path (const char *s, char *d)
         }
       else
         {
-          while (*s && ! IS_DIR_SEPARATOR (*s))
+          while (*s && !IS_DIR_SEPARATOR (*s))
             *d++ = *s++;
         }
 
@@ -692,7 +697,7 @@ handle_dwarf2_line (DebuginfoData *data, uint32_t off, char *comp_dir, GHashTabl
   value = 1;
   while (*ptr != 0)
     {
-      ptr = (unsigned char *) strchr ((char *)ptr, 0) + 1;
+      ptr = (unsigned char *) strchr ((char *) ptr, 0) + 1;
       ++value;
     }
 
@@ -703,7 +708,7 @@ handle_dwarf2_line (DebuginfoData *data, uint32_t off, char *comp_dir, GHashTabl
   while (*ptr != 0)
     {
       dirt[dirt_cnt++] = ptr;
-      ptr = (unsigned char *) strchr ((char *)ptr, 0) + 1;
+      ptr = (unsigned char *) strchr ((char *) ptr, 0) + 1;
     }
   ptr++;
 
@@ -714,17 +719,19 @@ handle_dwarf2_line (DebuginfoData *data, uint32_t off, char *comp_dir, GHashTabl
       size_t file_len, dir_len;
 
       file = (char *) ptr;
-      ptr = (unsigned char *) strchr ((char *)ptr, 0) + 1;
+      ptr = (unsigned char *) strchr ((char *) ptr, 0) + 1;
       value = read_uleb128 (ptr);
 
       if (value >= dirt_cnt)
         return xdg_app_fail (error, "%s: Wrong directory table index %u",  data->filename, value);
 
       file_len = strlen (file);
-      dir_len = strlen ((char *)dirt[value]);
+      dir_len = strlen ((char *) dirt[value]);
       s = g_malloc (comp_dir_len + 1 + file_len + 1 + dir_len + 1);
       if (*file == '/')
-        memcpy (s, file, file_len + 1);
+        {
+          memcpy (s, file, file_len + 1);
+        }
       else if (*dirt[value] == '/')
         {
           memcpy (s, dirt[value], dir_len);
@@ -749,8 +756,8 @@ handle_dwarf2_line (DebuginfoData *data, uint32_t off, char *comp_dir, GHashTabl
       if (s)
         g_hash_table_insert (files, s, NULL);
 
-      (void)read_uleb128 (ptr);
-      (void)read_uleb128 (ptr);
+      (void) read_uleb128 (ptr);
+      (void) read_uleb128 (ptr);
     }
   ++ptr;
 
@@ -777,8 +784,8 @@ handle_attributes (DebuginfoData *data, unsigned char *ptr, struct abbrev_tag *t
         {
           if (t->attr[i].attr == DW_AT_stmt_list)
             {
-              if (form == DW_FORM_data4
-                  || form == DW_FORM_sec_offset)
+              if (form == DW_FORM_data4 ||
+                  form == DW_FORM_sec_offset)
                 {
                   list_offs = do_read_32_relocated (ptr);
                   found_list_offs = 1;
@@ -790,7 +797,7 @@ handle_attributes (DebuginfoData *data, unsigned char *ptr, struct abbrev_tag *t
               if (form == DW_FORM_string)
                 {
                   g_free (comp_dir);
-                  comp_dir = g_strdup ((char *)ptr);
+                  comp_dir = g_strdup ((char *) ptr);
                 }
               else if (form == DW_FORM_strp &&
                        data->debug_sections[DEBUG_STR].data)
@@ -798,22 +805,22 @@ handle_attributes (DebuginfoData *data, unsigned char *ptr, struct abbrev_tag *t
                   char *dir;
 
                   dir = (char *) data->debug_sections[DEBUG_STR].data
-                    + do_read_32_relocated (ptr);
+                        + do_read_32_relocated (ptr);
 
                   g_free (comp_dir);
                   comp_dir = g_strdup (dir);
                 }
             }
-          else if ((t->tag == DW_TAG_compile_unit
-                    || t->tag == DW_TAG_partial_unit)
-                   && t->attr[i].attr == DW_AT_name
-                   && form == DW_FORM_strp
-                   && data->debug_sections[DEBUG_STR].data)
+          else if ((t->tag == DW_TAG_compile_unit ||
+                    t->tag == DW_TAG_partial_unit) &&
+                   t->attr[i].attr == DW_AT_name &&
+                   form == DW_FORM_strp &&
+                   data->debug_sections[DEBUG_STR].data)
             {
               char *name;
 
               name = (char *) data->debug_sections[DEBUG_STR].data
-                + do_read_32_relocated (ptr);
+                     + do_read_32_relocated (ptr);
               if (*name == '/' && comp_dir == NULL)
                 {
                   char *enddir = strrchr (name, '/');
@@ -822,10 +829,12 @@ handle_attributes (DebuginfoData *data, unsigned char *ptr, struct abbrev_tag *t
                     {
                       comp_dir = g_malloc (enddir - name + 1);
                       memcpy (comp_dir, name, enddir - name);
-                      comp_dir [enddir - name] = '\0';
+                      comp_dir[enddir - name] = '\0';
                     }
                   else
-                    comp_dir = g_strdup ("/");
+                    {
+                      comp_dir = g_strdup ("/");
+                    }
                 }
 
             }
@@ -838,61 +847,76 @@ handle_attributes (DebuginfoData *data, unsigned char *ptr, struct abbrev_tag *t
               else
                 ptr += 4;
               break;
+
             case DW_FORM_flag_present:
               break;
+
             case DW_FORM_addr:
               ptr += ptr_size;
               break;
+
             case DW_FORM_ref1:
             case DW_FORM_flag:
             case DW_FORM_data1:
               ++ptr;
               break;
+
             case DW_FORM_ref2:
             case DW_FORM_data2:
               ptr += 2;
               break;
+
             case DW_FORM_ref4:
             case DW_FORM_data4:
             case DW_FORM_sec_offset:
               ptr += 4;
               break;
+
             case DW_FORM_ref8:
             case DW_FORM_data8:
             case DW_FORM_ref_sig8:
               ptr += 8;
               break;
+
             case DW_FORM_sdata:
             case DW_FORM_ref_udata:
             case DW_FORM_udata:
-              (void)read_uleb128 (ptr);
+              (void) read_uleb128 (ptr);
               break;
+
             case DW_FORM_strp:
               ptr += 4;
               break;
+
             case DW_FORM_string:
-              ptr = (unsigned char *) strchr ((char *)ptr, '\0') + 1;
+              ptr = (unsigned char *) strchr ((char *) ptr, '\0') + 1;
               break;
+
             case DW_FORM_indirect:
               form = read_uleb128 (ptr);
               continue;
+
             case DW_FORM_block1:
               len = *ptr++;
               break;
+
             case DW_FORM_block2:
               len = read_16 (ptr);
               form = DW_FORM_block1;
               break;
+
             case DW_FORM_block4:
               len = read_32 (ptr);
               form = DW_FORM_block1;
               break;
+
             case DW_FORM_block:
             case DW_FORM_exprloc:
               len = read_uleb128 (ptr);
               form = DW_FORM_block1;
               g_assert (len < UINT_MAX);
               break;
+
             default:
               g_warning ("%s: Unknown DWARF DW_FORM_%d", data->filename, form);
               return NULL;
@@ -953,7 +977,9 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
       do_read_32 = buf_read_ube32;
     }
   else
-    return xdg_app_fail (0, 0, "%s: Wrong ELF data enconding", data->filename);
+    {
+      return xdg_app_fail (0, 0, "%s: Wrong ELF data enconding", data->filename);
+    }
 
   debug_sections = data->debug_sections;
 
@@ -1002,7 +1028,9 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
                   rela.r_addend = 0;
                 }
               else
-                gelf_getrela (e_data, ndx, &rela);
+                {
+                  gelf_getrela (e_data, ndx, &rela);
+                }
               gelf_getsym (symdata, ELF64_R_SYM (rela.r_info), &sym);
               /* Relocations against section symbols are uninteresting
                  in REL.  */
@@ -1010,9 +1038,9 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
                 continue;
               /* Only consider relocations against .debug_str, .debug_line
                  and .debug_abbrev.  */
-              if (sym.st_shndx != debug_sections[DEBUG_STR].sec
-                  && sym.st_shndx != debug_sections[DEBUG_LINE].sec
-                  && sym.st_shndx != debug_sections[DEBUG_ABBREV].sec)
+              if (sym.st_shndx != debug_sections[DEBUG_STR].sec &&
+                  sym.st_shndx != debug_sections[DEBUG_LINE].sec &&
+                  sym.st_shndx != debug_sections[DEBUG_ABBREV].sec)
                 continue;
               rela.r_addend += sym.st_value;
               rtype = ELF64_R_TYPE (rela.r_info);
@@ -1024,43 +1052,52 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
                   if (rtype != R_SPARC_32 && rtype != R_SPARC_UA32)
                     goto fail;
                   break;
+
                 case EM_386:
                   if (rtype != R_386_32)
                     goto fail;
                   break;
+
                 case EM_PPC:
                 case EM_PPC64:
                   if (rtype != R_PPC_ADDR32 && rtype != R_PPC_UADDR32)
                     goto fail;
                   break;
+
                 case EM_S390:
                   if (rtype != R_390_32)
                     goto fail;
                   break;
+
                 case EM_IA_64:
                   if (rtype != R_IA64_SECREL32LSB)
                     goto fail;
                   break;
+
                 case EM_X86_64:
                   if (rtype != R_X86_64_32)
                     goto fail;
                   break;
+
                 case EM_ALPHA:
                   if (rtype != R_ALPHA_REFLONG)
                     goto fail;
                   break;
+
 #if defined(EM_AARCH64) && defined(R_AARCH64_ABS32)
                 case EM_AARCH64:
                   if (rtype != R_AARCH64_ABS32)
                     goto fail;
                   break;
+
 #endif
                 case EM_68K:
                   if (rtype != R_68K_32)
                     goto fail;
                   break;
+
                 default:
-                fail:
+fail:
                   return xdg_app_fail (error, "%s: Unhandled relocation %d in .debug_info section",
                                        data->filename, rtype);
                 }
@@ -1076,7 +1113,9 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
               relend = NULL;
             }
           else
-            qsort (relbuf, relend - relbuf, sizeof (REL), rel_cmp);
+            {
+              qsort (relbuf, relend - relbuf, sizeof (REL), rel_cmp);
+            }
         }
 
       ptr = debug_sections[DEBUG_INFO].data;
@@ -1117,7 +1156,9 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
                 return xdg_app_fail (error, "%s: Invalid DWARF pointer size %d", data->filename, ptr_size);
             }
           else if (read_1 (ptr) != ptr_size)
-            return xdg_app_fail (error, "%s: DWARF pointer size differs between CUs", data->filename);
+            {
+              return xdg_app_fail (error, "%s: DWARF pointer size differs between CUs", data->filename);
+            }
 
           abbrev = read_abbrev (data,
                                 debug_sections[DEBUG_ABBREV].data + value);
@@ -1127,9 +1168,11 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
               guint entry = read_uleb128 (ptr);
               if (entry == 0)
                 continue;
-              t = g_hash_table_lookup (abbrev, GINT_TO_POINTER(entry));
+              t = g_hash_table_lookup (abbrev, GINT_TO_POINTER (entry));
               if (t == NULL)
-                g_warning ("%s: Could not find DWARF abbreviation %d", data->filename, entry);
+                {
+                  g_warning ("%s: Could not find DWARF abbreviation %d", data->filename, entry);
+                }
               else
                 {
                   ptr = handle_attributes (data, ptr, t, files, error);
@@ -1155,9 +1198,9 @@ strptr (Elf_Scn **scns, GElf_Shdr *shdr, int sec, off_t offset)
       data = NULL;
       while ((data = elf_rawdata (scn, data)) != NULL)
         {
-          if (data->d_buf
-              && offset >= data->d_off
-              && offset < data->d_off + data->d_size)
+          if (data->d_buf &&
+              offset >= data->d_off &&
+              offset < data->d_off + data->d_size)
             return (const char *) data->d_buf + (offset - data->d_off);
         }
     }
@@ -1176,6 +1219,7 @@ builder_get_debuginfo_file_references (const char *filename, GError **error)
   g_autofree GElf_Shdr *shdr = NULL;
   g_autofree Elf_Scn **scns = NULL;
   debug_section_t *debug_sections;
+
   g_autoptr(GHashTable) files = NULL;
   char **res;
 
@@ -1232,7 +1276,7 @@ builder_get_debuginfo_file_references (const char *filename, GError **error)
   debug_sections = data.debug_sections;
   for (i = 1; i < ehdr.e_shnum; ++i)
     {
-      if (! (shdr[i].sh_flags & (SHF_ALLOC | SHF_WRITE | SHF_EXECINSTR)) && shdr[i].sh_size)
+      if (!(shdr[i].sh_flags & (SHF_ALLOC | SHF_WRITE | SHF_EXECINSTR)) && shdr[i].sh_size)
         {
           const char *name = strptr (scns, shdr, ehdr.e_shstrndx, shdr[i].sh_name);
 
@@ -1287,7 +1331,7 @@ builder_get_debuginfo_file_references (const char *filename, GError **error)
   if (elf_end (elf) < 0)
     g_warning ("elf_end failed: %s\n", elf_errmsg (elf_errno ()));
 
-  res = (char **)g_hash_table_get_keys_as_array (files, NULL);
+  res = (char **) g_hash_table_get_keys_as_array (files, NULL);
   g_hash_table_steal_all (files);
   return res;
 }

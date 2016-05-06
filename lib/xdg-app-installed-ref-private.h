@@ -18,7 +18,7 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
@@ -28,13 +28,13 @@
 #include <xdg-app-installed-ref.h>
 #include <xdg-app-dir.h>
 
-XdgAppInstalledRef *xdg_app_installed_ref_new (const char *full_ref,
-                                               const char *commit,
-                                               const char *latest_commit,
-                                               const char *origin,
+XdgAppInstalledRef *xdg_app_installed_ref_new (const char  *full_ref,
+                                               const char  *commit,
+                                               const char  *latest_commit,
+                                               const char  *origin,
                                                const char **subpaths,
-                                               const char *deploy_dir,
-                                               guint64     installed_size,
-                                               gboolean    current);
+                                               const char  *deploy_dir,
+                                               guint64      installed_size,
+                                               gboolean     current);
 
 #endif /* __XDG_APP_INSTALLED_REF_PRIVATE_H__ */

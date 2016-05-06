@@ -50,7 +50,7 @@ typedef struct _XdgAppRemotePrivate XdgAppRemotePrivate;
 
 struct _XdgAppRemotePrivate
 {
-  char *name;
+  char      *name;
   XdgAppDir *dir;
 };
 
@@ -75,10 +75,10 @@ xdg_app_remote_finalize (GObject *object)
 }
 
 static void
-xdg_app_remote_set_property (GObject         *object,
-                             guint            prop_id,
-                             const GValue    *value,
-                             GParamSpec      *pspec)
+xdg_app_remote_set_property (GObject      *object,
+                             guint         prop_id,
+                             const GValue *value,
+                             GParamSpec   *pspec)
 {
   XdgAppRemote *self = XDG_APP_REMOTE (object);
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
@@ -97,10 +97,10 @@ xdg_app_remote_set_property (GObject         *object,
 }
 
 static void
-xdg_app_remote_get_property (GObject         *object,
-                             guint            prop_id,
-                             GValue          *value,
-                             GParamSpec      *pspec)
+xdg_app_remote_get_property (GObject    *object,
+                             guint       prop_id,
+                             GValue     *value,
+                             GParamSpec *pspec)
 {
   XdgAppRemote *self = XDG_APP_REMOTE (object);
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
@@ -168,7 +168,7 @@ xdg_app_remote_get_name (XdgAppRemote *self)
  **/
 GFile *
 xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
-                                  const char *arch)
+                                  const char   *arch)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
   g_autofree char *subdir = NULL;
@@ -193,7 +193,7 @@ xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
  **/
 GFile *
 xdg_app_remote_get_appstream_timestamp (XdgAppRemote *self,
-                                        const char *arch)
+                                        const char   *arch)
 {
   XdgAppRemotePrivate *priv = xdg_app_remote_get_instance_private (self);
   g_autofree char *subdir = NULL;
@@ -313,7 +313,7 @@ xdg_app_remote_get_gpg_verify (XdgAppRemote *self)
 }
 
 XdgAppRemote *
-xdg_app_remote_new (XdgAppDir *dir,
+xdg_app_remote_new (XdgAppDir  *dir,
                     const char *name)
 {
   XdgAppRemotePrivate *priv;

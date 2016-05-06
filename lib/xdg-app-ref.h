@@ -18,7 +18,7 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
@@ -29,23 +29,25 @@ typedef struct _XdgAppRef XdgAppRef;
 
 #include <glib-object.h>
 
-#define XDG_APP_TYPE_REF xdg_app_ref_get_type()
+#define XDG_APP_TYPE_REF xdg_app_ref_get_type ()
 #define XDG_APP_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_REF, XdgAppRef))
 #define XDG_APP_IS_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_REF))
 
 XDG_APP_EXTERN GType xdg_app_ref_get_type (void);
 
-struct _XdgAppRef {
+struct _XdgAppRef
+{
   GObject parent;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 } XdgAppRefClass;
 
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppRef, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppRef, g_object_unref)
 #endif
 
 /**
@@ -60,13 +62,13 @@ typedef enum {
   XDG_APP_REF_KIND_RUNTIME,
 } XdgAppRefKind;
 
-XDG_APP_EXTERN const char *  xdg_app_ref_get_name    (XdgAppRef      *self);
-XDG_APP_EXTERN const char *  xdg_app_ref_get_arch    (XdgAppRef      *self);
-XDG_APP_EXTERN const char *  xdg_app_ref_get_branch (XdgAppRef      *self);
-XDG_APP_EXTERN const char *  xdg_app_ref_get_commit  (XdgAppRef      *self);
-XDG_APP_EXTERN XdgAppRefKind xdg_app_ref_get_kind    (XdgAppRef      *self);
-XDG_APP_EXTERN char *        xdg_app_ref_format_ref  (XdgAppRef      *self);
-XDG_APP_EXTERN XdgAppRef *   xdg_app_ref_parse       (const char     *ref,
-                                                      GError        **error);
+XDG_APP_EXTERN const char *  xdg_app_ref_get_name (XdgAppRef *self);
+XDG_APP_EXTERN const char *  xdg_app_ref_get_arch (XdgAppRef *self);
+XDG_APP_EXTERN const char *  xdg_app_ref_get_branch (XdgAppRef *self);
+XDG_APP_EXTERN const char *  xdg_app_ref_get_commit (XdgAppRef *self);
+XDG_APP_EXTERN XdgAppRefKind xdg_app_ref_get_kind (XdgAppRef *self);
+XDG_APP_EXTERN char *        xdg_app_ref_format_ref (XdgAppRef *self);
+XDG_APP_EXTERN XdgAppRef *   xdg_app_ref_parse (const char *ref,
+                                                GError    **error);
 
 #endif /* __XDG_APP_REF_H__ */

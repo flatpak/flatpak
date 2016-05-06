@@ -16,6 +16,7 @@ static XdgAppDb *
 create_test_db (gboolean serialized)
 {
   XdgAppDb *db;
+
   g_autoptr(XdgAppDbEntry) entry1 = NULL;
   g_autoptr(XdgAppDbEntry) entry2 = NULL;
   g_autoptr(XdgAppDbEntry) entry3 = NULL;
@@ -73,8 +74,8 @@ verify_test_db (XdgAppDb *db)
 
   ids = xdg_app_db_list_ids (db);
   g_assert (g_strv_length (ids) == 2);
-  g_assert (g_strv_contains ((const char **)ids, "foo"));
-  g_assert (g_strv_contains ((const char **)ids, "bar"));
+  g_assert (g_strv_contains ((const char **) ids, "foo"));
+  g_assert (g_strv_contains ((const char **) ids, "bar"));
 
   {
     g_autoptr(XdgAppDbEntry) entry = NULL;
@@ -91,24 +92,24 @@ verify_test_db (XdgAppDb *db)
     g_assert_cmpstr (g_variant_get_type_string (data1), ==, "s");
     g_assert_cmpstr (g_variant_get_string (data1, NULL), ==, "foo-data");
     apps1 = xdg_app_db_entry_list_apps (entry);
-    g_assert (g_strv_length ((char **)apps1) == 3);
+    g_assert (g_strv_length ((char **) apps1) == 3);
     g_assert (g_strv_contains (apps1, "org.test.app"));
     g_assert (g_strv_contains (apps1, "org.test.bapp"));
     g_assert (g_strv_contains (apps1, "org.test.capp"));
     permissions1 = xdg_app_db_entry_list_permissions (entry, "org.test.app");
-    g_assert (g_strv_length ((char **)permissions1) == 2);
+    g_assert (g_strv_length ((char **) permissions1) == 2);
     g_assert (g_strv_contains (permissions1, "read"));
     g_assert (g_strv_contains (permissions1, "write"));
     permissions2 = xdg_app_db_entry_list_permissions (entry, "org.test.bapp");
-    g_assert (g_strv_length ((char **)permissions2) == 1);
+    g_assert (g_strv_length ((char **) permissions2) == 1);
     g_assert (g_strv_contains (permissions2, "read"));
     permissions3 = xdg_app_db_entry_list_permissions (entry, "org.test.capp");
-    g_assert (g_strv_length ((char **)permissions3) == 2);
+    g_assert (g_strv_length ((char **) permissions3) == 2);
     g_assert (g_strv_contains (permissions3, "read"));
     g_assert (g_strv_contains (permissions3, "write"));
     permissions4 = xdg_app_db_entry_list_permissions (entry, "org.test.noapp");
     g_assert (permissions4 != NULL);
-    g_assert (g_strv_length ((char **)permissions4) == 0);
+    g_assert (g_strv_length ((char **) permissions4) == 0);
   }
 
   {
@@ -124,14 +125,14 @@ verify_test_db (XdgAppDb *db)
     g_assert_cmpstr (g_variant_get_type_string (data2), ==, "s");
     g_assert_cmpstr (g_variant_get_string (data2, NULL), ==, "bar-data");
     apps2 = xdg_app_db_entry_list_apps (entry);
-    g_assert (g_strv_length ((char **)apps2) == 2);
+    g_assert (g_strv_length ((char **) apps2) == 2);
     g_assert (g_strv_contains (apps2, "org.test.app"));
     g_assert (g_strv_contains (apps2, "org.test.dapp"));
     permissions5 = xdg_app_db_entry_list_permissions (entry, "org.test.app");
-    g_assert (g_strv_length ((char **)permissions5) == 1);
+    g_assert (g_strv_length ((char **) permissions5) == 1);
     g_assert (g_strv_contains (permissions5, "read"));
     permissions6 = xdg_app_db_entry_list_permissions (entry, "org.test.dapp");
-    g_assert (g_strv_length ((char **)permissions6) == 1);
+    g_assert (g_strv_length ((char **) permissions6) == 1);
     g_assert (g_strv_contains (permissions6, "write"));
   }
 
@@ -143,10 +144,10 @@ verify_test_db (XdgAppDb *db)
 
   all_apps = xdg_app_db_list_apps (db);
   g_assert (g_strv_length (all_apps) == 4);
-  g_assert (g_strv_contains ((const char **)all_apps, "org.test.app"));
-  g_assert (g_strv_contains ((const char **)all_apps, "org.test.bapp"));
-  g_assert (g_strv_contains ((const char **)all_apps, "org.test.capp"));
-  g_assert (g_strv_contains ((const char **)all_apps, "org.test.dapp"));
+  g_assert (g_strv_contains ((const char **) all_apps, "org.test.app"));
+  g_assert (g_strv_contains ((const char **) all_apps, "org.test.bapp"));
+  g_assert (g_strv_contains ((const char **) all_apps, "org.test.capp"));
+  g_assert (g_strv_contains ((const char **) all_apps, "org.test.dapp"));
 }
 
 static void
@@ -273,32 +274,32 @@ test_modify (void)
 
     entry5 = xdg_app_db_lookup (db, "foo");
     permissions1 = xdg_app_db_entry_list_permissions (entry5, "org.test.app");
-    g_assert (g_strv_length ((char **)permissions1) == 3);
+    g_assert (g_strv_length ((char **) permissions1) == 3);
     g_assert (g_strv_contains (permissions1, "read"));
     g_assert (g_strv_contains (permissions1, "write"));
     g_assert (g_strv_contains (permissions1, "execute"));
 
     entry6 = xdg_app_db_lookup (db, "bar");
     permissions2 = xdg_app_db_entry_list_permissions (entry6, "org.test.dapp");
-    g_assert (g_strv_length ((char **)permissions2) == 0);
+    g_assert (g_strv_length ((char **) permissions2) == 0);
 
     entry7 = xdg_app_db_lookup (db, "gazonk");
     permissions3 = xdg_app_db_entry_list_permissions (entry7, "org.test.eapp");
-    g_assert (g_strv_length ((char **)permissions3) == 3);
+    g_assert (g_strv_length ((char **) permissions3) == 3);
     g_assert (g_strv_contains (permissions3, "read"));
     g_assert (g_strv_contains (permissions3, "write"));
     g_assert (g_strv_contains (permissions3, "execute"));
 
     apps2 = xdg_app_db_entry_list_apps (entry6);
-    g_assert_cmpint (g_strv_length ((char **)apps2), ==, 1);
+    g_assert_cmpint (g_strv_length ((char **) apps2), ==, 1);
     g_assert (g_strv_contains (apps2, "org.test.app"));
 
     apps3 = xdg_app_db_list_apps (db);
     g_assert_cmpint (g_strv_length (apps3), ==, 4);
-    g_assert (g_strv_contains ((const char **)apps3, "org.test.app"));
-    g_assert (g_strv_contains ((const char **)apps3, "org.test.bapp"));
-    g_assert (g_strv_contains ((const char **)apps3, "org.test.capp"));
-    g_assert (g_strv_contains ((const char **)apps3, "org.test.eapp"));
+    g_assert (g_strv_contains ((const char **) apps3, "org.test.app"));
+    g_assert (g_strv_contains ((const char **) apps3, "org.test.bapp"));
+    g_assert (g_strv_contains ((const char **) apps3, "org.test.capp"));
+    g_assert (g_strv_contains ((const char **) apps3, "org.test.eapp"));
   }
 
   xdg_app_db_update (db);
@@ -316,32 +317,32 @@ test_modify (void)
 
     entry5 = xdg_app_db_lookup (db, "foo");
     permissions1 = xdg_app_db_entry_list_permissions (entry5, "org.test.app");
-    g_assert (g_strv_length ((char **)permissions1) == 3);
+    g_assert (g_strv_length ((char **) permissions1) == 3);
     g_assert (g_strv_contains (permissions1, "read"));
     g_assert (g_strv_contains (permissions1, "write"));
     g_assert (g_strv_contains (permissions1, "execute"));
 
     entry6 = xdg_app_db_lookup (db, "bar");
     permissions2 = xdg_app_db_entry_list_permissions (entry6, "org.test.dapp");
-    g_assert (g_strv_length ((char **)permissions2) == 0);
+    g_assert (g_strv_length ((char **) permissions2) == 0);
 
     entry7 = xdg_app_db_lookup (db, "gazonk");
     permissions3 = xdg_app_db_entry_list_permissions (entry7, "org.test.eapp");
-    g_assert (g_strv_length ((char **)permissions3) == 3);
+    g_assert (g_strv_length ((char **) permissions3) == 3);
     g_assert (g_strv_contains (permissions3, "read"));
     g_assert (g_strv_contains (permissions3, "write"));
     g_assert (g_strv_contains (permissions3, "execute"));
 
     apps2 = xdg_app_db_entry_list_apps (entry6);
-    g_assert_cmpint (g_strv_length ((char **)apps2), ==, 1);
+    g_assert_cmpint (g_strv_length ((char **) apps2), ==, 1);
     g_assert (g_strv_contains (apps2, "org.test.app"));
 
     apps3 = xdg_app_db_list_apps (db);
     g_assert_cmpint (g_strv_length (apps3), ==, 4);
-    g_assert (g_strv_contains ((const char **)apps3, "org.test.app"));
-    g_assert (g_strv_contains ((const char **)apps3, "org.test.bapp"));
-    g_assert (g_strv_contains ((const char **)apps3, "org.test.capp"));
-    g_assert (g_strv_contains ((const char **)apps3, "org.test.eapp"));
+    g_assert (g_strv_contains ((const char **) apps3, "org.test.app"));
+    g_assert (g_strv_contains ((const char **) apps3, "org.test.bapp"));
+    g_assert (g_strv_contains ((const char **) apps3, "org.test.capp"));
+    g_assert (g_strv_contains ((const char **) apps3, "org.test.eapp"));
   }
 }
 

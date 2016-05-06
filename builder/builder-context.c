@@ -31,30 +31,32 @@
 #include "xdg-app-utils.h"
 #include "builder-context.h"
 
-struct BuilderContext {
-  GObject parent;
+struct BuilderContext
+{
+  GObject         parent;
 
-  GFile *app_dir;
-  GFile *base_dir;
-  SoupSession *soup_session;
-  char *arch;
+  GFile          *app_dir;
+  GFile          *base_dir;
+  SoupSession    *soup_session;
+  char           *arch;
 
-  GFile *download_dir;
-  GFile *state_dir;
-  GFile *build_dir;
-  GFile *cache_dir;
-  GFile *ccache_dir;
+  GFile          *download_dir;
+  GFile          *state_dir;
+  GFile          *build_dir;
+  GFile          *cache_dir;
+  GFile          *ccache_dir;
 
   BuilderOptions *options;
-  gboolean keep_build_dirs;
-  char **cleanup;
-  char **cleanup_platform;
-  gboolean use_ccache;
-  gboolean build_runtime;
-  gboolean separate_locales;
+  gboolean        keep_build_dirs;
+  char          **cleanup;
+  char          **cleanup_platform;
+  gboolean        use_ccache;
+  gboolean        build_runtime;
+  gboolean        separate_locales;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 } BuilderContextClass;
 
@@ -71,7 +73,7 @@ enum {
 static void
 builder_context_finalize (GObject *object)
 {
-  BuilderContext *self = (BuilderContext *)object;
+  BuilderContext *self = (BuilderContext *) object;
 
   g_clear_object (&self->app_dir);
   g_clear_object (&self->base_dir);
@@ -86,9 +88,9 @@ builder_context_finalize (GObject *object)
 
 static void
 builder_context_get_property (GObject    *object,
-                                guint       prop_id,
-                                GValue     *value,
-                                GParamSpec *pspec)
+                              guint       prop_id,
+                              GValue     *value,
+                              GParamSpec *pspec)
 {
   BuilderContext *self = BUILDER_CONTEXT (object);
 
@@ -109,9 +111,9 @@ builder_context_get_property (GObject    *object,
 
 static void
 builder_context_set_property (GObject      *object,
-                                guint         prop_id,
-                                const GValue *value,
-                                GParamSpec   *pspec)
+                              guint         prop_id,
+                              const GValue *value,
+                              GParamSpec   *pspec)
 {
   BuilderContext *self = BUILDER_CONTEXT (object);
 
@@ -125,7 +127,7 @@ builder_context_set_property (GObject      *object,
       g_set_object (&self->app_dir, g_value_get_object (value));
       break;
 
-   default:
+    default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
 }
@@ -158,14 +160,14 @@ builder_context_class_init (BuilderContextClass *klass)
                                                         "",
                                                         "",
                                                         G_TYPE_FILE,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
   g_object_class_install_property (object_class,
                                    PROP_BASE_DIR,
                                    g_param_spec_object ("base-dir",
                                                         "",
                                                         "",
                                                         G_TYPE_FILE,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
 }
 
 static void
@@ -174,43 +176,43 @@ builder_context_init (BuilderContext *self)
 }
 
 GFile *
-builder_context_get_base_dir (BuilderContext  *self)
+builder_context_get_base_dir (BuilderContext *self)
 {
   return self->base_dir;
 }
 
 GFile *
-builder_context_get_state_dir (BuilderContext  *self)
+builder_context_get_state_dir (BuilderContext *self)
 {
   return self->state_dir;
 }
 
 GFile *
-builder_context_get_app_dir (BuilderContext  *self)
+builder_context_get_app_dir (BuilderContext *self)
 {
   return self->app_dir;
 }
 
 GFile *
-builder_context_get_download_dir (BuilderContext  *self)
+builder_context_get_download_dir (BuilderContext *self)
 {
   return self->download_dir;
 }
 
 GFile *
-builder_context_get_cache_dir (BuilderContext  *self)
+builder_context_get_cache_dir (BuilderContext *self)
 {
   return self->cache_dir;
 }
 
 GFile *
-builder_context_get_build_dir (BuilderContext  *self)
+builder_context_get_build_dir (BuilderContext *self)
 {
   return self->build_dir;
 }
 
 GFile *
-builder_context_get_ccache_dir (BuilderContext  *self)
+builder_context_get_ccache_dir (BuilderContext *self)
 {
   return self->ccache_dir;
 }
@@ -248,7 +250,7 @@ builder_context_get_arch (BuilderContext *self)
   if (self->arch == NULL)
     self->arch = g_strdup (xdg_app_get_arch ());
 
-  return (const char *)self->arch;
+  return (const char *) self->arch;
 }
 
 void
@@ -275,7 +277,7 @@ builder_context_set_options (BuilderContext *self,
 int
 builder_context_get_n_cpu (BuilderContext *self)
 {
-  return (int)sysconf (_SC_NPROCESSORS_ONLN);
+  return (int) sysconf (_SC_NPROCESSORS_ONLN);
 }
 
 void
@@ -286,31 +288,31 @@ builder_context_set_keep_build_dirs (BuilderContext *self,
 }
 
 void
-builder_context_set_global_cleanup  (BuilderContext  *self,
-                                     const char     **cleanup)
+builder_context_set_global_cleanup (BuilderContext *self,
+                                    const char    **cleanup)
 {
   g_strfreev (self->cleanup);
-  self->cleanup = g_strdupv ((char **)cleanup);
+  self->cleanup = g_strdupv ((char **) cleanup);
 }
 
 const char **
-builder_context_get_global_cleanup  (BuilderContext  *self)
+builder_context_get_global_cleanup (BuilderContext *self)
 {
-  return (const char **)self->cleanup;
+  return (const char **) self->cleanup;
 }
 
 void
-builder_context_set_global_cleanup_platform  (BuilderContext  *self,
-                                              const char     **cleanup)
+builder_context_set_global_cleanup_platform (BuilderContext *self,
+                                             const char    **cleanup)
 {
   g_strfreev (self->cleanup_platform);
-  self->cleanup_platform = g_strdupv ((char **)cleanup);
+  self->cleanup_platform = g_strdupv ((char **) cleanup);
 }
 
 const char **
-builder_context_get_global_cleanup_platform (BuilderContext  *self)
+builder_context_get_global_cleanup_platform (BuilderContext *self)
 {
-  return (const char **)self->cleanup_platform;
+  return (const char **) self->cleanup_platform;
 }
 
 gboolean
@@ -320,34 +322,34 @@ builder_context_get_keep_build_dirs (BuilderContext *self)
 }
 
 gboolean
-builder_context_get_build_runtime (BuilderContext  *self)
+builder_context_get_build_runtime (BuilderContext *self)
 {
   return self->build_runtime;
 }
 
 void
-builder_context_set_build_runtime (BuilderContext  *self,
-                                   gboolean         build_runtime)
+builder_context_set_build_runtime (BuilderContext *self,
+                                   gboolean        build_runtime)
 {
   self->build_runtime = !!build_runtime;
 }
 
 gboolean
-builder_context_get_separate_locales (BuilderContext  *self)
+builder_context_get_separate_locales (BuilderContext *self)
 {
   return self->separate_locales;
 }
 
 void
-builder_context_set_separate_locales (BuilderContext  *self,
-                                      gboolean         separate_locales)
+builder_context_set_separate_locales (BuilderContext *self,
+                                      gboolean        separate_locales)
 {
   self->separate_locales = !!separate_locales;
 }
 
 gboolean
-builder_context_enable_ccache (BuilderContext  *self,
-                               GError         **error)
+builder_context_enable_ccache (BuilderContext *self,
+                               GError        **error)
 {
   g_autofree char *ccache_path = g_file_get_path (self->ccache_dir);
   g_autofree char *ccache_bin_path = g_build_filename (ccache_path, "bin", NULL);
@@ -381,8 +383,8 @@ builder_context_enable_ccache (BuilderContext  *self,
 }
 
 char **
-builder_context_extend_env (BuilderContext  *self,
-                            char           **envp)
+builder_context_extend_env (BuilderContext *self,
+                            char          **envp)
 {
   if (self->use_ccache)
     {

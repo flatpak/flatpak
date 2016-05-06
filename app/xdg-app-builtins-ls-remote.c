@@ -132,13 +132,13 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
         g_hash_table_insert (names, g_strdup (name), g_strdup (checksum));
     }
 
-  keys = (const char **)g_hash_table_get_keys_as_array (names, &n_keys);
-  g_qsort_with_data (keys, n_keys, sizeof(char *), (GCompareDataFunc)xdg_app_strcmp0_ptr, NULL);
+  keys = (const char **) g_hash_table_get_keys_as_array (names, &n_keys);
+  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) xdg_app_strcmp0_ptr, NULL);
 
   for (i = 0; i < n_keys; i++)
     {
       if (opt_show_details)
-        g_print ("%s %.12s\n", keys[i], (char *)g_hash_table_lookup (names, keys[i]));
+        g_print ("%s %.12s\n", keys[i], (char *) g_hash_table_lookup (names, keys[i]));
       else
         g_print ("%s\n", keys[i]);
     }

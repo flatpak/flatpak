@@ -30,60 +30,62 @@ G_BEGIN_DECLS
 
 typedef struct BuilderSource BuilderSource;
 
-#define BUILDER_TYPE_SOURCE             (builder_source_get_type())
+#define BUILDER_TYPE_SOURCE (builder_source_get_type ())
 #define BUILDER_SOURCE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_SOURCE, BuilderSource))
-#define BUILDER_SOURCE_CLASS(klass)	(G_TYPE_CHECK_CLASS_CAST ((klass), BUILDER_TYPE_SOURCE, BuilderSourceClass))
+#define BUILDER_SOURCE_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), BUILDER_TYPE_SOURCE, BuilderSourceClass))
 #define BUILDER_IS_SOURCE(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BUILDER_TYPE_SOURCE))
 #define BUILDER_IS_SOURCE_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), BUILDER_TYPE_SOURCE))
 #define BUILDER_SOURCE_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), BUILDER_TYPE_SOURCE, BuilderSourceClass))
 
-struct BuilderSource {
+struct BuilderSource
+{
   GObject parent;
 
-  char *dest;
+  char   *dest;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 
-  gboolean (* download) (BuilderSource *self,
-                         gboolean update_vcs,
-                         BuilderContext *context,
-                         GError **error);
-  gboolean (* extract) (BuilderSource *self,
-                        GFile *dest,
+  gboolean (* download)(BuilderSource  *self,
+                        gboolean        update_vcs,
                         BuilderContext *context,
-                        GError **error);
-  gboolean (* update) (BuilderSource *self,
+                        GError        **error);
+  gboolean (* extract)(BuilderSource  *self,
+                       GFile          *dest,
                        BuilderContext *context,
-                       GError **error);
-  void     (* checksum) (BuilderSource *self,
-                         BuilderCache   *cache,
-                         BuilderContext *context);
+                       GError        **error);
+  gboolean (* update)(BuilderSource  *self,
+                      BuilderContext *context,
+                      GError        **error);
+  void (* checksum)(BuilderSource  *self,
+                    BuilderCache   *cache,
+                    BuilderContext *context);
 } BuilderSourceClass;
 
 GType builder_source_get_type (void);
 
 BuilderSource * builder_source_from_json (JsonNode *node);
-JsonNode *      builder_source_to_json   (BuilderSource *self);
+JsonNode *      builder_source_to_json (BuilderSource *self);
 
-gboolean builder_source_download (BuilderSource *self,
-                                  gboolean update_vcs,
+gboolean builder_source_download (BuilderSource  *self,
+                                  gboolean        update_vcs,
                                   BuilderContext *context,
-                                  GError **error);
-gboolean builder_source_extract  (BuilderSource *self,
-                                  GFile *dest,
-                                  BuilderContext *context,
-                                  GError **error);
-gboolean builder_source_update  (BuilderSource *self,
+                                  GError        **error);
+gboolean builder_source_extract (BuilderSource  *self,
+                                 GFile          *dest,
                                  BuilderContext *context,
-                                 GError **error);
+                                 GError        **error);
+gboolean builder_source_update (BuilderSource  *self,
+                                BuilderContext *context,
+                                GError        **error);
 
 void     builder_source_checksum (BuilderSource  *self,
                                   BuilderCache   *cache,
                                   BuilderContext *context);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderSource, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderSource, g_object_unref)
 
 G_END_DECLS
 

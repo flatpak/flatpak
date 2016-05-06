@@ -18,7 +18,7 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 

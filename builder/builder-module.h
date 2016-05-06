@@ -30,7 +30,7 @@ G_BEGIN_DECLS
 
 typedef struct BuilderModule BuilderModule;
 
-#define BUILDER_TYPE_MODULE (builder_module_get_type())
+#define BUILDER_TYPE_MODULE (builder_module_get_type ())
 #define BUILDER_MODULE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_MODULE, BuilderModule))
 #define BUILDER_IS_MODULE(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BUILDER_TYPE_MODULE))
 
@@ -39,39 +39,39 @@ typedef struct BuilderModule BuilderModule;
 
 GType builder_module_get_type (void);
 
-const char * builder_module_get_name    (BuilderModule  *self);
-GList *      builder_module_get_sources (BuilderModule  *self);
-GPtrArray *  builder_module_get_changes (BuilderModule  *self);
-void         builder_module_set_changes (BuilderModule  *self,
-                                         GPtrArray      *changes);
+const char * builder_module_get_name (BuilderModule *self);
+GList *      builder_module_get_sources (BuilderModule *self);
+GPtrArray *  builder_module_get_changes (BuilderModule *self);
+void         builder_module_set_changes (BuilderModule *self,
+                                         GPtrArray     *changes);
 
-gboolean builder_module_download_sources     (BuilderModule   *self,
-                                              gboolean         update_vcs,
-                                              BuilderContext  *context,
-                                              GError         **error);
-gboolean builder_module_extract_sources      (BuilderModule   *self,
-                                              GFile           *dest,
-                                              BuilderContext  *context,
-                                              GError         **error);
-gboolean builder_module_build                (BuilderModule   *self,
-                                              BuilderCache    *cache,
-                                              BuilderContext  *context,
-                                              GError         **error);
-gboolean builder_module_update               (BuilderModule   *self,
-                                              BuilderContext  *context,
-                                              GError         **error);
-void     builder_module_checksum             (BuilderModule   *self,
-                                              BuilderCache    *cache,
-                                              BuilderContext  *context);
-void     builder_module_checksum_for_cleanup (BuilderModule   *self,
-                                              BuilderCache    *cache,
-                                              BuilderContext  *context);
-void     builder_module_cleanup_collect      (BuilderModule   *self,
-                                              gboolean         platform,
-                                              BuilderContext  *context,
-                                              GHashTable      *to_remove_ht);
+gboolean builder_module_download_sources (BuilderModule  *self,
+                                          gboolean        update_vcs,
+                                          BuilderContext *context,
+                                          GError        **error);
+gboolean builder_module_extract_sources (BuilderModule  *self,
+                                         GFile          *dest,
+                                         BuilderContext *context,
+                                         GError        **error);
+gboolean builder_module_build (BuilderModule  *self,
+                               BuilderCache   *cache,
+                               BuilderContext *context,
+                               GError        **error);
+gboolean builder_module_update (BuilderModule  *self,
+                                BuilderContext *context,
+                                GError        **error);
+void     builder_module_checksum (BuilderModule  *self,
+                                  BuilderCache   *cache,
+                                  BuilderContext *context);
+void     builder_module_checksum_for_cleanup (BuilderModule  *self,
+                                              BuilderCache   *cache,
+                                              BuilderContext *context);
+void     builder_module_cleanup_collect (BuilderModule  *self,
+                                         gboolean        platform,
+                                         BuilderContext *context,
+                                         GHashTable     *to_remove_ht);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderModule, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderModule, g_object_unref)
 
 G_END_DECLS
 

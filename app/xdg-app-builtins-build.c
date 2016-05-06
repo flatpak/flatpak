@@ -111,7 +111,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   directory = argv[rest_argv_start];
   if (rest_argc >= 2)
-    command = argv[rest_argv_start+1];
+    command = argv[rest_argv_start + 1];
 
   app_deploy = g_file_new_for_commandline_arg (directory);
 
@@ -160,7 +160,9 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       runtime_files = g_object_ref (usr);
     }
   else
-    runtime_files = xdg_app_deploy_get_files (runtime_deploy);
+    {
+      runtime_files = xdg_app_deploy_get_files (runtime_deploy);
+    }
 
   add_args (argv_array,
             custom_usr ? "--bind" : "--ro-bind", gs_file_get_path_cached (runtime_files), "/usr",
@@ -220,7 +222,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (argv_array, NULL);
 
-  if (!execve (xdg_app_get_bwrap (), (char **)argv_array->pdata, envp))
+  if (!execve (xdg_app_get_bwrap (), (char **) argv_array->pdata, envp))
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
       return FALSE;

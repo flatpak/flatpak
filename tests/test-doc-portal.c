@@ -36,6 +36,7 @@ static char *
 make_doc_path (const char *id, const char *basename, const char *app)
 {
   g_autofree char *dir = make_doc_dir (id, app);
+
   return g_build_filename (dir, basename, NULL);
 }
 
@@ -88,6 +89,7 @@ export_file (const char *path, gboolean unique)
 {
   int fd, fd_id;
   GUnixFDList *fd_list = NULL;
+
   g_autoptr(GVariant) reply = NULL;
   GError *error = NULL;
   char *doc_id;
@@ -168,7 +170,7 @@ grant_permissions (const char *id, const char *app, gboolean write)
   xdp_dbus_documents_call_grant_permissions_sync (documents,
                                                   id,
                                                   app,
-                                                  (const char **)permissions->pdata,
+                                                  (const char **) permissions->pdata,
                                                   NULL,
                                                   &error);
   g_assert_no_error (error);

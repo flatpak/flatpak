@@ -18,7 +18,7 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
@@ -29,6 +29,7 @@
 #include <xdg-app-dir.h>
 #include <ostree.h>
 
-XdgAppRemote *xdg_app_remote_new (XdgAppDir *dir, const char *name);
+XdgAppRemote *xdg_app_remote_new (XdgAppDir  *dir,
+                                  const char *name);
 
 #endif /* __XDG_APP_REMOTE_PRIVATE_H__ */

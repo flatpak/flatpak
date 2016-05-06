@@ -27,13 +27,13 @@ G_BEGIN_DECLS
 
 typedef struct BuilderSourceShell BuilderSourceShell;
 
-#define BUILDER_TYPE_SOURCE_SHELL (builder_source_shell_get_type())
+#define BUILDER_TYPE_SOURCE_SHELL (builder_source_shell_get_type ())
 #define BUILDER_SOURCE_SHELL(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_SOURCE_SHELL, BuilderSourceShell))
 #define BUILDER_IS_SOURCE_SHELL(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BUILDER_TYPE_SOURCE_SHELL))
 
 GType builder_source_shell_get_type (void);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderSourceShell, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderSourceShell, g_object_unref)
 
 G_END_DECLS
 

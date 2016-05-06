@@ -31,31 +31,33 @@
 #include "gvdb/gvdb-reader.h"
 #include "gvdb/gvdb-builder.h"
 
-struct XdgAppDb {
-  GObject parent;
+struct XdgAppDb
+{
+  GObject    parent;
 
-  char *path;
-  gboolean fail_if_not_found;
+  char      *path;
+  gboolean   fail_if_not_found;
   GvdbTable *gvdb;
-  GBytes *gvdb_contents;
+  GBytes    *gvdb_contents;
 
-  gboolean dirty;
+  gboolean   dirty;
 
   /* Map id => GVariant (data, sorted-dict[appid->perms]) */
-  GvdbTable *main_table;
+  GvdbTable  *main_table;
   GHashTable *main_updates;
 
   /* (reverse) Map app id => [ id ]*/
-  GvdbTable *app_table;
+  GvdbTable  *app_table;
   GHashTable *app_additions;
   GHashTable *app_removals;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 } XdgAppDbClass;
 
-static void initable_iface_init      (GInitableIface         *initable_iface);
+static void initable_iface_init (GInitableIface *initable_iface);
 
 G_DEFINE_TYPE_WITH_CODE (XdgAppDb, xdg_app_db, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init));
@@ -70,17 +72,17 @@ enum {
 static int
 cmpstringp (const void *p1, const void *p2)
 {
-  return strcmp (* (char * const *) p1, * (char * const *) p2);
+  return strcmp (*(char * const *) p1, *(char * const *) p2);
 }
 
 static void
 sort_strv (const char **strv)
 {
-  qsort (strv, g_strv_length ((char **)strv), sizeof (const char *), cmpstringp);
+  qsort (strv, g_strv_length ((char **) strv), sizeof (const char *), cmpstringp);
 }
 
 static int
-str_ptr_array_find (GPtrArray *array,
+str_ptr_array_find (GPtrArray  *array,
                     const char *str)
 {
   int i;
@@ -93,7 +95,7 @@ str_ptr_array_find (GPtrArray *array,
 }
 
 static gboolean
-str_ptr_array_contains (GPtrArray *array,
+str_ptr_array_contains (GPtrArray  *array,
                         const char *str)
 {
   return str_ptr_array_find (array, str) >= 0;
@@ -108,7 +110,7 @@ xdg_app_db_get_path (XdgAppDb *self)
 }
 
 void
-xdg_app_db_set_path (XdgAppDb *self,
+xdg_app_db_set_path (XdgAppDb   *self,
                      const char *path)
 {
   g_return_if_fail (XDG_APP_IS_DB (self));
@@ -119,8 +121,8 @@ xdg_app_db_set_path (XdgAppDb *self,
 
 XdgAppDb *
 xdg_app_db_new (const char *path,
-                gboolean fail_if_not_found,
-                GError **error)
+                gboolean    fail_if_not_found,
+                GError    **error)
 {
   return g_initable_new (XDG_APP_TYPE_DB,
                          NULL,
@@ -133,7 +135,7 @@ xdg_app_db_new (const char *path,
 static void
 xdg_app_db_finalize (GObject *object)
 {
-  XdgAppDb *self = (XdgAppDb *)object;
+  XdgAppDb *self = (XdgAppDb *) object;
 
   g_clear_pointer (&self->path, g_free);
   g_clear_pointer (&self->gvdb_contents, g_bytes_unref);
@@ -149,11 +151,11 @@ xdg_app_db_finalize (GObject *object)
 
 static void
 xdg_app_db_get_property (GObject    *object,
-                                guint       prop_id,
-                                GValue     *value,
-                                GParamSpec *pspec)
+                         guint       prop_id,
+                         GValue     *value,
+                         GParamSpec *pspec)
 {
-  XdgAppDb *self = XDG_APP_DB(object);
+  XdgAppDb *self = XDG_APP_DB (object);
 
   switch (prop_id)
     {
@@ -172,9 +174,9 @@ xdg_app_db_get_property (GObject    *object,
 
 static void
 xdg_app_db_set_property (GObject      *object,
-                                guint         prop_id,
-                                const GValue *value,
-                                GParamSpec   *pspec)
+                         guint         prop_id,
+                         const GValue *value,
+                         GParamSpec   *pspec)
 {
   XdgAppDb *self = XDG_APP_DB (object);
 
@@ -226,13 +228,13 @@ xdg_app_db_init (XdgAppDb *self)
 
   self->main_updates =
     g_hash_table_new_full (g_str_hash, g_str_equal,
-                           g_free, (GDestroyNotify)g_variant_unref);
+                           g_free, (GDestroyNotify) g_variant_unref);
   self->app_additions =
     g_hash_table_new_full (g_str_hash, g_str_equal,
-                           g_free, (GDestroyNotify)g_ptr_array_unref);
+                           g_free, (GDestroyNotify) g_ptr_array_unref);
   self->app_removals =
     g_hash_table_new_full (g_str_hash, g_str_equal,
-                           g_free, (GDestroyNotify)g_ptr_array_unref);
+                           g_free, (GDestroyNotify) g_ptr_array_unref);
 }
 
 static gboolean
@@ -252,11 +254,11 @@ is_on_nfs (const char *path)
 }
 
 static gboolean
-initable_init (GInitable     *initable,
-               GCancellable  *cancellable,
-               GError       **error)
+initable_init (GInitable    *initable,
+               GCancellable *cancellable,
+               GError      **error)
 {
-  XdgAppDb *self = (XdgAppDb *)initable;
+  XdgAppDb *self = (XdgAppDb *) initable;
   GError *my_error = NULL;
 
   if (self->path == NULL)
@@ -365,7 +367,7 @@ xdg_app_db_list_ids (XdgAppDb *self)
     }
 
   g_ptr_array_add (res, NULL);
-  return (char **)g_ptr_array_free (res, FALSE);
+  return (char **) g_ptr_array_free (res, FALSE);
 }
 
 static gboolean
@@ -447,12 +449,12 @@ xdg_app_db_list_apps (XdgAppDb *self)
     }
 
   g_ptr_array_add (res, NULL);
-  return (char **)g_ptr_array_free (res, FALSE);
+  return (char **) g_ptr_array_free (res, FALSE);
 }
 
 /* Transfer: full */
 char **
-xdg_app_db_list_ids_by_app (XdgAppDb *self,
+xdg_app_db_list_ids_by_app (XdgAppDb   *self,
                             const char *app)
 {
   GPtrArray *res;
@@ -491,12 +493,12 @@ xdg_app_db_list_ids_by_app (XdgAppDb *self,
     }
 
   g_ptr_array_add (res, NULL);
-  return (char **)g_ptr_array_free (res, FALSE);
+  return (char **) g_ptr_array_free (res, FALSE);
 }
 
 /* Transfer: full */
 XdgAppDbEntry *
-xdg_app_db_lookup (XdgAppDb *self,
+xdg_app_db_lookup (XdgAppDb   *self,
                    const char *id)
 {
   GVariant *res = NULL;
@@ -508,12 +510,14 @@ xdg_app_db_lookup (XdgAppDb *self,
   if (g_hash_table_lookup_extended (self->main_updates, id, NULL, &value))
     {
       if (value != NULL)
-        res = g_variant_ref ((GVariant *)value);
+        res = g_variant_ref ((GVariant *) value);
     }
   else if (self->main_table)
-    res = gvdb_table_get_value (self->main_table, id);
+    {
+      res = gvdb_table_get_value (self->main_table, id);
+    }
 
-  return (XdgAppDbEntry *)res;
+  return (XdgAppDbEntry *) res;
 }
 
 /* Transfer: full */
@@ -551,11 +555,11 @@ xdg_app_db_list_ids_by_value (XdgAppDb *self,
     }
 
   g_ptr_array_add (res, NULL);
-  return (char **)g_ptr_array_free (res, FALSE);
+  return (char **) g_ptr_array_free (res, FALSE);
 }
 
 static void
-add_app_id (XdgAppDb *self,
+add_app_id (XdgAppDb   *self,
             const char *app,
             const char *id)
 {
@@ -588,7 +592,7 @@ add_app_id (XdgAppDb *self,
 }
 
 static void
-remove_app_id (XdgAppDb *self,
+remove_app_id (XdgAppDb   *self,
                const char *app,
                const char *id)
 {
@@ -630,8 +634,8 @@ xdg_app_db_is_dirty (XdgAppDb *self)
 
 /* add, replace, or NULL entry to remove */
 void
-xdg_app_db_set_entry (XdgAppDb *self,
-                      const char *id,
+xdg_app_db_set_entry (XdgAppDb      *self,
+                      const char    *id,
                       XdgAppDbEntry *entry)
 {
   g_autoptr(XdgAppDbEntry) old_entry = NULL;
@@ -718,6 +722,7 @@ xdg_app_db_update (XdgAppDb *self)
   GBytes *new_contents;
   GvdbTable *new_gvdb;
   int i;
+
   g_auto(GStrv) ids = NULL;
   g_auto(GStrv) apps = NULL;
 
@@ -738,7 +743,7 @@ xdg_app_db_update (XdgAppDb *self)
           GvdbItem *item;
 
           item = gvdb_hash_table_insert (main_h, ids[i]);
-          gvdb_item_set_value (item, (GVariant *)entry);
+          gvdb_item_set_value (item, (GVariant *) entry);
         }
     }
 
@@ -751,7 +756,7 @@ xdg_app_db_update (XdgAppDb *self)
       int j;
 
       /* May as well ensure that on-disk arrays are sorted, even if we don't use it yet */
-      sort_strv ((const char **)app_ids);
+      sort_strv ((const char **) app_ids);
 
       /* We should never list an app that has empty id lists */
       g_assert (app_ids[0] != NULL);
@@ -811,18 +816,18 @@ xdg_app_db_save_content (XdgAppDb *self,
 }
 
 static void
-save_content_callback (GObject *source_object,
+save_content_callback (GObject      *source_object,
                        GAsyncResult *res,
-                       gpointer user_data)
+                       gpointer      user_data)
 {
   g_autoptr(GTask) task = user_data;
   GFile *file = G_FILE (source_object);
   gboolean ok;
   g_autoptr(GError) error = NULL;
 
-  ok = g_file_replace_contents_finish  (file,
-                                        res,
-                                        NULL, &error);
+  ok = g_file_replace_contents_finish (file,
+                                       res,
+                                       NULL, &error);
   if (ok)
     g_task_return_boolean (task, TRUE);
   else
@@ -830,12 +835,13 @@ save_content_callback (GObject *source_object,
 }
 
 void
-xdg_app_db_save_content_async  (XdgAppDb              *self,
-                                GCancellable          *cancellable,
-                                GAsyncReadyCallback    callback,
-                                gpointer               user_data)
+xdg_app_db_save_content_async (XdgAppDb           *self,
+                               GCancellable       *cancellable,
+                               GAsyncReadyCallback callback,
+                               gpointer            user_data)
 {
   GBytes *content = NULL;
+
   g_autoptr(GTask) task = NULL;
   g_autoptr(GFile) file = NULL;
 
@@ -856,7 +862,7 @@ xdg_app_db_save_content_async  (XdgAppDb              *self,
     }
 
   content = g_bytes_ref (self->gvdb_contents);
-  g_task_set_task_data (task, content, (GDestroyNotify)g_bytes_unref);
+  g_task_set_task_data (task, content, (GDestroyNotify) g_bytes_unref);
 
   file = g_file_new_for_path (self->path);
   g_file_replace_contents_bytes_async (file, content,
@@ -867,9 +873,9 @@ xdg_app_db_save_content_async  (XdgAppDb              *self,
 }
 
 gboolean
-xdg_app_db_save_content_finish (XdgAppDb              *self,
-                                GAsyncResult          *res,
-                                GError               **error)
+xdg_app_db_save_content_finish (XdgAppDb     *self,
+                                GAsyncResult *res,
+                                GError      **error)
 {
   return g_task_propagate_boolean (G_TASK (res), error);
 }
@@ -877,7 +883,7 @@ xdg_app_db_save_content_finish (XdgAppDb              *self,
 
 GString *
 xdg_app_db_print_string (XdgAppDb *self,
-                         GString *string)
+                         GString  *string)
 {
   g_auto(GStrv) ids = NULL;
   g_auto(GStrv) apps = NULL;
@@ -891,7 +897,7 @@ xdg_app_db_print_string (XdgAppDb *self,
   g_string_append_printf (string, "main {\n");
 
   ids = xdg_app_db_list_ids (self);
-  sort_strv ((const char **)ids);
+  sort_strv ((const char **) ids);
   for (i = 0; ids[i] != 0; i++)
     {
       g_autoptr(XdgAppDbEntry) entry = xdg_app_db_lookup (self, ids[i]);
@@ -904,14 +910,14 @@ xdg_app_db_print_string (XdgAppDb *self,
   g_string_append_printf (string, "}\napps {\n");
 
   apps = xdg_app_db_list_apps (self);
-  sort_strv ((const char **)apps);
+  sort_strv ((const char **) apps);
   for (i = 0; apps[i] != 0; i++)
     {
       int j;
       g_auto(GStrv) app_ids = NULL;
 
       app_ids = xdg_app_db_list_ids_by_app (self, apps[i]);
-      sort_strv ((const char **)app_ids);
+      sort_strv ((const char **) app_ids);
 
       g_string_append_printf (string, " %s: ", apps[i]);
       for (j = 0; app_ids[j] != NULL; j++)
@@ -931,33 +937,34 @@ xdg_app_db_print (XdgAppDb *self)
 }
 
 XdgAppDbEntry  *
-xdg_app_db_entry_ref (XdgAppDbEntry  *entry)
+xdg_app_db_entry_ref (XdgAppDbEntry *entry)
 {
   if (entry != NULL)
-    g_variant_ref ((GVariant *)entry);
+    g_variant_ref ((GVariant *) entry);
   return entry;
 }
 
 void
-xdg_app_db_entry_unref (XdgAppDbEntry  *entry)
+xdg_app_db_entry_unref (XdgAppDbEntry *entry)
 {
-  g_variant_unref ((GVariant *)entry);
+  g_variant_unref ((GVariant *) entry);
 }
 
 /* Transfer: full */
 GVariant *
-xdg_app_db_entry_get_data (XdgAppDbEntry  *entry)
+xdg_app_db_entry_get_data (XdgAppDbEntry *entry)
 {
-  g_autoptr(GVariant) variant = g_variant_get_child_value ((GVariant *)entry, 0);
+  g_autoptr(GVariant) variant = g_variant_get_child_value ((GVariant *) entry, 0);
 
   return g_variant_get_child_value (variant, 0);
 }
 
 /* Transfer: container */
 const char **
-xdg_app_db_entry_list_apps (XdgAppDbEntry  *entry)
+xdg_app_db_entry_list_apps (XdgAppDbEntry *entry)
 {
-  GVariant *v = (GVariant *)entry;
+  GVariant *v = (GVariant *) entry;
+
   g_autoptr(GVariant) app_array = NULL;
   GVariantIter iter;
   GVariant *child;
@@ -976,21 +983,22 @@ xdg_app_db_entry_list_apps (XdgAppDbEntry  *entry)
       if (g_variant_n_children (permissions) > 0)
         {
           g_variant_get_child (child, 0, "&s", &child_app_id);
-          g_ptr_array_add (res, (char *)child_app_id);
+          g_ptr_array_add (res, (char *) child_app_id);
         }
 
       g_variant_unref (child);
     }
 
   g_ptr_array_add (res, NULL);
-  return (const char **)g_ptr_array_free (res, FALSE);
+  return (const char **) g_ptr_array_free (res, FALSE);
 }
 
 static GVariant *
 xdg_app_db_entry_get_permissions_variant (XdgAppDbEntry *entry,
-                                          const char *app_id)
+                                          const char    *app_id)
 {
-  GVariant *v = (GVariant *)entry;
+  GVariant *v = (GVariant *) entry;
+
   g_autoptr(GVariant) app_array = NULL;
   GVariant *child;
   GVariant *res = NULL;
@@ -1018,9 +1026,13 @@ xdg_app_db_entry_get_permissions_variant (XdgAppDbEntry *entry,
           break;
         }
       else if (cmp < 0)
-        end = m;
+        {
+          end = m;
+        }
       else /* cmp > 0 */
-        start = m + 1;
+        {
+          start = m + 1;
+        }
     }
 
   return res;
@@ -1030,7 +1042,7 @@ xdg_app_db_entry_get_permissions_variant (XdgAppDbEntry *entry,
 /* Transfer: container */
 const char **
 xdg_app_db_entry_list_permissions (XdgAppDbEntry *entry,
-                                   const char *app)
+                                   const char    *app)
 {
   g_autoptr(GVariant) permissions = NULL;
 
@@ -1042,9 +1054,9 @@ xdg_app_db_entry_list_permissions (XdgAppDbEntry *entry,
 }
 
 gboolean
-xdg_app_db_entry_has_permission (XdgAppDbEntry  *entry,
-                                 const char     *app,
-                                 const char     *permission)
+xdg_app_db_entry_has_permission (XdgAppDbEntry *entry,
+                                 const char    *app,
+                                 const char    *permission)
 {
   g_autofree const char **app_permissions = NULL;
 
@@ -1054,9 +1066,9 @@ xdg_app_db_entry_has_permission (XdgAppDbEntry  *entry,
 }
 
 gboolean
-xdg_app_db_entry_has_permissions (XdgAppDbEntry  *entry,
-                                  const char     *app,
-                                  const char    **permissions)
+xdg_app_db_entry_has_permissions (XdgAppDbEntry *entry,
+                                  const char    *app,
+                                  const char   **permissions)
 {
   g_autofree const char **app_permissions = NULL;
   int i;
@@ -1089,6 +1101,7 @@ static GVariant *
 make_permissions (const char *app, const char **permissions)
 {
   static const char **empty = { NULL };
+
   if (permissions == NULL)
     permissions = empty;
 
@@ -1108,6 +1121,7 @@ add_permissions (GVariant *app_permissions,
   int cmp;
   const char *new_app_id;
   const char *child_app_id;
+
   g_autoptr(GVariant) new_perms_array = NULL;
 
   g_variant_get (permissions, "{&s@as}", &new_app_id, &new_perms_array);
@@ -1164,14 +1178,14 @@ xdg_app_db_entry_new (GVariant *data)
   res = make_entry (data,
                     make_empty_app_permissions ());
 
-  return (XdgAppDbEntry  *)g_variant_ref_sink (res);
+  return (XdgAppDbEntry  *) g_variant_ref_sink (res);
 }
 
 XdgAppDbEntry  *
-xdg_app_db_entry_modify_data (XdgAppDbEntry  *entry,
-                              GVariant *data)
+xdg_app_db_entry_modify_data (XdgAppDbEntry *entry,
+                              GVariant      *data)
 {
-  GVariant *v = (GVariant *)entry;
+  GVariant *v = (GVariant *) entry;
   GVariant *res;
 
   if (data == NULL)
@@ -1179,17 +1193,18 @@ xdg_app_db_entry_modify_data (XdgAppDbEntry  *entry,
 
   res = make_entry (data,
                     g_variant_get_child_value (v, 1));
-  return (XdgAppDbEntry  *)g_variant_ref_sink (res);
+  return (XdgAppDbEntry  *) g_variant_ref_sink (res);
 }
 
 /* NULL (or empty) permissions to remove permissions */
 XdgAppDbEntry  *
 xdg_app_db_entry_set_app_permissions (XdgAppDbEntry *entry,
-                                      const char *app,
-                                      const char **permissions)
+                                      const char    *app,
+                                      const char   **permissions)
 {
-  GVariant *v = (GVariant *)entry;
+  GVariant *v = (GVariant *) entry;
   GVariant *res;
+
   g_autoptr(GVariant) old_data_v = g_variant_get_child_value (v, 0);
   g_autoptr(GVariant) old_data = g_variant_get_child_value (old_data_v, 0);
   g_autoptr(GVariant) old_permissions = g_variant_get_child_value (v, 1);
@@ -1198,12 +1213,12 @@ xdg_app_db_entry_set_app_permissions (XdgAppDbEntry *entry,
                     add_permissions (old_permissions,
                                      make_permissions (app,
                                                        permissions)));
-  return (XdgAppDbEntry  *)g_variant_ref_sink (res);
+  return (XdgAppDbEntry  *) g_variant_ref_sink (res);
 }
 
 GString *
-xdg_app_db_entry_print_string (XdgAppDbEntry   *entry,
-                               GString         *string)
+xdg_app_db_entry_print_string (XdgAppDbEntry *entry,
+                               GString       *string)
 {
-  return g_variant_print_string ((GVariant *)entry, string, FALSE);
+  return g_variant_print_string ((GVariant *) entry, string, FALSE);
 }

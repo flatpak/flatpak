@@ -58,25 +58,27 @@ static gboolean
 update_appstream (XdgAppDir *dir, const char *remote, GCancellable *cancellable, GError **error)
 {
   gboolean changed;
+
   if (!xdg_app_dir_update_appstream (dir, remote, opt_arch, &changed,
-                                   NULL, cancellable, error))
+                                     NULL, cancellable, error))
     return FALSE;
 
   return TRUE;
 }
 
 static gboolean
-do_update (XdgAppDir* dir,
-           const char *name,
-           const char *branch,
-           const char *arch,
-           gboolean check_app,
-           gboolean check_runtime,
+do_update (XdgAppDir   * dir,
+           const char   *name,
+           const char   *branch,
+           const char   *arch,
+           gboolean      check_app,
+           gboolean      check_runtime,
            GCancellable *cancellable,
-           GError **error)
+           GError      **error)
 {
   g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
+
   g_auto(GStrv) subpaths = NULL;
   gboolean is_app;
 
@@ -108,14 +110,14 @@ do_update (XdgAppDir* dir,
                            cancellable, error))
     return FALSE;
 
-  return  TRUE;
+  return TRUE;
 }
 
 gboolean
-xdg_app_builtin_update (int argc,
-                        char **argv,
+xdg_app_builtin_update (int           argc,
+                        char        **argv,
                         GCancellable *cancellable,
-                        GError **error)
+                        GError      **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(XdgAppDir) dir = NULL;
@@ -230,5 +232,5 @@ xdg_app_builtin_update (int argc,
 
   xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
 
-  return  TRUE;
+  return TRUE;
 }

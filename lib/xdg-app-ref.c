@@ -49,10 +49,10 @@ typedef struct _XdgAppRefPrivate XdgAppRefPrivate;
 
 struct _XdgAppRefPrivate
 {
-  char *name;
-  char *arch;
-  char *branch;
-  char *commit;
+  char         *name;
+  char         *arch;
+  char         *branch;
+  char         *commit;
   XdgAppRefKind kind;
 };
 
@@ -83,10 +83,10 @@ xdg_app_ref_finalize (GObject *object)
 }
 
 static void
-xdg_app_ref_set_property (GObject         *object,
-                          guint            prop_id,
-                          const GValue    *value,
-                          GParamSpec      *pspec)
+xdg_app_ref_set_property (GObject      *object,
+                          guint         prop_id,
+                          const GValue *value,
+                          GParamSpec   *pspec)
 {
   XdgAppRef *self = XDG_APP_REF (object);
   XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
@@ -124,10 +124,10 @@ xdg_app_ref_set_property (GObject         *object,
 }
 
 static void
-xdg_app_ref_get_property (GObject         *object,
-                          guint            prop_id,
-                          GValue          *value,
-                          GParamSpec      *pspec)
+xdg_app_ref_get_property (GObject    *object,
+                          guint       prop_id,
+                          GValue     *value,
+                          GParamSpec *pspec)
 {
   XdgAppRef *self = XDG_APP_REF (object);
   XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
@@ -305,7 +305,7 @@ xdg_app_ref_get_kind (XdgAppRef *self)
  * Returns: (transfer full): string representation
  */
 char *
-xdg_app_ref_format_ref  (XdgAppRef *self)
+xdg_app_ref_format_ref (XdgAppRef *self)
 {
   XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
 
@@ -340,9 +340,13 @@ xdg_app_ref_parse (const char *ref, GError **error)
 
   XdgAppRefKind kind;
   if (g_strcmp0 (parts[0], "app") == 0)
-    kind = XDG_APP_REF_KIND_APP;
+    {
+      kind = XDG_APP_REF_KIND_APP;
+    }
   else if (g_strcmp0 (parts[0], "runtime") == 0)
-    kind = XDG_APP_REF_KIND_RUNTIME;
+    {
+      kind = XDG_APP_REF_KIND_RUNTIME;
+    }
   else
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,

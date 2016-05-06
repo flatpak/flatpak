@@ -79,10 +79,12 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
     return FALSE;
 
   g_print ("Updating appstream branch\n");
-  if (!xdg_app_repo_generate_appstream (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
+  if (!xdg_app_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
     {
       if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
-        g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");
+        {
+          g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");
+        }
       else
         {
           g_propagate_error (error, g_steal_pointer (&my_error));
@@ -116,7 +118,7 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
       all_deltas_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
       for (i = 0; i < all_deltas->len; i++)
         {
-          g_print ("adding %s\n", (char *)g_ptr_array_index (all_deltas, i));
+          g_print ("adding %s\n", (char *) g_ptr_array_index (all_deltas, i));
           g_hash_table_insert (all_deltas_hash,
                                g_strdup (g_ptr_array_index (all_deltas, i)),
                                NULL);
@@ -160,9 +162,9 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
             }
 
           /* Mark this one as wanted */
-          g_hash_table_insert (all_deltas_hash, g_strdup (commit), GINT_TO_POINTER(1));
+          g_hash_table_insert (all_deltas_hash, g_strdup (commit), GINT_TO_POINTER (1));
 
-            /* From parent */
+          /* From parent */
           if (parent_variant != NULL)
             {
               from_parent = g_strdup_printf ("%s-%s", parent_commit, commit);
@@ -179,13 +181,13 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
                 }
 
               /* Mark this one as wanted */
-              g_hash_table_insert (all_deltas_hash, g_strdup (from_parent), GINT_TO_POINTER(1));
+              g_hash_table_insert (all_deltas_hash, g_strdup (from_parent), GINT_TO_POINTER (1));
             }
         }
     }
 
   g_print ("Updating summary\n");
-  if (!xdg_app_repo_update (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+  if (!xdg_app_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
 
   if (opt_prune)

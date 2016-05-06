@@ -32,16 +32,18 @@
 #include "builder-utils.h"
 #include "builder-source-file.h"
 
-struct BuilderSourceFile {
+struct BuilderSourceFile
+{
   BuilderSource parent;
 
-  char *path;
-  char *url;
-  char *sha256;
-  char *dest_filename;
+  char         *path;
+  char         *url;
+  char         *sha256;
+  char         *dest_filename;
 };
 
-typedef struct {
+typedef struct
+{
   BuilderSourceClass parent_class;
 } BuilderSourceFileClass;
 
@@ -59,7 +61,7 @@ enum {
 static void
 builder_source_file_finalize (GObject *object)
 {
-  BuilderSourceFile *self = (BuilderSourceFile *)object;
+  BuilderSourceFile *self = (BuilderSourceFile *) object;
 
   g_free (self->path);
   g_free (self->url);
@@ -71,9 +73,9 @@ builder_source_file_finalize (GObject *object)
 
 static void
 builder_source_file_get_property (GObject    *object,
-                                guint       prop_id,
-                                GValue     *value,
-                                GParamSpec *pspec)
+                                  guint       prop_id,
+                                  GValue     *value,
+                                  GParamSpec *pspec)
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (object);
 
@@ -102,9 +104,9 @@ builder_source_file_get_property (GObject    *object,
 
 static void
 builder_source_file_set_property (GObject      *object,
-                                 guint         prop_id,
-                                 const GValue *value,
-                                 GParamSpec   *pspec)
+                                  guint         prop_id,
+                                  const GValue *value,
+                                  GParamSpec   *pspec)
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (object);
 
@@ -137,7 +139,7 @@ builder_source_file_set_property (GObject      *object,
 
 static SoupURI *
 get_uri (BuilderSourceFile *self,
-         GError **error)
+         GError           **error)
 {
   SoupURI *uri;
 
@@ -158,9 +160,9 @@ get_uri (BuilderSourceFile *self,
 
 static GFile *
 get_download_location (BuilderSourceFile *self,
-                       gboolean *is_inline,
-                       BuilderContext *context,
-                       GError **error)
+                       gboolean          *is_inline,
+                       BuilderContext    *context,
+                       GError           **error)
 {
   g_autoptr(SoupURI) uri = NULL;
   const char *path;
@@ -199,10 +201,10 @@ get_download_location (BuilderSourceFile *self,
 
 static GFile *
 get_source_file (BuilderSourceFile *self,
-                 BuilderContext *context,
-                 gboolean *is_local,
-                 gboolean *is_inline,
-                 GError **error)
+                 BuilderContext    *context,
+                 gboolean          *is_local,
+                 gboolean          *is_inline,
+                 GError           **error)
 {
   GFile *base_dir = builder_context_get_base_dir (context);
 
@@ -224,11 +226,12 @@ get_source_file (BuilderSourceFile *self,
 }
 
 static GBytes *
-download_uri (const char *url,
+download_uri (const char     *url,
               BuilderContext *context,
-              GError **error)
+              GError        **error)
 {
   SoupSession *session;
+
   g_autoptr(SoupRequest) req = NULL;
   g_autoptr(GInputStream) input = NULL;
   g_autoptr(GOutputStream) out = NULL;
@@ -244,26 +247,27 @@ download_uri (const char *url,
     return NULL;
 
   out = g_memory_output_stream_new_resizable ();
-  if (!g_output_stream_splice  (out,
-                                input,
-                                G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET | G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
-                                NULL,
-                                error))
+  if (!g_output_stream_splice (out,
+                               input,
+                               G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET | G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                               NULL,
+                               error))
     return NULL;
 
   return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
 }
 
 static gboolean
-builder_source_file_download (BuilderSource *source,
-                              gboolean update_vcs,
+builder_source_file_download (BuilderSource  *source,
+                              gboolean        update_vcs,
                               BuilderContext *context,
-                              GError **error)
+                              GError        **error)
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
+
   g_autoptr(GFile) file = NULL;
   gboolean is_local, is_inline;
-  g_autoptr (GFile) dir = NULL;
+  g_autoptr(GFile) dir = NULL;
   g_autofree char *dir_path = NULL;
   g_autofree char *sha256 = NULL;
   g_autofree char *base_name = NULL;
@@ -336,12 +340,13 @@ builder_source_file_download (BuilderSource *source,
 }
 
 static gboolean
-builder_source_file_extract (BuilderSource *source,
-                             GFile *dest,
+builder_source_file_extract (BuilderSource  *source,
+                             GFile          *dest,
                              BuilderContext *context,
-                             GError **error)
+                             GError        **error)
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
+
   g_autoptr(GFile) src = NULL;
   g_autoptr(GFile) dest_file = NULL;
   g_autofree char *dest_filename = NULL;
@@ -352,7 +357,9 @@ builder_source_file_extract (BuilderSource *source,
     return FALSE;
 
   if (self->dest_filename)
-    dest_filename = g_strdup (self->dest_filename);
+    {
+      dest_filename = g_strdup (self->dest_filename);
+    }
   else
     {
       if (is_inline)
@@ -400,7 +407,7 @@ builder_source_file_extract (BuilderSource *source,
           if (!g_file_load_contents (src, NULL, &data, &len, NULL, error))
             return FALSE;
 
-          base64 = g_base64_encode ((const guchar *)data, len);
+          base64 = g_base64_encode ((const guchar *) data, len);
           g_free (self->url);
           self->url = g_strdup_printf ("data:text/plain;charset=utf8;base64,%s", base64);
           if (self->dest_filename == NULL || *self->dest_filename == 0)
@@ -422,11 +429,12 @@ builder_source_file_extract (BuilderSource *source,
 }
 
 static gboolean
-builder_source_file_update (BuilderSource *source,
+builder_source_file_update (BuilderSource  *source,
                             BuilderContext *context,
-                            GError **error)
+                            GError        **error)
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
+
   g_autoptr(GFile) src = NULL;
   gboolean is_local, is_inline;
 
@@ -443,7 +451,7 @@ builder_source_file_update (BuilderSource *source,
       if (!g_file_load_contents (src, NULL, &data, &len, NULL, error))
         return FALSE;
 
-      base64 = g_base64_encode ((const guchar *)data, len);
+      base64 = g_base64_encode ((const guchar *) data, len);
       g_free (self->url);
       self->url = g_strdup_printf ("data:text/plain;charset=utf8;base64,%s", base64);
       if (self->dest_filename == NULL || *self->dest_filename == 0)
@@ -462,6 +470,7 @@ builder_source_file_checksum (BuilderSource  *source,
                               BuilderContext *context)
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
+
   g_autoptr(GFile) src = NULL;
   g_autofree char *data = NULL;
   gsize len;
@@ -473,7 +482,7 @@ builder_source_file_checksum (BuilderSource  *source,
 
   if (is_local &&
       g_file_load_contents (src, NULL, &data, &len, NULL, NULL))
-    builder_cache_checksum_data (cache, (guchar *)data, len);
+    builder_cache_checksum_data (cache, (guchar *) data, len);
 
   builder_cache_checksum_str (cache, self->path);
   builder_cache_checksum_str (cache, self->url);

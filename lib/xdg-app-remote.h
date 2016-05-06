@@ -18,7 +18,7 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
@@ -30,34 +30,36 @@ typedef struct _XdgAppRemote XdgAppRemote;
 #include <gio/gio.h>
 #include <xdg-app-remote-ref.h>
 
-#define XDG_APP_TYPE_REMOTE xdg_app_remote_get_type()
+#define XDG_APP_TYPE_REMOTE xdg_app_remote_get_type ()
 #define XDG_APP_REMOTE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_REMOTE, XdgAppRemote))
 #define XDG_APP_IS_REMOTE(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_REMOTE))
 
 XDG_APP_EXTERN GType xdg_app_remote_get_type (void);
 
-struct _XdgAppRemote {
+struct _XdgAppRemote
+{
   GObject parent;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 } XdgAppRemoteClass;
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppRemote, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppRemote, g_object_unref)
 #endif
 
-XDG_APP_EXTERN const char *  xdg_app_remote_get_name          (XdgAppRemote *self);
+XDG_APP_EXTERN const char *  xdg_app_remote_get_name (XdgAppRemote * self);
 XDG_APP_EXTERN GFile *       xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
                                                                const char   *arch);
 XDG_APP_EXTERN GFile *       xdg_app_remote_get_appstream_timestamp (XdgAppRemote *self,
                                                                      const char   *arch);
-XDG_APP_EXTERN char *        xdg_app_remote_get_url           (XdgAppRemote *self);
-XDG_APP_EXTERN char *        xdg_app_remote_get_title         (XdgAppRemote *self);
-XDG_APP_EXTERN gboolean      xdg_app_remote_get_gpg_verify    (XdgAppRemote *self);
-XDG_APP_EXTERN gboolean      xdg_app_remote_get_noenumerate   (XdgAppRemote *self);
-XDG_APP_EXTERN gboolean      xdg_app_remote_get_disabled      (XdgAppRemote *self);
-XDG_APP_EXTERN int           xdg_app_remote_get_prio          (XdgAppRemote *self);
+XDG_APP_EXTERN char *        xdg_app_remote_get_url (XdgAppRemote *self);
+XDG_APP_EXTERN char *        xdg_app_remote_get_title (XdgAppRemote *self);
+XDG_APP_EXTERN gboolean      xdg_app_remote_get_gpg_verify (XdgAppRemote *self);
+XDG_APP_EXTERN gboolean      xdg_app_remote_get_noenumerate (XdgAppRemote *self);
+XDG_APP_EXTERN gboolean      xdg_app_remote_get_disabled (XdgAppRemote *self);
+XDG_APP_EXTERN int           xdg_app_remote_get_prio (XdgAppRemote *self);
 
 #endif /* __XDG_APP_REMOTE_H__ */

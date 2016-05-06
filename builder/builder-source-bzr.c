@@ -33,14 +33,16 @@
 #include "builder-utils.h"
 #include "xdg-app-utils.h"
 
-struct BuilderSourceBzr {
+struct BuilderSourceBzr
+{
   BuilderSource parent;
 
-  char *url;
-  char *revision;
+  char         *url;
+  char         *revision;
 };
 
-typedef struct {
+typedef struct
+{
   BuilderSourceClass parent_class;
 } BuilderSourceBzrClass;
 
@@ -56,7 +58,7 @@ enum {
 static void
 builder_source_bzr_finalize (GObject *object)
 {
-  BuilderSourceBzr *self = (BuilderSourceBzr *)object;
+  BuilderSourceBzr *self = (BuilderSourceBzr *) object;
 
   g_free (self->url);
   g_free (self->revision);
@@ -66,9 +68,9 @@ builder_source_bzr_finalize (GObject *object)
 
 static void
 builder_source_bzr_get_property (GObject    *object,
-                                guint       prop_id,
-                                GValue     *value,
-                                GParamSpec *pspec)
+                                 guint       prop_id,
+                                 GValue     *value,
+                                 GParamSpec *pspec)
 {
   BuilderSourceBzr *self = BUILDER_SOURCE_BZR (object);
 
@@ -113,9 +115,9 @@ builder_source_bzr_set_property (GObject      *object,
 }
 
 static gboolean
-bzr (GFile        *dir,
-     char        **output,
-     GError      **error,
+bzr (GFile   *dir,
+     char   **output,
+     GError **error,
      ...)
 {
   gboolean res;
@@ -154,19 +156,20 @@ get_current_commit (BuilderSourceBzr *self, BuilderContext *context, GError **er
   mirror_dir = get_mirror_dir (self, context);
 
   if (!bzr (mirror_dir, &output, error,
-           "revno", NULL))
+            "revno", NULL))
     return NULL;
 
   return output;
 }
 
 static gboolean
-builder_source_bzr_download (BuilderSource *source,
-                             gboolean update_vcs,
+builder_source_bzr_download (BuilderSource  *source,
+                             gboolean        update_vcs,
                              BuilderContext *context,
-                             GError **error)
+                             GError        **error)
 {
   BuilderSourceBzr *self = BUILDER_SOURCE_BZR (source);
+
   g_autoptr(GFile) mirror_dir = NULL;
 
   if (self->url == NULL)
@@ -204,12 +207,13 @@ builder_source_bzr_download (BuilderSource *source,
 }
 
 static gboolean
-builder_source_bzr_extract (BuilderSource *source,
-                            GFile *dest,
+builder_source_bzr_extract (BuilderSource  *source,
+                            GFile          *dest,
                             BuilderContext *context,
-                            GError **error)
+                            GError        **error)
 {
   BuilderSourceBzr *self = BUILDER_SOURCE_BZR (source);
+
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *mirror_dir_path = NULL;
   g_autofree char *dest_path = NULL;
@@ -241,6 +245,7 @@ builder_source_bzr_checksum (BuilderSource  *source,
 {
   BuilderSourceBzr *self = BUILDER_SOURCE_BZR (source);
   g_autofree char *current_commit;
+
   g_autoptr(GError) error = NULL;
 
   builder_cache_checksum_str (cache, self->url);
@@ -256,7 +261,7 @@ builder_source_bzr_checksum (BuilderSource  *source,
 static gboolean
 builder_source_bzr_update (BuilderSource  *source,
                            BuilderContext *context,
-                           GError **error)
+                           GError        **error)
 {
   BuilderSourceBzr *self = BUILDER_SOURCE_BZR (source);
   char *current_commit;

@@ -18,7 +18,7 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
@@ -30,24 +30,26 @@ typedef struct _XdgAppRemoteRef XdgAppRemoteRef;
 #include <gio/gio.h>
 #include <xdg-app-ref.h>
 
-#define XDG_APP_TYPE_REMOTE_REF xdg_app_remote_ref_get_type()
+#define XDG_APP_TYPE_REMOTE_REF xdg_app_remote_ref_get_type ()
 #define XDG_APP_REMOTE_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_REMOTE_REF, XdgAppRemoteRef))
 #define XDG_APP_IS_REMOTE_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_REMOTE_REF))
 
 XDG_APP_EXTERN GType xdg_app_remote_ref_get_type (void);
 
-struct _XdgAppRemoteRef {
+struct _XdgAppRemoteRef
+{
   XdgAppRef parent;
 };
 
-typedef struct {
+typedef struct
+{
   XdgAppRefClass parent_class;
 } XdgAppRemoteRefClass;
 
 XDG_APP_EXTERN const char * xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self);
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppRemoteRef, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppRemoteRef, g_object_unref)
 #endif
 
 #endif /* __XDG_APP_REMOTE_REF_H__ */

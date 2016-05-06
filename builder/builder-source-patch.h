@@ -27,13 +27,13 @@ G_BEGIN_DECLS
 
 typedef struct BuilderSourcePatch BuilderSourcePatch;
 
-#define BUILDER_TYPE_SOURCE_PATCH (builder_source_patch_get_type())
+#define BUILDER_TYPE_SOURCE_PATCH (builder_source_patch_get_type ())
 #define BUILDER_SOURCE_PATCH(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_SOURCE_PATCH, BuilderSourcePatch))
 #define BUILDER_IS_SOURCE_PATCH(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BUILDER_TYPE_SOURCE_PATCH))
 
 GType builder_source_patch_get_type (void);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderSourcePatch, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderSourcePatch, g_object_unref)
 
 G_END_DECLS
 

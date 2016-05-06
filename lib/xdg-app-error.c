@@ -31,4 +31,4 @@
  *
  */
 
-G_DEFINE_QUARK (xdg-app-error-quark, xdg_app_error)
+G_DEFINE_QUARK (xdg - app - error - quark, xdg_app_error)

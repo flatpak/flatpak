@@ -41,11 +41,11 @@ typedef struct _XdgAppInstalledRefPrivate XdgAppInstalledRefPrivate;
 struct _XdgAppInstalledRefPrivate
 {
   gboolean is_current;
-  char *origin;
-  char *latest_commit;
-  char *deploy_dir;
-  char **subpaths;
-  guint64 installed_size;
+  char    *origin;
+  char    *latest_commit;
+  char    *deploy_dir;
+  char   **subpaths;
+  guint64  installed_size;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (XdgAppInstalledRef, xdg_app_installed_ref, XDG_APP_TYPE_REF)
@@ -75,10 +75,10 @@ xdg_app_installed_ref_finalize (GObject *object)
 }
 
 static void
-xdg_app_installed_ref_set_property (GObject         *object,
-                                    guint            prop_id,
-                                    const GValue    *value,
-                                    GParamSpec      *pspec)
+xdg_app_installed_ref_set_property (GObject      *object,
+                                    guint         prop_id,
+                                    const GValue *value,
+                                    GParamSpec   *pspec)
 {
   XdgAppInstalledRef *self = XDG_APP_INSTALLED_REF (object);
   XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
@@ -120,10 +120,10 @@ xdg_app_installed_ref_set_property (GObject         *object,
 }
 
 static void
-xdg_app_installed_ref_get_property (GObject         *object,
-                                    guint            prop_id,
-                                    GValue          *value,
-                                    GParamSpec      *pspec)
+xdg_app_installed_ref_get_property (GObject    *object,
+                                    guint       prop_id,
+                                    GValue     *value,
+                                    GParamSpec *pspec)
 {
   XdgAppInstalledRef *self = XDG_APP_INSTALLED_REF (object);
   XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
@@ -179,10 +179,10 @@ xdg_app_installed_ref_class_init (XdgAppInstalledRefClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_INSTALLED_SIZE,
                                    g_param_spec_uint64 ("installed-size",
-                                                         "Installed Size",
-                                                         "The installed size of the application",
+                                                        "Installed Size",
+                                                        "The installed size of the application",
                                                         0, G_MAXUINT64, 0,
-                                                         G_PARAM_READWRITE));
+                                                        G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_ORIGIN,
                                    g_param_spec_string ("origin",
@@ -290,7 +290,7 @@ xdg_app_installed_ref_get_is_current (XdgAppInstalledRef *self)
  *
  * Returns: (transfer none): A strv, or %NULL
  */
-const char * const*
+const char * const *
 xdg_app_installed_ref_get_subpaths (XdgAppInstalledRef *self)
 {
   XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
@@ -326,9 +326,9 @@ xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef *self)
  *     or %NULL if an error occurred
  */
 GBytes *
-xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
-                                      GCancellable *cancellable,
-                                      GError **error)
+xdg_app_installed_ref_load_metadata (XdgAppInstalledRef *self,
+                                     GCancellable       *cancellable,
+                                     GError            **error)
 {
   XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
   g_autofree char *path = NULL;
@@ -350,17 +350,18 @@ xdg_app_installed_ref_load_metadata  (XdgAppInstalledRef *self,
 }
 
 XdgAppInstalledRef *
-xdg_app_installed_ref_new (const char *full_ref,
-                           const char *commit,
-                           const char *latest_commit,
-                           const char *origin,
-                           const char**subpaths,
-                           const char *deploy_dir,
-                           guint64     installed_size,
-                           gboolean    is_current)
+xdg_app_installed_ref_new (const char  *full_ref,
+                           const char  *commit,
+                           const char  *latest_commit,
+                           const char  *origin,
+                           const char **subpaths,
+                           const char  *deploy_dir,
+                           guint64      installed_size,
+                           gboolean     is_current)
 {
   XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
   XdgAppInstalledRef *ref;
+
   g_auto(GStrv) parts = NULL;
 
   parts = g_strsplit (full_ref, "/", -1);

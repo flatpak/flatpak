@@ -38,7 +38,7 @@ parse_generic_args (int n_args, const char *args[])
 {
   if (g_str_has_prefix (args[0], "--fd="))
     {
-      const char *fd_s = args[0] + strlen("--fd=");
+      const char *fd_s = args[0] + strlen ("--fd=");
       char *endptr;
       int fd;
 
@@ -63,19 +63,19 @@ int
 start_proxy (int n_args, const char *args[])
 {
   g_autoptr(XdgAppProxy) proxy = NULL;
-  g_autoptr (GError) error = NULL;
+  g_autoptr(GError) error = NULL;
   const char *bus_address, *socket_path;
   int n;
 
   n = 0;
-  if (n_args < n+1 || args[n][0] == '-')
+  if (n_args < n + 1 || args[n][0] == '-')
     {
       g_printerr ("No bus address given\n");
       return -1;
     }
   bus_address = args[n++];
 
-  if (n_args < n+1 || args[n][0] == '-')
+  if (n_args < n + 1 || args[n][0] == '-')
     {
       g_printerr ("No socket path given\n");
       return -1;
@@ -152,9 +152,9 @@ start_proxy (int n_args, const char *args[])
 }
 
 static gboolean
-sync_closed_cb (GIOChannel   *source,
-                GIOCondition  condition,
-                gpointer      data)
+sync_closed_cb (GIOChannel  *source,
+                GIOCondition condition,
+                gpointer     data)
 {
   GList *l;
 

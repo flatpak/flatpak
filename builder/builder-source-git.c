@@ -34,14 +34,16 @@
 #include "builder-utils.h"
 #include "xdg-app-utils.h"
 
-struct BuilderSourceGit {
+struct BuilderSourceGit
+{
   BuilderSource parent;
 
-  char *url;
-  char *branch;
+  char         *url;
+  char         *branch;
 };
 
-typedef struct {
+typedef struct
+{
   BuilderSourceClass parent_class;
 } BuilderSourceGitClass;
 
@@ -54,17 +56,17 @@ enum {
   LAST_PROP
 };
 
-static gboolean git_mirror_repo (const char *repo_url,
-                                 gboolean update,
-                                 const char *ref,
+static gboolean git_mirror_repo (const char     *repo_url,
+                                 gboolean        update,
+                                 const char     *ref,
                                  BuilderContext *context,
-                                 GError **error);
+                                 GError        **error);
 
 
 static void
 builder_source_git_finalize (GObject *object)
 {
-  BuilderSourceGit *self = (BuilderSourceGit *)object;
+  BuilderSourceGit *self = (BuilderSourceGit *) object;
 
   g_free (self->url);
   g_free (self->branch);
@@ -74,9 +76,9 @@ builder_source_git_finalize (GObject *object)
 
 static void
 builder_source_git_get_property (GObject    *object,
-                                guint       prop_id,
-                                GValue     *value,
-                                GParamSpec *pspec)
+                                 guint       prop_id,
+                                 GValue     *value,
+                                 GParamSpec *pspec)
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (object);
 
@@ -121,9 +123,9 @@ builder_source_git_set_property (GObject      *object,
 }
 
 static gboolean
-git (GFile        *dir,
-     char        **output,
-     GError      **error,
+git (GFile   *dir,
+     char   **output,
+     GError **error,
      ...)
 {
   gboolean res;
@@ -137,7 +139,7 @@ git (GFile        *dir,
 }
 
 static GFile *
-git_get_mirror_dir (const char *url,
+git_get_mirror_dir (const char     *url,
                     BuilderContext *context)
 {
   g_autoptr(GFile) git_dir = NULL;
@@ -165,8 +167,8 @@ get_branch (BuilderSourceGit *self)
 
 static char *
 get_url (BuilderSourceGit *self,
-         BuilderContext *context,
-         GError **error)
+         BuilderContext   *context,
+         GError          **error)
 {
   g_autofree char *scheme = NULL;
 
@@ -190,10 +192,10 @@ get_url (BuilderSourceGit *self,
 
 
 static char *
-git_get_current_commit (GFile *repo_dir,
-                        const char *branch,
+git_get_current_commit (GFile          *repo_dir,
+                        const char     *branch,
                         BuilderContext *context,
-                        GError **error)
+                        GError        **error)
 {
   char *output = NULL;
 
@@ -218,8 +220,8 @@ make_absolute_url (const char *orig_parent, const char *orig_relpath, GError **e
   if (!g_str_has_prefix (relpath, "../"))
     return g_strdup (orig_relpath);
 
-  if (parent[strlen(parent) - 1] == '/')
-    parent[strlen(parent) - 1] = 0;
+  if (parent[strlen (parent) - 1] == '/')
+    parent[strlen (parent) - 1] = 0;
 
   method = strstr (parent, "://");
   if (method == NULL)
@@ -251,14 +253,15 @@ make_absolute_url (const char *orig_parent, const char *orig_relpath, GError **e
 }
 
 static gboolean
-git_mirror_submodules (const char *repo_url,
-                       gboolean update,
-                       GFile *mirror_dir,
-                       const char *revision,
+git_mirror_submodules (const char     *repo_url,
+                       gboolean        update,
+                       GFile          *mirror_dir,
+                       const char     *revision,
                        BuilderContext *context,
-                       GError **error)
+                       GError        **error)
 {
   g_autofree char *mirror_dir_path = NULL;
+
   g_autoptr(GFile) checkout_dir_template = NULL;
   g_autoptr(GFile) checkout_dir = NULL;
   g_autofree char *checkout_dir_path = NULL;
@@ -327,11 +330,11 @@ git_mirror_submodules (const char *repo_url,
 }
 
 static gboolean
-git_mirror_repo (const char *repo_url,
-                 gboolean update,
-                 const char *ref,
+git_mirror_repo (const char     *repo_url,
+                 gboolean        update,
+                 const char     *ref,
                  BuilderContext *context,
-                 GError **error)
+                 GError        **error)
 {
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *current_commit = NULL;
@@ -371,10 +374,10 @@ git_mirror_repo (const char *repo_url,
 }
 
 static gboolean
-builder_source_git_download (BuilderSource *source,
-                             gboolean update_vcs,
+builder_source_git_download (BuilderSource  *source,
+                             gboolean        update_vcs,
                              BuilderContext *context,
-                             GError **error)
+                             GError        **error)
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
   g_autofree char *url = NULL;
@@ -394,10 +397,10 @@ builder_source_git_download (BuilderSource *source,
 }
 
 static gboolean
-git_extract_submodule (const char *repo_url,
-                       GFile *checkout_dir,
+git_extract_submodule (const char     *repo_url,
+                       GFile          *checkout_dir,
                        BuilderContext *context,
-                       GError **error)
+                       GError        **error)
 {
   g_autofree char *submodule_status = NULL;
 
@@ -427,7 +430,7 @@ git_extract_submodule (const char *repo_url,
              Only check if the command succeeds. If it fails, the update method is not set. */
           option = g_strdup_printf ("submodule.%s.update", words[1]);
           if (git (checkout_dir, &update_method, NULL,
-                  "config", "-f", ".gitmodules", option, NULL))
+                   "config", "-f", ".gitmodules", option, NULL))
             {
               /* Trim trailing whitespace */
               g_strchomp (update_method);
@@ -473,12 +476,13 @@ git_extract_submodule (const char *repo_url,
 }
 
 static gboolean
-builder_source_git_extract (BuilderSource *source,
-                            GFile *dest,
+builder_source_git_extract (BuilderSource  *source,
+                            GFile          *dest,
                             BuilderContext *context,
-                            GError **error)
+                            GError        **error)
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
+
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *mirror_dir_path = NULL;
   g_autofree char *dest_path = NULL;
@@ -517,6 +521,7 @@ builder_source_git_checksum (BuilderSource  *source,
                              BuilderContext *context)
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
+
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *current_commit = NULL;
   g_autoptr(GError) error = NULL;
@@ -537,15 +542,18 @@ builder_source_git_checksum (BuilderSource  *source,
         g_warning ("Failed to get current git checksum: %s", error->message);
     }
   else
-    g_warning ("No url");
+    {
+      g_warning ("No url");
+    }
 }
 
 static gboolean
 builder_source_git_update (BuilderSource  *source,
                            BuilderContext *context,
-                           GError **error)
+                           GError        **error)
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
+
   g_autoptr(GFile) mirror_dir = NULL;
   char *current_commit;
   g_autofree char *url = NULL;

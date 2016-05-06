@@ -32,14 +32,16 @@
 #include "builder-utils.h"
 #include "builder-source-patch.h"
 
-struct BuilderSourcePatch {
+struct BuilderSourcePatch
+{
   BuilderSource parent;
 
-  char *path;
-  guint strip_components;
+  char         *path;
+  guint         strip_components;
 };
 
-typedef struct {
+typedef struct
+{
   BuilderSourceClass parent_class;
 } BuilderSourcePatchClass;
 
@@ -55,7 +57,7 @@ enum {
 static void
 builder_source_patch_finalize (GObject *object)
 {
-  BuilderSourcePatch *self = (BuilderSourcePatch *)object;
+  BuilderSourcePatch *self = (BuilderSourcePatch *) object;
 
   g_free (self->path);
 
@@ -111,8 +113,8 @@ builder_source_patch_set_property (GObject      *object,
 
 static GFile *
 get_source_file (BuilderSourcePatch *self,
-                 BuilderContext *context,
-                 GError **error)
+                 BuilderContext     *context,
+                 GError            **error)
 {
   if (self->path == NULL || self->path[0] == 0)
     {
@@ -124,12 +126,13 @@ get_source_file (BuilderSourcePatch *self,
 }
 
 static gboolean
-builder_source_patch_download (BuilderSource *source,
-                               gboolean update_vcs,
+builder_source_patch_download (BuilderSource  *source,
+                               gboolean        update_vcs,
                                BuilderContext *context,
-                               GError **error)
+                               GError        **error)
 {
   BuilderSourcePatch *self = BUILDER_SOURCE_PATCH (source);
+
   g_autoptr(GFile) src = NULL;
 
   src = get_source_file (self, context, error);
@@ -146,9 +149,9 @@ builder_source_patch_download (BuilderSource *source,
 }
 
 static gboolean
-patch (GFile *dir,
+patch (GFile   *dir,
        GError **error,
-     ...)
+       ...)
 {
   gboolean res;
   va_list ap;
@@ -161,12 +164,13 @@ patch (GFile *dir,
 }
 
 static gboolean
-builder_source_patch_extract (BuilderSource *source,
-                              GFile *dest,
+builder_source_patch_extract (BuilderSource  *source,
+                              GFile          *dest,
                               BuilderContext *context,
-                              GError **error)
+                              GError        **error)
 {
   BuilderSourcePatch *self = BUILDER_SOURCE_PATCH (source);
+
   g_autoptr(GFile) patchfile = NULL;
   g_autofree char *patch_path = NULL;
   g_autofree char *strip_components = NULL;
@@ -189,6 +193,7 @@ builder_source_patch_checksum (BuilderSource  *source,
                                BuilderContext *context)
 {
   BuilderSourcePatch *self = BUILDER_SOURCE_PATCH (source);
+
   g_autoptr(GFile) src = NULL;
   g_autofree char *data = NULL;
   gsize len;
@@ -198,7 +203,7 @@ builder_source_patch_checksum (BuilderSource  *source,
     return;
 
   if (g_file_load_contents (src, NULL, &data, &len, NULL, NULL))
-    builder_cache_checksum_data (cache, (guchar *)data, len);
+    builder_cache_checksum_data (cache, (guchar *) data, len);
 
   builder_cache_checksum_str (cache, self->path);
   builder_cache_checksum_uint32 (cache, self->strip_components);

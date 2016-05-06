@@ -25,10 +25,10 @@
 
 typedef struct
 {
-  char *doc_id;
-  int fd;
-  char *owner;
-  guint flags;
+  char                  *doc_id;
+  int                    fd;
+  char                  *owner;
+  guint                  flags;
 
   GDBusMethodInvocation *finish_invocation;
 } XdpDocUpdate;
@@ -41,26 +41,26 @@ static int daemon_event_fd = -1;
 static int final_exit_status = 0;
 static dev_t fuse_dev = 0;
 
-G_LOCK_DEFINE(db);
+G_LOCK_DEFINE (db);
 
 char **
 xdp_list_apps (void)
 {
-  AUTOLOCK(db);
+  AUTOLOCK (db);
   return xdg_app_db_list_apps (db);
 }
 
 char **
 xdp_list_docs (void)
 {
-  AUTOLOCK(db);
+  AUTOLOCK (db);
   return xdg_app_db_list_ids (db);
 }
 
 XdgAppDbEntry *
 xdp_lookup_doc (const char *doc_id)
 {
-  AUTOLOCK(db);
+  AUTOLOCK (db);
   return xdg_app_db_lookup (db, doc_id);
 }
 
@@ -73,12 +73,13 @@ persist_entry (XdgAppDbEntry *entry)
 }
 
 static void
-do_set_permissions (XdgAppDbEntry *entry,
-                    const char *doc_id,
-                    const char *app_id,
+do_set_permissions (XdgAppDbEntry     *entry,
+                    const char        *doc_id,
+                    const char        *app_id,
                     XdpPermissionFlags perms)
 {
   g_autofree const char **perms_s = xdg_unparse_permissions (perms);
+
   g_autoptr(XdgAppDbEntry) new_entry = NULL;
 
   g_debug ("set_permissions %s %s %x", doc_id, app_id, perms);
@@ -87,31 +88,34 @@ do_set_permissions (XdgAppDbEntry *entry,
   xdg_app_db_set_entry (db, doc_id, new_entry);
 
   if (persist_entry (new_entry))
-    xdg_app_permission_store_call_set_permission (permission_store,
-                                                  TABLE_NAME,
-                                                  FALSE,
-                                                  doc_id,
-                                                  app_id,
-                                                  perms_s,
-                                                  NULL,
-                                                  NULL, NULL);
+    {
+      xdg_app_permission_store_call_set_permission (permission_store,
+                                                    TABLE_NAME,
+                                                    FALSE,
+                                                    doc_id,
+                                                    app_id,
+                                                    perms_s,
+                                                    NULL,
+                                                    NULL, NULL);
+    }
 }
 
 static void
 portal_grant_permissions (GDBusMethodInvocation *invocation,
-                          GVariant *parameters,
-                          const char *app_id)
+                          GVariant              *parameters,
+                          const char            *app_id)
 {
   const char *target_app_id;
   const char *id;
   g_autofree const char **permissions = NULL;
   XdpPermissionFlags perms;
+
   g_autoptr(XdgAppDbEntry) entry = NULL;
 
   g_variant_get (parameters, "(&s&s^a&s)", &id, &target_app_id, &permissions);
 
   {
-    AUTOLOCK(db);
+    AUTOLOCK (db);
 
     entry = xdg_app_db_lookup (db, id);
     if (entry == NULL)
@@ -151,19 +155,20 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
 
 static void
 portal_revoke_permissions (GDBusMethodInvocation *invocation,
-                           GVariant *parameters,
-                           const char *app_id)
+                           GVariant              *parameters,
+                           const char            *app_id)
 {
   const char *target_app_id;
   const char *id;
   g_autofree const char **permissions = NULL;
+
   g_autoptr(XdgAppDbEntry) entry = NULL;
   XdpPermissionFlags perms;
 
   g_variant_get (parameters, "(&s&s^a&s)", &id, &target_app_id, &permissions);
 
   {
-    AUTOLOCK(db);
+    AUTOLOCK (db);
 
     entry = xdg_app_db_lookup (db, id);
     if (entry == NULL)
@@ -204,10 +209,11 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
 
 static void
 portal_delete (GDBusMethodInvocation *invocation,
-               GVariant *parameters,
-               const char *app_id)
+               GVariant              *parameters,
+               const char            *app_id)
 {
   const char *id;
+
   g_autoptr(XdgAppDbEntry) entry = NULL;
   g_autofree const char **old_apps = NULL;
   int i;
@@ -215,13 +221,13 @@ portal_delete (GDBusMethodInvocation *invocation,
   g_variant_get (parameters, "(s)", &id);
 
   {
-    AUTOLOCK(db);
+    AUTOLOCK (db);
 
     entry = xdg_app_db_lookup (db, id);
     if (entry == NULL)
       {
         g_dbus_method_invocation_return_error (invocation, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
-                                             "No such document: %s", id);
+                                               "No such document: %s", id);
         return;
       }
 
@@ -255,7 +261,7 @@ char *
 do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_existing, gboolean persistent)
 {
   g_autoptr(GVariant) data = NULL;
-  g_autoptr (XdgAppDbEntry) entry = NULL;
+  g_autoptr(XdgAppDbEntry) entry = NULL;
   g_auto(GStrv) ids = NULL;
   char *id = NULL;
   guint32 flags = 0;
@@ -267,8 +273,8 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
   data =
     g_variant_ref_sink (g_variant_new ("(^ayttu)",
                                        path,
-                                       (guint64)parent_st_buf->st_dev,
-                                       (guint64)parent_st_buf->st_ino,
+                                       (guint64) parent_st_buf->st_dev,
+                                       (guint64) parent_st_buf->st_ino,
                                        flags));
 
   if (reuse_existing)
@@ -284,7 +290,7 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
       g_autoptr(XdgAppDbEntry) existing = NULL;
 
       g_clear_pointer (&id, g_free);
-      id = xdp_name_from_id ((guint32)g_random_int ());
+      id = xdp_name_from_id ((guint32) g_random_int ());
       existing = xdg_app_db_lookup (db, id);
       if (existing == NULL)
         break;
@@ -296,21 +302,23 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
   xdg_app_db_set_entry (db, id, entry);
 
   if (persistent)
-    xdg_app_permission_store_call_set (permission_store,
-                                       TABLE_NAME,
-                                       TRUE,
-                                       id,
-                                       g_variant_new_array (G_VARIANT_TYPE("{sas}"), NULL, 0),
-                                       g_variant_new_variant (data),
-                                       NULL, NULL, NULL);
+    {
+      xdg_app_permission_store_call_set (permission_store,
+                                         TABLE_NAME,
+                                         TRUE,
+                                         id,
+                                         g_variant_new_array (G_VARIANT_TYPE ("{sas}"), NULL, 0),
+                                         g_variant_new_variant (data),
+                                         NULL, NULL, NULL);
+    }
 
   return id;
 }
 
 static void
 portal_add (GDBusMethodInvocation *invocation,
-            GVariant *parameters,
-            const char *app_id)
+            GVariant              *parameters,
+            const char            *app_id)
 {
   GDBusMessage *message;
   GUnixFDList *fd_list;
@@ -319,7 +327,7 @@ portal_add (GDBusMethodInvocation *invocation,
   int fd_id, fd, fds_len, fd_flags;
   glnx_fd_close int dir_fd = -1;
   const int *fds;
-  char path_buffer[PATH_MAX+1];
+  char path_buffer[PATH_MAX + 1];
   ssize_t symlink_size;
   struct stat st_buf, real_st_buf, real_parent_st_buf;
   g_autofree char *dirname = NULL;
@@ -369,7 +377,7 @@ portal_add (GDBusMethodInvocation *invocation,
      could later replace a parent with a symlink and make us read some other file */
   dirname = g_path_get_dirname (path_buffer);
   name = g_path_get_basename (path_buffer);
-  dir_fd = open (dirname, O_CLOEXEC|O_PATH);
+  dir_fd = open (dirname, O_CLOEXEC | O_PATH);
 
   if (fstat (dir_fd, &real_parent_st_buf) < 0 ||
       fstatat (dir_fd, name, &real_st_buf, AT_SYMLINK_NOFOLLOW) < 0 ||
@@ -403,7 +411,7 @@ portal_add (GDBusMethodInvocation *invocation,
       /* Don't lock the db before doing the fuse call above, because it takes takes a lock
          that can block something calling back, causing a deadlock on the db lock */
 
-      AUTOLOCK(db);
+      AUTOLOCK (db);
 
       /* If the entry doesn't exist anymore, fail.  Also fail if not
          resuse_existing, because otherwise the user could use this to
@@ -422,7 +430,7 @@ portal_add (GDBusMethodInvocation *invocation,
   else
     {
       {
-        AUTOLOCK(db);
+        AUTOLOCK (db);
 
         id = do_create_doc (&real_parent_st_buf, path_buffer, reuse_existing, persistent);
 
@@ -458,8 +466,8 @@ portal_add (GDBusMethodInvocation *invocation,
 
 static void
 portal_add_named (GDBusMethodInvocation *invocation,
-                  GVariant *parameters,
-                  const char *app_id)
+                  GVariant              *parameters,
+                  const char            *app_id)
 {
   GDBusMessage *message;
   GUnixFDList *fd_list;
@@ -467,12 +475,13 @@ portal_add_named (GDBusMethodInvocation *invocation,
   g_autofree char *proc_path = NULL;
   int parent_fd_id, parent_fd, fds_len, fd_flags;
   const int *fds;
-  char parent_path_buffer[PATH_MAX+1];
+  char parent_path_buffer[PATH_MAX + 1];
   g_autofree char *path = NULL;
   ssize_t symlink_size;
   struct stat parent_st_buf;
   const char *filename;
   gboolean reuse_existing, persistent;
+
   g_autoptr(GVariant) filename_v = NULL;
 
   g_variant_get (parameters, "(h@aybb)", &parent_fd_id, &filename_v, &reuse_existing, &persistent);
@@ -542,7 +551,7 @@ portal_add_named (GDBusMethodInvocation *invocation,
 
   g_debug ("portal_add_named %s", path);
 
-  AUTOLOCK(db);
+  AUTOLOCK (db);
 
   id = do_create_doc (&parent_st_buf, path, reuse_existing, persistent);
 
@@ -552,15 +561,16 @@ portal_add_named (GDBusMethodInvocation *invocation,
 
 
 typedef void (*PortalMethod) (GDBusMethodInvocation *invocation,
-                              GVariant *parameters,
-                              const char *app_id);
+                              GVariant              *parameters,
+                              const char            *app_id);
 
 static void
-got_app_id_cb (GObject *source_object,
+got_app_id_cb (GObject      *source_object,
                GAsyncResult *res,
-               gpointer user_data)
+               gpointer      user_data)
 {
   GDBusMethodInvocation *invocation = G_DBUS_METHOD_INVOCATION (source_object);
+
   g_autoptr(GError) error = NULL;
   g_autofree char *app_id = NULL;
   PortalMethod portal_method = user_data;
@@ -574,7 +584,7 @@ got_app_id_cb (GObject *source_object,
 }
 
 static gboolean
-handle_method (GCallback method_callback,
+handle_method (GCallback              method_callback,
                GDBusMethodInvocation *invocation)
 {
   xdg_app_invocation_lookup_app_id (invocation, NULL, got_app_id_cb, method_callback);
@@ -695,9 +705,9 @@ exit_handler (int sig)
 }
 
 static int
-set_one_signal_handler (int sig,
+set_one_signal_handler (int    sig,
                         void (*handler)(int),
-                        int remove)
+                        int    remove)
 {
   struct sigaction sa;
   struct sigaction old_sa;
@@ -735,10 +745,10 @@ static GOptionEntry entries[] = {
 };
 
 static void
-message_handler (const gchar *log_domain,
+message_handler (const gchar   *log_domain,
                  GLogLevelFlags log_level,
-                 const gchar *message,
-                 gpointer user_data)
+                 const gchar   *message,
+                 gpointer       user_data)
 {
   /* Make this look like normal console output */
   if (log_level & G_LOG_LEVEL_DEBUG)
@@ -752,9 +762,10 @@ main (int    argc,
       char **argv)
 {
   guint owner_id;
+
   g_autoptr(GError) error = NULL;
   g_autofree char *path = NULL;
-  GDBusConnection  *session_bus;
+  GDBusConnection *session_bus;
   GOptionContext *context;
 
   setlocale (LC_ALL, "");
@@ -810,7 +821,7 @@ main (int    argc,
       do_exit (3);
     }
 
-  permission_store = xdg_app_permission_store_proxy_new_sync (session_bus,G_DBUS_PROXY_FLAGS_NONE,
+  permission_store = xdg_app_permission_store_proxy_new_sync (session_bus, G_DBUS_PROXY_FLAGS_NONE,
                                                               "org.freedesktop.XdgApp",
                                                               "/org/freedesktop/XdgApp/PermissionStore",
                                                               NULL, &error);
@@ -825,13 +836,11 @@ main (int    argc,
 
   g_signal_connect (session_bus, "closed", G_CALLBACK (session_bus_closed), NULL);
 
-  if (set_one_signal_handler(SIGHUP, exit_handler, 0) == -1 ||
-      set_one_signal_handler(SIGINT, exit_handler, 0) == -1 ||
-      set_one_signal_handler(SIGTERM, exit_handler, 0) == -1 ||
-      set_one_signal_handler(SIGPIPE, SIG_IGN, 0) == -1)
-    {
-      do_exit (5);
-    }
+  if (set_one_signal_handler (SIGHUP, exit_handler, 0) == -1 ||
+      set_one_signal_handler (SIGINT, exit_handler, 0) == -1 ||
+      set_one_signal_handler (SIGTERM, exit_handler, 0) == -1 ||
+      set_one_signal_handler (SIGPIPE, SIG_IGN, 0) == -1)
+    do_exit (5);
 
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
                              "org.freedesktop.portal.Documents",

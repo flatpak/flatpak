@@ -69,15 +69,15 @@ static GOptionEntry entries[] = {
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description (passed to build-export)", "BODY" },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
-  { "force-clean",0, 0, G_OPTION_ARG_NONE, &opt_force_clean, "Erase previous contents of DIRECTORY", NULL },
+  { "force-clean", 0, 0, G_OPTION_ARG_NONE, &opt_force_clean, "Erase previous contents of DIRECTORY", NULL },
   { NULL }
 };
 
 static void
-message_handler (const gchar *log_domain,
+message_handler (const gchar   *log_domain,
                  GLogLevelFlags log_level,
-                 const gchar *message,
-                 gpointer user_data)
+                 const gchar   *message,
+                 gpointer       user_data)
 {
   /* Make this look like normal console output */
   if (log_level & G_LOG_LEVEL_DEBUG)
@@ -90,6 +90,7 @@ int
 usage (GOptionContext *context, const char *message)
 {
   g_autofree gchar *help = g_option_context_get_help (context, TRUE, NULL);
+
   g_printerr ("%s\n", message);
   g_printerr ("%s", help);
   return 1;
@@ -99,7 +100,7 @@ static const char skip_arg[] = "skip";
 
 static gboolean
 do_export (BuilderContext *build_context,
-	   GError        **error,
+           GError        **error,
            gboolean        runtime,
            ...)
 {
@@ -157,6 +158,7 @@ main (int    argc,
       char **argv)
 {
   g_autofree const char *old_env = NULL;
+
   g_autoptr(GError) error = NULL;
   g_autoptr(BuilderManifest) manifest = NULL;
   GOptionContext *context;
@@ -221,8 +223,8 @@ main (int    argc,
       return 1;
     }
 
-  manifest = (BuilderManifest *)json_gobject_from_data (BUILDER_TYPE_MANIFEST,
-                                                        json, -1, &error);
+  manifest = (BuilderManifest *) json_gobject_from_data (BUILDER_TYPE_MANIFEST,
+                                                         json, -1, &error);
   if (manifest == NULL)
     {
       g_printerr ("Can't parse '%s': %s\n", manifest_path, error->message);
@@ -364,9 +366,7 @@ main (int    argc,
     }
 
   if (!opt_require_changes)
-    {
-      builder_cache_ensure_checkout (cache);
-    }
+    builder_cache_ensure_checkout (cache);
 
   if (!opt_build_only && opt_repo && builder_cache_has_checkout (cache))
     {
@@ -398,9 +398,7 @@ main (int    argc,
           g_autofree char *files_arg = NULL;
 
           if (strcmp (name, "metadata.locale") == 0)
-            {
-              g_print ("exporting %s.Locale to repo\n", builder_manifest_get_id (manifest));
-            }
+            g_print ("exporting %s.Locale to repo\n", builder_manifest_get_id (manifest));
           else
             continue;
 
@@ -440,21 +438,21 @@ main (int    argc,
         {
           g_print ("exporting %s to repo\n", platform_id);
 
-            if (!do_export (build_context, &error, TRUE,
-                            "--metadata=metadata.platform",
-                            "--files=platform",
-                            builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
-                            opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
-              {
-                g_print ("Export failed: %s\n", error->message);
-                return 1;
-              }
+          if (!do_export (build_context, &error, TRUE,
+                          "--metadata=metadata.platform",
+                          "--files=platform",
+                          builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
+            {
+              g_print ("Export failed: %s\n", error->message);
+              return 1;
+            }
         }
 
       /* Export platform locales */
       dir_enum2 = g_file_enumerate_children (app_dir, "standard::name,standard::type",
-                                            G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                            NULL, NULL);
+                                             G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                             NULL, NULL);
       while (dir_enum2 != NULL &&
              (next = g_file_enumerator_next_file (dir_enum2, NULL, NULL)))
         {
@@ -464,9 +462,7 @@ main (int    argc,
           g_autofree char *files_arg = NULL;
 
           if (strcmp (name, "metadata.platform.locale") == 0)
-            {
-              g_print ("exporting %s.Locale to repo\n", platform_id);
-            }
+            g_print ("exporting %s.Locale to repo\n", platform_id);
           else
             continue;
 

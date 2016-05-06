@@ -36,20 +36,22 @@
 #include "builder-utils.h"
 #include "builder-cache.h"
 
-struct BuilderCache {
-  GObject parent;
-  GChecksum *checksum;
-  GFile *cache_dir;
-  GFile *app_dir;
-  char *branch;
-  char *stage;
+struct BuilderCache
+{
+  GObject     parent;
+  GChecksum  *checksum;
+  GFile      *cache_dir;
+  GFile      *app_dir;
+  char       *branch;
+  char       *stage;
   GHashTable *unused_stages;
-  char *last_parent;
+  char       *last_parent;
   OstreeRepo *repo;
-  gboolean disabled;
+  gboolean    disabled;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 } BuilderCacheClass;
 
@@ -69,7 +71,7 @@ enum {
 static void
 builder_cache_finalize (GObject *object)
 {
-  BuilderCache *self = (BuilderCache *)object;
+  BuilderCache *self = (BuilderCache *) object;
 
   g_clear_object (&self->cache_dir);
   g_clear_object (&self->app_dir);
@@ -152,14 +154,14 @@ builder_cache_class_init (BuilderCacheClass *klass)
                                                         "",
                                                         "",
                                                         G_TYPE_FILE,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
   g_object_class_install_property (object_class,
                                    PROP_APP_DIR,
                                    g_param_spec_object ("app-dir",
                                                         "",
                                                         "",
                                                         G_TYPE_FILE,
-                                                        G_PARAM_READWRITE|G_PARAM_CONSTRUCT));
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
   g_object_class_install_property (object_class,
                                    PROP_BRANCH,
                                    g_param_spec_string ("branch",
@@ -176,8 +178,8 @@ builder_cache_init (BuilderCache *self)
 }
 
 BuilderCache *
-builder_cache_new (GFile *cache_dir,
-                   GFile *app_dir,
+builder_cache_new (GFile      *cache_dir,
+                   GFile      *app_dir,
                    const char *branch)
 {
   return g_object_new (BUILDER_TYPE_CACHE,
@@ -217,7 +219,7 @@ get_ref (BuilderCache *self, const char *stage)
 
 gboolean
 builder_cache_open (BuilderCache *self,
-                    GError **error)
+                    GError      **error)
 {
   self->repo = ostree_repo_new (self->cache_dir);
 
@@ -332,7 +334,7 @@ builder_cache_get_current_ref (BuilderCache *self)
 
 gboolean
 builder_cache_lookup (BuilderCache *self,
-                      const char *stage)
+                      const char   *stage)
 {
   g_autofree char *current = NULL;
   g_autofree char *commit = NULL;
@@ -373,7 +375,7 @@ builder_cache_lookup (BuilderCache *self,
         }
     }
 
- checkout:
+checkout:
   if (self->last_parent)
     {
       g_print ("Cache miss, checking out last cache hit\n");
@@ -388,12 +390,13 @@ builder_cache_lookup (BuilderCache *self,
 }
 
 gboolean
-builder_cache_commit (BuilderCache  *self,
-                      const char *body,
-                      GError       **error)
+builder_cache_commit (BuilderCache *self,
+                      const char   *body,
+                      GError      **error)
 {
   g_autofree char *current = NULL;
   OstreeRepoCommitModifier *modifier = NULL;
+
   g_autoptr(OstreeMutableTree) mtree = NULL;
   g_autoptr(GFile) root = NULL;
   g_autofree char *commit_checksum = NULL;
@@ -434,7 +437,7 @@ builder_cache_commit (BuilderCache  *self,
 
   res = TRUE;
 
- out:
+out:
   if (!res)
     {
       if (!ostree_repo_abort_transaction (self->repo, NULL, NULL))
@@ -447,14 +450,14 @@ builder_cache_commit (BuilderCache  *self,
 }
 
 gboolean
-builder_cache_get_outstanding_changes (BuilderCache  *self,
-                                       GPtrArray    **added_out,
-                                       GPtrArray    **modified_out,
-                                       GPtrArray    **removed_out,
-                                       GError       **error)
+builder_cache_get_outstanding_changes (BuilderCache *self,
+                                       GPtrArray   **added_out,
+                                       GPtrArray   **modified_out,
+                                       GPtrArray   **removed_out,
+                                       GError      **error)
 {
   g_autoptr(GPtrArray) added = g_ptr_array_new_with_free_func (g_object_unref);
-  g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify)ostree_diff_item_unref);
+  g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify) ostree_diff_item_unref);
   g_autoptr(GPtrArray) removed = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GPtrArray) added_paths = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) modified_paths = g_ptr_array_new_with_free_func (g_free);
@@ -513,11 +516,11 @@ builder_cache_get_outstanding_changes (BuilderCache  *self,
 }
 
 GPtrArray *
-builder_cache_get_all_changes (BuilderCache  *self,
-                               GError       **error)
+builder_cache_get_all_changes (BuilderCache *self,
+                               GError      **error)
 {
   g_autoptr(GPtrArray) added = g_ptr_array_new_with_free_func (g_object_unref);
-  g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify)ostree_diff_item_unref);
+  g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify) ostree_diff_item_unref);
   g_autoptr(GPtrArray) removed = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GPtrArray) all_paths = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GFile) init_root = NULL;
@@ -566,11 +569,11 @@ builder_cache_get_all_changes (BuilderCache  *self,
 }
 
 GPtrArray   *
-builder_cache_get_changes  (BuilderCache  *self,
-                            GError       **error)
+builder_cache_get_changes (BuilderCache *self,
+                           GError      **error)
 {
   g_autoptr(GPtrArray) added = g_ptr_array_new_with_free_func (g_object_unref);
-  g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify)ostree_diff_item_unref);
+  g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify) ostree_diff_item_unref);
   g_autoptr(GPtrArray) removed = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GPtrArray) changed_paths = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GFile) current_root = NULL;
@@ -619,14 +622,14 @@ builder_cache_get_changes  (BuilderCache  *self,
 }
 
 void
-builder_cache_disable_lookups (BuilderCache  *self)
+builder_cache_disable_lookups (BuilderCache *self)
 {
   self->disabled = TRUE;
 }
 
 gboolean
-builder_gc (BuilderCache  *self,
-            GError       **error)
+builder_gc (BuilderCache *self,
+            GError      **error)
 {
   gint objects_total;
   gint objects_pruned;
@@ -637,7 +640,7 @@ builder_gc (BuilderCache  *self,
   g_hash_table_iter_init (&iter, self->unused_stages);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      const char *unused_stage = (const char *)key;
+      const char *unused_stage = (const char *) key;
       g_autofree char *unused_ref = get_ref (self, unused_stage);
 
       g_debug ("Removing unused ref %s", unused_ref);
@@ -660,51 +663,54 @@ builder_gc (BuilderCache  *self,
 }
 
 void
-builder_cache_checksum_str (BuilderCache  *self,
-                            const char    *str)
+builder_cache_checksum_str (BuilderCache *self,
+                            const char   *str)
 {
   /* We include the terminating zero so that we make
    * a difference between NULL and "". */
 
   if (str)
-    g_checksum_update (self->checksum, (const guchar *)str, strlen (str) + 1);
+    g_checksum_update (self->checksum, (const guchar *) str, strlen (str) + 1);
   else
     /* Always add something so we can't be fooled by a sequence like
        NULL, "a" turning into "a", NULL. */
-    g_checksum_update (self->checksum, (const guchar *)"\1", 1);
+    g_checksum_update (self->checksum, (const guchar *) "\1", 1);
 }
 
 void
-builder_cache_checksum_strv (BuilderCache  *self,
-                             char         **strv)
+builder_cache_checksum_strv (BuilderCache *self,
+                             char        **strv)
 {
   int i;
 
   if (strv)
     {
-      g_checksum_update (self->checksum, (const guchar *)"\1", 1);
+      g_checksum_update (self->checksum, (const guchar *) "\1", 1);
       for (i = 0; strv[i] != NULL; i++)
         builder_cache_checksum_str (self, strv[i]);
     }
   else
-    g_checksum_update (self->checksum, (const guchar *)"\2", 1);
+    {
+      g_checksum_update (self->checksum, (const guchar *) "\2", 1);
+    }
 }
 
 void
-builder_cache_checksum_boolean (BuilderCache  *self,
-                                gboolean       val)
+builder_cache_checksum_boolean (BuilderCache *self,
+                                gboolean      val)
 {
   if (val)
-    g_checksum_update (self->checksum, (const guchar *)"\1", 1);
+    g_checksum_update (self->checksum, (const guchar *) "\1", 1);
   else
-    g_checksum_update (self->checksum, (const guchar *)"\0", 1);
+    g_checksum_update (self->checksum, (const guchar *) "\0", 1);
 }
 
 void
-builder_cache_checksum_uint32  (BuilderCache  *self,
-                                guint32        val)
+builder_cache_checksum_uint32 (BuilderCache *self,
+                               guint32       val)
 {
   guchar v[4];
+
   v[0] = (val >> 0) & 0xff;
   v[1] = (val >> 8) & 0xff;
   v[2] = (val >> 16) & 0xff;
@@ -713,9 +719,9 @@ builder_cache_checksum_uint32  (BuilderCache  *self,
 }
 
 void
-builder_cache_checksum_data (BuilderCache  *self,
-                             guint8        *data,
-                             gsize          len)
+builder_cache_checksum_data (BuilderCache *self,
+                             guint8       *data,
+                             gsize         len)
 {
   g_checksum_update (self->checksum, data, len);
 }

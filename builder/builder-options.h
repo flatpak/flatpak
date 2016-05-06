@@ -29,7 +29,7 @@ G_BEGIN_DECLS
 typedef struct BuilderContext BuilderContext;
 typedef struct BuilderOptions BuilderOptions;
 
-#define BUILDER_TYPE_OPTIONS (builder_options_get_type())
+#define BUILDER_TYPE_OPTIONS (builder_options_get_type ())
 #define BUILDER_OPTIONS(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_OPTIONS, BuilderOptions))
 #define BUILDER_IS_OPTIONS(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BUILDER_TYPE_OPTIONS))
 
@@ -38,28 +38,28 @@ typedef struct BuilderOptions BuilderOptions;
 
 GType builder_options_get_type (void);
 
-const char *builder_options_get_cflags       (BuilderOptions *self,
-                                              BuilderContext *context);
-const char *builder_options_get_cxxflags     (BuilderOptions *self,
-                                              BuilderContext *context);
-const char *builder_options_get_prefix       (BuilderOptions *self,
-                                              BuilderContext *context);
-char **     builder_options_get_env          (BuilderOptions *self,
-                                              BuilderContext *context);
-char **     builder_options_get_build_args   (BuilderOptions *self,
-                                              BuilderContext *context);
-char **     builder_options_get_config_opts  (BuilderOptions *self,
-                                              BuilderContext *context,
-					      char          **base_opts);
-void        builder_options_checksum         (BuilderOptions *self,
-                                              BuilderCache   *cache,
-                                              BuilderContext *context);
+const char *builder_options_get_cflags (BuilderOptions *self,
+                                        BuilderContext *context);
+const char *builder_options_get_cxxflags (BuilderOptions *self,
+                                          BuilderContext *context);
+const char *builder_options_get_prefix (BuilderOptions *self,
+                                        BuilderContext *context);
+char **     builder_options_get_env (BuilderOptions *self,
+                                     BuilderContext *context);
+char **     builder_options_get_build_args (BuilderOptions *self,
+                                            BuilderContext *context);
+char **     builder_options_get_config_opts (BuilderOptions *self,
+                                             BuilderContext *context,
+                                             char          **base_opts);
+void        builder_options_checksum (BuilderOptions *self,
+                                      BuilderCache   *cache,
+                                      BuilderContext *context);
 gboolean    builder_options_get_no_debuginfo (BuilderOptions *self,
                                               BuilderContext *context);
-gboolean    builder_options_get_strip        (BuilderOptions *self,
-                                              BuilderContext *context);
+gboolean    builder_options_get_strip (BuilderOptions *self,
+                                       BuilderContext *context);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderOptions, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderOptions, g_object_unref)
 
 G_END_DECLS
 

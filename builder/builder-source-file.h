@@ -27,13 +27,13 @@ G_BEGIN_DECLS
 
 typedef struct BuilderSourceFile BuilderSourceFile;
 
-#define BUILDER_TYPE_SOURCE_FILE (builder_source_file_get_type())
+#define BUILDER_TYPE_SOURCE_FILE (builder_source_file_get_type ())
 #define BUILDER_SOURCE_FILE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_SOURCE_FILE, BuilderSourceFile))
 #define BUILDER_IS_SOURCE_FILE(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BUILDER_TYPE_SOURCE_FILE))
 
 GType builder_source_file_get_type (void);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderSourceFile, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderSourceFile, g_object_unref)
 
 G_END_DECLS
 

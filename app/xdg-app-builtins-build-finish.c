@@ -43,16 +43,17 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
-export_dir (int            source_parent_fd,
-            const char    *source_name,
-            const char    *source_relpath,
-            int            destination_parent_fd,
-            const char    *destination_name,
-            const char    *required_prefix,
-            GCancellable  *cancellable,
-            GError       **error)
+export_dir (int           source_parent_fd,
+            const char   *source_name,
+            const char   *source_relpath,
+            int           destination_parent_fd,
+            const char   *destination_name,
+            const char   *required_prefix,
+            GCancellable *cancellable,
+            GError      **error)
 {
   int res;
+
   g_auto(GLnxDirFdIterator) source_iter = {0};
   glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
@@ -91,7 +92,9 @@ export_dir (int            source_parent_fd,
       if (fstatat (source_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
         {
           if (errno == ENOENT)
-            continue;
+            {
+              continue;
+            }
           else
             {
               glnx_set_error_from_errno (error);
@@ -106,7 +109,7 @@ export_dir (int            source_parent_fd,
 
       if (S_ISDIR (stbuf.st_mode))
         {
-          g_autofree gchar *child_relpath = g_build_filename(source_relpath, dent->d_name, NULL);
+          g_autofree gchar *child_relpath = g_build_filename (source_relpath, dent->d_name, NULL);
 
           if (!export_dir (source_iter.fd, dent->d_name, child_relpath, destination_dfd, dent->d_name,
                            required_prefix, cancellable, error))
@@ -157,12 +160,12 @@ export_dir (int            source_parent_fd,
 }
 
 static gboolean
-copy_exports (GFile    *source,
-              GFile    *destination,
-              const char *source_prefix,
-              const char *required_prefix,
-              GCancellable  *cancellable,
-              GError       **error)
+copy_exports (GFile        *source,
+              GFile        *destination,
+              const char   *source_prefix,
+              const char   *required_prefix,
+              GCancellable *cancellable,
+              GError      **error)
 {
   if (!gs_file_ensure_directory (destination, TRUE, cancellable, error))
     return FALSE;
@@ -241,6 +244,7 @@ static gboolean
 update_metadata (GFile *base, XdgAppContext *arg_context, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *path = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;

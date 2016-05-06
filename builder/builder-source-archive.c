@@ -32,16 +32,18 @@
 #include "builder-utils.h"
 #include "builder-source-archive.h"
 
-struct BuilderSourceArchive {
+struct BuilderSourceArchive
+{
   BuilderSource parent;
 
-  char *path;
-  char *url;
-  char *sha256;
-  guint strip_components;
+  char         *path;
+  char         *url;
+  char         *sha256;
+  guint         strip_components;
 };
 
-typedef struct {
+typedef struct
+{
   BuilderSourceClass parent_class;
 } BuilderSourceArchiveClass;
 
@@ -83,18 +85,25 @@ tar_decompress_flag (BuilderArchiveType type)
     default:
     case TAR:
       return NULL;
+
     case TAR_GZIP:
       return "-z";
+
     case TAR_COMPRESS:
       return "-Z";
+
     case TAR_BZIP2:
       return "-j";
+
     case TAR_LZIP:
       return "--lzip";
+
     case TAR_LZMA:
       return "--lzma";
+
     case TAR_LZOP:
       return "--lzop";
+
     case TAR_XZ:
       return "-J";
     }
@@ -103,7 +112,7 @@ tar_decompress_flag (BuilderArchiveType type)
 static void
 builder_source_archive_finalize (GObject *object)
 {
-  BuilderSourceArchive *self = (BuilderSourceArchive *)object;
+  BuilderSourceArchive *self = (BuilderSourceArchive *) object;
 
   g_free (self->url);
   g_free (self->path);
@@ -179,7 +188,7 @@ builder_source_archive_set_property (GObject      *object,
 
 static SoupURI *
 get_uri (BuilderSourceArchive *self,
-         GError **error)
+         GError              **error)
 {
   SoupURI *uri;
 
@@ -200,8 +209,8 @@ get_uri (BuilderSourceArchive *self,
 
 static GFile *
 get_download_location (BuilderSourceArchive *self,
-                       BuilderContext *context,
-                       GError **error)
+                       BuilderContext       *context,
+                       GError              **error)
 {
   g_autoptr(SoupURI) uri = NULL;
   const char *path;
@@ -233,9 +242,9 @@ get_download_location (BuilderSourceArchive *self,
 
 static GFile *
 get_source_file (BuilderSourceArchive *self,
-                 BuilderContext *context,
-                 gboolean *is_local,
-                 GError **error)
+                 BuilderContext       *context,
+                 gboolean             *is_local,
+                 GError              **error)
 {
   GFile *base_dir = builder_context_get_base_dir (context);
 
@@ -256,11 +265,12 @@ get_source_file (BuilderSourceArchive *self,
 }
 
 static GBytes *
-download_uri (const char *url,
+download_uri (const char     *url,
               BuilderContext *context,
-              GError **error)
+              GError        **error)
 {
   SoupSession *session;
+
   g_autoptr(SoupRequest) req = NULL;
   g_autoptr(GInputStream) input = NULL;
   g_autoptr(GOutputStream) out = NULL;
@@ -276,25 +286,26 @@ download_uri (const char *url,
     return NULL;
 
   out = g_memory_output_stream_new_resizable ();
-  if (!g_output_stream_splice  (out,
-                                input,
-                                G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET | G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
-                                NULL,
-                                error))
+  if (!g_output_stream_splice (out,
+                               input,
+                               G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET | G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
+                               NULL,
+                               error))
     return NULL;
 
   return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
 }
 
 static gboolean
-builder_source_archive_download (BuilderSource *source,
-                                 gboolean update_vcs,
+builder_source_archive_download (BuilderSource  *source,
+                                 gboolean        update_vcs,
                                  BuilderContext *context,
-                                 GError **error)
+                                 GError        **error)
 {
   BuilderSourceArchive *self = BUILDER_SOURCE_ARCHIVE (source);
-  g_autoptr (GFile) file = NULL;
-  g_autoptr (GFile) dir = NULL;
+
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GFile) dir = NULL;
   g_autofree char *dir_path = NULL;
   g_autofree char *sha256 = NULL;
   g_autofree char *base_name = NULL;
@@ -369,7 +380,7 @@ builder_source_archive_download (BuilderSource *source,
 }
 
 static gboolean
-tar (GFile *dir,
+tar (GFile   *dir,
      GError **error,
      ...)
 {
@@ -384,7 +395,7 @@ tar (GFile *dir,
 }
 
 static gboolean
-unzip (GFile *dir,
+unzip (GFile   *dir,
        GError **error,
        ...)
 {
@@ -445,9 +456,9 @@ get_type (GFile *archivefile)
 }
 
 static gboolean
-strip_components_into (GFile *dest,
-                       GFile *src,
-                       int level,
+strip_components_into (GFile   *dest,
+                       GFile   *src,
+                       int      level,
                        GError **error)
 {
   g_autoptr(GFileEnumerator) dir_enum = NULL;
@@ -499,12 +510,13 @@ strip_components_into (GFile *dest,
 
 
 static gboolean
-builder_source_archive_extract (BuilderSource *source,
-                                GFile *dest,
+builder_source_archive_extract (BuilderSource  *source,
+                                GFile          *dest,
                                 BuilderContext *context,
-                                GError **error)
+                                GError        **error)
 {
   BuilderSourceArchive *self = BUILDER_SOURCE_ARCHIVE (source);
+
   g_autoptr(GFile) archivefile = NULL;
   g_autofree char *archive_path = NULL;
   BuilderArchiveType type;
@@ -543,7 +555,9 @@ builder_source_archive_extract (BuilderSource *source,
           zip_dest = g_file_new_for_path (tmp_dir_path);
         }
       else
-        zip_dest = g_object_ref (dest);
+        {
+          zip_dest = g_object_ref (dest);
+        }
 
       if (!unzip (zip_dest, error, archive_path, NULL))
         return FALSE;

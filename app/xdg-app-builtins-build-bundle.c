@@ -57,7 +57,7 @@ static GOptionEntry options[] = {
 
 static GBytes *
 read_gpg_data (GCancellable *cancellable,
-               GError **error)
+               GError      **error)
 {
   g_autoptr(GInputStream) source_stream = NULL;
   guint n_keyrings = 0;
@@ -81,7 +81,7 @@ read_gpg_data (GCancellable *cancellable,
       else
         {
           g_autoptr(GFile) file = g_file_new_for_path (opt_gpg_file[ii]);
-          input_stream = G_INPUT_STREAM(g_file_read (file, cancellable, error));
+          input_stream = G_INPUT_STREAM (g_file_read (file, cancellable, error));
 
           if (input_stream == NULL)
             return NULL;
@@ -104,6 +104,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
 {
   GVariantBuilder metadata_builder;
   GVariantBuilder param_builder;
+
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autoptr(GFile) xmls_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
@@ -140,7 +141,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
 
   keyfile = g_key_file_new ();
 
-  in = (GInputStream*)g_file_read (metadata_file, cancellable, NULL);
+  in = (GInputStream *) g_file_read (metadata_file, cancellable, NULL);
   if (in != NULL)
     {
       g_autoptr(GBytes) bytes = xdg_app_read_stream (in, TRUE, error);
@@ -162,7 +163,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
   appstream_basename = g_strconcat (name, ".xml.gz", NULL);
   appstream_file = g_file_get_child (xmls_dir, appstream_basename);
 
-  xml_in = (GInputStream*)g_file_read (appstream_file, cancellable, NULL);
+  xml_in = (GInputStream *) g_file_read (appstream_file, cancellable, NULL);
   if (xml_in)
     {
       g_autoptr(XdgAppXml) appstream_root = NULL;
@@ -193,11 +194,11 @@ build_bundle (OstreeRepo *repo, GFile *file,
 
           for (i = 0; i < G_N_ELEMENTS (icon_sizes); i++)
             {
-              g_autoptr(GFile) size_dir =g_file_get_child (icons_dir, icon_sizes[i]);
+              g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, icon_sizes[i]);
               g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
               g_autoptr(GInputStream) png_in = NULL;
 
-              png_in = (GInputStream*)g_file_read (icon_file, cancellable, NULL);
+              png_in = (GInputStream *) g_file_read (icon_file, cancellable, NULL);
               if (png_in != NULL)
                 {
                   g_autoptr(GBytes) png_data = xdg_app_read_stream (png_in, FALSE, error);
@@ -224,11 +225,13 @@ build_bundle (OstreeRepo *repo, GFile *file,
     }
 
   if (gpg_data)
-    g_variant_builder_add (&metadata_builder, "{sv}", "gpg-keys",
-                           g_variant_new_fixed_array (G_VARIANT_TYPE_BYTE,
-                                                      g_bytes_get_data (gpg_data, NULL),
-                                                      g_bytes_get_size (gpg_data),
-                                                      1));
+    {
+      g_variant_builder_add (&metadata_builder, "{sv}", "gpg-keys",
+                             g_variant_new_fixed_array (G_VARIANT_TYPE_BYTE,
+                                                        g_bytes_get_data (gpg_data, NULL),
+                                                        g_bytes_get_size (gpg_data),
+                                                        1));
+    }
 
   g_variant_builder_init (&param_builder, G_VARIANT_TYPE ("a{sv}"));
   g_variant_builder_add (&param_builder, "{sv}", "min-fallback-size", g_variant_new_uint32 (0));
@@ -253,20 +256,21 @@ build_bundle (OstreeRepo *repo, GFile *file,
 
 #if defined(HAVE_LIBARCHIVE) && defined(HAVE_OSTREE_EXPORT_PATH_PREFIX)
 
-GLNX_DEFINE_CLEANUP_FUNCTION(void*, xdg_app_local_free_read_archive, archive_read_free)
-#define free_read_archive __attribute__ ((cleanup(xdg_app_local_free_read_archive)))
+GLNX_DEFINE_CLEANUP_FUNCTION (void *, xdg_app_local_free_read_archive, archive_read_free)
+#define free_read_archive __attribute__((cleanup (xdg_app_local_free_read_archive)))
 
-GLNX_DEFINE_CLEANUP_FUNCTION(void*, xdg_app_local_free_write_archive, archive_write_free)
-#define free_write_archive __attribute__ ((cleanup(xdg_app_local_free_write_archive)))
+GLNX_DEFINE_CLEANUP_FUNCTION (void *, xdg_app_local_free_write_archive, archive_write_free)
+#define free_write_archive __attribute__((cleanup (xdg_app_local_free_write_archive)))
 
-GLNX_DEFINE_CLEANUP_FUNCTION(void*, xdg_app_local_free_archive_entry, archive_entry_free)
-#define free_archive_entry __attribute__ ((cleanup(xdg_app_local_free_archive_entry)))
+GLNX_DEFINE_CLEANUP_FUNCTION (void *, xdg_app_local_free_archive_entry, archive_entry_free)
+#define free_archive_entry __attribute__((cleanup (xdg_app_local_free_archive_entry)))
 
 
-typedef struct {
+typedef struct
+{
   GString *str;
-  int depth;
-  GList *index;
+  int      depth;
+  GList   *index;
 } JsonWriter;
 
 static void
@@ -281,6 +285,7 @@ static void
 json_writer_indent (JsonWriter *writer)
 {
   int i;
+
   for (i = 0; i < writer->depth; i++)
     g_string_append (writer->str, "    ");
 }
@@ -315,20 +320,25 @@ json_writer_add_string (JsonWriter *writer, const gchar *str)
             case '\b':
               g_string_append (writer->str, "\\b");
               break;
+
             case '\f':
               g_string_append (writer->str, "\\f");
               break;
+
             case '\n':
               g_string_append (writer->str, "\\n");
               break;
+
             case '\r':
               g_string_append (writer->str, "\\r");
               break;
+
             case '\t':
               g_string_append (writer->str, "\\t");
               break;
+
             default:
-              g_string_append_printf (writer->str, "\\u00%02x", (guint)*p);
+              g_string_append_printf (writer->str, "\\u00%02x", (guint) * p);
               break;
             }
         }
@@ -344,13 +354,14 @@ json_writer_add_string (JsonWriter *writer, const gchar *str)
 static void
 json_writer_start_item (JsonWriter *writer)
 {
-  int index = GPOINTER_TO_INT(writer->index->data);
+  int index = GPOINTER_TO_INT (writer->index->data);
+
   if (index != 0)
     g_string_append (writer->str, ",\n");
   else
     g_string_append (writer->str, "\n");
   json_writer_indent (writer);
-  writer->index->data = GINT_TO_POINTER(index+1);
+  writer->index->data = GINT_TO_POINTER (index + 1);
 }
 
 static void
@@ -364,6 +375,7 @@ static void
 json_writer_close_scope (JsonWriter *writer)
 {
   GList *l;
+
   writer->depth -= 1;
   l = writer->index;
   writer->index = g_list_remove_link (writer->index, l);
@@ -383,11 +395,12 @@ static void
 json_writer_close_struct (JsonWriter *writer)
 {
   int index;
+
   json_writer_close_scope (writer);
   g_string_append (writer->str, "}");
 
   /* Last newline in file */
-  index = GPOINTER_TO_INT(writer->index->data);
+  index = GPOINTER_TO_INT (writer->index->data);
   if (index == 0)
     g_string_append (writer->str, "\n");
 }
@@ -457,7 +470,7 @@ json_writer_add_array_struct (JsonWriter *writer)
 }
 
 static gboolean
-propagate_libarchive_error (GError      **error,
+propagate_libarchive_error (GError        **error,
                             struct archive *a)
 {
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -466,8 +479,8 @@ propagate_libarchive_error (GError      **error,
 }
 
 struct archive_entry *
-new_entry (struct archive *a,
-           const char *name,
+new_entry (struct archive                 *a,
+           const char                     *name,
            OstreeRepoExportArchiveOptions *opts)
 {
   struct archive_entry *entry = archive_entry_new2 (a);
@@ -485,12 +498,13 @@ new_entry (struct archive *a,
 
 
 static gboolean
-add_dir (struct archive *a,
-         const char *name,
+add_dir (struct archive                 *a,
+         const char                     *name,
          OstreeRepoExportArchiveOptions *opts,
-         GError **error)
+         GError                        **error)
 {
   g_autofree char *full_name = g_build_filename ("rootfs", name, NULL);
+
   free_archive_entry struct archive_entry *entry = new_entry (a, full_name, opts);
 
   archive_entry_set_mode (entry, AE_IFDIR | 0755);
@@ -502,13 +516,14 @@ add_dir (struct archive *a,
 }
 
 static gboolean
-add_symlink (struct archive *a,
-             const char *name,
-             const char *target,
+add_symlink (struct archive                 *a,
+             const char                     *name,
+             const char                     *target,
              OstreeRepoExportArchiveOptions *opts,
-             GError **error)
+             GError                        **error)
 {
   g_autofree char *full_name = g_build_filename ("rootfs", name, NULL);
+
   free_archive_entry struct archive_entry *entry = new_entry (a, full_name, opts);
 
   archive_entry_set_mode (entry, AE_IFLNK | 0755);
@@ -521,13 +536,13 @@ add_symlink (struct archive *a,
 }
 
 static gboolean
-add_file (struct archive *a,
-          const char *name,
-          OstreeRepo *repo,
-          GFile *file,
+add_file (struct archive                 *a,
+          const char                     *name,
+          OstreeRepo                     *repo,
+          GFile                          *file,
           OstreeRepoExportArchiveOptions *opts,
-          GCancellable *cancellable,
-          GError **error)
+          GCancellable                   *cancellable,
+          GError                        **error)
 {
   free_archive_entry struct archive_entry *entry = new_entry (a, name, opts);
   guint8 buf[8192];
@@ -535,7 +550,7 @@ add_file (struct archive *a,
   g_autoptr(GFileInfo) file_info = NULL;
   const char *checksum;
 
-  checksum = ostree_repo_file_get_checksum ((OstreeRepoFile*)file);
+  checksum = ostree_repo_file_get_checksum ((OstreeRepoFile *) file);
 
   if (!ostree_repo_load_file (repo, checksum, &file_in, &file_info, NULL,
                               cancellable, error))
@@ -571,14 +586,14 @@ add_file (struct archive *a,
 }
 
 static gboolean
-add_file_from_data (struct archive *a,
-                    const char *name,
-                    OstreeRepo *repo,
-                    const char *data,
-                    gsize size,
+add_file_from_data (struct archive                 *a,
+                    const char                     *name,
+                    OstreeRepo                     *repo,
+                    const char                     *data,
+                    gsize                           size,
                     OstreeRepoExportArchiveOptions *opts,
-                    GCancellable *cancellable,
-                    GError **error)
+                    GCancellable                   *cancellable,
+                    GError                        **error)
 {
   free_archive_entry struct archive_entry *entry = new_entry (a, name, opts);
   ssize_t r;
@@ -687,33 +702,33 @@ generate_config_json (const char *arch)
 
   json_writer_add_struct_property (&writer, "linux");
   {
-      json_writer_add_string_property (&writer, "rootfsPropagation", "slave");
-      json_writer_add_struct_property (&writer, "resources");
+    json_writer_add_string_property (&writer, "rootfsPropagation", "slave");
+    json_writer_add_struct_property (&writer, "resources");
+    {
+      json_writer_close_struct (&writer);
+    }
+
+    json_writer_add_array_property (&writer, "namespaces");
+    {
+      json_writer_add_array_struct (&writer);
       {
+        json_writer_add_string_property (&writer, "type", "pid");
         json_writer_close_struct (&writer);
       }
-
-      json_writer_add_array_property (&writer, "namespaces");
+      json_writer_add_array_struct (&writer);
       {
-        json_writer_add_array_struct (&writer);
-        {
-          json_writer_add_string_property (&writer, "type", "pid");
-          json_writer_close_struct (&writer);
-        }
-        json_writer_add_array_struct (&writer);
-        {
-          json_writer_add_string_property (&writer, "type", "mount");
-          json_writer_close_struct (&writer);
-        }
-        json_writer_close_array (&writer);
+        json_writer_add_string_property (&writer, "type", "mount");
+        json_writer_close_struct (&writer);
       }
+      json_writer_close_array (&writer);
+    }
 
-      json_writer_close_struct (&writer);
+    json_writer_close_struct (&writer);
   }
 
   json_writer_add_struct_property (&writer, "annotations");
   {
-      json_writer_close_struct (&writer);
+    json_writer_close_struct (&writer);
   }
 
   json_writer_close_struct (&writer);
@@ -806,18 +821,18 @@ build_oci (OstreeRepo *repo, GFile *file,
         return FALSE;
 
     for (i = 0; i < G_N_ELEMENTS (root_symlinks); i += 2)
-      if (!add_symlink (a, root_symlinks[i], root_symlinks[i+1], &opts, error))
+      if (!add_symlink (a, root_symlinks[i], root_symlinks[i + 1], &opts, error))
         return FALSE;
   }
 
-  if (!ostree_repo_export_tree_to_archive (repo, &opts, (OstreeRepoFile*)files, a,
+  if (!ostree_repo_export_tree_to_archive (repo, &opts, (OstreeRepoFile *) files, a,
                                            cancellable, error))
     return FALSE;
 
   if (!opt_runtime && g_file_query_exists (export, NULL))
     {
       opts.path_prefix = "rootfs/export/";
-      if (!ostree_repo_export_tree_to_archive (repo, &opts, (OstreeRepoFile*)export, a,
+      if (!ostree_repo_export_tree_to_archive (repo, &opts, (OstreeRepoFile *) export, a,
                                                cancellable, error))
         return FALSE;
     }

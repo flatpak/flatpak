@@ -73,8 +73,8 @@ static GOptionEntry common_options[] = {
 
 static gboolean
 open_source_stream (GInputStream **out_source_stream,
-                    GCancellable *cancellable,
-                    GError **error)
+                    GCancellable  *cancellable,
+                    GError       **error)
 {
   g_autoptr(GInputStream) source_stream = NULL;
   guint n_keyrings = 0;
@@ -98,7 +98,7 @@ open_source_stream (GInputStream **out_source_stream,
       else
         {
           g_autoptr(GFile) file = g_file_new_for_path (opt_gpg_import[ii]);
-          input_stream = G_INPUT_STREAM(g_file_read (file, cancellable, error));
+          input_stream = G_INPUT_STREAM (g_file_read (file, cancellable, error));
 
           if (input_stream == NULL)
             {
@@ -120,10 +120,10 @@ open_source_stream (GInputStream **out_source_stream,
 }
 
 gboolean
-import_keys (XdgAppDir *dir,
-             const char *remote_name,
+import_keys (XdgAppDir    *dir,
+             const char   *remote_name,
              GCancellable *cancellable,
-             GError **error)
+             GError      **error)
 {
   if (opt_gpg_import != NULL)
     {

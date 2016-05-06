@@ -170,7 +170,8 @@
 
 typedef struct XdgAppProxyClient XdgAppProxyClient;
 
-XdgAppPolicy xdg_app_proxy_get_policy (XdgAppProxy *proxy, const char *name);
+XdgAppPolicy xdg_app_proxy_get_policy (XdgAppProxy *proxy,
+                                       const char  *name);
 
 /* We start looking ignoring the first cr-lf
    since there is no previous line initially */
@@ -188,22 +189,24 @@ typedef enum {
   EXPECTED_REPLY_REWRITE,
 } ExpectedReplyType;
 
-typedef struct {
-  gsize size;
-  gsize pos;
+typedef struct
+{
+  gsize    size;
+  gsize    pos;
   gboolean send_credentials;
-  GList *control_messages;
+  GList   *control_messages;
 
-  guchar data[16];
+  guchar   data[16];
   /* data continues here */
 } Buffer;
 
-typedef struct {
-  gboolean big_endian;
-  guchar type;
-  guchar flags;
-  guint32 length;
-  guint32 serial;
+typedef struct
+{
+  gboolean    big_endian;
+  guchar      type;
+  guchar      flags;
+  guint32     length;
+  guint32     serial;
   const char *path;
   const char *interface;
   const char *member;
@@ -211,71 +214,76 @@ typedef struct {
   const char *destination;
   const char *sender;
   const char *signature;
-  gboolean has_reply_serial;
-  guint32 reply_serial;
-  guint32 unix_fds;
+  gboolean    has_reply_serial;
+  guint32     reply_serial;
+  guint32     unix_fds;
 } Header;
 
-typedef struct {
-  gboolean got_first_byte; /* always true on bus side */
-  gboolean closed; /* always true on bus side */
+typedef struct
+{
+  gboolean           got_first_byte; /* always true on bus side */
+  gboolean           closed; /* always true on bus side */
 
   XdgAppProxyClient *client;
   GSocketConnection *connection;
-  GSource *in_source;
-  GSource *out_source;
+  GSource           *in_source;
+  GSource           *out_source;
 
-  GBytes *extra_input_data;
-  Buffer *current_read_buffer;
-  Buffer header_buffer;
+  GBytes            *extra_input_data;
+  Buffer            *current_read_buffer;
+  Buffer             header_buffer;
 
-  GList *buffers; /* to be sent */
-  GList *control_messages;
+  GList             *buffers; /* to be sent */
+  GList             *control_messages;
 
-  GHashTable *expected_replies;
+  GHashTable        *expected_replies;
 } ProxySide;
 
-struct XdgAppProxyClient {
-  GObject parent;
+struct XdgAppProxyClient
+{
+  GObject      parent;
 
   XdgAppProxy *proxy;
 
-  gboolean authenticated;
-  int auth_end_offset;
+  gboolean     authenticated;
+  int          auth_end_offset;
 
-  ProxySide client_side;
-  ProxySide bus_side;
+  ProxySide    client_side;
+  ProxySide    bus_side;
 
   /* Filtering data: */
-  guint32 serial_offset;
-  guint32 hello_serial;
-  guint32 last_serial;
+  guint32     serial_offset;
+  guint32     hello_serial;
+  guint32     last_serial;
   GHashTable *rewrite_reply;
   GHashTable *get_owner_reply;
 
   GHashTable *unique_id_policy;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 } XdgAppProxyClientClass;
 
-struct XdgAppProxy {
+struct XdgAppProxy
+{
   GSocketService parent;
 
-  gboolean log_messages;
+  gboolean       log_messages;
 
-  GList *clients;
-  char *socket_path;
-  char *dbus_address;
+  GList         *clients;
+  char          *socket_path;
+  char          *dbus_address;
 
-  gboolean filter;
+  gboolean       filter;
 
-  GHashTable *wildcard_policy;
-  GHashTable *policy;
+  GHashTable    *wildcard_policy;
+  GHashTable    *policy;
 };
 
-typedef struct {
+typedef struct
+{
   GSocketServiceClass parent_class;
 } XdgAppProxyClass;
 
@@ -287,12 +295,12 @@ enum {
   PROP_SOCKET_PATH
 };
 
-#define XDG_APP_TYPE_PROXY xdg_app_proxy_get_type()
+#define XDG_APP_TYPE_PROXY xdg_app_proxy_get_type ()
 #define XDG_APP_PROXY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_PROXY, XdgAppProxy))
 #define XDG_APP_IS_PROXY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_PROXY))
 
 
-#define XDG_APP_TYPE_PROXY_CLIENT xdg_app_proxy_client_get_type()
+#define XDG_APP_TYPE_PROXY_CLIENT xdg_app_proxy_client_get_type ()
 #define XDG_APP_PROXY_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_PROXY_CLIENT, XdgAppProxyClient))
 #define XDG_APP_IS_PROXY_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_PROXY_CLIENT))
 
@@ -317,8 +325,8 @@ free_side (ProxySide *side)
   g_clear_object (&side->connection);
   g_clear_pointer (&side->extra_input_data, g_bytes_unref);
 
-  g_list_free_full (side->buffers, (GDestroyNotify)buffer_free);
-  g_list_free_full (side->control_messages, (GDestroyNotify)g_object_unref);
+  g_list_free_full (side->buffers, (GDestroyNotify) buffer_free);
+  g_list_free_full (side->control_messages, (GDestroyNotify) g_object_unref);
 
   if (side->in_source)
     g_source_destroy (side->in_source);
@@ -395,7 +403,7 @@ xdg_app_proxy_client_new (XdgAppProxy *proxy, GSocketConnection *connection)
 
 static XdgAppPolicy
 xdg_app_proxy_get_wildcard_policy (XdgAppProxy *proxy,
-                                   const char *name)
+                                   const char  *name)
 {
   guint wildcard_policy = 0;
   char *dot;
@@ -405,7 +413,7 @@ xdg_app_proxy_get_wildcard_policy (XdgAppProxy *proxy,
   if (dot && (dot - name) <= 255)
     {
       strncpy (buffer, name, dot - name);
-      buffer[dot-name] = 0;
+      buffer[dot - name] = 0;
       wildcard_policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->wildcard_policy, buffer));
     }
 
@@ -414,7 +422,7 @@ xdg_app_proxy_get_wildcard_policy (XdgAppProxy *proxy,
 
 XdgAppPolicy
 xdg_app_proxy_get_policy (XdgAppProxy *proxy,
-                          const char *name)
+                          const char  *name)
 {
   guint policy, wildcard_policy;
 
@@ -427,21 +435,21 @@ xdg_app_proxy_get_policy (XdgAppProxy *proxy,
 
 void
 xdg_app_proxy_set_filter (XdgAppProxy *proxy,
-                          gboolean filter)
+                          gboolean     filter)
 {
   proxy->filter = filter;
 }
 
 void
 xdg_app_proxy_set_log_messages (XdgAppProxy *proxy,
-                                gboolean log)
+                                gboolean     log)
 {
   proxy->log_messages = log;
 }
 
 void
 xdg_app_proxy_add_policy (XdgAppProxy *proxy,
-                          const char *name,
+                          const char  *name,
                           XdgAppPolicy policy)
 {
   g_hash_table_replace (proxy->policy, g_strdup (name), GINT_TO_POINTER (policy));
@@ -449,7 +457,7 @@ xdg_app_proxy_add_policy (XdgAppProxy *proxy,
 
 void
 xdg_app_proxy_add_wildcarded_policy (XdgAppProxy *proxy,
-                                     const char *name,
+                                     const char  *name,
                                      XdgAppPolicy policy)
 {
   g_hash_table_replace (proxy->wildcard_policy, g_strdup (name), GINT_TO_POINTER (policy));
@@ -476,10 +484,10 @@ xdg_app_proxy_finalize (GObject *object)
 }
 
 static void
-xdg_app_proxy_set_property (GObject         *object,
-                            guint            prop_id,
-                            const GValue    *value,
-                            GParamSpec      *pspec)
+xdg_app_proxy_set_property (GObject      *object,
+                            guint         prop_id,
+                            const GValue *value,
+                            GParamSpec   *pspec)
 {
   XdgAppProxy *proxy = XDG_APP_PROXY (object);
 
@@ -488,9 +496,11 @@ xdg_app_proxy_set_property (GObject         *object,
     case PROP_DBUS_ADDRESS:
       proxy->dbus_address = g_value_dup_string (value);
       break;
+
     case PROP_SOCKET_PATH:
       proxy->socket_path = g_value_dup_string (value);
       break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -498,10 +508,10 @@ xdg_app_proxy_set_property (GObject         *object,
 }
 
 static void
-xdg_app_proxy_get_property (GObject         *object,
-                            guint            prop_id,
-                            GValue          *value,
-                            GParamSpec      *pspec)
+xdg_app_proxy_get_property (GObject    *object,
+                            guint       prop_id,
+                            GValue     *value,
+                            GParamSpec *pspec)
 {
   XdgAppProxy *proxy = XDG_APP_PROXY (object);
 
@@ -510,9 +520,11 @@ xdg_app_proxy_get_property (GObject         *object,
     case PROP_DBUS_ADDRESS:
       g_value_set_string (value, proxy->dbus_address);
       break;
+
     case PROP_SOCKET_PATH:
       g_value_set_string (value, proxy->socket_path);
       break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -574,7 +586,9 @@ side_closed (ProxySide *side)
     }
 
   if (other_side->closed)
-    g_object_unref (side->client);
+    {
+      g_object_unref (side->client);
+    }
   else
     {
       GError *error = NULL;
@@ -590,8 +604,8 @@ side_closed (ProxySide *side)
 
 static gboolean
 buffer_read (ProxySide *side,
-             Buffer *buffer,
-             GSocket *socket)
+             Buffer    *buffer,
+             GSocket   *socket)
 {
   gssize res;
   GInputVector v;
@@ -608,13 +622,17 @@ buffer_read (ProxySide *side,
       memcpy (&buffer->data[buffer->pos], extra_bytes, res);
 
       if (res < extra_size)
-        side->extra_input_data =
-          g_bytes_new_with_free_func (extra_bytes + res,
-                                      extra_size - res,
-                                      (GDestroyNotify)g_bytes_unref,
-                                      side->extra_input_data);
+        {
+          side->extra_input_data =
+            g_bytes_new_with_free_func (extra_bytes + res,
+                                        extra_size - res,
+                                        (GDestroyNotify) g_bytes_unref,
+                                        side->extra_input_data);
+        }
       else
-        g_clear_pointer (&side->extra_input_data, g_bytes_unref);
+        {
+          g_clear_pointer (&side->extra_input_data, g_bytes_unref);
+        }
     }
   else
     {
@@ -656,8 +674,8 @@ buffer_read (ProxySide *side,
 
 static gboolean
 buffer_write (ProxySide *side,
-              Buffer *buffer,
-              GSocket *socket)
+              Buffer    *buffer,
+              GSocket   *socket)
 {
   gssize res;
   GOutputVector v;
@@ -694,7 +712,7 @@ buffer_write (ProxySide *side,
 
   n_messages = g_list_length (buffer->control_messages);
   messages = g_new (GSocketControlMessage *, n_messages);
-  for (l = buffer->control_messages, i = 0; l != NULL ; l = l->next, i++)
+  for (l = buffer->control_messages, i = 0; l != NULL; l = l->next, i++)
     messages[i] = l->data;
 
   v.buffer = &buffer->data[buffer->pos];
@@ -751,7 +769,9 @@ side_out_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
             }
         }
       else
-        break;
+        {
+          break;
+        }
     }
 
   if (side->buffers == NULL)
@@ -774,8 +794,8 @@ static void
 queue_expected_reply (ProxySide *side, guint32 serial, ExpectedReplyType type)
 {
   g_hash_table_replace (side->expected_replies,
-			GUINT_TO_POINTER (serial),
-			GUINT_TO_POINTER (type));
+                        GUINT_TO_POINTER (serial),
+                        GUINT_TO_POINTER (type));
 }
 
 static ExpectedReplyType
@@ -784,10 +804,10 @@ steal_expected_reply (ProxySide *side, guint32 serial)
   ExpectedReplyType type;
 
   type = GPOINTER_TO_UINT (g_hash_table_lookup (side->expected_replies,
-						GUINT_TO_POINTER (serial)));
+                                                GUINT_TO_POINTER (serial)));
   if (type)
     g_hash_table_remove (side->expected_replies,
-			 GUINT_TO_POINTER (serial));
+                         GUINT_TO_POINTER (serial));
   return type;
 }
 
@@ -801,7 +821,7 @@ queue_outgoing_buffer (ProxySide *side, Buffer *buffer)
 
       socket = g_socket_connection_get_socket (side->connection);
       side->out_source = g_socket_create_source (socket, G_IO_OUT, NULL);
-      g_source_set_callback (side->out_source, (GSourceFunc)side_out_cb, side, NULL);
+      g_source_set_callback (side->out_source, (GSourceFunc) side_out_cb, side, NULL);
       g_source_attach (side->out_source, NULL);
       g_source_unref (side->out_source);
     }
@@ -814,30 +834,30 @@ static guint32
 read_uint32 (Header *header, guint8 *ptr)
 {
   if (header->big_endian)
-    return GUINT32_FROM_BE (*(guint32 *)ptr);
+    return GUINT32_FROM_BE (*(guint32 *) ptr);
   else
-    return GUINT32_FROM_LE (*(guint32 *)ptr);
+    return GUINT32_FROM_LE (*(guint32 *) ptr);
 }
 
 static void
 write_uint32 (Header *header, guint8 *ptr, guint32 val)
 {
   if (header->big_endian)
-    *(guint32 *)ptr = GUINT32_TO_BE (val);
+    *(guint32 *) ptr = GUINT32_TO_BE (val);
   else
-    *(guint32 *)ptr = GUINT32_TO_LE (val);
+    *(guint32 *) ptr = GUINT32_TO_LE (val);
 }
 
 static guint32
 align_by_8 (guint32 offset)
 {
-  return 8 * ((offset + 7)/8);
+  return 8 * ((offset + 7) / 8);
 }
 
 static guint32
 align_by_4 (guint32 offset)
 {
-  return 4 * ((offset + 3)/4);
+  return 4 * ((offset + 3) / 4);
 }
 
 static const char *
@@ -858,7 +878,7 @@ get_signature (Buffer *buffer, guint32 *offset, guint32 end_offset)
   if (buffer->data[(*offset) + len] != 0)
     return FALSE;
 
-  str = (char *)&buffer->data[(*offset)];
+  str = (char *) &buffer->data[(*offset)];
   *offset += len + 1;
 
   return str;
@@ -883,7 +903,7 @@ get_string (Buffer *buffer, Header *header, guint32 *offset, guint32 end_offset)
   if (buffer->data[(*offset) + len] != 0)
     return FALSE;
 
-  str = (char *)&buffer->data[(*offset)];
+  str = (char *) &buffer->data[(*offset)];
   *offset += len + 1;
 
   return str;
@@ -1057,6 +1077,7 @@ parse_header (Buffer *buffer, Header *header, guint32 serial_offset, guint32 rep
           strcmp (header->interface, "org.freedesktop.DBus.Local") == 0)
         return FALSE;
       break;
+
     default:
       /* Unknown message type, for safety, fail parse */
       return FALSE;
@@ -1071,9 +1092,7 @@ parse_header (Buffer *buffer, Header *header, guint32 serial_offset, guint32 rep
   if (reply_serial_offset > 0 &&
       header->has_reply_serial &&
       header->reply_serial > hello_serial + reply_serial_offset)
-    {
-      write_uint32 (header, &buffer->data[reply_serial_pos], header->reply_serial - reply_serial_offset);
-    }
+    write_uint32 (header, &buffer->data[reply_serial_pos], header->reply_serial - reply_serial_offset);
 
   return TRUE;
 }
@@ -1115,6 +1134,7 @@ print_outgoing_header (Header *header)
                header->member ? header->member : "",
                header->path ? header->path : "");
       break;
+
     default:
       g_print ("unknown message type\n");
     }
@@ -1157,6 +1177,7 @@ print_incoming_header (Header *header)
                header->member ? header->member : "",
                header->path ? header->path : "");
       break;
+
     default:
       g_print ("unknown message type\n");
     }
@@ -1176,8 +1197,8 @@ xdg_app_proxy_client_get_policy (XdgAppProxyClient *client, const char *source)
 
 static void
 xdg_app_proxy_client_update_unique_id_policy (XdgAppProxyClient *client,
-                                              const char *unique_id,
-                                              XdgAppPolicy policy)
+                                              const char        *unique_id,
+                                              XdgAppPolicy       policy)
 {
   if (policy > XDG_APP_POLICY_NONE)
     {
@@ -1190,8 +1211,8 @@ xdg_app_proxy_client_update_unique_id_policy (XdgAppProxyClient *client,
 
 static void
 xdg_app_proxy_client_update_unique_id_policy_from_name (XdgAppProxyClient *client,
-                                                        const char *unique_id,
-                                                        const char *as_name)
+                                                        const char        *unique_id,
+                                                        const char        *as_name)
 {
   xdg_app_proxy_client_update_unique_id_policy (client,
                                                 unique_id,
@@ -1329,10 +1350,10 @@ get_dbus_method_handler (XdgAppProxyClient *client, Header *header)
   if (header->has_reply_serial)
     {
       ExpectedReplyType expected_reply =
-	steal_expected_reply (&client->bus_side,
-			      header->reply_serial);
+        steal_expected_reply (&client->bus_side,
+                              header->reply_serial);
       if (expected_reply == EXPECTED_REPLY_NONE)
-	return HANDLE_DENY;
+        return HANDLE_DENY;
 
       return HANDLE_PASS;
     }
@@ -1396,10 +1417,13 @@ policy_from_handler (BusHandler handler)
     {
     case HANDLE_VALIDATE_OWN:
       return XDG_APP_POLICY_OWN;
+
     case HANDLE_VALIDATE_TALK:
       return XDG_APP_POLICY_TALK;
+
     case HANDLE_VALIDATE_SEE:
       return XDG_APP_POLICY_SEE;
+
     default:
       return XDG_APP_POLICY_NONE;
     }
@@ -1416,9 +1440,7 @@ get_arg0_string (Buffer *buffer)
       (body = g_dbus_message_get_body (message)) != NULL &&
       (arg0 = g_variant_get_child_value (body, 0)) != NULL &&
       g_variant_is_of_type (arg0, G_VARIANT_TYPE_STRING))
-    {
-      name = g_variant_dup_string (arg0, NULL);
-    }
+    name = g_variant_dup_string (arg0, NULL);
 
   g_object_unref (message);
 
@@ -1596,12 +1618,12 @@ update_socket_messages (ProxySide *side, Buffer *buffer, Header *header)
     {
       buffer->control_messages = side_get_n_unix_fds (side, header->unix_fds);
       if (buffer->control_messages == NULL)
-	{
-	  g_warning ("Not enough fds for message");
-	  side_closed (side);
-	  buffer_free (buffer);
-	  return FALSE;
-	}
+        {
+          g_warning ("Not enough fds for message");
+          side_closed (side);
+          buffer_free (buffer);
+          return FALSE;
+        }
     }
   return TRUE;
 }
@@ -1763,7 +1785,7 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
         }
 
       if (!update_socket_messages (side, buffer, &header))
-	return;
+        return;
 
       /* Make sure the client is not playing games with the serials, as that
          could confuse us. */
@@ -1780,7 +1802,7 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
         print_outgoing_header (&header);
 
       /* Keep track of the initial Hello request so that we can read
-	 the reply which has our assigned unique id */
+         the reply which has our assigned unique id */
       if (is_dbus_method_call (&header) &&
           g_strcmp0 (header.member, "Hello") == 0)
         {
@@ -1796,14 +1818,14 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
         case HANDLE_FILTER_GET_OWNER_REPLY:
           if (!validate_arg0_name (client, buffer, XDG_APP_POLICY_SEE, NULL))
             {
-	      g_clear_pointer (&buffer, buffer_free);
+              g_clear_pointer (&buffer, buffer_free);
               if (handler == HANDLE_FILTER_GET_OWNER_REPLY)
-		buffer = get_error_for_roundtrip (client, &header,
-						  "org.freedesktop.DBus.Error.NameHasNoOwner");
+                buffer = get_error_for_roundtrip (client, &header,
+                                                  "org.freedesktop.DBus.Error.NameHasNoOwner");
               else
                 buffer = get_bool_reply_for_roundtrip (client, &header, FALSE);
 
-	      expecting_reply = EXPECTED_REPLY_REWRITE;
+              expecting_reply = EXPECTED_REPLY_REWRITE;
               break;
             }
 
@@ -1817,18 +1839,18 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
             if (validate_arg0_name (client, buffer, policy_from_handler (handler), &name_policy))
               goto handle_pass;
 
-            if (name_policy < (int)XDG_APP_POLICY_SEE)
+            if (name_policy < (int) XDG_APP_POLICY_SEE)
               goto handle_hide;
             else
               goto handle_deny;
           }
 
         case HANDLE_FILTER_NAME_LIST_REPLY:
-	  expecting_reply = EXPECTED_REPLY_LIST_NAMES;
+          expecting_reply = EXPECTED_REPLY_LIST_NAMES;
           goto handle_pass;
 
         case HANDLE_PASS:
-        handle_pass:
+handle_pass:
           if (client_message_generates_reply (&header))
 	    {
 	      if (expecting_reply == EXPECTED_REPLY_NONE)
@@ -1838,12 +1860,12 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
           break;
 
         case HANDLE_HIDE:
-        handle_hide:
-	  g_clear_pointer (&buffer, buffer_free);
+handle_hide:
+          g_clear_pointer (&buffer, buffer_free);
 
           if (client_message_generates_reply (&header))
             {
-	      const char *error;
+              const char *error;
 
               if (client->proxy->log_messages)
                 g_print ("*HIDDEN* (ping)\n");
@@ -1852,7 +1874,7 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
                   (header.flags & G_DBUS_MESSAGE_FLAGS_NO_AUTO_START) != 0)
                 error = "org.freedesktop.DBus.Error.NameHasNoOwner";
               else
-		error = "org.freedesktop.DBus.Error.ServiceUnknown";
+                error = "org.freedesktop.DBus.Error.ServiceUnknown";
 
               buffer = get_error_for_roundtrip (client, &header, error);
 	      expecting_reply = EXPECTED_REPLY_REWRITE;
@@ -1866,8 +1888,8 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
 
         default:
         case HANDLE_DENY:
-        handle_deny:
-	  g_clear_pointer (&buffer, buffer_free);
+handle_deny:
+          g_clear_pointer (&buffer, buffer_free);
 
           if (client_message_generates_reply (&header))
             {
@@ -1912,35 +1934,35 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
       if (!parse_header (buffer, &header, 0, client->serial_offset, client->hello_serial))
         {
           g_warning ("Invalid message header format");
-	  buffer_free (buffer);
+          buffer_free (buffer);
           side_closed (side);
           return;
         }
 
       if (!update_socket_messages (side, buffer, &header))
-	return;
+        return;
 
       if (client->proxy->log_messages)
         print_incoming_header (&header);
 
       if (header.has_reply_serial)
-	{
-	  expected_reply = steal_expected_reply (get_other_side (side), header.reply_serial);
+        {
+          expected_reply = steal_expected_reply (get_other_side (side), header.reply_serial);
 
-	  /* We only allow replies we expect */
-	  if (expected_reply == EXPECTED_REPLY_NONE)
-	    {
-	      if (client->proxy->log_messages)
-		g_print ("*Unexpected reply*\n");
-	      buffer_free (buffer);
-	      return;
-	    }
+          /* We only allow replies we expect */
+          if (expected_reply == EXPECTED_REPLY_NONE)
+            {
+              if (client->proxy->log_messages)
+                g_print ("*Unexpected reply*\n");
+              buffer_free (buffer);
+              return;
+            }
 
-	  switch (expected_reply)
-	    {
-	    case EXPECTED_REPLY_HELLO:
-	      /* When we get the initial reply to Hello, allow all
-		 further communications to our own unique id. */
+          switch (expected_reply)
+            {
+            case EXPECTED_REPLY_HELLO:
+              /* When we get the initial reply to Hello, allow all
+                 further communications to our own unique id. */
               if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                 {
                   char *my_id = get_arg0_string (buffer);
@@ -1948,26 +1970,26 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
                   break;
                 }
 
-	    case EXPECTED_REPLY_REWRITE:
-	      /* Replace a roundtrip ping with the rewritten message */
+            case EXPECTED_REPLY_REWRITE:
+              /* Replace a roundtrip ping with the rewritten message */
 
-	      rewritten = g_hash_table_lookup (client->rewrite_reply,
-					       GINT_TO_POINTER (header.reply_serial));
+              rewritten = g_hash_table_lookup (client->rewrite_reply,
+                                               GINT_TO_POINTER (header.reply_serial));
 
-	      if (client->proxy->log_messages)
-		g_print ("*REWRITTEN*\n");
+              if (client->proxy->log_messages)
+                g_print ("*REWRITTEN*\n");
 
-	      g_dbus_message_set_serial (rewritten, header.serial);
-	      g_clear_pointer (&buffer, buffer_free);
-	      buffer = message_to_buffer (rewritten);
+              g_dbus_message_set_serial (rewritten, header.serial);
+              g_clear_pointer (&buffer, buffer_free);
+              buffer = message_to_buffer (rewritten);
 
-	      g_hash_table_remove (client->rewrite_reply,
-				   GINT_TO_POINTER (header.reply_serial));
-	      break;
+              g_hash_table_remove (client->rewrite_reply,
+                                   GINT_TO_POINTER (header.reply_serial));
+              break;
 
-	    case EXPECTED_REPLY_FAKE_LIST_NAMES:
-	      /* This is a reply from the bus to a fake ListNames
-		 request, request ownership of any name matching a
+            case EXPECTED_REPLY_FAKE_LIST_NAMES:
+              /* This is a reply from the bus to a fake ListNames
+                 request, request ownership of any name matching a
                  wildcard policy */
 
               queue_wildcard_initial_name_ops (client, &header, buffer);
@@ -1981,12 +2003,12 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
               start_reading (&client->client_side);
               break;
 
-	    case EXPECTED_REPLY_FAKE_GET_NAME_OWNER:
-	      /* This is a reply from the bus to a fake GetNameOwner
-		 request, update the policy for this unique name based on
-		 the policy */
-	      {
-		char *requested_name = g_hash_table_lookup (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial));
+            case EXPECTED_REPLY_FAKE_GET_NAME_OWNER:
+              /* This is a reply from the bus to a fake GetNameOwner
+                 request, update the policy for this unique name based on
+                 the policy */
+              {
+                char *requested_name = g_hash_table_lookup (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial));
 
                 if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                   {
@@ -2001,18 +2023,18 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
                 if (client->proxy->log_messages)
                   g_print ("*SKIPPED*\n");
                 g_clear_pointer (&buffer, buffer_free);
-		break;
-	      }
+                break;
+              }
 
-	    case EXPECTED_REPLY_FILTER:
+            case EXPECTED_REPLY_FILTER:
               if (client->proxy->log_messages)
                 g_print ("*SKIPPED*\n");
               g_clear_pointer (&buffer, buffer_free);
               break;
 
-	    case EXPECTED_REPLY_LIST_NAMES:
-	      /* This is a reply from the bus to a ListNames request, filter
-		 it according to the policy */
+            case EXPECTED_REPLY_LIST_NAMES:
+              /* This is a reply from the bus to a ListNames request, filter
+                 it according to the policy */
               if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                 {
                   Buffer *filtered_buffer;
@@ -2024,22 +2046,22 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 
               break;
 
-	    case EXPECTED_REPLY_NORMAL:
-	      break;
+            case EXPECTED_REPLY_NORMAL:
+              break;
 
-	    default:
-	      g_warning ("Unexpected expected reply type %d\n", expected_reply);
-	    }
-	}
+            default:
+              g_warning ("Unexpected expected reply type %d\n", expected_reply);
+            }
+        }
       else /* Not reply */
-	{
+        {
 
           /* Don't allow reply types with no reply_serial */
           if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN ||
               header.type == G_DBUS_MESSAGE_TYPE_ERROR)
             {
-	      if (client->proxy->log_messages)
-		g_print ("*Invalid reply*\n");
+              if (client->proxy->log_messages)
+                g_print ("*Invalid reply*\n");
               g_clear_pointer (&buffer, buffer_free);
             }
 
@@ -2053,15 +2075,15 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 
       /* All incoming broadcast signals are filtered according to policy */
       if (header.type == G_DBUS_MESSAGE_TYPE_SIGNAL && header.destination == NULL)
-	{
-	  policy = xdg_app_proxy_client_get_policy (client, header.sender);
-	  if (policy < XDG_APP_POLICY_TALK)
-	    {
-	      if (client->proxy->log_messages)
-		g_print ("*FILTERED IN*\n");
-	      g_clear_pointer (&buffer, buffer_free);
-	    }
-	}
+        {
+          policy = xdg_app_proxy_client_get_policy (client, header.sender);
+          if (policy < XDG_APP_POLICY_TALK)
+            {
+              if (client->proxy->log_messages)
+                g_print ("*FILTERED IN*\n");
+              g_clear_pointer (&buffer, buffer_free);
+            }
+        }
 
       /* We received and forwarded a message from a trusted peer. Make the policy for
          this unique id SEE so that the client can track its lifetime. */
@@ -2069,7 +2091,7 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
         xdg_app_proxy_client_update_unique_id_policy (client, header.sender, XDG_APP_POLICY_SEE);
 
       if (buffer && client_message_generates_reply (&header))
-	queue_expected_reply (side, header.serial, EXPECTED_REPLY_NORMAL);
+        queue_expected_reply (side, header.serial, EXPECTED_REPLY_NORMAL);
     }
 
   if (buffer)
@@ -2122,7 +2144,7 @@ find_auth_end (XdgAppProxyClient *client, Buffer *buffer)
     return match - buffer->data + strlen (AUTH_END_STRING);
 
   /* Record longest prefix match at the end */
-  for (i = MIN (strlen (AUTH_END_STRING) - 1, buffer->pos); i > 0 ; i--)
+  for (i = MIN (strlen (AUTH_END_STRING) - 1, buffer->pos); i > 0; i--)
     {
       if (memcmp (buffer->data + buffer->pos - i, AUTH_END_STRING, i) == 0)
         {
@@ -2194,7 +2216,9 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
                 client->authenticated = TRUE;
             }
           else
-            buffer_free (buffer);
+            {
+              buffer_free (buffer);
+            }
         }
       else if (buffer->pos == buffer->size)
         {
@@ -2208,7 +2232,9 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
                   side_closed (side);
                 }
               else
-                side->current_read_buffer = buffer_new (required, buffer);
+                {
+                  side->current_read_buffer = buffer_new (required, buffer);
+                }
             }
           else
             {
@@ -2237,7 +2263,7 @@ start_reading (ProxySide *side)
 
   socket = g_socket_connection_get_socket (side->connection);
   side->in_source = g_socket_create_source (socket, G_IO_IN, NULL);
-  g_source_set_callback (side->in_source, (GSourceFunc)side_in_cb, side, NULL);
+  g_source_set_callback (side->in_source, (GSourceFunc) side_in_cb, side, NULL);
   g_source_attach (side->in_source, NULL);
   g_source_unref (side->in_source);
 }
@@ -2254,9 +2280,9 @@ stop_reading (ProxySide *side)
 
 
 static void
-client_connected_to_dbus (GObject *source_object,
+client_connected_to_dbus (GObject      *source_object,
                           GAsyncResult *res,
-                          gpointer user_data)
+                          gpointer      user_data)
 {
   XdgAppProxyClient *client = user_data;
   GSocketConnection *connection;
@@ -2292,7 +2318,7 @@ xdg_app_proxy_incoming (GSocketService    *service,
   g_dbus_address_get_stream (proxy->dbus_address,
                              NULL,
                              client_connected_to_dbus,
-                            client);
+                             client);
   return TRUE;
 }
 

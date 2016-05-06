@@ -30,8 +30,8 @@ typedef struct _XdgAppBundleRefPrivate XdgAppBundleRefPrivate;
 
 struct _XdgAppBundleRefPrivate
 {
-  GFile *file;
-  char *origin;
+  GFile  *file;
+  char   *origin;
   GBytes *metadata;
   GBytes *appstream;
   GBytes *icon_64;
@@ -65,10 +65,10 @@ xdg_app_bundle_ref_finalize (GObject *object)
 }
 
 static void
-xdg_app_bundle_ref_set_property (GObject         *object,
-                                 guint            prop_id,
-                                 const GValue    *value,
-                                 GParamSpec      *pspec)
+xdg_app_bundle_ref_set_property (GObject      *object,
+                                 guint         prop_id,
+                                 const GValue *value,
+                                 GParamSpec   *pspec)
 {
   XdgAppBundleRef *self = XDG_APP_BUNDLE_REF (object);
   XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
@@ -86,10 +86,10 @@ xdg_app_bundle_ref_set_property (GObject         *object,
 }
 
 static void
-xdg_app_bundle_ref_get_property (GObject         *object,
-                                 guint            prop_id,
-                                 GValue          *value,
-                                 GParamSpec      *pspec)
+xdg_app_bundle_ref_get_property (GObject    *object,
+                                 guint       prop_id,
+                                 GValue     *value,
+                                 GParamSpec *pspec)
 {
   XdgAppBundleRef *self = XDG_APP_BUNDLE_REF (object);
   XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
@@ -154,7 +154,7 @@ xdg_app_bundle_ref_get_file (XdgAppBundleRef *self)
  * Returns: (transfer full) : an #GBytes with the metadata contents, or %NULL
  */
 GBytes *
-xdg_app_bundle_ref_get_metadata (XdgAppBundleRef  *self)
+xdg_app_bundle_ref_get_metadata (XdgAppBundleRef *self)
 {
   XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
 
@@ -172,7 +172,7 @@ xdg_app_bundle_ref_get_metadata (XdgAppBundleRef  *self)
  * Returns: (transfer full) : an #GBytes with the appstream contents, or %NULL
  */
 GBytes *
-xdg_app_bundle_ref_get_appstream (XdgAppBundleRef  *self)
+xdg_app_bundle_ref_get_appstream (XdgAppBundleRef *self)
 {
   XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
 
@@ -191,8 +191,8 @@ xdg_app_bundle_ref_get_appstream (XdgAppBundleRef  *self)
  * Returns: (transfer full) : an #GBytes with png contents
  */
 GBytes *
-xdg_app_bundle_ref_get_icon (XdgAppBundleRef  *self,
-                             int               size)
+xdg_app_bundle_ref_get_icon (XdgAppBundleRef *self,
+                             int              size)
 {
   XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
 
@@ -214,7 +214,7 @@ xdg_app_bundle_ref_get_icon (XdgAppBundleRef  *self,
  * Returns: (transfer full) : an url string, or %NULL
  */
 char *
-xdg_app_bundle_ref_get_origin (XdgAppBundleRef  *self)
+xdg_app_bundle_ref_get_origin (XdgAppBundleRef *self)
 {
   XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
 
@@ -222,7 +222,7 @@ xdg_app_bundle_ref_get_origin (XdgAppBundleRef  *self)
 }
 
 guint64
-xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef  *self)
+xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef *self)
 {
   XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
 
@@ -231,11 +231,12 @@ xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef  *self)
 
 
 XdgAppBundleRef *
-xdg_app_bundle_ref_new (GFile *file,
+xdg_app_bundle_ref_new (GFile   *file,
                         GError **error)
 {
   XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
   XdgAppBundleRefPrivate *priv;
+
   g_auto(GStrv) parts = NULL;
   XdgAppBundleRef *ref;
   g_autoptr(GVariant) metadata = NULL;

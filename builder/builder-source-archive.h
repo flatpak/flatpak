@@ -27,13 +27,13 @@ G_BEGIN_DECLS
 
 typedef struct BuilderSourceArchive BuilderSourceArchive;
 
-#define BUILDER_TYPE_SOURCE_ARCHIVE (builder_source_archive_get_type())
+#define BUILDER_TYPE_SOURCE_ARCHIVE (builder_source_archive_get_type ())
 #define BUILDER_SOURCE_ARCHIVE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_SOURCE_ARCHIVE, BuilderSourceArchive))
 #define BUILDER_IS_SOURCE_ARCHIVE(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BUILDER_TYPE_SOURCE_ARCHIVE))
 
 GType builder_source_archive_get_type (void);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderSourceArchive, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderSourceArchive, g_object_unref)
 
 G_END_DECLS
 

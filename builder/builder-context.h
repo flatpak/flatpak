@@ -29,51 +29,51 @@ G_BEGIN_DECLS
 
 /* BuilderContext defined in builder-options.h to fix include loop */
 
-#define BUILDER_TYPE_CONTEXT (builder_context_get_type())
+#define BUILDER_TYPE_CONTEXT (builder_context_get_type ())
 #define BUILDER_CONTEXT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_CONTEXT, BuilderContext))
 #define BUILDER_IS_CONTEXT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BUILDER_TYPE_CONTEXT))
 
 GType builder_context_get_type (void);
 
-GFile *         builder_context_get_app_dir         (BuilderContext  *self);
-GFile *         builder_context_get_base_dir        (BuilderContext  *self);
-GFile *         builder_context_get_state_dir       (BuilderContext  *self);
-GFile *         builder_context_get_cache_dir       (BuilderContext  *self);
-GFile *         builder_context_get_build_dir       (BuilderContext  *self);
-GFile *         builder_context_get_ccache_dir      (BuilderContext  *self);
-GFile *         builder_context_get_download_dir    (BuilderContext  *self);
-SoupSession *   builder_context_get_soup_session    (BuilderContext  *self);
-const char *    builder_context_get_arch            (BuilderContext  *self);
-void            builder_context_set_arch            (BuilderContext  *self,
-                                                     const char      *arch);
-int             builder_context_get_n_cpu           (BuilderContext  *self);
-void            builder_context_set_keep_build_dirs (BuilderContext  *self,
-                                                     gboolean         keep_build_dirs);
-gboolean        builder_context_get_keep_build_dirs (BuilderContext  *self);
-void            builder_context_set_global_cleanup  (BuilderContext  *self,
-                                                     const char     **cleanup);
-const char **   builder_context_get_global_cleanup  (BuilderContext  *self);
-void            builder_context_set_global_cleanup_platform  (BuilderContext  *self,
-                                                              const char     **cleanup);
-const char **   builder_context_get_global_cleanup_platform  (BuilderContext  *self);
-BuilderOptions *builder_context_get_options         (BuilderContext  *self);
-void            builder_context_set_options         (BuilderContext  *self,
-                                                     BuilderOptions  *option);
-gboolean        builder_context_get_build_runtime   (BuilderContext  *self);
-void            builder_context_set_build_runtime   (BuilderContext  *self,
-                                                     gboolean         build_runtime);
-gboolean        builder_context_get_separate_locales(BuilderContext  *self);
-void            builder_context_set_separate_locales(BuilderContext  *self,
-                                                     gboolean         separate_locales);
+GFile *         builder_context_get_app_dir (BuilderContext *self);
+GFile *         builder_context_get_base_dir (BuilderContext *self);
+GFile *         builder_context_get_state_dir (BuilderContext *self);
+GFile *         builder_context_get_cache_dir (BuilderContext *self);
+GFile *         builder_context_get_build_dir (BuilderContext *self);
+GFile *         builder_context_get_ccache_dir (BuilderContext *self);
+GFile *         builder_context_get_download_dir (BuilderContext *self);
+SoupSession *   builder_context_get_soup_session (BuilderContext *self);
+const char *    builder_context_get_arch (BuilderContext *self);
+void            builder_context_set_arch (BuilderContext *self,
+                                          const char     *arch);
+int             builder_context_get_n_cpu (BuilderContext *self);
+void            builder_context_set_keep_build_dirs (BuilderContext *self,
+                                                     gboolean        keep_build_dirs);
+gboolean        builder_context_get_keep_build_dirs (BuilderContext *self);
+void            builder_context_set_global_cleanup (BuilderContext *self,
+                                                    const char    **cleanup);
+const char **   builder_context_get_global_cleanup (BuilderContext *self);
+void            builder_context_set_global_cleanup_platform (BuilderContext *self,
+                                                             const char    **cleanup);
+const char **   builder_context_get_global_cleanup_platform (BuilderContext *self);
+BuilderOptions *builder_context_get_options (BuilderContext *self);
+void            builder_context_set_options (BuilderContext *self,
+                                             BuilderOptions *option);
+gboolean        builder_context_get_build_runtime (BuilderContext *self);
+void            builder_context_set_build_runtime (BuilderContext *self,
+                                                   gboolean        build_runtime);
+gboolean        builder_context_get_separate_locales (BuilderContext *self);
+void            builder_context_set_separate_locales (BuilderContext *self,
+                                                      gboolean        separate_locales);
 
-BuilderContext *builder_context_new              (GFile          *base_dir,
-                                                  GFile          *app_dir);
-gboolean        builder_context_enable_ccache    (BuilderContext  *self,
-                                                  GError         **error);
-char **         builder_context_extend_env       (BuilderContext  *self,
-                                                  char           **envp);
+BuilderContext *builder_context_new (GFile *base_dir,
+                                     GFile *app_dir);
+gboolean        builder_context_enable_ccache (BuilderContext *self,
+                                               GError        **error);
+char **         builder_context_extend_env (BuilderContext *self,
+                                            char          **envp);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(BuilderContext, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderContext, g_object_unref)
 
 G_END_DECLS
 

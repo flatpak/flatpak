@@ -33,19 +33,19 @@
 static PolkitAuthority *authority = NULL;
 
 #ifndef glib_autoptr_cleanup_PolkitAuthorizationResult
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(PolkitAuthorizationResult, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(PolkitDetails, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(PolkitSubject, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitAuthorizationResult, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitDetails, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitSubject, g_object_unref)
 #endif
 
 static gboolean
-handle_deploy (XdgAppSystemHelper *object,
+handle_deploy (XdgAppSystemHelper    *object,
                GDBusMethodInvocation *invocation,
-               const gchar *arg_repo_path,
-               guint32 arg_flags,
-               const gchar *arg_ref,
-               const gchar *arg_origin,
-               const gchar *const *arg_subpaths)
+               const gchar           *arg_repo_path,
+               guint32                arg_flags,
+               const gchar           *arg_ref,
+               const gchar           *arg_origin,
+               const gchar *const    *arg_subpaths)
 {
   g_autoptr(XdgAppDir) system = xdg_app_dir_get_system ();
   g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
@@ -115,7 +115,7 @@ handle_deploy (XdgAppSystemHelper *object,
   if (!xdg_app_dir_pull_untrusted_local (system, arg_repo_path,
                                          arg_origin,
                                          arg_ref,
-                                         (char **)arg_subpaths,
+                                         (char **) arg_subpaths,
                                          NULL,
                                          NULL, &error))
     {
@@ -131,7 +131,7 @@ handle_deploy (XdgAppSystemHelper *object,
     {
       /* TODO: This doesn't support a custom subpath */
       if (!xdg_app_dir_deploy_update (system, arg_ref,
-                                       NULL,
+                                      NULL,
                                       NULL, &error))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
@@ -142,7 +142,7 @@ handle_deploy (XdgAppSystemHelper *object,
   else
     {
       if (!xdg_app_dir_deploy_install (system, arg_ref, arg_origin,
-                                       (char **)arg_subpaths,
+                                       (char **) arg_subpaths,
                                        NULL, &error))
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
@@ -167,6 +167,7 @@ xdg_app_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   gboolean authorized;
   const gchar *sender;
   const gchar *action;
+
   g_autoptr(PolkitSubject) subject = NULL;
   g_autoptr(PolkitDetails) details = NULL;
   g_autoptr(GError) error = NULL;
@@ -289,6 +290,7 @@ main (int    argc,
 {
   guint owner_id;
   GMainLoop *loop;
+
   g_autoptr(GError) error = NULL;
 
   setlocale (LC_ALL, "");

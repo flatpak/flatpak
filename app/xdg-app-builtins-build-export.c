@@ -63,6 +63,7 @@ static gboolean
 metadata_get_arch (GFile *file, char **out_arch, GError **error)
 {
   g_autofree char *path = NULL;
+
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime = NULL;
   g_auto(GStrv) parts = NULL;
@@ -115,7 +116,8 @@ is_empty_directory (GFile *file, GCancellable *cancellable)
   return TRUE;
 }
 
-typedef struct {
+typedef struct
+{
   const char **exclude;
   const char **include;
 } CommitData;
@@ -140,7 +142,7 @@ matches_patterns (const char **patterns, const char *path)
 static OstreeRepoCommitFilterResult
 commit_filter (OstreeRepo *repo,
                const char *path,
-               GFileInfo *file_info,
+               GFileInfo  *file_info,
                CommitData *commit_data)
 {
   guint mode;
@@ -167,14 +169,14 @@ commit_filter (OstreeRepo *repo,
 }
 
 gboolean
-add_file_to_mtree (GFile *file,
-                   const char *name,
-                   OstreeRepo *repo,
+add_file_to_mtree (GFile             *file,
+                   const char        *name,
+                   OstreeRepo        *repo,
                    OstreeMutableTree *mtree,
-                   GCancellable *cancellable,
-                   GError **error)
+                   GCancellable      *cancellable,
+                   GError           **error)
 {
-  g_autoptr (GFileInfo) file_info = NULL;
+  g_autoptr(GFileInfo) file_info = NULL;
   g_autoptr(GInputStream) raw_input = NULL;
   g_autoptr(GInputStream) input = NULL;
   guint64 length;
@@ -193,7 +195,7 @@ add_file_to_mtree (GFile *file,
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100644);
 
-  raw_input = (GInputStream*)g_file_read (file, cancellable, error);
+  raw_input = (GInputStream *) g_file_read (file, cancellable, error);
   if (raw_input == NULL)
     return FALSE;
 
@@ -218,6 +220,7 @@ gboolean
 xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files = NULL;
@@ -356,12 +359,12 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     goto out;
 
   modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS,
-                                              (OstreeRepoCommitFilter)commit_filter, &commit_data, NULL);
+                                              (OstreeRepoCommitFilter) commit_filter, &commit_data, NULL);
 
   if (opt_runtime)
     {
-      commit_data.exclude = (const char **)opt_exclude;
-      commit_data.include = (const char **)opt_include;
+      commit_data.exclude = (const char **) opt_exclude;
+      commit_data.include = (const char **) opt_include;
       if (!ostree_repo_write_directory_to_mtree (repo, usr, files_mtree, modifier, cancellable, error))
         goto out;
       commit_data.exclude = NULL;
@@ -369,8 +372,8 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     }
   else
     {
-      commit_data.exclude = (const char **)opt_exclude;
-      commit_data.include = (const char **)opt_include;
+      commit_data.exclude = (const char **) opt_exclude;
+      commit_data.include = (const char **) opt_include;
       if (!ostree_repo_write_directory_to_mtree (repo, files, files_mtree, modifier, cancellable, error))
         goto out;
       commit_data.exclude = NULL;
@@ -421,10 +424,12 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     {
       g_autoptr(GError) my_error = NULL;
 
-      if (!xdg_app_repo_generate_appstream (repo, (const char **)opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
+      if (!xdg_app_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
         {
           if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
-            g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");
+            {
+              g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");
+            }
           else
             {
               g_propagate_error (error, g_steal_pointer (&my_error));
@@ -434,7 +439,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     }
 
   if (!xdg_app_repo_update (repo,
-                            (const char **)opt_gpg_key_ids,
+                            (const char **) opt_gpg_key_ids,
                             opt_gpg_homedir,
                             cancellable,
                             error))
@@ -451,7 +456,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   ret = TRUE;
 
- out:
+out:
   if (repo)
     ostree_repo_abort_transaction (repo, cancellable, NULL);
 

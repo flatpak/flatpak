@@ -75,6 +75,7 @@ static gboolean
 print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gboolean print_user, GCancellable *cancellable, GError **error)
 {
   g_autofree char *last = NULL;
+
   g_auto(GStrv) system = NULL;
   g_auto(GStrv) system_app = NULL;
   g_auto(GStrv) system_runtime = NULL;
@@ -145,7 +146,7 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
         }
 
       parts = g_strsplit (ref, "/", -1);
-      partial_ref = strchr(ref, '/') + 1;
+      partial_ref = strchr (ref, '/') + 1;
 
       deploy_data = xdg_app_dir_get_deploy_data (dir, ref, cancellable, error);
       if (deploy_data == NULL)
@@ -170,15 +171,19 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
                   latest = g_strdup ("-");
                 }
               else
-                latest[MIN(strlen(latest), 12)] = 0;
+                {
+                  latest[MIN (strlen (latest), 12)] = 0;
+                }
             }
           else
-            latest = g_strdup ("?");
+            {
+              latest = g_strdup ("?");
+            }
 
           xdg_app_table_printer_add_column (printer, partial_ref);
           xdg_app_table_printer_add_column (printer, repo);
 
-          active[MIN(strlen(active), 12)] = 0;
+          active[MIN (strlen (active), 12)] = 0;
           xdg_app_table_printer_add_column (printer, active);
           xdg_app_table_printer_add_column (printer, latest);
 
@@ -207,7 +212,9 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
 
           subpaths = xdg_app_deploy_data_get_subpaths (deploy_data);
           if (subpaths[0] == NULL)
-            xdg_app_table_printer_add_column (printer, "");
+            {
+              xdg_app_table_printer_add_column (printer, "");
+            }
           else
             {
               int i;

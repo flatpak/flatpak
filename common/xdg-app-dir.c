@@ -37,41 +37,45 @@
 
 #include "errno.h"
 
-#define NO_SYSTEM_HELPER ((XdgAppSystemHelper *)(gpointer)1)
+#define NO_SYSTEM_HELPER ((XdgAppSystemHelper *) (gpointer) 1)
 
-struct XdgAppDir {
-  GObject parent;
+struct XdgAppDir
+{
+  GObject             parent;
 
-  gboolean user;
-  GFile *basedir;
-  OstreeRepo *repo;
+  gboolean            user;
+  GFile              *basedir;
+  OstreeRepo         *repo;
 
   XdgAppSystemHelper *system_helper;
 
-  SoupSession *soup_session;
+  SoupSession        *soup_session;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 } XdgAppDirClass;
 
-struct XdgAppDeploy {
-  GObject parent;
+struct XdgAppDeploy
+{
+  GObject        parent;
 
-  GFile *dir;
-  GKeyFile *metadata;
+  GFile         *dir;
+  GKeyFile      *metadata;
   XdgAppContext *system_overrides;
   XdgAppContext *user_overrides;
 };
 
-typedef struct {
+typedef struct
+{
   GObjectClass parent_class;
 } XdgAppDeployClass;
 
 G_DEFINE_TYPE (XdgAppDir, xdg_app_dir, G_TYPE_OBJECT)
 G_DEFINE_TYPE (XdgAppDeploy, xdg_app_deploy, G_TYPE_OBJECT)
 
-G_DEFINE_QUARK (xdg-app-dir-error-quark, xdg_app_dir_error)
+G_DEFINE_QUARK (xdg - app - dir - error - quark, xdg_app_dir_error)
 
 enum {
   PROP_0,
@@ -164,6 +168,7 @@ GFile *
 xdg_app_get_user_base_dir_location (void)
 {
   g_autofree char *base = g_build_filename (g_get_user_data_dir (), "xdg-app", NULL);
+
   return g_file_new_for_path (base);
 }
 
@@ -260,10 +265,10 @@ xdg_app_dir_finalize (GObject *object)
 }
 
 static void
-xdg_app_dir_set_property(GObject         *object,
-                         guint            prop_id,
-                         const GValue    *value,
-                         GParamSpec      *pspec)
+xdg_app_dir_set_property (GObject      *object,
+                          guint         prop_id,
+                          const GValue *value,
+                          GParamSpec   *pspec)
 {
   XdgAppDir *self = XDG_APP_DIR (object);
 
@@ -273,9 +278,11 @@ xdg_app_dir_set_property(GObject         *object,
       /* Canonicalize */
       self->basedir = g_file_new_for_path (gs_file_get_path_cached (g_value_get_object (value)));
       break;
+
     case PROP_USER:
       self->user = g_value_get_boolean (value);
       break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -283,10 +290,10 @@ xdg_app_dir_set_property(GObject         *object,
 }
 
 static void
-xdg_app_dir_get_property(GObject         *object,
-                         guint            prop_id,
-                         GValue          *value,
-                         GParamSpec      *pspec)
+xdg_app_dir_get_property (GObject    *object,
+                          guint       prop_id,
+                          GValue     *value,
+                          GParamSpec *pspec)
 {
   XdgAppDir *self = XDG_APP_DIR (object);
 
@@ -295,9 +302,11 @@ xdg_app_dir_get_property(GObject         *object,
     case PROP_PATH:
       g_value_set_object (value, self->basedir);
       break;
+
     case PROP_USER:
       g_value_set_boolean (value, self->user);
       break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -353,10 +362,10 @@ xdg_app_dir_get_changed_path (XdgAppDir *self)
 }
 
 char *
-xdg_app_dir_load_override (XdgAppDir *self,
+xdg_app_dir_load_override (XdgAppDir  *self,
                            const char *app_id,
-                           gsize   *length,
-                           GError **error)
+                           gsize      *length,
+                           GError    **error)
 {
   g_autoptr(GFile) override_dir = NULL;
   g_autoptr(GFile) file = NULL;
@@ -366,7 +375,7 @@ xdg_app_dir_load_override (XdgAppDir *self,
   file = g_file_get_child (override_dir, app_id);
 
   if (!g_file_load_contents (file, NULL,
-                            &metadata_contents, length, NULL, NULL))
+                             &metadata_contents, length, NULL, NULL))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                    "No overrides found for %s", app_id);
@@ -381,6 +390,7 @@ xdg_app_load_override_keyfile (const char *app_id, gboolean user, GError **error
 {
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
+
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
   g_autoptr(XdgAppDir) dir = NULL;
 
@@ -403,6 +413,7 @@ XdgAppContext *
 xdg_app_load_override_file (const char *app_id, gboolean user, GError **error)
 {
   XdgAppContext *overrides = xdg_app_context_new ();
+
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GError) my_error = NULL;
 
@@ -425,10 +436,10 @@ xdg_app_load_override_file (const char *app_id, gboolean user, GError **error)
 }
 
 gboolean
-xdg_app_save_override_keyfile (GKeyFile    *metakey,
-                               const char       *app_id,
-                               gboolean          user,
-                               GError          **error)
+xdg_app_save_override_keyfile (GKeyFile   *metakey,
+                               const char *app_id,
+                               gboolean    user,
+                               GError    **error)
 {
   g_autoptr(GFile) base_dir = NULL;
   g_autoptr(GFile) override_dir = NULL;
@@ -446,7 +457,7 @@ xdg_app_save_override_keyfile (GKeyFile    *metakey,
 
   filename = g_file_get_path (file);
   parent = g_path_get_dirname (filename);
-  if (g_mkdir_with_parents  (parent, 0755))
+  if (g_mkdir_with_parents (parent, 0755))
     {
       glnx_set_error_from_errno (error);
       return FALSE;
@@ -511,20 +522,20 @@ xdg_app_dir_load_deployed (XdgAppDir    *self,
 }
 
 GFile *
-xdg_app_dir_get_deploy_dir (XdgAppDir     *self,
-                            const char    *ref)
+xdg_app_dir_get_deploy_dir (XdgAppDir  *self,
+                            const char *ref)
 {
   return g_file_resolve_relative_path (self->basedir, ref);
 }
 
 GFile *
-xdg_app_dir_get_exports_dir (XdgAppDir     *self)
+xdg_app_dir_get_exports_dir (XdgAppDir *self)
 {
   return g_file_get_child (self->basedir, "exports");
 }
 
 GFile *
-xdg_app_dir_get_removed_dir (XdgAppDir     *self)
+xdg_app_dir_get_removed_dir (XdgAppDir *self)
 {
   return g_file_get_child (self->basedir, ".removed");
 }
@@ -544,10 +555,10 @@ xdg_app_dir_get_repo (XdgAppDir *self)
  * to do the right thing.
  */
 gboolean
-xdg_app_dir_lock (XdgAppDir      *self,
-                  GLnxLockFile   *lockfile,
-                  GCancellable   *cancellable,
-                  GError        **error)
+xdg_app_dir_lock (XdgAppDir    *self,
+                  GLnxLockFile *lockfile,
+                  GCancellable *cancellable,
+                  GError      **error)
 {
   g_autoptr(GFile) lock_file = g_file_get_child (xdg_app_dir_get_path (self), "lock");
   g_autofree char *lock_path = g_file_get_path (lock_file);
@@ -559,6 +570,7 @@ const char *
 xdg_app_deploy_data_get_origin (GVariant *deploy_data)
 {
   const char *origin;
+
   g_variant_get_child (deploy_data, 0, "&s", &origin);
   return origin;
 }
@@ -567,6 +579,7 @@ const char *
 xdg_app_deploy_data_get_commit (GVariant *deploy_data)
 {
   const char *commit;
+
   g_variant_get_child (deploy_data, 1, "&s", &commit);
   return commit;
 }
@@ -580,6 +593,7 @@ const char **
 xdg_app_deploy_data_get_subpaths (GVariant *deploy_data)
 {
   const char **subpaths;
+
   g_variant_get_child (deploy_data, 2, "^as", &subpaths);
   return subpaths;
 }
@@ -588,6 +602,7 @@ guint64
 xdg_app_deploy_data_get_installed_size (GVariant *deploy_data)
 {
   guint64 size;
+
   g_variant_get_child (deploy_data, 3, "t", &size);
   return GUINT64_FROM_BE (size);
 }
@@ -595,9 +610,9 @@ xdg_app_deploy_data_get_installed_size (GVariant *deploy_data)
 static GVariant *
 xdg_app_dir_new_deploy_data (const char *origin,
                              const char *commit,
-                             char **subpaths,
-                             guint64 installed_size,
-                             GVariant *metadata)
+                             char      **subpaths,
+                             guint64     installed_size,
+                             GVariant   *metadata)
 {
   char *empty_subpaths[] = {NULL};
   GVariantBuilder builder;
@@ -617,9 +632,9 @@ xdg_app_dir_new_deploy_data (const char *origin,
 }
 
 static char **
-get_old_subpaths (GFile *deploy_base,
-                  GCancellable   *cancellable,
-                  GError        **error)
+get_old_subpaths (GFile        *deploy_base,
+                  GCancellable *cancellable,
+                  GError      **error)
 {
   g_autoptr(GFile) file = NULL;
   g_autofree char *data = NULL;
@@ -632,7 +647,9 @@ get_old_subpaths (GFile *deploy_base,
   if (!g_file_load_contents (file, cancellable, &data, NULL, NULL, &my_error))
     {
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        data = g_strdup ("");
+        {
+          data = g_strdup ("");
+        }
       else
         {
           g_propagate_error (error, g_steal_pointer (&my_error));
@@ -651,14 +668,14 @@ get_old_subpaths (GFile *deploy_base,
     }
 
   g_ptr_array_add (subpaths, NULL);
-  return (char **)g_ptr_array_free (subpaths, FALSE);
+  return (char **) g_ptr_array_free (subpaths, FALSE);
 }
 
 static GVariant *
-xdg_app_create_deploy_data_from_old (XdgAppDir *self,
-                                     GFile *deploy_dir,
+xdg_app_create_deploy_data_from_old (XdgAppDir    *self,
+                                     GFile        *deploy_dir,
                                      GCancellable *cancellable,
-                                     GError **error)
+                                     GError      **error)
 {
   g_autoptr(GFile) deploy_base = NULL;
   g_autofree char *old_origin = NULL;
@@ -687,10 +704,10 @@ xdg_app_create_deploy_data_from_old (XdgAppDir *self,
 }
 
 GVariant *
-xdg_app_dir_get_deploy_data (XdgAppDir      *self,
-                             const char     *ref,
-                             GCancellable   *cancellable,
-                             GError        **error)
+xdg_app_dir_get_deploy_data (XdgAppDir    *self,
+                             const char   *ref,
+                             GCancellable *cancellable,
+                             GError      **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) data_file = NULL;
@@ -726,10 +743,10 @@ xdg_app_dir_get_deploy_data (XdgAppDir      *self,
 
 
 char *
-xdg_app_dir_get_origin (XdgAppDir      *self,
-                        const char     *ref,
-                        GCancellable   *cancellable,
-                        GError        **error)
+xdg_app_dir_get_origin (XdgAppDir    *self,
+                        const char   *ref,
+                        GCancellable *cancellable,
+                        GError      **error)
 {
   g_autoptr(GVariant) deploy_data = NULL;
 
@@ -745,10 +762,10 @@ xdg_app_dir_get_origin (XdgAppDir      *self,
 }
 
 char **
-xdg_app_dir_get_subpaths (XdgAppDir      *self,
-                          const char     *ref,
-                          GCancellable   *cancellable,
-                          GError        **error)
+xdg_app_dir_get_subpaths (XdgAppDir    *self,
+                          const char   *ref,
+                          GCancellable *cancellable,
+                          GError      **error)
 {
   g_autoptr(GVariant) deploy_data = NULL;
   char **subpaths;
@@ -762,7 +779,7 @@ xdg_app_dir_get_subpaths (XdgAppDir      *self,
       return NULL;
     }
 
-  subpaths = (char **)xdg_app_deploy_data_get_subpaths (deploy_data);
+  subpaths = (char **) xdg_app_deploy_data_get_subpaths (deploy_data);
   for (i = 0; subpaths[i] != NULL; i++)
     subpaths[i] = g_strdup (subpaths[i]);
 
@@ -770,19 +787,20 @@ xdg_app_dir_get_subpaths (XdgAppDir      *self,
 }
 
 gboolean
-xdg_app_dir_ensure_path (XdgAppDir     *self,
-                         GCancellable  *cancellable,
-                         GError       **error)
+xdg_app_dir_ensure_path (XdgAppDir    *self,
+                         GCancellable *cancellable,
+                         GError      **error)
 {
   return gs_file_ensure_directory (self->basedir, TRUE, cancellable, error);
 }
 
 gboolean
-xdg_app_dir_ensure_repo (XdgAppDir *self,
+xdg_app_dir_ensure_repo (XdgAppDir    *self,
                          GCancellable *cancellable,
-                         GError **error)
+                         GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) repodir = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
 
@@ -793,7 +811,9 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
 
       repodir = g_file_get_child (self->basedir, "repo");
       if (self->user)
-        repo = ostree_repo_new (repodir);
+        {
+          repo = ostree_repo_new (repodir);
+        }
       else
         {
           g_autoptr(GFile) cache_dir = NULL;
@@ -841,13 +861,13 @@ xdg_app_dir_ensure_repo (XdgAppDir *self,
     }
 
   ret = TRUE;
- out:
+out:
   return ret;
 }
 
 gboolean
 xdg_app_dir_mark_changed (XdgAppDir *self,
-                          GError **error)
+                          GError   **error)
 {
   g_autoptr(GFile) changed_file = NULL;
 
@@ -860,10 +880,10 @@ xdg_app_dir_mark_changed (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_remove_appstream (XdgAppDir      *self,
-                              const char     *remote,
-                              GCancellable   *cancellable,
-                              GError        **error)
+xdg_app_dir_remove_appstream (XdgAppDir    *self,
+                              const char   *remote,
+                              GCancellable *cancellable,
+                              GError      **error)
 {
   g_autoptr(GFile) appstream_dir = NULL;
   g_autoptr(GFile) remote_dir = NULL;
@@ -882,12 +902,13 @@ xdg_app_dir_remove_appstream (XdgAppDir      *self,
 }
 
 gboolean
-xdg_app_dir_remove_all_refs (XdgAppDir      *self,
-                             const char     *remote,
-                             GCancellable   *cancellable,
-                             GError        **error)
+xdg_app_dir_remove_all_refs (XdgAppDir    *self,
+                             const char   *remote,
+                             GCancellable *cancellable,
+                             GError      **error)
 {
   g_autofree char *prefix = NULL;
+
   g_autoptr(GHashTable) refs = NULL;
   GHashTableIter hash_iter;
   gpointer key;
@@ -917,18 +938,19 @@ xdg_app_dir_remove_all_refs (XdgAppDir      *self,
 }
 
 gboolean
-xdg_app_dir_update_appstream (XdgAppDir *self,
-                              const char *remote,
-                              const char *arch,
-                              gboolean *out_changed,
+xdg_app_dir_update_appstream (XdgAppDir           *self,
+                              const char          *remote,
+                              const char          *arch,
+                              gboolean            *out_changed,
                               OstreeAsyncProgress *progress,
-                              GCancellable *cancellable,
-                              GError **error)
+                              GCancellable        *cancellable,
+                              GError             **error)
 {
   g_autofree char *branch = NULL;
   g_autofree char *remote_and_branch = NULL;
   g_autofree char *old_checksum = NULL;
   g_autofree char *new_checksum = NULL;
+
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) appstream_dir = NULL;
   g_autoptr(GFile) remote_dir = NULL;
@@ -1054,16 +1076,17 @@ xdg_app_dir_update_appstream (XdgAppDir *self,
 /* This is a copy of ostree_repo_pull_one_dir that always disables
    static deltas if subdir is used */
 static gboolean
-repo_pull_one_dir (OstreeRepo               *self,
-                   const char               *remote_name,
-                   const char               *dir_to_pull,
-                   char                    **refs_to_fetch,
-                   OstreeRepoPullFlags       flags,
-                   OstreeAsyncProgress      *progress,
-                   GCancellable             *cancellable,
-                   GError                  **error)
+repo_pull_one_dir (OstreeRepo          *self,
+                   const char          *remote_name,
+                   const char          *dir_to_pull,
+                   char               **refs_to_fetch,
+                   OstreeRepoPullFlags  flags,
+                   OstreeAsyncProgress *progress,
+                   GCancellable        *cancellable,
+                   GError             **error)
 {
   GVariantBuilder builder;
+
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
 
   if (dir_to_pull)
@@ -1078,7 +1101,7 @@ repo_pull_one_dir (OstreeRepo               *self,
                          g_variant_new_variant (g_variant_new_int32 (flags)));
   if (refs_to_fetch)
     g_variant_builder_add (&builder, "{s@v}", "refs",
-                           g_variant_new_variant (g_variant_new_strv ((const char *const*) refs_to_fetch, -1)));
+                           g_variant_new_variant (g_variant_new_strv ((const char * const *) refs_to_fetch, -1)));
 
   return ostree_repo_pull_with_options (self, remote_name, g_variant_builder_end (&builder),
                                         progress, cancellable, error);
@@ -1086,18 +1109,19 @@ repo_pull_one_dir (OstreeRepo               *self,
 
 
 gboolean
-xdg_app_dir_pull (XdgAppDir *self,
-                  const char *repository,
-                  const char *ref,
-                  char **subpaths,
-                  OstreeRepo *repo,
-                  OstreeRepoPullFlags flags,
+xdg_app_dir_pull (XdgAppDir           *self,
+                  const char          *repository,
+                  const char          *ref,
+                  char               **subpaths,
+                  OstreeRepo          *repo,
+                  OstreeRepoPullFlags  flags,
                   OstreeAsyncProgress *progress,
-                  GCancellable *cancellable,
-                  GError **error)
+                  GCancellable        *cancellable,
+                  GError             **error)
 {
   gboolean ret = FALSE;
   GSConsole *console = NULL;
+
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   const char *refs[2];
   g_autofree char *url = NULL;
@@ -1135,7 +1159,7 @@ xdg_app_dir_pull (XdgAppDir *self,
   if (subpaths == NULL || subpaths[0] == NULL)
     {
       if (!ostree_repo_pull (repo, repository,
-                             (char **)refs, flags,
+                             (char **) refs, flags,
                              progress,
                              cancellable, error))
         {
@@ -1149,7 +1173,7 @@ xdg_app_dir_pull (XdgAppDir *self,
 
       if (!repo_pull_one_dir (repo, repository,
                               "/metadata",
-                              (char **)refs, flags,
+                              (char **) refs, flags,
                               progress,
                               cancellable, error))
         {
@@ -1163,7 +1187,7 @@ xdg_app_dir_pull (XdgAppDir *self,
           g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
           if (!repo_pull_one_dir (repo, repository,
                                   subpath,
-                                  (char **)refs, flags,
+                                  (char **) refs, flags,
                                   progress,
                                   cancellable, error))
             {
@@ -1176,7 +1200,7 @@ xdg_app_dir_pull (XdgAppDir *self,
 
   ret = TRUE;
 
- out:
+out:
   if (console)
     {
       ostree_async_progress_finish (progress);
@@ -1187,18 +1211,19 @@ xdg_app_dir_pull (XdgAppDir *self,
 }
 
 static gboolean
-repo_pull_one_untrusted (OstreeRepo               *self,
-                         const char               *remote_name,
-                         const char               *url,
-                         const char               *dir_to_pull,
-                         const char               *ref,
-                         const char               *checksum,
-                         OstreeAsyncProgress      *progress,
-                         GCancellable             *cancellable,
-                         GError                  **error)
+repo_pull_one_untrusted (OstreeRepo          *self,
+                         const char          *remote_name,
+                         const char          *url,
+                         const char          *dir_to_pull,
+                         const char          *ref,
+                         const char          *checksum,
+                         OstreeAsyncProgress *progress,
+                         GCancellable        *cancellable,
+                         GError             **error)
 {
   OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED;
   GVariantBuilder builder;
+
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
   const char *refs[2] = { NULL, NULL };
   const char *commits[2] = { NULL, NULL };
@@ -1209,9 +1234,9 @@ repo_pull_one_untrusted (OstreeRepo               *self,
   g_variant_builder_add (&builder, "{s@v}", "flags",
                          g_variant_new_variant (g_variant_new_int32 (flags)));
   g_variant_builder_add (&builder, "{s@v}", "refs",
-                         g_variant_new_variant (g_variant_new_strv ((const char *const*) refs, -1)));
+                         g_variant_new_variant (g_variant_new_strv ((const char * const *) refs, -1)));
   g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
-                         g_variant_new_variant (g_variant_new_strv ((const char *const*) commits, -1)));
+                         g_variant_new_variant (g_variant_new_strv ((const char * const *) commits, -1)));
   g_variant_builder_add (&builder, "{s@v}", "override-remote-name",
                          g_variant_new_variant (g_variant_new_string (remote_name)));
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify",
@@ -1232,17 +1257,18 @@ repo_pull_one_untrusted (OstreeRepo               *self,
 }
 
 gboolean
-xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
-                                  const char *src_path,
-                                  const char *remote_name,
-                                  const char *ref,
-                                  char **subpaths,
+xdg_app_dir_pull_untrusted_local (XdgAppDir           *self,
+                                  const char          *src_path,
+                                  const char          *remote_name,
+                                  const char          *ref,
+                                  char               **subpaths,
                                   OstreeAsyncProgress *progress,
-                                  GCancellable *cancellable,
-                                  GError **error)
+                                  GCancellable        *cancellable,
+                                  GError             **error)
 {
   gboolean ret = FALSE;
   GSConsole *console = NULL;
+
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GFile) path_file = g_file_new_for_path (src_path);
   g_autoptr(GFile) summary_file = g_file_get_child (path_file, "summary");
@@ -1311,7 +1337,7 @@ xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
       return FALSE;
     }
 
-  (void)ostree_repo_load_commit (self->repo, checksum, &old_commit, NULL, NULL);
+  (void) ostree_repo_load_commit (self->repo, checksum, &old_commit, NULL, NULL);
 
   if (old_commit)
     {
@@ -1347,7 +1373,7 @@ xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
 
   if (subpaths == NULL || subpaths[0] == NULL)
     {
-      if (!repo_pull_one_untrusted (self->repo, remote_name,url,
+      if (!repo_pull_one_untrusted (self->repo, remote_name, url,
                                     NULL, ref, checksum, progress,
                                     cancellable, error))
         {
@@ -1359,7 +1385,7 @@ xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
     {
       int i;
 
-      if (!repo_pull_one_untrusted (self->repo, remote_name,url,
+      if (!repo_pull_one_untrusted (self->repo, remote_name, url,
                                     "/metadata", ref, checksum, progress,
                                     cancellable, error))
         {
@@ -1371,7 +1397,7 @@ xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
       for (i = 0; subpaths[i] != NULL; i++)
         {
           g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
-          if (!repo_pull_one_untrusted (self->repo, remote_name,url,
+          if (!repo_pull_one_untrusted (self->repo, remote_name, url,
                                         subpath, ref, checksum, progress,
                                         cancellable, error))
             {
@@ -1384,7 +1410,7 @@ xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
 
   ret = TRUE;
 
- out:
+out:
   if (console)
     {
       ostree_async_progress_finish (progress);
@@ -1396,8 +1422,8 @@ xdg_app_dir_pull_untrusted_local (XdgAppDir *self,
 
 
 char *
-xdg_app_dir_current_ref (XdgAppDir *self,
-                         const char *name,
+xdg_app_dir_current_ref (XdgAppDir    *self,
+                         const char   *name,
                          GCancellable *cancellable)
 {
   g_autoptr(GFile) base = NULL;
@@ -1420,10 +1446,10 @@ xdg_app_dir_current_ref (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_drop_current_ref (XdgAppDir *self,
-                              const char *name,
+xdg_app_dir_drop_current_ref (XdgAppDir    *self,
+                              const char   *name,
                               GCancellable *cancellable,
-                              GError **error)
+                              GError      **error)
 {
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
@@ -1438,10 +1464,10 @@ xdg_app_dir_drop_current_ref (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_make_current_ref (XdgAppDir *self,
-                              const char *ref,
+xdg_app_dir_make_current_ref (XdgAppDir    *self,
+                              const char   *ref,
                               GCancellable *cancellable,
-                              GError **error)
+                              GError      **error)
 {
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
@@ -1471,19 +1497,20 @@ xdg_app_dir_make_current_ref (XdgAppDir *self,
 
   ret = TRUE;
 
- out:
+out:
   return ret;
 }
 
 gboolean
-xdg_app_dir_list_refs_for_name (XdgAppDir      *self,
-                                const char     *kind,
-                                const char     *name,
-                                char         ***refs_out,
-                                GCancellable   *cancellable,
-                                GError        **error)
+xdg_app_dir_list_refs_for_name (XdgAppDir    *self,
+                                const char   *kind,
+                                const char   *name,
+                                char       ***refs_out,
+                                GCancellable *cancellable,
+                                GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
@@ -1564,7 +1591,7 @@ out:
   if (ret)
     {
       g_ptr_array_add (refs, NULL);
-      *refs_out = (char **)g_ptr_array_free (refs, FALSE);
+      *refs_out = (char **) g_ptr_array_free (refs, FALSE);
       refs = NULL;
     }
 
@@ -1575,13 +1602,14 @@ out:
 }
 
 gboolean
-xdg_app_dir_list_refs (XdgAppDir      *self,
-                       const char     *kind,
-                       char         ***refs_out,
-                       GCancellable   *cancellable,
-                       GError        **error)
+xdg_app_dir_list_refs (XdgAppDir    *self,
+                       const char   *kind,
+                       char       ***refs_out,
+                       GCancellable *cancellable,
+                       GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) base;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
@@ -1639,7 +1667,7 @@ out:
   if (ret)
     {
       g_ptr_array_add (refs, NULL);
-      *refs_out = (char **)g_ptr_array_free (refs, FALSE);
+      *refs_out = (char **) g_ptr_array_free (refs, FALSE);
       refs = NULL;
     }
 
@@ -1650,11 +1678,11 @@ out:
 }
 
 char *
-xdg_app_dir_read_latest (XdgAppDir      *self,
-                         const char     *remote,
-                         const char     *ref,
-                         GCancellable   *cancellable,
-                         GError        **error)
+xdg_app_dir_read_latest (XdgAppDir    *self,
+                         const char   *remote,
+                         const char   *ref,
+                         GCancellable *cancellable,
+                         GError      **error)
 {
   g_autofree char *remote_and_ref = NULL;
   char *res = NULL;
@@ -1676,8 +1704,8 @@ xdg_app_dir_read_latest (XdgAppDir      *self,
 
 
 char *
-xdg_app_dir_read_active (XdgAppDir *self,
-                         const char *ref,
+xdg_app_dir_read_active (XdgAppDir    *self,
+                         const char   *ref,
                          GCancellable *cancellable)
 {
   g_autoptr(GFile) deploy_base = NULL;
@@ -1697,18 +1725,19 @@ xdg_app_dir_read_active (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_set_active (XdgAppDir *self,
-                        const char *ref,
-                        const char *checksum,
+xdg_app_dir_set_active (XdgAppDir    *self,
+                        const char   *ref,
+                        const char   *checksum,
                         GCancellable *cancellable,
-                        GError **error)
+                        GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) deploy_base = NULL;
   g_autofree char *tmpname = NULL;
   g_autoptr(GFile) active_tmp_link = NULL;
   g_autoptr(GFile) active_link = NULL;
-  g_autoptr (GError) my_error = NULL;
+  g_autoptr(GError) my_error = NULL;
 
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
   active_link = g_file_get_child (deploy_base, "active");
@@ -1737,17 +1766,18 @@ xdg_app_dir_set_active (XdgAppDir *self,
     }
 
   ret = TRUE;
- out:
+out:
   return ret;
 }
 
 
 gboolean
-xdg_app_dir_run_triggers (XdgAppDir *self,
-			  GCancellable *cancellable,
-			  GError **error)
+xdg_app_dir_run_triggers (XdgAppDir    *self,
+                          GCancellable *cancellable,
+                          GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
   g_autoptr(GFile) triggersdir = NULL;
@@ -1778,48 +1808,48 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
       child = g_file_get_child (triggersdir, name);
 
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_REGULAR &&
-	  g_str_has_suffix (name, ".trigger"))
-	{
-	  g_autoptr(GPtrArray) argv_array = NULL;
+          g_str_has_suffix (name, ".trigger"))
+        {
+          g_autoptr(GPtrArray) argv_array = NULL;
 
-	  g_debug ("running trigger %s", name);
+          g_debug ("running trigger %s", name);
 
-	  argv_array = g_ptr_array_new_with_free_func (g_free);
+          argv_array = g_ptr_array_new_with_free_func (g_free);
 #ifdef DISABLE_SANDBOXED_TRIGGERS
-	  g_ptr_array_add (argv_array, g_file_get_path (child));
-	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
+          g_ptr_array_add (argv_array, g_file_get_path (child));
+          g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
 #else
-	  g_ptr_array_add (argv_array, g_strdup (xdg_app_get_bwrap ()));
-	  g_ptr_array_add (argv_array, g_strdup ("--unshare-ipc"));
-	  g_ptr_array_add (argv_array, g_strdup ("--unshare-net"));
-	  g_ptr_array_add (argv_array, g_strdup ("--unshare-pid"));
-	  g_ptr_array_add (argv_array, g_strdup ("--ro-bind"));
-	  g_ptr_array_add (argv_array, g_strdup ("/"));
-	  g_ptr_array_add (argv_array, g_strdup ("/"));
-	  g_ptr_array_add (argv_array, g_strdup ("--proc"));
-	  g_ptr_array_add (argv_array, g_strdup ("/proc"));
-	  g_ptr_array_add (argv_array, g_strdup ("--dev"));
-	  g_ptr_array_add (argv_array, g_strdup ("/dev"));
-	  g_ptr_array_add (argv_array, g_strdup ("--bind"));
-	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
-	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
+          g_ptr_array_add (argv_array, g_strdup (xdg_app_get_bwrap ()));
+          g_ptr_array_add (argv_array, g_strdup ("--unshare-ipc"));
+          g_ptr_array_add (argv_array, g_strdup ("--unshare-net"));
+          g_ptr_array_add (argv_array, g_strdup ("--unshare-pid"));
+          g_ptr_array_add (argv_array, g_strdup ("--ro-bind"));
+          g_ptr_array_add (argv_array, g_strdup ("/"));
+          g_ptr_array_add (argv_array, g_strdup ("/"));
+          g_ptr_array_add (argv_array, g_strdup ("--proc"));
+          g_ptr_array_add (argv_array, g_strdup ("/proc"));
+          g_ptr_array_add (argv_array, g_strdup ("--dev"));
+          g_ptr_array_add (argv_array, g_strdup ("/dev"));
+          g_ptr_array_add (argv_array, g_strdup ("--bind"));
+          g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
+          g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
 #endif
-	  g_ptr_array_add (argv_array, g_file_get_path (child));
-	  g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
-	  g_ptr_array_add (argv_array, NULL);
+          g_ptr_array_add (argv_array, g_file_get_path (child));
+          g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
+          g_ptr_array_add (argv_array, NULL);
 
-	  if (!g_spawn_sync ("/",
-			     (char **)argv_array->pdata,
-			     NULL,
-			     G_SPAWN_DEFAULT,
-			     NULL, NULL,
-			     NULL, NULL,
-			     NULL, &trigger_error))
-	    {
-	      g_warning ("Error running trigger %s: %s", name, trigger_error->message);
-	      g_clear_error (&trigger_error);
-	    }
-	}
+          if (!g_spawn_sync ("/",
+                             (char **) argv_array->pdata,
+                             NULL,
+                             G_SPAWN_DEFAULT,
+                             NULL, NULL,
+                             NULL, NULL,
+                             NULL, &trigger_error))
+            {
+              g_warning ("Error running trigger %s: %s", name, trigger_error->message);
+              g_clear_error (&trigger_error);
+            }
+        }
 
       g_clear_object (&child_info);
     }
@@ -1831,16 +1861,16 @@ xdg_app_dir_run_triggers (XdgAppDir *self,
     }
 
   ret = TRUE;
- out:
+out:
   return ret;
 }
 
 static gboolean
-read_fd (int           fd,
-         struct stat  *stat_buf,
-         gchar       **contents,
-         gsize        *length,
-         GError      **error)
+read_fd (int          fd,
+         struct stat *stat_buf,
+         gchar      **contents,
+         gsize       *length,
+         GError     **error)
 {
   gchar *buf;
   gsize bytes_read;
@@ -1883,9 +1913,13 @@ read_fd (int           fd,
             }
         }
       else if (rc == 0)
-        break;
+        {
+          break;
+        }
       else
-        bytes_read += rc;
+        {
+          bytes_read += rc;
+        }
     }
 
   buf[bytes_read] = '\0';
@@ -1925,20 +1959,21 @@ maybe_quote (const char *str)
 }
 
 static gboolean
-export_desktop_file (const char    *app,
-                     const char    *branch,
-                     const char    *arch,
-                     GKeyFile      *metadata,
-                     int            parent_fd,
-                     const char    *name,
-                     struct stat   *stat_buf,
-                     char         **target,
-                     GCancellable  *cancellable,
-                     GError       **error)
+export_desktop_file (const char   *app,
+                     const char   *branch,
+                     const char   *arch,
+                     GKeyFile     *metadata,
+                     int           parent_fd,
+                     const char   *name,
+                     struct stat  *stat_buf,
+                     char        **target,
+                     GCancellable *cancellable,
+                     GError      **error)
 {
   gboolean ret = FALSE;
   glnx_fd_close int desktop_fd = -1;
   g_autofree char *tmpfile_name = NULL;
+
   g_autoptr(GOutputStream) out_stream = NULL;
   g_autofree gchar *data = NULL;
   gsize data_len;
@@ -1988,10 +2023,12 @@ export_desktop_file (const char    *app,
                                                        NULL);
 
       if (tags != NULL)
-        g_key_file_set_string_list (keyfile,
-                                    "Desktop Entry",
-                                    "X-XdgApp-Tags",
-                                    (const char * const *)tags, length);
+        {
+          g_key_file_set_string_list (keyfile,
+                                      "Desktop Entry",
+                                      "X-XdgApp-Tags",
+                                      (const char * const *) tags, length);
+        }
     }
 
   groups = g_key_file_get_groups (keyfile, NULL);
@@ -2004,7 +2041,7 @@ export_desktop_file (const char    *app,
       g_key_file_remove_key (keyfile, groups[i], "X-GNOME-Bugzilla-ExtraInfoScript", NULL);
 
       new_exec = g_string_new ("");
-      g_string_append_printf (new_exec, XDG_APP_BINDIR"/xdg-app run --branch=%s --arch=%s", escaped_branch, escaped_arch);
+      g_string_append_printf (new_exec, XDG_APP_BINDIR "/xdg-app run --branch=%s --arch=%s", escaped_branch, escaped_arch);
 
       old_exec = g_key_file_get_string (keyfile, groups[i], "Exec", NULL);
       if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
@@ -2050,7 +2087,7 @@ export_desktop_file (const char    *app,
     *target = g_steal_pointer (&tmpfile_name);
 
   ret = TRUE;
- out:
+out:
 
   if (new_exec != NULL)
     g_string_free (new_exec, TRUE);
@@ -2059,16 +2096,17 @@ export_desktop_file (const char    *app,
 }
 
 static gboolean
-rewrite_export_dir (const char    *app,
-                    const char    *branch,
-                    const char    *arch,
-                    GKeyFile      *metadata,
-                    int            source_parent_fd,
-                    const char    *source_name,
-                    GCancellable  *cancellable,
-                    GError       **error)
+rewrite_export_dir (const char   *app,
+                    const char   *branch,
+                    const char   *arch,
+                    GKeyFile     *metadata,
+                    int           source_parent_fd,
+                    const char   *source_name,
+                    GCancellable *cancellable,
+                    GError      **error)
 {
   gboolean ret = FALSE;
+
   g_auto(GLnxDirFdIterator) source_iter = {0};
   g_autoptr(GHashTable) visited_children = NULL;
   struct dirent *dent;
@@ -2089,15 +2127,17 @@ rewrite_export_dir (const char    *app,
         break;
 
       if (g_hash_table_contains (visited_children, dent->d_name))
-          continue;
+        continue;
 
       /* Avoid processing the same file again if it was re-created during an export */
-      g_hash_table_insert (visited_children, g_strdup (dent->d_name), GINT_TO_POINTER(1));
+      g_hash_table_insert (visited_children, g_strdup (dent->d_name), GINT_TO_POINTER (1));
 
       if (fstatat (source_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
         {
           if (errno == ENOENT)
-            continue;
+            {
+              continue;
+            }
           else
             {
               glnx_set_error_from_errno (error);
@@ -2133,7 +2173,7 @@ rewrite_export_dir (const char    *app,
                                         source_iter.fd, dent->d_name, &stbuf, &new_name, cancellable, error))
                 goto out;
 
-              g_hash_table_insert (visited_children, g_strdup (new_name), GINT_TO_POINTER(1));
+              g_hash_table_insert (visited_children, g_strdup (new_name), GINT_TO_POINTER (1));
 
               if (renameat (source_iter.fd, new_name, source_iter.fd, dent->d_name) != 0)
                 {
@@ -2154,19 +2194,19 @@ rewrite_export_dir (const char    *app,
     }
 
   ret = TRUE;
- out:
+out:
 
   return ret;
 }
 
 gboolean
-xdg_app_rewrite_export_dir (const char *app,
-                            const char *branch,
-                            const char *arch,
-                            GKeyFile *metadata,
-                            GFile    *source,
-                            GCancellable  *cancellable,
-                            GError       **error)
+xdg_app_rewrite_export_dir (const char   *app,
+                            const char   *branch,
+                            const char   *arch,
+                            GKeyFile     *metadata,
+                            GFile        *source,
+                            GCancellable *cancellable,
+                            GError      **error)
 {
   gboolean ret = FALSE;
 
@@ -2178,23 +2218,24 @@ xdg_app_rewrite_export_dir (const char *app,
 
   ret = TRUE;
 
- out:
+out:
   return ret;
 }
 
 
 static gboolean
-export_dir (int            source_parent_fd,
-            const char    *source_name,
-            const char    *source_symlink_prefix,
-            const char    *source_relpath,
-            int            destination_parent_fd,
-            const char    *destination_name,
-            GCancellable  *cancellable,
-            GError       **error)
+export_dir (int           source_parent_fd,
+            const char   *source_name,
+            const char   *source_symlink_prefix,
+            const char   *source_relpath,
+            int           destination_parent_fd,
+            const char   *destination_name,
+            GCancellable *cancellable,
+            GError      **error)
 {
   gboolean ret = FALSE;
   int res;
+
   g_auto(GLnxDirFdIterator) source_iter = {0};
   glnx_fd_close int destination_dfd = -1;
   struct dirent *dent;
@@ -2232,7 +2273,9 @@ export_dir (int            source_parent_fd,
       if (fstatat (source_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
         {
           if (errno == ENOENT)
-            continue;
+            {
+              continue;
+            }
           else
             {
               glnx_set_error_from_errno (error);
@@ -2270,17 +2313,17 @@ export_dir (int            source_parent_fd,
     }
 
   ret = TRUE;
- out:
+out:
 
   return ret;
 }
 
 gboolean
-xdg_app_export_dir (GFile    *source,
-                    GFile    *destination,
-                    const char *symlink_prefix,
-                    GCancellable  *cancellable,
-                    GError       **error)
+xdg_app_export_dir (GFile        *source,
+                    GFile        *destination,
+                    const char   *symlink_prefix,
+                    GCancellable *cancellable,
+                    GError      **error)
 {
   gboolean ret = FALSE;
 
@@ -2295,17 +2338,18 @@ xdg_app_export_dir (GFile    *source,
 
   ret = TRUE;
 
- out:
+out:
   return ret;
 }
 
 gboolean
-xdg_app_dir_update_exports (XdgAppDir *self,
-                            const char *changed_app,
+xdg_app_dir_update_exports (XdgAppDir    *self,
+                            const char   *changed_app,
                             GCancellable *cancellable,
-                            GError **error)
+                            GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) exports = NULL;
   g_autofree char *current_ref = NULL;
   g_autofree char *active_id = NULL;
@@ -2347,21 +2391,22 @@ xdg_app_dir_update_exports (XdgAppDir *self,
 
   ret = TRUE;
 
- out:
+out:
   return ret;
 }
 
 gboolean
-xdg_app_dir_deploy (XdgAppDir *self,
-                    const char *origin,
-                    const char *ref,
-                    const char *checksum_or_latest,
+xdg_app_dir_deploy (XdgAppDir           *self,
+                    const char          *origin,
+                    const char          *ref,
+                    const char          *checksum_or_latest,
                     const char * const * subpaths,
-                    GVariant *old_deploy_data,
-                    GCancellable *cancellable,
-                    GError **error)
+                    GVariant            *old_deploy_data,
+                    GCancellable        *cancellable,
+                    GError             **error)
 {
   g_autofree char *resolved_ref = NULL;
+
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFileInfo) file_info = NULL;
   g_autoptr(GFile) deploy_base = NULL;
@@ -2492,7 +2537,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
           g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
           g_autofree char *dstpath = g_build_filename (checkoutdirpath, "/files", subpaths[i], NULL);
           g_autofree char *dstpath_parent = g_path_get_dirname (dstpath);
-          if (g_mkdir_with_parents  (dstpath_parent, 0755))
+          if (g_mkdir_with_parents (dstpath_parent, 0755))
             {
               glnx_set_error_from_errno (error);
               return FALSE;
@@ -2523,7 +2568,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
       char *etcfiles[] = {"passwd", "group", "machine-id" };
       g_autoptr(GFile) etc_resolve_conf = g_file_get_child (files_etc, "resolv.conf");
       int i;
-      for (i = 0; i < G_N_ELEMENTS(etcfiles); i++)
+      for (i = 0; i < G_N_ELEMENTS (etcfiles); i++)
         {
           g_autoptr(GFile) etc_file = g_file_get_child (files_etc, etcfiles[i]);
           GFileType type;
@@ -2582,7 +2627,7 @@ xdg_app_dir_deploy (XdgAppDir *self,
 
   deploy_data = xdg_app_dir_new_deploy_data (origin,
                                              checksum,
-                                             (char **)subpaths,
+                                             (char **) subpaths,
                                              installed_size,
                                              NULL);
 
@@ -2601,12 +2646,12 @@ xdg_app_dir_deploy (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_deploy_install (XdgAppDir      *self,
-                            const char     *ref,
-                            const char     *origin,
-                            char          **subpaths,
-                            GCancellable   *cancellable,
-                            GError        **error)
+xdg_app_dir_deploy_install (XdgAppDir    *self,
+                            const char   *ref,
+                            const char   *origin,
+                            char        **subpaths,
+                            GCancellable *cancellable,
+                            GError      **error)
 {
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autoptr(GFile) deploy_base = NULL;
@@ -2623,12 +2668,16 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
   if (!g_file_make_directory_with_parents (deploy_base, cancellable, &local_error))
     {
       if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
-        g_set_error (error,
-                     G_IO_ERROR, G_IO_ERROR_EXISTS,
-                     "%s branch %s already installed",
-                     ref_parts[1], ref_parts[3]);
+        {
+          g_set_error (error,
+                       G_IO_ERROR, G_IO_ERROR_EXISTS,
+                       "%s branch %s already installed",
+                       ref_parts[1], ref_parts[3]);
+        }
       else
-        g_propagate_error (error, g_steal_pointer (&local_error));
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+        }
 
       goto out;
     }
@@ -2636,7 +2685,7 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
   /* After we create the deploy base we must goto out on errors */
   created_deploy_base = TRUE;
 
-  if (!xdg_app_dir_deploy (self, origin, ref, NULL, (const char * const *)subpaths, NULL, cancellable, error))
+  if (!xdg_app_dir_deploy (self, origin, ref, NULL, (const char * const *) subpaths, NULL, cancellable, error))
     goto out;
 
   if (g_str_has_prefix (ref, "app/"))
@@ -2659,7 +2708,7 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
 
   ret = TRUE;
 
- out:
+out:
   if (created_deploy_base && !ret)
     gs_shutil_rm_rf (deploy_base, cancellable, NULL);
 
@@ -2668,13 +2717,14 @@ xdg_app_dir_deploy_install (XdgAppDir      *self,
 
 
 gboolean
-xdg_app_dir_deploy_update (XdgAppDir      *self,
-                           const char     *ref,
-                           const char     *checksum_or_latest,
-                           GCancellable   *cancellable,
-                           GError        **error)
+xdg_app_dir_deploy_update (XdgAppDir    *self,
+                           const char   *ref,
+                           const char   *checksum_or_latest,
+                           GCancellable *cancellable,
+                           GError      **error)
 {
   g_autofree char *previous_deployment = NULL;
+
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GVariant) old_deploy_data = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
@@ -2738,9 +2788,9 @@ xdg_app_dir_deploy_update (XdgAppDir      *self,
 }
 
 static OstreeRepo *
-xdg_app_dir_create_system_child_repo (XdgAppDir *self,
+xdg_app_dir_create_system_child_repo (XdgAppDir    *self,
                                       GLnxLockFile *file_lock,
-                                      GError **error)
+                                      GError      **error)
 {
   g_autoptr(GFile) cache_dir = NULL;
   g_autoptr(GFile) repo_dir = NULL;
@@ -2803,15 +2853,15 @@ xdg_app_dir_create_system_child_repo (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_install (XdgAppDir      *self,
-                     gboolean        no_pull,
-                     gboolean        no_deploy,
-                     const char     *ref,
-                     const char     *remote_name,
-                     char          **subpaths,
+xdg_app_dir_install (XdgAppDir           *self,
+                     gboolean             no_pull,
+                     gboolean             no_deploy,
+                     const char          *ref,
+                     const char          *remote_name,
+                     char               **subpaths,
                      OstreeAsyncProgress *progress,
-                     GCancellable   *cancellable,
-                     GError        **error)
+                     GCancellable        *cancellable,
+                     GError             **error)
 {
   if (xdg_app_dir_use_child_repo (self))
     {
@@ -2844,7 +2894,7 @@ xdg_app_dir_install (XdgAppDir      *self,
                                                    XDG_APP_HELPER_DEPLOY_FLAGS_NONE,
                                                    ref,
                                                    remote_name,
-                                                   (const char *const *)(subpaths ? subpaths : empty_subpaths),
+                                                   (const char * const *) (subpaths ? subpaths : empty_subpaths),
                                                    cancellable,
                                                    error))
         return FALSE;
@@ -2875,16 +2925,16 @@ xdg_app_dir_install (XdgAppDir      *self,
 }
 
 gboolean
-xdg_app_dir_update (XdgAppDir      *self,
-                    gboolean        no_pull,
-                    gboolean        no_deploy,
-                    const char     *ref,
-                    const char     *remote_name,
-                    const char     *checksum_or_latest,
-                    char          **subpaths,
+xdg_app_dir_update (XdgAppDir           *self,
+                    gboolean             no_pull,
+                    gboolean             no_deploy,
+                    const char          *ref,
+                    const char          *remote_name,
+                    const char          *checksum_or_latest,
+                    char               **subpaths,
                     OstreeAsyncProgress *progress,
-                    GCancellable   *cancellable,
-                    GError        **error)
+                    GCancellable        *cancellable,
+                    GError             **error)
 {
   if (xdg_app_dir_use_child_repo (self))
     {
@@ -2929,7 +2979,7 @@ xdg_app_dir_update (XdgAppDir      *self,
                                                        XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE,
                                                        ref,
                                                        remote_name,
-                                                       (const char *const *)empty_subpaths,
+                                                       (const char * const *) empty_subpaths,
                                                        cancellable,
                                                        error))
             return FALSE;
@@ -2954,7 +3004,7 @@ xdg_app_dir_update (XdgAppDir      *self,
   if (!no_deploy)
     {
       if (!xdg_app_dir_deploy_update (self, ref, checksum_or_latest,
-                                       cancellable, error))
+                                      cancellable, error))
         return FALSE;
     }
 
@@ -2964,16 +3014,17 @@ xdg_app_dir_update (XdgAppDir      *self,
 
 
 gboolean
-xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
-				   const char *type,
-				   const char *name_prefix,
-				   const char *branch,
-				   const char *arch,
-				   GHashTable *hash,
-				   GCancellable *cancellable,
-				   GError **error)
+xdg_app_dir_collect_deployed_refs (XdgAppDir    *self,
+                                   const char   *type,
+                                   const char   *name_prefix,
+                                   const char   *branch,
+                                   const char   *arch,
+                                   GHashTable   *hash,
+                                   GCancellable *cancellable,
+                                   GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
@@ -2996,15 +3047,15 @@ xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
 
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
           name[0] != '.' && (name_prefix == NULL || g_str_has_prefix (name, name_prefix)))
-	{
-	  g_autoptr(GFile) child1 = g_file_get_child (dir, name);
-	  g_autoptr(GFile) child2 = g_file_get_child (child1, branch);
-	  g_autoptr(GFile) child3 = g_file_get_child (child2, arch);
-	  g_autoptr(GFile) active = g_file_get_child (child3, "active");
+        {
+          g_autoptr(GFile) child1 = g_file_get_child (dir, name);
+          g_autoptr(GFile) child2 = g_file_get_child (child1, branch);
+          g_autoptr(GFile) child3 = g_file_get_child (child2, arch);
+          g_autoptr(GFile) active = g_file_get_child (child3, "active");
 
-	  if (g_file_query_exists (active, cancellable))
-	    g_hash_table_add (hash, g_strdup (name));
-	}
+          if (g_file_query_exists (active, cancellable))
+            g_hash_table_add (hash, g_strdup (name));
+        }
 
       g_clear_object (&child_info);
     }
@@ -3016,18 +3067,19 @@ xdg_app_dir_collect_deployed_refs (XdgAppDir *self,
     }
 
   ret = TRUE;
- out:
+out:
   return ret;
 }
 
 gboolean
-xdg_app_dir_list_deployed (XdgAppDir *self,
-                           const char *ref,
-                           char ***deployed_checksums,
+xdg_app_dir_list_deployed (XdgAppDir    *self,
+                           const char   *ref,
+                           char       ***deployed_checksums,
                            GCancellable *cancellable,
-                           GError **error)
+                           GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GPtrArray) checksums = NULL;
   GError *temp_error = NULL;
@@ -3078,11 +3130,11 @@ xdg_app_dir_list_deployed (XdgAppDir *self,
 
   ret = TRUE;
 
- out:
+out:
   if (ret)
     {
       g_ptr_array_add (checksums, NULL);
-      *deployed_checksums = (char **)g_ptr_array_free (g_steal_pointer (&checksums), FALSE);
+      *deployed_checksums = (char **) g_ptr_array_free (g_steal_pointer (&checksums), FALSE);
     }
 
   return ret;
@@ -3094,6 +3146,7 @@ dir_is_locked (GFile *dir)
 {
   glnx_fd_close int ref_fd = -1;
   struct flock lock = {0};
+
   g_autoptr(GFile) reffile = NULL;
 
   reffile = g_file_resolve_relative_path (dir, "files/.ref");
@@ -3107,21 +3160,22 @@ dir_is_locked (GFile *dir)
       lock.l_len = 0;
 
       if (fcntl (ref_fd, F_GETLK, &lock) == 0)
-	return lock.l_type != F_UNLCK;
+        return lock.l_type != F_UNLCK;
     }
 
   return FALSE;
 }
 
 gboolean
-xdg_app_dir_undeploy (XdgAppDir *self,
-                      const char *ref,
-                      const char *checksum,
-		      gboolean force_remove,
+xdg_app_dir_undeploy (XdgAppDir    *self,
+                      const char   *ref,
+                      const char   *checksum,
+                      gboolean      force_remove,
                       GCancellable *cancellable,
-                      GError **error)
+                      GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) removed_subdir = NULL;
@@ -3199,17 +3253,17 @@ xdg_app_dir_undeploy (XdgAppDir *self,
     }
 
   ret = TRUE;
- out:
+out:
   return ret;
 }
 
 gboolean
-xdg_app_dir_undeploy_all (XdgAppDir      *self,
-                          const char     *ref,
-                          gboolean        force_remove,
-                          gboolean       *was_deployed_out,
-                          GCancellable   *cancellable,
-                          GError        **error)
+xdg_app_dir_undeploy_all (XdgAppDir    *self,
+                          const char   *ref,
+                          gboolean      force_remove,
+                          gboolean     *was_deployed_out,
+                          GCancellable *cancellable,
+                          GError      **error)
 {
   g_auto(GStrv) deployed = NULL;
   g_autoptr(GFile) deploy_base = NULL;
@@ -3270,11 +3324,11 @@ xdg_app_dir_undeploy_all (XdgAppDir      *self,
 }
 
 gboolean
-xdg_app_dir_remove_ref (XdgAppDir      *self,
-                        const char     *remote_name,
-                        const char     *ref,
-                        GCancellable   *cancellable,
-                        GError        **error)
+xdg_app_dir_remove_ref (XdgAppDir    *self,
+                        const char   *remote_name,
+                        const char   *ref,
+                        GCancellable *cancellable,
+                        GError      **error)
 {
   if (!ostree_repo_set_ref_immediate (self->repo, remote_name, ref, NULL, cancellable, error))
     return FALSE;
@@ -3283,11 +3337,12 @@ xdg_app_dir_remove_ref (XdgAppDir      *self,
 }
 
 gboolean
-xdg_app_dir_cleanup_removed (XdgAppDir      *self,
-			     GCancellable   *cancellable,
-			     GError        **error)
+xdg_app_dir_cleanup_removed (XdgAppDir    *self,
+                             GCancellable *cancellable,
+                             GError      **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) removed_dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
@@ -3310,15 +3365,15 @@ xdg_app_dir_cleanup_removed (XdgAppDir      *self,
       g_autoptr(GFile) child = g_file_get_child (removed_dir, name);
 
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
-	  !dir_is_locked (child))
-	{
+          !dir_is_locked (child))
+        {
           GError *tmp_error = NULL;
           if (!gs_shutil_rm_rf (child, cancellable, &tmp_error))
             {
               g_warning ("Unable to remove old checkout: %s\n", tmp_error->message);
               g_error_free (tmp_error);
             }
-	}
+        }
 
       g_clear_object (&child_info);
     }
@@ -3330,15 +3385,15 @@ xdg_app_dir_cleanup_removed (XdgAppDir      *self,
     }
 
   ret = TRUE;
- out:
+out:
   return ret;
 }
 
 
 gboolean
-xdg_app_dir_prune (XdgAppDir      *self,
-                   GCancellable   *cancellable,
-                   GError        **error)
+xdg_app_dir_prune (XdgAppDir    *self,
+                   GCancellable *cancellable,
+                   GError      **error)
 {
   gboolean ret = FALSE;
   gint objects_total, objects_pruned;
@@ -3361,16 +3416,16 @@ xdg_app_dir_prune (XdgAppDir      *self,
   g_debug ("Pruned %d/%d objects, size %s", objects_total, objects_pruned, formatted_freed_size);
 
   ret = TRUE;
- out:
+out:
   return ret;
 
 }
 
 GFile *
-xdg_app_dir_get_if_deployed (XdgAppDir     *self,
-                             const char    *ref,
-                             const char    *checksum,
-                             GCancellable  *cancellable)
+xdg_app_dir_get_if_deployed (XdgAppDir    *self,
+                             const char   *ref,
+                             const char   *checksum,
+                             GCancellable *cancellable)
 {
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
@@ -3378,7 +3433,9 @@ xdg_app_dir_get_if_deployed (XdgAppDir     *self,
   deploy_base = xdg_app_dir_get_deploy_dir (self, ref);
 
   if (checksum != NULL)
-    deploy_dir = g_file_get_child (deploy_base, checksum);
+    {
+      deploy_dir = g_file_get_child (deploy_base, checksum);
+    }
   else
     {
       g_autoptr(GFile) active_link = g_file_get_child (deploy_base, "active");
@@ -3406,11 +3463,11 @@ xdg_app_dir_get_if_deployed (XdgAppDir     *self,
 }
 
 static gboolean
-xdg_app_dir_remote_fetch_summary (XdgAppDir     *self,
-                                  const char    *name,
-                                  GBytes       **out_summary,
-                                  GCancellable  *cancellable,
-                                  GError       **error)
+xdg_app_dir_remote_fetch_summary (XdgAppDir    *self,
+                                  const char   *name,
+                                  GBytes      **out_summary,
+                                  GCancellable *cancellable,
+                                  GError      **error)
 {
   /* TODO: Add in-memory cache here, also use for ostree_repo_list_refs */
   if (!ostree_repo_remote_fetch_summary (self->repo, name,
@@ -3423,21 +3480,22 @@ xdg_app_dir_remote_fetch_summary (XdgAppDir     *self,
 }
 
 char *
-xdg_app_dir_find_remote_ref (XdgAppDir      *self,
-                             const char     *remote,
-                             const char     *name,
-                             const char     *opt_branch,
-                             const char     *opt_arch,
-                             gboolean        app,
-                             gboolean        runtime,
-                             gboolean       *is_app,
-                             GCancellable   *cancellable,
-                             GError        **error)
+xdg_app_dir_find_remote_ref (XdgAppDir    *self,
+                             const char   *remote,
+                             const char   *name,
+                             const char   *opt_branch,
+                             const char   *opt_arch,
+                             gboolean      app,
+                             gboolean      runtime,
+                             gboolean     *is_app,
+                             GCancellable *cancellable,
+                             GError      **error)
 {
   g_autofree char *app_ref = NULL;
   g_autofree char *runtime_ref = NULL;
   g_autofree char *app_ref_with_remote = NULL;
   g_autofree char *runtime_ref_with_remote = NULL;
+
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) refs = NULL;
   g_autoptr(GBytes) summary_bytes = NULL;
@@ -3517,14 +3575,14 @@ xdg_app_dir_find_remote_ref (XdgAppDir      *self,
 }
 
 char *
-xdg_app_dir_find_installed_ref (XdgAppDir      *self,
-                                const char     *name,
-                                const char     *opt_branch,
-                                const char     *opt_arch,
-                                gboolean        app,
-                                gboolean        runtime,
-                                gboolean       *is_app,
-                                GError        **error)
+xdg_app_dir_find_installed_ref (XdgAppDir  *self,
+                                const char *name,
+                                const char *opt_branch,
+                                const char *opt_arch,
+                                gboolean    app,
+                                gboolean    runtime,
+                                gboolean   *is_app,
+                                GError    **error)
 {
   if (app)
     {
@@ -3568,13 +3626,13 @@ xdg_app_dir_find_installed_ref (XdgAppDir      *self,
   return NULL;
 }
 
-XdgAppDir*
+XdgAppDir *
 xdg_app_dir_new (GFile *path, gboolean user)
 {
   return g_object_new (XDG_APP_TYPE_DIR, "path", path, "user", user, NULL);
 }
 
-XdgAppDir*
+XdgAppDir *
 xdg_app_dir_clone (XdgAppDir *self)
 {
   return xdg_app_dir_new (self->basedir, self->user);
@@ -3588,7 +3646,7 @@ xdg_app_dir_get_system (void)
 }
 
 XdgAppDir *
-xdg_app_dir_get_user  (void)
+xdg_app_dir_get_user (void)
 {
   g_autoptr(GFile) path = xdg_app_get_user_base_dir_location ();
   return xdg_app_dir_new (path, TRUE);
@@ -3610,7 +3668,7 @@ get_group (const char *remote_name)
 }
 
 char *
-xdg_app_dir_get_remote_title (XdgAppDir *self,
+xdg_app_dir_get_remote_title (XdgAppDir  *self,
                               const char *remote_name)
 {
   GKeyFile *config = ostree_repo_get_config (self->repo);
@@ -3623,7 +3681,7 @@ xdg_app_dir_get_remote_title (XdgAppDir *self,
 }
 
 int
-xdg_app_dir_get_remote_prio (XdgAppDir *self,
+xdg_app_dir_get_remote_prio (XdgAppDir  *self,
                              const char *remote_name)
 {
   GKeyFile *config = ostree_repo_get_config (self->repo);
@@ -3636,7 +3694,7 @@ xdg_app_dir_get_remote_prio (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_get_remote_noenumerate (XdgAppDir *self,
+xdg_app_dir_get_remote_noenumerate (XdgAppDir  *self,
                                     const char *remote_name)
 {
   GKeyFile *config = ostree_repo_get_config (self->repo);
@@ -3649,7 +3707,7 @@ xdg_app_dir_get_remote_noenumerate (XdgAppDir *self,
 }
 
 gboolean
-xdg_app_dir_get_remote_disabled (XdgAppDir *self,
+xdg_app_dir_get_remote_disabled (XdgAppDir  *self,
                                  const char *remote_name)
 {
   GKeyFile *config = ostree_repo_get_config (self->repo);
@@ -3662,13 +3720,13 @@ xdg_app_dir_get_remote_disabled (XdgAppDir *self,
 }
 
 gint
-cmp_remote (gconstpointer  a,
-            gconstpointer  b,
-            gpointer       user_data)
+cmp_remote (gconstpointer a,
+            gconstpointer b,
+            gpointer      user_data)
 {
   XdgAppDir *self = user_data;
-  const char *a_name = *(const char **)a;
-  const char *b_name = *(const char **)b;
+  const char *a_name = *(const char **) a;
+  const char *b_name = *(const char **) b;
   int prio_a, prio_b;
 
   prio_a = xdg_app_dir_get_remote_prio (self, a_name);
@@ -3678,15 +3736,16 @@ cmp_remote (gconstpointer  a,
 }
 
 char *
-xdg_app_dir_create_origin_remote (XdgAppDir *self,
-                                  const char *url,
-                                  const char *id,
-                                  const char *title,
-                                  GBytes *gpg_data,
+xdg_app_dir_create_origin_remote (XdgAppDir    *self,
+                                  const char   *url,
+                                  const char   *id,
+                                  const char   *title,
+                                  GBytes       *gpg_data,
                                   GCancellable *cancellable,
-                                  GError **error)
+                                  GError      **error)
 {
   g_autofree char *remote = NULL;
+
   g_auto(GStrv) remotes = NULL;
   int version = 0;
   g_autoptr(GVariantBuilder) optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
@@ -3745,9 +3804,9 @@ xdg_app_dir_create_origin_remote (XdgAppDir *self,
 
 
 char **
-xdg_app_dir_list_remotes (XdgAppDir *self,
+xdg_app_dir_list_remotes (XdgAppDir    *self,
                           GCancellable *cancellable,
-                          GError **error)
+                          GError      **error)
 {
   char **res;
 
@@ -3765,20 +3824,21 @@ xdg_app_dir_list_remotes (XdgAppDir *self,
 }
 
 static gboolean
-remove_unless_in_hash (gpointer  key,
-                       gpointer  value,
-                       gpointer  user_data)
+remove_unless_in_hash (gpointer key,
+                       gpointer value,
+                       gpointer user_data)
 {
   GHashTable *table = user_data;
+
   return !g_hash_table_contains (table, key);
 }
 
 gboolean
-xdg_app_dir_list_remote_refs (XdgAppDir *self,
-                              const char *remote,
-                              GHashTable **refs,
+xdg_app_dir_list_remote_refs (XdgAppDir    *self,
+                              const char   *remote,
+                              GHashTable  **refs,
                               GCancellable *cancellable,
-                              GError **error)
+                              GError      **error)
 {
   g_autoptr(GError) my_error = NULL;
 
@@ -3804,7 +3864,7 @@ xdg_app_dir_list_remote_refs (XdgAppDir *self,
        * available refs */
 
       if (!ostree_repo_list_refs (self->repo, refspec_prefix, &local_refs,
-                                 cancellable, error))
+                                  cancellable, error))
         return FALSE;
 
       /* First we need to unprefix the remote name from the local refs */
@@ -3828,10 +3888,10 @@ xdg_app_dir_list_remote_refs (XdgAppDir *self,
 }
 
 char *
-xdg_app_dir_fetch_remote_title (XdgAppDir *self,
-                                const char *remote,
+xdg_app_dir_fetch_remote_title (XdgAppDir    *self,
+                                const char   *remote,
                                 GCancellable *cancellable,
-                                GError **error)
+                                GError      **error)
 {
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GBytes) summary_bytes = NULL;
@@ -3904,19 +3964,20 @@ ensure_soup_session (XdgAppDir *self)
         }
 
       if (g_getenv ("OSTREE_DEBUG_HTTP"))
-        soup_session_add_feature (soup_session, (SoupSessionFeature*)soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
+        soup_session_add_feature (soup_session, (SoupSessionFeature *) soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
 
       g_once_init_leave (&self->soup_session, soup_session);
     }
 }
 
 static GBytes *
-xdg_app_dir_load_uri (XdgAppDir *self,
-                      const char *uri,
+xdg_app_dir_load_uri (XdgAppDir    *self,
+                      const char   *uri,
                       GCancellable *cancellable,
-                      GError **error)
+                      GError      **error)
 {
   g_autofree char *scheme = NULL;
+
   g_autoptr(GBytes) bytes = NULL;
 
   scheme = g_uri_parse_scheme (uri);
@@ -3955,6 +4016,7 @@ xdg_app_dir_load_uri (XdgAppDir *self,
             case 410:
               code = G_IO_ERROR_NOT_FOUND;
               break;
+
             default:
               code = G_IO_ERROR_FAILED;
             }
@@ -3981,17 +4043,18 @@ xdg_app_dir_load_uri (XdgAppDir *self,
 }
 
 GBytes *
-xdg_app_dir_fetch_remote_object (XdgAppDir *self,
-                                 const char *remote_name,
-                                 const char *checksum,
-                                 const char *type,
+xdg_app_dir_fetch_remote_object (XdgAppDir    *self,
+                                 const char   *remote_name,
+                                 const char   *checksum,
+                                 const char   *type,
                                  GCancellable *cancellable,
-                                 GError **error)
+                                 GError      **error)
 {
   g_autofree char *base_url = NULL;
   g_autofree char *object_url = NULL;
   g_autofree char *part1 = NULL;
   g_autofree char *part2 = NULL;
+
   g_autoptr(GBytes) bytes = NULL;
 
   if (!ostree_repo_remote_get_url (self->repo, remote_name, &base_url, error))
@@ -4066,30 +4129,28 @@ xdg_app_dir_fetch_ref_cache (XdgAppDir    *self,
     {
       guint64 v;
       g_variant_get_child (res, 0, "t", &v);
-      *installed_size = GUINT64_FROM_BE(v);
+      *installed_size = GUINT64_FROM_BE (v);
     }
 
   if (download_size)
     {
       guint64 v;
       g_variant_get_child (res, 1, "t", &v);
-      *download_size = GUINT64_FROM_BE(v);
+      *download_size = GUINT64_FROM_BE (v);
     }
 
   if (metadata)
-    {
-      g_variant_get_child (res, 2, "s", metadata);
-    }
+    g_variant_get_child (res, 2, "s", metadata);
 
   return TRUE;
 }
 
 GBytes *
-xdg_app_dir_fetch_metadata (XdgAppDir *self,
-                            const char *remote_name,
-                            const char *commit,
+xdg_app_dir_fetch_metadata (XdgAppDir    *self,
+                            const char   *remote_name,
+                            const char   *commit,
                             GCancellable *cancellable,
-                            GError **error)
+                            GError      **error)
 {
   g_autoptr(GBytes) commit_bytes = NULL;
   g_autoptr(GBytes) root_bytes = NULL;
@@ -4161,8 +4222,8 @@ xdg_app_dir_fetch_metadata (XdgAppDir *self,
     }
 
   filez_bytes = xdg_app_dir_fetch_remote_object (self, remote_name,
-                                                file_checksum, "filez",
-                                                cancellable, error);
+                                                 file_checksum, "filez",
+                                                 cancellable, error);
   if (filez_bytes == NULL)
     return NULL;
 
@@ -4174,7 +4235,7 @@ xdg_app_dir_fetch_metadata (XdgAppDir *self,
       return NULL;
     }
 
-  archive_header_size = GUINT32_FROM_BE (*(guint32 *)filez_data);
+  archive_header_size = GUINT32_FROM_BE (*(guint32 *) filez_data);
 
   archive_header_size += 4 + 4; /* Include header-size and padding */
 
@@ -4182,18 +4243,18 @@ xdg_app_dir_fetch_metadata (XdgAppDir *self,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "File header size %u exceeds file size",
-                   (guint)archive_header_size);
+                   (guint) archive_header_size);
       return NULL;
     }
 
-  dataz_stream = (GMemoryInputStream*)g_memory_input_stream_new_from_data (filez_data + archive_header_size,
-                                                                           g_bytes_get_size (filez_bytes) - archive_header_size,
-                                                                           NULL);
+  dataz_stream = (GMemoryInputStream *) g_memory_input_stream_new_from_data (filez_data + archive_header_size,
+                                                                             g_bytes_get_size (filez_bytes) - archive_header_size,
+                                                                             NULL);
 
-  zlib_decomp = (GConverter*)g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_RAW);
+  zlib_decomp = (GConverter *) g_zlib_decompressor_new (G_ZLIB_COMPRESSOR_FORMAT_RAW);
   zlib_input = g_converter_input_stream_new (G_INPUT_STREAM (dataz_stream), zlib_decomp);
 
-  data_stream = (GMemoryOutputStream*)g_memory_output_stream_new (NULL, 0, g_realloc, g_free);
+  data_stream = (GMemoryOutputStream *) g_memory_output_stream_new (NULL, 0, g_realloc, g_free);
 
   if (g_output_stream_splice (G_OUTPUT_STREAM (data_stream), zlib_input,
                               G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE | G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,

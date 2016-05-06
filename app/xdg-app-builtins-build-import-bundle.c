@@ -96,7 +96,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (!ostree_repo_write_mtree (repo, archive_mtree, &archive_root, cancellable, error))
     return FALSE;
 
-  if (!ostree_repo_file_ensure_resolved ((OstreeRepoFile*)archive_root, error))
+  if (!ostree_repo_file_ensure_resolved ((OstreeRepoFile *) archive_root, error))
     return FALSE;
 
   ref = g_file_resolve_relative_path (archive_root, "rootfs/ref");
@@ -172,7 +172,7 @@ import_oci (OstreeRepo *repo, GFile *file,
     }
 
   if (!ostree_mutable_tree_replace_file (mtree, "metadata",
-                                         ostree_repo_file_get_checksum ((OstreeRepoFile*) metadata),
+                                         ostree_repo_file_get_checksum ((OstreeRepoFile *) metadata),
                                          error))
     return FALSE;
 
@@ -190,13 +190,13 @@ import_oci (OstreeRepo *repo, GFile *file,
     tree_metadata_bytes = g_variant_get_child_value (commitv, 7);
     tree_metadata_checksum = ostree_checksum_from_bytes_v (tree_metadata_bytes);
 
-    if (strcmp (tree_contents_checksum, ostree_repo_file_tree_get_contents_checksum ((OstreeRepoFile*) root)))
+    if (strcmp (tree_contents_checksum, ostree_repo_file_tree_get_contents_checksum ((OstreeRepoFile *) root)))
       return xdg_app_fail (error, "Imported content checksum (%s) does not match original checksum (%s)",
-                           tree_contents_checksum, ostree_repo_file_tree_get_contents_checksum ((OstreeRepoFile*) root));
+                           tree_contents_checksum, ostree_repo_file_tree_get_contents_checksum ((OstreeRepoFile *) root));
 
-    if (strcmp (tree_metadata_checksum, ostree_repo_file_tree_get_metadata_checksum ((OstreeRepoFile*) root)))
+    if (strcmp (tree_metadata_checksum, ostree_repo_file_tree_get_metadata_checksum ((OstreeRepoFile *) root)))
       return xdg_app_fail (error, "Imported metadata checksum (%s) does not match original checksum (%s)",
-                           tree_metadata_checksum, ostree_repo_file_tree_get_metadata_checksum ((OstreeRepoFile*) root));
+                           tree_metadata_checksum, ostree_repo_file_tree_get_metadata_checksum ((OstreeRepoFile *) root));
   }
 
   commitv_metadata = g_variant_get_child_value (commitv, 0);
@@ -238,7 +238,7 @@ import_oci (OstreeRepo *repo, GFile *file,
 
 static gboolean
 import_bundle (OstreeRepo *repo, GFile *file,
-              GCancellable *cancellable, GError **error)
+               GCancellable *cancellable, GError **error)
 {
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *bundle_ref = NULL;

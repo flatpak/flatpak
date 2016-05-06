@@ -30,12 +30,13 @@
 
 GHashTable *tables = NULL;
 
-typedef struct {
-  char *name;
+typedef struct
+{
+  char     *name;
   XdgAppDb *db;
-  GList *outstanding_writes;
-  GList *current_writes;
-  gboolean writing;
+  GList    *outstanding_writes;
+  GList    *current_writes;
+  gboolean  writing;
 } Table;
 
 static void start_writeout (Table *table);
@@ -49,13 +50,14 @@ table_free (Table *table)
 }
 
 static Table *
-lookup_table (const char *name,
+lookup_table (const char            *name,
               GDBusMethodInvocation *invocation)
 {
   Table *table;
   XdgAppDb *db;
   g_autofree char *dir = NULL;
   g_autofree char *path = NULL;
+
   g_autoptr(GError) error = NULL;
 
   table = g_hash_table_lookup (tables, name);
@@ -85,12 +87,13 @@ lookup_table (const char *name,
 }
 
 static void
-writeout_done (GObject *source_object,
+writeout_done (GObject      *source_object,
                GAsyncResult *res,
-               gpointer user_data)
+               gpointer      user_data)
 {
   Table *table = user_data;
   GList *l;
+
   g_autoptr(GError) error = NULL;
   gboolean ok;
 
@@ -131,7 +134,7 @@ start_writeout (Table *table)
 }
 
 static void
-ensure_writeout (Table *table,
+ensure_writeout (Table                 *table,
                  GDBusMethodInvocation *invocation)
 {
   table->outstanding_writes = g_list_prepend (table->outstanding_writes, invocation);
@@ -143,9 +146,10 @@ ensure_writeout (Table *table,
 static gboolean
 handle_list (XdgAppPermissionStore *object,
              GDBusMethodInvocation *invocation,
-             const gchar *table_name)
+             const gchar           *table_name)
 {
   Table *table;
+
   g_auto(GStrv) ids = NULL;
 
   table = lookup_table (table_name, invocation);
@@ -154,7 +158,7 @@ handle_list (XdgAppPermissionStore *object,
 
   ids = xdg_app_db_list_ids (table->db);
 
-  xdg_app_permission_store_complete_list (object,invocation, (const char *const *)ids);
+  xdg_app_permission_store_complete_list (object, invocation, (const char * const *) ids);
 
   return TRUE;
 }
@@ -184,10 +188,11 @@ get_app_permissions (XdgAppDbEntry *entry)
 static gboolean
 handle_lookup (XdgAppPermissionStore *object,
                GDBusMethodInvocation *invocation,
-               const gchar *table_name,
-               const gchar *id)
+               const gchar           *table_name,
+               const gchar           *id)
 {
   Table *table;
+
   g_autoptr(GVariant) data = NULL;
   g_autoptr(GVariant) permissions = NULL;
   g_autoptr(XdgAppDbEntry) entry = NULL;
@@ -217,9 +222,9 @@ handle_lookup (XdgAppPermissionStore *object,
 
 static void
 emit_deleted (XdgAppPermissionStore *object,
-              const gchar *table_name,
-              const gchar *id,
-              XdgAppDbEntry *entry)
+              const gchar           *table_name,
+              const gchar           *id,
+              XdgAppDbEntry         *entry)
 {
   g_autoptr(GVariant) data = NULL;
   g_autoptr(GVariant) permissions = NULL;
@@ -237,9 +242,9 @@ emit_deleted (XdgAppPermissionStore *object,
 
 static void
 emit_changed (XdgAppPermissionStore *object,
-              const gchar *table_name,
-              const gchar *id,
-              XdgAppDbEntry *entry)
+              const gchar           *table_name,
+              const gchar           *id,
+              XdgAppDbEntry         *entry)
 {
   g_autoptr(GVariant) data = NULL;
   g_autoptr(GVariant) permissions = NULL;
@@ -257,10 +262,11 @@ emit_changed (XdgAppPermissionStore *object,
 static gboolean
 handle_delete (XdgAppPermissionStore *object,
                GDBusMethodInvocation *invocation,
-               const gchar *table_name,
-               const gchar *id)
+               const gchar           *table_name,
+               const gchar           *id)
 {
   Table *table;
+
   g_autoptr(XdgAppDbEntry) entry = NULL;
 
   table = lookup_table (table_name, invocation);
@@ -287,15 +293,16 @@ handle_delete (XdgAppPermissionStore *object,
 static gboolean
 handle_set (XdgAppPermissionStore *object,
             GDBusMethodInvocation *invocation,
-            const gchar *table_name,
-            gboolean create,
-            const gchar *id,
-            GVariant *app_permissions,
-            GVariant *data)
+            const gchar           *table_name,
+            gboolean               create,
+            const gchar           *id,
+            GVariant              *app_permissions,
+            GVariant              *data)
 {
   Table *table;
   GVariantIter iter;
   GVariant *child;
+
   g_autoptr(GVariant) data_child = NULL;
   g_autoptr(XdgAppDbEntry) old_entry = NULL;
   g_autoptr(XdgAppDbEntry) new_entry = NULL;
@@ -328,7 +335,7 @@ handle_set (XdgAppPermissionStore *object,
       g_variant_get (child, "{&s^a&s}", &child_app_id, &permissions);
 
       old_entry = new_entry;
-      new_entry = xdg_app_db_entry_set_app_permissions (new_entry, child_app_id, (const char **)permissions);
+      new_entry = xdg_app_db_entry_set_app_permissions (new_entry, child_app_id, (const char **) permissions);
 
       g_variant_unref (child);
     }
@@ -344,13 +351,14 @@ handle_set (XdgAppPermissionStore *object,
 static gboolean
 handle_set_permission (XdgAppPermissionStore *object,
                        GDBusMethodInvocation *invocation,
-                       const gchar *table_name,
-                       gboolean create,
-                       const gchar *id,
-                       const gchar *app,
-                       const gchar *const *permissions)
+                       const gchar           *table_name,
+                       gboolean               create,
+                       const gchar           *id,
+                       const gchar           *app,
+                       const gchar *const    *permissions)
 {
   Table *table;
+
   g_autoptr(XdgAppDbEntry) entry = NULL;
   g_autoptr(XdgAppDbEntry) new_entry = NULL;
 
@@ -362,7 +370,9 @@ handle_set_permission (XdgAppPermissionStore *object,
   if (entry == NULL)
     {
       if (create)
-        entry = xdg_app_db_entry_new (NULL);
+        {
+          entry = xdg_app_db_entry_new (NULL);
+        }
       else
         {
           g_dbus_method_invocation_return_error (invocation,
@@ -372,7 +382,7 @@ handle_set_permission (XdgAppPermissionStore *object,
         }
     }
 
-  new_entry = xdg_app_db_entry_set_app_permissions (entry, app, (const char **)permissions);
+  new_entry = xdg_app_db_entry_set_app_permissions (entry, app, (const char **) permissions);
   xdg_app_db_set_entry (table->db, id, new_entry);
   emit_changed (object, table_name, id, new_entry);
 
@@ -384,12 +394,13 @@ handle_set_permission (XdgAppPermissionStore *object,
 static gboolean
 handle_set_value (XdgAppPermissionStore *object,
                   GDBusMethodInvocation *invocation,
-                  const gchar *table_name,
-                  gboolean create,
-                  const gchar *id,
-                  GVariant *data)
+                  const gchar           *table_name,
+                  gboolean               create,
+                  const gchar           *id,
+                  GVariant              *data)
 {
   Table *table;
+
   g_autoptr(XdgAppDbEntry) entry = NULL;
   g_autoptr(XdgAppDbEntry) new_entry = NULL;
 
@@ -401,7 +412,9 @@ handle_set_value (XdgAppPermissionStore *object,
   if (entry == NULL)
     {
       if (create)
-        new_entry = xdg_app_db_entry_new (data);
+        {
+          new_entry = xdg_app_db_entry_new (data);
+        }
       else
         {
           g_dbus_method_invocation_return_error (invocation,
@@ -411,7 +424,9 @@ handle_set_value (XdgAppPermissionStore *object,
         }
     }
   else
-    new_entry = xdg_app_db_entry_modify_data (entry, data);
+    {
+      new_entry = xdg_app_db_entry_modify_data (entry, data);
+    }
 
   xdg_app_db_set_entry (table->db, id, new_entry);
   emit_changed (object, table_name, id, new_entry);
@@ -428,7 +443,7 @@ xdg_app_permission_store_start (GDBusConnection *connection)
   GError *error = NULL;
 
   tables = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                  g_free, (GDestroyNotify)table_free);
+                                  g_free, (GDestroyNotify) table_free);
 
   store = xdg_app_permission_store_skeleton_new ();
 

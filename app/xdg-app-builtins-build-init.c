@@ -192,7 +192,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                         }
                       else
                         {
-                          g_list_free_full (extensions, (GDestroyNotify)xdg_app_extension_free);
+                          g_list_free_full (extensions, (GDestroyNotify) xdg_app_extension_free);
                           return xdg_app_fail (error, "Requested extension %s not installed\n", requested_extension);
                         }
                     }
@@ -201,7 +201,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
               if (!found)
                 return xdg_app_fail (error, "No extension %s in sdk\n", requested_extension);
             }
-          g_list_free_full (extensions, (GDestroyNotify)xdg_app_extension_free);
+          g_list_free_full (extensions, (GDestroyNotify) xdg_app_extension_free);
         }
     }
 
@@ -243,10 +243,10 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   metadata_contents = g_string_new ("[Application]\n");
   g_string_append_printf (metadata_contents,
-                           "name=%s\n"
-                           "runtime=%s\n"
-                           "sdk=%s\n",
-                           app_id, runtime_ref, sdk_ref);
+                          "name=%s\n"
+                          "runtime=%s\n"
+                          "sdk=%s\n",
+                          app_id, runtime_ref, sdk_ref);
   if (opt_tags != NULL)
     {
       g_string_append (metadata_contents, "tags=");

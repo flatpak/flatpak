@@ -33,28 +33,28 @@ typedef enum {
 
 typedef struct XdgAppProxy XdgAppProxy;
 
-#define XDG_APP_TYPE_PROXY xdg_app_proxy_get_type()
+#define XDG_APP_TYPE_PROXY xdg_app_proxy_get_type ()
 #define XDG_APP_PROXY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_PROXY, XdgAppProxy))
 #define XDG_APP_IS_PROXY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_PROXY))
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(XdgAppProxy, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppProxy, g_object_unref)
 
 GType xdg_app_proxy_get_type (void);
 
-XdgAppProxy *xdg_app_proxy_new                   (const char    *dbus_address,
-                                                  const char    *socket_path);
-void         xdg_app_proxy_set_log_messages      (XdgAppProxy   *proxy,
-                                                  gboolean       log);
-void         xdg_app_proxy_set_filter            (XdgAppProxy   *proxy,
-                                                  gboolean       filter);
-void         xdg_app_proxy_add_policy            (XdgAppProxy   *proxy,
-                                                  const char    *name,
-                                                  XdgAppPolicy   policy);
-void         xdg_app_proxy_add_wildcarded_policy (XdgAppProxy   *proxy,
-                                                  const char    *name,
-                                                  XdgAppPolicy   policy);
-gboolean     xdg_app_proxy_start                 (XdgAppProxy   *proxy,
-                                                  GError       **error);
-void         xdg_app_proxy_stop                  (XdgAppProxy   *proxy);
+XdgAppProxy *xdg_app_proxy_new (const char *dbus_address,
+                                const char *socket_path);
+void         xdg_app_proxy_set_log_messages (XdgAppProxy *proxy,
+                                             gboolean     log);
+void         xdg_app_proxy_set_filter (XdgAppProxy *proxy,
+                                       gboolean     filter);
+void         xdg_app_proxy_add_policy (XdgAppProxy *proxy,
+                                       const char  *name,
+                                       XdgAppPolicy policy);
+void         xdg_app_proxy_add_wildcarded_policy (XdgAppProxy *proxy,
+                                                  const char  *name,
+                                                  XdgAppPolicy policy);
+gboolean     xdg_app_proxy_start (XdgAppProxy *proxy,
+                                  GError     **error);
+void         xdg_app_proxy_stop (XdgAppProxy *proxy);
 
 #endif /* __XDG_APP_PROXY_H__ */

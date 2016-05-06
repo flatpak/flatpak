@@ -37,11 +37,15 @@ static gboolean opt_version;
 static gboolean opt_default_arch;
 static gboolean opt_user;
 
-typedef struct {
+typedef struct
+{
   const char *name;
-  gboolean (*fn) (int argc, char **argv, GCancellable *cancellable, GError **error);
+  gboolean (*fn)(int           argc,
+                 char        **argv,
+                 GCancellable *cancellable,
+                 GError      **error);
   const char *description;
-  gboolean deprecated;
+  gboolean    deprecated;
 } XdgAppCommand;
 
 static XdgAppCommand commands[] = {
@@ -93,10 +97,10 @@ static GOptionEntry user_entries[] = {
 };
 
 static void
-message_handler (const gchar *log_domain,
+message_handler (const gchar   *log_domain,
                  GLogLevelFlags log_level,
-                 const gchar *message,
-                 gpointer user_data)
+                 const gchar   *message,
+                 gpointer       user_data)
 {
   /* Make this look like normal console output */
   if (log_level & G_LOG_LEVEL_DEBUG)
@@ -123,10 +127,12 @@ xdg_app_option_context_new_with_commands (XdgAppCommand *commands)
             {
               g_string_append_printf (summary, "\n  %s", commands->name);
               if (commands->description)
-                g_string_append_printf (summary, "%*s%s", (int)(20 - strlen (commands->name)), "", commands->description);
+                g_string_append_printf (summary, "%*s%s", (int) (20 - strlen (commands->name)), "", commands->description);
             }
           else
-            g_string_append_printf (summary, "\n%s", commands->name);
+            {
+              g_string_append_printf (summary, "\n%s", commands->name);
+            }
         }
       commands++;
     }
@@ -140,7 +146,7 @@ xdg_app_option_context_new_with_commands (XdgAppCommand *commands)
 
 int
 xdg_app_usage (XdgAppCommand *commands,
-              gboolean is_error)
+               gboolean       is_error)
 {
   GOptionContext *context;
   g_autofree char *help;
@@ -158,18 +164,18 @@ xdg_app_usage (XdgAppCommand *commands,
 
   g_option_context_free (context);
 
-  return (is_error ? 1 : 0);
+  return is_error ? 1 : 0;
 }
 
 gboolean
-xdg_app_option_context_parse (GOptionContext *context,
+xdg_app_option_context_parse (GOptionContext     *context,
                               const GOptionEntry *main_entries,
-                              int *argc,
-                              char ***argv,
-                              XdgAppBuiltinFlags flags,
-                              XdgAppDir **out_dir,
-                              GCancellable *cancellable,
-                              GError **error)
+                              int                *argc,
+                              char             ***argv,
+                              XdgAppBuiltinFlags  flags,
+                              XdgAppDir         **out_dir,
+                              GCancellable       *cancellable,
+                              GError            **error)
 {
   g_autoptr(XdgAppDir) dir = NULL;
 
@@ -204,7 +210,7 @@ xdg_app_option_context_parse (GOptionContext *context,
         return FALSE;
 
       if (!(flags & XDG_APP_BUILTIN_FLAG_NO_REPO) &&
-          !xdg_app_dir_ensure_repo (dir, cancellable,error))
+          !xdg_app_dir_ensure_repo (dir, cancellable, error))
         return FALSE;
     }
 
@@ -221,14 +227,15 @@ gboolean
 usage_error (GOptionContext *context, const char *message, GError **error)
 {
   g_autofree gchar *help = g_option_context_get_help (context, TRUE, NULL);
+
   g_printerr ("%s", help);
   g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, message);
   return FALSE;
 }
 
 int
-xdg_app_run (int    argc,
-             char **argv,
+xdg_app_run (int      argc,
+             char   **argv,
              GError **res_error)
 {
   XdgAppCommand *command;
@@ -282,15 +289,11 @@ xdg_app_run (int    argc,
       if (xdg_app_option_context_parse (context, NULL, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
         {
           if (command_name == NULL)
-            {
-              g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                                   "No command specified");
-            }
+            g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                 "No command specified");
           else
-            {
-              g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Unknown command '%s'", command_name);
-            }
+            g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                         "Unknown command '%s'", command_name);
         }
 
       help = g_option_context_get_help (context, FALSE, NULL);
@@ -308,7 +311,7 @@ xdg_app_run (int    argc,
     goto out;
 
   success = TRUE;
- out:
+out:
   g_assert (success || error);
 
   if (error)

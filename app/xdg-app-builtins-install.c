@@ -57,7 +57,7 @@ static GOptionEntry options[] = {
 
 static GBytes *
 read_gpg_data (GCancellable *cancellable,
-               GError **error)
+               GError      **error)
 {
   g_autoptr(GInputStream) source_stream = NULL;
   guint n_keyrings = 0;
@@ -81,7 +81,7 @@ read_gpg_data (GCancellable *cancellable,
       else
         {
           g_autoptr(GFile) file = g_file_new_for_path (opt_gpg_file[ii]);
-          input_stream = G_INPUT_STREAM(g_file_read (file, cancellable, error));
+          input_stream = G_INPUT_STREAM (g_file_read (file, cancellable, error));
 
           if (input_stream == NULL)
             return NULL;
@@ -105,6 +105,7 @@ install_bundle (XdgAppDir *dir,
                 GError **error)
 {
   gboolean ret = FALSE;
+
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) file = NULL;
   const char *filename;
@@ -186,7 +187,7 @@ install_bundle (XdgAppDir *dir,
 
   ret = TRUE;
 
- out:
+out:
   if (added_remote && !ret)
     ostree_repo_remote_delete (repo, remote, NULL, NULL);
 
@@ -233,10 +234,8 @@ xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                                   opt_app, opt_runtime, &is_app,
                                                   &my_error);
   if (installed_ref != NULL)
-    {
-      return xdg_app_fail (error, "%s %s, branch %s is already installed",
-                           is_app ? "App" : "Runtime", name, branch ? branch : "master");
-    }
+    return xdg_app_fail (error, "%s %s, branch %s is already installed",
+                         is_app ? "App" : "Runtime", name, branch ? branch : "master");
 
   if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
     {

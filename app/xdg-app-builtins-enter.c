@@ -49,9 +49,9 @@ write_to_file (int fd, const char *content, ssize_t len)
     {
       res = write (fd, content, len);
       if (res < 0 && errno == EINTR)
-	continue;
+        continue;
       if (res <= 0)
-	return FALSE;
+        return FALSE;
       len -= res;
       content += res;
     }
@@ -117,16 +117,16 @@ child_setup (gpointer user_data)
 }
 
 gboolean
-xdg_app_builtin_enter (int argc,
-                       char **argv,
+xdg_app_builtin_enter (int           argc,
+                       char        **argv,
                        GCancellable *cancellable,
-                       GError **error)
+                       GError      **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   int rest_argv_start, rest_argc;
   g_autoptr(XdgAppContext) arg_context = NULL;
   const char *ns_name[5] = { "user", "ipc", "net", "pid", "mnt" };
-  int ns_fd[G_N_ELEMENTS(ns_name)];
+  int ns_fd[G_N_ELEMENTS (ns_name)];
   char pid_ns[256];
   ssize_t pid_ns_len;
   char self_ns[256];
@@ -184,7 +184,7 @@ xdg_app_builtin_enter (int argc,
   if (!g_file_get_contents (environment_path, &environment, &environment_len, error))
     return FALSE;
 
-  for (i = 0; i < G_N_ELEMENTS(ns_name); i++)
+  for (i = 0; i < G_N_ELEMENTS (ns_name); i++)
     {
       g_autofree char *path = g_strdup_printf ("/proc/%d/ns/%s", pid, ns_name[i]);
       g_autofree char *self_path = g_strdup_printf ("/proc/self/ns/%s", ns_name[i]);
@@ -212,7 +212,7 @@ xdg_app_builtin_enter (int argc,
         }
     }
 
-  for (i = 0; i < G_N_ELEMENTS(ns_fd); i++)
+  for (i = 0; i < G_N_ELEMENTS (ns_fd); i++)
     {
       if (ns_fd[i] != -1)
         {
@@ -241,7 +241,7 @@ xdg_app_builtin_enter (int argc,
 
   xdg_runtime_dir = g_strdup_printf ("/run/user/%d", uid);
   g_ptr_array_add (envp_array, g_strdup_printf ("XDG_RUNTIME_DIR=%s", xdg_runtime_dir));
-      
+
   if (g_file_test ("/tmp/.X11-unix/X99", G_FILE_TEST_EXISTS))
     g_ptr_array_add (envp_array, g_strdup ("DISPLAY=:99.0"));
 
@@ -258,15 +258,15 @@ xdg_app_builtin_enter (int argc,
 
   if (g_file_test ("/run/dbus/system_bus_socket", G_FILE_TEST_EXISTS))
     g_ptr_array_add (envp_array, g_strdup ("DBUS_SYSTEM_BUS_ADDRESS=unix:/run/dbus/system_bus_socket"));
-  
+
   g_ptr_array_add (envp_array, NULL);
-  
+
   argv_array = g_ptr_array_new_with_free_func (g_free);
   for (i = 1; i < rest_argc; i++)
     g_ptr_array_add (argv_array, g_strdup (argv[rest_argv_start + i]));
   g_ptr_array_add (argv_array, NULL);
 
-  if (!g_spawn_sync (NULL, (char **)argv_array->pdata, (char **)envp_array->pdata,
+  if (!g_spawn_sync (NULL, (char **) argv_array->pdata, (char **) envp_array->pdata,
                      G_SPAWN_SEARCH_PATH_FROM_ENVP | G_SPAWN_CHILD_INHERITS_STDIN,
                      child_setup, NULL,
                      NULL, NULL,

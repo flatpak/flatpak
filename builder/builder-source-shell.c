@@ -30,13 +30,15 @@
 #include "builder-utils.h"
 #include "builder-source-shell.h"
 
-struct BuilderSourceShell {
+struct BuilderSourceShell
+{
   BuilderSource parent;
 
-  char **commands;
+  char        **commands;
 };
 
-typedef struct {
+typedef struct
+{
   BuilderSourceClass parent_class;
 } BuilderSourceShellClass;
 
@@ -51,7 +53,7 @@ enum {
 static void
 builder_source_shell_finalize (GObject *object)
 {
-  BuilderSourceShell *self = (BuilderSourceShell *)object;
+  BuilderSourceShell *self = (BuilderSourceShell *) object;
 
   g_strfreev (self->commands);
 
@@ -60,9 +62,9 @@ builder_source_shell_finalize (GObject *object)
 
 static void
 builder_source_shell_get_property (GObject    *object,
-                                    guint       prop_id,
-                                    GValue     *value,
-                                    GParamSpec *pspec)
+                                   guint       prop_id,
+                                   GValue     *value,
+                                   GParamSpec *pspec)
 {
   BuilderSourceShell *self = BUILDER_SOURCE_SHELL (object);
 
@@ -79,9 +81,9 @@ builder_source_shell_get_property (GObject    *object,
 
 static void
 builder_source_shell_set_property (GObject      *object,
-                                    guint         prop_id,
-                                    const GValue *value,
-                                    GParamSpec   *pspec)
+                                   guint         prop_id,
+                                   const GValue *value,
+                                   GParamSpec   *pspec)
 {
   BuilderSourceShell *self = BUILDER_SOURCE_SHELL (object);
   gchar **tmp;
@@ -100,21 +102,22 @@ builder_source_shell_set_property (GObject      *object,
 }
 
 static gboolean
-builder_source_shell_download (BuilderSource *source,
-                                gboolean update_vcs,
-                                BuilderContext *context,
-                                GError **error)
+builder_source_shell_download (BuilderSource  *source,
+                               gboolean        update_vcs,
+                               BuilderContext *context,
+                               GError        **error)
 {
   return TRUE;
 }
 
 static gboolean
 run_script (BuilderContext *context,
-            GFile *source_dir,
-            const gchar *script,
-            GError **error)
+            GFile          *source_dir,
+            const gchar    *script,
+            GError        **error)
 {
   GFile *app_dir = builder_context_get_app_dir (context);
+
   g_autoptr(GSubprocessLauncher) launcher = NULL;
   g_autoptr(GSubprocess) subp = NULL;
   g_autoptr(GPtrArray) args = NULL;
@@ -156,10 +159,10 @@ run_script (BuilderContext *context,
 
 
 static gboolean
-builder_source_shell_extract (BuilderSource *source,
-                               GFile *dest,
-                               BuilderContext *context,
-                               GError **error)
+builder_source_shell_extract (BuilderSource  *source,
+                              GFile          *dest,
+                              BuilderContext *context,
+                              GError        **error)
 {
   BuilderSourceShell *self = BUILDER_SOURCE_SHELL (source);
   int i;
@@ -180,8 +183,8 @@ builder_source_shell_extract (BuilderSource *source,
 
 static void
 builder_source_shell_checksum (BuilderSource  *source,
-                                BuilderCache   *cache,
-                                BuilderContext *context)
+                               BuilderCache   *cache,
+                               BuilderContext *context)
 {
   BuilderSourceShell *self = BUILDER_SOURCE_SHELL (source);
 

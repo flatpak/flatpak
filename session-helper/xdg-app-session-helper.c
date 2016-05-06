@@ -30,13 +30,13 @@
 static char *monitor_dir;
 
 static gboolean
-handle_request_monitor (XdgAppSessionHelper *object,
-			GDBusMethodInvocation *invocation,
-			gpointer user_data)
+handle_request_monitor (XdgAppSessionHelper   *object,
+                        GDBusMethodInvocation *invocation,
+                        gpointer               user_data)
 {
   xdg_app_session_helper_complete_request_monitor (object, invocation,
-						   monitor_dir);
-  
+                                                   monitor_dir);
+
   return TRUE;
 }
 
@@ -52,12 +52,12 @@ on_bus_acquired (GDBusConnection *connection,
 
   helper = xdg_app_session_helper_skeleton_new ();
 
- g_signal_connect (helper, "handle-request-monitor", G_CALLBACK (handle_request_monitor), NULL);
+  g_signal_connect (helper, "handle-request-monitor", G_CALLBACK (handle_request_monitor), NULL);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
-					 connection,
-					 "/org/freedesktop/XdgApp/SessionHelper",
-					 &error))
+                                         connection,
+                                         "/org/freedesktop/XdgApp/SessionHelper",
+                                         &error))
     {
       g_warning ("error: %s\n", error->message);
       g_error_free (error);
@@ -81,7 +81,7 @@ on_name_lost (GDBusConnection *connection,
 
 static void
 copy_file (const char *source,
-	   const char *target_dir)
+           const char *target_dir)
 {
   char *basename = g_path_get_basename (source);
   char *dest = g_build_filename (target_dir, basename, NULL);
@@ -97,11 +97,11 @@ copy_file (const char *source,
 }
 
 static void
-file_changed (GFileMonitor      *monitor,
-	      GFile             *file,
-	      GFile             *other_file,
-	      GFileMonitorEvent  event_type,
-	      char              *source)
+file_changed (GFileMonitor     *monitor,
+              GFile            *file,
+              GFile            *other_file,
+              GFileMonitorEvent event_type,
+              char             *source)
 {
   if (event_type == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT ||
       event_type == G_FILE_MONITOR_EVENT_CREATED)
@@ -118,7 +118,7 @@ setup_file_monitor (const char *source)
 
   monitor = g_file_monitor_file (s, G_FILE_MONITOR_NONE, NULL, NULL);
   if (monitor)
-    g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), (char *)source);
+    g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), (char *) source);
 }
 
 int

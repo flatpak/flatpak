@@ -65,10 +65,10 @@ xdg_app_builtin_export_file (int argc, char **argv,
   g_autoptr(GDBusConnection) session_bus = NULL;
   g_autoptr(GPtrArray) permissions = NULL;
   const char *file;
-  g_autofree char  *mountpoint = NULL;
-  g_autofree char  *basename = NULL;
-  g_autofree char  *dirname = NULL;
-  g_autofree char  *doc_path = NULL;
+  g_autofree char *mountpoint = NULL;
+  g_autofree char *basename = NULL;
+  g_autofree char *dirname = NULL;
+  g_autofree char *doc_path = NULL;
   XdpDbusDocuments *documents;
   int fd, fd_id;
   int i;
@@ -120,31 +120,35 @@ xdg_app_builtin_export_file (int argc, char **argv,
   close (fd);
 
   if (opt_noexist)
-    reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
-                                                           "org.freedesktop.portal.Documents",
-                                                           "/org/freedesktop/portal/documents",
-                                                           "org.freedesktop.portal.Documents",
-                                                           "AddNamed",
-                                                           g_variant_new ("(h^aybb)", fd_id, basename, !opt_unique, !opt_transient),
-                                                           G_VARIANT_TYPE ("(s)"),
-                                                           G_DBUS_CALL_FLAGS_NONE,
-                                                           30000,
-                                                           fd_list, NULL,
-                                                           NULL,
-                                                           error);
+    {
+      reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
+                                                             "org.freedesktop.portal.Documents",
+                                                             "/org/freedesktop/portal/documents",
+                                                             "org.freedesktop.portal.Documents",
+                                                             "AddNamed",
+                                                             g_variant_new ("(h^aybb)", fd_id, basename, !opt_unique, !opt_transient),
+                                                             G_VARIANT_TYPE ("(s)"),
+                                                             G_DBUS_CALL_FLAGS_NONE,
+                                                             30000,
+                                                             fd_list, NULL,
+                                                             NULL,
+                                                             error);
+    }
   else
-    reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
-                                                           "org.freedesktop.portal.Documents",
-                                                           "/org/freedesktop/portal/documents",
-                                                           "org.freedesktop.portal.Documents",
-                                                           "Add",
-                                                           g_variant_new ("(hbb)", fd_id, !opt_unique, !opt_transient),
-                                                           G_VARIANT_TYPE ("(s)"),
-                                                           G_DBUS_CALL_FLAGS_NONE,
-                                                           30000,
-                                                           fd_list, NULL,
-                                                           NULL,
-                                                           error);
+    {
+      reply = g_dbus_connection_call_with_unix_fd_list_sync (session_bus,
+                                                             "org.freedesktop.portal.Documents",
+                                                             "/org/freedesktop/portal/documents",
+                                                             "org.freedesktop.portal.Documents",
+                                                             "Add",
+                                                             g_variant_new ("(hbb)", fd_id, !opt_unique, !opt_transient),
+                                                             G_VARIANT_TYPE ("(s)"),
+                                                             G_DBUS_CALL_FLAGS_NONE,
+                                                             30000,
+                                                             fd_list, NULL,
+                                                             NULL,
+                                                             error);
+    }
   g_object_unref (fd_list);
 
   if (reply == NULL)
@@ -168,7 +172,7 @@ xdg_app_builtin_export_file (int argc, char **argv,
       if (!xdp_dbus_documents_call_grant_permissions_sync (documents,
                                                            doc_id,
                                                            opt_apps[i],
-                                                           (const char **)permissions->pdata,
+                                                           (const char **) permissions->pdata,
                                                            NULL,
                                                            error))
         return FALSE;
