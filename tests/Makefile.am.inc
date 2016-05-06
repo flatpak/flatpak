@@ -1,7 +1,7 @@
 TESTS_ENVIRONMENT += OT_TESTS_DEBUG=1 \
-	XDG_APP_TRIGGERSDIR=$$(cd $(top_srcdir) && pwd)/triggers \
-	XDG_APP_BWRAP=$$(cd $(top_builddir) && pwd)/bwrap \
-	XDG_APP_DBUSPROXY=$$(cd $(top_builddir) && pwd)/xdg-dbus-proxy \
+	FLATPAK_TRIGGERSDIR=$$(cd $(top_srcdir) && pwd)/triggers \
+	FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/bwrap \
+	FLATPAK_DBUSPROXY=$$(cd $(top_builddir) && pwd)/xdg-dbus-proxy \
 	GI_TYPELIB_PATH=$$(cd $(top_builddir) && pwd) \
 	LD_LIBRARY_PATH=$$(cd $(top_builddir)/.libs && pwd) \
 	PATH=$$(cd $(top_builddir) && pwd):$${PATH} \

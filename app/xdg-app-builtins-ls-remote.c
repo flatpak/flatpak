@@ -45,10 +45,10 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GHashTable) refs = NULL;
   GHashTableIter iter;
   gpointer key;
@@ -62,7 +62,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
   context = g_option_context_new (" REMOTE - Show available runtimes and applications");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (!opt_app && !opt_runtime)
@@ -74,7 +74,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   repository = argv[1];
 
 
-  if (!xdg_app_dir_list_remote_refs (dir,
+  if (!flatpak_dir_list_remote_refs (dir,
                                      repository,
                                      &refs,
                                      cancellable, error))
@@ -82,7 +82,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
   names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
-  arch = xdg_app_get_arch ();
+  arch = flatpak_get_arch ();
 
   g_hash_table_iter_init (&iter, refs);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -92,7 +92,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       const char *name = NULL;
       g_auto(GStrv) parts = NULL;
 
-      parts = xdg_app_decompose_ref (ref, NULL);
+      parts = flatpak_decompose_ref (ref, NULL);
       if (parts == NULL)
         {
           g_debug ("Invalid remote ref %s\n", ref);
@@ -103,7 +103,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
         {
           g_autofree char *deployed = NULL;
 
-          deployed = xdg_app_dir_read_active (dir, ref, cancellable);
+          deployed = flatpak_dir_read_active (dir, ref, cancellable);
           if (deployed == NULL)
             continue;
 
@@ -133,7 +133,7 @@ xdg_app_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
     }
 
   keys = (const char **) g_hash_table_get_keys_as_array (names, &n_keys);
-  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) xdg_app_strcmp0_ptr, NULL);
+  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
 
   for (i = 0; i < n_keys; i++)
     {

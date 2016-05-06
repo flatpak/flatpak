@@ -35,47 +35,47 @@
 
 /**
  * SECTION:xdg-app-installation
- * @Title: XdgAppInstallation
+ * @Title: FlatpakInstallation
  * @Short_description: Installation information
  *
- * XdgAppInstallation is the toplevel object that software installers
+ * FlatpakInstallation is the toplevel object that software installers
  * should use to operate on an xdg-apps.
  *
- * An XdgAppInstallation object provides information about an installation
+ * An FlatpakInstallation object provides information about an installation
  * location for xdg-app applications. Typical installation locations are either
  * system-wide (in /var/lib/xdg-app) or per-user (in ~/.local/share/xdg-app).
  *
- * XdgAppInstallation can list configured remotes as well as installed application
+ * FlatpakInstallation can list configured remotes as well as installed application
  * and runtime references (in short: refs). It can also run, install, update and
  * uninstall applications and runtimes.
  */
 
-typedef struct _XdgAppInstallationPrivate XdgAppInstallationPrivate;
+typedef struct _FlatpakInstallationPrivate FlatpakInstallationPrivate;
 
-struct _XdgAppInstallationPrivate
+struct _FlatpakInstallationPrivate
 {
-  XdgAppDir *dir;
+  FlatpakDir *dir;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (XdgAppInstallation, xdg_app_installation, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstallation, flatpak_installation, G_TYPE_OBJECT)
 
 enum {
   PROP_0,
 };
 
 static void
-xdg_app_installation_finalize (GObject *object)
+flatpak_installation_finalize (GObject *object)
 {
-  XdgAppInstallation *self = XDG_APP_INSTALLATION (object);
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallation *self = FLATPAK_INSTALLATION (object);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_object_unref (priv->dir);
 
-  G_OBJECT_CLASS (xdg_app_installation_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_installation_parent_class)->finalize (object);
 }
 
 static void
-xdg_app_installation_set_property (GObject      *object,
+flatpak_installation_set_property (GObject      *object,
                                    guint         prop_id,
                                    const GValue *value,
                                    GParamSpec   *pspec)
@@ -90,7 +90,7 @@ xdg_app_installation_set_property (GObject      *object,
 }
 
 static void
-xdg_app_installation_get_property (GObject    *object,
+flatpak_installation_get_property (GObject    *object,
                                    guint       prop_id,
                                    GValue     *value,
                                    GParamSpec *pspec)
@@ -105,37 +105,37 @@ xdg_app_installation_get_property (GObject    *object,
 }
 
 static void
-xdg_app_installation_class_init (XdgAppInstallationClass *klass)
+flatpak_installation_class_init (FlatpakInstallationClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->get_property = xdg_app_installation_get_property;
-  object_class->set_property = xdg_app_installation_set_property;
-  object_class->finalize = xdg_app_installation_finalize;
+  object_class->get_property = flatpak_installation_get_property;
+  object_class->set_property = flatpak_installation_set_property;
+  object_class->finalize = flatpak_installation_finalize;
 
 }
 
 static void
-xdg_app_installation_init (XdgAppInstallation *self)
+flatpak_installation_init (FlatpakInstallation *self)
 {
 }
 
-static XdgAppInstallation *
-xdg_app_installation_new_for_dir (XdgAppDir    *dir,
+static FlatpakInstallation *
+flatpak_installation_new_for_dir (FlatpakDir   *dir,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
-  XdgAppInstallation *self;
-  XdgAppInstallationPrivate *priv;
+  FlatpakInstallation *self;
+  FlatpakInstallationPrivate *priv;
 
-  if (!xdg_app_dir_ensure_repo (dir, NULL, error))
+  if (!flatpak_dir_ensure_repo (dir, NULL, error))
     {
       g_object_unref (dir);
       return NULL;
     }
 
-  self = g_object_new (XDG_APP_TYPE_INSTALLATION, NULL);
-  priv = xdg_app_installation_get_instance_private (self);
+  self = g_object_new (FLATPAK_TYPE_INSTALLATION, NULL);
+  priv = flatpak_installation_get_instance_private (self);
 
   priv->dir = dir;
 
@@ -143,104 +143,104 @@ xdg_app_installation_new_for_dir (XdgAppDir    *dir,
 }
 
 /**
- * xdg_app_get_default_arch:
+ * flatpak_get_default_arch:
  *
  * Returns the canonical name for the arch of the current machine.
  *
  * Returns: an arch string
  */
 const char  *
-xdg_app_get_default_arch (void)
+flatpak_get_default_arch (void)
 {
-  return xdg_app_get_arch ();
+  return flatpak_get_arch ();
 }
 
 /**
- * xdg_app_installation_new_system:
+ * flatpak_installation_new_system:
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Creates a new #XdgAppInstallation for the system-wide installation.
+ * Creates a new #FlatpakInstallation for the system-wide installation.
  *
- * Returns: (transfer full): a new #XdgAppInstallation
+ * Returns: (transfer full): a new #FlatpakInstallation
  */
-XdgAppInstallation *
-xdg_app_installation_new_system (GCancellable *cancellable,
+FlatpakInstallation *
+flatpak_installation_new_system (GCancellable *cancellable,
                                  GError      **error)
 {
-  return xdg_app_installation_new_for_dir (xdg_app_dir_get_system (), cancellable, error);
+  return flatpak_installation_new_for_dir (flatpak_dir_get_system (), cancellable, error);
 }
 
 /**
- * xdg_app_installation_new_user:
+ * flatpak_installation_new_user:
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Creates a new #XdgAppInstallation for the per-user installation.
+ * Creates a new #FlatpakInstallation for the per-user installation.
  *
- * Returns: (transfer full): a new #XdgAppInstallation
+ * Returns: (transfer full): a new #FlatpakInstallation
  */
-XdgAppInstallation *
-xdg_app_installation_new_user (GCancellable *cancellable,
+FlatpakInstallation *
+flatpak_installation_new_user (GCancellable *cancellable,
                                GError      **error)
 {
-  return xdg_app_installation_new_for_dir (xdg_app_dir_get_user (), cancellable, error);
+  return flatpak_installation_new_for_dir (flatpak_dir_get_user (), cancellable, error);
 }
 
 /**
- * xdg_app_installation_new_for_path:
+ * flatpak_installation_new_for_path:
  * @path: a #GFile
  * @user: whether this is a user-specific location
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Creates a new #XdgAppInstallation for the installation at the given @path.
+ * Creates a new #FlatpakInstallation for the installation at the given @path.
  *
- * Returns: (transfer full): a new #XdgAppInstallation
+ * Returns: (transfer full): a new #FlatpakInstallation
  */
-XdgAppInstallation *
-xdg_app_installation_new_for_path (GFile *path, gboolean user,
+FlatpakInstallation *
+flatpak_installation_new_for_path (GFile *path, gboolean user,
                                    GCancellable *cancellable,
                                    GError **error)
 {
-  return xdg_app_installation_new_for_dir (xdg_app_dir_new (path, user), cancellable, error);
+  return flatpak_installation_new_for_dir (flatpak_dir_new (path, user), cancellable, error);
 }
 
 /**
- * xdg_app_installation_get_is_user:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_get_is_user:
+ * @self: a #FlatpakInstallation
  *
  * Returns whether the installation is for a user-specific location.
  *
  * Returns: %TRUE if @self is a per-user installation
  */
 gboolean
-xdg_app_installation_get_is_user (XdgAppInstallation *self)
+flatpak_installation_get_is_user (FlatpakInstallation *self)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
-  return xdg_app_dir_is_user (priv->dir);
+  return flatpak_dir_is_user (priv->dir);
 }
 
 /**
- * xdg_app_installation_get_path:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_get_path:
+ * @self: a #FlatpakInstallation
  *
  * Returns the installation location for @self.
  *
  * Returns: (transfer full): an #GFile
  */
 GFile *
-xdg_app_installation_get_path (XdgAppInstallation *self)
+flatpak_installation_get_path (FlatpakInstallation *self)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
-  return g_object_ref (xdg_app_dir_get_path (priv->dir));
+  return g_object_ref (flatpak_dir_get_path (priv->dir));
 }
 
 /**
- * xdg_app_installation_launch:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_launch:
+ * @self: a #FlatpakInstallation
  * @name: name of the app to launch
  * @arch: (nullable): which architecture to launch (default: current architecture)
  * @branch: (nullable): which branch of the application (default: "master")
@@ -250,53 +250,53 @@ xdg_app_installation_get_path (XdgAppInstallation *self)
  *
  * Launch an installed application.
  *
- * You can use xdg_app_installation_get_installed_ref() or
- * xdg_app_installation_get_current_installed_app() to find out what builds
+ * You can use flatpak_installation_get_installed_ref() or
+ * flatpak_installation_get_current_installed_app() to find out what builds
  * are available, in order to get a value for @commit.
  *
  * Returns: %TRUE, unless an error occurred
  */
 gboolean
-xdg_app_installation_launch (XdgAppInstallation *self,
-                             const char         *name,
-                             const char         *arch,
-                             const char         *branch,
-                             const char         *commit,
-                             GCancellable       *cancellable,
-                             GError            **error)
+flatpak_installation_launch (FlatpakInstallation *self,
+                             const char          *name,
+                             const char          *arch,
+                             const char          *branch,
+                             const char          *commit,
+                             GCancellable        *cancellable,
+                             GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autofree char *app_ref = NULL;
 
-  g_autoptr(XdgAppDeploy) app_deploy = NULL;
+  g_autoptr(FlatpakDeploy) app_deploy = NULL;
 
   app_ref =
-    xdg_app_build_app_ref (name, branch, arch);
+    flatpak_build_app_ref (name, branch, arch);
 
   app_deploy =
-    xdg_app_dir_load_deployed (priv->dir, app_ref,
+    flatpak_dir_load_deployed (priv->dir, app_ref,
                                commit,
                                cancellable, error);
   if (app_deploy == NULL)
     return FALSE;
 
-  return xdg_app_run_app (app_ref,
+  return flatpak_run_app (app_ref,
                           app_deploy,
                           NULL, NULL,
                           NULL,
-                          XDG_APP_RUN_FLAG_BACKGROUND,
+                          FLATPAK_RUN_FLAG_BACKGROUND,
                           NULL,
                           NULL, 0,
                           cancellable, error);
 }
 
 
-static XdgAppInstalledRef *
-get_ref (XdgAppInstallation *self,
-         const char         *full_ref,
-         GCancellable       *cancellable)
+static FlatpakInstalledRef *
+get_ref (FlatpakInstallation *self,
+         const char          *full_ref,
+         GCancellable        *cancellable)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_auto(GStrv) parts = NULL;
   const char *origin = NULL;
@@ -312,27 +312,27 @@ get_ref (XdgAppInstallation *self,
 
   parts = g_strsplit (full_ref, "/", -1);
 
-  deploy_data = xdg_app_dir_get_deploy_data (priv->dir, full_ref, cancellable, NULL);
-  origin = xdg_app_deploy_data_get_origin (deploy_data);
-  commit = xdg_app_deploy_data_get_commit (deploy_data);
-  subpaths = xdg_app_deploy_data_get_subpaths (deploy_data);
-  installed_size = xdg_app_deploy_data_get_installed_size (deploy_data);
+  deploy_data = flatpak_dir_get_deploy_data (priv->dir, full_ref, cancellable, NULL);
+  origin = flatpak_deploy_data_get_origin (deploy_data);
+  commit = flatpak_deploy_data_get_commit (deploy_data);
+  subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+  installed_size = flatpak_deploy_data_get_installed_size (deploy_data);
 
-  deploy_dir = xdg_app_dir_get_deploy_dir (priv->dir, full_ref);
+  deploy_dir = flatpak_dir_get_deploy_dir (priv->dir, full_ref);
   deploy_subdir = g_file_get_child (deploy_dir, commit);
   deploy_path = g_file_get_path (deploy_subdir);
 
   if (strcmp (parts[0], "app") == 0)
     {
       g_autofree char *current =
-        xdg_app_dir_current_ref (priv->dir, parts[1], cancellable);
+        flatpak_dir_current_ref (priv->dir, parts[1], cancellable);
       if (current && strcmp (full_ref, current) == 0)
         is_current = TRUE;
     }
 
-  latest_commit = xdg_app_dir_read_latest (priv->dir, origin, full_ref, NULL, NULL);
+  latest_commit = flatpak_dir_read_latest (priv->dir, origin, full_ref, NULL, NULL);
 
-  return xdg_app_installed_ref_new (full_ref,
+  return flatpak_installed_ref_new (full_ref,
                                     commit,
                                     latest_commit,
                                     origin, subpaths,
@@ -342,8 +342,8 @@ get_ref (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_get_installed_ref:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_get_installed_ref:
+ * @self: a #FlatpakInstallation
  * @kind: whether this is an app or runtime
  * @name: name of the app/runtime to fetch
  * @arch: (nullable): which architecture to fetch (default: current architecture)
@@ -354,32 +354,32 @@ get_ref (XdgAppInstallation *self,
  * Returns information about an installed ref, such as the available builds,
  * its size, location, etc.
  *
- * Returns: (transfer full): an #XdgAppInstalledRef, or %NULL if an error occurred
+ * Returns: (transfer full): an #FlatpakInstalledRef, or %NULL if an error occurred
  */
-XdgAppInstalledRef *
-xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
-                                        XdgAppRefKind       kind,
-                                        const char         *name,
-                                        const char         *arch,
-                                        const char         *branch,
-                                        GCancellable       *cancellable,
-                                        GError            **error)
+FlatpakInstalledRef *
+flatpak_installation_get_installed_ref (FlatpakInstallation *self,
+                                        FlatpakRefKind       kind,
+                                        const char          *name,
+                                        const char          *arch,
+                                        const char          *branch,
+                                        GCancellable        *cancellable,
+                                        GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_autoptr(GFile) deploy = NULL;
   g_autofree char *ref = NULL;
 
   if (arch == NULL)
-    arch = xdg_app_get_arch ();
+    arch = flatpak_get_arch ();
 
-  if (kind == XDG_APP_REF_KIND_APP)
-    ref = xdg_app_build_app_ref (name, branch, arch);
+  if (kind == FLATPAK_REF_KIND_APP)
+    ref = flatpak_build_app_ref (name, branch, arch);
   else
-    ref = xdg_app_build_runtime_ref (name, branch, arch);
+    ref = flatpak_build_runtime_ref (name, branch, arch);
 
 
-  deploy = xdg_app_dir_get_if_deployed (priv->dir,
+  deploy = flatpak_dir_get_if_deployed (priv->dir,
                                         ref, NULL, cancellable);
   if (deploy == NULL)
     {
@@ -392,32 +392,32 @@ xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_get_current_installed_app:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_get_current_installed_app:
+ * @self: a #FlatpakInstallation
  * @name: the name of the app
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
  * Get the last build of reference @name that was installed with
- * xdg_app_installation_install(), or %NULL if the reference has
+ * flatpak_installation_install(), or %NULL if the reference has
  * never been installed locally.
  *
- * Returns: (transfer full): an #XdgAppInstalledRef
+ * Returns: (transfer full): an #FlatpakInstalledRef
  */
-XdgAppInstalledRef *
-xdg_app_installation_get_current_installed_app (XdgAppInstallation *self,
-                                                const char         *name,
-                                                GCancellable       *cancellable,
-                                                GError            **error)
+FlatpakInstalledRef *
+flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
+                                                const char          *name,
+                                                GCancellable        *cancellable,
+                                                GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_autoptr(GFile) deploy = NULL;
   g_autofree char *current =
-    xdg_app_dir_current_ref (priv->dir, name, cancellable);
+    flatpak_dir_current_ref (priv->dir, name, cancellable);
 
   if (current)
-    deploy = xdg_app_dir_get_if_deployed (priv->dir,
+    deploy = flatpak_dir_get_if_deployed (priv->dir,
                                           current, NULL, cancellable);
 
   if (deploy == NULL)
@@ -431,29 +431,29 @@ xdg_app_installation_get_current_installed_app (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_list_installed_refs:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_list_installed_refs:
+ * @self: a #FlatpakInstallation
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
  * Lists the installed references.
  *
- * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
- *   #XdgAppInstalledRef instances
+ * Returns: (transfer container) (element-type FlatpakInstalledRef): an GPtrArray of
+ *   #FlatpakInstalledRef instances
  */
 GPtrArray *
-xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
-                                          GCancellable       *cancellable,
-                                          GError            **error)
+flatpak_installation_list_installed_refs (FlatpakInstallation *self,
+                                          GCancellable        *cancellable,
+                                          GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_auto(GStrv) raw_refs_app = NULL;
   g_auto(GStrv) raw_refs_runtime = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
 
-  if (!xdg_app_dir_list_refs (priv->dir,
+  if (!flatpak_dir_list_refs (priv->dir,
                               "app",
                               &raw_refs_app,
                               cancellable, error))
@@ -463,7 +463,7 @@ xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
     g_ptr_array_add (refs,
                      get_ref (self, raw_refs_app[i], cancellable));
 
-  if (!xdg_app_dir_list_refs (priv->dir,
+  if (!flatpak_dir_list_refs (priv->dir,
                               "runtime",
                               &raw_refs_runtime,
                               cancellable, error))
@@ -477,31 +477,31 @@ xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_list_installed_refs_by_kind:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_list_installed_refs_by_kind:
+ * @self: a #FlatpakInstallation
  * @kind: the kind of installation
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
  * Lists the installed references of a specific kind.
  *
- * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
- *   #XdgAppInstalledRef instances
+ * Returns: (transfer container) (element-type FlatpakInstalledRef): an GPtrArray of
+ *   #FlatpakInstalledRef instances
  */
 GPtrArray *
-xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
-                                                  XdgAppRefKind       kind,
-                                                  GCancellable       *cancellable,
-                                                  GError            **error)
+flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
+                                                  FlatpakRefKind       kind,
+                                                  GCancellable        *cancellable,
+                                                  GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_auto(GStrv) raw_refs = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
 
-  if (!xdg_app_dir_list_refs (priv->dir,
-                              kind == XDG_APP_REF_KIND_APP ? "app" : "runtime",
+  if (!flatpak_dir_list_refs (priv->dir,
+                              kind == FLATPAK_REF_KIND_APP ? "app" : "runtime",
                               &raw_refs,
                               cancellable, error))
     return NULL;
@@ -514,8 +514,8 @@ xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_list_installed_refs_for_update:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_list_installed_refs_for_update:
+ * @self: a #FlatpakInstallation
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -524,13 +524,13 @@ xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
  * it can have local updates available that has not been deployed. Look
  * at commit vs latest_commit on installed apps for this.
  *
- * Returns: (transfer container) (element-type XdgAppInstalledRef): an GPtrArray of
- *   #XdgAppInstalledRef instances
+ * Returns: (transfer container) (element-type FlatpakInstalledRef): an GPtrArray of
+ *   #FlatpakInstalledRef instances
  */
 GPtrArray *
-xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
-                                                     GCancellable       *cancellable,
-                                                     GError            **error)
+flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
+                                                     GCancellable        *cancellable,
+                                                     GError             **error)
 {
   g_autoptr(GPtrArray) updates = NULL;
   g_autoptr(GPtrArray) installed = NULL;
@@ -539,42 +539,42 @@ xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
   int i, j;
 
   ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-  remotes = xdg_app_installation_list_remotes (self, cancellable, error);
+  remotes = flatpak_installation_list_remotes (self, cancellable, error);
   if (remotes == NULL)
     return NULL;
 
   for (i = 0; i < remotes->len; i++)
     {
-      XdgAppRemote *remote = g_ptr_array_index (remotes, i);
+      FlatpakRemote *remote = g_ptr_array_index (remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
       g_autoptr(GError) local_error = NULL;
 
       /* We ignore errors here. we don't want one remote to fail us */
-      refs = xdg_app_installation_list_remote_refs_sync (self,
-                                                         xdg_app_remote_get_name (remote),
+      refs = flatpak_installation_list_remote_refs_sync (self,
+                                                         flatpak_remote_get_name (remote),
                                                          cancellable, &local_error);
       if (refs != NULL)
         {
           for (j = 0; j < refs->len; j++)
             {
-              XdgAppRemoteRef *remote_ref = g_ptr_array_index (refs, j);
-              g_autofree char *full_ref = xdg_app_ref_format_ref (XDG_APP_REF (remote_ref));
-              g_autofree char *key = g_strdup_printf ("%s:%s", xdg_app_remote_get_name (remote),
+              FlatpakRemoteRef *remote_ref = g_ptr_array_index (refs, j);
+              g_autofree char *full_ref = flatpak_ref_format_ref (FLATPAK_REF (remote_ref));
+              g_autofree char *key = g_strdup_printf ("%s:%s", flatpak_remote_get_name (remote),
                                                       full_ref);
 
               g_hash_table_insert (ht, g_steal_pointer (&key),
-                                   g_strdup (xdg_app_ref_get_commit (XDG_APP_REF (remote_ref))));
+                                   g_strdup (flatpak_ref_get_commit (FLATPAK_REF (remote_ref))));
             }
         }
       else
         {
           g_debug ("Update: Failed to read remote %s: %s\n",
-                   xdg_app_remote_get_name (remote),
+                   flatpak_remote_get_name (remote),
                    local_error->message);
         }
     }
 
-  installed = xdg_app_installation_list_installed_refs (self, cancellable, error);
+  installed = flatpak_installation_list_installed_refs (self, cancellable, error);
   if (installed == NULL)
     return NULL;
 
@@ -582,15 +582,15 @@ xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
 
   for (i = 0; i < installed->len; i++)
     {
-      XdgAppInstalledRef *installed_ref = g_ptr_array_index (installed, i);
-      g_autofree char *full_ref = xdg_app_ref_format_ref (XDG_APP_REF (installed_ref));
-      g_autofree char *key = g_strdup_printf ("%s:%s", xdg_app_installed_ref_get_origin (installed_ref),
+      FlatpakInstalledRef *installed_ref = g_ptr_array_index (installed, i);
+      g_autofree char *full_ref = flatpak_ref_format_ref (FLATPAK_REF (installed_ref));
+      g_autofree char *key = g_strdup_printf ("%s:%s", flatpak_installed_ref_get_origin (installed_ref),
                                               full_ref);
       const char *remote_ref = g_hash_table_lookup (ht, key);
 
       if (remote_ref != NULL &&
           g_strcmp0 (remote_ref,
-                     xdg_app_installed_ref_get_latest_commit (installed_ref)) != 0)
+                     flatpak_installed_ref_get_latest_commit (installed_ref)) != 0)
         g_ptr_array_add (updates, g_object_ref (installed_ref));
     }
 
@@ -599,69 +599,69 @@ xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
 
 
 /**
- * xdg_app_installation_list_remotes:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_list_remotes:
+ * @self: a #FlatpakInstallation
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
  * Lists the remotes, in priority (highest first) order. For same priority,
  * an earlier added remote comes before a later added one.
  *
- * Returns: (transfer container) (element-type XdgAppRemote): an GPtrArray of
- *   #XdgAppRemote instances
+ * Returns: (transfer container) (element-type FlatpakRemote): an GPtrArray of
+ *   #FlatpakRemote instances
  */
 GPtrArray *
-xdg_app_installation_list_remotes (XdgAppInstallation *self,
-                                   GCancellable       *cancellable,
-                                   GError            **error)
+flatpak_installation_list_remotes (FlatpakInstallation *self,
+                                   GCancellable        *cancellable,
+                                   GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_auto(GStrv) remote_names = NULL;
   g_autoptr(GPtrArray) remotes = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
 
-  remote_names = xdg_app_dir_list_remotes (priv->dir, cancellable, error);
+  remote_names = flatpak_dir_list_remotes (priv->dir, cancellable, error);
   if (remote_names == NULL)
     return NULL;
 
   for (i = 0; remote_names[i] != NULL; i++)
     g_ptr_array_add (remotes,
-                     xdg_app_remote_new (priv->dir, remote_names[i]));
+                     flatpak_remote_new (priv->dir, remote_names[i]));
 
   return g_steal_pointer (&remotes);
 }
 
 /**
- * xdg_app_installation_get_remote_by_name:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_get_remote_by_name:
+ * @self: a #FlatpakInstallation
  * @name: a remote name
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
  * Looks up a remote by name.
  *
- * Returns: (transfer full): a #XdgAppRemote instances, or %NULL error
+ * Returns: (transfer full): a #FlatpakRemote instances, or %NULL error
  */
-XdgAppRemote *
-xdg_app_installation_get_remote_by_name (XdgAppInstallation *self,
-                                         const gchar        *name,
-                                         GCancellable       *cancellable,
-                                         GError            **error)
+FlatpakRemote *
+flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
+                                         const gchar         *name,
+                                         GCancellable        *cancellable,
+                                         GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_auto(GStrv) remote_names = NULL;
   int i;
 
-  remote_names = xdg_app_dir_list_remotes (priv->dir, cancellable, error);
+  remote_names = flatpak_dir_list_remotes (priv->dir, cancellable, error);
   if (remote_names == NULL)
     return NULL;
 
   for (i = 0; remote_names[i] != NULL; i++)
     {
       if (strcmp (remote_names[i], name) == 0)
-        return xdg_app_remote_new (priv->dir, remote_names[i]);
+        return flatpak_remote_new (priv->dir, remote_names[i]);
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
@@ -670,8 +670,8 @@ xdg_app_installation_get_remote_by_name (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_load_app_overrides:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_load_app_overrides:
+ * @self: a #FlatpakInstallation
  * @app_id: an application id
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
@@ -682,16 +682,16 @@ xdg_app_installation_get_remote_by_name (XdgAppInstallation *self,
  *    or %NULL if an error occurred
  */
 char *
-xdg_app_installation_load_app_overrides (XdgAppInstallation *self,
-                                         const char         *app_id,
-                                         GCancellable       *cancellable,
-                                         GError            **error)
+flatpak_installation_load_app_overrides (FlatpakInstallation *self,
+                                         const char          *app_id,
+                                         GCancellable        *cancellable,
+                                         GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
 
-  metadata_contents = xdg_app_dir_load_override (priv->dir, app_id, &metadata_size, error);
+  metadata_contents = flatpak_dir_load_override (priv->dir, app_id, &metadata_size, error);
   if (metadata_contents == NULL)
     return NULL;
 
@@ -701,7 +701,7 @@ xdg_app_installation_load_app_overrides (XdgAppInstallation *self,
 static void
 progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 {
-  XdgAppProgressCallback progress_cb = g_object_get_data (G_OBJECT (progress), "callback");
+  FlatpakProgressCallback progress_cb = g_object_get_data (G_OBJECT (progress), "callback");
   guint last_progress = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "last_progress"));
   GString *buf;
   g_autofree char *status = NULL;
@@ -802,8 +802,8 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 }
 
 /**
- * xdg_app_installation_install_bundle:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_install_bundle:
+ * @self: a #FlatpakInstallation
  * @file: a #GFile that is an xdg-app bundle
  * @progress: (scope call): progress callback
  * @progress_data: user data passed to @progress
@@ -815,21 +815,21 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
-XdgAppInstalledRef *
-xdg_app_installation_install_bundle (XdgAppInstallation    *self,
-                                     GFile                 *file,
-                                     XdgAppProgressCallback progress,
-                                     gpointer               progress_data,
-                                     GCancellable          *cancellable,
-                                     GError               **error)
+FlatpakInstalledRef *
+flatpak_installation_install_bundle (FlatpakInstallation    *self,
+                                     GFile                  *file,
+                                     FlatpakProgressCallback progress,
+                                     gpointer                progress_data,
+                                     GCancellable           *cancellable,
+                                     GError                **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
   gboolean added_remote = FALSE;
 
   g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(XdgAppDir) dir_clone = NULL;
-  XdgAppInstalledRef *result = NULL;
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+  FlatpakInstalledRef *result = NULL;
   g_autoptr(GError) local_error = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autoptr(GVariant) metadata = NULL;
@@ -840,7 +840,7 @@ xdg_app_installation_install_bundle (XdgAppInstallation    *self,
   g_autofree char *to_checksum = NULL;
   g_autofree char *remote = NULL;
 
-  metadata = xdg_app_bundle_load (file, &to_checksum,
+  metadata = flatpak_bundle_load (file, &to_checksum,
                                   &ref,
                                   &origin,
                                   NULL,
@@ -849,23 +849,23 @@ xdg_app_installation_install_bundle (XdgAppInstallation    *self,
   if (metadata == NULL)
     return FALSE;
 
-  parts = xdg_app_decompose_ref (ref, error);
+  parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
     return FALSE;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (priv->dir, ref);
 
   if (g_file_query_exists (deploy_base, cancellable))
     {
       g_set_error (error,
-                   XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
+                   FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                    "%s branch %s already installed", parts[1], parts[3]);
       return NULL;
     }
 
   /* Add a remote for later updates */
   basename = g_file_get_basename (file);
-  remote = xdg_app_dir_create_origin_remote (priv->dir,
+  remote = flatpak_dir_create_origin_remote (priv->dir,
                                              origin,
                                              parts[1],
                                              basename,
@@ -879,12 +879,12 @@ xdg_app_installation_install_bundle (XdgAppInstallation    *self,
   added_remote = TRUE;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = xdg_app_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (priv->dir);
 
-  if (!xdg_app_dir_ensure_repo (dir_clone, cancellable, error))
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     goto out;
 
-  if (!xdg_app_pull_from_bundle (xdg_app_dir_get_repo (dir_clone),
+  if (!flatpak_pull_from_bundle (flatpak_dir_get_repo (dir_clone),
                                  file,
                                  remote,
                                  ref,
@@ -893,7 +893,7 @@ xdg_app_installation_install_bundle (XdgAppInstallation    *self,
                                  error))
     goto out;
 
-  if (!xdg_app_dir_deploy_install (dir_clone, ref, remote, NULL, cancellable, error))
+  if (!flatpak_dir_deploy_install (dir_clone, ref, remote, NULL, cancellable, error))
     goto out;
 
   result = get_ref (self, ref, cancellable);
@@ -901,16 +901,16 @@ xdg_app_installation_install_bundle (XdgAppInstallation    *self,
 out:
 
   if (added_remote && result == NULL)
-    ostree_repo_remote_delete (xdg_app_dir_get_repo (priv->dir), remote, NULL, NULL);
+    ostree_repo_remote_delete (flatpak_dir_get_repo (priv->dir), remote, NULL, NULL);
 
   return result;
 }
 
 /**
- * xdg_app_installation_install:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_install:
+ * @self: a #FlatpakInstallation
  * @remote_name: name of the remote to use
- * @kind: what this ref contains (an #XdgAppRefKind)
+ * @kind: what this ref contains (an #FlatpakRefKind)
  * @name: name of the app/runtime to fetch
  * @arch: (nullable): which architecture to fetch (default: current architecture)
  * @branch: (nullable): which branch to fetch (default: 'master')
@@ -923,44 +923,44 @@ out:
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
-XdgAppInstalledRef *
-xdg_app_installation_install (XdgAppInstallation    *self,
-                              const char            *remote_name,
-                              XdgAppRefKind          kind,
-                              const char            *name,
-                              const char            *arch,
-                              const char            *branch,
-                              XdgAppProgressCallback progress,
-                              gpointer               progress_data,
-                              GCancellable          *cancellable,
-                              GError               **error)
+FlatpakInstalledRef *
+flatpak_installation_install (FlatpakInstallation    *self,
+                              const char             *remote_name,
+                              FlatpakRefKind          kind,
+                              const char             *name,
+                              const char             *arch,
+                              const char             *branch,
+                              FlatpakProgressCallback progress,
+                              gpointer                progress_data,
+                              GCancellable           *cancellable,
+                              GError                **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
 
   g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(XdgAppDir) dir_clone = NULL;
+  g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
-  XdgAppInstalledRef *result = NULL;
+  FlatpakInstalledRef *result = NULL;
   g_autoptr(GError) local_error = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, branch, arch, error);
+  ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
     return NULL;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (priv->dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
     {
       g_set_error (error,
-                   XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
+                   FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                    "%s branch %s already installed", name, branch ? branch : "master");
       goto out;
     }
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = xdg_app_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (priv->dir);
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
   main_context = g_main_context_new ();
@@ -973,7 +973,7 @@ xdg_app_installation_install (XdgAppInstallation    *self,
       g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER (0));
     }
 
-  if (!xdg_app_dir_install (dir_clone, FALSE, FALSE, ref, remote_name, NULL,
+  if (!flatpak_dir_install (dir_clone, FALSE, FALSE, ref, remote_name, NULL,
                             ostree_progress, cancellable, error))
     goto out;
 
@@ -990,9 +990,9 @@ out:
 }
 
 /**
- * xdg_app_installation_update:
- * @self: a #XdgAppInstallation
- * @flags: an #XdgAppUpdateFlags variable
+ * flatpak_installation_update:
+ * @self: a #FlatpakInstallation
+ * @flags: an #FlatpakUpdateFlags variable
  * @kind: whether this is an app or runtime
  * @name: name of the app or runtime to update
  * @arch: (nullable): architecture of the app or runtime to update (default: current architecture)
@@ -1006,52 +1006,52 @@ out:
  *
  * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %NULL on failure
  */
-XdgAppInstalledRef *
-xdg_app_installation_update (XdgAppInstallation    *self,
-                             XdgAppUpdateFlags      flags,
-                             XdgAppRefKind          kind,
-                             const char            *name,
-                             const char            *arch,
-                             const char            *branch,
-                             XdgAppProgressCallback progress,
-                             gpointer               progress_data,
-                             GCancellable          *cancellable,
-                             GError               **error)
+FlatpakInstalledRef *
+flatpak_installation_update (FlatpakInstallation    *self,
+                             FlatpakUpdateFlags      flags,
+                             FlatpakRefKind          kind,
+                             const char             *name,
+                             const char             *arch,
+                             const char             *branch,
+                             FlatpakProgressCallback progress,
+                             gpointer                progress_data,
+                             GCancellable           *cancellable,
+                             GError                **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
 
   g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(XdgAppDir) dir_clone = NULL;
+  g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autofree char *remote_name = NULL;
-  XdgAppInstalledRef *result = NULL;
+  FlatpakInstalledRef *result = NULL;
   g_auto(GStrv) subpaths = NULL;
 
-  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, branch, arch, error);
+  ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
     return NULL;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (priv->dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
     {
       g_set_error (error,
-                   XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
+                   FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                    "%s branch %s is not installed", name, branch ? branch : "master");
       return NULL;
     }
 
-  remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
+  remote_name = flatpak_dir_get_origin (priv->dir, ref, cancellable, error);
   if (remote_name == NULL)
     return NULL;
 
-  subpaths = xdg_app_dir_get_subpaths (priv->dir, ref, cancellable, error);
+  subpaths = flatpak_dir_get_subpaths (priv->dir, ref, cancellable, error);
   if (subpaths == NULL)
     return FALSE;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = xdg_app_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (priv->dir);
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
   main_context = g_main_context_new ();
@@ -1064,9 +1064,9 @@ xdg_app_installation_update (XdgAppInstallation    *self,
       g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER (0));
     }
 
-  if (!xdg_app_dir_update (dir_clone,
-                           (flags & XDG_APP_UPDATE_FLAGS_NO_PULL) != 0,
-                           (flags & XDG_APP_UPDATE_FLAGS_NO_DEPLOY) != 0,
+  if (!flatpak_dir_update (dir_clone,
+                           (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
+                           (flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0,
                            remote_name, ref, NULL, subpaths,
                            ostree_progress, cancellable, error))
     goto out;
@@ -1084,9 +1084,9 @@ out:
 }
 
 /**
- * xdg_app_installation_uninstall:
- * @self: a #XdgAppInstallation
- * @kind: what this ref contains (an #XdgAppRefKind)
+ * flatpak_installation_uninstall:
+ * @self: a #FlatpakInstallation
+ * @kind: what this ref contains (an #FlatpakRefKind)
  * @name: name of the app or runtime to uninstall
  * @arch: architecture of the app or runtime to uninstall
  * @branch: name of the branch of the app or runtime to uninstall
@@ -1099,92 +1099,92 @@ out:
  *
  * Returns: %TRUE on success
  */
-XDG_APP_EXTERN gboolean
-xdg_app_installation_uninstall (XdgAppInstallation    *self,
-                                XdgAppRefKind          kind,
-                                const char            *name,
-                                const char            *arch,
-                                const char            *branch,
-                                XdgAppProgressCallback progress,
-                                gpointer               progress_data,
-                                GCancellable          *cancellable,
-                                GError               **error)
+FLATPAK_EXTERN gboolean
+flatpak_installation_uninstall (FlatpakInstallation    *self,
+                                FlatpakRefKind          kind,
+                                const char             *name,
+                                const char             *arch,
+                                const char             *branch,
+                                FlatpakProgressCallback progress,
+                                gpointer                progress_data,
+                                GCancellable           *cancellable,
+                                GError                **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
   g_autofree char *remote_name = NULL;
   g_autofree char *current_ref = NULL;
 
   g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(XdgAppDir) dir_clone = NULL;
+  g_autoptr(FlatpakDir) dir_clone = NULL;
   gboolean was_deployed = FALSE;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  ref = xdg_app_compose_ref (kind == XDG_APP_REF_KIND_APP, name, branch, arch, error);
+  ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
     return FALSE;
 
   /* prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = xdg_app_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (priv->dir);
 
-  if (!xdg_app_dir_lock (dir_clone, &lock,
+  if (!flatpak_dir_lock (dir_clone, &lock,
                          cancellable, error))
     return FALSE;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (priv->dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (priv->dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
     {
       g_set_error (error,
-                   XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
+                   FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                    "%s branch %s is not installed", name, branch ? branch : "master");
       return FALSE;
     }
 
-  remote_name = xdg_app_dir_get_origin (priv->dir, ref, cancellable, error);
+  remote_name = flatpak_dir_get_origin (priv->dir, ref, cancellable, error);
   if (remote_name == NULL)
     return FALSE;
 
   g_debug ("dropping active ref");
-  if (!xdg_app_dir_set_active (dir_clone, ref, NULL, cancellable, error))
+  if (!flatpak_dir_set_active (dir_clone, ref, NULL, cancellable, error))
     return FALSE;
 
-  if (kind == XDG_APP_REF_KIND_APP)
+  if (kind == FLATPAK_REF_KIND_APP)
     {
-      current_ref = xdg_app_dir_current_ref (dir_clone, name, cancellable);
+      current_ref = flatpak_dir_current_ref (dir_clone, name, cancellable);
       if (current_ref != NULL && strcmp (ref, current_ref) == 0)
         {
           g_debug ("dropping current ref");
-          if (!xdg_app_dir_drop_current_ref (dir_clone, name, cancellable, error))
+          if (!flatpak_dir_drop_current_ref (dir_clone, name, cancellable, error))
             return FALSE;
         }
     }
 
-  if (!xdg_app_dir_undeploy_all (dir_clone, ref, FALSE, &was_deployed, cancellable, error))
+  if (!flatpak_dir_undeploy_all (dir_clone, ref, FALSE, &was_deployed, cancellable, error))
     return FALSE;
 
-  if (!xdg_app_dir_remove_ref (dir_clone, remote_name, ref, cancellable, error))
+  if (!flatpak_dir_remove_ref (dir_clone, remote_name, ref, cancellable, error))
     return FALSE;
 
   glnx_release_lock_file (&lock);
 
-  if (!xdg_app_dir_prune (dir_clone, cancellable, error))
+  if (!flatpak_dir_prune (dir_clone, cancellable, error))
     return FALSE;
 
-  xdg_app_dir_cleanup_removed (dir_clone, cancellable, NULL);
+  flatpak_dir_cleanup_removed (dir_clone, cancellable, NULL);
 
-  if (kind == XDG_APP_REF_KIND_APP)
+  if (kind == FLATPAK_REF_KIND_APP)
     {
-      if (!xdg_app_dir_update_exports (dir_clone, name, cancellable, error))
+      if (!flatpak_dir_update_exports (dir_clone, name, cancellable, error))
         return FALSE;
     }
 
-  if (!xdg_app_dir_mark_changed (dir_clone, error))
+  if (!flatpak_dir_mark_changed (dir_clone, error))
     return FALSE;
 
   if (!was_deployed)
     {
       g_set_error (error,
-                   XDG_APP_ERROR, XDG_APP_ERROR_NOT_INSTALLED,
+                   FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                    "%s branch %s is not installed", name, branch ? branch : "master");
       return FALSE;
     }
@@ -1193,8 +1193,8 @@ xdg_app_installation_uninstall (XdgAppInstallation    *self,
 }
 
 /**
- * xdg_app_installation_fetch_remote_size_sync:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_fetch_remote_size_sync:
+ * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
  * @commit: the commit
  * @download_size: (out): return location for the download size
@@ -1206,25 +1206,25 @@ xdg_app_installation_uninstall (XdgAppInstallation    *self,
  * to pull a commit from a remote repository, and about the amount of
  * local disk space that is required to check out this commit.
  *
- * This is deprectated, use xdg_app_installation_fetch_remote_size_sync2 instead.
+ * This is deprectated, use flatpak_installation_fetch_remote_size_sync2 instead.
  *
  * Returns: %TRUE, unless an error occurred
  */
 gboolean
-xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation *self,
-                                             const char         *remote_name,
-                                             const char         *commit,
-                                             guint64            *download_size,
-                                             guint64            *installed_size,
-                                             GCancellable       *cancellable,
-                                             GError            **error)
+flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
+                                             const char          *remote_name,
+                                             const char          *commit,
+                                             guint64             *download_size,
+                                             guint64             *installed_size,
+                                             GCancellable        *cancellable,
+                                             GError             **error)
 {
-  return xdg_app_fail (error, "Deprecated function call xdg_app_installation_fetch_remote_size_sync");
+  return flatpak_fail (error, "Deprecated function call flatpak_installation_fetch_remote_size_sync");
 }
 
 /**
- * xdg_app_installation_fetch_remote_size_sync2:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_fetch_remote_size_sync2:
+ * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
  * @ref: the ref
  * @download_size: (out): return location for the (maximum) download size
@@ -1243,18 +1243,18 @@ xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation *self,
  * Returns: %TRUE, unless an error occurred
  */
 gboolean
-xdg_app_installation_fetch_remote_size_sync2 (XdgAppInstallation *self,
-                                              const char         *remote_name,
-                                              XdgAppRef          *ref,
-                                              guint64            *download_size,
-                                              guint64            *installed_size,
-                                              GCancellable       *cancellable,
-                                              GError            **error)
+flatpak_installation_fetch_remote_size_sync2 (FlatpakInstallation *self,
+                                              const char          *remote_name,
+                                              FlatpakRef          *ref,
+                                              guint64             *download_size,
+                                              guint64             *installed_size,
+                                              GCancellable        *cancellable,
+                                              GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
-  g_autofree char *full_ref = xdg_app_ref_format_ref (ref);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autofree char *full_ref = flatpak_ref_format_ref (ref);
 
-  return xdg_app_dir_fetch_ref_cache (priv->dir, remote_name, full_ref,
+  return flatpak_dir_fetch_ref_cache (priv->dir, remote_name, full_ref,
                                       download_size, installed_size,
                                       NULL,
                                       cancellable,
@@ -1262,8 +1262,8 @@ xdg_app_installation_fetch_remote_size_sync2 (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_fetch_remote_metadata_sync:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_fetch_remote_metadata_sync:
+ * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
  * @commit: the commit
  * @cancellable: (nullable): a #GCancellable
@@ -1271,23 +1271,23 @@ xdg_app_installation_fetch_remote_size_sync2 (XdgAppInstallation *self,
  *
  * Obtains the metadata file from a commit.
  *
- * This is deprecated, use xdg_app_installation_fetch_remote_metadata_sync2
+ * This is deprecated, use flatpak_installation_fetch_remote_metadata_sync2
  *
  * Returns: (transfer full): a #GBytes containing the xdg-app metadata file,
  *   or %NULL if an error occurred
  */
 GBytes *
-xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
-                                                 const char         *remote_name,
-                                                 const char         *commit,
-                                                 GCancellable       *cancellable,
-                                                 GError            **error)
+flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
+                                                 const char          *remote_name,
+                                                 const char          *commit,
+                                                 GCancellable        *cancellable,
+                                                 GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_autoptr(GBytes) bytes = NULL;
 
-  bytes = xdg_app_dir_fetch_metadata (priv->dir,
+  bytes = flatpak_dir_fetch_metadata (priv->dir,
                                       remote_name,
                                       commit,
                                       cancellable,
@@ -1299,8 +1299,8 @@ xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_fetch_remote_metadata_sync2:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_fetch_remote_metadata_sync2:
+ * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
  * @ref: the ref
  * @cancellable: (nullable): a #GCancellable
@@ -1312,17 +1312,17 @@ xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
  *   or %NULL if an error occurred
  */
 GBytes *
-xdg_app_installation_fetch_remote_metadata_sync2 (XdgAppInstallation *self,
-                                                  const char         *remote_name,
-                                                  XdgAppRef          *ref,
-                                                  GCancellable       *cancellable,
-                                                  GError            **error)
+flatpak_installation_fetch_remote_metadata_sync2 (FlatpakInstallation *self,
+                                                  const char          *remote_name,
+                                                  FlatpakRef          *ref,
+                                                  GCancellable        *cancellable,
+                                                  GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
-  g_autofree char *full_ref = xdg_app_ref_format_ref (ref);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autofree char *full_ref = flatpak_ref_format_ref (ref);
   char *res = NULL;
 
-  if (!xdg_app_dir_fetch_ref_cache (priv->dir, remote_name, full_ref,
+  if (!flatpak_dir_fetch_ref_cache (priv->dir, remote_name, full_ref,
                                     NULL, NULL,
                                     &res,
                                     cancellable, error))
@@ -1332,24 +1332,24 @@ xdg_app_installation_fetch_remote_metadata_sync2 (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_list_remote_refs_sync:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_list_remote_refs_sync:
+ * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
  * Lists all the applications and runtimes in a remote.
  *
- * Returns: (transfer container) (element-type XdgAppRemoteRef): an GPtrArray of
- *   #XdgAppRemoteRef instances
+ * Returns: (transfer container) (element-type FlatpakRemoteRef): an GPtrArray of
+ *   #FlatpakRemoteRef instances
  */
 GPtrArray *
-xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
-                                            const char         *remote_name,
-                                            GCancellable       *cancellable,
-                                            GError            **error)
+flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
+                                            const char          *remote_name,
+                                            GCancellable        *cancellable,
+                                            GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GHashTable) ht = NULL;
@@ -1357,7 +1357,7 @@ xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
   gpointer key;
   gpointer value;
 
-  if (!xdg_app_dir_list_remote_refs (priv->dir,
+  if (!flatpak_dir_list_remote_refs (priv->dir,
                                      remote_name,
                                      &ht,
                                      cancellable,
@@ -1369,9 +1369,9 @@ xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
     {
       const char *refspec = key;
       const char *checksum = value;
-      XdgAppRemoteRef *ref;
+      FlatpakRemoteRef *ref;
 
-      ref = xdg_app_remote_ref_new (refspec, checksum, remote_name);
+      ref = flatpak_remote_ref_new (refspec, checksum, remote_name);
 
       if (ref)
         g_ptr_array_add (refs, ref);
@@ -1381,10 +1381,10 @@ xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_fetch_remote_ref_sync:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_fetch_remote_ref_sync:
+ * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
- * @kind: what this ref contains (an #XdgAppRefKind)
+ * @kind: what this ref contains (an #FlatpakRefKind)
  * @name: name of the app/runtime to fetch
  * @arch: (nullable): which architecture to fetch (default: current architecture)
  * @branch: (nullable): which branch to fetch (default: 'master')
@@ -1393,19 +1393,19 @@ xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
  *
  * Gets the current remote branch of a ref in the remote.
  *
- * Returns: (transfer full): a #XdgAppRemoteRef instance, or %NULL
+ * Returns: (transfer full): a #FlatpakRemoteRef instance, or %NULL
  */
-XdgAppRemoteRef *
-xdg_app_installation_fetch_remote_ref_sync (XdgAppInstallation *self,
-                                            const char         *remote_name,
-                                            XdgAppRefKind       kind,
-                                            const char         *name,
-                                            const char         *arch,
-                                            const char         *branch,
-                                            GCancellable       *cancellable,
-                                            GError            **error)
+FlatpakRemoteRef *
+flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
+                                            const char          *remote_name,
+                                            FlatpakRefKind       kind,
+                                            const char          *name,
+                                            const char          *arch,
+                                            const char          *branch,
+                                            GCancellable        *cancellable,
+                                            GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_autoptr(GHashTable) ht = NULL;
   g_autofree char *ref = NULL;
@@ -1414,26 +1414,26 @@ xdg_app_installation_fetch_remote_ref_sync (XdgAppInstallation *self,
   if (branch == NULL)
     branch = "master";
 
-  if (!xdg_app_dir_list_remote_refs (priv->dir,
+  if (!flatpak_dir_list_remote_refs (priv->dir,
                                      remote_name,
                                      &ht,
                                      cancellable,
                                      error))
     return NULL;
 
-  if (kind == XDG_APP_REF_KIND_APP)
-    ref = xdg_app_build_app_ref (name,
+  if (kind == FLATPAK_REF_KIND_APP)
+    ref = flatpak_build_app_ref (name,
                                  branch,
                                  arch);
   else
-    ref = xdg_app_build_runtime_ref (name,
+    ref = flatpak_build_runtime_ref (name,
                                      branch,
                                      arch);
 
   checksum = g_hash_table_lookup (ht, ref);
 
   if (checksum != NULL)
-    return xdg_app_remote_ref_new (ref, checksum, remote_name);
+    return flatpak_remote_ref_new (ref, checksum, remote_name);
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                "Reference %s doesn't exist in remote\n", ref);
@@ -1446,8 +1446,8 @@ no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 }
 
 /**
- * xdg_app_installation_update_appstream_sync:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_update_appstream_sync:
+ * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
  * @arch: Architecture to update, or %NULL for the local machine arch
  * @out_changed: (nullable): Set to %TRUE if the contents of the appstream changed, %FALSE if nothing changed
@@ -1459,22 +1459,22 @@ no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
  * Returns: %TRUE on success, or %FALSE on error
  */
 gboolean
-xdg_app_installation_update_appstream_sync (XdgAppInstallation *self,
-                                            const char         *remote_name,
-                                            const char         *arch,
-                                            gboolean           *out_changed,
-                                            GCancellable       *cancellable,
-                                            GError            **error)
+flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
+                                            const char          *remote_name,
+                                            const char          *arch,
+                                            gboolean            *out_changed,
+                                            GCancellable        *cancellable,
+                                            GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
-  g_autoptr(XdgAppDir) dir_clone = NULL;
+  g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   gboolean res;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = xdg_app_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (priv->dir);
 
   if (main_context)
     g_main_context_pop_thread_default (main_context);
@@ -1485,7 +1485,7 @@ xdg_app_installation_update_appstream_sync (XdgAppInstallation *self,
 
   ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-  res = xdg_app_dir_update_appstream (dir_clone,
+  res = flatpak_dir_update_appstream (dir_clone,
                                       remote_name,
                                       arch,
                                       out_changed,
@@ -1502,8 +1502,8 @@ xdg_app_installation_update_appstream_sync (XdgAppInstallation *self,
 }
 
 /**
- * xdg_app_installation_create_monitor:
- * @self: a #XdgAppInstallation
+ * flatpak_installation_create_monitor:
+ * @self: a #FlatpakInstallation
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1514,15 +1514,15 @@ xdg_app_installation_update_appstream_sync (XdgAppInstallation *self,
  * Returns: (transfer full): a new #GFileMonitor instance, or %NULL on error
  */
 GFileMonitor *
-xdg_app_installation_create_monitor (XdgAppInstallation *self,
-                                     GCancellable       *cancellable,
-                                     GError            **error)
+flatpak_installation_create_monitor (FlatpakInstallation *self,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
 {
-  XdgAppInstallationPrivate *priv = xdg_app_installation_get_instance_private (self);
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
   g_autoptr(GFile) path = NULL;
 
-  path = xdg_app_dir_get_changed_path (priv->dir);
+  path = flatpak_dir_get_changed_path (priv->dir);
 
   return g_file_monitor_file (path, G_FILE_MONITOR_NONE,
                               cancellable, error);

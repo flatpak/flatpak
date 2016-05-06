@@ -34,11 +34,11 @@ EXTRA_DIST += $(service_in_files)
 XDG_APP_BINDIR=$(bindir)
 
 AM_CPPFLAGS =						\
-	-DXDG_APP_BINDIR=\"$(XDG_APP_BINDIR)\"		\
-	-DXDG_APP_SYSTEMDIR=\"$(localstatedir)/lib/xdg-app\"\
-	-DXDG_APP_CONFIGDIR=\"$(sysconfdir)/xdg-app\"\
-	-DXDG_APP_BASEDIR=\"$(pkgdatadir)\"		\
-	-DXDG_APP_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
+	-DFLATPAK_BINDIR=\"$(XDG_APP_BINDIR)\"		\
+	-DFLATPAK_SYSTEMDIR=\"$(localstatedir)/lib/xdg-app\"\
+	-DFLATPAK_CONFIGDIR=\"$(sysconfdir)/xdg-app\"\
+	-DFLATPAK_BASEDIR=\"$(pkgdatadir)\"		\
+	-DFLATPAK_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
 	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"	\
 	-DHELPER=\"$(libdir)/xdg-app/bwrap\"		\
 	-DDBUSPROXY=\"$(libexecdir)/xdg-dbus-proxy\"	\

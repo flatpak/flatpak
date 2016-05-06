@@ -18,38 +18,38 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
-#ifndef __XDG_APP_REMOTE_REF_H__
-#define __XDG_APP_REMOTE_REF_H__
+#ifndef __FLATPAK_REMOTE_REF_H__
+#define __FLATPAK_REMOTE_REF_H__
 
-typedef struct _XdgAppRemoteRef XdgAppRemoteRef;
+typedef struct _FlatpakRemoteRef FlatpakRemoteRef;
 
 #include <gio/gio.h>
 #include <xdg-app-ref.h>
 
-#define XDG_APP_TYPE_REMOTE_REF xdg_app_remote_ref_get_type ()
-#define XDG_APP_REMOTE_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_REMOTE_REF, XdgAppRemoteRef))
-#define XDG_APP_IS_REMOTE_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_REMOTE_REF))
+#define FLATPAK_TYPE_REMOTE_REF flatpak_remote_ref_get_type ()
+#define FLATPAK_REMOTE_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_REMOTE_REF, FlatpakRemoteRef))
+#define FLATPAK_IS_REMOTE_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_REMOTE_REF))
 
-XDG_APP_EXTERN GType xdg_app_remote_ref_get_type (void);
+FLATPAK_EXTERN GType flatpak_remote_ref_get_type (void);
 
-struct _XdgAppRemoteRef
+struct _FlatpakRemoteRef
 {
-  XdgAppRef parent;
+  FlatpakRef parent;
 };
 
 typedef struct
 {
-  XdgAppRefClass parent_class;
-} XdgAppRemoteRefClass;
+  FlatpakRefClass parent_class;
+} FlatpakRemoteRefClass;
 
-XDG_APP_EXTERN const char * xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self);
+FLATPAK_EXTERN const char * flatpak_remote_ref_get_remote_name (FlatpakRemoteRef *self);
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppRemoteRef, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemoteRef, g_object_unref)
 #endif
 
-#endif /* __XDG_APP_REMOTE_REF_H__ */
+#endif /* __FLATPAK_REMOTE_REF_H__ */

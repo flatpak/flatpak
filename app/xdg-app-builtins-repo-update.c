@@ -49,7 +49,7 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_build_update_repo (int argc, char **argv,
+flatpak_builtin_build_update_repo (int argc, char **argv,
                                    GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
@@ -60,7 +60,7 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
 
   context = g_option_context_new ("LOCATION - Update repository metadata");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (argc < 2)
@@ -75,11 +75,11 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
     return FALSE;
 
   if (opt_title &&
-      !xdg_app_repo_set_title (repo, opt_title, error))
+      !flatpak_repo_set_title (repo, opt_title, error))
     return FALSE;
 
   g_print ("Updating appstream branch\n");
-  if (!xdg_app_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
+  if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
     {
       if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
         {
@@ -187,7 +187,7 @@ xdg_app_builtin_build_update_repo (int argc, char **argv,
     }
 
   g_print ("Updating summary\n");
-  if (!xdg_app_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+  if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
 
   if (opt_prune)

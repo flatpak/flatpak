@@ -28,17 +28,17 @@
 
 /**
  * SECTION:xdg-app-installed-ref
- * @Title: XdgAppInstalledRef
+ * @Title: FlatpakInstalledRef
  * @Short_description: Installed application reference
  *
- * A XdgAppInstalledRef provides information about an installed
+ * A FlatpakInstalledRef provides information about an installed
  * application or runtime (in short: ref), such as the available
  * builds, its size, location, etc.
  */
 
-typedef struct _XdgAppInstalledRefPrivate XdgAppInstalledRefPrivate;
+typedef struct _FlatpakInstalledRefPrivate FlatpakInstalledRefPrivate;
 
-struct _XdgAppInstalledRefPrivate
+struct _FlatpakInstalledRefPrivate
 {
   gboolean is_current;
   char    *origin;
@@ -48,7 +48,7 @@ struct _XdgAppInstalledRefPrivate
   guint64  installed_size;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (XdgAppInstalledRef, xdg_app_installed_ref, XDG_APP_TYPE_REF)
+G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstalledRef, flatpak_installed_ref, FLATPAK_TYPE_REF)
 
 enum {
   PROP_0,
@@ -62,26 +62,26 @@ enum {
 };
 
 static void
-xdg_app_installed_ref_finalize (GObject *object)
+flatpak_installed_ref_finalize (GObject *object)
 {
-  XdgAppInstalledRef *self = XDG_APP_INSTALLED_REF (object);
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRef *self = FLATPAK_INSTALLED_REF (object);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   g_free (priv->origin);
   g_free (priv->deploy_dir);
   g_strfreev (priv->subpaths);
 
-  G_OBJECT_CLASS (xdg_app_installed_ref_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_installed_ref_parent_class)->finalize (object);
 }
 
 static void
-xdg_app_installed_ref_set_property (GObject      *object,
+flatpak_installed_ref_set_property (GObject      *object,
                                     guint         prop_id,
                                     const GValue *value,
                                     GParamSpec   *pspec)
 {
-  XdgAppInstalledRef *self = XDG_APP_INSTALLED_REF (object);
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRef *self = FLATPAK_INSTALLED_REF (object);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   switch (prop_id)
     {
@@ -120,13 +120,13 @@ xdg_app_installed_ref_set_property (GObject      *object,
 }
 
 static void
-xdg_app_installed_ref_get_property (GObject    *object,
+flatpak_installed_ref_get_property (GObject    *object,
                                     guint       prop_id,
                                     GValue     *value,
                                     GParamSpec *pspec)
 {
-  XdgAppInstalledRef *self = XDG_APP_INSTALLED_REF (object);
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRef *self = FLATPAK_INSTALLED_REF (object);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   switch (prop_id)
     {
@@ -161,13 +161,13 @@ xdg_app_installed_ref_get_property (GObject    *object,
 }
 
 static void
-xdg_app_installed_ref_class_init (XdgAppInstalledRefClass *klass)
+flatpak_installed_ref_class_init (FlatpakInstalledRefClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->get_property = xdg_app_installed_ref_get_property;
-  object_class->set_property = xdg_app_installed_ref_set_property;
-  object_class->finalize = xdg_app_installed_ref_finalize;
+  object_class->get_property = flatpak_installed_ref_get_property;
+  object_class->set_property = flatpak_installed_ref_set_property;
+  object_class->finalize = flatpak_installed_ref_finalize;
 
   g_object_class_install_property (object_class,
                                    PROP_IS_CURRENT,
@@ -214,109 +214,109 @@ xdg_app_installed_ref_class_init (XdgAppInstalledRefClass *klass)
 }
 
 static void
-xdg_app_installed_ref_init (XdgAppInstalledRef *self)
+flatpak_installed_ref_init (FlatpakInstalledRef *self)
 {
 }
 
 /**
- * xdg_app_installed_ref_get_origin:
- * @self: a #XdgAppInstalledRef
+ * flatpak_installed_ref_get_origin:
+ * @self: a #FlatpakInstalledRef
  *
  * Gets the origin of the ref.
  *
  * Returns: (transfer none): the origin
  */
 const char *
-xdg_app_installed_ref_get_origin (XdgAppInstalledRef *self)
+flatpak_installed_ref_get_origin (FlatpakInstalledRef *self)
 {
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   return priv->origin;
 }
 
 /**
- * xdg_app_installed_ref_get_latest_commit:
- * @self: a #XdgAppInstalledRef
+ * flatpak_installed_ref_get_latest_commit:
+ * @self: a #FlatpakInstalledRef
  *
  * Gets the latest commit of the ref.
  *
  * Returns: (transfer none): the latest commit
  */
 const char *
-xdg_app_installed_ref_get_latest_commit (XdgAppInstalledRef *self)
+flatpak_installed_ref_get_latest_commit (FlatpakInstalledRef *self)
 {
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   return priv->latest_commit;
 }
 
 /**
- * xdg_app_installed_ref_get_deploy_dir:
- * @self: a #XdgAppInstalledRef
+ * flatpak_installed_ref_get_deploy_dir:
+ * @self: a #FlatpakInstalledRef
  *
  * Gets the deploy dir of the ref.
  *
  * Returns: (transfer none): the deploy dir
  */
 const char *
-xdg_app_installed_ref_get_deploy_dir (XdgAppInstalledRef *self)
+flatpak_installed_ref_get_deploy_dir (FlatpakInstalledRef *self)
 {
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   return priv->deploy_dir;
 }
 
 /**
- * xdg_app_installed_ref_get_is_current:
- * @self: a #XdgAppInstalledRef
+ * flatpak_installed_ref_get_is_current:
+ * @self: a #FlatpakInstalledRef
  *
  * Returns whether the ref is current.
  *
  * Returns: %TRUE if the ref is current
  */
 gboolean
-xdg_app_installed_ref_get_is_current (XdgAppInstalledRef *self)
+flatpak_installed_ref_get_is_current (FlatpakInstalledRef *self)
 {
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   return priv->is_current;
 }
 
 /**
- * xdg_app_installed_ref_get_subpaths:
- * @self: a #XdgAppInstalledRef
+ * flatpak_installed_ref_get_subpaths:
+ * @self: a #FlatpakInstalledRef
  *
  * Returns the subpaths that are installed, or %NULL if all files installed.
  *
  * Returns: (transfer none): A strv, or %NULL
  */
 const char * const *
-xdg_app_installed_ref_get_subpaths (XdgAppInstalledRef *self)
+flatpak_installed_ref_get_subpaths (FlatpakInstalledRef *self)
 {
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   return (const char * const *) priv->subpaths;
 }
 
 /**
- * xdg_app_installed_ref_get_installed_size:
- * @self: a #XdgAppInstalledRef
+ * flatpak_installed_ref_get_installed_size:
+ * @self: a #FlatpakInstalledRef
  *
  * Returns the installed size of the ref.
  *
  * Returns: the installed size
  */
 guint64
-xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef *self)
+flatpak_installed_ref_get_installed_size (FlatpakInstalledRef *self)
 {
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   return priv->installed_size;
 }
 
 /**
- * xdg_app_installed_ref_load_metadata:
- * @self: a #XdgAppInstalledRef
+ * flatpak_installed_ref_load_metadata:
+ * @self: a #FlatpakInstalledRef
  * @cancellable: (nullable): a #GCancellable
  * @error: a return location for a #GError
  *
@@ -326,11 +326,11 @@ xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef *self)
  *     or %NULL if an error occurred
  */
 GBytes *
-xdg_app_installed_ref_load_metadata (XdgAppInstalledRef *self,
-                                     GCancellable       *cancellable,
-                                     GError            **error)
+flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
 {
-  XdgAppInstalledRefPrivate *priv = xdg_app_installed_ref_get_instance_private (self);
+  FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
   g_autofree char *path = NULL;
   char *metadata;
   gsize length;
@@ -349,8 +349,8 @@ xdg_app_installed_ref_load_metadata (XdgAppInstalledRef *self,
   return g_bytes_new_take (metadata, length);
 }
 
-XdgAppInstalledRef *
-xdg_app_installed_ref_new (const char  *full_ref,
+FlatpakInstalledRef *
+flatpak_installed_ref_new (const char  *full_ref,
                            const char  *commit,
                            const char  *latest_commit,
                            const char  *origin,
@@ -359,21 +359,21 @@ xdg_app_installed_ref_new (const char  *full_ref,
                            guint64      installed_size,
                            gboolean     is_current)
 {
-  XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
-  XdgAppInstalledRef *ref;
+  FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
+  FlatpakInstalledRef *ref;
 
   g_auto(GStrv) parts = NULL;
 
   parts = g_strsplit (full_ref, "/", -1);
 
   if (strcmp (parts[0], "app") != 0)
-    kind = XDG_APP_REF_KIND_RUNTIME;
+    kind = FLATPAK_REF_KIND_RUNTIME;
 
   /* Canonicalize the "no subpaths" case */
   if (subpaths && *subpaths == NULL)
     subpaths = NULL;
 
-  ref = g_object_new (XDG_APP_TYPE_INSTALLED_REF,
+  ref = g_object_new (FLATPAK_TYPE_INSTALLED_REF,
                       "kind", kind,
                       "name", parts[1],
                       "arch", parts[2],

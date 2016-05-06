@@ -117,14 +117,14 @@ child_setup (gpointer user_data)
 }
 
 gboolean
-xdg_app_builtin_enter (int           argc,
+flatpak_builtin_enter (int           argc,
                        char        **argv,
                        GCancellable *cancellable,
                        GError      **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   int rest_argv_start, rest_argc;
-  g_autoptr(XdgAppContext) arg_context = NULL;
+  g_autoptr(FlatpakContext) arg_context = NULL;
   const char *ns_name[5] = { "user", "ipc", "net", "pid", "mnt" };
   int ns_fd[G_N_ELEMENTS (ns_name)];
   char pid_ns[256];
@@ -162,10 +162,10 @@ xdg_app_builtin_enter (int           argc,
         }
     }
 
-  arg_context = xdg_app_context_new ();
-  g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
+  arg_context = flatpak_context_new ();
+  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (rest_argc < 2)
@@ -178,7 +178,7 @@ xdg_app_builtin_enter (int           argc,
 
   pid = atoi (pid_s);
   if (pid <= 0)
-    return xdg_app_fail (error, "Invalid pid %s\n", pid_s);
+    return flatpak_fail (error, "Invalid pid %s\n", pid_s);
 
   environment_path = g_strdup_printf ("/proc/%d/environ", pid);
   if (!g_file_get_contents (environment_path, &environment, &environment_len, error))
@@ -191,12 +191,12 @@ xdg_app_builtin_enter (int           argc,
 
       pid_ns_len = readlink (path, pid_ns, sizeof (pid_ns) - 1);
       if (pid_ns_len <= 0)
-        return xdg_app_fail (error, "Invalid %s namespace for pid %d\n", ns_name[i], pid);
+        return flatpak_fail (error, "Invalid %s namespace for pid %d\n", ns_name[i], pid);
       pid_ns[pid_ns_len] = 0;
 
       self_ns_len = readlink (self_path, self_ns, sizeof (self_ns) - 1);
       if (self_ns_len <= 0)
-        return xdg_app_fail (error, "Invalid %s namespace for self\n", ns_name[i]);
+        return flatpak_fail (error, "Invalid %s namespace for self\n", ns_name[i]);
       self_ns[self_ns_len] = 0;
 
       if (strcmp (self_ns, pid_ns) == 0)
@@ -208,7 +208,7 @@ xdg_app_builtin_enter (int           argc,
         {
           ns_fd[i] = open (path, O_RDONLY);
           if (ns_fd[i] == -1)
-            return xdg_app_fail (error, "Can't open %s namespace: %s", ns_name[i], strerror (errno));
+            return flatpak_fail (error, "Can't open %s namespace: %s", ns_name[i], strerror (errno));
         }
     }
 
@@ -217,7 +217,7 @@ xdg_app_builtin_enter (int           argc,
       if (ns_fd[i] != -1)
         {
           if (setns (ns_fd[i], 0) == -1)
-            return xdg_app_fail (error, "Can't enter %s namespace: %s", ns_name[i], strerror (errno));
+            return flatpak_fail (error, "Can't enter %s namespace: %s", ns_name[i], strerror (errno));
           close (ns_fd[i]);
         }
     }

@@ -47,10 +47,10 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   const char *name = NULL;
   const char *branch = NULL;
   g_autofree char *ref = NULL;
@@ -62,7 +62,7 @@ xdg_app_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
   context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (argc < 2)
@@ -75,7 +75,7 @@ xdg_app_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
 
-  ref = xdg_app_dir_find_installed_ref (dir,
+  ref = flatpak_dir_find_installed_ref (dir,
                                         name,
                                         branch,
                                         opt_arch,
@@ -86,33 +86,33 @@ xdg_app_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
   /* TODO: when removing runtimes, look for apps that use it, require --force */
 
-  if (!xdg_app_dir_lock (dir, &lock,
+  if (!flatpak_dir_lock (dir, &lock,
                          cancellable, error))
     return FALSE;
 
-  repository = xdg_app_dir_get_origin (dir, ref, cancellable, NULL);
+  repository = flatpak_dir_get_origin (dir, ref, cancellable, NULL);
 
   g_debug ("dropping active ref");
-  if (!xdg_app_dir_set_active (dir, ref, NULL, cancellable, error))
+  if (!flatpak_dir_set_active (dir, ref, NULL, cancellable, error))
     return FALSE;
 
   if (is_app)
     {
-      current_ref = xdg_app_dir_current_ref (dir, name, cancellable);
+      current_ref = flatpak_dir_current_ref (dir, name, cancellable);
       if (current_ref != NULL && strcmp (ref, current_ref) == 0)
         {
           g_debug ("dropping current ref");
-          if (!xdg_app_dir_drop_current_ref (dir, name, cancellable, error))
+          if (!flatpak_dir_drop_current_ref (dir, name, cancellable, error))
             return FALSE;
         }
     }
 
-  if (!xdg_app_dir_undeploy_all (dir, ref, opt_force_remove, &was_deployed, cancellable, error))
+  if (!flatpak_dir_undeploy_all (dir, ref, opt_force_remove, &was_deployed, cancellable, error))
     return FALSE;
 
   if (!opt_keep_ref)
     {
-      if (!xdg_app_dir_remove_ref (dir, repository, ref, cancellable, error))
+      if (!flatpak_dir_remove_ref (dir, repository, ref, cancellable, error))
         return FALSE;
     }
 
@@ -120,28 +120,28 @@ xdg_app_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
   if (!opt_keep_ref)
     {
-      if (!xdg_app_dir_prune (dir, cancellable, error))
+      if (!flatpak_dir_prune (dir, cancellable, error))
         return FALSE;
     }
 
-  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+  flatpak_dir_cleanup_removed (dir, cancellable, NULL);
 
   if (is_app)
     {
-      if (!xdg_app_dir_update_exports (dir, name, cancellable, error))
+      if (!flatpak_dir_update_exports (dir, name, cancellable, error))
         return FALSE;
     }
 
   if (repository != NULL &&
       g_str_has_suffix (repository, "-origin") &&
-      xdg_app_dir_get_remote_noenumerate (dir, repository))
-    ostree_repo_remote_delete (xdg_app_dir_get_repo (dir), repository, NULL, NULL);
+      flatpak_dir_get_remote_noenumerate (dir, repository))
+    ostree_repo_remote_delete (flatpak_dir_get_repo (dir), repository, NULL, NULL);
 
-  if (!xdg_app_dir_mark_changed (dir, error))
+  if (!flatpak_dir_mark_changed (dir, error))
     return FALSE;
 
   if (!was_deployed)
-    return xdg_app_fail (error, "Nothing to uninstall");
+    return flatpak_fail (error, "Nothing to uninstall");
 
   return TRUE;
 }

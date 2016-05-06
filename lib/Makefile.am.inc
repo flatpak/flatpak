@@ -64,7 +64,7 @@ libxdg_app_la_SOURCES = \
 
 libxdg_app_la_CFLAGS = \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
-	-DXDG_APP_COMPILATION \
+	-DFLATPAK_COMPILATION \
 	-I$(top_srcdir)/lib \
 	-I$(top_builddir)/lib \
 	$(AM_CFLAGS) \
@@ -107,23 +107,23 @@ test_libxdg_app_LDADD = \
 INTROSPECTION_GIRS =
 
 if HAVE_INTROSPECTION
-XdgApp-1.0.gir: libxdg-app.la Makefile
+Flatpak-1.0.gir: libxdg-app.la Makefile
 
 introspected_headers = $(public_headers)
 introspected_sources = $(filter-out %-private.h,$(sources))
 
-XdgApp_1_0_gir_NAMESPACE = XdgApp
-XdgApp_1_0_gir_VERSION = 1.0
-XdgApp_1_0_gir_LIBS = libxdg-app.la
-XdgApp_1_0_gir_FILES = $(introspected_headers) $(introspected_sources)
-XdgApp_1_0_gir_CFLAGS = $(libxdg_app_la_CFLAGS)
-XdgApp_1_0_gir_INCLUDES = GObject-2.0 Gio-2.0
-XdgApp_1_0_gir_SCANNERFLAGS = \
+Flatpak_1_0_gir_NAMESPACE = Flatpak
+Flatpak_1_0_gir_VERSION = 1.0
+Flatpak_1_0_gir_LIBS = libxdg-app.la
+Flatpak_1_0_gir_FILES = $(introspected_headers) $(introspected_sources)
+Flatpak_1_0_gir_CFLAGS = $(libxdg_app_la_CFLAGS)
+Flatpak_1_0_gir_INCLUDES = GObject-2.0 Gio-2.0
+Flatpak_1_0_gir_SCANNERFLAGS = \
         --warn-all \
         --c-include='xdg-app.h' \
         --pkg-export=xdg-app
 
-INTROSPECTION_GIRS += XdgApp-1.0.gir
+INTROSPECTION_GIRS += Flatpak-1.0.gir
 
 girdir = $(datadir)/gir-1.0
 nodist_gir_DATA = $(INTROSPECTION_GIRS)

@@ -18,26 +18,26 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
-#ifndef __XDG_APP_INSTALLATION_H__
-#define __XDG_APP_INSTALLATION_H__
+#ifndef __FLATPAK_INSTALLATION_H__
+#define __FLATPAK_INSTALLATION_H__
 
-typedef struct _XdgAppInstallation XdgAppInstallation;
+typedef struct _FlatpakInstallation FlatpakInstallation;
 
 #include <gio/gio.h>
 #include <xdg-app-installed-ref.h>
 #include <xdg-app-remote.h>
 
-#define XDG_APP_TYPE_INSTALLATION xdg_app_installation_get_type ()
-#define XDG_APP_INSTALLATION(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_INSTALLATION, XdgAppInstallation))
-#define XDG_APP_IS_INSTALLATION(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_INSTALLATION))
+#define FLATPAK_TYPE_INSTALLATION flatpak_installation_get_type ()
+#define FLATPAK_INSTALLATION(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_INSTALLATION, FlatpakInstallation))
+#define FLATPAK_IS_INSTALLATION(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_INSTALLATION))
 
-XDG_APP_EXTERN GType xdg_app_installation_get_type (void);
+FLATPAK_EXTERN GType flatpak_installation_get_type (void);
 
-struct _XdgAppInstallation
+struct _FlatpakInstallation
 {
   GObject parent;
 };
@@ -45,40 +45,40 @@ struct _XdgAppInstallation
 typedef struct
 {
   GObjectClass parent_class;
-} XdgAppInstallationClass;
+} FlatpakInstallationClass;
 
 /**
- * XdgAppUpdateFlags:
- * @XDG_APP_UPDATE_FLAGS_NONE: Fetch remote builds and install the latest one (default)
- * @XDG_APP_UPDATE_FLAGS_NO_DEPLOY: Don't install any new builds that might be fetched
- * @XDG_APP_UPDATE_FLAGS_NO_PULL: Don't try to fetch new builds from the remote repo
+ * FlatpakUpdateFlags:
+ * @FLATPAK_UPDATE_FLAGS_NONE: Fetch remote builds and install the latest one (default)
+ * @FLATPAK_UPDATE_FLAGS_NO_DEPLOY: Don't install any new builds that might be fetched
+ * @FLATPAK_UPDATE_FLAGS_NO_PULL: Don't try to fetch new builds from the remote repo
  *
- * Flags to alter the behavior of xdg_app_installation_update().
+ * Flags to alter the behavior of flatpak_installation_update().
  */
 typedef enum {
-  XDG_APP_UPDATE_FLAGS_NONE      = 0,
-  XDG_APP_UPDATE_FLAGS_NO_DEPLOY = (1 << 0),
-  XDG_APP_UPDATE_FLAGS_NO_PULL   = (1 << 1),
-} XdgAppUpdateFlags;
+  FLATPAK_UPDATE_FLAGS_NONE      = 0,
+  FLATPAK_UPDATE_FLAGS_NO_DEPLOY = (1 << 0),
+  FLATPAK_UPDATE_FLAGS_NO_PULL   = (1 << 1),
+} FlatpakUpdateFlags;
 
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppInstallation, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakInstallation, g_object_unref)
 #endif
 
-XDG_APP_EXTERN const char  *xdg_app_get_default_arch (void);
+FLATPAK_EXTERN const char  *flatpak_get_default_arch (void);
 
-XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_system (GCancellable *cancellable,
-                                                                    GError      **error);
-XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_user (GCancellable *cancellable,
-                                                                  GError      **error);
-XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_for_path (GFile        *path,
-                                                                      gboolean      user,
-                                                                      GCancellable *cancellable,
-                                                                      GError      **error);
+FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_system (GCancellable *cancellable,
+                                                                     GError      **error);
+FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_user (GCancellable *cancellable,
+                                                                   GError      **error);
+FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_for_path (GFile        *path,
+                                                                       gboolean      user,
+                                                                       GCancellable *cancellable,
+                                                                       GError      **error);
 
 /**
- * XdgAppProgressCallback:
+ * FlatpakProgressCallback:
  * @status: A status string, suitable for display
  * @progress: percentage of completion
  * @estimating: whether @progress is just an estimate
@@ -90,132 +90,132 @@ XDG_APP_EXTERN XdgAppInstallation *xdg_app_installation_new_for_path (GFile     
  *
  * The callback occurs in the thread-default context of the caller.
  */
-typedef void (*XdgAppProgressCallback)(const char *status,
-                                       guint       progress,
-                                       gboolean    estimating,
-                                       gpointer    user_data);
+typedef void (*FlatpakProgressCallback)(const char *status,
+                                        guint       progress,
+                                        gboolean    estimating,
+                                        gpointer    user_data);
 
-XDG_APP_EXTERN gboolean             xdg_app_installation_get_is_user (XdgAppInstallation *self);
-XDG_APP_EXTERN GFile               *xdg_app_installation_get_path (XdgAppInstallation *self);
-XDG_APP_EXTERN gboolean             xdg_app_installation_launch (XdgAppInstallation *self,
-                                                                 const char         *name,
-                                                                 const char         *arch,
-                                                                 const char         *branch,
-                                                                 const char         *commit,
-                                                                 GCancellable       *cancellable,
-                                                                 GError            **error);
-XDG_APP_EXTERN GFileMonitor        *xdg_app_installation_create_monitor (XdgAppInstallation *self,
-                                                                         GCancellable       *cancellable,
-                                                                         GError            **error);
-XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_installed_refs (XdgAppInstallation *self,
-                                                                              GCancellable       *cancellable,
-                                                                              GError            **error);
-XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_installed_refs_by_kind (XdgAppInstallation *self,
-                                                                                      XdgAppRefKind       kind,
-                                                                                      GCancellable       *cancellable,
-                                                                                      GError            **error);
-XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_installed_refs_for_update (XdgAppInstallation *self,
-                                                                                         GCancellable       *cancellable,
-                                                                                         GError            **error);
-XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_get_installed_ref (XdgAppInstallation *self,
-                                                                            XdgAppRefKind       kind,
-                                                                            const char         *name,
-                                                                            const char         *arch,
-                                                                            const char         *branch,
-                                                                            GCancellable       *cancellable,
-                                                                            GError            **error);
-XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_get_current_installed_app (XdgAppInstallation *self,
-                                                                                    const char         *name,
-                                                                                    GCancellable       *cancellable,
-                                                                                    GError            **error);
-XDG_APP_EXTERN GPtrArray           *xdg_app_installation_list_remotes (XdgAppInstallation *self,
-                                                                       GCancellable       *cancellable,
-                                                                       GError            **error);
-XDG_APP_EXTERN XdgAppRemote        *xdg_app_installation_get_remote_by_name (XdgAppInstallation *self,
-                                                                             const gchar        *name,
-                                                                             GCancellable       *cancellable,
-                                                                             GError            **error);
-XDG_APP_EXTERN char *              xdg_app_installation_load_app_overrides (XdgAppInstallation *self,
-                                                                            const char         *app_id,
-                                                                            GCancellable       *cancellable,
-                                                                            GError            **error);
-XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_install (XdgAppInstallation    *self,
-                                                                  const char            *remote_name,
-                                                                  XdgAppRefKind          kind,
-                                                                  const char            *name,
-                                                                  const char            *arch,
-                                                                  const char            *branch,
-                                                                  XdgAppProgressCallback progress,
-                                                                  gpointer               progress_data,
-                                                                  GCancellable          *cancellable,
-                                                                  GError               **error);
-XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_update (XdgAppInstallation    *self,
-                                                                 XdgAppUpdateFlags      flags,
-                                                                 XdgAppRefKind          kind,
-                                                                 const char            *name,
-                                                                 const char            *arch,
-                                                                 const char            *branch,
-                                                                 XdgAppProgressCallback progress,
-                                                                 gpointer               progress_data,
-                                                                 GCancellable          *cancellable,
-                                                                 GError               **error);
-XDG_APP_EXTERN XdgAppInstalledRef * xdg_app_installation_install_bundle (XdgAppInstallation    *self,
-                                                                         GFile                 *file,
-                                                                         XdgAppProgressCallback progress,
-                                                                         gpointer               progress_data,
-                                                                         GCancellable          *cancellable,
-                                                                         GError               **error);
-XDG_APP_EXTERN gboolean             xdg_app_installation_uninstall (XdgAppInstallation    *self,
-                                                                    XdgAppRefKind          kind,
-                                                                    const char            *name,
-                                                                    const char            *arch,
-                                                                    const char            *branch,
-                                                                    XdgAppProgressCallback progress,
-                                                                    gpointer               progress_data,
-                                                                    GCancellable          *cancellable,
-                                                                    GError               **error);
+FLATPAK_EXTERN gboolean             flatpak_installation_get_is_user (FlatpakInstallation *self);
+FLATPAK_EXTERN GFile               *flatpak_installation_get_path (FlatpakInstallation *self);
+FLATPAK_EXTERN gboolean             flatpak_installation_launch (FlatpakInstallation *self,
+                                                                 const char          *name,
+                                                                 const char          *arch,
+                                                                 const char          *branch,
+                                                                 const char          *commit,
+                                                                 GCancellable        *cancellable,
+                                                                 GError             **error);
+FLATPAK_EXTERN GFileMonitor        *flatpak_installation_create_monitor (FlatpakInstallation *self,
+                                                                         GCancellable        *cancellable,
+                                                                         GError             **error);
+FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_installed_refs (FlatpakInstallation *self,
+                                                                              GCancellable        *cancellable,
+                                                                              GError             **error);
+FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
+                                                                                      FlatpakRefKind       kind,
+                                                                                      GCancellable        *cancellable,
+                                                                                      GError             **error);
+FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
+                                                                                         GCancellable        *cancellable,
+                                                                                         GError             **error);
+FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_get_installed_ref (FlatpakInstallation *self,
+                                                                             FlatpakRefKind       kind,
+                                                                             const char          *name,
+                                                                             const char          *arch,
+                                                                             const char          *branch,
+                                                                             GCancellable        *cancellable,
+                                                                             GError             **error);
+FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
+                                                                                     const char          *name,
+                                                                                     GCancellable        *cancellable,
+                                                                                     GError             **error);
+FLATPAK_EXTERN GPtrArray           *flatpak_installation_list_remotes (FlatpakInstallation *self,
+                                                                       GCancellable        *cancellable,
+                                                                       GError             **error);
+FLATPAK_EXTERN FlatpakRemote        *flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
+                                                                              const gchar         *name,
+                                                                              GCancellable        *cancellable,
+                                                                              GError             **error);
+FLATPAK_EXTERN char *              flatpak_installation_load_app_overrides (FlatpakInstallation *self,
+                                                                            const char          *app_id,
+                                                                            GCancellable        *cancellable,
+                                                                            GError             **error);
+FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install (FlatpakInstallation    *self,
+                                                                   const char             *remote_name,
+                                                                   FlatpakRefKind          kind,
+                                                                   const char             *name,
+                                                                   const char             *arch,
+                                                                   const char             *branch,
+                                                                   FlatpakProgressCallback progress,
+                                                                   gpointer                progress_data,
+                                                                   GCancellable           *cancellable,
+                                                                   GError                **error);
+FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update (FlatpakInstallation    *self,
+                                                                  FlatpakUpdateFlags      flags,
+                                                                  FlatpakRefKind          kind,
+                                                                  const char             *name,
+                                                                  const char             *arch,
+                                                                  const char             *branch,
+                                                                  FlatpakProgressCallback progress,
+                                                                  gpointer                progress_data,
+                                                                  GCancellable           *cancellable,
+                                                                  GError                **error);
+FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install_bundle (FlatpakInstallation    *self,
+                                                                          GFile                  *file,
+                                                                          FlatpakProgressCallback progress,
+                                                                          gpointer                progress_data,
+                                                                          GCancellable           *cancellable,
+                                                                          GError                **error);
+FLATPAK_EXTERN gboolean             flatpak_installation_uninstall (FlatpakInstallation    *self,
+                                                                    FlatpakRefKind          kind,
+                                                                    const char             *name,
+                                                                    const char             *arch,
+                                                                    const char             *branch,
+                                                                    FlatpakProgressCallback progress,
+                                                                    gpointer                progress_data,
+                                                                    GCancellable           *cancellable,
+                                                                    GError                **error);
 
-XDG_APP_EXTERN gboolean          xdg_app_installation_fetch_remote_size_sync (XdgAppInstallation *self,
-                                                                              const char         *remote_name,
-                                                                              const char         *commit,
-                                                                              guint64            *download_size,
-                                                                              guint64            *installed_size,
-                                                                              GCancellable       *cancellable,
-                                                                              GError            **error);
-XDG_APP_EXTERN gboolean          xdg_app_installation_fetch_remote_size_sync2 (XdgAppInstallation *self,
-                                                                               const char         *remote_name,
-                                                                               XdgAppRef          *ref,
-                                                                               guint64            *download_size,
-                                                                               guint64            *installed_size,
-                                                                               GCancellable       *cancellable,
-                                                                               GError            **error);
-XDG_APP_EXTERN GBytes        *   xdg_app_installation_fetch_remote_metadata_sync (XdgAppInstallation *self,
-                                                                                  const char         *remote_name,
-                                                                                  const char         *commit,
-                                                                                  GCancellable       *cancellable,
-                                                                                  GError            **error);
-XDG_APP_EXTERN GBytes        *   xdg_app_installation_fetch_remote_metadata_sync2 (XdgAppInstallation *self,
-                                                                                   const char         *remote_name,
-                                                                                   XdgAppRef          *ref,
-                                                                                   GCancellable       *cancellable,
-                                                                                   GError            **error);
-XDG_APP_EXTERN GPtrArray    *    xdg_app_installation_list_remote_refs_sync (XdgAppInstallation *self,
-                                                                             const char         *remote_name,
-                                                                             GCancellable       *cancellable,
-                                                                             GError            **error);
-XDG_APP_EXTERN XdgAppRemoteRef  *xdg_app_installation_fetch_remote_ref_sync (XdgAppInstallation *self,
-                                                                             const char         *remote_name,
-                                                                             XdgAppRefKind       kind,
-                                                                             const char         *name,
-                                                                             const char         *arch,
-                                                                             const char         *branch,
-                                                                             GCancellable       *cancellable,
-                                                                             GError            **error);
-XDG_APP_EXTERN gboolean          xdg_app_installation_update_appstream_sync (XdgAppInstallation *self,
-                                                                             const char         *remote_name,
-                                                                             const char         *arch,
-                                                                             gboolean           *out_changed,
-                                                                             GCancellable       *cancellable,
-                                                                             GError            **error);
+FLATPAK_EXTERN gboolean          flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
+                                                                              const char          *remote_name,
+                                                                              const char          *commit,
+                                                                              guint64             *download_size,
+                                                                              guint64             *installed_size,
+                                                                              GCancellable        *cancellable,
+                                                                              GError             **error);
+FLATPAK_EXTERN gboolean          flatpak_installation_fetch_remote_size_sync2 (FlatpakInstallation *self,
+                                                                               const char          *remote_name,
+                                                                               FlatpakRef          *ref,
+                                                                               guint64             *download_size,
+                                                                               guint64             *installed_size,
+                                                                               GCancellable        *cancellable,
+                                                                               GError             **error);
+FLATPAK_EXTERN GBytes        *   flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
+                                                                                  const char          *remote_name,
+                                                                                  const char          *commit,
+                                                                                  GCancellable        *cancellable,
+                                                                                  GError             **error);
+FLATPAK_EXTERN GBytes        *   flatpak_installation_fetch_remote_metadata_sync2 (FlatpakInstallation *self,
+                                                                                   const char          *remote_name,
+                                                                                   FlatpakRef          *ref,
+                                                                                   GCancellable        *cancellable,
+                                                                                   GError             **error);
+FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
+                                                                             const char          *remote_name,
+                                                                             GCancellable        *cancellable,
+                                                                             GError             **error);
+FLATPAK_EXTERN FlatpakRemoteRef  *flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
+                                                                              const char          *remote_name,
+                                                                              FlatpakRefKind       kind,
+                                                                              const char          *name,
+                                                                              const char          *arch,
+                                                                              const char          *branch,
+                                                                              GCancellable        *cancellable,
+                                                                              GError             **error);
+FLATPAK_EXTERN gboolean          flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
+                                                                             const char          *remote_name,
+                                                                             const char          *arch,
+                                                                             gboolean            *out_changed,
+                                                                             GCancellable        *cancellable,
+                                                                             GError             **error);
 
-#endif /* __XDG_APP_INSTALLATION_H__ */
+#endif /* __FLATPAK_INSTALLATION_H__ */

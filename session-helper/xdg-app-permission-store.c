@@ -32,11 +32,11 @@ GHashTable *tables = NULL;
 
 typedef struct
 {
-  char     *name;
-  XdgAppDb *db;
-  GList    *outstanding_writes;
-  GList    *current_writes;
-  gboolean  writing;
+  char      *name;
+  FlatpakDb *db;
+  GList     *outstanding_writes;
+  GList     *current_writes;
+  gboolean   writing;
 } Table;
 
 static void start_writeout (Table *table);
@@ -54,7 +54,7 @@ lookup_table (const char            *name,
               GDBusMethodInvocation *invocation)
 {
   Table *table;
-  XdgAppDb *db;
+  FlatpakDb *db;
   g_autofree char *dir = NULL;
   g_autofree char *path = NULL;
 
@@ -68,11 +68,11 @@ lookup_table (const char            *name,
   g_mkdir_with_parents (dir, 0755);
 
   path = g_build_filename (dir, name, NULL);
-  db = xdg_app_db_new (path, FALSE, &error);
+  db = flatpak_db_new (path, FALSE, &error);
   if (db == NULL)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_FAILED,
                                              "Unable to load db file: %s", error->message);
       return NULL;
     }
@@ -97,7 +97,7 @@ writeout_done (GObject      *source_object,
   g_autoptr(GError) error = NULL;
   gboolean ok;
 
-  ok = xdg_app_db_save_content_finish (table->db, res, &error);
+  ok = flatpak_db_save_content_finish (table->db, res, &error);
 
   for (l = table->current_writes; l != NULL; l = l->next)
     {
@@ -108,7 +108,7 @@ writeout_done (GObject      *source_object,
                                                g_variant_new ("()"));
       else
         g_dbus_method_invocation_return_error (invocation,
-                                               XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED,
+                                               FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_FAILED,
                                                "Unable to write db: %s", error->message);
     }
 
@@ -128,9 +128,9 @@ start_writeout (Table *table)
   table->outstanding_writes = NULL;
   table->writing = TRUE;
 
-  xdg_app_db_update (table->db);
+  flatpak_db_update (table->db);
 
-  xdg_app_db_save_content_async (table->db, NULL, writeout_done, table);
+  flatpak_db_save_content_async (table->db, NULL, writeout_done, table);
 }
 
 static void
@@ -156,7 +156,7 @@ handle_list (XdgAppPermissionStore *object,
   if (table == NULL)
     return TRUE;
 
-  ids = xdg_app_db_list_ids (table->db);
+  ids = flatpak_db_list_ids (table->db);
 
   xdg_app_permission_store_complete_list (object, invocation, (const char * const *) ids);
 
@@ -164,18 +164,18 @@ handle_list (XdgAppPermissionStore *object,
 }
 
 static GVariant *
-get_app_permissions (XdgAppDbEntry *entry)
+get_app_permissions (FlatpakDbEntry *entry)
 {
   g_autofree const char **apps = NULL;
   GVariantBuilder builder;
   int i;
 
-  apps = xdg_app_db_entry_list_apps (entry);
+  apps = flatpak_db_entry_list_apps (entry);
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sas}"));
 
   for (i = 0; apps[i] != NULL; i++)
     {
-      g_autofree const char **permissions = xdg_app_db_entry_list_permissions (entry, apps[i]);
+      g_autofree const char **permissions = flatpak_db_entry_list_permissions (entry, apps[i]);
       g_variant_builder_add_value (&builder,
                                    g_variant_new ("{s@as}",
                                                   apps[i],
@@ -195,22 +195,22 @@ handle_lookup (XdgAppPermissionStore *object,
 
   g_autoptr(GVariant) data = NULL;
   g_autoptr(GVariant) permissions = NULL;
-  g_autoptr(XdgAppDbEntry) entry = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
 
   table = lookup_table (table_name, invocation);
   if (table == NULL)
     return TRUE;
 
-  entry = xdg_app_db_lookup (table->db, id);
+  entry = flatpak_db_lookup (table->db, id);
   if (entry == NULL)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_NOT_FOUND,
                                              "No entry for %s", id);
       return TRUE;
     }
 
-  data = xdg_app_db_entry_get_data (entry);
+  data = flatpak_db_entry_get_data (entry);
   permissions = get_app_permissions (entry);
 
   xdg_app_permission_store_complete_lookup (object, invocation,
@@ -224,12 +224,12 @@ static void
 emit_deleted (XdgAppPermissionStore *object,
               const gchar           *table_name,
               const gchar           *id,
-              XdgAppDbEntry         *entry)
+              FlatpakDbEntry        *entry)
 {
   g_autoptr(GVariant) data = NULL;
   g_autoptr(GVariant) permissions = NULL;
 
-  data = xdg_app_db_entry_get_data (entry);
+  data = flatpak_db_entry_get_data (entry);
   permissions = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sas}"), NULL, 0));
 
   xdg_app_permission_store_emit_changed (object,
@@ -244,12 +244,12 @@ static void
 emit_changed (XdgAppPermissionStore *object,
               const gchar           *table_name,
               const gchar           *id,
-              XdgAppDbEntry         *entry)
+              FlatpakDbEntry        *entry)
 {
   g_autoptr(GVariant) data = NULL;
   g_autoptr(GVariant) permissions = NULL;
 
-  data = xdg_app_db_entry_get_data (entry);
+  data = flatpak_db_entry_get_data (entry);
   permissions = get_app_permissions (entry);
 
   xdg_app_permission_store_emit_changed (object,
@@ -267,22 +267,22 @@ handle_delete (XdgAppPermissionStore *object,
 {
   Table *table;
 
-  g_autoptr(XdgAppDbEntry) entry = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
 
   table = lookup_table (table_name, invocation);
   if (table == NULL)
     return TRUE;
 
-  entry = xdg_app_db_lookup (table->db, id);
+  entry = flatpak_db_lookup (table->db, id);
   if (entry == NULL)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_NOT_FOUND,
                                              "No entry for %s", id);
       return TRUE;
     }
 
-  xdg_app_db_set_entry (table->db, id, NULL);
+  flatpak_db_set_entry (table->db, id, NULL);
   emit_deleted (object, table_name, id, entry);
 
   ensure_writeout (table, invocation);
@@ -304,43 +304,43 @@ handle_set (XdgAppPermissionStore *object,
   GVariant *child;
 
   g_autoptr(GVariant) data_child = NULL;
-  g_autoptr(XdgAppDbEntry) old_entry = NULL;
-  g_autoptr(XdgAppDbEntry) new_entry = NULL;
+  g_autoptr(FlatpakDbEntry) old_entry = NULL;
+  g_autoptr(FlatpakDbEntry) new_entry = NULL;
 
   table = lookup_table (table_name, invocation);
   if (table == NULL)
     return TRUE;
 
-  old_entry = xdg_app_db_lookup (table->db, id);
+  old_entry = flatpak_db_lookup (table->db, id);
   if (old_entry == NULL && !create)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_NOT_FOUND,
                                              "Id %s not found", id);
       return TRUE;
     }
 
   data_child = g_variant_get_child_value (data, 0);
-  new_entry = xdg_app_db_entry_new (data_child);
+  new_entry = flatpak_db_entry_new (data_child);
 
   /* Add all the given app permissions */
 
   g_variant_iter_init (&iter, app_permissions);
   while ((child = g_variant_iter_next_value (&iter)))
     {
-      g_autoptr(XdgAppDbEntry) old_entry;
+      g_autoptr(FlatpakDbEntry) old_entry;
       const char *child_app_id;
       g_autofree const char **permissions;
 
       g_variant_get (child, "{&s^a&s}", &child_app_id, &permissions);
 
       old_entry = new_entry;
-      new_entry = xdg_app_db_entry_set_app_permissions (new_entry, child_app_id, (const char **) permissions);
+      new_entry = flatpak_db_entry_set_app_permissions (new_entry, child_app_id, (const char **) permissions);
 
       g_variant_unref (child);
     }
 
-  xdg_app_db_set_entry (table->db, id, new_entry);
+  flatpak_db_set_entry (table->db, id, new_entry);
   emit_changed (object, table_name, id, new_entry);
 
   ensure_writeout (table, invocation);
@@ -359,31 +359,31 @@ handle_set_permission (XdgAppPermissionStore *object,
 {
   Table *table;
 
-  g_autoptr(XdgAppDbEntry) entry = NULL;
-  g_autoptr(XdgAppDbEntry) new_entry = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
+  g_autoptr(FlatpakDbEntry) new_entry = NULL;
 
   table = lookup_table (table_name, invocation);
   if (table == NULL)
     return TRUE;
 
-  entry = xdg_app_db_lookup (table->db, id);
+  entry = flatpak_db_lookup (table->db, id);
   if (entry == NULL)
     {
       if (create)
         {
-          entry = xdg_app_db_entry_new (NULL);
+          entry = flatpak_db_entry_new (NULL);
         }
       else
         {
           g_dbus_method_invocation_return_error (invocation,
-                                                 XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
+                                                 FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_NOT_FOUND,
                                                  "Id %s not found", id);
           return TRUE;
         }
     }
 
-  new_entry = xdg_app_db_entry_set_app_permissions (entry, app, (const char **) permissions);
-  xdg_app_db_set_entry (table->db, id, new_entry);
+  new_entry = flatpak_db_entry_set_app_permissions (entry, app, (const char **) permissions);
+  flatpak_db_set_entry (table->db, id, new_entry);
   emit_changed (object, table_name, id, new_entry);
 
   ensure_writeout (table, invocation);
@@ -401,34 +401,34 @@ handle_set_value (XdgAppPermissionStore *object,
 {
   Table *table;
 
-  g_autoptr(XdgAppDbEntry) entry = NULL;
-  g_autoptr(XdgAppDbEntry) new_entry = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
+  g_autoptr(FlatpakDbEntry) new_entry = NULL;
 
   table = lookup_table (table_name, invocation);
   if (table == NULL)
     return TRUE;
 
-  entry = xdg_app_db_lookup (table->db, id);
+  entry = flatpak_db_lookup (table->db, id);
   if (entry == NULL)
     {
       if (create)
         {
-          new_entry = xdg_app_db_entry_new (data);
+          new_entry = flatpak_db_entry_new (data);
         }
       else
         {
           g_dbus_method_invocation_return_error (invocation,
-                                                 XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_NOT_FOUND,
+                                                 FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_NOT_FOUND,
                                                  "Id %s not found", id);
           return TRUE;
         }
     }
   else
     {
-      new_entry = xdg_app_db_entry_modify_data (entry, data);
+      new_entry = flatpak_db_entry_modify_data (entry, data);
     }
 
-  xdg_app_db_set_entry (table->db, id, new_entry);
+  flatpak_db_set_entry (table->db, id, new_entry);
   emit_changed (object, table_name, id, new_entry);
 
   ensure_writeout (table, invocation);
@@ -437,7 +437,7 @@ handle_set_value (XdgAppPermissionStore *object,
 }
 
 void
-xdg_app_permission_store_start (GDBusConnection *connection)
+flatpak_permission_store_start (GDBusConnection *connection)
 {
   XdgAppPermissionStore *store;
   GError *error = NULL;
@@ -456,7 +456,7 @@ xdg_app_permission_store_start (GDBusConnection *connection)
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (store),
                                          connection,
-                                         "/org/freedesktop/XdgApp/PermissionStore",
+                                         "/org/freedesktop/Flatpak/PermissionStore",
                                          &error))
     {
       g_warning ("error: %s\n", error->message);

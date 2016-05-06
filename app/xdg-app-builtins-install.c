@@ -92,13 +92,13 @@ read_gpg_data (GCancellable *cancellable,
     }
 
   /* Chain together all the --keyring options as one long stream. */
-  source_stream = (GInputStream *) xdg_app_chain_input_stream_new (streams);
+  source_stream = (GInputStream *) flatpak_chain_input_stream_new (streams);
 
-  return xdg_app_read_stream (source_stream, FALSE, error);
+  return flatpak_read_stream (source_stream, FALSE, error);
 }
 
 gboolean
-install_bundle (XdgAppDir *dir,
+install_bundle (FlatpakDir *dir,
                 GOptionContext *context,
                 int argc, char **argv,
                 GCancellable *cancellable,
@@ -125,11 +125,11 @@ install_bundle (XdgAppDir *dir,
 
   filename = argv[1];
 
-  repo = xdg_app_dir_get_repo (dir);
+  repo = flatpak_dir_get_repo (dir);
 
   file = g_file_new_for_commandline_arg (filename);
 
-  metadata = xdg_app_bundle_load (file, &to_checksum,
+  metadata = flatpak_bundle_load (file, &to_checksum,
                                   &ref,
                                   &origin,
                                   NULL,
@@ -146,18 +146,18 @@ install_bundle (XdgAppDir *dir,
         return FALSE;
     }
 
-  parts = xdg_app_decompose_ref (ref, error);
+  parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
     return FALSE;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
 
   if (g_file_query_exists (deploy_base, cancellable))
-    return xdg_app_fail (error, "%s branch %s already installed", parts[1], parts[3]);
+    return flatpak_fail (error, "%s branch %s already installed", parts[1], parts[3]);
 
   /* Add a remote for later updates */
   basename = g_file_get_basename (file);
-  remote = xdg_app_dir_create_origin_remote (dir,
+  remote = flatpak_dir_create_origin_remote (dir,
                                              origin,
                                              parts[1],
                                              basename,
@@ -170,10 +170,10 @@ install_bundle (XdgAppDir *dir,
   /* From here we need to goto out on error, to clean up */
   added_remote = TRUE;
 
-  if (!xdg_app_dir_ensure_repo (dir, cancellable, error))
+  if (!flatpak_dir_ensure_repo (dir, cancellable, error))
     goto out;
 
-  if (!xdg_app_pull_from_bundle (xdg_app_dir_get_repo (dir),
+  if (!flatpak_pull_from_bundle (flatpak_dir_get_repo (dir),
                                  file,
                                  remote,
                                  ref,
@@ -182,7 +182,7 @@ install_bundle (XdgAppDir *dir,
                                  error))
     goto out;
 
-  if (!xdg_app_dir_deploy_install (dir, ref, remote, NULL, cancellable, error))
+  if (!flatpak_dir_deploy_install (dir, ref, remote, NULL, cancellable, error))
     goto out;
 
   ret = TRUE;
@@ -195,10 +195,10 @@ out:
 }
 
 gboolean
-xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   const char *repository;
   const char *name;
@@ -210,7 +210,7 @@ xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   context = g_option_context_new ("REPOSITORY NAME [BRANCH] - Install an application or runtime");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (opt_bundle)
@@ -227,14 +227,14 @@ xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
 
-  installed_ref = xdg_app_dir_find_installed_ref (dir,
+  installed_ref = flatpak_dir_find_installed_ref (dir,
                                                   name,
                                                   branch,
                                                   opt_arch,
                                                   opt_app, opt_runtime, &is_app,
                                                   &my_error);
   if (installed_ref != NULL)
-    return xdg_app_fail (error, "%s %s, branch %s is already installed",
+    return flatpak_fail (error, "%s %s, branch %s is already installed",
                          is_app ? "App" : "Runtime", name, branch ? branch : "master");
 
   if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -243,16 +243,16 @@ xdg_app_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       return FALSE;
     }
 
-  ref = xdg_app_dir_find_remote_ref (dir, repository, name, branch, opt_arch,
+  ref = flatpak_dir_find_remote_ref (dir, repository, name, branch, opt_arch,
                                      opt_app, opt_runtime, &is_app, cancellable, error);
   if (ref == NULL)
     return FALSE;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
-    return xdg_app_fail (error, "Ref %s already deployed", ref);
+    return flatpak_fail (error, "Ref %s already deployed", ref);
 
-  if (!xdg_app_dir_install (dir,
+  if (!flatpak_dir_install (dir,
                             opt_no_pull,
                             opt_no_deploy,
                             ref, repository, opt_subpaths,

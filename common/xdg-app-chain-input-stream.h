@@ -27,26 +27,26 @@
 
 G_BEGIN_DECLS
 
-#define XDG_APP_TYPE_CHAIN_INPUT_STREAM (xdg_app_chain_input_stream_get_type ())
-#define XDG_APP_CHAIN_INPUT_STREAM(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), XDG_APP_TYPE_CHAIN_INPUT_STREAM, XdgAppChainInputStream))
-#define XDG_APP_CHAIN_INPUT_STREAM_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), XDG_APP_TYPE_CHAIN_INPUT_STREAM, XdgAppChainInputStreamClass))
-#define XDG_APP_IS_CHAIN_INPUT_STREAM(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), XDG_APP_TYPE_CHAIN_INPUT_STREAM))
-#define XDG_APP_IS_CHAIN_INPUT_STREAM_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), XDG_APP_TYPE_CHAIN_INPUT_STREAM))
-#define XDG_APP_CHAIN_INPUT_STREAM_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), XDG_APP_TYPE_CHAIN_INPUT_STREAM, XdgAppChainInputStreamClass))
+#define FLATPAK_TYPE_CHAIN_INPUT_STREAM (flatpak_chain_input_stream_get_type ())
+#define FLATPAK_CHAIN_INPUT_STREAM(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), FLATPAK_TYPE_CHAIN_INPUT_STREAM, FlatpakChainInputStream))
+#define FLATPAK_CHAIN_INPUT_STREAM_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), FLATPAK_TYPE_CHAIN_INPUT_STREAM, FlatpakChainInputStreamClass))
+#define FLATPAK_IS_CHAIN_INPUT_STREAM(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), FLATPAK_TYPE_CHAIN_INPUT_STREAM))
+#define FLATPAK_IS_CHAIN_INPUT_STREAM_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), FLATPAK_TYPE_CHAIN_INPUT_STREAM))
+#define FLATPAK_CHAIN_INPUT_STREAM_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), FLATPAK_TYPE_CHAIN_INPUT_STREAM, FlatpakChainInputStreamClass))
 
-typedef struct _XdgAppChainInputStream        XdgAppChainInputStream;
-typedef struct _XdgAppChainInputStreamClass   XdgAppChainInputStreamClass;
-typedef struct _XdgAppChainInputStreamPrivate XdgAppChainInputStreamPrivate;
+typedef struct _FlatpakChainInputStream        FlatpakChainInputStream;
+typedef struct _FlatpakChainInputStreamClass   FlatpakChainInputStreamClass;
+typedef struct _FlatpakChainInputStreamPrivate FlatpakChainInputStreamPrivate;
 
-struct _XdgAppChainInputStream
+struct _FlatpakChainInputStream
 {
   GInputStream parent_instance;
 
   /*< private >*/
-  XdgAppChainInputStreamPrivate *priv;
+  FlatpakChainInputStreamPrivate *priv;
 };
 
-struct _XdgAppChainInputStreamClass
+struct _FlatpakChainInputStreamClass
 {
   GInputStreamClass parent_class;
 
@@ -59,9 +59,9 @@ struct _XdgAppChainInputStreamClass
   void (*_g_reserved5) (void);
 };
 
-GType          xdg_app_chain_input_stream_get_type (void) G_GNUC_CONST;
+GType          flatpak_chain_input_stream_get_type (void) G_GNUC_CONST;
 
-XdgAppChainInputStream * xdg_app_chain_input_stream_new (GPtrArray *streams);
+FlatpakChainInputStream * flatpak_chain_input_stream_new (GPtrArray *streams);
 
 G_END_DECLS
 

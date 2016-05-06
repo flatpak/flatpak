@@ -26,7 +26,7 @@ echo "1..3"
 ${XDG_APP} --version > version_out
 
 VERSION=`cat $(dirname $0)/package_version.txt`
-assert_file_has_content version_out "^xdg-app $VERSION$"
+assert_file_has_content version_out "^flatpak $VERSION$"
 
 echo "ok version"
 

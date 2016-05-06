@@ -120,7 +120,7 @@ export_dir (int           source_parent_fd,
           source_printable = g_build_filename (source_relpath, dent->d_name, NULL);
 
 
-          if (!xdg_app_has_name_prefix (dent->d_name, required_prefix))
+          if (!flatpak_has_name_prefix (dent->d_name, required_prefix))
             {
               g_print ("Not exporting %s, wrong prefix\n", source_printable);
               continue;
@@ -241,14 +241,14 @@ collect_exports (GFile *base, const char *app_id, gboolean is_runtime, GCancella
 }
 
 static gboolean
-update_metadata (GFile *base, XdgAppContext *arg_context, GCancellable *cancellable, GError **error)
+update_metadata (GFile *base, FlatpakContext *arg_context, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
 
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *path = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
-  g_autoptr(XdgAppContext) app_context = NULL;
+  g_autoptr(FlatpakContext) app_context = NULL;
   GError *temp_error = NULL;
 
   metadata = g_file_get_child (base, "metadata");
@@ -315,11 +315,11 @@ update_metadata (GFile *base, XdgAppContext *arg_context, GCancellable *cancella
         }
     }
 
-  app_context = xdg_app_context_new ();
-  if (!xdg_app_context_load_metadata (app_context, keyfile, error))
+  app_context = flatpak_context_new ();
+  if (!flatpak_context_load_metadata (app_context, keyfile, error))
     goto out;
-  xdg_app_context_merge (app_context, arg_context);
-  xdg_app_context_save_metadata (app_context, keyfile);
+  flatpak_context_merge (app_context, arg_context);
+  flatpak_context_save_metadata (app_context, keyfile);
 
   if (!g_key_file_save_to_file (keyfile, path, error))
     goto out;
@@ -334,7 +334,7 @@ out:
 }
 
 gboolean
-xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) base = NULL;
@@ -347,14 +347,14 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   gsize metadata_size;
   const char *directory;
   g_autoptr(GKeyFile) metakey = NULL;
-  g_autoptr(XdgAppContext) arg_context = NULL;
+  g_autoptr(FlatpakContext) arg_context = NULL;
 
   context = g_option_context_new ("DIRECTORY - Convert a directory to a bundle");
 
-  arg_context = xdg_app_context_new ();
-  g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
+  arg_context = flatpak_context_new ();
+  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (argc < 2)
@@ -370,7 +370,7 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   if (!g_file_query_exists (files_dir, cancellable) ||
       !g_file_query_exists (metadata_file, cancellable))
-    return xdg_app_fail (error, "Build directory %s not initialized", directory);
+    return flatpak_fail (error, "Build directory %s not initialized", directory);
 
   if (!g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, error))
     return FALSE;
@@ -384,12 +384,12 @@ xdg_app_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
     {
       id = g_key_file_get_string (metakey, "Runtime", "name", NULL);
       if (id == NULL)
-        return xdg_app_fail (error, "No name specified in the metadata");
+        return flatpak_fail (error, "No name specified in the metadata");
       is_runtime = TRUE;
     }
 
   if (g_file_query_exists (export_dir, cancellable))
-    return xdg_app_fail (error, "Build directory %s already finalized", directory);
+    return flatpak_fail (error, "Build directory %s already finalized", directory);
 
   g_debug ("Collecting exports");
   if (!collect_exports (base, id, is_runtime, cancellable, error))

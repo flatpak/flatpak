@@ -31,7 +31,7 @@
 #include "gvdb/gvdb-reader.h"
 #include "gvdb/gvdb-builder.h"
 
-struct XdgAppDb
+struct FlatpakDb
 {
   GObject    parent;
 
@@ -55,11 +55,11 @@ struct XdgAppDb
 typedef struct
 {
   GObjectClass parent_class;
-} XdgAppDbClass;
+} FlatpakDbClass;
 
 static void initable_iface_init (GInitableIface *initable_iface);
 
-G_DEFINE_TYPE_WITH_CODE (XdgAppDb, xdg_app_db, G_TYPE_OBJECT,
+G_DEFINE_TYPE_WITH_CODE (FlatpakDb, flatpak_db, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init));
 
 enum {
@@ -102,29 +102,29 @@ str_ptr_array_contains (GPtrArray  *array,
 }
 
 const char *
-xdg_app_db_get_path (XdgAppDb *self)
+flatpak_db_get_path (FlatpakDb *self)
 {
-  g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
+  g_return_val_if_fail (FLATPAK_IS_DB (self), NULL);
 
   return self->path;
 }
 
 void
-xdg_app_db_set_path (XdgAppDb   *self,
+flatpak_db_set_path (FlatpakDb  *self,
                      const char *path)
 {
-  g_return_if_fail (XDG_APP_IS_DB (self));
+  g_return_if_fail (FLATPAK_IS_DB (self));
 
   g_clear_pointer (&self->path, g_free);
   self->path = g_strdup (path);
 }
 
-XdgAppDb *
-xdg_app_db_new (const char *path,
+FlatpakDb *
+flatpak_db_new (const char *path,
                 gboolean    fail_if_not_found,
                 GError    **error)
 {
-  return g_initable_new (XDG_APP_TYPE_DB,
+  return g_initable_new (FLATPAK_TYPE_DB,
                          NULL,
                          error,
                          "path", path,
@@ -133,9 +133,9 @@ xdg_app_db_new (const char *path,
 }
 
 static void
-xdg_app_db_finalize (GObject *object)
+flatpak_db_finalize (GObject *object)
 {
-  XdgAppDb *self = (XdgAppDb *) object;
+  FlatpakDb *self = (FlatpakDb *) object;
 
   g_clear_pointer (&self->path, g_free);
   g_clear_pointer (&self->gvdb_contents, g_bytes_unref);
@@ -146,16 +146,16 @@ xdg_app_db_finalize (GObject *object)
   g_clear_pointer (&self->app_additions, g_hash_table_unref);
   g_clear_pointer (&self->app_removals, g_hash_table_unref);
 
-  G_OBJECT_CLASS (xdg_app_db_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_db_parent_class)->finalize (object);
 }
 
 static void
-xdg_app_db_get_property (GObject    *object,
+flatpak_db_get_property (GObject    *object,
                          guint       prop_id,
                          GValue     *value,
                          GParamSpec *pspec)
 {
-  XdgAppDb *self = XDG_APP_DB (object);
+  FlatpakDb *self = FLATPAK_DB (object);
 
   switch (prop_id)
     {
@@ -173,12 +173,12 @@ xdg_app_db_get_property (GObject    *object,
 }
 
 static void
-xdg_app_db_set_property (GObject      *object,
+flatpak_db_set_property (GObject      *object,
                          guint         prop_id,
                          const GValue *value,
                          GParamSpec   *pspec)
 {
-  XdgAppDb *self = XDG_APP_DB (object);
+  FlatpakDb *self = FLATPAK_DB (object);
 
   switch (prop_id)
     {
@@ -197,13 +197,13 @@ xdg_app_db_set_property (GObject      *object,
 }
 
 static void
-xdg_app_db_class_init (XdgAppDbClass *klass)
+flatpak_db_class_init (FlatpakDbClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = xdg_app_db_finalize;
-  object_class->get_property = xdg_app_db_get_property;
-  object_class->set_property = xdg_app_db_set_property;
+  object_class->finalize = flatpak_db_finalize;
+  object_class->get_property = flatpak_db_get_property;
+  object_class->set_property = flatpak_db_set_property;
 
   g_object_class_install_property (object_class,
                                    PROP_PATH,
@@ -222,7 +222,7 @@ xdg_app_db_class_init (XdgAppDbClass *klass)
 }
 
 static void
-xdg_app_db_init (XdgAppDb *self)
+flatpak_db_init (FlatpakDb *self)
 {
   self->fail_if_not_found = TRUE;
 
@@ -258,7 +258,7 @@ initable_init (GInitable    *initable,
                GCancellable *cancellable,
                GError      **error)
 {
-  XdgAppDb *self = (XdgAppDb *) initable;
+  FlatpakDb *self = (FlatpakDb *) initable;
   GError *my_error = NULL;
 
   if (self->path == NULL)
@@ -332,14 +332,14 @@ initable_iface_init (GInitableIface *initable_iface)
 
 /* Transfer: full */
 char **
-xdg_app_db_list_ids (XdgAppDb *self)
+flatpak_db_list_ids (FlatpakDb *self)
 {
   GPtrArray *res;
   GHashTableIter iter;
   gpointer key, value;
   int i;
 
-  g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
+  g_return_val_if_fail (FLATPAK_IS_DB (self), NULL);
 
   res = g_ptr_array_new ();
 
@@ -384,14 +384,14 @@ app_update_empty (GHashTable *ht, const char *app)
 
 /* Transfer: full */
 char **
-xdg_app_db_list_apps (XdgAppDb *self)
+flatpak_db_list_apps (FlatpakDb *self)
 {
   gpointer key, _value;
   GHashTableIter iter;
   GPtrArray *res;
   int i;
 
-  g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
+  g_return_val_if_fail (FLATPAK_IS_DB (self), NULL);
 
   res = g_ptr_array_new ();
 
@@ -454,7 +454,7 @@ xdg_app_db_list_apps (XdgAppDb *self)
 
 /* Transfer: full */
 char **
-xdg_app_db_list_ids_by_app (XdgAppDb   *self,
+flatpak_db_list_ids_by_app (FlatpakDb  *self,
                             const char *app)
 {
   GPtrArray *res;
@@ -462,7 +462,7 @@ xdg_app_db_list_ids_by_app (XdgAppDb   *self,
   GPtrArray *removals;
   int i;
 
-  g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
+  g_return_val_if_fail (FLATPAK_IS_DB (self), NULL);
 
   res = g_ptr_array_new ();
 
@@ -497,14 +497,14 @@ xdg_app_db_list_ids_by_app (XdgAppDb   *self,
 }
 
 /* Transfer: full */
-XdgAppDbEntry *
-xdg_app_db_lookup (XdgAppDb   *self,
+FlatpakDbEntry *
+flatpak_db_lookup (FlatpakDb  *self,
                    const char *id)
 {
   GVariant *res = NULL;
   gpointer value;
 
-  g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
+  g_return_val_if_fail (FLATPAK_IS_DB (self), NULL);
   g_return_val_if_fail (id != NULL, NULL);
 
   if (g_hash_table_lookup_extended (self->main_updates, id, NULL, &value))
@@ -517,19 +517,19 @@ xdg_app_db_lookup (XdgAppDb   *self,
       res = gvdb_table_get_value (self->main_table, id);
     }
 
-  return (XdgAppDbEntry *) res;
+  return (FlatpakDbEntry *) res;
 }
 
 /* Transfer: full */
 char **
-xdg_app_db_list_ids_by_value (XdgAppDb *self,
-                              GVariant *data)
+flatpak_db_list_ids_by_value (FlatpakDb *self,
+                              GVariant  *data)
 {
-  g_autofree char **ids = xdg_app_db_list_ids (self);
+  g_autofree char **ids = flatpak_db_list_ids (self);
   int i;
   GPtrArray *res;
 
-  g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
+  g_return_val_if_fail (FLATPAK_IS_DB (self), NULL);
   g_return_val_if_fail (data != NULL, NULL);
 
   res = g_ptr_array_new ();
@@ -538,13 +538,13 @@ xdg_app_db_list_ids_by_value (XdgAppDb *self,
     {
       char *id = ids[i];
 
-      g_autoptr(XdgAppDbEntry) entry = NULL;
+      g_autoptr(FlatpakDbEntry) entry = NULL;
       g_autoptr(GVariant) entry_data = NULL;
 
-      entry = xdg_app_db_lookup (self, id);
+      entry = flatpak_db_lookup (self, id);
       if (entry)
         {
-          entry_data = xdg_app_db_entry_get_data (entry);
+          entry_data = flatpak_db_entry_get_data (entry);
           if (g_variant_equal (data, entry_data))
             {
               g_ptr_array_add (res, id);
@@ -559,7 +559,7 @@ xdg_app_db_list_ids_by_value (XdgAppDb *self,
 }
 
 static void
-add_app_id (XdgAppDb   *self,
+add_app_id (FlatpakDb  *self,
             const char *app,
             const char *id)
 {
@@ -592,7 +592,7 @@ add_app_id (XdgAppDb   *self,
 }
 
 static void
-remove_app_id (XdgAppDb   *self,
+remove_app_id (FlatpakDb  *self,
                const char *app,
                const char *id)
 {
@@ -625,50 +625,50 @@ remove_app_id (XdgAppDb   *self,
 }
 
 gboolean
-xdg_app_db_is_dirty (XdgAppDb *self)
+flatpak_db_is_dirty (FlatpakDb *self)
 {
-  g_return_val_if_fail (XDG_APP_IS_DB (self), FALSE);
+  g_return_val_if_fail (FLATPAK_IS_DB (self), FALSE);
 
   return self->dirty;
 }
 
 /* add, replace, or NULL entry to remove */
 void
-xdg_app_db_set_entry (XdgAppDb      *self,
-                      const char    *id,
-                      XdgAppDbEntry *entry)
+flatpak_db_set_entry (FlatpakDb      *self,
+                      const char     *id,
+                      FlatpakDbEntry *entry)
 {
-  g_autoptr(XdgAppDbEntry) old_entry = NULL;
+  g_autoptr(FlatpakDbEntry) old_entry = NULL;
   g_autofree const char **old = NULL;
   g_autofree const char **new = NULL;
   static const char *empty[] = { NULL };
   const char **a, **b;
   int ia, ib;
 
-  g_return_if_fail (XDG_APP_IS_DB (self));
+  g_return_if_fail (FLATPAK_IS_DB (self));
   g_return_if_fail (id != NULL);
 
   self->dirty = TRUE;
 
-  old_entry = xdg_app_db_lookup (self, id);
+  old_entry = flatpak_db_lookup (self, id);
 
   g_hash_table_insert (self->main_updates,
                        g_strdup (id),
-                       xdg_app_db_entry_ref (entry));
+                       flatpak_db_entry_ref (entry));
 
   a = empty;
   b = empty;
 
   if (old_entry)
     {
-      old = xdg_app_db_entry_list_apps (old_entry);
+      old = flatpak_db_entry_list_apps (old_entry);
       sort_strv (old);
       a = old;
     }
 
   if (entry)
     {
-      new = xdg_app_db_entry_list_apps (entry);
+      new = flatpak_db_entry_list_apps (entry);
       sort_strv (new);
       b = new;
     }
@@ -716,7 +716,7 @@ xdg_app_db_set_entry (XdgAppDb      *self,
 }
 
 void
-xdg_app_db_update (XdgAppDb *self)
+flatpak_db_update (FlatpakDb *self)
 {
   GHashTable *root, *main_h, *apps_h;
   GBytes *new_contents;
@@ -726,7 +726,7 @@ xdg_app_db_update (XdgAppDb *self)
   g_auto(GStrv) ids = NULL;
   g_auto(GStrv) apps = NULL;
 
-  g_return_if_fail (XDG_APP_IS_DB (self));
+  g_return_if_fail (FLATPAK_IS_DB (self));
 
   root = gvdb_hash_table_new (NULL, NULL);
   main_h = gvdb_hash_table_new (root, "main");
@@ -734,10 +734,10 @@ xdg_app_db_update (XdgAppDb *self)
   g_hash_table_unref (main_h);
   g_hash_table_unref (apps_h);
 
-  ids = xdg_app_db_list_ids (self);
+  ids = flatpak_db_list_ids (self);
   for (i = 0; ids[i] != 0; i++)
     {
-      g_autoptr(XdgAppDbEntry) entry = xdg_app_db_lookup (self, ids[i]);
+      g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (self, ids[i]);
       if (entry != NULL)
         {
           GvdbItem *item;
@@ -747,10 +747,10 @@ xdg_app_db_update (XdgAppDb *self)
         }
     }
 
-  apps = xdg_app_db_list_apps (self);
+  apps = flatpak_db_list_apps (self);
   for (i = 0; apps[i] != 0; i++)
     {
-      g_auto(GStrv) app_ids = xdg_app_db_list_ids_by_app (self, apps[i]);
+      g_auto(GStrv) app_ids = flatpak_db_list_ids_by_app (self, apps[i]);
       GVariantBuilder builder;
       GvdbItem *item;
       int j;
@@ -783,17 +783,17 @@ xdg_app_db_update (XdgAppDb *self)
 }
 
 GBytes *
-xdg_app_db_get_content (XdgAppDb *self)
+flatpak_db_get_content (FlatpakDb *self)
 {
-  g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
+  g_return_val_if_fail (FLATPAK_IS_DB (self), NULL);
 
   return self->gvdb_contents;
 }
 
 /* Note: You must first call update to serialize, this only saves serialied data */
 gboolean
-xdg_app_db_save_content (XdgAppDb *self,
-                         GError  **error)
+flatpak_db_save_content (FlatpakDb *self,
+                         GError   **error)
 {
   GBytes *content = NULL;
 
@@ -835,7 +835,7 @@ save_content_callback (GObject      *source_object,
 }
 
 void
-xdg_app_db_save_content_async (XdgAppDb           *self,
+flatpak_db_save_content_async (FlatpakDb          *self,
                                GCancellable       *cancellable,
                                GAsyncReadyCallback callback,
                                gpointer            user_data)
@@ -873,7 +873,7 @@ xdg_app_db_save_content_async (XdgAppDb           *self,
 }
 
 gboolean
-xdg_app_db_save_content_finish (XdgAppDb     *self,
+flatpak_db_save_content_finish (FlatpakDb    *self,
                                 GAsyncResult *res,
                                 GError      **error)
 {
@@ -882,41 +882,41 @@ xdg_app_db_save_content_finish (XdgAppDb     *self,
 
 
 GString *
-xdg_app_db_print_string (XdgAppDb *self,
-                         GString  *string)
+flatpak_db_print_string (FlatpakDb *self,
+                         GString   *string)
 {
   g_auto(GStrv) ids = NULL;
   g_auto(GStrv) apps = NULL;
   int i;
 
-  g_return_val_if_fail (XDG_APP_IS_DB (self), NULL);
+  g_return_val_if_fail (FLATPAK_IS_DB (self), NULL);
 
   if G_UNLIKELY (string == NULL)
     string = g_string_new (NULL);
 
   g_string_append_printf (string, "main {\n");
 
-  ids = xdg_app_db_list_ids (self);
+  ids = flatpak_db_list_ids (self);
   sort_strv ((const char **) ids);
   for (i = 0; ids[i] != 0; i++)
     {
-      g_autoptr(XdgAppDbEntry) entry = xdg_app_db_lookup (self, ids[i]);
+      g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (self, ids[i]);
       g_string_append_printf (string, " %s: ", ids[i]);
       if (entry != NULL)
-        xdg_app_db_entry_print_string (entry, string);
+        flatpak_db_entry_print_string (entry, string);
       g_string_append_printf (string, "\n");
     }
 
   g_string_append_printf (string, "}\napps {\n");
 
-  apps = xdg_app_db_list_apps (self);
+  apps = flatpak_db_list_apps (self);
   sort_strv ((const char **) apps);
   for (i = 0; apps[i] != 0; i++)
     {
       int j;
       g_auto(GStrv) app_ids = NULL;
 
-      app_ids = xdg_app_db_list_ids_by_app (self, apps[i]);
+      app_ids = flatpak_db_list_ids_by_app (self, apps[i]);
       sort_strv ((const char **) app_ids);
 
       g_string_append_printf (string, " %s: ", apps[i]);
@@ -931,13 +931,13 @@ xdg_app_db_print_string (XdgAppDb *self,
 }
 
 char *
-xdg_app_db_print (XdgAppDb *self)
+flatpak_db_print (FlatpakDb *self)
 {
-  return g_string_free (xdg_app_db_print_string (self, NULL), FALSE);
+  return g_string_free (flatpak_db_print_string (self, NULL), FALSE);
 }
 
-XdgAppDbEntry  *
-xdg_app_db_entry_ref (XdgAppDbEntry *entry)
+FlatpakDbEntry  *
+flatpak_db_entry_ref (FlatpakDbEntry *entry)
 {
   if (entry != NULL)
     g_variant_ref ((GVariant *) entry);
@@ -945,14 +945,14 @@ xdg_app_db_entry_ref (XdgAppDbEntry *entry)
 }
 
 void
-xdg_app_db_entry_unref (XdgAppDbEntry *entry)
+flatpak_db_entry_unref (FlatpakDbEntry *entry)
 {
   g_variant_unref ((GVariant *) entry);
 }
 
 /* Transfer: full */
 GVariant *
-xdg_app_db_entry_get_data (XdgAppDbEntry *entry)
+flatpak_db_entry_get_data (FlatpakDbEntry *entry)
 {
   g_autoptr(GVariant) variant = g_variant_get_child_value ((GVariant *) entry, 0);
 
@@ -961,7 +961,7 @@ xdg_app_db_entry_get_data (XdgAppDbEntry *entry)
 
 /* Transfer: container */
 const char **
-xdg_app_db_entry_list_apps (XdgAppDbEntry *entry)
+flatpak_db_entry_list_apps (FlatpakDbEntry *entry)
 {
   GVariant *v = (GVariant *) entry;
 
@@ -994,8 +994,8 @@ xdg_app_db_entry_list_apps (XdgAppDbEntry *entry)
 }
 
 static GVariant *
-xdg_app_db_entry_get_permissions_variant (XdgAppDbEntry *entry,
-                                          const char    *app_id)
+flatpak_db_entry_get_permissions_variant (FlatpakDbEntry *entry,
+                                          const char     *app_id)
 {
   GVariant *v = (GVariant *) entry;
 
@@ -1041,12 +1041,12 @@ xdg_app_db_entry_get_permissions_variant (XdgAppDbEntry *entry,
 
 /* Transfer: container */
 const char **
-xdg_app_db_entry_list_permissions (XdgAppDbEntry *entry,
-                                   const char    *app)
+flatpak_db_entry_list_permissions (FlatpakDbEntry *entry,
+                                   const char     *app)
 {
   g_autoptr(GVariant) permissions = NULL;
 
-  permissions = xdg_app_db_entry_get_permissions_variant (entry, app);
+  permissions = flatpak_db_entry_get_permissions_variant (entry, app);
   if (permissions)
     return g_variant_get_strv (permissions, NULL);
   else
@@ -1054,26 +1054,26 @@ xdg_app_db_entry_list_permissions (XdgAppDbEntry *entry,
 }
 
 gboolean
-xdg_app_db_entry_has_permission (XdgAppDbEntry *entry,
-                                 const char    *app,
-                                 const char    *permission)
+flatpak_db_entry_has_permission (FlatpakDbEntry *entry,
+                                 const char     *app,
+                                 const char     *permission)
 {
   g_autofree const char **app_permissions = NULL;
 
-  app_permissions = xdg_app_db_entry_list_permissions (entry, app);
+  app_permissions = flatpak_db_entry_list_permissions (entry, app);
 
   return g_strv_contains (app_permissions, permission);
 }
 
 gboolean
-xdg_app_db_entry_has_permissions (XdgAppDbEntry *entry,
-                                  const char    *app,
-                                  const char   **permissions)
+flatpak_db_entry_has_permissions (FlatpakDbEntry *entry,
+                                  const char     *app,
+                                  const char    **permissions)
 {
   g_autofree const char **app_permissions = NULL;
   int i;
 
-  app_permissions = xdg_app_db_entry_list_permissions (entry, app);
+  app_permissions = flatpak_db_entry_list_permissions (entry, app);
 
   for (i = 0; permissions[i] != NULL; i++)
     {
@@ -1167,8 +1167,8 @@ add_permissions (GVariant *app_permissions,
   return g_variant_builder_end (&builder);
 }
 
-XdgAppDbEntry  *
-xdg_app_db_entry_new (GVariant *data)
+FlatpakDbEntry  *
+flatpak_db_entry_new (GVariant *data)
 {
   GVariant *res;
 
@@ -1178,12 +1178,12 @@ xdg_app_db_entry_new (GVariant *data)
   res = make_entry (data,
                     make_empty_app_permissions ());
 
-  return (XdgAppDbEntry  *) g_variant_ref_sink (res);
+  return (FlatpakDbEntry  *) g_variant_ref_sink (res);
 }
 
-XdgAppDbEntry  *
-xdg_app_db_entry_modify_data (XdgAppDbEntry *entry,
-                              GVariant      *data)
+FlatpakDbEntry  *
+flatpak_db_entry_modify_data (FlatpakDbEntry *entry,
+                              GVariant       *data)
 {
   GVariant *v = (GVariant *) entry;
   GVariant *res;
@@ -1193,14 +1193,14 @@ xdg_app_db_entry_modify_data (XdgAppDbEntry *entry,
 
   res = make_entry (data,
                     g_variant_get_child_value (v, 1));
-  return (XdgAppDbEntry  *) g_variant_ref_sink (res);
+  return (FlatpakDbEntry  *) g_variant_ref_sink (res);
 }
 
 /* NULL (or empty) permissions to remove permissions */
-XdgAppDbEntry  *
-xdg_app_db_entry_set_app_permissions (XdgAppDbEntry *entry,
-                                      const char    *app,
-                                      const char   **permissions)
+FlatpakDbEntry  *
+flatpak_db_entry_set_app_permissions (FlatpakDbEntry *entry,
+                                      const char     *app,
+                                      const char    **permissions)
 {
   GVariant *v = (GVariant *) entry;
   GVariant *res;
@@ -1213,12 +1213,12 @@ xdg_app_db_entry_set_app_permissions (XdgAppDbEntry *entry,
                     add_permissions (old_permissions,
                                      make_permissions (app,
                                                        permissions)));
-  return (XdgAppDbEntry  *) g_variant_ref_sink (res);
+  return (FlatpakDbEntry  *) g_variant_ref_sink (res);
 }
 
 GString *
-xdg_app_db_entry_print_string (XdgAppDbEntry *entry,
-                               GString       *string)
+flatpak_db_entry_print_string (FlatpakDbEntry *entry,
+                               GString        *string)
 {
   return g_variant_print_string ((GVariant *) entry, string, FALSE);
 }

@@ -26,37 +26,37 @@
 
 /**
  * SECTION:xdg-app-ref
- * @Title: XdgAppRef
+ * @Title: FlatpakRef
  * @Short_description: Application reference
  *
  * Currently xdg-app manages two types of binary artifacts: applications, and
  * runtimes. Applications contain a program that desktop users can run, while
- * runtimes contain only libraries and data. An XdgAppRef object (or short: ref)
+ * runtimes contain only libraries and data. An FlatpakRef object (or short: ref)
  * can refer to either of these.
  *
  * Both applications and runtimes are identified by a 4-tuple of strings: kind,
  * name, arch and branch, e.g. app/org.gnome.evince/x86_64/master. The functions
- * xdg_app_ref_parse() and xdg_app_ref_format_ref() can be used to convert
- * XdgAppRef objects into this string representation and back.
+ * flatpak_ref_parse() and flatpak_ref_format_ref() can be used to convert
+ * FlatpakRef objects into this string representation and back.
  *
  * To uniquely identify a particular version of an application or runtime, you
  * need a commit.
  *
- * The subclasses #XdgAppInstalledRef and #XdgAppRemoteRef provide more information
+ * The subclasses #FlatpakInstalledRef and #FlatpakRemoteRef provide more information
  * for artifacts that are locally installed or available from a remote repository.
  */
-typedef struct _XdgAppRefPrivate XdgAppRefPrivate;
+typedef struct _FlatpakRefPrivate FlatpakRefPrivate;
 
-struct _XdgAppRefPrivate
+struct _FlatpakRefPrivate
 {
-  char         *name;
-  char         *arch;
-  char         *branch;
-  char         *commit;
-  XdgAppRefKind kind;
+  char          *name;
+  char          *arch;
+  char          *branch;
+  char          *commit;
+  FlatpakRefKind kind;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (XdgAppRef, xdg_app_ref, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (FlatpakRef, flatpak_ref, G_TYPE_OBJECT)
 
 enum {
   PROP_0,
@@ -69,27 +69,27 @@ enum {
 };
 
 static void
-xdg_app_ref_finalize (GObject *object)
+flatpak_ref_finalize (GObject *object)
 {
-  XdgAppRef *self = XDG_APP_REF (object);
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRef *self = FLATPAK_REF (object);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
   g_free (priv->name);
   g_free (priv->arch);
   g_free (priv->branch);
   g_free (priv->commit);
 
-  G_OBJECT_CLASS (xdg_app_ref_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_ref_parent_class)->finalize (object);
 }
 
 static void
-xdg_app_ref_set_property (GObject      *object,
+flatpak_ref_set_property (GObject      *object,
                           guint         prop_id,
                           const GValue *value,
                           GParamSpec   *pspec)
 {
-  XdgAppRef *self = XDG_APP_REF (object);
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRef *self = FLATPAK_REF (object);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
   switch (prop_id)
     {
@@ -124,13 +124,13 @@ xdg_app_ref_set_property (GObject      *object,
 }
 
 static void
-xdg_app_ref_get_property (GObject    *object,
+flatpak_ref_get_property (GObject    *object,
                           guint       prop_id,
                           GValue     *value,
                           GParamSpec *pspec)
 {
-  XdgAppRef *self = XDG_APP_REF (object);
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRef *self = FLATPAK_REF (object);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
   switch (prop_id)
     {
@@ -161,13 +161,13 @@ xdg_app_ref_get_property (GObject    *object,
 }
 
 static void
-xdg_app_ref_class_init (XdgAppRefClass *klass)
+flatpak_ref_class_init (FlatpakRefClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->get_property = xdg_app_ref_get_property;
-  object_class->set_property = xdg_app_ref_set_property;
-  object_class->finalize = xdg_app_ref_finalize;
+  object_class->get_property = flatpak_ref_get_property;
+  object_class->set_property = flatpak_ref_set_property;
+  object_class->finalize = flatpak_ref_finalize;
 
   g_object_class_install_property (object_class,
                                    PROP_NAME,
@@ -202,150 +202,150 @@ xdg_app_ref_class_init (XdgAppRefClass *klass)
                                    g_param_spec_enum ("kind",
                                                       "Kind",
                                                       "The kind of artifact",
-                                                      XDG_TYPE_APP_REF_KIND,
-                                                      XDG_APP_REF_KIND_APP,
+                                                      FLATPAK_TYPE_REF_KIND,
+                                                      FLATPAK_REF_KIND_APP,
                                                       G_PARAM_READWRITE));
 }
 
 static void
-xdg_app_ref_init (XdgAppRef *self)
+flatpak_ref_init (FlatpakRef *self)
 {
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
-  priv->kind = XDG_APP_REF_KIND_APP;
+  priv->kind = FLATPAK_REF_KIND_APP;
 }
 
 /**
- * xdg_app_ref_get_name:
- * @self: a #XdgAppRef
+ * flatpak_ref_get_name:
+ * @self: a #FlatpakRef
  *
  * Gets the name of the ref.
  *
  * Returns: (transfer none): the name
  */
 const char *
-xdg_app_ref_get_name (XdgAppRef *self)
+flatpak_ref_get_name (FlatpakRef *self)
 {
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
   return priv->name;
 }
 
 /**
- * xdg_app_ref_get_arch:
- * @self: a #XdgAppRef
+ * flatpak_ref_get_arch:
+ * @self: a #FlatpakRef
  *
  * Gets the arch or the ref.
  *
  * Returns: (transfer none): the arch
  */
 const char *
-xdg_app_ref_get_arch (XdgAppRef *self)
+flatpak_ref_get_arch (FlatpakRef *self)
 {
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
   return priv->arch;
 }
 
 /**
- * xdg_app_ref_get_branch:
- * @self: a #XdgAppRef
+ * flatpak_ref_get_branch:
+ * @self: a #FlatpakRef
  *
  * Gets the branch of the ref.
  *
  * Returns: (transfer none): the branch
  */
 const char *
-xdg_app_ref_get_branch (XdgAppRef *self)
+flatpak_ref_get_branch (FlatpakRef *self)
 {
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
   return priv->branch;
 }
 
 /**
- * xdg_app_ref_get_commit:
- * @self: a #XdgAppRef
+ * flatpak_ref_get_commit:
+ * @self: a #FlatpakRef
  *
  * Gets the commit of the ref.
  *
  * Returns: (transfer none): the commit
  */
 const char *
-xdg_app_ref_get_commit (XdgAppRef *self)
+flatpak_ref_get_commit (FlatpakRef *self)
 {
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
   return priv->commit;
 }
 
 /**
- * xdg_app_ref_get_kind:
- * @self: a #XdgAppRef
+ * flatpak_ref_get_kind:
+ * @self: a #FlatpakRef
  *
  * Gets the kind of artifact that this ref refers to.
  *
  * Returns: the kind of artifact
  */
-XdgAppRefKind
-xdg_app_ref_get_kind (XdgAppRef *self)
+FlatpakRefKind
+flatpak_ref_get_kind (FlatpakRef *self)
 {
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
   return priv->kind;
 }
 
 /**
- * xdg_app_ref_format_ref:
- * @self: a #XdgAppRef
+ * flatpak_ref_format_ref:
+ * @self: a #FlatpakRef
  *
- * Convert an XdgAppRef object into a string representation that
- * can be parsed by xdg_app_ref_parse().
+ * Convert an FlatpakRef object into a string representation that
+ * can be parsed by flatpak_ref_parse().
  *
  * Returns: (transfer full): string representation
  */
 char *
-xdg_app_ref_format_ref (XdgAppRef *self)
+flatpak_ref_format_ref (FlatpakRef *self)
 {
-  XdgAppRefPrivate *priv = xdg_app_ref_get_instance_private (self);
+  FlatpakRefPrivate *priv = flatpak_ref_get_instance_private (self);
 
-  if (priv->kind == XDG_APP_REF_KIND_APP)
-    return xdg_app_build_app_ref (priv->name,
+  if (priv->kind == FLATPAK_REF_KIND_APP)
+    return flatpak_build_app_ref (priv->name,
                                   priv->branch,
                                   priv->arch);
   else
-    return xdg_app_build_runtime_ref (priv->name,
+    return flatpak_build_runtime_ref (priv->name,
                                       priv->branch,
                                       priv->arch);
 }
 
 /**
- * xdg_app_ref_parse:
+ * flatpak_ref_parse:
  * @ref: A string ref name, such as "app/org.test.App/86_64/master"
  * @error: return location for a #GError
  *
- * Tries to parse a full ref name and return a #XdgAppRef (without a
+ * Tries to parse a full ref name and return a #FlatpakRef (without a
  * commit set) or fail if the ref is invalid somehow.
  *
- * Returns: (transfer full): an #XdgAppRef, or %NULL
+ * Returns: (transfer full): an #FlatpakRef, or %NULL
  */
-XdgAppRef *
-xdg_app_ref_parse (const char *ref, GError **error)
+FlatpakRef *
+flatpak_ref_parse (const char *ref, GError **error)
 {
   g_auto(GStrv) parts = NULL;
 
-  parts = xdg_app_decompose_ref (ref, error);
+  parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
     return NULL;
 
-  XdgAppRefKind kind;
+  FlatpakRefKind kind;
   if (g_strcmp0 (parts[0], "app") == 0)
     {
-      kind = XDG_APP_REF_KIND_APP;
+      kind = FLATPAK_REF_KIND_APP;
     }
   else if (g_strcmp0 (parts[0], "runtime") == 0)
     {
-      kind = XDG_APP_REF_KIND_RUNTIME;
+      kind = FLATPAK_REF_KIND_RUNTIME;
     }
   else
     {
@@ -354,7 +354,7 @@ xdg_app_ref_parse (const char *ref, GError **error)
       return NULL;
     }
 
-  return XDG_APP_REF (g_object_new (XDG_APP_TYPE_REF,
+  return FLATPAK_REF (g_object_new (FLATPAK_TYPE_REF,
                                     "kind", kind,
                                     "name", parts[1],
                                     "arch", parts[2],

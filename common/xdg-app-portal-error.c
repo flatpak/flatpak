@@ -25,24 +25,24 @@
 
 #include <gio/gio.h>
 
-static const GDBusErrorEntry xdg_app_error_entries[] = {
-  {XDG_APP_PORTAL_ERROR_FAILED,                           "org.freedesktop.XdgApp.Failed"},
-  {XDG_APP_PORTAL_ERROR_INVALID_ARGUMENT,                 "org.freedesktop.XdgApp.InvalidArgument"},
-  {XDG_APP_PORTAL_ERROR_NOT_FOUND,                        "org.freedesktop.XdgApp.NotFound"},
-  {XDG_APP_PORTAL_ERROR_EXISTS,                           "org.freedesktop.XdgApp.Exists"},
-  {XDG_APP_PORTAL_ERROR_NOT_ALLOWED,                      "org.freedesktop.XdgApp.NotAllowed"},
-  {XDG_APP_PORTAL_ERROR_CANCELLED,                        "org.freedesktop.XdgApp.Cancelled"},
-  {XDG_APP_PORTAL_ERROR_WINDOW_DESTROYED,                 "org.freedesktop.XdgApp.WindowDestroyed"},
+static const GDBusErrorEntry flatpak_error_entries[] = {
+  {FLATPAK_PORTAL_ERROR_FAILED,                           "org.freedesktop.Flatpak.Failed"},
+  {FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,                 "org.freedesktop.Flatpak.InvalidArgument"},
+  {FLATPAK_PORTAL_ERROR_NOT_FOUND,                        "org.freedesktop.Flatpak.NotFound"},
+  {FLATPAK_PORTAL_ERROR_EXISTS,                           "org.freedesktop.Flatpak.Exists"},
+  {FLATPAK_PORTAL_ERROR_NOT_ALLOWED,                      "org.freedesktop.Flatpak.NotAllowed"},
+  {FLATPAK_PORTAL_ERROR_CANCELLED,                        "org.freedesktop.Flatpak.Cancelled"},
+  {FLATPAK_PORTAL_ERROR_WINDOW_DESTROYED,                 "org.freedesktop.Flatpak.WindowDestroyed"},
 };
 
 GQuark
-xdg_app_portal_error_quark (void)
+flatpak_portal_error_quark (void)
 {
   static volatile gsize quark_volatile = 0;
 
   g_dbus_error_register_error_domain ("xdg-app-portal-error-quark",
                                       &quark_volatile,
-                                      xdg_app_error_entries,
-                                      G_N_ELEMENTS (xdg_app_error_entries));
+                                      flatpak_error_entries,
+                                      G_N_ELEMENTS (flatpak_error_entries));
   return (GQuark) quark_volatile;
 }

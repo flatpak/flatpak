@@ -388,7 +388,7 @@ tar (GFile   *dir,
   va_list ap;
 
   va_start (ap, error);
-  res = xdg_app_spawn (dir, NULL, error, "tar", ap);
+  res = flatpak_spawn (dir, NULL, error, "tar", ap);
   va_end (ap);
 
   return res;
@@ -403,7 +403,7 @@ unzip (GFile   *dir,
   va_list ap;
 
   va_start (ap, error);
-  res = xdg_app_spawn (dir, NULL, error, "unzip", ap);
+  res = flatpak_spawn (dir, NULL, error, "unzip", ap);
   va_end (ap);
 
   return res;

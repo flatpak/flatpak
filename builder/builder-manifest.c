@@ -826,7 +826,7 @@ xdg_app (GError **error,
   va_list ap;
 
   va_start (ap, error);
-  res = xdg_app_spawn (NULL, &output, error, "xdg-app", ap);
+  res = flatpak_spawn (NULL, &output, error, "xdg-app", ap);
   va_end (ap);
 
   if (res)
@@ -849,14 +849,14 @@ builder_manifest_start (BuilderManifest *self,
   self->sdk_commit = xdg_app (NULL, "info", arch_option, "--show-commit", self->sdk,
                               builder_manifest_get_runtime_version (self), NULL);
   if (self->sdk_commit == NULL)
-    return xdg_app_fail (error, "Unable to find sdk %s version %s",
+    return flatpak_fail (error, "Unable to find sdk %s version %s",
                          self->sdk,
                          builder_manifest_get_runtime_version (self));
 
   self->runtime_commit = xdg_app (NULL, "info", arch_option, "--show-commit", self->runtime,
                                   builder_manifest_get_runtime_version (self), NULL);
   if (self->runtime_commit == NULL)
-    return xdg_app_fail (error, "Unable to find runtime %s version %s",
+    return flatpak_fail (error, "Unable to find runtime %s version %s",
                          self->runtime,
                          builder_manifest_get_runtime_version (self));
 

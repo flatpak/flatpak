@@ -105,11 +105,11 @@ import_oci (OstreeRepo *repo, GFile *file,
   commitmeta = g_file_resolve_relative_path (archive_root, "rootfs/commitmeta");
 
   if (!g_file_query_exists (ref, NULL))
-    return xdg_app_fail (error, "Required file ref not in tarfile");
+    return flatpak_fail (error, "Required file ref not in tarfile");
   if (!g_file_query_exists (metadata, NULL))
-    return xdg_app_fail (error, "Required file metadata not in tarfile");
+    return flatpak_fail (error, "Required file metadata not in tarfile");
   if (!g_file_query_exists (commit, NULL))
-    return xdg_app_fail (error, "Required file commit not in tarfile");
+    return flatpak_fail (error, "Required file commit not in tarfile");
 
   if (!g_file_load_contents (ref, cancellable,
                              &ref_data, NULL,
@@ -123,7 +123,7 @@ import_oci (OstreeRepo *repo, GFile *file,
 
   files = g_file_resolve_relative_path (archive_root, files_source);
   if (!g_file_query_exists (files, NULL))
-    return xdg_app_fail (error, "Required directory %s not in tarfile", files_source);
+    return flatpak_fail (error, "Required directory %s not in tarfile", files_source);
 
   export = g_file_resolve_relative_path (archive_root, "rootfs/export");
 
@@ -151,7 +151,7 @@ import_oci (OstreeRepo *repo, GFile *file,
 
   mtree = ostree_mutable_tree_new ();
 
-  if (!xdg_app_mtree_create_root (repo, mtree, cancellable, error))
+  if (!flatpak_mtree_create_root (repo, mtree, cancellable, error))
     return FALSE;
 
   if (!ostree_mutable_tree_ensure_dir (mtree, "files", &files_mtree, error))
@@ -191,11 +191,11 @@ import_oci (OstreeRepo *repo, GFile *file,
     tree_metadata_checksum = ostree_checksum_from_bytes_v (tree_metadata_bytes);
 
     if (strcmp (tree_contents_checksum, ostree_repo_file_tree_get_contents_checksum ((OstreeRepoFile *) root)))
-      return xdg_app_fail (error, "Imported content checksum (%s) does not match original checksum (%s)",
+      return flatpak_fail (error, "Imported content checksum (%s) does not match original checksum (%s)",
                            tree_contents_checksum, ostree_repo_file_tree_get_contents_checksum ((OstreeRepoFile *) root));
 
     if (strcmp (tree_metadata_checksum, ostree_repo_file_tree_get_metadata_checksum ((OstreeRepoFile *) root)))
-      return xdg_app_fail (error, "Imported metadata checksum (%s) does not match original checksum (%s)",
+      return flatpak_fail (error, "Imported metadata checksum (%s) does not match original checksum (%s)",
                            tree_metadata_checksum, ostree_repo_file_tree_get_metadata_checksum ((OstreeRepoFile *) root));
   }
 
@@ -245,7 +245,7 @@ import_bundle (OstreeRepo *repo, GFile *file,
   g_autofree char *to_checksum = NULL;
   const char *ref;
 
-  metadata = xdg_app_bundle_load (file, &to_checksum,
+  metadata = flatpak_bundle_load (file, &to_checksum,
                                   &bundle_ref,
                                   NULL,
                                   NULL,
@@ -260,7 +260,7 @@ import_bundle (OstreeRepo *repo, GFile *file,
     ref = bundle_ref;
 
   g_print ("Importing %s (%s)\n", ref, to_checksum);
-  if (!xdg_app_pull_from_bundle (repo, file,
+  if (!flatpak_pull_from_bundle (repo, file,
                                  NULL, ref, FALSE,
                                  cancellable,
                                  error))
@@ -270,7 +270,7 @@ import_bundle (OstreeRepo *repo, GFile *file,
 }
 
 gboolean
-xdg_app_builtin_build_import (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) file = NULL;
@@ -282,7 +282,7 @@ xdg_app_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
 
   context = g_option_context_new ("LOCATION FILENAME - Import a file bundle into a local repository");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (argc < 3)
@@ -295,7 +295,7 @@ xdg_app_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   repo = ostree_repo_new (repofile);
 
   if (!g_file_query_exists (repofile, cancellable))
-    return xdg_app_fail (error, "'%s' is not a valid repository", location);
+    return flatpak_fail (error, "'%s' is not a valid repository", location);
 
   file = g_file_new_for_commandline_arg (filename);
 

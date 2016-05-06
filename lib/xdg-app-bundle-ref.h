@@ -18,47 +18,47 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
-#ifndef __XDG_APP_BUNDLE_REF_H__
-#define __XDG_APP_BUNDLE_REF_H__
+#ifndef __FLATPAK_BUNDLE_REF_H__
+#define __FLATPAK_BUNDLE_REF_H__
 
-typedef struct _XdgAppBundleRef XdgAppBundleRef;
+typedef struct _FlatpakBundleRef FlatpakBundleRef;
 
 #include <gio/gio.h>
 #include <xdg-app-ref.h>
 
-#define XDG_APP_TYPE_BUNDLE_REF xdg_app_bundle_ref_get_type ()
-#define XDG_APP_BUNDLE_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_BUNDLE_REF, XdgAppBundleRef))
-#define XDG_APP_IS_BUNDLE_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_BUNDLE_REF))
+#define FLATPAK_TYPE_BUNDLE_REF flatpak_bundle_ref_get_type ()
+#define FLATPAK_BUNDLE_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_BUNDLE_REF, FlatpakBundleRef))
+#define FLATPAK_IS_BUNDLE_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_BUNDLE_REF))
 
-XDG_APP_EXTERN GType xdg_app_bundle_ref_get_type (void);
+FLATPAK_EXTERN GType flatpak_bundle_ref_get_type (void);
 
-struct _XdgAppBundleRef
+struct _FlatpakBundleRef
 {
-  XdgAppRef parent;
+  FlatpakRef parent;
 };
 
 typedef struct
 {
-  XdgAppRefClass parent_class;
-} XdgAppBundleRefClass;
+  FlatpakRefClass parent_class;
+} FlatpakBundleRefClass;
 
-XDG_APP_EXTERN XdgAppBundleRef *xdg_app_bundle_ref_new (GFile   *file,
-                                                        GError **error);
-XDG_APP_EXTERN GFile           *xdg_app_bundle_ref_get_file (XdgAppBundleRef *self);
-XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_metadata (XdgAppBundleRef *self);
-XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_appstream (XdgAppBundleRef *self);
-XDG_APP_EXTERN GBytes          *xdg_app_bundle_ref_get_icon (XdgAppBundleRef *self,
-                                                             int              size);
-XDG_APP_EXTERN char            *xdg_app_bundle_ref_get_origin (XdgAppBundleRef *self);
-XDG_APP_EXTERN guint64          xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef *self);
+FLATPAK_EXTERN FlatpakBundleRef *flatpak_bundle_ref_new (GFile   *file,
+                                                         GError **error);
+FLATPAK_EXTERN GFile           *flatpak_bundle_ref_get_file (FlatpakBundleRef *self);
+FLATPAK_EXTERN GBytes          *flatpak_bundle_ref_get_metadata (FlatpakBundleRef *self);
+FLATPAK_EXTERN GBytes          *flatpak_bundle_ref_get_appstream (FlatpakBundleRef *self);
+FLATPAK_EXTERN GBytes          *flatpak_bundle_ref_get_icon (FlatpakBundleRef *self,
+                                                             int               size);
+FLATPAK_EXTERN char            *flatpak_bundle_ref_get_origin (FlatpakBundleRef *self);
+FLATPAK_EXTERN guint64          flatpak_bundle_ref_get_installed_size (FlatpakBundleRef *self);
 
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppBundleRef, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakBundleRef, g_object_unref)
 #endif
 
-#endif /* __XDG_APP_BUNDLE_REF_H__ */
+#endif /* __FLATPAK_BUNDLE_REF_H__ */

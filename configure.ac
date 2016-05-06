@@ -1,28 +1,28 @@
 AC_PREREQ([2.63])
 
 # Making releases:
-#   XDG_APP_MICRO_VERSION += 1;
-#   XDG_APP_INTERFACE_AGE += 1;
-#   XDG_APP_BINARY_AGE += 1;
-# if any functions have been added, set XDG_APP_INTERFACE_AGE to 0.
+#   FLATPAK_MICRO_VERSION += 1;
+#   FLATPAK_INTERFACE_AGE += 1;
+#   FLATPAK_BINARY_AGE += 1;
+# if any functions have been added, set FLATPAK_INTERFACE_AGE to 0.
 # if backwards compatibility has been broken,
-# set XDG_APP_BINARY_AGE and XDG_APP_INTERFACE_AGE to 0.
+# set FLATPAK_BINARY_AGE and FLATPAK_INTERFACE_AGE to 0.
 #
 # in easier to understand terms:
 #
 # on the stable branch, interface age == micro
 # on the unstable (ie master), interface age = 0
 
-m4_define([xdg_app_major_version], [0])
-m4_define([xdg_app_minor_version], [5])
-m4_define([xdg_app_micro_version], [2])
-m4_define([xdg_app_interface_age], [2])
-m4_define([xdg_app_binary_age],
-          [m4_eval(10000 * xdg_app_major_version + 100 * xdg_app_minor_version + xdg_app_micro_version)])
-m4_define([xdg_app_version],
-          [xdg_app_major_version.xdg_app_minor_version.xdg_app_micro_version])
+m4_define([flatpak_major_version], [0])
+m4_define([flatpak_minor_version], [5])
+m4_define([flatpak_micro_version], [2])
+m4_define([flatpak_interface_age], [2])
+m4_define([flatpak_binary_age],
+          [m4_eval(10000 * flatpak_major_version + 100 * flatpak_minor_version + flatpak_micro_version)])
+m4_define([flatpak_version],
+          [flatpak_major_version.flatpak_minor_version.flatpak_micro_version])
 
-AC_INIT([xdg-app],[xdg_app_version])
+AC_INIT([flatpak],[flatpak_version])
 
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -41,7 +41,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.11 no-define no-dist-gzip dist-xz tar-ustar foreign subdir-objects])
 AC_PROG_SED
 
-GETTEXT_PACKAGE=XdgApp
+GETTEXT_PACKAGE=Flatpak
 AC_SUBST([GETTEXT_PACKAGE])
 AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 
@@ -319,11 +319,11 @@ case "$host" in
     CFLAGS="${SAVED_CFLAGS}"
 
     AS_IF([test "${enable_fvisibility_hidden}" = "yes"], [
-      AC_DEFINE([XDG_APP_EXTERN], [__attribute__((visibility("default"))) extern],
+      AC_DEFINE([FLATPAK_EXTERN], [__attribute__((visibility("default"))) extern],
                 [defines how to decorate public symbols while building])
       HIDDEN_VISIBILITY_CFLAGS="-fvisibility=hidden"
     ], [
-      AC_DEFINE([XDG_APP_EXTERN], [extern],
+      AC_DEFINE([FLATPAK_EXTERN], [extern],
                 [defines how to decorate public symbols while building])
     ])
     ;;
@@ -332,27 +332,27 @@ AC_SUBST(HIDDEN_VISIBILITY_CFLAGS)
 
 GLIB_TESTS
 
-XDG_APP_MAJOR_VERSION=xdg_app_major_version
-XDG_APP_MINOR_VERSION=xdg_app_minor_version
-XDG_APP_MICRO_VERSION=xdg_app_micro_version
-XDG_APP_INTERFACE_AGE=xdg_app_interface_age
-XDG_APP_VERSION=xdg_app_version
-AC_SUBST(XDG_APP_MAJOR_VERSION)
-AC_SUBST(XDG_APP_MINOR_VERSION)
-AC_SUBST(XDG_APP_MICRO_VERSION)
-AC_SUBST(XDG_APP_INTERFACE_AGE)
-AC_SUBST(XDG_APP_VERSION)
+FLATPAK_MAJOR_VERSION=flatpak_major_version
+FLATPAK_MINOR_VERSION=flatpak_minor_version
+FLATPAK_MICRO_VERSION=flatpak_micro_version
+FLATPAK_INTERFACE_AGE=flatpak_interface_age
+FLATPAK_VERSION=flatpak_version
+AC_SUBST(FLATPAK_MAJOR_VERSION)
+AC_SUBST(FLATPAK_MINOR_VERSION)
+AC_SUBST(FLATPAK_MICRO_VERSION)
+AC_SUBST(FLATPAK_INTERFACE_AGE)
+AC_SUBST(FLATPAK_VERSION)
 
 # libtool versioning
-#LT_RELEASE=$XDG_APP_MAJOR_VERSION.$XDG_APP_MINOR_VERSION
-#LT_CURRENT=`expr $XDG_APP_MICRO_VERSION - $XDG_APP_INTERFACE_AGE`
-#LT_REVISION=$XDG_APP_INTERFACE_AGE
-#LT_AGE=`expr $XDG_APP_BINARY_AGE - $XDG_APP_INTERFACE_AGE`
+#LT_RELEASE=$FLATPAK_MAJOR_VERSION.$FLATPAK_MINOR_VERSION
+#LT_CURRENT=`expr $FLATPAK_MICRO_VERSION - $FLATPAK_INTERFACE_AGE`
+#LT_REVISION=$FLATPAK_INTERFACE_AGE
+#LT_AGE=`expr $FLATPAK_BINARY_AGE - $FLATPAK_INTERFACE_AGE`
 #LT_CURRENT_MINUS_AGE=`expr $LT_CURRENT - $LT_AGE`
 
-m4_define([lt_current], [m4_eval(10000 * xdg_app_major_version +  100 * xdg_app_minor_version + xdg_app_micro_version - xdg_app_interface_age)])
-m4_define([lt_revision], [xdg_app_interface_age])
-m4_define([lt_age], [m4_eval(xdg_app_binary_age - xdg_app_interface_age)])
+m4_define([lt_current], [m4_eval(10000 * flatpak_major_version +  100 * flatpak_minor_version + flatpak_micro_version - flatpak_interface_age)])
+m4_define([lt_revision], [flatpak_interface_age])
+m4_define([lt_age], [m4_eval(flatpak_binary_age - flatpak_interface_age)])
 LT_VERSION_INFO="lt_current:lt_revision:lt_age"
 LT_CURRENT_MINUS_AGE=m4_eval(lt_current - lt_age)
 AC_SUBST(LT_VERSION_INFO)

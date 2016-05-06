@@ -1,6 +1,6 @@
 /*** BEGIN file-header ***/
-#ifndef __XDG_APP_ENUM_TYPES_H__
-#define __XDG_APP_ENUM_TYPES_H__
+#ifndef __FLATPAK_ENUM_TYPES_H__
+#define __FLATPAK_ENUM_TYPES_H__
 
 #include <glib-object.h>
 
@@ -13,7 +13,7 @@ G_BEGIN_DECLS
 /*** END file-production ***/
 
 /*** BEGIN value-header ***/
-XDG_APP_EXTERN GType @enum_name@_get_type (void) G_GNUC_CONST;
+FLATPAK_EXTERN GType @enum_name@_get_type (void) G_GNUC_CONST;
 #define @ENUMPREFIX@_TYPE_@ENUMSHORT@ (@enum_name@_get_type ())
 /*** END value-header ***/
 

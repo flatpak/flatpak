@@ -13,17 +13,17 @@ G_BEGIN_DECLS
 const char **      xdg_unparse_permissions (XdpPermissionFlags permissions);
 XdpPermissionFlags xdp_parse_permissions (const char **permissions);
 
-XdpPermissionFlags xdp_entry_get_permissions (XdgAppDbEntry *entry,
-                                              const char    *app_id);
-gboolean           xdp_entry_has_permissions (XdgAppDbEntry     *entry,
+XdpPermissionFlags xdp_entry_get_permissions (FlatpakDbEntry *entry,
+                                              const char     *app_id);
+gboolean           xdp_entry_has_permissions (FlatpakDbEntry    *entry,
                                               const char        *app_id,
                                               XdpPermissionFlags perms);
-const char *       xdp_entry_get_path (XdgAppDbEntry *entry);
-char *             xdp_entry_dup_basename (XdgAppDbEntry *entry);
-char *             xdp_entry_dup_dirname (XdgAppDbEntry *entry);
-guint64            xdp_entry_get_device (XdgAppDbEntry *entry);
-guint64            xdp_entry_get_inode (XdgAppDbEntry *entry);
-guint32            xdp_entry_get_flags (XdgAppDbEntry *entry);
+const char *       xdp_entry_get_path (FlatpakDbEntry *entry);
+char *             xdp_entry_dup_basename (FlatpakDbEntry *entry);
+char *             xdp_entry_dup_dirname (FlatpakDbEntry *entry);
+guint64            xdp_entry_get_device (FlatpakDbEntry *entry);
+guint64            xdp_entry_get_inode (FlatpakDbEntry *entry);
+guint32            xdp_entry_get_flags (FlatpakDbEntry *entry);
 
 char *  xdp_name_from_id (guint32 doc_id);
 

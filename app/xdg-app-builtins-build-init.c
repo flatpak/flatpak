@@ -51,7 +51,7 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) var_deploy_base = NULL;
@@ -76,7 +76,7 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   context = g_option_context_new ("DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (argc < 5)
@@ -89,20 +89,20 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (argc >= 6)
     branch = argv[5];
 
-  if (!xdg_app_is_valid_name (app_id))
-    return xdg_app_fail (error, "'%s' is not a valid application name", app_id);
+  if (!flatpak_is_valid_name (app_id))
+    return flatpak_fail (error, "'%s' is not a valid application name", app_id);
 
-  if (!xdg_app_is_valid_name (runtime))
-    return xdg_app_fail (error, "'%s' is not a valid runtime name", runtime);
+  if (!flatpak_is_valid_name (runtime))
+    return flatpak_fail (error, "'%s' is not a valid runtime name", runtime);
 
-  if (!xdg_app_is_valid_name (sdk))
-    return xdg_app_fail (error, "'%s' is not a valid sdk name", sdk);
+  if (!flatpak_is_valid_name (sdk))
+    return flatpak_fail (error, "'%s' is not a valid sdk name", sdk);
 
-  if (!xdg_app_is_valid_branch (branch))
-    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
+  if (!flatpak_is_valid_branch (branch))
+    return flatpak_fail (error, "'%s' is not a valid branch name", branch);
 
-  runtime_ref = xdg_app_build_untyped_ref (runtime, branch, opt_arch);
-  sdk_ref = xdg_app_build_untyped_ref (sdk, branch, opt_arch);
+  runtime_ref = flatpak_build_untyped_ref (runtime, branch, opt_arch);
+  sdk_ref = flatpak_build_untyped_ref (sdk, branch, opt_arch);
 
   base = g_file_new_for_commandline_arg (directory);
 
@@ -121,16 +121,16 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   if (!opt_update &&
       g_file_query_exists (files_dir, cancellable))
-    return xdg_app_fail (error, "Build directory %s already initialized", directory);
+    return flatpak_fail (error, "Build directory %s already initialized", directory);
 
   if (opt_writable_sdk)
     {
       g_autofree char *full_sdk_ref = g_strconcat ("runtime/", sdk_ref, NULL);
       g_autoptr(GError) my_error = NULL;
       g_autoptr(GFile) sdk_deploy_files = NULL;
-      g_autoptr(XdgAppDeploy) sdk_deploy = NULL;
+      g_autoptr(FlatpakDeploy) sdk_deploy = NULL;
 
-      sdk_deploy = xdg_app_find_deploy_for_ref (full_sdk_ref, cancellable, error);
+      sdk_deploy = flatpak_find_deploy_for_ref (full_sdk_ref, cancellable, error);
       if (sdk_deploy == NULL)
         return FALSE;
 
@@ -145,17 +145,17 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
           g_clear_error (&my_error);
         }
 
-      sdk_deploy_files = xdg_app_deploy_get_files (sdk_deploy);
-      if (!xdg_app_cp_a (sdk_deploy_files, usr_dir, XDG_APP_CP_FLAGS_NO_CHOWN, cancellable, error))
+      sdk_deploy_files = flatpak_deploy_get_files (sdk_deploy);
+      if (!flatpak_cp_a (sdk_deploy_files, usr_dir, FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))
         return FALSE;
 
       if (opt_sdk_extensions)
         {
-          g_autoptr(GKeyFile) metakey = xdg_app_deploy_get_metadata (sdk_deploy);
+          g_autoptr(GKeyFile) metakey = flatpak_deploy_get_metadata (sdk_deploy);
           GList *extensions = NULL, *l;
 
           /* We leak this on failure, as we have no autoptr for deep lists.. */
-          extensions = xdg_app_list_extensions (metakey,
+          extensions = flatpak_list_extensions (metakey,
                                                 opt_arch,
                                                 branch);
 
@@ -166,12 +166,12 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
               for (l = extensions; l != NULL; l = l->next)
                 {
-                  XdgAppExtension *ext = l->data;
+                  FlatpakExtension *ext = l->data;
 
                   if (strcmp (ext->installed_id, requested_extension) == 0 ||
                       strcmp (ext->id, requested_extension) == 0)
                     {
-                      g_autoptr(GFile) ext_deploy_dir = xdg_app_find_deploy_dir_for_ref (ext->ref, cancellable, NULL);
+                      g_autoptr(GFile) ext_deploy_dir = flatpak_find_deploy_dir_for_ref (ext->ref, cancellable, NULL);
                       if (ext_deploy_dir != NULL)
                         {
                           g_autoptr(GFile) ext_deploy_files = g_file_get_child (ext_deploy_dir, "files");
@@ -185,31 +185,31 @@ xdg_app_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                           if (!gs_shutil_rm_rf (target, cancellable, error))
                             return FALSE;
 
-                          if (!xdg_app_cp_a (ext_deploy_files, target, XDG_APP_CP_FLAGS_NO_CHOWN, cancellable, error))
+                          if (!flatpak_cp_a (ext_deploy_files, target, FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))
                             return FALSE;
 
                           found = TRUE;
                         }
                       else
                         {
-                          g_list_free_full (extensions, (GDestroyNotify) xdg_app_extension_free);
-                          return xdg_app_fail (error, "Requested extension %s not installed\n", requested_extension);
+                          g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
+                          return flatpak_fail (error, "Requested extension %s not installed\n", requested_extension);
                         }
                     }
                 }
 
               if (!found)
-                return xdg_app_fail (error, "No extension %s in sdk\n", requested_extension);
+                return flatpak_fail (error, "No extension %s in sdk\n", requested_extension);
             }
-          g_list_free_full (extensions, (GDestroyNotify) xdg_app_extension_free);
+          g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
         }
     }
 
   if (opt_var)
     {
-      var_ref = xdg_app_build_runtime_ref (opt_var, branch, opt_arch);
+      var_ref = flatpak_build_runtime_ref (opt_var, branch, opt_arch);
 
-      var_deploy_base = xdg_app_find_deploy_dir_for_ref (var_ref, cancellable, error);
+      var_deploy_base = flatpak_find_deploy_dir_for_ref (var_ref, cancellable, error);
       if (var_deploy_base == NULL)
         return FALSE;
 

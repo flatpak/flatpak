@@ -132,7 +132,7 @@ git (GFile   *dir,
   va_list ap;
 
   va_start (ap, error);
-  res = xdg_app_spawn (dir, output, error, "git", ap);
+  res = flatpak_spawn (dir, output, error, "git", ap);
   va_end (ap);
 
   return res;

@@ -48,34 +48,34 @@
 #define DEFAULT_SHELL "/bin/sh"
 
 typedef enum {
-  XDG_APP_CONTEXT_SHARED_NETWORK   = 1 << 0,
-  XDG_APP_CONTEXT_SHARED_IPC       = 1 << 1,
-} XdgAppContextShares;
+  FLATPAK_CONTEXT_SHARED_NETWORK   = 1 << 0,
+  FLATPAK_CONTEXT_SHARED_IPC       = 1 << 1,
+} FlatpakContextShares;
 
 /* In numerical order of more privs */
 typedef enum {
-  XDG_APP_FILESYSTEM_MODE_READ_ONLY    = 1,
-  XDG_APP_FILESYSTEM_MODE_READ_WRITE   = 2,
-} XdgAppFilesystemMode;
+  FLATPAK_FILESYSTEM_MODE_READ_ONLY    = 1,
+  FLATPAK_FILESYSTEM_MODE_READ_WRITE   = 2,
+} FlatpakFilesystemMode;
 
 
 /* Same order as enum */
-static const char *xdg_app_context_shares[] = {
+static const char *flatpak_context_shares[] = {
   "network",
   "ipc",
   NULL
 };
 
 typedef enum {
-  XDG_APP_CONTEXT_SOCKET_X11         = 1 << 0,
-  XDG_APP_CONTEXT_SOCKET_WAYLAND     = 1 << 1,
-  XDG_APP_CONTEXT_SOCKET_PULSEAUDIO  = 1 << 2,
-  XDG_APP_CONTEXT_SOCKET_SESSION_BUS = 1 << 3,
-  XDG_APP_CONTEXT_SOCKET_SYSTEM_BUS  = 1 << 4,
-} XdgAppContextSockets;
+  FLATPAK_CONTEXT_SOCKET_X11         = 1 << 0,
+  FLATPAK_CONTEXT_SOCKET_WAYLAND     = 1 << 1,
+  FLATPAK_CONTEXT_SOCKET_PULSEAUDIO  = 1 << 2,
+  FLATPAK_CONTEXT_SOCKET_SESSION_BUS = 1 << 3,
+  FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS  = 1 << 4,
+} FlatpakContextSockets;
 
 /* Same order as enum */
-static const char *xdg_app_context_sockets[] = {
+static const char *flatpak_context_sockets[] = {
   "x11",
   "wayland",
   "pulseaudio",
@@ -90,35 +90,35 @@ const char *dont_mount_in_root[] = {
 };
 
 typedef enum {
-  XDG_APP_CONTEXT_DEVICE_DRI         = 1 << 0,
-} XdgAppContextDevices;
+  FLATPAK_CONTEXT_DEVICE_DRI         = 1 << 0,
+} FlatpakContextDevices;
 
-static const char *xdg_app_context_devices[] = {
+static const char *flatpak_context_devices[] = {
   "dri",
   NULL
 };
 
-struct XdgAppContext
+struct FlatpakContext
 {
-  XdgAppContextShares  shares;
-  XdgAppContextShares  shares_valid;
-  XdgAppContextSockets sockets;
-  XdgAppContextSockets sockets_valid;
-  XdgAppContextDevices devices;
-  XdgAppContextDevices devices_valid;
-  GHashTable          *env_vars;
-  GHashTable          *persistent;
-  GHashTable          *filesystems;
-  GHashTable          *session_bus_policy;
-  GHashTable          *system_bus_policy;
+  FlatpakContextShares  shares;
+  FlatpakContextShares  shares_valid;
+  FlatpakContextSockets sockets;
+  FlatpakContextSockets sockets_valid;
+  FlatpakContextDevices devices;
+  FlatpakContextDevices devices_valid;
+  GHashTable           *env_vars;
+  GHashTable           *persistent;
+  GHashTable           *filesystems;
+  GHashTable           *session_bus_policy;
+  GHashTable           *system_bus_policy;
 };
 
-XdgAppContext *
-xdg_app_context_new (void)
+FlatpakContext *
+flatpak_context_new (void)
 {
-  XdgAppContext *context;
+  FlatpakContext *context;
 
-  context = g_slice_new0 (XdgAppContext);
+  context = g_slice_new0 (FlatpakContext);
   context->env_vars = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   context->persistent = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   context->filesystems = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -129,18 +129,18 @@ xdg_app_context_new (void)
 }
 
 void
-xdg_app_context_free (XdgAppContext *context)
+flatpak_context_free (FlatpakContext *context)
 {
   g_hash_table_destroy (context->env_vars);
   g_hash_table_destroy (context->persistent);
   g_hash_table_destroy (context->filesystems);
   g_hash_table_destroy (context->session_bus_policy);
   g_hash_table_destroy (context->system_bus_policy);
-  g_slice_free (XdgAppContext, context);
+  g_slice_free (FlatpakContext, context);
 }
 
 static guint32
-xdg_app_context_bitmask_from_string (const char *name, const char **names)
+flatpak_context_bitmask_from_string (const char *name, const char **names)
 {
   guint32 i;
 
@@ -155,7 +155,7 @@ xdg_app_context_bitmask_from_string (const char *name, const char **names)
 
 
 static char **
-xdg_app_context_bitmask_to_string (guint32 enabled, guint32 valid, const char **names)
+flatpak_context_bitmask_to_string (guint32 enabled, guint32 valid, const char **names)
 {
   guint32 i;
   GPtrArray *array;
@@ -178,10 +178,10 @@ xdg_app_context_bitmask_to_string (guint32 enabled, guint32 valid, const char **
   return (char **) g_ptr_array_free (array, FALSE);
 }
 
-static XdgAppContextShares
-xdg_app_context_share_from_string (const char *string, GError **error)
+static FlatpakContextShares
+flatpak_context_share_from_string (const char *string, GError **error)
 {
-  XdgAppContextShares shares = xdg_app_context_bitmask_from_string (string, xdg_app_context_shares);
+  FlatpakContextShares shares = flatpak_context_bitmask_from_string (string, flatpak_context_shares);
 
   if (shares == 0)
     g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
@@ -190,22 +190,22 @@ xdg_app_context_share_from_string (const char *string, GError **error)
 }
 
 static char **
-xdg_app_context_shared_to_string (XdgAppContextShares shares, XdgAppContextShares valid)
+flatpak_context_shared_to_string (FlatpakContextShares shares, FlatpakContextShares valid)
 {
-  return xdg_app_context_bitmask_to_string (shares, valid, xdg_app_context_shares);
+  return flatpak_context_bitmask_to_string (shares, valid, flatpak_context_shares);
 }
 
-static XdgAppPolicy
-xdg_app_policy_from_string (const char *string, GError **error)
+static FlatpakPolicy
+flatpak_policy_from_string (const char *string, GError **error)
 {
   if (strcmp (string, "none") == 0)
-    return XDG_APP_POLICY_NONE;
+    return FLATPAK_POLICY_NONE;
   if (strcmp (string, "see") == 0)
-    return XDG_APP_POLICY_SEE;
+    return FLATPAK_POLICY_SEE;
   if (strcmp (string, "talk") == 0)
-    return XDG_APP_POLICY_TALK;
+    return FLATPAK_POLICY_TALK;
   if (strcmp (string, "own") == 0)
-    return XDG_APP_POLICY_OWN;
+    return FLATPAK_POLICY_OWN;
 
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
                "Unknown socket type %s, valid types are: x11,wayland,pulseaudio,session-bus,system-bus\n", string);
@@ -213,20 +213,20 @@ xdg_app_policy_from_string (const char *string, GError **error)
 }
 
 static const char *
-xdg_app_policy_to_string (XdgAppPolicy policy)
+flatpak_policy_to_string (FlatpakPolicy policy)
 {
-  if (policy == XDG_APP_POLICY_SEE)
+  if (policy == FLATPAK_POLICY_SEE)
     return "see";
-  if (policy == XDG_APP_POLICY_TALK)
+  if (policy == FLATPAK_POLICY_TALK)
     return "talk";
-  if (policy == XDG_APP_POLICY_OWN)
+  if (policy == FLATPAK_POLICY_OWN)
     return "own";
 
   return "none";
 }
 
 static gboolean
-xdg_app_verify_dbus_name (const char *name, GError **error)
+flatpak_verify_dbus_name (const char *name, GError **error)
 {
   const char *name_part;
   g_autofree char *tmp = NULL;
@@ -248,10 +248,10 @@ xdg_app_verify_dbus_name (const char *name, GError **error)
   return FALSE;
 }
 
-static XdgAppContextSockets
-xdg_app_context_socket_from_string (const char *string, GError **error)
+static FlatpakContextSockets
+flatpak_context_socket_from_string (const char *string, GError **error)
 {
-  XdgAppContextSockets sockets = xdg_app_context_bitmask_from_string (string, xdg_app_context_sockets);
+  FlatpakContextSockets sockets = flatpak_context_bitmask_from_string (string, flatpak_context_sockets);
 
   if (sockets == 0)
     g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
@@ -260,15 +260,15 @@ xdg_app_context_socket_from_string (const char *string, GError **error)
 }
 
 static char **
-xdg_app_context_sockets_to_string (XdgAppContextSockets sockets, XdgAppContextSockets valid)
+flatpak_context_sockets_to_string (FlatpakContextSockets sockets, FlatpakContextSockets valid)
 {
-  return xdg_app_context_bitmask_to_string (sockets, valid, xdg_app_context_sockets);
+  return flatpak_context_bitmask_to_string (sockets, valid, flatpak_context_sockets);
 }
 
-static XdgAppContextDevices
-xdg_app_context_device_from_string (const char *string, GError **error)
+static FlatpakContextDevices
+flatpak_context_device_from_string (const char *string, GError **error)
 {
-  XdgAppContextDevices devices = xdg_app_context_bitmask_from_string (string, xdg_app_context_devices);
+  FlatpakContextDevices devices = flatpak_context_bitmask_from_string (string, flatpak_context_devices);
 
   if (devices == 0)
     g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
@@ -277,86 +277,86 @@ xdg_app_context_device_from_string (const char *string, GError **error)
 }
 
 static char **
-xdg_app_context_devices_to_string (XdgAppContextDevices devices, XdgAppContextDevices valid)
+flatpak_context_devices_to_string (FlatpakContextDevices devices, FlatpakContextDevices valid)
 {
-  return xdg_app_context_bitmask_to_string (devices, valid, xdg_app_context_devices);
+  return flatpak_context_bitmask_to_string (devices, valid, flatpak_context_devices);
 }
 
 static void
-xdg_app_context_add_shares (XdgAppContext      *context,
-                            XdgAppContextShares shares)
+flatpak_context_add_shares (FlatpakContext      *context,
+                            FlatpakContextShares shares)
 {
   context->shares_valid |= shares;
   context->shares |= shares;
 }
 
 static void
-xdg_app_context_remove_shares (XdgAppContext      *context,
-                               XdgAppContextShares shares)
+flatpak_context_remove_shares (FlatpakContext      *context,
+                               FlatpakContextShares shares)
 {
   context->shares_valid |= shares;
   context->shares &= ~shares;
 }
 
 static void
-xdg_app_context_add_sockets (XdgAppContext       *context,
-                             XdgAppContextSockets sockets)
+flatpak_context_add_sockets (FlatpakContext       *context,
+                             FlatpakContextSockets sockets)
 {
   context->sockets_valid |= sockets;
   context->sockets |= sockets;
 }
 
 static void
-xdg_app_context_remove_sockets (XdgAppContext       *context,
-                                XdgAppContextSockets sockets)
+flatpak_context_remove_sockets (FlatpakContext       *context,
+                                FlatpakContextSockets sockets)
 {
   context->sockets_valid |= sockets;
   context->sockets &= ~sockets;
 }
 
 static void
-xdg_app_context_add_devices (XdgAppContext       *context,
-                             XdgAppContextDevices devices)
+flatpak_context_add_devices (FlatpakContext       *context,
+                             FlatpakContextDevices devices)
 {
   context->devices_valid |= devices;
   context->devices |= devices;
 }
 
 static void
-xdg_app_context_remove_devices (XdgAppContext       *context,
-                                XdgAppContextDevices devices)
+flatpak_context_remove_devices (FlatpakContext       *context,
+                                FlatpakContextDevices devices)
 {
   context->devices_valid |= devices;
   context->devices &= ~devices;
 }
 
 static void
-xdg_app_context_set_env_var (XdgAppContext *context,
-                             const char    *name,
-                             const char    *value)
+flatpak_context_set_env_var (FlatpakContext *context,
+                             const char     *name,
+                             const char     *value)
 {
   g_hash_table_insert (context->env_vars, g_strdup (name), g_strdup (value));
 }
 
 void
-xdg_app_context_set_session_bus_policy (XdgAppContext *context,
-                                        const char    *name,
-                                        XdgAppPolicy   policy)
+flatpak_context_set_session_bus_policy (FlatpakContext *context,
+                                        const char     *name,
+                                        FlatpakPolicy   policy)
 {
   g_hash_table_insert (context->session_bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
 }
 
 void
-xdg_app_context_set_system_bus_policy (XdgAppContext *context,
-                                       const char    *name,
-                                       XdgAppPolicy   policy)
+flatpak_context_set_system_bus_policy (FlatpakContext *context,
+                                       const char     *name,
+                                       FlatpakPolicy   policy)
 {
   g_hash_table_insert (context->system_bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
 }
 
 static void
-xdg_app_context_set_persistent (XdgAppContext *context,
-                                const char    *path)
+flatpak_context_set_persistent (FlatpakContext *context,
+                                const char     *path)
 {
   g_hash_table_insert (context->persistent, g_strdup (path), GINT_TO_POINTER (1));
 }
@@ -467,31 +467,31 @@ get_user_dir_from_string (const char  *filesystem,
 }
 
 static char *
-parse_filesystem_flags (const char *filesystem, XdgAppFilesystemMode *mode)
+parse_filesystem_flags (const char *filesystem, FlatpakFilesystemMode *mode)
 {
   gsize len = strlen (filesystem);
 
   if (mode)
-    *mode = XDG_APP_FILESYSTEM_MODE_READ_WRITE;
+    *mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
 
   if (g_str_has_suffix (filesystem, ":ro"))
     {
       len -= 3;
       if (mode)
-        *mode = XDG_APP_FILESYSTEM_MODE_READ_ONLY;
+        *mode = FLATPAK_FILESYSTEM_MODE_READ_ONLY;
     }
   else if (g_str_has_suffix (filesystem, ":rw"))
     {
       len -= 3;
       if (mode)
-        *mode = XDG_APP_FILESYSTEM_MODE_READ_WRITE;
+        *mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
     }
 
   return g_strndup (filesystem, len);
 }
 
 static gboolean
-xdg_app_context_verify_filesystem (const char *filesystem_and_mode,
+flatpak_context_verify_filesystem (const char *filesystem_and_mode,
                                    GError    **error)
 {
   g_autofree char *filesystem = parse_filesystem_flags (filesystem_and_mode, NULL);
@@ -513,18 +513,18 @@ xdg_app_context_verify_filesystem (const char *filesystem_and_mode,
 }
 
 static void
-xdg_app_context_add_filesystem (XdgAppContext *context,
-                                const char    *what)
+flatpak_context_add_filesystem (FlatpakContext *context,
+                                const char     *what)
 {
-  XdgAppFilesystemMode mode;
+  FlatpakFilesystemMode mode;
   char *fs = parse_filesystem_flags (what, &mode);
 
   g_hash_table_insert (context->filesystems, fs, GINT_TO_POINTER (mode));
 }
 
 static void
-xdg_app_context_remove_filesystem (XdgAppContext *context,
-                                   const char    *what)
+flatpak_context_remove_filesystem (FlatpakContext *context,
+                                   const char     *what)
 {
   g_hash_table_insert (context->filesystems,
                        parse_filesystem_flags (what, NULL),
@@ -532,8 +532,8 @@ xdg_app_context_remove_filesystem (XdgAppContext *context,
 }
 
 void
-xdg_app_context_merge (XdgAppContext *context,
-                       XdgAppContext *other)
+flatpak_context_merge (FlatpakContext *context,
+                       FlatpakContext *other)
 {
   GHashTableIter iter;
   gpointer key, value;
@@ -575,14 +575,14 @@ option_share_cb (const gchar *option_name,
                  gpointer     data,
                  GError     **error)
 {
-  XdgAppContext *context = data;
-  XdgAppContextShares share;
+  FlatpakContext *context = data;
+  FlatpakContextShares share;
 
-  share = xdg_app_context_share_from_string (value, error);
+  share = flatpak_context_share_from_string (value, error);
   if (share == 0)
     return FALSE;
 
-  xdg_app_context_add_shares (context, share);
+  flatpak_context_add_shares (context, share);
 
   return TRUE;
 }
@@ -593,14 +593,14 @@ option_unshare_cb (const gchar *option_name,
                    gpointer     data,
                    GError     **error)
 {
-  XdgAppContext *context = data;
-  XdgAppContextShares share;
+  FlatpakContext *context = data;
+  FlatpakContextShares share;
 
-  share = xdg_app_context_share_from_string (value, error);
+  share = flatpak_context_share_from_string (value, error);
   if (share == 0)
     return FALSE;
 
-  xdg_app_context_remove_shares (context, share);
+  flatpak_context_remove_shares (context, share);
 
   return TRUE;
 }
@@ -611,14 +611,14 @@ option_socket_cb (const gchar *option_name,
                   gpointer     data,
                   GError     **error)
 {
-  XdgAppContext *context = data;
-  XdgAppContextSockets socket;
+  FlatpakContext *context = data;
+  FlatpakContextSockets socket;
 
-  socket = xdg_app_context_socket_from_string (value, error);
+  socket = flatpak_context_socket_from_string (value, error);
   if (socket == 0)
     return FALSE;
 
-  xdg_app_context_add_sockets (context, socket);
+  flatpak_context_add_sockets (context, socket);
 
   return TRUE;
 }
@@ -629,14 +629,14 @@ option_nosocket_cb (const gchar *option_name,
                     gpointer     data,
                     GError     **error)
 {
-  XdgAppContext *context = data;
-  XdgAppContextSockets socket;
+  FlatpakContext *context = data;
+  FlatpakContextSockets socket;
 
-  socket = xdg_app_context_socket_from_string (value, error);
+  socket = flatpak_context_socket_from_string (value, error);
   if (socket == 0)
     return FALSE;
 
-  xdg_app_context_remove_sockets (context, socket);
+  flatpak_context_remove_sockets (context, socket);
 
   return TRUE;
 }
@@ -647,14 +647,14 @@ option_device_cb (const gchar *option_name,
                   gpointer     data,
                   GError     **error)
 {
-  XdgAppContext *context = data;
-  XdgAppContextDevices device;
+  FlatpakContext *context = data;
+  FlatpakContextDevices device;
 
-  device = xdg_app_context_device_from_string (value, error);
+  device = flatpak_context_device_from_string (value, error);
   if (device == 0)
     return FALSE;
 
-  xdg_app_context_add_devices (context, device);
+  flatpak_context_add_devices (context, device);
 
   return TRUE;
 }
@@ -665,14 +665,14 @@ option_nodevice_cb (const gchar *option_name,
                     gpointer     data,
                     GError     **error)
 {
-  XdgAppContext *context = data;
-  XdgAppContextDevices device;
+  FlatpakContext *context = data;
+  FlatpakContextDevices device;
 
-  device = xdg_app_context_device_from_string (value, error);
+  device = flatpak_context_device_from_string (value, error);
   if (device == 0)
     return FALSE;
 
-  xdg_app_context_remove_devices (context, device);
+  flatpak_context_remove_devices (context, device);
 
   return TRUE;
 }
@@ -683,12 +683,12 @@ option_filesystem_cb (const gchar *option_name,
                       gpointer     data,
                       GError     **error)
 {
-  XdgAppContext *context = data;
+  FlatpakContext *context = data;
 
-  if (!xdg_app_context_verify_filesystem (value, error))
+  if (!flatpak_context_verify_filesystem (value, error))
     return FALSE;
 
-  xdg_app_context_add_filesystem (context, value);
+  flatpak_context_add_filesystem (context, value);
   return TRUE;
 }
 
@@ -698,12 +698,12 @@ option_nofilesystem_cb (const gchar *option_name,
                         gpointer     data,
                         GError     **error)
 {
-  XdgAppContext *context = data;
+  FlatpakContext *context = data;
 
-  if (!xdg_app_context_verify_filesystem (value, error))
+  if (!flatpak_context_verify_filesystem (value, error))
     return FALSE;
 
-  xdg_app_context_remove_filesystem (context, value);
+  flatpak_context_remove_filesystem (context, value);
   return TRUE;
 }
 
@@ -713,7 +713,7 @@ option_env_cb (const gchar *option_name,
                gpointer     data,
                GError     **error)
 {
-  XdgAppContext *context = data;
+  FlatpakContext *context = data;
 
   g_auto(GStrv) split = g_strsplit (value, "=", 2);
 
@@ -723,7 +723,7 @@ option_env_cb (const gchar *option_name,
       return FALSE;
     }
 
-  xdg_app_context_set_env_var (context, split[0], split[1]);
+  flatpak_context_set_env_var (context, split[0], split[1]);
   return TRUE;
 }
 
@@ -733,12 +733,12 @@ option_own_name_cb (const gchar *option_name,
                     gpointer     data,
                     GError     **error)
 {
-  XdgAppContext *context = data;
+  FlatpakContext *context = data;
 
-  if (!xdg_app_verify_dbus_name (value, error))
+  if (!flatpak_verify_dbus_name (value, error))
     return FALSE;
 
-  xdg_app_context_set_session_bus_policy (context, value, XDG_APP_POLICY_OWN);
+  flatpak_context_set_session_bus_policy (context, value, FLATPAK_POLICY_OWN);
   return TRUE;
 }
 
@@ -748,12 +748,12 @@ option_talk_name_cb (const gchar *option_name,
                      gpointer     data,
                      GError     **error)
 {
-  XdgAppContext *context = data;
+  FlatpakContext *context = data;
 
-  if (!xdg_app_verify_dbus_name (value, error))
+  if (!flatpak_verify_dbus_name (value, error))
     return FALSE;
 
-  xdg_app_context_set_session_bus_policy (context, value, XDG_APP_POLICY_TALK);
+  flatpak_context_set_session_bus_policy (context, value, FLATPAK_POLICY_TALK);
   return TRUE;
 }
 
@@ -763,12 +763,12 @@ option_system_own_name_cb (const gchar *option_name,
                            gpointer     data,
                            GError     **error)
 {
-  XdgAppContext *context = data;
+  FlatpakContext *context = data;
 
-  if (!xdg_app_verify_dbus_name (value, error))
+  if (!flatpak_verify_dbus_name (value, error))
     return FALSE;
 
-  xdg_app_context_set_system_bus_policy (context, value, XDG_APP_POLICY_OWN);
+  flatpak_context_set_system_bus_policy (context, value, FLATPAK_POLICY_OWN);
   return TRUE;
 }
 
@@ -778,12 +778,12 @@ option_system_talk_name_cb (const gchar *option_name,
                             gpointer     data,
                             GError     **error)
 {
-  XdgAppContext *context = data;
+  FlatpakContext *context = data;
 
-  if (!xdg_app_verify_dbus_name (value, error))
+  if (!flatpak_verify_dbus_name (value, error))
     return FALSE;
 
-  xdg_app_context_set_system_bus_policy (context, value, XDG_APP_POLICY_TALK);
+  flatpak_context_set_system_bus_policy (context, value, FLATPAK_POLICY_TALK);
   return TRUE;
 }
 
@@ -793,9 +793,9 @@ option_persist_cb (const gchar *option_name,
                    gpointer     data,
                    GError     **error)
 {
-  XdgAppContext *context = data;
+  FlatpakContext *context = data;
 
-  xdg_app_context_set_persistent (context, value);
+  flatpak_context_set_persistent (context, value);
   return TRUE;
 }
 
@@ -818,7 +818,7 @@ static GOptionEntry context_options[] = {
 };
 
 GOptionGroup  *
-xdg_app_context_get_options (XdgAppContext *context)
+flatpak_context_get_options (FlatpakContext *context)
 {
   GOptionGroup *group;
 
@@ -850,161 +850,161 @@ parse_negated (const char *option, gboolean *negated)
 
 /* This is a merge, not a replace */
 gboolean
-xdg_app_context_load_metadata (XdgAppContext *context,
-                               GKeyFile      *metakey,
-                               GError       **error)
+flatpak_context_load_metadata (FlatpakContext *context,
+                               GKeyFile       *metakey,
+                               GError        **error)
 {
   gboolean remove;
   int i;
 
-  if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_SHARED, NULL))
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_SHARED, NULL))
     {
-      g_auto(GStrv) shares = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
-                                                         XDG_APP_METADATA_KEY_SHARED, NULL, error);
+      g_auto(GStrv) shares = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                         FLATPAK_METADATA_KEY_SHARED, NULL, error);
       if (shares == NULL)
         return FALSE;
 
       for (i = 0; shares[i] != NULL; i++)
         {
-          XdgAppContextShares share;
+          FlatpakContextShares share;
 
-          share = xdg_app_context_share_from_string (parse_negated (shares[i], &remove), error);
+          share = flatpak_context_share_from_string (parse_negated (shares[i], &remove), error);
           if (share == 0)
             return FALSE;
           if (remove)
-            xdg_app_context_remove_shares (context, share);
+            flatpak_context_remove_shares (context, share);
           else
-            xdg_app_context_add_shares (context, share);
+            flatpak_context_add_shares (context, share);
         }
     }
 
-  if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_SOCKETS, NULL))
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_SOCKETS, NULL))
     {
-      g_auto(GStrv) sockets = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
-                                                          XDG_APP_METADATA_KEY_SOCKETS, NULL, error);
+      g_auto(GStrv) sockets = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                          FLATPAK_METADATA_KEY_SOCKETS, NULL, error);
       if (sockets == NULL)
         return FALSE;
 
       for (i = 0; sockets[i] != NULL; i++)
         {
-          XdgAppContextSockets socket = xdg_app_context_socket_from_string (parse_negated (sockets[i], &remove), error);
+          FlatpakContextSockets socket = flatpak_context_socket_from_string (parse_negated (sockets[i], &remove), error);
           if (socket == 0)
             return FALSE;
           if (remove)
-            xdg_app_context_remove_sockets (context, socket);
+            flatpak_context_remove_sockets (context, socket);
           else
-            xdg_app_context_add_sockets (context, socket);
+            flatpak_context_add_sockets (context, socket);
         }
     }
 
-  if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_DEVICES, NULL))
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_DEVICES, NULL))
     {
-      g_auto(GStrv) devices = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
-                                                          XDG_APP_METADATA_KEY_DEVICES, NULL, error);
+      g_auto(GStrv) devices = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                          FLATPAK_METADATA_KEY_DEVICES, NULL, error);
       if (devices == NULL)
         return FALSE;
 
 
       for (i = 0; devices[i] != NULL; i++)
         {
-          XdgAppContextDevices device = xdg_app_context_device_from_string (parse_negated (devices[i], &remove), error);
+          FlatpakContextDevices device = flatpak_context_device_from_string (parse_negated (devices[i], &remove), error);
           if (device == 0)
             return FALSE;
           if (remove)
-            xdg_app_context_remove_devices (context, device);
+            flatpak_context_remove_devices (context, device);
           else
-            xdg_app_context_add_devices (context, device);
+            flatpak_context_add_devices (context, device);
         }
     }
 
-  if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_FILESYSTEMS, NULL))
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FILESYSTEMS, NULL))
     {
-      g_auto(GStrv) filesystems = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
-                                                              XDG_APP_METADATA_KEY_FILESYSTEMS, NULL, error);
+      g_auto(GStrv) filesystems = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                              FLATPAK_METADATA_KEY_FILESYSTEMS, NULL, error);
       if (filesystems == NULL)
         return FALSE;
 
       for (i = 0; filesystems[i] != NULL; i++)
         {
           const char *fs = parse_negated (filesystems[i], &remove);
-          if (!xdg_app_context_verify_filesystem (fs, error))
+          if (!flatpak_context_verify_filesystem (fs, error))
             return FALSE;
           if (remove)
-            xdg_app_context_remove_filesystem (context, fs);
+            flatpak_context_remove_filesystem (context, fs);
           else
-            xdg_app_context_add_filesystem (context, fs);
+            flatpak_context_add_filesystem (context, fs);
         }
     }
 
-  if (g_key_file_has_key (metakey, XDG_APP_METADATA_GROUP_CONTEXT, XDG_APP_METADATA_KEY_PERSISTENT, NULL))
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_PERSISTENT, NULL))
     {
-      g_auto(GStrv) persistent = g_key_file_get_string_list (metakey, XDG_APP_METADATA_GROUP_CONTEXT,
-                                                             XDG_APP_METADATA_KEY_PERSISTENT, NULL, error);
+      g_auto(GStrv) persistent = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                             FLATPAK_METADATA_KEY_PERSISTENT, NULL, error);
       if (persistent == NULL)
         return FALSE;
 
       for (i = 0; persistent[i] != NULL; i++)
-        xdg_app_context_set_persistent (context, persistent[i]);
+        flatpak_context_set_persistent (context, persistent[i]);
     }
 
-  if (g_key_file_has_group (metakey, XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY))
+  if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY))
     {
       g_auto(GStrv) keys = NULL;
       gsize i, keys_count;
 
-      keys = g_key_file_get_keys (metakey, XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY, &keys_count, NULL);
+      keys = g_key_file_get_keys (metakey, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY, &keys_count, NULL);
       for (i = 0; i < keys_count; i++)
         {
           const char *key = keys[i];
-          g_autofree char *value = g_key_file_get_string (metakey, XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY, key, NULL);
-          XdgAppPolicy policy;
+          g_autofree char *value = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY, key, NULL);
+          FlatpakPolicy policy;
 
-          if (!xdg_app_verify_dbus_name (key, error))
+          if (!flatpak_verify_dbus_name (key, error))
             return FALSE;
 
-          policy = xdg_app_policy_from_string (value, error);
+          policy = flatpak_policy_from_string (value, error);
           if ((int) policy == -1)
             return FALSE;
 
-          xdg_app_context_set_session_bus_policy (context, key, policy);
+          flatpak_context_set_session_bus_policy (context, key, policy);
         }
     }
 
-  if (g_key_file_has_group (metakey, XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY))
+  if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY))
     {
       g_auto(GStrv) keys = NULL;
       gsize i, keys_count;
 
-      keys = g_key_file_get_keys (metakey, XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY, &keys_count, NULL);
+      keys = g_key_file_get_keys (metakey, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY, &keys_count, NULL);
       for (i = 0; i < keys_count; i++)
         {
           const char *key = keys[i];
-          g_autofree char *value = g_key_file_get_string (metakey, XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY, key, NULL);
-          XdgAppPolicy policy;
+          g_autofree char *value = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY, key, NULL);
+          FlatpakPolicy policy;
 
-          if (!xdg_app_verify_dbus_name (key, error))
+          if (!flatpak_verify_dbus_name (key, error))
             return FALSE;
 
-          policy = xdg_app_policy_from_string (value, error);
+          policy = flatpak_policy_from_string (value, error);
           if ((int) policy == -1)
             return FALSE;
 
-          xdg_app_context_set_system_bus_policy (context, key, policy);
+          flatpak_context_set_system_bus_policy (context, key, policy);
         }
     }
 
-  if (g_key_file_has_group (metakey, XDG_APP_METADATA_GROUP_ENVIRONMENT))
+  if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT))
     {
       g_auto(GStrv) keys = NULL;
       gsize i, keys_count;
 
-      keys = g_key_file_get_keys (metakey, XDG_APP_METADATA_GROUP_ENVIRONMENT, &keys_count, NULL);
+      keys = g_key_file_get_keys (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, &keys_count, NULL);
       for (i = 0; i < keys_count; i++)
         {
           const char *key = keys[i];
-          g_autofree char *value = g_key_file_get_string (metakey, XDG_APP_METADATA_GROUP_ENVIRONMENT, key, NULL);
+          g_autofree char *value = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, key, NULL);
 
-          xdg_app_context_set_env_var (context, key, value);
+          flatpak_context_set_env_var (context, key, value);
         }
     }
 
@@ -1012,57 +1012,57 @@ xdg_app_context_load_metadata (XdgAppContext *context,
 }
 
 void
-xdg_app_context_save_metadata (XdgAppContext *context,
-                               GKeyFile      *metakey)
+flatpak_context_save_metadata (FlatpakContext *context,
+                               GKeyFile       *metakey)
 {
-  g_auto(GStrv) shared = xdg_app_context_shared_to_string (context->shares, context->shares_valid);
-  g_auto(GStrv) sockets = xdg_app_context_sockets_to_string (context->sockets, context->sockets_valid);
-  g_auto(GStrv) devices = xdg_app_context_devices_to_string (context->devices, context->devices_valid);
+  g_auto(GStrv) shared = flatpak_context_shared_to_string (context->shares, context->shares_valid);
+  g_auto(GStrv) sockets = flatpak_context_sockets_to_string (context->sockets, context->sockets_valid);
+  g_auto(GStrv) devices = flatpak_context_devices_to_string (context->devices, context->devices_valid);
   GHashTableIter iter;
   gpointer key, value;
 
   if (shared[0] != NULL)
     {
       g_key_file_set_string_list (metakey,
-                                  XDG_APP_METADATA_GROUP_CONTEXT,
-                                  XDG_APP_METADATA_KEY_SHARED,
+                                  FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_SHARED,
                                   (const char * const *) shared, g_strv_length (shared));
     }
   else
     {
       g_key_file_remove_key (metakey,
-                             XDG_APP_METADATA_GROUP_CONTEXT,
-                             XDG_APP_METADATA_KEY_SHARED,
+                             FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_SHARED,
                              NULL);
     }
 
   if (sockets[0] != NULL)
     {
       g_key_file_set_string_list (metakey,
-                                  XDG_APP_METADATA_GROUP_CONTEXT,
-                                  XDG_APP_METADATA_KEY_SOCKETS,
+                                  FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_SOCKETS,
                                   (const char * const *) sockets, g_strv_length (sockets));
     }
   else
     {
       g_key_file_remove_key (metakey,
-                             XDG_APP_METADATA_GROUP_CONTEXT,
-                             XDG_APP_METADATA_KEY_SOCKETS,
+                             FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_SOCKETS,
                              NULL);
     }
 
   if (devices[0] != NULL)
     {
       g_key_file_set_string_list (metakey,
-                                  XDG_APP_METADATA_GROUP_CONTEXT,
-                                  XDG_APP_METADATA_KEY_DEVICES,
+                                  FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_DEVICES,
                                   (const char * const *) devices, g_strv_length (devices));
     }
   else
     {
       g_key_file_remove_key (metakey,
-                             XDG_APP_METADATA_GROUP_CONTEXT,
-                             XDG_APP_METADATA_KEY_DEVICES,
+                             FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_DEVICES,
                              NULL);
     }
 
@@ -1073,24 +1073,24 @@ xdg_app_context_save_metadata (XdgAppContext *context,
       g_hash_table_iter_init (&iter, context->filesystems);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          XdgAppFilesystemMode mode = GPOINTER_TO_INT (value);
+          FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
-          if (mode == XDG_APP_FILESYSTEM_MODE_READ_ONLY)
+          if (mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
             g_ptr_array_add (array, g_strconcat (key, ":ro", NULL));
           else if (value != NULL)
             g_ptr_array_add (array, g_strdup (key));
         }
 
       g_key_file_set_string_list (metakey,
-                                  XDG_APP_METADATA_GROUP_CONTEXT,
-                                  XDG_APP_METADATA_KEY_FILESYSTEMS,
+                                  FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_FILESYSTEMS,
                                   (const char * const *) array->pdata, array->len);
     }
   else
     {
       g_key_file_remove_key (metakey,
-                             XDG_APP_METADATA_GROUP_CONTEXT,
-                             XDG_APP_METADATA_KEY_FILESYSTEMS,
+                             FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_FILESYSTEMS,
                              NULL);
     }
 
@@ -1099,54 +1099,54 @@ xdg_app_context_save_metadata (XdgAppContext *context,
       g_autofree char **keys = (char **) g_hash_table_get_keys_as_array (context->persistent, NULL);
 
       g_key_file_set_string_list (metakey,
-                                  XDG_APP_METADATA_GROUP_CONTEXT,
-                                  XDG_APP_METADATA_KEY_PERSISTENT,
+                                  FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_PERSISTENT,
                                   (const char * const *) keys, g_strv_length (keys));
     }
   else
     {
       g_key_file_remove_key (metakey,
-                             XDG_APP_METADATA_GROUP_CONTEXT,
-                             XDG_APP_METADATA_KEY_PERSISTENT,
+                             FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_PERSISTENT,
                              NULL);
     }
 
-  g_key_file_remove_group (metakey, XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY, NULL);
+  g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY, NULL);
   g_hash_table_iter_init (&iter, context->session_bus_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      XdgAppPolicy policy = GPOINTER_TO_INT (value);
+      FlatpakPolicy policy = GPOINTER_TO_INT (value);
       if (policy > 0)
         g_key_file_set_string (metakey,
-                               XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY,
-                               (char *) key, xdg_app_policy_to_string (policy));
+                               FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
+                               (char *) key, flatpak_policy_to_string (policy));
     }
 
-  g_key_file_remove_group (metakey, XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY, NULL);
+  g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY, NULL);
   g_hash_table_iter_init (&iter, context->system_bus_policy);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      XdgAppPolicy policy = GPOINTER_TO_INT (value);
+      FlatpakPolicy policy = GPOINTER_TO_INT (value);
       if (policy > 0)
         g_key_file_set_string (metakey,
-                               XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY,
-                               (char *) key, xdg_app_policy_to_string (policy));
+                               FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY,
+                               (char *) key, flatpak_policy_to_string (policy));
     }
 
-  g_key_file_remove_group (metakey, XDG_APP_METADATA_GROUP_ENVIRONMENT, NULL);
+  g_key_file_remove_group (metakey, FLATPAK_METADATA_GROUP_ENVIRONMENT, NULL);
   g_hash_table_iter_init (&iter, context->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       g_key_file_set_string (metakey,
-                             XDG_APP_METADATA_GROUP_ENVIRONMENT,
+                             FLATPAK_METADATA_GROUP_ENVIRONMENT,
                              (char *) key, (char *) value);
     }
 }
 
 void
-xdg_app_context_allow_host_fs (XdgAppContext *context)
+flatpak_context_allow_host_fs (FlatpakContext *context)
 {
-  xdg_app_context_add_filesystem (context, "host");
+  flatpak_context_add_filesystem (context, "host");
 }
 
 static char *
@@ -1292,7 +1292,7 @@ create_tmp_fd (const char *contents,
 }
 
 static void
-xdg_app_run_add_x11_args (GPtrArray *argv_array,
+flatpak_run_add_x11_args (GPtrArray *argv_array,
                           char    ***envp_p)
 {
   char *x11_socket = NULL;
@@ -1357,7 +1357,7 @@ xdg_app_run_add_x11_args (GPtrArray *argv_array,
 }
 
 static void
-xdg_app_run_add_wayland_args (GPtrArray *argv_array,
+flatpak_run_add_wayland_args (GPtrArray *argv_array,
                               char    ***envp_p)
 {
   g_autofree char *wayland_socket = g_build_filename (g_get_user_runtime_dir (), "wayland-0", NULL);
@@ -1372,7 +1372,7 @@ xdg_app_run_add_wayland_args (GPtrArray *argv_array,
 }
 
 static void
-xdg_app_run_add_pulseaudio_args (GPtrArray *argv_array,
+flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
                                  char    ***envp_p)
 {
   char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
@@ -1424,11 +1424,11 @@ create_proxy_socket (char *template)
 }
 
 gboolean
-xdg_app_run_add_system_dbus_args (XdgAppContext *context,
-                                  char        ***envp_p,
-                                  GPtrArray     *argv_array,
-                                  GPtrArray     *dbus_proxy_argv,
-                                  gboolean       unrestricted)
+flatpak_run_add_system_dbus_args (FlatpakContext *context,
+                                  char         ***envp_p,
+                                  GPtrArray      *argv_array,
+                                  GPtrArray      *dbus_proxy_argv,
+                                  gboolean        unrestricted)
 {
   const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
   g_autofree char *real_dbus_address = NULL;
@@ -1476,7 +1476,7 @@ xdg_app_run_add_system_dbus_args (XdgAppContext *context,
 }
 
 gboolean
-xdg_app_run_add_session_dbus_args (GPtrArray *argv_array,
+flatpak_run_add_session_dbus_args (GPtrArray *argv_array,
                                    char    ***envp_p,
                                    GPtrArray *dbus_proxy_argv,
                                    gboolean   unrestricted)
@@ -1522,10 +1522,10 @@ xdg_app_run_add_session_dbus_args (GPtrArray *argv_array,
 }
 
 static void
-xdg_app_add_bus_filters (GPtrArray     *dbus_proxy_argv,
-                         GHashTable    *ht,
-                         const char    *app_id,
-                         XdgAppContext *context)
+flatpak_add_bus_filters (GPtrArray      *dbus_proxy_argv,
+                         GHashTable     *ht,
+                         const char     *app_id,
+                         FlatpakContext *context)
 {
   GHashTableIter iter;
   gpointer key, value;
@@ -1540,15 +1540,15 @@ xdg_app_add_bus_filters (GPtrArray     *dbus_proxy_argv,
   g_hash_table_iter_init (&iter, ht);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      XdgAppPolicy policy = GPOINTER_TO_INT (value);
+      FlatpakPolicy policy = GPOINTER_TO_INT (value);
 
       if (policy > 0)
-        g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--%s=%s", xdg_app_policy_to_string (policy), (char *) key));
+        g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--%s=%s", flatpak_policy_to_string (policy), (char *) key));
     }
 }
 
 gboolean
-xdg_app_run_add_extension_args (GPtrArray    *argv_array,
+flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                 GKeyFile     *metakey,
                                 const char   *full_ref,
                                 GCancellable *cancellable,
@@ -1560,19 +1560,19 @@ xdg_app_run_add_extension_args (GPtrArray    *argv_array,
 
   parts = g_strsplit (full_ref, "/", 0);
   if (g_strv_length (parts) != 4)
-    return xdg_app_fail (error, "Failed to determine parts from ref: %s", full_ref);
+    return flatpak_fail (error, "Failed to determine parts from ref: %s", full_ref);
 
   is_app = strcmp (parts[0], "app") == 0;
 
-  extensions = xdg_app_list_extensions (metakey,
+  extensions = flatpak_list_extensions (metakey,
                                         parts[2], parts[3]);
 
   for (l = extensions; l != NULL; l = l->next)
     {
-      XdgAppExtension *ext = l->data;
+      FlatpakExtension *ext = l->data;
       g_autoptr(GFile) deploy = NULL;
 
-      deploy = xdg_app_find_deploy_dir_for_ref (ext->ref, cancellable, NULL);
+      deploy = flatpak_find_deploy_dir_for_ref (ext->ref, cancellable, NULL);
       if (deploy != NULL)
         {
           g_autoptr(GFile) files = g_file_get_child (deploy, "files");
@@ -1586,15 +1586,15 @@ xdg_app_run_add_extension_args (GPtrArray    *argv_array,
         }
     }
 
-  g_list_free_full (extensions, (GDestroyNotify) xdg_app_extension_free);
+  g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
 
   return TRUE;
 }
 
 static void
-add_file_arg (GPtrArray           *argv_array,
-              XdgAppFilesystemMode mode,
-              const char          *path)
+add_file_arg (GPtrArray            *argv_array,
+              FlatpakFilesystemMode mode,
+              const char           *path)
 {
   struct stat st;
 
@@ -1605,19 +1605,19 @@ add_file_arg (GPtrArray           *argv_array,
       S_ISREG (st.st_mode))
     {
       add_args (argv_array,
-                (mode == XDG_APP_FILESYSTEM_MODE_READ_WRITE) ? "--bind" : "--ro-bind",
+                (mode == FLATPAK_FILESYSTEM_MODE_READ_WRITE) ? "--bind" : "--ro-bind",
                 path, path, NULL);
     }
 }
 
 void
-xdg_app_run_add_environment_args (GPtrArray     *argv_array,
-                                  char        ***envp_p,
-                                  GPtrArray     *session_bus_proxy_argv,
-                                  GPtrArray     *system_bus_proxy_argv,
-                                  const char    *app_id,
-                                  XdgAppContext *context,
-                                  GFile         *app_id_dir)
+flatpak_run_add_environment_args (GPtrArray      *argv_array,
+                                  char         ***envp_p,
+                                  GPtrArray      *session_bus_proxy_argv,
+                                  GPtrArray      *system_bus_proxy_argv,
+                                  const char     *app_id,
+                                  FlatpakContext *context,
+                                  GFile          *app_id_dir)
 {
   GHashTableIter iter;
   gpointer key, value;
@@ -1625,21 +1625,21 @@ xdg_app_run_add_environment_args (GPtrArray     *argv_array,
   gboolean unrestricted_system_bus;
   gboolean home_access = FALSE;
   GString *xdg_dirs_conf = NULL;
-  XdgAppFilesystemMode fs_mode, home_mode;
+  FlatpakFilesystemMode fs_mode, home_mode;
 
-  if ((context->shares & XDG_APP_CONTEXT_SHARED_IPC) == 0)
+  if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
       g_debug ("Disallowing ipc access");
       add_args (argv_array, "--unshare-ipc", NULL);
     }
 
-  if ((context->shares & XDG_APP_CONTEXT_SHARED_NETWORK) == 0)
+  if ((context->shares & FLATPAK_CONTEXT_SHARED_NETWORK) == 0)
     {
       g_debug ("Disallowing network access");
       add_args (argv_array, "--unshare-net", NULL);
     }
 
-  if (context->devices & XDG_APP_CONTEXT_DEVICE_DRI)
+  if (context->devices & FLATPAK_CONTEXT_DEVICE_DRI)
     {
       g_debug ("Allowing dri access");
       if (g_file_test ("/dev/dri", G_FILE_TEST_IS_DIR))
@@ -1653,7 +1653,7 @@ xdg_app_run_add_environment_args (GPtrArray     *argv_array,
         }
     }
 
-  fs_mode = (XdgAppFilesystemMode) g_hash_table_lookup (context->filesystems, "host");
+  fs_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "host");
   if (fs_mode != 0)
     {
       DIR *dir;
@@ -1680,7 +1680,7 @@ xdg_app_run_add_environment_args (GPtrArray     *argv_array,
       add_file_arg (argv_array, fs_mode, "/run/media");
     }
 
-  home_mode = (XdgAppFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
+  home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
   if (home_mode != 0)
     {
       g_debug ("Allowing homedir access");
@@ -1712,7 +1712,7 @@ xdg_app_run_add_environment_args (GPtrArray     *argv_array,
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       const char *filesystem = key;
-      XdgAppFilesystemMode mode = GPOINTER_TO_INT (value);
+      FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
 
       if (value == NULL ||
           strcmp (filesystem, "host") == 0 ||
@@ -1816,38 +1816,38 @@ xdg_app_run_add_environment_args (GPtrArray     *argv_array,
       g_string_free (xdg_dirs_conf, TRUE);
     }
 
-  if (context->sockets & XDG_APP_CONTEXT_SOCKET_X11)
+  if (context->sockets & FLATPAK_CONTEXT_SOCKET_X11)
     {
       g_debug ("Allowing x11 access");
-      xdg_app_run_add_x11_args (argv_array, envp_p);
+      flatpak_run_add_x11_args (argv_array, envp_p);
     }
 
-  if (context->sockets & XDG_APP_CONTEXT_SOCKET_WAYLAND)
+  if (context->sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {
       g_debug ("Allowing wayland access");
-      xdg_app_run_add_wayland_args (argv_array, envp_p);
+      flatpak_run_add_wayland_args (argv_array, envp_p);
     }
 
-  if (context->sockets & XDG_APP_CONTEXT_SOCKET_PULSEAUDIO)
+  if (context->sockets & FLATPAK_CONTEXT_SOCKET_PULSEAUDIO)
     {
       g_debug ("Allowing pulseaudio access");
-      xdg_app_run_add_pulseaudio_args (argv_array, envp_p);
+      flatpak_run_add_pulseaudio_args (argv_array, envp_p);
     }
 
-  unrestricted_session_bus = (context->sockets & XDG_APP_CONTEXT_SOCKET_SESSION_BUS) != 0;
+  unrestricted_session_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) != 0;
   if (unrestricted_session_bus)
     g_debug ("Allowing session-dbus access");
-  if (xdg_app_run_add_session_dbus_args (argv_array, envp_p, session_bus_proxy_argv, unrestricted_session_bus) &&
+  if (flatpak_run_add_session_dbus_args (argv_array, envp_p, session_bus_proxy_argv, unrestricted_session_bus) &&
       !unrestricted_session_bus && session_bus_proxy_argv)
-    xdg_app_add_bus_filters (session_bus_proxy_argv, context->session_bus_policy, app_id, context);
+    flatpak_add_bus_filters (session_bus_proxy_argv, context->session_bus_policy, app_id, context);
 
-  unrestricted_system_bus = (context->sockets & XDG_APP_CONTEXT_SOCKET_SYSTEM_BUS) != 0;
+  unrestricted_system_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) != 0;
   if (unrestricted_system_bus)
     g_debug ("Allowing system-dbus access");
-  if (xdg_app_run_add_system_dbus_args (context, envp_p, argv_array, system_bus_proxy_argv,
+  if (flatpak_run_add_system_dbus_args (context, envp_p, argv_array, system_bus_proxy_argv,
                                         unrestricted_system_bus) &&
       !unrestricted_system_bus && system_bus_proxy_argv)
-    xdg_app_add_bus_filters (system_bus_proxy_argv, context->system_bus_policy, NULL, context);
+    flatpak_add_bus_filters (system_bus_proxy_argv, context->system_bus_policy, NULL, context);
 
 }
 
@@ -1873,7 +1873,7 @@ static const struct {const char *env;
 };
 
 char **
-xdg_app_run_get_minimal_env (gboolean devel)
+flatpak_run_get_minimal_env (gboolean devel)
 {
   GPtrArray *env_array;
   static const char * const copy[] = {
@@ -1943,7 +1943,7 @@ xdg_app_run_get_minimal_env (gboolean devel)
 }
 
 char **
-xdg_app_run_apply_env_default (char **envp)
+flatpak_run_apply_env_default (char **envp)
 {
   int i;
 
@@ -1954,7 +1954,7 @@ xdg_app_run_apply_env_default (char **envp)
 }
 
 char **
-xdg_app_run_apply_env_appid (char **envp,
+flatpak_run_apply_env_appid (char **envp,
                              GFile *app_dir)
 {
   g_autoptr(GFile) app_dir_data = NULL;
@@ -1972,7 +1972,7 @@ xdg_app_run_apply_env_appid (char **envp,
 }
 
 char **
-xdg_app_run_apply_env_vars (char **envp, XdgAppContext *context)
+flatpak_run_apply_env_vars (char **envp, FlatpakContext *context)
 {
   GHashTableIter iter;
   gpointer key, value;
@@ -1993,7 +1993,7 @@ xdg_app_run_apply_env_vars (char **envp, XdgAppContext *context)
 }
 
 GFile *
-xdg_app_get_data_dir (const char *app_id)
+flatpak_get_data_dir (const char *app_id)
 {
   g_autoptr(GFile) home = g_file_new_for_path (g_get_home_dir ());
   g_autoptr(GFile) var_app = g_file_resolve_relative_path (home, ".var/app");
@@ -2002,11 +2002,11 @@ xdg_app_get_data_dir (const char *app_id)
 }
 
 GFile *
-xdg_app_ensure_data_dir (const char   *app_id,
+flatpak_ensure_data_dir (const char   *app_id,
                          GCancellable *cancellable,
                          GError      **error)
 {
-  g_autoptr(GFile) dir = xdg_app_get_data_dir (app_id);
+  g_autoptr(GFile) dir = flatpak_get_data_dir (app_id);
   g_autoptr(GFile) data_dir = g_file_get_child (dir, "data");
   g_autoptr(GFile) cache_dir = g_file_get_child (dir, "cache");
   g_autoptr(GFile) config_dir = g_file_get_child (dir, "config");
@@ -2042,7 +2042,7 @@ job_removed_cb (SystemdManager *manager,
 }
 
 gboolean
-xdg_app_run_in_transient_unit (const char *appid, GError **error)
+flatpak_run_in_transient_unit (const char *appid, GError **error)
 {
   g_autoptr(GDBusConnection) conn = NULL;
   g_autofree char *path = NULL;
@@ -2062,7 +2062,7 @@ xdg_app_run_in_transient_unit (const char *appid, GError **error)
   path = g_strdup_printf ("/run/user/%d/systemd/private", getuid ());
 
   if (!g_file_test (path, G_FILE_TEST_EXISTS))
-    return xdg_app_fail (error,
+    return flatpak_fail (error,
                          "No systemd user session available, sandboxing not available");
 
   main_context = g_main_context_new ();
@@ -2164,40 +2164,40 @@ add_font_path_args (GPtrArray *argv_array)
 }
 
 static void
-add_default_permissions (XdgAppContext *app_context)
+add_default_permissions (FlatpakContext *app_context)
 {
-  xdg_app_context_set_session_bus_policy (app_context,
+  flatpak_context_set_session_bus_policy (app_context,
                                           "org.freedesktop.portal.Documents",
-                                          XDG_APP_POLICY_TALK);
+                                          FLATPAK_POLICY_TALK);
 }
 
-static XdgAppContext *
+static FlatpakContext *
 compute_permissions (GKeyFile *app_metadata,
                      GKeyFile *runtime_metadata,
                      GError  **error)
 {
-  g_autoptr(XdgAppContext) app_context = NULL;
+  g_autoptr(FlatpakContext) app_context = NULL;
 
-  app_context = xdg_app_context_new ();
+  app_context = flatpak_context_new ();
 
   add_default_permissions (app_context);
 
-  if (!xdg_app_context_load_metadata (app_context, runtime_metadata, error))
+  if (!flatpak_context_load_metadata (app_context, runtime_metadata, error))
     return NULL;
 
-  if (!xdg_app_context_load_metadata (app_context, app_metadata, error))
+  if (!flatpak_context_load_metadata (app_context, app_metadata, error))
     return NULL;
 
   return g_steal_pointer (&app_context);
 }
 
 static gboolean
-add_app_info_args (GPtrArray     *argv_array,
-                   XdgAppDeploy  *deploy,
-                   const char    *app_id,
-                   const char    *runtime_ref,
-                   XdgAppContext *final_app_context,
-                   GError       **error)
+add_app_info_args (GPtrArray      *argv_array,
+                   FlatpakDeploy  *deploy,
+                   const char     *app_id,
+                   const char     *runtime_ref,
+                   FlatpakContext *final_app_context,
+                   GError        **error)
 {
   g_autofree char *tmp_path = NULL;
   int fd;
@@ -2218,12 +2218,12 @@ add_app_info_args (GPtrArray     *argv_array,
       g_key_file_set_string (keyfile, "Application", "name", app_id);
       g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
 
-      files = xdg_app_deploy_get_files (deploy);
+      files = flatpak_deploy_get_files (deploy);
       files_path = g_file_get_path (files);
 
       g_key_file_set_string (keyfile, "Application", "app-path", files_path);
 
-      xdg_app_context_save_metadata (final_app_context, keyfile);
+      flatpak_context_save_metadata (final_app_context, keyfile);
 
       if (!g_key_file_save_to_file (keyfile, tmp_path, error))
         return FALSE;
@@ -2253,8 +2253,8 @@ add_monitor_path_args (GPtrArray *argv_array,
   session_helper =
     xdg_app_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
                                                    G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
-                                                   "org.freedesktop.XdgApp",
-                                                   "/org/freedesktop/XdgApp/SessionHelper",
+                                                   "org.freedesktop.Flatpak",
+                                                   "/org/freedesktop/Flatpak/SessionHelper",
                                                    NULL, NULL);
   if (session_helper &&
       xdg_app_session_helper_call_request_monitor_sync (session_helper,
@@ -2376,7 +2376,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
       add_args (argv_array, "--sync-fd", fd_str, NULL);
     }
 
-  proxy = g_getenv ("XDG_APP_DBUSPROXY");
+  proxy = g_getenv ("FLATPAK_DBUSPROXY");
   if (proxy == NULL)
     proxy = DBUSPROXY;
 
@@ -2527,7 +2527,7 @@ setup_seccomp (GPtrArray  *argv_array,
 
   seccomp = seccomp_init (SCMP_ACT_ALLOW);
   if (!seccomp)
-    return xdg_app_fail (error, "Initialize seccomp failed");
+    return flatpak_fail (error, "Initialize seccomp failed");
 
   if (arch != NULL)
     {
@@ -2549,7 +2549,7 @@ setup_seccomp (GPtrArray  *argv_array,
              couldn't continue runnning. */
           r = seccomp_arch_add (seccomp, arch_id);
           if (r < 0 && r != -EEXIST)
-            return xdg_app_fail (error, "Failed to add architecture to seccomp filter");
+            return flatpak_fail (error, "Failed to add architecture to seccomp filter");
         }
     }
 
@@ -2558,15 +2558,15 @@ setup_seccomp (GPtrArray  *argv_array,
 #if defined(__i386__) || defined(__x86_64__)
   r = seccomp_arch_add (seccomp, SCMP_ARCH_X86);
   if (r < 0 && r != -EEXIST)
-    return xdg_app_fail (error, "Failed to add x86 architecture to seccomp filter");
+    return flatpak_fail (error, "Failed to add x86 architecture to seccomp filter");
 
   r = seccomp_arch_add (seccomp, SCMP_ARCH_X86_64);
   if (r < 0 && r != -EEXIST)
-    return xdg_app_fail (error, "Failed to add x86_64 architecture to seccomp filter");
+    return flatpak_fail (error, "Failed to add x86_64 architecture to seccomp filter");
 
   r = seccomp_arch_add (seccomp, SCMP_ARCH_X32);
   if (r < 0 && r != -EEXIST)
-    return xdg_app_fail (error, "Failed to add x32 architecture to seccomp filter");
+    return flatpak_fail (error, "Failed to add x32 architecture to seccomp filter");
 #endif
 
   /* TODO: Should we filter the kernel keyring syscalls in some way?
@@ -2582,7 +2582,7 @@ setup_seccomp (GPtrArray  *argv_array,
       else
         r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (EPERM), scall, 0);
       if (r < 0 && r == -EFAULT /* unknown syscall */)
-        return xdg_app_fail (error, "Failed to block syscall %d", scall);
+        return flatpak_fail (error, "Failed to block syscall %d", scall);
     }
 
   if (!devel)
@@ -2596,7 +2596,7 @@ setup_seccomp (GPtrArray  *argv_array,
             r = seccomp_rule_add (seccomp, SCMP_ACT_ERRNO (EPERM), scall, 0);
 
           if (r < 0 && r == -EFAULT /* unknown syscall */)
-            return xdg_app_fail (error, "Failed to block syscall %d", scall);
+            return flatpak_fail (error, "Failed to block syscall %d", scall);
         }
     }
 
@@ -2619,7 +2619,7 @@ setup_seccomp (GPtrArray  *argv_array,
   unlink (path);
 
   if (seccomp_export_bpf (seccomp, fd) != 0)
-    return xdg_app_fail (error, "Failed to export bpf");
+    return flatpak_fail (error, "Failed to export bpf");
 
   lseek (fd, 0, SEEK_SET);
 
@@ -2636,12 +2636,12 @@ setup_seccomp (GPtrArray  *argv_array,
 #endif
 
 gboolean
-xdg_app_run_setup_base_argv (GPtrArray     *argv_array,
-                             GFile         *runtime_files,
-                             GFile         *app_id_dir,
-                             const char    *arch,
-                             XdgAppRunFlags flags,
-                             GError       **error)
+flatpak_run_setup_base_argv (GPtrArray      *argv_array,
+                             GFile          *runtime_files,
+                             GFile          *app_id_dir,
+                             const char     *arch,
+                             FlatpakRunFlags flags,
+                             GError        **error)
 {
   const char *usr_links[] = {"lib", "lib32", "lib64", "bin", "sbin"};
   g_autofree char *run_dir = g_strdup_printf ("/run/user/%d", getuid ());
@@ -2781,7 +2781,7 @@ xdg_app_run_setup_base_argv (GPtrArray     *argv_array,
 #ifdef ENABLE_SECCOMP
   if (!setup_seccomp (argv_array,
                       arch,
-                      (flags & XDG_APP_RUN_FLAG_DEVEL) != 0,
+                      (flags & FLATPAK_RUN_FLAG_DEVEL) != 0,
                       error))
     return FALSE;
 #endif
@@ -2811,19 +2811,19 @@ join_args (GPtrArray *argv_array, gsize *len_out)
 }
 
 gboolean
-xdg_app_run_app (const char    *app_ref,
-                 XdgAppDeploy  *app_deploy,
-                 XdgAppContext *extra_context,
-                 const char    *custom_runtime,
-                 const char    *custom_runtime_version,
-                 XdgAppRunFlags flags,
-                 const char    *custom_command,
-                 char          *args[],
-                 int            n_args,
-                 GCancellable  *cancellable,
-                 GError       **error)
+flatpak_run_app (const char     *app_ref,
+                 FlatpakDeploy  *app_deploy,
+                 FlatpakContext *extra_context,
+                 const char     *custom_runtime,
+                 const char     *custom_runtime_version,
+                 FlatpakRunFlags flags,
+                 const char     *custom_command,
+                 char           *args[],
+                 int             n_args,
+                 GCancellable   *cancellable,
+                 GError        **error)
 {
-  g_autoptr(XdgAppDeploy) runtime_deploy = NULL;
+  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
@@ -2842,22 +2842,22 @@ xdg_app_run_app (const char    *app_ref,
   g_autoptr(GError) my_error = NULL;
   g_auto(GStrv) runtime_parts = NULL;
   int i;
-  g_autoptr(XdgAppContext) app_context = NULL;
-  g_autoptr(XdgAppContext) overrides = NULL;
+  g_autoptr(FlatpakContext) app_context = NULL;
+  g_autoptr(FlatpakContext) overrides = NULL;
   g_auto(GStrv) app_ref_parts = NULL;
 
-  app_ref_parts = xdg_app_decompose_ref (app_ref, error);
+  app_ref_parts = flatpak_decompose_ref (app_ref, error);
   if (app_ref_parts == NULL)
     return FALSE;
 
-  metakey = xdg_app_deploy_get_metadata (app_deploy);
+  metakey = flatpak_deploy_get_metadata (app_deploy);
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   session_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
   system_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
 
   default_runtime = g_key_file_get_string (metakey, "Application",
-                                           (flags & XDG_APP_RUN_FLAG_DEVEL) != 0 ? "sdk" : "runtime",
+                                           (flags & FLATPAK_RUN_FLAG_DEVEL) != 0 ? "sdk" : "runtime",
                                            &my_error);
   if (my_error)
     {
@@ -2867,7 +2867,7 @@ xdg_app_run_app (const char    *app_ref,
 
   runtime_parts = g_strsplit (default_runtime, "/", 0);
   if (g_strv_length (runtime_parts) != 3)
-    return xdg_app_fail (error, "Wrong number of components in runtime %s", default_runtime);
+    return flatpak_fail (error, "Wrong number of components in runtime %s", default_runtime);
 
   if (custom_runtime)
     {
@@ -2889,7 +2889,7 @@ xdg_app_run_app (const char    *app_ref,
       runtime_parts[2] = g_strdup (custom_runtime_version);
     }
 
-  runtime_ref = xdg_app_compose_ref (FALSE,
+  runtime_ref = flatpak_compose_ref (FALSE,
                                      runtime_parts[0],
                                      runtime_parts[2],
                                      runtime_parts[1],
@@ -2897,32 +2897,32 @@ xdg_app_run_app (const char    *app_ref,
   if (runtime_ref == NULL)
     return FALSE;
 
-  runtime_deploy = xdg_app_find_deploy_for_ref (runtime_ref, cancellable, error);
+  runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
     return FALSE;
 
-  runtime_metakey = xdg_app_deploy_get_metadata (runtime_deploy);
+  runtime_metakey = flatpak_deploy_get_metadata (runtime_deploy);
 
   app_context = compute_permissions (metakey, runtime_metakey, error);
   if (app_context == NULL)
     return FALSE;
 
-  overrides = xdg_app_deploy_get_overrides (app_deploy);
-  xdg_app_context_merge (app_context, overrides);
+  overrides = flatpak_deploy_get_overrides (app_deploy);
+  flatpak_context_merge (app_context, overrides);
 
   if (extra_context)
-    xdg_app_context_merge (app_context, extra_context);
+    flatpak_context_merge (app_context, extra_context);
 
-  runtime_files = xdg_app_deploy_get_files (runtime_deploy);
-  app_files = xdg_app_deploy_get_files (app_deploy);
+  runtime_files = flatpak_deploy_get_files (runtime_deploy);
+  app_files = flatpak_deploy_get_files (app_deploy);
 
-  if ((app_id_dir = xdg_app_ensure_data_dir (app_ref_parts[1], cancellable, error)) == NULL)
+  if ((app_id_dir = flatpak_ensure_data_dir (app_ref_parts[1], cancellable, error)) == NULL)
     return FALSE;
 
   envp = g_get_environ ();
-  envp = xdg_app_run_apply_env_default (envp);
-  envp = xdg_app_run_apply_env_vars (envp, app_context);
-  envp = xdg_app_run_apply_env_appid (envp, app_id_dir);
+  envp = flatpak_run_apply_env_default (envp);
+  envp = flatpak_run_apply_env_vars (envp, app_context);
+  envp = flatpak_run_apply_env_appid (envp, app_id_dir);
 
   add_args (argv_array,
             "--ro-bind", gs_file_get_path_cached (runtime_files), "/usr",
@@ -2931,23 +2931,23 @@ xdg_app_run_app (const char    *app_ref,
             "--lock-file", "/app/.ref",
             NULL);
 
-  if (!xdg_app_run_setup_base_argv (argv_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
+  if (!flatpak_run_setup_base_argv (argv_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
   if (!add_app_info_args (argv_array, app_deploy, app_ref_parts[1], runtime_ref, app_context, error))
     return FALSE;
 
-  if (!xdg_app_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
+  if (!flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
     return FALSE;
 
-  if (!xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
+  if (!flatpak_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
   add_monitor_path_args (argv_array, &envp);
 
   add_document_portal_args (argv_array, app_ref_parts[1]);
 
-  xdg_app_run_add_environment_args (argv_array, &envp,
+  flatpak_run_add_environment_args (argv_array, &envp,
                                     session_bus_proxy_argv,
                                     system_bus_proxy_argv,
                                     app_ref_parts[1], app_context, app_id_dir);
@@ -2956,13 +2956,13 @@ xdg_app_run_app (const char    *app_ref,
 
   /* Must run this before spawning the dbus proxy, to ensure it
      ends up in the app cgroup */
-  if (!xdg_app_run_in_transient_unit (app_ref_parts[1], error))
+  if (!flatpak_run_in_transient_unit (app_ref_parts[1], error))
     return FALSE;
 
-  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & XDG_APP_RUN_FLAG_LOG_SESSION_BUS) != 0, sync_fds, error))
+  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0, sync_fds, error))
     return FALSE;
 
-  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & XDG_APP_RUN_FLAG_LOG_SYSTEM_BUS) != 0, sync_fds, error))
+  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0, sync_fds, error))
     return FALSE;
 
   if (sync_fds[1] != -1)
@@ -3000,7 +3000,7 @@ xdg_app_run_app (const char    *app_ref,
     }
 
   real_argv_array = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (real_argv_array, g_strdup (xdg_app_get_bwrap ()));
+  g_ptr_array_add (real_argv_array, g_strdup (flatpak_get_bwrap ()));
 
   {
     gsize len;
@@ -3025,7 +3025,7 @@ xdg_app_run_app (const char    *app_ref,
 
   g_ptr_array_add (real_argv_array, NULL);
 
-  if ((flags & XDG_APP_RUN_FLAG_BACKGROUND) != 0)
+  if ((flags & FLATPAK_RUN_FLAG_BACKGROUND) != 0)
     {
       if (!g_spawn_async (NULL,
                           (char **) real_argv_array->pdata,
@@ -3038,7 +3038,7 @@ xdg_app_run_app (const char    *app_ref,
     }
   else
     {
-      if (execvpe (xdg_app_get_bwrap (), (char **) real_argv_array->pdata, envp) == -1)
+      if (execvpe (flatpak_get_bwrap (), (char **) real_argv_array->pdata, envp) == -1)
         {
           g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
           return FALSE;

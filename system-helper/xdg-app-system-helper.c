@@ -51,7 +51,7 @@ handle_deploy (XdgAppSystemHelper    *object,
                const gchar           *arg_origin,
                const gchar *const    *arg_subpaths)
 {
-  g_autoptr(XdgAppDir) system = xdg_app_dir_get_system ();
+  g_autoptr(FlatpakDir) system = flatpak_dir_get_system ();
   g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
@@ -60,10 +60,10 @@ handle_deploy (XdgAppSystemHelper    *object,
   gboolean is_update;
   g_autoptr(GMainContext) main_context = NULL;
 
-  if ((arg_flags & ~XDG_APP_HELPER_DEPLOY_FLAGS_ALL) != 0)
+  if ((arg_flags & ~FLATPAK_HELPER_DEPLOY_FLAGS_ALL) != 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
-                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~XDG_APP_HELPER_DEPLOY_FLAGS_ALL));
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_DEPLOY_FLAGS_ALL));
       return TRUE;
     }
 
@@ -73,9 +73,9 @@ handle_deploy (XdgAppSystemHelper    *object,
       return TRUE;
     }
 
-  is_update = (arg_flags & XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
+  is_update = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
 
-  deploy_dir = xdg_app_dir_get_if_deployed (system, arg_ref,
+  deploy_dir = flatpak_dir_get_if_deployed (system, arg_ref,
                                             NULL, NULL);
 
   if (deploy_dir)
@@ -84,12 +84,12 @@ handle_deploy (XdgAppSystemHelper    *object,
       if (!is_update)
         {
           /* Can't install already installed app */
-          g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
+          g_dbus_method_invocation_return_error (invocation, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                                                  "%s is already installed", arg_ref);
           return TRUE;
         }
 
-      real_origin = xdg_app_dir_get_origin (system, arg_ref, NULL, NULL);
+      real_origin = flatpak_dir_get_origin (system, arg_ref, NULL, NULL);
       if (g_strcmp0 (real_origin, arg_origin) != 0)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
@@ -100,12 +100,12 @@ handle_deploy (XdgAppSystemHelper    *object,
   else if (!deploy_dir && is_update)
     {
       /* Can't update not installed app */
-      g_dbus_method_invocation_return_error (invocation, XDG_APP_ERROR, XDG_APP_ERROR_ALREADY_INSTALLED,
+      g_dbus_method_invocation_return_error (invocation, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                                              "%s is not installed", arg_ref);
       return TRUE;
     }
 
-  if (!xdg_app_dir_ensure_repo (system, NULL, &error))
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                              "Can't open system repo %s", error->message);
@@ -116,7 +116,7 @@ handle_deploy (XdgAppSystemHelper    *object,
   main_context = g_main_context_new ();
   g_main_context_push_thread_default (main_context);
 
-  if (!xdg_app_dir_pull_untrusted_local (system, arg_repo_path,
+  if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
                                          arg_origin,
                                          arg_ref,
                                          (char **) arg_subpaths,
@@ -134,7 +134,7 @@ handle_deploy (XdgAppSystemHelper    *object,
   if (is_update)
     {
       /* TODO: This doesn't support a custom subpath */
-      if (!xdg_app_dir_deploy_update (system, arg_ref,
+      if (!flatpak_dir_deploy_update (system, arg_ref,
                                       NULL,
                                       NULL, &error))
         {
@@ -145,7 +145,7 @@ handle_deploy (XdgAppSystemHelper    *object,
     }
   else
     {
-      if (!xdg_app_dir_deploy_install (system, arg_ref, arg_origin,
+      if (!flatpak_dir_deploy_install (system, arg_ref, arg_origin,
                                        (char **) arg_subpaths,
                                        NULL, &error))
         {
@@ -162,7 +162,7 @@ handle_deploy (XdgAppSystemHelper    *object,
 
 
 static gboolean
-xdg_app_authorize_method_handler (GDBusInterfaceSkeleton *interface,
+flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
                                   GDBusMethodInvocation  *invocation,
                                   gpointer                user_data)
 {
@@ -196,22 +196,22 @@ xdg_app_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       g_variant_get_child (parameters, 2, "&s", &ref);
       g_variant_get_child (parameters, 3, "&s", &origin);
 
-      is_update = (flags & XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
+      is_update = (flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
       is_app = g_str_has_prefix (ref, "app/");
 
       if (is_update)
         {
           if (is_app)
-            action = "org.freedesktop.XdgApp.app-update";
+            action = "org.freedesktop.Flatpak.app-update";
           else
-            action = "org.freedesktop.XdgApp.runtime-update";
+            action = "org.freedesktop.Flatpak.runtime-update";
         }
       else
         {
           if (is_app)
-            action = "org.freedesktop.XdgApp.app-install";
+            action = "org.freedesktop.Flatpak.app-install";
           else
-            action = "org.freedesktop.XdgApp.runtime-install";
+            action = "org.freedesktop.Flatpak.runtime-install";
         }
 
       details = polkit_details_new ();
@@ -260,12 +260,12 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-deploy", G_CALLBACK (handle_deploy), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
-                    G_CALLBACK (xdg_app_authorize_method_handler),
+                    G_CALLBACK (flatpak_authorize_method_handler),
                     NULL);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
                                          connection,
-                                         "/org/freedesktop/XdgApp/SystemHelper",
+                                         "/org/freedesktop/Flatpak/SystemHelper",
                                          &error))
     {
       g_warning ("error: %s\n", error->message);
@@ -311,7 +311,7 @@ main (int    argc,
     }
 
   owner_id = g_bus_own_name (G_BUS_TYPE_SYSTEM,
-                             "org.freedesktop.XdgApp.SystemHelper",
+                             "org.freedesktop.Flatpak.SystemHelper",
                              G_BUS_NAME_OWNER_FLAGS_NONE,
                              on_bus_acquired,
                              on_name_acquired,

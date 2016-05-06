@@ -39,10 +39,10 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   const char *app;
   const char *branch = "master";
@@ -51,7 +51,7 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
 
   context = g_option_context_new ("APP BRANCH - Make branch of application current");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (argc < 3)
@@ -60,27 +60,27 @@ xdg_app_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   app  = argv[1];
   branch = argv[2];
 
-  ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
+  ref = flatpak_compose_ref (TRUE, app, branch, opt_arch, error);
   if (ref == NULL)
     return FALSE;
 
-  if (!xdg_app_dir_lock (dir, &lock,
+  if (!flatpak_dir_lock (dir, &lock,
                          cancellable, error))
     return FALSE;
 
-  deploy_base = xdg_app_dir_get_deploy_dir (dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
-    return xdg_app_fail (error, "App %s branch %s is not installed", app, branch);
+    return flatpak_fail (error, "App %s branch %s is not installed", app, branch);
 
-  if (!xdg_app_dir_make_current_ref (dir, ref, cancellable, error))
+  if (!flatpak_dir_make_current_ref (dir, ref, cancellable, error))
     return FALSE;
 
-  if (!xdg_app_dir_update_exports (dir, app, cancellable, error))
+  if (!flatpak_dir_update_exports (dir, app, cancellable, error))
     return FALSE;
 
   glnx_release_lock_file (&lock);
 
-  if (!xdg_app_dir_mark_changed (dir, error))
+  if (!flatpak_dir_mark_changed (dir, error))
     return FALSE;
 
   return TRUE;

@@ -18,47 +18,47 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __XDG_APP_DIR_H__
-#define __XDG_APP_DIR_H__
+#ifndef __FLATPAK_DIR_H__
+#define __FLATPAK_DIR_H__
 
 #include <ostree.h>
 
 #include "libglnx/libglnx.h"
 #include <xdg-app-common-types.h>
 
-#define XDG_APP_TYPE_DIR xdg_app_dir_get_type ()
-#define XDG_APP_DIR(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_DIR, XdgAppDir))
-#define XDG_APP_IS_DIR(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_DIR))
+#define FLATPAK_TYPE_DIR flatpak_dir_get_type ()
+#define FLATPAK_DIR(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_DIR, FlatpakDir))
+#define FLATPAK_IS_DIR(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_DIR))
 
-#define XDG_APP_TYPE_DEPLOY xdg_app_deploy_get_type ()
-#define XDG_APP_DEPLOY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_DEPLOY, XdgAppDeploy))
-#define XDG_APP_IS_DEPLOY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_DEPLOY))
+#define FLATPAK_TYPE_DEPLOY flatpak_deploy_get_type ()
+#define FLATPAK_DEPLOY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_DEPLOY, FlatpakDeploy))
+#define FLATPAK_IS_DEPLOY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_DEPLOY))
 
-GType xdg_app_dir_get_type (void);
-GType xdg_app_deploy_get_type (void);
+GType flatpak_dir_get_type (void);
+GType flatpak_deploy_get_type (void);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppDir, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppDeploy, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)
 
-#define XDG_APP_DIR_ERROR xdg_app_dir_error_quark ()
-
-typedef enum {
-  XDG_APP_DIR_ERROR_ALREADY_DEPLOYED,
-  XDG_APP_DIR_ERROR_ALREADY_UNDEPLOYED,
-  XDG_APP_DIR_ERROR_NOT_DEPLOYED,
-} XdgAppDirErrorEnum;
+#define FLATPAK_DIR_ERROR flatpak_dir_error_quark ()
 
 typedef enum {
-  XDG_APP_HELPER_DEPLOY_FLAGS_NONE = 0,
-  XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE = 1 << 0,
-} XdgAppHelperDeployFlags;
+  FLATPAK_DIR_ERROR_ALREADY_DEPLOYED,
+  FLATPAK_DIR_ERROR_ALREADY_UNDEPLOYED,
+  FLATPAK_DIR_ERROR_NOT_DEPLOYED,
+} FlatpakDirErrorEnum;
 
-#define XDG_APP_HELPER_DEPLOY_FLAGS_ALL (XDG_APP_HELPER_DEPLOY_FLAGS_UPDATE)
+typedef enum {
+  FLATPAK_HELPER_DEPLOY_FLAGS_NONE = 0,
+  FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE = 1 << 0,
+} FlatpakHelperDeployFlags;
 
-GQuark       xdg_app_dir_error_quark (void);
+#define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE)
+
+GQuark       flatpak_dir_error_quark (void);
 
 /**
- * XDG_APP_DEPLOY_DATA_GVARIANT_FORMAT:
+ * FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT:
  *
  * s - origin
  * s - commit
@@ -66,63 +66,63 @@ GQuark       xdg_app_dir_error_quark (void);
  * t - installed size
  * a{sv} - Metadata
  */
-#define XDG_APP_DEPLOY_DATA_GVARIANT_STRING "(ssasta{sv})"
-#define XDG_APP_DEPLOY_DATA_GVARIANT_FORMAT G_VARIANT_TYPE (XDG_APP_DEPLOY_DATA_GVARIANT_STRING)
+#define FLATPAK_DEPLOY_DATA_GVARIANT_STRING "(ssasta{sv})"
+#define FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT G_VARIANT_TYPE (FLATPAK_DEPLOY_DATA_GVARIANT_STRING)
 
-GFile *  xdg_app_get_system_base_dir_location (void);
-GFile *  xdg_app_get_user_base_dir_location (void);
+GFile *  flatpak_get_system_base_dir_location (void);
+GFile *  flatpak_get_user_base_dir_location (void);
 
-GKeyFile *     xdg_app_load_override_keyfile (const char *app_id,
+GKeyFile *     flatpak_load_override_keyfile (const char *app_id,
                                               gboolean    user,
                                               GError    **error);
-XdgAppContext *xdg_app_load_override_file (const char *app_id,
-                                           gboolean    user,
-                                           GError    **error);
-gboolean       xdg_app_save_override_keyfile (GKeyFile   *metakey,
+FlatpakContext *flatpak_load_override_file (const char *app_id,
+                                            gboolean    user,
+                                            GError    **error);
+gboolean       flatpak_save_override_keyfile (GKeyFile   *metakey,
                                               const char *app_id,
                                               gboolean    user,
                                               GError    **error);
 
-const char *        xdg_app_deploy_data_get_origin (GVariant *deploy_data);
-const char *        xdg_app_deploy_data_get_commit (GVariant *deploy_data);
-const char **       xdg_app_deploy_data_get_subpaths (GVariant *deploy_data);
-guint64             xdg_app_deploy_data_get_installed_size (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_origin (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_commit (GVariant *deploy_data);
+const char **       flatpak_deploy_data_get_subpaths (GVariant *deploy_data);
+guint64             flatpak_deploy_data_get_installed_size (GVariant *deploy_data);
 
-GFile *        xdg_app_deploy_get_dir (XdgAppDeploy *deploy);
-GFile *        xdg_app_deploy_get_files (XdgAppDeploy *deploy);
-XdgAppContext *xdg_app_deploy_get_overrides (XdgAppDeploy *deploy);
-GKeyFile *     xdg_app_deploy_get_metadata (XdgAppDeploy *deploy);
+GFile *        flatpak_deploy_get_dir (FlatpakDeploy *deploy);
+GFile *        flatpak_deploy_get_files (FlatpakDeploy *deploy);
+FlatpakContext *flatpak_deploy_get_overrides (FlatpakDeploy *deploy);
+GKeyFile *     flatpak_deploy_get_metadata (FlatpakDeploy *deploy);
 
-XdgAppDir *  xdg_app_dir_new (GFile   *basedir,
-                              gboolean user);
-XdgAppDir *  xdg_app_dir_clone (XdgAppDir *self);
-XdgAppDir  *xdg_app_dir_get (gboolean user);
-XdgAppDir  *xdg_app_dir_get_system (void);
-XdgAppDir  *xdg_app_dir_get_user (void);
-gboolean    xdg_app_dir_is_user (XdgAppDir *self);
-GFile *     xdg_app_dir_get_path (XdgAppDir *self);
-GFile *     xdg_app_dir_get_changed_path (XdgAppDir *self);
-GFile *     xdg_app_dir_get_deploy_dir (XdgAppDir  *self,
+FlatpakDir *  flatpak_dir_new (GFile   *basedir,
+                               gboolean user);
+FlatpakDir *  flatpak_dir_clone (FlatpakDir *self);
+FlatpakDir  *flatpak_dir_get (gboolean user);
+FlatpakDir  *flatpak_dir_get_system (void);
+FlatpakDir  *flatpak_dir_get_user (void);
+gboolean    flatpak_dir_is_user (FlatpakDir *self);
+GFile *     flatpak_dir_get_path (FlatpakDir *self);
+GFile *     flatpak_dir_get_changed_path (FlatpakDir *self);
+GFile *     flatpak_dir_get_deploy_dir (FlatpakDir *self,
                                         const char *ref);
-GVariant *  xdg_app_dir_get_deploy_data (XdgAppDir    *dir,
+GVariant *  flatpak_dir_get_deploy_data (FlatpakDir   *dir,
                                          const char   *ref,
                                          GCancellable *cancellable,
                                          GError      **error);
-char *      xdg_app_dir_get_origin (XdgAppDir    *self,
+char *      flatpak_dir_get_origin (FlatpakDir   *self,
                                     const char   *ref,
                                     GCancellable *cancellable,
                                     GError      **error);
-char **     xdg_app_dir_get_subpaths (XdgAppDir    *self,
+char **     flatpak_dir_get_subpaths (FlatpakDir   *self,
                                       const char   *ref,
                                       GCancellable *cancellable,
                                       GError      **error);
-GFile *     xdg_app_dir_get_exports_dir (XdgAppDir *self);
-GFile *     xdg_app_dir_get_removed_dir (XdgAppDir *self);
-GFile *     xdg_app_dir_get_if_deployed (XdgAppDir    *self,
+GFile *     flatpak_dir_get_exports_dir (FlatpakDir *self);
+GFile *     flatpak_dir_get_removed_dir (FlatpakDir *self);
+GFile *     flatpak_dir_get_if_deployed (FlatpakDir   *self,
                                          const char   *ref,
                                          const char   *checksum,
                                          GCancellable *cancellable);
-char *      xdg_app_dir_find_remote_ref (XdgAppDir    *self,
+char *      flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                          const char   *remote,
                                          const char   *name,
                                          const char   *opt_branch,
@@ -132,7 +132,7 @@ char *      xdg_app_dir_find_remote_ref (XdgAppDir    *self,
                                          gboolean     *is_app,
                                          GCancellable *cancellable,
                                          GError      **error);
-char *      xdg_app_dir_find_installed_ref (XdgAppDir  *self,
+char *      flatpak_dir_find_installed_ref (FlatpakDir *self,
                                             const char *name,
                                             const char *opt_branch,
                                             const char *opt_arch,
@@ -140,39 +140,39 @@ char *      xdg_app_dir_find_installed_ref (XdgAppDir  *self,
                                             gboolean    runtime,
                                             gboolean   *is_app,
                                             GError    **error);
-XdgAppDeploy *xdg_app_dir_load_deployed (XdgAppDir    *self,
-                                         const char   *ref,
-                                         const char   *checksum,
-                                         GCancellable *cancellable,
-                                         GError      **error);
-char *    xdg_app_dir_load_override (XdgAppDir  *dir,
+FlatpakDeploy *flatpak_dir_load_deployed (FlatpakDir   *self,
+                                          const char   *ref,
+                                          const char   *checksum,
+                                          GCancellable *cancellable,
+                                          GError      **error);
+char *    flatpak_dir_load_override (FlatpakDir *dir,
                                      const char *app_id,
                                      gsize      *length,
                                      GError    **error);
-OstreeRepo *xdg_app_dir_get_repo (XdgAppDir *self);
-gboolean    xdg_app_dir_ensure_path (XdgAppDir    *self,
+OstreeRepo *flatpak_dir_get_repo (FlatpakDir *self);
+gboolean    flatpak_dir_ensure_path (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
-gboolean    xdg_app_dir_use_child_repo (XdgAppDir *self);
-gboolean    xdg_app_dir_ensure_system_child_repo (XdgAppDir *self,
-                                                  GError   **error);
-gboolean    xdg_app_dir_ensure_repo (XdgAppDir    *self,
+gboolean    flatpak_dir_use_child_repo (FlatpakDir *self);
+gboolean    flatpak_dir_ensure_system_child_repo (FlatpakDir *self,
+                                                  GError    **error);
+gboolean    flatpak_dir_ensure_repo (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
-gboolean    xdg_app_dir_mark_changed (XdgAppDir *self,
-                                      GError   **error);
-gboolean    xdg_app_dir_remove_appstream (XdgAppDir    *self,
+gboolean    flatpak_dir_mark_changed (FlatpakDir *self,
+                                      GError    **error);
+gboolean    flatpak_dir_remove_appstream (FlatpakDir   *self,
                                           const char   *remote,
                                           GCancellable *cancellable,
                                           GError      **error);
-gboolean    xdg_app_dir_update_appstream (XdgAppDir           *self,
+gboolean    flatpak_dir_update_appstream (FlatpakDir          *self,
                                           const char          *remote,
                                           const char          *arch,
                                           gboolean            *out_changed,
                                           OstreeAsyncProgress *progress,
                                           GCancellable        *cancellable,
                                           GError             **error);
-gboolean    xdg_app_dir_pull (XdgAppDir           *self,
+gboolean    flatpak_dir_pull (FlatpakDir          *self,
                               const char          *repository,
                               const char          *ref,
                               char               **subpaths,
@@ -181,7 +181,7 @@ gboolean    xdg_app_dir_pull (XdgAppDir           *self,
                               OstreeAsyncProgress *progress,
                               GCancellable        *cancellable,
                               GError             **error);
-gboolean    xdg_app_dir_pull_untrusted_local (XdgAppDir           *self,
+gboolean    flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                               const char          *src_path,
                                               const char          *remote_name,
                                               const char          *ref,
@@ -189,51 +189,51 @@ gboolean    xdg_app_dir_pull_untrusted_local (XdgAppDir           *self,
                                               OstreeAsyncProgress *progress,
                                               GCancellable        *cancellable,
                                               GError             **error);
-gboolean    xdg_app_dir_list_refs_for_name (XdgAppDir    *self,
+gboolean    flatpak_dir_list_refs_for_name (FlatpakDir   *self,
                                             const char   *kind,
                                             const char   *name,
                                             char       ***refs,
                                             GCancellable *cancellable,
                                             GError      **error);
-gboolean    xdg_app_dir_list_refs (XdgAppDir    *self,
+gboolean    flatpak_dir_list_refs (FlatpakDir   *self,
                                    const char   *kind,
                                    char       ***refs,
                                    GCancellable *cancellable,
                                    GError      **error);
-char *      xdg_app_dir_read_latest (XdgAppDir    *self,
+char *      flatpak_dir_read_latest (FlatpakDir   *self,
                                      const char   *remote,
                                      const char   *ref,
                                      GCancellable *cancellable,
                                      GError      **error);
-char *      xdg_app_dir_read_active (XdgAppDir    *self,
+char *      flatpak_dir_read_active (FlatpakDir   *self,
                                      const char   *ref,
                                      GCancellable *cancellable);
-gboolean    xdg_app_dir_set_active (XdgAppDir    *self,
+gboolean    flatpak_dir_set_active (FlatpakDir   *self,
                                     const char   *ref,
                                     const char   *checksum,
                                     GCancellable *cancellable,
                                     GError      **error);
-char *      xdg_app_dir_current_ref (XdgAppDir    *self,
+char *      flatpak_dir_current_ref (FlatpakDir   *self,
                                      const char   *name,
                                      GCancellable *cancellable);
-gboolean    xdg_app_dir_drop_current_ref (XdgAppDir    *self,
+gboolean    flatpak_dir_drop_current_ref (FlatpakDir   *self,
                                           const char   *name,
                                           GCancellable *cancellable,
                                           GError      **error);
-gboolean    xdg_app_dir_make_current_ref (XdgAppDir    *self,
+gboolean    flatpak_dir_make_current_ref (FlatpakDir   *self,
                                           const char   *ref,
                                           GCancellable *cancellable,
                                           GError      **error);
-gboolean    xdg_app_dir_list_deployed (XdgAppDir    *self,
+gboolean    flatpak_dir_list_deployed (FlatpakDir   *self,
                                        const char   *ref,
                                        char       ***deployed_checksums,
                                        GCancellable *cancellable,
                                        GError      **error);
-gboolean    xdg_app_dir_lock (XdgAppDir    *self,
+gboolean    flatpak_dir_lock (FlatpakDir   *self,
                               GLnxLockFile *lockfile,
                               GCancellable *cancellable,
                               GError      **error);
-gboolean    xdg_app_dir_deploy (XdgAppDir           *self,
+gboolean    flatpak_dir_deploy (FlatpakDir          *self,
                                 const char          *origin,
                                 const char          *ref,
                                 const char          *checksum_or_latest,
@@ -241,18 +241,18 @@ gboolean    xdg_app_dir_deploy (XdgAppDir           *self,
                                 GVariant            *old_deploy_data,
                                 GCancellable        *cancellable,
                                 GError             **error);
-gboolean    xdg_app_dir_deploy_update (XdgAppDir    *self,
+gboolean    flatpak_dir_deploy_update (FlatpakDir   *self,
                                        const char   *ref,
                                        const char   *checksum,
                                        GCancellable *cancellable,
                                        GError      **error);
-gboolean   xdg_app_dir_deploy_install (XdgAppDir    *self,
+gboolean   flatpak_dir_deploy_install (FlatpakDir   *self,
                                        const char   *ref,
                                        const char   *origin,
                                        char        **subpaths,
                                        GCancellable *cancellable,
                                        GError      **error);
-gboolean   xdg_app_dir_install (XdgAppDir           *self,
+gboolean   flatpak_dir_install (FlatpakDir          *self,
                                 gboolean             no_pull,
                                 gboolean             no_deploy,
                                 const char          *ref,
@@ -261,7 +261,7 @@ gboolean   xdg_app_dir_install (XdgAppDir           *self,
                                 OstreeAsyncProgress *progress,
                                 GCancellable        *cancellable,
                                 GError             **error);
-gboolean   xdg_app_dir_update (XdgAppDir           *self,
+gboolean   flatpak_dir_update (FlatpakDir          *self,
                                gboolean             no_pull,
                                gboolean             no_deploy,
                                const char          *ref,
@@ -271,38 +271,38 @@ gboolean   xdg_app_dir_update (XdgAppDir           *self,
                                OstreeAsyncProgress *progress,
                                GCancellable        *cancellable,
                                GError             **error);
-gboolean    xdg_app_dir_undeploy (XdgAppDir    *self,
+gboolean    flatpak_dir_undeploy (FlatpakDir   *self,
                                   const char   *ref,
                                   const char   *checksum,
                                   gboolean      force_remove,
                                   GCancellable *cancellable,
                                   GError      **error);
-gboolean    xdg_app_dir_undeploy_all (XdgAppDir    *self,
+gboolean    flatpak_dir_undeploy_all (FlatpakDir   *self,
                                       const char   *ref,
                                       gboolean      force_remove,
                                       gboolean     *was_deployed_out,
                                       GCancellable *cancellable,
                                       GError      **error);
-gboolean    xdg_app_dir_remove_all_refs (XdgAppDir    *self,
+gboolean    flatpak_dir_remove_all_refs (FlatpakDir   *self,
                                          const char   *remote,
                                          GCancellable *cancellable,
                                          GError      **error);
-gboolean    xdg_app_dir_remove_ref (XdgAppDir    *self,
+gboolean    flatpak_dir_remove_ref (FlatpakDir   *self,
                                     const char   *remote_name,
                                     const char   *ref,
                                     GCancellable *cancellable,
                                     GError      **error);
-gboolean    xdg_app_dir_update_exports (XdgAppDir    *self,
+gboolean    flatpak_dir_update_exports (FlatpakDir   *self,
                                         const char   *app,
                                         GCancellable *cancellable,
                                         GError      **error);
-gboolean    xdg_app_dir_prune (XdgAppDir    *self,
+gboolean    flatpak_dir_prune (FlatpakDir   *self,
                                GCancellable *cancellable,
                                GError      **error);
-gboolean    xdg_app_dir_cleanup_removed (XdgAppDir    *self,
+gboolean    flatpak_dir_cleanup_removed (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error);
-gboolean    xdg_app_dir_collect_deployed_refs (XdgAppDir    *self,
+gboolean    flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
                                                const char   *type,
                                                const char   *name_prefix,
                                                const char   *branch,
@@ -310,45 +310,45 @@ gboolean    xdg_app_dir_collect_deployed_refs (XdgAppDir    *self,
                                                GHashTable   *hash,
                                                GCancellable *cancellable,
                                                GError      **error);
-char      *xdg_app_dir_create_origin_remote (XdgAppDir    *self,
+char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *url,
                                              const char   *id,
                                              const char   *title,
                                              GBytes       *gpg_data,
                                              GCancellable *cancellable,
                                              GError      **error);
-char     **xdg_app_dir_list_remotes (XdgAppDir    *self,
+char     **flatpak_dir_list_remotes (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
-char      *xdg_app_dir_get_remote_title (XdgAppDir  *self,
+char      *flatpak_dir_get_remote_title (FlatpakDir *self,
                                          const char *remote_name);
-int        xdg_app_dir_get_remote_prio (XdgAppDir  *self,
+int        flatpak_dir_get_remote_prio (FlatpakDir *self,
                                         const char *remote_name);
-gboolean   xdg_app_dir_get_remote_noenumerate (XdgAppDir  *self,
+gboolean   flatpak_dir_get_remote_noenumerate (FlatpakDir *self,
                                                const char *remote_name);
-gboolean   xdg_app_dir_get_remote_disabled (XdgAppDir  *self,
+gboolean   flatpak_dir_get_remote_disabled (FlatpakDir *self,
                                             const char *remote_name);
-gboolean   xdg_app_dir_list_remote_refs (XdgAppDir    *self,
+gboolean   flatpak_dir_list_remote_refs (FlatpakDir   *self,
                                          const char   *remote,
                                          GHashTable  **refs,
                                          GCancellable *cancellable,
                                          GError      **error);
-char *   xdg_app_dir_fetch_remote_title (XdgAppDir    *self,
+char *   flatpak_dir_fetch_remote_title (FlatpakDir   *self,
                                          const char   *remote,
                                          GCancellable *cancellable,
                                          GError      **error);
-GBytes * xdg_app_dir_fetch_remote_object (XdgAppDir    *self,
+GBytes * flatpak_dir_fetch_remote_object (FlatpakDir   *self,
                                           const char   *remote,
                                           const char   *checksum,
                                           const char   *type,
                                           GCancellable *cancellable,
                                           GError      **error);
-GBytes * xdg_app_dir_fetch_metadata (XdgAppDir    *self,
+GBytes * flatpak_dir_fetch_metadata (FlatpakDir   *self,
                                      const char   *remote_name,
                                      const char   *commit,
                                      GCancellable *cancellable,
                                      GError      **error);
-gboolean xdg_app_dir_fetch_ref_cache (XdgAppDir    *self,
+gboolean flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                                       const char   *remote_name,
                                       const char   *ref,
                                       guint64      *download_size,
@@ -357,4 +357,4 @@ gboolean xdg_app_dir_fetch_ref_cache (XdgAppDir    *self,
                                       GCancellable *cancellable,
                                       GError      **error);
 
-#endif /* __XDG_APP_DIR_H__ */
+#endif /* __FLATPAK_DIR_H__ */

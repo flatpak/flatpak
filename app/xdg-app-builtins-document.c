@@ -56,7 +56,7 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_export_file (int argc, char **argv,
+flatpak_builtin_export_file (int argc, char **argv,
                              GCancellable *cancellable,
                              GError **error)
 {
@@ -77,8 +77,8 @@ xdg_app_builtin_export_file (int argc, char **argv,
 
   context = g_option_context_new ("FILE - Export a file to apps");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv,
-                                     XDG_APP_BUILTIN_FLAG_NO_DIR,
+  if (!flatpak_option_context_parse (context, options, &argc, &argv,
+                                     FLATPAK_BUILTIN_FLAG_NO_DIR,
                                      NULL, cancellable, error))
     return FALSE;
 

@@ -45,18 +45,18 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) user_dir = NULL;
-  g_autoptr(XdgAppDir) system_dir = NULL;
-  XdgAppDir *dirs[2] = { 0 };
+  g_autoptr(FlatpakDir) user_dir = NULL;
+  g_autoptr(FlatpakDir) system_dir = NULL;
+  FlatpakDir *dirs[2] = { 0 };
   guint i = 0, n_dirs = 0, j;
-  XdgAppTablePrinter *printer;
+  FlatpakTablePrinter *printer;
 
   context = g_option_context_new (" - List remote repositories");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (!opt_user && !opt_system)
@@ -64,24 +64,24 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_user)
     {
-      user_dir = xdg_app_dir_get_user ();
+      user_dir = flatpak_dir_get_user ();
       dirs[n_dirs++] = user_dir;
     }
 
   if (opt_system)
     {
-      system_dir = xdg_app_dir_get_system ();
+      system_dir = flatpak_dir_get_system ();
       dirs[n_dirs++] = system_dir;
     }
 
-  printer = xdg_app_table_printer_new ();
+  printer = flatpak_table_printer_new ();
 
   for (j = 0; j < n_dirs; j++)
     {
-      XdgAppDir *dir = dirs[j];
+      FlatpakDir *dir = dirs[j];
       g_auto(GStrv) remotes = NULL;
 
-      remotes = xdg_app_dir_list_remotes (dir, cancellable, error);
+      remotes = flatpak_dir_list_remotes (dir, cancellable, error);
       if (remotes == NULL)
         return FALSE;
 
@@ -90,7 +90,7 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
           char *remote_name = remotes[i];
           gboolean disabled;
 
-          disabled = xdg_app_dir_get_remote_disabled (dir, remote_name);
+          disabled = flatpak_dir_get_remote_disabled (dir, remote_name);
           if (disabled && !opt_show_disabled)
             continue;
 
@@ -102,48 +102,48 @@ xdg_app_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
               g_autofree char *prio_as_string = NULL;
               gboolean gpg_verify = TRUE;
 
-              xdg_app_table_printer_add_column (printer, remote_name);
+              flatpak_table_printer_add_column (printer, remote_name);
 
-              title = xdg_app_dir_get_remote_title (dir, remote_name);
+              title = flatpak_dir_get_remote_title (dir, remote_name);
               if (title)
-                xdg_app_table_printer_add_column (printer, title);
+                flatpak_table_printer_add_column (printer, title);
               else
-                xdg_app_table_printer_add_column (printer, "-");
+                flatpak_table_printer_add_column (printer, "-");
 
-              ostree_repo_remote_get_url (xdg_app_dir_get_repo (dir), remote_name, &remote_url, NULL);
+              ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, &remote_url, NULL);
 
-              xdg_app_table_printer_add_column (printer, remote_url);
+              flatpak_table_printer_add_column (printer, remote_url);
 
-              prio = xdg_app_dir_get_remote_prio (dir, remote_name);
+              prio = flatpak_dir_get_remote_prio (dir, remote_name);
               prio_as_string = g_strdup_printf ("%d", prio);
-              xdg_app_table_printer_add_column (printer, prio_as_string);
+              flatpak_table_printer_add_column (printer, prio_as_string);
 
-              xdg_app_table_printer_add_column (printer, ""); /* Options */
+              flatpak_table_printer_add_column (printer, ""); /* Options */
 
-              ostree_repo_remote_get_gpg_verify (xdg_app_dir_get_repo (dir), remote_name,
+              ostree_repo_remote_get_gpg_verify (flatpak_dir_get_repo (dir), remote_name,
                                                  &gpg_verify, NULL);
               if (!gpg_verify)
-                xdg_app_table_printer_append_with_comma (printer, "no-gpg-verify");
+                flatpak_table_printer_append_with_comma (printer, "no-gpg-verify");
               if (disabled)
-                xdg_app_table_printer_append_with_comma (printer, "disabled");
+                flatpak_table_printer_append_with_comma (printer, "disabled");
 
-              if (xdg_app_dir_get_remote_noenumerate (dir, remote_name))
-                xdg_app_table_printer_append_with_comma (printer, "no-enumerate");
+              if (flatpak_dir_get_remote_noenumerate (dir, remote_name))
+                flatpak_table_printer_append_with_comma (printer, "no-enumerate");
 
               if (opt_user && opt_system)
-                xdg_app_table_printer_append_with_comma (printer, dir == user_dir ? "user" : "system");
+                flatpak_table_printer_append_with_comma (printer, dir == user_dir ? "user" : "system");
             }
           else
             {
-              xdg_app_table_printer_add_column (printer, remote_name);
+              flatpak_table_printer_add_column (printer, remote_name);
             }
 
-          xdg_app_table_printer_finish_row (printer);
+          flatpak_table_printer_finish_row (printer);
         }
     }
 
-  xdg_app_table_printer_print (printer);
-  xdg_app_table_printer_free (printer);
+  flatpak_table_printer_print (printer);
+  flatpak_table_printer_free (printer);
 
   return TRUE;
 }

@@ -92,9 +92,9 @@ read_gpg_data (GCancellable *cancellable,
     }
 
   /* Chain together all the --keyring options as one long stream. */
-  source_stream = (GInputStream *) xdg_app_chain_input_stream_new (streams);
+  source_stream = (GInputStream *) flatpak_chain_input_stream_new (streams);
 
-  return xdg_app_read_stream (source_stream, FALSE, error);
+  return flatpak_read_stream (source_stream, FALSE, error);
 }
 
 static gboolean
@@ -144,7 +144,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
   in = (GInputStream *) g_file_read (metadata_file, cancellable, NULL);
   if (in != NULL)
     {
-      g_autoptr(GBytes) bytes = xdg_app_read_stream (in, TRUE, error);
+      g_autoptr(GBytes) bytes = flatpak_read_stream (in, TRUE, error);
 
       if (bytes == NULL)
         return FALSE;
@@ -166,17 +166,17 @@ build_bundle (OstreeRepo *repo, GFile *file,
   xml_in = (GInputStream *) g_file_read (appstream_file, cancellable, NULL);
   if (xml_in)
     {
-      g_autoptr(XdgAppXml) appstream_root = NULL;
-      g_autoptr(XdgAppXml) xml_root = xdg_app_xml_parse (xml_in, TRUE,
-                                                         cancellable, error);
+      g_autoptr(FlatpakXml) appstream_root = NULL;
+      g_autoptr(FlatpakXml) xml_root = flatpak_xml_parse (xml_in, TRUE,
+                                                          cancellable, error);
       if (xml_root == NULL)
         return FALSE;
 
-      appstream_root = xdg_app_appstream_xml_new ();
-      if (xdg_app_appstream_xml_migrate (xml_root, appstream_root,
+      appstream_root = flatpak_appstream_xml_new ();
+      if (flatpak_appstream_xml_migrate (xml_root, appstream_root,
                                          full_branch, name, keyfile))
         {
-          g_autoptr(GBytes) xml_data = xdg_app_appstream_xml_root_to_data (appstream_root, error);
+          g_autoptr(GBytes) xml_data = flatpak_appstream_xml_root_to_data (appstream_root, error);
           int i;
           g_autoptr(GFile) icons_dir =
             g_file_resolve_relative_path (root,
@@ -201,7 +201,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
               png_in = (GInputStream *) g_file_read (icon_file, cancellable, NULL);
               if (png_in != NULL)
                 {
-                  g_autoptr(GBytes) png_data = xdg_app_read_stream (png_in, FALSE, error);
+                  g_autoptr(GBytes) png_data = flatpak_read_stream (png_in, FALSE, error);
                   if (png_data == NULL)
                     return FALSE;
 
@@ -256,14 +256,14 @@ build_bundle (OstreeRepo *repo, GFile *file,
 
 #if defined(HAVE_LIBARCHIVE) && defined(HAVE_OSTREE_EXPORT_PATH_PREFIX)
 
-GLNX_DEFINE_CLEANUP_FUNCTION (void *, xdg_app_local_free_read_archive, archive_read_free)
-#define free_read_archive __attribute__((cleanup (xdg_app_local_free_read_archive)))
+GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_read_archive, archive_read_free)
+#define free_read_archive __attribute__((cleanup (flatpak_local_free_read_archive)))
 
-GLNX_DEFINE_CLEANUP_FUNCTION (void *, xdg_app_local_free_write_archive, archive_write_free)
-#define free_write_archive __attribute__((cleanup (xdg_app_local_free_write_archive)))
+GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_write_archive, archive_write_free)
+#define free_write_archive __attribute__((cleanup (flatpak_local_free_write_archive)))
 
-GLNX_DEFINE_CLEANUP_FUNCTION (void *, xdg_app_local_free_archive_entry, archive_entry_free)
-#define free_archive_entry __attribute__((cleanup (xdg_app_local_free_archive_entry)))
+GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_archive_entry, archive_entry_free)
+#define free_archive_entry __attribute__((cleanup (flatpak_local_free_archive_entry)))
 
 
 typedef struct
@@ -884,7 +884,7 @@ build_oci (OstreeRepo *repo, GFile *file,
 }
 
 gboolean
-xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) file = NULL;
@@ -898,7 +898,7 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
 
   context = g_option_context_new ("LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local repository");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (argc < 4)
@@ -917,20 +917,20 @@ xdg_app_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   repo = ostree_repo_new (repofile);
 
   if (!g_file_query_exists (repofile, cancellable))
-    return xdg_app_fail (error, "'%s' is not a valid repository", location);
+    return flatpak_fail (error, "'%s' is not a valid repository", location);
 
   file = g_file_new_for_commandline_arg (filename);
 
-  if (!xdg_app_is_valid_name (name))
-    return xdg_app_fail (error, "'%s' is not a valid name", name);
+  if (!flatpak_is_valid_name (name))
+    return flatpak_fail (error, "'%s' is not a valid name", name);
 
-  if (!xdg_app_is_valid_branch (branch))
-    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
+  if (!flatpak_is_valid_branch (branch))
+    return flatpak_fail (error, "'%s' is not a valid branch name", branch);
 
   if (opt_runtime)
-    full_branch = xdg_app_build_runtime_ref (name, branch, opt_arch);
+    full_branch = flatpak_build_runtime_ref (name, branch, opt_arch);
   else
-    full_branch = xdg_app_build_app_ref (name, branch, opt_arch);
+    full_branch = flatpak_build_app_ref (name, branch, opt_arch);
 
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;

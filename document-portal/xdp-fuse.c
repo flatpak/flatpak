@@ -610,7 +610,7 @@ create_tmp_for_doc (XdpInode *dir, int dir_fd, int flags, mode_t mode, int *fd_o
   g_autofree char *template = g_strconcat (".xdp_", dir->basename, ".XXXXXX", NULL);
   int fd;
 
-  fd = xdg_app_mkstempat (dir_fd, template, flags | O_CLOEXEC, mode);
+  fd = flatpak_mkstempat (dir_fd, template, flags | O_CLOEXEC, mode);
   if (fd == -1)
     return NULL;
 
@@ -723,7 +723,7 @@ xdp_inode_lookup (fuse_ino_t inode_nr)
 }
 
 static XdpInode *
-xdp_inode_get_dir_unlocked (const char *app_id, const char *doc_id, XdgAppDbEntry *entry)
+xdp_inode_get_dir_unlocked (const char *app_id, const char *doc_id, FlatpakDbEntry *entry)
 {
   fuse_ino_t ino;
   XdpInode *inode;
@@ -775,7 +775,7 @@ xdp_inode_get_dir_unlocked (const char *app_id, const char *doc_id, XdgAppDbEntr
 }
 
 static XdpInode *
-xdp_inode_get_dir (const char *app_id, const char *doc_id, XdgAppDbEntry *entry)
+xdp_inode_get_dir (const char *app_id, const char *doc_id, FlatpakDbEntry *entry)
 {
   AUTOLOCK (inodes);
   return xdp_inode_get_dir_unlocked (app_id, doc_id, entry);
@@ -793,7 +793,7 @@ get_user_perms (const struct stat *stbuf)
 }
 
 static gboolean
-app_can_write_doc (XdgAppDbEntry *entry, const char *app_id)
+app_can_write_doc (FlatpakDbEntry *entry, const char *app_id)
 {
   if (app_id == NULL)
     return TRUE;
@@ -805,7 +805,7 @@ app_can_write_doc (XdgAppDbEntry *entry, const char *app_id)
 }
 
 static gboolean
-app_can_see_doc (XdgAppDbEntry *entry, const char *app_id)
+app_can_see_doc (FlatpakDbEntry *entry, const char *app_id)
 {
   if (app_id == NULL)
     return TRUE;
@@ -866,7 +866,7 @@ xdp_inode_stat (XdpInode    *inode,
 
     case XDP_INODE_DOC_FILE:
       {
-        g_autoptr(XdgAppDbEntry) entry = NULL;
+        g_autoptr(FlatpakDbEntry) entry = NULL;
         struct stat tmp_stbuf;
         gboolean can_see, can_write;
         int fd, res, errsv;
@@ -943,7 +943,7 @@ xdp_fuse_lookup (fuse_req_t  req,
   g_autoptr(XdpInode) parent_inode = NULL;
   struct fuse_entry_param e = {0};
   g_autoptr(XdpInode) child_inode = NULL;
-  g_autoptr(XdgAppDbEntry) entry = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
 
   g_debug ("xdp_fuse_lookup %lx/%s -> ", parent, name);
 
@@ -976,7 +976,7 @@ xdp_fuse_lookup (fuse_req_t  req,
 
     case XDP_INODE_BY_APP:
       /* This lazily creates the app dir */
-      if (xdg_app_is_valid_name (name))
+      if (flatpak_is_valid_name (name))
         child_inode = xdp_inode_get_dir (name, NULL, NULL);
       break;
 
@@ -1105,7 +1105,7 @@ dirbuf_add_docs (fuse_req_t     req,
     {
       if (app_id)
         {
-          g_autoptr(XdgAppDbEntry) entry = xdp_lookup_doc (docs[i]);
+          g_autoptr(FlatpakDbEntry) entry = xdp_lookup_doc (docs[i]);
           if (entry == NULL ||
               !app_can_see_doc (entry, app_id))
             continue;
@@ -1202,7 +1202,7 @@ xdp_fuse_opendir (fuse_req_t             req,
       {
         GList *children, *l;
         g_autoptr(XdpInode) doc_inode = NULL;
-        g_autoptr(XdgAppDbEntry) entry = NULL;
+        g_autoptr(FlatpakDbEntry) entry = NULL;
 
         entry = xdp_lookup_doc (inode->doc_id);
         if (entry == NULL)
@@ -1309,7 +1309,7 @@ xdp_fuse_fsyncdir (fuse_req_t             req,
   if (inode->type == XDP_INODE_APP_DOC_DIR ||
       inode->type == XDP_INODE_DOC_DIR)
     {
-      g_autoptr(XdgAppDbEntry) entry =  xdp_lookup_doc (inode->doc_id);
+      g_autoptr(FlatpakDbEntry) entry =  xdp_lookup_doc (inode->doc_id);
       if (entry != NULL)
         {
           g_autofree char *dirname = xdp_entry_dup_dirname (entry);
@@ -1431,9 +1431,9 @@ xdp_file_free (XdpFile *file)
 
 /* sets errno */
 static int
-xdp_inode_locked_ensure_fd_open (XdpInode      *inode,
-                                 XdgAppDbEntry *entry,
-                                 gboolean       for_write)
+xdp_inode_locked_ensure_fd_open (XdpInode       *inode,
+                                 FlatpakDbEntry *entry,
+                                 gboolean        for_write)
 {
   /* Ensure all fds are open */
   if (inode->dir_fd == -1)
@@ -1487,7 +1487,7 @@ xdp_fuse_open (fuse_req_t             req,
                struct fuse_file_info *fi)
 {
   g_autoptr(XdpInode) inode = NULL;
-  g_autoptr(XdgAppDbEntry) entry = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
   gboolean can_write;
   int open_mode;
   XdpFile *file = NULL;
@@ -1568,7 +1568,7 @@ xdp_fuse_create (fuse_req_t             req,
                  struct fuse_file_info *fi)
 {
   g_autoptr(XdpInode) parent_inode = NULL;
-  g_autoptr(XdgAppDbEntry) entry = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
   struct fuse_entry_param e = {0};
   gboolean can_see, can_write;
   int open_mode;
@@ -1764,7 +1764,7 @@ xdp_fuse_setattr (fuse_req_t             req,
                   struct fuse_file_info *fi)
 {
   g_autoptr(XdpInode) inode = NULL;
-  g_autoptr(XdgAppDbEntry) entry = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
   double attr_cache_time = ATTR_CACHE_TIME;
   struct stat newattr = {0};
   gboolean can_write;
@@ -2042,7 +2042,7 @@ xdp_fuse_rename (fuse_req_t  req,
                  const char *newname)
 {
   g_autoptr(XdpInode) parent_inode = NULL;
-  g_autoptr(XdgAppDbEntry) entry = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
   gboolean can_see, can_write;
 
   g_debug ("xdp_fuse_rename %lx/%s -> %lx/%s", parent, name, newparent, newname);
@@ -2244,7 +2244,7 @@ xdp_fuse_init (GError **error)
 
   if (g_mkdir_with_parents (mount_path, 0700))
     {
-      g_set_error (error, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED,
+      g_set_error (error, FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_FAILED,
                    "Unable to create dir %s", mount_path);
       return FALSE;
     }
@@ -2252,7 +2252,7 @@ xdp_fuse_init (GError **error)
   main_ch = fuse_mount (mount_path, &args);
   if (main_ch == NULL)
     {
-      g_set_error (error, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED, "Can't mount fuse fs");
+      g_set_error (error, FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_FAILED, "Can't mount fuse fs");
       return FALSE;
     }
 
@@ -2260,7 +2260,7 @@ xdp_fuse_init (GError **error)
                                sizeof (xdp_fuse_oper), NULL);
   if (session == NULL)
     {
-      g_set_error (error, XDG_APP_PORTAL_ERROR, XDG_APP_PORTAL_ERROR_FAILED,
+      g_set_error (error, FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_FAILED,
                    "Can't create fuse session");
       return FALSE;
     }

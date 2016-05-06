@@ -18,24 +18,24 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
-#ifndef __XDG_APP_REF_H__
-#define __XDG_APP_REF_H__
+#ifndef __FLATPAK_REF_H__
+#define __FLATPAK_REF_H__
 
-typedef struct _XdgAppRef XdgAppRef;
+typedef struct _FlatpakRef FlatpakRef;
 
 #include <glib-object.h>
 
-#define XDG_APP_TYPE_REF xdg_app_ref_get_type ()
-#define XDG_APP_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_REF, XdgAppRef))
-#define XDG_APP_IS_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_REF))
+#define FLATPAK_TYPE_REF flatpak_ref_get_type ()
+#define FLATPAK_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_REF, FlatpakRef))
+#define FLATPAK_IS_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_REF))
 
-XDG_APP_EXTERN GType xdg_app_ref_get_type (void);
+FLATPAK_EXTERN GType flatpak_ref_get_type (void);
 
-struct _XdgAppRef
+struct _FlatpakRef
 {
   GObject parent;
 };
@@ -43,32 +43,32 @@ struct _XdgAppRef
 typedef struct
 {
   GObjectClass parent_class;
-} XdgAppRefClass;
+} FlatpakRefClass;
 
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppRef, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRef, g_object_unref)
 #endif
 
 /**
- * XdgAppRefKind:
- * @XDG_APP_REF_KIND_APP: An application
- * @XDG_APP_REF_KIND_RUNTIME: A runtime that applications can use.
+ * FlatpakRefKind:
+ * @FLATPAK_REF_KIND_APP: An application
+ * @FLATPAK_REF_KIND_RUNTIME: A runtime that applications can use.
  *
- * The kind of artifact that a XdgAppRef refers to.
+ * The kind of artifact that a FlatpakRef refers to.
  */
 typedef enum {
-  XDG_APP_REF_KIND_APP,
-  XDG_APP_REF_KIND_RUNTIME,
-} XdgAppRefKind;
+  FLATPAK_REF_KIND_APP,
+  FLATPAK_REF_KIND_RUNTIME,
+} FlatpakRefKind;
 
-XDG_APP_EXTERN const char *  xdg_app_ref_get_name (XdgAppRef *self);
-XDG_APP_EXTERN const char *  xdg_app_ref_get_arch (XdgAppRef *self);
-XDG_APP_EXTERN const char *  xdg_app_ref_get_branch (XdgAppRef *self);
-XDG_APP_EXTERN const char *  xdg_app_ref_get_commit (XdgAppRef *self);
-XDG_APP_EXTERN XdgAppRefKind xdg_app_ref_get_kind (XdgAppRef *self);
-XDG_APP_EXTERN char *        xdg_app_ref_format_ref (XdgAppRef *self);
-XDG_APP_EXTERN XdgAppRef *   xdg_app_ref_parse (const char *ref,
-                                                GError    **error);
+FLATPAK_EXTERN const char *  flatpak_ref_get_name (FlatpakRef *self);
+FLATPAK_EXTERN const char *  flatpak_ref_get_arch (FlatpakRef *self);
+FLATPAK_EXTERN const char *  flatpak_ref_get_branch (FlatpakRef *self);
+FLATPAK_EXTERN const char *  flatpak_ref_get_commit (FlatpakRef *self);
+FLATPAK_EXTERN FlatpakRefKind flatpak_ref_get_kind (FlatpakRef *self);
+FLATPAK_EXTERN char *        flatpak_ref_format_ref (FlatpakRef *self);
+FLATPAK_EXTERN FlatpakRef *   flatpak_ref_parse (const char *ref,
+                                                 GError    **error);
 
-#endif /* __XDG_APP_REF_H__ */
+#endif /* __FLATPAK_REF_H__ */

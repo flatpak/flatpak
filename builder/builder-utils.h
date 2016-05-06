@@ -44,9 +44,9 @@ char ** builder_get_debuginfo_file_references (const char *filename,
 
 gboolean directory_is_empty (const char *path);
 
-gboolean xdg_app_matches_path_pattern (const char *path,
+gboolean flatpak_matches_path_pattern (const char *path,
                                        const char *pattern);
-void     xdg_app_collect_matches_for_path_pattern (const char *path,
+void     flatpak_collect_matches_for_path_pattern (const char *path,
                                                    const char *pattern,
                                                    const char *add_prefix,
                                                    GHashTable *to_remove_ht);

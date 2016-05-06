@@ -248,7 +248,7 @@ const char *
 builder_context_get_arch (BuilderContext *self)
 {
   if (self->arch == NULL)
-    self->arch = g_strdup (xdg_app_get_arch ());
+    self->arch = g_strdup (flatpak_get_arch ());
 
   return (const char *) self->arch;
 }

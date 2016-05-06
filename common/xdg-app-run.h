@@ -18,94 +18,94 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __XDG_APP_RUN_H__
-#define __XDG_APP_RUN_H__
+#ifndef __FLATPAK_RUN_H__
+#define __FLATPAK_RUN_H__
 
 #include "libglnx/libglnx.h"
 #include "dbus-proxy/xdg-app-proxy.h"
 #include "xdg-app-common-types.h"
 
-gboolean xdg_app_run_in_transient_unit (const char *app_id,
+gboolean flatpak_run_in_transient_unit (const char *app_id,
                                         GError    **error);
 
-#define XDG_APP_METADATA_GROUP_CONTEXT "Context"
-#define XDG_APP_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
-#define XDG_APP_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
-#define XDG_APP_METADATA_GROUP_ENVIRONMENT "Environment"
-#define XDG_APP_METADATA_KEY_SHARED "shared"
-#define XDG_APP_METADATA_KEY_SOCKETS "sockets"
-#define XDG_APP_METADATA_KEY_FILESYSTEMS "filesystems"
-#define XDG_APP_METADATA_KEY_PERSISTENT "persistent"
-#define XDG_APP_METADATA_KEY_DEVICES "devices"
+#define FLATPAK_METADATA_GROUP_CONTEXT "Context"
+#define FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
+#define FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
+#define FLATPAK_METADATA_GROUP_ENVIRONMENT "Environment"
+#define FLATPAK_METADATA_KEY_SHARED "shared"
+#define FLATPAK_METADATA_KEY_SOCKETS "sockets"
+#define FLATPAK_METADATA_KEY_FILESYSTEMS "filesystems"
+#define FLATPAK_METADATA_KEY_PERSISTENT "persistent"
+#define FLATPAK_METADATA_KEY_DEVICES "devices"
 
-XdgAppContext *xdg_app_context_new (void);
-void           xdg_app_context_free (XdgAppContext *context);
-void           xdg_app_context_merge (XdgAppContext *context,
-                                      XdgAppContext *other);
-GOptionGroup  *xdg_app_context_get_options (XdgAppContext *context);
-gboolean       xdg_app_context_load_metadata (XdgAppContext *context,
-                                              GKeyFile      *metakey,
-                                              GError       **error);
-void           xdg_app_context_save_metadata (XdgAppContext *context,
-                                              GKeyFile      *metakey);
-void           xdg_app_context_allow_host_fs (XdgAppContext *context);
-void           xdg_app_context_set_session_bus_policy (XdgAppContext *context,
-                                                       const char    *name,
-                                                       XdgAppPolicy   policy);
-void           xdg_app_context_set_system_bus_policy (XdgAppContext *context,
-                                                      const char    *name,
-                                                      XdgAppPolicy   policy);
+FlatpakContext *flatpak_context_new (void);
+void           flatpak_context_free (FlatpakContext *context);
+void           flatpak_context_merge (FlatpakContext *context,
+                                      FlatpakContext *other);
+GOptionGroup  *flatpak_context_get_options (FlatpakContext *context);
+gboolean       flatpak_context_load_metadata (FlatpakContext *context,
+                                              GKeyFile       *metakey,
+                                              GError        **error);
+void           flatpak_context_save_metadata (FlatpakContext *context,
+                                              GKeyFile       *metakey);
+void           flatpak_context_allow_host_fs (FlatpakContext *context);
+void           flatpak_context_set_session_bus_policy (FlatpakContext *context,
+                                                       const char     *name,
+                                                       FlatpakPolicy   policy);
+void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
+                                                      const char     *name,
+                                                      FlatpakPolicy   policy);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppContext, xdg_app_context_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
-gboolean  xdg_app_run_add_extension_args (GPtrArray    *argv_array,
+gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                           GKeyFile     *metakey,
                                           const char   *full_ref,
                                           GCancellable *cancellable,
                                           GError      **error);
-void     xdg_app_run_add_environment_args (GPtrArray     *argv_array,
-                                           char        ***envp_p,
-                                           GPtrArray     *session_bus_proxy_argv,
-                                           GPtrArray     *system_bus_proxy_argv,
-                                           const char    *app_id,
-                                           XdgAppContext *context,
-                                           GFile         *app_id_dir);
-char **  xdg_app_run_get_minimal_env (gboolean devel);
-char **  xdg_app_run_apply_env_default (char **envp);
-char **  xdg_app_run_apply_env_appid (char **envp,
+void     flatpak_run_add_environment_args (GPtrArray      *argv_array,
+                                           char         ***envp_p,
+                                           GPtrArray      *session_bus_proxy_argv,
+                                           GPtrArray      *system_bus_proxy_argv,
+                                           const char     *app_id,
+                                           FlatpakContext *context,
+                                           GFile          *app_id_dir);
+char **  flatpak_run_get_minimal_env (gboolean devel);
+char **  flatpak_run_apply_env_default (char **envp);
+char **  flatpak_run_apply_env_appid (char **envp,
                                       GFile *app_dir);
-char **  xdg_app_run_apply_env_vars (char         **envp,
-                                     XdgAppContext *context);
+char **  flatpak_run_apply_env_vars (char          **envp,
+                                     FlatpakContext *context);
 
-GFile *xdg_app_get_data_dir (const char *app_id);
-GFile *xdg_app_ensure_data_dir (const char   *app_id,
+GFile *flatpak_get_data_dir (const char *app_id);
+GFile *flatpak_ensure_data_dir (const char   *app_id,
                                 GCancellable *cancellable,
                                 GError      **error);
 
 typedef enum {
-  XDG_APP_RUN_FLAG_DEVEL           = (1 << 0),
-  XDG_APP_RUN_FLAG_BACKGROUND      = (1 << 1),
-  XDG_APP_RUN_FLAG_LOG_SESSION_BUS = (1 << 2),
-  XDG_APP_RUN_FLAG_LOG_SYSTEM_BUS  = (1 << 3),
-} XdgAppRunFlags;
+  FLATPAK_RUN_FLAG_DEVEL           = (1 << 0),
+  FLATPAK_RUN_FLAG_BACKGROUND      = (1 << 1),
+  FLATPAK_RUN_FLAG_LOG_SESSION_BUS = (1 << 2),
+  FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS  = (1 << 3),
+} FlatpakRunFlags;
 
-gboolean xdg_app_run_setup_base_argv (GPtrArray     *argv_array,
-                                      GFile         *runtime_files,
-                                      GFile         *app_id_dir,
-                                      const char    *arch,
-                                      XdgAppRunFlags flags,
-                                      GError       **error);
-gboolean xdg_app_run_app (const char    *app_ref,
-                          XdgAppDeploy  *app_deploy,
-                          XdgAppContext *extra_context,
-                          const char    *custom_runtime,
-                          const char    *custom_runtime_version,
-                          XdgAppRunFlags flags,
-                          const char    *custom_command,
-                          char          *args[],
-                          int            n_args,
-                          GCancellable  *cancellable,
-                          GError       **error);
+gboolean flatpak_run_setup_base_argv (GPtrArray      *argv_array,
+                                      GFile          *runtime_files,
+                                      GFile          *app_id_dir,
+                                      const char     *arch,
+                                      FlatpakRunFlags flags,
+                                      GError        **error);
+gboolean flatpak_run_app (const char     *app_ref,
+                          FlatpakDeploy  *app_deploy,
+                          FlatpakContext *extra_context,
+                          const char     *custom_runtime,
+                          const char     *custom_runtime_version,
+                          FlatpakRunFlags flags,
+                          const char     *custom_command,
+                          char           *args[],
+                          int             n_args,
+                          GCancellable   *cancellable,
+                          GError        **error);
 
 
-#endif /* __XDG_APP_RUN_H__ */
+#endif /* __FLATPAK_RUN_H__ */

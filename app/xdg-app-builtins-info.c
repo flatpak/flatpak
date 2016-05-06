@@ -53,13 +53,13 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_info (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autofree char *ref = NULL;
-  g_autoptr(XdgAppDir) user_dir = NULL;
-  g_autoptr(XdgAppDir) system_dir = NULL;
-  XdgAppDir *dir = NULL;
+  g_autoptr(FlatpakDir) user_dir = NULL;
+  g_autoptr(FlatpakDir) system_dir = NULL;
+  FlatpakDir *dir = NULL;
   g_autoptr(GError) lookup_error = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
   const char *name;
@@ -71,7 +71,7 @@ xdg_app_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   context = g_option_context_new ("NAME [BRANCH] - Get info about installed app and/or runtime");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (argc < 2)
@@ -89,9 +89,9 @@ xdg_app_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (opt_user)
     {
-      user_dir = xdg_app_dir_get_user ();
+      user_dir = flatpak_dir_get_user ();
 
-      ref = xdg_app_dir_find_installed_ref (user_dir,
+      ref = flatpak_dir_find_installed_ref (user_dir,
                                             name,
                                             branch,
                                             opt_arch,
@@ -103,9 +103,9 @@ xdg_app_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (ref == NULL && opt_system)
     {
-      system_dir = xdg_app_dir_get_system ();
+      system_dir = flatpak_dir_get_system ();
 
-      ref = xdg_app_dir_find_installed_ref (system_dir,
+      ref = flatpak_dir_find_installed_ref (system_dir,
                                             name,
                                             branch,
                                             opt_arch,
@@ -121,12 +121,12 @@ xdg_app_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       return FALSE;
     }
 
-  deploy_data = xdg_app_dir_get_deploy_data (dir, ref, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, error);
   if (deploy_data == NULL)
     return FALSE;
 
-  commit = xdg_app_deploy_data_get_commit (deploy_data);
-  origin = xdg_app_deploy_data_get_origin (deploy_data);
+  commit = flatpak_deploy_data_get_commit (deploy_data);
+  origin = flatpak_deploy_data_get_origin (deploy_data);
 
   if (!opt_show_ref && !opt_show_origin && !opt_show_commit)
     opt_show_ref = opt_show_origin = opt_show_commit = TRUE;

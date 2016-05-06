@@ -27,49 +27,49 @@ enum {
   PROP_STREAMS
 };
 
-G_DEFINE_TYPE (XdgAppChainInputStream, xdg_app_chain_input_stream, G_TYPE_INPUT_STREAM)
+G_DEFINE_TYPE (FlatpakChainInputStream, flatpak_chain_input_stream, G_TYPE_INPUT_STREAM)
 
-struct _XdgAppChainInputStreamPrivate
+struct _FlatpakChainInputStreamPrivate
 {
   GPtrArray *streams;
   guint      index;
 };
 
-static void     xdg_app_chain_input_stream_set_property (GObject      *object,
+static void     flatpak_chain_input_stream_set_property (GObject      *object,
                                                          guint         prop_id,
                                                          const GValue *value,
                                                          GParamSpec   *pspec);
-static void     xdg_app_chain_input_stream_get_property (GObject    *object,
+static void     flatpak_chain_input_stream_get_property (GObject    *object,
                                                          guint       prop_id,
                                                          GValue     *value,
                                                          GParamSpec *pspec);
-static void     xdg_app_chain_input_stream_finalize (GObject *object);
-static gssize   xdg_app_chain_input_stream_read (GInputStream *stream,
+static void     flatpak_chain_input_stream_finalize (GObject *object);
+static gssize   flatpak_chain_input_stream_read (GInputStream *stream,
                                                  void         *buffer,
                                                  gsize         count,
                                                  GCancellable *cancellable,
                                                  GError      **error);
-static gboolean xdg_app_chain_input_stream_close (GInputStream *stream,
+static gboolean flatpak_chain_input_stream_close (GInputStream *stream,
                                                   GCancellable *cancellable,
                                                   GError      **error);
 
 static void
-xdg_app_chain_input_stream_class_init (XdgAppChainInputStreamClass *klass)
+flatpak_chain_input_stream_class_init (FlatpakChainInputStreamClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GInputStreamClass *stream_class = G_INPUT_STREAM_CLASS (klass);
 
-  g_type_class_add_private (klass, sizeof (XdgAppChainInputStreamPrivate));
+  g_type_class_add_private (klass, sizeof (FlatpakChainInputStreamPrivate));
 
-  gobject_class->get_property = xdg_app_chain_input_stream_get_property;
-  gobject_class->set_property = xdg_app_chain_input_stream_set_property;
-  gobject_class->finalize     = xdg_app_chain_input_stream_finalize;
+  gobject_class->get_property = flatpak_chain_input_stream_get_property;
+  gobject_class->set_property = flatpak_chain_input_stream_set_property;
+  gobject_class->finalize     = flatpak_chain_input_stream_finalize;
 
-  stream_class->read_fn = xdg_app_chain_input_stream_read;
-  stream_class->close_fn = xdg_app_chain_input_stream_close;
+  stream_class->read_fn = flatpak_chain_input_stream_read;
+  stream_class->close_fn = flatpak_chain_input_stream_close;
 
   /*
-   * XdgAppChainInputStream:streams: (element-type GInputStream)
+   * FlatpakChainInputStream:streams: (element-type GInputStream)
    *
    * Chain of input streams read in order.
    */
@@ -84,14 +84,14 @@ xdg_app_chain_input_stream_class_init (XdgAppChainInputStreamClass *klass)
 }
 
 static void
-xdg_app_chain_input_stream_set_property (GObject      *object,
+flatpak_chain_input_stream_set_property (GObject      *object,
                                          guint         prop_id,
                                          const GValue *value,
                                          GParamSpec   *pspec)
 {
-  XdgAppChainInputStream *self;
+  FlatpakChainInputStream *self;
 
-  self = XDG_APP_CHAIN_INPUT_STREAM (object);
+  self = FLATPAK_CHAIN_INPUT_STREAM (object);
 
   switch (prop_id)
     {
@@ -106,14 +106,14 @@ xdg_app_chain_input_stream_set_property (GObject      *object,
 }
 
 static void
-xdg_app_chain_input_stream_get_property (GObject    *object,
+flatpak_chain_input_stream_get_property (GObject    *object,
                                          guint       prop_id,
                                          GValue     *value,
                                          GParamSpec *pspec)
 {
-  XdgAppChainInputStream *self;
+  FlatpakChainInputStream *self;
 
-  self = XDG_APP_CHAIN_INPUT_STREAM (object);
+  self = FLATPAK_CHAIN_INPUT_STREAM (object);
 
   switch (prop_id)
     {
@@ -127,46 +127,46 @@ xdg_app_chain_input_stream_get_property (GObject    *object,
 }
 
 static void
-xdg_app_chain_input_stream_finalize (GObject *object)
+flatpak_chain_input_stream_finalize (GObject *object)
 {
-  XdgAppChainInputStream *stream;
+  FlatpakChainInputStream *stream;
 
-  stream = (XdgAppChainInputStream *) (object);
+  stream = (FlatpakChainInputStream *) (object);
 
   g_ptr_array_unref (stream->priv->streams);
 
-  G_OBJECT_CLASS (xdg_app_chain_input_stream_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_chain_input_stream_parent_class)->finalize (object);
 }
 
 static void
-xdg_app_chain_input_stream_init (XdgAppChainInputStream *self)
+flatpak_chain_input_stream_init (FlatpakChainInputStream *self)
 {
   self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self,
-                                            XDG_APP_TYPE_CHAIN_INPUT_STREAM,
-                                            XdgAppChainInputStreamPrivate);
+                                            FLATPAK_TYPE_CHAIN_INPUT_STREAM,
+                                            FlatpakChainInputStreamPrivate);
 
 }
 
-XdgAppChainInputStream *
-xdg_app_chain_input_stream_new (GPtrArray *streams)
+FlatpakChainInputStream *
+flatpak_chain_input_stream_new (GPtrArray *streams)
 {
-  XdgAppChainInputStream *stream;
+  FlatpakChainInputStream *stream;
 
-  stream = g_object_new (XDG_APP_TYPE_CHAIN_INPUT_STREAM,
+  stream = g_object_new (FLATPAK_TYPE_CHAIN_INPUT_STREAM,
                          "streams", streams,
                          NULL);
 
-  return (XdgAppChainInputStream *) (stream);
+  return (FlatpakChainInputStream *) (stream);
 }
 
 static gssize
-xdg_app_chain_input_stream_read (GInputStream *stream,
+flatpak_chain_input_stream_read (GInputStream *stream,
                                  void         *buffer,
                                  gsize         count,
                                  GCancellable *cancellable,
                                  GError      **error)
 {
-  XdgAppChainInputStream *self = (XdgAppChainInputStream *) stream;
+  FlatpakChainInputStream *self = (FlatpakChainInputStream *) stream;
   GInputStream *child;
   gssize res = -1;
 
@@ -193,12 +193,12 @@ xdg_app_chain_input_stream_read (GInputStream *stream,
 }
 
 static gboolean
-xdg_app_chain_input_stream_close (GInputStream *stream,
+flatpak_chain_input_stream_close (GInputStream *stream,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
   gboolean ret = FALSE;
-  XdgAppChainInputStream *self = (gpointer) stream;
+  FlatpakChainInputStream *self = (gpointer) stream;
   guint i;
 
   for (i = 0; i < self->priv->streams->len; i++)

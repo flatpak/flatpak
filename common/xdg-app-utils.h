@@ -18,8 +18,8 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __XDG_APP_UTILS_H__
-#define __XDG_APP_UTILS_H__
+#ifndef __FLATPAK_UTILS_H__
+#define __FLATPAK_UTILS_H__
 
 #include <string.h>
 
@@ -31,90 +31,90 @@
 #include "xdg-app-dir.h"
 #include <ostree.h>
 
-gboolean xdg_app_fail (GError    **error,
+gboolean flatpak_fail (GError    **error,
                        const char *format,
                        ...);
 
-gint xdg_app_strcmp0_ptr (gconstpointer a,
+gint flatpak_strcmp0_ptr (gconstpointer a,
                           gconstpointer b);
 
-const char * xdg_app_path_match_prefix (const char *pattern,
+const char * flatpak_path_match_prefix (const char *pattern,
                                         const char *path);
 
-const char * xdg_app_get_arch (void);
+const char * flatpak_get_arch (void);
 
-const char * xdg_app_get_bwrap (void);
+const char * flatpak_get_bwrap (void);
 
-GBytes * xdg_app_read_stream (GInputStream *in,
+GBytes * flatpak_read_stream (GInputStream *in,
                               gboolean      null_terminate,
                               GError      **error);
 
-gboolean xdg_app_variant_save (GFile        *dest,
+gboolean flatpak_variant_save (GFile        *dest,
                                GVariant     *variant,
                                GCancellable *cancellable,
                                GError      **error);
-gboolean xdg_app_variant_bsearch_str (GVariant   *array,
+gboolean flatpak_variant_bsearch_str (GVariant   *array,
                                       const char *str,
                                       int        *out_pos);
-gboolean xdg_app_summary_lookup_ref (GVariant   *summary,
+gboolean flatpak_summary_lookup_ref (GVariant   *summary,
                                      const char *ref,
                                      char      **out_checksum);
 
-gboolean xdg_app_has_name_prefix (const char *string,
+gboolean flatpak_has_name_prefix (const char *string,
                                   const char *name);
-gboolean xdg_app_is_valid_name (const char *string);
-gboolean xdg_app_is_valid_branch (const char *string);
+gboolean flatpak_is_valid_name (const char *string);
+gboolean flatpak_is_valid_branch (const char *string);
 
-char **xdg_app_decompose_ref (const char *ref,
+char **flatpak_decompose_ref (const char *ref,
                               GError    **error);
 
-char * xdg_app_compose_ref (gboolean    app,
+char * flatpak_compose_ref (gboolean    app,
                             const char *name,
                             const char *branch,
                             const char *arch,
                             GError    **error);
 
-char * xdg_app_build_untyped_ref (const char *runtime,
+char * flatpak_build_untyped_ref (const char *runtime,
                                   const char *branch,
                                   const char *arch);
-char * xdg_app_build_runtime_ref (const char *runtime,
+char * flatpak_build_runtime_ref (const char *runtime,
                                   const char *branch,
                                   const char *arch);
-char * xdg_app_build_app_ref (const char *app,
+char * flatpak_build_app_ref (const char *app,
                               const char *branch,
                               const char *arch);
-GFile * xdg_app_find_deploy_dir_for_ref (const char   *ref,
+GFile * flatpak_find_deploy_dir_for_ref (const char   *ref,
                                          GCancellable *cancellable,
                                          GError      **error);
-XdgAppDeploy * xdg_app_find_deploy_for_ref (const char   *ref,
-                                            GCancellable *cancellable,
-                                            GError      **error);
-char ** xdg_app_list_deployed_refs (const char   *type,
+FlatpakDeploy * flatpak_find_deploy_for_ref (const char   *ref,
+                                             GCancellable *cancellable,
+                                             GError      **error);
+char ** flatpak_list_deployed_refs (const char   *type,
                                     const char   *name_prefix,
                                     const char   *branch,
                                     const char   *arch,
                                     GCancellable *cancellable,
                                     GError      **error);
 
-gboolean xdg_app_overlay_symlink_tree (GFile        *source,
+gboolean flatpak_overlay_symlink_tree (GFile        *source,
                                        GFile        *destination,
                                        const char   *symlink_prefix,
                                        GCancellable *cancellable,
                                        GError      **error);
-gboolean xdg_app_remove_dangling_symlinks (GFile        *dir,
+gboolean flatpak_remove_dangling_symlinks (GFile        *dir,
                                            GCancellable *cancellable,
                                            GError      **error);
 
-void  xdg_app_invocation_lookup_app_id (GDBusMethodInvocation *invocation,
+void  flatpak_invocation_lookup_app_id (GDBusMethodInvocation *invocation,
                                         GCancellable          *cancellable,
                                         GAsyncReadyCallback    callback,
                                         gpointer               user_data);
 
-char *xdg_app_invocation_lookup_app_id_finish (GDBusMethodInvocation *invocation,
+char *flatpak_invocation_lookup_app_id_finish (GDBusMethodInvocation *invocation,
                                                GAsyncResult          *result,
                                                GError               **error);
 
-void  xdg_app_connection_track_name_owners (GDBusConnection *connection);
+void  flatpak_connection_track_name_owners (GDBusConnection *connection);
 
 #if !GLIB_CHECK_VERSION (2, 40, 0)
 static inline gboolean
@@ -154,58 +154,58 @@ g_strv_subset (const gchar * const *strv,
 }
 
 static inline void
-xdg_app_auto_unlock_helper (GMutex **mutex)
+flatpak_auto_unlock_helper (GMutex **mutex)
 {
   if (*mutex)
     g_mutex_unlock (*mutex);
 }
 
 static inline GMutex *
-xdg_app_auto_lock_helper (GMutex *mutex)
+flatpak_auto_lock_helper (GMutex *mutex)
 {
   if (mutex)
     g_mutex_lock (mutex);
   return mutex;
 }
 
-gint xdg_app_mkstempat (int    dir_fd,
+gint flatpak_mkstempat (int    dir_fd,
                         gchar *tmpl,
                         int    flags,
                         int    mode);
 
 
-typedef struct XdgAppTablePrinter XdgAppTablePrinter;
+typedef struct FlatpakTablePrinter FlatpakTablePrinter;
 
-XdgAppTablePrinter *xdg_app_table_printer_new (void);
-void                xdg_app_table_printer_free (XdgAppTablePrinter *printer);
-void                xdg_app_table_printer_add_column (XdgAppTablePrinter *printer,
-                                                      const char         *text);
-void                xdg_app_table_printer_append_with_comma (XdgAppTablePrinter *printer,
-                                                             const char         *text);
-void                xdg_app_table_printer_finish_row (XdgAppTablePrinter *printer);
-void                xdg_app_table_printer_print (XdgAppTablePrinter *printer);
+FlatpakTablePrinter *flatpak_table_printer_new (void);
+void                flatpak_table_printer_free (FlatpakTablePrinter *printer);
+void                flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
+                                                      const char          *text);
+void                flatpak_table_printer_append_with_comma (FlatpakTablePrinter *printer,
+                                                             const char          *text);
+void                flatpak_table_printer_finish_row (FlatpakTablePrinter *printer);
+void                flatpak_table_printer_print (FlatpakTablePrinter *printer);
 
-gboolean xdg_app_repo_set_title (OstreeRepo *repo,
+gboolean flatpak_repo_set_title (OstreeRepo *repo,
                                  const char *title,
                                  GError    **error);
-gboolean xdg_app_repo_update (OstreeRepo   *repo,
+gboolean flatpak_repo_update (OstreeRepo   *repo,
                               const char  **gpg_key_ids,
                               const char   *gpg_homedir,
                               GCancellable *cancellable,
                               GError      **error);
-gboolean xdg_app_repo_collect_sizes (OstreeRepo   *repo,
+gboolean flatpak_repo_collect_sizes (OstreeRepo   *repo,
                                      GFile        *root,
                                      guint64      *installed_size,
                                      guint64      *download_size,
                                      GCancellable *cancellable,
                                      GError      **error);
 
-gboolean xdg_app_mtree_create_root (OstreeRepo        *repo,
+gboolean flatpak_mtree_create_root (OstreeRepo        *repo,
                                     OstreeMutableTree *mtree,
                                     GCancellable      *cancellable,
                                     GError           **error);
 
-GVariant * xdg_app_bundle_load (GFile   *file,
+GVariant * flatpak_bundle_load (GFile   *file,
                                 char   **commit,
                                 char   **ref,
                                 char   **origin,
@@ -213,7 +213,7 @@ GVariant * xdg_app_bundle_load (GFile   *file,
                                 GBytes **gpg_keys,
                                 GError **error);
 
-gboolean xdg_app_pull_from_bundle (OstreeRepo   *repo,
+gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,
                                    GFile        *file,
                                    const char   *remote,
                                    const char   *ref,
@@ -228,38 +228,38 @@ typedef struct
   char *installed_id;
   char *ref;
   char *directory;
-} XdgAppExtension;
+} FlatpakExtension;
 
-void xdg_app_extension_free (XdgAppExtension *extension);
+void flatpak_extension_free (FlatpakExtension *extension);
 
-GList *xdg_app_list_extensions (GKeyFile   *metakey,
+GList *flatpak_list_extensions (GKeyFile   *metakey,
                                 const char *arch,
                                 const char *branch);
 
-gboolean            xdg_app_spawn (GFile       *dir,
+gboolean            flatpak_spawn (GFile       *dir,
                                    char       **output,
                                    GError     **error,
                                    const gchar *argv0,
                                    va_list      args);
 
 typedef enum {
-  XDG_APP_CP_FLAGS_NONE = 0,
-  XDG_APP_CP_FLAGS_MERGE = 1<<0,
-  XDG_APP_CP_FLAGS_NO_CHOWN = 1<<1,
-  XDG_APP_CP_FLAGS_MOVE = 1<<2,
-} XdgAppCpFlags;
+  FLATPAK_CP_FLAGS_NONE = 0,
+  FLATPAK_CP_FLAGS_MERGE = 1<<0,
+  FLATPAK_CP_FLAGS_NO_CHOWN = 1<<1,
+  FLATPAK_CP_FLAGS_MOVE = 1<<2,
+} FlatpakCpFlags;
 
-gboolean   xdg_app_cp_a (GFile        *src,
-                         GFile        *dest,
-                         XdgAppCpFlags flags,
-                         GCancellable *cancellable,
-                         GError      **error);
+gboolean   flatpak_cp_a (GFile         *src,
+                         GFile         *dest,
+                         FlatpakCpFlags flags,
+                         GCancellable  *cancellable,
+                         GError       **error);
 
 
-#define xdg_app_autorm_rf _GLIB_CLEANUP (g_autoptr_cleanup_generic_gfree)
+#define flatpak_autorm_rf _GLIB_CLEANUP (g_autoptr_cleanup_generic_gfree)
 
 static inline void
-xdg_app_temp_dir_destroy (void *p)
+flatpak_temp_dir_destroy (void *p)
 {
   GFile *dir = p;
 
@@ -270,11 +270,11 @@ xdg_app_temp_dir_destroy (void *p)
     }
 }
 
-typedef GFile XdgAppTempDir;
+typedef GFile FlatpakTempDir;
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppTempDir, xdg_app_temp_dir_destroy)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakTempDir, flatpak_temp_dir_destroy)
 
-#define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup (xdg_app_auto_unlock_helper))) GMutex * G_PASTE (auto_unlock, __LINE__) = xdg_app_auto_lock_helper (&G_LOCK_NAME (name))
+#define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup (flatpak_auto_unlock_helper))) GMutex * G_PASTE (auto_unlock, __LINE__) = flatpak_auto_lock_helper (&G_LOCK_NAME (name))
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepo, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeMutableTree, g_object_unref)
@@ -295,55 +295,55 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupURI, soup_uri_free)
 typedef XdgAppSessionHelper AutoXdgAppSessionHelper;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoXdgAppSessionHelper, g_object_unref)
 
-typedef struct XdgAppXml XdgAppXml;
+typedef struct FlatpakXml FlatpakXml;
 
-struct XdgAppXml
+struct FlatpakXml
 {
-  gchar     *element_name; /* NULL == text */
-  char     **attribute_names;
-  char     **attribute_values;
-  char      *text;
-  XdgAppXml *parent;
-  XdgAppXml *first_child;
-  XdgAppXml *last_child;
-  XdgAppXml *next_sibling;
+  gchar      *element_name; /* NULL == text */
+  char      **attribute_names;
+  char      **attribute_values;
+  char       *text;
+  FlatpakXml *parent;
+  FlatpakXml *first_child;
+  FlatpakXml *last_child;
+  FlatpakXml *next_sibling;
 };
 
-XdgAppXml *xdg_app_xml_new (const gchar *element_name);
-XdgAppXml *xdg_app_xml_new_text (const gchar *text);
-void       xdg_app_xml_add (XdgAppXml *parent,
-                            XdgAppXml *node);
-void       xdg_app_xml_free (XdgAppXml *node);
-XdgAppXml *xdg_app_xml_parse (GInputStream *in,
-                              gboolean      compressed,
-                              GCancellable *cancellable,
-                              GError      **error);
-void       xdg_app_xml_to_string (XdgAppXml *node,
-                                  GString   *res);
-XdgAppXml *xdg_app_xml_unlink (XdgAppXml *node,
-                               XdgAppXml *prev_sibling);
-XdgAppXml *xdg_app_xml_find (XdgAppXml  *node,
-                             const char *type,
-                             XdgAppXml **prev_child_out);
+FlatpakXml *flatpak_xml_new (const gchar *element_name);
+FlatpakXml *flatpak_xml_new_text (const gchar *text);
+void       flatpak_xml_add (FlatpakXml *parent,
+                            FlatpakXml *node);
+void       flatpak_xml_free (FlatpakXml *node);
+FlatpakXml *flatpak_xml_parse (GInputStream *in,
+                               gboolean      compressed,
+                               GCancellable *cancellable,
+                               GError      **error);
+void       flatpak_xml_to_string (FlatpakXml *node,
+                                  GString    *res);
+FlatpakXml *flatpak_xml_unlink (FlatpakXml *node,
+                                FlatpakXml *prev_sibling);
+FlatpakXml *flatpak_xml_find (FlatpakXml  *node,
+                              const char  *type,
+                              FlatpakXml **prev_child_out);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppXml, xdg_app_xml_free);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakXml, flatpak_xml_free);
 
 
-XdgAppXml *xdg_app_appstream_xml_new (void);
-gboolean   xdg_app_appstream_xml_migrate (XdgAppXml  *source,
-                                          XdgAppXml  *dest,
+FlatpakXml *flatpak_appstream_xml_new (void);
+gboolean   flatpak_appstream_xml_migrate (FlatpakXml *source,
+                                          FlatpakXml *dest,
                                           const char *ref,
                                           const char *id,
                                           GKeyFile   *metadata);
-GBytes *xdg_app_appstream_xml_root_to_data (XdgAppXml *appstream_root,
-                                            GError   **error);
-gboolean   xdg_app_repo_generate_appstream (OstreeRepo   *repo,
+GBytes *flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
+                                            GError    **error);
+gboolean   flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                             const char  **gpg_key_ids,
                                             const char   *gpg_homedir,
                                             GCancellable *cancellable,
                                             GError      **error);
 
-gboolean xdg_app_allocate_tmpdir (int           tmpdir_dfd,
+gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   const char   *tmpdir_relpath,
                                   const char   *tmpdir_prefix,
                                   char        **tmpdir_name_out,
@@ -354,4 +354,4 @@ gboolean xdg_app_allocate_tmpdir (int           tmpdir_dfd,
                                   GError      **error);
 
 
-#endif /* __XDG_APP_UTILS_H__ */
+#endif /* __FLATPAK_UTILS_H__ */

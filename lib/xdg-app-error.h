@@ -19,29 +19,29 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef XDG_APP_ERROR_H
-#define XDG_APP_ERROR_H
+#ifndef FLATPAK_ERROR_H
+#define FLATPAK_ERROR_H
 
 #include <glib.h>
 
 G_BEGIN_DECLS
 
 /**
- * XdgAppError:
- * @XDG_APP_ERROR_ALREADY_INSTALLED: App/runtime is already installed
- * @XDG_APP_ERROR_NOT_INSTALLED: App/runtime is not installed
+ * FlatpakError:
+ * @FLATPAK_ERROR_ALREADY_INSTALLED: App/runtime is already installed
+ * @FLATPAK_ERROR_NOT_INSTALLED: App/runtime is not installed
  *
  * Error codes for library functions.
  */
 typedef enum {
-  XDG_APP_ERROR_ALREADY_INSTALLED,
-  XDG_APP_ERROR_NOT_INSTALLED,
-} XdgAppError;
+  FLATPAK_ERROR_ALREADY_INSTALLED,
+  FLATPAK_ERROR_NOT_INSTALLED,
+} FlatpakError;
 
-#define XDG_APP_ERROR xdg_app_error_quark ()
+#define FLATPAK_ERROR flatpak_error_quark ()
 
-XDG_APP_EXTERN GQuark  xdg_app_error_quark (void);
+FLATPAK_EXTERN GQuark  flatpak_error_quark (void);
 
 G_END_DECLS
 
-#endif /* XDG_APP_ERROR_H */
+#endif /* FLATPAK_ERROR_H */

@@ -168,10 +168,10 @@
  * For unknown methods, we return a synthetic error.
  */
 
-typedef struct XdgAppProxyClient XdgAppProxyClient;
+typedef struct FlatpakProxyClient FlatpakProxyClient;
 
-XdgAppPolicy xdg_app_proxy_get_policy (XdgAppProxy *proxy,
-                                       const char  *name);
+FlatpakPolicy flatpak_proxy_get_policy (FlatpakProxy *proxy,
+                                        const char   *name);
 
 /* We start looking ignoring the first cr-lf
    since there is no previous line initially */
@@ -221,35 +221,35 @@ typedef struct
 
 typedef struct
 {
-  gboolean           got_first_byte; /* always true on bus side */
-  gboolean           closed; /* always true on bus side */
+  gboolean            got_first_byte; /* always true on bus side */
+  gboolean            closed; /* always true on bus side */
 
-  XdgAppProxyClient *client;
-  GSocketConnection *connection;
-  GSource           *in_source;
-  GSource           *out_source;
+  FlatpakProxyClient *client;
+  GSocketConnection  *connection;
+  GSource            *in_source;
+  GSource            *out_source;
 
-  GBytes            *extra_input_data;
-  Buffer            *current_read_buffer;
-  Buffer             header_buffer;
+  GBytes             *extra_input_data;
+  Buffer             *current_read_buffer;
+  Buffer              header_buffer;
 
-  GList             *buffers; /* to be sent */
-  GList             *control_messages;
+  GList              *buffers; /* to be sent */
+  GList              *control_messages;
 
-  GHashTable        *expected_replies;
+  GHashTable         *expected_replies;
 } ProxySide;
 
-struct XdgAppProxyClient
+struct FlatpakProxyClient
 {
-  GObject      parent;
+  GObject       parent;
 
-  XdgAppProxy *proxy;
+  FlatpakProxy *proxy;
 
-  gboolean     authenticated;
-  int          auth_end_offset;
+  gboolean      authenticated;
+  int           auth_end_offset;
 
-  ProxySide    client_side;
-  ProxySide    bus_side;
+  ProxySide     client_side;
+  ProxySide     bus_side;
 
   /* Filtering data: */
   guint32     serial_offset;
@@ -264,9 +264,9 @@ struct XdgAppProxyClient
 typedef struct
 {
   GObjectClass parent_class;
-} XdgAppProxyClientClass;
+} FlatpakProxyClientClass;
 
-struct XdgAppProxy
+struct FlatpakProxy
 {
   GSocketService parent;
 
@@ -285,7 +285,7 @@ struct XdgAppProxy
 typedef struct
 {
   GSocketServiceClass parent_class;
-} XdgAppProxyClass;
+} FlatpakProxyClass;
 
 
 enum {
@@ -295,19 +295,19 @@ enum {
   PROP_SOCKET_PATH
 };
 
-#define XDG_APP_TYPE_PROXY xdg_app_proxy_get_type ()
-#define XDG_APP_PROXY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_PROXY, XdgAppProxy))
-#define XDG_APP_IS_PROXY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_PROXY))
+#define FLATPAK_TYPE_PROXY flatpak_proxy_get_type ()
+#define FLATPAK_PROXY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_PROXY, FlatpakProxy))
+#define FLATPAK_IS_PROXY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_PROXY))
 
 
-#define XDG_APP_TYPE_PROXY_CLIENT xdg_app_proxy_client_get_type ()
-#define XDG_APP_PROXY_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_PROXY_CLIENT, XdgAppProxyClient))
-#define XDG_APP_IS_PROXY_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_PROXY_CLIENT))
+#define FLATPAK_TYPE_PROXY_CLIENT flatpak_proxy_client_get_type ()
+#define FLATPAK_PROXY_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_PROXY_CLIENT, FlatpakProxyClient))
+#define FLATPAK_IS_PROXY_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_PROXY_CLIENT))
 
-GType xdg_app_proxy_client_get_type (void);
+GType flatpak_proxy_client_get_type (void);
 
-G_DEFINE_TYPE (XdgAppProxy, xdg_app_proxy, G_TYPE_SOCKET_SERVICE)
-G_DEFINE_TYPE (XdgAppProxyClient, xdg_app_proxy_client, G_TYPE_OBJECT)
+G_DEFINE_TYPE (FlatpakProxy, flatpak_proxy, G_TYPE_SOCKET_SERVICE)
+G_DEFINE_TYPE (FlatpakProxyClient, flatpak_proxy_client, G_TYPE_OBJECT)
 
 static void start_reading (ProxySide *side);
 static void stop_reading (ProxySide *side);
@@ -337,9 +337,9 @@ free_side (ProxySide *side)
 }
 
 static void
-xdg_app_proxy_client_finalize (GObject *object)
+flatpak_proxy_client_finalize (GObject *object)
 {
-  XdgAppProxyClient *client = XDG_APP_PROXY_CLIENT (object);
+  FlatpakProxyClient *client = FLATPAK_PROXY_CLIENT (object);
 
   client->proxy->clients = g_list_remove (client->proxy->clients, client);
   g_clear_object (&client->proxy);
@@ -351,19 +351,19 @@ xdg_app_proxy_client_finalize (GObject *object)
   free_side (&client->client_side);
   free_side (&client->bus_side);
 
-  G_OBJECT_CLASS (xdg_app_proxy_client_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_proxy_client_parent_class)->finalize (object);
 }
 
 static void
-xdg_app_proxy_client_class_init (XdgAppProxyClientClass *klass)
+flatpak_proxy_client_class_init (FlatpakProxyClientClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = xdg_app_proxy_client_finalize;
+  object_class->finalize = flatpak_proxy_client_finalize;
 }
 
 static void
-init_side (XdgAppProxyClient *client, ProxySide *side)
+init_side (FlatpakProxyClient *client, ProxySide *side)
 {
   side->got_first_byte = (side == &client->bus_side);
   side->client = client;
@@ -374,7 +374,7 @@ init_side (XdgAppProxyClient *client, ProxySide *side)
 }
 
 static void
-xdg_app_proxy_client_init (XdgAppProxyClient *client)
+flatpak_proxy_client_init (FlatpakProxyClient *client)
 {
   init_side (client, &client->client_side);
   init_side (client, &client->bus_side);
@@ -385,14 +385,14 @@ xdg_app_proxy_client_init (XdgAppProxyClient *client)
   client->unique_id_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 }
 
-XdgAppProxyClient *
-xdg_app_proxy_client_new (XdgAppProxy *proxy, GSocketConnection *connection)
+FlatpakProxyClient *
+flatpak_proxy_client_new (FlatpakProxy *proxy, GSocketConnection *connection)
 {
-  XdgAppProxyClient *client;
+  FlatpakProxyClient *client;
 
   g_socket_set_blocking (g_socket_connection_get_socket (connection), FALSE);
 
-  client = g_object_new (XDG_APP_TYPE_PROXY_CLIENT, NULL);
+  client = g_object_new (FLATPAK_TYPE_PROXY_CLIENT, NULL);
   client->proxy = g_object_ref (proxy);
   client->client_side.connection = g_object_ref (connection);
 
@@ -401,9 +401,9 @@ xdg_app_proxy_client_new (XdgAppProxy *proxy, GSocketConnection *connection)
   return client;
 }
 
-static XdgAppPolicy
-xdg_app_proxy_get_wildcard_policy (XdgAppProxy *proxy,
-                                   const char  *name)
+static FlatpakPolicy
+flatpak_proxy_get_wildcard_policy (FlatpakProxy *proxy,
+                                   const char   *name)
 {
   guint wildcard_policy = 0;
   char *dot;
@@ -420,53 +420,53 @@ xdg_app_proxy_get_wildcard_policy (XdgAppProxy *proxy,
   return wildcard_policy;
 }
 
-XdgAppPolicy
-xdg_app_proxy_get_policy (XdgAppProxy *proxy,
-                          const char  *name)
+FlatpakPolicy
+flatpak_proxy_get_policy (FlatpakProxy *proxy,
+                          const char   *name)
 {
   guint policy, wildcard_policy;
 
   policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->policy, name));
 
-  wildcard_policy = xdg_app_proxy_get_wildcard_policy (proxy, name);
+  wildcard_policy = flatpak_proxy_get_wildcard_policy (proxy, name);
 
   return MAX (policy, wildcard_policy);
 }
 
 void
-xdg_app_proxy_set_filter (XdgAppProxy *proxy,
-                          gboolean     filter)
+flatpak_proxy_set_filter (FlatpakProxy *proxy,
+                          gboolean      filter)
 {
   proxy->filter = filter;
 }
 
 void
-xdg_app_proxy_set_log_messages (XdgAppProxy *proxy,
-                                gboolean     log)
+flatpak_proxy_set_log_messages (FlatpakProxy *proxy,
+                                gboolean      log)
 {
   proxy->log_messages = log;
 }
 
 void
-xdg_app_proxy_add_policy (XdgAppProxy *proxy,
-                          const char  *name,
-                          XdgAppPolicy policy)
+flatpak_proxy_add_policy (FlatpakProxy *proxy,
+                          const char   *name,
+                          FlatpakPolicy policy)
 {
   g_hash_table_replace (proxy->policy, g_strdup (name), GINT_TO_POINTER (policy));
 }
 
 void
-xdg_app_proxy_add_wildcarded_policy (XdgAppProxy *proxy,
-                                     const char  *name,
-                                     XdgAppPolicy policy)
+flatpak_proxy_add_wildcarded_policy (FlatpakProxy *proxy,
+                                     const char   *name,
+                                     FlatpakPolicy policy)
 {
   g_hash_table_replace (proxy->wildcard_policy, g_strdup (name), GINT_TO_POINTER (policy));
 }
 
 static void
-xdg_app_proxy_finalize (GObject *object)
+flatpak_proxy_finalize (GObject *object)
 {
-  XdgAppProxy *proxy = XDG_APP_PROXY (object);
+  FlatpakProxy *proxy = FLATPAK_PROXY (object);
 
   if (g_socket_service_is_active (G_SOCKET_SERVICE (proxy)))
     unlink (proxy->socket_path);
@@ -480,16 +480,16 @@ xdg_app_proxy_finalize (GObject *object)
   g_free (proxy->socket_path);
   g_free (proxy->dbus_address);
 
-  G_OBJECT_CLASS (xdg_app_proxy_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_proxy_parent_class)->finalize (object);
 }
 
 static void
-xdg_app_proxy_set_property (GObject      *object,
+flatpak_proxy_set_property (GObject      *object,
                             guint         prop_id,
                             const GValue *value,
                             GParamSpec   *pspec)
 {
-  XdgAppProxy *proxy = XDG_APP_PROXY (object);
+  FlatpakProxy *proxy = FLATPAK_PROXY (object);
 
   switch (prop_id)
     {
@@ -508,12 +508,12 @@ xdg_app_proxy_set_property (GObject      *object,
 }
 
 static void
-xdg_app_proxy_get_property (GObject    *object,
+flatpak_proxy_get_property (GObject    *object,
                             guint       prop_id,
                             GValue     *value,
                             GParamSpec *pspec)
 {
-  XdgAppProxy *proxy = XDG_APP_PROXY (object);
+  FlatpakProxy *proxy = FLATPAK_PROXY (object);
 
   switch (prop_id)
     {
@@ -556,7 +556,7 @@ buffer_new (gsize size, Buffer *old)
 static ProxySide *
 get_other_side (ProxySide *side)
 {
-  XdgAppProxyClient *client = side->client;
+  FlatpakProxyClient *client = side->client;
 
   if (side == &client->client_side)
     return &client->bus_side;
@@ -751,7 +751,7 @@ static gboolean
 side_out_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
 {
   ProxySide *side = user_data;
-  XdgAppProxyClient *client = side->client;
+  FlatpakProxyClient *client = side->client;
   gboolean retval = G_SOURCE_CONTINUE;
 
   g_object_ref (client);
@@ -1183,26 +1183,26 @@ print_incoming_header (Header *header)
     }
 }
 
-static XdgAppPolicy
-xdg_app_proxy_client_get_policy (XdgAppProxyClient *client, const char *source)
+static FlatpakPolicy
+flatpak_proxy_client_get_policy (FlatpakProxyClient *client, const char *source)
 {
   if (source == NULL)
-    return XDG_APP_POLICY_TALK; /* All clients can talk to the bus itself */
+    return FLATPAK_POLICY_TALK; /* All clients can talk to the bus itself */
 
   if (source[0] == ':')
     return GPOINTER_TO_UINT (g_hash_table_lookup (client->unique_id_policy, source));
 
-  return xdg_app_proxy_get_policy (client->proxy, source);
+  return flatpak_proxy_get_policy (client->proxy, source);
 }
 
 static void
-xdg_app_proxy_client_update_unique_id_policy (XdgAppProxyClient *client,
-                                              const char        *unique_id,
-                                              XdgAppPolicy       policy)
+flatpak_proxy_client_update_unique_id_policy (FlatpakProxyClient *client,
+                                              const char         *unique_id,
+                                              FlatpakPolicy       policy)
 {
-  if (policy > XDG_APP_POLICY_NONE)
+  if (policy > FLATPAK_POLICY_NONE)
     {
-      XdgAppPolicy old_policy;
+      FlatpakPolicy old_policy;
       old_policy = GPOINTER_TO_UINT (g_hash_table_lookup (client->unique_id_policy, unique_id));
       if (policy > old_policy)
         g_hash_table_replace (client->unique_id_policy, g_strdup (unique_id), GINT_TO_POINTER (policy));
@@ -1210,13 +1210,13 @@ xdg_app_proxy_client_update_unique_id_policy (XdgAppProxyClient *client,
 }
 
 static void
-xdg_app_proxy_client_update_unique_id_policy_from_name (XdgAppProxyClient *client,
-                                                        const char        *unique_id,
-                                                        const char        *as_name)
+flatpak_proxy_client_update_unique_id_policy_from_name (FlatpakProxyClient *client,
+                                                        const char         *unique_id,
+                                                        const char         *as_name)
 {
-  xdg_app_proxy_client_update_unique_id_policy (client,
+  flatpak_proxy_client_update_unique_id_policy (client,
                                                 unique_id,
-                                                xdg_app_proxy_get_policy (client->proxy, as_name));
+                                                flatpak_proxy_get_policy (client->proxy, as_name));
 }
 
 
@@ -1252,7 +1252,7 @@ message_to_buffer (GDBusMessage *message)
 }
 
 static GDBusMessage *
-get_error_for_header (XdgAppProxyClient *client, Header *header, const char *error)
+get_error_for_header (FlatpakProxyClient *client, Header *header, const char *error)
 {
   GDBusMessage *reply;
 
@@ -1267,7 +1267,7 @@ get_error_for_header (XdgAppProxyClient *client, Header *header, const char *err
 }
 
 static GDBusMessage *
-get_bool_reply_for_header (XdgAppProxyClient *client, Header *header, gboolean val)
+get_bool_reply_for_header (FlatpakProxyClient *client, Header *header, gboolean val)
 {
   GDBusMessage *reply;
 
@@ -1298,7 +1298,7 @@ get_ping_buffer_for_header (Header *header)
 }
 
 static Buffer *
-get_error_for_roundtrip (XdgAppProxyClient *client, Header *header, const char *error_name)
+get_error_for_roundtrip (FlatpakProxyClient *client, Header *header, const char *error_name)
 {
   Buffer *ping_buffer = get_ping_buffer_for_header (header);
   GDBusMessage *reply;
@@ -1309,7 +1309,7 @@ get_error_for_roundtrip (XdgAppProxyClient *client, Header *header, const char *
 }
 
 static Buffer *
-get_bool_reply_for_roundtrip (XdgAppProxyClient *client, Header *header, gboolean val)
+get_bool_reply_for_roundtrip (FlatpakProxyClient *client, Header *header, gboolean val)
 {
   Buffer *ping_buffer = get_ping_buffer_for_header (header);
   GDBusMessage *reply;
@@ -1342,9 +1342,9 @@ is_dbus_method_call (Header *header)
 }
 
 static BusHandler
-get_dbus_method_handler (XdgAppProxyClient *client, Header *header)
+get_dbus_method_handler (FlatpakProxyClient *client, Header *header)
 {
-  XdgAppPolicy policy;
+  FlatpakPolicy policy;
   const char *method;
 
   if (header->has_reply_serial)
@@ -1358,10 +1358,10 @@ get_dbus_method_handler (XdgAppProxyClient *client, Header *header)
       return HANDLE_PASS;
     }
 
-  policy = xdg_app_proxy_client_get_policy (client, header->destination);
-  if (policy < XDG_APP_POLICY_SEE)
+  policy = flatpak_proxy_client_get_policy (client, header->destination);
+  if (policy < FLATPAK_POLICY_SEE)
     return HANDLE_HIDE;
-  if (policy < XDG_APP_POLICY_TALK)
+  if (policy < FLATPAK_POLICY_TALK)
     return HANDLE_DENY;
 
   if (!is_dbus_method_call (header))
@@ -1410,22 +1410,22 @@ get_dbus_method_handler (XdgAppProxyClient *client, Header *header)
   return HANDLE_DENY;
 }
 
-static XdgAppPolicy
+static FlatpakPolicy
 policy_from_handler (BusHandler handler)
 {
   switch (handler)
     {
     case HANDLE_VALIDATE_OWN:
-      return XDG_APP_POLICY_OWN;
+      return FLATPAK_POLICY_OWN;
 
     case HANDLE_VALIDATE_TALK:
-      return XDG_APP_POLICY_TALK;
+      return FLATPAK_POLICY_TALK;
 
     case HANDLE_VALIDATE_SEE:
-      return XDG_APP_POLICY_SEE;
+      return FLATPAK_POLICY_SEE;
 
     default:
-      return XDG_APP_POLICY_NONE;
+      return FLATPAK_POLICY_NONE;
     }
 }
 
@@ -1448,16 +1448,16 @@ get_arg0_string (Buffer *buffer)
 }
 
 static gboolean
-validate_arg0_name (XdgAppProxyClient *client, Buffer *buffer, XdgAppPolicy required_policy, XdgAppPolicy *has_policy)
+validate_arg0_name (FlatpakProxyClient *client, Buffer *buffer, FlatpakPolicy required_policy, FlatpakPolicy *has_policy)
 {
   GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
   GVariant *body, *arg0;
   const char *name;
-  XdgAppPolicy name_policy;
+  FlatpakPolicy name_policy;
   gboolean res = FALSE;
 
   if (has_policy)
-    *has_policy = XDG_APP_POLICY_NONE;
+    *has_policy = FLATPAK_POLICY_NONE;
 
   if (message != NULL &&
       (body = g_dbus_message_get_body (message)) != NULL &&
@@ -1465,7 +1465,7 @@ validate_arg0_name (XdgAppProxyClient *client, Buffer *buffer, XdgAppPolicy requ
       g_variant_is_of_type (arg0, G_VARIANT_TYPE_STRING))
     {
       name = g_variant_get_string (arg0, NULL);
-      name_policy = xdg_app_proxy_client_get_policy (client, name);
+      name_policy = flatpak_proxy_client_get_policy (client, name);
 
       if (has_policy)
         *has_policy = name_policy;
@@ -1481,7 +1481,7 @@ validate_arg0_name (XdgAppProxyClient *client, Buffer *buffer, XdgAppPolicy requ
 }
 
 static Buffer *
-filter_names_list (XdgAppProxyClient *client, Buffer *buffer)
+filter_names_list (FlatpakProxyClient *client, Buffer *buffer)
 {
   GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
   GVariant *body, *arg0, *new_names;
@@ -1501,7 +1501,7 @@ filter_names_list (XdgAppProxyClient *client, Buffer *buffer)
   g_variant_builder_init (&builder, G_VARIANT_TYPE_STRING_ARRAY);
   for (i = 0; names[i] != NULL; i++)
     {
-      if (xdg_app_proxy_client_get_policy (client, names[i]) >= XDG_APP_POLICY_SEE)
+      if (flatpak_proxy_client_get_policy (client, names[i]) >= FLATPAK_POLICY_SEE)
         g_variant_builder_add (&builder, "s", names[i]);
     }
   g_free (names);
@@ -1516,7 +1516,7 @@ filter_names_list (XdgAppProxyClient *client, Buffer *buffer)
 }
 
 static gboolean
-message_is_name_owner_changed (XdgAppProxyClient *client, Header *header)
+message_is_name_owner_changed (FlatpakProxyClient *client, Header *header)
 {
   if (header->type == G_DBUS_MESSAGE_TYPE_SIGNAL &&
       g_strcmp0 (header->sender, "org.freedesktop.DBus") == 0 &&
@@ -1527,7 +1527,7 @@ message_is_name_owner_changed (XdgAppProxyClient *client, Header *header)
 }
 
 static gboolean
-should_filter_name_owner_changed (XdgAppProxyClient *client, Buffer *buffer)
+should_filter_name_owner_changed (FlatpakProxyClient *client, Buffer *buffer)
 {
   GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
   GVariant *body, *arg0, *arg1, *arg2;
@@ -1548,15 +1548,15 @@ should_filter_name_owner_changed (XdgAppProxyClient *client, Buffer *buffer)
   old = g_variant_get_string (arg1, NULL);
   new = g_variant_get_string (arg2, NULL);
 
-  if (xdg_app_proxy_client_get_policy (client, name) >= XDG_APP_POLICY_SEE)
+  if (flatpak_proxy_client_get_policy (client, name) >= FLATPAK_POLICY_SEE)
     {
       if (name[0] != ':')
         {
           if (old[0] != 0)
-            xdg_app_proxy_client_update_unique_id_policy_from_name (client, old, name);
+            flatpak_proxy_client_update_unique_id_policy_from_name (client, old, name);
 
           if (new[0] != 0)
-            xdg_app_proxy_client_update_unique_id_policy_from_name (client, new, name);
+            flatpak_proxy_client_update_unique_id_policy_from_name (client, new, name);
         }
 
       filter = FALSE;
@@ -1629,7 +1629,7 @@ update_socket_messages (ProxySide *side, Buffer *buffer, Header *header)
 }
 
 static void
-queue_fake_message (XdgAppProxyClient *client, GDBusMessage *message, ExpectedReplyType reply_type)
+queue_fake_message (FlatpakProxyClient *client, GDBusMessage *message, ExpectedReplyType reply_type)
 {
   Buffer *buffer;
 
@@ -1646,7 +1646,7 @@ queue_fake_message (XdgAppProxyClient *client, GDBusMessage *message, ExpectedRe
 /* After the first Hello message we need to synthesize a bunch of messages to synchronize the
    ownership state for the names in the policy */
 static void
-queue_initial_name_ops (XdgAppProxyClient *client)
+queue_initial_name_ops (FlatpakProxyClient *client)
 {
   GHashTableIter iter;
   gpointer key, value;
@@ -1724,7 +1724,7 @@ queue_initial_name_ops (XdgAppProxyClient *client)
 }
 
 static void
-queue_wildcard_initial_name_ops (XdgAppProxyClient *client, Header *header, Buffer *buffer)
+queue_wildcard_initial_name_ops (FlatpakProxyClient *client, Header *header, Buffer *buffer)
 {
   GDBusMessage *decoded_message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
   GVariant *body, *arg0;
@@ -1745,7 +1745,7 @@ queue_wildcard_initial_name_ops (XdgAppProxyClient *client, Header *header, Buff
           const char *name = names[i];
 
           if (name[0] != ':' &&
-              xdg_app_proxy_get_wildcard_policy (client->proxy, name) != XDG_APP_POLICY_NONE)
+              flatpak_proxy_get_wildcard_policy (client->proxy, name) != FLATPAK_POLICY_NONE)
             {
               /* Get the current owner of the name (if any) so we can apply policy to it */
               GDBusMessage *message = g_dbus_message_new_method_call ("org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetNameOwner");
@@ -1765,7 +1765,7 @@ queue_wildcard_initial_name_ops (XdgAppProxyClient *client, Header *header, Buff
 
 
 static void
-got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
+got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer)
 {
   ExpectedReplyType expecting_reply = EXPECTED_REPLY_NONE;
 
@@ -1816,7 +1816,7 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
         {
         case HANDLE_FILTER_HAS_OWNER_REPLY:
         case HANDLE_FILTER_GET_OWNER_REPLY:
-          if (!validate_arg0_name (client, buffer, XDG_APP_POLICY_SEE, NULL))
+          if (!validate_arg0_name (client, buffer, FLATPAK_POLICY_SEE, NULL))
             {
               g_clear_pointer (&buffer, buffer_free);
               if (handler == HANDLE_FILTER_GET_OWNER_REPLY)
@@ -1835,11 +1835,11 @@ got_buffer_from_client (XdgAppProxyClient *client, ProxySide *side, Buffer *buff
         case HANDLE_VALIDATE_SEE:
         case HANDLE_VALIDATE_TALK:
           {
-            XdgAppPolicy name_policy;
+            FlatpakPolicy name_policy;
             if (validate_arg0_name (client, buffer, policy_from_handler (handler), &name_policy))
               goto handle_pass;
 
-            if (name_policy < (int) XDG_APP_POLICY_SEE)
+            if (name_policy < (int) FLATPAK_POLICY_SEE)
               goto handle_hide;
             else
               goto handle_deny;
@@ -1920,13 +1920,13 @@ handle_deny:
 }
 
 static void
-got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
+got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer)
 {
   if (client->authenticated && client->proxy->filter)
     {
       Header header;
       GDBusMessage *rewritten;
-      XdgAppPolicy policy;
+      FlatpakPolicy policy;
       ExpectedReplyType expected_reply;
 
       /* Filter and rewrite incomming messages as needed */
@@ -1966,7 +1966,7 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
               if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                 {
                   char *my_id = get_arg0_string (buffer);
-                  xdg_app_proxy_client_update_unique_id_policy (client, my_id, XDG_APP_POLICY_TALK);
+                  flatpak_proxy_client_update_unique_id_policy (client, my_id, FLATPAK_POLICY_TALK);
                   break;
                 }
 
@@ -2013,7 +2013,7 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
                 if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                   {
                     char *owner = get_arg0_string (buffer);
-                    xdg_app_proxy_client_update_unique_id_policy_from_name (client, owner, requested_name);
+                    flatpak_proxy_client_update_unique_id_policy_from_name (client, owner, requested_name);
                     g_free (owner);
                   }
 
@@ -2076,8 +2076,8 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
       /* All incoming broadcast signals are filtered according to policy */
       if (header.type == G_DBUS_MESSAGE_TYPE_SIGNAL && header.destination == NULL)
         {
-          policy = xdg_app_proxy_client_get_policy (client, header.sender);
-          if (policy < XDG_APP_POLICY_TALK)
+          policy = flatpak_proxy_client_get_policy (client, header.sender);
+          if (policy < FLATPAK_POLICY_TALK)
             {
               if (client->proxy->log_messages)
                 g_print ("*FILTERED IN*\n");
@@ -2088,7 +2088,7 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
       /* We received and forwarded a message from a trusted peer. Make the policy for
          this unique id SEE so that the client can track its lifetime. */
       if (buffer && header.sender && header.sender[0] == ':')
-        xdg_app_proxy_client_update_unique_id_policy (client, header.sender, XDG_APP_POLICY_SEE);
+        flatpak_proxy_client_update_unique_id_policy (client, header.sender, FLATPAK_POLICY_SEE);
 
       if (buffer && client_message_generates_reply (&header))
         queue_expected_reply (side, header.serial, EXPECTED_REPLY_NORMAL);
@@ -2101,7 +2101,7 @@ got_buffer_from_bus (XdgAppProxyClient *client, ProxySide *side, Buffer *buffer)
 static void
 got_buffer_from_side (ProxySide *side, Buffer *buffer)
 {
-  XdgAppProxyClient *client = side->client;
+  FlatpakProxyClient *client = side->client;
 
   if (side == &client->client_side)
     got_buffer_from_client (client, side, buffer);
@@ -2110,7 +2110,7 @@ got_buffer_from_side (ProxySide *side, Buffer *buffer)
 }
 
 static gssize
-find_auth_end (XdgAppProxyClient *client, Buffer *buffer)
+find_auth_end (FlatpakProxyClient *client, Buffer *buffer)
 {
   guchar *match;
   int i;
@@ -2160,7 +2160,7 @@ static gboolean
 side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
 {
   ProxySide *side = user_data;
-  XdgAppProxyClient *client = side->client;
+  FlatpakProxyClient *client = side->client;
   GError *error = NULL;
   Buffer *buffer;
   gboolean retval = G_SOURCE_CONTINUE;
@@ -2284,7 +2284,7 @@ client_connected_to_dbus (GObject      *source_object,
                           GAsyncResult *res,
                           gpointer      user_data)
 {
-  XdgAppProxyClient *client = user_data;
+  FlatpakProxyClient *client = user_data;
   GSocketConnection *connection;
   GError *error = NULL;
   GIOStream *stream;
@@ -2306,14 +2306,14 @@ client_connected_to_dbus (GObject      *source_object,
 }
 
 static gboolean
-xdg_app_proxy_incoming (GSocketService    *service,
+flatpak_proxy_incoming (GSocketService    *service,
                         GSocketConnection *connection,
                         GObject           *source_object)
 {
-  XdgAppProxy *proxy = XDG_APP_PROXY (service);
-  XdgAppProxyClient *client;
+  FlatpakProxy *proxy = FLATPAK_PROXY (service);
+  FlatpakProxyClient *client;
 
-  client = xdg_app_proxy_client_new (proxy, connection);
+  client = flatpak_proxy_client_new (proxy, connection);
 
   g_dbus_address_get_stream (proxy->dbus_address,
                              NULL,
@@ -2323,24 +2323,24 @@ xdg_app_proxy_incoming (GSocketService    *service,
 }
 
 static void
-xdg_app_proxy_init (XdgAppProxy *proxy)
+flatpak_proxy_init (FlatpakProxy *proxy)
 {
   proxy->policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   proxy->wildcard_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  xdg_app_proxy_add_policy (proxy, "org.freedesktop.DBus", XDG_APP_POLICY_TALK);
+  flatpak_proxy_add_policy (proxy, "org.freedesktop.DBus", FLATPAK_POLICY_TALK);
 }
 
 static void
-xdg_app_proxy_class_init (XdgAppProxyClass *klass)
+flatpak_proxy_class_init (FlatpakProxyClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GSocketServiceClass *socket_service_class = G_SOCKET_SERVICE_CLASS (klass);
 
-  object_class->get_property = xdg_app_proxy_get_property;
-  object_class->set_property = xdg_app_proxy_set_property;
-  object_class->finalize = xdg_app_proxy_finalize;
+  object_class->get_property = flatpak_proxy_get_property;
+  object_class->set_property = flatpak_proxy_set_property;
+  object_class->finalize = flatpak_proxy_finalize;
 
-  socket_service_class->incoming = xdg_app_proxy_incoming;
+  socket_service_class->incoming = flatpak_proxy_incoming;
 
   g_object_class_install_property (object_class,
                                    PROP_DBUS_ADDRESS,
@@ -2359,18 +2359,18 @@ xdg_app_proxy_class_init (XdgAppProxyClass *klass)
 
 }
 
-XdgAppProxy *
-xdg_app_proxy_new (const char *dbus_address,
+FlatpakProxy *
+flatpak_proxy_new (const char *dbus_address,
                    const char *socket_path)
 {
-  XdgAppProxy *proxy;
+  FlatpakProxy *proxy;
 
-  proxy = g_object_new (XDG_APP_TYPE_PROXY, "dbus-address", dbus_address, "socket-path", socket_path, NULL);
+  proxy = g_object_new (FLATPAK_TYPE_PROXY, "dbus-address", dbus_address, "socket-path", socket_path, NULL);
   return proxy;
 }
 
 gboolean
-xdg_app_proxy_start (XdgAppProxy *proxy, GError **error)
+flatpak_proxy_start (FlatpakProxy *proxy, GError **error)
 {
   GSocketAddress *address;
   gboolean res;
@@ -2398,7 +2398,7 @@ xdg_app_proxy_start (XdgAppProxy *proxy, GError **error)
 }
 
 void
-xdg_app_proxy_stop (XdgAppProxy *proxy)
+flatpak_proxy_stop (FlatpakProxy *proxy)
 {
   unlink (proxy->socket_path);
 

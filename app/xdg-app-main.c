@@ -46,39 +46,39 @@ typedef struct
                  GError      **error);
   const char *description;
   gboolean    deprecated;
-} XdgAppCommand;
+} FlatpakCommand;
 
-static XdgAppCommand commands[] = {
+static FlatpakCommand commands[] = {
   { " Manage installed apps and runtimes" },
-  { "install", xdg_app_builtin_install, "Install an application or runtime from a remote"},
-  { "update", xdg_app_builtin_update, "Update an installed application or runtime"},
-  { "uninstall", xdg_app_builtin_uninstall, "Uninstall an installed application or runtime" },
-  { "list", xdg_app_builtin_list, "List installed apps and/or runtimes" },
-  { "info", xdg_app_builtin_info, "Show info for installed app or runtime" },
+  { "install", flatpak_builtin_install, "Install an application or runtime from a remote"},
+  { "update", flatpak_builtin_update, "Update an installed application or runtime"},
+  { "uninstall", flatpak_builtin_uninstall, "Uninstall an installed application or runtime" },
+  { "list", flatpak_builtin_list, "List installed apps and/or runtimes" },
+  { "info", flatpak_builtin_info, "Show info for installed app or runtime" },
 
   { "\n Running applications" },
-  { "run", xdg_app_builtin_run, "Run an application" },
-  { "override", xdg_app_builtin_override, "Override permissions for an application" },
-  { "export-file", xdg_app_builtin_export_file, "Grant an application access to a specific file" },
-  { "make-current", xdg_app_builtin_make_current_app, "Specify default version to run" },
-  { "enter", xdg_app_builtin_enter, "Enter the namespace of a running application" },
+  { "run", flatpak_builtin_run, "Run an application" },
+  { "override", flatpak_builtin_override, "Override permissions for an application" },
+  { "export-file", flatpak_builtin_export_file, "Grant an application access to a specific file" },
+  { "make-current", flatpak_builtin_make_current_app, "Specify default version to run" },
+  { "enter", flatpak_builtin_enter, "Enter the namespace of a running application" },
 
   { "\n Manage remote repositories" },
-  { "remote-add", xdg_app_builtin_add_remote, "Add a new remote repository (by URL)" },
-  { "remote-modify", xdg_app_builtin_modify_remote, "Modify properties of a configured remote" },
-  { "remote-delete", xdg_app_builtin_delete_remote, "Delete a configured remote" },
-  { "remote-list", xdg_app_builtin_list_remotes, "List all configured remotes"  },
-  { "remote-ls", xdg_app_builtin_ls_remote, "List contents of a configured remote" },
+  { "remote-add", flatpak_builtin_add_remote, "Add a new remote repository (by URL)" },
+  { "remote-modify", flatpak_builtin_modify_remote, "Modify properties of a configured remote" },
+  { "remote-delete", flatpak_builtin_delete_remote, "Delete a configured remote" },
+  { "remote-list", flatpak_builtin_list_remotes, "List all configured remotes"  },
+  { "remote-ls", flatpak_builtin_ls_remote, "List contents of a configured remote" },
 
   { "\n Build applications" },
-  { "build-init", xdg_app_builtin_build_init, "Initialize a directory for building" },
-  { "build", xdg_app_builtin_build, "Run a build command inside the build dir" },
-  { "build-finish", xdg_app_builtin_build_finish, "Finish a build dir for export" },
-  { "build-export", xdg_app_builtin_build_export, "Export a build dir to a repository" },
-  { "build-bundle", xdg_app_builtin_build_bundle, "Create a bundle file from a build directory" },
-  { "build-import-bundle", xdg_app_builtin_build_import, "Import a bundle file" },
-  { "build-sign", xdg_app_builtin_build_sign, "Sign an application or runtime" },
-  { "build-update-repo", xdg_app_builtin_build_update_repo, "Update the summary file in a repository" },
+  { "build-init", flatpak_builtin_build_init, "Initialize a directory for building" },
+  { "build", flatpak_builtin_build, "Run a build command inside the build dir" },
+  { "build-finish", flatpak_builtin_build_finish, "Finish a build dir for export" },
+  { "build-export", flatpak_builtin_build_export, "Export a build dir to a repository" },
+  { "build-bundle", flatpak_builtin_build_bundle, "Create a bundle file from a build directory" },
+  { "build-import-bundle", flatpak_builtin_build_import, "Import a bundle file" },
+  { "build-sign", flatpak_builtin_build_sign, "Sign an application or runtime" },
+  { "build-update-repo", flatpak_builtin_build_update_repo, "Update the summary file in a repository" },
 
   { NULL }
 };
@@ -110,7 +110,7 @@ message_handler (const gchar   *log_domain,
 }
 
 GOptionContext *
-xdg_app_option_context_new_with_commands (XdgAppCommand *commands)
+flatpak_option_context_new_with_commands (FlatpakCommand *commands)
 {
   GOptionContext *context;
   GString *summary;
@@ -145,13 +145,13 @@ xdg_app_option_context_new_with_commands (XdgAppCommand *commands)
 }
 
 int
-xdg_app_usage (XdgAppCommand *commands,
-               gboolean       is_error)
+flatpak_usage (FlatpakCommand *commands,
+               gboolean        is_error)
 {
   GOptionContext *context;
   g_autofree char *help;
 
-  context = xdg_app_option_context_new_with_commands (commands);
+  context = flatpak_option_context_new_with_commands (commands);
 
   g_option_context_add_main_entries (context, global_entries, NULL);
 
@@ -168,18 +168,18 @@ xdg_app_usage (XdgAppCommand *commands,
 }
 
 gboolean
-xdg_app_option_context_parse (GOptionContext     *context,
+flatpak_option_context_parse (GOptionContext     *context,
                               const GOptionEntry *main_entries,
                               int                *argc,
                               char             ***argv,
-                              XdgAppBuiltinFlags  flags,
-                              XdgAppDir         **out_dir,
+                              FlatpakBuiltinFlags flags,
+                              FlatpakDir        **out_dir,
                               GCancellable       *cancellable,
                               GError            **error)
 {
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
 
-  if (!(flags & XDG_APP_BUILTIN_FLAG_NO_DIR))
+  if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR))
     g_option_context_add_main_entries (context, user_entries, NULL);
 
   if (main_entries != NULL)
@@ -198,19 +198,19 @@ xdg_app_option_context_parse (GOptionContext     *context,
 
   if (opt_default_arch)
     {
-      g_print ("%s\n", xdg_app_get_arch ());
+      g_print ("%s\n", flatpak_get_arch ());
       exit (EXIT_SUCCESS);
     }
 
-  if (!(flags & XDG_APP_BUILTIN_FLAG_NO_DIR))
+  if (!(flags & FLATPAK_BUILTIN_FLAG_NO_DIR))
     {
-      dir = xdg_app_dir_get (opt_user);
+      dir = flatpak_dir_get (opt_user);
 
-      if (!xdg_app_dir_ensure_path (dir, cancellable, error))
+      if (!flatpak_dir_ensure_path (dir, cancellable, error))
         return FALSE;
 
-      if (!(flags & XDG_APP_BUILTIN_FLAG_NO_REPO) &&
-          !xdg_app_dir_ensure_repo (dir, cancellable, error))
+      if (!(flags & FLATPAK_BUILTIN_FLAG_NO_REPO) &&
+          !flatpak_dir_ensure_repo (dir, cancellable, error))
         return FALSE;
     }
 
@@ -234,11 +234,11 @@ usage_error (GOptionContext *context, const char *message, GError **error)
 }
 
 int
-xdg_app_run (int      argc,
+flatpak_run (int      argc,
              char   **argv,
              GError **res_error)
 {
-  XdgAppCommand *command;
+  FlatpakCommand *command;
   GError *error = NULL;
   GCancellable *cancellable = NULL;
   const char *command_name = NULL;
@@ -283,10 +283,10 @@ xdg_app_run (int      argc,
       GOptionContext *context;
       g_autofree char *help;
 
-      context = xdg_app_option_context_new_with_commands (commands);
+      context = flatpak_option_context_new_with_commands (commands);
 
       /* This will not return for some options (e.g. --version). */
-      if (xdg_app_option_context_parse (context, NULL, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
+      if (flatpak_option_context_parse (context, NULL, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
         {
           if (command_name == NULL)
             g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -345,9 +345,9 @@ main (int    argc,
   else
     g_unsetenv ("GIO_USE_VFS");
 
-  ret = xdg_app_run (argc, argv, &error);
+  ret = flatpak_run (argc, argv, &error);
   if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED))
-    xdg_app_usage (commands, TRUE);
+    flatpak_usage (commands, TRUE);
 
   if (error != NULL)
     {

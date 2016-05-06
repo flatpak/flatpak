@@ -46,7 +46,7 @@ static GOptionEntry options[] = {
 
 
 gboolean
-xdg_app_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GFile) repofile = NULL;
@@ -60,7 +60,7 @@ xdg_app_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
 
   context = g_option_context_new ("LOCATION ID [BRANCH] - Create a repository from a build directory");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (argc < 3)
@@ -77,19 +77,19 @@ xdg_app_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   else
     branch = "master";
 
-  if (!xdg_app_is_valid_name (id))
-    return xdg_app_fail (error, "'%s' is not a valid name", id);
+  if (!flatpak_is_valid_name (id))
+    return flatpak_fail (error, "'%s' is not a valid name", id);
 
-  if (!xdg_app_is_valid_branch (branch))
-    return xdg_app_fail (error, "'%s' is not a valid branch name", branch);
+  if (!flatpak_is_valid_branch (branch))
+    return flatpak_fail (error, "'%s' is not a valid branch name", branch);
 
   if (opt_gpg_key_ids == NULL)
-    return xdg_app_fail (error, "No gpg key ids specified");
+    return flatpak_fail (error, "No gpg key ids specified");
 
   if (opt_runtime)
-    ref = xdg_app_build_runtime_ref (id, branch, opt_arch);
+    ref = flatpak_build_runtime_ref (id, branch, opt_arch);
   else
-    ref = xdg_app_build_app_ref (id, branch, opt_arch);
+    ref = flatpak_build_app_ref (id, branch, opt_arch);
 
   repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);

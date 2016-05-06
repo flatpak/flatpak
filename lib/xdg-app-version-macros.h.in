@@ -18,19 +18,19 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined (__XDG_APP_H_INSIDE__) && !defined (XDG_APP_COMPILATION)
+#if !defined (__FLATPAK_H_INSIDE__) && !defined (FLATPAK_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
-#ifndef __XDG_APP_VERSION_MACROS_H__
-#define __XDG_APP_VERSION_MACROS_H__
+#ifndef __FLATPAK_VERSION_MACROS_H__
+#define __FLATPAK_VERSION_MACROS_H__
 
-#define XDG_APP_MAJOR_VERSION (@XDG_APP_MAJOR_VERSION@)
-#define XDG_APP_MINOR_VERSION (@XDG_APP_MINOR_VERSION@)
-#define XDG_APP_MICRO_VERSION (@XDG_APP_MICRO_VERSION@)
+#define FLATPAK_MAJOR_VERSION (@FLATPAK_MAJOR_VERSION@)
+#define FLATPAK_MINOR_VERSION (@FLATPAK_MINOR_VERSION@)
+#define FLATPAK_MICRO_VERSION (@FLATPAK_MICRO_VERSION@)
 
-#ifndef XDG_APP_EXTERN
-#define XDG_APP_EXTERN extern
+#ifndef FLATPAK_EXTERN
+#define FLATPAK_EXTERN extern
 #endif
 
 /**
@@ -38,4 +38,4 @@
  * @Title: Version information
  */
 
-#endif /* __XDG_APP_VERSION_MACROS_H__ */
+#endif /* __FLATPAK_VERSION_MACROS_H__ */

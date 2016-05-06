@@ -112,7 +112,7 @@ open_source_stream (GInputStream **out_source_stream,
     }
 
   /* Chain together all the --keyring options as one long stream. */
-  source_stream = (GInputStream *) xdg_app_chain_input_stream_new (streams);
+  source_stream = (GInputStream *) flatpak_chain_input_stream_new (streams);
 
   *out_source_stream = g_steal_pointer (&source_stream);
 
@@ -120,7 +120,7 @@ open_source_stream (GInputStream **out_source_stream,
 }
 
 gboolean
-import_keys (XdgAppDir    *dir,
+import_keys (FlatpakDir   *dir,
              const char   *remote_name,
              GCancellable *cancellable,
              GError      **error)
@@ -133,7 +133,7 @@ import_keys (XdgAppDir    *dir,
       if (!open_source_stream (&input_stream, cancellable, error))
         return FALSE;
 
-      if (!ostree_repo_remote_gpg_import (xdg_app_dir_get_repo (dir), remote_name, input_stream,
+      if (!ostree_repo_remote_gpg_import (flatpak_dir_get_repo (dir), remote_name, input_stream,
                                           NULL, &imported, cancellable, error))
         return FALSE;
 
@@ -146,11 +146,11 @@ import_keys (XdgAppDir    *dir,
 }
 
 gboolean
-xdg_app_builtin_add_remote (int argc, char **argv,
+flatpak_builtin_add_remote (int argc, char **argv,
                             GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GVariantBuilder) optbuilder = NULL;
   g_autoptr(GFile) file = NULL;
   g_autofree char *title = NULL;
@@ -163,7 +163,7 @@ xdg_app_builtin_add_remote (int argc, char **argv,
 
   g_option_context_add_main_entries (context, common_options, NULL);
 
-  if (!xdg_app_option_context_parse (context, add_options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, add_options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (argc < 3)
@@ -228,7 +228,7 @@ xdg_app_builtin_add_remote (int argc, char **argv,
                            "xa.title",
                            g_variant_new_variant (g_variant_new_string (title)));
 
-  if (!ostree_repo_remote_change (xdg_app_dir_get_repo (dir), NULL,
+  if (!ostree_repo_remote_change (flatpak_dir_get_repo (dir), NULL,
                                   opt_if_not_exists ? OSTREE_REPO_REMOTE_CHANGE_ADD_IF_NOT_EXISTS :
                                   OSTREE_REPO_REMOTE_CHANGE_ADD,
                                   remote_name, remote_url,
@@ -238,7 +238,7 @@ xdg_app_builtin_add_remote (int argc, char **argv,
 
   if (title == NULL)
     {
-      title = xdg_app_dir_fetch_remote_title (dir,
+      title = flatpak_dir_fetch_remote_title (dir,
                                               remote_name,
                                               NULL,
                                               NULL);
@@ -247,10 +247,10 @@ xdg_app_builtin_add_remote (int argc, char **argv,
           g_autoptr(GKeyFile) config = NULL;
           g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
 
-          config = ostree_repo_copy_config (xdg_app_dir_get_repo (dir));
+          config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
           g_key_file_set_string (config, group, "xa.title", title);
 
-          if (!ostree_repo_write_config (xdg_app_dir_get_repo (dir), config, error))
+          if (!ostree_repo_write_config (flatpak_dir_get_repo (dir), config, error))
             return FALSE;
         }
     }
@@ -258,17 +258,17 @@ xdg_app_builtin_add_remote (int argc, char **argv,
   if (!import_keys (dir, remote_name, cancellable, error))
     return FALSE;
 
-  if (!xdg_app_dir_mark_changed (dir, error))
+  if (!flatpak_dir_mark_changed (dir, error))
     return FALSE;
 
   return TRUE;
 }
 
 gboolean
-xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GVariantBuilder) optbuilder = NULL;
   g_autoptr(GKeyFile) config = NULL;
   const char *remote_name;
@@ -278,7 +278,7 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   g_option_context_add_main_entries (context, common_options, NULL);
 
-  if (!xdg_app_option_context_parse (context, modify_options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, modify_options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (argc < 2)
@@ -290,10 +290,10 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   group = g_strdup_printf ("remote \"%s\"", remote_name);
 
-  if (!ostree_repo_remote_get_url (xdg_app_dir_get_repo (dir), remote_name, NULL, NULL))
-    return xdg_app_fail (error, "No remote %s", remote_name);
+  if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, NULL, NULL))
+    return flatpak_fail (error, "No remote %s", remote_name);
 
-  config = ostree_repo_copy_config (xdg_app_dir_get_repo (dir));
+  config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
 
   if (opt_no_gpg_verify)
     {
@@ -330,13 +330,13 @@ xdg_app_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
       g_key_file_set_string (config, group, "xa.prio", prio_as_string);
     }
 
-  if (!ostree_repo_write_config (xdg_app_dir_get_repo (dir), config, error))
+  if (!ostree_repo_write_config (flatpak_dir_get_repo (dir), config, error))
     return FALSE;
 
   if (!import_keys (dir, remote_name, cancellable, error))
     return FALSE;
 
-  if (!xdg_app_dir_mark_changed (dir, error))
+  if (!flatpak_dir_mark_changed (dir, error))
     return FALSE;
 
   return TRUE;

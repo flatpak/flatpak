@@ -48,7 +48,7 @@ on_bus_acquired (GDBusConnection *connection,
   XdgAppSessionHelper *helper;
   GError *error = NULL;
 
-  xdg_app_permission_store_start (connection);
+  flatpak_permission_store_start (connection);
 
   helper = xdg_app_session_helper_skeleton_new ();
 
@@ -56,7 +56,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
                                          connection,
-                                         "/org/freedesktop/XdgApp/SessionHelper",
+                                         "/org/freedesktop/Flatpak/SessionHelper",
                                          &error))
     {
       g_warning ("error: %s\n", error->message);
@@ -145,7 +145,7 @@ main (int    argc,
   setup_file_monitor ("/etc/localtime");
 
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
-                             "org.freedesktop.XdgApp",
+                             "org.freedesktop.Flatpak",
                              G_BUS_NAME_OWNER_FLAGS_NONE,
                              on_bus_acquired,
                              on_name_acquired,

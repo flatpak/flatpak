@@ -18,25 +18,25 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
-#ifndef __XDG_APP_REMOTE_H__
-#define __XDG_APP_REMOTE_H__
+#ifndef __FLATPAK_REMOTE_H__
+#define __FLATPAK_REMOTE_H__
 
-typedef struct _XdgAppRemote XdgAppRemote;
+typedef struct _FlatpakRemote FlatpakRemote;
 
 #include <gio/gio.h>
 #include <xdg-app-remote-ref.h>
 
-#define XDG_APP_TYPE_REMOTE xdg_app_remote_get_type ()
-#define XDG_APP_REMOTE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_REMOTE, XdgAppRemote))
-#define XDG_APP_IS_REMOTE(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_REMOTE))
+#define FLATPAK_TYPE_REMOTE flatpak_remote_get_type ()
+#define FLATPAK_REMOTE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_REMOTE, FlatpakRemote))
+#define FLATPAK_IS_REMOTE(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_REMOTE))
 
-XDG_APP_EXTERN GType xdg_app_remote_get_type (void);
+FLATPAK_EXTERN GType flatpak_remote_get_type (void);
 
-struct _XdgAppRemote
+struct _FlatpakRemote
 {
   GObject parent;
 };
@@ -44,22 +44,22 @@ struct _XdgAppRemote
 typedef struct
 {
   GObjectClass parent_class;
-} XdgAppRemoteClass;
+} FlatpakRemoteClass;
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppRemote, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemote, g_object_unref)
 #endif
 
-XDG_APP_EXTERN const char *  xdg_app_remote_get_name (XdgAppRemote * self);
-XDG_APP_EXTERN GFile *       xdg_app_remote_get_appstream_dir (XdgAppRemote *self,
-                                                               const char   *arch);
-XDG_APP_EXTERN GFile *       xdg_app_remote_get_appstream_timestamp (XdgAppRemote *self,
-                                                                     const char   *arch);
-XDG_APP_EXTERN char *        xdg_app_remote_get_url (XdgAppRemote *self);
-XDG_APP_EXTERN char *        xdg_app_remote_get_title (XdgAppRemote *self);
-XDG_APP_EXTERN gboolean      xdg_app_remote_get_gpg_verify (XdgAppRemote *self);
-XDG_APP_EXTERN gboolean      xdg_app_remote_get_noenumerate (XdgAppRemote *self);
-XDG_APP_EXTERN gboolean      xdg_app_remote_get_disabled (XdgAppRemote *self);
-XDG_APP_EXTERN int           xdg_app_remote_get_prio (XdgAppRemote *self);
+FLATPAK_EXTERN const char *  flatpak_remote_get_name (FlatpakRemote * self);
+FLATPAK_EXTERN GFile *       flatpak_remote_get_appstream_dir (FlatpakRemote *self,
+                                                               const char    *arch);
+FLATPAK_EXTERN GFile *       flatpak_remote_get_appstream_timestamp (FlatpakRemote *self,
+                                                                     const char    *arch);
+FLATPAK_EXTERN char *        flatpak_remote_get_url (FlatpakRemote *self);
+FLATPAK_EXTERN char *        flatpak_remote_get_title (FlatpakRemote *self);
+FLATPAK_EXTERN gboolean      flatpak_remote_get_gpg_verify (FlatpakRemote *self);
+FLATPAK_EXTERN gboolean      flatpak_remote_get_noenumerate (FlatpakRemote *self);
+FLATPAK_EXTERN gboolean      flatpak_remote_get_disabled (FlatpakRemote *self);
+FLATPAK_EXTERN int           flatpak_remote_get_prio (FlatpakRemote *self);
 
-#endif /* __XDG_APP_REMOTE_H__ */
+#endif /* __FLATPAK_REMOTE_H__ */

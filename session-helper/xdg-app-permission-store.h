@@ -18,11 +18,11 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __XDG_APP_PERMISSION_STORE_H__
-#define __XDG_APP_PERMISSION_STORE_H__
+#ifndef __FLATPAK_PERMISSION_STORE_H__
+#define __FLATPAK_PERMISSION_STORE_H__
 
 #include "xdg-app-dbus.h"
 
-void xdg_app_permission_store_start (GDBusConnection *connection);
+void flatpak_permission_store_start (GDBusConnection *connection);
 
-#endif /* __XDG_APP_PERMISSION_STORE_H__ */
+#endif /* __FLATPAK_PERMISSION_STORE_H__ */

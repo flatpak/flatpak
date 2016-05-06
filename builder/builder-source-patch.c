@@ -157,7 +157,7 @@ patch (GFile   *dir,
   va_list ap;
 
   va_start (ap, error);
-  res = xdg_app_spawn (dir, NULL, error, "patch", ap);
+  res = flatpak_spawn (dir, NULL, error, "patch", ap);
   va_end (ap);
 
   return res;

@@ -563,7 +563,7 @@ build (GFile          *app_dir,
        BuilderContext *context,
        GFile          *source_dir,
        const char     *cwd_subdir,
-       char          **xdg_app_opts,
+       char          **flatpak_opts,
        char          **env_vars,
        GError        **error,
        const gchar    *argv1,
@@ -608,10 +608,10 @@ build (GFile          *app_dir,
       g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/ccache=%s", ccache_dir_path));
     }
 
-  if (xdg_app_opts)
+  if (flatpak_opts)
     {
-      for (i = 0; xdg_app_opts[i] != NULL; i++)
-        g_ptr_array_add (args, g_strdup (xdg_app_opts[i]));
+      for (i = 0; flatpak_opts[i] != NULL; i++)
+        g_ptr_array_add (args, g_strdup (flatpak_opts[i]));
     }
 
   if (env_vars)
@@ -681,7 +681,7 @@ builder_module_handle_debuginfo (BuilderModule  *self,
   for (i = 0; i < modified->len; i++)
     g_ptr_array_add (added_or_modified, g_ptr_array_index (modified, i));
 
-  g_ptr_array_sort (added_or_modified, xdg_app_strcmp0_ptr);
+  g_ptr_array_sort (added_or_modified, flatpak_strcmp0_ptr);
 
   for (i = 0; i < added_or_modified->len; i++)
     {
@@ -988,10 +988,10 @@ builder_module_build (BuilderModule  *self,
       if (use_builddir)
         {
           if (source_subdir_relative)
-            build_dir_relative = g_build_filename (source_subdir_relative, "_xdg_app_build", NULL);
+            build_dir_relative = g_build_filename (source_subdir_relative, "_flatpak_build", NULL);
           else
-            build_dir_relative = g_strdup ("_xdg_app_build");
-          build_dir = g_file_get_child (source_subdir, "_xdg_app_build");
+            build_dir_relative = g_strdup ("_flatpak_build");
+          build_dir = g_file_get_child (source_subdir, "_flatpak_build");
 
           if (!g_file_make_directory (build_dir, NULL, error))
             return FALSE;
@@ -1198,7 +1198,7 @@ collect_cleanup_for_path (const char **patterns,
     return;
 
   for (i = 0; patterns[i] != NULL; i++)
-    xdg_app_collect_matches_for_path_pattern (path, patterns[i], add_prefix, to_remove_ht);
+    flatpak_collect_matches_for_path_pattern (path, patterns[i], add_prefix, to_remove_ht);
 }
 
 static gboolean
@@ -1212,7 +1212,7 @@ matches_cleanup_for_path (const char **patterns,
 
   for (i = 0; patterns[i] != NULL; i++)
     {
-      if (xdg_app_matches_path_pattern (path, patterns[i]))
+      if (flatpak_matches_path_pattern (path, patterns[i]))
         return TRUE;
     }
 

@@ -18,18 +18,18 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
-#ifndef __XDG_APP_REMOTE_PRIVATE_H__
-#define __XDG_APP_REMOTE_PRIVATE_H__
+#ifndef __FLATPAK_REMOTE_PRIVATE_H__
+#define __FLATPAK_REMOTE_PRIVATE_H__
 
 #include <xdg-app-remote.h>
 #include <xdg-app-dir.h>
 #include <ostree.h>
 
-XdgAppRemote *xdg_app_remote_new (XdgAppDir  *dir,
-                                  const char *name);
+FlatpakRemote *flatpak_remote_new (FlatpakDir *dir,
+                                   const char *name);
 
-#endif /* __XDG_APP_REMOTE_PRIVATE_H__ */
+#endif /* __FLATPAK_REMOTE_PRIVATE_H__ */

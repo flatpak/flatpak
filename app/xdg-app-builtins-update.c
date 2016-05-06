@@ -55,11 +55,11 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
-update_appstream (XdgAppDir *dir, const char *remote, GCancellable *cancellable, GError **error)
+update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable, GError **error)
 {
   gboolean changed;
 
-  if (!xdg_app_dir_update_appstream (dir, remote, opt_arch, &changed,
+  if (!flatpak_dir_update_appstream (dir, remote, opt_arch, &changed,
                                      NULL, cancellable, error))
     return FALSE;
 
@@ -67,7 +67,7 @@ update_appstream (XdgAppDir *dir, const char *remote, GCancellable *cancellable,
 }
 
 static gboolean
-do_update (XdgAppDir   * dir,
+do_update (FlatpakDir  * dir,
            const char   *name,
            const char   *branch,
            const char   *arch,
@@ -82,7 +82,7 @@ do_update (XdgAppDir   * dir,
   g_auto(GStrv) subpaths = NULL;
   gboolean is_app;
 
-  ref = xdg_app_dir_find_installed_ref (dir,
+  ref = flatpak_dir_find_installed_ref (dir,
                                         name,
                                         branch,
                                         arch,
@@ -91,18 +91,18 @@ do_update (XdgAppDir   * dir,
   if (ref == NULL)
     return FALSE;
 
-  repository = xdg_app_dir_get_origin (dir, ref, cancellable, error);
+  repository = flatpak_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
     return FALSE;
 
-  if (xdg_app_dir_get_remote_disabled (dir, repository))
+  if (flatpak_dir_get_remote_disabled (dir, repository))
     g_print ("Not updating %s due to disabled remote %s\n", ref, repository);
 
-  subpaths = xdg_app_dir_get_subpaths (dir, ref, cancellable, error);
+  subpaths = flatpak_dir_get_subpaths (dir, ref, cancellable, error);
   if (subpaths == NULL)
     return FALSE;
 
-  if (!xdg_app_dir_update (dir,
+  if (!flatpak_dir_update (dir,
                            opt_no_pull,
                            opt_no_deploy,
                            ref, repository, opt_commit, opt_subpaths,
@@ -114,13 +114,13 @@ do_update (XdgAppDir   * dir,
 }
 
 gboolean
-xdg_app_builtin_update (int           argc,
+flatpak_builtin_update (int           argc,
                         char        **argv,
                         GCancellable *cancellable,
                         GError      **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   const char *name = NULL;
   const char *branch = NULL;
   const char *arch = opt_arch;
@@ -128,7 +128,7 @@ xdg_app_builtin_update (int           argc,
 
   context = g_option_context_new ("[NAME [BRANCH]] - Update an application or runtime");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (argc < 1)
@@ -140,7 +140,7 @@ xdg_app_builtin_update (int           argc,
     branch = argv[2];
 
   if (arch == NULL)
-    arch = xdg_app_get_arch ();
+    arch = flatpak_get_arch ();
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
@@ -154,14 +154,14 @@ xdg_app_builtin_update (int           argc,
         {
           g_auto(GStrv) refs = NULL;
 
-          if (!xdg_app_dir_list_refs (dir, "app", &refs,
+          if (!flatpak_dir_list_refs (dir, "app", &refs,
                                       cancellable,
                                       error))
             return FALSE;
 
           for (i = 0; refs != NULL && refs[i] != NULL; i++)
             {
-              g_auto(GStrv) parts = xdg_app_decompose_ref (refs[i], error);
+              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
               if (parts == NULL)
                 return FALSE;
 
@@ -188,14 +188,14 @@ xdg_app_builtin_update (int           argc,
         {
           g_auto(GStrv) refs = NULL;
 
-          if (!xdg_app_dir_list_refs (dir, "runtime", &refs,
+          if (!flatpak_dir_list_refs (dir, "runtime", &refs,
                                       cancellable,
                                       error))
             return FALSE;
 
           for (i = 0; refs != NULL && refs[i] != NULL; i++)
             {
-              g_auto(GStrv) parts = xdg_app_decompose_ref (refs[i], error);
+              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
               if (parts == NULL)
                 return FALSE;
 
@@ -230,7 +230,7 @@ xdg_app_builtin_update (int           argc,
         return FALSE;
     }
 
-  xdg_app_dir_cleanup_removed (dir, cancellable, NULL);
+  flatpak_dir_cleanup_removed (dir, cancellable, NULL);
 
   return TRUE;
 }

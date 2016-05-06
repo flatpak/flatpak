@@ -18,46 +18,46 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
-#ifndef __XDG_APP_INSTALLED_REF_H__
-#define __XDG_APP_INSTALLED_REF_H__
+#ifndef __FLATPAK_INSTALLED_REF_H__
+#define __FLATPAK_INSTALLED_REF_H__
 
-typedef struct _XdgAppInstalledRef XdgAppInstalledRef;
+typedef struct _FlatpakInstalledRef FlatpakInstalledRef;
 
 #include <gio/gio.h>
 #include <xdg-app-ref.h>
 
-#define XDG_APP_TYPE_INSTALLED_REF xdg_app_installed_ref_get_type ()
-#define XDG_APP_INSTALLED_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_INSTALLED_REF, XdgAppInstalledRef))
-#define XDG_APP_IS_INSTALLED_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_INSTALLED_REF))
+#define FLATPAK_TYPE_INSTALLED_REF flatpak_installed_ref_get_type ()
+#define FLATPAK_INSTALLED_REF(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_INSTALLED_REF, FlatpakInstalledRef))
+#define FLATPAK_IS_INSTALLED_REF(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_INSTALLED_REF))
 
-XDG_APP_EXTERN GType xdg_app_installed_ref_get_type (void);
+FLATPAK_EXTERN GType flatpak_installed_ref_get_type (void);
 
-struct _XdgAppInstalledRef
+struct _FlatpakInstalledRef
 {
-  XdgAppRef parent;
+  FlatpakRef parent;
 };
 
 typedef struct
 {
-  XdgAppRefClass parent_class;
-} XdgAppInstalledRefClass;
+  FlatpakRefClass parent_class;
+} FlatpakInstalledRefClass;
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppInstalledRef, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakInstalledRef, g_object_unref)
 #endif
 
-XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_origin (XdgAppInstalledRef  * self);
-XDG_APP_EXTERN const char * const *xdg_app_installed_ref_get_subpaths (XdgAppInstalledRef *self);
-XDG_APP_EXTERN guint64      xdg_app_installed_ref_get_installed_size (XdgAppInstalledRef *self);
-XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_deploy_dir (XdgAppInstalledRef *self);
-XDG_APP_EXTERN const char  *xdg_app_installed_ref_get_latest_commit (XdgAppInstalledRef *self);
-XDG_APP_EXTERN gboolean     xdg_app_installed_ref_get_is_current (XdgAppInstalledRef *self);
-XDG_APP_EXTERN GBytes      *xdg_app_installed_ref_load_metadata (XdgAppInstalledRef *self,
-                                                                 GCancellable       *cancellable,
-                                                                 GError            **error);
+FLATPAK_EXTERN const char  *flatpak_installed_ref_get_origin (FlatpakInstalledRef  * self);
+FLATPAK_EXTERN const char * const *flatpak_installed_ref_get_subpaths (FlatpakInstalledRef *self);
+FLATPAK_EXTERN guint64      flatpak_installed_ref_get_installed_size (FlatpakInstalledRef *self);
+FLATPAK_EXTERN const char  *flatpak_installed_ref_get_deploy_dir (FlatpakInstalledRef *self);
+FLATPAK_EXTERN const char  *flatpak_installed_ref_get_latest_commit (FlatpakInstalledRef *self);
+FLATPAK_EXTERN gboolean     flatpak_installed_ref_get_is_current (FlatpakInstalledRef *self);
+FLATPAK_EXTERN GBytes      *flatpak_installed_ref_load_metadata (FlatpakInstalledRef *self,
+                                                                 GCancellable        *cancellable,
+                                                                 GError             **error);
 
-#endif /* __XDG_APP_INSTALLED_REF_H__ */
+#endif /* __FLATPAK_INSTALLED_REF_H__ */

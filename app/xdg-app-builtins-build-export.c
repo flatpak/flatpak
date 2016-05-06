@@ -84,13 +84,13 @@ metadata_get_arch (GFile *file, char **out_arch, GError **error)
                                    "runtime", NULL);
   if (runtime == NULL)
     {
-      *out_arch = g_strdup (xdg_app_get_arch ());
+      *out_arch = g_strdup (flatpak_get_arch ());
       return TRUE;
     }
 
   parts = g_strsplit (runtime, "/", 0);
   if (g_strv_length (parts) != 3)
-    return xdg_app_fail (error, "Failed to determine arch from metadata runtime key: %s", runtime);
+    return flatpak_fail (error, "Failed to determine arch from metadata runtime key: %s", runtime);
 
   *out_arch = g_strdup (parts[1]);
 
@@ -132,7 +132,7 @@ matches_patterns (const char **patterns, const char *path)
 
   for (i = 0; patterns[i] != NULL; i++)
     {
-      if (xdg_app_path_match_prefix (patterns[i], path) != NULL)
+      if (flatpak_path_match_prefix (patterns[i], path) != NULL)
         return TRUE;
     }
 
@@ -217,7 +217,7 @@ add_file_to_mtree (GFile             *file,
 }
 
 gboolean
-xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
 
@@ -253,7 +253,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   context = g_option_context_new ("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;
 
   if (argc < 3)
@@ -270,9 +270,9 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   else
     branch = "master";
 
-  if (!xdg_app_is_valid_branch (branch))
+  if (!flatpak_is_valid_branch (branch))
     {
-      xdg_app_fail (error, "'%s' is not a valid branch name", branch);
+      flatpak_fail (error, "'%s' is not a valid branch name", branch);
       goto out;
     }
 
@@ -294,7 +294,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!g_file_query_exists (files, cancellable) ||
       !g_file_query_exists (metadata, cancellable))
     {
-      xdg_app_fail (error, "Build directory %s not initialized", directory);
+      flatpak_fail (error, "Build directory %s not initialized", directory);
       goto out;
     }
 
@@ -311,7 +311,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (!opt_runtime && !g_file_query_exists (export, cancellable))
     {
-      xdg_app_fail (error, "Build directory %s not finalized", directory);
+      flatpak_fail (error, "Build directory %s not finalized", directory);
       goto out;
     }
 
@@ -352,7 +352,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   mtree = ostree_mutable_tree_new ();
 
-  if (!xdg_app_mtree_create_root (repo, mtree, cancellable, error))
+  if (!flatpak_mtree_create_root (repo, mtree, cancellable, error))
     goto out;
 
   if (!ostree_mutable_tree_ensure_dir (mtree, "files", &files_mtree, error))
@@ -424,7 +424,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     {
       g_autoptr(GError) my_error = NULL;
 
-      if (!xdg_app_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
+      if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
         {
           if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
             {
@@ -438,7 +438,7 @@ xdg_app_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
         }
     }
 
-  if (!xdg_app_repo_update (repo,
+  if (!flatpak_repo_update (repo,
                             (const char **) opt_gpg_key_ids,
                             opt_gpg_homedir,
                             cancellable,

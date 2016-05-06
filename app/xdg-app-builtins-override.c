@@ -39,22 +39,22 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_override (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   const char *app;
-  g_autoptr(XdgAppContext) arg_context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakContext) arg_context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
-  g_autoptr(XdgAppContext) overrides = NULL;
+  g_autoptr(FlatpakContext) overrides = NULL;
   g_autoptr(GError) my_error = NULL;
 
   context = g_option_context_new ("APP - Override settings for application");
 
-  arg_context = xdg_app_context_new ();
-  g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
+  arg_context = flatpak_context_new ();
+  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (argc < 2)
@@ -65,10 +65,10 @@ xdg_app_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
 
   app = argv[1];
 
-  if (!xdg_app_is_valid_name (app))
-    return xdg_app_fail (error, "'%s' is not a valid application name", app);
+  if (!flatpak_is_valid_name (app))
+    return flatpak_fail (error, "'%s' is not a valid application name", app);
 
-  metakey = xdg_app_load_override_keyfile (app, xdg_app_dir_is_user (dir), &my_error);
+  metakey = flatpak_load_override_keyfile (app, flatpak_dir_is_user (dir), &my_error);
   if (metakey == NULL)
     {
       if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -79,15 +79,15 @@ xdg_app_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
       metakey = g_key_file_new ();
     }
 
-  overrides = xdg_app_context_new ();
-  if (!xdg_app_context_load_metadata (overrides, metakey, error))
+  overrides = flatpak_context_new ();
+  if (!flatpak_context_load_metadata (overrides, metakey, error))
     return FALSE;
 
-  xdg_app_context_merge (overrides, arg_context);
+  flatpak_context_merge (overrides, arg_context);
 
-  xdg_app_context_save_metadata (overrides, metakey);
+  flatpak_context_save_metadata (overrides, metakey);
 
-  if (!xdg_app_save_override_keyfile (metakey, app, xdg_app_dir_is_user (dir), error))
+  if (!flatpak_save_override_keyfile (metakey, app, flatpak_dir_is_user (dir), error))
     return FALSE;
 
   return TRUE;

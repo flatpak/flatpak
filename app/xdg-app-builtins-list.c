@@ -82,36 +82,36 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
   g_auto(GStrv) user = NULL;
   g_auto(GStrv) user_app = NULL;
   g_auto(GStrv) user_runtime = NULL;
-  g_autoptr(XdgAppDir) user_dir = NULL;
-  g_autoptr(XdgAppDir) system_dir = NULL;
+  g_autoptr(FlatpakDir) user_dir = NULL;
+  g_autoptr(FlatpakDir) system_dir = NULL;
   int s, u;
 
   if (print_user)
     {
-      user_dir = xdg_app_dir_get (TRUE);
+      user_dir = flatpak_dir_get (TRUE);
 
-      if (xdg_app_dir_ensure_repo (user_dir, cancellable, NULL))
+      if (flatpak_dir_ensure_repo (user_dir, cancellable, NULL))
         {
-          if (app && !xdg_app_dir_list_refs (user_dir, "app", &user_app, cancellable, error))
+          if (app && !flatpak_dir_list_refs (user_dir, "app", &user_app, cancellable, error))
             return FALSE;
-          if (runtime && !xdg_app_dir_list_refs (user_dir, "runtime", &user_runtime, cancellable, error))
+          if (runtime && !flatpak_dir_list_refs (user_dir, "runtime", &user_runtime, cancellable, error))
             return FALSE;
         }
     }
 
   if (print_system)
     {
-      system_dir = xdg_app_dir_get (FALSE);
-      if (xdg_app_dir_ensure_repo (system_dir, cancellable, NULL))
+      system_dir = flatpak_dir_get (FALSE);
+      if (flatpak_dir_ensure_repo (system_dir, cancellable, NULL))
         {
-          if (app && !xdg_app_dir_list_refs (system_dir, "app", &system_app, cancellable, error))
+          if (app && !flatpak_dir_list_refs (system_dir, "app", &system_app, cancellable, error))
             return FALSE;
-          if (runtime && !xdg_app_dir_list_refs (system_dir, "runtime", &system_runtime, cancellable, error))
+          if (runtime && !flatpak_dir_list_refs (system_dir, "runtime", &system_runtime, cancellable, error))
             return FALSE;
         }
     }
 
-  XdgAppTablePrinter *printer = xdg_app_table_printer_new ();
+  FlatpakTablePrinter *printer = flatpak_table_printer_new ();
 
   user = join_strv (user_app, user_runtime);
   system = join_strv (system_app, system_runtime);
@@ -122,7 +122,7 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
       g_auto(GStrv) parts = NULL;
       const char *repo = NULL;
       gboolean is_user;
-      XdgAppDir *dir = NULL;
+      FlatpakDir *dir = NULL;
       g_autoptr(GVariant) deploy_data = NULL;
 
       if (system[s] == NULL)
@@ -148,21 +148,21 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
       parts = g_strsplit (ref, "/", -1);
       partial_ref = strchr (ref, '/') + 1;
 
-      deploy_data = xdg_app_dir_get_deploy_data (dir, ref, cancellable, error);
+      deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, error);
       if (deploy_data == NULL)
         return FALSE;
 
-      repo = xdg_app_deploy_data_get_origin (deploy_data);
+      repo = flatpak_deploy_data_get_origin (deploy_data);
 
       if (opt_show_details)
         {
-          g_autofree char *active = xdg_app_dir_read_active (dir, ref, NULL);
+          g_autofree char *active = flatpak_dir_read_active (dir, ref, NULL);
           g_autofree char *latest = NULL;
           g_autofree char *size_s = NULL;
           guint64 size = 0;
           g_autofree const char **subpaths = NULL;
 
-          latest = xdg_app_dir_read_latest (dir, repo, ref, NULL, NULL);
+          latest = flatpak_dir_read_latest (dir, repo, ref, NULL, NULL);
           if (latest)
             {
               if (strcmp (active, latest) == 0)
@@ -180,75 +180,75 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
               latest = g_strdup ("?");
             }
 
-          xdg_app_table_printer_add_column (printer, partial_ref);
-          xdg_app_table_printer_add_column (printer, repo);
+          flatpak_table_printer_add_column (printer, partial_ref);
+          flatpak_table_printer_add_column (printer, repo);
 
           active[MIN (strlen (active), 12)] = 0;
-          xdg_app_table_printer_add_column (printer, active);
-          xdg_app_table_printer_add_column (printer, latest);
+          flatpak_table_printer_add_column (printer, active);
+          flatpak_table_printer_add_column (printer, latest);
 
-          size = xdg_app_deploy_data_get_installed_size (deploy_data);
+          size = flatpak_deploy_data_get_installed_size (deploy_data);
           size_s = g_format_size (size);
-          xdg_app_table_printer_add_column (printer, size_s);
+          flatpak_table_printer_add_column (printer, size_s);
 
-          xdg_app_table_printer_add_column (printer, ""); /* Options */
+          flatpak_table_printer_add_column (printer, ""); /* Options */
 
           if (print_user && print_system)
-            xdg_app_table_printer_append_with_comma (printer, is_user ? "user" : "system");
+            flatpak_table_printer_append_with_comma (printer, is_user ? "user" : "system");
 
           if (strcmp (parts[0], "app") == 0)
             {
               g_autofree char *current;
 
-              current = xdg_app_dir_current_ref (dir, parts[1], cancellable);
+              current = flatpak_dir_current_ref (dir, parts[1], cancellable);
               if (current && strcmp (ref, current) == 0)
-                xdg_app_table_printer_append_with_comma (printer, "current");
+                flatpak_table_printer_append_with_comma (printer, "current");
             }
           else
             {
               if (app)
-                xdg_app_table_printer_append_with_comma (printer, "runtime");
+                flatpak_table_printer_append_with_comma (printer, "runtime");
             }
 
-          subpaths = xdg_app_deploy_data_get_subpaths (deploy_data);
+          subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
           if (subpaths[0] == NULL)
             {
-              xdg_app_table_printer_add_column (printer, "");
+              flatpak_table_printer_add_column (printer, "");
             }
           else
             {
               int i;
-              xdg_app_table_printer_add_column (printer, ""); /* subpaths */
+              flatpak_table_printer_add_column (printer, ""); /* subpaths */
               for (i = 0; subpaths[i] != NULL; i++)
-                xdg_app_table_printer_append_with_comma (printer, subpaths[i]);
+                flatpak_table_printer_append_with_comma (printer, subpaths[i]);
             }
         }
       else
         {
           if (last == NULL || strcmp (last, parts[1]) != 0)
             {
-              xdg_app_table_printer_add_column (printer, parts[1]);
+              flatpak_table_printer_add_column (printer, parts[1]);
               g_clear_pointer (&last, g_free);
               last = g_strdup (parts[1]);
             }
         }
-      xdg_app_table_printer_finish_row (printer);
+      flatpak_table_printer_finish_row (printer);
     }
 
-  xdg_app_table_printer_print (printer);
-  xdg_app_table_printer_free (printer);
+  flatpak_table_printer_print (printer);
+  flatpak_table_printer_free (printer);
 
   return TRUE;
 }
 
 gboolean
-xdg_app_builtin_list (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
 
   context = g_option_context_new (" - List installed apps and/or runtimes");
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (!opt_app && !opt_runtime)

@@ -26,9 +26,9 @@
 #include "xdg-app-bundle-ref.h"
 #include "xdg-app-enum-types.h"
 
-typedef struct _XdgAppBundleRefPrivate XdgAppBundleRefPrivate;
+typedef struct _FlatpakBundleRefPrivate FlatpakBundleRefPrivate;
 
-struct _XdgAppBundleRefPrivate
+struct _FlatpakBundleRefPrivate
 {
   GFile  *file;
   char   *origin;
@@ -39,7 +39,7 @@ struct _XdgAppBundleRefPrivate
   guint64 installed_size;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (XdgAppBundleRef, xdg_app_bundle_ref, XDG_APP_TYPE_REF)
+G_DEFINE_TYPE_WITH_PRIVATE (FlatpakBundleRef, flatpak_bundle_ref, FLATPAK_TYPE_REF)
 
 enum {
   PROP_0,
@@ -48,10 +48,10 @@ enum {
 };
 
 static void
-xdg_app_bundle_ref_finalize (GObject *object)
+flatpak_bundle_ref_finalize (GObject *object)
 {
-  XdgAppBundleRef *self = XDG_APP_BUNDLE_REF (object);
-  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+  FlatpakBundleRef *self = FLATPAK_BUNDLE_REF (object);
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
 
   g_clear_object (&priv->file);
 
@@ -61,17 +61,17 @@ xdg_app_bundle_ref_finalize (GObject *object)
   g_bytes_unref (priv->icon_128);
   g_free (priv->origin);
 
-  G_OBJECT_CLASS (xdg_app_bundle_ref_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_bundle_ref_parent_class)->finalize (object);
 }
 
 static void
-xdg_app_bundle_ref_set_property (GObject      *object,
+flatpak_bundle_ref_set_property (GObject      *object,
                                  guint         prop_id,
                                  const GValue *value,
                                  GParamSpec   *pspec)
 {
-  XdgAppBundleRef *self = XDG_APP_BUNDLE_REF (object);
-  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+  FlatpakBundleRef *self = FLATPAK_BUNDLE_REF (object);
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
 
   switch (prop_id)
     {
@@ -86,13 +86,13 @@ xdg_app_bundle_ref_set_property (GObject      *object,
 }
 
 static void
-xdg_app_bundle_ref_get_property (GObject    *object,
+flatpak_bundle_ref_get_property (GObject    *object,
                                  guint       prop_id,
                                  GValue     *value,
                                  GParamSpec *pspec)
 {
-  XdgAppBundleRef *self = XDG_APP_BUNDLE_REF (object);
-  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+  FlatpakBundleRef *self = FLATPAK_BUNDLE_REF (object);
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
 
   switch (prop_id)
     {
@@ -107,13 +107,13 @@ xdg_app_bundle_ref_get_property (GObject    *object,
 }
 
 static void
-xdg_app_bundle_ref_class_init (XdgAppBundleRefClass *klass)
+flatpak_bundle_ref_class_init (FlatpakBundleRefClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->get_property = xdg_app_bundle_ref_get_property;
-  object_class->set_property = xdg_app_bundle_ref_set_property;
-  object_class->finalize = xdg_app_bundle_ref_finalize;
+  object_class->get_property = flatpak_bundle_ref_get_property;
+  object_class->set_property = flatpak_bundle_ref_set_property;
+  object_class->finalize = flatpak_bundle_ref_finalize;
 
   g_object_class_install_property (object_class,
                                    PROP_FILE,
@@ -125,38 +125,38 @@ xdg_app_bundle_ref_class_init (XdgAppBundleRefClass *klass)
 }
 
 static void
-xdg_app_bundle_ref_init (XdgAppBundleRef *self)
+flatpak_bundle_ref_init (FlatpakBundleRef *self)
 {
 }
 
 /**
- * xdg_app_bundle_ref_get_file:
- * @self: a #XdgAppInstallation
+ * flatpak_bundle_ref_get_file:
+ * @self: a #FlatpakInstallation
  *
  * Get the file this bundle is stored in.
  *
  * Returns: (transfer full) : an #GFile
  */
 GFile *
-xdg_app_bundle_ref_get_file (XdgAppBundleRef *self)
+flatpak_bundle_ref_get_file (FlatpakBundleRef *self)
 {
-  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
 
   return g_object_ref (priv->file);
 }
 
 /**
- * xdg_app_bundle_ref_get_metadata:
- * @self: a #XdgAppInstallation
+ * flatpak_bundle_ref_get_metadata:
+ * @self: a #FlatpakInstallation
  *
  * Get the metadata for the app/runtime
  *
  * Returns: (transfer full) : an #GBytes with the metadata contents, or %NULL
  */
 GBytes *
-xdg_app_bundle_ref_get_metadata (XdgAppBundleRef *self)
+flatpak_bundle_ref_get_metadata (FlatpakBundleRef *self)
 {
-  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
 
   if (priv->metadata)
     return g_bytes_ref (priv->metadata);
@@ -164,17 +164,17 @@ xdg_app_bundle_ref_get_metadata (XdgAppBundleRef *self)
 }
 
 /**
- * xdg_app_bundle_ref_get_appstream:
- * @self: a #XdgAppInstallation
+ * flatpak_bundle_ref_get_appstream:
+ * @self: a #FlatpakInstallation
  *
  * Get the compressed appstream for the app/runtime
  *
  * Returns: (transfer full) : an #GBytes with the appstream contents, or %NULL
  */
 GBytes *
-xdg_app_bundle_ref_get_appstream (XdgAppBundleRef *self)
+flatpak_bundle_ref_get_appstream (FlatpakBundleRef *self)
 {
-  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
 
   if (priv->appstream)
     return g_bytes_ref (priv->appstream);
@@ -182,8 +182,8 @@ xdg_app_bundle_ref_get_appstream (XdgAppBundleRef *self)
 }
 
 /**
- * xdg_app_bundle_ref_get_icon:
- * @self: a #XdgAppInstallation
+ * flatpak_bundle_ref_get_icon:
+ * @self: a #FlatpakInstallation
  * @size: 64 or 128
  *
  * Get the icon png data for the app/runtime
@@ -191,10 +191,10 @@ xdg_app_bundle_ref_get_appstream (XdgAppBundleRef *self)
  * Returns: (transfer full) : an #GBytes with png contents
  */
 GBytes *
-xdg_app_bundle_ref_get_icon (XdgAppBundleRef *self,
-                             int              size)
+flatpak_bundle_ref_get_icon (FlatpakBundleRef *self,
+                             int               size)
 {
-  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
 
   if (size == 64 && priv->icon_64)
     return g_bytes_ref (priv->icon_64);
@@ -206,39 +206,39 @@ xdg_app_bundle_ref_get_icon (XdgAppBundleRef *self,
 }
 
 /**
- * xdg_app_bundle_ref_get_origin:
- * @self: a #XdgAppInstallation
+ * flatpak_bundle_ref_get_origin:
+ * @self: a #FlatpakInstallation
  *
  * Get the origin url stored in the bundle
  *
  * Returns: (transfer full) : an url string, or %NULL
  */
 char *
-xdg_app_bundle_ref_get_origin (XdgAppBundleRef *self)
+flatpak_bundle_ref_get_origin (FlatpakBundleRef *self)
 {
-  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
 
   return g_strdup (priv->origin);
 }
 
 guint64
-xdg_app_bundle_ref_get_installed_size (XdgAppBundleRef *self)
+flatpak_bundle_ref_get_installed_size (FlatpakBundleRef *self)
 {
-  XdgAppBundleRefPrivate *priv = xdg_app_bundle_ref_get_instance_private (self);
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
 
   return priv->installed_size;
 }
 
 
-XdgAppBundleRef *
-xdg_app_bundle_ref_new (GFile   *file,
+FlatpakBundleRef *
+flatpak_bundle_ref_new (GFile   *file,
                         GError **error)
 {
-  XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
-  XdgAppBundleRefPrivate *priv;
+  FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
+  FlatpakBundleRefPrivate *priv;
 
   g_auto(GStrv) parts = NULL;
-  XdgAppBundleRef *ref;
+  FlatpakBundleRef *ref;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *commit = NULL;
   g_autofree char *full_ref = NULL;
@@ -249,12 +249,12 @@ xdg_app_bundle_ref_new (GFile   *file,
   g_autoptr(GVariant) icon_128 = NULL;
   guint64 installed_size;
 
-  metadata = xdg_app_bundle_load (file, &commit, &full_ref, &origin, &installed_size,
+  metadata = flatpak_bundle_load (file, &commit, &full_ref, &origin, &installed_size,
                                   NULL, error);
   if (metadata == NULL)
     return NULL;
 
-  parts = xdg_app_decompose_ref (full_ref, error);
+  parts = flatpak_decompose_ref (full_ref, error);
   if (parts == NULL)
     return NULL;
 
@@ -262,9 +262,9 @@ xdg_app_bundle_ref_new (GFile   *file,
     metadata_contents = NULL;
 
   if (strcmp (parts[0], "app") != 0)
-    kind = XDG_APP_REF_KIND_RUNTIME;
+    kind = FLATPAK_REF_KIND_RUNTIME;
 
-  ref = g_object_new (XDG_APP_TYPE_BUNDLE_REF,
+  ref = g_object_new (FLATPAK_TYPE_BUNDLE_REF,
                       "kind", kind,
                       "name", parts[1],
                       "arch", parts[2],
@@ -272,7 +272,7 @@ xdg_app_bundle_ref_new (GFile   *file,
                       "commit", commit,
                       "file", file,
                       NULL);
-  priv = xdg_app_bundle_ref_get_instance_private (ref);
+  priv = flatpak_bundle_ref_get_instance_private (ref);
 
   if (metadata_contents)
     priv->metadata = g_bytes_new_take (metadata_contents,

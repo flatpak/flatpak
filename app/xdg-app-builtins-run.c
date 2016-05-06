@@ -57,16 +57,16 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDeploy) app_deploy = NULL;
+  g_autoptr(FlatpakDeploy) app_deploy = NULL;
   g_autofree char *app_ref = NULL;
   const char *app;
   const char *branch = "master";
   int i;
   int rest_argv_start, rest_argc;
-  g_autoptr(XdgAppContext) arg_context = NULL;
+  g_autoptr(FlatpakContext) arg_context = NULL;
 
   context = g_option_context_new ("APP [args...] - Run an app");
 
@@ -83,10 +83,10 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
         }
     }
 
-  arg_context = xdg_app_context_new ();
-  g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
+  arg_context = flatpak_context_new ();
+  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (rest_argc == 0)
@@ -99,32 +99,32 @@ xdg_app_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (opt_branch == NULL && opt_arch == NULL)
     {
-      g_autoptr(XdgAppDir) user_dir = xdg_app_dir_get_user ();
-      g_autoptr(XdgAppDir) system_dir = xdg_app_dir_get_system ();
+      g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
+      g_autoptr(FlatpakDir) system_dir = flatpak_dir_get_system ();
 
-      app_ref = xdg_app_dir_current_ref (user_dir, app, cancellable);
+      app_ref = flatpak_dir_current_ref (user_dir, app, cancellable);
       if (app_ref == NULL)
-        app_ref = xdg_app_dir_current_ref (system_dir, app, cancellable);
+        app_ref = flatpak_dir_current_ref (system_dir, app, cancellable);
     }
 
   if (app_ref == NULL)
     {
-      app_ref = xdg_app_compose_ref (TRUE, app, branch, opt_arch, error);
+      app_ref = flatpak_compose_ref (TRUE, app, branch, opt_arch, error);
       if (app_ref == NULL)
         return FALSE;
     }
 
-  app_deploy = xdg_app_find_deploy_for_ref (app_ref, cancellable, error);
+  app_deploy = flatpak_find_deploy_for_ref (app_ref, cancellable, error);
   if (app_deploy == NULL)
     return FALSE;
 
-  if (!xdg_app_run_app (app_ref, app_deploy,
+  if (!flatpak_run_app (app_ref, app_deploy,
                         arg_context,
                         opt_runtime,
                         opt_runtime_version,
-                        (opt_devel ? XDG_APP_RUN_FLAG_DEVEL : 0) |
-                        (opt_log_session_bus ? XDG_APP_RUN_FLAG_LOG_SESSION_BUS : 0) |
-                        (opt_log_system_bus ? XDG_APP_RUN_FLAG_LOG_SYSTEM_BUS : 0),
+                        (opt_devel ? FLATPAK_RUN_FLAG_DEVEL : 0) |
+                        (opt_log_session_bus ? FLATPAK_RUN_FLAG_LOG_SESSION_BUS : 0) |
+                        (opt_log_system_bus ? FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS : 0),
                         opt_command,
                         &argv[rest_argv_start + 1],
                         rest_argc - 1,

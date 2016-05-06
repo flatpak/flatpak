@@ -18,11 +18,11 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __XDG_APP_COMMON_TYPES_H__
-#define __XDG_APP_COMMON_TYPES_H__
+#ifndef __FLATPAK_COMMON_TYPES_H__
+#define __FLATPAK_COMMON_TYPES_H__
 
-typedef struct XdgAppDir     XdgAppDir;
-typedef struct XdgAppDeploy  XdgAppDeploy;
-typedef struct XdgAppContext XdgAppContext;
+typedef struct FlatpakDir     FlatpakDir;
+typedef struct FlatpakDeploy  FlatpakDeploy;
+typedef struct FlatpakContext FlatpakContext;
 
-#endif /* __XDG_APP_COMMON_TYPES_H__ */
+#endif /* __FLATPAK_COMMON_TYPES_H__ */

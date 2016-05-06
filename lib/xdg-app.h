@@ -18,10 +18,10 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __XDG_APP_H__
-#define __XDG_APP_H__
+#ifndef __FLATPAK_H__
+#define __FLATPAK_H__
 
-#define __XDG_APP_H_INSIDE__
+#define __FLATPAK_H_INSIDE__
 
 #include <gio/gio.h>
 
@@ -35,6 +35,6 @@
 #include <xdg-app-remote.h>
 #include <xdg-app-installation.h>
 
-#undef __XDG_APP_H_INSIDE__
+#undef __FLATPAK_H_INSIDE__
 
-#endif /* __XDG_APP_H__ */
+#endif /* __FLATPAK_H__ */

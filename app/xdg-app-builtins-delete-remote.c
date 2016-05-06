@@ -31,15 +31,15 @@
 #include "xdg-app-builtins.h"
 
 gboolean
-xdg_app_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDir) dir = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
   const char *remote_name;
 
   context = g_option_context_new ("NAME - Delete a remote repository");
 
-  if (!xdg_app_option_context_parse (context, NULL, &argc, &argv, 0, &dir, cancellable, error))
+  if (!flatpak_option_context_parse (context, NULL, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
   if (argc < 2)
@@ -47,22 +47,22 @@ xdg_app_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
 
   remote_name = argv[1];
 
-  if (!xdg_app_dir_remove_all_refs (dir, remote_name,
+  if (!flatpak_dir_remove_all_refs (dir, remote_name,
                                     cancellable, error))
     return FALSE;
 
-  if (!xdg_app_dir_remove_appstream (dir, remote_name,
+  if (!flatpak_dir_remove_appstream (dir, remote_name,
                                      cancellable, error))
     return FALSE;
 
-  if (!ostree_repo_remote_change (xdg_app_dir_get_repo (dir), NULL,
+  if (!ostree_repo_remote_change (flatpak_dir_get_repo (dir), NULL,
                                   OSTREE_REPO_REMOTE_CHANGE_DELETE,
                                   remote_name, NULL,
                                   NULL,
                                   cancellable, error))
     return FALSE;
 
-  if (!xdg_app_dir_mark_changed (dir, error))
+  if (!flatpak_dir_mark_changed (dir, error))
     return FALSE;
 
   return TRUE;

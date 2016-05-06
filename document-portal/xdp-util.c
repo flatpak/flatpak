@@ -50,20 +50,20 @@ xdp_parse_permissions (const char **permissions)
 }
 
 XdpPermissionFlags
-xdp_entry_get_permissions (XdgAppDbEntry *entry,
-                           const char    *app_id)
+xdp_entry_get_permissions (FlatpakDbEntry *entry,
+                           const char     *app_id)
 {
   g_autofree const char **permissions = NULL;
 
   if (strcmp (app_id, "") == 0)
     return XDP_PERMISSION_FLAGS_ALL;
 
-  permissions = xdg_app_db_entry_list_permissions (entry, app_id);
+  permissions = flatpak_db_entry_list_permissions (entry, app_id);
   return xdp_parse_permissions (permissions);
 }
 
 gboolean
-xdp_entry_has_permissions (XdgAppDbEntry     *entry,
+xdp_entry_has_permissions (FlatpakDbEntry    *entry,
                            const char        *app_id,
                            XdpPermissionFlags perms)
 {
@@ -81,15 +81,15 @@ xdp_name_from_id (guint32 doc_id)
 }
 
 const char *
-xdp_entry_get_path (XdgAppDbEntry *entry)
+xdp_entry_get_path (FlatpakDbEntry *entry)
 {
-  g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
+  g_autoptr(GVariant) v = flatpak_db_entry_get_data (entry);
   g_autoptr(GVariant) c = g_variant_get_child_value (v, 0);
   return g_variant_get_bytestring (c);
 }
 
 char *
-xdp_entry_dup_basename (XdgAppDbEntry *entry)
+xdp_entry_dup_basename (FlatpakDbEntry *entry)
 {
   const char *path = xdp_entry_get_path (entry);
 
@@ -97,7 +97,7 @@ xdp_entry_dup_basename (XdgAppDbEntry *entry)
 }
 
 char *
-xdp_entry_dup_dirname (XdgAppDbEntry *entry)
+xdp_entry_dup_dirname (FlatpakDbEntry *entry)
 {
   const char *path = xdp_entry_get_path (entry);
 
@@ -105,25 +105,25 @@ xdp_entry_dup_dirname (XdgAppDbEntry *entry)
 }
 
 guint64
-xdp_entry_get_device (XdgAppDbEntry *entry)
+xdp_entry_get_device (FlatpakDbEntry *entry)
 {
-  g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
+  g_autoptr(GVariant) v = flatpak_db_entry_get_data (entry);
   g_autoptr(GVariant) c = g_variant_get_child_value (v, 1);
   return g_variant_get_uint64 (c);
 }
 
 guint64
-xdp_entry_get_inode (XdgAppDbEntry *entry)
+xdp_entry_get_inode (FlatpakDbEntry *entry)
 {
-  g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
+  g_autoptr(GVariant) v = flatpak_db_entry_get_data (entry);
   g_autoptr(GVariant) c = g_variant_get_child_value (v, 2);
   return g_variant_get_uint64 (c);
 }
 
 guint32
-xdp_entry_get_flags (XdgAppDbEntry *entry)
+xdp_entry_get_flags (FlatpakDbEntry *entry)
 {
-  g_autoptr(GVariant) v = xdg_app_db_entry_get_data (entry);
+  g_autoptr(GVariant) v = flatpak_db_entry_get_data (entry);
   g_autoptr(GVariant) c = g_variant_get_child_value (v, 3);
   return g_variant_get_uint32 (c);
 }

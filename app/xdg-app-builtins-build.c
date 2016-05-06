@@ -57,10 +57,10 @@ add_args (GPtrArray *argv_array, ...)
 }
 
 gboolean
-xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError **error)
+flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(XdgAppDeploy) runtime_deploy = NULL;
+  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(GFile) var = NULL;
   g_autoptr(GFile) usr = NULL;
   g_autoptr(GFile) app_deploy = NULL;
@@ -80,8 +80,8 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autofree char *app_id = NULL;
   int i;
   int rest_argv_start, rest_argc;
-  g_autoptr(XdgAppContext) arg_context = NULL;
-  g_autoptr(XdgAppContext) app_context = NULL;
+  g_autoptr(FlatpakContext) arg_context = NULL;
+  g_autoptr(FlatpakContext) app_context = NULL;
   gboolean custom_usr;
   g_auto(GStrv) runtime_ref_parts = NULL;
 
@@ -100,10 +100,10 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
         }
     }
 
-  arg_context = xdg_app_context_new ();
-  g_option_context_add_group (context, xdg_app_context_get_options (arg_context));
+  arg_context = flatpak_context_new ();
+  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
-  if (!xdg_app_option_context_parse (context, options, &argc, &argv, XDG_APP_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
   if (rest_argc == 0)
@@ -133,15 +133,15 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   runtime_ref = g_build_filename ("runtime", runtime, NULL);
 
-  runtime_ref_parts = xdg_app_decompose_ref (runtime_ref, error);
+  runtime_ref_parts = flatpak_decompose_ref (runtime_ref, error);
   if (runtime_ref_parts == NULL)
     return FALSE;
 
-  runtime_deploy = xdg_app_find_deploy_for_ref (runtime_ref, cancellable, error);
+  runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
   if (runtime_deploy == NULL)
     return FALSE;
 
-  runtime_metakey = xdg_app_deploy_get_metadata (runtime_deploy);
+  runtime_metakey = flatpak_deploy_get_metadata (runtime_deploy);
 
   var = g_file_get_child (app_deploy, "var");
   if (!gs_file_ensure_directory (var, TRUE, cancellable, error))
@@ -150,7 +150,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   app_files = g_file_get_child (app_deploy, "files");
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (argv_array, g_strdup (xdg_app_get_bwrap ()));
+  g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
 
   custom_usr = FALSE;
   usr = g_file_get_child (app_deploy, "usr");
@@ -161,7 +161,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     }
   else
     {
-      runtime_files = xdg_app_deploy_get_files (runtime_deploy);
+      runtime_files = flatpak_deploy_get_files (runtime_deploy);
     }
 
   add_args (argv_array,
@@ -169,7 +169,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             "--bind", gs_file_get_path_cached (app_files), "/app",
             NULL);
 
-  if (!xdg_app_run_setup_base_argv (argv_array, runtime_files, NULL, runtime_ref_parts[2], XDG_APP_RUN_FLAG_DEVEL, error))
+  if (!flatpak_run_setup_base_argv (argv_array, runtime_files, NULL, runtime_ref_parts[2], FLATPAK_RUN_FLAG_DEVEL, error))
     return FALSE;
 
   /* After setup_base to avoid conflicts with /var symlinks */
@@ -177,21 +177,21 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             "--bind", gs_file_get_path_cached (var), "/var",
             NULL);
 
-  app_context = xdg_app_context_new ();
-  if (!xdg_app_context_load_metadata (app_context, runtime_metakey, error))
+  app_context = flatpak_context_new ();
+  if (!flatpak_context_load_metadata (app_context, runtime_metakey, error))
     return FALSE;
-  if (!xdg_app_context_load_metadata (app_context, metakey, error))
+  if (!flatpak_context_load_metadata (app_context, metakey, error))
     return FALSE;
-  xdg_app_context_allow_host_fs (app_context);
-  xdg_app_context_merge (app_context, arg_context);
+  flatpak_context_allow_host_fs (app_context);
+  flatpak_context_merge (app_context, arg_context);
 
-  envp = xdg_app_run_get_minimal_env (TRUE);
-  envp = xdg_app_run_apply_env_vars (envp, app_context);
-  xdg_app_run_add_environment_args (argv_array, &envp, NULL, NULL, app_id,
+  envp = flatpak_run_get_minimal_env (TRUE);
+  envp = flatpak_run_apply_env_vars (envp, app_context);
+  flatpak_run_add_environment_args (argv_array, &envp, NULL, NULL, app_id,
                                     app_context, NULL);
 
   if (!custom_usr &&
-      !xdg_app_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
+      !flatpak_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
@@ -222,7 +222,7 @@ xdg_app_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (argv_array, NULL);
 
-  if (!execve (xdg_app_get_bwrap (), (char **) argv_array->pdata, envp))
+  if (!execve (flatpak_get_bwrap (), (char **) argv_array->pdata, envp))
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
       return FALSE;

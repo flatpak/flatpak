@@ -18,18 +18,18 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#if !defined(__XDG_APP_H_INSIDE__) && !defined(XDG_APP_COMPILATION)
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
 #error "Only <xdg-app.h> can be included directly."
 #endif
 
-#ifndef __XDG_APP_REMOTE_REF_PRIVATE_H__
-#define __XDG_APP_REMOTE_REF_PRIVATE_H__
+#ifndef __FLATPAK_REMOTE_REF_PRIVATE_H__
+#define __FLATPAK_REMOTE_REF_PRIVATE_H__
 
 #include <xdg-app-remote-ref.h>
 #include <xdg-app-dir.h>
 
-XdgAppRemoteRef *xdg_app_remote_ref_new (const char *full_ref,
-                                         const char *commit,
-                                         const char *remote_name);
+FlatpakRemoteRef *flatpak_remote_ref_new (const char *full_ref,
+                                          const char *commit,
+                                          const char *remote_name);
 
-#endif /* __XDG_APP_REMOTE_REF_PRIVATE_H__ */
+#endif /* __FLATPAK_REMOTE_REF_PRIVATE_H__ */

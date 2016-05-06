@@ -77,7 +77,7 @@ inplace_basename (const char *path)
  * path, otherwise just the basename.
  */
 void
-xdg_app_collect_matches_for_path_pattern (const char *path,
+flatpak_collect_matches_for_path_pattern (const char *path,
                                           const char *pattern,
                                           const char *add_prefix,
                                           GHashTable *to_remove_ht)
@@ -86,7 +86,7 @@ xdg_app_collect_matches_for_path_pattern (const char *path,
 
   if (pattern[0] != '/')
     {
-      rest = xdg_app_path_match_prefix (pattern, inplace_basename (path));
+      rest = flatpak_path_match_prefix (pattern, inplace_basename (path));
       if (rest != NULL)
         g_hash_table_insert (to_remove_ht, g_strconcat (add_prefix ? add_prefix : "", path, NULL), GINT_TO_POINTER (1));
     }
@@ -96,7 +96,7 @@ xdg_app_collect_matches_for_path_pattern (const char *path,
        * files, as a prefix match should remove all files below that
        * (in this module) */
 
-      rest = xdg_app_path_match_prefix (pattern, path);
+      rest = flatpak_path_match_prefix (pattern, path);
       while (rest != NULL)
         {
           const char *slash;
@@ -115,13 +115,13 @@ xdg_app_collect_matches_for_path_pattern (const char *path,
 }
 
 gboolean
-xdg_app_matches_path_pattern (const char *path,
+flatpak_matches_path_pattern (const char *path,
                               const char *pattern)
 {
   if (pattern[0] != '/')
     path = inplace_basename (path);
 
-  return xdg_app_path_match_prefix (pattern, path) != NULL;
+  return flatpak_path_match_prefix (pattern, path) != NULL;
 }
 
 gboolean
@@ -132,7 +132,7 @@ strip (GError **error,
   va_list ap;
 
   va_start (ap, error);
-  res = xdg_app_spawn (NULL, NULL, error, "strip", ap);
+  res = flatpak_spawn (NULL, NULL, error, "strip", ap);
   va_end (ap);
 
   return res;
@@ -146,7 +146,7 @@ eu_strip (GError **error,
   va_list ap;
 
   va_start (ap, error);
-  res = xdg_app_spawn (NULL, NULL, error, "eu-strip", ap);
+  res = flatpak_spawn (NULL, NULL, error, "eu-strip", ap);
   va_end (ap);
 
   return res;
@@ -296,8 +296,8 @@ migrate_locale_dir (GFile      *source_dir,
                                          NULL, error))
             return FALSE;
 
-          if (!xdg_app_cp_a (child, locale_subdir,
-                             XDG_APP_CP_FLAGS_MERGE | XDG_APP_CP_FLAGS_MOVE,
+          if (!flatpak_cp_a (child, locale_subdir,
+                             FLATPAK_CP_FLAGS_MERGE | FLATPAK_CP_FLAGS_MOVE,
                              NULL, error))
             return FALSE;
 
@@ -676,19 +676,19 @@ handle_dwarf2_line (DebuginfoData *data, uint32_t off, char *comp_dir, GHashTabl
   endcu = ptr + 4;
   endcu += read_32 (ptr);
   if (endcu == ptr + 0xffffffff)
-    return xdg_app_fail (error, "%s: 64-bit DWARF not supported", data->filename);
+    return flatpak_fail (error, "%s: 64-bit DWARF not supported", data->filename);
 
   if (endcu > endsec)
-    return xdg_app_fail (error, "%s: .debug_line CU does not fit into section", data->filename);
+    return flatpak_fail (error, "%s: .debug_line CU does not fit into section", data->filename);
 
   value = read_16 (ptr);
   if (value != 2 && value != 3 && value != 4)
-    return xdg_app_fail (error, "%s: DWARF version %d unhandled", data->filename, value);
+    return flatpak_fail (error, "%s: DWARF version %d unhandled", data->filename, value);
 
   endprol = ptr + 4;
   endprol += read_32 (ptr);
   if (endprol > endcu)
-    return xdg_app_fail (error, "%s: .debug_line CU prologue does not fit into CU", data->filename);
+    return flatpak_fail (error, "%s: .debug_line CU prologue does not fit into CU", data->filename);
 
   opcode_base = ptr[4 + (value >= 4)];
   ptr = dir = ptr + 4 + (value >= 4) + opcode_base;
@@ -723,7 +723,7 @@ handle_dwarf2_line (DebuginfoData *data, uint32_t off, char *comp_dir, GHashTabl
       value = read_uleb128 (ptr);
 
       if (value >= dirt_cnt)
-        return xdg_app_fail (error, "%s: Wrong directory table index %u",  data->filename, value);
+        return flatpak_fail (error, "%s: Wrong directory table index %u",  data->filename, value);
 
       file_len = strlen (file);
       dir_len = strlen ((char *) dirt[value]);
@@ -978,7 +978,7 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
     }
   else
     {
-      return xdg_app_fail (0, 0, "%s: Wrong ELF data enconding", data->filename);
+      return flatpak_fail (0, 0, "%s: Wrong ELF data enconding", data->filename);
     }
 
   debug_sections = data->debug_sections;
@@ -1098,7 +1098,7 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
 
                 default:
 fail:
-                  return xdg_app_fail (error, "%s: Unhandled relocation %d in .debug_info section",
+                  return flatpak_fail (error, "%s: Unhandled relocation %d in .debug_info section",
                                        data->filename, rtype);
                 }
               relend->ptr = debug_sections[DEBUG_INFO].data
@@ -1126,38 +1126,38 @@ fail:
           g_autoptr(GHashTable) abbrev = NULL;
 
           if (ptr + 11 > endsec)
-            return xdg_app_fail (error, "%s: .debug_info CU header too small", data->filename);
+            return flatpak_fail (error, "%s: .debug_info CU header too small", data->filename);
 
           endcu = ptr + 4;
           endcu += read_32 (ptr);
           if (endcu == ptr + 0xffffffff)
-            return xdg_app_fail (error, "%s: 64-bit DWARF not supported", data->filename);
+            return flatpak_fail (error, "%s: 64-bit DWARF not supported", data->filename);
 
           if (endcu > endsec)
-            return xdg_app_fail (error, "%s: .debug_info too small", data->filename);
+            return flatpak_fail (error, "%s: .debug_info too small", data->filename);
 
           cu_version = read_16 (ptr);
           if (cu_version != 2 && cu_version != 3 && cu_version != 4)
-            return xdg_app_fail (error, "%s: DWARF version %d unhandled", data->filename, cu_version);
+            return flatpak_fail (error, "%s: DWARF version %d unhandled", data->filename, cu_version);
 
           value = read_32_relocated (ptr);
           if (value >= debug_sections[DEBUG_ABBREV].size)
             {
               if (debug_sections[DEBUG_ABBREV].data == NULL)
-                return xdg_app_fail (error, "%s: .debug_abbrev not present", data->filename);
+                return flatpak_fail (error, "%s: .debug_abbrev not present", data->filename);
               else
-                return xdg_app_fail (error, "%s: DWARF CU abbrev offset too large", data->filename);
+                return flatpak_fail (error, "%s: DWARF CU abbrev offset too large", data->filename);
             }
 
           if (ptr_size == 0)
             {
               ptr_size = read_1 (ptr);
               if (ptr_size != 4 && ptr_size != 8)
-                return xdg_app_fail (error, "%s: Invalid DWARF pointer size %d", data->filename, ptr_size);
+                return flatpak_fail (error, "%s: Invalid DWARF pointer size %d", data->filename, ptr_size);
             }
           else if (read_1 (ptr) != ptr_size)
             {
-              return xdg_app_fail (error, "%s: DWARF pointer size differs between CUs", data->filename);
+              return flatpak_fail (error, "%s: DWARF pointer size differs between CUs", data->filename);
             }
 
           abbrev = read_abbrev (data,
@@ -1233,25 +1233,25 @@ builder_get_debuginfo_file_references (const char *filename, GError **error)
   elf = elf_begin (fd, ELF_C_RDWR_MMAP, NULL);
   if (elf == NULL)
     {
-      xdg_app_fail (error, "cannot open ELF file: %s", elf_errmsg (-1));
+      flatpak_fail (error, "cannot open ELF file: %s", elf_errmsg (-1));
       return NULL;
     }
 
   if (elf_kind (elf) != ELF_K_ELF)
     {
-      xdg_app_fail (error, "\"%s\" is not an ELF file", filename);
+      flatpak_fail (error, "\"%s\" is not an ELF file", filename);
       return NULL;
     }
 
   if (gelf_getehdr (elf, &ehdr) == NULL)
     {
-      xdg_app_fail (error, "cannot get the ELF header: %s", elf_errmsg (-1));
+      flatpak_fail (error, "cannot get the ELF header: %s", elf_errmsg (-1));
       return NULL;
     }
 
   if (ehdr.e_type != ET_DYN && ehdr.e_type != ET_EXEC && ehdr.e_type != ET_REL)
     {
-      xdg_app_fail (error, "\"%s\" is not a shared library", filename);
+      flatpak_fail (error, "\"%s\" is not a shared library", filename);
       return NULL;
     }
 

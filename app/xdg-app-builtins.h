@@ -18,8 +18,8 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __XDG_APP_BUILTINS_H__
-#define __XDG_APP_BUILTINS_H__
+#ifndef __FLATPAK_BUILTINS_H__
+#define __FLATPAK_BUILTINS_H__
 
 #include <ostree.h>
 #include <gio/gio.h>
@@ -29,16 +29,16 @@
 G_BEGIN_DECLS
 
 typedef enum {
-  XDG_APP_BUILTIN_FLAG_NO_DIR = 1 << 0,
-    XDG_APP_BUILTIN_FLAG_NO_REPO = 1 << 1,
-} XdgAppBuiltinFlags;
+  FLATPAK_BUILTIN_FLAG_NO_DIR = 1 << 0,
+    FLATPAK_BUILTIN_FLAG_NO_REPO = 1 << 1,
+} FlatpakBuiltinFlags;
 
-gboolean xdg_app_option_context_parse (GOptionContext     *context,
+gboolean flatpak_option_context_parse (GOptionContext     *context,
                                        const GOptionEntry *main_entries,
                                        int                *argc,
                                        char             ***argv,
-                                       XdgAppBuiltinFlags  flags,
-                                       XdgAppDir         **out_dir,
+                                       FlatpakBuiltinFlags flags,
+                                       FlatpakDir        **out_dir,
                                        GCancellable       *cancellable,
                                        GError            **error);
 
@@ -46,7 +46,7 @@ gboolean usage_error (GOptionContext *context,
                       const char     *message,
                       GError        **error);
 
-#define BUILTINPROTO(name) gboolean xdg_app_builtin_ ## name (int argc, char **argv, GCancellable * cancellable, GError * *error)
+#define BUILTINPROTO(name) gboolean flatpak_builtin_ ## name (int argc, char **argv, GCancellable * cancellable, GError * *error)
 
 BUILTINPROTO (add_remote);
 BUILTINPROTO (modify_remote);
@@ -77,4 +77,4 @@ BUILTINPROTO (override);
 
 G_END_DECLS
 
-#endif /* __XDG_APP_BUILTINS_H__ */
+#endif /* __FLATPAK_BUILTINS_H__ */

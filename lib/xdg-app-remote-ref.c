@@ -29,20 +29,20 @@
 
 /**
  * SECTION:xdg-app-remote-ref
- * @Title: XdgAppRemoteRef
+ * @Title: FlatpakRemoteRef
  * @Short_description: Remote application reference
  *
- * A XdgAppRemoteRef provides information about an application or runtime
+ * A FlatpakRemoteRef provides information about an application or runtime
  * (in short: ref) that is available from a remote repository.
  */
-typedef struct _XdgAppRemoteRefPrivate XdgAppRemoteRefPrivate;
+typedef struct _FlatpakRemoteRefPrivate FlatpakRemoteRefPrivate;
 
-struct _XdgAppRemoteRefPrivate
+struct _FlatpakRemoteRefPrivate
 {
   char *remote_name;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE (XdgAppRemoteRef, xdg_app_remote_ref, XDG_APP_TYPE_REF)
+G_DEFINE_TYPE_WITH_PRIVATE (FlatpakRemoteRef, flatpak_remote_ref, FLATPAK_TYPE_REF)
 
 enum {
   PROP_0,
@@ -51,24 +51,24 @@ enum {
 };
 
 static void
-xdg_app_remote_ref_finalize (GObject *object)
+flatpak_remote_ref_finalize (GObject *object)
 {
-  XdgAppRemoteRef *self = XDG_APP_REMOTE_REF (object);
-  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
+  FlatpakRemoteRef *self = FLATPAK_REMOTE_REF (object);
+  FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
 
   g_free (priv->remote_name);
 
-  G_OBJECT_CLASS (xdg_app_remote_ref_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_remote_ref_parent_class)->finalize (object);
 }
 
 static void
-xdg_app_remote_ref_set_property (GObject      *object,
+flatpak_remote_ref_set_property (GObject      *object,
                                  guint         prop_id,
                                  const GValue *value,
                                  GParamSpec   *pspec)
 {
-  XdgAppRemoteRef *self = XDG_APP_REMOTE_REF (object);
-  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
+  FlatpakRemoteRef *self = FLATPAK_REMOTE_REF (object);
+  FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
 
   switch (prop_id)
     {
@@ -84,13 +84,13 @@ xdg_app_remote_ref_set_property (GObject      *object,
 }
 
 static void
-xdg_app_remote_ref_get_property (GObject    *object,
+flatpak_remote_ref_get_property (GObject    *object,
                                  guint       prop_id,
                                  GValue     *value,
                                  GParamSpec *pspec)
 {
-  XdgAppRemoteRef *self = XDG_APP_REMOTE_REF (object);
-  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
+  FlatpakRemoteRef *self = FLATPAK_REMOTE_REF (object);
+  FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
 
   switch (prop_id)
     {
@@ -105,13 +105,13 @@ xdg_app_remote_ref_get_property (GObject    *object,
 }
 
 static void
-xdg_app_remote_ref_class_init (XdgAppRemoteRefClass *klass)
+flatpak_remote_ref_class_init (FlatpakRemoteRefClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->get_property = xdg_app_remote_ref_get_property;
-  object_class->set_property = xdg_app_remote_ref_set_property;
-  object_class->finalize = xdg_app_remote_ref_finalize;
+  object_class->get_property = flatpak_remote_ref_get_property;
+  object_class->set_property = flatpak_remote_ref_set_property;
+  object_class->finalize = flatpak_remote_ref_finalize;
 
   g_object_class_install_property (object_class,
                                    PROP_REMOTE_NAME,
@@ -123,45 +123,45 @@ xdg_app_remote_ref_class_init (XdgAppRemoteRefClass *klass)
 }
 
 static void
-xdg_app_remote_ref_init (XdgAppRemoteRef *self)
+flatpak_remote_ref_init (FlatpakRemoteRef *self)
 {
 }
 
 /**
- * xdg_app_remote_ref_get_remote_name:
- * @self: a #XdgAppRemoteRef
+ * flatpak_remote_ref_get_remote_name:
+ * @self: a #FlatpakRemoteRef
  *
  * Gets the remote name of the ref.
  *
  * Returns: (transfer none): the remote name
  */
 const char *
-xdg_app_remote_ref_get_remote_name (XdgAppRemoteRef *self)
+flatpak_remote_ref_get_remote_name (FlatpakRemoteRef *self)
 {
-  XdgAppRemoteRefPrivate *priv = xdg_app_remote_ref_get_instance_private (self);
+  FlatpakRemoteRefPrivate *priv = flatpak_remote_ref_get_instance_private (self);
 
   return priv->remote_name;
 }
 
 
-XdgAppRemoteRef *
-xdg_app_remote_ref_new (const char *full_ref,
+FlatpakRemoteRef *
+flatpak_remote_ref_new (const char *full_ref,
                         const char *commit,
                         const char *remote_name)
 {
-  XdgAppRefKind kind = XDG_APP_REF_KIND_APP;
+  FlatpakRefKind kind = FLATPAK_REF_KIND_APP;
 
   g_auto(GStrv) parts = NULL;
-  XdgAppRemoteRef *ref;
+  FlatpakRemoteRef *ref;
 
-  parts = xdg_app_decompose_ref (full_ref, NULL);
+  parts = flatpak_decompose_ref (full_ref, NULL);
   if (parts == NULL)
     return NULL;
 
   if (strcmp (parts[0], "app") != 0)
-    kind = XDG_APP_REF_KIND_RUNTIME;
+    kind = FLATPAK_REF_KIND_RUNTIME;
 
-  ref = g_object_new (XDG_APP_TYPE_REMOTE_REF,
+  ref = g_object_new (FLATPAK_TYPE_REMOTE_REF,
                       "kind", kind,
                       "name", parts[1],
                       "arch", parts[2],

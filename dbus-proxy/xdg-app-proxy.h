@@ -18,43 +18,43 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __XDG_APP_PROXY_H__
-#define __XDG_APP_PROXY_H__
+#ifndef __FLATPAK_PROXY_H__
+#define __FLATPAK_PROXY_H__
 
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
 
 typedef enum {
-  XDG_APP_POLICY_NONE,
-  XDG_APP_POLICY_SEE,
-  XDG_APP_POLICY_TALK,
-  XDG_APP_POLICY_OWN
-} XdgAppPolicy;
+  FLATPAK_POLICY_NONE,
+  FLATPAK_POLICY_SEE,
+  FLATPAK_POLICY_TALK,
+  FLATPAK_POLICY_OWN
+} FlatpakPolicy;
 
-typedef struct XdgAppProxy XdgAppProxy;
+typedef struct FlatpakProxy FlatpakProxy;
 
-#define XDG_APP_TYPE_PROXY xdg_app_proxy_get_type ()
-#define XDG_APP_PROXY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_PROXY, XdgAppProxy))
-#define XDG_APP_IS_PROXY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_PROXY))
+#define FLATPAK_TYPE_PROXY flatpak_proxy_get_type ()
+#define FLATPAK_PROXY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_PROXY, FlatpakProxy))
+#define FLATPAK_IS_PROXY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_PROXY))
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppProxy, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakProxy, g_object_unref)
 
-GType xdg_app_proxy_get_type (void);
+GType flatpak_proxy_get_type (void);
 
-XdgAppProxy *xdg_app_proxy_new (const char *dbus_address,
-                                const char *socket_path);
-void         xdg_app_proxy_set_log_messages (XdgAppProxy *proxy,
-                                             gboolean     log);
-void         xdg_app_proxy_set_filter (XdgAppProxy *proxy,
-                                       gboolean     filter);
-void         xdg_app_proxy_add_policy (XdgAppProxy *proxy,
-                                       const char  *name,
-                                       XdgAppPolicy policy);
-void         xdg_app_proxy_add_wildcarded_policy (XdgAppProxy *proxy,
-                                                  const char  *name,
-                                                  XdgAppPolicy policy);
-gboolean     xdg_app_proxy_start (XdgAppProxy *proxy,
-                                  GError     **error);
-void         xdg_app_proxy_stop (XdgAppProxy *proxy);
+FlatpakProxy *flatpak_proxy_new (const char *dbus_address,
+                                 const char *socket_path);
+void         flatpak_proxy_set_log_messages (FlatpakProxy *proxy,
+                                             gboolean      log);
+void         flatpak_proxy_set_filter (FlatpakProxy *proxy,
+                                       gboolean      filter);
+void         flatpak_proxy_add_policy (FlatpakProxy *proxy,
+                                       const char   *name,
+                                       FlatpakPolicy policy);
+void         flatpak_proxy_add_wildcarded_policy (FlatpakProxy *proxy,
+                                                  const char   *name,
+                                                  FlatpakPolicy policy);
+gboolean     flatpak_proxy_start (FlatpakProxy *proxy,
+                                  GError      **error);
+void         flatpak_proxy_stop (FlatpakProxy *proxy);
 
-#endif /* __XDG_APP_PROXY_H__ */
+#endif /* __FLATPAK_PROXY_H__ */

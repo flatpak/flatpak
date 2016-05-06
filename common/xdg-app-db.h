@@ -19,8 +19,8 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef XDG_APP_DB_H
-#define XDG_APP_DB_H
+#ifndef FLATPAK_DB_H
+#define FLATPAK_DB_H
 
 #include <string.h>
 
@@ -29,75 +29,75 @@
 
 G_BEGIN_DECLS
 
-typedef struct XdgAppDb       XdgAppDb;
-typedef struct _XdgAppDbEntry XdgAppDbEntry;
+typedef struct FlatpakDb       FlatpakDb;
+typedef struct _FlatpakDbEntry FlatpakDbEntry;
 
-#define XDG_APP_TYPE_DB (xdg_app_db_get_type ())
-#define XDG_APP_DB(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), XDG_APP_TYPE_DB, XdgAppDb))
-#define XDG_APP_IS_DB(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), XDG_APP_TYPE_DB))
+#define FLATPAK_TYPE_DB (flatpak_db_get_type ())
+#define FLATPAK_DB(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_DB, FlatpakDb))
+#define FLATPAK_IS_DB(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_DB))
 
-GType xdg_app_db_get_type (void);
+GType flatpak_db_get_type (void);
 
-XdgAppDb *     xdg_app_db_new (const char *path,
-                               gboolean    fail_if_not_found,
-                               GError    **error);
-char **        xdg_app_db_list_ids (XdgAppDb *self);
-char **        xdg_app_db_list_apps (XdgAppDb *self);
-char **        xdg_app_db_list_ids_by_app (XdgAppDb   *self,
+FlatpakDb *     flatpak_db_new (const char *path,
+                                gboolean    fail_if_not_found,
+                                GError    **error);
+char **        flatpak_db_list_ids (FlatpakDb *self);
+char **        flatpak_db_list_apps (FlatpakDb *self);
+char **        flatpak_db_list_ids_by_app (FlatpakDb  *self,
                                            const char *app);
-char **        xdg_app_db_list_ids_by_value (XdgAppDb *self,
-                                             GVariant *data);
-XdgAppDbEntry *xdg_app_db_lookup (XdgAppDb   *self,
-                                  const char *id);
-GString *      xdg_app_db_print_string (XdgAppDb *self,
-                                        GString  *string);
-char *         xdg_app_db_print (XdgAppDb *self);
+char **        flatpak_db_list_ids_by_value (FlatpakDb *self,
+                                             GVariant  *data);
+FlatpakDbEntry *flatpak_db_lookup (FlatpakDb  *self,
+                                   const char *id);
+GString *      flatpak_db_print_string (FlatpakDb *self,
+                                        GString   *string);
+char *         flatpak_db_print (FlatpakDb *self);
 
-gboolean       xdg_app_db_is_dirty (XdgAppDb *self);
-void           xdg_app_db_set_entry (XdgAppDb      *self,
-                                     const char    *id,
-                                     XdgAppDbEntry *entry);
-void           xdg_app_db_update (XdgAppDb *self);
-GBytes *       xdg_app_db_get_content (XdgAppDb *self);
-const char *   xdg_app_db_get_path (XdgAppDb *self);
-gboolean       xdg_app_db_save_content (XdgAppDb *self,
-                                        GError  **error);
-void           xdg_app_db_save_content_async (XdgAppDb           *self,
+gboolean       flatpak_db_is_dirty (FlatpakDb *self);
+void           flatpak_db_set_entry (FlatpakDb      *self,
+                                     const char     *id,
+                                     FlatpakDbEntry *entry);
+void           flatpak_db_update (FlatpakDb *self);
+GBytes *       flatpak_db_get_content (FlatpakDb *self);
+const char *   flatpak_db_get_path (FlatpakDb *self);
+gboolean       flatpak_db_save_content (FlatpakDb *self,
+                                        GError   **error);
+void           flatpak_db_save_content_async (FlatpakDb          *self,
                                               GCancellable       *cancellable,
                                               GAsyncReadyCallback callback,
                                               gpointer            user_data);
-gboolean       xdg_app_db_save_content_finish (XdgAppDb     *self,
+gboolean       flatpak_db_save_content_finish (FlatpakDb    *self,
                                                GAsyncResult *res,
                                                GError      **error);
-void           xdg_app_db_set_path (XdgAppDb   *self,
+void           flatpak_db_set_path (FlatpakDb  *self,
                                     const char *path);
 
 
-XdgAppDbEntry  *xdg_app_db_entry_ref (XdgAppDbEntry *entry);
-void            xdg_app_db_entry_unref (XdgAppDbEntry *entry);
-GVariant *      xdg_app_db_entry_get_data (XdgAppDbEntry *entry);
-const char **   xdg_app_db_entry_list_apps (XdgAppDbEntry *entry);
-const char **   xdg_app_db_entry_list_permissions (XdgAppDbEntry *entry,
-                                                   const char    *app);
-gboolean        xdg_app_db_entry_has_permission (XdgAppDbEntry *entry,
-                                                 const char    *app,
-                                                 const char    *permission);
-gboolean        xdg_app_db_entry_has_permissions (XdgAppDbEntry *entry,
-                                                  const char    *app,
-                                                  const char   **permissions);
-GString *       xdg_app_db_entry_print_string (XdgAppDbEntry *entry,
-                                               GString       *string);
+FlatpakDbEntry  *flatpak_db_entry_ref (FlatpakDbEntry *entry);
+void            flatpak_db_entry_unref (FlatpakDbEntry *entry);
+GVariant *      flatpak_db_entry_get_data (FlatpakDbEntry *entry);
+const char **   flatpak_db_entry_list_apps (FlatpakDbEntry *entry);
+const char **   flatpak_db_entry_list_permissions (FlatpakDbEntry *entry,
+                                                   const char     *app);
+gboolean        flatpak_db_entry_has_permission (FlatpakDbEntry *entry,
+                                                 const char     *app,
+                                                 const char     *permission);
+gboolean        flatpak_db_entry_has_permissions (FlatpakDbEntry *entry,
+                                                  const char     *app,
+                                                  const char    **permissions);
+GString *       flatpak_db_entry_print_string (FlatpakDbEntry *entry,
+                                               GString        *string);
 
-XdgAppDbEntry  *xdg_app_db_entry_new (GVariant *data);
-XdgAppDbEntry  *xdg_app_db_entry_modify_data (XdgAppDbEntry *entry,
-                                              GVariant      *data);
-XdgAppDbEntry  *xdg_app_db_entry_set_app_permissions (XdgAppDbEntry *entry,
-                                                      const char    *app,
-                                                      const char   **permissions);
+FlatpakDbEntry  *flatpak_db_entry_new (GVariant *data);
+FlatpakDbEntry  *flatpak_db_entry_modify_data (FlatpakDbEntry *entry,
+                                               GVariant       *data);
+FlatpakDbEntry  *flatpak_db_entry_set_app_permissions (FlatpakDbEntry *entry,
+                                                       const char     *app,
+                                                       const char    **permissions);
 
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppDb, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdgAppDbEntry, xdg_app_db_entry_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDb, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDbEntry, flatpak_db_entry_unref)
 
 G_END_DECLS
 
-#endif /* XDG_APP_DB_H */
+#endif /* FLATPAK_DB_H */
