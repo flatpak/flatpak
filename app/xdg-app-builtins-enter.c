@@ -196,7 +196,6 @@ xdg_app_builtin_enter (int argc,
 
       self_ns_len = readlink (self_path, self_ns, sizeof (self_ns) - 1);
       if (self_ns_len <= 0)
-      if (pid_ns_len <= 0)
         return xdg_app_fail (error, "Invalid %s namespace for self\n", ns_name[i]);
       self_ns[self_ns_len] = 0;
 
