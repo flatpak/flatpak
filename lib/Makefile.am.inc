@@ -2,58 +2,58 @@ lib_LTLIBRARIES += libxdg-app.la
 noinst_PROGRAMS += test-libxdg-app
 
 public_headers = \
-	lib/xdg-app.h \
-	lib/xdg-app-ref.h \
-	lib/xdg-app-error.h \
-	lib/xdg-app-installed-ref.h \
-	lib/xdg-app-remote-ref.h \
-	lib/xdg-app-bundle-ref.h \
-	lib/xdg-app-installation.h \
-	lib/xdg-app-remote.h \
-	lib/xdg-app-version-macros.h \
+	lib/flatpak.h \
+	lib/flatpak-ref.h \
+	lib/flatpak-error.h \
+	lib/flatpak-installed-ref.h \
+	lib/flatpak-remote-ref.h \
+	lib/flatpak-bundle-ref.h \
+	lib/flatpak-installation.h \
+	lib/flatpak-remote.h \
+	lib/flatpak-version-macros.h \
 	$(NULL)
 
 generated_public_headers = \
-	lib/xdg-app-enum-types.h \
+	lib/flatpak-enum-types.h \
 	$(NULL)
 
-BUILT_SOURCES += 		\
-	lib/xdg-app-enum-types.c \
-	lib/xdg-app-enum-types.h \
+BUILT_SOURCES += \
+	lib/flatpak-enum-types.c \
+	lib/flatpak-enum-types.h \
 	$(NULL)
 
-DISTCLEANFILES += 		\
-	lib/xdg-app-enum-types.c \
-	lib/xdg-app-enum-types.h \
+DISTCLEANFILES += \
+	lib/flatpak-enum-types.c \
+	lib/flatpak-enum-types.h \
 	$(NULL)
 
 
-lib/xdg-app-enum-types.h: $(public_headers) lib/xdg-app-enum-types.h.template
+lib/flatpak-enum-types.h: $(public_headers) lib/flatpak-enum-types.h.template
 	$(AM_V_GEN) $(GLIB_MKENUMS) --template $(filter %.template,$^) $(filter-out %.template,$^) > \
-	    lib/xdg-app-enum-types.h.tmp && mv lib/xdg-app-enum-types.h.tmp lib/xdg-app-enum-types.h
+	    lib/flatpak-enum-types.h.tmp && mv lib/flatpak-enum-types.h.tmp lib/flatpak-enum-types.h
 
-lib/xdg-app-enum-types.c: $(public_headers) lib/xdg-app-enum-types.c.template
+lib/flatpak-enum-types.c: $(public_headers) lib/flatpak-enum-types.c.template
 	$(AM_V_GEN) $(GLIB_MKENUMS) --template $(filter %.template,$^) $(filter-out %.template,$^) > \
-	    lib/xdg-app-enum-types.c.tmp && mv lib/xdg-app-enum-types.c.tmp lib/xdg-app-enum-types.c
+	    lib/flatpak-enum-types.c.tmp && mv lib/flatpak-enum-types.c.tmp lib/flatpak-enum-types.c
 
-EXTRA_DIST += lib/xdg-app-enum-types.c.template lib/xdg-app-enum-types.h.template
+EXTRA_DIST += lib/flatpak-enum-types.c.template lib/flatpak-enum-types.h.template
 
 xdgappincludedir = $(includedir)/xdg-app
 xdgappinclude_HEADERS = $(public_headers) $(generated_public_headers)
 
 sources = \
-	lib/xdg-app.c \
-	lib/xdg-app-enum-types.c \
-	lib/xdg-app-ref.c \
-	lib/xdg-app-installed-ref.c \
-	lib/xdg-app-installed-ref-private.h \
-	lib/xdg-app-remote-ref.c \
-	lib/xdg-app-bundle-ref.c \
-	lib/xdg-app-remote-ref-private.h \
-	lib/xdg-app-remote-private.h \
-	lib/xdg-app-remote.c \
-	lib/xdg-app-error.c \
-	lib/xdg-app-installation.c \
+	lib/flatpak.c \
+	lib/flatpak-enum-types.c \
+	lib/flatpak-ref.c \
+	lib/flatpak-installed-ref.c \
+	lib/flatpak-installed-ref-private.h \
+	lib/flatpak-remote-ref.c \
+	lib/flatpak-bundle-ref.c \
+	lib/flatpak-remote-ref-private.h \
+	lib/flatpak-remote-private.h \
+	lib/flatpak-remote.c \
+	lib/flatpak-error.c \
+	lib/flatpak-installation.c \
 	$(NULL)
 
 libxdg_app_la_SOURCES = \
@@ -120,8 +120,8 @@ Flatpak_1_0_gir_CFLAGS = $(libxdg_app_la_CFLAGS)
 Flatpak_1_0_gir_INCLUDES = GObject-2.0 Gio-2.0
 Flatpak_1_0_gir_SCANNERFLAGS = \
         --warn-all \
-        --c-include='xdg-app.h' \
-        --pkg-export=xdg-app
+        --c-include='flatpak.h' \
+        --pkg-export=flatpak
 
 INTROSPECTION_GIRS += Flatpak-1.0.gir
 

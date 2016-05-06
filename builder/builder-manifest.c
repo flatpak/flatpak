@@ -29,7 +29,7 @@
 
 #include "builder-manifest.h"
 #include "builder-utils.h"
-#include "xdg-app-utils.h"
+#include "flatpak-utils.h"
 
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"

@@ -13,8 +13,8 @@ service_in_files += system-helper/xdg-app-system-helper.service.in
 systemdsystemunit_DATA = system-helper/xdg-app-system-helper.service
 
 xdg_app_system_helper_SOURCES = \
-	system-helper/xdg-app-system-helper.c	\
-	lib/xdg-app-error.c	\
+	system-helper/flatpak-system-helper.c	\
+	lib/flatpak-error.c	\
 	$(NULL)
 
 xdg_app_system_helper_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(POLKIT_LIBS) libxdgapp-common.la

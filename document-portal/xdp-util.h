@@ -2,7 +2,7 @@
 #define XDP_UTIL_H
 
 #include <gio/gio.h>
-#include "xdg-app-db.h"
+#include "flatpak-db.h"
 #include "xdp-enums.h"
 
 G_BEGIN_DECLS

@@ -2,7 +2,7 @@
 #define XDP_FUSE_H
 
 #include <glib.h>
-#include "xdg-app-db.h"
+#include "flatpak-db.h"
 
 G_BEGIN_DECLS
 

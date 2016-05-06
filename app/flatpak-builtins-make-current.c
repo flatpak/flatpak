@@ -1,0 +1,87 @@
+/*
+ * Copyright © 2014 Red Hat, Inc
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Authors:
+ *       Alexander Larsson <alexl@redhat.com>
+ */
+
+#include "config.h"
+
+#include <locale.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
+#include "libgsystem.h"
+#include "libglnx/libglnx.h"
+
+#include "flatpak-builtins.h"
+#include "flatpak-utils.h"
+
+static char *opt_arch;
+
+static GOptionEntry options[] = {
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to make current for", "ARCH" },
+  { NULL }
+};
+
+gboolean
+flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
+  const char *app;
+  const char *branch = "master";
+  g_autofree char *ref = NULL;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+
+  context = g_option_context_new ("APP BRANCH - Make branch of application current");
+
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+    return FALSE;
+
+  if (argc < 3)
+    return usage_error (context, "APP and BRANCH must be specified", error);
+
+  app  = argv[1];
+  branch = argv[2];
+
+  ref = flatpak_compose_ref (TRUE, app, branch, opt_arch, error);
+  if (ref == NULL)
+    return FALSE;
+
+  if (!flatpak_dir_lock (dir, &lock,
+                         cancellable, error))
+    return FALSE;
+
+  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
+  if (!g_file_query_exists (deploy_base, cancellable))
+    return flatpak_fail (error, "App %s branch %s is not installed", app, branch);
+
+  if (!flatpak_dir_make_current_ref (dir, ref, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_update_exports (dir, app, cancellable, error))
+    return FALSE;
+
+  glnx_release_lock_file (&lock);
+
+  if (!flatpak_dir_mark_changed (dir, error))
+    return FALSE;
+
+  return TRUE;
+}

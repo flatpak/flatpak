@@ -28,7 +28,7 @@
 
 #include "libglnx/libglnx.h"
 
-#include "xdg-app-proxy.h"
+#include "flatpak-proxy.h"
 
 GList *proxies;
 int sync_fd = -1;

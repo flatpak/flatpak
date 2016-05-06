@@ -28,7 +28,7 @@
 #include <sys/statfs.h>
 #include <unistd.h>
 
-#include "xdg-app-utils.h"
+#include "flatpak-utils.h"
 #include "builder-context.h"
 
 struct BuilderContext

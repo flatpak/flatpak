@@ -15,10 +15,10 @@
 #include <gio/gio.h>
 #include <pthread.h>
 
-#include "xdg-app-portal-error.h"
+#include "flatpak-portal-error.h"
 #include "xdp-fuse.h"
 #include "xdp-util.h"
-#include "xdg-app-utils.h"
+#include "flatpak-utils.h"
 
 #define NON_DOC_DIR_PERMS 0500
 #define DOC_DIR_PERMS 0700

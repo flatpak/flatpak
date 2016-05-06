@@ -1,7 +1,7 @@
 #include "config.h"
 
 #include <glib.h>
-#include <xdg-app-db.h>
+#include <flatpak-db.h>
 
 /*
 static void

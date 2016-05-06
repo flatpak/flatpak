@@ -29,7 +29,7 @@
 
 #include <string.h>
 
-#include "xdg-app-utils.h"
+#include "flatpak-utils.h"
 #include "builder-utils.h"
 
 char *

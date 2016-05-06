@@ -13,10 +13,10 @@
 #include <gio/gunixfdlist.h>
 #include "xdp-dbus.h"
 #include "xdp-util.h"
-#include "xdg-app-db.h"
-#include "xdg-app-dbus.h"
-#include "xdg-app-utils.h"
-#include "xdg-app-portal-error.h"
+#include "flatpak-db.h"
+#include "flatpak-dbus.h"
+#include "flatpak-utils.h"
+#include "flatpak-portal-error.h"
 #include "xdp-fuse.h"
 
 #include <sys/eventfd.h>

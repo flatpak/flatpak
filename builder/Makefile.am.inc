@@ -3,7 +3,7 @@ bin_PROGRAMS += \
 	$(NULL)
 
 xdg_app_builder_SOURCES = \
-	builder/xdg-app-builder-main.c \
+	builder/builder-main.c \
 	builder/builder-manifest.c \
 	builder/builder-manifest.h \
 	builder/builder-options.c \

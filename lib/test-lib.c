@@ -2,7 +2,7 @@
 
 #include "libglnx/libglnx.h"
 
-#include <xdg-app.h>
+#include <flatpak.h>
 #include <gio/gunixoutputstream.h>
 
 

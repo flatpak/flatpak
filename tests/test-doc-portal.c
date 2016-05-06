@@ -13,7 +13,7 @@
 
 #include "document-portal/xdp-dbus.h"
 
-#include "xdg-app-dbus.h"
+#include "flatpak-dbus.h"
 
 char outdir[] = "/tmp/xdp-test-XXXXXX";
 

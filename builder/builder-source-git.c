@@ -32,7 +32,7 @@
 
 #include "builder-source-git.h"
 #include "builder-utils.h"
-#include "xdg-app-utils.h"
+#include "flatpak-utils.h"
 
 struct BuilderSourceGit
 {

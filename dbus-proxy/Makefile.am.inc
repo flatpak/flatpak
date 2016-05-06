@@ -3,8 +3,8 @@ libexec_PROGRAMS += \
 	$(NULL)
 
 xdg_dbus_proxy_SOURCES = \
-	dbus-proxy/xdg-app-proxy.c	\
-	dbus-proxy/xdg-app-proxy.h	\
+	dbus-proxy/flatpak-proxy.c	\
+	dbus-proxy/flatpak-proxy.h	\
 	dbus-proxy/dbus-proxy.c	        \
 	$(NULL)
 

@@ -3,30 +3,30 @@ bin_PROGRAMS += \
 	$(NULL)
 
 xdg_app_SOURCES = \
-	app/xdg-app-main.c \
-	app/xdg-app-builtins.h \
-	app/xdg-app-builtins-add-remote.c \
-	app/xdg-app-builtins-delete-remote.c \
-	app/xdg-app-builtins-list-remotes.c \
-	app/xdg-app-builtins-ls-remote.c \
-	app/xdg-app-builtins-install.c \
-	app/xdg-app-builtins-override.c \
-	app/xdg-app-builtins-make-current.c \
-	app/xdg-app-builtins-update.c \
-	app/xdg-app-builtins-uninstall.c \
-	app/xdg-app-builtins-list.c \
-	app/xdg-app-builtins-info.c \
-	app/xdg-app-builtins-run.c \
-	app/xdg-app-builtins-enter.c \
-	app/xdg-app-builtins-build-init.c \
-	app/xdg-app-builtins-build.c \
-	app/xdg-app-builtins-build-finish.c \
-	app/xdg-app-builtins-build-export.c \
-	app/xdg-app-builtins-build-bundle.c \
-	app/xdg-app-builtins-build-import-bundle.c \
-	app/xdg-app-builtins-build-sign.c \
-	app/xdg-app-builtins-repo-update.c \
-	app/xdg-app-builtins-document.c \
+	app/flatpak-main.c \
+	app/flatpak-builtins.h \
+	app/flatpak-builtins-add-remote.c \
+	app/flatpak-builtins-delete-remote.c \
+	app/flatpak-builtins-list-remotes.c \
+	app/flatpak-builtins-ls-remote.c \
+	app/flatpak-builtins-install.c \
+	app/flatpak-builtins-override.c \
+	app/flatpak-builtins-make-current.c \
+	app/flatpak-builtins-update.c \
+	app/flatpak-builtins-uninstall.c \
+	app/flatpak-builtins-list.c \
+	app/flatpak-builtins-info.c \
+	app/flatpak-builtins-run.c \
+	app/flatpak-builtins-enter.c \
+	app/flatpak-builtins-build-init.c \
+	app/flatpak-builtins-build.c \
+	app/flatpak-builtins-build-finish.c \
+	app/flatpak-builtins-build-export.c \
+	app/flatpak-builtins-build-bundle.c \
+	app/flatpak-builtins-build-import-bundle.c \
+	app/flatpak-builtins-build-sign.c \
+	app/flatpak-builtins-repo-update.c \
+	app/flatpak-builtins-document.c \
 	$(xdp_dbus_built_sources)	\
 	$(NULL)
 
