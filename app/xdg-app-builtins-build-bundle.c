@@ -555,7 +555,7 @@ add_file (struct archive *a,
       gssize bytes_read = g_input_stream_read (file_in, buf, sizeof (buf),
                                                cancellable, error);
       if (bytes_read < 0)
-        return FALSE;;
+        return FALSE;
       if (bytes_read == 0)
         break;
 
