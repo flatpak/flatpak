@@ -73,16 +73,6 @@ BUILTINPROTO(build_update_repo);
 BUILTINPROTO(export_file);
 BUILTINPROTO(override);
 
-/* Deprecated */
-BUILTINPROTO(install_runtime);
-BUILTINPROTO(install_app);
-BUILTINPROTO(update_runtime);
-BUILTINPROTO(update_app);
-BUILTINPROTO(uninstall_runtime);
-BUILTINPROTO(uninstall_app);
-BUILTINPROTO(list_apps);
-BUILTINPROTO(list_runtimes);
-
 #undef BUILTINPROTO
 
 G_END_DECLS
