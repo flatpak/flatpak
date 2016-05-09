@@ -818,7 +818,7 @@ builder_manifest_get_branch (BuilderManifest *self)
 }
 
 static char *
-xdg_app (GError **error,
+flatpak (GError **error,
          ...)
 {
   gboolean res;
@@ -826,7 +826,7 @@ xdg_app (GError **error,
   va_list ap;
 
   va_start (ap, error);
-  res = flatpak_spawn (NULL, &output, error, "xdg-app", ap);
+  res = flatpak_spawn (NULL, &output, error, "flatpak", ap);
   va_end (ap);
 
   if (res)
@@ -846,14 +846,14 @@ builder_manifest_start (BuilderManifest *self,
 
   arch_option = g_strdup_printf ("--arch=%s", builder_context_get_arch (context));
 
-  self->sdk_commit = xdg_app (NULL, "info", arch_option, "--show-commit", self->sdk,
+  self->sdk_commit = flatpak (NULL, "info", arch_option, "--show-commit", self->sdk,
                               builder_manifest_get_runtime_version (self), NULL);
   if (self->sdk_commit == NULL)
     return flatpak_fail (error, "Unable to find sdk %s version %s",
                          self->sdk,
                          builder_manifest_get_runtime_version (self));
 
-  self->runtime_commit = xdg_app (NULL, "info", arch_option, "--show-commit", self->runtime,
+  self->runtime_commit = flatpak (NULL, "info", arch_option, "--show-commit", self->runtime,
                                   builder_manifest_get_runtime_version (self), NULL);
   if (self->runtime_commit == NULL)
     return flatpak_fail (error, "Unable to find runtime %s version %s",
@@ -899,7 +899,7 @@ builder_manifest_init_app_dir (BuilderManifest *self,
 
   args = g_ptr_array_new_with_free_func (g_free);
 
-  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("flatpak"));
   g_ptr_array_add (args, g_strdup ("build-init"));
   if (self->writable_sdk || self->build_runtime)
     {
@@ -1129,7 +1129,7 @@ command (GFile      *app_dir,
   int i;
 
   args = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("flatpak"));
   g_ptr_array_add (args, g_strdup ("build"));
 
   g_ptr_array_add (args, g_strdup ("--nofilesystem=host"));
@@ -1306,7 +1306,7 @@ appstream_compose (GFile   *app_dir,
   va_list ap;
 
   args = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("flatpak"));
   g_ptr_array_add (args, g_strdup ("build"));
   g_ptr_array_add (args, g_strdup ("--nofilesystem=host"));
   g_ptr_array_add (args, g_file_get_path (app_dir));
@@ -1550,7 +1550,7 @@ builder_manifest_cleanup (BuilderManifest *self,
           g_print ("Running appstream-compose\n");
           if (!appstream_compose (app_dir, error,
                                   self->build_runtime ?  "--prefix=/usr" : "--prefix=/app",
-                                  "--origin=xdg-app",
+                                  "--origin=flatpak",
                                   basename_arg,
                                   self->id,
                                   NULL))
@@ -1605,7 +1605,7 @@ builder_manifest_finish (BuilderManifest *self,
         }
 
       args = g_ptr_array_new_with_free_func (g_free);
-      g_ptr_array_add (args, g_strdup ("xdg-app"));
+      g_ptr_array_add (args, g_strdup ("flatpak"));
       g_ptr_array_add (args, g_strdup ("build-finish"));
       if (self->command)
         g_ptr_array_add (args, g_strdup_printf ("--command=%s", self->command));
@@ -1771,7 +1771,7 @@ builder_manifest_create_platform (BuilderManifest *self,
 
       args = g_ptr_array_new_with_free_func (g_free);
 
-      g_ptr_array_add (args, g_strdup ("xdg-app"));
+      g_ptr_array_add (args, g_strdup ("flatpak"));
       g_ptr_array_add (args, g_strdup ("build-init"));
       g_ptr_array_add (args, g_strdup ("--update"));
       g_ptr_array_add (args, g_strdup ("--writable-sdk"));
@@ -1985,7 +1985,7 @@ builder_manifest_run (BuilderManifest *self,
     return FALSE;
 
   args = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("flatpak"));
   g_ptr_array_add (args, g_strdup ("build"));
 
   build_dir_path = g_file_get_path (builder_context_get_build_dir (context));
@@ -2038,7 +2038,7 @@ builder_manifest_run (BuilderManifest *self,
 
   if (!execvp ((char *) args->pdata[0], (char **) args->pdata))
     {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start xdg-app build");
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start flatpak build");
       return FALSE;
     }
 

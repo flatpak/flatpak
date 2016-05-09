@@ -1023,10 +1023,10 @@ got_credentials_cb (GObject      *source_object,
                   const char *unit = lines[i] + strlen ("1:name=systemd:");
                   g_autofree char *scope = g_path_get_basename (unit);
 
-                  if (g_str_has_prefix (scope, "xdg-app-") &&
+                  if (g_str_has_prefix (scope, "flatpak-") &&
                       g_str_has_suffix (scope, ".scope"))
                     {
-                      const char *name = scope + strlen ("xdg-app-");
+                      const char *name = scope + strlen ("flatpak-");
                       char *dash = strchr (name, '-');
                       if (dash != NULL)
                         {
@@ -1532,9 +1532,9 @@ flatpak_repo_set_title (OstreeRepo *repo,
   config = ostree_repo_copy_config (repo);
 
   if (title)
-    g_key_file_set_string (config, "xdg-app", "title", title);
+    g_key_file_set_string (config, "flatpak", "title", title);
   else
-    g_key_file_remove_key (config, "xdg-app", "title", NULL);
+    g_key_file_remove_key (config, "flatpak", "title", NULL);
 
   if (!ostree_repo_write_config (repo, config, error))
     return FALSE;
@@ -1633,7 +1633,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   config = ostree_repo_get_config (repo);
 
   if (config)
-    title = g_key_file_get_string (config, "xdg-app", "title", NULL);
+    title = g_key_file_get_string (config, "flatpak", "title", NULL);
 
   if (title)
     g_variant_builder_add (&builder, "{sv}", "xa.title",
@@ -1779,7 +1779,7 @@ validate_component (FlatpakXml *component,
   bundle->attribute_names = g_new0 (char *, 2 * 4);
   bundle->attribute_values = g_new0 (char *, 2 * 4);
   bundle->attribute_names[0] = g_strdup ("type");
-  bundle->attribute_values[0] = g_strdup ("xdg-app");
+  bundle->attribute_values[0] = g_strdup ("flatpak");
 
   i = 1;
   if (runtime)
@@ -1905,7 +1905,7 @@ copy_icon (const char *id,
 
   g_autoptr(GFile) icons_dir =
     g_file_resolve_relative_path (root,
-                                  "files/share/app-info/icons/xdg-app");
+                                  "files/share/app-info/icons/flatpak");
   g_autoptr(GFile) size_dir = g_file_get_child (icons_dir, size);
   g_autoptr(GFile) icon_file = g_file_get_child (size_dir, icon_name);
   g_autoptr(GFile) dest_dir = g_file_get_child (dest, "icons");
@@ -2049,7 +2049,7 @@ flatpak_appstream_xml_new (void)
   appstream_components->attribute_names[0] = g_strdup ("version");
   appstream_components->attribute_values[0] = g_strdup ("0.8");
   appstream_components->attribute_names[1] = g_strdup ("origin");
-  appstream_components->attribute_values[1] = g_strdup ("xdg-app");
+  appstream_components->attribute_values[1] = g_strdup ("flatpak");
 
   return appstream_root;
 }
@@ -2124,7 +2124,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
     {
       GHashTableIter iter2;
       const char *arch = key;
-      g_autofree char *tmpdir = g_strdup ("/tmp/xdg-app-appstream-XXXXXX");
+      g_autofree char *tmpdir = g_strdup ("/tmp/flatpak-appstream-XXXXXX");
       g_autoptr(FlatpakTempDir) tmpdir_file = NULL;
       g_autoptr(GFile) appstream_file = NULL;
       g_autoptr(GFile) root = NULL;

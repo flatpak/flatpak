@@ -1,0 +1,151 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-build-bundle">
+
+    <refentryinfo>
+        <title>flatpak build-bundle</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak build-bundle</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-build-bundle</refname>
+        <refpurpose>Create a single file bundle from a local repository</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak build-bundle</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">LOCATION</arg>
+                <arg choice="plain">FILENAME</arg>
+                <arg choice="plain">NAME</arg>
+                <arg choice="opt">BRANCH</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Creates a single file named <arg choice="plain">FILENAME</arg>
+            for the application (or runtime) named <arg choice="plain">NAME</arg>
+            in the repository at <arg choice="plain">LOCATION</arg>. If
+            a <arg choice="plain">BRANCH</arg> is specified, this branch of
+            the application is used.
+        </para>
+        <para>
+            The format of the bundle file is that of an ostree static delta
+            (against an empty base) with some flatpak specific metadata for
+            the application icons and appdata.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    Export a runtime instead of an application.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    The arch to create a bundle for.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--repo-url=URL</option></term>
+
+                <listitem><para>
+                    The URL for the repository from which the
+                    application can be updated. Installing the
+                    bundle will automatically configure a remote
+                    for this URL.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-keys=FILE</option></term>
+
+                <listitem><para>
+                    Add the GPG key from FILE (use - for stdin).
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-homedir=PATH</option></term>
+
+                <listitem><para>
+                    GPG Homedir to use when looking for keyrings.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-import-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-repo-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>

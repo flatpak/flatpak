@@ -23,19 +23,19 @@ set -euo pipefail
 
 echo "1..3"
 
-${XDG_APP} --version > version_out
+${FLATPAK} --version > version_out
 
 VERSION=`cat $(dirname $0)/package_version.txt`
 assert_file_has_content version_out "^flatpak $VERSION$"
 
 echo "ok version"
 
-${XDG_APP} --help > help_out
+${FLATPAK} --help > help_out
 
 assert_file_has_content help_out "^Usage:$"
 
 echo "ok help"
 
-${XDG_APP} --default-arch > /dev/null
+${FLATPAK} --default-arch > /dev/null
 
 echo "ok default arch"

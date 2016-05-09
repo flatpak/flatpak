@@ -40,7 +40,7 @@ assert_has_dir $USERDIR/app/org.test.Hello/$ARCH/master/active/files
 assert_has_dir $USERDIR/app/org.test.Hello/$ARCH/master/active/export
 assert_has_file $USERDIR/exports/share/applications/org.test.Hello.desktop
 # Ensure Exec key is rewritten
-assert_file_has_content $USERDIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*/xdg-app run --branch=master --arch=$ARCH --command=hello.sh org.test.Hello$"
+assert_file_has_content $USERDIR/exports/share/applications/org.test.Hello.desktop "^Exec=.*/flatpak run --branch=master --arch=$ARCH --command=hello.sh org.test.Hello$"
 assert_has_file $USERDIR/exports/share/icons/hicolor/64x64/apps/org.test.Hello.png
 
 # Ensure triggers ran
@@ -49,14 +49,14 @@ assert_file_has_content $USERDIR/exports/share/applications/mimeinfo.cache x-tes
 assert_has_file $USERDIR/exports/share/icons/hicolor/icon-theme.cache
 assert_has_file $USERDIR/exports/share/icons/hicolor/index.theme
 
-$XDG_APP list --user | grep org.test.Hello > /dev/null
-$XDG_APP list --user -d | grep org.test.Hello | grep test-repo > /dev/null
-$XDG_APP list --user -d | grep org.test.Hello | grep current > /dev/null
-$XDG_APP list --user -d | grep org.test.Hello | grep ${ID:0:12} > /dev/null
+$FLATPAK list --user | grep org.test.Hello > /dev/null
+$FLATPAK list --user -d | grep org.test.Hello | grep test-repo > /dev/null
+$FLATPAK list --user -d | grep org.test.Hello | grep current > /dev/null
+$FLATPAK list --user -d | grep org.test.Hello | grep ${ID:0:12} > /dev/null
 
-$XDG_APP info --user org.test.Hello > /dev/null
-$XDG_APP info --user org.test.Hello | grep test-repo > /dev/null
-$XDG_APP info --user org.test.Hello | grep $ID > /dev/null
+$FLATPAK info --user org.test.Hello > /dev/null
+$FLATPAK info --user org.test.Hello | grep test-repo > /dev/null
+$FLATPAK info --user org.test.Hello | grep $ID > /dev/null
 
 echo "ok install"
 
@@ -65,10 +65,10 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 echo "ok hello"
 
-run_sh cat /run/user/`id -u`/xdg-app-info > xai
-assert_file_has_content xai '^name=org.test.Hello$'
+run_sh cat /run/user/`id -u`/flatpak-info > fpi
+assert_file_has_content fpi '^name=org.test.Hello$'
 
-echo "ok xdg-app-info"
+echo "ok flatpak-info"
 
 run_sh readlink /proc/self/ns/net > unshared_net_ns
 ARGS="--share=network" run_sh readlink /proc/self/ns/net > shared_net_ns
@@ -89,12 +89,12 @@ ARGS="--filesystem=host" run_sh cat $(dirname $0)/package_version.txt > /dev/nul
 
 echo "ok namespaces"
 
-$XDG_APP override --user --filesystem=host org.test.Hello
+$FLATPAK override --user --filesystem=host org.test.Hello
 run_sh cat $(dirname $0)/package_version.txt &> /dev/null
 if ARGS="--nofilesystem=host" run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access --nofilesystem=host file"
 fi
-$XDG_APP override --user --nofilesystem=host org.test.Hello
+$FLATPAK override --user --nofilesystem=host org.test.Hello
 
 if run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access file"

@@ -1318,7 +1318,7 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
 
 #ifdef ENABLE_XAUTH
       int fd;
-      fd = g_file_open_tmp ("xdg-app-xauth-XXXXXX", &tmp_path, NULL);
+      fd = g_file_open_tmp ("flatpak-xauth-XXXXXX", &tmp_path, NULL);
       if (fd >= 0)
         {
           FILE *output = fdopen (fd, "wb");
@@ -1795,7 +1795,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       g_autofree char *path = NULL;
       int fd;
 
-      fd = g_file_open_tmp ("xdg-app-user-dir-XXXXXX.dirs", &tmp_path, NULL);
+      fd = g_file_open_tmp ("flatpak-user-dir-XXXXXX.dirs", &tmp_path, NULL);
       if (fd >= 0)
         {
           close (fd);
@@ -2087,7 +2087,7 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
   if (!manager)
     goto out;
 
-  name = g_strdup_printf ("xdg-app-%s-%d.scope", appid, getpid ());
+  name = g_strdup_printf ("flatpak-%s-%d.scope", appid, getpid ());
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(sv)"));
 
@@ -2202,14 +2202,14 @@ add_app_info_args (GPtrArray      *argv_array,
   g_autofree char *tmp_path = NULL;
   int fd;
 
-  fd = g_file_open_tmp ("xdg-app-context-XXXXXX", &tmp_path, NULL);
+  fd = g_file_open_tmp ("flatpak-context-XXXXXX", &tmp_path, NULL);
   if (fd >= 0)
     {
       g_autoptr(GKeyFile) keyfile = NULL;
       g_autoptr(GFile) files = NULL;
       g_autofree char *files_path = NULL;
       g_autofree char *fd_str = NULL;
-      g_autofree char *dest = g_strdup_printf ("/run/user/%d/xdg-app-info", getuid ());
+      g_autofree char *dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
 
       close (fd);
 
@@ -2247,17 +2247,17 @@ static void
 add_monitor_path_args (GPtrArray *argv_array,
                        char    ***envp_p)
 {
-  g_autoptr(AutoXdgAppSessionHelper) session_helper = NULL;
+  g_autoptr(AutoFlatpakSessionHelper) session_helper = NULL;
   g_autofree char *monitor_path = NULL;
 
   session_helper =
-    xdg_app_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+    flatpak_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
                                                    G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
                                                    "org.freedesktop.Flatpak",
                                                    "/org/freedesktop/Flatpak/SessionHelper",
                                                    NULL, NULL);
   if (session_helper &&
-      xdg_app_session_helper_call_request_monitor_sync (session_helper,
+      flatpak_session_helper_call_request_monitor_sync (session_helper,
                                                         &monitor_path,
                                                         NULL, NULL))
     {
@@ -2545,7 +2545,7 @@ setup_seccomp (GPtrArray  *argv_array,
           /* This *adds* the target arch, instead of replacing the
              native one. This is not ideal, because we'd like to only
              allow the target arch, but we can't really disallow the
-             native arch at this point, because then xdg-app-helper
+             native arch at this point, because then bubblewrap
              couldn't continue runnning. */
           r = seccomp_arch_add (seccomp, arch_id);
           if (r < 0 && r != -EEXIST)
@@ -2612,7 +2612,7 @@ setup_seccomp (GPtrArray  *argv_array,
         r = seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, family));
     }
 
-  fd = g_file_open_tmp ("xdg-app-seccomp-XXXXXX", &path, error);
+  fd = g_file_open_tmp ("flatpak-seccomp-XXXXXX", &path, error);
   if (fd == -1)
     return FALSE;
 
@@ -2969,7 +2969,7 @@ flatpak_run_app (const char     *app_ref,
     close (sync_fds[1]);
 
   add_args (argv_array,
-            /* Not in base, because we don't want this for xdg-app build */
+            /* Not in base, because we don't want this for flatpak build */
             "--symlink", "/app/lib/debug/source", "/run/build",
             "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
             NULL);

@@ -1,0 +1,203 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-update">
+
+    <refentryinfo>
+        <title>flatpak update</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak update</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-update</refname>
+        <refpurpose>Update a runtime</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak update</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="opt">NAME</arg>
+                <arg choice="opt">BRANCH</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Updates an application or runtime. <arg choice="plain">NAME</arg> is the
+            name of an installed application or runtime. Optionally,
+            <arg choice="plain">BRANCH</arg> can be specified to update a
+            specific branch, otherwise all installed branches are updated. If
+            no <arg choice="plain">NAME</arg> is given, then everything installed
+            is updated.
+        </para>
+        <para>
+            By default this looks for both installed applications and
+            runtimes, but you can limit this by using the --app or
+            --runtime option.
+        </para>
+        <para>
+            Normally, this command updates the application to the tip
+            of its branch. But it is possible to check out another commit,
+            with the --commit option.
+        </para>
+        <para>
+            Note that updating a is different from installing
+            a different branch, and runtime updates are expected to keep
+            strict compatibility. If an application update does cause
+            a problem, it is possible to go back to the previous
+            version, with the --commit option.
+        </para>
+        <para>
+            Unless overridden with the --user option, this command updates
+            a system-wide installation.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Update a per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Update a system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    The architecture to update for.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--subpath=PATH</option></term>
+
+                <listitem><para>
+                  Install only a subpath of the ref. This is mainly used to install a subset of locales.
+                  This can be added multiple times to install multiple subpaths.
+                  If this is not specified the subpaths specified at install time are reused.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--commit=COMMIT</option></term>
+
+                <listitem><para>
+                    Update to this commit, instead of the tip of the branch.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-deploy</option></term>
+
+                <listitem><para>
+                    Download the latest version, but don't deploy it.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-pull</option></term>
+
+                <listitem><para>
+                    Don't download the latest version, deploy it whatever is locally availiable.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--app</option></term>
+
+                <listitem><para>
+                    Only look for an app with the given name.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    Only look for an runtime with the given name.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak --user update org.gnome.GEdit</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-install-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-list-apps</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>

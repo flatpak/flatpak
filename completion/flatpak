@@ -1,0 +1,405 @@
+[ -z "$BASH_VERSION" ] && return
+
+__contains_word () {
+        local w word=$1; shift
+        for w in "$@"; do
+                [[ $w = "$word" ]] && return
+        done
+}
+
+_flatpak() {
+        local cur prev
+        local cur=${COMP_WORDS[COMP_CWORD]}
+        local prev=${COMP_WORDS[COMP_CWORD-1]}
+
+        if [[ $cur == "=" ]] && [[ "$prev" = -* ]]; then
+           cur=""
+        elif [[ $prev == "=" ]]  && [[ "${COMP_WORDS[COMP_CWORD-2]}" = -* ]]; then
+                prev=${COMP_WORDS[COMP_CWORD-2]}
+        fi
+
+        local i verb comps mode kind bundle
+        local remote name
+        local file dir cmd sdk loc
+
+        local -A VERBS=(
+                [ALL]='remote-add remote-modify remote-delete remote-ls remote-list install update uninstall list run override enter export-file build-init build build-finish build-export build-bundle build-update-repo make-current'
+                [MODE]='remote-add remote-modify remote-delete remote-ls remote-list install update uninstall list list make-current'
+                [KIND]='install update uninstall list remote-ls'
+                [PERMS]='run override build build-finish'
+                [UNINSTALL]='uninstall'
+                [SHOW_DETAILS]='list remote-list remote-ls'
+                [ARCH]='build-init install build-bundle run uninstall update make-current'
+                [USER_AND_SYSTEM]='run remote-list list'
+                [APP_AND_RUNTIME]='install update uninstall'
+        )
+
+        local -A OPTS=(
+                [GENERAL]='--help --verbose --version'
+                [MODE]='--user --system'
+                [KIND]='--app --runtime'
+                [ARCH]='--arch='
+                [SHOW_DETAILS]='-d --show-details'
+                [PERMS]='--share= --unshare= --socket= --nosocket= --device= --nodevice= --filesystem= --env= --own-name= --talk-name= --persist='
+                [ADD_REMOTE]='--no-gpg-verify --if-not-exists --title= --gpg-import= --gpg-key='
+                [MODIFY_REMOTE]='--no-gpg-verify --gpg-verify --title= --gpg-import= --gpg-key='
+                [LIST_REMOTES]='--show-details'
+                [LS_REMOTE]='--show-details --updates'
+                [UNINSTALL]='--keep-ref --force-remove'
+                [INSTALL]='--bundle --gpg-file='
+                [BUILD_BUNDLE]='--gpg-keys= --runtime --arch= --repo-url='
+                [RUN]='--command= --branch= --devel --runtime='
+                [BUILD_INIT]='--arch= --var='
+                [BUILD]='--runtime'
+                [BUILD_FINISH]='--command= --allow'
+                [BUILD_EXPORT]='--subject= --body='
+                [EXPORT_FILE]='--app= --allow-write --allow-delete --allow-grant-permission --unique --transient'
+
+                [ARG]='--arch --command --branch --var --share --unshare  --socket --nosocket --device --nodevice --subject --body --title --runtime --filesystem'
+        )
+
+        for ((i=0; i < COMP_CWORD; i++)); do
+                if [[ "${COMP_WORDS[i]}" = -* ]]; then
+                        continue
+                fi
+                if  __contains_word "${COMP_WORDS[i-1]}" ${OPTS[ARG]}; then
+                        continue
+                fi
+                if __contains_word "${COMP_WORDS[i]}" ${VERBS[*]} &&
+                   test -z $first_verb; then
+                        first_verb=${COMP_WORDS[i]}
+                fi
+        done
+
+        if __contains_word "--bundle" ${COMP_WORDS[*]}; then
+            bundle="true"
+        else
+            bundle="false"
+        fi
+
+        if __contains_word "--user" ${COMP_WORDS[*]}; then
+            if __contains_word "--system" ${COMP_WORDS[*]}; then
+                mode="--user --system"
+            else
+                mode="--user"
+            fi
+        else
+            if __contains_word "--system" ${COMP_WORDS[*]}; then
+                mode=--system
+            else
+                if __contains_word "$first_verb" ${VERBS[USER_AND_SYSTEM]}; then
+                    mode="--user --system"
+                else
+                    mode="--system"
+                fi
+            fi
+        fi
+
+        if __contains_word "--app" ${COMP_WORDS[*]}; then
+            if __contains_word "--runtime" ${COMP_WORDS[*]}; then
+                kind="--app --runtime"
+            else
+                kind="--app"
+            fi
+        else
+            if __contains_word "--runtime" ${COMP_WORDS[*]}; then
+                kind="--runtime"
+            else
+                if __contains_word "$first_verb" ${VERBS[APP_AND_RUNTIME]}; then
+                    kind="--app --runtime"
+                else
+                    kind="--app"
+                fi
+            fi
+        fi
+
+        if __contains_word "$prev" ${OPTS[ARG]}; then
+                case $prev in
+                        --arch)
+                                comps='x86_64 i686'
+                                ;;
+                        --command)
+                                comps=$(compgen -A command)
+                                ;;
+                        --var)
+                                comps=$(flatpak $mode list --runtime)
+                                ;;
+                        --runtime)
+                                if __contains_word "$verb" ${VERBS[KIND]}; then
+                                    comps=XXX
+                                else
+                                    comps=$(flatpak $mode list --runtime)
+                                fi
+                                ;;
+                        --share|--noshare)
+                                comps='network ipc'
+                                ;;
+                        --device|--nodevice)
+                                comps='dri'
+                                ;;
+                        --socket|--nosocket)
+                                comps='x11 wayland pulseaudio system-bus session-bus'
+                                ;;
+                        --branch|--subject|--body|--title)
+                                comps=''
+                                ;;
+                        --filesystem)
+                                comps='host home xdg-desktop xdg-documents xdg-download xdg-music xdg-pictures xdg-public-share xdg-templates xdg-videos'
+                                ;;
+                esac
+                if [[ $comps != "XXXX" ]] ; then
+                    COMPREPLY=( $(compgen -W '$comps' -- "$cur") )
+                    return 0
+                fi
+        fi
+
+        for ((i=0; i < COMP_CWORD; i++)); do
+                if [[ "${COMP_WORDS[i]}" = -* ]]; then
+                        continue
+                fi
+                if  __contains_word "${COMP_WORDS[i-1]}" ${OPTS[ARG]}; then
+                        continue
+                fi
+                if __contains_word "${COMP_WORDS[i]}" ${VERBS[*]} &&
+                   test -z $verb; then
+                        verb=${COMP_WORDS[i]}
+                elif [[ $verb = install && $bundle = "true" ]]; then
+                        if [[ -z $file ]]; then
+                                file=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = install ]]; then
+                        if [[ -z $remote ]]; then
+                                remote=${COMP_WORDS[i]}
+                        elif [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb =~ (update|uninstall|run) ]]; then
+                        if [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build-init ]]; then
+                        if [[ -z $dir ]]; then
+                                dir=${COMP_WORDS[i]}
+                        elif [[ -z $sdk ]]; then
+                                sdk=${COMP_WORDS[i]}
+                        elif [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build ]]; then
+                        if [[ -z $dir ]]; then
+                                dir=${COMP_WORDS[i]}
+                        elif [[ -z $cmd ]]; then
+                                cmd=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build-finish ]]; then
+                        if [[ -z $dir ]]; then
+                                dir=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build-export ]]; then
+                        if [[ -z $loc ]]; then
+                                loc=${COMP_WORDS[i]}
+                        elif [[ -z $dir ]]; then
+                                dir=${COMP_WORDS[i]}
+                        elif [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build-bundle ]]; then
+                        if [[ -z $loc ]]; then
+                                loc=${COMP_WORDS[i]}
+                        elif [[ -z $file ]]; then
+                                file=${COMP_WORDS[i]}
+                        elif [[ -z $name ]]; then
+                                name=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = build-update-repo ]]; then
+                        if [[ -z $loc ]]; then
+                                loc=${COMP_WORDS[i]}
+                        fi
+                elif [[ $verb = export-file ]]; then
+                        if [[ -z $file ]]; then
+                                file=${COMP_WORDS[i]}
+                        fi
+                fi
+        done
+
+        if [[ -z $verb ]]; then
+                comps="${VERBS[*]}"
+
+        elif [[ "$cur" = -* ]]; then
+                comps="${OPTS[GENERAL]}"
+                if __contains_word "$verb" ${VERBS[MODE]}; then
+                        comps="$comps ${OPTS[MODE]}"
+                fi
+                if __contains_word "$verb" ${VERBS[KIND]}; then
+                        comps="$comps ${OPTS[KIND]}"
+                fi
+                if __contains_word "$verb" ${VERBS[PERMS]}; then
+                        comps="$comps ${OPTS[PERMS]}"
+                fi
+                if [ "$verb" = "remote-list" ]; then
+                        comps="$comps ${OPTS[LIST_REMOTES]}"
+                fi
+                if __contains_word "$verb" ${VERBS[ARCH]}; then
+                        comps="$comps ${OPTS[ARCH]}"
+                fi
+                if __contains_word "$verb" ${VERBS[SHOW_DETAILS]}; then
+                        comps="$comps ${OPTS[SHOW_DETAILS]}"
+                fi
+                if __contains_word "$verb" ${VERBS[UNINSTALL]}; then
+                        comps="$comps ${OPTS[UNINSTALL]}"
+                fi
+                if [ "$verb" = "run" ]; then
+                        comps="$comps ${OPTS[RUN]}"
+                fi
+                if [ "$verb" = "export-file" ]; then
+                        comps="$comps ${OPTS[EXPORT_FILE]}"
+                fi
+                if [ "$verb" = "remote-ls" ]; then
+                        comps="$comps ${OPTS[LS_REMOTE]}"
+                fi
+                if [ "$verb" = "build-init" ]; then
+                        comps="$comps ${OPTS[BUILD_INIT]}"
+                fi
+                if [ "$verb" = "build" ]; then
+                        comps="$comps ${OPTS[BUILD]}"
+                fi
+                if [ "$verb" = "build-finish" ]; then
+                        comps="$comps ${OPTS[BUILD_FINISH]}"
+                fi
+                if [ "$verb" = "build-bundle" ]; then
+                        comps="$comps ${OPTS[BUILD_BUNDLE]}"
+                fi
+                if [ "$verb" = "install" ]; then
+                        comps="$comps ${OPTS[INSTALL]}"
+                fi
+                if [ "$verb" = "build-export" ]; then
+                        comps="$comps ${OPTS[BUILD_EXPORT]}"
+                fi
+                if [ "$verb" = "repo-update" ]; then
+                        comps="$comps ${OPTS[REPO_UPDATE]}"
+                fi
+                if [ "$verb" = "remote-add" ]; then
+                        comps="$comps ${OPTS[ADD_REMOTE]}"
+                fi
+                if [ "$verb" = "remote-modify" ]; then
+                        comps="$comps ${OPTS[MODIFY_REMOTE]}"
+                fi
+        else
+                case "$verb" in
+                remote-add|remote-modify|remote-delete|remote-ls)
+                        comps=$(flatpak $mode remote-list)
+                ;;
+
+                install)
+                        if [[ $bundle == "true" ]]; then
+                                comps=''
+                                compopt -o filenames
+                        else
+                            if [[ -z $remote ]]; then
+                                comps=$(flatpak $mode remote-list)
+                                if [[ $mode == "--system" ]]; then
+                                    comps="$comps --user"
+                                fi
+                            elif [[ -z $name ]]; then
+                                comps=$(flatpak remote-ls $mode  $kind $remote)
+                            else
+                                comps='' # FIXME: branches
+                            fi
+                        fi
+                ;;
+
+                remote-list|list)
+                        comps=''
+                        ;;
+
+                update|uninstall)
+                        if [[ -z $name ]]; then
+                                comps=$(flatpak $mode $kind list)
+                        else
+                                comps='' # FIXME: branches
+                        fi
+                ;;
+
+                run|override)
+                        # run doesn't take --user or --system, so don't use mode here
+                        if [[ -z $name ]]; then
+                                comps=$(flatpak list --app)
+                        fi
+                        ;;
+
+
+                build-init)
+                        if [[ -z $dir ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        elif [[ -z $sdk ]]; then
+                                comps="$(flatpak list --runtime) $(flatpak --user list --runtime)"
+                        elif [[ -z $name ]]; then
+                                comps="$(flatpak list --runtime) $(flatpak --user list --runtime)"
+                        else
+                                comps='' # FIXME: branches
+                        fi
+                        ;;
+
+                build)
+                        if [[ -z $dir ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        elif [[ -z $cmd ]]; then
+                                comps=''
+                                compopt -o bashdefault
+                        fi
+                        ;;
+
+                build-finish)
+                        if [[ -z $dir ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        fi
+                        ;;
+
+                build-export)
+                        if [[ -z $loc ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        elif [[ -z $dir ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        fi
+                        ;;
+
+                build-bundle)
+                        if [[ -z $loc ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        elif [[ -z $file ]]; then
+                                comps=''
+                                compopt -o filenames
+                        else
+                                comps='' # FIXME: list apps/runtimes
+                        fi
+                        ;;
+
+                build-update-repo)
+                        if [[ -z $loc ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        fi
+                        ;;
+
+                export-file)
+                        if [[ -z $file ]]; then
+                                comps=''
+                                compopt -o dirnames
+                        fi
+                        ;;
+
+                esac
+        fi
+
+        COMPREPLY=( $(compgen -W '$comps' -- "$cur") )
+        [[ $COMPREPLY == *= ]] && compopt -o nospace
+        return 0
+}
+
+complete -F _flatpak flatpak

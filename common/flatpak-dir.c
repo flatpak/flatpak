@@ -37,19 +37,19 @@
 
 #include "errno.h"
 
-#define NO_SYSTEM_HELPER ((XdgAppSystemHelper *) (gpointer) 1)
+#define NO_SYSTEM_HELPER ((FlatpakSystemHelper *) (gpointer) 1)
 
 struct FlatpakDir
 {
-  GObject             parent;
+  GObject              parent;
 
-  gboolean            user;
-  GFile              *basedir;
-  OstreeRepo         *repo;
+  gboolean             user;
+  GFile               *basedir;
+  OstreeRepo          *repo;
 
-  XdgAppSystemHelper *system_helper;
+  FlatpakSystemHelper *system_helper;
 
-  SoupSession        *soup_session;
+  SoupSession         *soup_session;
 };
 
 typedef struct
@@ -75,7 +75,7 @@ typedef struct
 G_DEFINE_TYPE (FlatpakDir, flatpak_dir, G_TYPE_OBJECT)
 G_DEFINE_TYPE (FlatpakDeploy, flatpak_deploy, G_TYPE_OBJECT)
 
-G_DEFINE_QUARK (xdg - app - dir - error - quark, flatpak_dir_error)
+G_DEFINE_QUARK (flatpak-dir-error-quark, flatpak_dir_error)
 
 enum {
   PROP_0,
@@ -199,16 +199,16 @@ flatpak_ensure_user_cache_dir_location (GError **error)
   return g_steal_pointer (&cache_dir);
 }
 
-static XdgAppSystemHelper *
+static FlatpakSystemHelper *
 flatpak_dir_get_system_helper (FlatpakDir *self)
 {
   g_autoptr(GError) error = NULL;
 
   if (g_once_init_enter (&self->system_helper))
     {
-      XdgAppSystemHelper *system_helper;
+      FlatpakSystemHelper *system_helper;
       system_helper =
-        xdg_app_system_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+        flatpak_system_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
                                                       G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
                                                       G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
                                                       "org.freedesktop.Flatpak.SystemHelper",
@@ -231,7 +231,7 @@ flatpak_dir_get_system_helper (FlatpakDir *self)
 gboolean
 flatpak_dir_use_child_repo (FlatpakDir *self)
 {
-  XdgAppSystemHelper *system_helper;
+  FlatpakSystemHelper *system_helper;
 
   if (self->user || getuid () == 0)
     return FALSE;
@@ -547,7 +547,7 @@ flatpak_dir_get_repo (FlatpakDir *self)
 }
 
 
-/* This is an exclusive per xdg-app installation file lock that is taken
+/* This is an exclusive per flatpak installation file lock that is taken
  * whenever any config in the directory outside the repo is to be changed. For
  * instance deployements, overrides or active commit changes.
  *
@@ -2041,7 +2041,7 @@ export_desktop_file (const char   *app,
       g_key_file_remove_key (keyfile, groups[i], "X-GNOME-Bugzilla-ExtraInfoScript", NULL);
 
       new_exec = g_string_new ("");
-      g_string_append_printf (new_exec, FLATPAK_BINDIR "/xdg-app run --branch=%s --arch=%s", escaped_branch, escaped_arch);
+      g_string_append_printf (new_exec, FLATPAK_BINDIR "/flatpak run --branch=%s --arch=%s", escaped_branch, escaped_arch);
 
       old_exec = g_key_file_get_string (keyfile, groups[i], "Exec", NULL);
       if (old_exec && g_shell_parse_argv (old_exec, &old_argc, &old_argv, NULL) && old_argc >= 1)
@@ -2868,7 +2868,7 @@ flatpak_dir_install (FlatpakDir          *self,
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
       char *empty_subpaths[] = {NULL};
-      XdgAppSystemHelper *system_helper;
+      FlatpakSystemHelper *system_helper;
 
       if (no_pull)
         return flatpak_fail (error, "No-pull install not supported without root permissions");
@@ -2889,7 +2889,7 @@ flatpak_dir_install (FlatpakDir          *self,
                              progress, cancellable, error))
         return FALSE;
 
-      if (!xdg_app_system_helper_call_deploy_sync (system_helper,
+      if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                    gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
                                                    FLATPAK_HELPER_DEPLOY_FLAGS_NONE,
                                                    ref,
@@ -2943,7 +2943,7 @@ flatpak_dir_update (FlatpakDir          *self,
       char *empty_subpaths[] = {NULL};
       g_autofree char *pulled_checksum = NULL;
       g_autofree char *active_checksum = NULL;
-      XdgAppSystemHelper *system_helper;
+      FlatpakSystemHelper *system_helper;
 
       if (no_pull)
         return flatpak_fail (error, "No-pull update not supported without root permissions");
@@ -2974,7 +2974,7 @@ flatpak_dir_update (FlatpakDir          *self,
       if (g_strcmp0 (active_checksum, pulled_checksum) != 0)
         {
 
-          if (!xdg_app_system_helper_call_deploy_sync (system_helper,
+          if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                        gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
                                                        FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE,
                                                        ref,

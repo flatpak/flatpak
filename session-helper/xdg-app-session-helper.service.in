@@ -1,7 +1,0 @@
-[Unit]
-Description=xdg-app session helper
-
-[Service]
-BusName=org.freedesktop.XdgApp
-ExecStart=@libexecdir@/xdg-app-session-helper
-Type=dbus

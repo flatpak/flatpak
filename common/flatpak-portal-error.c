@@ -1,4 +1,4 @@
-/* xdg-app-error.c
+/* flatpak-error.c
  *
  * Copyright (C) 2015 Red Hat, Inc
  *
@@ -40,7 +40,7 @@ flatpak_portal_error_quark (void)
 {
   static volatile gsize quark_volatile = 0;
 
-  g_dbus_error_register_error_domain ("xdg-app-portal-error-quark",
+  g_dbus_error_register_error_domain ("flatpak-portal-error-quark",
                                       &quark_volatile,
                                       flatpak_error_entries,
                                       G_N_ELEMENTS (flatpak_error_entries));

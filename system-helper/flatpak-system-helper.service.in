@@ -1,0 +1,7 @@
+[Unit]
+Description=flatpak system helper
+
+[Service]
+BusName=org.freedesktop.Flatpak.SystemHelper
+ExecStart=@libexecdir@/flatpak-system-helper
+Type=dbus

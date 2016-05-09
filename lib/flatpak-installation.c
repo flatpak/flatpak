@@ -34,15 +34,15 @@
 #include "flatpak-error.h"
 
 /**
- * SECTION:xdg-app-installation
+ * SECTION:flatpak-installation
  * @Title: FlatpakInstallation
  * @Short_description: Installation information
  *
  * FlatpakInstallation is the toplevel object that software installers
- * should use to operate on an xdg-apps.
+ * should use to operate on an flatpak applications.
  *
  * An FlatpakInstallation object provides information about an installation
- * location for xdg-app applications. Typical installation locations are either
+ * location for flatpak applications. Typical installation locations are either
  * system-wide (in /var/lib/xdg-app) or per-user (in ~/.local/share/xdg-app).
  *
  * FlatpakInstallation can list configured remotes as well as installed application
@@ -804,14 +804,14 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 /**
  * flatpak_installation_install_bundle:
  * @self: a #FlatpakInstallation
- * @file: a #GFile that is an xdg-app bundle
+ * @file: a #GFile that is an flatpak bundle
  * @progress: (scope call): progress callback
  * @progress_data: user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Install an application or runtime from an xdg-app bundle file.
- * See xdg-app-build-bundle(1) for how to create brundles.
+ * Install an application or runtime from an flatpak bundle file.
+ * See flatpak-build-bundle(1) for how to create brundles.
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
@@ -1273,7 +1273,7 @@ flatpak_installation_fetch_remote_size_sync2 (FlatpakInstallation *self,
  *
  * This is deprecated, use flatpak_installation_fetch_remote_metadata_sync2
  *
- * Returns: (transfer full): a #GBytes containing the xdg-app metadata file,
+ * Returns: (transfer full): a #GBytes containing the flatpak metadata file,
  *   or %NULL if an error occurred
  */
 GBytes *
@@ -1308,7 +1308,7 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
  *
  * Obtains the metadata file from a commit.
  *
- * Returns: (transfer full): a #GBytes containing the xdg-app metadata file,
+ * Returns: (transfer full): a #GBytes containing the flatpak metadata file,
  *   or %NULL if an error occurred
  */
 GBytes *

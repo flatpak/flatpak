@@ -1,4 +1,4 @@
-/* xdg-app-error.c
+/* flatpak-portal-error.c
  *
  * Copyright (C) 2015 Red Hat, Inc
  *

@@ -1,0 +1,292 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak">
+
+    <refentryinfo>
+        <title>flatpak</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak</refname>
+        <refpurpose>Build, install and run applications and runtimes</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="req">COMMAND</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            flatpak is a tool for managing applications and the runtimes
+            they use. In the flatpak model, applications can be built and
+            distributed independently from the host system they are used
+            on, and they are isolated from the host system ('sandboxed')
+            to some degree, at runtime.
+        </para>
+
+        <para>
+            flatpak can operate in system-wide or per-user mode. The system-wide
+            data (runtimes, applications and configuration) is located in
+            <filename>$prefix/share/flatpak/</filename>, and the per-user
+            data is in <filename>$HOME/.local/share/flatpak/</filename>.
+            Below these locations, there is a local repository in the
+            <filename>repo/</filename> subdirectory and installed runtimes
+            and applications are in the corresponding <filename>runtime/</filename>
+            and <filename>app/</filename> subdirectories.
+        </para>
+
+        <para>
+            flatpak uses OSTree to distribute and deploy data. The repositories
+            it uses are OSTree repositories and can be manipulated with the
+            <command>ostree</command> utility. Installed runtimes and
+            applications are OSTree checkouts.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Commands</title>
+
+        <para>Commands for managing installed applications and runtimes:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-install</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Install an application or a runtime from a remote or bundle.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-update</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Update an installed application or runtime.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-uninstall</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Uninstall an installed application or runtime.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List installed applications and/or runtimes.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-info</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Show information for an installed application or runtime.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+
+        <para>Commands for running applications:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-run</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Run an application.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-override</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Override permissions for an application.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-export-file</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Grant an application access to a specific file.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-enter</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Enter the namespace of a running application.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+        <para>Commands for managing remote rempositories:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Add a new remote repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Modify properties of a configured remote repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-remote-delete</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Delete a configured remote repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-remote-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List all configured remote repositories.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-remote-ls</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List contents of a configured remote repository.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
+        <para>Commands for building applications:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Initialize a build directory.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Run a build command in a build directory.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Finalizes a build directory for export.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Export a build directory to a repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Create a bundle file from a build directory.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build-import-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Import a file bundle into a local repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build-update-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Update the summary file in a repository.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Sign an application or runtime after its been exported.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+            <para>
+                <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>ostree.repo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+            </para>
+
+    </refsect1>
+
+</refentry>

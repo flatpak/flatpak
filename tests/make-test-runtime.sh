@@ -7,7 +7,7 @@ DIR=`mktemp -d`
 ID=$1
 shift
 
-xdg-app build-init ${DIR} ${ID} ${ID} ${ID}
+flatpak build-init ${DIR} ${ID} ${ID} ${ID}
 sed -i s/Application/Runtime/ ${DIR}/metadata
 
 # Add bash and dependencies
@@ -26,5 +26,5 @@ for i in `sort -u $T`; do
     cp "$i" ${DIR}/usr/lib/
 done
 
-xdg-app build-export --runtime repo ${DIR}
+flatpak build-export --runtime repo ${DIR}
 rm -rf ${DIR}

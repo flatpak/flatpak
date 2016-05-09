@@ -28,7 +28,7 @@
 #include <string.h>
 
 /**
- * SECTION:xdg-app-remote
+ * SECTION:flatpak-remote
  * @Short_description: Remote repository
  * @Title: FlatpakRemote
  *

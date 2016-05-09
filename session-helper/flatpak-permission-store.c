@@ -144,9 +144,9 @@ ensure_writeout (Table                 *table,
 }
 
 static gboolean
-handle_list (XdgAppPermissionStore *object,
-             GDBusMethodInvocation *invocation,
-             const gchar           *table_name)
+handle_list (FlatpakPermissionStore *object,
+             GDBusMethodInvocation  *invocation,
+             const gchar            *table_name)
 {
   Table *table;
 
@@ -158,7 +158,7 @@ handle_list (XdgAppPermissionStore *object,
 
   ids = flatpak_db_list_ids (table->db);
 
-  xdg_app_permission_store_complete_list (object, invocation, (const char * const *) ids);
+  flatpak_permission_store_complete_list (object, invocation, (const char * const *) ids);
 
   return TRUE;
 }
@@ -186,10 +186,10 @@ get_app_permissions (FlatpakDbEntry *entry)
 }
 
 static gboolean
-handle_lookup (XdgAppPermissionStore *object,
-               GDBusMethodInvocation *invocation,
-               const gchar           *table_name,
-               const gchar           *id)
+handle_lookup (FlatpakPermissionStore *object,
+               GDBusMethodInvocation  *invocation,
+               const gchar            *table_name,
+               const gchar            *id)
 {
   Table *table;
 
@@ -213,7 +213,7 @@ handle_lookup (XdgAppPermissionStore *object,
   data = flatpak_db_entry_get_data (entry);
   permissions = get_app_permissions (entry);
 
-  xdg_app_permission_store_complete_lookup (object, invocation,
+  flatpak_permission_store_complete_lookup (object, invocation,
                                             permissions,
                                             g_variant_new_variant (data));
 
@@ -221,10 +221,10 @@ handle_lookup (XdgAppPermissionStore *object,
 }
 
 static void
-emit_deleted (XdgAppPermissionStore *object,
-              const gchar           *table_name,
-              const gchar           *id,
-              FlatpakDbEntry        *entry)
+emit_deleted (FlatpakPermissionStore *object,
+              const gchar            *table_name,
+              const gchar            *id,
+              FlatpakDbEntry         *entry)
 {
   g_autoptr(GVariant) data = NULL;
   g_autoptr(GVariant) permissions = NULL;
@@ -232,7 +232,7 @@ emit_deleted (XdgAppPermissionStore *object,
   data = flatpak_db_entry_get_data (entry);
   permissions = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sas}"), NULL, 0));
 
-  xdg_app_permission_store_emit_changed (object,
+  flatpak_permission_store_emit_changed (object,
                                          table_name, id,
                                          TRUE,
                                          g_variant_new_variant (data),
@@ -241,10 +241,10 @@ emit_deleted (XdgAppPermissionStore *object,
 
 
 static void
-emit_changed (XdgAppPermissionStore *object,
-              const gchar           *table_name,
-              const gchar           *id,
-              FlatpakDbEntry        *entry)
+emit_changed (FlatpakPermissionStore *object,
+              const gchar            *table_name,
+              const gchar            *id,
+              FlatpakDbEntry         *entry)
 {
   g_autoptr(GVariant) data = NULL;
   g_autoptr(GVariant) permissions = NULL;
@@ -252,7 +252,7 @@ emit_changed (XdgAppPermissionStore *object,
   data = flatpak_db_entry_get_data (entry);
   permissions = get_app_permissions (entry);
 
-  xdg_app_permission_store_emit_changed (object,
+  flatpak_permission_store_emit_changed (object,
                                          table_name, id,
                                          FALSE,
                                          g_variant_new_variant (data),
@@ -260,10 +260,10 @@ emit_changed (XdgAppPermissionStore *object,
 }
 
 static gboolean
-handle_delete (XdgAppPermissionStore *object,
-               GDBusMethodInvocation *invocation,
-               const gchar           *table_name,
-               const gchar           *id)
+handle_delete (FlatpakPermissionStore *object,
+               GDBusMethodInvocation  *invocation,
+               const gchar            *table_name,
+               const gchar            *id)
 {
   Table *table;
 
@@ -291,13 +291,13 @@ handle_delete (XdgAppPermissionStore *object,
 }
 
 static gboolean
-handle_set (XdgAppPermissionStore *object,
-            GDBusMethodInvocation *invocation,
-            const gchar           *table_name,
-            gboolean               create,
-            const gchar           *id,
-            GVariant              *app_permissions,
-            GVariant              *data)
+handle_set (FlatpakPermissionStore *object,
+            GDBusMethodInvocation  *invocation,
+            const gchar            *table_name,
+            gboolean                create,
+            const gchar            *id,
+            GVariant               *app_permissions,
+            GVariant               *data)
 {
   Table *table;
   GVariantIter iter;
@@ -349,13 +349,13 @@ handle_set (XdgAppPermissionStore *object,
 }
 
 static gboolean
-handle_set_permission (XdgAppPermissionStore *object,
-                       GDBusMethodInvocation *invocation,
-                       const gchar           *table_name,
-                       gboolean               create,
-                       const gchar           *id,
-                       const gchar           *app,
-                       const gchar *const    *permissions)
+handle_set_permission (FlatpakPermissionStore *object,
+                       GDBusMethodInvocation  *invocation,
+                       const gchar            *table_name,
+                       gboolean                create,
+                       const gchar            *id,
+                       const gchar            *app,
+                       const gchar *const     *permissions)
 {
   Table *table;
 
@@ -392,12 +392,12 @@ handle_set_permission (XdgAppPermissionStore *object,
 }
 
 static gboolean
-handle_set_value (XdgAppPermissionStore *object,
-                  GDBusMethodInvocation *invocation,
-                  const gchar           *table_name,
-                  gboolean               create,
-                  const gchar           *id,
-                  GVariant              *data)
+handle_set_value (FlatpakPermissionStore *object,
+                  GDBusMethodInvocation  *invocation,
+                  const gchar            *table_name,
+                  gboolean                create,
+                  const gchar            *id,
+                  GVariant               *data)
 {
   Table *table;
 
@@ -439,13 +439,13 @@ handle_set_value (XdgAppPermissionStore *object,
 void
 flatpak_permission_store_start (GDBusConnection *connection)
 {
-  XdgAppPermissionStore *store;
+  FlatpakPermissionStore *store;
   GError *error = NULL;
 
   tables = g_hash_table_new_full (g_str_hash, g_str_equal,
                                   g_free, (GDestroyNotify) table_free);
 
-  store = xdg_app_permission_store_skeleton_new ();
+  store = flatpak_permission_store_skeleton_new ();
 
   g_signal_connect (store, "handle-list", G_CALLBACK (handle_list), NULL);
   g_signal_connect (store, "handle-lookup", G_CALLBACK (handle_lookup), NULL);

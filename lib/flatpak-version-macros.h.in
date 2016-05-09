@@ -34,7 +34,7 @@
 #endif
 
 /**
- * SECTION:xdg-app-version-macros
+ * SECTION:flatpak-version-macros
  * @Title: Version information
  */
 

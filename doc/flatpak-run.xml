@@ -1,0 +1,337 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-run">
+
+    <refentryinfo>
+        <title>flatpak run</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak run</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-run</refname>
+        <refpurpose>Run an application</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak run</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">APP</arg>
+                <arg choice="opt" rep="repeat">ARG</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Runs an application in a sandboxed environment.
+            <arg choice="plain">APP</arg> must name an installed application.
+            Extra arguments are passed on to the application.
+        </para>
+        <para>
+            flatpak creates a sandboxed environment for the application to run in
+            by mounting the right runtime at <filename>/usr</filename> and a writable
+            directory at <filename>/var</filename>, whose content is preserved between
+            application runs. The application itself is mounted at <filename>/app</filename>.
+        </para>
+        <para>
+            The details of the sandboxed environment are controlled by the application
+            metadata and various options like --share and --socket that are passed to the run
+            command: Access is allowed if it was requested either in the application
+            metadata file or with an option and the user hasn't overridden it.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    The architecture to install for.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--command=COMMAND</option></term>
+
+                <listitem><para>
+                    The command to run instead of the one listed in the application metadata.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--branch=BRANCH</option></term>
+
+                <listitem><para>
+                    The branch to use.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-d</option></term>
+                <term><option>--devel</option></term>
+
+                <listitem><para>
+                    Use the devel runtime that is specified in the application metadata instead of the regular runtime.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime=RUNTIME</option></term>
+
+                <listitem><para>
+                  Use this runtime instead of the one that is specified in the application metadata.
+                  This is a full tuple, like for example <arg choice="plain">org.freedesktop.Sdk/x86_64/1.2</arg>, but
+                  partial tuples are allowed. Any empty or missing parts are filled in with the corresponding
+                  values specified by the app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime-version=VERSION</option></term>
+
+                <listitem><para>
+                  Use this version of the runtime instead of the one that is specified in the application metadata.
+                  This overrides any version specified with the --runtime option.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--share=SUBSYSTEM</option></term>
+
+                <listitem><para>
+                    Share a subsystem with the host session. This overrides
+                    the Context section from the application metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--unshare=SUBSYSTEM</option></term>
+
+                <listitem><para>
+                    Don't share a subsystem with the host session. This overrides
+                    the Context section from the application metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--socket=SOCKET</option></term>
+
+                <listitem><para>
+                    Expose a well known socket to the application. This overrides to
+                    the Context section from the application metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--nosocket=SOCKET</option></term>
+
+                <listitem><para>
+                    Don't expose a well known socket to the application. This overrides to
+                    the Context section from the application metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--device=DEVICE</option></term>
+
+                <listitem><para>
+                    Expose a device to the application. This overrides to
+                    the Context section from the application metadata.
+                    DEVICE must be one of: dri.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--nodevice=DEVICE</option></term>
+
+                <listitem><para>
+                    Don't expose a device to the application. This overrides to
+                    the Context section from the application metadata.
+                    DEVICE must be one of: dri.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--filesystem=FS</option></term>
+
+                <listitem><para>
+                    Allow the application access to a subset of the filesystem.
+                    This overrides to the Context section from the application metadata.
+                    FS can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos, xdg-run,
+                    an absolute path, or a homedir-relative path like ~/dir or paths
+                    relative to the xdg dirs, like xdg-download/subdir.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--env=VAR=VALUE</option></term>
+
+                <listitem><para>
+                    Set an environment variable in the application.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--own-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to own the well known name NAME on the session bus.
+                    If NAME ends with .*, it allows the application to own all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--talk-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to talk to the well known name NAME on the session bus.
+                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system-own-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to own the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to own all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system-talk-name=NAME</option></term>
+
+                <listitem><para>
+                    Allow the application to talk to the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--persist=FILENAME</option></term>
+
+                <listitem><para>
+                    If the application doesn't have access to the real homedir, make the (homedir-relative) path
+                    FILENAME a bind mount to the corresponding path in the per-application directory,
+                    allowing that location to be used for persistant data.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--log-session-bus</option></term>
+
+                <listitem><para>
+                    Log session bus traffic. This can be useful to see what access you need to allow in
+                    your D-Bus policy.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--log-system-bus</option></term>
+
+                <listitem><para>
+                    Log system bus traffic. This can be useful to see what access you need to allow in
+                    your D-Bus policy.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak run org.gnome.GEdit</command>
+        </para>
+        <para>
+            <command>$ flatpak run --devel --command=bash org.gnome.Builder</command>
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-override</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-enter</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>

@@ -36,7 +36,7 @@ static gboolean opt_oci = FALSE;
 
 static GOptionEntry options[] = {
   { "ref", 0, 0, G_OPTION_ARG_STRING, &opt_ref, "Override the ref used for the imported bundle", "REF" },
-  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, "Import oci image instead of xdg-app bundle"},
+  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, "Import oci image instead of flatpak bundle"},
   { NULL }
 };
 
@@ -52,7 +52,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   return FALSE;
 #elif !defined(HAVE_LIBARCHIVE)
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-               "This version of xdg-app is not compiled with libarchive support");
+               "This version of flatpak is not compiled with libarchive support");
   return FALSE;
 #else
   g_autoptr(OstreeMutableTree) archive_mtree = NULL;

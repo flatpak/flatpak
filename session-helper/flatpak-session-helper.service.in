@@ -1,0 +1,7 @@
+[Unit]
+Description=flatpak session helper
+
+[Service]
+BusName=org.freedesktop.Flatpak
+ExecStart=@libexecdir@/flatpak-session-helper
+Type=dbus

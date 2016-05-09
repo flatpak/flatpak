@@ -112,7 +112,7 @@ do_export (BuilderContext *build_context,
   g_autoptr(GSubprocess) subp = NULL;
 
   args = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("flatpak"));
   g_ptr_array_add (args, g_strdup ("build-export"));
 
   g_ptr_array_add (args, g_strdup_printf ("--arch=%s", builder_context_get_arch (build_context)));

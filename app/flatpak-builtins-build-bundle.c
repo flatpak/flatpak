@@ -50,7 +50,7 @@ static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to bundle for", "ARCH" },
   { "repo-url", 0, 0, G_OPTION_ARG_STRING, &opt_repo_url, "Url for repo", "URL" },
   { "gpg-keys", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, "Add GPG key from FILE (- for stdin)", "FILE" },
-  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, "Export oci image instead of xdg-app bundle"},
+  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, "Export oci image instead of flatpak bundle"},
 
   { NULL }
 };
@@ -132,7 +132,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
    * later.  Furthermore, the use of an uint32 lets use detect
    * byteorder issues.
    */
-  g_variant_builder_add (&metadata_builder, "{sv}", "xdg-app",
+  g_variant_builder_add (&metadata_builder, "{sv}", "flatpak",
                          g_variant_new_uint32 (0xe5890001));
 
   g_variant_builder_add (&metadata_builder, "{sv}", "ref", g_variant_new_string (full_branch));
@@ -180,7 +180,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
           int i;
           g_autoptr(GFile) icons_dir =
             g_file_resolve_relative_path (root,
-                                          "files/share/app-info/icons/xdg-app");
+                                          "files/share/app-info/icons/flatpak");
           const char *icon_sizes[] = { "64x64", "128x128" };
           const char *icon_sizes_key[] = { "icon-64", "icon-128" };
           g_autofree char *icon_name = g_strconcat (name, ".png", NULL);
@@ -749,7 +749,7 @@ build_oci (OstreeRepo *repo, GFile *file,
   return FALSE;
 #elif !defined(HAVE_LIBARCHIVE)
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-               "This version of xdg-app is not compiled with libarchive support");
+               "This version of flatpak is not compiled with libarchive support");
   return FALSE;
 #else
   struct free_write_archive archive *a = NULL;
@@ -876,7 +876,7 @@ build_oci (OstreeRepo *repo, GFile *file,
   if (archive_write_close (a) != ARCHIVE_OK)
     return propagate_libarchive_error (error, a);
 
-  g_print ("WARNING: the oci format produced by xdg-app is experimental and unstable.\n"
+  g_print ("WARNING: the oci format produced by flatpak is experimental and unstable.\n"
            "Don't use this for anything but experiments for now\n");
 
   return TRUE;

@@ -35,7 +35,7 @@ cd $TEST_DATA_DIR/
 cp -a $(dirname $0)/test-configure .
 echo "version1" > app-data
 cp $(dirname $0)/test.json .
-xdg-app-builder --repo=$REPO --force-clean appdir test.json > /dev/null
+flatpak-builder --repo=$REPO --force-clean appdir test.json > /dev/null
 
 assert_file_has_content appdir/files/share/app-data version1
 assert_file_has_content appdir/metadata shared=network;
@@ -46,12 +46,12 @@ assert_not_has_file appdir/files/bin/file.cleanup
 
 assert_has_file appdir/files/cleaned_up > out
 
-${XDG_APP} build appdir /app/bin/hello2.sh > hello_out2
+${FLATPAK} build appdir /app/bin/hello2.sh > hello_out2
 assert_file_has_content hello_out2 '^Hello world2, from a sandbox$'
 
 echo "ok build"
 
-${XDG_APP} --user install test-repo org.test.Hello2 master
+${FLATPAK} --user install test-repo org.test.Hello2 master
 run org.test.Hello2 > hello_out3
 assert_file_has_content hello_out3 '^Hello world2, from a sandbox$'
 
@@ -61,10 +61,10 @@ assert_file_has_content app_data_1 version1
 echo "ok install+run"
 
 echo "version2" > app-data
-xdg-app-builder --repo=$REPO --force-clean appdir test.json > /dev/null
+flatpak-builder --repo=$REPO --force-clean appdir test.json > /dev/null
 assert_file_has_content appdir/files/share/app-data version2
 
-${XDG_APP} --user update org.test.Hello2 master
+${FLATPAK} --user update org.test.Hello2 master
 
 run --command=cat org.test.Hello2 /app/share/app-data > app_data_2
 assert_file_has_content app_data_2 version2

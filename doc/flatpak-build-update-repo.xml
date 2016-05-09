@@ -1,0 +1,152 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-build-update-repo">
+
+    <refentryinfo>
+        <title>flatpak build-update-repo</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak build-update-repo</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-build-update-repo</refname>
+        <refpurpose>Create a repository from a build directory</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak build-update-repo</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">LOCATION</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Updates repository metadata for the repository at
+            <arg choice="plain">LOCATION</arg>. This command generates
+            an OSTree summary file that lists the contents of the repository.
+            The summary is used by flatpak repo-contents and other commands
+            to display the contents of remote repositories.
+        </para>
+        <para>
+            After this command, <arg choice="plain">LOCATION</arg> can be
+            used as the repository location for flatpak add-repo, either by
+            exporting it over http, or directly with a file: url.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--title=TITLE</option></term>
+
+                <listitem><para>
+                    A title for the repository, e.g. for display in a UI.
+                    The title is stored in the repository summary.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-sign=KEYID</option></term>
+
+                <listitem><para>
+                    Sign the commit with this GPG key
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-homedir=PATH</option></term>
+
+                <listitem><para>
+                    GPG Homedir to use when looking for keyrings
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--generate-static-deltas</option></term>
+
+                <listitem><para>
+                  Generate static deltas for all references. This generates from-empty and
+                  delta static files that allow for faster download.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--prune</option></term>
+
+                <listitem><para>
+                    Remove unreferences objects in repo.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--prune-depth</option></term>
+
+                <listitem><para>
+                    Only keep at most this number of old versions for any particular ref. Default is -1 which means infinite.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-repo-contents</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>

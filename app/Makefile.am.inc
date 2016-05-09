@@ -1,8 +1,8 @@
 bin_PROGRAMS += \
-	xdg-app \
+	flatpak \
 	$(NULL)
 
-xdg_app_SOURCES = \
+flatpak_SOURCES = \
 	app/flatpak-main.c \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-add-remote.c \
@@ -30,5 +30,5 @@ xdg_app_SOURCES = \
 	$(xdp_dbus_built_sources)	\
 	$(NULL)
 
-xdg_app_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(LIBARCHIVE_LIBS) libglnx.la libflatpak-common.la
-xdg_app_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(LIBARCHIVE_CFLAGS)
+flatpak_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(LIBARCHIVE_LIBS) libglnx.la libflatpak-common.la
+flatpak_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(LIBARCHIVE_CFLAGS)

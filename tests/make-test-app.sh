@@ -5,7 +5,7 @@ set -e
 DIR=`mktemp -d`
 
 # Init dir
-xdg-app build-init ${DIR} org.test.Hello org.test.Platform org.test.Platform
+flatpak build-init ${DIR} org.test.Hello org.test.Platform org.test.Platform
 
 mkdir -p ${DIR}/files/bin
 cat > ${DIR}/files/bin/hello.sh <<EOF
@@ -29,7 +29,7 @@ cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/
 
 
 mkdir -p ${DIR}/files/share/app-info/xmls
-mkdir -p ${DIR}/files/share/app-info/icons/xdg-app/64x64
+mkdir -p ${DIR}/files/share/app-info/icons/flatpak/64x64
 gzip -c > ${DIR}/files/share/app-info/xmls/org.test.Hello.xml.gz <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <components version="0.8">
@@ -45,8 +45,8 @@ gzip -c > ${DIR}/files/share/app-info/xmls/org.test.Hello.xml.gz <<EOF
   </component>
 </components>
 EOF
-cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/xdg-app/64x64/
+cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/
 
-xdg-app build-finish --command=hello.sh ${DIR}
-xdg-app build-export repo ${DIR}
+flatpak build-finish --command=hello.sh ${DIR}
+flatpak build-export repo ${DIR}
 rm -rf ${DIR}

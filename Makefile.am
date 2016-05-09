@@ -31,17 +31,17 @@ CLEANFILES += $(dbus_service_DATA)
 CLEANFILES += $(systemduserunit_DATA)
 EXTRA_DIST += $(service_in_files)
 
-XDG_APP_BINDIR=$(bindir)
+FLATPAK_BINDIR=$(bindir)
 
 AM_CPPFLAGS =						\
-	-DFLATPAK_BINDIR=\"$(XDG_APP_BINDIR)\"		\
+	-DFLATPAK_BINDIR=\"$(FLATPAK_BINDIR)\"		\
 	-DFLATPAK_SYSTEMDIR=\"$(localstatedir)/lib/xdg-app\"\
-	-DFLATPAK_CONFIGDIR=\"$(sysconfdir)/xdg-app\"\
+	-DFLATPAK_CONFIGDIR=\"$(sysconfdir)/flatpak\"\
 	-DFLATPAK_BASEDIR=\"$(pkgdatadir)\"		\
 	-DFLATPAK_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
 	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"	\
 	-DHELPER=\"$(libdir)/flatpak/bwrap\"		\
-	-DDBUSPROXY=\"$(libexecdir)/xdg-dbus-proxy\"	\
+	-DDBUSPROXY=\"$(libexecdir)/flatpak-dbus-proxy\"	\
 	-DG_LOG_DOMAIN=\"flatpak\"			\
 	-I$(srcdir)/libglnx				\
 	-I$(srcdir)/common				\
@@ -94,26 +94,26 @@ endif
 endif
 
 completiondir = $(datadir)/bash-completion/completions
-completion_DATA = completion/xdg-app
+completion_DATA = completion/flatpak
 EXTRA_DIST += $(completion_DATA)
 
 profiledir = $(sysconfdir)/profile.d
-profile_DATA = xdg-app.sh
+profile_DATA = flatpak.sh
 EXTRA_DIST += \
-	profile/xdg-app.sh.in \
+	profile/flatpak.sh.in \
 	$(NULL)
-DISTCLEANFILES += xdg-app.sh
+DISTCLEANFILES += flatpak.sh
 
-xdg-app.sh: profile/xdg-app.sh.in
+flatpak.sh: profile/flatpak.sh.in
 	$(AM_V_GEN) $(SED) -e "s|\@localstatedir\@|$(localstatedir)|" \
 		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
 
 envdir = $(datadir)/gdm/env.d
-env_DATA = xdg-app.env
-EXTRA_DIST += env.d/xdg-app.env.in
-DISTCLEANFILES += xdg-app.env
+env_DATA = flatpak.env
+EXTRA_DIST += env.d/flatpak.env.in
+DISTCLEANFILES += flatpak.env
 
-xdg-app.env: env.d/xdg-app.env.in
+flatpak.env: env.d/flatpak.env.in
 	$(AM_V_GEN) $(SED) -e "s|\@localstatedir\@|$(localstatedir)|" \
 		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
 

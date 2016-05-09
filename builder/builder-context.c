@@ -137,7 +137,7 @@ builder_context_constructed (GObject *object)
 {
   BuilderContext *self = BUILDER_CONTEXT (object);
 
-  self->state_dir = g_file_get_child (self->base_dir, ".xdg-app-builder");
+  self->state_dir = g_file_get_child (self->base_dir, ".flatpak-builder");
   self->download_dir = g_file_get_child (self->state_dir, "downloads");
   self->build_dir = g_file_get_child (self->state_dir, "build");
   self->cache_dir = g_file_get_child (self->state_dir, "cache");
@@ -224,7 +224,7 @@ builder_context_get_soup_session (BuilderContext *self)
     {
       const char *http_proxy;
 
-      self->soup_session = soup_session_new_with_options (SOUP_SESSION_USER_AGENT, "xdg-app-builder ",
+      self->soup_session = soup_session_new_with_options (SOUP_SESSION_USER_AGENT, "flatpak-builder ",
                                                           SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE,
                                                           SOUP_SESSION_USE_THREAD_CONTEXT, TRUE,
                                                           SOUP_SESSION_TIMEOUT, 60,
@@ -391,7 +391,7 @@ builder_context_extend_env (BuilderContext *self,
       const char *old_path = g_environ_getenv (envp, "PATH");
       g_autofree char *new_path = NULL;
       if (old_path == NULL)
-        old_path = "/app/bin:/usr/bin"; /* This is the xdg-app default PATH */
+        old_path = "/app/bin:/usr/bin"; /* This is the flatpak default PATH */
 
       new_path = g_strdup_printf ("/run/ccache/bin:%s", old_path);
       envp = g_environ_setenv (envp, "PATH", new_path, TRUE);

@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.freedesktop.Flatpak
+Exec=@libexecdir@/flatpak-session-helper
+SystemdService=flatpak-session-helper.service

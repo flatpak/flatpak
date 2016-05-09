@@ -43,7 +43,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitDetails, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
 
 static gboolean
-handle_deploy (XdgAppSystemHelper    *object,
+handle_deploy (FlatpakSystemHelper   *object,
                GDBusMethodInvocation *invocation,
                const gchar           *arg_repo_path,
                guint32                arg_flags,
@@ -155,7 +155,7 @@ handle_deploy (XdgAppSystemHelper    *object,
         }
     }
 
-  xdg_app_system_helper_complete_deploy (object, invocation);
+  flatpak_system_helper_complete_deploy (object, invocation);
 
   return TRUE;
 }
@@ -249,10 +249,10 @@ on_bus_acquired (GDBusConnection *connection,
                  const gchar     *name,
                  gpointer         user_data)
 {
-  XdgAppSystemHelper *helper;
+  FlatpakSystemHelper *helper;
   GError *error = NULL;
 
-  helper = xdg_app_system_helper_skeleton_new ();
+  helper = flatpak_system_helper_skeleton_new ();
 
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (helper),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);

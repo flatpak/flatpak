@@ -1,4 +1,4 @@
-/* xdg-app-db.c
+/* flatpak-db.c
  *
  * Copyright (C) 2015 Red Hat, Inc
  *

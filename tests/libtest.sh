@@ -62,20 +62,20 @@ if test -n "${OT_TESTS_DEBUG:-}"; then
 fi
 
 if test -n "${OT_TESTS_VALGRIND:-}"; then
-    CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=full --num-callers=30 --suppressions=${test_srcdir}/xdg-app-valgrind.supp"
+    CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=full --num-callers=30 --suppressions=${test_srcdir}/flatpak-valgrind.supp"
 else
     CMD_PREFIX=""
 fi
 
 # We need this to be in /var/tmp because /tmp has no xattr support
-TEST_DATA_DIR=`mktemp -d /var/tmp/test-xdg-app-XXXXXX`
+TEST_DATA_DIR=`mktemp -d /var/tmp/test-flatpak-XXXXXX`
 
 export XDG_DATA_HOME=${TEST_DATA_DIR}/share
 
 export USERDIR=${TEST_DATA_DIR}/share/xdg-app
-export ARCH=`xdg-app --default-arch`
+export ARCH=`flatpak --default-arch`
 
-export XDG_APP="${CMD_PREFIX} xdg-app"
+export FLATPAK="${CMD_PREFIX} flatpak"
 
 assert_streq () {
     test "$1" = "$2" || (echo 1>&2 "$1 != $2"; exit 1)
@@ -146,7 +146,7 @@ assert_file_empty() {
 setup_repo () {
     . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
     . $(dirname $0)/make-test-app.sh > /dev/null
-    xdg-app remote-add --user --no-gpg-verify test-repo repo
+    flatpak remote-add --user --no-gpg-verify test-repo repo
 }
 
 setup_sdk_repo () {
@@ -155,21 +155,21 @@ setup_sdk_repo () {
 
 
 install_repo () {
-    ${XDG_APP} --user install test-repo org.test.Platform master
-    ${XDG_APP} --user install test-repo org.test.Hello master
+    ${FLATPAK} --user install test-repo org.test.Platform master
+    ${FLATPAK} --user install test-repo org.test.Hello master
 }
 
 install_sdk_repo () {
-    ${XDG_APP} --user install test-repo org.test.Sdk master
+    ${FLATPAK} --user install test-repo org.test.Sdk master
 }
 
 run () {
-    ${CMD_PREFIX} xdg-app run "$@"
+    ${CMD_PREFIX} flatpak run "$@"
 
 }
 
 run_sh () {
-    ${CMD_PREFIX} xdg-app run --command=bash ${ARGS-} org.test.Hello -c "$*"
+    ${CMD_PREFIX} flatpak run --command=bash ${ARGS-} org.test.Hello -c "$*"
 }
 
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf

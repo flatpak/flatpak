@@ -1,5 +1,5 @@
 [Unit]
-Description=xdg-app document portal service
+Description=flatpak document portal service
 
 [Service]
 BusName=org.freedesktop.portal.Documents

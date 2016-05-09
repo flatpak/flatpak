@@ -583,7 +583,7 @@ build (GFile          *app_dir,
   int i;
 
   args = g_ptr_array_new_with_free_func (g_free);
-  g_ptr_array_add (args, g_strdup ("xdg-app"));
+  g_ptr_array_add (args, g_strdup ("flatpak"));
   g_ptr_array_add (args, g_strdup ("build"));
 
   source_dir_path_canonical = canonicalize_file_name (source_dir_path);

@@ -1,4 +1,0 @@
-[D-BUS Service]
-Name=org.freedesktop.XdgApp
-Exec=@libexecdir@/xdg-app-session-helper
-SystemdService=xdg-app-session-helper.service

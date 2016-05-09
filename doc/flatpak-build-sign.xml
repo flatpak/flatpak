@@ -1,0 +1,154 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-build-export">
+
+    <refentryinfo>
+        <title>flatpak build-sign</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak build-sign</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-build-sign</refname>
+        <refpurpose>Sign an application or runtime</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak build-sign</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">LOCATION</arg>
+                <arg choice="plain">ID</arg>
+                <arg choice="opt">BRANCH</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Signs the commit for a speficied application or runtime in
+            a local repository.  <arg choice="plain">LOCATION</arg> is
+            the location of the repository. <arg
+            choice="plain">ID</arg> is the name of the application, or
+            runtime if --runtime is specified. If <arg
+            choice="plain">BRANCH</arg> is not specified, it is
+            assumed to be "master".
+        </para>
+        <para>
+            Applications can also be signed during build-export, but
+            it is sometimes useful to add additionaly signatures later.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-sign=KEYID</option></term>
+
+                <listitem><para>
+                    Sign the commit with this GPG key
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-homedir=PATH</option></term>
+
+                <listitem><para>
+                    GPG Homedir to use when looking for keyrings
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    Sign a runtime instead of an app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    The architecture to use.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak build-export ~/repos/gnome-calculator/ ~/build/gnome-calculator/ org.gnome.Calculator</command>
+        </para>
+<programlisting>
+Commit: 9d0044ea480297114d03aec85c3d7ae3779438f9d2cb69d717fb54237acacb8c
+Metadata Total: 605
+Metadata Written: 5
+Content Total: 1174
+Content Written: 1
+Content Bytes Written: 305
+</programlisting>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+        </para>
+
+    </refsect1>
+
+</refentry>

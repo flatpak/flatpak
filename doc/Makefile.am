@@ -15,31 +15,31 @@ XSLTPROC_FLAGS = \
 	$(AM_V_GEN) $(XSLTPROC) $(XSLTPROC_FLAGS) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
 
 man_MANS = \
-	xdg-app.1			\
-	xdg-app-remote-add.1		\
-	xdg-app-remote-delete.1		\
-	xdg-app-remote-list.1		\
-	xdg-app-remote-modify.1		\
-	xdg-app-remote-ls.1		\
-	xdg-app-install.1		\
-	xdg-app-update.1		\
-	xdg-app-uninstall.1		\
-	xdg-app-list.1			\
-	xdg-app-info.1			\
-	xdg-app-make-current.1		\
-	xdg-app-run.1			\
-	xdg-app-override.1		\
-	xdg-app-enter.1			\
-	xdg-app-export-file.1		\
-	xdg-app-build-init.1		\
-	xdg-app-build.1			\
-	xdg-app-build-bundle.1		\
-	xdg-app-build-import-bundle.1	\
-	xdg-app-build-finish.1		\
-	xdg-app-build-export.1		\
-	xdg-app-build-update-repo.1	\
-	xdg-app-build-sign.1		\
-	xdg-app-builder.1		\
+	flatpak.1			\
+	flatpak-remote-add.1		\
+	flatpak-remote-delete.1		\
+	flatpak-remote-list.1		\
+	flatpak-remote-modify.1		\
+	flatpak-remote-ls.1		\
+	flatpak-install.1		\
+	flatpak-update.1		\
+	flatpak-uninstall.1		\
+	flatpak-list.1			\
+	flatpak-info.1			\
+	flatpak-make-current.1		\
+	flatpak-run.1			\
+	flatpak-override.1		\
+	flatpak-enter.1			\
+	flatpak-export-file.1		\
+	flatpak-build-init.1		\
+	flatpak-build.1			\
+	flatpak-build-bundle.1		\
+	flatpak-build-import-bundle.1	\
+	flatpak-build-finish.1		\
+	flatpak-build-export.1		\
+	flatpak-build-update-repo.1	\
+	flatpak-build-sign.1		\
+	flatpak-builder.1		\
 	$(NULL)
 
 xml_files = $(man_MANS:.1=.xml)

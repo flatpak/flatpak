@@ -4,12 +4,12 @@ dbus_built_sources = common/flatpak-dbus.c common/flatpak-dbus.h
 systemd_dbus_built_sources = common/flatpak-systemd-dbus.c common/flatpak-systemd-dbus.h
 BUILT_SOURCES += $(dbus_built_sources) $(systemd_dbus_built_sources)
 
-$(dbus_built_sources) : data/org.freedesktop.XdgApp.xml
+$(dbus_built_sources) : data/org.freedesktop.Flatpak.xml
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
-		--interface-prefix org.freedesktop.XdgApp.	\
+		--interface-prefix org.freedesktop.Flatpak.	\
 		--c-namespace Flatpak				\
 		--generate-c-code $(builddir)/common/flatpak-dbus	\
-		$(srcdir)/data/org.freedesktop.XdgApp.xml	\
+		$(srcdir)/data/org.freedesktop.Flatpak.xml	\
 		$(NULL)
 
 $(systemd_dbus_built_sources) : data/org.freedesktop.systemd1.xml

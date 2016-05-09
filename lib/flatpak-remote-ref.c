@@ -28,7 +28,7 @@
 #include "flatpak-enum-types.h"
 
 /**
- * SECTION:xdg-app-remote-ref
+ * SECTION:flatpak-remote-ref
  * @Title: FlatpakRemoteRef
  * @Short_description: Remote application reference
  *

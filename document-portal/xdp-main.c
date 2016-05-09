@@ -36,7 +36,7 @@ typedef struct
 
 static GMainLoop *loop = NULL;
 static FlatpakDb *db = NULL;
-static XdgAppPermissionStore *permission_store;
+static FlatpakPermissionStore *permission_store;
 static int daemon_event_fd = -1;
 static int final_exit_status = 0;
 static dev_t fuse_dev = 0;
@@ -89,7 +89,7 @@ do_set_permissions (FlatpakDbEntry    *entry,
 
   if (persist_entry (new_entry))
     {
-      xdg_app_permission_store_call_set_permission (permission_store,
+      flatpak_permission_store_call_set_permission (permission_store,
                                                     TABLE_NAME,
                                                     FALSE,
                                                     doc_id,
@@ -243,7 +243,7 @@ portal_delete (GDBusMethodInvocation *invocation,
     flatpak_db_set_entry (db, id, NULL);
 
     if (persist_entry (entry))
-      xdg_app_permission_store_call_delete (permission_store, TABLE_NAME,
+      flatpak_permission_store_call_delete (permission_store, TABLE_NAME,
                                             id, NULL, NULL, NULL);
   }
 
@@ -303,7 +303,7 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
 
   if (persistent)
     {
-      xdg_app_permission_store_call_set (permission_store,
+      flatpak_permission_store_call_set (permission_store,
                                          TABLE_NAME,
                                          TRUE,
                                          id,
@@ -821,7 +821,7 @@ main (int    argc,
       do_exit (3);
     }
 
-  permission_store = xdg_app_permission_store_proxy_new_sync (session_bus, G_DBUS_PROXY_FLAGS_NONE,
+  permission_store = flatpak_permission_store_proxy_new_sync (session_bus, G_DBUS_PROXY_FLAGS_NONE,
                                                               "org.freedesktop.Flatpak",
                                                               "/org/freedesktop/Flatpak/PermissionStore",
                                                               NULL, &error);

@@ -27,7 +27,7 @@
 #include "flatpak-enum-types.h"
 
 /**
- * SECTION:xdg-app-installed-ref
+ * SECTION:flatpak-installed-ref
  * @Title: FlatpakInstalledRef
  * @Short_description: Installed application reference
  *

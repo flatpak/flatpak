@@ -1,4 +1,4 @@
-/* xdg-app-error.c
+/* flatpak-error.c
  *
  * Copyright (C) 2015 Red Hat, Inc
  *
@@ -26,9 +26,9 @@
 #include <gio/gio.h>
 
 /**
- * SECTION:xdg-app-error
+ * SECTION:flatpak-error
  * @Title: Error codes
  *
  */
 
-G_DEFINE_QUARK (xdg - app - error - quark, flatpak_error)
+G_DEFINE_QUARK (flatpak-error-quark, flatpak_error)

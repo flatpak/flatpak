@@ -1,0 +1,232 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-build-export">
+
+    <refentryinfo>
+        <title>flatpak build-export</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak build-export</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-build-export</refname>
+        <refpurpose>Create a repository from a build directory</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak build-export</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">LOCATION</arg>
+                <arg choice="plain">DIRECTORY</arg>
+                <arg choice="opt">BRANCH</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Creates or updates a repository with an application build.
+            <arg choice="plain">LOCATION</arg> is the location of the
+            repository. <arg choice="plain">DIRECTORY</arg> must be a
+            finalized build directory. If <arg choice="plain">BRANCH</arg>
+            is not specified, it is assumed to be "master".
+        </para>
+        <para>
+            If <arg choice="plain">LOCATION</arg> exists, it is assumed to
+            be an OSTree repository, otherwise a new OSTree repository is
+            created at this location. The repository can be inspected with
+            the <command>ostree</command> tool.
+        </para>
+        <para>
+            The contents of <arg choice="plain">DIRECTORY</arg> are committed
+            on the branch with name <literal>app/APPNAME/ARCH/BRANCH</literal>,
+            where ARCH is the architecture of the runtime that the application
+            is using. A commit filter is used to enforce that only the contents
+            of the <filename>files/</filename> and <filename>export/</filename>
+            subdirectories and the <filename>metadata</filename> file are included
+            in the commit, anything else is ignored.
+        </para>
+        <para>
+            The repo-update command should be used to update repository
+            metadata whenever application builds are added to a repository.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-s</option></term>
+                <term><option>--subject=SUBJECT</option></term>
+
+                <listitem><para>
+                    One line subject for the commit message.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-b</option></term>
+                <term><option>--body=BODY</option></term>
+
+                <listitem><para>
+                    Full description for the commit message.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    Specify the architecture component of the branch to export. Only host compatible architectures can be specified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--exclude=PATTERN</option></term>
+
+                <listitem><para>
+                    Exclude files matching PATTERN from the commit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--include=PATTERN</option></term>
+
+                <listitem><para>
+                    Don't exclude files matching PATTERN from the commit, even if they match the --export patterns.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--metadata=FILENAME</option></term>
+
+                <listitem><para>
+                  Use the specified filename as metadata in the exported app instead of
+                  the default file (called <filename>metadata</filename>). This is useful
+                  if you want to commit multiple things from a single build tree, typically
+                  used in combination with --files and --exclude.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--files=SUBDIR</option></term>
+
+                <listitem><para>
+                  Use the files in the specified subdirectory as the file contents, rather
+                  than the regular <filename>files</filename> directory.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--update-appstream</option></term>
+
+                <listitem><para>
+                    Run appstream-builder and to update the appstream branch after build.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-sign=KEYID</option></term>
+
+                <listitem><para>
+                    Sign the commit with this GPG key
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-homedir=PATH</option></term>
+
+                <listitem><para>
+                    GPG Homedir to use when looking for keyrings
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--runtime</option></term>
+
+                <listitem><para>
+                    Export a runtime instead for an app (this uses the usr subdir as files).
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak build-export ~/repos/gnome-calculator/ ~/build/gnome-calculator/ org.gnome.Calculator</command>
+        </para>
+<programlisting>
+Commit: 9d0044ea480297114d03aec85c3d7ae3779438f9d2cb69d717fb54237acacb8c
+Metadata Total: 605
+Metadata Written: 5
+Content Total: 1174
+Content Written: 1
+Content Bytes Written: 305
+</programlisting>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-repo-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>

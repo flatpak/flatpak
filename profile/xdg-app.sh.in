@@ -1,4 +1,0 @@
-# @sysconfdir@/profile.d/xdg-app.sh - set XDG_DATA_DIRS
-
-XDG_DATA_DIRS="${XDG_DATA_DIRS:-$HOME/.local/share/xdg-app/exports/share:@localstatedir@/xdg-app/exports/share/:/usr/local/share/:/usr/share/}"
-export XDG_DATA_DIRS

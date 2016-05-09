@@ -92,7 +92,7 @@ main (int argc, char *argv[])
 
   g_print ("\n**** Loading bundle\n");
   {
-    g_autoptr(GFile) f = g_file_new_for_commandline_arg ("tests/hello.xdgapp");
+    g_autoptr(GFile) f = g_file_new_for_commandline_arg ("tests/hello.pak");
     g_autoptr(FlatpakBundleRef) bundle = flatpak_bundle_ref_new (f, &error);
     if (bundle == NULL)
       {

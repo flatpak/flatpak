@@ -30,11 +30,11 @@
 static char *monitor_dir;
 
 static gboolean
-handle_request_monitor (XdgAppSessionHelper   *object,
+handle_request_monitor (FlatpakSessionHelper   *object,
                         GDBusMethodInvocation *invocation,
                         gpointer               user_data)
 {
-  xdg_app_session_helper_complete_request_monitor (object, invocation,
+  flatpak_session_helper_complete_request_monitor (object, invocation,
                                                    monitor_dir);
 
   return TRUE;
@@ -45,12 +45,12 @@ on_bus_acquired (GDBusConnection *connection,
                  const gchar     *name,
                  gpointer         user_data)
 {
-  XdgAppSessionHelper *helper;
+  FlatpakSessionHelper *helper;
   GError *error = NULL;
 
   flatpak_permission_store_start (connection);
 
-  helper = xdg_app_session_helper_skeleton_new ();
+  helper = flatpak_session_helper_skeleton_new ();
 
   g_signal_connect (helper, "handle-request-monitor", G_CALLBACK (handle_request_monitor), NULL);
 
@@ -134,7 +134,7 @@ main (int    argc,
 
   g_set_prgname (argv[0]);
 
-  monitor_dir = g_build_filename (g_get_user_runtime_dir (), "xdg-app-monitor", NULL);
+  monitor_dir = g_build_filename (g_get_user_runtime_dir (), "flatpak-monitor", NULL);
   if (g_mkdir_with_parents (monitor_dir, 0755) != 0)
     {
       g_print ("Can't create %s\n", monitor_dir);

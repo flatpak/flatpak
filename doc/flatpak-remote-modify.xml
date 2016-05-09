@@ -1,0 +1,211 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-remote-modify">
+
+    <refentryinfo>
+        <title>flatpak remote-modify</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak remote-modify</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-remote-modify</refname>
+        <refpurpose>Modify a remote repository</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak remote-modify</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">NAME</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Modifies options for an existing remote repository in the flatpak repository configuration.
+            <arg choice="plain">NAME</arg> is the name for the remote.
+        </para>
+        <para>
+            Unless overridden with the --user option, this command changes
+            the system-wide configuration.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Modify the per-user configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Modify the system-wide configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-gpg-verify</option></term>
+
+                <listitem><para>
+                    Disable GPG verification for the added remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-verify</option></term>
+
+                <listitem><para>
+                    Enable GPG verification for the added remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--prio=PRIO</option></term>
+
+                <listitem><para>
+                    Set the priority for the remote. Default is 1, higher is more prioritized. This is
+                    mainly used for graphical installation tools.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--no-enumerate</option></term>
+
+                <listitem><para>
+                    Mark the remote as not enumerated. This means the remote will
+                    not be used to list applications, for instance in graphical
+                    installation tools.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--disable</option></term>
+
+                <listitem><para>
+                    Disable the remote. Disabled remotes will not be automatically updated from.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--enable</option></term>
+
+                <listitem><para>
+                    Enable the remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--enumerate</option></term>
+
+                <listitem><para>
+                    Mark the remote as enumerated. This means the remote will
+                    be used to list applications, for instance in graphical
+                    installation tools.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--title=TITLE</option></term>
+
+                <listitem><para>
+                    A title for the remote, e.g. for display in a UI.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-import=FILE</option></term>
+
+                <listitem><para>
+                     Import gpg keys from the specified keyring file as
+                     trusted for the new remote. If the file is - the
+                     keyring is read from standard input.  The set of keys
+                     imported from the keyring can optionally be limited by
+                     using --gpg-key.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-key=KEY</option></term>
+
+                <listitem><para>
+                  Only import the named keys from the specified gpg keyrings.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak --user remote-modify --no-gpg-verify test-repo</command>
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+            <para>
+                <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-add-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-delete-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-list-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            </para>
+    </refsect1>
+
+</refentry>

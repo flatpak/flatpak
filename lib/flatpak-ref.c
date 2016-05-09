@@ -25,11 +25,11 @@
 #include "flatpak-enum-types.h"
 
 /**
- * SECTION:xdg-app-ref
+ * SECTION:flatpak-ref
  * @Title: FlatpakRef
  * @Short_description: Application reference
  *
- * Currently xdg-app manages two types of binary artifacts: applications, and
+ * Currently flatpak manages two types of binary artifacts: applications, and
  * runtimes. Applications contain a program that desktop users can run, while
  * runtimes contain only libraries and data. An FlatpakRef object (or short: ref)
  * can refer to either of these.
