@@ -14,5 +14,5 @@ xdg_app_session_helper_SOURCES = \
 	session-helper/flatpak-permission-store.h	\
 	$(NULL)
 
-xdg_app_session_helper_LDADD = $(BASE_LIBS) libxdgapp-common.la
+xdg_app_session_helper_LDADD = $(BASE_LIBS) libflatpak-common.la
 xdg_app_session_helper_CFLAGS = $(BASE_CFLAGS)

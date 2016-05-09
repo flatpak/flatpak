@@ -7,10 +7,10 @@ datadir=@datadir@
 
 interfaces_dir=${datadir}/dbus-1/interfaces/
 
-Name: xdg-app
+Name: flatpak
 Description: Application sandboxing framework
 Version: @VERSION@
 Requires: glib-2.0 gio-2.0
 Requires.private: gio-unix-2.0 ostree-1 libgsystem
-Libs: -L${libdir} -lxdg-app
-Cflags: -I${includedir}/xdg-app
+Libs: -L${libdir} -lflatpak
+Cflags: -I${includedir}/flatpak

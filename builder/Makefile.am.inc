@@ -35,5 +35,5 @@ xdg_app_builder_SOURCES = \
 	$(NULL)
 
 xdg_app_builder_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(JSON_LIBS) $(SOUP_LIBS) $(LIBARCHIVE_LIBS) $(LIBELF_LIBS) \
-			libglnx.la libxdgapp-common.la
+			libglnx.la libflatpak-common.la
 xdg_app_builder_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(JSON_CFLAGS) $(SOUP_CFLAGS) $(LIBARCHIVE_CFLAGS)

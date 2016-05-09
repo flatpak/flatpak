@@ -40,9 +40,9 @@ AM_CPPFLAGS =						\
 	-DFLATPAK_BASEDIR=\"$(pkgdatadir)\"		\
 	-DFLATPAK_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
 	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"	\
-	-DHELPER=\"$(libdir)/xdg-app/bwrap\"		\
+	-DHELPER=\"$(libdir)/flatpak/bwrap\"		\
 	-DDBUSPROXY=\"$(libexecdir)/xdg-dbus-proxy\"	\
-	-DG_LOG_DOMAIN=\"xdg-app\"			\
+	-DG_LOG_DOMAIN=\"flatpak\"			\
 	-I$(srcdir)/libglnx				\
 	-I$(srcdir)/common				\
 	-I$(builddir)/common				\
@@ -78,18 +78,18 @@ include document-portal/Makefile.am.inc
 include tests/Makefile.am.inc
 
 bwrap_PROGRAMS = bwrap
-bwrapdir = $(libdir)/xdg-app
+bwrapdir = $(libdir)/flatpak
 include bubblewrap/Makefile-bwrap.am.inc
 
 # NOTE: bwrap is install-bwrapPROGS which is run from install-data, not install-exec, this data-hook is used
 install-data-hook:
 	$(MAKE) $(AM_MAKEFLAGS) install-test-data-hook
 if PRIV_MODE_SETUID
-	$(SUDO_BIN) chown root $(DESTDIR)$(libdir)/xdg-app/bwrap
-	$(SUDO_BIN) chmod u+s $(DESTDIR)$(libdir)/xdg-app/bwrap
+	$(SUDO_BIN) chown root $(DESTDIR)$(libdir)/flatpak/bwrap
+	$(SUDO_BIN) chmod u+s $(DESTDIR)$(libdir)/flatpak/bwrap
 else
 if PRIV_MODE_FILECAPS
-	$(SUDO_BIN) setcap cap_sys_admin,cap_net_admin,cap_sys_chroot+ep $(DESTDIR)$(libdir)/xdg-app/bwrap
+	$(SUDO_BIN) setcap cap_sys_admin,cap_net_admin,cap_sys_chroot+ep $(DESTDIR)$(libdir)/flatpak/bwrap
 endif
 endif
 
@@ -118,8 +118,8 @@ xdg-app.env: env.d/xdg-app.env.in
 		-e "s|\@sysconfdir\@|$(sysconfdir)|" $< > $@
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = xdg-app.pc
-EXTRA_DIST += xdg-app.pc.in
+pkgconfig_DATA = flatpak.pc
+EXTRA_DIST += flatpak.pc.in
 
 DISTCHECK_CONFIGURE_FLAGS =		\
 	--enable-documentation		\

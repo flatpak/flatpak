@@ -17,7 +17,7 @@ xdg_app_system_helper_SOURCES = \
 	lib/flatpak-error.c	\
 	$(NULL)
 
-xdg_app_system_helper_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(POLKIT_LIBS) libxdgapp-common.la
+xdg_app_system_helper_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(POLKIT_LIBS) libflatpak-common.la
 xdg_app_system_helper_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(POLKIT_CFLAGS)
 
 polkit_rulesdir = $(datadir)/polkit-1/rules.d

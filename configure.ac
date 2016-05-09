@@ -362,7 +362,7 @@ AC_CONFIG_FILES([
 Makefile
 doc/Makefile
 doc/reference/Makefile
-xdg-app.pc
+flatpak.pc
 lib/flatpak-version-macros.h
 doc/reference/version.xml
 po/Makefile.in

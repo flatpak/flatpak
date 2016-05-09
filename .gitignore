@@ -52,7 +52,7 @@ lib/xdg-app-version-macros.h
 xdg-app.pc
 lib/xdg-app-enum-types.c
 lib/xdg-app-enum-types.h
-test-libxdg-app
+test-libflatpak
 XdgApp-1.0.*
 /doc/reference/gtkdoc-check.log
 /doc/reference/gtkdoc-check.test

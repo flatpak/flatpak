@@ -7,21 +7,21 @@
 ]>
 <book id="index">
   <bookinfo>
-    <title>xdg-app Library Reference Manual</title>
+    <title>Flatpak Library Reference Manual</title>
     <releaseinfo>
-      For xdg-app &version;
+      For flatpak &version;
     </releaseinfo>
   </bookinfo>
 
   <chapter>
-    <title>XDG-App</title>
-    <xi:include href="xml/xdg-app-installation.xml"/>
-    <xi:include href="xml/xdg-app-ref.xml"/>
-    <xi:include href="xml/xdg-app-installed-ref.xml"/>
-    <xi:include href="xml/xdg-app-remote-ref.xml"/>
-    <xi:include href="xml/xdg-app-remote.xml"/>
-    <xi:include href="xml/xdg-app-error.xml"/>
-    <xi:include href="xml/xdg-app-version-macros.xml"/>
+    <title>Flatpak</title>
+    <xi:include href="xml/flatpak-installation.xml"/>
+    <xi:include href="xml/flatpak-ref.xml"/>
+    <xi:include href="xml/flatpak-installed-ref.xml"/>
+    <xi:include href="xml/flatpak-remote-ref.xml"/>
+    <xi:include href="xml/flatpak-remote.xml"/>
+    <xi:include href="xml/flatpak-error.xml"/>
+    <xi:include href="xml/flatpak-version-macros.xml"/>
   </chapter>
 
   <chapter id="object-tree">

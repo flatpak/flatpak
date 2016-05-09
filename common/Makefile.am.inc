@@ -1,4 +1,4 @@
-noinst_LTLIBRARIES += libxdgapp-common.la
+noinst_LTLIBRARIES += libflatpak-common.la
 
 dbus_built_sources = common/flatpak-dbus.c common/flatpak-dbus.h
 systemd_dbus_built_sources = common/flatpak-systemd-dbus.c common/flatpak-systemd-dbus.h
@@ -20,7 +20,7 @@ $(systemd_dbus_built_sources) : data/org.freedesktop.systemd1.xml
 		$(srcdir)/data/org.freedesktop.systemd1.xml	\
 		$(NULL)
 
-libxdgapp_common_la_SOURCES = \
+libflatpak_common_la_SOURCES = \
 	common/flatpak-common-types.h \
 	common/flatpak-dir.c \
 	common/flatpak-dir.h \
@@ -43,7 +43,7 @@ libxdgapp_common_la_SOURCES = \
 	$(systemd_dbus_built_sources)	\
 	$(NULL)
 
-libxdgapp_common_la_CFLAGS = \
+libflatpak_common_la_CFLAGS = \
 	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
@@ -53,4 +53,4 @@ libxdgapp_common_la_CFLAGS = \
 	$(LIBSECCOMP_CFLAGS) \
 	-I$(srcdir)/dbus-proxy \
 	$(NULL)
-libxdgapp_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS)
+libflatpak_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS)
