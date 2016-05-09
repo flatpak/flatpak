@@ -32,11 +32,15 @@
 
 static PolkitAuthority *authority = NULL;
 
-#ifndef glib_autoptr_cleanup_PolkitAuthorizationResult
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitAuthorizationResult, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitDetails, g_object_unref)
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitSubject, g_object_unref)
-#endif
+/* This uses a weird Auto prefix to avoid conflicts with later added polkit types.
+ */
+typedef PolkitAuthorizationResult AutoPolkitAuthorizationResult;
+typedef PolkitDetails AutoPolkitDetails;
+typedef PolkitSubject AutoPolkitSubject;
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitAuthorizationResult, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitDetails, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
 
 static gboolean
 handle_deploy (XdgAppSystemHelper    *object,
@@ -51,8 +55,8 @@ handle_deploy (XdgAppSystemHelper    *object,
   g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(PolkitSubject) subject = NULL;
-  g_autoptr(PolkitDetails) details = NULL;
+  g_autoptr(AutoPolkitSubject) subject = NULL;
+  g_autoptr(AutoPolkitDetails) details = NULL;
   gboolean is_update;
   g_autoptr(GMainContext) main_context = NULL;
 
@@ -168,10 +172,10 @@ xdg_app_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   const gchar *sender;
   const gchar *action;
 
-  g_autoptr(PolkitSubject) subject = NULL;
-  g_autoptr(PolkitDetails) details = NULL;
+  g_autoptr(AutoPolkitSubject) subject = NULL;
+  g_autoptr(AutoPolkitDetails) details = NULL;
   g_autoptr(GError) error = NULL;
-  g_autoptr(PolkitAuthorizationResult) result = NULL;
+  g_autoptr(AutoPolkitAuthorizationResult) result = NULL;
 
   authorized = FALSE;
 
