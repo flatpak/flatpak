@@ -59,6 +59,7 @@ Flatpak-1.0.*
 /doc/reference/gtkdoc-check.log
 /doc/reference/gtkdoc-check.test
 /doc/reference/gtkdoc-check.trs
+/doc/reference/version.xml
 /test-doc-portal
 /test-doc-portal.log
 /test-doc-portal.trs
@@ -78,5 +79,7 @@ Flatpak-1.0.*
 po/.intltool-merge-cache
 po/Makefile.in.in
 po/POTFILES
+po/Flatpak.pot
 system-helper/org.freedesktop.Flatpak.policy
 bwrap
+py-compile
