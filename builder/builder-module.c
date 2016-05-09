@@ -45,6 +45,7 @@ struct BuilderModule
   char          **config_opts;
   char          **make_args;
   char          **make_install_args;
+  gboolean        disabled;
   gboolean        rm_configure;
   gboolean        no_autogen;
   gboolean        no_parallel_make;
@@ -72,6 +73,7 @@ enum {
   PROP_NAME,
   PROP_SUBDIR,
   PROP_RM_CONFIGURE,
+  PROP_DISABLED,
   PROP_NO_AUTOGEN,
   PROP_NO_PARALLEL_MAKE,
   PROP_CMAKE,
@@ -130,6 +132,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_RM_CONFIGURE:
       g_value_set_boolean (value, self->rm_configure);
+      break;
+
+    case PROP_DISABLED:
+      g_value_set_boolean (value, self->disabled);
       break;
 
     case PROP_NO_AUTOGEN:
@@ -208,6 +214,10 @@ builder_module_set_property (GObject      *object,
 
     case PROP_RM_CONFIGURE:
       self->rm_configure = g_value_get_boolean (value);
+      break;
+
+    case PROP_DISABLED:
+      self->disabled = g_value_get_boolean (value);
       break;
 
     case PROP_NO_AUTOGEN:
@@ -303,6 +313,13 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_RM_CONFIGURE,
                                    g_param_spec_boolean ("rm-configure",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_DISABLED,
+                                   g_param_spec_boolean ("disabled",
                                                          "",
                                                          "",
                                                          FALSE,
@@ -504,6 +521,12 @@ const char *
 builder_module_get_name (BuilderModule *self)
 {
   return self->name;
+}
+
+gboolean
+builder_module_get_disabled (BuilderModule *self)
+{
+  return self->disabled;
 }
 
 GList *
@@ -1143,6 +1166,7 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_strv (cache, self->make_install_args);
   builder_cache_checksum_boolean (cache, self->rm_configure);
   builder_cache_checksum_boolean (cache, self->no_autogen);
+  builder_cache_checksum_boolean (cache, self->disabled);
   builder_cache_checksum_boolean (cache, self->no_parallel_make);
   builder_cache_checksum_boolean (cache, self->cmake);
   builder_cache_checksum_boolean (cache, self->builddir);

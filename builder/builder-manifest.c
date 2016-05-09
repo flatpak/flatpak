@@ -1060,6 +1060,9 @@ builder_manifest_download (BuilderManifest *self,
     {
       BuilderModule *m = l->data;
 
+      if (builder_module_get_disabled (m))
+        continue;
+
       if (!builder_module_download_sources (m, update_vcs, context, error))
         return FALSE;
     }
@@ -1086,6 +1089,13 @@ builder_manifest_build (BuilderManifest *self,
     {
       BuilderModule *m = l->data;
       g_autoptr(GPtrArray) changes = NULL;
+
+      if (builder_module_get_disabled (m))
+        {
+          g_print ("Skipping disabled module %s\n", builder_module_get_name (m));
+          continue;
+        }
+
       g_autofree char *stage = g_strdup_printf ("build-%s", builder_module_get_name (m));
 
       builder_module_checksum (m, cache, context);
@@ -1372,6 +1382,9 @@ builder_manifest_cleanup (BuilderManifest *self,
       for (l = self->modules; l != NULL; l = l->next)
         {
           BuilderModule *m = l->data;
+
+          if (builder_module_get_disabled (m))
+            continue;
 
           builder_module_cleanup_collect (m, FALSE, context, to_remove_ht);
         }
@@ -1827,6 +1840,9 @@ builder_manifest_create_platform (BuilderManifest *self,
       for (l = self->modules; l != NULL; l = l->next)
         {
           BuilderModule *m = l->data;
+
+          if (builder_module_get_disabled (m))
+            continue;
 
           builder_module_cleanup_collect (m, TRUE, context, to_remove_ht);
         }

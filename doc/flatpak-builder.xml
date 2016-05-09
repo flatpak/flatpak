@@ -285,6 +285,10 @@
                     <listitem><para>The name of the module, used in e.g. build logs</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>disabled</option> (boolean)</term>
+                    <listitem><para>If true, skip this module</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>sources</option> (array of objects)</term>
                     <listitem><para>An array of objects defining sources that will be downloaded and extracted in order</para></listitem>
                 </varlistentry>
