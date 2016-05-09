@@ -834,8 +834,6 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   FlatpakInstalledRef *result = NULL;
-  g_autoptr(GError) local_error = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *origin = NULL;
   g_auto(GStrv) parts = NULL;
@@ -947,8 +945,6 @@ flatpak_installation_install (FlatpakInstallation    *self,
   g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   FlatpakInstalledRef *result = NULL;
-  g_autoptr(GError) local_error = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)

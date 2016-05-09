@@ -256,9 +256,6 @@ build_bundle (OstreeRepo *repo, GFile *file,
 
 #if defined(HAVE_LIBARCHIVE) && defined(HAVE_OSTREE_EXPORT_PATH_PREFIX)
 
-GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_read_archive, archive_read_free)
-#define free_read_archive __attribute__((cleanup (flatpak_local_free_read_archive)))
-
 GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_write_archive, archive_write_free)
 #define free_write_archive __attribute__((cleanup (flatpak_local_free_write_archive)))
 
@@ -752,7 +749,7 @@ build_oci (OstreeRepo *repo, GFile *file,
                "This version of flatpak is not compiled with libarchive support");
   return FALSE;
 #else
-  struct free_write_archive archive *a = NULL;
+  free_write_archive struct archive *a = NULL;
   OstreeRepoExportArchiveOptions opts = { 0, };
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) files = NULL;

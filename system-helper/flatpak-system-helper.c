@@ -55,8 +55,6 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(AutoPolkitSubject) subject = NULL;
-  g_autoptr(AutoPolkitDetails) details = NULL;
   gboolean is_update;
   g_autoptr(GMainContext) main_context = NULL;
 

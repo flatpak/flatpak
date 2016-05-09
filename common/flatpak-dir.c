@@ -681,7 +681,6 @@ flatpak_create_deploy_data_from_old (FlatpakDir   *self,
   g_autofree char *old_origin = NULL;
   g_autofree char *commit = NULL;
   g_auto(GStrv) old_subpaths = NULL;
-  g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) origin = NULL;
   guint64 installed_size;
 
@@ -714,7 +713,6 @@ flatpak_dir_get_deploy_data (FlatpakDir   *self,
   g_autoptr(GError) my_error = NULL;
   char *data = NULL;
   gsize data_size;
-  g_autofree char *active = NULL;
 
   deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
   if (deploy_dir == NULL)
@@ -2723,8 +2721,6 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            GCancellable *cancellable,
                            GError      **error)
 {
-  g_autofree char *previous_deployment = NULL;
-
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GVariant) old_deploy_data = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;

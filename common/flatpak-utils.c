@@ -1525,10 +1525,8 @@ flatpak_summary_lookup_ref (GVariant *summary, const char *ref, char **out_check
   int pos;
   g_autoptr(GVariant) refdata = NULL;
   g_autoptr(GVariant) reftargetdata = NULL;
-  g_autoptr(GVariant) commit_data = NULL;
   guint64 commit_size;
   g_autoptr(GVariant) commit_csum_v = NULL;
-  g_autoptr(GBytes) commit_bytes = NULL;
 
   if (!flatpak_variant_bsearch_str (refs, ref, &pos))
     return FALSE;
@@ -2918,7 +2916,6 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
 
   while (tmpdir_name == NULL)
     {
-      gs_dirfd_iterator_cleanup GSDirFdIterator child_dfd_iter = { 0, };
       struct dirent *dent;
       glnx_fd_close int existing_tmpdir_fd = -1;
       g_autoptr(GError) local_error = NULL;

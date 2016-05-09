@@ -276,7 +276,6 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GFile) file = NULL;
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
-  g_autoptr(GBytes) gpg_data = NULL;
   const char *location;
   const char *filename;
 
