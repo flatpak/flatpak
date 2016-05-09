@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gio/gio.h>
-#include "permission-store-dbus.h"
+#include "permission-store/permission-store-dbus.h"
 #include "xdg-permission-store.h"
 #include "flatpak-db.h"
 #include "flatpak-portal-error.h"
