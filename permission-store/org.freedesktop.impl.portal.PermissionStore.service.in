@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.PermissionStore
+Exec=@libexecdir@/xdg-permission-store
+SystemdService=xdg-permission-store.service

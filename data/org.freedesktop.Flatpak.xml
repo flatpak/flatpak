@@ -31,57 +31,6 @@
     </method>
   </interface>
 
-  <interface name='org.freedesktop.Flatpak.PermissionStore'>
-
-    <method name="Lookup">
-      <arg name='table' type='s' direction='in'/>
-      <arg name='id' type='s' direction='in'/>
-      <arg name='permissions' type='a{sas}' direction='out'/>
-      <arg name='data' type='v' direction='out'/>
-    </method>
-
-    <method name="Set">
-      <arg name='table' type='s' direction='in'/>
-      <arg name='create' type='b' direction='in'/>
-      <arg name='id' type='s' direction='in'/>
-      <arg name='app_permissions' type='a{sas}' direction='in'/>
-      <arg name='data' type='v' direction='in'/>
-    </method>
-
-    <method name="Delete">
-      <arg name='table' type='s' direction='in'/>
-      <arg name='id' type='s' direction='in'/>
-    </method>
-
-    <method name="SetValue">
-      <arg name='table' type='s' direction='in'/>
-      <arg name='create' type='b' direction='in'/>
-      <arg name='id' type='s' direction='in'/>
-      <arg name='data' type='v' direction='in'/>
-    </method>
-
-    <method name="SetPermission">
-      <arg name='table' type='s' direction='in'/>
-      <arg name='create' type='b' direction='in'/>
-      <arg name='id' type='s' direction='in'/>
-      <arg name='app' type='s' direction='in'/>
-      <arg name='permissions' type='as' direction='in'/>
-    </method>
-
-    <method name="List">
-      <arg name='table' type='s' direction='in'/>
-      <arg name='ids' type='as' direction='out'/>
-    </method>
-
-    <signal name="Changed">
-      <arg name='table' type='s' direction='out'/>
-      <arg name='id' type='s' direction='out'/>
-      <arg name='deleted' type='b' direction='out'/>
-      <arg name='data' type='v' direction='out'/>
-      <arg name='permissions' type='a{sas}' direction='out'/>
-    </signal>
-  </interface>
-
   <interface name='org.freedesktop.Flatpak.SystemHelper'>
     <method name="Deploy">
       <arg type='ay' name='repo_path' direction='in'/>

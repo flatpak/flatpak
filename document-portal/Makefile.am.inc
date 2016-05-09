@@ -22,7 +22,8 @@ dbus_service_DATA += document-portal/org.freedesktop.portal.Documents.service
 xdg_document_portal_SOURCES = \
 	document-portal/xdp-main.c		\
 	document-portal/xdp-enums.h		\
-	$(xdp_dbus_built_sources)	\
+	$(xdp_dbus_built_sources)		\
+	$(ps_dbus_built_sources)		\
 	document-portal/xdp-util.h		\
 	document-portal/xdp-util.c		\
 	document-portal/xdp-fuse.h		\

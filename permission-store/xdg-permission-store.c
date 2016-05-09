@@ -24,7 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gio/gio.h>
-#include "flatpak-permission-store.h"
+#include "permission-store-dbus.h"
+#include "xdg-permission-store.h"
 #include "flatpak-db.h"
 #include "flatpak-portal-error.h"
 
@@ -144,7 +145,7 @@ ensure_writeout (Table                 *table,
 }
 
 static gboolean
-handle_list (FlatpakPermissionStore *object,
+handle_list (XdgPermissionStore     *object,
              GDBusMethodInvocation  *invocation,
              const gchar            *table_name)
 {
@@ -158,7 +159,7 @@ handle_list (FlatpakPermissionStore *object,
 
   ids = flatpak_db_list_ids (table->db);
 
-  flatpak_permission_store_complete_list (object, invocation, (const char * const *) ids);
+  xdg_permission_store_complete_list (object, invocation, (const char * const *) ids);
 
   return TRUE;
 }
@@ -186,7 +187,7 @@ get_app_permissions (FlatpakDbEntry *entry)
 }
 
 static gboolean
-handle_lookup (FlatpakPermissionStore *object,
+handle_lookup (XdgPermissionStore     *object,
                GDBusMethodInvocation  *invocation,
                const gchar            *table_name,
                const gchar            *id)
@@ -213,15 +214,15 @@ handle_lookup (FlatpakPermissionStore *object,
   data = flatpak_db_entry_get_data (entry);
   permissions = get_app_permissions (entry);
 
-  flatpak_permission_store_complete_lookup (object, invocation,
-                                            permissions,
-                                            g_variant_new_variant (data));
+  xdg_permission_store_complete_lookup (object, invocation,
+                                        permissions,
+                                        g_variant_new_variant (data));
 
   return TRUE;
 }
 
 static void
-emit_deleted (FlatpakPermissionStore *object,
+emit_deleted (XdgPermissionStore     *object,
               const gchar            *table_name,
               const gchar            *id,
               FlatpakDbEntry         *entry)
@@ -232,16 +233,16 @@ emit_deleted (FlatpakPermissionStore *object,
   data = flatpak_db_entry_get_data (entry);
   permissions = g_variant_ref_sink (g_variant_new_array (G_VARIANT_TYPE ("{sas}"), NULL, 0));
 
-  flatpak_permission_store_emit_changed (object,
-                                         table_name, id,
-                                         TRUE,
-                                         g_variant_new_variant (data),
-                                         permissions);
+  xdg_permission_store_emit_changed (object,
+                                     table_name, id,
+                                     TRUE,
+                                     g_variant_new_variant (data),
+                                     permissions);
 }
 
 
 static void
-emit_changed (FlatpakPermissionStore *object,
+emit_changed (XdgPermissionStore     *object,
               const gchar            *table_name,
               const gchar            *id,
               FlatpakDbEntry         *entry)
@@ -252,15 +253,15 @@ emit_changed (FlatpakPermissionStore *object,
   data = flatpak_db_entry_get_data (entry);
   permissions = get_app_permissions (entry);
 
-  flatpak_permission_store_emit_changed (object,
-                                         table_name, id,
-                                         FALSE,
-                                         g_variant_new_variant (data),
-                                         permissions);
+  xdg_permission_store_emit_changed (object,
+                                     table_name, id,
+                                     FALSE,
+                                     g_variant_new_variant (data),
+                                     permissions);
 }
 
 static gboolean
-handle_delete (FlatpakPermissionStore *object,
+handle_delete (XdgPermissionStore     *object,
                GDBusMethodInvocation  *invocation,
                const gchar            *table_name,
                const gchar            *id)
@@ -291,7 +292,7 @@ handle_delete (FlatpakPermissionStore *object,
 }
 
 static gboolean
-handle_set (FlatpakPermissionStore *object,
+handle_set (XdgPermissionStore     *object,
             GDBusMethodInvocation  *invocation,
             const gchar            *table_name,
             gboolean                create,
@@ -349,7 +350,7 @@ handle_set (FlatpakPermissionStore *object,
 }
 
 static gboolean
-handle_set_permission (FlatpakPermissionStore *object,
+handle_set_permission (XdgPermissionStore     *object,
                        GDBusMethodInvocation  *invocation,
                        const gchar            *table_name,
                        gboolean                create,
@@ -392,7 +393,7 @@ handle_set_permission (FlatpakPermissionStore *object,
 }
 
 static gboolean
-handle_set_value (FlatpakPermissionStore *object,
+handle_set_value (XdgPermissionStore     *object,
                   GDBusMethodInvocation  *invocation,
                   const gchar            *table_name,
                   gboolean                create,
@@ -437,15 +438,15 @@ handle_set_value (FlatpakPermissionStore *object,
 }
 
 void
-flatpak_permission_store_start (GDBusConnection *connection)
+xdg_permission_store_start (GDBusConnection *connection)
 {
-  FlatpakPermissionStore *store;
+  XdgPermissionStore *store;
   GError *error = NULL;
 
   tables = g_hash_table_new_full (g_str_hash, g_str_equal,
                                   g_free, (GDestroyNotify) table_free);
 
-  store = flatpak_permission_store_skeleton_new ();
+  store = xdg_permission_store_skeleton_new ();
 
   g_signal_connect (store, "handle-list", G_CALLBACK (handle_list), NULL);
   g_signal_connect (store, "handle-lookup", G_CALLBACK (handle_lookup), NULL);
@@ -456,7 +457,7 @@ flatpak_permission_store_start (GDBusConnection *connection)
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (store),
                                          connection,
-                                         "/org/freedesktop/Flatpak/PermissionStore",
+                                         "/org/freedesktop/impl/portal/PermissionStore",
                                          &error))
     {
       g_warning ("error: %s\n", error->message);

@@ -17,6 +17,7 @@
 #include "flatpak-dbus.h"
 #include "flatpak-utils.h"
 #include "flatpak-portal-error.h"
+#include "permission-store/permission-store-dbus.h"
 #include "xdp-fuse.h"
 
 #include <sys/eventfd.h>
@@ -36,7 +37,7 @@ typedef struct
 
 static GMainLoop *loop = NULL;
 static FlatpakDb *db = NULL;
-static FlatpakPermissionStore *permission_store;
+static XdgPermissionStore *permission_store;
 static int daemon_event_fd = -1;
 static int final_exit_status = 0;
 static dev_t fuse_dev = 0;
@@ -89,14 +90,14 @@ do_set_permissions (FlatpakDbEntry    *entry,
 
   if (persist_entry (new_entry))
     {
-      flatpak_permission_store_call_set_permission (permission_store,
-                                                    TABLE_NAME,
-                                                    FALSE,
-                                                    doc_id,
-                                                    app_id,
-                                                    perms_s,
-                                                    NULL,
-                                                    NULL, NULL);
+      xdg_permission_store_call_set_permission (permission_store,
+                                                TABLE_NAME,
+                                                FALSE,
+                                                doc_id,
+                                                app_id,
+                                                perms_s,
+                                                NULL,
+                                                NULL, NULL);
     }
 }
 
@@ -243,8 +244,8 @@ portal_delete (GDBusMethodInvocation *invocation,
     flatpak_db_set_entry (db, id, NULL);
 
     if (persist_entry (entry))
-      flatpak_permission_store_call_delete (permission_store, TABLE_NAME,
-                                            id, NULL, NULL, NULL);
+      xdg_permission_store_call_delete (permission_store, TABLE_NAME,
+                                        id, NULL, NULL, NULL);
   }
 
   /* All i/o is done now, so drop the lock so we can invalidate the fuse caches */
@@ -303,13 +304,13 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
 
   if (persistent)
     {
-      flatpak_permission_store_call_set (permission_store,
-                                         TABLE_NAME,
-                                         TRUE,
-                                         id,
-                                         g_variant_new_array (G_VARIANT_TYPE ("{sas}"), NULL, 0),
-                                         g_variant_new_variant (data),
-                                         NULL, NULL, NULL);
+      xdg_permission_store_call_set (permission_store,
+                                     TABLE_NAME,
+                                     TRUE,
+                                     id,
+                                     g_variant_new_array (G_VARIANT_TYPE ("{sas}"), NULL, 0),
+                                     g_variant_new_variant (data),
+                                     NULL, NULL, NULL);
     }
 
   return id;
@@ -823,10 +824,10 @@ main (int    argc,
       do_exit (3);
     }
 
-  permission_store = flatpak_permission_store_proxy_new_sync (session_bus, G_DBUS_PROXY_FLAGS_NONE,
-                                                              "org.freedesktop.Flatpak",
-                                                              "/org/freedesktop/Flatpak/PermissionStore",
-                                                              NULL, &error);
+  permission_store = xdg_permission_store_proxy_new_sync (session_bus, G_DBUS_PROXY_FLAGS_NONE,
+                                                          "org.freedesktop.impl.portal.PermissionStore",
+                                                          "/org/freedesktop/impl/portal/PermissionStore",
+                                                          NULL, &error);
   if (permission_store == NULL)
     {
       g_print ("No permission store: %s\n", error->message);

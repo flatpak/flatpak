@@ -1,0 +1,7 @@
+[Unit]
+Description=sandboxed app permission store
+
+[Service]
+BusName=org.freedesktop.impl.portal.PermissionStore
+ExecStart=@libexecdir@/xdg-permission-store
+Type=dbus

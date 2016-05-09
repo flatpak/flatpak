@@ -30,6 +30,7 @@ gtk-doc.make
 flatpak
 flatpak-session-helper
 xdg-document-portal
+xdg-permission-store
 flatpak-builder
 testdb
 doc/*.1
@@ -39,6 +40,7 @@ flatpak-dbus.[ch]
 flatpak-systemd-dbus.[ch]
 flatpak-resources.[ch]
 flatpak-dbus-proxy
+permission-store-dbus.[ch]
 flatpak-system-helper
 xdg-desktop-portal
 *.service

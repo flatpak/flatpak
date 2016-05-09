@@ -25,9 +25,13 @@ test_doc_portal_LDADD = \
              $(NULL)
 test_doc_portal_SOURCES = tests/test-doc-portal.c $(xdp_dbus_built_sources)
 
-EXTRA_test_doc_portal_DEPENDENCIES = tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.Flatpak.service
+EXTRA_test_doc_portal_DEPENDENCIES = tests/services/org.freedesktop.impl.portal.PermissionStore.service tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.Flatpak.service
 
 tests/services/org.freedesktop.portal.Documents.service: document-portal/org.freedesktop.portal.Documents.service.in
+	mkdir -p tests/services
+	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
+
+tests/services/org.freedesktop.impl.portal.PermissionStore.service: permission-store/org.freedesktop.impl.portal.PermissionStore.service.in
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
 
@@ -35,13 +39,14 @@ tests/services/org.freedesktop.Flatpak.service: session-helper/org.freedesktop.F
 	mkdir -p tests/services
 	$(AM_V_GEN) $(SED) -e "s|\@libexecdir\@|$(abs_top_builddir)|" $< > $@
 
-tests/libtest.sh: tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.Flatpak.service
+tests/libtest.sh: tests/services/org.freedesktop.impl.portal.PermissionStore.service tests/services/org.freedesktop.portal.Documents.service  tests/services/org.freedesktop.Flatpak.service
 
 install-test-data-hook:
 if ENABLE_INSTALLED_TESTS
 	mkdir -p $(DESTDIR)$(installed_testdir)/services
 	ln -sf $(dbus_servicedir)/org.freedesktop.Flatpak.service $(DESTDIR)$(installed_testdir)/services/
 	ln -sf $(dbus_servicedir)/org.freedesktop.portal.Documents.service $(DESTDIR)$(installed_testdir)/services/
+	ln -sf $(dbus_servicedir)/org.freedesktop.impl.portal.PermissionStore.service $(DESTDIR)$(installed_testdir)/services/
 endif
 
 tests/package_version.txt: Makefile
@@ -81,4 +86,5 @@ EXTRA_DIST += tests/flatpak-valgrind.supp tests/dbs/no_tables
 CLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \
 	tests/services/org.freedesktop.portal.Documents.service \
+	tests/services/org.freedesktop.impl.portal.PermissionStore.service \
 	$(NULL)

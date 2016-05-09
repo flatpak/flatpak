@@ -25,7 +25,6 @@
 #include <string.h>
 #include <gio/gio.h>
 #include "flatpak-dbus.h"
-#include "flatpak-permission-store.h"
 #include "flatpak-utils.h"
 
 static char *monitor_dir;
@@ -48,8 +47,6 @@ on_bus_acquired (GDBusConnection *connection,
 {
   FlatpakSessionHelper *helper;
   GError *error = NULL;
-
-  flatpak_permission_store_start (connection);
 
   helper = flatpak_session_helper_skeleton_new ();
 

@@ -10,8 +10,6 @@ dbus_service_DATA += session-helper/org.freedesktop.Flatpak.service
 
 flatpak_session_helper_SOURCES = \
 	session-helper/flatpak-session-helper.c	\
-	session-helper/flatpak-permission-store.c	\
-	session-helper/flatpak-permission-store.h	\
 	$(NULL)
 
 flatpak_session_helper_LDADD = $(BASE_LIBS) libflatpak-common.la

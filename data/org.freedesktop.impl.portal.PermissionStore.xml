@@ -1,0 +1,78 @@
+<!DOCTYPE node PUBLIC
+"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<!--
+ Copyright (C) 2015 Red Hat, Inc.
+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General
+ Public License along with this library; if not, write to the
+ Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
+
+ Author: Alexander Larsson <alexl@redhat.com>
+-->
+
+<node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
+  <interface name='org.freedesktop.impl.portal.PermissionStore'>
+
+    <method name="Lookup">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='permissions' type='a{sas}' direction='out'/>
+      <arg name='data' type='v' direction='out'/>
+    </method>
+
+    <method name="Set">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='create' type='b' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='app_permissions' type='a{sas}' direction='in'/>
+      <arg name='data' type='v' direction='in'/>
+    </method>
+
+    <method name="Delete">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+    </method>
+
+    <method name="SetValue">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='create' type='b' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='data' type='v' direction='in'/>
+    </method>
+
+    <method name="SetPermission">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='create' type='b' direction='in'/>
+      <arg name='id' type='s' direction='in'/>
+      <arg name='app' type='s' direction='in'/>
+      <arg name='permissions' type='as' direction='in'/>
+    </method>
+
+    <method name="List">
+      <arg name='table' type='s' direction='in'/>
+      <arg name='ids' type='as' direction='out'/>
+    </method>
+
+    <signal name="Changed">
+      <arg name='table' type='s' direction='out'/>
+      <arg name='id' type='s' direction='out'/>
+      <arg name='deleted' type='b' direction='out'/>
+      <arg name='data' type='v' direction='out'/>
+      <arg name='permissions' type='a{sas}' direction='out'/>
+    </signal>
+  </interface>
+
+</node>

@@ -23,6 +23,6 @@
 
 #include "flatpak-dbus.h"
 
-void flatpak_permission_store_start (GDBusConnection *connection);
+void xdg_permission_store_start (GDBusConnection *connection);
 
 #endif /* __FLATPAK_PERMISSION_STORE_H__ */
