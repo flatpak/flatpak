@@ -43,7 +43,7 @@
  *
  * An FlatpakInstallation object provides information about an installation
  * location for flatpak applications. Typical installation locations are either
- * system-wide (in /var/lib/xdg-app) or per-user (in ~/.local/share/xdg-app).
+ * system-wide (in /var/lib/flatpak) or per-user (in ~/.local/share/flatpak).
  *
  * FlatpakInstallation can list configured remotes as well as installed application
  * and runtime references (in short: refs). It can also run, install, update and
@@ -184,6 +184,8 @@ FlatpakInstallation *
 flatpak_installation_new_user (GCancellable *cancellable,
                                GError      **error)
 {
+  flatpak_migrate_from_xdg_app ();
+
   return flatpak_installation_new_for_dir (flatpak_dir_get_user (), cancellable, error);
 }
 
@@ -203,6 +205,8 @@ flatpak_installation_new_for_path (GFile *path, gboolean user,
                                    GCancellable *cancellable,
                                    GError **error)
 {
+  flatpak_migrate_from_xdg_app ();
+
   return flatpak_installation_new_for_dir (flatpak_dir_new (path, user), cancellable, error);
 }
 

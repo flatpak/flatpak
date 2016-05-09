@@ -26,6 +26,7 @@
 #include <gio/gio.h>
 #include "flatpak-dbus.h"
 #include "flatpak-permission-store.h"
+#include "flatpak-utils.h"
 
 static char *monitor_dir;
 
@@ -133,6 +134,8 @@ main (int    argc,
   g_setenv ("GIO_USE_VFS", "local", TRUE);
 
   g_set_prgname (argv[0]);
+
+  flatpak_migrate_from_xdg_app ();
 
   monitor_dir = g_build_filename (g_get_user_runtime_dir (), "flatpak-monitor", NULL);
   if (g_mkdir_with_parents (monitor_dir, 0755) != 0)

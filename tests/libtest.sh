@@ -72,7 +72,7 @@ TEST_DATA_DIR=`mktemp -d /var/tmp/test-flatpak-XXXXXX`
 
 export XDG_DATA_HOME=${TEST_DATA_DIR}/share
 
-export USERDIR=${TEST_DATA_DIR}/share/xdg-app
+export USERDIR=${TEST_DATA_DIR}/share/flatpak
 export ARCH=`flatpak --default-arch`
 
 export FLATPAK="${CMD_PREFIX} flatpak"

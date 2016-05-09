@@ -345,6 +345,8 @@ main (int    argc,
   else
     g_unsetenv ("GIO_USE_VFS");
 
+  flatpak_migrate_from_xdg_app ();
+
   ret = flatpak_run (argc, argv, &error);
   if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED))
     flatpak_usage (commands, TRUE);

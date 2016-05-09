@@ -167,7 +167,7 @@ flatpak_get_system_base_dir_location (void)
 GFile *
 flatpak_get_user_base_dir_location (void)
 {
-  g_autofree char *base = g_build_filename (g_get_user_data_dir (), "xdg-app", NULL);
+  g_autofree char *base = g_build_filename (g_get_user_data_dir (), "flatpak", NULL);
 
   return g_file_new_for_path (base);
 }

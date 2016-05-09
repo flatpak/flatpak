@@ -64,7 +64,7 @@ lookup_table (const char            *name,
   if (table != NULL)
     return table;
 
-  dir = g_build_filename (g_get_user_data_dir (), "xdg-app/db", NULL);
+  dir = g_build_filename (g_get_user_data_dir (), "flatpak/db", NULL);
   g_mkdir_with_parents (dir, 0755);
 
   path = g_build_filename (dir, name, NULL);

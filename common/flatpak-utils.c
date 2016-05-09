@@ -26,6 +26,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -250,6 +251,29 @@ flatpak_get_bwrap (void)
   if (e != NULL)
     return e;
   return HELPER;
+}
+
+/* We only migrate the user dir, because thats what most people used with xdg-app,
+ * and its where all per-user state/config are stored.
+ */
+void
+flatpak_migrate_from_xdg_app (void)
+{
+  g_autofree char *source = g_build_filename (g_get_user_data_dir (), "xdg-app", NULL);
+  g_autofree char *dest = g_build_filename (g_get_user_data_dir (), "flatpak", NULL);
+
+  if (!g_file_test (dest, G_FILE_TEST_EXISTS) &&
+      g_file_test (source, G_FILE_TEST_EXISTS))
+    {
+      g_print ("Migrating %s to %s\n", source, dest);
+      if (rename (source, dest) != 0)
+        {
+          if (errno != ENOENT &&
+              errno != ENOTEMPTY &&
+              errno != EEXIST)
+            g_print ("Error during migration: %s\n", strerror (errno));
+        }
+    }
 }
 
 static gboolean

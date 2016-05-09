@@ -2440,7 +2440,7 @@ setup_seccomp (GPtrArray  *argv_array,
    * can do, and we should support code portability between different
    * container tools.
    *
-   * This syscall blacklist is copied from xdg-app, which was in turn
+   * This syscall blacklist is copied from linux-user-chroot, which was in turn
    * clearly influenced by the Sandstorm.io blacklist.
    *
    * If you make any changes here, I suggest sending the changes along
@@ -2454,7 +2454,7 @@ setup_seccomp (GPtrArray  *argv_array,
    *  https://github.com/sandstorm-io/sandstorm
    *    in src/sandstorm/supervisor.c++
    *  http://cgit.freedesktop.org/xdg-app/xdg-app/
-   *    in lib/xdg-app-helper.c
+   *    in common/flatpak-run.c
    *  https://git.gnome.org/browse/linux-user-chroot
    *    in src/setup-seccomp.c
    *

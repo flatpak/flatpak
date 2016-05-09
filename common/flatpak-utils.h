@@ -45,6 +45,8 @@ const char * flatpak_get_arch (void);
 
 const char * flatpak_get_bwrap (void);
 
+void flatpak_migrate_from_xdg_app (void);
+
 GBytes * flatpak_read_stream (GInputStream *in,
                               gboolean      null_terminate,
                               GError      **error);

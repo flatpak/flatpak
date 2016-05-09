@@ -773,6 +773,8 @@ main (int    argc,
   /* Avoid even loading gvfs to avoid accidental confusion */
   g_setenv ("GIO_USE_VFS", "local", TRUE);
 
+  flatpak_migrate_from_xdg_app ();
+
   context = g_option_context_new ("- document portal");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error))
@@ -806,7 +808,7 @@ main (int    argc,
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  path = g_build_filename (g_get_user_data_dir (), "xdg-app/db", TABLE_NAME, NULL);
+  path = g_build_filename (g_get_user_data_dir (), "flatpak/db", TABLE_NAME, NULL);
   db = flatpak_db_new (path, FALSE, &error);
   if (db == NULL)
     {

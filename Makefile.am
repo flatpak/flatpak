@@ -35,7 +35,7 @@ FLATPAK_BINDIR=$(bindir)
 
 AM_CPPFLAGS =						\
 	-DFLATPAK_BINDIR=\"$(FLATPAK_BINDIR)\"		\
-	-DFLATPAK_SYSTEMDIR=\"$(localstatedir)/lib/xdg-app\"\
+	-DFLATPAK_SYSTEMDIR=\"$(localstatedir)/lib/flatpak\"\
 	-DFLATPAK_CONFIGDIR=\"$(sysconfdir)/flatpak\"\
 	-DFLATPAK_BASEDIR=\"$(pkgdatadir)\"		\
 	-DFLATPAK_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
