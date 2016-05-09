@@ -177,28 +177,16 @@ FLATPAK_EXTERN gboolean             flatpak_installation_uninstall (FlatpakInsta
 
 FLATPAK_EXTERN gboolean          flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
                                                                               const char          *remote_name,
-                                                                              const char          *commit,
+                                                                              FlatpakRef          *ref,
                                                                               guint64             *download_size,
                                                                               guint64             *installed_size,
                                                                               GCancellable        *cancellable,
                                                                               GError             **error);
-FLATPAK_EXTERN gboolean          flatpak_installation_fetch_remote_size_sync2 (FlatpakInstallation *self,
-                                                                               const char          *remote_name,
-                                                                               FlatpakRef          *ref,
-                                                                               guint64             *download_size,
-                                                                               guint64             *installed_size,
-                                                                               GCancellable        *cancellable,
-                                                                               GError             **error);
 FLATPAK_EXTERN GBytes        *   flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
                                                                                   const char          *remote_name,
-                                                                                  const char          *commit,
+                                                                                  FlatpakRef          *ref,
                                                                                   GCancellable        *cancellable,
                                                                                   GError             **error);
-FLATPAK_EXTERN GBytes        *   flatpak_installation_fetch_remote_metadata_sync2 (FlatpakInstallation *self,
-                                                                                   const char          *remote_name,
-                                                                                   FlatpakRef          *ref,
-                                                                                   GCancellable        *cancellable,
-                                                                                   GError             **error);
 FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
                                                                              const char          *remote_name,
                                                                              GCancellable        *cancellable,

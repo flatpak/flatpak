@@ -322,9 +322,10 @@ main (int argc, char *argv[])
                 {
                   guint64 download_size;
                   guint64 installed_size;
+
                   if (!flatpak_installation_fetch_remote_size_sync (installation,
                                                                     flatpak_remote_get_name (remote),
-                                                                    flatpak_ref_get_commit (FLATPAK_REF (ref)),
+                                                                    FLATPAK_REF (ref),
                                                                     &download_size,
                                                                     &installed_size,
                                                                     NULL, &error))
@@ -335,22 +336,6 @@ main (int argc, char *argv[])
                   else
                     {
                       g_print ("Download size: %"G_GUINT64_FORMAT " Installed size: %"G_GUINT64_FORMAT "\n",
-                               download_size, installed_size);
-                    }
-
-                  if (!flatpak_installation_fetch_remote_size_sync2 (installation,
-                                                                     flatpak_remote_get_name (remote),
-                                                                     FLATPAK_REF (ref),
-                                                                     &download_size,
-                                                                     &installed_size,
-                                                                     NULL, &error))
-                    {
-                      g_print ("error fetching sizes2: %s\n", error->message);
-                      g_clear_error (&error);
-                    }
-                  else
-                    {
-                      g_print ("Download size2: %"G_GUINT64_FORMAT " Installed size2: %"G_GUINT64_FORMAT "\n",
                                download_size, installed_size);
                     }
 
@@ -367,7 +352,6 @@ main (int argc, char *argv[])
       if (remote_ref)
         {
           GBytes *metadata;
-          GBytes *metadata2;
 
           g_print ("%d %s %s %s %s %s\n",
                    flatpak_ref_get_kind (FLATPAK_REF (remote_ref)),
@@ -378,23 +362,10 @@ main (int argc, char *argv[])
                    flatpak_remote_ref_get_remote_name (remote_ref));
 
           metadata = flatpak_installation_fetch_remote_metadata_sync (installation, flatpak_remote_get_name (remote),
-                                                                      flatpak_ref_get_commit (FLATPAK_REF (remote_ref)), NULL, &error);
+                                                                      FLATPAK_REF (remote_ref), NULL, &error);
           if (metadata)
             {
               g_print ("metadata: %s\n", (char *) g_bytes_get_data (metadata, NULL));
-            }
-          else
-            {
-              g_print ("fetch error\n");
-              g_print ("error: %s\n", error->message);
-              g_clear_error (&error);
-            }
-
-          metadata2 = flatpak_installation_fetch_remote_metadata_sync2 (installation, flatpak_remote_get_name (remote),
-                                                                        FLATPAK_REF (remote_ref), NULL, &error);
-          if (metadata2)
-            {
-              g_print ("metadata2: %s\n", (char *) g_bytes_get_data (metadata2, NULL));
             }
           else
             {

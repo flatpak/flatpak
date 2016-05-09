@@ -1196,36 +1196,6 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
  * flatpak_installation_fetch_remote_size_sync:
  * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
- * @commit: the commit
- * @download_size: (out): return location for the download size
- * @installed_size: (out): return location for the installed size
- * @cancellable: (nullable): a #GCancellable
- * @error: return location for a #GError
- *
- * Gets information about the amount of data that needs to be transferred
- * to pull a commit from a remote repository, and about the amount of
- * local disk space that is required to check out this commit.
- *
- * This is deprectated, use flatpak_installation_fetch_remote_size_sync2 instead.
- *
- * Returns: %TRUE, unless an error occurred
- */
-gboolean
-flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
-                                             const char          *remote_name,
-                                             const char          *commit,
-                                             guint64             *download_size,
-                                             guint64             *installed_size,
-                                             GCancellable        *cancellable,
-                                             GError             **error)
-{
-  return flatpak_fail (error, "Deprecated function call flatpak_installation_fetch_remote_size_sync");
-}
-
-/**
- * flatpak_installation_fetch_remote_size_sync2:
- * @self: a #FlatpakInstallation
- * @remote_name: the name of the remote
  * @ref: the ref
  * @download_size: (out): return location for the (maximum) download size
  * @installed_size: (out): return location for the installed size
@@ -1243,13 +1213,13 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
  * Returns: %TRUE, unless an error occurred
  */
 gboolean
-flatpak_installation_fetch_remote_size_sync2 (FlatpakInstallation *self,
-                                              const char          *remote_name,
-                                              FlatpakRef          *ref,
-                                              guint64             *download_size,
-                                              guint64             *installed_size,
-                                              GCancellable        *cancellable,
-                                              GError             **error)
+flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
+                                             const char          *remote_name,
+                                             FlatpakRef          *ref,
+                                             guint64             *download_size,
+                                             guint64             *installed_size,
+                                             GCancellable        *cancellable,
+                                             GError             **error)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
@@ -1265,43 +1235,6 @@ flatpak_installation_fetch_remote_size_sync2 (FlatpakInstallation *self,
  * flatpak_installation_fetch_remote_metadata_sync:
  * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
- * @commit: the commit
- * @cancellable: (nullable): a #GCancellable
- * @error: return location for a #GError
- *
- * Obtains the metadata file from a commit.
- *
- * This is deprecated, use flatpak_installation_fetch_remote_metadata_sync2
- *
- * Returns: (transfer full): a #GBytes containing the flatpak metadata file,
- *   or %NULL if an error occurred
- */
-GBytes *
-flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
-                                                 const char          *remote_name,
-                                                 const char          *commit,
-                                                 GCancellable        *cancellable,
-                                                 GError             **error)
-{
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
-  g_autoptr(GBytes) bytes = NULL;
-
-  bytes = flatpak_dir_fetch_metadata (priv->dir,
-                                      remote_name,
-                                      commit,
-                                      cancellable,
-                                      error);
-  if (bytes == NULL)
-    return NULL;
-
-  return g_steal_pointer (&bytes);
-}
-
-/**
- * flatpak_installation_fetch_remote_metadata_sync2:
- * @self: a #FlatpakInstallation
- * @remote_name: the name of the remote
  * @ref: the ref
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
@@ -1312,11 +1245,11 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
  *   or %NULL if an error occurred
  */
 GBytes *
-flatpak_installation_fetch_remote_metadata_sync2 (FlatpakInstallation *self,
-                                                  const char          *remote_name,
-                                                  FlatpakRef          *ref,
-                                                  GCancellable        *cancellable,
-                                                  GError             **error)
+flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
+                                                 const char          *remote_name,
+                                                 FlatpakRef          *ref,
+                                                 GCancellable        *cancellable,
+                                                 GError             **error)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
