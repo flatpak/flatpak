@@ -1293,11 +1293,29 @@ create_tmp_fd (const char *contents,
 
 static void
 flatpak_run_add_x11_args (GPtrArray *argv_array,
-                          char    ***envp_p)
+                          char    ***envp_p,
+                          gboolean allowed)
 {
   char *x11_socket = NULL;
-  const char *display = g_getenv ("DISPLAY");
+  const char *display;
 
+  /* Always cover /tmp/.X11-unix, that way we never see the host one in case
+   * we have access to the host /tmp. If you request X access we'll put the right
+   * thing in this anyway.
+   */
+  add_args (argv_array,
+            "--tmpfs", "/tmp/.X11-unix",
+            NULL);
+
+  if (!allowed)
+    {
+      *envp_p = g_environ_unsetenv (*envp_p, "DISPLAY");
+      return;
+    }
+
+  g_debug ("Allowing x11 access");
+
+  display = g_getenv ("DISPLAY");
   if (display && display[0] == ':' && g_ascii_isdigit (display[1]))
     {
       const char *display_nr = &display[1];
@@ -1816,11 +1834,8 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       g_string_free (xdg_dirs_conf, TRUE);
     }
 
-  if (context->sockets & FLATPAK_CONTEXT_SOCKET_X11)
-    {
-      g_debug ("Allowing x11 access");
-      flatpak_run_add_x11_args (argv_array, envp_p);
-    }
+  flatpak_run_add_x11_args (argv_array, envp_p,
+                            (context->sockets & FLATPAK_CONTEXT_SOCKET_X11) != 0);
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
     {
