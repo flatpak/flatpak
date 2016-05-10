@@ -221,20 +221,22 @@ text_percent_internal (const char *text,
 
   if (percentage == -1)
     {
+      const guint spacelen = ncolumns - input_textlen;
       fwrite (text, 1, input_textlen, stdout);
+      printpad (spaces, n_spaces, spacelen);
     }
   else
     {
       const guint textlen = MIN (input_textlen, ncolumns - bar_min);
       const guint barlen = ncolumns - (textlen + 1);;
-      
+
       if (textlen > 0)
         {
           fwrite (text, 1, textlen, stdout);
           fputc (' ', stdout);
         }
-  
-      { 
+
+      {
         const guint nbraces = 2;
         const guint textpercent_len = 5;
         const guint bar_internal_len = barlen - nbraces - textpercent_len;
@@ -246,10 +248,6 @@ text_percent_internal (const char *text,
         printpad (spaces, n_spaces, spacelen);
         fputc (']', stdout);
         fprintf (stdout, " %3d%%", percentage);
-      }
-
-      { const guint spacelen = ncolumns - textlen - barlen;
-        printpad (spaces, n_spaces, spacelen);
       }
     }
 
