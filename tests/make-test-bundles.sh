@@ -1,8 +1,9 @@
 #!/bin/sh
 
 set -e
+set -x
 
-./make-test-runtime.sh
+./make-test-runtime.sh org.test.Platform bash ls cat echo readlink
 ./make-test-app.sh
 
 URL=file://`pwd`/repo
