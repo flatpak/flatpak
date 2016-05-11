@@ -3901,6 +3901,87 @@ flatpak_dir_list_remotes (FlatpakDir   *self,
   return res;
 }
 
+gboolean
+flatpak_dir_modify_remove (FlatpakDir   *self,
+                           const char   *remote_name,
+                           GKeyFile     *config,
+                           GBytes       *gpg_data,
+                           GCancellable *cancellable,
+                           GError      **error)
+{
+  g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
+  g_autofree char *url = NULL;
+  g_autofree char *metalink = NULL;
+  g_autoptr(GKeyFile) new_config = NULL;
+  g_auto(GStrv) keys = NULL;
+  int i;
+
+  if (strchr (remote_name, '/') != NULL)
+    return flatpak_fail (error, "Invalid character '/' in remote name: %s",
+                         remote_name);
+
+
+  if (!g_key_file_has_group (config, group))
+    return flatpak_fail (error, "No configuration for remote %s specified",
+                         remote_name);
+
+  metalink = g_key_file_get_string (config, group, "metalink", NULL);
+  if (metalink != NULL && *metalink != 0)
+    url = g_strconcat ("metalink=", metalink, NULL);
+  else
+    url = g_key_file_get_string (config, group, "url", NULL);
+
+  if (url == NULL || *url == 0)
+    return flatpak_fail (error, "No url for remote %s specified",
+                         remote_name);
+
+  /* Add it if its not there yet */
+  if (!ostree_repo_remote_change (self->repo, NULL,
+                                  OSTREE_REPO_REMOTE_CHANGE_ADD_IF_NOT_EXISTS,
+                                  remote_name,
+                                  url, NULL, cancellable, error))
+    return FALSE;
+
+  new_config = ostree_repo_copy_config (self->repo);
+
+  g_key_file_remove_group (new_config, group, NULL);
+
+  keys = g_key_file_get_keys (config,
+                              group,
+                              NULL, error);
+  if (keys == NULL)
+    return FALSE;
+
+  for (i = 0; keys[i] != NULL; i++)
+    {
+      g_autofree gchar *value = g_key_file_get_value (config, group, keys[i], NULL);
+      if (value)
+        g_key_file_set_value (new_config, group, keys[i], value);
+    }
+
+  if (!ostree_repo_write_config (self->repo, config, error))
+    return FALSE;
+
+  if (gpg_data != NULL)
+    {
+      g_autoptr(GInputStream) input_stream = g_memory_input_stream_new_from_bytes (gpg_data);
+      guint imported = 0;
+
+      if (!ostree_repo_remote_gpg_import (self->repo, remote_name, input_stream,
+                                          NULL, &imported, cancellable, error))
+        return FALSE;
+
+      /* XXX If we ever add internationalization, use ngettext() here. */
+      g_debug ("Imported %u GPG key%s to remote \"%s\"",
+               imported, (imported == 1) ? "" : "s", remote_name);
+    }
+
+  if (!flatpak_dir_mark_changed (self, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static gboolean
 remove_unless_in_hash (gpointer key,
                        gpointer value,

@@ -118,6 +118,29 @@ open_source_stream (GInputStream **out_source_stream,
   return TRUE;
 }
 
+GBytes *
+load_keys (GCancellable *cancellable,
+           GError      **error)
+{
+  g_autoptr(GInputStream) input_stream = NULL;
+  g_autoptr(GOutputStream) output_stream = NULL;
+  gssize n_bytes_written;
+
+  if (!open_source_stream (&input_stream, cancellable, error))
+    return FALSE;
+
+  output_stream = g_memory_output_stream_new_resizable ();
+
+  n_bytes_written = g_output_stream_splice (output_stream, input_stream,
+                                            G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE |
+                                            G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
+                                            NULL, error);
+  if (n_bytes_written < 0)
+    return NULL;
+
+  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
+}
+
 gboolean
 import_keys (FlatpakDir   *dir,
              const char   *remote_name,
@@ -270,6 +293,7 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GVariantBuilder) optbuilder = NULL;
   g_autoptr(GKeyFile) config = NULL;
+  g_autoptr(GBytes) gpg_data = NULL;
   const char *remote_name;
   g_autofree char *group = NULL;
 
@@ -329,14 +353,12 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
       g_key_file_set_string (config, group, "xa.prio", prio_as_string);
     }
 
-  if (!ostree_repo_write_config (flatpak_dir_get_repo (dir), config, error))
-    return FALSE;
+  if (opt_gpg_import != NULL)
+    {
+      gpg_data = load_keys (cancellable, error);
+      if (gpg_data == NULL)
+        return FALSE;
+    }
 
-  if (!import_keys (dir, remote_name, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_dir_mark_changed (dir, error))
-    return FALSE;
-
-  return TRUE;
+  return flatpak_dir_modify_remove (dir, remote_name, config, gpg_data, cancellable, error);
 }
