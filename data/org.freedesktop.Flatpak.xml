@@ -39,6 +39,12 @@
       <arg type='s' name='origin' direction='in'/>
       <arg type='as' name='subpaths' direction='in'/>
     </method>
+
+    <method name="DeployAppstream">
+      <arg type='ay' name='repo_path' direction='in'/>
+      <arg type='s' name='origin' direction='in'/>
+      <arg type='s' name='arch' direction='in'/>
+    </method>
   </interface>
 
 </node>

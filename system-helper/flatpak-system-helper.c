@@ -158,6 +158,71 @@ handle_deploy (FlatpakSystemHelper   *object,
   return TRUE;
 }
 
+static gboolean
+handle_deploy_appstream (FlatpakSystemHelper   *object,
+                         GDBusMethodInvocation *invocation,
+                         const gchar           *arg_repo_path,
+                         const gchar           *arg_origin,
+                         const gchar           *arg_arch)
+{
+  g_autoptr(FlatpakDir) system = flatpak_dir_get_system ();
+  g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GMainContext) main_context = NULL;
+  g_autofree char *branch = NULL;
+
+  if (!g_file_query_exists (path, NULL))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Path does not exist");
+      return TRUE;
+    }
+
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Can't open system repo %s", error->message);
+      return TRUE;
+    }
+
+  /* Work around ostree-pull spinning the default main context for the sync calls */
+  main_context = g_main_context_new ();
+  g_main_context_push_thread_default (main_context);
+
+  branch = g_strdup_printf ("appstream/%s", arg_arch);
+
+  g_print ("pulling branch %s\n", branch);
+
+  if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
+                                         arg_origin,
+                                         branch,
+                                         NULL,
+                                         NULL,
+                                         NULL, &error))
+    {
+      g_main_context_pop_thread_default (main_context);
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Error pulling from repo: %s", error->message);
+      return TRUE;
+    }
+
+  g_main_context_pop_thread_default (main_context);
+
+  if (!flatpak_dir_deploy_appstream (system,
+                                     arg_origin,
+                                     arg_arch,
+                                     NULL,
+                                     NULL,
+                                     &error))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                             "Error deploying appstream: %s", error->message);
+      return TRUE;
+    }
+
+  flatpak_system_helper_complete_deploy_appstream (object, invocation);
+
+  return TRUE;
+}
 
 static gboolean
 flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
@@ -229,6 +294,32 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       authorized = polkit_authorization_result_get_is_authorized (result);
     }
+  else   if (g_strcmp0 (method_name, "DeployAppstream") == 0)
+    {
+      const char *arch, *origin;
+
+      g_variant_get_child (parameters, 1, "&s", &origin);
+      g_variant_get_child (parameters, 2, "&s", &arch);
+
+      action = "org.freedesktop.Flatpak.appstream-update";
+
+      details = polkit_details_new ();
+      polkit_details_insert (details, "origin", origin);
+      polkit_details_insert (details, "arch", arch);
+
+      result = polkit_authority_check_authorization_sync (authority, subject,
+                                                          action, details,
+                                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
+                                                          NULL, &error);
+      if (result == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Authorization error: %s", error->message);
+          return FALSE;
+        }
+
+      authorized = polkit_authorization_result_get_is_authorized (result);
+    }
 
   if (!authorized)
     {
@@ -256,6 +347,7 @@ on_bus_acquired (GDBusConnection *connection,
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
 
   g_signal_connect (helper, "handle-deploy", G_CALLBACK (handle_deploy), NULL);
+  g_signal_connect (helper, "handle-deploy-appstream", G_CALLBACK (handle_deploy_appstream), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
                     G_CALLBACK (flatpak_authorize_method_handler),

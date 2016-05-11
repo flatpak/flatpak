@@ -165,6 +165,12 @@ gboolean    flatpak_dir_remove_appstream (FlatpakDir   *self,
                                           const char   *remote,
                                           GCancellable *cancellable,
                                           GError      **error);
+gboolean    flatpak_dir_deploy_appstream (FlatpakDir          *self,
+                                          const char          *remote,
+                                          const char          *arch,
+                                          gboolean            *out_changed,
+                                          GCancellable        *cancellable,
+                                          GError             **error);
 gboolean    flatpak_dir_update_appstream (FlatpakDir          *self,
                                           const char          *remote,
                                           const char          *arch,

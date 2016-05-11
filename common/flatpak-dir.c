@@ -39,6 +39,10 @@
 
 #define NO_SYSTEM_HELPER ((FlatpakSystemHelper *) (gpointer) 1)
 
+static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
+                                                          GLnxLockFile *file_lock,
+                                                          GError      **error);
+
 struct FlatpakDir
 {
   GObject              parent;
@@ -936,63 +940,36 @@ flatpak_dir_remove_all_refs (FlatpakDir   *self,
 }
 
 gboolean
-flatpak_dir_update_appstream (FlatpakDir          *self,
+flatpak_dir_deploy_appstream (FlatpakDir          *self,
                               const char          *remote,
                               const char          *arch,
                               gboolean            *out_changed,
-                              OstreeAsyncProgress *progress,
                               GCancellable        *cancellable,
                               GError             **error)
 {
-  g_autofree char *branch = NULL;
-  g_autofree char *remote_and_branch = NULL;
-  g_autofree char *old_checksum = NULL;
-  g_autofree char *new_checksum = NULL;
-
-  g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) appstream_dir = NULL;
   g_autoptr(GFile) remote_dir = NULL;
   g_autoptr(GFile) arch_dir = NULL;
   g_autoptr(GFile) checkout_dir = NULL;
-  g_autoptr(GFile) old_checkout_dir = NULL;
-  g_autoptr(GFileInfo) file_info = NULL;
+  g_autoptr(GFile) timestamp_file = NULL;
   g_autofree char *arch_path = NULL;
+  gboolean checkout_exists;
+  g_autofree char *remote_and_branch = NULL;
+  const char *old_checksum = NULL;
+  g_autofree char *new_checksum = NULL;
+  g_autoptr(GFile) active_link = NULL;
+  g_autoptr(GFileInfo) file_info = NULL;
+  g_autofree char *branch = NULL;
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GFile) old_checkout_dir = NULL;
   g_autofree char *tmpname = NULL;
   g_autoptr(GFile) active_tmp_link = NULL;
-  g_autoptr(GFile) active_link = NULL;
-  g_autoptr(GFile) timestamp_file = NULL;
   g_autoptr(GError) tmp_error = NULL;
-  gboolean checkout_exists;
-
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
-    return FALSE;
-
-  if (arch == NULL)
-    arch = flatpak_get_arch ();
-
-  branch = g_strdup_printf ("appstream/%s", arch);
-  remote_and_branch = g_strdup_printf ("%s:%s", remote, branch);
-
-  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &old_checksum, error))
-    return FALSE;
-
-  if (!flatpak_dir_pull (self, remote, branch, NULL, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
-                         cancellable, error))
-    return FALSE;
-
-  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
-    return FALSE;
-
-  if (new_checksum == NULL)
-    {
-      g_warning ("No appstream branch in remote %s\n", remote);
-      return TRUE;
-    }
 
   appstream_dir = g_file_get_child (flatpak_dir_get_path (self), "appstream");
   remote_dir = g_file_get_child (appstream_dir, remote);
   arch_dir = g_file_get_child (remote_dir, arch);
-  checkout_dir = g_file_get_child (arch_dir, new_checksum);
+  active_link = g_file_get_child (arch_dir, "active");
   timestamp_file = g_file_get_child (arch_dir, ".timestamp");
 
   arch_path = g_file_get_path (arch_dir);
@@ -1002,6 +979,20 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       return FALSE;
     }
 
+  old_checksum = NULL;
+  file_info = g_file_query_info (active_link, OSTREE_GIO_FAST_QUERYINFO,
+                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                 cancellable, NULL);
+  if (file_info != NULL)
+    old_checksum =  g_file_info_get_symlink_target (file_info);
+
+  branch = g_strdup_printf ("appstream/%s", arch);
+  remote_and_branch = g_strdup_printf ("%s:%s", remote, branch);
+
+  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
+    return FALSE;
+
+  checkout_dir = g_file_get_child (arch_dir, new_checksum);
   checkout_exists = g_file_query_exists (checkout_dir, NULL);
 
   if (old_checksum != NULL && new_checksum != NULL &&
@@ -1036,7 +1027,6 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
   tmpname = gs_fileutil_gen_tmp_name (".active-", NULL);
   active_tmp_link = g_file_get_child (arch_dir, tmpname);
-  active_link = g_file_get_child (arch_dir, "active");
 
   if (!g_file_make_symbolic_link (active_tmp_link, new_checksum, cancellable, error))
     return FALSE;
@@ -1068,7 +1058,99 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
   if (out_changed)
     *out_changed = TRUE;
+
   return TRUE;
+}
+
+gboolean
+flatpak_dir_update_appstream (FlatpakDir          *self,
+                              const char          *remote,
+                              const char          *arch,
+                              gboolean            *out_changed,
+                              OstreeAsyncProgress *progress,
+                              GCancellable        *cancellable,
+                              GError             **error)
+{
+  g_autofree char *branch = NULL;
+  g_autofree char *remote_and_branch = NULL;
+  g_autofree char *new_checksum = NULL;
+
+  if (out_changed)
+    *out_changed = FALSE;
+
+  if (arch == NULL)
+    arch = flatpak_get_arch ();
+
+  branch = g_strdup_printf ("appstream/%s", arch);
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (flatpak_dir_use_child_repo (self))
+    {
+      g_autoptr(OstreeRepo) child_repo = NULL;
+      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      FlatpakSystemHelper *system_helper;
+
+      child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
+      if (child_repo == NULL)
+        return FALSE;
+
+      system_helper = flatpak_dir_get_system_helper (self);
+
+      g_assert (system_helper != NULL);
+
+      if (!flatpak_dir_pull (self, remote, branch, NULL,
+                             child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                             progress, cancellable, error))
+        return FALSE;
+
+      if (!ostree_repo_resolve_rev (child_repo, branch, TRUE, &new_checksum, error))
+        return FALSE;
+
+      if (new_checksum == NULL)
+        {
+          g_warning ("No appstream branch in remote %s\n", remote);
+        }
+      else
+        {
+          if (!flatpak_system_helper_call_deploy_appstream_sync (system_helper,
+                                                                 gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                                                 remote,
+                                                                 arch,
+                                                                 cancellable,
+                                                                 error))
+            return FALSE;
+        }
+
+      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
+                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                   NULL, NULL);
+
+      return TRUE;
+    }
+
+  if (!flatpak_dir_pull (self, remote, branch, NULL, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
+                         cancellable, error))
+    return FALSE;
+
+  remote_and_branch = g_strdup_printf ("%s:%s", remote, branch);
+
+  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
+    return FALSE;
+
+  if (new_checksum == NULL)
+    {
+      g_warning ("No appstream branch in remote %s\n", remote);
+      return TRUE;
+    }
+
+  return flatpak_dir_deploy_appstream (self,
+                                       remote,
+                                       arch,
+                                       out_changed,
+                                       cancellable,
+                                       error);
 }
 
 /* This is a copy of ostree_repo_pull_one_dir that always disables
