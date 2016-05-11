@@ -2452,6 +2452,7 @@ cleanup_seccomp (void *p)
 
 static gboolean
 setup_seccomp (GPtrArray  *argv_array,
+               GArray     *fd_array,
                const char *arch,
                gboolean    devel,
                GError    **error)
@@ -2651,6 +2652,8 @@ setup_seccomp (GPtrArray  *argv_array,
   lseek (fd, 0, SEEK_SET);
 
   fd_str = g_strdup_printf ("%d", fd);
+  if (fd_array)
+    g_array_append_val (fd_array, fd);
 
   add_args (argv_array,
             "--seccomp", fd_str,
@@ -2812,6 +2815,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
 
 #ifdef ENABLE_SECCOMP
   if (!setup_seccomp (argv_array,
+                      fd_array,
                       arch,
                       (flags & FLATPAK_RUN_FLAG_DEVEL) != 0,
                       error))
