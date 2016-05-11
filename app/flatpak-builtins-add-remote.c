@@ -141,182 +141,11 @@ load_keys (GCancellable *cancellable,
   return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
 }
 
-gboolean
-import_keys (FlatpakDir   *dir,
-             const char   *remote_name,
-             GCancellable *cancellable,
-             GError      **error)
+static GKeyFile *
+get_config_from_opts (FlatpakDir *dir, const char *remote_name)
 {
-  if (opt_gpg_import != NULL)
-    {
-      g_autoptr(GInputStream) input_stream = NULL;
-      guint imported = 0;
-
-      if (!open_source_stream (&input_stream, cancellable, error))
-        return FALSE;
-
-      if (!ostree_repo_remote_gpg_import (flatpak_dir_get_repo (dir), remote_name, input_stream,
-                                          NULL, &imported, cancellable, error))
-        return FALSE;
-
-      /* XXX If we ever add internationalization, use ngettext() here. */
-      g_print ("Imported %u GPG key%s to remote \"%s\"\n",
-               imported, (imported == 1) ? "" : "s", remote_name);
-    }
-
-  return TRUE;
-}
-
-gboolean
-flatpak_builtin_add_remote (int argc, char **argv,
-                            GCancellable *cancellable, GError **error)
-{
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GVariantBuilder) optbuilder = NULL;
-  g_autoptr(GFile) file = NULL;
-  g_autofree char *title = NULL;
-  g_autofree char *remote_url = NULL;
-  const char *remote_name;
-  const char *url_or_path;
-  g_autofree char *prio_as_string = NULL;
-
-  context = g_option_context_new ("NAME LOCATION - Add a remote repository");
-
-  g_option_context_add_main_entries (context, common_options, NULL);
-
-  if (!flatpak_option_context_parse (context, add_options, &argc, &argv, 0, &dir, cancellable, error))
-    return FALSE;
-
-  if (argc < 3)
-    return usage_error (context, "NAME and LOCATION must be specified", error);
-
-  remote_name = argv[1];
-  url_or_path  = argv[2];
-
-  file = g_file_new_for_commandline_arg (url_or_path);
-  if (g_file_is_native (file))
-    remote_url = g_file_get_uri (file);
-  else
-    remote_url = g_strdup (url_or_path);
-
-  optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
-
-  if (opt_no_gpg_verify)
-    {
-      g_variant_builder_add (optbuilder, "{s@v}",
-                             "gpg-verify",
-                             g_variant_new_variant (g_variant_new_boolean (FALSE)));
-      g_variant_builder_add (optbuilder, "{s@v}",
-                             "gpg-verify-summary",
-                             g_variant_new_variant (g_variant_new_boolean (FALSE)));
-    }
-  else
-    {
-      g_variant_builder_add (optbuilder, "{s@v}",
-                             "gpg-verify",
-                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
-      g_variant_builder_add (optbuilder, "{s@v}",
-                             "gpg-verify-summary",
-                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
-    }
-
-  if (opt_no_enumerate)
-    g_variant_builder_add (optbuilder, "{s@v}",
-                           "xa.noenumerate",
-                           g_variant_new_variant (g_variant_new_boolean (TRUE)));
-
-  if (opt_disable)
-    g_variant_builder_add (optbuilder, "{s@v}",
-                           "xa.disable",
-                           g_variant_new_variant (g_variant_new_boolean (TRUE)));
-
-  if (opt_prio != -1)
-    {
-      prio_as_string = g_strdup_printf ("%d", opt_prio);
-      g_variant_builder_add (optbuilder, "{s@v}",
-                             "xa.prio",
-                             g_variant_new_variant (g_variant_new_string (prio_as_string)));
-    }
-
-  if (opt_title)
-    {
-      g_free (title);
-      title = g_strdup (opt_title);
-    }
-
-  if (title)
-    g_variant_builder_add (optbuilder, "{s@v}",
-                           "xa.title",
-                           g_variant_new_variant (g_variant_new_string (title)));
-
-  if (!ostree_repo_remote_change (flatpak_dir_get_repo (dir), NULL,
-                                  opt_if_not_exists ? OSTREE_REPO_REMOTE_CHANGE_ADD_IF_NOT_EXISTS :
-                                  OSTREE_REPO_REMOTE_CHANGE_ADD,
-                                  remote_name, remote_url,
-                                  g_variant_builder_end (optbuilder),
-                                  cancellable, error))
-    return FALSE;
-
-  if (title == NULL)
-    {
-      title = flatpak_dir_fetch_remote_title (dir,
-                                              remote_name,
-                                              NULL,
-                                              NULL);
-      if (title)
-        {
-          g_autoptr(GKeyFile) config = NULL;
-          g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
-
-          config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
-          g_key_file_set_string (config, group, "xa.title", title);
-
-          if (!ostree_repo_write_config (flatpak_dir_get_repo (dir), config, error))
-            return FALSE;
-        }
-    }
-
-  if (!import_keys (dir, remote_name, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_dir_mark_changed (dir, error))
-    return FALSE;
-
-  return TRUE;
-}
-
-gboolean
-flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
-{
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GVariantBuilder) optbuilder = NULL;
-  g_autoptr(GKeyFile) config = NULL;
-  g_autoptr(GBytes) gpg_data = NULL;
-  const char *remote_name;
-  g_autofree char *group = NULL;
-
-  context = g_option_context_new ("NAME - Modify a remote repository");
-
-  g_option_context_add_main_entries (context, common_options, NULL);
-
-  if (!flatpak_option_context_parse (context, modify_options, &argc, &argv, 0, &dir, cancellable, error))
-    return FALSE;
-
-  if (argc < 2)
-    return usage_error (context, "remote NAME must be specified", error);
-
-  remote_name = argv[1];
-
-  optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
-
-  group = g_strdup_printf ("remote \"%s\"", remote_name);
-
-  if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, NULL, NULL))
-    return flatpak_fail (error, "No remote %s", remote_name);
-
-  config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+  GKeyFile *config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+  g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
 
   if (opt_no_gpg_verify)
     {
@@ -352,6 +181,114 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
       g_autofree char *prio_as_string = g_strdup_printf ("%d", opt_prio);
       g_key_file_set_string (config, group, "xa.prio", prio_as_string);
     }
+
+  return config;
+}
+
+gboolean
+flatpak_builtin_add_remote (int argc, char **argv,
+                            GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GVariantBuilder) optbuilder = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_auto(GStrv) remotes = NULL;
+  g_autofree char *title = NULL;
+  g_autofree char *remote_url = NULL;
+  const char *remote_name;
+  const char *url_or_path;
+  g_autofree char *prio_as_string = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+  g_autoptr(GBytes) gpg_data = NULL;
+
+  context = g_option_context_new ("NAME LOCATION - Add a remote repository");
+
+  g_option_context_add_main_entries (context, common_options, NULL);
+
+  if (!flatpak_option_context_parse (context, add_options, &argc, &argv, 0, &dir, cancellable, error))
+    return FALSE;
+
+  if (argc < 3)
+    return usage_error (context, "NAME and LOCATION must be specified", error);
+
+  remote_name = argv[1];
+  url_or_path  = argv[2];
+
+  remotes = flatpak_dir_list_remotes (dir, cancellable, error);
+  if (remotes == NULL)
+    return FALSE;
+
+  if (g_strv_contains ((const char **)remotes, remote_name))
+    {
+      if (opt_if_not_exists)
+        return TRUE; /* Do nothing */
+
+      return flatpak_fail (error, "Remote %s already exists", remote_name);
+    }
+
+  file = g_file_new_for_commandline_arg (url_or_path);
+  if (g_file_is_native (file))
+    remote_url = g_file_get_uri (file);
+  else
+    remote_url = g_strdup (url_or_path);
+
+  /* Default to gpg verify */
+  if (!opt_no_gpg_verify)
+    opt_do_gpg_verify = TRUE;
+
+  opt_url = remote_url;
+
+  if (opt_title == NULL)
+    {
+      title = flatpak_dir_fetch_remote_title (dir,
+                                              remote_name,
+                                              NULL,
+                                              NULL);
+      if (title)
+        opt_title = title;
+    }
+
+  config = get_config_from_opts (dir, remote_name);
+
+  if (opt_gpg_import != NULL)
+    {
+      gpg_data = load_keys (cancellable, error);
+      if (gpg_data == NULL)
+        return FALSE;
+    }
+
+  return flatpak_dir_modify_remove (dir, remote_name, config, gpg_data, cancellable, error);
+}
+
+gboolean
+flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GVariantBuilder) optbuilder = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+  g_autoptr(GBytes) gpg_data = NULL;
+  const char *remote_name;
+
+  context = g_option_context_new ("NAME - Modify a remote repository");
+
+  g_option_context_add_main_entries (context, common_options, NULL);
+
+  if (!flatpak_option_context_parse (context, modify_options, &argc, &argv, 0, &dir, cancellable, error))
+    return FALSE;
+
+  if (argc < 2)
+    return usage_error (context, "remote NAME must be specified", error);
+
+  remote_name = argv[1];
+
+  optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+  if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, NULL, NULL))
+    return flatpak_fail (error, "No remote %s", remote_name);
+
+  config = get_config_from_opts (dir, remote_name);
 
   if (opt_gpg_import != NULL)
     {
