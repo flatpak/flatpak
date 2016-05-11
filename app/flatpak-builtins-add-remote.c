@@ -160,7 +160,12 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name)
     }
 
   if (opt_url)
-    g_key_file_set_string (config, group, "url", opt_url);
+    {
+      if (g_str_has_prefix (opt_url, "metalink="))
+        g_key_file_set_string (config, group, "metalink", opt_url + strlen ("metalink="));
+      else
+        g_key_file_set_string (config, group, "url", opt_url);
+    }
 
   if (opt_title)
     g_key_file_set_string (config, group, "xa.title", opt_title);
