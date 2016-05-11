@@ -2217,6 +2217,7 @@ compute_permissions (GKeyFile *app_metadata,
 
 static gboolean
 add_app_info_args (GPtrArray      *argv_array,
+                   GArray         *fd_array,
                    FlatpakDeploy  *deploy,
                    const char     *app_id,
                    const char     *runtime_ref,
@@ -2260,6 +2261,8 @@ add_app_info_args (GPtrArray      *argv_array,
         }
       unlink (tmp_path);
       fd_str = g_strdup_printf ("%d", fd);
+      if (fd_array)
+        g_array_append_val (fd_array, fd);
 
       add_args (argv_array, "--file", fd_str, dest, NULL);
     }
@@ -2661,6 +2664,7 @@ setup_seccomp (GPtrArray  *argv_array,
 
 gboolean
 flatpak_run_setup_base_argv (GPtrArray      *argv_array,
+                             GArray         *fd_array,
                              GFile          *runtime_files,
                              GFile          *app_id_dir,
                              const char     *arch,
@@ -2691,6 +2695,8 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   if ((passwd_fd = create_tmp_fd (passwd_contents, -1, error)) < 0)
     return FALSE;
   passwd_fd_str = g_strdup_printf ("%d", passwd_fd);
+  if (fd_array)
+    g_array_append_val (fd_array, passwd_fd);
 
   group_contents = g_strdup_printf ("%s:x:%d:%s\n"
                                     "nfsnobody:x:65534:\n",
@@ -2699,6 +2705,8 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   if ((group_fd = create_tmp_fd (group_contents, -1, error)) < 0)
     return FALSE;
   group_fd_str = g_strdup_printf ("%d", group_fd);
+  if (fd_array)
+    g_array_append_val (fd_array, group_fd);
 
   add_args (argv_array,
             "--unshare-pid",
@@ -2846,30 +2854,15 @@ static void
 child_setup (gpointer user_data)
 {
   GArray *fd_array = user_data;
-  int fd, i, open_max;
+  int i;
 
   /* If no fd_array was specified, don't care. */
   if (fd_array == NULL)
     return;
 
-  /* Otherwise, mark close-on-exec all the fds not in the array */
-  open_max = sysconf (_SC_OPEN_MAX);
-  for (fd = 3; fd < open_max; fd++)
-    {
-      gboolean found = FALSE;
-      for (i = 0; i < fd_array->len; i++)
-        {
-          if (g_array_index (fd_array, int, i) == fd)
-            {
-              found = TRUE;
-              break;
-            }
-        }
-
-      if (!found)
-        fcntl (fd, F_SETFD, FD_CLOEXEC);
-    }
-
+  /* Otherwise, mark not - close-on-exec all the fds in the array */
+  for (i = 0; i < fd_array->len; i++)
+    fcntl (g_array_index (fd_array, int, i), F_SETFD, 0);
 }
 
 
@@ -2998,10 +2991,10 @@ flatpak_run_app (const char     *app_ref,
             "--lock-file", "/app/.ref",
             NULL);
 
-  if (!flatpak_run_setup_base_argv (argv_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
+  if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
-  if (!add_app_info_args (argv_array, app_deploy, app_ref_parts[1], runtime_ref, app_context, error))
+  if (!add_app_info_args (argv_array, fd_array, app_deploy, app_ref_parts[1], runtime_ref, app_context, error))
     return FALSE;
 
   if (!flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
@@ -3098,7 +3091,7 @@ flatpak_run_app (const char     *app_ref,
       if (!g_spawn_async (NULL,
                           (char **) real_argv_array->pdata,
                           envp,
-                          G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
+                          G_SPAWN_DEFAULT,
                           child_setup, fd_array,
                           NULL,
                           error))
