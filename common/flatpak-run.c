@@ -3080,6 +3080,7 @@ flatpak_run_app (const char     *app_ref,
       return FALSE;
 
     arg_fd_str = g_strdup_printf ("%d", arg_fd);
+    g_array_append_val (fd_array, arg_fd);
 
     add_args (real_argv_array,
               "--args", arg_fd_str,
