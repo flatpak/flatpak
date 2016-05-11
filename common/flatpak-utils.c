@@ -2159,7 +2159,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
       g_autoptr(FlatpakXml) appstream_root = NULL;
       g_autoptr(GBytes) xml_data = NULL;
 
-      if (g_mkdtemp (tmpdir) == NULL)
+      if (g_mkdtemp_full (tmpdir, 0755) == NULL)
         return flatpak_fail (error, "Can't create temporary directory");
 
       tmpdir_file = g_file_new_for_path (tmpdir);
