@@ -298,7 +298,8 @@ flatpak_installation_launch (FlatpakInstallation *self,
 static FlatpakInstalledRef *
 get_ref (FlatpakInstallation *self,
          const char          *full_ref,
-         GCancellable        *cancellable)
+         GCancellable        *cancellable,
+         GError **error)
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
@@ -316,7 +317,9 @@ get_ref (FlatpakInstallation *self,
 
   parts = g_strsplit (full_ref, "/", -1);
 
-  deploy_data = flatpak_dir_get_deploy_data (priv->dir, full_ref, cancellable, NULL);
+  deploy_data = flatpak_dir_get_deploy_data (priv->dir, full_ref, cancellable, error);
+  if (deploy_data == NULL)
+    return NULL;
   origin = flatpak_deploy_data_get_origin (deploy_data);
   commit = flatpak_deploy_data_get_commit (deploy_data);
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
@@ -392,7 +395,7 @@ flatpak_installation_get_installed_ref (FlatpakInstallation *self,
       return NULL;
     }
 
-  return get_ref (self, ref, cancellable);
+  return get_ref (self, ref, cancellable, error);
 }
 
 /**
@@ -431,7 +434,7 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
       return NULL;
     }
 
-  return get_ref (self, current, cancellable);
+  return get_ref (self, current, cancellable, error);
 }
 
 /**
@@ -464,8 +467,14 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
     return NULL;
 
   for (i = 0; raw_refs_app[i] != NULL; i++)
-    g_ptr_array_add (refs,
-                     get_ref (self, raw_refs_app[i], cancellable));
+    {
+      g_autoptr(GError) local_error = NULL;
+      FlatpakInstalledRef *ref = get_ref (self, raw_refs_app[i], cancellable, &local_error);
+      if (ref != NULL)
+        g_ptr_array_add (refs, ref);
+      else
+        g_warning ("Unexpected failure getting ref for %s: %s", raw_refs_app[i], local_error->message);
+    }
 
   if (!flatpak_dir_list_refs (priv->dir,
                               "runtime",
@@ -474,8 +483,14 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
     return NULL;
 
   for (i = 0; raw_refs_runtime[i] != NULL; i++)
-    g_ptr_array_add (refs,
-                     get_ref (self, raw_refs_runtime[i], cancellable));
+    {
+      g_autoptr(GError) local_error = NULL;
+      FlatpakInstalledRef *ref = get_ref (self, raw_refs_runtime[i], cancellable, &local_error);
+      if (ref != NULL)
+        g_ptr_array_add (refs, ref);
+      else
+        g_warning ("Unexpected failure getting ref for %s: %s", raw_refs_runtime[i], local_error->message);
+    }
 
   return g_steal_pointer (&refs);
 }
@@ -511,8 +526,14 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
     return NULL;
 
   for (i = 0; raw_refs[i] != NULL; i++)
-    g_ptr_array_add (refs,
-                     get_ref (self, raw_refs[i], cancellable));
+    {
+      g_autoptr(GError) local_error = NULL;
+      FlatpakInstalledRef *ref = get_ref (self, raw_refs[i], cancellable, &local_error);
+      if (ref != NULL)
+        g_ptr_array_add (refs, ref);
+      else
+        g_warning ("Unexpected failure getting ref for %s: %s", raw_refs[i], local_error->message);
+    }
 
   return g_steal_pointer (&refs);
 }
@@ -898,7 +919,9 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   if (!flatpak_dir_deploy_install (dir_clone, ref, remote, NULL, cancellable, error))
     goto out;
 
-  result = get_ref (self, ref, cancellable);
+  result = get_ref (self, ref, cancellable, error);
+  if (result == NULL)
+    goto out;
 
 out:
 
@@ -977,7 +1000,9 @@ flatpak_installation_install (FlatpakInstallation    *self,
                             ostree_progress, cancellable, error))
     goto out;
 
-  result = get_ref (self, ref, cancellable);
+  result = get_ref (self, ref, cancellable, error);
+  if (result == NULL)
+    goto out;
 
 out:
   if (main_context)
@@ -1071,7 +1096,9 @@ flatpak_installation_update (FlatpakInstallation    *self,
                            ostree_progress, cancellable, error))
     goto out;
 
-  result = get_ref (self, ref, cancellable);
+  result = get_ref (self, ref, cancellable, error);
+  if (result == NULL)
+    goto out;
 
 out:
   if (main_context)
