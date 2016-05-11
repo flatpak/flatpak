@@ -2547,7 +2547,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   tmp_dir_template = g_file_get_child (deploy_base, template);
   tmp_dir_path = g_file_get_path (tmp_dir_template);
 
-  if (g_mkdtemp (tmp_dir_path) == NULL)
+  if (g_mkdtemp_full (tmp_dir_path, 0755) == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create deploy directory");
       return FALSE;
