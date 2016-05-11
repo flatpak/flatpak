@@ -140,17 +140,7 @@
                 <listitem><para>
                      Import gpg keys from the specified keyring file as
                      trusted for the new remote. If the file is - the
-                     keyring is read from standard input.  The set of keys
-                     imported from the keyring can optionally be limited by
-                     using --gpg-key.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--gpg-key=KEY</option></term>
-
-                <listitem><para>
-                  Only import the named keys from the specified gpg keyrings.
+                     keyring is read from standard input.
                 </para></listitem>
             </varlistentry>
 
