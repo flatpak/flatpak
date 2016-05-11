@@ -64,6 +64,7 @@ gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                           GCancellable *cancellable,
                                           GError      **error);
 void     flatpak_run_add_environment_args (GPtrArray      *argv_array,
+                                           GArray         *fd_array,
                                            char         ***envp_p,
                                            GPtrArray      *session_bus_proxy_argv,
                                            GPtrArray      *system_bus_proxy_argv,

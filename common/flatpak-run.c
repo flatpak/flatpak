@@ -1293,6 +1293,7 @@ create_tmp_fd (const char *contents,
 
 static void
 flatpak_run_add_x11_args (GPtrArray *argv_array,
+                          GArray    *fd_array,
                           char    ***envp_p,
                           gboolean allowed)
 {
@@ -1352,6 +1353,8 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
                   add_args (argv_array,
                             "--bind-data", tmp_fd_str, dest,
                             NULL);
+                  if (fd_array)
+                    g_array_append_val (fd_array, tmp_fd);
                   *envp_p = g_environ_setenv (*envp_p, "XAUTHORITY", dest, TRUE);
                 }
 
@@ -1391,6 +1394,7 @@ flatpak_run_add_wayland_args (GPtrArray *argv_array,
 
 static void
 flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
+                                 GArray    *fd_array,
                                  char    ***envp_p)
 {
   char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
@@ -1411,6 +1415,8 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
         return;
 
       fd_str = g_strdup_printf ("%d", fd);
+      if (fd_array)
+        g_array_append_val (fd_array, fd);
 
       add_args (argv_array,
                 "--bind", pulseaudio_socket, sandbox_socket_path,
@@ -1630,6 +1636,7 @@ add_file_arg (GPtrArray            *argv_array,
 
 void
 flatpak_run_add_environment_args (GPtrArray      *argv_array,
+                                  GArray         *fd_array,
                                   char         ***envp_p,
                                   GPtrArray      *session_bus_proxy_argv,
                                   GPtrArray      *system_bus_proxy_argv,
@@ -1821,9 +1828,11 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
             {
               int tmp_fd = open (tmp_path, O_RDONLY);
               unlink (tmp_path);
-              if (tmp_fd)
+              if (tmp_fd != -1)
                 {
                   g_autofree char *tmp_fd_str = g_strdup_printf ("%d", tmp_fd);
+                  if (fd_array)
+                    g_array_append_val (fd_array, tmp_fd);
                   path = g_build_filename (gs_file_get_path_cached (app_id_dir),
                                            "config/user-dirs.dirs", NULL);
 
@@ -1834,7 +1843,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       g_string_free (xdg_dirs_conf, TRUE);
     }
 
-  flatpak_run_add_x11_args (argv_array, envp_p,
+  flatpak_run_add_x11_args (argv_array, fd_array, envp_p,
                             (context->sockets & FLATPAK_CONTEXT_SOCKET_X11) != 0);
 
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_WAYLAND)
@@ -1846,7 +1855,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   if (context->sockets & FLATPAK_CONTEXT_SOCKET_PULSEAUDIO)
     {
       g_debug ("Allowing pulseaudio access");
-      flatpak_run_add_pulseaudio_args (argv_array, envp_p);
+      flatpak_run_add_pulseaudio_args (argv_array, fd_array, envp_p);
     }
 
   unrestricted_session_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) != 0;
@@ -2825,6 +2834,45 @@ join_args (GPtrArray *argv_array, gsize *len_out)
   return string;
 }
 
+static void
+clear_fd (gpointer data)
+{
+  int *fd_p = data;
+  if (fd_p != NULL && *fd_p != -1)
+    close (*fd_p);
+}
+
+static void
+child_setup (gpointer user_data)
+{
+  GArray *fd_array = user_data;
+  int fd, i, open_max;
+
+  /* If no fd_array was specified, don't care. */
+  if (fd_array == NULL)
+    return;
+
+  /* Otherwise, mark close-on-exec all the fds not in the array */
+  open_max = sysconf (_SC_OPEN_MAX);
+  for (fd = 3; fd < open_max; fd++)
+    {
+      gboolean found = FALSE;
+      for (i = 0; i < fd_array->len; i++)
+        {
+          if (g_array_index (fd_array, int, i) == fd)
+            {
+              found = TRUE;
+              break;
+            }
+        }
+
+      if (!found)
+        fcntl (fd, F_SETFD, FD_CLOEXEC);
+    }
+
+}
+
+
 gboolean
 flatpak_run_app (const char     *app_ref,
                  FlatpakDeploy  *app_deploy,
@@ -2849,6 +2897,7 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
+  g_autoptr(GArray) fd_array = NULL;
   g_autoptr(GPtrArray) real_argv_array = NULL;
   g_auto(GStrv) envp = NULL;
   g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
@@ -2868,6 +2917,9 @@ flatpak_run_app (const char     *app_ref,
   metakey = flatpak_deploy_get_metadata (app_deploy);
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
+  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
+  g_array_set_clear_func (fd_array, clear_fd);
+
   session_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
   system_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
 
@@ -2962,7 +3014,7 @@ flatpak_run_app (const char     *app_ref,
 
   add_document_portal_args (argv_array, app_ref_parts[1]);
 
-  flatpak_run_add_environment_args (argv_array, &envp,
+  flatpak_run_add_environment_args (argv_array, fd_array, &envp,
                                     session_bus_proxy_argv,
                                     system_bus_proxy_argv,
                                     app_ref_parts[1], app_context, app_id_dir);
@@ -3045,8 +3097,8 @@ flatpak_run_app (const char     *app_ref,
       if (!g_spawn_async (NULL,
                           (char **) real_argv_array->pdata,
                           envp,
-                          G_SPAWN_DEFAULT,
-                          NULL, NULL,
+                          G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
+                          child_setup, fd_array,
                           NULL,
                           error))
         return FALSE;

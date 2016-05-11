@@ -187,7 +187,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   envp = flatpak_run_get_minimal_env (TRUE);
   envp = flatpak_run_apply_env_vars (envp, app_context);
-  flatpak_run_add_environment_args (argv_array, &envp, NULL, NULL, app_id,
+  flatpak_run_add_environment_args (argv_array, NULL, &envp, NULL, NULL, app_id,
                                     app_context, NULL);
 
   if (!custom_usr &&
