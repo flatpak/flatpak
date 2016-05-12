@@ -232,7 +232,7 @@ flatpak_dir_get_system_helper (FlatpakDir *self)
 }
 
 gboolean
-flatpak_dir_use_child_repo (FlatpakDir *self)
+flatpak_dir_use_system_helper (FlatpakDir *self)
 {
   FlatpakSystemHelper *system_helper;
 
@@ -1085,7 +1085,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
-  if (flatpak_dir_use_child_repo (self))
+  if (flatpak_dir_use_system_helper (self))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
@@ -2945,7 +2945,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      GCancellable        *cancellable,
                      GError             **error)
 {
-  if (flatpak_dir_use_child_repo (self))
+  if (flatpak_dir_use_system_helper (self))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
@@ -3018,7 +3018,7 @@ flatpak_dir_update (FlatpakDir          *self,
                     GCancellable        *cancellable,
                     GError             **error)
 {
-  if (flatpak_dir_use_child_repo (self))
+  if (flatpak_dir_use_system_helper (self))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
@@ -3115,6 +3115,21 @@ flatpak_dir_uninstall (FlatpakDir          *self,
   if (parts == NULL)
     return FALSE;
   name = parts[1];
+
+  if (flatpak_dir_use_system_helper (self))
+    {
+      FlatpakSystemHelper *system_helper;
+
+      system_helper = flatpak_dir_get_system_helper (self);
+      g_assert (system_helper != NULL);
+
+      if (!flatpak_system_helper_call_uninstall_sync (system_helper,
+                                                      flags, ref,
+                                                      cancellable, error))
+        return FALSE;
+
+      return TRUE;
+    }
 
   if (!flatpak_dir_lock (self, &lock,
                          cancellable, error))

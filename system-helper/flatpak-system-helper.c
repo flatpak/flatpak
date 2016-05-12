@@ -296,6 +296,41 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
 }
 
 static gboolean
+handle_uninstall (FlatpakSystemHelper *object,
+                  GDBusMethodInvocation *invocation,
+                  guint arg_flags,
+                  const gchar *arg_ref)
+{
+  g_autoptr(FlatpakDir) system = flatpak_dir_get_system ();
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GMainContext) main_context = NULL;
+
+  g_debug ("Uninstall %u %s", arg_flags, arg_ref);
+
+  if ((arg_flags & ~FLATPAK_HELPER_UNINSTALL_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_UNINSTALL_FLAGS_ALL));
+      return TRUE;
+    }
+
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror  (invocation, error);
+      return TRUE;
+    }
+
+  if (!flatpak_dir_uninstall (system, arg_ref, arg_flags, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror  (invocation, error);
+      return TRUE;
+    }
+
+  flatpak_system_helper_complete_uninstall (object, invocation);
+  return TRUE;
+}
+
+static gboolean
 flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
                                   GDBusMethodInvocation  *invocation,
                                   gpointer                user_data)
@@ -368,7 +403,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       authorized = polkit_authorization_result_get_is_authorized (result);
     }
-  else   if (g_strcmp0 (method_name, "DeployAppstream") == 0)
+  else if (g_strcmp0 (method_name, "DeployAppstream") == 0)
     {
       const char *arch, *origin;
 
@@ -380,6 +415,35 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       details = polkit_details_new ();
       polkit_details_insert (details, "origin", origin);
       polkit_details_insert (details, "arch", arch);
+
+      result = polkit_authority_check_authorization_sync (authority, subject,
+                                                          action, details,
+                                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
+                                                          NULL, &error);
+      if (result == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Authorization error: %s", error->message);
+          return FALSE;
+        }
+
+      authorized = polkit_authorization_result_get_is_authorized (result);
+    }
+  else if (g_strcmp0 (method_name, "Uninstall") == 0)
+    {
+      const char *ref;
+      gboolean is_app;
+
+      g_variant_get_child (parameters, 1, "&s", &ref);
+
+      is_app = g_str_has_prefix (ref, "app/");
+      if (is_app)
+        action = "org.freedesktop.Flatpak.app-uninstall";
+      else
+        action = "org.freedesktop.Flatpak.runtime-uninstall";
+
+      details = polkit_details_new ();
+      polkit_details_insert (details, "ref", ref);
 
       result = polkit_authority_check_authorization_sync (authority, subject,
                                                           action, details,
@@ -424,6 +488,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   g_signal_connect (helper, "handle-deploy", G_CALLBACK (handle_deploy), NULL);
   g_signal_connect (helper, "handle-deploy-appstream", G_CALLBACK (handle_deploy_appstream), NULL);
+  g_signal_connect (helper, "handle-uninstall", G_CALLBACK (handle_uninstall), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
                     G_CALLBACK (flatpak_authorize_method_handler),
