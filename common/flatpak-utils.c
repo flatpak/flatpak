@@ -2184,7 +2184,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   ref, split[1], tmpdir_file,
                                   cancellable, &my_error))
             {
-              g_print ("No appstream data for %s\n", ref);
+              g_print ("No appstream data for %s: %s\n", ref, my_error->message);
               continue;
             }
         }
