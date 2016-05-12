@@ -26,13 +26,13 @@
 #include <gio/gio.h>
 
 static const GDBusErrorEntry flatpak_error_entries[] = {
-  {FLATPAK_PORTAL_ERROR_FAILED,                           "org.freedesktop.Flatpak.Failed"},
-  {FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,                 "org.freedesktop.Flatpak.InvalidArgument"},
-  {FLATPAK_PORTAL_ERROR_NOT_FOUND,                        "org.freedesktop.Flatpak.NotFound"},
-  {FLATPAK_PORTAL_ERROR_EXISTS,                           "org.freedesktop.Flatpak.Exists"},
-  {FLATPAK_PORTAL_ERROR_NOT_ALLOWED,                      "org.freedesktop.Flatpak.NotAllowed"},
-  {FLATPAK_PORTAL_ERROR_CANCELLED,                        "org.freedesktop.Flatpak.Cancelled"},
-  {FLATPAK_PORTAL_ERROR_WINDOW_DESTROYED,                 "org.freedesktop.Flatpak.WindowDestroyed"},
+  {FLATPAK_PORTAL_ERROR_FAILED,                           "org.freedesktop.portal.Error.Failed"},
+  {FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,                 "org.freedesktop.portal.Error.InvalidArgument"},
+  {FLATPAK_PORTAL_ERROR_NOT_FOUND,                        "org.freedesktop.portal.Error.NotFound"},
+  {FLATPAK_PORTAL_ERROR_EXISTS,                           "org.freedesktop.portal.Error.Exists"},
+  {FLATPAK_PORTAL_ERROR_NOT_ALLOWED,                      "org.freedesktop.portal.Error.NotAllowed"},
+  {FLATPAK_PORTAL_ERROR_CANCELLED,                        "org.freedesktop.portal.Error.Cancelled"},
+  {FLATPAK_PORTAL_ERROR_WINDOW_DESTROYED,                 "org.freedesktop.portal.Error.WindowDestroyed"},
 };
 
 GQuark
