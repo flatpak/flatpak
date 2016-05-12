@@ -3088,7 +3088,93 @@ flatpak_dir_update (FlatpakDir          *self,
   return TRUE;
 }
 
+gboolean
+flatpak_dir_uninstall (FlatpakDir          *self,
+                       const char          *ref,
+                       gboolean             keep_ref,
+                       gboolean             force_remove,
+                       GCancellable        *cancellable,
+                       GError             **error)
+{
+  const char *repository;
+  g_autofree char *current_ref = NULL;
+  gboolean was_deployed;
+  gboolean is_app;
+  const char *name;
+  g_auto(GStrv) parts = NULL;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_autoptr(GVariant) deploy_data = NULL;
 
+  parts = flatpak_decompose_ref (ref, error);
+  if (parts == NULL)
+    return FALSE;
+  name = parts[1];
+
+  if (!flatpak_dir_lock (self, &lock,
+                         cancellable, error))
+    return FALSE;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, ref,
+                                             cancellable, error);
+  if (deploy_data == NULL)
+    return FALSE;
+
+  repository = flatpak_deploy_data_get_origin (deploy_data);
+  if (repository == NULL)
+    return FALSE;
+
+  g_debug ("dropping active ref");
+  if (!flatpak_dir_set_active (self, ref, NULL, cancellable, error))
+    return FALSE;
+
+  is_app = g_str_has_prefix (ref, "app/");
+  if (is_app)
+    {
+      current_ref = flatpak_dir_current_ref (self, name, cancellable);
+      if (g_strcmp0 (ref, current_ref) == 0)
+        {
+          g_debug ("dropping current ref");
+          if (!flatpak_dir_drop_current_ref (self, name, cancellable, error))
+            return FALSE;
+        }
+    }
+
+  if (!flatpak_dir_undeploy_all (self, ref, force_remove, &was_deployed, cancellable, error))
+    return FALSE;
+
+  if (!keep_ref &&
+      !flatpak_dir_remove_ref (self, repository, ref, cancellable, error))
+    return FALSE;
+
+  if (is_app &&
+      !flatpak_dir_update_exports (self, name, cancellable, error))
+    return FALSE;
+
+  glnx_release_lock_file (&lock);
+
+  if (repository != NULL &&
+      g_str_has_suffix (repository, "-origin") &&
+      flatpak_dir_get_remote_noenumerate (self, repository))
+    ostree_repo_remote_delete (self->repo, repository, NULL, NULL);
+
+  if (!keep_ref &&
+      !flatpak_dir_prune (self, cancellable, error))
+    return FALSE;
+
+  flatpak_dir_cleanup_removed (self, cancellable, NULL);
+
+  if (!flatpak_dir_mark_changed (self, error))
+    return FALSE;
+
+  if (!was_deployed)
+    {
+      g_set_error (error,
+                   FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                   "%s branch %s is not installed", name, parts[3]);
+    }
+
+  return TRUE;
+}
 
 gboolean
 flatpak_dir_collect_deployed_refs (FlatpakDir   *self,

@@ -1139,13 +1139,7 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
 {
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
   g_autofree char *ref = NULL;
-  g_autofree char *remote_name = NULL;
-  g_autofree char *current_ref = NULL;
-
-  g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
-  gboolean was_deployed = FALSE;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
@@ -1154,67 +1148,9 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
   /* prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (priv->dir);
 
-  if (!flatpak_dir_lock (dir_clone, &lock,
-                         cancellable, error))
+  if (!flatpak_dir_uninstall (dir_clone, ref, FALSE, FALSE,
+                              cancellable, error))
     return FALSE;
-
-  deploy_base = flatpak_dir_get_deploy_dir (priv->dir, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
-    {
-      g_set_error (error,
-                   FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   "%s branch %s is not installed", name, branch ? branch : "master");
-      return FALSE;
-    }
-
-  remote_name = flatpak_dir_get_origin (priv->dir, ref, cancellable, error);
-  if (remote_name == NULL)
-    return FALSE;
-
-  g_debug ("dropping active ref");
-  if (!flatpak_dir_set_active (dir_clone, ref, NULL, cancellable, error))
-    return FALSE;
-
-  if (kind == FLATPAK_REF_KIND_APP)
-    {
-      current_ref = flatpak_dir_current_ref (dir_clone, name, cancellable);
-      if (current_ref != NULL && strcmp (ref, current_ref) == 0)
-        {
-          g_debug ("dropping current ref");
-          if (!flatpak_dir_drop_current_ref (dir_clone, name, cancellable, error))
-            return FALSE;
-        }
-    }
-
-  if (!flatpak_dir_undeploy_all (dir_clone, ref, FALSE, &was_deployed, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_dir_remove_ref (dir_clone, remote_name, ref, cancellable, error))
-    return FALSE;
-
-  glnx_release_lock_file (&lock);
-
-  if (!flatpak_dir_prune (dir_clone, cancellable, error))
-    return FALSE;
-
-  flatpak_dir_cleanup_removed (dir_clone, cancellable, NULL);
-
-  if (kind == FLATPAK_REF_KIND_APP)
-    {
-      if (!flatpak_dir_update_exports (dir_clone, name, cancellable, error))
-        return FALSE;
-    }
-
-  if (!flatpak_dir_mark_changed (dir_clone, error))
-    return FALSE;
-
-  if (!was_deployed)
-    {
-      g_set_error (error,
-                   FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   "%s branch %s is not installed", name, branch ? branch : "master");
-      return FALSE;
-    }
 
   return TRUE;
 }

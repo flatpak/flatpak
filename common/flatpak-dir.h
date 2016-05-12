@@ -269,6 +269,12 @@ gboolean   flatpak_dir_update (FlatpakDir          *self,
                                OstreeAsyncProgress *progress,
                                GCancellable        *cancellable,
                                GError             **error);
+gboolean flatpak_dir_uninstall (FlatpakDir          *self,
+                                const char          *ref,
+                                gboolean             keep_ref,
+                                gboolean             force_remove,
+                                GCancellable        *cancellable,
+                                GError             **error);
 gboolean    flatpak_dir_undeploy (FlatpakDir   *self,
                                   const char   *ref,
                                   const char   *checksum,

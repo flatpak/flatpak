@@ -54,11 +54,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   const char *name = NULL;
   const char *branch = NULL;
   g_autofree char *ref = NULL;
-  g_autofree char *repository = NULL;
-  g_autofree char *current_ref = NULL;
-  gboolean was_deployed;
   gboolean is_app;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
 
@@ -86,62 +82,13 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
   /* TODO: when removing runtimes, look for apps that use it, require --force */
 
-  if (!flatpak_dir_lock (dir, &lock,
-                         cancellable, error))
+  if (!flatpak_dir_uninstall (dir,
+                             ref,
+                             opt_keep_ref,
+                             opt_force_remove,
+                             cancellable,
+                             error))
     return FALSE;
-
-  repository = flatpak_dir_get_origin (dir, ref, cancellable, NULL);
-
-  g_debug ("dropping active ref");
-  if (!flatpak_dir_set_active (dir, ref, NULL, cancellable, error))
-    return FALSE;
-
-  if (is_app)
-    {
-      current_ref = flatpak_dir_current_ref (dir, name, cancellable);
-      if (current_ref != NULL && strcmp (ref, current_ref) == 0)
-        {
-          g_debug ("dropping current ref");
-          if (!flatpak_dir_drop_current_ref (dir, name, cancellable, error))
-            return FALSE;
-        }
-    }
-
-  if (!flatpak_dir_undeploy_all (dir, ref, opt_force_remove, &was_deployed, cancellable, error))
-    return FALSE;
-
-  if (!opt_keep_ref)
-    {
-      if (!flatpak_dir_remove_ref (dir, repository, ref, cancellable, error))
-        return FALSE;
-    }
-
-  glnx_release_lock_file (&lock);
-
-  if (!opt_keep_ref)
-    {
-      if (!flatpak_dir_prune (dir, cancellable, error))
-        return FALSE;
-    }
-
-  flatpak_dir_cleanup_removed (dir, cancellable, NULL);
-
-  if (is_app)
-    {
-      if (!flatpak_dir_update_exports (dir, name, cancellable, error))
-        return FALSE;
-    }
-
-  if (repository != NULL &&
-      g_str_has_suffix (repository, "-origin") &&
-      flatpak_dir_get_remote_noenumerate (dir, repository))
-    ostree_repo_remote_delete (flatpak_dir_get_repo (dir), repository, NULL, NULL);
-
-  if (!flatpak_dir_mark_changed (dir, error))
-    return FALSE;
-
-  if (!was_deployed)
-    return flatpak_fail (error, "Nothing to uninstall");
 
   return TRUE;
 }
