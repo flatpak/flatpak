@@ -30,6 +30,7 @@
 #include <gio/gio.h>
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
+#include "lib/flatpak-error.h"
 
 #include "flatpak-dir.h"
 #include "flatpak-utils.h"

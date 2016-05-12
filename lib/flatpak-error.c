@@ -31,4 +31,4 @@
  *
  */
 
-G_DEFINE_QUARK (flatpak-error-quark, flatpak_error)
+/* This is actually defined in common/flatpak-utils.c so the common code can report errors */

@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "flatpak-utils.h"
+#include "lib/flatpak-error.h"
 #include "flatpak-dir.h"
 #include "flatpak-portal-error.h"
 
@@ -38,6 +39,9 @@
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 #include <libsoup/soup.h>
+
+/* This is also here so the common code can report these errors to the lib */
+G_DEFINE_QUARK (flatpak-error-quark, flatpak_error)
 
 GBytes *
 flatpak_read_stream (GInputStream *in,
