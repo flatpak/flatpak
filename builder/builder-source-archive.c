@@ -534,7 +534,7 @@ builder_source_archive_extract (BuilderSource  *source,
     {
       g_autofree char *strip_components = g_strdup_printf ("--strip-components=%u", self->strip_components);
       /* Note: tar_decompress_flag can return NULL, so put it last */
-      if (!tar (dest, error, "xf", archive_path, strip_components, tar_decompress_flag (type), NULL))
+      if (!tar (dest, error, "xf", archive_path, "--no-same-owner", strip_components, tar_decompress_flag (type), NULL))
         return FALSE;
     }
   else if (type == ZIP)
