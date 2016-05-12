@@ -215,7 +215,7 @@ flatpak_option_context_parse (GOptionContext     *context,
     }
 
   if (opt_verbose)
-    g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
   if (out_dir)
     *out_dir = g_steal_pointer (&dir);
@@ -332,7 +332,7 @@ main (int    argc,
 
   setlocale (LC_ALL, "");
 
-  g_log_set_handler (NULL, G_LOG_LEVEL_MESSAGE, message_handler, NULL);
+  g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, message_handler, NULL);
 
   g_set_prgname (argv[0]);
 
