@@ -223,7 +223,7 @@ flatpak_dir_get_system_helper (FlatpakDir *self)
           g_warning ("Can't find org.freedesktop.Flatpak.SystemHelper: %s\n", error->message);
           system_helper = NO_SYSTEM_HELPER;
         }
-
+      g_dbus_proxy_set_default_timeout (G_DBUS_PROXY (self->system_helper), G_MAXINT);
       g_once_init_leave (&self->system_helper, system_helper);
     }
 
