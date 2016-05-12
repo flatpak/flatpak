@@ -1890,13 +1890,18 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
           g_str_has_suffix (name, ".trigger"))
         {
           g_autoptr(GPtrArray) argv_array = NULL;
+          /* We need to canonicalize the basedir, because if has a symlink
+             somewhere the bind mount will be on the target of that, not
+             at that exact path. */
+          g_autofree char *basedir_orig = g_file_get_path (self->basedir);
+          g_autofree char *basedir = canonicalize_file_name (basedir_orig);
 
           g_debug ("running trigger %s", name);
 
           argv_array = g_ptr_array_new_with_free_func (g_free);
 #ifdef DISABLE_SANDBOXED_TRIGGERS
           g_ptr_array_add (argv_array, g_file_get_path (child));
-          g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
+          g_ptr_array_add (argv_array, g_strdup (basedir));
 #else
           g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
           g_ptr_array_add (argv_array, g_strdup ("--unshare-ipc"));
@@ -1910,11 +1915,11 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
           g_ptr_array_add (argv_array, g_strdup ("--dev"));
           g_ptr_array_add (argv_array, g_strdup ("/dev"));
           g_ptr_array_add (argv_array, g_strdup ("--bind"));
-          g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
-          g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
+          g_ptr_array_add (argv_array, g_strdup (basedir));
+          g_ptr_array_add (argv_array, g_strdup (basedir));
 #endif
           g_ptr_array_add (argv_array, g_file_get_path (child));
-          g_ptr_array_add (argv_array, g_file_get_path (self->basedir));
+          g_ptr_array_add (argv_array, g_strdup (basedir));
           g_ptr_array_add (argv_array, NULL);
 
           if (!g_spawn_sync ("/",
