@@ -31,6 +31,11 @@
 #include "lib/flatpak-error.h"
 
 static PolkitAuthority *authority = NULL;
+static FlatpakSystemHelper *helper = NULL;
+static GMainLoop *main_loop = NULL;
+static guint name_owner_id = 0;
+
+#define IDLE_TIMEOUT_SECS 10*60
 
 /* This uses a weird Auto prefix to avoid conflicts with later added polkit types.
  */
@@ -41,6 +46,70 @@ typedef PolkitSubject AutoPolkitSubject;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitAuthorizationResult, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitDetails, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoPolkitSubject, g_object_unref)
+
+static void
+skeleton_died_cb (gpointer data)
+{
+  g_debug ("skeleton finalized, exiting");
+  g_main_loop_quit (main_loop);
+}
+
+static gboolean
+unref_skeleton_in_timeout_cb (gpointer user_data)
+{
+  static gboolean unreffed = FALSE;
+  g_debug ("unreffing helper main ref");
+  if (!unreffed)
+    {
+      g_object_unref (helper);
+      unreffed = TRUE;
+    }
+
+  return G_SOURCE_REMOVE;
+}
+
+static void
+unref_skeleton_in_timeout (void)
+{
+  if (name_owner_id)
+    g_bus_unown_name (name_owner_id);
+  name_owner_id = 0;
+
+  /* After we've lost the name or idled we drop the main ref on the helper
+     so that we'll exit when it drops to zero. However, if there are
+     outstanding calls these will keep the refcount up during the
+     execution of them. We do the unref on a timeout to make sure
+     we're completely draining the queue of (stale) requests. */
+  g_timeout_add (500, unref_skeleton_in_timeout_cb, NULL);
+}
+
+static gboolean
+idle_timeout_cb (gpointer user_data)
+{
+  if (name_owner_id)
+    {
+      g_debug ("Idle - unowning name");
+      unref_skeleton_in_timeout ();
+    }
+  return G_SOURCE_REMOVE;
+}
+
+G_LOCK_DEFINE_STATIC (idle);
+static void
+schedule_idle_callback (void)
+{
+  static guint idle_timeout_id = 0;
+
+  G_LOCK(idle);
+
+  if (idle_timeout_id != 0)
+    g_source_remove (idle_timeout_id);
+
+  idle_timeout_id = g_timeout_add_seconds (IDLE_TIMEOUT_SECS, idle_timeout_cb, NULL);
+
+  G_UNLOCK(idle);
+}
+
 
 static gboolean
 handle_deploy (FlatpakSystemHelper   *object,
@@ -57,6 +126,8 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GFile) deploy_dir = NULL;
   gboolean is_update;
   g_autoptr(GMainContext) main_context = NULL;
+
+  g_debug ("Deploy %s %u %s %s", arg_repo_path, arg_flags, arg_ref, arg_origin);
 
   if ((arg_flags & ~FLATPAK_HELPER_DEPLOY_FLAGS_ALL) != 0)
     {
@@ -171,6 +242,8 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
   g_autoptr(GMainContext) main_context = NULL;
   g_autofree char *branch = NULL;
 
+  g_debug ("DeployAppstream %s %s %s", arg_repo_path, arg_origin, arg_arch);
+
   if (!g_file_query_exists (path, NULL))
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS, "Path does not exist");
@@ -189,8 +262,6 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
   g_main_context_push_thread_default (main_context);
 
   branch = g_strdup_printf ("appstream/%s", arg_arch);
-
-  g_print ("pulling branch %s\n", branch);
 
   if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
                                          arg_origin,
@@ -234,6 +305,9 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   gboolean authorized;
   const gchar *sender;
   const gchar *action;
+
+  /* Ensure we don't idle exit */
+  schedule_idle_callback ();
 
   g_autoptr(AutoPolkitSubject) subject = NULL;
   g_autoptr(AutoPolkitDetails) details = NULL;
@@ -332,16 +406,18 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   return authorized;
 }
 
-
 static void
 on_bus_acquired (GDBusConnection *connection,
                  const gchar     *name,
                  gpointer         user_data)
 {
-  FlatpakSystemHelper *helper;
   GError *error = NULL;
 
+  g_debug ("Bus aquired, creating skeleton");
+
   helper = flatpak_system_helper_skeleton_new ();
+
+  g_object_set_data_full (G_OBJECT(helper), "track-alive", GINT_TO_POINTER(42), skeleton_died_cb);
 
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (helper),
                                        G_DBUS_INTERFACE_SKELETON_FLAGS_HANDLE_METHOD_INVOCATIONS_IN_THREAD);
@@ -368,6 +444,7 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
+  g_debug ("Name aquired");
 }
 
 static void
@@ -375,23 +452,96 @@ on_name_lost (GDBusConnection *connection,
               const gchar     *name,
               gpointer         user_data)
 {
-  exit (1);
+  g_debug ("Name lost");
+  unref_skeleton_in_timeout ();
+}
+
+static void
+binary_file_changed_cb (GFileMonitor *file_monitor,
+                        GFile *file,
+                        GFile *other_file,
+                        GFileMonitorEvent event_type,
+                        gpointer data)
+{
+  static gboolean got_it = FALSE;
+
+  if (!got_it)
+    {
+      g_debug ("binary file changed");
+      unref_skeleton_in_timeout ();
+    }
+
+  got_it = TRUE;
+}
+
+static void
+message_handler (const gchar   *log_domain,
+                 GLogLevelFlags log_level,
+                 const gchar   *message,
+                 gpointer       user_data)
+{
+  /* Make this look like normal console output */
+  if (log_level & G_LOG_LEVEL_DEBUG)
+    g_printerr ("XA: %s\n", message);
+  else
+    g_printerr ("%s: %s\n", g_get_prgname (), message);
 }
 
 int
 main (int    argc,
       char **argv)
 {
-  guint owner_id;
-  GMainLoop *loop;
-
+  gchar exe_path[PATH_MAX+1];
+  ssize_t exe_path_len;
+  gboolean replace;
+  gboolean verbose;
+  gboolean show_version;
+  GBusNameOwnerFlags flags;
+  GOptionContext *context;
   g_autoptr(GError) error = NULL;
+  const GOptionEntry options[] = {
+    { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
+    { "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,  "Enable debug output.", NULL },
+    { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
+    { NULL }
+  };
 
   setlocale (LC_ALL, "");
 
   g_setenv ("GIO_USE_VFS", "local", TRUE);
 
   g_set_prgname (argv[0]);
+
+  g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, message_handler, NULL);
+
+  context = g_option_context_new ("");
+
+  g_option_context_set_summary (context, "Flatpak system helper");
+  g_option_context_add_main_entries (context, options, GETTEXT_PACKAGE);
+
+  replace = FALSE;
+  verbose = FALSE;
+  show_version = FALSE;
+
+  if (!g_option_context_parse (context, &argc, &argv, &error))
+    {
+      g_printerr ("%s: %s", g_get_application_name(), error->message);
+      g_printerr ("\n");
+      g_printerr ("Try \"%s --help\" for more information.",
+                  g_get_prgname ());
+      g_printerr ("\n");
+      g_option_context_free (context);
+      return 1;
+    }
+
+  if (show_version)
+    {
+      g_print (PACKAGE_STRING "\n");
+      return 0;
+    }
+
+  if (verbose)
+    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
   authority = polkit_authority_get_sync (NULL, &error);
   if (authority == NULL)
@@ -400,19 +550,44 @@ main (int    argc,
       return 1;
     }
 
-  owner_id = g_bus_own_name (G_BUS_TYPE_SYSTEM,
-                             "org.freedesktop.Flatpak.SystemHelper",
-                             G_BUS_NAME_OWNER_FLAGS_NONE,
-                             on_bus_acquired,
-                             on_name_acquired,
-                             on_name_lost,
-                             NULL,
-                             NULL);
+  exe_path_len = readlink ("/proc/self/exe", exe_path, sizeof (exe_path) - 1);
+  if (exe_path_len > 0)
+    {
+      exe_path[exe_path_len] = 0;
+      GFileMonitor *monitor;
+      g_autoptr(GFile) exe = NULL;
+      g_autoptr(GError) local_error = NULL;
 
-  loop = g_main_loop_new (NULL, FALSE);
-  g_main_loop_run (loop);
+      exe = g_file_new_for_path (exe_path);
+      monitor =  g_file_monitor_file (exe,
+                                      G_FILE_MONITOR_NONE,
+                                      NULL,
+                                      &local_error);
+      if (monitor == NULL)
+        g_warning ("Failed to set watch on %s: %s", exe_path, error->message);
+      else
+        g_signal_connect (monitor, "changed",
+                          G_CALLBACK (binary_file_changed_cb), NULL);
+    }
 
-  g_bus_unown_name (owner_id);
+  flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;
+  if (replace)
+    flags |= G_BUS_NAME_OWNER_FLAGS_REPLACE;
+
+  name_owner_id = g_bus_own_name (G_BUS_TYPE_SYSTEM,
+                                  "org.freedesktop.Flatpak.SystemHelper",
+                                  flags,
+                                  on_bus_acquired,
+                                  on_name_acquired,
+                                  on_name_lost,
+                                  NULL,
+                                  NULL);
+
+  /* Ensure we don't idle exit */
+  schedule_idle_callback ();
+
+  main_loop = g_main_loop_new (NULL, FALSE);
+  g_main_loop_run (main_loop);
 
   return 0;
 }
