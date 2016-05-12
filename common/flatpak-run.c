@@ -1810,9 +1810,10 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                                     NULL);
       g_autofree char *path = g_build_filename (gs_file_get_path_cached (app_id_dir),
                                                 "config/user-dirs.dirs", NULL);
-      add_args (argv_array,
-                "--ro-bind", src_path, path,
-                NULL);
+      if (g_file_test (src_path, G_FILE_TEST_EXISTS))
+        add_args (argv_array,
+                  "--ro-bind", src_path, path,
+                  NULL);
     }
   else if (xdg_dirs_conf != NULL && app_id_dir != NULL)
     {
