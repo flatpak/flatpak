@@ -720,7 +720,7 @@ flatpak_dir_get_deploy_data (FlatpakDir   *self,
   deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
   if (deploy_dir == NULL)
     {
-      flatpak_fail (error, "%s is not installed", ref);
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED, "%s not installed", ref);
       return NULL;
     }
 
@@ -755,7 +755,7 @@ flatpak_dir_get_origin (FlatpakDir   *self,
                                              cancellable, error);
   if (deploy_data == NULL)
     {
-      flatpak_fail (error, "%s is not installed", ref);
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED, "%s not installed", ref);
       return NULL;
     }
 
@@ -776,7 +776,7 @@ flatpak_dir_get_subpaths (FlatpakDir   *self,
                                              cancellable, error);
   if (deploy_data == NULL)
     {
-      flatpak_fail (error, "%s is not installed", ref);
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED, "%s not installed", ref);
       return NULL;
     }
 
@@ -3698,7 +3698,7 @@ flatpak_dir_find_installed_ref (FlatpakDir *self,
         }
     }
 
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                "%s %s not installed", name, opt_branch ? opt_branch : "master");
   return NULL;
 }

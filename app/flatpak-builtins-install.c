@@ -32,6 +32,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "lib/flatpak-error.h"
 #include "flatpak-chain-input-stream.h"
 
 static char *opt_arch;
@@ -237,7 +238,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     return flatpak_fail (error, "%s %s, branch %s is already installed",
                          is_app ? "App" : "Runtime", name, branch ? branch : "master");
 
-  if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+  if (!g_error_matches (my_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
     {
       g_propagate_error (error, g_steal_pointer (&my_error));
       return FALSE;

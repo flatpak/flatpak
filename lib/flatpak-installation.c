@@ -390,7 +390,7 @@ flatpak_installation_get_installed_ref (FlatpakInstallation *self,
                                         ref, NULL, cancellable);
   if (deploy == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                    "Ref %s no installed", ref);
       return NULL;
     }
@@ -429,7 +429,7 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
 
   if (deploy == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                    "App %s no installed", name);
       return NULL;
     }
