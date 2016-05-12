@@ -45,6 +45,12 @@ typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE = 1 << 0,
 } FlatpakHelperDeployFlags;
 
+typedef enum {
+  FLATPAK_HELPER_UNINSTALL_FLAGS_NONE = 0,
+  FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF = 1 << 0,
+  FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE = 1 << 1,
+} FlatpakHelperUninstallFlags;
+
 #define FLATPAK_HELPER_DEPLOY_FLAGS_ALL (FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE)
 
 GQuark       flatpak_dir_error_quark (void);
@@ -271,8 +277,7 @@ gboolean   flatpak_dir_update (FlatpakDir          *self,
                                GError             **error);
 gboolean flatpak_dir_uninstall (FlatpakDir          *self,
                                 const char          *ref,
-                                gboolean             keep_ref,
-                                gboolean             force_remove,
+                                FlatpakHelperUninstallFlags flags,
                                 GCancellable        *cancellable,
                                 GError             **error);
 gboolean    flatpak_dir_undeploy (FlatpakDir   *self,

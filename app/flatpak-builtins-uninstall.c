@@ -55,6 +55,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   const char *branch = NULL;
   g_autofree char *ref = NULL;
   gboolean is_app;
+  FlatpakHelperUninstallFlags flags = 0;
 
   context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
 
@@ -82,12 +83,13 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 
   /* TODO: when removing runtimes, look for apps that use it, require --force */
 
-  if (!flatpak_dir_uninstall (dir,
-                             ref,
-                             opt_keep_ref,
-                             opt_force_remove,
-                             cancellable,
-                             error))
+  if (opt_keep_ref)
+    flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
+  if (opt_force_remove)
+    flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
+
+  if (!flatpak_dir_uninstall (dir, ref, flags,
+                              cancellable, error))
     return FALSE;
 
   return TRUE;

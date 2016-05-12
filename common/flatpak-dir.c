@@ -3091,8 +3091,7 @@ flatpak_dir_update (FlatpakDir          *self,
 gboolean
 flatpak_dir_uninstall (FlatpakDir          *self,
                        const char          *ref,
-                       gboolean             keep_ref,
-                       gboolean             force_remove,
+                       FlatpakHelperUninstallFlags flags,
                        GCancellable        *cancellable,
                        GError             **error)
 {
@@ -3104,6 +3103,8 @@ flatpak_dir_uninstall (FlatpakDir          *self,
   g_auto(GStrv) parts = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autoptr(GVariant) deploy_data = NULL;
+  gboolean keep_ref = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
+  gboolean force_remove = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)

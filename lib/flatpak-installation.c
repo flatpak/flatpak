@@ -1148,7 +1148,7 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
   /* prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (priv->dir);
 
-  if (!flatpak_dir_uninstall (dir_clone, ref, FALSE, FALSE,
+  if (!flatpak_dir_uninstall (dir_clone, ref, FLATPAK_HELPER_UNINSTALL_FLAGS_NONE,
                               cancellable, error))
     return FALSE;
 
