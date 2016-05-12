@@ -41,7 +41,22 @@
 #include <libsoup/soup.h>
 
 /* This is also here so the common code can report these errors to the lib */
-G_DEFINE_QUARK (flatpak-error-quark, flatpak_error)
+static const GDBusErrorEntry flatpak_error_entries[] = {
+  {FLATPAK_ERROR_ALREADY_INSTALLED,     "org.freedesktop.Flatpak.Error.AlreadyInstalled"},
+  {FLATPAK_ERROR_NOT_INSTALLED,         "org.freedesktop.Flatpak.Error.NotInstalled"},
+};
+
+GQuark
+flatpak_error_quark (void)
+{
+  static volatile gsize quark_volatile = 0;
+
+  g_dbus_error_register_error_domain ("flatpak-error-quark",
+                                      &quark_volatile,
+                                      flatpak_error_entries,
+                                      G_N_ELEMENTS (flatpak_error_entries));
+  return (GQuark) quark_volatile;
+}
 
 GBytes *
 flatpak_read_stream (GInputStream *in,

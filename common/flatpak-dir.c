@@ -210,6 +210,10 @@ flatpak_dir_get_system_helper (FlatpakDir *self)
   if (g_once_init_enter (&self->system_helper))
     {
       FlatpakSystemHelper *system_helper;
+
+      /* To ensure reverse mapping */
+      flatpak_error_quark ();
+
       system_helper =
         flatpak_system_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
                                                       G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
