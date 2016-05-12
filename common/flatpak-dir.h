@@ -40,14 +40,6 @@ GType flatpak_deploy_get_type (void);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)
 
-#define FLATPAK_DIR_ERROR flatpak_dir_error_quark ()
-
-typedef enum {
-  FLATPAK_DIR_ERROR_ALREADY_DEPLOYED,
-  FLATPAK_DIR_ERROR_ALREADY_UNDEPLOYED,
-  FLATPAK_DIR_ERROR_NOT_DEPLOYED,
-} FlatpakDirErrorEnum;
-
 typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_NONE = 0,
   FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE = 1 << 0,

@@ -650,7 +650,7 @@ flatpak_find_deploy_for_ref (const char   *ref,
   system_dir = flatpak_dir_get_system ();
 
   deploy = flatpak_dir_load_deployed (user_dir, ref, NULL, cancellable, &my_error);
-  if (deploy == NULL && g_error_matches (my_error, FLATPAK_DIR_ERROR, FLATPAK_DIR_ERROR_NOT_DEPLOYED))
+  if (deploy == NULL && g_error_matches (my_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
     {
       g_clear_error (&my_error);
       deploy = flatpak_dir_load_deployed (system_dir, ref, NULL, cancellable, &my_error);

@@ -80,8 +80,6 @@ typedef struct
 G_DEFINE_TYPE (FlatpakDir, flatpak_dir, G_TYPE_OBJECT)
 G_DEFINE_TYPE (FlatpakDeploy, flatpak_deploy, G_TYPE_OBJECT)
 
-G_DEFINE_QUARK (flatpak-dir-error-quark, flatpak_dir_error)
-
 enum {
   PROP_0,
 
@@ -489,7 +487,7 @@ flatpak_dir_load_deployed (FlatpakDir   *self,
   deploy_dir = flatpak_dir_get_if_deployed (self, ref, checksum, cancellable);
   if (deploy_dir == NULL)
     {
-      g_set_error (error, FLATPAK_DIR_ERROR, FLATPAK_DIR_ERROR_NOT_DEPLOYED, "%s not installed", ref);
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED, "%s not installed", ref);
       return NULL;
     }
 
@@ -2538,9 +2536,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
   real_checkoutdir = g_file_get_child (deploy_base, checksum);
   if (g_file_query_exists (real_checkoutdir, cancellable))
     {
-      g_set_error (error, FLATPAK_DIR_ERROR,
-                   FLATPAK_DIR_ERROR_ALREADY_DEPLOYED,
-                   "%s branch %s already deployed", ref, checksum);
+      g_set_error (error, FLATPAK_ERROR,
+                   FLATPAK_ERROR_ALREADY_INSTALLED,
+                   "%s branch %s already installed", ref, checksum);
       return FALSE;
     }
 
@@ -2831,8 +2829,8 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            old_deploy_data,
                            cancellable, &my_error))
     {
-      if (g_error_matches (my_error, FLATPAK_DIR_ERROR,
-                           FLATPAK_DIR_ERROR_ALREADY_DEPLOYED))
+      if (g_error_matches (my_error, FLATPAK_ERROR,
+                           FLATPAK_ERROR_ALREADY_INSTALLED))
         return TRUE;
 
       g_propagate_error (error, my_error);
@@ -3271,9 +3269,9 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   checkoutdir = g_file_get_child (deploy_base, checksum);
   if (!g_file_query_exists (checkoutdir, cancellable))
     {
-      g_set_error (error, FLATPAK_DIR_ERROR,
-                   FLATPAK_DIR_ERROR_ALREADY_UNDEPLOYED,
-                   "%s branch %s already undeployed", ref, checksum);
+      g_set_error (error, FLATPAK_ERROR,
+                   FLATPAK_ERROR_NOT_INSTALLED,
+                   "%s branch %s not installed", ref, checksum);
       goto out;
     }
 
