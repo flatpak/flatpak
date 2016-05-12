@@ -48,7 +48,7 @@ static GOptionEntry options[] = {
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description", "BODY" },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Architecture to export for (must be host compatible)", "ARCH" },
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Commit runtime (/usr), not /app" },
-  { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Update the appstream branch" },
+  { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, "Update the appstream branch" },
   { "files", 0, 0, G_OPTION_ARG_STRING, &opt_files, "Use alternative directory for the files", "SUBDIR"},
   { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, "Use alternative file for the metadata", "FILE"},
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
