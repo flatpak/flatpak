@@ -32,7 +32,7 @@
 
 static gboolean opt_force;
 
-static GOptionEntry modify_options[] = {
+static GOptionEntry delete_options[] = {
   { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force, "Remove remote even if in use",  },
   { NULL }
 };
@@ -46,6 +46,8 @@ flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
   const char *remote_name;
 
   context = g_option_context_new ("NAME - Delete a remote repository");
+
+  g_option_context_add_main_entries (context, delete_options, NULL);
 
   if (!flatpak_option_context_parse (context, NULL, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
