@@ -51,6 +51,15 @@
       <arg type='s' name='ref' direction='in'/>
     </method>
 
+    <method name="ConfigureRemote">
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='remote' direction='in'/>
+      <arg type='s' name='config' direction='in'/>
+      <arg type='ay' name='gpg_key' direction='in'>
+        <annotation name="org.gtk.GDBus.C.ForceGVariant" value="true"/>
+      </arg>
+    </method>
+
   </interface>
 
 </node>

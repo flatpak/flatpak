@@ -303,7 +303,6 @@ handle_uninstall (FlatpakSystemHelper *object,
 {
   g_autoptr(FlatpakDir) system = flatpak_dir_get_system ();
   g_autoptr(GError) error = NULL;
-  g_autoptr(GMainContext) main_context = NULL;
 
   g_debug ("Uninstall %u %s", arg_flags, arg_ref);
 
@@ -327,6 +326,85 @@ handle_uninstall (FlatpakSystemHelper *object,
     }
 
   flatpak_system_helper_complete_uninstall (object, invocation);
+
+  return TRUE;
+}
+
+static gboolean
+handle_configure_remote (FlatpakSystemHelper *object,
+                         GDBusMethodInvocation *invocation,
+                         guint arg_flags,
+                         const gchar *arg_remote,
+                         const gchar *arg_config,
+                         GVariant *arg_gpg_key)
+{
+  g_autoptr(FlatpakDir) system = flatpak_dir_get_system ();
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GKeyFile) config = g_key_file_new ();
+  g_autofree char *group = g_strdup_printf ("remote \"%s\"", arg_remote);
+  g_autoptr(GBytes) gpg_data = NULL;
+  gboolean force_remove;
+
+  g_debug ("ConfigureRemote %u %s", arg_flags, arg_remote);
+
+  if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Invalid remote name: %s", arg_remote);
+      return TRUE;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_ALL));
+      return TRUE;
+    }
+
+  if (!g_key_file_load_from_data (config, arg_config, strlen (arg_config),
+                                  G_KEY_FILE_NONE, &error))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Invalid config: %s\n", error->message);
+      return TRUE;
+    }
+
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror  (invocation, error);
+      return TRUE;
+    }
+
+  if (g_variant_get_size (arg_gpg_key) > 0)
+    gpg_data = g_variant_get_data_as_bytes (arg_gpg_key);
+
+  force_remove = (arg_flags & FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_FORCE_REMOVE) != 0;
+
+  if (g_key_file_has_group (config, group))
+    {
+      /* Add/Modify */
+      if (!flatpak_dir_modify_remote (system, arg_remote, config,
+                                      gpg_data, NULL, &error))
+        {
+          g_dbus_method_invocation_return_gerror  (invocation, error);
+          return TRUE;
+        }
+    }
+  else
+    {
+      /* Remove */
+      if (!flatpak_dir_remove_remote (system,
+                                      force_remove,
+                                      arg_remote,
+                                      NULL, &error))
+        {
+          g_dbus_method_invocation_return_gerror  (invocation, error);
+          return TRUE;
+        }
+    }
+
+  flatpak_system_helper_complete_configure_remote (object, invocation);
+
   return TRUE;
 }
 
@@ -458,6 +536,30 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       authorized = polkit_authorization_result_get_is_authorized (result);
     }
+  else if (g_strcmp0 (method_name, "ConfigureRemote") == 0)
+    {
+      const char *remote;
+
+      g_variant_get_child (parameters, 1, "&s", &remote);
+
+      action = "org.freedesktop.Flatpak.configure-remote";
+
+      details = polkit_details_new ();
+      polkit_details_insert (details, "remote", remote);
+
+      result = polkit_authority_check_authorization_sync (authority, subject,
+                                                          action, details,
+                                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
+                                                          NULL, &error);
+      if (result == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Authorization error: %s", error->message);
+          return FALSE;
+        }
+
+      authorized = polkit_authorization_result_get_is_authorized (result);
+    }
 
   if (!authorized)
     {
@@ -489,6 +591,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-deploy", G_CALLBACK (handle_deploy), NULL);
   g_signal_connect (helper, "handle-deploy-appstream", G_CALLBACK (handle_deploy_appstream), NULL);
   g_signal_connect (helper, "handle-uninstall", G_CALLBACK (handle_uninstall), NULL);
+  g_signal_connect (helper, "handle-configure-remote", G_CALLBACK (handle_configure_remote), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
                     G_CALLBACK (flatpak_authorize_method_handler),

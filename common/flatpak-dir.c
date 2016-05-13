@@ -4163,6 +4163,30 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   GHashTableIter hash_iter;
   gpointer key;
 
+  if (flatpak_dir_use_system_helper (self))
+    {
+      FlatpakSystemHelper *system_helper;
+      g_autoptr(GVariant) gpg_data_v = NULL;
+      FlatpakHelperConfigureRemoteFlags flags = 0;
+
+      gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
+
+      system_helper = flatpak_dir_get_system_helper (self);
+      g_assert (system_helper != NULL);
+
+      if (force_remove)
+        flags |= FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_FORCE_REMOVE;
+
+      if (!flatpak_system_helper_call_configure_remote_sync (system_helper,
+                                                             flags, remote_name,
+                                                             "",
+                                                             gpg_data_v,
+                                                             cancellable, error))
+        return FALSE;
+
+      return TRUE;
+    }
+
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
@@ -4222,6 +4246,17 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
   return TRUE;
 }
 
+static GVariant *
+variant_new_ay_bytes (GBytes *bytes)
+{
+  gsize size;
+  gconstpointer data;
+  data = g_bytes_get_data (bytes, &size);
+  g_bytes_ref (bytes);
+  return g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), data, size,
+                                                      TRUE, (GDestroyNotify)g_bytes_unref, bytes));
+}
+
 gboolean
 flatpak_dir_modify_remote (FlatpakDir   *self,
                            const char   *remote_name,
@@ -4245,6 +4280,31 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   if (!g_key_file_has_group (config, group))
     return flatpak_fail (error, "No configuration for remote %s specified",
                          remote_name);
+
+
+  if (flatpak_dir_use_system_helper (self))
+    {
+      FlatpakSystemHelper *system_helper;
+      g_autofree char *config_data = g_key_file_to_data (config, NULL, NULL);
+      g_autoptr(GVariant) gpg_data_v = NULL;
+
+      if (gpg_data != NULL)
+        gpg_data_v = variant_new_ay_bytes (gpg_data);
+      else
+        gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
+
+      system_helper = flatpak_dir_get_system_helper (self);
+      g_assert (system_helper != NULL);
+
+      if (!flatpak_system_helper_call_configure_remote_sync (system_helper,
+                                                             0, remote_name,
+                                                             config_data,
+                                                             gpg_data_v,
+                                                             cancellable, error))
+        return FALSE;
+
+      return TRUE;
+    }
 
   metalink = g_key_file_get_string (config, group, "metalink", NULL);
   if (metalink != NULL && *metalink != 0)
