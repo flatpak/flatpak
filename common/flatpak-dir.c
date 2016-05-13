@@ -921,42 +921,6 @@ flatpak_dir_remove_appstream (FlatpakDir   *self,
 }
 
 gboolean
-flatpak_dir_remove_all_refs (FlatpakDir   *self,
-                             const char   *remote,
-                             GCancellable *cancellable,
-                             GError      **error)
-{
-  g_autofree char *prefix = NULL;
-
-  g_autoptr(GHashTable) refs = NULL;
-  GHashTableIter hash_iter;
-  gpointer key;
-
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
-    return FALSE;
-
-  prefix = g_strdup_printf ("%s:", remote);
-
-  if (!ostree_repo_list_refs (self->repo,
-                              NULL,
-                              &refs,
-                              cancellable, error))
-    return FALSE;
-
-  g_hash_table_iter_init (&hash_iter, refs);
-  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
-    {
-      const char *refspec = key;
-
-      if (g_str_has_prefix (refspec, prefix) &&
-          !flatpak_dir_remove_ref (self, remote, refspec + strlen (prefix), cancellable, error))
-        return FALSE;
-    }
-
-  return TRUE;
-}
-
-gboolean
 flatpak_dir_deploy_appstream (FlatpakDir          *self,
                               const char          *remote,
                               const char          *arch,
@@ -4185,6 +4149,77 @@ flatpak_dir_list_remotes (FlatpakDir   *self,
                      cmp_remote, self);
 
   return res;
+}
+
+gboolean
+flatpak_dir_remove_remote (FlatpakDir   *self,
+                           gboolean      force_remove,
+                           const char   *remote_name,
+                           GCancellable *cancellable,
+                           GError      **error)
+{
+  g_autofree char *prefix = NULL;
+  g_autoptr(GHashTable) refs = NULL;
+  GHashTableIter hash_iter;
+  gpointer key;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_list_refs (self->repo,
+                              NULL,
+                              &refs,
+                              cancellable, error))
+    return FALSE;
+
+  prefix = g_strdup_printf ("%s:", remote_name);
+
+  if (!force_remove)
+    {
+      g_hash_table_iter_init (&hash_iter, refs);
+      while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+        {
+          const char *refspec = key;
+
+          if (g_str_has_prefix (refspec, prefix))
+            {
+              const char *unprefixed_refspec = refspec + strlen (prefix);
+              g_autofree char *origin = flatpak_dir_get_origin (self, unprefixed_refspec,
+                                                                cancellable, NULL);
+
+              if (g_strcmp0 (origin, remote_name) == 0)
+                return flatpak_fail (error, "Can't remove remote '%s' with installed ref %s (at least)",
+                                     remote_name, unprefixed_refspec);
+            }
+        }
+    }
+
+  /* Remove all refs */
+  g_hash_table_iter_init (&hash_iter, refs);
+  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+    {
+      const char *refspec = key;
+
+      if (g_str_has_prefix (refspec, prefix) &&
+          !flatpak_dir_remove_ref (self, remote_name, refspec + strlen (prefix), cancellable, error))
+        return FALSE;
+    }
+
+  if (!flatpak_dir_remove_appstream (self, remote_name,
+                                     cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_remote_change (self->repo, NULL,
+                                  OSTREE_REPO_REMOTE_CHANGE_DELETE,
+                                  remote_name, NULL,
+                                  NULL,
+                                  cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_mark_changed (self, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 gboolean

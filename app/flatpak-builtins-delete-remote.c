@@ -30,6 +30,14 @@
 
 #include "flatpak-builtins.h"
 
+static gboolean opt_force;
+
+static GOptionEntry modify_options[] = {
+  { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force, "Remove remote even if in use",  },
+  { NULL }
+};
+
+
 gboolean
 flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -47,22 +55,8 @@ flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
 
   remote_name = argv[1];
 
-  if (!flatpak_dir_remove_all_refs (dir, remote_name,
-                                    cancellable, error))
-    return FALSE;
-
-  if (!flatpak_dir_remove_appstream (dir, remote_name,
-                                     cancellable, error))
-    return FALSE;
-
-  if (!ostree_repo_remote_change (flatpak_dir_get_repo (dir), NULL,
-                                  OSTREE_REPO_REMOTE_CHANGE_DELETE,
-                                  remote_name, NULL,
-                                  NULL,
+  if (!flatpak_dir_remove_remote (dir, opt_force, remote_name,
                                   cancellable, error))
-    return FALSE;
-
-  if (!flatpak_dir_mark_changed (dir, error))
     return FALSE;
 
   return TRUE;

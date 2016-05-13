@@ -294,10 +294,6 @@ gboolean    flatpak_dir_undeploy_all (FlatpakDir   *self,
                                       gboolean     *was_deployed_out,
                                       GCancellable *cancellable,
                                       GError      **error);
-gboolean    flatpak_dir_remove_all_refs (FlatpakDir   *self,
-                                         const char   *remote,
-                                         GCancellable *cancellable,
-                                         GError      **error);
 gboolean    flatpak_dir_remove_ref (FlatpakDir   *self,
                                     const char   *remote_name,
                                     const char   *ref,
@@ -335,6 +331,11 @@ gboolean   flatpak_dir_modify_remote (FlatpakDir   *self,
                                       const char   *remote_name,
                                       GKeyFile     *config,
                                       GBytes       *gpg_data,
+                                      GCancellable *cancellable,
+                                      GError      **error);
+gboolean   flatpak_dir_remove_remote (FlatpakDir   *self,
+                                      gboolean      force_remove,
+                                      const char   *remote_name,
                                       GCancellable *cancellable,
                                       GError      **error);
 char      *flatpak_dir_get_remote_title (FlatpakDir *self,

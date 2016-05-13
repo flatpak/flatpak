@@ -82,6 +82,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--force</option></term>
+
+                <listitem><para>
+                    Remove remote even if its in use by installed apps or runtimes.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
