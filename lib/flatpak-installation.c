@@ -52,9 +52,15 @@
 
 typedef struct _FlatpakInstallationPrivate FlatpakInstallationPrivate;
 
+G_LOCK_DEFINE_STATIC (dir);
+
 struct _FlatpakInstallationPrivate
 {
-  FlatpakDir *dir;
+  /* All raw access to this should be protected by the dir lock. The FlatpakDir object is mostly
+     threadsafe (apart from pull transactions being a singleton on it), however we replace it during
+     flatpak_installation_drop_caches(), so every user needs to keep its own reference alive until
+     done. */
+  FlatpakDir *dir_unlocked;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakInstallation, flatpak_installation, G_TYPE_OBJECT)
@@ -69,7 +75,7 @@ flatpak_installation_finalize (GObject *object)
   FlatpakInstallation *self = FLATPAK_INSTALLATION (object);
   FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
 
-  g_object_unref (priv->dir);
+  g_object_unref (priv->dir_unlocked);
 
   G_OBJECT_CLASS (flatpak_installation_parent_class)->finalize (object);
 }
@@ -137,11 +143,10 @@ flatpak_installation_new_for_dir (FlatpakDir   *dir,
   self = g_object_new (FLATPAK_TYPE_INSTALLATION, NULL);
   priv = flatpak_installation_get_instance_private (self);
 
-  priv->dir = dir;
+  priv->dir_unlocked = dir;
 
   return self;
 }
-
 /**
  * flatpak_get_default_arch:
  *
@@ -210,6 +215,52 @@ flatpak_installation_new_for_path (GFile *path, gboolean user,
   return flatpak_installation_new_for_dir (flatpak_dir_new (path, user), cancellable, error);
 }
 
+static FlatpakDir *
+flatpak_installation_get_dir (FlatpakInstallation *self)
+{
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  FlatpakDir *dir;
+  G_LOCK (dir);
+  dir = g_object_ref (priv->dir_unlocked);
+  G_UNLOCK (dir);
+  return dir;
+}
+
+/**
+ * flatpak_installation_drop_caches:
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Drops all internal (in-memory) caches. For instance, this may be needed to pick up new
+ * remotes that have been added outside this instance.
+ *
+ * Returns: %TRUE on success, %FALSE on error
+ */
+gboolean
+flatpak_installation_drop_caches (FlatpakInstallation *self,
+                                  GCancellable *cancellable,
+                                  GError      **error)
+{
+  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  FlatpakDir *clone, *old;
+  gboolean res = FALSE;
+
+  G_LOCK (dir);
+
+  old = priv->dir_unlocked;
+  clone = flatpak_dir_clone (priv->dir_unlocked);
+
+  if (flatpak_dir_ensure_repo (clone, cancellable, error))
+    {
+      priv->dir_unlocked = clone;
+      g_object_unref (old);
+    }
+
+  G_UNLOCK (dir);
+
+  return res;
+}
+
 /**
  * flatpak_installation_get_is_user:
  * @self: a #FlatpakInstallation
@@ -221,9 +272,9 @@ flatpak_installation_new_for_path (GFile *path, gboolean user,
 gboolean
 flatpak_installation_get_is_user (FlatpakInstallation *self)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
 
-  return flatpak_dir_is_user (priv->dir);
+  return flatpak_dir_is_user (dir);
 }
 
 /**
@@ -237,9 +288,9 @@ flatpak_installation_get_is_user (FlatpakInstallation *self)
 GFile *
 flatpak_installation_get_path (FlatpakInstallation *self)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
 
-  return g_object_ref (flatpak_dir_get_path (priv->dir));
+  return g_object_ref (flatpak_dir_get_path (dir));
 }
 
 /**
@@ -269,7 +320,7 @@ flatpak_installation_launch (FlatpakInstallation *self,
                              GCancellable        *cancellable,
                              GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *app_ref = NULL;
 
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
@@ -278,7 +329,7 @@ flatpak_installation_launch (FlatpakInstallation *self,
     flatpak_build_app_ref (name, branch, arch);
 
   app_deploy =
-    flatpak_dir_load_deployed (priv->dir, app_ref,
+    flatpak_dir_load_deployed (dir, app_ref,
                                commit,
                                cancellable, error);
   if (app_deploy == NULL)
@@ -296,13 +347,11 @@ flatpak_installation_launch (FlatpakInstallation *self,
 
 
 static FlatpakInstalledRef *
-get_ref (FlatpakInstallation *self,
+get_ref (FlatpakDir          *dir,
          const char          *full_ref,
          GCancellable        *cancellable,
          GError **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
   g_auto(GStrv) parts = NULL;
   const char *origin = NULL;
   const char *commit = NULL;
@@ -317,7 +366,7 @@ get_ref (FlatpakInstallation *self,
 
   parts = g_strsplit (full_ref, "/", -1);
 
-  deploy_data = flatpak_dir_get_deploy_data (priv->dir, full_ref, cancellable, error);
+  deploy_data = flatpak_dir_get_deploy_data (dir, full_ref, cancellable, error);
   if (deploy_data == NULL)
     return NULL;
   origin = flatpak_deploy_data_get_origin (deploy_data);
@@ -325,19 +374,19 @@ get_ref (FlatpakInstallation *self,
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
   installed_size = flatpak_deploy_data_get_installed_size (deploy_data);
 
-  deploy_dir = flatpak_dir_get_deploy_dir (priv->dir, full_ref);
+  deploy_dir = flatpak_dir_get_deploy_dir (dir, full_ref);
   deploy_subdir = g_file_get_child (deploy_dir, commit);
   deploy_path = g_file_get_path (deploy_subdir);
 
   if (strcmp (parts[0], "app") == 0)
     {
       g_autofree char *current =
-        flatpak_dir_current_ref (priv->dir, parts[1], cancellable);
+        flatpak_dir_current_ref (dir, parts[1], cancellable);
       if (current && strcmp (full_ref, current) == 0)
         is_current = TRUE;
     }
 
-  latest_commit = flatpak_dir_read_latest (priv->dir, origin, full_ref, NULL, NULL);
+  latest_commit = flatpak_dir_read_latest (dir, origin, full_ref, NULL, NULL);
 
   return flatpak_installed_ref_new (full_ref,
                                     commit,
@@ -372,7 +421,7 @@ flatpak_installation_get_installed_ref (FlatpakInstallation *self,
                                         GCancellable        *cancellable,
                                         GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
 
   g_autoptr(GFile) deploy = NULL;
   g_autofree char *ref = NULL;
@@ -386,7 +435,7 @@ flatpak_installation_get_installed_ref (FlatpakInstallation *self,
     ref = flatpak_build_runtime_ref (name, branch, arch);
 
 
-  deploy = flatpak_dir_get_if_deployed (priv->dir,
+  deploy = flatpak_dir_get_if_deployed (dir,
                                         ref, NULL, cancellable);
   if (deploy == NULL)
     {
@@ -395,7 +444,7 @@ flatpak_installation_get_installed_ref (FlatpakInstallation *self,
       return NULL;
     }
 
-  return get_ref (self, ref, cancellable, error);
+  return get_ref (dir, ref, cancellable, error);
 }
 
 /**
@@ -417,14 +466,14 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
                                                 GCancellable        *cancellable,
                                                 GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
 
   g_autoptr(GFile) deploy = NULL;
   g_autofree char *current =
-    flatpak_dir_current_ref (priv->dir, name, cancellable);
+    flatpak_dir_current_ref (dir, name, cancellable);
 
   if (current)
-    deploy = flatpak_dir_get_if_deployed (priv->dir,
+    deploy = flatpak_dir_get_if_deployed (dir,
                                           current, NULL, cancellable);
 
   if (deploy == NULL)
@@ -434,7 +483,7 @@ flatpak_installation_get_current_installed_app (FlatpakInstallation *self,
       return NULL;
     }
 
-  return get_ref (self, current, cancellable, error);
+  return get_ref (dir, current, cancellable, error);
 }
 
 /**
@@ -453,14 +502,13 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
                                           GCancellable        *cancellable,
                                           GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_auto(GStrv) raw_refs_app = NULL;
   g_auto(GStrv) raw_refs_runtime = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
 
-  if (!flatpak_dir_list_refs (priv->dir,
+  if (!flatpak_dir_list_refs (dir,
                               "app",
                               &raw_refs_app,
                               cancellable, error))
@@ -469,14 +517,14 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
   for (i = 0; raw_refs_app[i] != NULL; i++)
     {
       g_autoptr(GError) local_error = NULL;
-      FlatpakInstalledRef *ref = get_ref (self, raw_refs_app[i], cancellable, &local_error);
+      FlatpakInstalledRef *ref = get_ref (dir, raw_refs_app[i], cancellable, &local_error);
       if (ref != NULL)
         g_ptr_array_add (refs, ref);
       else
         g_warning ("Unexpected failure getting ref for %s: %s", raw_refs_app[i], local_error->message);
     }
 
-  if (!flatpak_dir_list_refs (priv->dir,
+  if (!flatpak_dir_list_refs (dir,
                               "runtime",
                               &raw_refs_runtime,
                               cancellable, error))
@@ -485,7 +533,7 @@ flatpak_installation_list_installed_refs (FlatpakInstallation *self,
   for (i = 0; raw_refs_runtime[i] != NULL; i++)
     {
       g_autoptr(GError) local_error = NULL;
-      FlatpakInstalledRef *ref = get_ref (self, raw_refs_runtime[i], cancellable, &local_error);
+      FlatpakInstalledRef *ref = get_ref (dir, raw_refs_runtime[i], cancellable, &local_error);
       if (ref != NULL)
         g_ptr_array_add (refs, ref);
       else
@@ -513,13 +561,12 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
                                                   GCancellable        *cancellable,
                                                   GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_auto(GStrv) raw_refs = NULL;
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
 
-  if (!flatpak_dir_list_refs (priv->dir,
+  if (!flatpak_dir_list_refs (dir,
                               kind == FLATPAK_REF_KIND_APP ? "app" : "runtime",
                               &raw_refs,
                               cancellable, error))
@@ -528,7 +575,7 @@ flatpak_installation_list_installed_refs_by_kind (FlatpakInstallation *self,
   for (i = 0; raw_refs[i] != NULL; i++)
     {
       g_autoptr(GError) local_error = NULL;
-      FlatpakInstalledRef *ref = get_ref (self, raw_refs[i], cancellable, &local_error);
+      FlatpakInstalledRef *ref = get_ref (dir, raw_refs[i], cancellable, &local_error);
       if (ref != NULL)
         g_ptr_array_add (refs, ref);
       else
@@ -640,19 +687,18 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
                                    GCancellable        *cancellable,
                                    GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_auto(GStrv) remote_names = NULL;
   g_autoptr(GPtrArray) remotes = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
 
-  remote_names = flatpak_dir_list_remotes (priv->dir, cancellable, error);
+  remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
   if (remote_names == NULL)
     return NULL;
 
   for (i = 0; remote_names[i] != NULL; i++)
     g_ptr_array_add (remotes,
-                     flatpak_remote_new (priv->dir, remote_names[i]));
+                     flatpak_remote_new (dir, remote_names[i]));
 
   return g_steal_pointer (&remotes);
 }
@@ -674,19 +720,18 @@ flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
                                          GCancellable        *cancellable,
                                          GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_auto(GStrv) remote_names = NULL;
   int i;
 
-  remote_names = flatpak_dir_list_remotes (priv->dir, cancellable, error);
+  remote_names = flatpak_dir_list_remotes (dir, cancellable, error);
   if (remote_names == NULL)
     return NULL;
 
   for (i = 0; remote_names[i] != NULL; i++)
     {
       if (strcmp (remote_names[i], name) == 0)
-        return flatpak_remote_new (priv->dir, remote_names[i]);
+        return flatpak_remote_new (dir, remote_names[i]);
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
@@ -712,11 +757,11 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
                                          GCancellable        *cancellable,
                                          GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
 
-  metadata_contents = flatpak_dir_load_override (priv->dir, app_id, &metadata_size, error);
+  metadata_contents = flatpak_dir_load_override (dir, app_id, &metadata_size, error);
   if (metadata_contents == NULL)
     return NULL;
 
@@ -848,10 +893,9 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
                                      GCancellable           *cancellable,
                                      GError                **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *ref = NULL;
   gboolean added_remote = FALSE;
-
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   FlatpakInstalledRef *result = NULL;
@@ -876,7 +920,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   if (parts == NULL)
     return FALSE;
 
-  deploy_base = flatpak_dir_get_deploy_dir (priv->dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
 
   if (g_file_query_exists (deploy_base, cancellable))
     {
@@ -888,7 +932,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
 
   /* Add a remote for later updates */
   basename = g_file_get_basename (file);
-  remote = flatpak_dir_create_origin_remote (priv->dir,
+  remote = flatpak_dir_create_origin_remote (dir,
                                              origin,
                                              parts[1],
                                              basename,
@@ -902,7 +946,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   added_remote = TRUE;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = flatpak_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (dir);
 
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     goto out;
@@ -919,14 +963,14 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
   if (!flatpak_dir_deploy_install (dir_clone, ref, remote, NULL, cancellable, error))
     goto out;
 
-  result = get_ref (self, ref, cancellable, error);
+  result = get_ref (dir, ref, cancellable, error);
   if (result == NULL)
     goto out;
 
 out:
 
   if (added_remote && result == NULL)
-    ostree_repo_remote_delete (flatpak_dir_get_repo (priv->dir), remote, NULL, NULL);
+    ostree_repo_remote_delete (flatpak_dir_get_repo (dir), remote, NULL, NULL);
 
   return result;
 }
@@ -960,9 +1004,8 @@ flatpak_installation_install (FlatpakInstallation    *self,
                               GCancellable           *cancellable,
                               GError                **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *ref = NULL;
-
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
@@ -973,7 +1016,7 @@ flatpak_installation_install (FlatpakInstallation    *self,
   if (ref == NULL)
     return NULL;
 
-  deploy_base = flatpak_dir_get_deploy_dir (priv->dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
   if (g_file_query_exists (deploy_base, cancellable))
     {
       g_set_error (error,
@@ -983,7 +1026,7 @@ flatpak_installation_install (FlatpakInstallation    *self,
     }
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = flatpak_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (dir);
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
   main_context = g_main_context_new ();
@@ -1000,7 +1043,7 @@ flatpak_installation_install (FlatpakInstallation    *self,
                             ostree_progress, cancellable, error))
     goto out;
 
-  result = get_ref (self, ref, cancellable, error);
+  result = get_ref (dir, ref, cancellable, error);
   if (result == NULL)
     goto out;
 
@@ -1043,9 +1086,8 @@ flatpak_installation_update (FlatpakInstallation    *self,
                              GCancellable           *cancellable,
                              GError                **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *ref = NULL;
-
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
@@ -1058,7 +1100,7 @@ flatpak_installation_update (FlatpakInstallation    *self,
   if (ref == NULL)
     return NULL;
 
-  deploy_base = flatpak_dir_get_deploy_dir (priv->dir, ref);
+  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
     {
       g_set_error (error,
@@ -1067,16 +1109,16 @@ flatpak_installation_update (FlatpakInstallation    *self,
       return NULL;
     }
 
-  remote_name = flatpak_dir_get_origin (priv->dir, ref, cancellable, error);
+  remote_name = flatpak_dir_get_origin (dir, ref, cancellable, error);
   if (remote_name == NULL)
     return NULL;
 
-  subpaths = flatpak_dir_get_subpaths (priv->dir, ref, cancellable, error);
+  subpaths = flatpak_dir_get_subpaths (dir, ref, cancellable, error);
   if (subpaths == NULL)
     return FALSE;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = flatpak_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (dir);
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
   main_context = g_main_context_new ();
@@ -1096,7 +1138,7 @@ flatpak_installation_update (FlatpakInstallation    *self,
                            ostree_progress, cancellable, error))
     goto out;
 
-  result = get_ref (self, ref, cancellable, error);
+  result = get_ref (dir, ref, cancellable, error);
   if (result == NULL)
     goto out;
 
@@ -1137,7 +1179,7 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
                                 GCancellable           *cancellable,
                                 GError                **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *ref = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
 
@@ -1146,7 +1188,7 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
     return FALSE;
 
   /* prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = flatpak_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (dir);
 
   if (!flatpak_dir_uninstall (dir_clone, ref, FLATPAK_HELPER_UNINSTALL_FLAGS_NONE,
                               cancellable, error))
@@ -1184,10 +1226,10 @@ flatpak_installation_fetch_remote_size_sync (FlatpakInstallation *self,
                                              GCancellable        *cancellable,
                                              GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
 
-  return flatpak_dir_fetch_ref_cache (priv->dir, remote_name, full_ref,
+  return flatpak_dir_fetch_ref_cache (dir, remote_name, full_ref,
                                       download_size, installed_size,
                                       NULL,
                                       cancellable,
@@ -1214,11 +1256,11 @@ flatpak_installation_fetch_remote_metadata_sync (FlatpakInstallation *self,
                                                  GCancellable        *cancellable,
                                                  GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *full_ref = flatpak_ref_format_ref (ref);
   char *res = NULL;
 
-  if (!flatpak_dir_fetch_ref_cache (priv->dir, remote_name, full_ref,
+  if (!flatpak_dir_fetch_ref_cache (dir, remote_name, full_ref,
                                     NULL, NULL,
                                     &res,
                                     cancellable, error))
@@ -1245,15 +1287,14 @@ flatpak_installation_list_remote_refs_sync (FlatpakInstallation *self,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GHashTable) ht = NULL;
   GHashTableIter iter;
   gpointer key;
   gpointer value;
 
-  if (!flatpak_dir_list_remote_refs (priv->dir,
+  if (!flatpak_dir_list_remote_refs (dir,
                                      remote_name,
                                      &ht,
                                      cancellable,
@@ -1301,8 +1342,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autoptr(GHashTable) ht = NULL;
   g_autofree char *ref = NULL;
   const char *checksum;
@@ -1310,7 +1350,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
   if (branch == NULL)
     branch = "master";
 
-  if (!flatpak_dir_list_remote_refs (priv->dir,
+  if (!flatpak_dir_list_remote_refs (dir,
                                      remote_name,
                                      &ht,
                                      cancellable,
@@ -1362,15 +1402,14 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
                                             GCancellable        *cancellable,
                                             GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   gboolean res;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
-  dir_clone = flatpak_dir_clone (priv->dir);
+  dir_clone = flatpak_dir_clone (dir);
 
   if (main_context)
     g_main_context_pop_thread_default (main_context);
@@ -1414,11 +1453,10 @@ flatpak_installation_create_monitor (FlatpakInstallation *self,
                                      GCancellable        *cancellable,
                                      GError             **error)
 {
-  FlatpakInstallationPrivate *priv = flatpak_installation_get_instance_private (self);
-
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autoptr(GFile) path = NULL;
 
-  path = flatpak_dir_get_changed_path (priv->dir);
+  path = flatpak_dir_get_changed_path (dir);
 
   return g_file_monitor_file (path, G_FILE_MONITOR_NONE,
                               cancellable, error);
