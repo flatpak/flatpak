@@ -3657,7 +3657,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
-  /* TODO: Add in-memory cache here, also use for ostree_repo_list_refs */
+  /* TODO: Add in-memory cache here */
   if (!ostree_repo_remote_fetch_summary (self->repo, name,
                                          out_summary, NULL,
                                          cancellable,
@@ -3666,6 +3666,71 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
 
   return TRUE;
 }
+
+/* This duplicates ostree_repo_list_refs so it can use flatpak_dir_remote_fetch_summary
+   and get caching */
+static gboolean
+flatpak_dir_remote_list_refs (FlatpakDir       *self,
+                              const char       *remote_name,
+                              GHashTable      **out_all_refs,
+                              GCancellable     *cancellable,
+                              GError          **error)
+{
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GHashTable) ret_all_refs = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) ref_map = NULL;
+  GVariantIter iter;
+  GVariant *child;
+
+  if (!flatpak_dir_remote_fetch_summary (self, remote_name,
+                                         &summary_bytes,
+                                         cancellable, error))
+    return FALSE;
+
+  if (summary_bytes == NULL)
+    return flatpak_fail (error, "Remote refs not available; server has no summary file\n");
+
+  ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                      summary_bytes, FALSE);
+
+  ref_map = g_variant_get_child_value (summary, 0);
+
+  g_variant_iter_init (&iter, ref_map);
+  while ((child = g_variant_iter_next_value (&iter)) != NULL)
+    {
+      const char *ref_name = NULL;
+      g_autoptr(GVariant) csum_v = NULL;
+      char tmp_checksum[65];
+
+      g_variant_get_child (child, 0, "&s", &ref_name);
+
+      if (ref_name != NULL)
+        {
+          const guchar *csum_bytes;
+
+          g_variant_get_child (child, 1, "(t@aya{sv})", NULL, &csum_v, NULL);
+          csum_bytes = ostree_checksum_bytes_peek_validate (csum_v, error);
+          if (csum_bytes == NULL)
+            return FALSE;
+
+          ostree_checksum_inplace_from_bytes (csum_bytes, tmp_checksum);
+
+          g_hash_table_insert (ret_all_refs,
+                               g_strdup (ref_name),
+                               g_strdup (tmp_checksum));
+        }
+
+      g_variant_unref (child);
+    }
+
+
+  *out_all_refs = g_steal_pointer (&ret_all_refs);
+
+  return TRUE;
+}
+
 
 char *
 flatpak_dir_find_remote_ref (FlatpakDir   *self,
@@ -4117,8 +4182,8 @@ flatpak_dir_list_remote_refs (FlatpakDir   *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
-  if (!ostree_repo_remote_list_refs (self->repo, remote,
-                                     refs, cancellable, error))
+  if (!flatpak_dir_remote_list_refs (self, remote, refs,
+                                     cancellable, error))
     return FALSE;
 
   if (flatpak_dir_get_remote_noenumerate (self, remote))
