@@ -127,8 +127,6 @@ static char *
 export_new_file (const char *basename, const char *contents, gboolean unique)
 {
   g_autofree char *path = NULL;
-  g_autofree char *id = NULL;
-  g_autofree char *doc_path = NULL;
   GError *error = NULL;
 
   path = g_build_filename (outdir, basename, NULL);

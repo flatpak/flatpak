@@ -3715,7 +3715,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   gboolean is_local;
 
   if (!ostree_repo_remote_get_url (self->repo, name, &url, error))
-    return NULL;
+    return FALSE;
 
   is_local = g_str_has_prefix (url, "file:");
 
