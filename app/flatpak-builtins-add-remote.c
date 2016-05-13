@@ -263,7 +263,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
         return FALSE;
     }
 
-  return flatpak_dir_modify_remove (dir, remote_name, config, gpg_data, cancellable, error);
+  return flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error);
 }
 
 gboolean
@@ -302,5 +302,5 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
         return FALSE;
     }
 
-  return flatpak_dir_modify_remove (dir, remote_name, config, gpg_data, cancellable, error);
+  return flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error);
 }

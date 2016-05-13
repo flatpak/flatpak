@@ -4188,7 +4188,7 @@ flatpak_dir_list_remotes (FlatpakDir   *self,
 }
 
 gboolean
-flatpak_dir_modify_remove (FlatpakDir   *self,
+flatpak_dir_modify_remote (FlatpakDir   *self,
                            const char   *remote_name,
                            GKeyFile     *config,
                            GBytes       *gpg_data,

@@ -331,7 +331,7 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
 char     **flatpak_dir_list_remotes (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
-gboolean   flatpak_dir_modify_remove (FlatpakDir   *self,
+gboolean   flatpak_dir_modify_remote (FlatpakDir   *self,
                                       const char   *remote_name,
                                       GKeyFile     *config,
                                       GBytes       *gpg_data,
