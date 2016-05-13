@@ -40,9 +40,20 @@
 
 #define NO_SYSTEM_HELPER ((FlatpakSystemHelper *) (gpointer) 1)
 
+#define SUMMARY_CACHE_TIMEOUT_SEC 5*60
+
 static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                                           GLnxLockFile *file_lock,
                                                           GError      **error);
+
+
+typedef struct
+{
+  GBytes *bytes;
+  char *remote;
+  char *url;
+  guint64 time;
+} CachedSummary;
 
 struct FlatpakDir
 {
@@ -53,6 +64,8 @@ struct FlatpakDir
   OstreeRepo          *repo;
 
   FlatpakSystemHelper *system_helper;
+
+  GHashTable          *summary_cache;
 
   SoupSession         *soup_session;
 };
@@ -267,6 +280,7 @@ flatpak_dir_finalize (GObject *object)
   g_clear_object (&self->system_helper);
 
   g_clear_object (&self->soup_session);
+  g_clear_pointer (&self->summary_cache, g_hash_table_unref);
 
   G_OBJECT_CLASS (flatpak_dir_parent_class)->finalize (object);
 }
@@ -3650,6 +3664,82 @@ flatpak_dir_get_if_deployed (FlatpakDir   *self,
   return NULL;
 }
 
+G_LOCK_DEFINE_STATIC (cache);
+
+static void
+cached_summary_free (CachedSummary *summary)
+{
+  g_bytes_unref (summary->bytes);
+  g_free (summary->remote);
+  g_free (summary->url);
+  g_free (summary);
+}
+
+static CachedSummary *
+cached_summary_new (GBytes *bytes,
+                    const char *remote,
+                    const char *url)
+{
+  CachedSummary *summary = g_new0 (CachedSummary, 1);
+  summary->bytes = g_bytes_ref (bytes);
+  summary->url = g_strdup (url);
+  summary->remote = g_strdup (remote);
+  summary->time = g_get_monotonic_time ();
+  return summary;
+}
+
+static GBytes *
+flatpak_dir_lookup_cached_summary (FlatpakDir  *self,
+                                   const char  *name,
+                                   const char  *url)
+{
+  CachedSummary *summary;
+  GBytes *res = NULL;
+
+  G_LOCK (cache);
+
+  if (self->summary_cache == NULL)
+    self->summary_cache = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GDestroyNotify)cached_summary_free);
+
+  summary = g_hash_table_lookup (self->summary_cache, name);
+  if (summary)
+    {
+      guint64 now = g_get_monotonic_time ();
+      if ((now - summary->time) < (1000 * (SUMMARY_CACHE_TIMEOUT_SEC)) &&
+          strcmp (url, summary->url) == 0)
+        {
+          g_debug ("Using cached summary for remote %s", name);
+          res = g_bytes_ref (summary->bytes);
+        }
+    }
+
+  G_UNLOCK (cache);
+
+  return res;
+}
+
+static GBytes *
+flatpak_dir_cache_summary (FlatpakDir  *self,
+                           GBytes      *bytes,
+                           const char  *name,
+                           const char  *url)
+{
+  CachedSummary *summary;
+  GBytes *res = NULL;
+
+  G_LOCK (cache);
+
+  /* This was already initialized in the cache-miss lookup */
+  g_assert (self->summary_cache != NULL);
+
+  summary = cached_summary_new (bytes, name, url);
+  g_hash_table_insert (self->summary_cache, summary->remote, summary);
+
+  G_UNLOCK (cache);
+
+  return res;
+}
+
 static gboolean
 flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                   const char   *name,
@@ -3657,12 +3747,33 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
-  /* TODO: Add in-memory cache here */
+  g_autofree char *url = NULL;
+  gboolean is_local;
+
+  if (!ostree_repo_remote_get_url (self->repo, name, &url, error))
+    return NULL;
+
+  is_local = g_str_has_prefix (url, "file:");
+
+  /* No caching for local files */
+  if (!is_local)
+    {
+      GBytes *cached_summary = flatpak_dir_lookup_cached_summary (self, name, url);
+      if (cached_summary)
+        {
+          *out_summary = cached_summary;
+          return TRUE;
+        }
+    }
+
   if (!ostree_repo_remote_fetch_summary (self->repo, name,
                                          out_summary, NULL,
                                          cancellable,
                                          error))
     return FALSE;
+
+  if (!is_local)
+    flatpak_dir_cache_summary (self, *out_summary, name, url);
 
   return TRUE;
 }
