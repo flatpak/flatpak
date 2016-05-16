@@ -90,14 +90,23 @@ flatpak_ref_get_type
 <FILE>flatpak-remote</FILE>
 <TITLE>FlatpakRemote</TITLE>
 FlatpakRemote
+flatpak_remote_new
+flatpak_remote_get_name
 flatpak_remote_get_appstream_dir
 flatpak_remote_get_appstream_timestamp
 flatpak_remote_get_gpg_verify
-flatpak_remote_get_name
+flatpak_remote_set_gpg_verify
+flatpak_remote_set_gpg_key
 flatpak_remote_get_noenumerate
+flatpak_remote_set_noenumerate
 flatpak_remote_get_prio
+flatpak_remote_set_prio
 flatpak_remote_get_title
+flatpak_remote_set_title
 flatpak_remote_get_url
+flatpak_remote_set_url
+flatpak_remote_get_disabled
+flatpak_remote_set_disabled
 <SUBSECTION Standard>
 FlatpakRemoteClass
 FLATPAK_IS_REMOTE
