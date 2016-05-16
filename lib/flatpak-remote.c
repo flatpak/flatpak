@@ -371,7 +371,7 @@ flatpak_remote_set_noenumerate (FlatpakRemote *self,
 }
 
 /**
- * flatpak_remote_get_disable:
+ * flatpak_remote_get_disabled:
  * @self: a #FlatpakRemote
  *
  * Returns whether this remote is disabled.
