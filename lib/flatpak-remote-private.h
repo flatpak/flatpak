@@ -29,7 +29,12 @@
 #include <flatpak-dir.h>
 #include <ostree.h>
 
-FlatpakRemote *flatpak_remote_new (FlatpakDir *dir,
-                                   const char *name);
+FlatpakRemote *flatpak_remote_new_with_dir (const char *name,
+                                            FlatpakDir *dir);
+
+gboolean flatpak_remote_commit (FlatpakRemote   *self,
+                                FlatpakDir      *dir,
+                                GCancellable    *cancellable,
+                                GError         **error);
 
 #endif /* __FLATPAK_REMOTE_PRIVATE_H__ */

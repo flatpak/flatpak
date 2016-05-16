@@ -688,6 +688,7 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
                                    GError             **error)
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir_clone = NULL;
   g_auto(GStrv) remote_names = NULL;
   g_autoptr(GPtrArray) remotes = g_ptr_array_new_with_free_func (g_object_unref);
   int i;
@@ -696,11 +697,66 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
   if (remote_names == NULL)
     return NULL;
 
+  /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
+     it has local changes */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+    return NULL;
+
   for (i = 0; remote_names[i] != NULL; i++)
     g_ptr_array_add (remotes,
-                     flatpak_remote_new (dir, remote_names[i]));
+                     flatpak_remote_new_with_dir (remote_names[i], dir_clone));
 
   return g_steal_pointer (&remotes);
+}
+
+gboolean
+flatpak_installation_modify_remote (FlatpakInstallation *self,
+                                    FlatpakRemote       *remote,
+                                    GCancellable        *cancellable,
+                                    GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
+     it has local changes */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+    return NULL;
+
+  if (!flatpak_remote_commit (remote, dir_clone, cancellable, error))
+    return FALSE;
+
+  /* Make sure we pick up the new config */
+  flatpak_installation_drop_caches (self, NULL, NULL);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_installation_remove_remote (FlatpakInstallation *self,
+                                    const char          *name,
+                                    GCancellable        *cancellable,
+                                    GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
+     it has local changes */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+    return NULL;
+
+  if (!flatpak_dir_remove_remote (dir, FALSE, name,
+                                  cancellable, error))
+    return FALSE;
+
+  /* Make sure we pick up the new config */
+  flatpak_installation_drop_caches (self, NULL, NULL);
+
+  return TRUE;
 }
 
 /**
@@ -721,6 +777,7 @@ flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
                                          GError             **error)
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir_clone = NULL;
   g_auto(GStrv) remote_names = NULL;
   int i;
 
@@ -731,7 +788,14 @@ flatpak_installation_get_remote_by_name (FlatpakInstallation *self,
   for (i = 0; remote_names[i] != NULL; i++)
     {
       if (strcmp (remote_names[i], name) == 0)
-        return flatpak_remote_new (dir, remote_names[i]);
+        {
+          /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
+             it has local changes */
+          dir_clone = flatpak_dir_clone (dir);
+          if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+            return NULL;
+          return flatpak_remote_new_with_dir (remote_names[i], dir_clone);
+        }
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,

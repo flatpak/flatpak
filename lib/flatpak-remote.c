@@ -52,6 +52,22 @@ struct _FlatpakRemotePrivate
 {
   char       *name;
   FlatpakDir *dir;
+
+  char       *local_url;
+  char       *local_title;
+  gboolean    local_gpg_verify;
+  gboolean    local_noenumerate;
+  gboolean    local_disabled;
+  int         local_prio;
+
+  guint       local_url_set : 1;
+  guint       local_title_set : 1;
+  guint       local_gpg_verify_set : 1;
+  guint       local_noenumerate_set : 1;
+  guint       local_disabled_set : 1;
+  guint       local_prio_set : 1;
+
+  GBytes     *local_gpg_key;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (FlatpakRemote, flatpak_remote, G_TYPE_OBJECT)
@@ -69,7 +85,13 @@ flatpak_remote_finalize (GObject *object)
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
   g_free (priv->name);
-  g_object_unref (priv->dir);
+  if (priv->dir)
+    g_object_unref (priv->dir);
+  if (priv->local_gpg_key)
+    g_bytes_unref (priv->local_gpg_key);
+
+  g_free (priv->local_url);
+  g_free (priv->local_title);
 
   G_OBJECT_CLASS (flatpak_remote_parent_class)->finalize (object);
 }
@@ -173,6 +195,9 @@ flatpak_remote_get_appstream_dir (FlatpakRemote *self,
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
   g_autofree char *subdir = NULL;
 
+  if (priv->dir == NULL)
+    return NULL;
+
   if (arch == NULL)
     arch = flatpak_get_arch ();
 
@@ -198,6 +223,9 @@ flatpak_remote_get_appstream_timestamp (FlatpakRemote *self,
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
   g_autofree char *subdir = NULL;
 
+  if (priv->dir == NULL)
+    return NULL;
+
   if (arch == NULL)
     arch = flatpak_get_arch ();
 
@@ -218,13 +246,41 @@ char *
 flatpak_remote_get_url (FlatpakRemote *self)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
-  OstreeRepo *repo = flatpak_dir_get_repo (priv->dir);
   char *url;
 
-  if (ostree_repo_remote_get_url (repo, priv->name, &url, NULL))
-    return url;
+  if (priv->local_url_set)
+    return g_strdup (priv->local_url);
+
+  if (priv->dir)
+    {
+      OstreeRepo *repo = flatpak_dir_get_repo (priv->dir);
+      if (ostree_repo_remote_get_url (repo, priv->name, &url, NULL))
+        return url;
+    }
 
   return NULL;
+}
+
+/**
+ * flatpak_remote_set_url:
+ * @self: a #FlatpakRemote
+ * @url: The new url
+ *
+ * Sets the repository URL of this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_url (FlatpakRemote *self,
+                        const char    *url)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_url);
+  priv->local_url = g_strdup (url);
+  priv->local_url_set = TRUE;
 }
 
 /**
@@ -240,7 +296,35 @@ flatpak_remote_get_title (FlatpakRemote *self)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
-  return flatpak_dir_get_remote_title (priv->dir, priv->name);
+  if (priv->local_title_set)
+    return g_strdup (priv->local_title);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_title (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_title:
+ * @self: a #FlatpakRemote
+ * @title: The new title
+ *
+ * Sets the repository title of this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_title (FlatpakRemote *self,
+                          const char    *title)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_title);
+  priv->local_title = g_strdup (title);
+  priv->local_title_set = TRUE;
 }
 
 /**
@@ -256,7 +340,34 @@ flatpak_remote_get_noenumerate (FlatpakRemote *self)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
-  return flatpak_dir_get_remote_noenumerate (priv->dir, priv->name);
+  if (priv->local_noenumerate_set)
+    return priv->local_noenumerate;
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_noenumerate (priv->dir, priv->name);
+
+  return FALSE;
+}
+
+/**
+ * flatpak_remote_set_noenumerate:
+ * @self: a #FlatpakRemote
+ * @noenumerate: a bool
+ *
+ * Sets the noenumeration config of this remote. See flatpak_remote_get_noenumerate().
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_noenumerate (FlatpakRemote *self,
+                                gboolean noenumerate)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  priv->local_noenumerate = noenumerate;
+  priv->local_noenumerate_set = TRUE;
 }
 
 /**
@@ -272,7 +383,33 @@ flatpak_remote_get_disabled (FlatpakRemote *self)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
-  return flatpak_dir_get_remote_disabled (priv->dir, priv->name);
+  if (priv->local_disabled_set)
+    return priv->local_disabled;
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_disabled (priv->dir, priv->name);
+
+  return FALSE;
+}
+/**
+ * flatpak_remote_set_disabled:
+ * @self: a #FlatpakRemote
+ * @disabled: a bool
+ *
+ * Sets the disabled config of this remote. See flatpak_remote_get_disable().
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_disabled (FlatpakRemote *self,
+                             gboolean disabled)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  priv->local_disabled = disabled;
+  priv->local_disabled_set = TRUE;
 }
 
 /**
@@ -288,7 +425,34 @@ flatpak_remote_get_prio (FlatpakRemote *self)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
-  return flatpak_dir_get_remote_prio (priv->dir, priv->name);
+  if (priv->local_prio_set)
+    return priv->local_prio;
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_prio (priv->dir, priv->name);
+
+  return 1;
+}
+
+/**
+ * flatpak_remote_set_prio:
+ * @self: a #FlatpakRemote
+ * @prio: a bool
+ *
+ * Sets the prio config of this remote. See flatpak_remote_get_prio().
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_prio (FlatpakRemote *self,
+                         int prio)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  priv->local_prio = prio;
+  priv->local_prio_set = TRUE;
 }
 
 /**
@@ -303,18 +467,67 @@ gboolean
 flatpak_remote_get_gpg_verify (FlatpakRemote *self)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
-  OstreeRepo *repo = flatpak_dir_get_repo (priv->dir);
   gboolean res;
 
-  if (ostree_repo_remote_get_gpg_verify (repo, priv->name, &res, NULL))
-    return res;
+  if (priv->local_gpg_verify_set)
+    return priv->local_gpg_verify;
+
+  if (priv->dir)
+    {
+      OstreeRepo *repo = flatpak_dir_get_repo (priv->dir);
+      if (ostree_repo_remote_get_gpg_verify (repo, priv->name, &res, NULL))
+        return res;
+    }
 
   return FALSE;
 }
 
+/**
+ * flatpak_remote_set_gpg_verify:
+ * @self: a #FlatpakRemote
+ * @gpg_verify: a bool
+ *
+ * Sets the gpg_verify config of this remote. See flatpak_remote_get_gpg_verify().
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_gpg_verify (FlatpakRemote *self,
+                               gboolean gpg_verify)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  priv->local_gpg_verify = gpg_verify;
+  priv->local_gpg_verify_set = TRUE;
+}
+
+/**
+ * flatpak_remote_set_gpg_key:
+ * @self: a #FlatpakRemote
+ * @gpg_key: a #GBytes with gpg binary key data
+ *
+ * Sets the trusted gpg key for this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_gpg_key (FlatpakRemote *self,
+                            GBytes        *gpg_key)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_gpg_key != NULL)
+    g_bytes_unref (priv->local_gpg_key);
+  priv->local_gpg_key = g_bytes_ref (gpg_key);
+}
+
 FlatpakRemote *
-flatpak_remote_new (FlatpakDir *dir,
-                    const char *name)
+flatpak_remote_new_with_dir (const char *name,
+                             FlatpakDir *dir)
 {
   FlatpakRemotePrivate *priv;
   FlatpakRemote *self = g_object_new (FLATPAK_TYPE_REMOTE,
@@ -322,7 +535,69 @@ flatpak_remote_new (FlatpakDir *dir,
                                       NULL);
 
   priv = flatpak_remote_get_instance_private (self);
-  priv->dir = g_object_ref (dir);
+  if (dir)
+    priv->dir = g_object_ref (dir);
 
   return self;
+}
+
+/**
+ * flatpak_remote_new:
+ * @name: a name
+ *
+ * Returns a new remote object which can be used to configure a new remote.
+ *
+ * Note: This is a local configuration object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ *
+ * Returns: (transfer full): a new #FlatpakRemote
+ **/
+FlatpakRemote *
+flatpak_remote_new (const char *name)
+{
+  return flatpak_remote_new_with_dir (name, NULL);
+}
+
+gboolean
+flatpak_remote_commit (FlatpakRemote   *self,
+                       FlatpakDir      *dir,
+                       GCancellable    *cancellable,
+                       GError         **error)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+  g_autofree char *url = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+  g_autofree char *group = g_strdup_printf ("remote \"%s\"", priv->name);
+
+  url = flatpak_remote_get_url (self);
+  if (url == NULL || *url == 0)
+    return flatpak_fail (error, "No url specified");
+
+  config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
+  if (priv->local_url_set)
+    g_key_file_set_string (config, group, "url", priv->local_url);
+
+  if (priv->local_title_set)
+    g_key_file_set_string (config, group, "title", priv->local_title);
+
+  if (priv->local_gpg_verify_set)
+    {
+      g_key_file_set_boolean (config, group, "gpg-verify", priv->local_gpg_verify);
+      g_key_file_set_boolean (config, group, "gpg-verify-summary", priv->local_gpg_verify);
+    }
+
+  if (priv->local_noenumerate_set)
+    g_key_file_set_boolean (config, group, "xa.noenumerate", priv->local_noenumerate);
+
+  if (priv->local_disabled_set)
+    g_key_file_set_boolean (config, group, "xa.disable", priv->local_disabled);
+
+  if (priv->local_prio_set)
+    {
+      g_autofree char *prio_as_string = g_strdup_printf ("%d", priv->local_prio);
+      g_key_file_set_string (config, group, "xa.prio", prio_as_string);
+    }
+
+  return flatpak_dir_modify_remote (dir, priv->name, config, priv->local_gpg_key, cancellable, error);
 }

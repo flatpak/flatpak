@@ -50,16 +50,34 @@ typedef struct
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRemote, g_object_unref)
 #endif
 
-FLATPAK_EXTERN const char *  flatpak_remote_get_name (FlatpakRemote * self);
+FLATPAK_EXTERN FlatpakRemote * flatpak_remote_new (const char    *name);
+
+FLATPAK_EXTERN const char *  flatpak_remote_get_name (FlatpakRemote *self);
 FLATPAK_EXTERN GFile *       flatpak_remote_get_appstream_dir (FlatpakRemote *self,
                                                                const char    *arch);
 FLATPAK_EXTERN GFile *       flatpak_remote_get_appstream_timestamp (FlatpakRemote *self,
                                                                      const char    *arch);
 FLATPAK_EXTERN char *        flatpak_remote_get_url (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_url (FlatpakRemote *self,
+                                                     const char    *url);
 FLATPAK_EXTERN char *        flatpak_remote_get_title (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_title (FlatpakRemote *self,
+                                                       const char    *title);
 FLATPAK_EXTERN gboolean      flatpak_remote_get_gpg_verify (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_gpg_verify (FlatpakRemote *self,
+                                                            gboolean       gpg_verify);
+FLATPAK_EXTERN void          flatpak_remote_set_gpg_key (FlatpakRemote *self,
+                                                         GBytes        *gpg_key);
 FLATPAK_EXTERN gboolean      flatpak_remote_get_noenumerate (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_noenumerate (FlatpakRemote *self,
+                                                             gboolean       noenumerate);
 FLATPAK_EXTERN gboolean      flatpak_remote_get_disabled (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_disabled (FlatpakRemote *self,
+                                                          gboolean       disabled);
 FLATPAK_EXTERN int           flatpak_remote_get_prio (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_prio (FlatpakRemote *self,
+                                                      int            prio);
+
+
 
 #endif /* __FLATPAK_REMOTE_H__ */
