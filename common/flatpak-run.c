@@ -2582,22 +2582,6 @@ setup_seccomp (GPtrArray  *argv_array,
         }
     }
 
-  /* Add in all possible secondary archs we are aware of that
-   * this kernel might support. */
-#if defined(__i386__) || defined(__x86_64__)
-  r = seccomp_arch_add (seccomp, SCMP_ARCH_X86);
-  if (r < 0 && r != -EEXIST)
-    return flatpak_fail (error, "Failed to add x86 architecture to seccomp filter");
-
-  r = seccomp_arch_add (seccomp, SCMP_ARCH_X86_64);
-  if (r < 0 && r != -EEXIST)
-    return flatpak_fail (error, "Failed to add x86_64 architecture to seccomp filter");
-
-  r = seccomp_arch_add (seccomp, SCMP_ARCH_X32);
-  if (r < 0 && r != -EEXIST)
-    return flatpak_fail (error, "Failed to add x32 architecture to seccomp filter");
-#endif
-
   /* TODO: Should we filter the kernel keyring syscalls in some way?
    * We do want them to be used by desktop apps, but they could also perhaps
    * leak system stuff or secrets from other apps.
