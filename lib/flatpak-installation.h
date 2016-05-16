@@ -95,6 +95,9 @@ typedef void (*FlatpakProgressCallback)(const char *status,
                                         gboolean    estimating,
                                         gpointer    user_data);
 
+FLATPAK_EXTERN gboolean             flatpak_installation_drop_caches (FlatpakInstallation *self,
+                                                                      GCancellable        *cancellable,
+                                                                      GError             **error);
 FLATPAK_EXTERN gboolean             flatpak_installation_get_is_user (FlatpakInstallation *self);
 FLATPAK_EXTERN GFile               *flatpak_installation_get_path (FlatpakInstallation *self);
 FLATPAK_EXTERN gboolean             flatpak_installation_launch (FlatpakInstallation *self,

@@ -231,8 +231,8 @@ flatpak_installation_get_dir (FlatpakInstallation *self)
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
- * Drops all internal (in-memory) caches. For instance, this may be needed to pick up new
- * remotes that have been added outside this instance.
+ * Drops all internal (in-memory) caches. For instance, this may be needed to pick up new or changed
+ * remotes configured outside this installation instance.
  *
  * Returns: %TRUE on success, %FALSE on error
  */
