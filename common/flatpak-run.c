@@ -2566,6 +2566,10 @@ setup_seccomp (GPtrArray  *argv_array,
         arch_id = SCMP_ARCH_X86;
       else if (strcmp (arch, "x86_64") == 0)
         arch_id = SCMP_ARCH_X86_64;
+      else if (strcmp (arch, "arm") == 0)
+        arch_id = SCMP_ARCH_ARM;
+      else if (strcmp (arch, "aarch64") == 0)
+        arch_id = SCMP_ARCH_AARCH64;
 
       /* We only really need to handle arches on multiarch systems.
        * If only one arch is supported the default is fine */
