@@ -196,7 +196,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GVariantBuilder) optbuilder = NULL;
   g_autoptr(GFile) file = NULL;
   g_auto(GStrv) remotes = NULL;
   g_autofree char *title = NULL;
@@ -271,7 +270,6 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GVariantBuilder) optbuilder = NULL;
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   const char *remote_name;
@@ -287,8 +285,6 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
     return usage_error (context, "remote NAME must be specified", error);
 
   remote_name = argv[1];
-
-  optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
   if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, NULL, NULL))
     return flatpak_fail (error, "No remote %s", remote_name);
