@@ -131,7 +131,7 @@ flatpak_bundle_ref_init (FlatpakBundleRef *self)
 
 /**
  * flatpak_bundle_ref_get_file:
- * @self: a #FlatpakInstallation
+ * @self: a #FlatpakBundleRef
  *
  * Get the file this bundle is stored in.
  *
@@ -147,7 +147,7 @@ flatpak_bundle_ref_get_file (FlatpakBundleRef *self)
 
 /**
  * flatpak_bundle_ref_get_metadata:
- * @self: a #FlatpakInstallation
+ * @self: a #FlatpakBundleRef
  *
  * Get the metadata for the app/runtime
  *
@@ -165,7 +165,7 @@ flatpak_bundle_ref_get_metadata (FlatpakBundleRef *self)
 
 /**
  * flatpak_bundle_ref_get_appstream:
- * @self: a #FlatpakInstallation
+ * @self: a #FlatpakBundleRef
  *
  * Get the compressed appstream for the app/runtime
  *
@@ -183,7 +183,7 @@ flatpak_bundle_ref_get_appstream (FlatpakBundleRef *self)
 
 /**
  * flatpak_bundle_ref_get_icon:
- * @self: a #FlatpakInstallation
+ * @self: a #FlatpakBundleRef
  * @size: 64 or 128
  *
  * Get the icon png data for the app/runtime
@@ -207,7 +207,7 @@ flatpak_bundle_ref_get_icon (FlatpakBundleRef *self,
 
 /**
  * flatpak_bundle_ref_get_origin:
- * @self: a #FlatpakInstallation
+ * @self: a #FlatpakBundleRef
  *
  * Get the origin url stored in the bundle
  *
@@ -221,6 +221,14 @@ flatpak_bundle_ref_get_origin (FlatpakBundleRef *self)
   return g_strdup (priv->origin);
 }
 
+/**
+ * flatpak_bundle_ref_get_installed_size:
+ * @self: a FlatpakBundleRef
+ *
+ * Returns the installed size for the bundle.
+ *
+ * Returns: the installed size
+ */
 guint64
 flatpak_bundle_ref_get_installed_size (FlatpakBundleRef *self)
 {
@@ -229,7 +237,15 @@ flatpak_bundle_ref_get_installed_size (FlatpakBundleRef *self)
   return priv->installed_size;
 }
 
-
+/**
+ * flatpak_bundle_ref_new:
+ * @file: a #GFile
+ * @error: (allow-none): return location for an error
+ *
+ * Creates a new bundle ref for the given file.
+ *
+ * Returns: a new bundle ref.
+ */
 FlatpakBundleRef *
 flatpak_bundle_ref_new (GFile   *file,
                         GError **error)
