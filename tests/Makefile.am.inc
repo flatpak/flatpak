@@ -16,7 +16,7 @@ testdb_LDADD = \
              $(NULL)
 testdb_SOURCES = tests/testdb.c
 
-test_doc_portal_CFLAGS = $(BASE_CFLAGS) -DTEST_SERVICES=\""$(abs_top_builddir)/tests/services"\" -DDOC_PORTAL=\""$(abs_top_builddir)/xdg-document-portal"\"
+test_doc_portal_CFLAGS = $(BASE_CFLAGS)
 test_doc_portal_LDADD = \
              $(BASE_LIBS) \
              $(OSTREE_LIBS) \

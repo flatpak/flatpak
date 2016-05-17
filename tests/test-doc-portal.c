@@ -335,6 +335,7 @@ global_setup (void)
   g_autofree gchar *fusermount = NULL;
   GError *error = NULL;
   gint exit_status;
+  g_autofree gchar *services = NULL;
 
   fusermount = g_find_program_in_path ("fusermount");
   /* cache result so subsequent tests can be marked as skipped */
@@ -352,7 +353,8 @@ global_setup (void)
   g_setenv ("XDG_DATA_HOME", outdir, TRUE);
 
   dbus = g_test_dbus_new (G_TEST_DBUS_NONE);
-  g_test_dbus_add_service_dir (dbus, TEST_SERVICES);
+  services = g_test_build_filename (G_TEST_BUILT, "services", NULL);
+  g_test_dbus_add_service_dir (dbus, services);
   g_test_dbus_up (dbus);
 
   /* g_test_dbus_up unsets this, so re-set */
