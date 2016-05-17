@@ -70,6 +70,15 @@ installed_test_data = \
 	tests/session.conf.in \
 	$(NULL)
 
+if ENABLE_INSTALLED_TESTS
+installed_test_keyringdir = $(installed_testdir)/test-keyring
+installed_test_keyring_DATA = \
+	tests/test-keyring/pubring.gpg \
+	tests/test-keyring/secring.gpg \
+	$(NULL)
+
+endif
+
 EXTRA_DIST += $(installed_test_SCRIPTS) $(installed_test_data)
 
 test_scripts = \

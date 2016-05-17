@@ -145,20 +145,23 @@ assert_file_empty() {
     fi
 }
 
+export FL_GPG_HOMEDIR=$(dirname $0)/test-keyring
+export FL_GPG_ID=7B0961FD
+export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
+
 setup_repo () {
-    . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
-    . $(dirname $0)/make-test-app.sh > /dev/null
-    flatpak remote-add ${U} --no-gpg-verify test-repo repo
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh > /dev/null
+    flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo repo
 }
 
 make_updated_app () {
-    . $(dirname $0)/make-test-app.sh UPDATED > /dev/null
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh UPDATED > /dev/null
 }
 
 setup_sdk_repo () {
-    . $(dirname $0)/make-test-runtime.sh org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
 }
-
 
 install_repo () {
     ${FLATPAK} ${U} install test-repo org.test.Platform master
