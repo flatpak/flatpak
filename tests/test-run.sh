@@ -21,6 +21,8 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
+skip_without_bwrap
+
 echo "1..7"
 
 setup_repo
