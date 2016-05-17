@@ -178,7 +178,20 @@ flatpak_deploy_new (GFile *dir, GKeyFile *metadata)
 GFile *
 flatpak_get_system_base_dir_location (void)
 {
-  return g_file_new_for_path (FLATPAK_SYSTEMDIR);
+  static gsize path = 0;
+
+  if (g_once_init_enter (&path))
+    {
+      gsize setup_value = 0;
+      const char *system_dir = g_getenv ("FLATPAK_SYSTEM_DIR");
+      if (system_dir != NULL)
+        setup_value = (gsize)system_dir;
+      else
+        setup_value = (gsize)FLATPAK_SYSTEMDIR;
+      g_once_init_leave (&path, setup_value);
+     }
+
+  return g_file_new_for_path ((char *)path);
 }
 
 GFile *
