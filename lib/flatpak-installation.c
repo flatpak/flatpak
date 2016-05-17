@@ -736,7 +736,7 @@ flatpak_installation_modify_remote (FlatpakInstallation *self,
      it has local changes */
   dir_clone = flatpak_dir_clone (dir);
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
-    return NULL;
+    return FALSE;
 
   if (!flatpak_remote_commit (remote, dir_clone, cancellable, error))
     return FALSE;
@@ -771,7 +771,7 @@ flatpak_installation_remove_remote (FlatpakInstallation *self,
      it has local changes */
   dir_clone = flatpak_dir_clone (dir);
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
-    return NULL;
+    return FALSE;
 
   if (!flatpak_dir_remove_remote (dir, FALSE, name,
                                   cancellable, error))
