@@ -19,12 +19,17 @@ flatpak_installation_list_installed_refs_by_kind
 flatpak_installation_list_installed_refs_for_update
 flatpak_installation_list_remote_refs_sync
 flatpak_installation_list_remotes
+flatpak_installation_get_remote_by_name
 flatpak_installation_fetch_remote_metadata_sync
 flatpak_installation_fetch_remote_ref_sync
 flatpak_installation_fetch_remote_size_sync
 flatpak_installation_load_app_overrides
 flatpak_installation_update_appstream_sync
 flatpak_installation_install_bundle
+flatpak_installation_drop_caches
+flatpak_installation_modify_remote
+flatpak_installation_remove_remote
+flatpak_get_default_arch
 FlatpakProgressCallback
 FlatpakUpdateFlags
 <SUBSECTION Standard>
@@ -45,6 +50,7 @@ flatpak_installed_ref_get_is_current
 flatpak_installed_ref_get_latest_commit
 flatpak_installed_ref_get_origin
 flatpak_installed_ref_load_metadata
+flatpak_installed_ref_get_subpaths
 <SUBSECTION Standard>
 FlatpakInstalledRefClass
 FLATPAK_INSTALLED_REF
@@ -90,14 +96,23 @@ flatpak_ref_get_type
 <FILE>flatpak-remote</FILE>
 <TITLE>FlatpakRemote</TITLE>
 FlatpakRemote
+flatpak_remote_new
+flatpak_remote_get_name
 flatpak_remote_get_appstream_dir
 flatpak_remote_get_appstream_timestamp
 flatpak_remote_get_gpg_verify
-flatpak_remote_get_name
+flatpak_remote_set_gpg_verify
+flatpak_remote_set_gpg_key
 flatpak_remote_get_noenumerate
+flatpak_remote_set_noenumerate
 flatpak_remote_get_prio
+flatpak_remote_set_prio
 flatpak_remote_get_title
+flatpak_remote_set_title
 flatpak_remote_get_url
+flatpak_remote_set_url
+flatpak_remote_get_disabled
+flatpak_remote_set_disabled
 <SUBSECTION Standard>
 FlatpakRemoteClass
 FLATPAK_IS_REMOTE
@@ -119,4 +134,22 @@ FLATPAK_EXTERN
 FLATPAK_ERROR
 FlatpakError
 flatpak_error_quark
+</SECTION>
+
+<SECTION>
+<FILE>flatpak-bundle-ref</FILE>
+FlatpakBundleRef
+flatpak_bundle_ref_new
+flatpak_bundle_ref_get_file
+flatpak_bundle_ref_get_metadata
+flatpak_bundle_ref_get_appstream
+flatpak_bundle_ref_get_icon
+flatpak_bundle_ref_get_origin
+flatpak_bundle_ref_get_installed_size
+<SUBSECTION Standard>
+FlatpakBundleRefClass
+FLATPAK_TYPE_BUNDLE_REF
+FLATPAK_BUNDLE_REF
+FLATPAK_IS_BUNDLE_REF
+flatpak_bundle_ref_get_type
 </SECTION>
