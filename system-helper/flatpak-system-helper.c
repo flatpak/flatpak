@@ -35,6 +35,8 @@ static FlatpakSystemHelper *helper = NULL;
 static GMainLoop *main_loop = NULL;
 static guint name_owner_id = 0;
 
+static gboolean no_idle_exit = FALSE;
+
 #define IDLE_TIMEOUT_SECS 10*60
 
 /* This uses a weird Auto prefix to avoid conflicts with later added polkit types.
@@ -102,10 +104,13 @@ schedule_idle_callback (void)
 
   G_LOCK(idle);
 
-  if (idle_timeout_id != 0)
-    g_source_remove (idle_timeout_id);
+  if (!no_idle_exit)
+    {
+      if (idle_timeout_id != 0)
+        g_source_remove (idle_timeout_id);
 
-  idle_timeout_id = g_timeout_add_seconds (IDLE_TIMEOUT_SECS, idle_timeout_cb, NULL);
+      idle_timeout_id = g_timeout_add_seconds (IDLE_TIMEOUT_SECS, idle_timeout_cb, NULL);
+    }
 
   G_UNLOCK(idle);
 }
@@ -677,6 +682,7 @@ main (int    argc,
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,  "Enable debug output.", NULL },
+    { "no-idle-exit", 0, 0, G_OPTION_ARG_NONE, &no_idle_exit,  "Don't exit when idle.", NULL },
     { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
     { NULL }
   };
