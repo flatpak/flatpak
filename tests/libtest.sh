@@ -30,8 +30,6 @@ else
   test_builddir=$(dirname $0)
 fi
 
-export U=${U-"--user"}
-
 assert_not_reached () {
     echo $@ 1>&2; exit 1
 }
@@ -71,11 +69,24 @@ fi
 
 # We need this to be in /var/tmp because /tmp has no xattr support
 TEST_DATA_DIR=`mktemp -d /var/tmp/test-flatpak-XXXXXX`
+mkdir -p ${TEST_DATA_DIR}/home
+mkdir -p ${TEST_DATA_DIR}/system
+export FLATPAK_SYSTEM_DIR=${TEST_DATA_DIR}/system
+export FLATPAK_SYSTEM_HELPER_ON_SESSION=1
 
-export XDG_DATA_HOME=${TEST_DATA_DIR}/share
+export XDG_DATA_HOME=${TEST_DATA_DIR}/home/share
 
-export USERDIR=${TEST_DATA_DIR}/share/flatpak
+export USERDIR=${TEST_DATA_DIR}/home/share/flatpak
+export SYSTEMDIR=${TEST_DATA_DIR}/system
 export ARCH=`flatpak --default-arch`
+
+if [ x${USE_SYSTEMDIR-} == xyes ] ; then
+    export FL_DIR=${SYSTEMDIR}
+    export U=
+else
+    export FL_DIR=${USERDIR}
+    export U="--user"
+fi
 
 export FLATPAK="${CMD_PREFIX} flatpak"
 
