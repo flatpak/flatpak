@@ -1,3 +1,38 @@
+Major changes in 0.6.0
+======================
+
+Renamed from xdg-app to Flatpak.  Existing repositories should keep
+working, and locally user installed apps/runtime will be migrated
+automatically. However, there are some things that you have to be
+aware of:
+ * The command names are now flatpak/flatpak-builder
+ * System-wide installed apps/runtimes need to be reinstalled
+ * flatpak-builder uses a ".flatpak-builder" subdirectory instead
+   of ".xdg-app-builder".
+ * The bus name and interface name for the permission
+   store is changed, it was in org.freedesktop.XdgApp, but is
+   now in org.freedesktop.impl.portal.DesktopPortal.
+ * The installation migration is a one-time operation so you can't
+   go back to xdg-app after updating.
+ * The library API (and name) changed due to the rename.
+
+Other changes:
+ * Flatpak now hard-requires ostree 2016.15
+ * Switch from using xdg-app-helper to an included version of bubblewrap:
+   https://github.com/projectatomic/bubblewrap
+ * Added a policykit-based system helper that allows you to authenticate
+   via polkit to install into the system repository.
+ * Added an experimental command to export/import applications and runtimes
+   as an OCI tarball.
+ * builder: Fix creation of locale extensions if there was no locale data in the
+   build.
+ * Its now possible to disable/enable configured remotes.
+ * A lot of new tests where added, and we now support installed tests.
+ * builder now has an optional --arch argument for multiarch building.
+ * Builder modules can be disabled with "disabled": true.
+ * Using --filesystem=/tmp now hides the system X11 sockets.
+
+
 Major changes in 0.5.2
 ======================
 
