@@ -228,6 +228,7 @@ flatpak_installation_get_dir (FlatpakInstallation *self)
 
 /**
  * flatpak_installation_drop_caches:
+ * @self: a #FlatpakInstallation
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -710,6 +711,17 @@ flatpak_installation_list_remotes (FlatpakInstallation *self,
   return g_steal_pointer (&remotes);
 }
 
+/**
+ * flatpak_installation_modify_remote:
+ * @self: a #FlatpakInstallation
+ * @remote: the modified #FlatpakRemote
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Saves changes in the @remote object.
+ *
+ * Returns: %TRUE if the modifications have been committed successfully
+ */
 gboolean
 flatpak_installation_modify_remote (FlatpakInstallation *self,
                                     FlatpakRemote       *remote,
@@ -734,6 +746,17 @@ flatpak_installation_modify_remote (FlatpakInstallation *self,
   return TRUE;
 }
 
+/**
+ * flatpak_installation_remove_remote:
+ * @self: a #FlatpakInstallation
+ * @name: the name of the remote to remove
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Removes the remote with the given name from the installation.
+ *
+ * Returns: %TRUE if the remote has been removed successfully
+ */
 gboolean
 flatpak_installation_remove_remote (FlatpakInstallation *self,
                                     const char          *name,
