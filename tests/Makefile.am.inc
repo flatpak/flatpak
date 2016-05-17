@@ -62,15 +62,15 @@ tests/test-basic.sh: tests/package_version.txt
 installed_test_SCRIPTS += \
 	buildutil/tap-driver.sh \
 	tests/test-configure \
-	tests/package_version.txt \
 	tests/make-test-app.sh \
 	tests/make-test-runtime.sh \
 	tests/make-test-bundles.sh \
-	tests/libtest.sh \
 	$(NULL)
 
 installed_test_data = \
+	tests/libtest.sh \
 	tests/org.test.Hello.png \
+	tests/package_version.txt \
 	tests/test.json \
 	tests/session.conf.in \
 	$(NULL)
