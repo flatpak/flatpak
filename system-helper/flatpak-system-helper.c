@@ -110,6 +110,13 @@ schedule_idle_callback (void)
   G_UNLOCK(idle);
 }
 
+static FlatpakDir *
+dir_get_system (void)
+{
+  FlatpakDir *system = flatpak_dir_get_system ();
+  flatpak_dir_set_no_system_helper (system, TRUE);
+  return system;
+}
 
 static gboolean
 handle_deploy (FlatpakSystemHelper   *object,
@@ -120,7 +127,7 @@ handle_deploy (FlatpakSystemHelper   *object,
                const gchar           *arg_origin,
                const gchar *const    *arg_subpaths)
 {
-  g_autoptr(FlatpakDir) system = flatpak_dir_get_system ();
+  g_autoptr(FlatpakDir) system = dir_get_system ();
   g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
@@ -236,7 +243,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                          const gchar           *arg_origin,
                          const gchar           *arg_arch)
 {
-  g_autoptr(FlatpakDir) system = flatpak_dir_get_system ();
+  g_autoptr(FlatpakDir) system = dir_get_system ();
   g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GMainContext) main_context = NULL;
@@ -301,7 +308,7 @@ handle_uninstall (FlatpakSystemHelper *object,
                   guint arg_flags,
                   const gchar *arg_ref)
 {
-  g_autoptr(FlatpakDir) system = flatpak_dir_get_system ();
+  g_autoptr(FlatpakDir) system = dir_get_system ();
   g_autoptr(GError) error = NULL;
 
   g_debug ("Uninstall %u %s", arg_flags, arg_ref);
@@ -338,7 +345,7 @@ handle_configure_remote (FlatpakSystemHelper *object,
                          const gchar *arg_config,
                          GVariant *arg_gpg_key)
 {
-  g_autoptr(FlatpakDir) system = flatpak_dir_get_system ();
+  g_autoptr(FlatpakDir) system = dir_get_system ();
   g_autoptr(GError) error = NULL;
   g_autoptr(GKeyFile) config = g_key_file_new ();
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", arg_remote);

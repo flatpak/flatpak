@@ -62,6 +62,7 @@ struct FlatpakDir
   gboolean             user;
   GFile               *basedir;
   OstreeRepo          *repo;
+  gboolean             no_system_helper;
 
   FlatpakSystemHelper *system_helper;
 
@@ -253,7 +254,7 @@ flatpak_dir_use_system_helper (FlatpakDir *self)
 {
   FlatpakSystemHelper *system_helper;
 
-  if (self->user || getuid () == 0)
+  if (self->no_system_helper || self->user || getuid () == 0)
     return FALSE;
 
   system_helper = flatpak_dir_get_system_helper (self);
@@ -368,6 +369,13 @@ gboolean
 flatpak_dir_is_user (FlatpakDir *self)
 {
   return self->user;
+}
+
+void
+flatpak_dir_set_no_system_helper (FlatpakDir *self,
+                                  gboolean    no_system_helper)
+{
+  self->no_system_helper = no_system_helper;
 }
 
 GFile *

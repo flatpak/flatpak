@@ -107,6 +107,8 @@ FlatpakDir  *flatpak_dir_get (gboolean user);
 FlatpakDir  *flatpak_dir_get_system (void);
 FlatpakDir  *flatpak_dir_get_user (void);
 gboolean    flatpak_dir_is_user (FlatpakDir *self);
+void        flatpak_dir_set_no_system_helper (FlatpakDir *self,
+                                              gboolean    no_system_helper);
 GFile *     flatpak_dir_get_path (FlatpakDir *self);
 GFile *     flatpak_dir_get_changed_path (FlatpakDir *self);
 GFile *     flatpak_dir_get_deploy_dir (FlatpakDir *self,
