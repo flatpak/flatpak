@@ -4,13 +4,15 @@ set -e
 
 DIR=`mktemp -d`
 
+EXTRA="${1-}"
+
 # Init dir
 flatpak build-init ${DIR} org.test.Hello org.test.Platform org.test.Platform
 
 mkdir -p ${DIR}/files/bin
 cat > ${DIR}/files/bin/hello.sh <<EOF
 #!/bin/sh
-echo "Hello world, from a sandbox"
+echo "Hello world, from a sandbox$EXTRA"
 EOF
 chmod a+x ${DIR}/files/bin/hello.sh
 

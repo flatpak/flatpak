@@ -21,7 +21,7 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..5"
+echo "1..6"
 
 setup_repo
 install_repo
@@ -101,3 +101,23 @@ if run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
 fi
 
 echo "ok overrides"
+
+
+OLD_COMMIT=`${FLATPAK} --user info --show-commit org.test.Hello`
+${FLATPAK} --user update org.test.Hello
+ALSO_OLD_COMMIT=`${FLATPAK} --user info --show-commit org.test.Hello`
+
+assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
+
+make_updated_app
+
+${FLATPAK} --user update org.test.Hello
+
+NEW_COMMIT=`${FLATPAK} --user info --show-commit org.test.Hello`
+
+assert_not_streq "$OLD_COMMIT" "$NEW_COMMIT"
+
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
+
+echo "ok update"

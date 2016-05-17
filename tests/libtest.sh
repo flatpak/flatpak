@@ -149,6 +149,10 @@ setup_repo () {
     flatpak remote-add --user --no-gpg-verify test-repo repo
 }
 
+make_updated_app () {
+    . $(dirname $0)/make-test-app.sh UPDATED > /dev/null
+}
+
 setup_sdk_repo () {
     . $(dirname $0)/make-test-runtime.sh org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
 }
