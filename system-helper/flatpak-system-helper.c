@@ -35,6 +35,7 @@ static FlatpakSystemHelper *helper = NULL;
 static GMainLoop *main_loop = NULL;
 static guint name_owner_id = 0;
 
+static gboolean on_session_bus = FALSE;
 static gboolean no_idle_exit = FALSE;
 
 #define IDLE_TIMEOUT_SECS 10*60
@@ -447,7 +448,16 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   sender = g_dbus_method_invocation_get_sender (invocation);
   subject = polkit_system_bus_name_new (sender);
 
-  if (g_strcmp0 (method_name, "Deploy") == 0)
+  if (on_session_bus)
+    {
+      /* This is test code, make sure it never runs with privileges */
+      g_assert (geteuid () != 0);
+      g_assert (getuid () != 0);
+      g_assert (getegid () != 0);
+      g_assert (getgid () != 0);
+      authorized = TRUE;
+    }
+  else if (g_strcmp0 (method_name, "Deploy") == 0)
     {
       const char *ref, *origin;
       guint32 flags;
@@ -682,6 +692,7 @@ main (int    argc,
   const GOptionEntry options[] = {
     { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,  "Enable debug output.", NULL },
+    { "session", 0, 0, G_OPTION_ARG_NONE, &on_session_bus,  "Run in session, not system scope (for tests).", NULL },
     { "no-idle-exit", 0, 0, G_OPTION_ARG_NONE, &no_idle_exit,  "Don't exit when idle.", NULL },
     { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
     { NULL }
@@ -755,7 +766,7 @@ main (int    argc,
   if (replace)
     flags |= G_BUS_NAME_OWNER_FLAGS_REPLACE;
 
-  name_owner_id = g_bus_own_name (G_BUS_TYPE_SYSTEM,
+  name_owner_id = g_bus_own_name (on_session_bus ? G_BUS_TYPE_SESSION  : G_BUS_TYPE_SYSTEM,
                                   "org.freedesktop.Flatpak.SystemHelper",
                                   flags,
                                   on_bus_acquired,
