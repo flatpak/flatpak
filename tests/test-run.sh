@@ -21,7 +21,7 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
-echo "1..6"
+echo "1..7"
 
 setup_repo
 install_repo
@@ -102,12 +102,13 @@ fi
 
 echo "ok overrides"
 
-
 OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 ${FLATPAK} ${U} update org.test.Hello
 ALSO_OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
+
+echo "ok null update"
 
 make_updated_app
 
