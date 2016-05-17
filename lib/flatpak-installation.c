@@ -255,6 +255,7 @@ flatpak_installation_drop_caches (FlatpakInstallation *self,
     {
       priv->dir_unlocked = clone;
       g_object_unref (old);
+      res = TRUE;
     }
 
   G_UNLOCK (dir);
