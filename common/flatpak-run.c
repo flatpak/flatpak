@@ -1716,7 +1716,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
 
   if (!home_access)
     {
-      /* Enable persistant mapping only if no access to real home dir */
+      /* Enable persistent mapping only if no access to real home dir */
 
       g_hash_table_iter_init (&iter, context->persistent);
       while (g_hash_table_iter_next (&iter, &key, NULL))

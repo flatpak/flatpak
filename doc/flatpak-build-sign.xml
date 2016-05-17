@@ -42,7 +42,7 @@
         <title>Description</title>
 
         <para>
-            Signs the commit for a speficied application or runtime in
+            Signs the commit for a specified application or runtime in
             a local repository.  <arg choice="plain">LOCATION</arg> is
             the location of the repository. <arg
             choice="plain">ID</arg> is the name of the application, or
@@ -52,7 +52,7 @@
         </para>
         <para>
             Applications can also be signed during build-export, but
-            it is sometimes useful to add additionaly signatures later.
+            it is sometimes useful to add additional signatures later.
         </para>
     </refsect1>
 

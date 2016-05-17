@@ -58,7 +58,7 @@
             the specified <arg choice="plain">REMOTE</arg>, but you can limit this by using the --app or --runtime option.
         </para>
         <para>
-            Note that flatpak allows to have multiple branches of an application and runtimes
+            Note that flatpak allows one to have multiple branches of an application and runtimes
             installed and used at the same time. However, only version of an application one can be current,
             meaning its exported files (for instance desktop files and icons) are
             visible to the host. The last installed version is made current by
