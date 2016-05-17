@@ -29,7 +29,7 @@
                     "type": "file",
                     "path": "test-configure",
                     "dest-filename": "configure",
-                    "sha256": "ce0a7014057cc45ac6cfa4b84fe848d46b1225f4ce03f1b52d5ab73521816cbf"
+                    "sha256": "675a1ac2feec4d4f54e581b4b01bc3cfd2c1cf31aa5963574d31228c8a11b7e7"
                 },
                 {
                     "type": "file",
