@@ -385,7 +385,7 @@ portal_add (GDBusMethodInvocation *invocation,
       st_buf.st_dev != real_st_buf.st_dev ||
       st_buf.st_ino != real_st_buf.st_ino)
     {
-      /* Don't leak any info about real file path existance, etc */
+      /* Don't leak any info about real file path existence, etc */
       g_dbus_method_invocation_return_error (invocation,
                                              FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
                                              "Invalid fd passed");
@@ -488,7 +488,7 @@ portal_add_named (GDBusMethodInvocation *invocation,
   g_variant_get (parameters, "(h@aybb)", &parent_fd_id, &filename_v, &reuse_existing, &persistent);
   filename = g_variant_get_bytestring (filename_v);
 
-  /* This is only allowed from the host, or else we could leak existance of files */
+  /* This is only allowed from the host, or else we could leak existence of files */
   if (*app_id != 0)
     {
       g_dbus_method_invocation_return_error (invocation, FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_NOT_ALLOWED,

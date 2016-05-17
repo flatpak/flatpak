@@ -310,7 +310,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>no-autogen</option> (boolean)</term>
-                    <listitem><para>Ignore the existance of an autogen script</para></listitem>
+                    <listitem><para>Ignore the existence of an autogen script</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>no-parallel-make</option> (boolean)</term>

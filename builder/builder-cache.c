@@ -403,7 +403,7 @@ builder_cache_commit (BuilderCache *self,
   gboolean res = FALSE;
   g_autofree char *ref = NULL;
 
-  g_print ("Commiting stage %s to cache\n", self->stage);
+  g_print ("Committing stage %s to cache\n", self->stage);
 
   if (!ostree_repo_prepare_transaction (self->repo, NULL, NULL, error))
     return FALSE;

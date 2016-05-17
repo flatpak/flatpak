@@ -601,7 +601,7 @@ on_bus_acquired (GDBusConnection *connection,
 {
   GError *error = NULL;
 
-  g_debug ("Bus aquired, creating skeleton");
+  g_debug ("Bus acquired, creating skeleton");
 
   helper = flatpak_system_helper_skeleton_new ();
 
@@ -634,7 +634,7 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
-  g_debug ("Name aquired");
+  g_debug ("Name acquired");
 }
 
 static void

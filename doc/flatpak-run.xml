@@ -285,7 +285,7 @@
                 <listitem><para>
                     If the application doesn't have access to the real homedir, make the (homedir-relative) path
                     FILENAME a bind mount to the corresponding path in the per-application directory,
-                    allowing that location to be used for persistant data.
+                    allowing that location to be used for persistent data.
                     This overrides to the Context section from the application metadata.
                     This option can be used multiple times.
                 </para></listitem>
