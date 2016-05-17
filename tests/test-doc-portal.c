@@ -334,7 +334,6 @@ global_setup (void)
   gboolean inited;
   g_autofree gchar *fusermount = NULL;
   GError *error = NULL;
-  gint exit_status;
   g_autofree gchar *services = NULL;
 
   fusermount = g_find_program_in_path ("fusermount");
@@ -359,10 +358,6 @@ global_setup (void)
 
   /* g_test_dbus_up unsets this, so re-set */
   g_setenv ("XDG_RUNTIME_DIR", outdir, TRUE);
-
-  g_spawn_command_line_sync (DOC_PORTAL " -d", NULL, NULL, &exit_status, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (exit_status, ==, 0);
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   g_assert_no_error (error);
