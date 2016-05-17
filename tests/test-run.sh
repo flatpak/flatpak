@@ -49,14 +49,14 @@ assert_file_has_content $USERDIR/exports/share/applications/mimeinfo.cache x-tes
 assert_has_file $USERDIR/exports/share/icons/hicolor/icon-theme.cache
 assert_has_file $USERDIR/exports/share/icons/hicolor/index.theme
 
-$FLATPAK list --user | grep org.test.Hello > /dev/null
-$FLATPAK list --user -d | grep org.test.Hello | grep test-repo > /dev/null
-$FLATPAK list --user -d | grep org.test.Hello | grep current > /dev/null
-$FLATPAK list --user -d | grep org.test.Hello | grep ${ID:0:12} > /dev/null
+$FLATPAK list ${U} | grep org.test.Hello > /dev/null
+$FLATPAK list ${U} -d | grep org.test.Hello | grep test-repo > /dev/null
+$FLATPAK list ${U} -d | grep org.test.Hello | grep current > /dev/null
+$FLATPAK list ${U} -d | grep org.test.Hello | grep ${ID:0:12} > /dev/null
 
-$FLATPAK info --user org.test.Hello > /dev/null
-$FLATPAK info --user org.test.Hello | grep test-repo > /dev/null
-$FLATPAK info --user org.test.Hello | grep $ID > /dev/null
+$FLATPAK info ${U} org.test.Hello > /dev/null
+$FLATPAK info ${U} org.test.Hello | grep test-repo > /dev/null
+$FLATPAK info ${U} org.test.Hello | grep $ID > /dev/null
 
 echo "ok install"
 
@@ -89,12 +89,12 @@ ARGS="--filesystem=host" run_sh cat $(dirname $0)/package_version.txt > /dev/nul
 
 echo "ok namespaces"
 
-$FLATPAK override --user --filesystem=host org.test.Hello
+$FLATPAK override ${U} --filesystem=host org.test.Hello
 run_sh cat $(dirname $0)/package_version.txt &> /dev/null
 if ARGS="--nofilesystem=host" run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access --nofilesystem=host file"
 fi
-$FLATPAK override --user --nofilesystem=host org.test.Hello
+$FLATPAK override ${U} --nofilesystem=host org.test.Hello
 
 if run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access file"
@@ -103,17 +103,17 @@ fi
 echo "ok overrides"
 
 
-OLD_COMMIT=`${FLATPAK} --user info --show-commit org.test.Hello`
-${FLATPAK} --user update org.test.Hello
-ALSO_OLD_COMMIT=`${FLATPAK} --user info --show-commit org.test.Hello`
+OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
+${FLATPAK} ${U} update org.test.Hello
+ALSO_OLD_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 assert_streq "$OLD_COMMIT" "$ALSO_OLD_COMMIT"
 
 make_updated_app
 
-${FLATPAK} --user update org.test.Hello
+${FLATPAK} ${U} update org.test.Hello
 
-NEW_COMMIT=`${FLATPAK} --user info --show-commit org.test.Hello`
+NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
 
 assert_not_streq "$OLD_COMMIT" "$NEW_COMMIT"
 

@@ -51,7 +51,7 @@ assert_file_has_content hello_out2 '^Hello world2, from a sandbox$'
 
 echo "ok build"
 
-${FLATPAK} --user install test-repo org.test.Hello2 master
+${FLATPAK} ${U} install test-repo org.test.Hello2 master
 run org.test.Hello2 > hello_out3
 assert_file_has_content hello_out3 '^Hello world2, from a sandbox$'
 
@@ -64,7 +64,7 @@ echo "version2" > app-data
 flatpak-builder --repo=$REPO --force-clean appdir test.json > /dev/null
 assert_file_has_content appdir/files/share/app-data version2
 
-${FLATPAK} --user update org.test.Hello2 master
+${FLATPAK} ${U} update org.test.Hello2 master
 
 run --command=cat org.test.Hello2 /app/share/app-data > app_data_2
 assert_file_has_content app_data_2 version2

@@ -30,6 +30,8 @@ else
   test_builddir=$(dirname $0)
 fi
 
+export U=${U-"--user"}
+
 assert_not_reached () {
     echo $@ 1>&2; exit 1
 }
@@ -146,7 +148,7 @@ assert_file_empty() {
 setup_repo () {
     . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
     . $(dirname $0)/make-test-app.sh > /dev/null
-    flatpak remote-add --user --no-gpg-verify test-repo repo
+    flatpak remote-add ${U} --no-gpg-verify test-repo repo
 }
 
 make_updated_app () {
@@ -159,12 +161,12 @@ setup_sdk_repo () {
 
 
 install_repo () {
-    ${FLATPAK} --user install test-repo org.test.Platform master
-    ${FLATPAK} --user install test-repo org.test.Hello master
+    ${FLATPAK} ${U} install test-repo org.test.Platform master
+    ${FLATPAK} ${U} install test-repo org.test.Hello master
 }
 
 install_sdk_repo () {
-    ${FLATPAK} --user install test-repo org.test.Sdk master
+    ${FLATPAK} ${U} install test-repo org.test.Sdk master
 }
 
 run () {
