@@ -80,23 +80,23 @@ ARGS="--share=ipc" run_sh readlink /proc/self/ns/ipc > shared_ipc_ns
 assert_not_streq `cat unshared_ipc_ns` `readlink /proc/self/ns/ipc`
 assert_streq `cat shared_ipc_ns` `readlink /proc/self/ns/ipc`
 
-if run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
+if run_sh cat "${test_builddir}/package_version.txt" &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access file"
 fi
 
-ARGS="--filesystem=$(dirname $0)" run_sh cat $(dirname $0)/package_version.txt > /dev/null
-ARGS="--filesystem=host" run_sh cat $(dirname $0)/package_version.txt > /dev/null
+ARGS="--filesystem=${test_builddir}" run_sh cat "${test_builddir}/package_version.txt" > /dev/null
+ARGS="--filesystem=host" run_sh cat "${test_builddir}/package_version.txt" > /dev/null
 
 echo "ok namespaces"
 
 $FLATPAK override ${U} --filesystem=host org.test.Hello
-run_sh cat $(dirname $0)/package_version.txt &> /dev/null
-if ARGS="--nofilesystem=host" run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
+run_sh cat "${test_builddir}/package_version.txt" &> /dev/null
+if ARGS="--nofilesystem=host" run_sh cat "${test_builddir}/package_version.txt" &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access --nofilesystem=host file"
 fi
 $FLATPAK override ${U} --nofilesystem=host org.test.Hello
 
-if run_sh cat $(dirname $0)/package_version.txt &> /dev/null; then
+if run_sh cat "${test_builddir}/package_version.txt" &> /dev/null; then
     assert_not_reached "Unexpectedly allowed to access file"
 fi
 
