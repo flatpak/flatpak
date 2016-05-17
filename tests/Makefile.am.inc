@@ -7,7 +7,7 @@ TESTS_ENVIRONMENT += OT_TESTS_DEBUG=1 \
 	PATH=$$(cd $(top_builddir) && pwd):$${PATH} \
 	$(NULL)
 
-testdb_CFLAGS = $(BASE_CFLAGS) -DDB_DIR=\"$(abs_srcdir)/tests/dbs\"
+testdb_CFLAGS = $(BASE_CFLAGS)
 testdb_LDADD = \
              $(BASE_LIBS) \
              $(OSTREE_LIBS) \
@@ -75,13 +75,15 @@ installed_test_data = \
 	tests/session.conf.in \
 	$(NULL)
 
-if ENABLE_INSTALLED_TESTS
 installed_test_keyringdir = $(installed_testdir)/test-keyring
+installed_test_dbsdir = $(installed_testdir)/dbs
+
+if ENABLE_INSTALLED_TESTS
 installed_test_keyring_DATA = \
 	tests/test-keyring/pubring.gpg \
 	tests/test-keyring/secring.gpg \
 	$(NULL)
-
+installed_test_dbs_DATA = tests/dbs/no_tables
 endif
 
 EXTRA_DIST += $(installed_test_SCRIPTS) $(installed_test_data)

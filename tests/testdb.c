@@ -156,18 +156,18 @@ test_db_open (void)
   GError *error = NULL;
   FlatpakDb *db;
 
-  db = flatpak_db_new (DB_DIR "/does_not_exist", TRUE, &error);
+  db = flatpak_db_new (g_test_get_filename (G_TEST_DIST, "dbs", "does_not_exist", NULL), TRUE, &error);
   g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_NOENT);
   g_assert (db == NULL);
   g_clear_error (&error);
 
-  db = flatpak_db_new (DB_DIR "/does_not_exist", FALSE, &error);
+  db = flatpak_db_new (g_test_get_filename (G_TEST_DIST, "dbs", "does_not_exist", NULL), FALSE, &error);
   g_assert_no_error (error);
   g_assert (db != NULL);
   g_clear_error (&error);
   g_object_unref (db);
 
-  db = flatpak_db_new (DB_DIR "/no_tables", TRUE, &error);
+  db = flatpak_db_new (g_test_get_filename (G_TEST_DIST, "dbs", "no_tables", NULL), TRUE, &error);
   g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_INVAL);
   g_assert (db == NULL);
   g_clear_error (&error);
