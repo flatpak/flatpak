@@ -33,19 +33,19 @@ EXTRA_DIST += $(service_in_files)
 
 FLATPAK_BINDIR=$(bindir)
 
-AM_CPPFLAGS =						\
-	-DFLATPAK_BINDIR=\"$(FLATPAK_BINDIR)\"		\
-	-DFLATPAK_SYSTEMDIR=\"$(localstatedir)/lib/flatpak\"\
-	-DFLATPAK_CONFIGDIR=\"$(sysconfdir)/flatpak\"\
-	-DFLATPAK_BASEDIR=\"$(pkgdatadir)\"		\
-	-DFLATPAK_TRIGGERDIR=\"$(pkgdatadir)/triggers\" \
-	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"	\
-	-DHELPER=\"$(libdir)/flatpak/bwrap\"		\
+AM_CPPFLAGS =							\
+	-DFLATPAK_BINDIR=\"$(FLATPAK_BINDIR)\"			\
+	-DFLATPAK_SYSTEMDIR=\"$(SYSTEM_INSTALL_DIR)\"		\
+	-DFLATPAK_CONFIGDIR=\"$(sysconfdir)/flatpak\"		\
+	-DFLATPAK_BASEDIR=\"$(pkgdatadir)\"			\
+	-DFLATPAK_TRIGGERDIR=\"$(pkgdatadir)/triggers\"		\
+	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"		\
+	-DHELPER=\"$(libdir)/flatpak/bwrap\"			\
 	-DDBUSPROXY=\"$(libexecdir)/flatpak-dbus-proxy\"	\
-	-DG_LOG_DOMAIN=\"flatpak\"			\
-	-I$(srcdir)/libglnx				\
-	-I$(srcdir)/common				\
-	-I$(builddir)/common				\
+	-DG_LOG_DOMAIN=\"flatpak\"				\
+	-I$(srcdir)/libglnx					\
+	-I$(srcdir)/common					\
+	-I$(builddir)/common					\
 	$(NULL)
 
 triggersdir = $(pkgdatadir)/triggers

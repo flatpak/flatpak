@@ -238,6 +238,14 @@ if test x$have_libelf != xyes; then
   AC_MSG_ERROR([libelf not found])
 fi
 
+AC_ARG_WITH(system-install-dir,
+           [AS_HELP_STRING([--with-system-install-dir=DIR],
+                           [Location of system installation [LOCALSTATEDIR/lib/flatpak]])],
+           [],
+           [with_system_install_dir='$(localstatedir)/lib/flatpak'])
+SYSTEM_INSTALL_DIR=$with_system_install_dir
+AC_SUBST(SYSTEM_INSTALL_DIR)
+
 dnl This only checks for the header, not the library.
 AC_ARG_WITH([dwarf-header],
             [AS_HELP_STRING([--with-dwarf-header],
