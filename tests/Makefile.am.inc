@@ -86,7 +86,7 @@ installed_test_keyring_DATA = \
 installed_test_dbs_DATA = tests/dbs/no_tables
 endif
 
-EXTRA_DIST += $(installed_test_SCRIPTS) $(installed_test_data)
+EXTRA_DIST += $(installed_test_SCRIPTS) $(installed_test_data) $(installed_test_keyring_DATA) $(installed_test_dbs_DATA)
 
 test_scripts = \
 	tests/test-basic.sh \
@@ -99,7 +99,7 @@ test_programs = testdb test-doc-portal
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak-valgrind.supp
-EXTRA_DIST += tests/flatpak-valgrind.supp tests/dbs/no_tables
+EXTRA_DIST += tests/flatpak-valgrind.supp
 CLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \
 	tests/services/org.freedesktop.portal.Documents.service \
