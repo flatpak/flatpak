@@ -100,7 +100,7 @@ test_programs = testdb test-doc-portal
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES=tests/flatpak-valgrind.supp
 EXTRA_DIST += tests/flatpak-valgrind.supp
-CLEANFILES += \
+DISTCLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \
 	tests/services/org.freedesktop.portal.Documents.service \
 	tests/services/org.freedesktop.impl.portal.PermissionStore.service \
