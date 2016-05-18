@@ -786,7 +786,7 @@ remove_dangling_symlinks (int           parent_fd,
 {
   gboolean ret = FALSE;
   struct dirent *dent;
-  GLnxDirFdIterator iter;
+  g_auto(GLnxDirFdIterator) iter = { 0 };
 
   if (!glnx_dirfd_iterator_init_at (parent_fd, name, FALSE, &iter, error))
     goto out;
