@@ -104,4 +104,6 @@ CLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \
 	tests/services/org.freedesktop.portal.Documents.service \
 	tests/services/org.freedesktop.impl.portal.PermissionStore.service \
+	tests/services/org.freedesktop.Flatpak.SystemHelper.service \
+	tests/package_version.txt \
 	$(NULL)

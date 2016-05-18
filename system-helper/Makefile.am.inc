@@ -31,4 +31,4 @@ dist_polkit_policy_DATA =					\
 @INTLTOOL_POLICY_RULE@
 
 EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf
-DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy
+DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy system-helper/flatpak-system-helper.service system-helper/org.freedesktop.Flatpak.SystemHelper.service
