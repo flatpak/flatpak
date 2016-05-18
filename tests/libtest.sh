@@ -156,7 +156,11 @@ assert_file_empty() {
     fi
 }
 
-export FL_GPG_HOMEDIR=$(dirname $0)/test-keyring
+export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
+mkdir -p ${FL_GPG_HOMEDIR}
+# This need to be writable, so copy the keys
+cp $(dirname $0)/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
+
 export FL_GPG_ID=7B0961FD
 export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
 
