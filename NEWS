@@ -17,7 +17,7 @@ aware of:
  * The library API (and name) changed due to the rename.
 
 Other changes:
- * Flatpak now hard-requires ostree 2016.15
+ * Flatpak now hard-requires ostree 2016.5
  * Switch from using xdg-app-helper to an included version of bubblewrap:
    https://github.com/projectatomic/bubblewrap
  * Added a policykit-based system helper that allows you to authenticate
