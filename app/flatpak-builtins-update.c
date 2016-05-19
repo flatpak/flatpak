@@ -123,7 +123,7 @@ flatpak_builtin_update (int           argc,
   g_autoptr(FlatpakDir) dir = NULL;
   const char *name = NULL;
   const char *branch = NULL;
-  const char *arch = opt_arch;
+  const char *arch = NULL;
   int i;
 
   context = g_option_context_new ("[NAME [BRANCH]] - Update an application or runtime");
@@ -139,8 +139,10 @@ flatpak_builtin_update (int           argc,
   if (argc >= 3)
     branch = argv[2];
 
-  if (arch == NULL)
+  if (opt_arch == NULL)
     arch = flatpak_get_arch ();
+  else
+    arch = opt_arch;
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
