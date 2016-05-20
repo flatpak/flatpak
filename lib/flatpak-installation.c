@@ -1222,7 +1222,7 @@ flatpak_installation_update (FlatpakInstallation    *self,
   if (!flatpak_dir_update (dir_clone,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0,
-                           remote_name, ref, NULL, subpaths,
+                           ref, remote_name, NULL, subpaths,
                            ostree_progress, cancellable, error))
     goto out;
 
