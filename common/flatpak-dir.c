@@ -2954,44 +2954,43 @@ flatpak_dir_install (FlatpakDir          *self,
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
       char *empty_subpaths[] = {NULL};
+      g_autofree char *child_repo_path = NULL;
       FlatpakSystemHelper *system_helper;
-
-      if (no_pull)
-        return flatpak_fail (error, "No-pull install not supported without root permissions");
-
-      if (no_deploy)
-        return flatpak_fail (error, "No-deploy install not supported without root permissions");
-
-      child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
-      if (child_repo == NULL)
-        return FALSE;
+      FlatpakHelperDeployFlags helper_flags = 0;
 
       system_helper = flatpak_dir_get_system_helper (self);
-
       g_assert (system_helper != NULL);
 
-      if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
-                             child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
-                             progress, cancellable, error))
-        return FALSE;
+      if (!no_pull)
+        {
+          child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
+          if (child_repo == NULL)
+            return FALSE;
+
+          if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
+                                 child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                                 progress, cancellable, error))
+            return FALSE;
+
+          child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
+        }
+
+      if (no_deploy)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY;
 
       if (!flatpak_system_helper_call_deploy_sync (system_helper,
-                                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
-                                                   FLATPAK_HELPER_DEPLOY_FLAGS_NONE,
-                                                   ref,
-                                                   remote_name,
+                                                   child_repo_path ? child_repo_path : "",
+                                                   helper_flags, ref, remote_name,
                                                    (const char * const *) (subpaths ? subpaths : empty_subpaths),
                                                    cancellable,
                                                    error))
         return FALSE;
 
-      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
-                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
-                                   NULL, NULL);
+      if (child_repo_path)
+        (void) glnx_shutil_rm_rf_at (AT_FDCWD, child_repo_path, NULL, NULL);
 
       return TRUE;
     }
-
 
   if (!no_pull)
     {
@@ -3027,53 +3026,58 @@ flatpak_dir_update (FlatpakDir          *self,
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
       char *empty_subpaths[] = {NULL};
-      g_autofree char *pulled_checksum = NULL;
+      g_autofree char *latest_checksum = NULL;
       g_autofree char *active_checksum = NULL;
       FlatpakSystemHelper *system_helper;
-
-      if (no_pull)
-        return flatpak_fail (error, "No-pull update not supported without root permissions");
-
-      if (no_deploy)
-        return flatpak_fail (error, "No-deploy update not supported without root permissions");
+      g_autofree char *child_repo_path = NULL;
+      FlatpakHelperDeployFlags helper_flags = 0;
 
       if (checksum_or_latest != NULL)
         return flatpak_fail (error, "Can't update to a specific commit without root permissions");
 
-      child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
-      if (child_repo == NULL)
-        return FALSE;
-
       system_helper = flatpak_dir_get_system_helper (self);
-
       g_assert (system_helper != NULL);
 
-      if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
-                             child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
-                             progress, cancellable, error))
-        return FALSE;
+      if (no_pull)
+        {
+          if (!ostree_repo_resolve_rev (self->repo, ref, FALSE, &latest_checksum, error))
+            return FALSE;
+        }
+      else
+        {
+          child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
+          if (child_repo == NULL)
+            return FALSE;
 
-      if (!ostree_repo_resolve_rev (child_repo, ref, FALSE, &pulled_checksum, error))
-        return FALSE;
+          if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
+                                 child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                                 progress, cancellable, error))
+            return FALSE;
+
+          if (!ostree_repo_resolve_rev (child_repo, ref, FALSE, &latest_checksum, error))
+            return FALSE;
+
+          child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
+        }
+
+      helper_flags = FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE;
+      if (no_deploy)
+        helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY;
 
       active_checksum = flatpak_dir_read_active (self, ref, NULL);
-      if (g_strcmp0 (active_checksum, pulled_checksum) != 0)
+      if (g_strcmp0 (active_checksum, latest_checksum) != 0)
         {
-
           if (!flatpak_system_helper_call_deploy_sync (system_helper,
-                                                       gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
-                                                       FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE,
-                                                       ref,
-                                                       remote_name,
+                                                       child_repo_path ? child_repo_path : "",
+                                                       helper_flags, ref, remote_name,
                                                        (const char * const *) empty_subpaths,
                                                        cancellable,
                                                        error))
             return FALSE;
         }
 
-      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
-                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
-                                   NULL, NULL);
+      if (child_repo_path)
+        (void) glnx_shutil_rm_rf_at (AT_FDCWD, child_repo_path, NULL, NULL);
 
       return TRUE;
     }

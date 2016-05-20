@@ -138,6 +138,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   gboolean is_update;
+  gboolean no_deploy;
   g_autoptr(GMainContext) main_context = NULL;
 
   g_debug ("Deploy %s %u %s %s", arg_repo_path, arg_flags, arg_ref, arg_origin);
@@ -156,6 +157,7 @@ handle_deploy (FlatpakSystemHelper   *object,
     }
 
   is_update = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
+  no_deploy = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY) != 0;
 
   deploy_dir = flatpak_dir_get_if_deployed (system, arg_ref,
                                             NULL, NULL);
@@ -194,46 +196,50 @@ handle_deploy (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  /* Work around ostree-pull spinning the default main context for the sync calls */
-  main_context = g_main_context_new ();
-  g_main_context_push_thread_default (main_context);
-
-  if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
-                                         arg_origin,
-                                         arg_ref,
-                                         (char **) arg_subpaths,
-                                         NULL,
-                                         NULL, &error))
+  if (strlen (arg_repo_path) > 0)
     {
-      g_main_context_pop_thread_default (main_context);
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                             "Error pulling from repo: %s", error->message);
-      return TRUE;
-    }
+      /* Work around ostree-pull spinning the default main context for the sync calls */
+      main_context = g_main_context_new ();
+      g_main_context_push_thread_default (main_context);
 
-  g_main_context_pop_thread_default (main_context);
-
-  if (is_update)
-    {
-      /* TODO: This doesn't support a custom subpath */
-      if (!flatpak_dir_deploy_update (system, arg_ref,
-                                      NULL,
-                                      NULL, &error))
+      if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
+                                             arg_origin,
+                                             arg_ref,
+                                             (char **) arg_subpaths,
+                                             NULL,
+                                             NULL, &error))
         {
+          g_main_context_pop_thread_default (main_context);
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Error deploying: %s", error->message);
+                                                 "Error pulling from repo: %s", error->message);
           return TRUE;
         }
+      g_main_context_pop_thread_default (main_context);
     }
-  else
+
+  if (!no_deploy)
     {
-      if (!flatpak_dir_deploy_install (system, arg_ref, arg_origin,
-                                       (char **) arg_subpaths,
-                                       NULL, &error))
+      if (is_update)
         {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Error deploying: %s", error->message);
-          return TRUE;
+          /* TODO: This doesn't support a custom subpath */
+          if (!flatpak_dir_deploy_update (system, arg_ref,
+                                          NULL, NULL, &error))
+            {
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                     "Error deploying: %s", error->message);
+              return TRUE;
+            }
+        }
+      else
+        {
+          if (!flatpak_dir_deploy_install (system, arg_ref, arg_origin,
+                                           (char **) arg_subpaths,
+                                           NULL, &error))
+            {
+              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                     "Error deploying: %s", error->message);
+              return TRUE;
+            }
         }
     }
 
