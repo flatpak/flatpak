@@ -1,3 +1,15 @@
+Major changes in 0.6.1
+======================
+
+ * Fixed support for systems without user namespaces (default for Arch) or
+   unprivileged support for user namespaces (default for Debian).
+ * Fix memory leak during install/update.
+ * update: Fix support for --arch.
+ * Set the right location for the system directory in the environment.
+ * system-helper: Support updating without deploying (needed for
+   gnome-software support).
+ * lib: Fix support for updates
+
 Major changes in 0.6.0
 ======================
 
