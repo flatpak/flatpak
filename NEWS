@@ -1,3 +1,10 @@
+Major changes in 0.6.2
+======================
+
+ * Fixed no-network support regression in setuid mode.
+ * Fixed creation of root-owned file in home dir when using sudo in some cases
+ * New --with-privileged-group configure option
+
 Major changes in 0.6.1
 ======================
 
