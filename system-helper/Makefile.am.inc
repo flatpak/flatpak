@@ -20,15 +20,18 @@ flatpak_system_helper_SOURCES = \
 flatpak_system_helper_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(POLKIT_LIBS) libflatpak-common.la
 flatpak_system_helper_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(POLKIT_CFLAGS)
 
+system-helper/org.freedesktop.Flatpak.rules: system-helper/org.freedesktop.Flatpak.rules.in
+	$(AM_V_GEN) $(SED) -e "s|\@privileged_group\@|$(PRIVILEGED_GROUP)|" $< > $@
+
 polkit_rulesdir = $(datadir)/polkit-1/rules.d
-dist_polkit_rules_DATA =					\
+polkit_rules_DATA =					\
 	system-helper/org.freedesktop.Flatpak.rules
 
 polkit_policydir = $(datadir)/polkit-1/actions
-dist_polkit_policy_DATA =					\
+polkit_policy_DATA =					\
 	system-helper/org.freedesktop.Flatpak.policy
 
 @INTLTOOL_POLICY_RULE@
 
-EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf
-DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy system-helper/flatpak-system-helper.service system-helper/org.freedesktop.Flatpak.SystemHelper.service
+EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf system-helper/org.freedesktop.Flatpak.rules.in
+DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy system-helper/org.freedesktop.Flatpak.rules system-helper/flatpak-system-helper.service system-helper/org.freedesktop.Flatpak.SystemHelper.service

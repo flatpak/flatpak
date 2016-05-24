@@ -62,6 +62,12 @@ AX_VALGRIND_CHECK
 
 PKG_PROG_PKG_CONFIG([0.24])
 
+AC_ARG_WITH(privileged_group,
+		AS_HELP_STRING([--with-privileged-group=GROUP],[Name of privileged group, [default=wheel]]),
+            with_privileged_group="$withval", with_privileged_group=wheel)
+PRIVILEGED_GROUP=$with_privileged_group
+AC_SUBST(PRIVILEGED_GROUP)
+
 AC_ARG_WITH(dbus_service_dir,
 		AS_HELP_STRING([--with-dbus-service-dir=PATH],[choose directory for dbus service files, [default=PREFIX/share/dbus-1/services]]),
             with_dbus_service_dir="$withval", with_dbus_service_dir=$datadir/dbus-1/services)
