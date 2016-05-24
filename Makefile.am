@@ -90,7 +90,7 @@ if PRIV_MODE_SETUID
 	$(SUDO_BIN) chmod u+s $(DESTDIR)$(libdir)/flatpak/bwrap
 else
 if PRIV_MODE_FILECAPS
-	$(SUDO_BIN) setcap cap_sys_admin,cap_net_admin,cap_sys_chroot+ep $(DESTDIR)$(libdir)/flatpak/bwrap
+	$(SUDO_BIN) setcap cap_sys_admin,cap_net_admin,cap_sys_chroot,cap_setuid,cap_setgid+ep $(DESTDIR)$(libdir)/flatpak/bwrap
 endif
 endif
 
