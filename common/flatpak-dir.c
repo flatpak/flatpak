@@ -851,7 +851,7 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
         goto out;
 
       repodir = g_file_get_child (self->basedir, "repo");
-      if (self->user)
+      if (self->no_system_helper || self->user || getuid () == 0)
         {
           repo = ostree_repo_new (repodir);
         }
