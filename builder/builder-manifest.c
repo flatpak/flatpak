@@ -2052,7 +2052,7 @@ builder_manifest_run (BuilderManifest *self,
 
   commandline = g_strjoinv (" ", (char **) args->pdata);
 
-  if (!execvp ((char *) args->pdata[0], (char **) args->pdata))
+  if (execvp ((char *) args->pdata[0], (char **) args->pdata) == -1)
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start flatpak build");
       return FALSE;
