@@ -1756,6 +1756,9 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
               continue;
             }
 
+          if (path == NULL)
+            continue; /* Unconfigured, ignore */
+
           if (strcmp (path, g_get_home_dir ()) == 0)
             {
               /* xdg-user-dirs sets disabled dirs to $HOME, and its in general not a good
