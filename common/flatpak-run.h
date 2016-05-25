@@ -84,10 +84,11 @@ GFile *flatpak_ensure_data_dir (const char   *app_id,
                                 GError      **error);
 
 typedef enum {
-  FLATPAK_RUN_FLAG_DEVEL           = (1 << 0),
-  FLATPAK_RUN_FLAG_BACKGROUND      = (1 << 1),
-  FLATPAK_RUN_FLAG_LOG_SESSION_BUS = (1 << 2),
-  FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS  = (1 << 3),
+  FLATPAK_RUN_FLAG_DEVEL              = (1 << 0),
+  FLATPAK_RUN_FLAG_BACKGROUND         = (1 << 1),
+  FLATPAK_RUN_FLAG_LOG_SESSION_BUS    = (1 << 2),
+  FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS     = (1 << 3),
+  FLATPAK_RUN_FLAG_NO_SESSION_HELPER  = (1 << 4),
 } FlatpakRunFlags;
 
 gboolean flatpak_run_setup_base_argv (GPtrArray      *argv_array,

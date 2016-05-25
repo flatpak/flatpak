@@ -169,7 +169,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             "--bind", gs_file_get_path_cached (app_files), "/app",
             NULL);
 
-  if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, NULL, runtime_ref_parts[2], FLATPAK_RUN_FLAG_DEVEL, error))
+  if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, NULL, runtime_ref_parts[2],
+                                    FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER,
+                                    error))
     return FALSE;
 
   /* After setup_base to avoid conflicts with /var symlinks */

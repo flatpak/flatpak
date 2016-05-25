@@ -2275,18 +2275,22 @@ add_app_info_args (GPtrArray      *argv_array,
 }
 
 static void
-add_monitor_path_args (GPtrArray *argv_array,
-                       char    ***envp_p)
+add_monitor_path_args (gboolean use_session_helper,
+                       GPtrArray *argv_array)
 {
   g_autoptr(AutoFlatpakSessionHelper) session_helper = NULL;
   g_autofree char *monitor_path = NULL;
 
-  session_helper =
-    flatpak_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
-                                                   G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
-                                                   "org.freedesktop.Flatpak",
-                                                   "/org/freedesktop/Flatpak/SessionHelper",
-                                                   NULL, NULL);
+  if (use_session_helper)
+    {
+      session_helper =
+        flatpak_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+                                                       G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                       "org.freedesktop.Flatpak",
+                                                       "/org/freedesktop/Flatpak/SessionHelper",
+                                                       NULL, NULL);
+    }
+
   if (session_helper &&
       flatpak_session_helper_call_request_monitor_sync (session_helper,
                                                         &monitor_path,
@@ -2816,6 +2820,8 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
     return FALSE;
 #endif
 
+  add_monitor_path_args ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0, argv_array);
+
   return TRUE;
 }
 
@@ -3000,8 +3006,6 @@ flatpak_run_app (const char     *app_ref,
 
   if (!flatpak_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
-
-  add_monitor_path_args (argv_array, &envp);
 
   add_document_portal_args (argv_array, app_ref_parts[1]);
 
