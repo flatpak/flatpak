@@ -1877,6 +1877,14 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       !unrestricted_system_bus && system_bus_proxy_argv)
     flatpak_add_bus_filters (system_bus_proxy_argv, context->system_bus_policy, NULL, context);
 
+  if (g_environ_getenv (*envp_p, "LD_LIBRARY_PATH") != NULL)
+    {
+      /* LD_LIBRARY_PATH is overridden for setuid helper, so pass it as cmdline arg */
+      add_args (argv_array,
+                "--setenv", "LD_LIBRARY_PATH", g_environ_getenv (*envp_p, "LD_LIBRARY_PATH"),
+                NULL);
+      *envp_p = g_environ_unsetenv (*envp_p, "LD_LIBRARY_PATH");
+    }
 }
 
 static const struct {const char *env;
@@ -3035,15 +3043,6 @@ flatpak_run_app (const char     *app_ref,
             "--symlink", "/app/lib/debug/source", "/run/build",
             "--symlink", "/usr/lib/debug/source", "/run/build-runtime",
             NULL);
-
-  if (g_environ_getenv (envp, "LD_LIBRARY_PATH") != NULL)
-    {
-      /* LD_LIBRARY_PATH is overridden for setuid helper, so pass it as cmdline arg */
-      add_args (argv_array,
-                "--setenv", "LD_LIBRARY_PATH", g_environ_getenv (envp, "LD_LIBRARY_PATH"),
-                NULL);
-      envp = g_environ_unsetenv (envp, "LD_LIBRARY_PATH");
-    }
 
   if (custom_command)
     {
