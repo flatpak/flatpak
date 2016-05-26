@@ -3993,41 +3993,61 @@ flatpak_dir_find_installed_ref (FlatpakDir *self,
                                 gboolean   *is_app,
                                 GError    **error)
 {
+  const char *arch = NULL;
+  g_autofree char *local_ref = NULL;
+  g_autoptr(GHashTable) local_refs = NULL;
+  g_autoptr(GError) my_error = NULL;
+  int i;
+
+  arch = opt_arch;
+  if (arch == NULL)
+    arch = flatpak_get_arch ();
+
+  if (!flatpak_dir_ensure_repo (self, NULL, error))
+    return NULL;
+
+  local_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   if (app)
     {
-      g_autofree char *app_ref = NULL;
-      g_autoptr(GFile) deploy_base = NULL;
+      g_auto(GStrv) app_refs = NULL;
 
-      app_ref = flatpak_compose_ref (TRUE, name, opt_branch, opt_arch, error);
-      if (app_ref == NULL)
+      if (!flatpak_dir_list_refs (self, "app", &app_refs, NULL, error))
         return NULL;
 
-
-      deploy_base = flatpak_dir_get_deploy_dir (self, app_ref);
-      if (g_file_query_exists (deploy_base, NULL))
-        {
-          if (is_app)
-            *is_app = TRUE;
-          return g_steal_pointer (&app_ref);
-        }
+      for (i = 0; app_refs[i] != NULL; i++)
+        g_hash_table_insert (local_refs, g_strdup (app_refs[i]),
+                             GINT_TO_POINTER (1));
     }
-
   if (runtime)
     {
-      g_autofree char *runtime_ref = NULL;
-      g_autoptr(GFile) deploy_base = NULL;
+      g_auto(GStrv) runtime_refs = NULL;
 
-      runtime_ref = flatpak_compose_ref (FALSE, name, opt_branch, opt_arch, error);
-      if (runtime_ref == NULL)
+      if (!flatpak_dir_list_refs (self, "runtime", &runtime_refs, NULL, error))
         return NULL;
 
-      deploy_base = flatpak_dir_get_deploy_dir (self, runtime_ref);
-      if (g_file_query_exists (deploy_base, NULL))
+      for (i = 0; runtime_refs[i] != NULL; i++)
+        g_hash_table_insert (local_refs, g_strdup (runtime_refs[i]),
+                             GINT_TO_POINTER (1));
+    }
+
+  local_ref = find_matching_ref (local_refs, name, opt_branch,
+                                  opt_arch, app, runtime, &my_error);
+  if (local_ref == NULL)
+    {
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        g_clear_error (&my_error);
+      else
         {
-          if (is_app)
-            *is_app = FALSE;
-          return g_steal_pointer (&runtime_ref);
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
         }
+    }
+  else
+    {
+      if (is_app)
+        *is_app = g_str_has_prefix (local_ref, "app/");
+
+      return g_steal_pointer (&local_ref);
     }
 
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,

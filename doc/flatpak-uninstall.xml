@@ -45,7 +45,8 @@
             <arg choice="plain">ARCH</arg> and <arg choice="plain">BRANCH</arg>
             arguments must identify an installed application.
             If <arg choice="plain">BRANCH</arg> is not specified, it defaults
-            to "master".
+            to whatever is installed, unless there are multiple versions, then you
+            have to specify a branch.
         </para>
         <para>
             By default this looks for both installed apps and runtime
