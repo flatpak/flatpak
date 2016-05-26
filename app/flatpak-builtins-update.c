@@ -68,28 +68,12 @@ update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable
 
 static gboolean
 do_update (FlatpakDir  * dir,
-           const char   *name,
-           const char   *branch,
-           const char   *arch,
-           gboolean      check_app,
-           gboolean      check_runtime,
+           const char   *ref,
            GCancellable *cancellable,
            GError      **error)
 {
-  g_autofree char *ref = NULL;
   g_autofree char *repository = NULL;
-
   g_auto(GStrv) subpaths = NULL;
-  gboolean is_app;
-
-  ref = flatpak_dir_find_installed_ref (dir,
-                                        name,
-                                        branch,
-                                        arch,
-                                        check_app, check_runtime, &is_app,
-                                        error);
-  if (ref == NULL)
-    return FALSE;
 
   repository = flatpak_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
@@ -124,6 +108,7 @@ flatpak_builtin_update (int           argc,
   const char *name = NULL;
   const char *branch = NULL;
   const char *arch = NULL;
+  gboolean failed = FALSE;
   int i;
 
   context = g_option_context_new ("[NAME [BRANCH]] - Update an application or runtime");
@@ -175,13 +160,8 @@ flatpak_builtin_update (int           argc,
 
               g_print ("Updating application %s %s\n", parts[1], parts[3]);
 
-              if (!do_update (dir,
-                              parts[1],
-                              parts[3],
-                              arch,
-                              TRUE, FALSE,
-                              cancellable,
-                              error))
+              if (!do_update (dir, refs[i],
+                              cancellable, error))
                 return FALSE;
             }
         }
@@ -198,6 +178,8 @@ flatpak_builtin_update (int           argc,
           for (i = 0; refs != NULL && refs[i] != NULL; i++)
             {
               g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
+              g_autoptr(GError) local_error = NULL;
+
               if (parts == NULL)
                 return FALSE;
 
@@ -208,31 +190,39 @@ flatpak_builtin_update (int           argc,
                 continue;
 
               g_print ("Updating runtime %s %s\n", parts[1], parts[3]);
-              if (!do_update (dir,
-                              parts[1],
-                              parts[3],
-                              arch,
-                              FALSE, TRUE,
-                              cancellable,
-                              error))
-                return FALSE;
+              if (!do_update (dir, refs[i], cancellable, &local_error))
+                {
+                  g_printerr ("error updating: %s\n", local_error->message);
+                  failed = TRUE;
+                }
             }
         }
 
     }
   else
     {
-      if (!do_update (dir,
-                      name,
-                      branch,
-                      arch,
-                      opt_app, opt_runtime,
+      gboolean is_app;
+      g_autofree char *ref = NULL;
+
+      ref = flatpak_dir_find_installed_ref (dir,
+                                            name,
+                                            branch,
+                                            arch,
+                                            opt_app, opt_runtime, &is_app,
+                                            error);
+      if (ref == NULL)
+        return FALSE;
+
+      if (!do_update (dir, ref,
                       cancellable,
                       error))
         return FALSE;
     }
 
   flatpak_dir_cleanup_removed (dir, cancellable, NULL);
+
+  if (failed)
+    return flatpak_fail (error, "One or more updates failed");
 
   return TRUE;
 }
