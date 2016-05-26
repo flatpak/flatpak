@@ -57,7 +57,7 @@ static GOptionEntry entries[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Architecture to build for (must be host compatible)", "ARCH" },
   { "run", 0, 0, G_OPTION_ARG_NONE, &opt_run, "Run a command in the build directory (see --run --help)", NULL },
   { "ccache", 0, 0, G_OPTION_ARG_NONE, &opt_ccache, "Use ccache", NULL },
-  { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache", NULL },
+  { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache lookups", NULL },
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
   { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
@@ -78,7 +78,6 @@ static GOptionEntry run_entries[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Architecture to build for (must be host compatible)", "ARCH" },
   { "run", 0, 0, G_OPTION_ARG_NONE, &opt_run, "Run a command in the build directory", NULL },
   { "ccache", 0, 0, G_OPTION_ARG_NONE, &opt_ccache, "Use ccache", NULL },
-  { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache", NULL },
   { NULL }
 };
 
@@ -185,6 +184,8 @@ main (int    argc,
   GFileInfo *next = NULL;
   const char *platform_id = NULL;
   gboolean is_run = FALSE;
+  g_autoptr(FlatpakContext) arg_context = NULL;
+
   int i;
 
   setlocale (LC_ALL, "");
@@ -206,7 +207,6 @@ main (int    argc,
     {
       if (argv[i][0] != '-')
         break;
-      g_print ("%d %s\n", i, argv[i]);
       if (strcmp (argv[i], "--run") == 0)
         {
           is_run = TRUE;
@@ -218,6 +218,8 @@ main (int    argc,
     {
       context = g_option_context_new ("DIRECTORY MANIFEST COMMAND [args] - Run command in build sandbox");
       g_option_context_add_main_entries (context, run_entries, NULL);
+      arg_context = flatpak_context_new ();
+      g_option_context_add_group (context, flatpak_context_get_options (arg_context));
     }
   else
     {
@@ -296,7 +298,7 @@ main (int    argc,
           return 1;
         }
 
-      if (!builder_manifest_run (manifest, build_context, argv + 3, argc - 3, &error))
+      if (!builder_manifest_run (manifest, build_context, arg_context, argv + 3, argc - 3, &error))
         {
           g_printerr ("Error running %s: %s\n", argv[3], error->message);
           return 1;

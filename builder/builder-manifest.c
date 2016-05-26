@@ -1984,6 +1984,7 @@ builder_manifest_create_platform (BuilderManifest *self,
 gboolean
 builder_manifest_run (BuilderManifest *self,
                       BuilderContext  *context,
+                      FlatpakContext  *arg_context,
                       char           **argv,
                       int              argc,
                       GError         **error)
@@ -2043,6 +2044,8 @@ builder_manifest_run (BuilderManifest *self,
             g_ptr_array_add (args, g_strdup (arg));
         }
     }
+
+  flatpak_context_to_args (arg_context, args);
 
   g_ptr_array_add (args, g_file_get_path (builder_context_get_app_dir (context)));
 

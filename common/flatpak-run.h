@@ -55,6 +55,8 @@ void           flatpak_context_set_session_bus_policy (FlatpakContext *context,
 void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       const char     *name,
                                                       FlatpakPolicy   policy);
+void           flatpak_context_to_args (FlatpakContext *context,
+                                        GPtrArray *args);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 

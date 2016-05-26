@@ -23,6 +23,7 @@
 
 #include <json-glib/json-glib.h>
 
+#include "flatpak-run.h"
 #include "builder-options.h"
 #include "builder-module.h"
 #include "builder-cache.h"
@@ -65,6 +66,7 @@ gboolean        builder_manifest_build (BuilderManifest *self,
                                         GError         **error);
 gboolean        builder_manifest_run (BuilderManifest *self,
                                       BuilderContext  *context,
+                                      FlatpakContext  *arg_context,
                                       char           **argv,
                                       int              argc,
                                       GError         **error);
