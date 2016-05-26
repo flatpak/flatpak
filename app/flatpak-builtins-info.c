@@ -63,7 +63,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(GError) lookup_error = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
   const char *name;
-  const char *branch = "master";
+  const char *branch = NULL;
   const char *commit = NULL;
   const char *origin = NULL;
   gboolean is_app = FALSE;
