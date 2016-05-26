@@ -3790,7 +3790,7 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
     return FALSE;
 
   if (summary_bytes == NULL)
-    return flatpak_fail (error, "Remote refs not available; server has no summary file\n");
+    return flatpak_fail (error, "Remote listing not available; server has no summary file\n");
 
   ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
@@ -3832,6 +3832,99 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
   return TRUE;
 }
 
+char *
+find_matching_ref (GHashTable *refs,
+                   const char   *name,
+                   const char   *opt_branch,
+                   const char   *opt_arch,
+                   gboolean      app,
+                   gboolean      runtime,
+                   GError      **error)
+{
+  g_autoptr(GPtrArray) matched_refs = NULL;
+  const char *arch = NULL;
+  GHashTableIter hash_iter;
+  gpointer key;
+
+  if (!flatpak_is_valid_name (name))
+    {
+      flatpak_fail (error, "'%s' is not a valid name", name);
+      return NULL;
+    }
+
+  if (opt_branch && !flatpak_is_valid_branch (opt_branch))
+    {
+      flatpak_fail (error, "'%s' is not a valid branch name", opt_branch);
+      return NULL;
+    }
+
+  matched_refs = g_ptr_array_new_with_free_func (g_free);
+
+  arch = opt_arch;
+  if (arch == NULL)
+    arch = flatpak_get_arch ();
+
+  g_hash_table_iter_init (&hash_iter, refs);
+  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+    {
+      g_autofree char *ref = NULL;
+      g_auto(GStrv) parts = NULL;
+      gboolean is_app, is_runtime;
+
+      /* Unprefix any remote name if needed */
+      ostree_parse_refspec (key, NULL, &ref, NULL);
+      if (ref == NULL)
+        continue;
+
+      is_app = g_str_has_prefix (ref, "app/");
+      is_runtime = g_str_has_prefix (ref, "runtime/");
+
+      if ((!app && is_app) ||
+          (!runtime && is_runtime) ||
+          (!is_app && !is_runtime))
+        continue;
+
+      parts = flatpak_decompose_ref (ref, NULL);
+      if (parts == NULL)
+        continue;
+
+      if (strcmp (parts[1], name) != 0 ||
+          strcmp (parts[2], arch) != 0)
+        continue;
+
+      if (opt_branch != NULL && strcmp (opt_branch, parts[3]) != 0)
+        continue;
+
+      g_ptr_array_add (matched_refs, g_steal_pointer (&ref));
+    }
+
+  if (matched_refs->len == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "Nothing matches %s", name);
+      return NULL;
+    }
+
+  if (matched_refs->len > 1)
+    {
+      int i;
+      g_autoptr(GString) err = g_string_new ("");
+      g_string_printf (err, "Multiple branches available for %s, you must specify one of: ", name);
+      for (i = 0; i < matched_refs->len; i++)
+        {
+          g_auto(GStrv) parts = flatpak_decompose_ref (g_ptr_array_index (matched_refs, i), NULL);
+          if (i != 0)
+            g_string_append (err, ", ");
+
+          g_string_append (err, parts[3]);
+        }
+
+      flatpak_fail (error, err->str);
+      return NULL;
+    }
+
+  return g_strdup (g_ptr_array_index (matched_refs, 0));
+}
 
 char *
 flatpak_dir_find_remote_ref (FlatpakDir   *self,
@@ -3845,85 +3938,47 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              GCancellable *cancellable,
                              GError      **error)
 {
-  g_autofree char *app_ref = NULL;
-  g_autofree char *runtime_ref = NULL;
-  g_autofree char *app_ref_with_remote = NULL;
-  g_autofree char *runtime_ref_with_remote = NULL;
+  const char *arch = NULL;
+  g_autofree char *refspec_prefix = NULL;
+  g_autofree char *remote_ref = NULL;
+  g_autoptr(GHashTable) remote_refs = NULL;
+  g_autoptr(GError) my_error = NULL;
 
-  g_autoptr(GVariant) summary = NULL;
-  g_autoptr(GVariant) refs = NULL;
-  g_autoptr(GBytes) summary_bytes = NULL;
+  arch = opt_arch;
+  if (arch == NULL)
+    arch = flatpak_get_arch ();
 
   if (!flatpak_dir_ensure_repo (self, NULL, error))
     return NULL;
 
-  if (app)
-    {
-      app_ref = flatpak_compose_ref (TRUE, name, opt_branch, opt_arch, error);
-      if (app_ref == NULL)
-        return NULL;
-      app_ref_with_remote = g_strconcat (remote, ":", app_ref, NULL);
-    }
+  refspec_prefix = g_strconcat (remote, ":.", NULL);
 
-  if (runtime)
-    {
-      runtime_ref = flatpak_compose_ref (FALSE, name, opt_branch, opt_arch, error);
-      if (runtime_ref == NULL)
-        return NULL;
-      runtime_ref_with_remote = g_strconcat (remote, ":", app_ref, NULL);
-    }
-
-  /* First look for a local ref */
-
-  if (app_ref &&
-      ostree_repo_resolve_rev (self->repo, app_ref_with_remote,
-                               FALSE, NULL, NULL))
-    {
-      if (is_app)
-        *is_app = TRUE;
-      return g_steal_pointer (&app_ref);
-    }
-
-  if (runtime_ref &&
-      ostree_repo_resolve_rev (self->repo, runtime_ref_with_remote,
-                               FALSE, NULL, NULL))
-    {
-      if (is_app)
-        *is_app = FALSE;
-      return g_steal_pointer (&runtime_ref);
-    }
-
-  if (!flatpak_dir_remote_fetch_summary (self, remote,
-                                         &summary_bytes,
-                                         cancellable, error))
+  if (!flatpak_dir_remote_list_refs (self, remote,
+                                     &remote_refs, cancellable, error))
     return NULL;
 
-  if (summary_bytes == NULL)
+  remote_ref = find_matching_ref (remote_refs, name, opt_branch,
+                                  opt_arch, app, runtime, &my_error);
+  if (remote_ref == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Can't find %s in remote %s; server has no summary file", name, remote);
-      return NULL;
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        g_clear_error (&my_error);
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
     }
-
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
-  refs = g_variant_get_child_value (summary, 0);
-
-  if (app_ref && flatpak_summary_lookup_ref (summary, app_ref, NULL))
+  else
     {
       if (is_app)
-        *is_app = TRUE;
-      return g_steal_pointer (&app_ref);
-    }
+        *is_app = g_str_has_prefix (remote_ref, "app/");
 
-  if (runtime_ref && flatpak_summary_lookup_ref (summary, runtime_ref, NULL))
-    {
-      if (is_app)
-        *is_app = FALSE;
-      return g_steal_pointer (&runtime_ref);
+      return g_steal_pointer (&remote_ref);
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-               "Can't find %s %s in remote %s", name, opt_branch ? opt_branch : "master", remote);
+               "Can't find %s in remote %s", name, remote);
 
   return NULL;
 }

@@ -51,7 +51,8 @@
             Installs an application or runtime. <arg choice="plain">REMOTE</arg> must name
             an existing remote and <arg choice="plain">NAME</arg> is the name of the
             application or runtime to install. Optionally, <arg choice="plain">BRANCH</arg> can
-            be specified to install a branch other than the default "master" branch.
+            be specified to install a branch other than the default branch. This required
+            if there are multiple matches in the selected remote.
         </para>
         <para>
             By default this looks for both apps and runtime with the given <arg choice="plain">NAME</arg> in

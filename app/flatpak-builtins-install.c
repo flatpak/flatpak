@@ -200,7 +200,6 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
   const char *repository;
   const char *name;
   const char *branch = NULL;
@@ -208,6 +207,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autofree char *installed_ref = NULL;
   gboolean is_app;
   g_autoptr(GError) my_error = NULL;
+  g_autoptr(GFile) deploy_base = NULL;
 
   context = g_option_context_new ("REPOSITORY NAME [BRANCH] - Install an application or runtime");
 
@@ -228,30 +228,19 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
 
-  installed_ref = flatpak_dir_find_installed_ref (dir,
-                                                  name,
-                                                  branch,
-                                                  opt_arch,
-                                                  opt_app, opt_runtime, &is_app,
-                                                  &my_error);
-  if (installed_ref != NULL)
-    return flatpak_fail (error, "%s %s, branch %s is already installed",
-                         is_app ? "App" : "Runtime", name, branch ? branch : "master");
-
-  if (!g_error_matches (my_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
-    {
-      g_propagate_error (error, g_steal_pointer (&my_error));
-      return FALSE;
-    }
-
   ref = flatpak_dir_find_remote_ref (dir, repository, name, branch, opt_arch,
                                      opt_app, opt_runtime, &is_app, cancellable, error);
   if (ref == NULL)
     return FALSE;
 
   deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
-  if (g_file_query_exists (deploy_base, cancellable))
-    return flatpak_fail (error, "Ref %s already deployed", ref);
+  if (g_file_query_exists (deploy_base, NULL))
+    {
+      g_auto(GStrv) parts =  flatpak_decompose_ref (ref, error);
+
+      return flatpak_fail (error, "%s %s, branch %s is already installed",
+                           is_app ? "App" : "Runtime", name, parts[3]);
+    }
 
   if (!flatpak_dir_install (dir,
                             opt_no_pull,
