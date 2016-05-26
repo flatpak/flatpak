@@ -55,7 +55,7 @@ static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
   { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version information and exit", NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Architecture to build for (must be host compatible)", "ARCH" },
-  { "run", 0, 0, G_OPTION_ARG_NONE, &opt_run, "Run a command in the build directory", NULL },
+  { "run", 0, 0, G_OPTION_ARG_NONE, &opt_run, "Run a command in the build directory (see --run --help)", NULL },
   { "ccache", 0, 0, G_OPTION_ARG_NONE, &opt_ccache, "Use ccache", NULL },
   { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache", NULL },
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
@@ -72,6 +72,16 @@ static GOptionEntry entries[] = {
   { "force-clean", 0, 0, G_OPTION_ARG_NONE, &opt_force_clean, "Erase previous contents of DIRECTORY", NULL },
   { NULL }
 };
+
+static GOptionEntry run_entries[] = {
+  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Architecture to build for (must be host compatible)", "ARCH" },
+  { "run", 0, 0, G_OPTION_ARG_NONE, &opt_run, "Run a command in the build directory", NULL },
+  { "ccache", 0, 0, G_OPTION_ARG_NONE, &opt_ccache, "Use ccache", NULL },
+  { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache", NULL },
+  { NULL }
+};
+
 
 static void
 message_handler (const gchar   *log_domain,
@@ -174,6 +184,8 @@ main (int    argc,
   g_autoptr(GFileEnumerator) dir_enum2 = NULL;
   GFileInfo *next = NULL;
   const char *platform_id = NULL;
+  gboolean is_run = FALSE;
+  int i;
 
   setlocale (LC_ALL, "");
 
@@ -190,8 +202,29 @@ main (int    argc,
   else
     g_unsetenv ("GIO_USE_VFS");
 
-  context = g_option_context_new ("DIRECTORY MANIFEST - Build manifest");
-  g_option_context_add_main_entries (context, entries, NULL);
+  for (i = 1; i < argc; i++)
+    {
+      if (argv[i][0] != '-')
+        break;
+      g_print ("%d %s\n", i, argv[i]);
+      if (strcmp (argv[i], "--run") == 0)
+        {
+          is_run = TRUE;
+          break;
+        }
+    }
+
+  if (is_run)
+    {
+      context = g_option_context_new ("DIRECTORY MANIFEST COMMAND [args] - Run command in build sandbox");
+      g_option_context_add_main_entries (context, run_entries, NULL);
+    }
+  else
+    {
+      context = g_option_context_new ("DIRECTORY MANIFEST - Build manifest");
+      g_option_context_add_main_entries (context, entries, NULL);
+    }
+
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
       g_printerr ("option parsing failed: %s\n", error->message);
@@ -231,6 +264,9 @@ main (int    argc,
       return 1;
     }
 
+  if (is_run && argc == 3)
+    return usage (context, "Program to run must be specified");
+
   manifest_file = g_file_new_for_path (manifest_path);
   base_dir = g_file_get_parent (manifest_file);
   app_dir = g_file_new_for_path (app_dir_path);
@@ -249,10 +285,9 @@ main (int    argc,
       return 1;
     }
 
-  if (opt_run)
+  if (is_run)
     {
-      if (argc == 3)
-        return usage (context, "Program to run must be specified");
+      g_assert (opt_run);
 
       if (!g_file_query_exists (app_dir, NULL) ||
           directory_is_empty (app_dir_path))
@@ -269,6 +304,8 @@ main (int    argc,
 
       return 0;
     }
+
+  g_assert (!opt_run);
 
   if (g_file_query_exists (app_dir, NULL) && !directory_is_empty (app_dir_path))
     {
