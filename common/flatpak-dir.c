@@ -1537,13 +1537,40 @@ flatpak_dir_drop_current_ref (FlatpakDir   *self,
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GFile) current_link = NULL;
+  g_auto(GStrv) refs = NULL;
+  g_autofree char *current_ref = NULL;
+  const char *other_ref = NULL;
 
   base = g_file_get_child (flatpak_dir_get_path (self), "app");
   dir = g_file_get_child (base, name);
 
+  current_ref = flatpak_dir_current_ref (self, name, cancellable);
+
+  if (flatpak_dir_list_refs_for_name (self, "app", name, &refs, cancellable, NULL))
+    {
+      int i;
+      for (i = 0; refs[i] != NULL; i++)
+        {
+          if (g_strcmp0 (refs[i], current_ref) != 0)
+            {
+              other_ref = refs[i];
+              break;
+            }
+        }
+    }
+
   current_link = g_file_get_child (dir, "current");
 
-  return g_file_delete (current_link, cancellable, error);
+  if (!g_file_delete (current_link, cancellable, error))
+    return FALSE;
+
+  if (other_ref)
+    {
+      if (!flatpak_dir_make_current_ref (self, other_ref, cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
 }
 
 gboolean
