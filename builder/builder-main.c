@@ -183,10 +183,10 @@ main (int    argc,
   g_autoptr(GFileEnumerator) dir_enum2 = NULL;
   GFileInfo *next = NULL;
   const char *platform_id = NULL;
+  g_autofree char **orig_argv;
   gboolean is_run = FALSE;
   g_autoptr(FlatpakContext) arg_context = NULL;
-
-  int i;
+  int i, first_non_arg, orig_argc;
 
   setlocale (LC_ALL, "");
 
@@ -203,15 +203,17 @@ main (int    argc,
   else
     g_unsetenv ("GIO_USE_VFS");
 
+  orig_argv = g_memdup (argv, sizeof (char *) * argc);
+  orig_argc = argc;
+
+  first_non_arg = 1;
   for (i = 1; i < argc; i++)
     {
       if (argv[i][0] != '-')
         break;
+      first_non_arg = i + 1;
       if (strcmp (argv[i], "--run") == 0)
-        {
-          is_run = TRUE;
-          break;
-        }
+        is_run = TRUE;
     }
 
   if (is_run)
@@ -220,6 +222,9 @@ main (int    argc,
       g_option_context_add_main_entries (context, run_entries, NULL);
       arg_context = flatpak_context_new ();
       g_option_context_add_group (context, flatpak_context_get_options (arg_context));
+
+      /* We drop the post-command part from the args, these go with the command in the sandbox */
+      argc = MIN (first_non_arg + 3, argc);
     }
   else
     {
@@ -298,7 +303,9 @@ main (int    argc,
           return 1;
         }
 
-      if (!builder_manifest_run (manifest, build_context, arg_context, argv + 3, argc - 3, &error))
+      if (!builder_manifest_run (manifest, build_context, arg_context,
+                                 orig_argv + first_non_arg + 2,
+                                 orig_argc - first_non_arg - 2, &error))
         {
           g_printerr ("Error running %s: %s\n", argv[3], error->message);
           return 1;
