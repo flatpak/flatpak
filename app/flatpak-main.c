@@ -280,26 +280,28 @@ flatpak_run (int      argc,
 
   if (!command->fn)
     {
-      GOptionContext *context;
+      g_autoptr(GOptionContext) context = NULL;
       g_autofree char *help;
 
       context = flatpak_option_context_new_with_commands (commands);
 
-      /* This will not return for some options (e.g. --version). */
-      if (flatpak_option_context_parse (context, NULL, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
+      if (command_name != NULL)
         {
-          if (command_name == NULL)
-            g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                                 "No command specified");
-          else
-            g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                         "Unknown command '%s'", command_name);
+          g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Unknown command '%s'", command_name);
+        }
+      else
+        {
+          /* This will not return for some options (e.g. --version). */
+          if (flatpak_option_context_parse (context, NULL, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
+            {
+              g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                   "No command specified");
+            }
         }
 
       help = g_option_context_get_help (context, FALSE, NULL);
       g_printerr ("%s", help);
-
-      g_option_context_free (context);
 
       goto out;
     }
