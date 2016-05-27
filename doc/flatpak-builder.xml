@@ -355,7 +355,7 @@
             <title>Sources</title>
             <para>
                 These contain a pointer to the source that will be extracted into the source directory before
-                the build starts. They can be of several types, distiguished by the type property.
+                the build starts. They can be of several types, distinguished by the type property.
             </para>
             <refsect3>
                 <title>Archive sources (tar, zip)</title>
