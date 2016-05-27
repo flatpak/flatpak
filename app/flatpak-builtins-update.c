@@ -50,7 +50,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, "Update appstream for remote", },
-  { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, "Only update this subpath", "path" },
+  { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, "Only update this subpath", "PATH" },
   { NULL }
 };
 
@@ -107,7 +107,6 @@ flatpak_builtin_update (int           argc,
   g_autoptr(FlatpakDir) dir = NULL;
   const char *name = NULL;
   const char *branch = NULL;
-  const char *arch = NULL;
   gboolean failed = FALSE;
   int i;
 
@@ -125,9 +124,7 @@ flatpak_builtin_update (int           argc,
     branch = argv[2];
 
   if (opt_arch == NULL)
-    arch = flatpak_get_arch ();
-  else
-    arch = opt_arch;
+    opt_arch = (char *)flatpak_get_arch ();
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
@@ -155,7 +152,7 @@ flatpak_builtin_update (int           argc,
               if (name != NULL && strcmp (parts[1], name) != 0)
                 continue;
 
-              if (strcmp (parts[2], arch) != 0)
+              if (strcmp (parts[2], opt_arch) != 0)
                 continue;
 
               g_print ("Updating application %s %s\n", parts[1], parts[3]);
@@ -186,7 +183,7 @@ flatpak_builtin_update (int           argc,
               if (name != NULL && strcmp (parts[1], name) != 0)
                 continue;
 
-              if (strcmp (parts[2], arch) != 0)
+              if (strcmp (parts[2], opt_arch) != 0)
                 continue;
 
               g_print ("Updating runtime %s %s\n", parts[1], parts[3]);
@@ -207,7 +204,7 @@ flatpak_builtin_update (int           argc,
       ref = flatpak_dir_find_installed_ref (dir,
                                             name,
                                             branch,
-                                            arch,
+                                            opt_arch,
                                             opt_app, opt_runtime, &is_app,
                                             error);
       if (ref == NULL)
@@ -223,6 +220,62 @@ flatpak_builtin_update (int           argc,
 
   if (failed)
     return flatpak_fail (error, "One or more updates failed");
+
+  return TRUE;
+}
+
+gboolean
+flatpak_complete_update (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GError) error = NULL;
+  g_auto(GStrv) refs = NULL;
+  int i;
+
+  context = g_option_context_new ("");
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+    return FALSE;
+
+  if (!opt_app && !opt_runtime)
+    opt_app = opt_runtime = TRUE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* NAME */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+      flatpak_complete_options (completion, user_entries);
+
+      refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
+                                              opt_app, opt_runtime, &error);
+      if (refs == NULL)
+        flatpak_completion_debug ("find local refs error: %s", error->message);
+      for (i = 0; refs != NULL && refs[i] != NULL; i++)
+        {
+          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+          if (parts)
+            flatpak_complete_word (completion, "%s \n", parts[1]);
+        }
+      break;
+
+    case 2: /* Branch */
+      refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
+                                              opt_app, opt_runtime, &error);
+      if (refs == NULL)
+        flatpak_completion_debug ("find remote refs error: %s", error->message);
+      for (i = 0; refs != NULL && refs[i] != NULL; i++)
+        {
+          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+          if (parts)
+            flatpak_complete_word (completion, "%s ", parts[3]);
+        }
+      break;
+
+    default:
+      break;
+    }
 
   return TRUE;
 }

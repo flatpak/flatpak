@@ -24,6 +24,7 @@
 #include "libglnx/libglnx.h"
 #include "dbus-proxy/flatpak-proxy.h"
 #include "flatpak-common-types.h"
+#include "flatpak-utils.h"
 
 gboolean flatpak_run_in_transient_unit (const char *app_id,
                                         GError    **error);
@@ -38,11 +39,17 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_PERSISTENT "persistent"
 #define FLATPAK_METADATA_KEY_DEVICES "devices"
 
+extern const char *flatpak_context_sockets[];
+extern const char *flatpak_context_devices[];
+extern const char *flatpak_context_shares[];
+
 FlatpakContext *flatpak_context_new (void);
 void           flatpak_context_free (FlatpakContext *context);
 void           flatpak_context_merge (FlatpakContext *context,
                                       FlatpakContext *other);
 GOptionGroup  *flatpak_context_get_options (FlatpakContext *context);
+void           flatpak_context_complete (FlatpakContext *context,
+                                         FlatpakCompletion *completion);
 gboolean       flatpak_context_load_metadata (FlatpakContext *context,
                                               GKeyFile       *metakey,
                                               GError        **error);

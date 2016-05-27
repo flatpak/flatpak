@@ -24,6 +24,7 @@
 #include "lib/flatpak-error.h"
 #include "flatpak-dir.h"
 #include "flatpak-portal-error.h"
+#include "flatpak-run.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -3045,4 +3046,236 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
     *reusing_dir_out = reusing_dir;
 
   return TRUE;
+}
+
+/* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
+ * to not have it interfere with stdout/stderr)
+ */
+#if 0
+void
+flatpak_completion_debug (const gchar *format, ...)
+{
+  va_list var_args;
+  gchar *s;
+  static FILE *f = NULL;
+
+  va_start (var_args, format);
+  s = g_strdup_vprintf (format, var_args);
+  if (f == NULL)
+    f = fopen ("/tmp/flatpak-completion-debug.txt", "a+");
+  fprintf (f, "%s\n", s);
+  fflush (f);
+  g_free (s);
+}
+#else
+void
+flatpak_completion_debug (const gchar *format, ...)
+{
+}
+#endif
+
+static gboolean
+is_word_separator (char c)
+{
+  return g_ascii_isspace (c);
+}
+
+void
+flatpak_complete_word (FlatpakCompletion *completion,
+                       char *format, ...)
+{
+  va_list args;
+  const char *rest;
+  g_autofree char *string = NULL;
+
+  g_return_if_fail (format != NULL);
+
+  va_start (args, format);
+  string = g_strdup_vprintf (format, args);
+  va_end (args);
+
+  if (!g_str_has_prefix (string, completion->cur))
+    return;
+
+  /* I'm not sure exactly what bash is doing here, but this seems to work... */
+  if (strcmp (completion->shell_cur, "=") == 0)
+    rest = string + strlen (completion->cur) - strlen (completion->shell_cur) + 1;
+  else
+    rest = string + strlen (completion->cur) - strlen (completion->shell_cur);
+
+  flatpak_completion_debug ("completing word: '%s' (%s)", string, rest);
+
+  g_print ("%s\n", rest);
+}
+
+void
+flatpak_complete_options (FlatpakCompletion *completion,
+                          GOptionEntry *entries)
+{
+  GOptionEntry *e = entries;
+  int i;
+
+  while (e->long_name != NULL)
+    {
+      if (e->arg_description)
+        {
+          g_autofree char *prefix = g_strdup_printf ("--%s=", e->long_name);
+
+          if (g_str_has_prefix (completion->cur, prefix))
+            {
+              if (strcmp (e->arg_description, "ARCH") == 0)
+                {
+                  const char *arches[] = {"i386", "x86_64", "aarch64", "arm"};
+                  for (i = 0; i < G_N_ELEMENTS (arches); i++)
+                    flatpak_complete_word (completion, "%s%s ", prefix, arches[i]);
+                }
+              else if (strcmp (e->arg_description, "SHARE") == 0)
+                {
+                  for (i = 0; flatpak_context_shares[i] != NULL; i++)
+                    flatpak_complete_word (completion, "%s%s ", prefix, flatpak_context_shares[i]);
+                }
+              else if (strcmp (e->arg_description, "DEVICE") == 0)
+                {
+                  for (i = 0; flatpak_context_devices[i] != NULL; i++)
+                    flatpak_complete_word (completion, "%s%s ", prefix, flatpak_context_devices[i]);
+                }
+              else if (strcmp (e->arg_description, "SOCKET") == 0)
+                {
+                  for (i = 0; flatpak_context_sockets[i] != NULL; i++)
+                    flatpak_complete_word (completion, "%s%s ", prefix, flatpak_context_sockets[i]);
+                }
+              else
+                flatpak_complete_word (completion, "%s", prefix);
+            }
+          else
+            flatpak_complete_word (completion, "%s", prefix);
+        }
+      else
+        flatpak_complete_word (completion, "--%s ", e->long_name);
+      if (e->short_name != 0)
+        flatpak_complete_word (completion, "-%c ", e->short_name);
+      e++;
+    }
+}
+
+static gchar *
+pick_word_at (const char  *s,
+              int          cursor,
+              int         *out_word_begins_at)
+{
+  int begin, end;
+
+  if (s[0] == '\0')
+    {
+      if (out_word_begins_at != NULL)
+        *out_word_begins_at = -1;
+      return NULL;
+    }
+
+  if (is_word_separator (s[cursor]) && ((cursor > 0 && is_word_separator(s[cursor-1])) || cursor == 0))
+    {
+      if (out_word_begins_at != NULL)
+        *out_word_begins_at = cursor;
+      return g_strdup ("");
+    }
+
+  while (!is_word_separator (s[cursor - 1]) && cursor > 0)
+    cursor--;
+  begin = cursor;
+
+  end = begin;
+  while (!is_word_separator (s[end]) && s[end] != '\0')
+    end++;
+
+  if (out_word_begins_at != NULL)
+    *out_word_begins_at = begin;
+
+  return g_strndup (s + begin, end - begin);
+}
+
+FlatpakCompletion *
+flatpak_completion_new (const char *arg_line,
+                        const char *arg_point,
+                        const char *arg_cur)
+{
+  FlatpakCompletion *completion;
+  g_autofree char *initial_completion_line = NULL;
+  int _point;
+  char *endp;
+  int cur_begin;
+  int i;
+
+  _point = strtol (arg_point, &endp, 10);
+  if (endp == arg_point || *endp != '\0')
+    return NULL;
+
+  completion = g_new0 (FlatpakCompletion, 1);
+  completion->line = g_strdup (arg_line);
+  completion->shell_cur = g_strdup (arg_cur);
+  completion->point = _point;
+
+  flatpak_completion_debug ("========================================");
+  flatpak_completion_debug ("completion_point=%d", completion->point);
+  flatpak_completion_debug ("completion_shell_cur='%s'", completion->shell_cur);
+  flatpak_completion_debug ("----");
+  flatpak_completion_debug (" 0123456789012345678901234567890123456789012345678901234567890123456789");
+  flatpak_completion_debug ("'%s'", completion->line);
+  flatpak_completion_debug (" %*s^", completion->point, "");
+
+  /* compute cur and prev */
+  completion->prev = NULL;
+  completion->cur = pick_word_at (completion->line, completion->point, &cur_begin);
+  if (cur_begin > 0)
+    {
+      gint prev_end;
+      for (prev_end = cur_begin - 1; prev_end >= 0; prev_end--)
+        {
+          if (!is_word_separator (completion->line[prev_end]))
+            {
+              completion->prev = pick_word_at (completion->line, prev_end, NULL);
+              break;
+            }
+        }
+
+      initial_completion_line = g_strndup (completion->line, cur_begin);
+    }
+  else
+    initial_completion_line = g_strdup ("");
+
+  flatpak_completion_debug ("'%s'", initial_completion_line);
+  flatpak_completion_debug ("----");
+
+  flatpak_completion_debug (" cur='%s'", completion->cur);
+  flatpak_completion_debug ("prev='%s'", completion->prev);
+
+  if (!g_shell_parse_argv (initial_completion_line,
+                           &completion->argc,
+                           &completion->argv,
+                           NULL))
+    {
+      /* it's very possible the command line can't be parsed (for
+       * example, missing quotes etc) - in that case, we just
+       * don't autocomplete at all
+       */
+      flatpak_completion_free (completion);
+      return NULL;
+    }
+
+  flatpak_completion_debug ("completion_argv:");
+  for (i = 0; i < completion->argc; i++)
+    flatpak_completion_debug (completion->argv[i]);
+
+  flatpak_completion_debug ("----");
+
+  return completion;
+}
+
+void
+flatpak_completion_free (FlatpakCompletion *completion)
+{
+  g_free (completion->cur);
+  g_free (completion->prev);
+  g_free (completion->line);
+  g_strfreev (completion->argv);
+  g_free (completion);
 }

@@ -262,3 +262,11 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
 
   return TRUE;
 }
+
+gboolean
+flatpak_complete_list (FlatpakCompletion *completion)
+{
+  flatpak_complete_options (completion, global_entries);
+  flatpak_complete_options (completion, options);
+  return TRUE;
+}

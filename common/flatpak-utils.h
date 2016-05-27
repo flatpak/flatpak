@@ -356,4 +356,26 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   GError      **error);
 
 
+typedef struct {
+  char *shell_cur;
+  char *cur;
+  char *prev;
+  char *line;
+  int point;
+  char **argv;
+  int argc;
+} FlatpakCompletion;
+
+void flatpak_completion_debug (const gchar *format, ...);
+
+FlatpakCompletion *flatpak_completion_new   (const char        *arg_line,
+                                             const char        *arg_point,
+                                             const char        *arg_cur);
+void               flatpak_complete_word    (FlatpakCompletion *completion,
+                                             char              *format,
+                                             ...);
+void               flatpak_complete_options (FlatpakCompletion *completion,
+                                             GOptionEntry      *entries);
+void               flatpak_completion_free  (FlatpakCompletion *completion);
+
 #endif /* __FLATPAK_UTILS_H__ */

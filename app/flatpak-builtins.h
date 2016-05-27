@@ -24,6 +24,7 @@
 #include <ostree.h>
 #include <gio/gio.h>
 
+#include "flatpak-utils.h"
 #include "flatpak-dir.h"
 
 G_BEGIN_DECLS
@@ -42,36 +43,42 @@ gboolean flatpak_option_context_parse (GOptionContext     *context,
                                        GCancellable       *cancellable,
                                        GError            **error);
 
+extern GOptionEntry user_entries[];
+extern GOptionEntry global_entries[];
+
 gboolean usage_error (GOptionContext *context,
                       const char     *message,
                       GError        **error);
 
-#define BUILTINPROTO(name) gboolean flatpak_builtin_ ## name (int argc, char **argv, GCancellable * cancellable, GError * *error)
+#define BUILTINPROTO(name) \
+  gboolean flatpak_builtin_ ## name (int argc, char **argv, GCancellable * cancellable, GError * *error); \
+  gboolean flatpak_complete_ ## name (FlatpakCompletion *completion);
 
-BUILTINPROTO (add_remote);
-BUILTINPROTO (modify_remote);
-BUILTINPROTO (delete_remote);
-BUILTINPROTO (ls_remote);
-BUILTINPROTO (list_remotes);
-BUILTINPROTO (install);
-BUILTINPROTO (update);
-BUILTINPROTO (make_current_app);
-BUILTINPROTO (uninstall);
-BUILTINPROTO (install_bundle);
-BUILTINPROTO (list);
-BUILTINPROTO (info);
-BUILTINPROTO (run);
-BUILTINPROTO (enter);
-BUILTINPROTO (build_init);
-BUILTINPROTO (build);
-BUILTINPROTO (build_finish);
-BUILTINPROTO (build_sign);
-BUILTINPROTO (build_export);
-BUILTINPROTO (build_bundle);
-BUILTINPROTO (build_import);
-BUILTINPROTO (build_update_repo);
-BUILTINPROTO (export_file);
-BUILTINPROTO (override);
+
+BUILTINPROTO (add_remote)
+BUILTINPROTO (modify_remote)
+BUILTINPROTO (delete_remote)
+BUILTINPROTO (ls_remote)
+BUILTINPROTO (list_remotes)
+BUILTINPROTO (install)
+BUILTINPROTO (update)
+BUILTINPROTO (make_current_app)
+BUILTINPROTO (uninstall)
+BUILTINPROTO (install_bundle)
+BUILTINPROTO (list)
+BUILTINPROTO (info)
+BUILTINPROTO (run)
+BUILTINPROTO (enter)
+BUILTINPROTO (build_init)
+BUILTINPROTO (build)
+BUILTINPROTO (build_finish)
+BUILTINPROTO (build_sign)
+BUILTINPROTO (build_export)
+BUILTINPROTO (build_bundle)
+BUILTINPROTO (build_import)
+BUILTINPROTO (build_update_repo)
+BUILTINPROTO (export_file)
+BUILTINPROTO (override)
 
 #undef BUILTINPROTO
 

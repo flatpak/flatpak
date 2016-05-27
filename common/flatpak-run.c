@@ -60,7 +60,7 @@ typedef enum {
 
 
 /* Same order as enum */
-static const char *flatpak_context_shares[] = {
+const char *flatpak_context_shares[] = {
   "network",
   "ipc",
   NULL
@@ -75,7 +75,7 @@ typedef enum {
 } FlatpakContextSockets;
 
 /* Same order as enum */
-static const char *flatpak_context_sockets[] = {
+const char *flatpak_context_sockets[] = {
   "x11",
   "wayland",
   "pulseaudio",
@@ -93,7 +93,7 @@ typedef enum {
   FLATPAK_CONTEXT_DEVICE_DRI         = 1 << 0,
 } FlatpakContextDevices;
 
-static const char *flatpak_context_devices[] = {
+const char *flatpak_context_devices[] = {
   "dri",
   NULL
 };
@@ -860,6 +860,12 @@ static GOptionEntry context_options[] = {
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, "Persist home directory directory", "FILENAME" },
   { NULL }
 };
+
+void
+flatpak_context_complete (FlatpakContext *context, FlatpakCompletion *completion)
+{
+  flatpak_complete_options (completion, context_options);
+}
 
 GOptionGroup  *
 flatpak_context_get_options (FlatpakContext *context)

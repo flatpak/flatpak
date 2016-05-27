@@ -57,7 +57,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   gboolean is_app;
   FlatpakHelperUninstallFlags flags = 0;
 
-  context = g_option_context_new ("APP [BRANCH] - Uninstall an application");
+  context = g_option_context_new ("NAME [BRANCH] - Uninstall an application");
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
@@ -91,6 +91,62 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   if (!flatpak_dir_uninstall (dir, ref, flags,
                               cancellable, error))
     return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_complete_uninstall (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  g_autoptr(GError) error = NULL;
+  g_auto(GStrv) refs = NULL;
+  int i;
+
+  context = g_option_context_new ("");
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+    return FALSE;
+
+  if (!opt_app && !opt_runtime)
+    opt_app = opt_runtime = TRUE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* NAME */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+      flatpak_complete_options (completion, user_entries);
+
+      refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
+                                              opt_app, opt_runtime, &error);
+      if (refs == NULL)
+        flatpak_completion_debug ("find local refs error: %s", error->message);
+      for (i = 0; refs != NULL && refs[i] != NULL; i++)
+        {
+          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+          if (parts)
+            flatpak_complete_word (completion, "%s ", parts[1]);
+        }
+      break;
+
+    case 2: /* Branch */
+      refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
+                                              opt_app, opt_runtime, &error);
+      if (refs == NULL)
+        flatpak_completion_debug ("find remote refs error: %s", error->message);
+      for (i = 0; refs != NULL && refs[i] != NULL; i++)
+        {
+          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+          if (parts)
+            flatpak_complete_word (completion, "%s ", parts[3]);
+        }
+      break;
+
+    default:
+      break;
+    }
 
   return TRUE;
 }

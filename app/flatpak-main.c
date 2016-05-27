@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
@@ -40,57 +41,62 @@ static gboolean opt_user;
 typedef struct
 {
   const char *name;
+  const char *description;
   gboolean (*fn)(int           argc,
                  char        **argv,
                  GCancellable *cancellable,
                  GError      **error);
-  const char *description;
+  gboolean (*complete)(FlatpakCompletion *completion);
   gboolean    deprecated;
 } FlatpakCommand;
 
 static FlatpakCommand commands[] = {
   { " Manage installed apps and runtimes" },
-  { "install", flatpak_builtin_install, "Install an application or runtime from a remote"},
-  { "update", flatpak_builtin_update, "Update an installed application or runtime"},
-  { "uninstall", flatpak_builtin_uninstall, "Uninstall an installed application or runtime" },
-  { "list", flatpak_builtin_list, "List installed apps and/or runtimes" },
-  { "info", flatpak_builtin_info, "Show info for installed app or runtime" },
+  { "install", "Install an application or runtime from a remote", flatpak_builtin_install, flatpak_complete_install },
+  { "update", "Update an installed application or runtime", flatpak_builtin_update, flatpak_complete_update },
+  { "uninstall", "Uninstall an installed application or runtime", flatpak_builtin_uninstall, flatpak_complete_uninstall },
+  { "list", "List installed apps and/or runtimes", flatpak_builtin_list, flatpak_complete_list },
+  { "info", "Show info for installed app or runtime", flatpak_builtin_info, flatpak_complete_info },
 
   { "\n Running applications" },
-  { "run", flatpak_builtin_run, "Run an application" },
-  { "override", flatpak_builtin_override, "Override permissions for an application" },
-  { "export-file", flatpak_builtin_export_file, "Grant an application access to a specific file" },
-  { "make-current", flatpak_builtin_make_current_app, "Specify default version to run" },
-  { "enter", flatpak_builtin_enter, "Enter the namespace of a running application" },
+  { "run", "Run an application", flatpak_builtin_run, flatpak_complete_run },
+  { "override", "Override permissions for an application", flatpak_builtin_override },
+  { "export-file", "Grant an application access to a specific file", flatpak_builtin_export_file},
+  { "make-current", "Specify default version to run", flatpak_builtin_make_current_app},
+  { "enter", "Enter the namespace of a running application", flatpak_builtin_enter },
 
   { "\n Manage remote repositories" },
-  { "remote-add", flatpak_builtin_add_remote, "Add a new remote repository (by URL)" },
-  { "remote-modify", flatpak_builtin_modify_remote, "Modify properties of a configured remote" },
-  { "remote-delete", flatpak_builtin_delete_remote, "Delete a configured remote" },
-  { "remote-list", flatpak_builtin_list_remotes, "List all configured remotes"  },
-  { "remote-ls", flatpak_builtin_ls_remote, "List contents of a configured remote" },
+  { "remote-add", "Add a new remote repository (by URL)", flatpak_builtin_add_remote },
+  { "remote-modify", "Modify properties of a configured remote", flatpak_builtin_modify_remote},
+  { "remote-delete", "Delete a configured remote", flatpak_builtin_delete_remote},
+  { "remote-list", "List all configured remotes", flatpak_builtin_list_remotes},
+  { "remote-ls", "List contents of a configured remote", flatpak_builtin_ls_remote },
 
   { "\n Build applications" },
-  { "build-init", flatpak_builtin_build_init, "Initialize a directory for building" },
-  { "build", flatpak_builtin_build, "Run a build command inside the build dir" },
-  { "build-finish", flatpak_builtin_build_finish, "Finish a build dir for export" },
-  { "build-export", flatpak_builtin_build_export, "Export a build dir to a repository" },
-  { "build-bundle", flatpak_builtin_build_bundle, "Create a bundle file from a build directory" },
-  { "build-import-bundle", flatpak_builtin_build_import, "Import a bundle file" },
-  { "build-sign", flatpak_builtin_build_sign, "Sign an application or runtime" },
-  { "build-update-repo", flatpak_builtin_build_update_repo, "Update the summary file in a repository" },
+  { "build-init", "Initialize a directory for building", flatpak_builtin_build_init },
+  { "build", "Run a build command inside the build dir", flatpak_builtin_build },
+  { "build-finish", "Finish a build dir for export", flatpak_builtin_build_finish },
+  { "build-export", "Export a build dir to a repository", flatpak_builtin_build_export },
+  { "build-bundle", "Create a bundle file from a build directory", flatpak_builtin_build_bundle },
+  { "build-import-bundle", "Import a bundle file", flatpak_builtin_build_import },
+  { "build-sign", "Sign an application or runtime", flatpak_builtin_build_sign },
+  { "build-update-repo", "Update the summary file in a repository", flatpak_builtin_build_update_repo },
 
   { NULL }
 };
 
-static GOptionEntry global_entries[] = {
+GOptionEntry global_entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
+  { NULL }
+};
+
+static GOptionEntry empty_entries[] = {
   { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version information and exit", NULL },
   { "default-arch", 0, 0, G_OPTION_ARG_NONE, &opt_default_arch, "Print default arch and exit", NULL },
   { NULL }
 };
 
-static GOptionEntry user_entries[] = {
+GOptionEntry user_entries[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Work on user installations", NULL },
   { "system", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_user, "Work on system-wide installations (default)", NULL },
   { NULL }
@@ -233,17 +239,12 @@ usage_error (GOptionContext *context, const char *message, GError **error)
   return FALSE;
 }
 
-int
-flatpak_run (int      argc,
-             char   **argv,
-             GError **res_error)
+FlatpakCommand *
+extract_command (int     *argc,
+                 char   **argv)
 {
   FlatpakCommand *command;
-  GError *error = NULL;
-  GCancellable *cancellable = NULL;
   const char *command_name = NULL;
-  g_autofree char *prgname = NULL;
-  gboolean success = FALSE;
   int in, out;
 
   /*
@@ -251,7 +252,7 @@ flatpak_run (int      argc,
    * necessary, in order to pass relevant options through
    * to the commands, but also have them take effect globally.
    */
-  for (in = 1, out = 1; in < argc; in++, out++)
+  for (in = 1, out = 1; in < *argc; in++, out++)
     {
       /* The non-option is the command, take it out of the arguments */
       if (argv[in][0] != '-')
@@ -267,7 +268,8 @@ flatpak_run (int      argc,
       argv[out] = argv[in];
     }
 
-  argc = out;
+  *argc = out;
+  argv[out] = NULL;
 
   command = commands;
   while (command->name)
@@ -278,30 +280,46 @@ flatpak_run (int      argc,
       command++;
     }
 
+  return command;
+}
+
+
+int
+flatpak_run (int      argc,
+             char   **argv,
+             GError **res_error)
+{
+  FlatpakCommand *command;
+  GError *error = NULL;
+  GCancellable *cancellable = NULL;
+  const char *command_name = NULL;
+  g_autofree char *prgname = NULL;
+  gboolean success = FALSE;
+
+  command = extract_command (&argc, argv);
+
   if (!command->fn)
     {
-      g_autoptr(GOptionContext) context = NULL;
+      GOptionContext *context;
       g_autofree char *help;
 
       context = flatpak_option_context_new_with_commands (commands);
 
-      if (command_name != NULL)
+      /* This will not return for some options (e.g. --version). */
+      if (flatpak_option_context_parse (context, empty_entries, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
         {
-          g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "Unknown command '%s'", command_name);
-        }
-      else
-        {
-          /* This will not return for some options (e.g. --version). */
-          if (flatpak_option_context_parse (context, NULL, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
-            {
-              g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                                   "No command specified");
-            }
+          if (command_name == NULL)
+            g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                 "No command specified");
+          else
+            g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                         "Unknown command '%s'", command_name);
         }
 
       help = g_option_context_get_help (context, FALSE, NULL);
       g_printerr ("%s", help);
+
+      g_option_context_free (context);
 
       goto out;
     }
@@ -321,6 +339,48 @@ out:
       g_propagate_error (res_error, error);
       return 1;
     }
+  return 0;
+}
+
+static int
+complete (int    argc,
+          char **argv)
+{
+  FlatpakCommand *command;
+  g_autofree char *initial_completion_line = NULL;
+  FlatpakCompletion *completion;
+
+  completion = flatpak_completion_new (argv[2], argv[3], argv[4]);
+  if (completion == NULL)
+    return 1;
+
+  command = extract_command (&completion->argc, completion->argv);
+  flatpak_completion_debug ("command=%p '%s'", command->fn, command->name);
+
+  if (!command->fn)
+    {
+      FlatpakCommand *c = commands;
+      while (c->name)
+        {
+          if (c->fn != NULL)
+            flatpak_complete_word (completion, "%s ", c->name);
+          c++;
+        }
+
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, empty_entries);
+      flatpak_complete_options (completion, user_entries);
+    }
+  else if (command->complete)
+    {
+      if (!command->complete (completion))
+        return 1;
+    }
+  else
+    {
+      flatpak_complete_options (completion, global_entries);
+    }
+
   return 0;
 }
 
@@ -346,6 +406,9 @@ main (int    argc,
     g_setenv ("GIO_USE_VFS", old_env, TRUE);
   else
     g_unsetenv ("GIO_USE_VFS");
+
+  if (argc >= 4 && strcmp (argv[1], "complete") == 0)
+    return complete (argc, argv);
 
   flatpak_migrate_from_xdg_app ();
 
