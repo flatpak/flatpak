@@ -197,7 +197,7 @@ main (int argc, const char *argv[])
 
   if (proxies == NULL)
     {
-      g_printerr ("No proxies specied\n");
+      g_printerr ("No proxies specified\n");
       return 1;
     }
 
