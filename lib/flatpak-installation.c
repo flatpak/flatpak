@@ -874,7 +874,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint fetched;
   guint metadata_fetched;
   guint requested;
-  guint64 ellapsed_time;
+  guint64 elapsed_time;
   guint new_progress = 0;
   gboolean estimating = FALSE;
 
@@ -892,7 +892,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   fetched = ostree_async_progress_get_uint (progress, "fetched");
   metadata_fetched = ostree_async_progress_get_uint (progress, "metadata-fetched");
   requested = ostree_async_progress_get_uint (progress, "requested");
-  ellapsed_time = (g_get_monotonic_time () - ostree_async_progress_get_uint64 (progress, "start-time")) / G_USEC_PER_SEC;
+  elapsed_time = (g_get_monotonic_time () - ostree_async_progress_get_uint64 (progress, "start-time")) / G_USEC_PER_SEC;
 
   if (status)
     {
@@ -900,7 +900,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
     }
   else if (outstanding_fetches)
     {
-      guint64 bytes_sec = bytes_transferred / ellapsed_time;
+      guint64 bytes_sec = bytes_transferred / elapsed_time;
       g_autofree char *formatted_bytes_transferred =
         g_format_size_full (bytes_transferred, 0);
       g_autofree char *formatted_bytes_sec = NULL;
@@ -1299,7 +1299,7 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
  * to pull the ref from a remote repository, and about the amount of
  * local disk space that is required to check out this commit.
  *
- * Note that if there are locally available data that are in the ref, which is commong
+ * Note that if there are locally available data that are in the ref, which is common
  * for instance if you're doing an update then the real download size may be smaller
  * than what is returned here.
  *

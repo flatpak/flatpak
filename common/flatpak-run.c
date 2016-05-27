@@ -2691,7 +2691,7 @@ setup_seccomp (GPtrArray  *argv_array,
              native one. This is not ideal, because we'd like to only
              allow the target arch, but we can't really disallow the
              native arch at this point, because then bubblewrap
-             couldn't continue runnning. */
+             couldn't continue running. */
           r = seccomp_arch_add (seccomp, arch_id);
           if (r < 0 && r != -EEXIST)
             return flatpak_fail (error, "Failed to add architecture to seccomp filter");

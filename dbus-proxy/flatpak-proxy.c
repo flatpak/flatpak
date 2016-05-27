@@ -60,7 +60,7 @@
  * in a proxy. But this is rarely a problem in practice, as clients
  * rarely release names and stay on the bus.
  *
- * Here is a desciption of the policy levels:
+ * Here is a description of the policy levels:
  * (all policy levels also imply the ones before it)
  *
  * SEE:
@@ -1717,7 +1717,7 @@ queue_initial_name_ops (FlatpakProxyClient *client)
       if (client->proxy->log_messages)
         g_print ("C%d: -> org.freedesktop.DBus fake ListNames\n", client->last_serial);
 
-      /* Stop reading from the client, to avoid incomming messages fighting with the ListNames roundtrip.
+      /* Stop reading from the client, to avoid incoming messages fighting with the ListNames roundtrip.
          We will start it again once we have handled the ListNames reply */
       stop_reading (&client->client_side);
     }
@@ -1929,7 +1929,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
       FlatpakPolicy policy;
       ExpectedReplyType expected_reply;
 
-      /* Filter and rewrite incomming messages as needed */
+      /* Filter and rewrite incoming messages as needed */
 
       if (!parse_header (buffer, &header, 0, client->serial_offset, client->hello_serial))
         {

@@ -1,7 +1,7 @@
 #! /bin/bash
 #
 # Run a test in tap mode, ensuring we have a temporary directory.  We
-# always use /var/tmp becuase we might want to use user xattrs, which
+# always use /var/tmp because we might want to use user xattrs, which
 # aren't available on tmpfs.
 #
 # The test binary is passed as $1

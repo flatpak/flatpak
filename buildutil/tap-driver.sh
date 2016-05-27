@@ -370,7 +370,7 @@ function setup_result_obj(line)
   sub("^(not )?ok[ \t]*", "", line)
 
   # If the result has an explicit number, get it and strip it; otherwise,
-  # automatically assing the next progresive number to it.
+  # automatically assing the next progressive number to it.
   if (line ~ /^[0-9]+$/ || line ~ /^[0-9]+[^a-zA-Z0-9_]/)
     {
       match(line, "^[0-9]+")
@@ -593,7 +593,7 @@ while (1)
           bailout_message = bailout_message " " $0
         testsuite_error(bailout_message)
       }
-    # Maybe we have too look for dianogtic comments too.
+    # Maybe we have too look for diagnostic comments too.
     else if (comments != 0)
       {
         comment = extract_tap_comment($0);

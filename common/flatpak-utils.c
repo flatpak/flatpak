@@ -236,7 +236,7 @@ flatpak_get_kernel_arch (void)
  * family can run all opcodes, for instance for modern 32bit intel we
  * report "i386", even though they support instructions that the
  * original i386 cpu cannot run. Still, such an executable would
- * at least try to execute a 386, wheras an arm binary would not.
+ * at least try to execute a 386, whereas an arm binary would not.
  */
 const char *
 flatpak_get_arch (void)
@@ -2875,7 +2875,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
     return FALSE;
 
   /* We ensure that the actual installed metadata matches the one in the
-     header, because you may have made decisions on wheter to install it or not
+     header, because you may have made decisions on whether to install it or not
      based on that data. */
   metadata_file = g_file_resolve_relative_path (root, "metadata");
   in = (GInputStream *) g_file_read (metadata_file, cancellable, NULL);
