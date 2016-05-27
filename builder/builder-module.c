@@ -548,7 +548,10 @@ builder_module_download_sources (BuilderModule  *self,
       BuilderSource *source = l->data;
 
       if (!builder_source_download (source, update_vcs, context, error))
-        return FALSE;
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
     }
 
   return TRUE;
@@ -571,7 +574,10 @@ builder_module_extract_sources (BuilderModule  *self,
       BuilderSource *source = l->data;
 
       if (!builder_source_extract (source, dest, context, error))
-        return FALSE;
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
     }
 
   return TRUE;
@@ -676,7 +682,10 @@ build (GFile          *app_dir,
 
   if (subp == NULL ||
       !g_subprocess_wait_check (subp, NULL, error))
-    return FALSE;
+    {
+      g_prefix_error (error, "module %s: ", module_name);
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -723,12 +732,18 @@ builder_module_handle_debuginfo (BuilderModule  *self,
               if (is_shared)
                 {
                   if (!strip (error, "--remove-section=.comment", "--remove-section=.note", "--strip-unneeded", path, NULL))
-                    return FALSE;
+                    {
+                      g_prefix_error (error, "module %s: ", self->name);
+                      return FALSE;
+                    }
                 }
               else
                 {
                   if (!strip (error, "--remove-section=.comment", "--remove-section=.note", path, NULL))
-                    return FALSE;
+                    {
+                      g_prefix_error (error, "module %s: ", self->name);
+                      return FALSE;
+                    }
                 }
             }
           else if (!builder_options_get_no_debuginfo (self->build_options, context))
@@ -763,6 +778,7 @@ builder_module_handle_debuginfo (BuilderModule  *self,
                   if (g_mkdir_with_parents (debug_dir, 0755) != 0)
                     {
                       glnx_set_error_from_errno (error);
+                      g_prefix_error (error, "module %s: ", self->name);
                       return FALSE;
                     }
 
@@ -770,6 +786,7 @@ builder_module_handle_debuginfo (BuilderModule  *self,
                   if (g_mkdir_with_parents (source_dir_path, 0755) != 0)
                     {
                       glnx_set_error_from_errno (error);
+                      g_prefix_error (error, "module %s: ", self->name);
                       return FALSE;
                     }
 
@@ -802,20 +819,29 @@ builder_module_handle_debuginfo (BuilderModule  *self,
                               GFileType file_type;
 
                               if (!gs_file_ensure_directory (dst_parent, TRUE, NULL, error))
-                                return FALSE;
+                                {
+                                  g_prefix_error (error, "module %s: ", self->name);
+                                  return FALSE;
+                                }
 
                               file_type = g_file_query_file_type (src, 0, NULL);
                               if (file_type == G_FILE_TYPE_DIRECTORY)
                                 {
                                   if (!gs_file_ensure_directory (dst, FALSE, NULL, error))
-                                    return FALSE;
+                                    {
+                                      g_prefix_error (error, "module %s: ", self->name);
+                                      return FALSE;
+                                    }
                                 }
                               else if (file_type == G_FILE_TYPE_REGULAR)
                                 {
                                   if (!g_file_copy (src, dst,
                                                     G_FILE_COPY_OVERWRITE,
                                                     NULL, NULL, NULL, error))
-                                    return FALSE;
+                                    {
+                                      g_prefix_error (error, "module %s: ", self->name);
+                                      return FALSE;
+                                    }
                                 }
                             }
                         }
@@ -826,7 +852,10 @@ builder_module_handle_debuginfo (BuilderModule  *self,
                                  "-f", debug_path,
                                  "-F", real_debug_path,
                                  path, NULL))
-                    return FALSE;
+                    {
+                      g_prefix_error (error, "module %s: ", self->name);
+                      return FALSE;
+                    }
                 }
             }
         }
@@ -871,7 +900,10 @@ builder_module_build (BuilderModule  *self,
 
   if (!gs_file_ensure_directory (build_parent_dir, TRUE,
                                  NULL, error))
-    return FALSE;
+    {
+      g_prefix_error (error, "module %s: ", self->name);
+      return FALSE;
+    }
 
   for (count = 1; source_dir_path == NULL; count++)
     {
@@ -891,6 +923,7 @@ builder_module_build (BuilderModule  *self,
           if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
             {
               g_propagate_error (error, g_steal_pointer (&my_error));
+              g_prefix_error (error, "module %s: ", self->name);
               return FALSE;
             }
           g_clear_error (&my_error);
@@ -906,6 +939,7 @@ builder_module_build (BuilderModule  *self,
       !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
     {
       g_propagate_error (error, g_steal_pointer (&my_error));
+      g_prefix_error (error, "module %s: ", self->name);
       return FALSE;
     }
   g_clear_error (&my_error);
@@ -913,7 +947,10 @@ builder_module_build (BuilderModule  *self,
   if (!g_file_make_symbolic_link (build_link,
                                   buildname,
                                   NULL, error))
-    return FALSE;
+    {
+      g_prefix_error (error, "module %s: ", self->name);
+      return FALSE;
+    }
 
   g_print ("========================================================================\n");
   g_print ("Building module %s in %s\n", self->name, source_dir_path);
@@ -941,7 +978,7 @@ builder_module_build (BuilderModule  *self,
       cmake_file = g_file_get_child (source_subdir, "CMakeLists.txt");
       if (!g_file_query_exists (cmake_file, NULL))
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't find CMakeLists.txt");
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module: %s: Can't find CMakeLists.txt", self->name);
           return FALSE;
         }
       configure_file = g_object_ref (cmake_file);
@@ -953,7 +990,10 @@ builder_module_build (BuilderModule  *self,
       if (self->rm_configure)
         {
           if (!g_file_delete (configure_file, NULL, error))
-            return FALSE;
+            {
+              g_prefix_error (error, "module %s: ", self->name);
+              return FALSE;
+            }
         }
     }
 
@@ -977,18 +1017,21 @@ builder_module_build (BuilderModule  *self,
 
       if (autogen_cmd == NULL)
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't find autogen, autogen.sh or bootstrap");
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Can't find autogen, autogen.sh or bootstrap", self->name);
           return FALSE;
         }
 
       env_with_noconfigure = g_environ_setenv (g_strdupv (env), "NOCONFIGURE", "1", TRUE);
       if (!build (app_dir, self->name, context, source_dir, source_subdir_relative, build_args, env_with_noconfigure, error,
                   autogen_cmd, NULL))
-        return FALSE;
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
 
       if (!g_file_query_exists (configure_file, NULL))
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "autogen did not create configure");
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: autogen did not create configure", self->name);
           return FALSE;
         }
 
@@ -1003,7 +1046,10 @@ builder_module_build (BuilderModule  *self,
       g_autofree char *configure_content = NULL;
 
       if (!g_file_load_contents (configure_file, NULL, &configure_content, NULL, NULL, error))
-        return FALSE;
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
 
       var_require_builddir = strstr (configure_content, "buildapi-variable-require-builddir") != NULL;
       use_builddir = var_require_builddir || self->builddir;
@@ -1017,7 +1063,10 @@ builder_module_build (BuilderModule  *self,
           build_dir = g_file_get_child (source_subdir, "_flatpak_build");
 
           if (!g_file_make_directory (build_dir, NULL, error))
-            return FALSE;
+            {
+              g_prefix_error (error, "module %s: ", self->name);
+              return FALSE;
+            }
 
           if (self->cmake)
             {
@@ -1070,7 +1119,7 @@ builder_module_build (BuilderModule  *self,
 
   if (makefile_names[i] == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't find makefile");
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Can't find makefile", self->name);
       return FALSE;
     }
 
@@ -1102,7 +1151,10 @@ builder_module_build (BuilderModule  *self,
         root_dir = g_file_get_child (app_dir, "files");
 
       if (!builder_migrate_locale_dirs (root_dir, error))
-        return FALSE;
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
     }
 
   if (self->post_install)
@@ -1123,10 +1175,16 @@ builder_module_build (BuilderModule  *self,
   if (!builder_context_get_keep_build_dirs (context))
     {
       if (!g_file_delete (build_link, NULL, error))
-        return FALSE;
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
 
       if (!gs_shutil_rm_rf (source_dir, NULL, error))
-        return FALSE;
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
     }
 
   return TRUE;
@@ -1144,7 +1202,10 @@ builder_module_update (BuilderModule  *self,
       BuilderSource *source = l->data;
 
       if (!builder_source_update (source, context, error))
-        return FALSE;
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
     }
 
   return TRUE;
