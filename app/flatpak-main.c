@@ -241,7 +241,8 @@ usage_error (GOptionContext *context, const char *message, GError **error)
 
 FlatpakCommand *
 extract_command (int     *argc,
-                 char   **argv)
+                 char   **argv,
+                 const char **command_name_out)
 {
   FlatpakCommand *command;
   const char *command_name = NULL;
@@ -280,6 +281,8 @@ extract_command (int     *argc,
       command++;
     }
 
+  *command_name_out = command_name;
+
   return command;
 }
 
@@ -292,11 +295,11 @@ flatpak_run (int      argc,
   FlatpakCommand *command;
   GError *error = NULL;
   GCancellable *cancellable = NULL;
-  const char *command_name = NULL;
   g_autofree char *prgname = NULL;
   gboolean success = FALSE;
+  const char *command_name = NULL;
 
-  command = extract_command (&argc, argv);
+  command = extract_command (&argc, argv, &command_name);
 
   if (!command->fn)
     {
@@ -305,15 +308,19 @@ flatpak_run (int      argc,
 
       context = flatpak_option_context_new_with_commands (commands);
 
-      /* This will not return for some options (e.g. --version). */
-      if (flatpak_option_context_parse (context, empty_entries, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
+      if (command_name != NULL)
         {
-          if (command_name == NULL)
-            g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                                 "No command specified");
-          else
-            g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                         "Unknown command '%s'", command_name);
+          g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Unknown command '%s'", command_name);
+        }
+      else
+        {
+          /* This will not return for some options (e.g. --version). */
+          if (flatpak_option_context_parse (context, empty_entries, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
+            {
+              g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                   "No command specified");
+            }
         }
 
       help = g_option_context_get_help (context, FALSE, NULL);
@@ -349,12 +356,13 @@ complete (int    argc,
   FlatpakCommand *command;
   g_autofree char *initial_completion_line = NULL;
   FlatpakCompletion *completion;
+  const char *command_name = NULL;
 
   completion = flatpak_completion_new (argv[2], argv[3], argv[4]);
   if (completion == NULL)
     return 1;
 
-  command = extract_command (&completion->argc, completion->argv);
+  command = extract_command (&completion->argc, completion->argv, &command_name);
   flatpak_completion_debug ("command=%p '%s'", command->fn, command->name);
 
   if (!command->fn)
