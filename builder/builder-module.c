@@ -199,12 +199,16 @@ builder_module_set_property (GObject      *object,
 {
   BuilderModule *self = BUILDER_MODULE (object);
   gchar **tmp;
+  char *p;
 
   switch (prop_id)
     {
     case PROP_NAME:
       g_clear_pointer (&self->name, g_free);
       self->name = g_value_dup_string (value);
+      if ((p = strchr (self->name, ' ')) ||
+          (p = strchr (self->name, '/')))
+        g_printerr ("Module names like '%s' containing '%c' are problematic. Expect errors.\n", self->name, *p);
       break;
 
     case PROP_SUBDIR:
