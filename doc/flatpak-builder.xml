@@ -395,11 +395,11 @@
                     </varlistentry>
                     <varlistentry>
                         <term><option>url</option> (string)</term>
-                        <listitem><para>URL of the git repostiory</para></listitem>
+                        <listitem><para>URL of the git repository</para></listitem>
                     </varlistentry>
                     <varlistentry>
                         <term><option>branch</option> (string)</term>
-                        <listitem><para>The branch/tag/commit to use from the git repostiory</para></listitem>
+                        <listitem><para>The branch/tag/commit to use from the git repository</para></listitem>
                     </varlistentry>
                     <varlistentry>
                         <term><option>dest</option> (string)</term>
@@ -416,7 +416,7 @@
                     </varlistentry>
                     <varlistentry>
                         <term><option>url</option> (string)</term>
-                        <listitem><para>URL of the bzr repostiory</para></listitem>
+                        <listitem><para>URL of the bzr repository</para></listitem>
                     </varlistentry>
                     <varlistentry>
                         <term><option>revision</option> (string)</term>
