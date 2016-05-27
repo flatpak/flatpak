@@ -592,7 +592,7 @@ flatpak_dir_get_repo (FlatpakDir *self)
 
 /* This is an exclusive per flatpak installation file lock that is taken
  * whenever any config in the directory outside the repo is to be changed. For
- * instance deployements, overrides or active commit changes.
+ * instance deployments, overrides or active commit changes.
  *
  * For concurrency protection of the actual repository we rely on ostree
  * to do the right thing.
