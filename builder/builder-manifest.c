@@ -844,6 +844,13 @@ builder_manifest_start (BuilderManifest *self,
 {
   g_autofree char *arch_option;
 
+  if (self->sdk == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "sdk not specified");
+      return FALSE;
+    }
+
   arch_option = g_strdup_printf ("--arch=%s", builder_context_get_arch (context));
 
   self->sdk_commit = flatpak (NULL, "info", arch_option, "--show-commit", self->sdk,
