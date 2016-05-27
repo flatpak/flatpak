@@ -842,7 +842,7 @@ builder_manifest_start (BuilderManifest *self,
                         BuilderContext  *context,
                         GError         **error)
 {
-  g_autofree char *arch_option;
+  g_autofree char *arch_option = NULL;
 
   if (self->sdk == NULL)
     {
