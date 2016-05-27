@@ -2875,7 +2875,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
     return FALSE;
 
   /* We ensure that the actual installed metadata matches the one in the
-     header, because you may have made decisions on wheter to install it or not
+     header, because you may have made decisions on whether to install it or not
      based on that data. */
   metadata_file = g_file_resolve_relative_path (root, "metadata");
   in = (GInputStream *) g_file_read (metadata_file, cancellable, NULL);
