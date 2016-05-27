@@ -282,7 +282,7 @@
             <variablelist>
                 <varlistentry>
                     <term><option>name</option> (string)</term>
-                    <listitem><para>The name of the module, used in e.g. build logs</para></listitem>
+                    <listitem><para>The name of the module, used in e.g. build logs. The name is also used for constructing filenames and commandline arguments, therefore using spaces or '/' in this string is a bad idea.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>disabled</option> (boolean)</term>
