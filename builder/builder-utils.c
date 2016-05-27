@@ -385,7 +385,7 @@ builder_migrate_locale_dirs (GFile   *root_dir,
 #define DEBUG_TYPES 11
 #define DEBUG_MACRO 12
 #define DEBUG_GDB_SCRIPT 13
-#define NUM_DEBUG_SECTIIONS 14
+#define NUM_DEBUG_SECTIONS 14
 
 static const char * debug_section_names[] = {
   ".debug_info",
@@ -420,7 +420,7 @@ typedef struct
   Elf_Scn       **scns;
   const char     *filename;
   int             lastscn;
-  debug_section_t debug_sections[NUM_DEBUG_SECTIIONS];
+  debug_section_t debug_sections[NUM_DEBUG_SECTIONS];
   GElf_Shdr      *shdr;
 } DebuginfoData;
 
@@ -1282,7 +1282,7 @@ builder_get_debuginfo_file_references (const char *filename, GError **error)
 
           if (g_str_has_prefix (name, ".debug_"))
             {
-              for (j = 0; j < NUM_DEBUG_SECTIIONS; ++j)
+              for (j = 0; j < NUM_DEBUG_SECTIONS; ++j)
                 {
                   if (strcmp (name, debug_section_names[j]) == 0)
                     {
@@ -1305,14 +1305,14 @@ builder_get_debuginfo_file_references (const char *filename, GError **error)
                     }
                 }
 
-              if (j == NUM_DEBUG_SECTIIONS)
+              if (j == NUM_DEBUG_SECTIONS)
                 g_warning ("%s: Unknown debugging section %s", filename, name);
             }
           else if (ehdr.e_type == ET_REL &&
                    ((shdr[i].sh_type == SHT_REL && g_str_has_prefix (name, ".rel.debug_")) ||
                     (shdr[i].sh_type == SHT_RELA && g_str_has_prefix (name, ".rela.debug_"))))
             {
-              for (j = 0; j < NUM_DEBUG_SECTIIONS; ++j)
+              for (j = 0; j < NUM_DEBUG_SECTIONS; ++j)
                 if (strcmp (name + sizeof (".rel") - 1
                             + (shdr[i].sh_type == SHT_RELA),
                             debug_section_names[j]) == 0)
