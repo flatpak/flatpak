@@ -141,7 +141,7 @@
                 <term><option>--no-pull</option></term>
 
                 <listitem><para>
-                    Don't download the latest version, deploy it whatever is locally availiable.
+                    Don't download the latest version, deploy it whatever is locally available.
                 </para></listitem>
             </varlistentry>
 
