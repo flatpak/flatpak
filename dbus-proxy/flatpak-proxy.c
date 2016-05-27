@@ -60,7 +60,7 @@
  * in a proxy. But this is rarely a problem in practice, as clients
  * rarely release names and stay on the bus.
  *
- * Here is a desciption of the policy levels:
+ * Here is a description of the policy levels:
  * (all policy levels also imply the ones before it)
  *
  * SEE:
