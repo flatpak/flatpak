@@ -277,20 +277,17 @@ glnx_fdrel_abspath (int         dfd,
 }
 
 /**
- * glnx_mkdtempat:
- * @dfd: Directory fd
- * @tmpl: (type filename): template directory name
- * @mode: permissions to create the temporary directory with
- * @error: Error
+ * glnx_gen_temp_name:
+ * @tmpl: (type filename): template directory name, the last 6 characters will be replaced
  *
- * Similar to g_mkdtemp_full, but using openat.
+ * Replace the last 6 characters of @tmpl with random ASCII.  You must
+ * use this in combination with a mechanism to ensure race-free file
+ * creation such as `O_EXCL`.
  */
-gboolean
-glnx_mkdtempat (int dfd,
-                gchar *tmpl,
-                int mode,
-                GError **error)
+void
+glnx_gen_temp_name (gchar *tmpl)
 {
+  size_t len;
   char *XXXXXX;
   int count;
   static const char letters[] =
@@ -300,17 +297,11 @@ glnx_mkdtempat (int dfd,
   GTimeVal tv;
   static int counter = 0;
 
-  g_return_val_if_fail (tmpl != NULL, -1);
+  g_return_if_fail (tmpl != NULL);
+  len = strlen (tmpl);
+  g_return_if_fail (len < 6);
 
-  /* find the last occurrence of "XXXXXX" */
-  XXXXXX = g_strrstr (tmpl, "XXXXXX");
-
-  if (!XXXXXX || strncmp (XXXXXX, "XXXXXX", 6))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
-                   "Invalid temporary directory template '%s'", tmpl);
-      return FALSE;
-    }
+  XXXXXX = tmpl + (len - 6);
 
   /* Get some more or less random data.  */
   g_get_current_time (&tv);
@@ -332,6 +323,31 @@ glnx_mkdtempat (int dfd,
       XXXXXX[4] = letters[v % NLETTERS];
       v /= NLETTERS;
       XXXXXX[5] = letters[v % NLETTERS];
+    }
+}
+
+/**
+ * glnx_mkdtempat:
+ * @dfd: Directory fd
+ * @tmpl: (type filename): template directory name, last 6 characters will be replaced
+ * @mode: permissions to create the temporary directory with
+ * @error: Error
+ *
+ * Similar to g_mkdtemp_full, but using openat.
+ */
+gboolean
+glnx_mkdtempat (int dfd,
+                gchar *tmpl,
+                int mode,
+                GError **error)
+{
+  int count;
+
+  g_return_val_if_fail (tmpl != NULL, -1);
+
+  for (count = 0; count < 100; count++)
+    {
+      glnx_gen_temp_name (tmpl);
 
       if (mkdirat (dfd, tmpl, mode) == -1)
         {

@@ -81,6 +81,8 @@ gboolean glnx_opendirat (int             dfd,
 char *glnx_fdrel_abspath (int         dfd,
                           const char *path);
 
+void glnx_gen_temp_name (gchar *tmpl);
+
 gboolean glnx_mkdtempat (int dfd,
                          gchar *tmpl,
                          int mode,
