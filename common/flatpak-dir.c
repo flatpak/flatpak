@@ -2770,6 +2770,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
 {
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) old_deploy_dir = NULL;
   gboolean created_deploy_base = FALSE;
   gboolean ret = FALSE;
   g_autoptr(GError) local_error = NULL;
@@ -2779,22 +2780,24 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
                          cancellable, error))
     goto out;
 
+  old_deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+  if (old_deploy_dir != NULL)
+    {
+      g_set_error (error, FLATPAK_ERROR,
+                   FLATPAK_ERROR_ALREADY_INSTALLED,
+                   "%s branch %s already installed",
+                   ref_parts[1], ref_parts[3]);
+      goto out;
+    }
+
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
   if (!g_file_make_directory_with_parents (deploy_base, cancellable, &local_error))
     {
-      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
-        {
-          g_set_error (error,
-                       G_IO_ERROR, G_IO_ERROR_EXISTS,
-                       "%s branch %s already installed",
-                       ref_parts[1], ref_parts[3]);
-        }
-      else
+      if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
         {
           g_propagate_error (error, g_steal_pointer (&local_error));
+          goto out;
         }
-
-      goto out;
     }
 
   /* After we create the deploy base we must goto out on errors */

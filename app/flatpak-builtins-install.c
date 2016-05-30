@@ -205,7 +205,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   const char *branch = NULL;
   g_autofree char *ref = NULL;
   gboolean is_app;
-  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GVariant) deploy_data = NULL;
 
   context = g_option_context_new ("REPOSITORY NAME [BRANCH] - Install an application or runtime");
 
@@ -231,8 +232,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (ref == NULL)
     return FALSE;
 
-  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
-  if (g_file_query_exists (deploy_base, NULL))
+  deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
+  if (deploy_dir != NULL)
     {
       g_auto(GStrv) parts =  flatpak_decompose_ref (ref, error);
 
