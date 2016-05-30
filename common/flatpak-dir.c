@@ -3987,9 +3987,7 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
                              GError      **error)
 {
   g_autofree char *refspec_prefix = NULL;
-  g_autofree char *remote_ref = NULL;
   g_autoptr(GHashTable) remote_refs = NULL;
-  g_autoptr(GError) my_error = NULL;
   GPtrArray *matched_refs;
 
   if (!flatpak_dir_ensure_repo (self, NULL, error))
@@ -4111,9 +4109,7 @@ flatpak_dir_find_installed_refs (FlatpakDir *self,
                                  gboolean    runtime,
                                  GError    **error)
 {
-  g_autofree char *local_ref = NULL;
   g_autoptr(GHashTable) local_refs = NULL;
-  g_autoptr(GError) my_error = NULL;
   GPtrArray *matched_refs;
 
   local_refs = flatpak_dir_get_all_installed_refs (self, app, runtime, error);

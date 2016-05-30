@@ -266,3 +266,98 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   return TRUE;
 }
+
+gboolean
+flatpak_complete_build_init (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) user_dir = NULL;
+  g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(GError) error = NULL;
+  int i;
+
+  context = g_option_context_new ("");
+
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
+    return FALSE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* DIR */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+
+      flatpak_complete_dir (completion);
+      break;
+
+    case 2: /* APP */
+      break;
+
+    case 3: /* RUNTIME */
+    case 4: /* SDK */
+      user_dir = flatpak_dir_get_user ();
+      {
+        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, opt_arch,
+                                                              FALSE, TRUE, &error);
+        if (refs == NULL)
+          flatpak_completion_debug ("find local refs error: %s", error->message);
+        for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          {
+            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+            if (parts)
+              flatpak_complete_word (completion, "%s ", parts[1]);
+          }
+      }
+
+      system_dir = flatpak_dir_get_system ();
+      {
+        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, opt_arch,
+                                                              FALSE, TRUE, &error);
+        if (refs == NULL)
+          flatpak_completion_debug ("find local refs error: %s", error->message);
+        for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          {
+            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+            if (parts)
+              flatpak_complete_word (completion, "%s ", parts[1]);
+          }
+      }
+
+      break;
+
+    case 5: /* BRANCH */
+      user_dir = flatpak_dir_get_user ();
+      {
+        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, completion->argv[3], NULL, opt_arch,
+                                                              FALSE, TRUE, &error);
+        if (refs == NULL)
+          flatpak_completion_debug ("find local refs error: %s", error->message);
+        for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          {
+            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+            if (parts)
+              flatpak_complete_word (completion, "%s ", parts[3]);
+          }
+      }
+
+      system_dir = flatpak_dir_get_system ();
+      {
+        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, completion->argv[3], NULL, opt_arch,
+                                                              FALSE, TRUE, &error);
+        if (refs == NULL)
+          flatpak_completion_debug ("find local refs error: %s", error->message);
+        for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          {
+            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+            if (parts)
+              flatpak_complete_word (completion, "%s ", parts[3]);
+          }
+      }
+
+      break;
+    }
+
+  return TRUE;
+}

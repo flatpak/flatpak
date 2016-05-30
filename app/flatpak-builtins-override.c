@@ -92,3 +92,65 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
 
   return TRUE;
 }
+
+gboolean
+flatpak_complete_override (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) user_dir = NULL;
+  g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(GError) error = NULL;
+  int i;
+  g_autoptr(FlatpakContext) arg_context = NULL;
+
+  context = g_option_context_new ("");
+
+  arg_context = flatpak_context_new ();
+  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
+
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
+    return FALSE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* NAME */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+      flatpak_context_complete (arg_context, completion);
+
+      user_dir = flatpak_dir_get_user ();
+      {
+        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, NULL,
+                                                              TRUE, FALSE, &error);
+        if (refs == NULL)
+          flatpak_completion_debug ("find local refs error: %s", error->message);
+        for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          {
+            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+            if (parts)
+              flatpak_complete_word (completion, "%s ", parts[1]);
+          }
+      }
+
+      system_dir = flatpak_dir_get_system ();
+      {
+        g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, NULL,
+                                                              TRUE, FALSE, &error);
+        if (refs == NULL)
+          flatpak_completion_debug ("find local refs error: %s", error->message);
+        for (i = 0; refs != NULL && refs[i] != NULL; i++)
+          {
+            g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+            if (parts)
+              flatpak_complete_word (completion, "%s ", parts[1]);
+          }
+      }
+
+      break;
+
+    }
+
+  return TRUE;
+}

@@ -60,27 +60,27 @@ static FlatpakCommand commands[] = {
 
   { "\n Running applications" },
   { "run", "Run an application", flatpak_builtin_run, flatpak_complete_run },
-  { "override", "Override permissions for an application", flatpak_builtin_override },
-  { "export-file", "Grant an application access to a specific file", flatpak_builtin_export_file},
-  { "make-current", "Specify default version to run", flatpak_builtin_make_current_app},
+  { "override", "Override permissions for an application", flatpak_builtin_override, flatpak_complete_override},
+  { "export-file", "Grant an application access to a specific file", flatpak_builtin_export_file, flatpak_complete_export_file},
+  { "make-current", "Specify default version to run", flatpak_builtin_make_current_app, flatpak_complete_make_current_app},
   { "enter", "Enter the namespace of a running application", flatpak_builtin_enter },
 
   { "\n Manage remote repositories" },
-  { "remote-add", "Add a new remote repository (by URL)", flatpak_builtin_add_remote },
-  { "remote-modify", "Modify properties of a configured remote", flatpak_builtin_modify_remote},
-  { "remote-delete", "Delete a configured remote", flatpak_builtin_delete_remote},
-  { "remote-list", "List all configured remotes", flatpak_builtin_list_remotes},
-  { "remote-ls", "List contents of a configured remote", flatpak_builtin_ls_remote },
+  { "remote-add", "Add a new remote repository (by URL)", flatpak_builtin_add_remote, flatpak_complete_add_remote },
+  { "remote-modify", "Modify properties of a configured remote", flatpak_builtin_modify_remote, flatpak_complete_modify_remote },
+  { "remote-delete", "Delete a configured remote", flatpak_builtin_delete_remote, flatpak_complete_delete_remote },
+  { "remote-list", "List all configured remotes", flatpak_builtin_list_remotes, flatpak_complete_list_remotes },
+  { "remote-ls", "List contents of a configured remote", flatpak_builtin_ls_remote, flatpak_complete_ls_remote },
 
   { "\n Build applications" },
-  { "build-init", "Initialize a directory for building", flatpak_builtin_build_init },
-  { "build", "Run a build command inside the build dir", flatpak_builtin_build },
-  { "build-finish", "Finish a build dir for export", flatpak_builtin_build_finish },
-  { "build-export", "Export a build dir to a repository", flatpak_builtin_build_export },
-  { "build-bundle", "Create a bundle file from a build directory", flatpak_builtin_build_bundle },
-  { "build-import-bundle", "Import a bundle file", flatpak_builtin_build_import },
-  { "build-sign", "Sign an application or runtime", flatpak_builtin_build_sign },
-  { "build-update-repo", "Update the summary file in a repository", flatpak_builtin_build_update_repo },
+  { "build-init", "Initialize a directory for building", flatpak_builtin_build_init, flatpak_complete_build_init },
+  { "build", "Run a build command inside the build dir", flatpak_builtin_build, flatpak_complete_build  },
+  { "build-finish", "Finish a build dir for export", flatpak_builtin_build_finish, flatpak_complete_build_finish },
+  { "build-export", "Export a build dir to a repository", flatpak_builtin_build_export, flatpak_complete_build_export },
+  { "build-bundle", "Create a bundle file from a build directory", flatpak_builtin_build_bundle, flatpak_complete_build_bundle },
+  { "build-import-bundle", "Import a bundle file", flatpak_builtin_build_import, flatpak_complete_build_import },
+  { "build-sign", "Sign an application or runtime", flatpak_builtin_build_sign, flatpak_complete_build_sign },
+  { "build-update-repo", "Update the summary file in a repository", flatpak_builtin_build_update_repo, flatpak_complete_build_update_repo },
 
   { NULL }
 };
@@ -354,7 +354,6 @@ complete (int    argc,
           char **argv)
 {
   FlatpakCommand *command;
-  g_autofree char *initial_completion_line = NULL;
   FlatpakCompletion *completion;
   const char *command_name = NULL;
 

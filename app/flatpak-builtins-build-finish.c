@@ -403,3 +403,33 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   return TRUE;
 }
+
+gboolean
+flatpak_complete_build_finish (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakContext) arg_context = NULL;
+
+  context = g_option_context_new ("");
+
+  arg_context = flatpak_context_new ();
+  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
+
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
+    return FALSE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* DIR */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+      flatpak_context_complete (arg_context, completion);
+
+      flatpak_complete_dir (completion);
+      break;
+    }
+
+  return TRUE;
+}

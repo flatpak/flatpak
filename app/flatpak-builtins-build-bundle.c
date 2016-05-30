@@ -945,3 +945,32 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
 
   return TRUE;
 }
+
+gboolean
+flatpak_complete_build_bundle (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+
+  context = g_option_context_new ("");
+
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
+    return FALSE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* LOCATION */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+
+      flatpak_complete_dir (completion);
+      break;
+
+    case 2: /* FILENAME */
+      flatpak_complete_file (completion);
+      break;
+    }
+
+  return TRUE;
+}

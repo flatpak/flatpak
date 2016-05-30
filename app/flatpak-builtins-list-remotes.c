@@ -147,3 +147,27 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
   return TRUE;
 }
+
+gboolean
+flatpak_complete_list_remotes (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  context = g_option_context_new ("");
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+    return FALSE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* REMOTE */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+      flatpak_complete_options (completion, user_entries);
+
+      break;
+    }
+
+  return TRUE;
+}

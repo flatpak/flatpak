@@ -173,7 +173,6 @@ flatpak_complete_info (FlatpakCompletion *completion)
   g_autoptr(FlatpakDir) user_dir = NULL;
   g_autoptr(FlatpakDir) system_dir = NULL;
   g_autoptr(GError) error = NULL;
-  g_auto(GStrv) refs = NULL;
   int i;
 
   context = g_option_context_new ("");

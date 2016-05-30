@@ -63,3 +63,36 @@ flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
 
   return TRUE;
 }
+
+gboolean
+flatpak_complete_delete_remote (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  int i;
+
+  context = g_option_context_new ("");
+  if (!flatpak_option_context_parse (context, delete_options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+    return FALSE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* REMOTE */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, delete_options);
+      flatpak_complete_options (completion, user_entries);
+
+      {
+        g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
+        if (remotes == NULL)
+          return FALSE;
+        for (i = 0; remotes[i] != NULL; i++)
+          flatpak_complete_word (completion, "%s ", remotes[i]);
+      }
+
+      break;
+    }
+
+  return TRUE;
+}

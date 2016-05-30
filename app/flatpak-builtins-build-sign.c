@@ -115,3 +115,34 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
 
   return TRUE;
 }
+
+gboolean
+flatpak_complete_build_sign (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+
+  context = g_option_context_new ("");
+
+  if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv,
+                                     FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
+    return FALSE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* LOCATION */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+
+      flatpak_complete_dir (completion);
+      break;
+
+    case 2: /* ID */
+      break;
+
+    case 3: /* BRANCH */
+      break;
+    }
+
+  return TRUE;
+}

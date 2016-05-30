@@ -202,7 +202,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
   g_autofree char *remote_url = NULL;
   const char *remote_name;
   const char *url_or_path;
-  g_autofree char *prio_as_string = NULL;
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
 
@@ -266,6 +265,32 @@ flatpak_builtin_add_remote (int argc, char **argv,
 }
 
 gboolean
+flatpak_complete_add_remote (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+
+  context = g_option_context_new ("");
+  g_option_context_add_main_entries (context, common_options, NULL);
+  if (!flatpak_option_context_parse (context, add_options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+    return FALSE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1:
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, common_options);
+      flatpak_complete_options (completion, add_options);
+      flatpak_complete_options (completion, user_entries);
+
+      break;
+    }
+
+  return TRUE;
+}
+
+gboolean
 flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
@@ -299,4 +324,39 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
     }
 
   return flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error);
+}
+
+gboolean
+flatpak_complete_modify_remote (FlatpakCompletion *completion)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  int i;
+
+  context = g_option_context_new ("");
+  g_option_context_add_main_entries (context, common_options, NULL);
+  if (!flatpak_option_context_parse (context, modify_options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
+    return FALSE;
+
+  switch (completion->argc)
+    {
+    case 0:
+    case 1: /* REMOTE */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, common_options);
+      flatpak_complete_options (completion, modify_options);
+      flatpak_complete_options (completion, user_entries);
+
+      {
+        g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
+        if (remotes == NULL)
+          return FALSE;
+        for (i = 0; remotes[i] != NULL; i++)
+          flatpak_complete_word (completion, "%s ", remotes[i]);
+      }
+
+      break;
+    }
+
+  return TRUE;
 }

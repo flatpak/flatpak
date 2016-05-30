@@ -122,7 +122,7 @@ flatpak_complete_uninstall (FlatpakCompletion *completion)
       refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
                                               opt_app, opt_runtime, &error);
       if (refs == NULL)
-        flatpak_completion_debug ("find local refs error: %s", error->message);
+        flatpak_completion_debug ("find installed refs error: %s", error->message);
       for (i = 0; refs != NULL && refs[i] != NULL; i++)
         {
           g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
@@ -135,7 +135,7 @@ flatpak_complete_uninstall (FlatpakCompletion *completion)
       refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
                                               opt_app, opt_runtime, &error);
       if (refs == NULL)
-        flatpak_completion_debug ("find remote refs error: %s", error->message);
+        flatpak_completion_debug ("find installed refs error: %s", error->message);
       for (i = 0; refs != NULL && refs[i] != NULL; i++)
         {
           g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);

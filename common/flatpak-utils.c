@@ -3081,6 +3081,20 @@ is_word_separator (char c)
 }
 
 void
+flatpak_complete_file (FlatpakCompletion *completion)
+{
+  flatpak_completion_debug ("completing FILE");
+  g_print ("%s\n", "__FLATPAK_FILE");
+}
+
+void
+flatpak_complete_dir (FlatpakCompletion *completion)
+{
+  flatpak_completion_debug ("completing DIR");
+  g_print ("%s\n", "__FLATPAK_DIR");
+}
+
+void
 flatpak_complete_word (FlatpakCompletion *completion,
                        char *format, ...)
 {
@@ -3143,6 +3157,10 @@ flatpak_complete_options (FlatpakCompletion *completion,
                 {
                   for (i = 0; flatpak_context_sockets[i] != NULL; i++)
                     flatpak_complete_word (completion, "%s%s ", prefix, flatpak_context_sockets[i]);
+                }
+              else if (strcmp (e->arg_description, "FILE") == 0)
+                {
+                  flatpak_complete_file (completion);
                 }
               else
                 flatpak_complete_word (completion, "%s", prefix);

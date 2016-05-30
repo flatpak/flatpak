@@ -6,7 +6,28 @@
 __flatpak() {
     local IFS=$'\n'
     local cur=`_get_cword :`
-    COMPREPLY=($(flatpak complete "${COMP_LINE}" "${COMP_POINT}" "${cur}"))
+    RES=($(flatpak complete "${COMP_LINE}" "${COMP_POINT}" "${cur}"))
+
+    COMPREPLY=()
+    for i in "${!RES[@]}"; do
+        if [[ "${RES[$i]}" = "__FLATPAK_FILE" ]]; then
+           if [[ "${cur}" = "=" ]]; then
+               CUR=""
+           else
+               CUR="${cur}"
+           fi
+            COMPREPLY=("${COMPREPLY[@]}" $(compgen -f -- "${CUR}") )
+        elif [[ "${RES[$i]}" = "__FLATPAK_DIR" ]]; then
+           if [[ "${cur}" = "=" ]]; then
+               CUR=""
+           else
+               CUR="${cur}"
+           fi
+            COMPREPLY=("${COMPREPLY[@]}" $(compgen -d -- "${CUR}") )
+        else
+            COMPREPLY=("${COMPREPLY[@]}" "${RES[$i]}")
+        fi
+    done
 }
 
 ####################################################################################################
