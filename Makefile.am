@@ -40,7 +40,7 @@ AM_CPPFLAGS =							\
 	-DFLATPAK_BASEDIR=\"$(pkgdatadir)\"			\
 	-DFLATPAK_TRIGGERDIR=\"$(pkgdatadir)/triggers\"		\
 	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"		\
-	-DHELPER=\"$(libdir)/flatpak/bwrap\"			\
+	-DHELPER=\"$(libexecdir)/flatpak-bwrap\"		\
 	-DDBUSPROXY=\"$(libexecdir)/flatpak-dbus-proxy\"	\
 	-DG_LOG_DOMAIN=\"flatpak\"				\
 	-I$(srcdir)/libglnx					\
@@ -78,19 +78,22 @@ include permission-store/Makefile.am.inc
 include document-portal/Makefile.am.inc
 include tests/Makefile.am.inc
 
-bwrap_PROGRAMS = bwrap
-bwrapdir = $(libdir)/flatpak
+bwrap_PROGRAMS = flatpak-bwrap
+flatpak_bwrap_SOURCES = $(bwrap_SOURCES)
+flatpak_bwrap_CFLAGS = $(bwrap_CFLAGS)
+flatpak_bwrap_LDFLAGS = $(bwrap_LDFLAGS)
+bwrapdir = $(libexecdir)
 include bubblewrap/Makefile-bwrap.am.inc
 
 # NOTE: bwrap is install-bwrapPROGS which is run from install-data, not install-exec, this data-hook is used
 install-data-hook:
 	$(MAKE) $(AM_MAKEFLAGS) install-test-data-hook
 if PRIV_MODE_SETUID
-	$(SUDO_BIN) chown root $(DESTDIR)$(libdir)/flatpak/bwrap
-	$(SUDO_BIN) chmod u+s $(DESTDIR)$(libdir)/flatpak/bwrap
+	$(SUDO_BIN) chown root $(DESTDIR)$(libexecdir)/flatpak-bwrap
+	$(SUDO_BIN) chmod u+s $(DESTDIR)$(libexecdir)/flatpak-bwrap
 else
 if PRIV_MODE_FILECAPS
-	$(SUDO_BIN) setcap cap_sys_admin,cap_net_admin,cap_sys_chroot,cap_setuid,cap_setgid+ep $(DESTDIR)$(libdir)/flatpak/bwrap
+	$(SUDO_BIN) setcap cap_sys_admin,cap_net_admin,cap_sys_chroot,cap_setuid,cap_setgid+ep $(DESTDIR)$(libexecdir)/flatpak-bwrap
 endif
 endif
 

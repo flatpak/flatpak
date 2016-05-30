@@ -1,6 +1,6 @@
 TESTS_ENVIRONMENT += OT_TESTS_DEBUG=1 \
 	FLATPAK_TRIGGERSDIR=$$(cd $(top_srcdir) && pwd)/triggers \
-	FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/bwrap \
+	FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap \
 	FLATPAK_DBUSPROXY=$$(cd $(top_builddir) && pwd)/flatpak-dbus-proxy \
 	GI_TYPELIB_PATH=$$(cd $(top_builddir) && pwd) \
 	LD_LIBRARY_PATH=$$(cd $(top_builddir)/.libs && pwd) \
