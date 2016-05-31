@@ -197,8 +197,8 @@ run_sh () {
 }
 
 skip_without_user_xattrs () {
-    touch test-xattrs
-    if ! setfattr -n user.testvalue -v somevalue test-xattrs; then
+    touch ${TEST_DATA_DIR}/test-xattrs
+    if ! setfattr -n user.testvalue -v somevalue ${TEST_DATA_DIR}/test-xattrs; then
         echo "1..0 # SKIP this test requires xattr support"
         exit 0
     fi
