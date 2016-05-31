@@ -2523,9 +2523,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *resolved_ref = NULL;
 
   g_autoptr(GFile) root = NULL;
-  g_autoptr(GFileInfo) file_info = NULL;
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) checkoutdir = NULL;
+  g_autofree char *checkoutdirpath = NULL;
   g_autoptr(GFile) real_checkoutdir = NULL;
   g_autoptr(GFile) dotref = NULL;
   g_autoptr(GFile) files_etc = NULL;
@@ -2535,7 +2535,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) export = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
   guint64 installed_size = 0;
+  OstreeRepoCheckoutOptions options = { 0, };
   const char *checksum;
+  glnx_fd_close int checkoutdir_dfd = -1;
   g_autoptr(GFile) tmp_dir_template = NULL;
   g_autofree char *tmp_dir_path = NULL;
 
@@ -2599,33 +2601,24 @@ flatpak_dir_deploy (FlatpakDir          *self,
   if (!flatpak_repo_collect_sizes (self->repo, root, &installed_size, NULL, cancellable, error))
     return FALSE;
 
-  file_info = g_file_query_info (root, OSTREE_GIO_FAST_QUERYINFO,
-                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                 cancellable, error);
-  if (file_info == NULL)
-    return FALSE;
+  options.mode = OSTREE_REPO_CHECKOUT_MODE_USER;
+  options.overwrite_mode = OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES;
+  options.disable_fsync = TRUE; /* We checkout to a temp dir and sync before moving it in place */
+  checkoutdirpath = g_file_get_path (checkoutdir);
 
   if (subpaths == NULL || *subpaths == NULL)
     {
-      if (!ostree_repo_checkout_tree (self->repo,
-                                      OSTREE_REPO_CHECKOUT_MODE_USER,
-                                      OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES,
-                                      checkoutdir,
-                                      OSTREE_REPO_FILE (root), file_info,
-                                      cancellable, error))
+      if (!ostree_repo_checkout_tree_at (self->repo, &options,
+                                         AT_FDCWD, checkoutdirpath,
+                                         checksum,
+                                         cancellable, error))
         {
-          g_autofree char *rootpath = NULL;
-          g_autofree char *checkoutpath = NULL;
-
-          rootpath = g_file_get_path (root);
-          checkoutpath = g_file_get_path (checkoutdir);
-          g_prefix_error (error, "While trying to checkout %s into %s: ", rootpath, checkoutpath);
+          g_prefix_error (error, "While trying to checkout %s into %s: ", checksum, checkoutdirpath);
           return FALSE;
         }
     }
   else
     {
-      OstreeRepoCheckoutOptions options = { 0, };
       g_autofree char *checkoutdirpath = g_file_get_path (checkoutdir);
       g_autoptr(GFile) files = g_file_get_child (checkoutdir, "files");
       int i;
@@ -2633,8 +2626,6 @@ flatpak_dir_deploy (FlatpakDir          *self,
       if (!g_file_make_directory_with_parents (files, cancellable, error))
         return FALSE;
 
-      options.mode = OSTREE_REPO_CHECKOUT_MODE_USER;
-      options.overwrite_mode = OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES;
       options.subpath = "/metadata";
 
       access ("checkout metadata", 0);
@@ -2749,6 +2740,15 @@ flatpak_dir_deploy (FlatpakDir          *self,
   deploy_data_file = g_file_get_child (checkoutdir, "deploy");
   if (!flatpak_variant_save (deploy_data_file, deploy_data, cancellable, error))
     return FALSE;
+
+  if (!glnx_opendirat (AT_FDCWD, checkoutdirpath, TRUE, &checkoutdir_dfd, error))
+    return FALSE;
+
+  if (syncfs (checkoutdir_dfd) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
 
   if (!g_file_move (checkoutdir, real_checkoutdir, G_FILE_COPY_NO_FALLBACK_FOR_MOVE,
                     cancellable, NULL, NULL, error))
