@@ -299,7 +299,7 @@ glnx_gen_temp_name (gchar *tmpl)
 
   g_return_if_fail (tmpl != NULL);
   len = strlen (tmpl);
-  g_return_if_fail (len < 6);
+  g_return_if_fail (len >= 6);
 
   XXXXXX = tmpl + (len - 6);
 
