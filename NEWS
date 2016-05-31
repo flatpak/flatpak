@@ -1,3 +1,15 @@
+Major changes in 0.6.3
+======================
+
+ * Fix resolv.conf regression in `flatpak build`
+ * Fix LD_LIBRARY_PATH override support in `flatpak build`
+ * Support forwarding app permissions in `flatpak-builder --run`
+ * Flatpak is now smarter about the default branch to use in most operations
+ * update will not fail on the first error if updating several things
+ * New much more complete bash completion system
+ * Faster installations
+ * Support new keyfile format for remote-add --from=file
+
 Major changes in 0.6.2
 ======================
 
