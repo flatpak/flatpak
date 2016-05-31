@@ -36,7 +36,7 @@ EOF
 else
     # gtkdocize needs the macro directory to exist before
     # we call autoreconf
-    mkdir m4
+    mkdir -p m4
     gtkdocize || exit $?
 fi
 
