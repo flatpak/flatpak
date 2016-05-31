@@ -125,7 +125,9 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = flatpak.pc
 EXTRA_DIST += flatpak.pc.in
 
-DISTCHECK_CONFIGURE_FLAGS =		\
+EXTRA_DIST += README.md
+
+AM_DISTCHECK_CONFIGURE_FLAGS =		\
 	--enable-documentation		\
 	--disable-maintainer-mode	\
 	--enable-introspection
