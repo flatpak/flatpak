@@ -22,7 +22,11 @@ m4_define([flatpak_binary_age],
 m4_define([flatpak_version],
           [flatpak_major_version.flatpak_minor_version.flatpak_micro_version])
 
-AC_INIT([flatpak],[flatpak_version])
+AC_INIT([Flatpak],
+        [flatpak_version],
+        [https://github.com/flatpak/flatpak/issues],
+        [flatpak],
+        [http://flatpak.org/])
 
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -41,9 +45,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.11 no-define no-dist-gzip dist-xz tar-ustar foreign subdir-objects])
 AC_PROG_SED
 
-GETTEXT_PACKAGE=Flatpak
-AC_SUBST([GETTEXT_PACKAGE])
-AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$PACKAGE_NAME"],[gettext domain])
 
 AM_GLIB_GNU_GETTEXT
 
