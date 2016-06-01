@@ -3821,7 +3821,8 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
     return FALSE;
 
   if (summary_bytes == NULL)
-    return flatpak_fail (error, "Remote listing not available; server has no summary file\n");
+    return flatpak_fail (error, "Remote listing not available; server has no summary file\n" \
+                                "Check the URL passed to remote-add was valid\n");
 
   ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
