@@ -3747,6 +3747,10 @@ flatpak_dir_cache_summary (FlatpakDir  *self,
   CachedSummary *summary;
   GBytes *res = NULL;
 
+  /* No sense caching the summary if there isn't one */
+  if (!bytes)
+      return NULL;
+
   G_LOCK (cache);
 
   /* This was already initialized in the cache-miss lookup */
