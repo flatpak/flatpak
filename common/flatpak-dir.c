@@ -3738,18 +3738,17 @@ flatpak_dir_lookup_cached_summary (FlatpakDir  *self,
   return res;
 }
 
-static GBytes *
+static void
 flatpak_dir_cache_summary (FlatpakDir  *self,
                            GBytes      *bytes,
                            const char  *name,
                            const char  *url)
 {
   CachedSummary *summary;
-  GBytes *res = NULL;
 
   /* No sense caching the summary if there isn't one */
   if (!bytes)
-      return NULL;
+      return;
 
   G_LOCK (cache);
 
@@ -3760,8 +3759,6 @@ flatpak_dir_cache_summary (FlatpakDir  *self,
   g_hash_table_insert (self->summary_cache, summary->remote, summary);
 
   G_UNLOCK (cache);
-
-  return res;
 }
 
 static gboolean
