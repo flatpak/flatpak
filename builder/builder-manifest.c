@@ -1504,6 +1504,7 @@ builder_manifest_cleanup (BuilderManifest *self,
           gsize desktop_size;
           g_auto(GStrv) desktop_keys = NULL;
 
+          g_print ("Rewriting contents of %s\n", desktop_basename);
           if (!g_file_load_contents (desktop, NULL,
                                      &desktop_contents, &desktop_size, NULL, error))
             {
