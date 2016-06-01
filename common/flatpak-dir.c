@@ -3738,14 +3738,17 @@ flatpak_dir_lookup_cached_summary (FlatpakDir  *self,
   return res;
 }
 
-static GBytes *
+static void
 flatpak_dir_cache_summary (FlatpakDir  *self,
                            GBytes      *bytes,
                            const char  *name,
                            const char  *url)
 {
   CachedSummary *summary;
-  GBytes *res = NULL;
+
+  /* No sense caching the summary if there isn't one */
+  if (!bytes)
+      return;
 
   G_LOCK (cache);
 
@@ -3756,8 +3759,6 @@ flatpak_dir_cache_summary (FlatpakDir  *self,
   g_hash_table_insert (self->summary_cache, summary->remote, summary);
 
   G_UNLOCK (cache);
-
-  return res;
 }
 
 static gboolean
@@ -3820,7 +3821,8 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
     return FALSE;
 
   if (summary_bytes == NULL)
-    return flatpak_fail (error, "Remote listing not available; server has no summary file\n");
+    return flatpak_fail (error, "Remote listing not available; server has no summary file\n" \
+                                "Check the URL passed to remote-add was valid\n");
 
   ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
