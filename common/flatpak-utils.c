@@ -3007,10 +3007,10 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
 
       /* No existing tmpdir found, create a new */
 
-      if (!glnx_mkdtempat (tmpdir_dfd, tmpdir_name_template, 0777, error))
+      if (!glnx_mkdtempat (dfd_iter.fd, tmpdir_name_template, 0777, error))
         return FALSE;
 
-      if (!glnx_opendirat (tmpdir_dfd, tmpdir_name_template, FALSE,
+      if (!glnx_opendirat (dfd_iter.fd, tmpdir_name_template, FALSE,
                            &new_tmpdir_fd, error))
         return FALSE;
 
@@ -3018,7 +3018,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
 
       /* Note, at this point we can race with another process that picks up this
        * new directory. If that happens we need to retry, making a new directory. */
-      if (!glnx_make_lock_file (tmpdir_dfd, lock_name, LOCK_EX | LOCK_NB,
+      if (!glnx_make_lock_file (dfd_iter.fd, lock_name, LOCK_EX | LOCK_NB,
                                 file_lock_out, &local_error))
         {
           if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
