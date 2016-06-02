@@ -25,7 +25,7 @@
 
     <refnamediv>
         <refname>flatpak-build-bundle</refname>
-        <refpurpose>Create a single file bundle from a local repository</refpurpose>
+        <refpurpose>Create a single-file bundle from a local repository</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
@@ -43,7 +43,7 @@
         <title>Description</title>
 
         <para>
-            Creates a single file named <arg choice="plain">FILENAME</arg>
+            Creates a single-file named <arg choice="plain">FILENAME</arg>
             for the application (or runtime) named <arg choice="plain">NAME</arg>
             in the repository at <arg choice="plain">LOCATION</arg>. If
             a <arg choice="plain">BRANCH</arg> is specified, this branch of
@@ -111,6 +111,14 @@
 
                 <listitem><para>
                     GPG Homedir to use when looking for keyrings.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--oci</option></term>
+
+                <listitem><para>
+                    Export to an OCI image instead of a Flatpak bundle.
                 </para></listitem>
             </varlistentry>
 
