@@ -1287,7 +1287,7 @@ rename_icon_cb (BuilderManifest *self,
 
       *found = TRUE;
 
-      g_print ("%s icon %s/%s to %s/%s\n", self->copy_icon ? "copying" : "renaming", rel_dir, source_name, rel_dir, new_name);
+      g_print ("%s icon %s/%s to %s/%s\n", self->copy_icon ? "Copying" : "Renaming", rel_dir, source_name, rel_dir, new_name);
 
       if (self->copy_icon)
         res = linkat (source_parent_fd, source_name, source_parent_fd, new_name, AT_SYMLINK_FOLLOW);

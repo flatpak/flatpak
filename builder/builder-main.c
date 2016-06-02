@@ -234,7 +234,7 @@ main (int    argc,
 
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      g_printerr ("option parsing failed: %s\n", error->message);
+      g_printerr ("Option parsing failed: %s\n", error->message);
       return 1;
     }
 
@@ -373,20 +373,20 @@ main (int    argc,
                          builder_manifest_get_id (manifest));
       if (!builder_manifest_init_app_dir (manifest, build_context, &error))
         {
-          g_print ("error: %s\n", error->message);
+          g_print ("Error: %s\n", error->message);
           return 1;
         }
 
       if (!builder_cache_commit (cache, body, &error))
         {
-          g_print ("error: %s\n", error->message);
+          g_print ("Error: %s\n", error->message);
           return 1;
         }
     }
 
   if (!builder_manifest_build (manifest, cache, build_context, &error))
     {
-      g_print ("error: %s\n", error->message);
+      g_print ("Error: %s\n", error->message);
       return 1;
     }
 
@@ -394,19 +394,19 @@ main (int    argc,
     {
       if (!builder_manifest_cleanup (manifest, cache, build_context, &error))
         {
-          g_print ("error: %s\n", error->message);
+          g_print ("Error: %s\n", error->message);
           return 1;
         }
 
       if (!builder_manifest_finish (manifest, cache, build_context, &error))
         {
-          g_print ("error: %s\n", error->message);
+          g_print ("Error: %s\n", error->message);
           return 1;
         }
 
       if (!builder_manifest_create_platform (manifest, cache, build_context, &error))
         {
-          g_print ("error: %s\n", error->message);
+          g_print ("Error: %s\n", error->message);
           return 1;
         }
     }
@@ -418,7 +418,7 @@ main (int    argc,
     {
       g_autoptr(GFile) debuginfo_metadata = NULL;
 
-      g_print ("exporting %s to repo\n", builder_manifest_get_id (manifest));
+      g_print ("Exporting %s to repo\n", builder_manifest_get_id (manifest));
 
       if (!do_export (build_context, &error,
                       builder_context_get_build_runtime (build_context),
@@ -444,7 +444,7 @@ main (int    argc,
           g_autofree char *files_arg = NULL;
 
           if (strcmp (name, "metadata.locale") == 0)
-            g_print ("exporting %s.Locale to repo\n", builder_manifest_get_id (manifest));
+            g_print ("Exporting %s.Locale to repo\n", builder_manifest_get_id (manifest));
           else
             continue;
 
@@ -465,7 +465,7 @@ main (int    argc,
       debuginfo_metadata = g_file_get_child (app_dir, "metadata.debuginfo");
       if (g_file_query_exists (debuginfo_metadata, NULL))
         {
-          g_print ("exporting %s.Debug to repo\n", builder_manifest_get_id (manifest));
+          g_print ("Exporting %s.Debug to repo\n", builder_manifest_get_id (manifest));
 
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.debuginfo",
@@ -482,7 +482,7 @@ main (int    argc,
       if (builder_context_get_build_runtime (build_context) &&
           platform_id != NULL)
         {
-          g_print ("exporting %s to repo\n", platform_id);
+          g_print ("Exporting %s to repo\n", platform_id);
 
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.platform",
@@ -508,7 +508,7 @@ main (int    argc,
           g_autofree char *files_arg = NULL;
 
           if (strcmp (name, "metadata.platform.locale") == 0)
-            g_print ("exporting %s.Locale to repo\n", platform_id);
+            g_print ("Exporting %s.Locale to repo\n", platform_id);
           else
             continue;
 
