@@ -363,7 +363,9 @@ typedef struct {
   char *line;
   int point;
   char **argv;
+  char **original_argv;
   int argc;
+  int original_argc;
 } FlatpakCompletion;
 
 void flatpak_completion_debug (const gchar *format, ...);
