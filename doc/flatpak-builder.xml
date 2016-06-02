@@ -107,7 +107,7 @@
             </para>
             <variablelist>
                 <varlistentry>
-                    <term><option>id</option> (string)</term>
+                    <term><option>id</option> or <option>app-id</option> (string)</term>
                     <listitem><para>A string defining the application id.</para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -219,7 +219,7 @@
                     <listitem><para>This string will be prefixed to the Name key in the main application desktop file.</para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>desktop-file-name-suffixed</option> (string)</term>
+                    <term><option>desktop-file-name-suffix</option> (string)</term>
                     <listitem><para>This string will be suffixed to the Name key in the main application desktop file.</para></listitem>
                 </varlistentry>
             </variablelist>
