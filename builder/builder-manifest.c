@@ -1624,6 +1624,19 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
         }
 
+      if (self->command)
+        {
+          g_autoptr(GFile) bin_dir = g_file_resolve_relative_path (app_dir, "files/bin");
+          g_autoptr(GFile) bin_command = g_file_get_child (bin_dir, self->command);
+
+          if (!g_file_query_exists (bin_command, NULL))
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Command '%s' not found", self->command);
+              return FALSE;
+            }
+        }
+
       args = g_ptr_array_new_with_free_func (g_free);
       g_ptr_array_add (args, g_strdup ("flatpak"));
       g_ptr_array_add (args, g_strdup ("build-finish"));
