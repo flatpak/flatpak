@@ -3122,6 +3122,46 @@ flatpak_complete_word (FlatpakCompletion *completion,
   g_print ("%s\n", rest);
 }
 
+static gboolean
+switch_already_in_line (FlatpakCompletion *completion,
+                        GOptionEntry      *entry)
+{
+  guint i = 0;
+  guint line_part_len = 0;
+
+  for (; i < completion->original_argc; ++i)
+    {
+      line_part_len = strlen (completion->original_argv[i]);
+      if (line_part_len > 2 &&
+          g_strcmp0 (&completion->original_argv[i][2], entry->long_name) == 0)
+        return TRUE;
+
+      if (line_part_len == 2 &&
+          completion->original_argv[i][1] == entry->short_name)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static gboolean
+should_filter_out_option_from_completion (FlatpakCompletion *completion,
+                                          GOptionEntry      *entry)
+{
+  switch (entry->arg)
+    {
+      case G_OPTION_ARG_NONE:
+      case G_OPTION_ARG_STRING:
+      case G_OPTION_ARG_INT:
+      case G_OPTION_ARG_FILENAME:
+      case G_OPTION_ARG_DOUBLE:
+      case G_OPTION_ARG_INT64:
+        return switch_already_in_line (completion, entry);
+      default:
+        return FALSE;
+    }
+}
+
 void
 flatpak_complete_options (FlatpakCompletion *completion,
                           GOptionEntry *entries)
@@ -3169,9 +3209,35 @@ flatpak_complete_options (FlatpakCompletion *completion,
             flatpak_complete_word (completion, "%s", prefix);
         }
       else
-        flatpak_complete_word (completion, "--%s ", e->long_name);
+        {
+          /* If this is just a switch, then don't add it multiple
+           * times */
+          if (!should_filter_out_option_from_completion (completion, e)) {
+            flatpak_complete_word (completion, "--%s ", e->long_name);
+          }  else {
+            flatpak_completion_debug ("switch --%s is already in line %s", e->long_name, completion->line);
+          }
+        }
+
+      /* We may end up checking switch_already_in_line twice, but this is
+       * for simplicity's sake - the alternative solution would be to
+       * continue the loop early and have to increment e. */
       if (e->short_name != 0)
-        flatpak_complete_word (completion, "-%c ", e->short_name);
+        {
+          /* This is a switch, we may not want to add it */
+          if (!e->arg_description)
+            {
+              if (!should_filter_out_option_from_completion (completion, e)) {
+                flatpak_complete_word (completion, "-%c ", e->short_name);
+              } else {
+                flatpak_completion_debug ("switch -%c is already in line %s", e->short_name, completion->line);
+              }
+            }
+          else
+            {
+              flatpak_complete_word (completion, "-%c ", e->short_name);
+            }
+        }
       e++;
     }
 }
