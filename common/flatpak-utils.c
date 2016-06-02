@@ -3122,6 +3122,46 @@ flatpak_complete_word (FlatpakCompletion *completion,
   g_print ("%s\n", rest);
 }
 
+static gboolean
+switch_already_in_line (FlatpakCompletion *completion,
+                        GOptionEntry      *entry)
+{
+  guint i = 0;
+  guint line_part_len = 0;
+
+  for (; i < completion->original_argc; ++i)
+    {
+      line_part_len = strlen (completion->original_argv[i]);
+      if (line_part_len > 2 &&
+          g_strcmp0 (&completion->original_argv[i][2], entry->long_name) == 0)
+        return TRUE;
+
+      if (line_part_len == 2 &&
+          completion->original_argv[i][1] == entry->short_name)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static gboolean
+should_filter_out_option_from_completion (FlatpakCompletion *completion,
+                                          GOptionEntry      *entry)
+{
+  switch (entry->arg)
+    {
+      case G_OPTION_ARG_NONE:
+      case G_OPTION_ARG_STRING:
+      case G_OPTION_ARG_INT:
+      case G_OPTION_ARG_FILENAME:
+      case G_OPTION_ARG_DOUBLE:
+      case G_OPTION_ARG_INT64:
+        return switch_already_in_line (completion, entry);
+      default:
+        return FALSE;
+    }
+}
+
 void
 flatpak_complete_options (FlatpakCompletion *completion,
                           GOptionEntry *entries)
@@ -3169,9 +3209,35 @@ flatpak_complete_options (FlatpakCompletion *completion,
             flatpak_complete_word (completion, "%s", prefix);
         }
       else
-        flatpak_complete_word (completion, "--%s ", e->long_name);
+        {
+          /* If this is just a switch, then don't add it multiple
+           * times */
+          if (!should_filter_out_option_from_completion (completion, e)) {
+            flatpak_complete_word (completion, "--%s ", e->long_name);
+          }  else {
+            flatpak_completion_debug ("switch --%s is already in line %s", e->long_name, completion->line);
+          }
+        }
+
+      /* We may end up checking switch_already_in_line twice, but this is
+       * for simplicity's sake - the alternative solution would be to
+       * continue the loop early and have to increment e. */
       if (e->short_name != 0)
-        flatpak_complete_word (completion, "-%c ", e->short_name);
+        {
+          /* This is a switch, we may not want to add it */
+          if (!e->arg_description)
+            {
+              if (!should_filter_out_option_from_completion (completion, e)) {
+                flatpak_complete_word (completion, "-%c ", e->short_name);
+              } else {
+                flatpak_completion_debug ("switch -%c is already in line %s", e->short_name, completion->line);
+              }
+            }
+          else
+            {
+              flatpak_complete_word (completion, "-%c ", e->short_name);
+            }
+        }
       e++;
     }
 }
@@ -3209,6 +3275,23 @@ pick_word_at (const char  *s,
     *out_word_begins_at = begin;
 
   return g_strndup (s + begin, end - begin);
+}
+
+static gboolean
+parse_completion_line_to_argv (const char        *initial_completion_line,
+                               FlatpakCompletion *completion)
+{
+  gboolean parse_result = g_shell_parse_argv (initial_completion_line,
+                                              &completion->original_argc,
+                                              &completion->original_argv,
+                                              NULL);
+
+  /* Make a shallow copy of argv, which will be our "working set" */
+  completion->argc = completion->original_argc;
+  completion->argv = g_memdup (completion->original_argv,
+                               sizeof (gchar *) * (completion->original_argc + 1));
+
+  return parse_result;
 }
 
 FlatpakCompletion *
@@ -3266,10 +3349,8 @@ flatpak_completion_new (const char *arg_line,
   flatpak_completion_debug (" cur='%s'", completion->cur);
   flatpak_completion_debug ("prev='%s'", completion->prev);
 
-  if (!g_shell_parse_argv (initial_completion_line,
-                           &completion->argc,
-                           &completion->argv,
-                           NULL))
+  if (!parse_completion_line_to_argv (initial_completion_line,
+                                      completion))
     {
       /* it's very possible the command line can't be parsed (for
        * example, missing quotes etc) - in that case, we just
@@ -3279,9 +3360,9 @@ flatpak_completion_new (const char *arg_line,
       return NULL;
     }
 
-  flatpak_completion_debug ("completion_argv:");
-  for (i = 0; i < completion->argc; i++)
-    flatpak_completion_debug (completion->argv[i]);
+  flatpak_completion_debug ("completion_argv %i:", completion->original_argc);
+  for (i = 0; i < completion->original_argc; i++)
+    flatpak_completion_debug (completion->original_argv[i]);
 
   flatpak_completion_debug ("----");
 
@@ -3294,6 +3375,7 @@ flatpak_completion_free (FlatpakCompletion *completion)
   g_free (completion->cur);
   g_free (completion->prev);
   g_free (completion->line);
-  g_strfreev (completion->argv);
+  g_free (completion->argv);
+  g_strfreev (completion->original_argv);
   g_free (completion);
 }
