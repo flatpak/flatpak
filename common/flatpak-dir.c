@@ -2987,12 +2987,34 @@ flatpak_dir_install (FlatpakDir          *self,
       g_autofree char *child_repo_path = NULL;
       FlatpakSystemHelper *system_helper;
       FlatpakHelperDeployFlags helper_flags = 0;
+      g_autofree char *url = NULL;
 
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
 
-      if (!no_pull)
+      if (!ostree_repo_remote_get_url (self->repo,
+                                       remote_name,
+                                       &url,
+                                       error))
+        return FALSE;
+
+      if (no_pull)
         {
+          /* Do nothing */
+        }
+      else if (g_str_has_prefix (url, "file:"))
+        {
+          /* In the local case we let the system-helper do all the work. That way we can trust its
+             reading from the right source, and its not doing any network i/o. */
+
+          helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
+        }
+      else
+        {
+          /* We're pulling from a remote source, we do the network mirroring pull as a
+             user and hand back the resulting data to the system-helper, that trusts us
+             due to the GPG signatures in the repo */
+
           child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
           if (child_repo == NULL)
             return FALSE;
@@ -3061,6 +3083,7 @@ flatpak_dir_update (FlatpakDir          *self,
       FlatpakSystemHelper *system_helper;
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
+      g_autofree char *url = NULL;
 
       if (checksum_or_latest != NULL)
         return flatpak_fail (error, "Can't update to a specific commit without root permissions");
@@ -3068,13 +3091,32 @@ flatpak_dir_update (FlatpakDir          *self,
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
 
+      if (!ostree_repo_remote_get_url (self->repo,
+                                       remote_name,
+                                       &url,
+                                       error))
+        return FALSE;
+
+      helper_flags = FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE;
+
       if (no_pull)
         {
           if (!ostree_repo_resolve_rev (self->repo, ref, FALSE, &latest_checksum, error))
             return FALSE;
         }
+      else if (g_str_has_prefix (url, "file:"))
+        {
+          /* In the local case we let the system-helper do all the work. That way we can trust its
+             reading from the right source, and its not doing any network i/o. */
+
+          helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
+        }
       else
         {
+          /* We're pulling from a remote source, we do the network mirroring pull as a
+             user and hand back the resulting data to the system-helper, that trusts us
+             due to the GPG signatures in the repo */
+
           child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
           if (child_repo == NULL)
             return FALSE;
@@ -3090,7 +3132,6 @@ flatpak_dir_update (FlatpakDir          *self,
           child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
         }
 
-      helper_flags = FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE;
       if (no_deploy)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY;
 

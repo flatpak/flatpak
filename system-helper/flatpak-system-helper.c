@@ -139,7 +139,9 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GFile) deploy_dir = NULL;
   gboolean is_update;
   gboolean no_deploy;
+  gboolean local_pull;
   g_autoptr(GMainContext) main_context = NULL;
+  g_autofree char *url = NULL;
 
   g_debug ("Deploy %s %u %s %s", arg_repo_path, arg_flags, arg_ref, arg_origin);
 
@@ -158,6 +160,7 @@ handle_deploy (FlatpakSystemHelper   *object,
 
   is_update = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE) != 0;
   no_deploy = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY) != 0;
+  local_pull = (arg_flags & FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL) != 0;
 
   deploy_dir = flatpak_dir_get_if_deployed (system, arg_ref,
                                             NULL, NULL);
@@ -208,6 +211,40 @@ handle_deploy (FlatpakSystemHelper   *object,
                                              (char **) arg_subpaths,
                                              NULL,
                                              NULL, &error))
+        {
+          g_main_context_pop_thread_default (main_context);
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Error pulling from repo: %s", error->message);
+          return TRUE;
+        }
+      g_main_context_pop_thread_default (main_context);
+    }
+  else if (local_pull)
+    {
+      if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (system),
+                                       arg_origin,
+                                       &url,
+                                       &error))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Error getting remote url: %s", error->message);
+          return TRUE;
+        }
+
+      if (!g_str_has_prefix (url, "file:"))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Local pull url doesn't start with file://");
+          return TRUE;
+        }
+
+      /* Work around ostree-pull spinning the default main context for the sync calls */
+      main_context = g_main_context_new ();
+      g_main_context_push_thread_default (main_context);
+
+      if (!flatpak_dir_pull (system, arg_origin, arg_ref, (char **)arg_subpaths, NULL,
+                             OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
+                             NULL, &error))
         {
           g_main_context_pop_thread_default (main_context);
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
