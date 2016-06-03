@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_without_user_xattrs
 
-echo "1..7"
+echo "1..8"
 
 setup_repo
 install_repo
@@ -128,3 +128,47 @@ run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
 echo "ok update"
+
+DIR=`mktemp -d`
+${FLATPAK} build-init ${DIR} org.test.Split org.test.Platform org.test.Platform
+
+mkdir -p ${DIR}/files/a
+echo "a" > ${DIR}/files/a/data
+mkdir -p ${DIR}/files/b
+echo "b" > ${DIR}/files/b/data
+mkdir -p ${DIR}/files/c
+echo "c" > ${DIR}/files/c/data
+mkdir -p ${DIR}/files/d
+echo "d" > ${DIR}/files/d/data
+echo "nope" > ${DIR}/files/nope
+
+${FLATPAK} build-finish --command=hello.sh ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+
+${FLATPAK} ${U} install test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir master
+
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/b/data
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/c
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/d
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nosuchdir
+
+echo "aa" > ${DIR}/files/a/data2
+rm  ${DIR}/files/a/data
+mkdir -p ${DIR}/files/e
+echo "e" > ${DIR}/files/e/data
+rm -rf  ${DIR}/files/b
+
+${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+${FLATPAK} ${U} update org.test.Split
+
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data2
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/b
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/c
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/d
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/e
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
+
+echo "ok subpaths"
