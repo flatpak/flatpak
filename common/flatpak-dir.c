@@ -2661,6 +2661,8 @@ flatpak_dir_deploy (FlatpakDir          *self,
     {
       g_autofree char *checkoutdirpath = g_file_get_path (checkoutdir);
       g_autoptr(GFile) files = g_file_get_child (checkoutdir, "files");
+      g_autoptr(GFile) root = NULL;
+      g_autofree char *commit = NULL;
       int i;
 
       if (!g_file_make_directory_with_parents (files, cancellable, error))
@@ -2668,7 +2670,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
       options.subpath = "/metadata";
 
-      access ("checkout metadata", 0);
+      if (!ostree_repo_read_commit (self->repo, checksum, &root,  &commit, cancellable, error))
+        return FALSE;
+
       if (!ostree_repo_checkout_tree_at (self->repo, &options,
                                          AT_FDCWD, checkoutdirpath,
                                          checksum,
@@ -2683,6 +2687,16 @@ flatpak_dir_deploy (FlatpakDir          *self,
           g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
           g_autofree char *dstpath = g_build_filename (checkoutdirpath, "/files", subpaths[i], NULL);
           g_autofree char *dstpath_parent = g_path_get_dirname (dstpath);
+          g_autoptr(GFile) child = NULL;
+
+          child = g_file_resolve_relative_path (root, subpath);
+
+          if (!g_file_query_exists (child, cancellable))
+            {
+              g_debug ("subpath %s not in tree", subpaths[i]);
+              continue;
+            }
+
           if (g_mkdir_with_parents (dstpath_parent, 0755))
             {
               glnx_set_error_from_errno (error);
