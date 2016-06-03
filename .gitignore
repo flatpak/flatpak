@@ -81,5 +81,6 @@ po/Makefile.in.in
 po/POTFILES
 po/Flatpak.pot
 system-helper/org.freedesktop.Flatpak.policy
-bwrap
+system-helper/org.freedesktop.Flatpak.rules
+flatpak-bwrap
 py-compile
