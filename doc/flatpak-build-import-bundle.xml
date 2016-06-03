@@ -82,6 +82,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--oci</option></term>
+
+                <listitem><para>
+                    Impport an OCI image instead of a Flatpak bundle.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--version</option></term>
 
                 <listitem><para>
