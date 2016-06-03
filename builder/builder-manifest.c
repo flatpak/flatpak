@@ -1632,8 +1632,14 @@ builder_manifest_finish (BuilderManifest *self,
 
           if (!g_file_query_exists (bin_command, NULL))
             {
+              const char *help = "";
+
+              if (strchr (self->command, ' '))
+                help = ". Use a shell wrapper for passing arguments";
+
               g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Command '%s' not found", self->command);
+                           "Command '%s' not found%s", self->command, help);
+
               return FALSE;
             }
         }
