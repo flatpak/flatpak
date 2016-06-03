@@ -954,6 +954,7 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   g_autoptr(GFile) remote_dir = NULL;
   g_autoptr(GFile) arch_dir = NULL;
   g_autoptr(GFile) checkout_dir = NULL;
+  g_autoptr(GFile) real_checkout_dir = NULL;
   g_autoptr(GFile) timestamp_file = NULL;
   g_autofree char *arch_path = NULL;
   gboolean checkout_exists;
@@ -961,13 +962,15 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   const char *old_checksum = NULL;
   g_autofree char *new_checksum = NULL;
   g_autoptr(GFile) active_link = NULL;
-  g_autoptr(GFileInfo) file_info = NULL;
   g_autofree char *branch = NULL;
-  g_autoptr(GFile) root = NULL;
   g_autoptr(GFile) old_checkout_dir = NULL;
   g_autofree char *tmpname = NULL;
   g_autoptr(GFile) active_tmp_link = NULL;
   g_autoptr(GError) tmp_error = NULL;
+  g_autofree char *checkout_dir_path = NULL;
+  OstreeRepoCheckoutOptions options = { 0, };
+  glnx_fd_close int dfd = -1;
+  g_autoptr(GFileInfo) file_info = NULL;
 
   appstream_dir = g_file_get_child (flatpak_dir_get_path (self), "appstream");
   remote_dir = g_file_get_child (appstream_dir, remote);
@@ -982,6 +985,9 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
       return FALSE;
     }
 
+  if (!glnx_opendirat (AT_FDCWD, arch_path, TRUE, &dfd, error))
+    return FALSE;
+
   old_checksum = NULL;
   file_info = g_file_query_info (active_link, OSTREE_GIO_FAST_QUERYINFO,
                                  G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
@@ -991,12 +997,11 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
 
   branch = g_strdup_printf ("appstream/%s", arch);
   remote_and_branch = g_strdup_printf ("%s:%s", remote, branch);
-
   if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
     return FALSE;
 
-  checkout_dir = g_file_get_child (arch_dir, new_checksum);
-  checkout_exists = g_file_query_exists (checkout_dir, NULL);
+  real_checkout_dir = g_file_get_child (arch_dir, new_checksum);
+  checkout_exists = g_file_query_exists (real_checkout_dir, NULL);
 
   if (old_checksum != NULL && new_checksum != NULL &&
       strcmp (old_checksum, new_checksum) == 0 &&
@@ -1008,24 +1013,29 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
 
       if (out_changed)
         *out_changed = FALSE;
+
       return TRUE; /* No changes, don't checkout */
     }
 
-  if (!ostree_repo_read_commit (self->repo, new_checksum, &root, NULL, cancellable, error))
-    return FALSE;
+  {
+    g_autofree char *template = g_strdup_printf (".%s-XXXXXX", new_checksum);
+    g_autoptr(GFile) tmp_dir_template = g_file_get_child (arch_dir, template);
+    checkout_dir_path = g_file_get_path (tmp_dir_template);
+    if (g_mkdtemp_full (checkout_dir_path, 0755) == NULL)
+      {
+        g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create deploy directory");
+        return FALSE;
+      }
+  }
+  checkout_dir = g_file_new_for_path (checkout_dir_path);
 
-  file_info = g_file_query_info (root, OSTREE_GIO_FAST_QUERYINFO,
-                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                 cancellable, error);
-  if (file_info == NULL)
-    return FALSE;
+  options.mode = OSTREE_REPO_CHECKOUT_MODE_USER;
+  options.overwrite_mode = OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES;
+  options.disable_fsync = TRUE; /* We checkout to a temp dir and sync before moving it in place */
 
-  if (!ostree_repo_checkout_tree (self->repo,
-                                  OSTREE_REPO_CHECKOUT_MODE_USER,
-                                  OSTREE_REPO_CHECKOUT_OVERWRITE_NONE,
-                                  checkout_dir,
-                                  OSTREE_REPO_FILE (root), file_info,
-                                  cancellable, error))
+  if (!ostree_repo_checkout_tree_at (self->repo, &options,
+                                     AT_FDCWD, checkout_dir_path, new_checksum,
+                                     cancellable, error))
     return FALSE;
 
   tmpname = gs_fileutil_gen_tmp_name (".active-", NULL);
@@ -1033,6 +1043,25 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
 
   if (!g_file_make_symbolic_link (active_tmp_link, new_checksum, cancellable, error))
     return FALSE;
+
+  if (syncfs (dfd) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  /* By now the checkout to the temporary directory is on disk, as is the temporary
+     symlink pointing to the final target. */
+
+  if (!g_file_move (checkout_dir, real_checkout_dir, G_FILE_COPY_NO_FALLBACK_FOR_MOVE,
+                    cancellable, NULL, NULL, error))
+    return FALSE;
+
+  if (syncfs (dfd) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
 
   if (!gs_file_rename (active_tmp_link,
                        active_link,
