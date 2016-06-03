@@ -104,6 +104,17 @@ enum {
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
 
+static GVariant *
+variant_new_ay_bytes (GBytes *bytes)
+{
+  gsize size;
+  gconstpointer data;
+  data = g_bytes_get_data (bytes, &size);
+  g_bytes_ref (bytes);
+  return g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), data, size,
+                                                      TRUE, (GDestroyNotify)g_bytes_unref, bytes));
+}
+
 static void
 flatpak_deploy_finalize (GObject *object)
 {
@@ -3112,6 +3123,33 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
   g_autofree char *remote = NULL;
   gboolean ret = FALSE;
 
+  if (flatpak_dir_use_system_helper (self))
+    {
+      FlatpakSystemHelper *system_helper;
+      g_autoptr(GVariant) gpg_data_v = NULL;
+
+      system_helper = flatpak_dir_get_system_helper (self);
+      g_assert (system_helper != NULL);
+
+      if (gpg_data != NULL)
+        gpg_data_v = variant_new_ay_bytes (gpg_data);
+      else
+        gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
+
+      if (!flatpak_system_helper_call_install_bundle_sync (system_helper,
+                                                           gs_file_get_path_cached (file),
+                                                           0, gpg_data_v,
+                                                           &ref,
+                                                           cancellable,
+                                                           error))
+        return FALSE;
+
+      if (out_ref)
+        *out_ref = g_steal_pointer (&ref);
+
+      return TRUE;
+    }
+
   metadata = flatpak_bundle_load (file, &to_checksum,
                                   &ref,
                                   &origin,
@@ -4623,17 +4661,6 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
     return FALSE;
 
   return TRUE;
-}
-
-static GVariant *
-variant_new_ay_bytes (GBytes *bytes)
-{
-  gsize size;
-  gconstpointer data;
-  data = g_bytes_get_data (bytes, &size);
-  g_bytes_ref (bytes);
-  return g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), data, size,
-                                                      TRUE, (GDestroyNotify)g_bytes_unref, bytes));
 }
 
 gboolean

@@ -387,6 +387,50 @@ handle_uninstall (FlatpakSystemHelper *object,
 }
 
 static gboolean
+handle_install_bundle (FlatpakSystemHelper   *object,
+                       GDBusMethodInvocation *invocation,
+                       const gchar           *arg_bundle_path,
+                       guint32                arg_flags,
+                       GVariant              *arg_gpg_key)
+{
+  g_autoptr(FlatpakDir) system = dir_get_system ();
+  g_autoptr(GFile) path = g_file_new_for_path (arg_bundle_path);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GBytes) gpg_data = NULL;
+  g_autofree char *ref = NULL;
+
+  g_debug ("InstallBundle %s %u %p", arg_bundle_path, arg_flags, arg_gpg_key);
+
+  if (arg_flags != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", arg_flags);
+      return TRUE;
+    }
+
+  if (!g_file_query_exists (path, NULL))
+    {
+      g_dbus_method_invocation_return_error (invocation, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                                             "Bundle %s does not exist", arg_bundle_path);
+      return TRUE;
+    }
+
+  if (g_variant_get_size (arg_gpg_key) > 0)
+    gpg_data = g_variant_get_data_as_bytes (arg_gpg_key);
+
+  if (!flatpak_dir_install_bundle (system, path, gpg_data, &ref, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror  (invocation, error);
+      return TRUE;
+    }
+
+  flatpak_system_helper_complete_install_bundle (object, invocation, ref);
+
+  return TRUE;
+}
+
+
+static gboolean
 handle_configure_remote (FlatpakSystemHelper *object,
                          GDBusMethodInvocation *invocation,
                          guint arg_flags,
@@ -572,6 +616,30 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       authorized = polkit_authorization_result_get_is_authorized (result);
     }
+  else if (g_strcmp0 (method_name, "InstallBundle") == 0)
+    {
+      const char *path;
+
+      g_variant_get_child (parameters, 0, "^ay", &path);
+
+      action = "org.freedesktop.Flatpak.install-bundle";
+
+      details = polkit_details_new ();
+      polkit_details_insert (details, "path", path);
+
+      result = polkit_authority_check_authorization_sync (authority, subject,
+                                                          action, details,
+                                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
+                                                          NULL, &error);
+      if (result == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Authorization error: %s", error->message);
+          return FALSE;
+        }
+
+      authorized = polkit_authorization_result_get_is_authorized (result);
+    }
   else if (g_strcmp0 (method_name, "Uninstall") == 0)
     {
       const char *ref;
@@ -656,6 +724,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-deploy", G_CALLBACK (handle_deploy), NULL);
   g_signal_connect (helper, "handle-deploy-appstream", G_CALLBACK (handle_deploy_appstream), NULL);
   g_signal_connect (helper, "handle-uninstall", G_CALLBACK (handle_uninstall), NULL);
+  g_signal_connect (helper, "handle-install-bundle", G_CALLBACK (handle_install_bundle), NULL);
   g_signal_connect (helper, "handle-configure-remote", G_CALLBACK (handle_configure_remote), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
