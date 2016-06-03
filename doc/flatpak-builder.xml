@@ -132,7 +132,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>command</option> (string)</term>
-                    <listitem><para>The filename or path to the main binary of the application.</para></listitem>
+                    <listitem><para>The filename or path to the main binary of the application. Note that this is really just a single file, not a commandline. If you want to pass arguments, install a shell script wrapper and use that as the command.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>build-runtime</option> (boolean)</term>
