@@ -105,39 +105,17 @@ install_bundle (FlatpakDir *dir,
                 GCancellable *cancellable,
                 GError **error)
 {
-  gboolean ret = FALSE;
-
-  g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) file = NULL;
   const char *filename;
-  g_autofree char *ref = NULL;
-  g_autofree char *origin = NULL;
-  gboolean added_remote = FALSE;
-  g_autofree char *to_checksum = NULL;
-  g_auto(GStrv) parts = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
-  g_autofree char *remote = NULL;
-  OstreeRepo *repo;
-  g_autoptr(GVariant) metadata = NULL;
-  g_autofree char *basename = NULL;
 
   if (argc < 2)
     return usage_error (context, "bundle filename must be specified", error);
 
   filename = argv[1];
 
-  repo = flatpak_dir_get_repo (dir);
-
   file = g_file_new_for_commandline_arg (filename);
 
-  metadata = flatpak_bundle_load (file, &to_checksum,
-                                  &ref,
-                                  &origin,
-                                  NULL,
-                                  &gpg_data,
-                                  error);
-  if (metadata == NULL)
-    return FALSE;
 
   if (opt_gpg_file != NULL)
     {
@@ -147,52 +125,11 @@ install_bundle (FlatpakDir *dir,
         return FALSE;
     }
 
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
+  if (!flatpak_dir_install_bundle (dir, file, gpg_data, NULL,
+                                   cancellable, error))
     return FALSE;
 
-  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
-
-  if (g_file_query_exists (deploy_base, cancellable))
-    return flatpak_fail (error, "%s branch %s already installed", parts[1], parts[3]);
-
-  /* Add a remote for later updates */
-  basename = g_file_get_basename (file);
-  remote = flatpak_dir_create_origin_remote (dir,
-                                             origin,
-                                             parts[1],
-                                             basename,
-                                             gpg_data,
-                                             cancellable,
-                                             error);
-  if (remote == NULL)
-    return FALSE;
-
-  /* From here we need to goto out on error, to clean up */
-  added_remote = TRUE;
-
-  if (!flatpak_dir_ensure_repo (dir, cancellable, error))
-    goto out;
-
-  if (!flatpak_pull_from_bundle (flatpak_dir_get_repo (dir),
-                                 file,
-                                 remote,
-                                 ref,
-                                 gpg_data != NULL,
-                                 cancellable,
-                                 error))
-    goto out;
-
-  if (!flatpak_dir_deploy_install (dir, ref, remote, NULL, cancellable, error))
-    goto out;
-
-  ret = TRUE;
-
-out:
-  if (added_remote && !ret)
-    ostree_repo_remote_delete (repo, remote, NULL, NULL);
-
-  return ret;
+  return TRUE;
 }
 
 gboolean

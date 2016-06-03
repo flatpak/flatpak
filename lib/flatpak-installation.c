@@ -982,83 +982,20 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
                                      GError                **error)
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
-  g_autofree char *ref = NULL;
-  gboolean added_remote = FALSE;
-  g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
+  g_autofree char *ref = NULL;
   FlatpakInstalledRef *result = NULL;
-  g_autoptr(GVariant) metadata = NULL;
-  g_autofree char *origin = NULL;
-  g_auto(GStrv) parts = NULL;
-  g_autofree char *basename = NULL;
-  g_autoptr(GBytes) gpg_data = NULL;
-  g_autofree char *to_checksum = NULL;
-  g_autofree char *remote = NULL;
-
-  metadata = flatpak_bundle_load (file, &to_checksum,
-                                  &ref,
-                                  &origin,
-                                  NULL,
-                                  &gpg_data,
-                                  error);
-  if (metadata == NULL)
-    return FALSE;
-
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
-    return FALSE;
-
-  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
-
-  if (g_file_query_exists (deploy_base, cancellable))
-    {
-      g_set_error (error,
-                   FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                   "%s branch %s already installed", parts[1], parts[3]);
-      return NULL;
-    }
-
-  /* Add a remote for later updates */
-  basename = g_file_get_basename (file);
-  remote = flatpak_dir_create_origin_remote (dir,
-                                             origin,
-                                             parts[1],
-                                             basename,
-                                             gpg_data,
-                                             cancellable,
-                                             error);
-  if (remote == NULL)
-    return FALSE;
-
-  /* From here we need to goto out on error, to clean up */
-  added_remote = TRUE;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
 
-  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
-    goto out;
-
-  if (!flatpak_pull_from_bundle (flatpak_dir_get_repo (dir_clone),
-                                 file,
-                                 remote,
-                                 ref,
-                                 gpg_data != NULL,
-                                 cancellable,
-                                 error))
-    goto out;
-
-  if (!flatpak_dir_deploy_install (dir_clone, ref, remote, NULL, cancellable, error))
-    goto out;
+  if (!flatpak_dir_install_bundle (dir_clone, file, NULL, &ref,
+                                   cancellable, error))
+    return NULL;
 
   result = get_ref (dir, ref, cancellable, error);
   if (result == NULL)
-    goto out;
-
-out:
-
-  if (added_remote && result == NULL)
-    ostree_repo_remote_delete (flatpak_dir_get_repo (dir), remote, NULL, NULL);
+    return NULL;
 
   return result;
 }

@@ -3091,6 +3091,95 @@ flatpak_dir_install (FlatpakDir          *self,
 }
 
 gboolean
+flatpak_dir_install_bundle (FlatpakDir          *self,
+                            GFile               *file,
+                            GBytes              *extra_gpg_data,
+                            char               **out_ref,
+                            GCancellable        *cancellable,
+                            GError             **error)
+{
+  g_autofree char *ref = NULL;
+  gboolean added_remote = FALSE;
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autofree char *origin = NULL;
+  g_auto(GStrv) parts = NULL;
+  g_autofree char *basename = NULL;
+  g_autoptr(GBytes) included_gpg_data = NULL;
+  GBytes *gpg_data = NULL;
+  g_autofree char *to_checksum = NULL;
+  g_autofree char *remote = NULL;
+  gboolean ret = FALSE;
+
+  metadata = flatpak_bundle_load (file, &to_checksum,
+                                  &ref,
+                                  &origin,
+                                  NULL,
+                                  &included_gpg_data,
+                                  error);
+  if (metadata == NULL)
+    return FALSE;
+
+  gpg_data = extra_gpg_data ? extra_gpg_data : included_gpg_data;
+
+  parts = flatpak_decompose_ref (ref, error);
+  if (parts == NULL)
+    return FALSE;
+
+  deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+  if (deploy_dir != NULL)
+    {
+      g_set_error (error,
+                   FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                   "%s branch %s already installed", parts[1], parts[3]);
+      return NULL;
+    }
+
+  /* Add a remote for later updates */
+  basename = g_file_get_basename (file);
+  remote = flatpak_dir_create_origin_remote (self,
+                                             origin,
+                                             parts[1],
+                                             basename,
+                                             gpg_data,
+                                             cancellable,
+                                             error);
+  if (remote == NULL)
+    return FALSE;
+
+  /* From here we need to goto out on error, to clean up */
+  added_remote = TRUE;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    goto out;
+
+  if (!flatpak_pull_from_bundle (self->repo,
+                                 file,
+                                 remote,
+                                 ref,
+                                 gpg_data != NULL,
+                                 cancellable,
+                                 error))
+    goto out;
+
+  if (!flatpak_dir_deploy_install (self, ref, remote, NULL, cancellable, error))
+    goto out;
+
+  if (out_ref)
+    *out_ref = g_steal_pointer (&ref);
+
+  ret = TRUE;
+
+out:
+  if (added_remote && !ret)
+    ostree_repo_remote_delete (self->repo, remote, NULL, NULL);
+
+  return ret;
+}
+
+
+gboolean
 flatpak_dir_update (FlatpakDir          *self,
                     gboolean             no_pull,
                     gboolean             no_deploy,

@@ -294,6 +294,12 @@ gboolean   flatpak_dir_install (FlatpakDir          *self,
                                 OstreeAsyncProgress *progress,
                                 GCancellable        *cancellable,
                                 GError             **error);
+gboolean flatpak_dir_install_bundle (FlatpakDir          *self,
+                                     GFile               *file,
+                                     GBytes              *extra_gpg_data,
+                                     char               **out_ref,
+                                     GCancellable        *cancellable,
+                                     GError             **error);
 gboolean   flatpak_dir_update (FlatpakDir          *self,
                                gboolean             no_pull,
                                gboolean             no_deploy,
