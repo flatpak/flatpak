@@ -92,6 +92,7 @@ test_scripts = \
 	tests/test-basic.sh \
 	tests/test-run.sh \
 	tests/test-run-system.sh \
+	tests/test-bundle.sh \
 	tests/test-builder.sh \
 	$(NULL)
 
