@@ -130,6 +130,10 @@
                     <listitem><para>The name of the development runtime that the application builds with.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>var</option> (string)</term>
+                    <listitem><para>Initialize the (otherwise empty) writable /var in the build with a copy of this runtime.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>metadata</option> (string)</term>
                     <listitem><para>Use this file as the base metadata file when finishing.</para></listitem>
                 </varlistentry>
