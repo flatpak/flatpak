@@ -48,6 +48,7 @@ struct BuilderManifest
   char           *runtime_version;
   char           *sdk;
   char           *sdk_commit;
+  char           *var;
   char           *metadata;
   char           *metadata_platform;
   gboolean        separate_locales;
@@ -93,6 +94,7 @@ enum {
   PROP_RUNTIME_VERSION,
   PROP_SDK,
   PROP_SDK_COMMIT,
+  PROP_VAR,
   PROP_METADATA,
   PROP_METADATA_PLATFORM,
   PROP_BUILD_OPTIONS,
@@ -130,6 +132,7 @@ builder_manifest_finalize (GObject *object)
   g_free (self->runtime_version);
   g_free (self->sdk);
   g_free (self->sdk_commit);
+  g_free (self->var);
   g_free (self->metadata);
   g_free (self->metadata_platform);
   g_free (self->command);
@@ -223,6 +226,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_SDK_COMMIT:
       g_value_set_string (value, self->sdk_commit);
+      break;
+
+    case PROP_VAR:
+      g_value_set_string (value, self->var);
       break;
 
     case PROP_METADATA:
@@ -367,6 +374,11 @@ builder_manifest_set_property (GObject      *object,
     case PROP_SDK_COMMIT:
       g_free (self->sdk_commit);
       self->sdk_commit = g_value_dup_string (value);
+      break;
+
+    case PROP_VAR:
+      g_free (self->var);
+      self->var = g_value_dup_string (value);
       break;
 
     case PROP_METADATA:
@@ -547,6 +559,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_SDK_COMMIT,
                                    g_param_spec_string ("sdk-commit",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_VAR,
+                                   g_param_spec_string ("var",
                                                         "",
                                                         "",
                                                         NULL,
@@ -926,6 +945,7 @@ builder_manifest_init_app_dir (BuilderManifest *self,
 
   g_autoptr(GSubprocess) subp = NULL;
   g_autoptr(GPtrArray) args = NULL;
+  g_autofree char *commandline = NULL;
   int i;
 
   g_print ("Initializing build dir\n");
@@ -970,6 +990,8 @@ builder_manifest_init_app_dir (BuilderManifest *self,
       for (i = 0; self->tags[i] != NULL; i++)
         g_ptr_array_add (args, g_strdup_printf ("--tag=%s", self->tags[i]));
     }
+  if (self->var)
+    g_ptr_array_add (args, g_strdup_printf ("--var=%s", self->var));
   g_ptr_array_add (args, g_strdup_printf ("--arch=%s", builder_context_get_arch (context)));
   g_ptr_array_add (args, g_file_get_path (app_dir));
   g_ptr_array_add (args, g_strdup (self->id));
@@ -977,6 +999,9 @@ builder_manifest_init_app_dir (BuilderManifest *self,
   g_ptr_array_add (args, g_strdup (self->runtime));
   g_ptr_array_add (args, g_strdup (builder_manifest_get_runtime_version (self)));
   g_ptr_array_add (args, NULL);
+
+  commandline = g_strjoinv (" ", (char **) args->pdata);
+  g_print ("Running: %s\n", commandline);
 
   subp =
     g_subprocess_newv ((const gchar * const *) args->pdata,
@@ -1013,6 +1038,7 @@ builder_manifest_checksum (BuilderManifest *self,
   builder_cache_checksum_str (cache, builder_manifest_get_runtime_version (self));
   builder_cache_checksum_str (cache, self->sdk);
   builder_cache_checksum_str (cache, self->sdk_commit);
+  builder_cache_checksum_str (cache, self->var);
   builder_cache_checksum_str (cache, self->metadata);
   builder_cache_checksum_strv (cache, self->tags);
   builder_cache_checksum_boolean (cache, self->writable_sdk);
@@ -1828,6 +1854,7 @@ builder_manifest_create_platform (BuilderManifest *self,
                                   GError         **error)
 {
   GFile *app_dir = builder_context_get_app_dir (context);
+  g_autofree char *commandline = NULL;
 
   g_autoptr(GFile) locale_dir = NULL;
   int i;
@@ -1872,6 +1899,9 @@ builder_manifest_create_platform (BuilderManifest *self,
       g_ptr_array_add (args, g_strdup (builder_manifest_get_runtime_version (self)));
 
       g_ptr_array_add (args, NULL);
+
+      commandline = g_strjoinv (" ", (char **) args->pdata);
+      g_print ("Running: %s\n", commandline);
 
       subp =
         g_subprocess_newv ((const gchar * const *) args->pdata,
