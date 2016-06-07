@@ -147,6 +147,12 @@ ${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
 
 ${FLATPAK} ${U} install test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir master
 
+COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
+if [ x${USE_SYSTEMDIR-} != xyes ] ; then
+    # Work around bug in ostree: local pulls don't do commitpartials
+    assert_has_file $FL_DIR/repo/state/${COMMIT}.commitpartial
+fi
+
 assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data
 assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/b/data
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/c
@@ -158,17 +164,48 @@ echo "aa" > ${DIR}/files/a/data2
 rm  ${DIR}/files/a/data
 mkdir -p ${DIR}/files/e
 echo "e" > ${DIR}/files/e/data
+mkdir -p ${DIR}/files/f
+echo "f" > ${DIR}/files/f/data
 rm -rf  ${DIR}/files/b
 
 ${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
-${FLATPAK} ${U} update org.test.Split
+
+${FLATPAK} ${U} update --subpath=/a --subpath=/b --subpath=/e --subpath=/nosuchdir org.test.Split
+
+COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
+if [ x${USE_SYSTEMDIR-} != xyes ] ; then
+    # Work around bug in ostree: local pulls don't do commitpartials
+    assert_has_file $FL_DIR/repo/state/${COMMIT}.commitpartial
+fi
 
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data
 assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data2
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/b
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/c
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/d
-assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/e
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/e/data
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/f
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
+
+${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+
+# Test reusing the old subpath list
+${FLATPAK} ${U} update org.test.Split
+
+COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Split`
+if [ x${USE_SYSTEMDIR-} != xyes ] ; then
+    # Work around bug in ostree: local pulls don't do commitpartials
+    assert_has_file $FL_DIR/repo/state/${COMMIT}.commitpartial
+fi
+
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/a/data2
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/b
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/c
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/d
+assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/e/data
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/f
+assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
+
 
 echo "ok subpaths"
