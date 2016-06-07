@@ -1119,7 +1119,6 @@ flatpak_installation_update (FlatpakInstallation    *self,
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autofree char *remote_name = NULL;
   FlatpakInstalledRef *result = NULL;
-  g_auto(GStrv) subpaths = NULL;
 
   ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
@@ -1138,10 +1137,6 @@ flatpak_installation_update (FlatpakInstallation    *self,
   if (remote_name == NULL)
     return NULL;
 
-  subpaths = flatpak_dir_get_subpaths (dir, ref, cancellable, error);
-  if (subpaths == NULL)
-    return FALSE;
-
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
 
@@ -1159,7 +1154,7 @@ flatpak_installation_update (FlatpakInstallation    *self,
   if (!flatpak_dir_update (dir_clone,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0,
-                           ref, remote_name, NULL, subpaths,
+                           ref, remote_name, NULL, NULL,
                            ostree_progress, cancellable, error))
     goto out;
 

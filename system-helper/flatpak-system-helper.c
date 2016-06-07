@@ -208,7 +208,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
                                              arg_origin,
                                              arg_ref,
-                                             (char **) arg_subpaths,
+                                             (const char **) arg_subpaths,
                                              NULL,
                                              NULL, &error))
         {
@@ -242,7 +242,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       main_context = g_main_context_new ();
       g_main_context_push_thread_default (main_context);
 
-      if (!flatpak_dir_pull (system, arg_origin, arg_ref, (char **)arg_subpaths, NULL,
+      if (!flatpak_dir_pull (system, arg_origin, arg_ref, (const char **)arg_subpaths, NULL,
                              OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
                              NULL, &error))
         {
@@ -258,9 +258,8 @@ handle_deploy (FlatpakSystemHelper   *object,
     {
       if (is_update)
         {
-          /* TODO: This doesn't support a custom subpath */
           if (!flatpak_dir_deploy_update (system, arg_ref,
-                                          NULL, NULL, &error))
+                                          NULL, (const char **)arg_subpaths, NULL, &error))
             {
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
                                                      "Error deploying: %s", error->message);
@@ -270,7 +269,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       else
         {
           if (!flatpak_dir_deploy_install (system, arg_ref, arg_origin,
-                                           (char **) arg_subpaths,
+                                           (const char **) arg_subpaths,
                                            NULL, &error))
             {
               g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,

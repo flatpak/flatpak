@@ -181,7 +181,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (!flatpak_dir_install (dir,
                             opt_no_pull,
                             opt_no_deploy,
-                            ref, repository, opt_subpaths,
+                            ref, repository, (const char **)opt_subpaths,
                             NULL,
                             cancellable, error))
     return FALSE;

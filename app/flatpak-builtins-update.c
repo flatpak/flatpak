@@ -73,7 +73,6 @@ do_update (FlatpakDir  * dir,
            GError      **error)
 {
   g_autofree char *repository = NULL;
-  g_auto(GStrv) subpaths = NULL;
 
   repository = flatpak_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
@@ -82,14 +81,10 @@ do_update (FlatpakDir  * dir,
   if (flatpak_dir_get_remote_disabled (dir, repository))
     g_print ("Not updating %s due to disabled remote %s\n", ref, repository);
 
-  subpaths = flatpak_dir_get_subpaths (dir, ref, cancellable, error);
-  if (subpaths == NULL)
-    return FALSE;
-
   if (!flatpak_dir_update (dir,
                            opt_no_pull,
                            opt_no_deploy,
-                           ref, repository, opt_commit, opt_subpaths,
+                           ref, repository, opt_commit, (const char **)opt_subpaths,
                            NULL,
                            cancellable, error))
     return FALSE;

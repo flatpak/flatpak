@@ -1235,7 +1235,7 @@ gboolean
 flatpak_dir_pull (FlatpakDir          *self,
                   const char          *repository,
                   const char          *ref,
-                  char               **subpaths,
+                  const char         **subpaths,
                   OstreeRepo          *repo,
                   OstreeRepoPullFlags  flags,
                   OstreeAsyncProgress *progress,
@@ -1384,7 +1384,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                   const char          *src_path,
                                   const char          *remote_name,
                                   const char          *ref,
-                                  char               **subpaths,
+                                  const char         **subpaths,
                                   OstreeAsyncProgress *progress,
                                   GCancellable        *cancellable,
                                   GError             **error)
@@ -2818,7 +2818,7 @@ gboolean
 flatpak_dir_deploy_install (FlatpakDir   *self,
                             const char   *ref,
                             const char   *origin,
-                            char        **subpaths,
+                            const char  **subpaths,
                             GCancellable *cancellable,
                             GError      **error)
 {
@@ -2892,6 +2892,7 @@ gboolean
 flatpak_dir_deploy_update (FlatpakDir   *self,
                            const char   *ref,
                            const char   *checksum_or_latest,
+                           const char **opt_subpaths,
                            GCancellable *cancellable,
                            GError      **error)
 {
@@ -2918,7 +2919,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            old_origin,
                            ref,
                            checksum_or_latest,
-                           old_subpaths,
+                           opt_subpaths ? opt_subpaths : old_subpaths,
                            old_deploy_data,
                            cancellable, &my_error))
     {
@@ -3027,7 +3028,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_deploy,
                      const char          *ref,
                      const char          *remote_name,
-                     char               **subpaths,
+                     const char         **opt_subpaths,
                      OstreeAsyncProgress *progress,
                      GCancellable        *cancellable,
                      GError             **error)
@@ -3036,7 +3037,8 @@ flatpak_dir_install (FlatpakDir          *self,
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
-      char *empty_subpaths[] = {NULL};
+      const char *empty_subpaths[] = {NULL};
+      const char **subpaths;
       g_autofree char *child_repo_path = NULL;
       FlatpakSystemHelper *system_helper;
       FlatpakHelperDeployFlags helper_flags = 0;
@@ -3044,6 +3046,11 @@ flatpak_dir_install (FlatpakDir          *self,
 
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
+
+      if (opt_subpaths)
+        subpaths = opt_subpaths;
+      else
+        subpaths = empty_subpaths;
 
       if (!ostree_repo_remote_get_url (self->repo,
                                        remote_name,
@@ -3086,7 +3093,7 @@ flatpak_dir_install (FlatpakDir          *self,
       if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                    child_repo_path ? child_repo_path : "",
                                                    helper_flags, ref, remote_name,
-                                                   (const char * const *) (subpaths ? subpaths : empty_subpaths),
+                                                   (const char * const *) subpaths,
                                                    cancellable,
                                                    error))
         return FALSE;
@@ -3099,14 +3106,14 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, remote_name, ref, subpaths, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
+      if (!flatpak_dir_pull (self, remote_name, ref, opt_subpaths, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                              cancellable, error))
         return FALSE;
     }
 
   if (!no_deploy)
     {
-      if (!flatpak_dir_deploy_install (self, ref, remote_name, subpaths,
+      if (!flatpak_dir_deploy_install (self, ref, remote_name, opt_subpaths,
                                        cancellable, error))
         return FALSE;
     }
@@ -3237,16 +3244,37 @@ flatpak_dir_update (FlatpakDir          *self,
                     const char          *ref,
                     const char          *remote_name,
                     const char          *checksum_or_latest,
-                    char               **subpaths,
+                    const char         **opt_subpaths,
                     OstreeAsyncProgress *progress,
                     GCancellable        *cancellable,
                     GError             **error)
 {
+  g_autoptr(GVariant) deploy_data = NULL;
+  g_autofree const char **old_subpaths = NULL;
+  const char *empty_subpaths[] = {NULL};
+  const char **subpaths;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, ref,
+                                             cancellable, NULL);
+
+  if (opt_subpaths)
+    {
+      subpaths = opt_subpaths;
+    }
+  else if (deploy_data != NULL)
+    {
+      old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+      subpaths = old_subpaths;
+    }
+  else
+    {
+      subpaths = empty_subpaths;
+    }
+
   if (flatpak_dir_use_system_helper (self))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
-      char *empty_subpaths[] = {NULL};
       g_autofree char *latest_checksum = NULL;
       g_autofree char *active_checksum = NULL;
       FlatpakSystemHelper *system_helper;
@@ -3310,7 +3338,7 @@ flatpak_dir_update (FlatpakDir          *self,
           if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                        child_repo_path ? child_repo_path : "",
                                                        helper_flags, ref, remote_name,
-                                                       (const char * const *) empty_subpaths,
+                                                       subpaths,
                                                        cancellable,
                                                        error))
             return FALSE;
@@ -3322,7 +3350,6 @@ flatpak_dir_update (FlatpakDir          *self,
       return TRUE;
     }
 
-
   if (!no_pull)
     {
       if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
@@ -3333,7 +3360,7 @@ flatpak_dir_update (FlatpakDir          *self,
 
   if (!no_deploy)
     {
-      if (!flatpak_dir_deploy_update (self, ref, checksum_or_latest,
+      if (!flatpak_dir_deploy_update (self, ref, checksum_or_latest, subpaths,
                                       cancellable, error))
         return FALSE;
     }
@@ -3819,7 +3846,6 @@ flatpak_dir_cleanup_removed (FlatpakDir   *self,
 out:
   return ret;
 }
-
 
 gboolean
 flatpak_dir_prune (FlatpakDir   *self,
