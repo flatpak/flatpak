@@ -2946,8 +2946,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   /* Release lock before doing possibly slow prune */
   glnx_release_lock_file (&lock);
 
-  if (!flatpak_dir_prune (self, cancellable, error))
-    return FALSE;
+  flatpak_dir_prune (self, cancellable, NULL);
 
   if (!flatpak_dir_mark_changed (self, error))
     return FALSE;
@@ -3427,9 +3426,8 @@ flatpak_dir_uninstall (FlatpakDir          *self,
       flatpak_dir_get_remote_noenumerate (self, repository))
     ostree_repo_remote_delete (self->repo, repository, NULL, NULL);
 
-  if (!keep_ref &&
-      !flatpak_dir_prune (self, cancellable, error))
-    return FALSE;
+  if (!keep_ref)
+    flatpak_dir_prune (self, cancellable, NULL);
 
   flatpak_dir_cleanup_removed (self, cancellable, NULL);
 
@@ -3832,6 +3830,10 @@ flatpak_dir_prune (FlatpakDir   *self,
   gint objects_total, objects_pruned;
   guint64 pruned_object_size_total;
   g_autofree char *formatted_freed_size = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (error == NULL)
+    error = &local_error;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -3849,7 +3851,14 @@ flatpak_dir_prune (FlatpakDir   *self,
   g_debug ("Pruned %d/%d objects, size %s", objects_total, objects_pruned, formatted_freed_size);
 
   ret = TRUE;
-out:
+
+ out:
+
+  /* There was an issue in ostree where for local pulls we don't get a .commitpartial (now fixed),
+     which caused errors when pruning. We print these here, but don't stop processing. */
+  if (local_error != NULL)
+    g_print ("Pruning repo failed: %s", local_error->message);
+
   return ret;
 
 }
