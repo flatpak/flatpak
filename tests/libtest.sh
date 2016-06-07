@@ -167,7 +167,9 @@ export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
 setup_repo () {
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh > /dev/null
-    flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo repo
+    ostree trivial-httpd --autoexit --daemonize -p httpd-port .
+    port=$(cat httpd-port)
+    flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/repo"
 }
 
 make_updated_app () {
