@@ -119,7 +119,7 @@ AC_ARG_ENABLE([system-helper],
                              [Disable system helper]),
               [],
               [enable_system_helper=yes])
-if test "xenable_system_helper" = "xyes"; then
+if test "x$enable_system_helper" = "xyes"; then
   PKG_CHECK_MODULES(POLKIT, \
   		    polkit-gobject-1 >= $POLKIT_GOBJECT_REQUIRED)
 fi
