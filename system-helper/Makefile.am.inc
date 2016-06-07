@@ -1,3 +1,5 @@
+if BUILD_SYSTEM_HELPER
+
 libexec_PROGRAMS += \
 	flatpak-system-helper \
 	$(NULL)
@@ -35,3 +37,5 @@ polkit_policy_DATA =					\
 
 EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf system-helper/org.freedesktop.Flatpak.rules.in
 DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy system-helper/org.freedesktop.Flatpak.rules system-helper/flatpak-system-helper.service system-helper/org.freedesktop.Flatpak.SystemHelper.service
+
+endif

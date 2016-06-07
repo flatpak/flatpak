@@ -114,8 +114,16 @@ POLKIT_GOBJECT_REQUIRED=0.98
 PKG_CHECK_MODULES(BASE, [glib-2.0 gio-2.0 gio-unix-2.0])
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
 
-PKG_CHECK_MODULES(POLKIT, \
-		  polkit-gobject-1 >= $POLKIT_GOBJECT_REQUIRED)
+AC_ARG_ENABLE([system-helper],
+              AC_HELP_STRING([--disable-system-helper],
+                             [Disable system helper]),
+              [],
+              [enable_system_helper=yes])
+if test "xenable_system_helper" = "xyes"; then
+  PKG_CHECK_MODULES(POLKIT, \
+  		    polkit-gobject-1 >= $POLKIT_GOBJECT_REQUIRED)
+fi
+AM_CONDITIONAL(BUILD_SYSTEM_HELPER, test x$enable_system_helper = xyes)
 
 AC_ARG_ENABLE([xauth],
               AC_HELP_STRING([--disable-xauth],
