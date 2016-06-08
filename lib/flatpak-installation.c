@@ -1001,13 +1001,15 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
 }
 
 /**
- * flatpak_installation_install:
+ * flatpak_installation_install_full:
  * @self: a #FlatpakInstallation
+ * @flags: set of #FlatpakInstallFlags flag
  * @remote_name: name of the remote to use
  * @kind: what this ref contains (an #FlatpakRefKind)
  * @name: name of the app/runtime to fetch
  * @arch: (nullable): which architecture to fetch (default: current architecture)
  * @branch: (nullable): which branch to fetch (default: 'master')
+ * @subpaths: (nullable): A list of subpaths to fetch, or %NULL for everything
  * @progress: (scope call): progress callback
  * @progress_data: user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
@@ -1018,16 +1020,18 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
 FlatpakInstalledRef *
-flatpak_installation_install (FlatpakInstallation    *self,
-                              const char             *remote_name,
-                              FlatpakRefKind          kind,
-                              const char             *name,
-                              const char             *arch,
-                              const char             *branch,
-                              FlatpakProgressCallback progress,
-                              gpointer                progress_data,
-                              GCancellable           *cancellable,
-                              GError                **error)
+flatpak_installation_install_full (FlatpakInstallation    *self,
+                                   FlatpakInstallFlags     flags,
+                                   const char             *remote_name,
+                                   FlatpakRefKind          kind,
+                                   const char             *name,
+                                   const char             *arch,
+                                   const char             *branch,
+                                   const char * const     *subpaths,
+                                   FlatpakProgressCallback progress,
+                                   gpointer                progress_data,
+                                   GCancellable           *cancellable,
+                                   GError                **error)
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *ref = NULL;
@@ -1064,7 +1068,7 @@ flatpak_installation_install (FlatpakInstallation    *self,
       g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER (0));
     }
 
-  if (!flatpak_dir_install (dir_clone, FALSE, FALSE, ref, remote_name, NULL,
+  if (!flatpak_dir_install (dir_clone, FALSE, FALSE, ref, remote_name, (const char **)subpaths,
                             ostree_progress, cancellable, error))
     goto out;
 
@@ -1083,13 +1087,49 @@ out:
 }
 
 /**
- * flatpak_installation_update:
+ * flatpak_installation_install:
  * @self: a #FlatpakInstallation
- * @flags: an #FlatpakUpdateFlags variable
+ * @remote_name: name of the remote to use
+ * @kind: what this ref contains (an #FlatpakRefKind)
+ * @name: name of the app/runtime to fetch
+ * @arch: (nullable): which architecture to fetch (default: current architecture)
+ * @branch: (nullable): which branch to fetch (default: 'master')
+ * @progress: (scope call): progress callback
+ * @progress_data: user data passed to @progress
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Install a new application or runtime.
+ *
+ * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
+ */
+FlatpakInstalledRef *
+flatpak_installation_install (FlatpakInstallation    *self,
+                              const char             *remote_name,
+                              FlatpakRefKind          kind,
+                              const char             *name,
+                              const char             *arch,
+                              const char             *branch,
+                              FlatpakProgressCallback progress,
+                              gpointer                progress_data,
+                              GCancellable           *cancellable,
+                              GError                **error)
+{
+  return flatpak_installation_install_full (self, FLATPAK_INSTALL_FLAGS_NONE,
+                                            remote_name, kind, name, arch, branch,
+                                            NULL, progress, progress_data,
+                                            cancellable, error);
+}
+
+/**
+ * flatpak_installation_update_full:
+ * @self: a #FlatpakInstallation
+ * @flags: set of #FlatpakUpdateFlags flag
  * @kind: whether this is an app or runtime
  * @name: name of the app or runtime to update
  * @arch: (nullable): architecture of the app or runtime to update (default: current architecture)
  * @branch: (nullable): name of the branch of the app or runtime to update (default: master)
+ * @subpaths: (nullable): A list of subpaths to fetch, or %NULL for everything
  * @progress: (scope call): the callback
  * @progress_data: user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
@@ -1100,16 +1140,17 @@ out:
  * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %NULL on failure
  */
 FlatpakInstalledRef *
-flatpak_installation_update (FlatpakInstallation    *self,
-                             FlatpakUpdateFlags      flags,
-                             FlatpakRefKind          kind,
-                             const char             *name,
-                             const char             *arch,
-                             const char             *branch,
-                             FlatpakProgressCallback progress,
-                             gpointer                progress_data,
-                             GCancellable           *cancellable,
-                             GError                **error)
+flatpak_installation_update_full (FlatpakInstallation    *self,
+                                  FlatpakUpdateFlags      flags,
+                                  FlatpakRefKind          kind,
+                                  const char             *name,
+                                  const char             *arch,
+                                  const char             *branch,
+                                  const char * const     *subpaths,
+                                  FlatpakProgressCallback progress,
+                                  gpointer                progress_data,
+                                  GCancellable           *cancellable,
+                                  GError                **error)
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *ref = NULL;
@@ -1170,6 +1211,40 @@ out:
     ostree_async_progress_finish (ostree_progress);
 
   return result;
+}
+
+/**
+ * flatpak_installation_update:
+ * @self: a #FlatpakInstallation
+ * @flags: set of #FlatpakUpdateFlags flag
+ * @kind: whether this is an app or runtime
+ * @name: name of the app or runtime to update
+ * @arch: (nullable): architecture of the app or runtime to update (default: current architecture)
+ * @branch: (nullable): name of the branch of the app or runtime to update (default: master)
+ * @progress: (scope call): the callback
+ * @progress_data: user data passed to @progress
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Update an application or runtime.
+ *
+ * Returns: (transfer full): The ref for the newly updated app (or the same if no update) or %NULL on failure
+ */
+FlatpakInstalledRef *
+flatpak_installation_update (FlatpakInstallation    *self,
+                             FlatpakUpdateFlags      flags,
+                             FlatpakRefKind          kind,
+                             const char             *name,
+                             const char             *arch,
+                             const char             *branch,
+                             FlatpakProgressCallback progress,
+                             gpointer                progress_data,
+                             GCancellable           *cancellable,
+                             GError                **error)
+{
+  return flatpak_installation_update_full (self, flags, kind, name, arch,
+                                           branch, NULL, progress, progress_data,
+                                           cancellable, error);
 }
 
 /**

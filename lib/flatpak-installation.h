@@ -61,6 +61,16 @@ typedef enum {
   FLATPAK_UPDATE_FLAGS_NO_PULL   = (1 << 1),
 } FlatpakUpdateFlags;
 
+/**
+ * FlatpakInstallFlags:
+ * @FLATPAK_INSTALL_FLAGS_NONE: Default
+ *
+ * Flags to alter the behavior of flatpak_installation_install_full().
+ */
+typedef enum {
+  FLATPAK_INSTALL_FLAGS_NONE      = 0,
+} FlatpakInstallFlags;
+
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakInstallation, g_object_unref)
@@ -160,6 +170,18 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install (FlatpakInstal
                                                                    gpointer                progress_data,
                                                                    GCancellable           *cancellable,
                                                                    GError                **error);
+FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install_full (FlatpakInstallation    *self,
+                                                                        FlatpakInstallFlags     flags,
+                                                                        const char             *remote_name,
+                                                                        FlatpakRefKind          kind,
+                                                                        const char             *name,
+                                                                        const char             *arch,
+                                                                        const char             *branch,
+                                                                        const char * const     *subpaths,
+                                                                        FlatpakProgressCallback progress,
+                                                                        gpointer                progress_data,
+                                                                        GCancellable           *cancellable,
+                                                                        GError                **error);
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update (FlatpakInstallation    *self,
                                                                   FlatpakUpdateFlags      flags,
                                                                   FlatpakRefKind          kind,
@@ -170,6 +192,17 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update (FlatpakInstall
                                                                   gpointer                progress_data,
                                                                   GCancellable           *cancellable,
                                                                   GError                **error);
+FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_update_full (FlatpakInstallation    *self,
+                                                                       FlatpakUpdateFlags      flags,
+                                                                       FlatpakRefKind          kind,
+                                                                       const char             *name,
+                                                                       const char             *arch,
+                                                                       const char             *branch,
+                                                                       const char * const     *subpaths,
+                                                                       FlatpakProgressCallback progress,
+                                                                       gpointer                progress_data,
+                                                                       GCancellable           *cancellable,
+                                                                       GError                **error);
 FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install_bundle (FlatpakInstallation    *self,
                                                                           GFile                  *file,
                                                                           FlatpakProgressCallback progress,
