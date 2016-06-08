@@ -3052,6 +3052,9 @@ flatpak_dir_install (FlatpakDir          *self,
       else
         subpaths = empty_subpaths;
 
+      if (!flatpak_dir_ensure_repo (self, cancellable, error))
+        return FALSE;
+
       if (!ostree_repo_remote_get_url (self->repo,
                                        remote_name,
                                        &url,
@@ -3287,6 +3290,9 @@ flatpak_dir_update (FlatpakDir          *self,
 
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
+
+      if (!flatpak_dir_ensure_repo (self, cancellable, error))
+        return FALSE;
 
       if (!ostree_repo_remote_get_url (self->repo,
                                        remote_name,
