@@ -1461,6 +1461,60 @@ out:
 }
 
 gboolean
+flatpak_zero_mtime (int parent_dfd,
+                    const char *rel_path,
+                    GCancellable  *cancellable,
+                    GError       **error)
+{
+  struct stat stbuf;
+
+  if (TEMP_FAILURE_RETRY (fstatat (parent_dfd, rel_path, &stbuf, AT_SYMLINK_NOFOLLOW)) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  if (S_ISDIR (stbuf.st_mode))
+    {
+      g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
+
+      glnx_dirfd_iterator_init_at (parent_dfd, rel_path, FALSE, &dfd_iter, NULL);
+
+      while (TRUE)
+        {
+          struct dirent *dent;
+
+          if (!glnx_dirfd_iterator_next_dent (&dfd_iter, &dent, NULL, NULL) || dent == NULL)
+            break;
+
+          if (!flatpak_zero_mtime (dfd_iter.fd, dent->d_name,
+                                   cancellable, error))
+            return FALSE;
+        }
+
+      /* Update stbuf */
+      if (TEMP_FAILURE_RETRY (fstat (dfd_iter.fd, &stbuf)) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+    }
+
+  if (stbuf.st_mtime != 0)
+    {
+      const struct timespec times[2] = { { 0, UTIME_OMIT }, { 0, } };
+
+      if (TEMP_FAILURE_RETRY (utimensat (parent_dfd, rel_path, times, AT_SYMLINK_NOFOLLOW)) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
+gboolean
 flatpak_variant_save (GFile        *dest,
                       GVariant     *variant,
                       GCancellable *cancellable,

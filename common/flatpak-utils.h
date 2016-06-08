@@ -257,6 +257,10 @@ gboolean   flatpak_cp_a (GFile         *src,
                          GCancellable  *cancellable,
                          GError       **error);
 
+gboolean flatpak_zero_mtime (int parent_dfd,
+                             const char *rel_path,
+                             GCancellable  *cancellable,
+                             GError       **error);
 
 #define flatpak_autorm_rf _GLIB_CLEANUP (g_autoptr_cleanup_generic_gfree)
 
