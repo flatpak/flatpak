@@ -1031,23 +1031,23 @@ flatpak_installation_install (FlatpakInstallation    *self,
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *ref = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   FlatpakInstalledRef *result = NULL;
+  g_autoptr(GFile) deploy_dir = NULL;
 
   ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
     return NULL;
 
-  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
-  if (g_file_query_exists (deploy_base, cancellable))
+  deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
+  if (deploy_dir != NULL)
     {
       g_set_error (error,
                    FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                    "%s branch %s already installed", name, branch ? branch : "master");
-      goto out;
+      return NULL;
     }
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
@@ -1113,7 +1113,7 @@ flatpak_installation_update (FlatpakInstallation    *self,
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autofree char *ref = NULL;
-  g_autoptr(GFile) deploy_base = NULL;
+  g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
@@ -1124,8 +1124,8 @@ flatpak_installation_update (FlatpakInstallation    *self,
   if (ref == NULL)
     return NULL;
 
-  deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
-  if (!g_file_query_exists (deploy_base, cancellable))
+  deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
+  if (deploy_dir != NULL)
     {
       g_set_error (error,
                    FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
