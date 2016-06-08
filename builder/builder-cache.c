@@ -412,6 +412,12 @@ builder_cache_commit (BuilderCache *self,
 
   g_print ("Committing stage %s to cache\n", self->stage);
 
+  /* We zero all mtimes during a commit, to simulate what would happen when
+     running via flatpak deploy (and also if we checked out from the cache). */
+  if (!flatpak_zero_mtime (AT_FDCWD, gs_file_get_path_cached (self->app_dir),
+                           NULL, NULL))
+    return FALSE;
+
   if (!ostree_repo_prepare_transaction (self->repo, NULL, NULL, error))
     return FALSE;
 
