@@ -317,6 +317,10 @@
                     <listitem><para>Don't call make with arguments to build in parallel</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>no-python-timestamp-fix</option> (boolean)</term>
+                    <listitem><para>Don't fix up the *.py[oc] header timestamps for ostree use.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>cmake</option> (boolean)</term>
                     <listitem><para>Use cmake instead of configure</para></listitem>
                 </varlistentry>
