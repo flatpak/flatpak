@@ -300,6 +300,13 @@ builder_cache_checkout (BuilderCache *self, const char *commit)
                                   NULL, NULL))
     return FALSE;
 
+  /* There is a bug in ostree (https://github.com/ostreedev/ostree/issues/326) that
+     causes it to not reset mtime to zero in this case (mismatching modes). So
+     we do that manually */
+  if (!flatpak_zero_mtime (AT_FDCWD, gs_file_get_path_cached (self->app_dir),
+                           NULL, NULL))
+    return FALSE;
+
   return TRUE;
 }
 
