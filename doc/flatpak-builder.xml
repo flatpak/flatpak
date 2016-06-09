@@ -176,8 +176,9 @@
                     <listitem><para>Object specifying the build environment. See below for details.</para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>modules</option> (array of objects)</term>
+                    <term><option>modules</option> (array of objects or string)</term>
                     <listitem><para>An array of object specifying the modules to be built in order.
+                    String members in the array are interpreted as the name of a separate json file that contains a module.
                     See below for details.</para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -277,6 +278,9 @@
                 the build options and a list of sources to download and extract before building.
             </para>
             <para>
+                Modules can be nested, in order to turn related modules on and off with a single key.
+            </para>
+            <para>
                 These are the properties that are accepted:
             </para>
             <variablelist>
@@ -352,6 +356,11 @@
                 <varlistentry>
                     <term><option>cleanup-platform</option> (array of strings)</term>
                     <listitem><para>Extra files to clean up in the platform.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>modules</option> (array of objects or strings)</term>
+                    <listitem><para>An array of object specifying nested modules to be built before this one.
+                    String members in the array are interpreted as names of a separate json file that contains a module.</para></listitem>
                 </varlistentry>
             </variablelist>
         </refsect2>
