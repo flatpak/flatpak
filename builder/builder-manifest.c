@@ -150,26 +150,27 @@ builder_manifest_finalize (GObject *object)
   G_OBJECT_CLASS (builder_manifest_parent_class)->finalize (object);
 }
 
-static GList *
-expand_modules (GList *modules)
+static gboolean
+expand_modules (GList *modules, GList **expanded, GError **error)
 {
   GList *l;
-  GList *expanded = NULL;
 
   for (l = modules; l; l = l->next)
     {
       BuilderModule *m = l->data;
-      GList *submodules;
+      GList *submodules = NULL;
 
       if (builder_module_get_disabled (m))
         continue;
 
-      submodules = expand_modules (builder_module_get_modules (m));
-      expanded = g_list_concat (expanded, submodules);
-      expanded = g_list_append (expanded, m);
+      if (!expand_modules (builder_module_get_modules (m),  &submodules, error))
+        return FALSE;
+
+      *expanded = g_list_concat (*expanded, submodules);
+      *expanded = g_list_append (*expanded, m);
     }
 
-  return expanded;
+  return TRUE;
 }
 
 static void
@@ -381,8 +382,6 @@ builder_manifest_set_property (GObject      *object,
       g_list_free_full (self->modules, g_object_unref);
       /* NOTE: This takes ownership of the list! */
       self->modules = g_value_get_pointer (value);
-      g_list_free (self->expanded_modules);
-      self->expanded_modules = expand_modules (self->modules);
       break;
 
     case PROP_CLEANUP:
@@ -892,6 +891,9 @@ builder_manifest_start (BuilderManifest *self,
     return flatpak_fail (error, "Unable to find runtime %s version %s",
                          self->runtime,
                          builder_manifest_get_runtime_version (self));
+
+  if (!expand_modules (self->modules, &self->expanded_modules, error))
+    return FALSE;
 
   return TRUE;
 }
