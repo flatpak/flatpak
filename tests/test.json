@@ -19,32 +19,37 @@
     "cleanup-commands": [ "touch /app/cleaned_up" ],
     "modules": [
         {
-            "name": "test",
-            "config-opts": ["--some-arg"],
-            "post-install": [ "touch /app/bin/file.cleanup" ],
-            "make-args": ["BAR=2" ],
-            "make-install-args": ["BAR=3" ],
-            "sources": [
+            "name": "root",
+            "modules": [
                 {
-                    "type": "file",
-                    "path": "test-configure",
-                    "dest-filename": "configure",
-                    "sha256": "675a1ac2feec4d4f54e581b4b01bc3cfd2c1cf31aa5963574d31228c8a11b7e7"
-                },
-                {
-                    "type": "file",
-                    "path": "app-data"
-                },
-                {
-                    "type": "script",
-                    "dest-filename": "hello2.sh",
-                    "commands": [ "echo \"Hello world2, from a sandbox\"" ]
-                },
-                {
-                    "type": "shell",
-                    "commands": [
-                        "mkdir /app/cleanup/",
-                        "touch /app/cleanup/a_file"
+                    "name": "test",
+                    "config-opts": ["--some-arg"],
+                    "post-install": [ "touch /app/bin/file.cleanup" ],
+                    "make-args": ["BAR=2" ],
+                    "make-install-args": ["BAR=3" ],
+                    "sources": [
+                        {
+                            "type": "file",
+                            "path": "test-configure",
+                            "dest-filename": "configure",
+                            "sha256": "675a1ac2feec4d4f54e581b4b01bc3cfd2c1cf31aa5963574d31228c8a11b7e7"
+                        },
+                        {
+                            "type": "file",
+                            "path": "app-data"
+                        },
+                        {
+                            "type": "script",
+                            "dest-filename": "hello2.sh",
+                            "commands": [ "echo \"Hello world2, from a sandbox\"" ]
+                        },
+                        {
+                            "type": "shell",
+                            "commands": [
+                                "mkdir /app/cleanup/",
+                                "touch /app/cleanup/a_file"
+                            ]
+                        }
                     ]
                 }
             ]
