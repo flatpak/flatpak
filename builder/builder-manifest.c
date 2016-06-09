@@ -1105,6 +1105,12 @@ builder_manifest_build (BuilderManifest *self,
 
       g_autofree char *stage = g_strdup_printf ("build-%s", builder_module_get_name (m));
 
+      if (!builder_module_get_sources (m))
+        {
+          g_print ("Skipping module %s (no sources)\n", builder_module_get_name (m));
+          continue;
+        }
+
       builder_module_checksum (m, cache, context);
 
       if (!builder_cache_lookup (cache, stage))
