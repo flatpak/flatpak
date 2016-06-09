@@ -42,6 +42,7 @@ GType builder_module_get_type (void);
 const char * builder_module_get_name (BuilderModule *self);
 gboolean     builder_module_get_disabled (BuilderModule *self);
 GList *      builder_module_get_sources (BuilderModule *self);
+GList *      builder_module_get_modules (BuilderModule *self);
 GPtrArray *  builder_module_get_changes (BuilderModule *self);
 void         builder_module_set_changes (BuilderModule *self,
                                          GPtrArray     *changes);

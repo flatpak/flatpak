@@ -70,6 +70,7 @@ struct BuilderManifest
   char           *command;
   BuilderOptions *build_options;
   GList          *modules;
+  GList          *expanded_modules;
 };
 
 typedef struct
@@ -134,6 +135,7 @@ builder_manifest_finalize (GObject *object)
   g_free (self->command);
   g_clear_object (&self->build_options);
   g_list_free_full (self->modules, g_object_unref);
+  g_list_free (self->expanded_modules);
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_commands);
   g_strfreev (self->cleanup_platform);
@@ -146,6 +148,29 @@ builder_manifest_finalize (GObject *object)
   g_free (self->desktop_file_name_suffix);
 
   G_OBJECT_CLASS (builder_manifest_parent_class)->finalize (object);
+}
+
+static gboolean
+expand_modules (GList *modules, GList **expanded, GError **error)
+{
+  GList *l;
+
+  for (l = modules; l; l = l->next)
+    {
+      BuilderModule *m = l->data;
+      GList *submodules = NULL;
+
+      if (builder_module_get_disabled (m))
+        continue;
+
+      if (!expand_modules (builder_module_get_modules (m),  &submodules, error))
+        return FALSE;
+
+      *expanded = g_list_concat (*expanded, submodules);
+      *expanded = g_list_append (*expanded, m);
+    }
+
+  return TRUE;
 }
 
 static void
@@ -742,13 +767,21 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
             {
               JsonNode *element_node = json_array_get_element (array, i);
 
-              if (JSON_NODE_TYPE (element_node) != JSON_NODE_OBJECT)
-                {
-                  g_list_free_full (modules, g_object_unref);
-                  return FALSE;
-                }
+              module = NULL;
 
-              module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+              if (JSON_NODE_HOLDS_VALUE (element_node) &&
+                  json_node_get_value_type (element_node) == G_TYPE_STRING)
+                {
+                  const char *module_path = json_node_get_string (element_node);
+                  g_autofree char *json = NULL;
+
+                  if (g_file_get_contents (module_path, &json, NULL, NULL))
+                    module = json_gobject_from_data (BUILDER_TYPE_MODULE,
+                                                     json, -1, NULL);
+                }
+              else if (JSON_NODE_HOLDS_OBJECT (element_node))
+                module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+
               if (module == NULL)
                 {
                   g_list_free_full (modules, g_object_unref);
@@ -866,6 +899,9 @@ builder_manifest_start (BuilderManifest *self,
     return flatpak_fail (error, "Unable to find runtime %s version %s",
                          self->runtime,
                          builder_manifest_get_runtime_version (self));
+
+  if (!expand_modules (self->modules, &self->expanded_modules, error))
+    return FALSE;
 
   return TRUE;
 }
@@ -995,7 +1031,7 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
   builder_cache_checksum_str (cache, self->desktop_file_name_suffix);
   builder_cache_checksum_boolean (cache, self->appstream_compose);
 
-  for (l = self->modules; l != NULL; l = l->next)
+  for (l = self->expanded_modules; l != NULL; l = l->next)
     {
       BuilderModule *m = l->data;
       builder_module_checksum_for_cleanup (m, cache, context);
@@ -1063,12 +1099,9 @@ builder_manifest_download (BuilderManifest *self,
   GList *l;
 
   g_print ("Downloading sources\n");
-  for (l = self->modules; l != NULL; l = l->next)
+  for (l = self->expanded_modules; l != NULL; l = l->next)
     {
       BuilderModule *m = l->data;
-
-      if (builder_module_get_disabled (m))
-        continue;
 
       if (!builder_module_download_sources (m, update_vcs, context, error))
         return FALSE;
@@ -1092,18 +1125,18 @@ builder_manifest_build (BuilderManifest *self,
   builder_context_set_separate_locales (context, self->separate_locales);
 
   g_print ("Starting build of %s\n", self->id ? self->id : "app");
-  for (l = self->modules; l != NULL; l = l->next)
+  for (l = self->expanded_modules; l != NULL; l = l->next)
     {
       BuilderModule *m = l->data;
       g_autoptr(GPtrArray) changes = NULL;
 
-      if (builder_module_get_disabled (m))
+      g_autofree char *stage = g_strdup_printf ("build-%s", builder_module_get_name (m));
+
+      if (!builder_module_get_sources (m))
         {
-          g_print ("Skipping disabled module %s\n", builder_module_get_name (m));
+          g_print ("Skipping module %s (no sources)\n", builder_module_get_name (m));
           continue;
         }
-
-      g_autofree char *stage = g_strdup_printf ("build-%s", builder_module_get_name (m));
 
       builder_module_checksum (m, cache, context);
 
@@ -1386,12 +1419,9 @@ builder_manifest_cleanup (BuilderManifest *self,
             }
         }
 
-      for (l = self->modules; l != NULL; l = l->next)
+      for (l = self->expanded_modules; l != NULL; l = l->next)
         {
           BuilderModule *m = l->data;
-
-          if (builder_module_get_disabled (m))
-            continue;
 
           builder_module_cleanup_collect (m, FALSE, context, to_remove_ht);
         }
@@ -1864,12 +1894,9 @@ builder_manifest_create_platform (BuilderManifest *self,
             return FALSE;
         }
 
-      for (l = self->modules; l != NULL; l = l->next)
+      for (l = self->expanded_modules; l != NULL; l = l->next)
         {
           BuilderModule *m = l->data;
-
-          if (builder_module_get_disabled (m))
-            continue;
 
           builder_module_cleanup_collect (m, TRUE, context, to_remove_ht);
         }
