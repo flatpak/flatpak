@@ -81,25 +81,53 @@ typedef struct {
   gboolean subscribed;
 } PortalImplementation;
 
+static void
+portal_implementation_free (PortalImplementation *impl)
+{
+  g_free (impl->dbus_name);
+  g_free (impl->interfaces);
+  g_free (impl->use_in);
+  g_free (impl);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(PortalImplementation, portal_implementation_free)
+
 static GList *implementations = NULL;
 
-static void
-register_portal (GKeyFile *key)
+static gboolean
+register_portal (const char *path, GError **error)
 {
-  PortalImplementation *impl = g_new0 (PortalImplementation, 1);
+  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_autoptr(PortalImplementation) impl = g_new0 (PortalImplementation, 1);
 
-  impl->dbus_name = g_key_file_get_string (key, "portal", "DBusName", NULL);
-  impl->interfaces = g_key_file_get_string_list (key, "portal", "Interfaces", NULL, NULL);
-  impl->use_in = g_key_file_get_string_list (key, "portal", "UseIn", NULL, NULL);
+  g_debug ("loading %s", path);
 
-  implementations = g_list_prepend (implementations, impl);
+  if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
+    return FALSE;
+
+  impl->dbus_name = g_key_file_get_string (keyfile, "portal", "DBusName", error);
+  if (impl->dbus_name == NULL)
+    return FALSE;
+
+  impl->interfaces = g_key_file_get_string_list (keyfile, "portal", "Interfaces", NULL, error);
+  if (impl->interfaces == NULL)
+    return FALSE;
+
+  impl->use_in = g_key_file_get_string_list (keyfile, "portal", "UseIn", NULL, error);
+  if (impl->use_in == NULL)
+    return FALSE;
 
   if (opt_verbose)
     {
       g_autofree char *uses = g_strjoinv (", ", impl->use_in);
       g_autofree char *ifaces = g_strjoinv (", ", impl->interfaces);
-      g_debug ("portal implementation for %s supports %s", uses, ifaces);
+      g_debug ("portal for %s supports %s", uses, ifaces);
     }
+
+  implementations = g_list_prepend (implementations, impl);
+  impl = NULL;
+
+  return TRUE;
 }
 
 static void
@@ -119,7 +147,6 @@ load_installed_portals (void)
       g_autoptr(GFileInfo) info = g_file_enumerator_next_file (enumerator, NULL, NULL);
       g_autoptr(GFile) child = NULL;
       g_autofree char *path = NULL;
-      g_autoptr(GKeyFile) keyfile = NULL;
       const char *name;
       g_autoptr(GError) error = NULL;
 
@@ -134,17 +161,11 @@ load_installed_portals (void)
       child = g_file_enumerator_get_child (enumerator, info);
       path = g_file_get_path (child);
 
-      keyfile = g_key_file_new ();
-
-      if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, &error))
+      if (!register_portal (path, &error))
         {
-          g_warning ("error loading %s/%s: %s", portal_dir, name, error->message);
+          g_warning ("error loading %s: %s", path, error->message);
           continue;
         }
-      else
-        g_debug ("loading %s/%s", portal_dir, name);
-
-      register_portal (keyfile);
     }
 }
 
