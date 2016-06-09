@@ -268,24 +268,27 @@ builder_cache_get_current (BuilderCache *self)
 }
 
 static gboolean
-builder_cache_checkout (BuilderCache *self, const char *commit)
+builder_cache_checkout (BuilderCache *self, const char *commit, GError **error)
 {
   g_autoptr(GFile) root = NULL;
   g_autoptr(GFileInfo) file_info = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  if (!ostree_repo_read_commit (self->repo, commit, &root, NULL, NULL, NULL))
+  if (!ostree_repo_read_commit (self->repo, commit, &root, NULL, NULL, error))
     return FALSE;
 
   file_info = g_file_query_info (root, OSTREE_GIO_FAST_QUERYINFO,
                                  G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                 NULL, NULL);
+                                 NULL, error);
   if (file_info == NULL)
     return FALSE;
 
   if (!g_file_delete (self->app_dir, NULL, &my_error) &&
       !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-    return FALSE;
+    {
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      return FALSE;
+    }
 
   /* We check out without user mode, not necessarily because we care
      about uids not owned by the user (they are all from the build,
@@ -297,14 +300,14 @@ builder_cache_checkout (BuilderCache *self, const char *commit)
                                   OSTREE_REPO_CHECKOUT_OVERWRITE_NONE,
                                   self->app_dir,
                                   OSTREE_REPO_FILE (root), file_info,
-                                  NULL, NULL))
+                                  NULL, error))
     return FALSE;
 
   /* There is a bug in ostree (https://github.com/ostreedev/ostree/issues/326) that
      causes it to not reset mtime to zero in this case (mismatching modes). So
      we do that manually */
   if (!flatpak_zero_mtime (AT_FDCWD, gs_file_get_path_cached (self->app_dir),
-                           NULL, NULL))
+                           NULL, error))
     return FALSE;
 
   return TRUE;
@@ -324,10 +327,11 @@ builder_cache_ensure_checkout (BuilderCache *self)
 
   if (self->last_parent)
     {
+      g_autoptr(GError) error = NULL;
       g_print ("Everything cached, checking out from cache\n");
 
-      if (!builder_cache_checkout (self, self->last_parent))
-        g_error ("Failed to check out cache");
+      if (!builder_cache_checkout (self, self->last_parent, &error))
+        g_error ("Failed to check out cache: %s", error->message);
     }
 
   self->disabled = TRUE;
@@ -385,10 +389,11 @@ builder_cache_lookup (BuilderCache *self,
 checkout:
   if (self->last_parent)
     {
+      g_autoptr(GError) error = NULL;
       g_print ("Cache miss, checking out last cache hit\n");
 
-      if (!builder_cache_checkout (self, self->last_parent))
-        g_error ("Failed to check out cache");
+      if (!builder_cache_checkout (self, self->last_parent, &error))
+        g_error ("Failed to check out cache: %s", error->message);
     }
 
   self->disabled = TRUE; /* Don't use cache any more after first miss */
