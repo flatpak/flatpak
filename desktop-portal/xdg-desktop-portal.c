@@ -83,7 +83,8 @@ register_portal (GKeyFile *key)
 static void
 load_installed_portals (void)
 {
-  g_autoptr(GFile) dir = g_file_new_for_path (PKGDATADIR "/portals");
+  const char *portal_dir = PKGDATADIR "/portals";
+  g_autoptr(GFile) dir = g_file_new_for_path (portal_dir);
   g_autoptr(GFileEnumerator) enumerator = NULL;
 
   enumerator = g_file_enumerate_children (dir, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
@@ -115,11 +116,11 @@ load_installed_portals (void)
 
       if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, &error))
         {
-          g_warning ("error loading %s: %s", name, error->message);
+          g_warning ("error loading %s/%s: %s", portal_dir, name, error->message);
           continue;
         }
       else
-        g_debug ("loaded portal implementation %s\n", name);
+        g_debug ("loaded portal implementation %s/%s", portal_dir, name);
 
       register_portal (keyfile);
     }
