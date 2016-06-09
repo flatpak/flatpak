@@ -3194,7 +3194,7 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
       g_set_error (error,
                    FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                    "%s branch %s already installed", parts[1], parts[3]);
-      return NULL;
+      return FALSE;
     }
 
   /* Add a remote for later updates */
