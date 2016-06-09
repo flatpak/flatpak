@@ -767,13 +767,21 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
             {
               JsonNode *element_node = json_array_get_element (array, i);
 
-              if (JSON_NODE_TYPE (element_node) != JSON_NODE_OBJECT)
-                {
-                  g_list_free_full (modules, g_object_unref);
-                  return FALSE;
-                }
+              module = NULL;
 
-              module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+              if (JSON_NODE_HOLDS_VALUE (element_node) &&
+                  json_node_get_value_type (element_node) == G_TYPE_STRING)
+                {
+                  const char *module_path = json_node_get_string (element_node);
+                  g_autofree char *json = NULL;
+
+                  if (g_file_get_contents (module_path, &json, NULL, NULL))
+                    module = json_gobject_from_data (BUILDER_TYPE_MODULE,
+                                                     json, -1, NULL);
+                }
+              else if (JSON_NODE_HOLDS_OBJECT (element_node))
+                module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+
               if (module == NULL)
                 {
                   g_list_free_full (modules, g_object_unref);
