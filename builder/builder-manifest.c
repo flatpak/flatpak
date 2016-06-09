@@ -151,7 +151,7 @@ builder_manifest_finalize (GObject *object)
 }
 
 static gboolean
-expand_modules (GList *modules, GList **expanded, GError **error)
+expand_modules (GList *modules, GList **expanded, GHashTable *names, GError **error)
 {
   GList *l;
 
@@ -159,14 +159,24 @@ expand_modules (GList *modules, GList **expanded, GError **error)
     {
       BuilderModule *m = l->data;
       GList *submodules = NULL;
+      const char *name;
 
       if (builder_module_get_disabled (m))
         continue;
 
-      if (!expand_modules (builder_module_get_modules (m),  &submodules, error))
+      if (!expand_modules (builder_module_get_modules (m), &submodules, names, error))
         return FALSE;
 
       *expanded = g_list_concat (*expanded, submodules);
+
+      name = builder_module_get_name (m);
+      if (g_hash_table_lookup (names, name) != NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Duplicate modules named '%s'", name);
+          return FALSE;
+        }
+      g_hash_table_insert (names, (char *)name, (char *)name);
       *expanded = g_list_append (*expanded, m);
     }
 
@@ -876,6 +886,7 @@ builder_manifest_start (BuilderManifest *self,
                         GError         **error)
 {
   g_autofree char *arch_option = NULL;
+  g_autoptr(GHashTable) names = g_hash_table_new (g_str_hash, g_str_equal);
 
   if (self->sdk == NULL)
     {
@@ -900,7 +911,7 @@ builder_manifest_start (BuilderManifest *self,
                          self->runtime,
                          builder_manifest_get_runtime_version (self));
 
-  if (!expand_modules (self->modules, &self->expanded_modules, error))
+  if (!expand_modules (self->modules, &self->expanded_modules, names, error))
     return FALSE;
 
   return TRUE;
