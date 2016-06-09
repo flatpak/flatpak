@@ -57,6 +57,7 @@ struct BuilderModule
   char          **cleanup;
   char          **cleanup_platform;
   GList          *sources;
+  GList          *modules;
 };
 
 typedef struct
@@ -88,6 +89,7 @@ enum {
   PROP_CLEANUP,
   PROP_CLEANUP_PLATFORM,
   PROP_POST_INSTALL,
+  PROP_MODULES,
   LAST_PROP
 };
 
@@ -107,6 +109,7 @@ builder_module_finalize (GObject *object)
   g_list_free_full (self->sources, g_object_unref);
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_platform);
+  g_list_free_full (self->modules, g_object_unref);
 
   if (self->changes)
     g_ptr_array_unref (self->changes);
@@ -190,6 +193,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_CLEANUP_PLATFORM:
       g_value_set_boxed (value, self->cleanup_platform);
+      break;
+
+    case PROP_MODULES:
+      g_value_set_pointer (value, self->modules);
       break;
 
     default:
@@ -294,6 +301,12 @@ builder_module_set_property (GObject      *object,
       tmp = self->cleanup_platform;
       self->cleanup_platform = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
+      break;
+
+    case PROP_MODULES:
+      g_list_free_full (self->modules, g_object_unref);
+      /* NOTE: This takes ownership of the list! */
+      self->modules = g_value_get_pointer (value);
       break;
 
     default:
@@ -428,6 +441,12 @@ builder_module_class_init (BuilderModuleClass *klass)
                                                        "",
                                                        G_TYPE_STRV,
                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_MODULES,
+                                   g_param_spec_pointer ("modules",
+                                                         "",
+                                                         "",
+                                                         G_PARAM_READWRITE));
 }
 
 static void
@@ -441,7 +460,31 @@ builder_module_serialize_property (JsonSerializable *serializable,
                                    const GValue     *value,
                                    GParamSpec       *pspec)
 {
-  if (strcmp (property_name, "sources") == 0)
+ if (strcmp (property_name, "modules") == 0)
+    {
+      BuilderModule *self = BUILDER_MODULE (serializable);
+      JsonNode *retval = NULL;
+      GList *l;
+
+      if (self->modules)
+        {
+          JsonArray *array;
+
+          array = json_array_sized_new (g_list_length (self->modules));
+
+          for (l = self->modules; l != NULL; l = l->next)
+            {
+              JsonNode *child = json_gobject_serialize (l->data);
+              json_array_add_element (array, child);
+            }
+
+          retval = json_node_init_array (json_node_alloc (), array);
+          json_array_unref (array);
+        }
+
+      return retval;
+    }
+  else if (strcmp (property_name, "sources") == 0)
     {
       BuilderModule *self = BUILDER_MODULE (serializable);
       JsonNode *retval = NULL;
@@ -481,7 +524,48 @@ builder_module_deserialize_property (JsonSerializable *serializable,
                                      GParamSpec       *pspec,
                                      JsonNode         *property_node)
 {
-  if (strcmp (property_name, "sources") == 0)
+ if (strcmp (property_name, "modules") == 0)
+    {
+      if (JSON_NODE_TYPE (property_node) == JSON_NODE_NULL)
+        {
+          g_value_set_pointer (value, NULL);
+          return TRUE;
+        }
+      else if (JSON_NODE_TYPE (property_node) == JSON_NODE_ARRAY)
+        {
+          JsonArray *array = json_node_get_array (property_node);
+          guint i, array_len = json_array_get_length (array);
+          GList *modules = NULL;
+          GObject *module;
+
+          for (i = 0; i < array_len; i++)
+            {
+              JsonNode *element_node = json_array_get_element (array, i);
+
+              if (JSON_NODE_TYPE (element_node) != JSON_NODE_OBJECT)
+                {
+                  g_list_free_full (modules, g_object_unref);
+                  return FALSE;
+                }
+
+              module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+              if (module == NULL)
+                {
+                  g_list_free_full (modules, g_object_unref);
+                  return FALSE;
+                }
+
+              modules = g_list_prepend (modules, module);
+            }
+
+          g_value_set_pointer (value, g_list_reverse (modules));
+
+          return TRUE;
+        }
+
+      return FALSE;
+    }
+  else if (strcmp (property_name, "sources") == 0)
     {
       if (JSON_NODE_TYPE (property_node) == JSON_NODE_NULL)
         {
@@ -554,6 +638,12 @@ GList *
 builder_module_get_sources (BuilderModule *self)
 {
   return self->sources;
+}
+
+GList *
+builder_module_get_modules (BuilderModule *self)
+{
+  return self->modules;
 }
 
 gboolean
