@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <locale.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <gio/gio.h>
@@ -33,9 +34,23 @@ message_handler (const gchar *log_domain,
 {
   /* Make this look like normal console output */
   if (log_level & G_LOG_LEVEL_DEBUG)
-    g_printerr ("XDP: %s\n", message);
+    printf ("XDP: %s\n", message);
   else
-    g_printerr ("%s: %s\n", g_get_prgname (), message);
+    printf ("%s: %s\n", g_get_prgname (), message);
+}
+
+static void
+printerr_handler (const gchar *string)
+{
+  int is_tty = isatty (1);
+  const char *prefix = "";
+  const char *suffix = "";
+  if (is_tty)
+    {
+      prefix = "\x1b[31m\x1b[1m"; /* red, bold */
+      suffix = "\x1b[22m\x1b[0m"; /* bold off, color reset */
+    }
+  fprintf (stderr, "%serror: %s%s\n", prefix, suffix, string);
 }
 
 static void
@@ -78,6 +93,13 @@ register_portal (GKeyFile *key)
   impl->use_in = g_key_file_get_string_list (key, "portal", "UseIn", NULL, NULL);
 
   implementations = g_list_prepend (implementations, impl);
+
+  if (opt_verbose)
+    {
+      g_autofree char *uses = g_strjoinv (", ", impl->use_in);
+      g_autofree char *ifaces = g_strjoinv (", ", impl->interfaces);
+      g_debug ("portal implementation for %s supports %s", uses, ifaces);
+    }
 }
 
 static void
@@ -120,7 +142,7 @@ load_installed_portals (void)
           continue;
         }
       else
-        g_debug ("loaded portal implementation %s/%s", portal_dir, name);
+        g_debug ("loading %s/%s", portal_dir, name);
 
       register_portal (keyfile);
     }
@@ -378,11 +400,13 @@ main (int argc, char *argv[])
   /* Avoid even loading gvfs to avoid accidental confusion */
   g_setenv ("GIO_USE_VFS", "local", TRUE);
 
-  context = g_option_context_new ("- file chooser portal");
+  g_set_printerr_handler (printerr_handler);
+
+  context = g_option_context_new ("- desktop portal");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      g_printerr ("option parsing failed: %s\n", error->message);
+      g_printerr ("Option parsing failed: %s", error->message);
       return 1;
     }
 
@@ -398,7 +422,7 @@ main (int argc, char *argv[])
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (session_bus == NULL)
     {
-      g_printerr ("No session bus: %s\n", error->message);
+      g_printerr ("No session bus: %s", error->message);
       return 2;
     }
 
