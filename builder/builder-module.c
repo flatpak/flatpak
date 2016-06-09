@@ -1464,6 +1464,9 @@ builder_module_cleanup_collect (BuilderModule  *self,
   const char **global_patterns;
   const char **local_patterns;
 
+  if (!self->changes)
+    return;
+
   if (platform)
     {
       global_patterns = builder_context_get_global_cleanup_platform (context);
