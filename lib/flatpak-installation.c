@@ -1166,7 +1166,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
     return NULL;
 
   deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
-  if (deploy_dir != NULL)
+  if (deploy_dir == NULL)
     {
       g_set_error (error,
                    FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
