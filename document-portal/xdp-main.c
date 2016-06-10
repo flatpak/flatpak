@@ -811,10 +811,10 @@ handle_info (gpointer object,
              GDBusMethodInvocation *invocation)
 {
   GVariant *parameters = g_dbus_method_invocation_get_parameters (invocation);
-  g_autofree char *id = NULL;
-  g_autoptr (FlatpakDbEntry) entry = NULL;
+  const char *id = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
 
-  g_variant_get (parameters, "(s)", &id);
+  g_variant_get (parameters, "(&s)", &id);
 
   AUTOLOCK (db);
 
@@ -836,6 +836,42 @@ handle_info (gpointer object,
   return TRUE;
 }
 
+static gboolean
+handle_list (gpointer object,
+             GDBusMethodInvocation *invocation)
+{
+  GVariant *parameters = g_dbus_method_invocation_get_parameters (invocation);
+  const char *app_id = NULL;
+  g_auto(GStrv) ids = NULL;
+  GVariantBuilder builder;
+  int i;
+
+  g_variant_get (parameters, "(&s)", &app_id);
+
+  AUTOLOCK (db);
+
+  if (strcmp (app_id, "") == 0)
+    ids = flatpak_db_list_ids (db);
+  else
+    ids = flatpak_db_list_ids_by_app (db, app_id);
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{say}"));
+  for (i = 0; ids[i]; i++)
+    {
+      g_autoptr(FlatpakDbEntry) entry = NULL;
+
+      entry = flatpak_db_lookup (db, ids[i]);
+
+      g_variant_builder_add (&builder, "{s@ay}", ids[i], get_path (entry));
+    }
+
+  g_dbus_method_invocation_return_value (invocation,
+                                         g_variant_new ("(@a{say})",
+                                                        g_variant_builder_end (&builder)));
+
+  return TRUE;
+}
+
 static void
 on_bus_acquired_impl (GDBusConnection *connection,
                       const gchar     *name,
@@ -848,6 +884,7 @@ on_bus_acquired_impl (GDBusConnection *connection,
 
   g_signal_connect (helper, "handle-lookup", G_CALLBACK (handle_lookup), NULL);
   g_signal_connect (helper, "handle-info", G_CALLBACK (handle_info), NULL);
+  g_signal_connect (helper, "handle-list", G_CALLBACK (handle_list), NULL);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
                                          connection,
