@@ -466,7 +466,7 @@ flatpak_load_override_keyfile (const char *app_id, gboolean user, GError **error
 FlatpakContext *
 flatpak_load_override_file (const char *app_id, gboolean user, GError **error)
 {
-  FlatpakContext *overrides = flatpak_context_new ();
+  g_autoptr(FlatpakContext) overrides = flatpak_context_new ();
 
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GError) my_error = NULL;
@@ -909,6 +909,8 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
             }
         }
 
+      /* Make sure we didn't reenter weirdly */
+      g_assert (self->repo == NULL);
       self->repo = g_object_ref (repo);
     }
 

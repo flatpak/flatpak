@@ -1557,7 +1557,7 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
 {
   const char *dbus_address = g_getenv ("DBUS_SYSTEM_BUS_ADDRESS");
   g_autofree char *real_dbus_address = NULL;
-  char *dbus_system_socket = NULL;
+  g_autofree char *dbus_system_socket = NULL;
 
   if (dbus_address != NULL)
     dbus_system_socket = extract_unix_path_from_dbus_address (dbus_address);
@@ -1802,6 +1802,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
               path = g_build_filename ("/", dirent->d_name, NULL);
               add_file_arg (argv_array, fs_mode, path);
             }
+          closedir (dir);
         }
       add_file_arg (argv_array, fs_mode, "/run/media");
     }
