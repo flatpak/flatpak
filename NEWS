@@ -1,3 +1,15 @@
+Major changes in 0.6.5
+======================
+
+ * Documentation improvements
+ * builder: Check that the specified command exists after build is done
+ * builder: Fix up mtime in headers for python precompiled files
+ * builder: Allow submodules and including modules from other json files
+ * system-helper builds are optional (--disable-system-helper)
+ * system-helper: Support installing from local remotes and bundles
+ * Improved support for --subpath installs, including libflatpak support
+ * Improved command line completion
+
 Major changes in 0.6.4
 ======================
 
