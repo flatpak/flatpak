@@ -57,12 +57,12 @@ export G_DEBUG=fatal-warnings
 # tarballs are predictable, except we don't want this in our tests.
 unset TAR_OPTIONS
 
-if test -n "${OT_TESTS_DEBUG:-}"; then
+if test -n "${FLATPAK_TESTS_DEBUG:-}"; then
     set -x
 fi
 
-if test -n "${OT_TESTS_VALGRIND:-}"; then
-    CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=full --num-callers=30 --suppressions=${test_srcdir}/flatpak-valgrind.supp"
+if test -n "${FLATPAK_TESTS_VALGRIND:-}"; then
+    CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=full --error-exitcode=1 --num-callers=30 --suppressions=${test_srcdir}/flatpak.supp --suppressions=${test_srcdir}/glib.supp"
 else
     CMD_PREFIX=""
 fi

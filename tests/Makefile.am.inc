@@ -1,4 +1,4 @@
-TESTS_ENVIRONMENT += OT_TESTS_DEBUG=1 \
+TESTS_ENVIRONMENT += FLATPAK_TESTS_DEBUG=1 \
 	FLATPAK_TRIGGERSDIR=$$(cd $(top_srcdir) && pwd)/triggers \
 	FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap \
 	FLATPAK_DBUSPROXY=$$(cd $(top_builddir) && pwd)/flatpak-dbus-proxy \
@@ -100,8 +100,8 @@ test_scripts = \
 test_programs = testdb test-doc-portal
 
 @VALGRIND_CHECK_RULES@
-VALGRIND_SUPPRESSIONS_FILES=tests/flatpak-valgrind.supp
-EXTRA_DIST += tests/flatpak-valgrind.supp
+VALGRIND_SUPPRESSIONS_FILES=tests/flatpak.supp tests/glib.supp
+EXTRA_DIST += tests/flatpak.supp tests/glib.supp
 DISTCLEANFILES += \
 	tests/services/org.freedesktop.Flatpak.service \
 	tests/services/org.freedesktop.portal.Documents.service \
