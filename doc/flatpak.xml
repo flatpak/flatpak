@@ -162,13 +162,6 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>flatpak-document-export</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    Grant an application access to a specific file.
-                </para></listitem>
-            </varlistentry>
-            <varlistentry>
                 <term><citerefentry><refentrytitle>flatpak-enter</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
@@ -176,6 +169,40 @@
                 </para></listitem>
             </varlistentry>
         </variablelist>
+
+        <para>Commands for managing file access:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-document-export</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Grant an application access to a specific file.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-document-unexport</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Revoke access to a specific file.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-document-info</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Show information about a specific file.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-document-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List exported files.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+
 
         <para>Commands for managing remote repositories:</para>
 
