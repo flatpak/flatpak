@@ -47,8 +47,8 @@
 
         <para>
             This command also lets you modify the per-application
-            permissions of the documents, granting access to the
-            file on a per-application basis.
+            permissions of the documents, granting or revoking access
+            to the file on a per-application basis.
         </para>
 
     </refsect1>
@@ -91,6 +91,24 @@
 
                 <listitem><para>
                   Grant read access to the specified application.
+                  This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--allow-read</option></term>
+
+                <listitem><para>
+                  Grant read access to the applications specified with --app.
+                  This defaults to TRUE.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--forbid-read</option></term>
+
+                <listitem><para>
+                  Revoke read access for the applications specified with --app.
                 </para></listitem>
             </varlistentry>
 
@@ -98,7 +116,15 @@
                 <term><option>--allow-write</option></term>
 
                 <listitem><para>
-                  Also grant write access to the applications specified with --app.
+                  Grant write access to the applications specified with --app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--forbid-write</option></term>
+
+                <listitem><para>
+                  Revoke write access for the applications specified with --app.
                 </para></listitem>
             </varlistentry>
 
@@ -106,7 +132,15 @@
                 <term><option>--allow-delete</option></term>
 
                 <listitem><para>
-                  Also grant the ability to delete a document id to the applications specified with --app.
+                  Grant the ability to delete a document id to the applications specified with --app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--forbid-delete</option></term>
+
+                <listitem><para>
+                  Remove the ability to delete a document id from the applications specified with --app.
                 </para></listitem>
             </varlistentry>
 
@@ -114,7 +148,15 @@
                 <term><option>--allow-grant-permission</option></term>
 
                 <listitem><para>
-                  Also grant the ability further grant permissions to the applications specified with --app.
+                  Grant the ability to grant further permissions to the applications specified with --app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--forbid-grant-permission</option></term>
+
+                <listitem><para>
+                  Revoke the ability to grant further permissions for the applications specified with --app.
                 </para></listitem>
             </varlistentry>
 
@@ -160,3 +202,4 @@
     </refsect1>
 
 </refentry>
+
