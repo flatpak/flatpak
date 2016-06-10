@@ -2223,7 +2223,7 @@ xdp_fuse_init (GError **error)
   char *argv[] = { "xdp-fuse", "-osplice_write,splice_move,splice_read" };
   struct fuse_args args = FUSE_ARGS_INIT (G_N_ELEMENTS (argv), argv);
   struct stat st;
-  const char *mount_path;
+  const char *path;
 
   inodes =
     g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, NULL);
@@ -2232,24 +2232,24 @@ xdp_fuse_init (GError **error)
   dir_to_inode_nr =
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
-  mount_path = xdp_fuse_get_mountpoint ();
+  path = xdp_fuse_get_mountpoint ();
 
-  if (stat (mount_path, &st) == -1 && errno == ENOTCONN)
+  if (stat (path, &st) == -1 && errno == ENOTCONN)
     {
-      char *argv[] = { "fusermount", "-u", (char *) mount_path, NULL };
+      char *umount_argv[] = { "fusermount", "-u", (char *) path, NULL };
 
-      g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+      g_spawn_sync (NULL, umount_argv, NULL, G_SPAWN_SEARCH_PATH,
                     NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
-  if (g_mkdir_with_parents (mount_path, 0700))
+  if (g_mkdir_with_parents (path, 0700))
     {
       g_set_error (error, FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_FAILED,
-                   "Unable to create dir %s", mount_path);
+                   "Unable to create dir %s", path);
       return FALSE;
     }
 
-  main_ch = fuse_mount (mount_path, &args);
+  main_ch = fuse_mount (path, &args);
   if (main_ch == NULL)
     {
       g_set_error (error, FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_FAILED, "Can't mount fuse fs");
