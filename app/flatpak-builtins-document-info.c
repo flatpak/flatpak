@@ -52,9 +52,9 @@ flatpak_builtin_document_info (int argc, char **argv,
   g_autoptr(GPtrArray) permissions = NULL;
   const char *file;
   XdpDbusDocuments *documents;
-  g_autofree char *mountpoint;
-  g_autofree char *basename;
-  g_autofree char *doc_path;
+  g_autofree char *mountpoint = NULL;
+  g_autofree char *basename = NULL;
+  g_autofree char *doc_path = NULL;
   int fd, fd_id;
   GUnixFDList *fd_list = NULL;
   const char *doc_id;
