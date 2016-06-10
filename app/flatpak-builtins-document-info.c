@@ -37,7 +37,7 @@
 #include "flatpak-run.h"
 
 static GOptionEntry options[] = {
-{ NULL }
+  { NULL }
 };
 
 gboolean

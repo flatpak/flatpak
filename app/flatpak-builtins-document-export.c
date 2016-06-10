@@ -61,7 +61,7 @@ static GOptionEntry options[] = {
   { "forbid-write", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_write, "Revoke write permissions of the app", NULL },
   { "forbid-delete", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_delete, "Revoke delete permissions of the app", NULL },
   { "forbid-grant-permission", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_grant_permissions, "Revoke the permission to grant further permissions", NULL },
-  { "app", 'a', 0, G_OPTION_ARG_STRING_ARRAY, &opt_apps, "Add permissions for this app", NULL },
+  { "app", 'a', 0, G_OPTION_ARG_STRING_ARRAY, &opt_apps, "Add permissions for this app", "APPID" },
   { NULL }
 };
 
