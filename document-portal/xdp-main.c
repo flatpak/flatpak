@@ -802,7 +802,6 @@ get_path (FlatpakDbEntry *entry)
   const char *path;
 
   g_variant_get (data, "(^ayttu)", &path, NULL, NULL, NULL);
-  g_print ("path: %s\n", path);
   return g_variant_new_bytestring (path);
 }
 
