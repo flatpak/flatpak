@@ -62,6 +62,7 @@ static FlatpakCommand commands[] = {
   { "run", "Run an application", flatpak_builtin_run, flatpak_complete_run },
   { "override", "Override permissions for an application", flatpak_builtin_override, flatpak_complete_override },
   { "document-export", "Grant an application access to a specific file", flatpak_builtin_document_export, flatpak_complete_document_export },
+  { "document-info", "Show information about a specific file", flatpak_builtin_document_info, flatpak_complete_document_info },
   { "make-current", "Specify default version to run", flatpak_builtin_make_current_app, flatpak_complete_make_current_app },
   { "enter", "Enter the namespace of a running application", flatpak_builtin_enter, flatpak_complete_enter },
 
