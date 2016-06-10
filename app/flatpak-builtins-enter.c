@@ -124,7 +124,6 @@ flatpak_builtin_enter (int           argc,
 {
   g_autoptr(GOptionContext) context = NULL;
   int rest_argv_start, rest_argc;
-  g_autoptr(FlatpakContext) arg_context = NULL;
   const char *ns_name[5] = { "user", "ipc", "net", "pid", "mnt" };
   int ns_fd[G_N_ELEMENTS (ns_name)];
   char pid_ns[256];
@@ -161,9 +160,6 @@ flatpak_builtin_enter (int           argc,
           break;
         }
     }
-
-  arg_context = flatpak_context_new ();
-  g_option_context_add_group (context, flatpak_context_get_options (arg_context));
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
