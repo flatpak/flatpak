@@ -222,8 +222,8 @@ Content Bytes Written: 305
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-            <citerefentry><refentrytitle>flatpak-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-repo-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
