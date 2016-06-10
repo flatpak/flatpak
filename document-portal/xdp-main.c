@@ -13,6 +13,7 @@
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "xdp-dbus.h"
+#include "xdp-impl-dbus.h"
 #include "xdp-util.h"
 #include "flatpak-db.h"
 #include "flatpak-dbus.h"
@@ -317,6 +318,69 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
   return id;
 }
 
+static gboolean
+validate_fd (int fd,
+             struct stat *st_buf,
+             struct stat *real_parent_st_buf,
+             char *path_buffer,
+             GError **error)
+{
+  g_autofree char *proc_path = NULL;
+  ssize_t symlink_size;
+  g_autofree char *dirname = NULL;
+  g_autofree char *name = NULL;
+  int fd_flags;
+  glnx_fd_close int dir_fd = -1;
+  struct stat real_st_buf;
+
+  proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
+
+  if (fd == -1 ||
+      /* Must be able to get fd flags */
+      (fd_flags = fcntl (fd, F_GETFL)) == -1 ||
+      /* Must be O_PATH */
+      ((fd_flags & O_PATH) != O_PATH) ||
+      /* Must not be O_NOFOLLOW (because we want the target file) */
+      ((fd_flags & O_NOFOLLOW) == O_PATH) ||
+      /* Must be able to fstat */
+      fstat (fd, st_buf) < 0 ||
+      /* Must be a regular file */
+      (st_buf->st_mode & S_IFMT) != S_IFREG ||
+      /* Must be able to read path from /proc/self/fd */
+      /* This is an absolute and (at least at open time) symlink-expanded path */
+      (symlink_size = readlink (proc_path, path_buffer, PATH_MAX)) < 0)
+    {
+      g_set_error (error,
+                   FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                   "Invalid fd passed");
+      return FALSE;
+    }
+
+  path_buffer[symlink_size] = 0;
+
+  /* We open the parent directory and do the stat in that, so that we have
+   * trustworthy parent dev/ino for later verification. Otherwise the caller
+   * could later replace a parent with a symlink and make us read some other file
+   */
+  dirname = g_path_get_dirname (path_buffer);
+  name = g_path_get_basename (path_buffer);
+  dir_fd = open (dirname, O_CLOEXEC | O_PATH);
+
+  if (fstat (dir_fd, real_parent_st_buf) < 0 ||
+      fstatat (dir_fd, name, &real_st_buf, AT_SYMLINK_NOFOLLOW) < 0 ||
+      st_buf->st_dev != real_st_buf.st_dev ||
+      st_buf->st_ino != real_st_buf.st_ino)
+    {
+      /* Don't leak any info about real file path existence, etc */
+      g_set_error (error,
+                   FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                   "Invalid fd passed");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 static void
 portal_add (GDBusMethodInvocation *invocation,
             GVariant              *parameters,
@@ -325,16 +389,12 @@ portal_add (GDBusMethodInvocation *invocation,
   GDBusMessage *message;
   GUnixFDList *fd_list;
   g_autofree char *id = NULL;
-  g_autofree char *proc_path = NULL;
-  int fd_id, fd, fds_len, fd_flags;
-  glnx_fd_close int dir_fd = -1;
-  const int *fds;
+  int fd_id, fd, fds_len;
   char path_buffer[PATH_MAX + 1];
-  ssize_t symlink_size;
-  struct stat st_buf, real_st_buf, real_parent_st_buf;
-  g_autofree char *dirname = NULL;
-  g_autofree char *name = NULL;
+  const int *fds;
+  struct stat st_buf, real_parent_st_buf;
   gboolean reuse_existing, persistent;
+  GError *error = NULL;
 
   g_variant_get (parameters, "(hbb)", &fd_id, &reuse_existing, &persistent);
 
@@ -349,51 +409,11 @@ portal_add (GDBusMethodInvocation *invocation,
         fd = fds[fd_id];
     }
 
-  proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
-
-  if (fd == -1 ||
-      /* Must be able to get fd flags */
-      (fd_flags = fcntl (fd, F_GETFL)) == -1 ||
-      /* Must be O_PATH */
-      ((fd_flags & O_PATH) != O_PATH) ||
-      /* Must not be O_NOFOLLOW (because we want the target file) */
-      ((fd_flags & O_NOFOLLOW) == O_PATH) ||
-      /* Must be able to fstat */
-      fstat (fd, &st_buf) < 0 ||
-      /* Must be a regular file */
-      (st_buf.st_mode & S_IFMT) != S_IFREG ||
-      /* Must be able to read path from /proc/self/fd */
-      /* This is an absolute and (at least at open time) symlink-expanded path */
-      (symlink_size = readlink (proc_path, path_buffer, sizeof (path_buffer) - 1)) < 0)
+  if (!validate_fd (fd, &st_buf, &real_parent_st_buf, path_buffer, &error))
     {
-      g_dbus_method_invocation_return_error (invocation,
-                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
-                                             "Invalid fd passed");
+      g_dbus_method_invocation_take_error (invocation, error);
       return;
     }
-
-  path_buffer[symlink_size] = 0;
-
-  /* We open the parent directory and do the stat in that, so that we have
-     trustworthy parent dev/ino for later verification. Otherwise the caller
-     could later replace a parent with a symlink and make us read some other file */
-  dirname = g_path_get_dirname (path_buffer);
-  name = g_path_get_basename (path_buffer);
-  dir_fd = open (dirname, O_CLOEXEC | O_PATH);
-
-  if (fstat (dir_fd, &real_parent_st_buf) < 0 ||
-      fstatat (dir_fd, name, &real_st_buf, AT_SYMLINK_NOFOLLOW) < 0 ||
-      st_buf.st_dev != real_st_buf.st_dev ||
-      st_buf.st_ino != real_st_buf.st_ino)
-    {
-      /* Don't leak any info about real file path existence, etc */
-      g_dbus_method_invocation_return_error (invocation,
-                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
-                                             "Invalid fd passed");
-      return;
-    }
-
-  g_debug ("portal_add %s", path_buffer);
 
   if (st_buf.st_dev == fuse_dev)
     {
@@ -416,9 +436,10 @@ portal_add (GDBusMethodInvocation *invocation,
       AUTOLOCK (db);
 
       /* If the entry doesn't exist anymore, fail.  Also fail if not
-         resuse_existing, because otherwise the user could use this to
-         get a copy with permissions and thus escape later permission
-         revocations */
+       * reuse_existing, because otherwise the user could use this to
+       * get a copy with permissions and thus escape later permission
+       * revocations
+       */
       old_entry = flatpak_db_lookup (db, id);
       if (old_entry == NULL ||
           !reuse_existing)
@@ -659,7 +680,7 @@ on_name_acquired (GDBusConnection *connection,
   g_autoptr(GError) error = NULL;
   struct stat stbuf;
 
-  g_debug ("org.freedesktop.portal.Documents acquired");
+  g_debug ("%s acquired", name);
 
   if (!xdp_fuse_init (&error))
     {
@@ -687,8 +708,172 @@ on_name_lost (GDBusConnection *connection,
               const gchar     *name,
               gpointer         user_data)
 {
-  g_debug ("org.freedesktop.portal.Documents lost");
+  g_debug ("%s lost", name);
   final_exit_status = 20;
+  g_main_loop_quit (loop);
+}
+
+static gboolean
+handle_lookup (gpointer object,
+               GDBusMethodInvocation *invocation)
+{
+  GDBusMessage *message;
+  GUnixFDList *fd_list;
+  GVariant *parameters = g_dbus_method_invocation_get_parameters (invocation);
+  int fd_id, fd, fds_len;
+  char path_buffer[PATH_MAX + 1];
+  const int *fds;
+  struct stat st_buf, real_parent_st_buf;
+  g_auto(GStrv) ids = NULL;
+  g_autofree char *id = NULL;
+  GError *error = NULL;
+
+  g_variant_get (parameters, "(h)", &fd_id);
+
+  message = g_dbus_method_invocation_get_message (invocation);
+  fd_list = g_dbus_message_get_unix_fd_list (message);
+
+  fd = -1;
+  if (fd_list != NULL)
+    {
+      fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
+      if (fd_id < fds_len)
+        fd = fds[fd_id];
+    }
+
+  if (!validate_fd (fd, &st_buf, &real_parent_st_buf, path_buffer, &error))
+    {
+      g_dbus_method_invocation_take_error (invocation, error);
+      return TRUE;
+    }
+
+  if (st_buf.st_dev == fuse_dev)
+    {
+      /* The passed in fd is on the fuse filesystem itself */
+      g_autoptr(FlatpakDbEntry) old_entry = NULL;
+
+      id = xdp_fuse_lookup_id_for_inode (st_buf.st_ino);
+      g_debug ("path on fuse, id %s", id);
+    }
+  else
+    {
+      g_autoptr(GVariant) data = NULL;
+
+      data = g_variant_ref_sink (g_variant_new ("(^ayttu)",
+                                                path_buffer,
+                                                (guint64)real_parent_st_buf.st_dev,
+                                                (guint64)real_parent_st_buf.st_ino,
+                                                0));
+      ids = flatpak_db_list_ids_by_value (db, data);
+      if (ids[0] != NULL)
+        id = g_strdup (ids[0]);
+    }
+
+  g_dbus_method_invocation_return_value (invocation,
+                                         g_variant_new ("(s)", id ? id : ""));
+
+  return TRUE;
+}
+
+static GVariant *
+get_app_permissions (FlatpakDbEntry *entry)
+{
+  g_autofree const char **apps = NULL;
+  GVariantBuilder builder;
+  int i;
+
+  apps = flatpak_db_entry_list_apps (entry);
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sas}"));
+
+  for (i = 0; apps[i] != NULL; i++)
+    {
+      g_autofree const char **permissions = flatpak_db_entry_list_permissions (entry, apps[i]);
+      g_variant_builder_add_value (&builder,
+                                   g_variant_new ("{s^as}", apps[i], permissions));
+    }
+
+  return g_variant_builder_end (&builder);
+}
+
+static GVariant *
+get_path (FlatpakDbEntry *entry)
+{
+  g_autoptr (GVariant) data = flatpak_db_entry_get_data (entry);
+  const char *path;
+
+  g_variant_get (data, "(^ayttu)", &path, NULL, NULL, NULL);
+  g_print ("path: %s\n", path);
+  return g_variant_new_bytestring (path);
+}
+
+static gboolean
+handle_info (gpointer object,
+             GDBusMethodInvocation *invocation)
+{
+  GVariant *parameters = g_dbus_method_invocation_get_parameters (invocation);
+  g_autofree char *id = NULL;
+  g_autoptr (FlatpakDbEntry) entry = NULL;
+
+  g_variant_get (parameters, "(s)", &id);
+
+  AUTOLOCK (db);
+
+  entry = flatpak_db_lookup (db, id);
+
+  if (!entry)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                                             "Invalid ID passed");
+      return TRUE;
+    }
+
+  g_dbus_method_invocation_return_value (invocation,
+                                         g_variant_new ("(@ay@a{sas})",
+                                                        get_path (entry),
+                                                        get_app_permissions (entry)));
+
+  return TRUE;
+}
+
+static void
+on_bus_acquired_impl (GDBusConnection *connection,
+                      const gchar     *name,
+                      gpointer         user_data)
+{
+  XdpImplDbusDocuments *helper;
+  GError *error = NULL;
+
+  helper = xdp_impl_dbus_documents_skeleton_new ();
+
+  g_signal_connect (helper, "handle-lookup", G_CALLBACK (handle_lookup), NULL);
+  g_signal_connect (helper, "handle-info", G_CALLBACK (handle_info), NULL);
+
+  if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
+                                         connection,
+                                         "/org/freedesktop/impl/portal/documents",
+                                         &error))
+    {
+      g_warning ("error: %s", error->message);
+      g_error_free (error);
+    }
+}
+
+static void
+on_name_acquired_impl (GDBusConnection *connection,
+                       const gchar     *name,
+                       gpointer         user_data)
+{
+  g_debug ("%s acquired", name);
+}
+
+static void
+on_name_lost_impl (GDBusConnection *connection,
+                   const gchar     *name,
+                   gpointer         user_data)
+{
+  g_debug ("%s lost", name);
+  final_exit_status = 21;
   g_main_loop_quit (loop);
 }
 
@@ -778,6 +963,7 @@ main (int    argc,
       char **argv)
 {
   guint owner_id;
+  guint owner_id_impl;
 
   g_autoptr(GError) error = NULL;
   g_autofree char *path = NULL;
@@ -871,11 +1057,20 @@ main (int    argc,
                              NULL,
                              NULL);
 
+  owner_id_impl = g_bus_own_name (G_BUS_TYPE_SESSION,
+                                  "org.freedesktop.impl.portal.Documents",
+                                  G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT | (opt_replace ? G_BUS_NAME_OWNER_FLAGS_REPLACE : 0),
+                                  on_bus_acquired_impl,
+                                  on_name_acquired_impl,
+                                  on_name_lost_impl,
+                                  NULL,
+                                  NULL);
   g_main_loop_run (loop);
 
   xdp_fuse_exit ();
 
   g_bus_unown_name (owner_id);
+  g_bus_unown_name (owner_id_impl);
 
   do_exit (final_exit_status);
 

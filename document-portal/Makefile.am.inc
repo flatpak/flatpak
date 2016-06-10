@@ -3,7 +3,8 @@ libexec_PROGRAMS += \
 	$(NULL)
 
 xdp_dbus_built_sources = document-portal/xdp-dbus.c document-portal/xdp-dbus.h
-BUILT_SOURCES += $(xdp_dbus_built_sources)
+xdp_impl_dbus_built_sources = document-portal/xdp-impl-dbus.c document-portal/xdp-impl-dbus.h
+BUILT_SOURCES += $(xdp_dbus_built_sources) $(xdp_impl_dbus_build_sources)
 
 $(xdp_dbus_built_sources) : data/org.freedesktop.portal.Documents.xml
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
@@ -11,6 +12,14 @@ $(xdp_dbus_built_sources) : data/org.freedesktop.portal.Documents.xml
 		--c-namespace XdpDbus				\
 		--generate-c-code $(builddir)/document-portal/xdp-dbus	\
 		$(srcdir)/data/org.freedesktop.portal.Documents.xml	\
+		$(NULL)
+
+$(xdp_impl_dbus_built_sources) : data/org.freedesktop.impl.portal.Documents.xml
+	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
+		--interface-prefix org.freedesktop.impl.portal.	\
+		--c-namespace XdpImplDbus				\
+		--generate-c-code $(builddir)/document-portal/xdp-impl-dbus	\
+		$(srcdir)/data/org.freedesktop.impl.portal.Documents.xml	\
 		$(NULL)
 
 service_in_files += document-portal/xdg-document-portal.service.in
@@ -23,6 +32,7 @@ xdg_document_portal_SOURCES = \
 	document-portal/xdp-main.c		\
 	document-portal/xdp-enums.h		\
 	$(xdp_dbus_built_sources)		\
+	$(xdp_impl_dbus_built_sources)		\
 	$(ps_dbus_built_sources)		\
 	document-portal/xdp-util.h		\
 	document-portal/xdp-util.c		\
