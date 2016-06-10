@@ -60,10 +60,10 @@ static FlatpakCommand commands[] = {
 
   { "\n Running applications" },
   { "run", "Run an application", flatpak_builtin_run, flatpak_complete_run },
-  { "override", "Override permissions for an application", flatpak_builtin_override, flatpak_complete_override},
-  { "export-file", "Grant an application access to a specific file", flatpak_builtin_export_file, flatpak_complete_export_file},
-  { "make-current", "Specify default version to run", flatpak_builtin_make_current_app, flatpak_complete_make_current_app},
-  { "enter", "Enter the namespace of a running application", flatpak_builtin_enter },
+  { "override", "Override permissions for an application", flatpak_builtin_override, flatpak_complete_override },
+  { "export-file", "Grant an application access to a specific file", flatpak_builtin_export_file, flatpak_complete_export_file },
+  { "make-current", "Specify default version to run", flatpak_builtin_make_current_app, flatpak_complete_make_current_app },
+  { "enter", "Enter the namespace of a running application", flatpak_builtin_enter, flatpak_complete_enter },
 
   { "\n Manage remote repositories" },
   { "remote-add", "Add a new remote repository (by URL)", flatpak_builtin_add_remote, flatpak_complete_add_remote },
@@ -87,6 +87,7 @@ static FlatpakCommand commands[] = {
 
 GOptionEntry global_entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
+  { "help", '?', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, "Show help options", NULL, NULL },
   { NULL }
 };
 
