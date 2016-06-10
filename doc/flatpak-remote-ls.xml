@@ -147,4 +147,13 @@ org.freedesktop.glxgears
 
     </refsect1>
 
+    <refsect1>
+        <title>See also</title>
+
+            <para>
+                <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-remote-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            </para>
+    </refsect1>
+
 </refentry>
