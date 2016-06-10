@@ -36,13 +36,13 @@
 #include "flatpak-utils.h"
 #include "flatpak-run.h"
 
-gboolean opt_unique = FALSE;
-gboolean opt_allow_write = FALSE;
-gboolean opt_allow_delete = FALSE;
-gboolean opt_transient = FALSE;
-gboolean opt_noexist = FALSE;
-gboolean opt_allow_grant_permissions = FALSE;
-char **opt_apps = NULL;
+static gboolean opt_unique = FALSE;
+static gboolean opt_allow_write = FALSE;
+static gboolean opt_allow_delete = FALSE;
+static gboolean opt_transient = FALSE;
+static gboolean opt_noexist = FALSE;
+static gboolean opt_allow_grant_permissions = FALSE;
+static char **opt_apps = NULL;
 
 static GOptionEntry options[] = {
   { "unique", 'u', 0, G_OPTION_ARG_NONE, &opt_unique, "Create a unique document reference", NULL },
