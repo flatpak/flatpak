@@ -87,6 +87,7 @@ static FlatpakCommand commands[] = {
 
 GOptionEntry global_entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
+  { "help", '?', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, "Show help options", NULL, NULL },
   { NULL }
 };
 
