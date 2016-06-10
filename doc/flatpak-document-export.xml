@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="flatpak-export-file">
+<refentry id="flatpak-document-export">
 
     <refentryinfo>
-        <title>flatpak export-file</title>
+        <title>flatpak document-export</title>
         <productname>flatpak</productname>
 
         <authorgroup>
@@ -19,18 +19,18 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>flatpak export-file</refentrytitle>
+        <refentrytitle>flatpak document-export</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>flatpak-export-file</refname>
+        <refname>flatpak-document-export</refname>
         <refpurpose>Export a file to a sandboxed application</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>flatpak export-file</command>
+                <command>flatpak document-export</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">FILE</arg>
             </cmdsynopsis>
@@ -141,7 +141,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak export-file --app=org.gnome.GEdit ~/test.txt</command>
+            <command>$ flatpak document-export --app=org.gnome.GEdit ~/test.txt</command>
         </para>
 <programlisting>
 /run/user/1000/doc/e52f9c6a/test.txt

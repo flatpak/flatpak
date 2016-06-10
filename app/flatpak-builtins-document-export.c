@@ -56,9 +56,9 @@ static GOptionEntry options[] = {
 };
 
 gboolean
-flatpak_builtin_export_file (int argc, char **argv,
-                             GCancellable *cancellable,
-                             GError **error)
+flatpak_builtin_document_export (int argc, char **argv,
+                                 GCancellable *cancellable,
+                                 GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GVariant) reply = NULL;
@@ -186,7 +186,7 @@ flatpak_builtin_export_file (int argc, char **argv,
 }
 
 gboolean
-flatpak_complete_export_file (FlatpakCompletion *completion)
+flatpak_complete_document_export (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
 

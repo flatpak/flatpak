@@ -77,7 +77,7 @@ BUILTINPROTO (build_export)
 BUILTINPROTO (build_bundle)
 BUILTINPROTO (build_import)
 BUILTINPROTO (build_update_repo)
-BUILTINPROTO (export_file)
+BUILTINPROTO (document_export)
 BUILTINPROTO (override)
 
 #undef BUILTINPROTO
