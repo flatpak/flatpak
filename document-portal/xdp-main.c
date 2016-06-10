@@ -2,6 +2,7 @@
 
 #include <locale.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -663,7 +664,7 @@ on_name_acquired (GDBusConnection *connection,
   if (!xdp_fuse_init (&error))
     {
       final_exit_status = 6;
-      g_printerr ("fuse init failed: %s\n", error->message);
+      g_printerr ("fuse init failed: %s", error->message);
       g_main_loop_quit (loop);
       return;
     }
@@ -671,7 +672,7 @@ on_name_acquired (GDBusConnection *connection,
   if (stat (xdp_fuse_get_mountpoint (), &stbuf) != 0)
     {
       final_exit_status = 7;
-      g_printerr ("fuse stat failed: %s\n", strerror (errno));
+      g_printerr ("fuse stat failed: %s", strerror (errno));
       g_main_loop_quit (loop);
       return;
     }
@@ -753,9 +754,23 @@ message_handler (const gchar   *log_domain,
 {
   /* Make this look like normal console output */
   if (log_level & G_LOG_LEVEL_DEBUG)
-    g_printerr ("XDP: %s\n", message);
+    printf ("XDP: %s\n", message);
   else
-    g_printerr ("%s: %s\n", g_get_prgname (), message);
+    printf ("%s: %s\n", g_get_prgname (), message);
+}
+
+static void
+printerr_handler (const gchar *string)
+{
+  int is_tty = isatty (1);
+  const char *prefix = "";
+  const char *suffix = "";
+  if (is_tty)
+    {
+      prefix = "\x1b[31m\x1b[1m"; /* red, bold */
+      suffix = "\x1b[22m\x1b[0m"; /* bold off, color reset */
+    }
+  fprintf (stderr, "%serror: %s%s\n", prefix, suffix, string);
 }
 
 int
@@ -776,11 +791,13 @@ main (int    argc,
 
   flatpak_migrate_from_xdg_app ();
 
+  g_set_printerr_handler (printerr_handler);
+
   context = g_option_context_new ("- document portal");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      g_printerr ("option parsing failed: %s\n", error->message);
+      g_printerr ("Option parsing failed: %s", error->message);
       return 1;
     }
 
@@ -803,7 +820,7 @@ main (int    argc,
     }
 
   if (opt_verbose)
-    g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
   g_set_prgname (argv[0]);
 
@@ -813,14 +830,14 @@ main (int    argc,
   db = flatpak_db_new (path, FALSE, &error);
   if (db == NULL)
     {
-      g_printerr ("Failed to load db: %s\n", error->message);
+      g_printerr ("Failed to load db: %s", error->message);
       do_exit (2);
     }
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (session_bus == NULL)
     {
-      g_printerr ("No session bus: %s\n", error->message);
+      g_printerr ("No session bus: %s", error->message);
       do_exit (3);
     }
 
@@ -830,7 +847,7 @@ main (int    argc,
                                                           NULL, &error);
   if (permission_store == NULL)
     {
-      g_print ("No permission store: %s\n", error->message);
+      g_print ("No permission store: %s", error->message);
       do_exit (4);
     }
 
