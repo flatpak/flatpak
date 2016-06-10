@@ -68,6 +68,7 @@ static FlatpakCommand commands[] = {
   { "document-export", "Grant an application access to a specific file", flatpak_builtin_document_export, flatpak_complete_document_export },
   { "document-unexport", "Revoke access to a specific file", flatpak_builtin_document_unexport, flatpak_complete_document_unexport },
   { "document-info", "Show information about a specific file", flatpak_builtin_document_info, flatpak_complete_document_info },
+  { "document-list", "List exported files", flatpak_builtin_document_list, flatpak_complete_document_list },
 
   { "\n Manage remote repositories" },
   { "remote-add", "Add a new remote repository (by URL)", flatpak_builtin_add_remote, flatpak_complete_add_remote },

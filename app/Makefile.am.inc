@@ -29,6 +29,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-document-export.c \
 	app/flatpak-builtins-document-unexport.c \
 	app/flatpak-builtins-document-info.c \
+	app/flatpak-builtins-document-list.c \
 	$(xdp_dbus_built_sources)	\
 	$(NULL)
 

@@ -1,0 +1,94 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-document-list">
+
+    <refentryinfo>
+        <title>flatpak document-list</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak document-list</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-document-list</refname>
+        <refpurpose>List exported files</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak document-list</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="opt">APPID</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Lists exported files, with their document id and the
+            full path to their origin. If an APPID is specified,
+            only the files exported to this app are listed.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-document-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>

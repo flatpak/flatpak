@@ -80,6 +80,7 @@ BUILTINPROTO (build_update_repo)
 BUILTINPROTO (document_export)
 BUILTINPROTO (document_unexport)
 BUILTINPROTO (document_info)
+BUILTINPROTO (document_list)
 BUILTINPROTO (override)
 
 #undef BUILTINPROTO

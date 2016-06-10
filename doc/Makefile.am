@@ -33,6 +33,7 @@ man_MANS = \
 	flatpak-document-export.1	\
 	flatpak-document-unexport.1	\
 	flatpak-document-info.1		\
+	flatpak-document-list.1		\
 	flatpak-build-init.1		\
 	flatpak-build.1			\
 	flatpak-build-bundle.1		\
