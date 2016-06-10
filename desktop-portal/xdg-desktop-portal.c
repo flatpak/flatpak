@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <locale.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <gio/gio.h>
@@ -33,9 +34,23 @@ message_handler (const gchar *log_domain,
 {
   /* Make this look like normal console output */
   if (log_level & G_LOG_LEVEL_DEBUG)
-    g_printerr ("XDP: %s\n", message);
+    printf ("XDP: %s\n", message);
   else
-    g_printerr ("%s: %s\n", g_get_prgname (), message);
+    printf ("%s: %s\n", g_get_prgname (), message);
+}
+
+static void
+printerr_handler (const gchar *string)
+{
+  int is_tty = isatty (1);
+  const char *prefix = "";
+  const char *suffix = "";
+  if (is_tty)
+    {
+      prefix = "\x1b[31m\x1b[1m"; /* red, bold */
+      suffix = "\x1b[22m\x1b[0m"; /* bold off, color reset */
+    }
+  fprintf (stderr, "%serror: %s%s\n", prefix, suffix, string);
 }
 
 static void
@@ -66,24 +81,60 @@ typedef struct {
   gboolean subscribed;
 } PortalImplementation;
 
+static void
+portal_implementation_free (PortalImplementation *impl)
+{
+  g_free (impl->dbus_name);
+  g_free (impl->interfaces);
+  g_free (impl->use_in);
+  g_free (impl);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(PortalImplementation, portal_implementation_free)
+
 static GList *implementations = NULL;
 
-static void
-register_portal (GKeyFile *key)
+static gboolean
+register_portal (const char *path, GError **error)
 {
-  PortalImplementation *impl = g_new0 (PortalImplementation, 1);
+  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_autoptr(PortalImplementation) impl = g_new0 (PortalImplementation, 1);
 
-  impl->dbus_name = g_key_file_get_string (key, "portal", "DBusName", NULL);
-  impl->interfaces = g_key_file_get_string_list (key, "portal", "Interfaces", NULL, NULL);
-  impl->use_in = g_key_file_get_string_list (key, "portal", "UseIn", NULL, NULL);
+  g_debug ("loading %s", path);
+
+  if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
+    return FALSE;
+
+  impl->dbus_name = g_key_file_get_string (keyfile, "portal", "DBusName", error);
+  if (impl->dbus_name == NULL)
+    return FALSE;
+
+  impl->interfaces = g_key_file_get_string_list (keyfile, "portal", "Interfaces", NULL, error);
+  if (impl->interfaces == NULL)
+    return FALSE;
+
+  impl->use_in = g_key_file_get_string_list (keyfile, "portal", "UseIn", NULL, error);
+  if (impl->use_in == NULL)
+    return FALSE;
+
+  if (opt_verbose)
+    {
+      g_autofree char *uses = g_strjoinv (", ", impl->use_in);
+      g_autofree char *ifaces = g_strjoinv (", ", impl->interfaces);
+      g_debug ("portal for %s supports %s", uses, ifaces);
+    }
 
   implementations = g_list_prepend (implementations, impl);
+  impl = NULL;
+
+  return TRUE;
 }
 
 static void
 load_installed_portals (void)
 {
-  g_autoptr(GFile) dir = g_file_new_for_path (PKGDATADIR "/portals");
+  const char *portal_dir = PKGDATADIR "/portals";
+  g_autoptr(GFile) dir = g_file_new_for_path (portal_dir);
   g_autoptr(GFileEnumerator) enumerator = NULL;
 
   enumerator = g_file_enumerate_children (dir, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
@@ -96,7 +147,6 @@ load_installed_portals (void)
       g_autoptr(GFileInfo) info = g_file_enumerator_next_file (enumerator, NULL, NULL);
       g_autoptr(GFile) child = NULL;
       g_autofree char *path = NULL;
-      g_autoptr(GKeyFile) keyfile = NULL;
       const char *name;
       g_autoptr(GError) error = NULL;
 
@@ -111,17 +161,11 @@ load_installed_portals (void)
       child = g_file_enumerator_get_child (enumerator, info);
       path = g_file_get_path (child);
 
-      keyfile = g_key_file_new ();
-
-      if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, &error))
+      if (!register_portal (path, &error))
         {
-          g_warning ("error loading %s: %s", name, error->message);
+          g_warning ("error loading %s: %s", path, error->message);
           continue;
         }
-      else
-        g_debug ("loaded portal implementation %s\n", name);
-
-      register_portal (keyfile);
     }
 }
 
@@ -377,16 +421,18 @@ main (int argc, char *argv[])
   /* Avoid even loading gvfs to avoid accidental confusion */
   g_setenv ("GIO_USE_VFS", "local", TRUE);
 
-  context = g_option_context_new ("- file chooser portal");
+  g_set_printerr_handler (printerr_handler);
+
+  context = g_option_context_new ("- desktop portal");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      g_printerr ("option parsing failed: %s\n", error->message);
+      g_printerr ("Option parsing failed: %s", error->message);
       return 1;
     }
 
   if (opt_verbose)
-    g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
   g_set_prgname (argv[0]);
 
@@ -397,7 +443,7 @@ main (int argc, char *argv[])
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
   if (session_bus == NULL)
     {
-      g_printerr ("No session bus: %s\n", error->message);
+      g_printerr ("No session bus: %s", error->message);
       return 2;
     }
 
