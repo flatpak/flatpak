@@ -26,7 +26,10 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-build-import-bundle.c \
 	app/flatpak-builtins-build-sign.c \
 	app/flatpak-builtins-repo-update.c \
-	app/flatpak-builtins-document.c \
+	app/flatpak-builtins-document-export.c \
+	app/flatpak-builtins-document-unexport.c \
+	app/flatpak-builtins-document-info.c \
+	app/flatpak-builtins-document-list.c \
 	$(xdp_dbus_built_sources)	\
 	$(NULL)
 

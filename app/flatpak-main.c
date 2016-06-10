@@ -61,9 +61,14 @@ static FlatpakCommand commands[] = {
   { "\n Running applications" },
   { "run", "Run an application", flatpak_builtin_run, flatpak_complete_run },
   { "override", "Override permissions for an application", flatpak_builtin_override, flatpak_complete_override },
-  { "export-file", "Grant an application access to a specific file", flatpak_builtin_export_file, flatpak_complete_export_file },
   { "make-current", "Specify default version to run", flatpak_builtin_make_current_app, flatpak_complete_make_current_app },
   { "enter", "Enter the namespace of a running application", flatpak_builtin_enter, flatpak_complete_enter },
+
+  { "\n Manage file access" },
+  { "document-export", "Grant an application access to a specific file", flatpak_builtin_document_export, flatpak_complete_document_export },
+  { "document-unexport", "Revoke access to a specific file", flatpak_builtin_document_unexport, flatpak_complete_document_unexport },
+  { "document-info", "Show information about a specific file", flatpak_builtin_document_info, flatpak_complete_document_info },
+  { "document-list", "List exported files", flatpak_builtin_document_list, flatpak_complete_document_list },
 
   { "\n Manage remote repositories" },
   { "remote-add", "Add a new remote repository (by URL)", flatpak_builtin_add_remote, flatpak_complete_add_remote },

@@ -36,34 +36,45 @@
 #include "flatpak-utils.h"
 #include "flatpak-run.h"
 
-gboolean opt_unique = FALSE;
-gboolean opt_allow_write = FALSE;
-gboolean opt_allow_delete = FALSE;
-gboolean opt_transient = FALSE;
-gboolean opt_noexist = FALSE;
-gboolean opt_allow_grant_permissions = FALSE;
-char **opt_apps = NULL;
+static gboolean opt_unique = FALSE;
+static gboolean opt_transient = FALSE;
+static gboolean opt_noexist = FALSE;
+static gboolean opt_allow_read = TRUE;
+static gboolean opt_forbid_read = FALSE;
+static gboolean opt_allow_write = FALSE;
+static gboolean opt_forbid_write = FALSE;
+static gboolean opt_allow_delete = FALSE;
+static gboolean opt_forbid_delete = FALSE;
+static gboolean opt_allow_grant_permissions = FALSE;
+static gboolean opt_forbid_grant_permissions = FALSE;
+static char **opt_apps = NULL;
 
 static GOptionEntry options[] = {
   { "unique", 'u', 0, G_OPTION_ARG_NONE, &opt_unique, "Create a unique document reference", NULL },
   { "transient", 't', 0, G_OPTION_ARG_NONE, &opt_transient, "Make the document transient for the current session", NULL },
   { "noexist", 'n', 0, G_OPTION_ARG_NONE, &opt_noexist, "Don't require the file to exist already", NULL },
+  { "allow-read", 'r', 0, G_OPTION_ARG_NONE, &opt_allow_read, "Give the app read permissions", NULL },
   { "allow-write", 'w', 0, G_OPTION_ARG_NONE, &opt_allow_write, "Give the app write permissions", NULL },
-  { "allow-delete", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_delete, "Give the app permissions to delete the document id", NULL },
-  { "allow-grant-permission", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_grant_permissions, "Give the app permissions to grant furthern permissions", NULL },
-  { "app", 'a', 0, G_OPTION_ARG_STRING_ARRAY, &opt_apps, "Add permissions for this app", NULL },
+  { "allow-delete", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_delete, "Give the app delete permissions", NULL },
+  { "allow-grant-permission", 'g', 0, G_OPTION_ARG_NONE, &opt_allow_grant_permissions, "Give the app permissions to grant further permissions", NULL },
+  { "forbid-read", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_read, "Revoke read permissions of the app", NULL },
+  { "forbid-write", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_write, "Revoke write permissions of the app", NULL },
+  { "forbid-delete", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_delete, "Revoke delete permissions of the app", NULL },
+  { "forbid-grant-permission", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_grant_permissions, "Revoke the permission to grant further permissions", NULL },
+  { "app", 'a', 0, G_OPTION_ARG_STRING_ARRAY, &opt_apps, "Add permissions for this app", "APPID" },
   { NULL }
 };
 
 gboolean
-flatpak_builtin_export_file (int argc, char **argv,
-                             GCancellable *cancellable,
-                             GError **error)
+flatpak_builtin_document_export (int argc, char **argv,
+                                 GCancellable *cancellable,
+                                 GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GVariant) reply = NULL;
   g_autoptr(GDBusConnection) session_bus = NULL;
   g_autoptr(GPtrArray) permissions = NULL;
+  g_autoptr(GPtrArray) revocations = NULL;
   const char *file;
   g_autofree char *mountpoint = NULL;
   g_autofree char *basename = NULL;
@@ -157,8 +168,8 @@ flatpak_builtin_export_file (int argc, char **argv,
   g_variant_get (reply, "(&s)", &doc_id);
 
   permissions = g_ptr_array_new ();
-
-  g_ptr_array_add (permissions, "read");
+  if (opt_allow_read)
+    g_ptr_array_add (permissions, "read");
   if (opt_allow_write)
     g_ptr_array_add (permissions, "write");
   if (opt_allow_delete)
@@ -166,6 +177,17 @@ flatpak_builtin_export_file (int argc, char **argv,
   if (opt_allow_grant_permissions)
     g_ptr_array_add (permissions, "grant-permissions");
   g_ptr_array_add (permissions, NULL);
+
+  revocations = g_ptr_array_new ();
+  if (opt_forbid_read)
+    g_ptr_array_add (revocations, "read");
+  if (opt_forbid_write)
+    g_ptr_array_add (revocations, "write");
+  if (opt_forbid_delete)
+    g_ptr_array_add (revocations, "delete");
+  if (opt_forbid_grant_permissions)
+    g_ptr_array_add (revocations, "grant-permissions");
+  g_ptr_array_add (revocations, NULL);
 
   for (i = 0; opt_apps != NULL && opt_apps[i] != NULL; i++)
     {
@@ -177,6 +199,13 @@ flatpak_builtin_export_file (int argc, char **argv,
                                                            error))
         return FALSE;
 
+      if (!xdp_dbus_documents_call_revoke_permissions_sync (documents,
+                                                            doc_id,
+                                                            opt_apps[i],
+                                                            (const char **) revocations->pdata,
+                                                            NULL,
+                                                            error))
+        return FALSE;
     }
 
   doc_path = g_build_filename (mountpoint, doc_id, basename, NULL);
@@ -186,7 +215,7 @@ flatpak_builtin_export_file (int argc, char **argv,
 }
 
 gboolean
-flatpak_complete_export_file (FlatpakCompletion *completion)
+flatpak_complete_document_export (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
 
