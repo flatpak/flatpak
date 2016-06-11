@@ -99,6 +99,7 @@ register_portal (const char *path, GError **error)
 {
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   g_autoptr(PortalImplementation) impl = g_new0 (PortalImplementation, 1);
+  int i;
 
   g_debug ("loading %s", path);
 
@@ -108,10 +109,25 @@ register_portal (const char *path, GError **error)
   impl->dbus_name = g_key_file_get_string (keyfile, "portal", "DBusName", error);
   if (impl->dbus_name == NULL)
     return FALSE;
+  if (!g_dbus_is_name (impl->dbus_name))
+    {
+      g_set_error (error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE,
+                   "Not a valid bus name: %s", impl->dbus_name);
+      return FALSE;
+    }
 
   impl->interfaces = g_key_file_get_string_list (keyfile, "portal", "Interfaces", NULL, error);
   if (impl->interfaces == NULL)
     return FALSE;
+  for (i = 0; impl->interfaces[i]; i++)
+    {
+      if (!g_dbus_is_interface_name (impl->interfaces[i]))
+        {
+          g_set_error (error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_INVALID_VALUE,
+                       "Not a valid interface name: %s", impl->interfaces[i]);
+          return FALSE;
+        }
+    }
 
   impl->use_in = g_key_file_get_string_list (keyfile, "portal", "UseIn", NULL, error);
   if (impl->use_in == NULL)
@@ -120,8 +136,9 @@ register_portal (const char *path, GError **error)
   if (opt_verbose)
     {
       g_autofree char *uses = g_strjoinv (", ", impl->use_in);
-      g_autofree char *ifaces = g_strjoinv (", ", impl->interfaces);
-      g_debug ("portal for %s supports %s", uses, ifaces);
+      g_debug ("portal for %s", uses);
+      for (i = 0; impl->interfaces[i]; i++)
+        g_debug ("portal supports %s", impl->interfaces[i]);
     }
 
   implementations = g_list_prepend (implementations, impl);
