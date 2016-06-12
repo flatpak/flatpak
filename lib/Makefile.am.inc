@@ -1,7 +1,9 @@
 lib_LTLIBRARIES += libflatpak.la
 noinst_PROGRAMS += test-libflatpak
 
-public_headers = \
+flatpakincludedir = $(includedir)/flatpak
+
+flatpakinclude_HEADERS = \
 	lib/flatpak.h \
 	lib/flatpak-ref.h \
 	lib/flatpak-error.h \
@@ -13,37 +15,33 @@ public_headers = \
 	lib/flatpak-version-macros.h \
 	$(NULL)
 
-generated_public_headers = \
+nodist_flatpakinclude_HEADERS = \
 	lib/flatpak-enum-types.h \
 	$(NULL)
 
 BUILT_SOURCES += \
-	lib/flatpak-enum-types.c \
-	lib/flatpak-enum-types.h \
+	$(nodist_flatpakinclude_HEADERS) \
+	$(nodist_libflatpak_la_SOURCES) \
 	$(NULL)
 
 DISTCLEANFILES += \
-	lib/flatpak-enum-types.c \
-	lib/flatpak-enum-types.h \
+	$(nodist_flatpakinclude_HEADERS) \
+	$(nodist_libflatpak_la_SOURCES) \
 	$(NULL)
 
 
-lib/flatpak-enum-types.h: $(public_headers) lib/flatpak-enum-types.h.template
+lib/flatpak-enum-types.h: $(flatpakinclude_HEADERS) lib/flatpak-enum-types.h.template
 	$(AM_V_GEN) $(GLIB_MKENUMS) --template $(filter %.template,$^) $(filter-out %.template,$^) > \
 	    lib/flatpak-enum-types.h.tmp && mv lib/flatpak-enum-types.h.tmp lib/flatpak-enum-types.h
 
-lib/flatpak-enum-types.c: $(public_headers) lib/flatpak-enum-types.c.template
+lib/flatpak-enum-types.c: $(flatpakinclude_HEADERS) lib/flatpak-enum-types.c.template
 	$(AM_V_GEN) $(GLIB_MKENUMS) --template $(filter %.template,$^) $(filter-out %.template,$^) > \
 	    lib/flatpak-enum-types.c.tmp && mv lib/flatpak-enum-types.c.tmp lib/flatpak-enum-types.c
 
 EXTRA_DIST += lib/flatpak-enum-types.c.template lib/flatpak-enum-types.h.template
 
-flatpakincludedir = $(includedir)/flatpak
-flatpakinclude_HEADERS = $(public_headers) $(generated_public_headers)
-
-sources = \
+libflatpak_la_SOURCES = \
 	lib/flatpak.c \
-	lib/flatpak-enum-types.c \
 	lib/flatpak-ref.c \
 	lib/flatpak-installed-ref.c \
 	lib/flatpak-installed-ref-private.h \
@@ -56,10 +54,13 @@ sources = \
 	lib/flatpak-installation.c \
 	$(NULL)
 
-libflatpak_la_SOURCES = \
-	$(public_headers) \
-	$(generated_public_headers) \
-	$(sources) \
+nodist_libflatpak_la_SOURCES = \
+	lib/flatpak-enum-types.c \
+	$(NULL)
+
+sources = \
+	$(libflatpak_la_SOURCES) \
+	$(nodist_libflatpak_la_SOURCES) \
 	$(NULL)
 
 libflatpak_la_CFLAGS = \
@@ -109,7 +110,10 @@ INTROSPECTION_GIRS =
 if HAVE_INTROSPECTION
 Flatpak-1.0.gir: libflatpak.la Makefile
 
-introspected_headers = $(public_headers)
+introspected_headers = \
+	$(flatpakinclude_HEADERS) \
+	$(nodist_flatpakinclude_HEADERS) \
+	$(NULL)
 introspected_sources = $(filter-out %-private.h,$(sources))
 
 Flatpak_1_0_gir_NAMESPACE = Flatpak
