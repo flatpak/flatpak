@@ -2,7 +2,6 @@ noinst_LTLIBRARIES += libflatpak-common.la
 
 dbus_built_sources = common/flatpak-dbus.c common/flatpak-dbus.h
 systemd_dbus_built_sources = common/flatpak-systemd-dbus.c common/flatpak-systemd-dbus.h
-BUILT_SOURCES += $(dbus_built_sources) $(systemd_dbus_built_sources)
 
 $(dbus_built_sources) : data/org.freedesktop.Flatpak.xml
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
@@ -19,6 +18,14 @@ $(systemd_dbus_built_sources) : data/org.freedesktop.systemd1.xml
 		--generate-c-code $(builddir)/common/flatpak-systemd-dbus	\
 		$(srcdir)/data/org.freedesktop.systemd1.xml	\
 		$(NULL)
+
+nodist_libflatpak_common_la_SOURCES = \
+	$(dbus_built_sources)		\
+	$(systemd_dbus_built_sources)	\
+	$(NULL)
+
+BUILT_SOURCES += $(nodist_libflatpak_common_la_SOURCES)
+CLEANFILES += $(nodist_libflatpak_common_la_SOURCES)
 
 libflatpak_common_la_SOURCES = \
 	common/flatpak-common-types.h \
@@ -39,8 +46,6 @@ libflatpak_common_la_SOURCES = \
 	common/gvdb/gvdb-builder.c	\
 	common/flatpak-db.c \
 	common/flatpak-db.h \
-	$(dbus_built_sources)		\
-	$(systemd_dbus_built_sources)	\
 	$(NULL)
 
 libflatpak_common_la_CFLAGS = \
