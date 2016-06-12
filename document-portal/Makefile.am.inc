@@ -19,11 +19,14 @@ systemduserunit_DATA += document-portal/xdg-document-portal.service
 service_in_files += document-portal/org.freedesktop.portal.Documents.service.in
 dbus_service_DATA += document-portal/org.freedesktop.portal.Documents.service
 
+nodist_xdg_document_portal_SOURCES = \
+	$(xdp_dbus_built_sources)		\
+	$(ps_dbus_built_sources)		\
+	$(NULL)
+
 xdg_document_portal_SOURCES = \
 	document-portal/xdp-main.c		\
 	document-portal/xdp-enums.h		\
-	$(xdp_dbus_built_sources)		\
-	$(ps_dbus_built_sources)		\
 	document-portal/xdp-util.h		\
 	document-portal/xdp-util.c		\
 	document-portal/xdp-fuse.h		\
