@@ -638,7 +638,8 @@ daemon_report_done (int status)
       guint64 counter;
 
       counter = status + 1;
-      write (daemon_event_fd, &counter, sizeof (counter));
+      if (write (daemon_event_fd, &counter, sizeof (counter)) < 0)
+          g_critical ("Unable to report exit status: %s", g_strerror (errno));
 
       daemon_event_fd = -1;
     }
