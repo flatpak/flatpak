@@ -136,7 +136,7 @@
                 <listitem><para>
                     Expose a device to the application. This updates
                     the [Context] group in the metadata.
-                    DEVICE must be one of: dri.
+                    DEVICE must be one of: dri, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -147,7 +147,7 @@
                 <listitem><para>
                     Don't expose a device to the application. This updates
                     the [Context] group in the metadata.
-                    DEVICE must be one of: dri.
+                    DEVICE must be one of: dri, all.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

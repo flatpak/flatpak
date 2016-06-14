@@ -91,10 +91,12 @@ const char *dont_mount_in_root[] = {
 
 typedef enum {
   FLATPAK_CONTEXT_DEVICE_DRI         = 1 << 0,
+  FLATPAK_CONTEXT_DEVICE_ALL         = 1 << 1,
 } FlatpakContextDevices;
 
 const char *flatpak_context_devices[] = {
   "dri",
+  "all",
   NULL
 };
 
@@ -1765,17 +1767,29 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       add_args (argv_array, "--unshare-net", NULL);
     }
 
-  if (context->devices & FLATPAK_CONTEXT_DEVICE_DRI)
+  if (context->devices & FLATPAK_CONTEXT_DEVICE_ALL)
     {
-      g_debug ("Allowing dri access");
-      if (g_file_test ("/dev/dri", G_FILE_TEST_IS_DIR))
-        add_args (argv_array, "--dev-bind", "/dev/dri", "/dev/dri", NULL);
-      if (g_file_test ("/dev/nvidiactl", G_FILE_TEST_EXISTS))
+      add_args (argv_array,
+                "--ro-bind", "/dev", "/dev",
+                NULL);
+    }
+  else
+    {
+      add_args (argv_array,
+                "--dev", "/dev",
+                NULL);
+      if (context->devices & FLATPAK_CONTEXT_DEVICE_DRI)
         {
-          add_args (argv_array,
-                    "--dev-bind", "/dev/nvidiactl", "/dev/nvidiactl",
-                    "--dev-bind", "/dev/nvidia0", "/dev/nvidia0",
-                    NULL);
+          g_debug ("Allowing dri access");
+          if (g_file_test ("/dev/dri", G_FILE_TEST_IS_DIR))
+            add_args (argv_array, "--dev-bind", "/dev/dri", "/dev/dri", NULL);
+          if (g_file_test ("/dev/nvidiactl", G_FILE_TEST_EXISTS))
+            {
+              add_args (argv_array,
+                        "--dev-bind", "/dev/nvidiactl", "/dev/nvidiactl",
+                        "--dev-bind", "/dev/nvidia0", "/dev/nvidia0",
+                        NULL);
+            }
         }
     }
 
@@ -2825,7 +2839,6 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   add_args (argv_array,
             "--unshare-pid",
             "--unshare-user-try",
-            "--dev", "/dev",
             "--proc", "/proc",
             "--dir", "/tmp",
             "--dir", "/run/host",
