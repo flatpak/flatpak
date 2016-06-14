@@ -22,8 +22,8 @@ if ! test -f libglnx/README.md -a -f bubblewrap/README.md; then
     git submodule update --init
 fi
 # Workaround automake bug with subdir-objects and computed paths
-sed -e 's,$(libglnx_srcpath),'${srcdir}/libglnx,g < libglnx/Makefile-libglnx.am >libglnx/Makefile-libglnx.am.inc
-sed -e 's,$(bwrap_srcpath),'${srcdir}/bubblewrap,g < bubblewrap/Makefile-bwrap.am >bubblewrap/Makefile-bwrap.am.inc
+sed -e 's,$(libglnx_srcpath),libglnx,g' < libglnx/Makefile-libglnx.am >libglnx/Makefile-libglnx.am.inc
+sed -e 's,$(bwrap_srcpath),bubblewrap,g' < bubblewrap/Makefile-bwrap.am >bubblewrap/Makefile-bwrap.am.inc
 
 GTKDOCIZE=$(which gtkdocize 2>/dev/null)
 if test -z $GTKDOCIZE; then

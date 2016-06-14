@@ -59,7 +59,7 @@ tests/package_version.txt: Makefile
 
 tests/test-basic.sh: tests/package_version.txt
 
-installed_test_SCRIPTS += \
+dist_installed_test_scripts += \
 	buildutil/tap-driver.sh \
 	tests/test-configure \
 	tests/make-test-app.sh \
@@ -79,16 +79,17 @@ installed_test_keyringdir = $(installed_testdir)/test-keyring
 installed_test_dbsdir = $(installed_testdir)/dbs
 
 if ENABLE_INSTALLED_TESTS
-installed_test_keyring_DATA = \
+dist_installed_test_keyring_DATA = \
+	tests/test-keyring/README \
 	tests/test-keyring/pubring.gpg \
 	tests/test-keyring/secring.gpg \
 	$(NULL)
-installed_test_dbs_DATA = tests/dbs/no_tables
+dist_installed_test_dbs_DATA = tests/dbs/no_tables
 endif
 
-EXTRA_DIST += $(installed_test_SCRIPTS) $(installed_test_data) $(installed_test_keyring_DATA) $(installed_test_dbs_DATA)
+EXTRA_DIST += $(installed_test_data)
 
-test_scripts = \
+dist_test_scripts = \
 	tests/test-basic.sh \
 	tests/test-run.sh \
 	tests/test-run-system.sh \

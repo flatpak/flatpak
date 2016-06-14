@@ -1,6 +1,7 @@
 NULL =
 
 bin_PROGRAMS = $(NULL)
+dist_installed_test_scripts = $(NULL)
 noinst_PROGRAMS = $(NULL)
 noinst_LTLIBRARIES = $(NULL)
 libexec_PROGRAMS = $(NULL)
@@ -81,7 +82,7 @@ include tests/Makefile.am.inc
 bwrap_PROGRAMS = flatpak-bwrap
 flatpak_bwrap_SOURCES = $(bwrap_SOURCES)
 flatpak_bwrap_CFLAGS = $(bwrap_CFLAGS)
-flatpak_bwrap_LDFLAGS = $(bwrap_LDFLAGS)
+flatpak_bwrap_LDADD = $(bwrap_LDADD)
 bwrapdir = $(libexecdir)
 include bubblewrap/Makefile-bwrap.am.inc
 
