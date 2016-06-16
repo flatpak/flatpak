@@ -746,6 +746,8 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
 
   ret = TRUE;
  out:
+  if (!ret)
+    (void) unlink (tmppath);
   return ret;
 }
 
