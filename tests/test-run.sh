@@ -83,24 +83,99 @@ ARGS="--share=ipc" run_sh readlink /proc/self/ns/ipc > shared_ipc_ns
 assert_not_streq `cat unshared_ipc_ns` `readlink /proc/self/ns/ipc`
 assert_streq `cat shared_ipc_ns` `readlink /proc/self/ns/ipc`
 
-if run_sh cat "${test_builddir}/package_version.txt" &> /dev/null; then
-    assert_not_reached "Unexpectedly allowed to access file"
-fi
+# We try the filesystem namespace tests several times with different
+# shared-or-not directories, because:
+# - --filesystem=/foo doesn't work if /foo is read-only in the container
+#   (notably, --filesystem=/usr/... won't work)
+# - --filesystem=host doesn't expose either /usr or /var/... or /var/tmp
+#   from the host because they're on the list of things we expect to be
+#   supplied by the container
 
-ARGS="--filesystem=${test_builddir}" run_sh cat "${test_builddir}/package_version.txt" > /dev/null
-ARGS="--filesystem=host" run_sh cat "${test_builddir}/package_version.txt" > /dev/null
+test_filesystem_binding () {
+    local dir="$1"
+
+    if run_sh cat "$dir/package_version.txt" &> /dev/null; then
+        assert_not_reached "Unexpectedly allowed to access file"
+    fi
+
+    case "$dir" in
+        (/home/*|/opt/*|/var/tmp/*)
+            if ! ARGS="--filesystem=$dir" run_sh cat "$dir/package_version.txt" > /dev/null; then
+                assert_not_reached "Failed to share --filesystem=$dir"
+            fi
+            ;;
+        (*)
+            echo "Not testing --filesystem=$dir, it won't necessarily work" >&2
+            ;;
+    esac
+
+    case "$dir" in
+        (/home/*|/opt/*)
+            if ! ARGS="--filesystem=host" run_sh cat "$dir/package_version.txt" > /dev/null; then
+                assert_not_reached "Failed to share $dir as part of host filesystem"
+            fi
+            ;;
+        (*)
+            echo "Not testing --filesystem=host with $dir, it won't necessarily work" >&2
+            ;;
+    esac
+}
+
+test_filesystem_binding "${test_builddir}"
+
+mkdir "${TEST_DATA_DIR}/shareable"
+cp "${test_builddir}/package_version.txt" "${TEST_DATA_DIR}/shareable/"
+test_filesystem_binding "${TEST_DATA_DIR}/shareable"
+
+# We don't want to pollute the home directory unprompted, but the user
+# can opt-in by creating this directory.
+if [ -e "${HOME}/.flatpak-tests" ]; then
+    cp "${test_builddir}/package_version.txt" "${HOME}/.flatpak-tests/"
+    test_filesystem_binding "${HOME}/.flatpak-tests"
+else
+    echo "not testing \$HOME binding, \$HOME/.flatpak-tests/ does not exist" >&2
+fi
 
 echo "ok namespaces"
 
-$FLATPAK override ${U} --filesystem=host org.test.Hello
-run_sh cat "${test_builddir}/package_version.txt" &> /dev/null
-if ARGS="--nofilesystem=host" run_sh cat "${test_builddir}/package_version.txt" &> /dev/null; then
-    assert_not_reached "Unexpectedly allowed to access --nofilesystem=host file"
-fi
-$FLATPAK override ${U} --nofilesystem=host org.test.Hello
+test_overrides () {
+    local dir="$1"
 
-if run_sh cat "${test_builddir}/package_version.txt" &> /dev/null; then
-    assert_not_reached "Unexpectedly allowed to access file"
+    if run_sh cat "$dir/package_version.txt" &> /dev/null; then
+        assert_not_reached "Unexpectedly allowed to access file"
+    fi
+
+    $FLATPAK override ${U} --filesystem=host org.test.Hello
+
+    case "$dir" in
+        (/home/*|/opt/*)
+            if ! run_sh cat "$dir/package_version.txt" > /dev/null; then
+                assert_not_reached "Failed to share $dir as part of host filesystem"
+            fi
+            ;;
+        (*)
+            echo "Not testing --filesystem=host with $dir, it won't necessarily work" >&2
+            ;;
+    esac
+
+    if ARGS="--nofilesystem=host" run_sh cat "${dir}/package_version.txt" &> /dev/null; then
+        assert_not_reached "Unexpectedly allowed to access --nofilesystem=host file"
+    fi
+
+    $FLATPAK override ${U} --nofilesystem=host org.test.Hello
+
+    if run_sh cat "${dir}/package_version.txt" &> /dev/null; then
+        assert_not_reached "Unexpectedly allowed to access file"
+    fi
+}
+
+test_overrides "${test_builddir}"
+
+if [ -e "${HOME}/.flatpak-tests" ]; then
+    cp "${test_builddir}/package_version.txt" "${HOME}/.flatpak-tests/"
+    test_overrides "${HOME}/.flatpak-tests"
+else
+    echo "not testing \$HOME binding overrides, \$HOME/.flatpak-tests/ does not exist" >&2
 fi
 
 echo "ok overrides"
