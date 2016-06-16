@@ -4803,7 +4803,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
         g_key_file_set_value (new_config, group, keys[i], value);
     }
 
-  if (!ostree_repo_write_config (self->repo, config, error))
+  if (!ostree_repo_write_config (self->repo, new_config, error))
     return FALSE;
 
   if (gpg_data != NULL)
