@@ -1534,12 +1534,8 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
 static char *
 create_proxy_socket (char *template)
 {
-  g_autofree char *dir = g_build_filename (g_get_user_runtime_dir (), "bus-proxy", NULL);
-  g_autofree char *proxy_socket = g_build_filename (dir, template, NULL);
+  g_autofree char *proxy_socket = g_build_filename (g_get_user_runtime_dir (), template, NULL);
   int fd;
-
-  if (mkdir (dir, 0700) == -1 && errno != EEXIST)
-    return NULL;
 
   fd = g_mkstemp (proxy_socket);
   if (fd == -1)
@@ -1578,7 +1574,7 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
   else if (dbus_proxy_argv &&
            g_hash_table_size (context->system_bus_policy) > 0)
     {
-      g_autofree char *proxy_socket = create_proxy_socket ("system-bus-proxy-XXXXXX");
+      g_autofree char *proxy_socket = create_proxy_socket (".system-bus-proxy-XXXXXX");
 
       if (proxy_socket == NULL)
         return FALSE;
@@ -1629,7 +1625,7 @@ flatpak_run_add_session_dbus_args (GPtrArray *argv_array,
     }
   else if (dbus_proxy_argv && dbus_address != NULL)
     {
-      g_autofree char *proxy_socket = create_proxy_socket ("session-bus-proxy-XXXXXX");
+      g_autofree char *proxy_socket = create_proxy_socket (".session-bus-proxy-XXXXXX");
 
       if (proxy_socket == NULL)
         return FALSE;
