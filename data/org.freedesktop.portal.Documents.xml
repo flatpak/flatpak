@@ -54,5 +54,18 @@
     <method name="Delete">
       <arg type='s' name='doc_id' direction='in'/>
     </method>
+    <method name="Lookup">
+      <arg type='ay' name='filename' direction='in'/>
+      <arg type='s' name='doc_id' direction='out'/>
+    </method>
+    <method name="Info">
+      <arg type='s' name='doc_id' direction='in'/>
+      <arg type='ay' name='path' direction='out'/>
+      <arg type='a{sas}' name='apps' direction='out'/>
+    </method>
+    <method name="List">
+      <arg type='s' name='app_id' direction='in'/>
+      <arg type='a{say}' name='docs' direction='out'/>
+    </method>
   </interface>
 </node>

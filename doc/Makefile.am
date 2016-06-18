@@ -30,7 +30,10 @@ man_MANS = \
 	flatpak-run.1			\
 	flatpak-override.1		\
 	flatpak-enter.1			\
-	flatpak-export-file.1		\
+	flatpak-document-export.1	\
+	flatpak-document-unexport.1	\
+	flatpak-document-info.1		\
+	flatpak-document-list.1		\
 	flatpak-build-init.1		\
 	flatpak-build.1			\
 	flatpak-build-bundle.1		\
