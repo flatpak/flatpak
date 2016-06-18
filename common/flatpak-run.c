@@ -1766,7 +1766,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   if (context->devices & FLATPAK_CONTEXT_DEVICE_ALL)
     {
       add_args (argv_array,
-                "--ro-bind", "/dev", "/dev",
+                "--dev-bind", "/dev", "/dev",
                 NULL);
     }
   else
