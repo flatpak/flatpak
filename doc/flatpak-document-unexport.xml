@@ -40,7 +40,7 @@
         <title>Description</title>
 
         <para>
-            Removes the document identifies for the file from the
+            Removes the document id for the file from the
             document portal. This will make the document unavailable
             to all sandboxed applications.
         </para>
@@ -86,7 +86,9 @@
 
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-document-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-document-export</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-document-info</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-document-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>

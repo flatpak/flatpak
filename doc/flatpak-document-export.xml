@@ -40,9 +40,10 @@
         <title>Description</title>
 
         <para>
-            Creates a document identifier for a local file that can be
-            exposed to sandboxed applications, allowing them access to
-            files that they would not otherwise see.
+            Creates a document id for a local file that can be exposed to
+            sandboxed applications, allowing them access to files that they
+            would not otherwise see. The exported files are exposed in a
+            fuse filesystem at /run/user/$UID/doc/.
         </para>
 
         <para>
@@ -90,7 +91,9 @@
                 <term><option>--app=APPID</option></term>
 
                 <listitem><para>
-                  Grant read access to the specified application.
+                  Grant read access to the specified application. The
+                  --allow and --forbid options can be used to grant
+                  or remove additional privileges.
                   This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -132,7 +135,7 @@
                 <term><option>--allow-delete</option></term>
 
                 <listitem><para>
-                  Grant the ability to delete a document id to the applications specified with --app.
+                  Grant the ability to remove the document from the document portal to the applications specified with --app.
                 </para></listitem>
             </varlistentry>
 
@@ -140,7 +143,7 @@
                 <term><option>--forbid-delete</option></term>
 
                 <listitem><para>
-                  Remove the ability to delete a document id from the applications specified with --app.
+                  Revoke the ability to remove the document from the document portal from the applications specified with --app.
                 </para></listitem>
             </varlistentry>
 
@@ -196,7 +199,9 @@
 
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-document-unexport</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-document-info</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-document-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>
