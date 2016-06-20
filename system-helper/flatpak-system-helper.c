@@ -579,7 +579,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
     {
       const char *path;
 
-      g_variant_get_child (parameters, 0, "^ay", &path);
+      g_variant_get_child (parameters, 0, "^&ay", &path);
 
       action = "org.freedesktop.Flatpak.install-bundle";
 
