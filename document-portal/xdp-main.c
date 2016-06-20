@@ -13,7 +13,6 @@
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "xdp-dbus.h"
-#include "xdp-impl-dbus.h"
 #include "xdp-util.h"
 #include "flatpak-db.h"
 #include "flatpak-dbus.h"
