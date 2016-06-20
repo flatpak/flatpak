@@ -696,9 +696,9 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
   if (!authorized)
     {
       g_dbus_method_invocation_return_error (invocation,
-                                             G_IO_ERROR,
-                                             G_IO_ERROR_PERMISSION_DENIED,
-                                             "Operation not permitted");
+                                             G_DBUS_ERROR,
+                                             G_DBUS_ERROR_ACCESS_DENIED,
+                                             "Flatpak system operation %s not allowed for user", method_name);
     }
 
   return authorized;
