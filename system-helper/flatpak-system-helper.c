@@ -512,27 +512,16 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
                                   GDBusMethodInvocation  *invocation,
                                   gpointer                user_data)
 {
-  const gchar *method_name;
-  GVariant *parameters;
-  gboolean authorized;
-  const gchar *sender;
-  const gchar *action;
+  const gchar *method_name = g_dbus_method_invocation_get_method_name (invocation);
+  const gchar *sender = g_dbus_method_invocation_get_sender (invocation);
+  GVariant *parameters = g_dbus_method_invocation_get_parameters (invocation);
+  g_autoptr(AutoPolkitSubject) subject = polkit_system_bus_name_new (sender);
+  g_autoptr(AutoPolkitDetails) details = polkit_details_new ();
+  const gchar *action = NULL;
+  gboolean authorized = FALSE;
 
   /* Ensure we don't idle exit */
   schedule_idle_callback ();
-
-  g_autoptr(AutoPolkitSubject) subject = NULL;
-  g_autoptr(AutoPolkitDetails) details = NULL;
-  g_autoptr(GError) error = NULL;
-  g_autoptr(AutoPolkitAuthorizationResult) result = NULL;
-
-  authorized = FALSE;
-
-  method_name = g_dbus_method_invocation_get_method_name (invocation);
-  parameters = g_dbus_method_invocation_get_parameters (invocation);
-
-  sender = g_dbus_method_invocation_get_sender (invocation);
-  subject = polkit_system_bus_name_new (sender);
 
   if (on_session_bus)
     {
@@ -547,8 +536,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
     {
       const char *ref, *origin;
       guint32 flags;
-      gboolean is_update;
-      gboolean is_app;
+      gboolean is_update, is_app;
 
       g_variant_get_child (parameters, 1, "u", &flags);
       g_variant_get_child (parameters, 2, "&s", &ref);
@@ -572,22 +560,8 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
             action = "org.freedesktop.Flatpak.runtime-install";
         }
 
-      details = polkit_details_new ();
       polkit_details_insert (details, "origin", origin);
       polkit_details_insert (details, "ref", ref);
-
-      result = polkit_authority_check_authorization_sync (authority, subject,
-                                                          action, details,
-                                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
-                                                          NULL, &error);
-      if (result == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Authorization error: %s", error->message);
-          return FALSE;
-        }
-
-      authorized = polkit_authorization_result_get_is_authorized (result);
     }
   else if (g_strcmp0 (method_name, "DeployAppstream") == 0)
     {
@@ -598,46 +572,18 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       action = "org.freedesktop.Flatpak.appstream-update";
 
-      details = polkit_details_new ();
       polkit_details_insert (details, "origin", origin);
       polkit_details_insert (details, "arch", arch);
-
-      result = polkit_authority_check_authorization_sync (authority, subject,
-                                                          action, details,
-                                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
-                                                          NULL, &error);
-      if (result == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Authorization error: %s", error->message);
-          return FALSE;
-        }
-
-      authorized = polkit_authorization_result_get_is_authorized (result);
     }
   else if (g_strcmp0 (method_name, "InstallBundle") == 0)
     {
       const char *path;
 
-      g_variant_get_child (parameters, 0, "^ay", &path);
+      g_variant_get_child (parameters, 0, "^&ay", &path);
 
       action = "org.freedesktop.Flatpak.install-bundle";
 
-      details = polkit_details_new ();
       polkit_details_insert (details, "path", path);
-
-      result = polkit_authority_check_authorization_sync (authority, subject,
-                                                          action, details,
-                                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
-                                                          NULL, &error);
-      if (result == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Authorization error: %s", error->message);
-          return FALSE;
-        }
-
-      authorized = polkit_authorization_result_get_is_authorized (result);
     }
   else if (g_strcmp0 (method_name, "Uninstall") == 0)
     {
@@ -652,21 +598,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
       else
         action = "org.freedesktop.Flatpak.runtime-uninstall";
 
-      details = polkit_details_new ();
       polkit_details_insert (details, "ref", ref);
-
-      result = polkit_authority_check_authorization_sync (authority, subject,
-                                                          action, details,
-                                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
-                                                          NULL, &error);
-      if (result == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Authorization error: %s", error->message);
-          return FALSE;
-        }
-
-      authorized = polkit_authorization_result_get_is_authorized (result);
     }
   else if (g_strcmp0 (method_name, "ConfigureRemote") == 0)
     {
@@ -676,8 +608,13 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       action = "org.freedesktop.Flatpak.configure-remote";
 
-      details = polkit_details_new ();
       polkit_details_insert (details, "remote", remote);
+    }
+
+  if (action)
+    {
+      g_autoptr(AutoPolkitAuthorizationResult) result;
+      g_autoptr(GError) error = NULL;
 
       result = polkit_authority_check_authorization_sync (authority, subject,
                                                           action, details,
