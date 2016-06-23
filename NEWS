@@ -1,3 +1,16 @@
+Major changes in 0.6.6
+======================
+
+ * Better support for multi-arch (for instance, will automatically install
+   i386-only app on x86_64 without user having to specify --arch).
+ * Support --device=all to access the full host /dev
+ * More command line support for managing exported documents
+ * Extended API for the document portal: Lookup, Info, List
+ * flatpak-builder: Support initializing /var from a runtime
+   extension.
+ * Disable static deltas when updating via the system helper to
+   work around bug in ostree.
+
 Major changes in 0.6.5
 ======================
 
