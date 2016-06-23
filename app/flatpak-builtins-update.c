@@ -127,88 +127,71 @@ flatpak_builtin_update (int           argc,
   if (opt_appstream)
     return update_appstream (dir, name, cancellable, error);
 
-  if (branch == NULL || name == NULL)
+  if (opt_app)
     {
-      if (opt_app)
-        {
-          g_auto(GStrv) refs = NULL;
+      g_auto(GStrv) refs = NULL;
 
-          if (!flatpak_dir_list_refs (dir, "app", &refs,
-                                      cancellable,
-                                      error))
+      if (!flatpak_dir_list_refs (dir, "app", &refs,
+                                  cancellable,
+                                  error))
+        return FALSE;
+
+      for (i = 0; refs != NULL && refs[i] != NULL; i++)
+        {
+          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
+          if (parts == NULL)
             return FALSE;
 
-          for (i = 0; refs != NULL && refs[i] != NULL; i++)
-            {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
-              if (parts == NULL)
-                return FALSE;
+          if (name != NULL && strcmp (parts[1], name) != 0)
+            continue;
 
-              if (name != NULL && strcmp (parts[1], name) != 0)
-                continue;
+          if (strcmp (parts[2], opt_arch) != 0)
+            continue;
 
-              if (strcmp (parts[2], opt_arch) != 0)
-                continue;
+          if (branch != NULL && strcmp (parts[3], branch) != 0)
+            continue;
 
-              g_print ("Updating application %s %s\n", parts[1], parts[3]);
+          g_print ("Updating application %s %s\n", parts[1], parts[3]);
 
-              if (!do_update (dir, refs[i],
-                              cancellable, error))
-                return FALSE;
-            }
-        }
-
-      if (opt_runtime)
-        {
-          g_auto(GStrv) refs = NULL;
-
-          if (!flatpak_dir_list_refs (dir, "runtime", &refs,
-                                      cancellable,
-                                      error))
+          if (!do_update (dir, refs[i],
+                          cancellable, error))
             return FALSE;
-
-          for (i = 0; refs != NULL && refs[i] != NULL; i++)
-            {
-              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
-              g_autoptr(GError) local_error = NULL;
-
-              if (parts == NULL)
-                return FALSE;
-
-              if (name != NULL && strcmp (parts[1], name) != 0)
-                continue;
-
-              if (strcmp (parts[2], opt_arch) != 0)
-                continue;
-
-              g_print ("Updating runtime %s %s\n", parts[1], parts[3]);
-              if (!do_update (dir, refs[i], cancellable, &local_error))
-                {
-                  g_printerr ("error updating: %s\n", local_error->message);
-                  failed = TRUE;
-                }
-            }
         }
-
     }
-  else
+
+  if (opt_runtime)
     {
-      gboolean is_app;
-      g_autofree char *ref = NULL;
+      g_auto(GStrv) refs = NULL;
 
-      ref = flatpak_dir_find_installed_ref (dir,
-                                            name,
-                                            branch,
-                                            opt_arch,
-                                            opt_app, opt_runtime, &is_app,
-                                            error);
-      if (ref == NULL)
+      if (!flatpak_dir_list_refs (dir, "runtime", &refs,
+                                  cancellable,
+                                  error))
         return FALSE;
 
-      if (!do_update (dir, ref,
-                      cancellable,
-                      error))
-        return FALSE;
+      for (i = 0; refs != NULL && refs[i] != NULL; i++)
+        {
+          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
+          g_autoptr(GError) local_error = NULL;
+
+          if (parts == NULL)
+            return FALSE;
+
+          if (name != NULL && strcmp (parts[1], name) != 0)
+            continue;
+
+          if (strcmp (parts[2], opt_arch) != 0)
+            continue;
+
+          if (branch != NULL && strcmp (parts[3], branch) != 0)
+            continue;
+
+          g_print ("Updating runtime %s %s\n", parts[1], parts[3]);
+          if (!do_update (dir, refs[i], cancellable, &local_error))
+            {
+              g_printerr ("error updating: %s\n", local_error->message);
+              failed = TRUE;
+            }
+        }
     }
 
   flatpak_dir_cleanup_removed (dir, cancellable, NULL);
