@@ -36,6 +36,10 @@ assert_file_has_content help_out "^Usage:$"
 
 echo "ok help"
 
-${FLATPAK} --default-arch > /dev/null
+${FLATPAK} --default-arch > arch
+
+${FLATPAK} --supported-arches > arches
+
+assert_streq `head -1 arches` `cat arch`
 
 echo "ok default arch"

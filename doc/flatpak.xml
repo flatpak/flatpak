@@ -97,6 +97,23 @@
                     Print version information and exit.
                 </para></listitem>
             </varlistentry>
+
+           <varlistentry>
+                <term><option>--default-arch</option></term>
+
+                <listitem><para>
+                    Print the default arch and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--supported-arches</option></term>
+
+                <listitem><para>
+                    Print the supported arches in priority order and exit.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
     </refsect1>
 

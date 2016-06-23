@@ -86,14 +86,6 @@
                 </para></listitem>
             </varlistentry>
 
-           <varlistentry>
-                <term><option>--default-arch</option></term>
-
-                <listitem><para>
-                    Print the default arch and exit.
-                </para></listitem>
-            </varlistentry>
-
             <varlistentry>
                 <term><option>-r</option></term>
                 <term><option>--runtime</option></term>

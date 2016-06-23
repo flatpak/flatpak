@@ -36,6 +36,7 @@
 static gboolean opt_verbose;
 static gboolean opt_version;
 static gboolean opt_default_arch;
+static gboolean opt_supported_arches;
 static gboolean opt_user;
 
 typedef struct
@@ -99,6 +100,7 @@ GOptionEntry global_entries[] = {
 static GOptionEntry empty_entries[] = {
   { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version information and exit", NULL },
   { "default-arch", 0, 0, G_OPTION_ARG_NONE, &opt_default_arch, "Print default arch and exit", NULL },
+  { "supported-arches", 0, 0, G_OPTION_ARG_NONE, &opt_supported_arches, "Print supported arches and exit", NULL },
   { NULL }
 };
 
@@ -211,6 +213,15 @@ flatpak_option_context_parse (GOptionContext     *context,
   if (opt_default_arch)
     {
       g_print ("%s\n", flatpak_get_arch ());
+      exit (EXIT_SUCCESS);
+    }
+
+  if (opt_supported_arches)
+    {
+      const char **arches = flatpak_get_arches ();
+      int i;
+      for (i = 0; arches[i] != NULL; i++)
+        g_print ("%s\n", arches[i]);
       exit (EXIT_SUCCESS);
     }
 
