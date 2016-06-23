@@ -229,7 +229,6 @@ flatpak_get_kernel_arch (void)
   return arch;
 }
 
-
 /* This maps the kernel-reported uname to a single string representing
  * the cpu family, in the sense that all members of this family would
  * be able to understand and link to a binary file with such cpu
@@ -262,6 +261,51 @@ flatpak_get_arch (void)
   return flatpak_get_kernel_arch ();
 #endif
 }
+
+/* Get all compatible arches for this host in order of priority */
+const char **
+flatpak_get_arches (void)
+{
+  static gsize arches = 0;
+  static struct {
+    const char *kernel_arch;
+    const char *compat_arch;
+  } compat_arches[] = {
+    { "x86_64", "i386" },
+    { "aarch64", "arm" },
+  };
+
+  if (g_once_init_enter (&arches))
+    {
+      gsize new_arches = NULL;
+      const char *main_arch = flatpak_get_arch ();
+      const char *kernel_arch = flatpak_get_kernel_arch ();
+      GPtrArray *array = g_ptr_array_new ();
+      int i;
+
+      /* This is the userspace arch, i.e. the one flatpak itself was
+         build for. It's always first. */
+      g_ptr_array_add (array, (char *)main_arch);
+
+      /* Also add all other arches that are compatible with the kernel arch */
+      for (i = 0; i < G_N_ELEMENTS(compat_arches); i++)
+        {
+          if ((strcmp (compat_arches[i].kernel_arch, kernel_arch) == 0) &&
+              /* Don't re-add the main arch */
+              (strcmp (compat_arches[i].compat_arch, main_arch) != 0))
+            g_ptr_array_add (array, (char *)compat_arches[i].compat_arch);
+        }
+
+      g_ptr_array_add (array, NULL);
+      new_arches = (gsize)g_ptr_array_free (array, FALSE);
+
+      g_once_init_leave (&arches, new_arches);
+ }
+
+  return (const char **)arches;
+}
+
+
 
 const char *
 flatpak_get_bwrap (void)

@@ -42,6 +42,7 @@ const char * flatpak_path_match_prefix (const char *pattern,
                                         const char *path);
 
 const char * flatpak_get_arch (void);
+const char ** flatpak_get_arches (void);
 
 const char * flatpak_get_bwrap (void);
 
