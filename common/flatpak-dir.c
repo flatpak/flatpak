@@ -4118,7 +4118,7 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
   return TRUE;
 }
 
-GPtrArray *
+static GPtrArray *
 find_matching_refs (GHashTable *refs,
                     const char   *opt_name,
                     const char   *opt_branch,
@@ -4190,7 +4190,7 @@ find_matching_refs (GHashTable *refs,
 }
 
 
-char *
+static char *
 find_matching_ref (GHashTable *refs,
                    const char   *name,
                    const char   *opt_branch,
