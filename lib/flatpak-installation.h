@@ -78,6 +78,8 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakInstallation, g_object_unref)
 
 FLATPAK_EXTERN const char  *flatpak_get_default_arch (void);
 
+FLATPAK_EXTERN const char *const *flatpak_get_supported_arches (void);
+
 FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_system (GCancellable *cancellable,
                                                                      GError      **error);
 FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_user (GCancellable *cancellable,

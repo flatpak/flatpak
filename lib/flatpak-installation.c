@@ -161,6 +161,21 @@ flatpak_get_default_arch (void)
 }
 
 /**
+ * flatpak_get_supported_arches:
+ *
+ * Returns the canonical names for the arches that are supported (i.e. can run)
+ * on the current machine, in order of priority (default is first).
+ *
+ * Returns: a zero terminated array of arch strings
+ */
+const char * const *
+flatpak_get_supported_arches (void)
+{
+  return (const char * const *)flatpak_get_arches ();
+}
+
+
+/**
  * flatpak_installation_new_system:
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
