@@ -4135,9 +4135,13 @@ find_matching_refs (GHashTable *refs,
                     GError      **error)
 {
   g_autoptr(GPtrArray) matched_refs = NULL;
-  const char *arch = NULL;
+  const char **arches = flatpak_get_arches ();
+  const char *opt_arches[] = {opt_arch, NULL};
   GHashTableIter hash_iter;
   gpointer key;
+
+  if (opt_arch != NULL)
+    arches = opt_arches;
 
   if (opt_name && !flatpak_is_valid_name (opt_name))
     {
@@ -4152,10 +4156,6 @@ find_matching_refs (GHashTable *refs,
     }
 
   matched_refs = g_ptr_array_new_with_free_func (g_free);
-
-  arch = opt_arch;
-  if (arch == NULL)
-    arch = flatpak_get_arch ();
 
   g_hash_table_iter_init (&hash_iter, refs);
   while (g_hash_table_iter_next (&hash_iter, &key, NULL))
@@ -4184,7 +4184,7 @@ find_matching_refs (GHashTable *refs,
       if (opt_name != NULL && strcmp (opt_name, parts[1]) != 0)
         continue;
 
-      if (strcmp (parts[2], arch) != 0)
+      if (!g_strv_contains (arches, parts[2]))
         continue;
 
       if (opt_branch != NULL && strcmp (opt_branch, parts[3]) != 0)
@@ -4206,39 +4206,50 @@ find_matching_ref (GHashTable *refs,
                    gboolean      runtime,
                    GError      **error)
 {
-  g_autoptr(GPtrArray) matched_refs = NULL;
+  const char **arches = flatpak_get_arches ();
+  const char *opt_arches[] = {opt_arch, NULL};
+  int i;
 
-  matched_refs = find_matching_refs (refs, name, opt_branch, opt_arch,
-                                     app, runtime, error);
-  if (matched_refs == NULL)
-    return NULL;
+  if (opt_arch != NULL)
+    arches = opt_arches;
 
-  if (matched_refs->len == 0)
+  /* We stop at the first arch (in prio order) that has a match */
+  for (i = 0; arches[i] != NULL; i++)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   "Nothing matches %s", name);
-      return NULL;
-    }
+      g_autoptr(GPtrArray) matched_refs = NULL;
 
-  if (matched_refs->len > 1)
-    {
-      int i;
-      g_autoptr(GString) err = g_string_new ("");
-      g_string_printf (err, "Multiple branches available for %s, you must specify one of: ", name);
-      for (i = 0; i < matched_refs->len; i++)
+      matched_refs = find_matching_refs (refs, name, opt_branch, arches[i],
+                                         app, runtime, error);
+      if (matched_refs == NULL)
+        return NULL;
+
+      if (matched_refs->len == 0)
+        continue;
+
+      if (matched_refs->len > 1)
         {
-          g_auto(GStrv) parts = flatpak_decompose_ref (g_ptr_array_index (matched_refs, i), NULL);
-          if (i != 0)
-            g_string_append (err, ", ");
+          int i;
+          g_autoptr(GString) err = g_string_new ("");
+          g_string_printf (err, "Multiple branches available for %s, you must specify one of: ", name);
+          for (i = 0; i < matched_refs->len; i++)
+            {
+              g_auto(GStrv) parts = flatpak_decompose_ref (g_ptr_array_index (matched_refs, i), NULL);
+              if (i != 0)
+                g_string_append (err, ", ");
 
-          g_string_append (err, parts[3]);
+              g_string_append (err, parts[3]);
+            }
+
+          flatpak_fail (error, err->str);
+          return NULL;
         }
 
-      flatpak_fail (error, err->str);
-      return NULL;
+      return g_strdup (g_ptr_array_index (matched_refs, 0));
     }
 
-  return g_strdup (g_ptr_array_index (matched_refs, 0));
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+               "Nothing matches %s", name);
+  return NULL;
 }
 
 char **
