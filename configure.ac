@@ -15,8 +15,8 @@ AC_PREREQ([2.63])
 
 m4_define([flatpak_major_version], [0])
 m4_define([flatpak_minor_version], [6])
-m4_define([flatpak_micro_version], [5])
-m4_define([flatpak_interface_age], [5])
+m4_define([flatpak_micro_version], [6])
+m4_define([flatpak_interface_age], [6])
 m4_define([flatpak_binary_age],
           [m4_eval(10000 * flatpak_major_version + 100 * flatpak_minor_version + flatpak_micro_version)])
 m4_define([flatpak_version],
