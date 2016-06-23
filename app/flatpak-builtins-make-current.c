@@ -60,7 +60,12 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   app  = argv[1];
   branch = argv[2];
 
-  ref = flatpak_compose_ref (TRUE, app, branch, opt_arch, error);
+  ref = flatpak_dir_find_installed_ref (dir,
+                                        app,
+                                        branch,
+                                        opt_arch,
+                                        TRUE, FALSE, NULL,
+                                        error);
   if (ref == NULL)
     return FALSE;
 
