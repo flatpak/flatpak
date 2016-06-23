@@ -35,12 +35,14 @@ static gboolean opt_show_details;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_only_updates;
+static char *opt_arch;
 
 static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show arches and branches", NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Show only runtimes", NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Show only apps", NULL },
   { "updates", 0, 0, G_OPTION_ARG_NONE, &opt_only_updates, "Show only those where updates are available", NULL },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Limit to this arch (* for all)", "ARCH" },
   { NULL }
 };
 
@@ -58,7 +60,8 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   g_autofree const char **keys = NULL;
   int i;
   const char *repository;
-  const char *arch;
+  const char **arches = flatpak_get_arches ();
+  const char *opt_arches[] = {NULL, NULL};
 
   context = g_option_context_new (" REMOTE - Show available runtimes and applications");
 
@@ -82,7 +85,16 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
   names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
-  arch = flatpak_get_arch ();
+  if (opt_arch != NULL)
+    {
+      if (strcmp (opt_arch, "*") == 0)
+        arches = NULL;
+      else
+        {
+          opt_arches[0] = opt_arch;
+          arches = opt_arches;
+        }
+    }
 
   g_hash_table_iter_init (&iter, refs);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -111,11 +123,8 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
             continue;
         }
 
-      if (!opt_show_details)
-        {
-          if (strcmp (arch, parts[2]) != 0)
-            continue;
-        }
+      if (arches != NULL && !g_strv_contains (arches, parts[2]))
+        continue;
 
       if (strcmp (parts[0], "runtime") == 0 && !opt_runtime)
         continue;

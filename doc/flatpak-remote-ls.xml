@@ -116,6 +116,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    Show only those matching the specied architecture. By default, only
+                    supported architectures are shown. Use --arch=* to show all archtectures.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
