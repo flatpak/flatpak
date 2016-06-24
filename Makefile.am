@@ -1,7 +1,7 @@
 NULL =
 
 bin_PROGRAMS = $(NULL)
-dist_installed_test_scripts = $(NULL)
+dist_installed_test_extra_scripts = $(NULL)
 noinst_PROGRAMS = $(NULL)
 noinst_LTLIBRARIES = $(NULL)
 libexec_PROGRAMS = $(NULL)

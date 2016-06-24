@@ -59,7 +59,7 @@ tests/package_version.txt: Makefile
 
 tests/test-basic.sh: tests/package_version.txt
 
-dist_installed_test_scripts += \
+dist_installed_test_extra_scripts += \
 	buildutil/tap-driver.sh \
 	tests/test-configure \
 	tests/make-test-app.sh \
