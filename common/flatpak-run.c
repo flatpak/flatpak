@@ -2481,7 +2481,7 @@ add_document_portal_args (GPtrArray  *argv_array,
         {
           if (g_dbus_message_to_gerror (reply, &local_error))
             {
-              g_warning ("Can't get document portal: %s\n", local_error->message);
+              g_message ("Can't get document portal: %s\n", local_error->message);
             }
           else
             {
