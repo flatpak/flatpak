@@ -41,7 +41,10 @@ static FlatpakDb *db = NULL;
 static XdgPermissionStore *permission_store;
 static int daemon_event_fd = -1;
 static int final_exit_status = 0;
+static GError *exit_error = NULL;
 static dev_t fuse_dev = 0;
+static GQueue get_mount_point_invocations = G_QUEUE_INIT;
+static XdpDbusDocuments *dbus_api;
 
 G_LOCK_DEFINE (db);
 
@@ -626,6 +629,14 @@ handle_method (GCallback              method_callback,
 static gboolean
 handle_get_mount_point (XdpDbusDocuments *object, GDBusMethodInvocation *invocation)
 {
+  if (fuse_dev == 0)
+    {
+      /* We mustn't reply to this until the FUSE mount point is open for
+       * business. */
+      g_queue_push_tail (&get_mount_point_invocations, g_object_ref (invocation));
+      return TRUE;
+    }
+
   xdp_dbus_documents_complete_get_mount_point (object, invocation, xdp_fuse_get_mountpoint ());
   return TRUE;
 }
@@ -811,24 +822,23 @@ on_bus_acquired (GDBusConnection *connection,
                  const gchar     *name,
                  gpointer         user_data)
 {
-  XdpDbusDocuments *helper;
   GError *error = NULL;
 
-  helper = xdp_dbus_documents_skeleton_new ();
+  dbus_api = xdp_dbus_documents_skeleton_new ();
 
-  g_signal_connect_swapped (helper, "handle-get-mount-point", G_CALLBACK (handle_get_mount_point), NULL);
-  g_signal_connect_swapped (helper, "handle-add", G_CALLBACK (handle_method), portal_add);
-  g_signal_connect_swapped (helper, "handle-add-named", G_CALLBACK (handle_method), portal_add_named);
-  g_signal_connect_swapped (helper, "handle-grant-permissions", G_CALLBACK (handle_method), portal_grant_permissions);
-  g_signal_connect_swapped (helper, "handle-revoke-permissions", G_CALLBACK (handle_method), portal_revoke_permissions);
-  g_signal_connect_swapped (helper, "handle-delete", G_CALLBACK (handle_method), portal_delete);
-  g_signal_connect_swapped (helper, "handle-lookup", G_CALLBACK (handle_method), portal_lookup);
-  g_signal_connect_swapped (helper, "handle-info", G_CALLBACK (handle_method), portal_info);
-  g_signal_connect_swapped (helper, "handle-list", G_CALLBACK (handle_method), portal_list);
+  g_signal_connect_swapped (dbus_api, "handle-get-mount-point", G_CALLBACK (handle_get_mount_point), NULL);
+  g_signal_connect_swapped (dbus_api, "handle-add", G_CALLBACK (handle_method), portal_add);
+  g_signal_connect_swapped (dbus_api, "handle-add-named", G_CALLBACK (handle_method), portal_add_named);
+  g_signal_connect_swapped (dbus_api, "handle-grant-permissions", G_CALLBACK (handle_method), portal_grant_permissions);
+  g_signal_connect_swapped (dbus_api, "handle-revoke-permissions", G_CALLBACK (handle_method), portal_revoke_permissions);
+  g_signal_connect_swapped (dbus_api, "handle-delete", G_CALLBACK (handle_method), portal_delete);
+  g_signal_connect_swapped (dbus_api, "handle-lookup", G_CALLBACK (handle_method), portal_lookup);
+  g_signal_connect_swapped (dbus_api, "handle-info", G_CALLBACK (handle_method), portal_info);
+  g_signal_connect_swapped (dbus_api, "handle-list", G_CALLBACK (handle_method), portal_list);
 
   flatpak_connection_track_name_owners (connection);
 
-  if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
+  if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (dbus_api),
                                          connection,
                                          "/org/freedesktop/portal/documents",
                                          &error))
@@ -865,21 +875,22 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
-  g_autoptr(GError) error = NULL;
   struct stat stbuf;
+  gpointer invocation;
 
   g_debug ("%s acquired", name);
 
-  if (!xdp_fuse_init (&error))
+  if (!xdp_fuse_init (&exit_error))
     {
       final_exit_status = 6;
-      g_printerr ("fuse init failed: %s", error->message);
+      g_printerr ("fuse init failed: %s", exit_error->message);
       g_main_loop_quit (loop);
       return;
     }
 
   if (stat (xdp_fuse_get_mountpoint (), &stbuf) != 0)
     {
+      g_set_error (&exit_error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "fuse stat failed: %s", strerror (errno));
       final_exit_status = 7;
       g_printerr ("fuse stat failed: %s", strerror (errno));
       g_main_loop_quit (loop);
@@ -887,6 +898,12 @@ on_name_acquired (GDBusConnection *connection,
     }
 
   fuse_dev = stbuf.st_dev;
+
+  while ((invocation = g_queue_pop_head (&get_mount_point_invocations)) != NULL)
+    {
+      xdp_dbus_documents_complete_get_mount_point (dbus_api, invocation, xdp_fuse_get_mountpoint ());
+      g_object_unref (invocation);
+    }
 
   daemon_report_done (0);
 }
@@ -898,12 +915,16 @@ on_name_lost (GDBusConnection *connection,
 {
   g_debug ("%s lost", name);
   final_exit_status = 20;
+  g_set_error (&exit_error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "D-Bus name \"%s\" lost", name);
   g_main_loop_quit (loop);
 }
 
 static void
 exit_handler (int sig)
 {
+  /* We cannot set exit_error here, because malloc() in a signal handler
+   * is undefined behaviour. Rely on main() coping gracefully with
+   * that. */
   g_main_loop_quit (loop);
 }
 
@@ -912,6 +933,7 @@ session_bus_closed (GDBusConnection *connection,
                     gboolean         remote_peer_vanished,
                     GError          *bus_error)
 {
+  g_set_error (&exit_error, G_IO_ERROR, G_IO_ERROR_NOT_CONNECTED, "Disconnected from session bus");
   g_main_loop_quit (loop);
 }
 
@@ -992,6 +1014,7 @@ main (int    argc,
   g_autofree char *path = NULL;
   GDBusConnection *session_bus;
   GOptionContext *context;
+  GDBusMethodInvocation *invocation;
 
   setlocale (LC_ALL, "");
 
@@ -1081,6 +1104,16 @@ main (int    argc,
                              NULL);
 
   g_main_loop_run (loop);
+
+  while ((invocation = g_queue_pop_head (&get_mount_point_invocations)) != NULL)
+    {
+      if (exit_error != NULL)
+        g_dbus_method_invocation_return_gerror (invocation, exit_error);
+      else
+        g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "Terminated");
+
+      g_object_unref (invocation);
+    }
 
   xdp_fuse_exit ();
 
