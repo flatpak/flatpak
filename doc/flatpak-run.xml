@@ -121,7 +121,7 @@
                 <term><option>--devel</option></term>
 
                 <listitem><para>
-                    Use the devel runtime that is specified in the application metadata instead of the regular runtime.
+                    Use the devel runtime that is specified in the application metadata instead of the regular runtime, and use a seccomp profile that is less likely to break development tools.
                 </para></listitem>
             </varlistentry>
 
