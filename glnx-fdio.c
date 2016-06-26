@@ -37,10 +37,247 @@
 
 #include <glnx-fdio.h>
 #include <glnx-dirfd.h>
+#include <glnx-alloca.h>
 #include <glnx-errors.h>
 #include <glnx-xattrs.h>
 #include <glnx-backport-autoptr.h>
 #include <glnx-local-alloc.h>
+#include <glnx-missing.h>
+
+/* Returns the number of chars needed to format variables of the
+ * specified type as a decimal string. Adds in extra space for a
+ * negative '-' prefix (hence works correctly on signed
+ * types). Includes space for the trailing NUL. */
+#define DECIMAL_STR_MAX(type)                                           \
+        (2+(sizeof(type) <= 1 ? 3 :                                     \
+            sizeof(type) <= 2 ? 5 :                                     \
+            sizeof(type) <= 4 ? 10 :                                    \
+            sizeof(type) <= 8 ? 20 : sizeof(int[-2*(sizeof(type) > 8)])))
+
+static gboolean
+rename_file_noreplace_at (int olddirfd, const char *oldpath,
+                          int newdirfd, const char *newpath,
+                          gboolean ignore_eexist,
+                          GError **error)
+{
+  if (renameat2 (olddirfd, oldpath, newdirfd, newpath, RENAME_NOREPLACE) < 0)
+    {
+      if (errno == EINVAL || errno == ENOSYS)
+        {
+          /* Fall through */
+          ;
+        }
+      else if (errno == EEXIST && ignore_eexist)
+        {
+          (void) unlinkat (olddirfd, oldpath, 0);
+          return TRUE;
+        }
+      else
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+    }
+  else
+    return TRUE;
+
+  if (linkat (olddirfd, oldpath, newdirfd, newpath, 0) < 0)
+    {
+      if (errno == EEXIST && ignore_eexist)
+        /* Fall through */
+        ;
+      else
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+    }
+  
+  if (unlinkat (olddirfd, oldpath, 0) < 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+gboolean
+glnx_open_tmpfile_linkable_at (int dfd,
+                               const char *subpath,
+                               int flags,
+                               int *out_fd,
+                               char **out_path,
+                               GError **error)
+{
+  glnx_fd_close int fd = -1;
+  int count;
+
+  /* Don't allow O_EXCL, as that has a special meaning for O_TMPFILE */
+  g_return_val_if_fail ((flags & O_EXCL) == 0, FALSE);
+
+  /* Creates a temporary file, that shall be renamed to "target"
+   * later. If possible, this uses O_TMPFILE – in which case
+   * "ret_path" will be returned as NULL. If not possible a the
+   * tempoary path name used is returned in "ret_path". Use
+   * link_tmpfile() below to rename the result after writing the file
+   * in full. */
+#ifdef O_TMPFILE
+  fd = openat (dfd, subpath, O_TMPFILE|flags, 0600);
+  if (fd == -1 && !(errno == ENOSYS || errno == EISDIR || errno == EOPNOTSUPP))
+    {
+      glnx_set_prefix_error_from_errno (error, "%s", "open(O_TMPFILE)");
+      return FALSE;
+    }
+  if (fd != -1)
+    {
+      *out_fd = fd;
+      fd = -1;
+      *out_path = NULL;
+      return TRUE;
+    }
+  /* Fallthrough */
+#endif
+
+  { g_autofree char *tmp = g_strconcat (subpath, "/tmp.XXXXXX", NULL);
+    const guint count_max = 100;
+  
+    for (count = 0; count < count_max; count++)
+      {
+        glnx_gen_temp_name (tmp);
+
+        fd = openat (dfd, tmp, O_CREAT|O_EXCL|O_NOFOLLOW|O_NOCTTY|flags, 0600);
+        if (fd < 0)
+          {
+            if (errno == EEXIST)
+              continue;
+            else
+              {
+                glnx_set_prefix_error_from_errno (error, "%s", "Creating temp file");
+                return FALSE;
+              }
+          }
+        else
+          {
+            *out_fd = fd;
+            fd = -1;
+            *out_path = g_steal_pointer (&tmp);
+            return TRUE;
+          }
+      }
+  }
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_EXISTS,
+               "Exhausted %u attempts to create temporary file", count);
+  return FALSE;
+}
+
+gboolean
+glnx_link_tmpfile_at (int dfd,
+                      GLnxLinkTmpfileReplaceMode mode,
+                      int fd,
+                      const char *tmpfile_path,
+                      int target_dfd,
+                      const char *target,
+                      GError **error)
+{
+  const gboolean replace = (mode == GLNX_LINK_TMPFILE_REPLACE);
+  const gboolean ignore_eexist = (mode == GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST);
+
+  g_return_val_if_fail (fd >= 0, FALSE);
+
+  /* Unlike the original systemd code, this function also supports
+   * replacing existing files.
+   */
+
+  /* We have `tmpfile_path` for old systems without O_TMPFILE. */
+  if (tmpfile_path)
+    {
+      if (replace)
+        {
+          /* We have a regular tempfile, we're overwriting - this is a
+           * simple renameat().
+           */
+          if (renameat (dfd, tmpfile_path, target_dfd, target) < 0)
+            {
+              glnx_set_error_from_errno (error);
+              return FALSE;
+            }
+        }
+      else
+        {
+          /* We need to use renameat2(..., NOREPLACE) or emulate it */
+          if (!rename_file_noreplace_at (dfd, tmpfile_path, target_dfd, target,
+                                         ignore_eexist,
+                                         error))
+            return FALSE;
+        }
+    }
+  else
+    {
+      /* This case we have O_TMPFILE, so our reference to it is via /proc/self/fd */
+      char proc_fd_path[strlen("/proc/self/fd/") + DECIMAL_STR_MAX(fd) + 1];
+
+      sprintf (proc_fd_path, "/proc/self/fd/%i", fd);
+
+      if (replace)
+        {
+          /* In this case, we had our temp file atomically hidden, but now
+           * we need to make it visible in the FS so we can do a rename.
+           * Ideally, linkat() would gain AT_REPLACE or so.
+           */
+          /* TODO - avoid double alloca, we can just alloca a copy of
+           * the pathname plus space for tmp.XXXXX */
+          char *dnbuf = strdupa (target);
+          const char *dn = dirname (dnbuf);
+          char *tmpname_buf = glnx_strjoina (dn, "/tmp.XXXXXX");
+          guint count;
+          const guint count_max = 100;
+
+          for (count = 0; count < count_max; count++)
+            {
+              glnx_gen_temp_name (tmpname_buf);
+
+              if (linkat (AT_FDCWD, proc_fd_path, target_dfd, tmpname_buf, AT_SYMLINK_FOLLOW) < 0)
+                {
+                  if (errno == EEXIST)
+                    continue;
+                  else
+                    {
+                      glnx_set_error_from_errno (error);
+                      return FALSE;
+                    }
+                }
+              else
+                break;
+            }
+          if (count == count_max)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_EXISTS,
+               "Exhausted %u attempts to create temporary file", count);
+            }
+          if (renameat (dfd, tmpname_buf, target_dfd, target) < 0)
+            {
+              glnx_set_error_from_errno (error);
+              return FALSE;
+            }
+        }
+      else
+        {
+          if (linkat (AT_FDCWD, proc_fd_path, target_dfd, target, AT_SYMLINK_FOLLOW) < 0)
+            {
+              if (errno == EEXIST && mode == GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST)
+                ;
+              else
+                {
+                  glnx_set_error_from_errno (error);
+                  return FALSE;
+                }
+            }
+        }
+
+    }
+  return TRUE;
+}
 
 static guint8*
 glnx_fd_readall_malloc (int               fd,
@@ -658,20 +895,24 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
                                           GCancellable         *cancellable,
                                           GError              **error)
 {
-  gboolean ret = FALSE;
   int r;
-  /* We use the /proc/self trick as there's no mkostemp_at() yet */
-  g_autofree char *tmppath = g_strdup_printf ("/proc/self/fd/%d/.tmpXXXXXX", dfd);
+  char *dnbuf = strdupa (subpath);
+  const char *dn = dirname (dnbuf);
+  g_autofree char *tmpfile_path = NULL;
   glnx_fd_close int fd = -1;
 
   dfd = glnx_dirfd_canonicalize (dfd);
 
-  if ((fd = g_mkstemp_full (tmppath, O_WRONLY | O_CLOEXEC,
-                            mode == (mode_t) -1 ? 0666 : mode)) == -1)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+  /* With O_TMPFILE we can't use umask, and we can't sanely query the
+   * umask...let's assume something relatively standard.
+   */
+  if (mode == (mode_t) -1)
+    mode = 0644;
+
+  if (!glnx_open_tmpfile_linkable_at (dfd, dn, O_WRONLY | O_CLOEXEC,
+                                      &fd, &tmpfile_path,
+                                      error))
+    return FALSE;
 
   if (len == -1)
     len = strlen ((char*)buf);
@@ -682,14 +923,14 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
     {
       errno = r;
       glnx_set_error_from_errno (error);
-      goto out;
+      return FALSE;
     }
 
   if ((r = glnx_loop_write (fd, buf, len)) != 0)
     {
       errno = -r;
       glnx_set_error_from_errno (error);
-      goto out;
+      return FALSE;
     }
     
   if (!(flags & GLNX_FILE_REPLACE_NODATASYNC))
@@ -702,7 +943,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
           if (errno != ENOENT)
             {
               glnx_set_error_from_errno (error);
-              goto out;
+              return FALSE;
             }
           do_sync = (flags & GLNX_FILE_REPLACE_DATASYNC_NEW) > 0;
         }
@@ -714,7 +955,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
           if (fdatasync (fd) != 0)
             {
               glnx_set_error_from_errno (error);
-              goto out;
+              return FALSE;
             }
         }
     }
@@ -724,31 +965,21 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
       if (fchown (fd, uid, gid) != 0)
         {
           glnx_set_error_from_errno (error);
-          goto out;
+          return FALSE;
         }
     }
 
-  /* If a mode was forced, override umask */
-  if (mode != (mode_t) -1)
-    {
-      if (fchmod (fd, mode) != 0)
-        {
-          glnx_set_error_from_errno (error);
-          goto out;
-        }
-    }
-
-  if (renameat (dfd, tmppath, dfd, subpath) != 0)
+  if (fchmod (fd, mode) != 0)
     {
       glnx_set_error_from_errno (error);
-      goto out;
+      return FALSE;
     }
 
-  ret = TRUE;
- out:
-  if (!ret)
-    (void) unlink (tmppath);
-  return ret;
+  if (!glnx_link_tmpfile_at (dfd, GLNX_LINK_TMPFILE_REPLACE,
+                             fd, tmpfile_path, dfd, subpath, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 /**

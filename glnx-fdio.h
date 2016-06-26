@@ -46,6 +46,29 @@ const char *glnx_basename (const char *path)
   return (basename) (path);
 }
 
+gboolean
+glnx_open_tmpfile_linkable_at (int dfd,
+                               const char *subpath,
+                               int flags,
+                               int *out_fd,
+                               char **out_path,
+                               GError **error);
+
+typedef enum {
+  GLNX_LINK_TMPFILE_REPLACE,
+  GLNX_LINK_TMPFILE_NOREPLACE,
+  GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST
+} GLnxLinkTmpfileReplaceMode;
+
+gboolean
+glnx_link_tmpfile_at (int dfd,
+                      GLnxLinkTmpfileReplaceMode flags,
+                      int fd,
+                      const char *tmpfile_path,
+                      int target_dfd,
+                      const char *target,
+                      GError **error);
+
 GBytes *
 glnx_fd_readall_bytes (int               fd,
                        GCancellable     *cancellable,
