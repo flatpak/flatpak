@@ -41,13 +41,18 @@ AM_CPPFLAGS =							\
 	-DFLATPAK_BASEDIR=\"$(pkgdatadir)\"			\
 	-DFLATPAK_TRIGGERDIR=\"$(pkgdatadir)/triggers\"		\
 	-DSYSTEM_FONTS_DIR=\"$(SYSTEM_FONTS_DIR)\"		\
-	-DHELPER=\"$(libexecdir)/flatpak-bwrap\"		\
 	-DDBUSPROXY=\"$(libexecdir)/flatpak-dbus-proxy\"	\
 	-DG_LOG_DOMAIN=\"flatpak\"				\
 	-I$(srcdir)/libglnx					\
 	-I$(srcdir)/common					\
 	-I$(builddir)/common					\
 	$(NULL)
+
+if WITH_SYSTEM_BWRAP
+AM_CPPFLAGS += -DHELPER=\"$(BWRAP)\"
+else
+AM_CPPFLAGS += -DHELPER=\"$(libexecdir)/flatpak-bwrap\"
+endif
 
 triggersdir = $(pkgdatadir)/triggers
 dist_triggers_SCRIPTS = \
@@ -79,6 +84,8 @@ include permission-store/Makefile.am.inc
 include document-portal/Makefile.am.inc
 include tests/Makefile.am.inc
 
+if !WITH_SYSTEM_BWRAP
+
 bwrap_PROGRAMS = flatpak-bwrap
 flatpak_bwrap_SOURCES = $(bwrap_SOURCES)
 flatpak_bwrap_CFLAGS = $(bwrap_CFLAGS)
@@ -97,6 +104,8 @@ if PRIV_MODE_FILECAPS
 	$(SUDO_BIN) setcap cap_sys_admin,cap_net_admin,cap_sys_chroot,cap_setuid,cap_setgid+ep $(DESTDIR)$(libexecdir)/flatpak-bwrap
 endif
 endif
+
+endif # !WITH_SYSTEM_BWRAP
 
 completiondir = $(datadir)/bash-completion/completions
 completion_DATA = completion/flatpak

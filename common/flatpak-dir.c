@@ -2004,7 +2004,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
           if (!g_spawn_sync ("/",
                              (char **) argv_array->pdata,
                              NULL,
-                             G_SPAWN_DEFAULT,
+                             G_SPAWN_SEARCH_PATH,
                              NULL, NULL,
                              NULL, NULL,
                              NULL, &trigger_error))

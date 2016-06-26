@@ -224,7 +224,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   g_ptr_array_add (argv_array, NULL);
 
-  if (execve (flatpak_get_bwrap (), (char **) argv_array->pdata, envp) == -1)
+  if (execvpe (flatpak_get_bwrap (), (char **) argv_array->pdata, envp) == -1)
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
       return FALSE;
