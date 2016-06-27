@@ -21,6 +21,9 @@ set -euo pipefail
 
 . $(dirname $0)/libtest.sh
 
+# This test looks for specific localized strings.
+export LC_ALL=C
+
 echo "1..3"
 
 ${FLATPAK} --version > version_out
