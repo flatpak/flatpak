@@ -1,11 +1,14 @@
 TESTS_ENVIRONMENT += FLATPAK_TESTS_DEBUG=1 \
 	FLATPAK_TRIGGERSDIR=$$(cd $(top_srcdir) && pwd)/triggers \
-	FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap \
 	FLATPAK_DBUSPROXY=$$(cd $(top_builddir) && pwd)/flatpak-dbus-proxy \
 	GI_TYPELIB_PATH=$$(cd $(top_builddir) && pwd) \
 	LD_LIBRARY_PATH=$$(cd $(top_builddir)/.libs && pwd) \
 	PATH=$$(cd $(top_builddir) && pwd):$${PATH} \
 	$(NULL)
+
+if !WITH_SYSTEM_BWRAP
+TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
+endif
 
 testdb_CFLAGS = $(BASE_CFLAGS)
 testdb_LDADD = \

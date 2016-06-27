@@ -100,6 +100,20 @@ AC_ARG_WITH(system_fonts_dir,
 SYSTEM_FONTS_DIR=$with_system_fonts_dir
 AC_SUBST(SYSTEM_FONTS_DIR)
 
+AC_ARG_VAR([BWRAP], [Bubblewrap executable])
+AC_ARG_WITH([system-bubblewrap],
+            [AS_HELP_STRING([--with-system-bubblewrap], [Use system bwrap executable [default=check $BWRAP]])],
+            [BWRAP="$withval"],
+            [BWRAP="${BWRAP:-false}"])
+AS_CASE([$BWRAP],
+        [yes],
+            [BWRAP=bwrap],
+        [no],
+            [BWRAP=false],
+        [auto],
+            [AC_CHECK_PROG([BWRAP], [bwrap], [bwrap], [false])])
+AM_CONDITIONAL([WITH_SYSTEM_BWRAP], [test "x$BWRAP" != xfalse])
+
 AC_CHECK_FUNCS(fdwalk)
 
 AC_CHECK_HEADER([sys/xattr.h], [], AC_MSG_ERROR([You must have sys/xattr.h from glibc]))
