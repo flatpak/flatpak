@@ -72,6 +72,7 @@ typedef enum {
   FLATPAK_CONTEXT_SOCKET_PULSEAUDIO  = 1 << 2,
   FLATPAK_CONTEXT_SOCKET_SESSION_BUS = 1 << 3,
   FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS  = 1 << 4,
+  FLATPAK_CONTEXT_SOCKET_JOURNAL     = 1 << 5,
 } FlatpakContextSockets;
 
 /* Same order as enum */
@@ -81,6 +82,7 @@ const char *flatpak_context_sockets[] = {
   "pulseaudio",
   "session-bus",
   "system-bus",
+  "journal",
   NULL
 };
 
@@ -1531,6 +1533,27 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
     }
 }
 
+static void
+flatpak_run_add_journal_args (GPtrArray *argv_array,
+                              char    ***envp_p)
+{
+  const char *journal_socket_socket = g_strdup ("/run/systemd/journal/socket");
+  const char *journal_stdout_socket = g_strdup ("/run/systemd/journal/stdout");
+
+  if (g_file_test (journal_socket_socket, G_FILE_TEST_EXISTS))
+    {
+      add_args (argv_array,
+                "--bind", journal_socket_socket, journal_socket_socket,
+                NULL);
+    }
+  if (g_file_test (journal_stdout_socket, G_FILE_TEST_EXISTS))
+    {
+      add_args (argv_array,
+                "--bind", journal_stdout_socket, journal_stdout_socket,
+                NULL);
+    }
+}
+
 static char *
 create_proxy_socket (char *template)
 {
@@ -1972,6 +1995,12 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
     {
       g_debug ("Allowing pulseaudio access");
       flatpak_run_add_pulseaudio_args (argv_array, fd_array, envp_p);
+    }
+
+  if (context->sockets & FLATPAK_CONTEXT_SOCKET_JOURNAL)
+    {
+      g_debug ("Allowing journal access");
+      flatpak_run_add_journal_args (argv_array, envp_p);
     }
 
   unrestricted_session_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) != 0;
