@@ -277,7 +277,7 @@ flatpak_get_arches (void)
 
   if (g_once_init_enter (&arches))
     {
-      gsize new_arches = NULL;
+      gsize new_arches = 0;
       const char *main_arch = flatpak_get_arch ();
       const char *kernel_arch = flatpak_get_kernel_arch ();
       GPtrArray *array = g_ptr_array_new ();
