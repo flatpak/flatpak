@@ -1299,20 +1299,35 @@ flatpak_spawn (GFile       *dir,
                const gchar *argv0,
                va_list      ap)
 {
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
   GPtrArray *args;
   const gchar *arg;
-  GInputStream *in;
-  g_autoptr(GOutputStream) out = NULL;
-  g_autoptr(GMainLoop) loop = NULL;
-  SpawnData data = {0};
+  gboolean res;
 
   args = g_ptr_array_new ();
   g_ptr_array_add (args, (gchar *) argv0);
   while ((arg = va_arg (ap, const gchar *)))
     g_ptr_array_add (args, (gchar *) arg);
   g_ptr_array_add (args, NULL);
+
+  res = flatpak_spawnv (dir, output, error, (const gchar * const *) args->pdata);
+
+  g_ptr_array_free (args, TRUE);
+
+  return res;
+}
+
+gboolean
+flatpak_spawnv (GFile                *dir,
+                char                **output,
+                GError              **error,
+                const gchar * const  *argv)
+{
+  g_autoptr(GSubprocessLauncher) launcher = NULL;
+  g_autoptr(GSubprocess) subp = NULL;
+  GInputStream *in;
+  g_autoptr(GOutputStream) out = NULL;
+  g_autoptr(GMainLoop) loop = NULL;
+  SpawnData data = {0};
 
   launcher = g_subprocess_launcher_new (0);
 
@@ -1325,8 +1340,7 @@ flatpak_spawn (GFile       *dir,
       g_subprocess_launcher_set_cwd (launcher, path);
     }
 
-  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
-  g_ptr_array_free (args, TRUE);
+  subp = g_subprocess_launcher_spawnv (launcher, argv, error);
 
   if (subp == NULL)
     return FALSE;
@@ -1377,7 +1391,6 @@ flatpak_spawn (GFile       *dir,
 
   return TRUE;
 }
-
 
 gboolean
 flatpak_cp_a (GFile         *src,
