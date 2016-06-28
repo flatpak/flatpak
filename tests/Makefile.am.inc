@@ -76,6 +76,7 @@ installed_test_data = \
 	tests/package_version.txt \
 	tests/test.json \
 	tests/session.conf.in \
+	tests/0001-Add-test-logo.patch \
 	$(NULL)
 
 installed_test_keyringdir = $(installed_testdir)/test-keyring

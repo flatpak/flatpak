@@ -38,7 +38,8 @@ cd $TEST_DATA_DIR/
 cp -a $(dirname $0)/test-configure .
 echo "version1" > app-data
 cp $(dirname $0)/test.json .
-flatpak-builder --repo=$REPO $FL_GPGARGS --force-clean appdir test.json > /dev/null
+cp $(dirname $0)/0001-Add-test-logo.patch .
+flatpak-builder --repo=$REPO $FL_GPGARGS --force-clean appdir test.json
 
 assert_file_has_content appdir/files/share/app-data version1
 assert_file_has_content appdir/metadata shared=network;
@@ -48,6 +49,7 @@ assert_not_has_file appdir/files/cleanup/a_filee
 assert_not_has_file appdir/files/bin/file.cleanup
 
 assert_has_file appdir/files/cleaned_up > out
+assert_has_file appdir/files/share/icons/org.test.Hello.png
 
 ${FLATPAK} build appdir /app/bin/hello2.sh > hello_out2
 assert_file_has_content hello_out2 '^Hello world2, from a sandbox$'
