@@ -90,6 +90,10 @@ else
     export U="--user"
 fi
 
+if [ x${USE_DELTAS-} == xyes ] ; then
+    export UPDATE_REPO_ARGS="--generate-static-deltas"
+fi
+
 export FLATPAK="${CMD_PREFIX} flatpak"
 
 assert_streq () {
@@ -169,17 +173,24 @@ export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
 setup_repo () {
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh > /dev/null
+    update_repo
     ostree trivial-httpd --autoexit --daemonize -p httpd-port .
     port=$(cat httpd-port)
     flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/repo"
 }
 
+update_repo () {
+    ${FLATPAK} build-update-repo $FL_GPGARGS ${UPDATE_REPO_ARGS-} repo
+}
+
 make_updated_app () {
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh UPDATED > /dev/null
+    update_repo
 }
 
 setup_sdk_repo () {
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
+    update_repo
 }
 
 install_repo () {

@@ -219,6 +219,7 @@ echo "nope" > ${DIR}/files/nope
 
 ${FLATPAK} build-finish --command=hello.sh ${DIR}
 ${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+update_repo
 
 ${FLATPAK} ${U} install test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir master
 
@@ -244,6 +245,7 @@ echo "f" > ${DIR}/files/f/data
 rm -rf  ${DIR}/files/b
 
 ${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+update_repo
 
 ${FLATPAK} ${U} update --subpath=/a --subpath=/b --subpath=/e --subpath=/nosuchdir org.test.Split
 
@@ -263,6 +265,7 @@ assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/f
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
 
 ${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+update_repo
 
 # Test reusing the old subpath list
 ${FLATPAK} ${U} update org.test.Split
