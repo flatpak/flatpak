@@ -39,7 +39,7 @@ cp -a $(dirname $0)/test-configure .
 echo "version1" > app-data
 cp $(dirname $0)/test.json .
 cp $(dirname $0)/0001-Add-test-logo.patch .
-flatpak-builder --repo=$REPO $FL_GPGARGS --force-clean appdir test.json
+flatpak-builder --repo=$REPO $FL_GPGARGS --force-clean appdir test.json > /dev/null
 
 assert_file_has_content appdir/files/share/app-data version1
 assert_file_has_content appdir/metadata shared=network;
