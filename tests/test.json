@@ -24,7 +24,7 @@
                 {
                     "name": "test",
                     "config-opts": ["--some-arg"],
-                    "post-install": [ "touch /app/bin/file.cleanup" ],
+                    "post-install": [ "touch /app/bin/file.cleanup", "mkdir -p /app/share/icons/", "cp org.test.Hello.png /app/share/icons/" ],
                     "make-args": ["BAR=2" ],
                     "make-install-args": ["BAR=3" ],
                     "sources": [
@@ -49,6 +49,11 @@
                                 "mkdir /app/cleanup/",
                                 "touch /app/cleanup/a_file"
                             ]
+                        },
+                        {
+                            "type": "patch",
+                            "path": "0001-Add-test-logo.patch",
+                            "use-git": true
                         }
                     ]
                 },

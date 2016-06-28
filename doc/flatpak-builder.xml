@@ -536,6 +536,10 @@
                         <term><option>dest</option> (string)</term>
                         <listitem><para>Directory inside the source dir where the patch will be applied.</para></listitem>
                     </varlistentry>
+                    <varlistentry>
+                        <term><option>use-git</option> (boolean)</term>
+                        <listitem><para>Whether to use "git apply" rather than "patch" to apply the patch, required when the patch file contains binary diffs.</para></listitem>
+                    </varlistentry>
                 </variablelist>
             </refsect3>
         </refsect2>

@@ -245,6 +245,11 @@ gboolean            flatpak_spawn (GFile       *dir,
                                    const gchar *argv0,
                                    va_list      args);
 
+gboolean            flatpak_spawnv (GFile                *dir,
+                                    char                **output,
+                                    GError              **error,
+                                    const gchar * const  *argv);
+
 typedef enum {
   FLATPAK_CP_FLAGS_NONE = 0,
   FLATPAK_CP_FLAGS_MERGE = 1<<0,
