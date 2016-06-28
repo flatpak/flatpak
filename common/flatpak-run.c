@@ -72,7 +72,6 @@ typedef enum {
   FLATPAK_CONTEXT_SOCKET_PULSEAUDIO  = 1 << 2,
   FLATPAK_CONTEXT_SOCKET_SESSION_BUS = 1 << 3,
   FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS  = 1 << 4,
-  FLATPAK_CONTEXT_SOCKET_JOURNAL     = 1 << 5,
 } FlatpakContextSockets;
 
 /* Same order as enum */
@@ -82,7 +81,6 @@ const char *flatpak_context_sockets[] = {
   "pulseaudio",
   "session-bus",
   "system-bus",
-  "journal",
   NULL
 };
 
@@ -1534,8 +1532,7 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
 }
 
 static void
-flatpak_run_add_journal_args (GPtrArray *argv_array,
-                              char    ***envp_p)
+flatpak_run_add_journal_args (GPtrArray *argv_array)
 {
   const char *journal_socket_socket = g_strdup ("/run/systemd/journal/socket");
   const char *journal_stdout_socket = g_strdup ("/run/systemd/journal/stdout");
@@ -1995,12 +1992,6 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
     {
       g_debug ("Allowing pulseaudio access");
       flatpak_run_add_pulseaudio_args (argv_array, fd_array, envp_p);
-    }
-
-  if (context->sockets & FLATPAK_CONTEXT_SOCKET_JOURNAL)
-    {
-      g_debug ("Allowing journal access");
-      flatpak_run_add_journal_args (argv_array, envp_p);
     }
 
   unrestricted_session_bus = (context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) != 0;
@@ -3164,7 +3155,7 @@ flatpak_run_app (const char     *app_ref,
                                     session_bus_proxy_argv,
                                     system_bus_proxy_argv,
                                     app_ref_parts[1], app_context, app_id_dir);
-
+  flatpak_run_add_journal_args (argv_array);
   add_font_path_args (argv_array);
 
   /* Must run this before spawning the dbus proxy, to ensure it
