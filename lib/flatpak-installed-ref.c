@@ -68,6 +68,7 @@ flatpak_installed_ref_finalize (GObject *object)
   FlatpakInstalledRefPrivate *priv = flatpak_installed_ref_get_instance_private (self);
 
   g_free (priv->origin);
+  g_free (priv->latest_commit);
   g_free (priv->deploy_dir);
   g_strfreev (priv->subpaths);
 
