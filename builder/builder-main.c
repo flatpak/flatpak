@@ -338,14 +338,14 @@ main (int    argc,
 
   if (!builder_manifest_start (manifest, build_context, &error))
     {
-      g_print ("Failed to init: %s\n", error->message);
+      g_printerr ("Failed to init: %s\n", error->message);
       return 1;
     }
 
   if (!opt_disable_download &&
       !builder_manifest_download (manifest, !opt_disable_updates, build_context, &error))
     {
-      g_print ("Failed to download sources: %s\n", error->message);
+      g_printerr ("Failed to download sources: %s\n", error->message);
       return 1;
     }
 
@@ -357,7 +357,7 @@ main (int    argc,
   cache = builder_cache_new (builder_context_get_cache_dir (build_context), app_dir, cache_branch);
   if (!builder_cache_open (cache, &error))
     {
-      g_print ("Error opening cache: %s\n", error->message);
+      g_printerr ("Error opening cache: %s\n", error->message);
       return 1;
     }
 
@@ -373,20 +373,20 @@ main (int    argc,
                          builder_manifest_get_id (manifest));
       if (!builder_manifest_init_app_dir (manifest, build_context, &error))
         {
-          g_print ("Error: %s\n", error->message);
+          g_printerr ("Error: %s\n", error->message);
           return 1;
         }
 
       if (!builder_cache_commit (cache, body, &error))
         {
-          g_print ("Error: %s\n", error->message);
+          g_printerr ("Error: %s\n", error->message);
           return 1;
         }
     }
 
   if (!builder_manifest_build (manifest, cache, build_context, &error))
     {
-      g_print ("Error: %s\n", error->message);
+      g_printerr ("Error: %s\n", error->message);
       return 1;
     }
 
@@ -394,19 +394,19 @@ main (int    argc,
     {
       if (!builder_manifest_cleanup (manifest, cache, build_context, &error))
         {
-          g_print ("Error: %s\n", error->message);
+          g_printerr ("Error: %s\n", error->message);
           return 1;
         }
 
       if (!builder_manifest_finish (manifest, cache, build_context, &error))
         {
-          g_print ("Error: %s\n", error->message);
+          g_printerr ("Error: %s\n", error->message);
           return 1;
         }
 
       if (!builder_manifest_create_platform (manifest, cache, build_context, &error))
         {
-          g_print ("Error: %s\n", error->message);
+          g_printerr ("Error: %s\n", error->message);
           return 1;
         }
     }
@@ -427,7 +427,7 @@ main (int    argc,
                       builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
                       opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
         {
-          g_print ("Export failed: %s\n", error->message);
+          g_printerr ("Export failed: %s\n", error->message);
           return 1;
         }
 
@@ -456,7 +456,7 @@ main (int    argc,
                           files_arg,
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
-              g_print ("Export failed: %s\n", error->message);
+              g_printerr ("Export failed: %s\n", error->message);
               return 1;
             }
         }
@@ -472,7 +472,7 @@ main (int    argc,
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
-              g_print ("Export failed: %s\n", error->message);
+              g_printerr ("Export failed: %s\n", error->message);
               return 1;
             }
         }
@@ -490,7 +490,7 @@ main (int    argc,
                           builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
-              g_print ("Export failed: %s\n", error->message);
+              g_printerr ("Export failed: %s\n", error->message);
               return 1;
             }
         }
@@ -519,7 +519,7 @@ main (int    argc,
                           files_arg,
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
-              g_print ("Export failed: %s\n", error->message);
+              g_printerr ("Export failed: %s\n", error->message);
               return 1;
             }
         }
