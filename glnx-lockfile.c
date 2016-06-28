@@ -187,7 +187,8 @@ void glnx_release_lock_file(GLnxLockFile *f) {
                 f->path = NULL;
         }
 
-        (void) close (f->fd);
+        if (f->fd != -1)
+                (void) close (f->fd);
         f->fd = -1;
         f->operation = 0;
 }
