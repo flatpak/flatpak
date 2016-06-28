@@ -38,6 +38,7 @@ struct BuilderSourcePatch
 
   char         *path;
   guint         strip_components;
+  gboolean      use_git;
 };
 
 typedef struct
@@ -51,6 +52,7 @@ enum {
   PROP_0,
   PROP_PATH,
   PROP_STRIP_COMPONENTS,
+  PROP_USE_GIT,
   LAST_PROP
 };
 
@@ -82,6 +84,10 @@ builder_source_patch_get_property (GObject    *object,
       g_value_set_uint (value, self->strip_components);
       break;
 
+    case PROP_USE_GIT:
+      g_value_set_boolean (value, self->use_git);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -104,6 +110,10 @@ builder_source_patch_set_property (GObject      *object,
 
     case PROP_STRIP_COMPONENTS:
       self->strip_components = g_value_get_uint (value);
+      break;
+
+    case PROP_USE_GIT:
+      self->use_git = g_value_get_boolean (value);
       break;
 
     default:
@@ -149,15 +159,40 @@ builder_source_patch_download (BuilderSource  *source,
 }
 
 static gboolean
-patch (GFile   *dir,
-       GError **error,
+patch (GFile      *dir,
+       gboolean    use_git,
+       const char *patch_path,
+       GError    **error,
        ...)
 {
   gboolean res;
+  GPtrArray *args;
+  const gchar *arg;
   va_list ap;
 
-  va_start (ap, error);
-  res = flatpak_spawn (dir, NULL, error, "patch", ap);
+  va_start(ap, error);
+
+  args = g_ptr_array_new ();
+  if (use_git) {
+    g_ptr_array_add (args, "git");
+    g_ptr_array_add (args, "apply");
+  } else {
+    g_ptr_array_add (args, "patch");
+  }
+  while ((arg = va_arg (ap, const gchar *)))
+    g_ptr_array_add (args, (gchar *) arg);
+  if (use_git) {
+    g_ptr_array_add (args, (char *) patch_path);
+  } else {
+    g_ptr_array_add (args, "-i");
+    g_ptr_array_add (args, (char *) patch_path);
+  }
+  g_ptr_array_add (args, NULL);
+
+  res = flatpak_spawnv (dir, NULL, error, (const char **) args->pdata);
+
+  g_ptr_array_free (args, TRUE);
+
   va_end (ap);
 
   return res;
@@ -181,7 +216,7 @@ builder_source_patch_extract (BuilderSource  *source,
 
   strip_components = g_strdup_printf ("-p%u", self->strip_components);
   patch_path = g_file_get_path (patchfile);
-  if (!patch (dest, error, strip_components, "-i", patch_path, NULL))
+  if (!patch (dest, self->use_git, patch_path, error, strip_components, NULL))
     return FALSE;
 
   return TRUE;
@@ -238,6 +273,13 @@ builder_source_patch_class_init (BuilderSourcePatchClass *klass)
                                                       0, G_MAXUINT,
                                                       1,
                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_USE_GIT,
+                                   g_param_spec_boolean ("use-git",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
 }
 
 static void
