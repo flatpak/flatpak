@@ -390,17 +390,6 @@ char *   flatpak_dir_fetch_remote_title (FlatpakDir   *self,
                                          const char   *remote,
                                          GCancellable *cancellable,
                                          GError      **error);
-GBytes * flatpak_dir_fetch_remote_object (FlatpakDir   *self,
-                                          const char   *remote,
-                                          const char   *checksum,
-                                          const char   *type,
-                                          GCancellable *cancellable,
-                                          GError      **error);
-GBytes * flatpak_dir_fetch_metadata (FlatpakDir   *self,
-                                     const char   *remote_name,
-                                     const char   *commit,
-                                     GCancellable *cancellable,
-                                     GError      **error);
 gboolean flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                                       const char   *remote_name,
                                       const char   *ref,
