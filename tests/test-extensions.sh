@@ -53,9 +53,7 @@ add_extensions () {
     mkdir -p $DIR/files/foo/ext4
     mkdir -p $DIR/files/foo/none
     mkdir -p $DIR/files/foo/dir
-    mkdir -p $DIR/files/foo/dir/foo
     mkdir -p $DIR/files/foo/dir2
-    mkdir -p $DIR/files/foo/dir2/foo
 
     cat >> $DIR/metadata <<EOF
 [Extension org.test.Extension1]
@@ -109,6 +107,7 @@ make_extension org.test.Extension3 master
 make_extension org.test.Extension3 not-master
 make_extension org.test.Extension4 master
 make_extension org.test.Dir.foo master
+make_extension org.test.Dir.bar master
 
 assert_has_extension_file () {
     local prefix=$1
@@ -134,6 +133,7 @@ assert_has_extension_file /usr ext3/extension-org.test.Extension3:not-master
 assert_not_has_extension_file /usr ext4/exists
 assert_has_extension_file /usr dir/foo/exists
 assert_has_extension_file /usr dir/foo/extension-org.test.Dir.foo:master
+assert_has_extension_file /usr dir/bar/extension-org.test.Dir.bar:master
 assert_not_has_extension_file /usr dir2/foo/exists
 
 echo "ok runtime extensions"
@@ -155,6 +155,7 @@ assert_has_extension_file /app ext3/extension-org.test.Extension3:not-master
 assert_not_has_extension_file /app ext4/exists
 assert_has_extension_file /app dir/foo/exists
 assert_has_extension_file /app dir/foo/extension-org.test.Dir.foo:master
+assert_has_extension_file /app dir/bar/extension-org.test.Dir.bar:master
 assert_not_has_extension_file /app dir2/foo/exists
 
 echo "ok app extensions"

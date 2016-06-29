@@ -1717,6 +1717,14 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
       g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
       g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
 
+      if (ext->needs_tmpfs)
+        {
+          g_autofree char *parent = g_path_get_dirname (full_directory);
+          add_args (argv_array,
+                    "--tmpfs", parent,
+                    NULL);
+        }
+
       add_args (argv_array,
                 "--bind", ext->files_path, full_directory,
                 NULL);

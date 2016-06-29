@@ -232,6 +232,7 @@ typedef struct
   char *ref;
   char *directory;
   char *files_path;
+  gboolean needs_tmpfs;
 } FlatpakExtension;
 
 void flatpak_extension_free (FlatpakExtension *extension);

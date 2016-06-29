@@ -2491,6 +2491,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
               g_autofree char *prefix = g_strconcat (extension, ".", NULL);
               g_auto(GStrv) refs = NULL;
               int j;
+              gboolean needs_tmpfs = TRUE;
 
               refs = flatpak_list_deployed_refs ("runtime", prefix, arch, branch,
                                                  NULL, NULL);
@@ -2503,6 +2504,8 @@ flatpak_list_extensions (GKeyFile   *metakey,
                   if (subdir_files)
                     {
                       ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, subdir_files);
+                      ext->needs_tmpfs = needs_tmpfs;
+                      needs_tmpfs = FALSE; /* Only first subdir needs a tmpfs */
                       res = g_list_prepend (res, ext);
                     }
                 }
@@ -2510,7 +2513,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
         }
     }
 
-  return res;
+  return g_list_reverse (res);
 }
 
 
