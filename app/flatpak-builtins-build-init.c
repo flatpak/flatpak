@@ -54,7 +54,6 @@ gboolean
 flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(GFile) var_deploy_base = NULL;
   g_autoptr(GFile) var_deploy_files = NULL;
   g_autoptr(GFile) base = NULL;
   g_autoptr(GFile) files_dir = NULL;
@@ -171,35 +170,29 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                   if (strcmp (ext->installed_id, requested_extension) == 0 ||
                       strcmp (ext->id, requested_extension) == 0)
                     {
-                      g_autoptr(GFile) ext_deploy_dir = flatpak_find_deploy_dir_for_ref (ext->ref, cancellable, NULL);
-                      if (ext_deploy_dir != NULL)
-                        {
-                          g_autoptr(GFile) ext_deploy_files = g_file_get_child (ext_deploy_dir, "files");
-                          g_autoptr(GFile) target = g_file_resolve_relative_path (usr_dir, ext->directory);
-                          g_autoptr(GFile) target_parent = g_file_get_parent (target);
+                      g_autoptr(GFile) ext_deploy_files = g_file_new_for_path (ext->files_path);
+                      g_autoptr(GFile) target = g_file_resolve_relative_path (usr_dir, ext->directory);
+                      g_autoptr(GFile) target_parent = g_file_get_parent (target);
 
-                          if (!gs_file_ensure_directory (target_parent, TRUE, cancellable, error))
-                            return FALSE;
+                      if (!gs_file_ensure_directory (target_parent, TRUE, cancellable, error))
+                        return FALSE;
 
-                          /* An extension overrides whatever is there before, so we clean up first */
-                          if (!gs_shutil_rm_rf (target, cancellable, error))
-                            return FALSE;
+                      /* An extension overrides whatever is there before, so we clean up first */
+                      if (!gs_shutil_rm_rf (target, cancellable, error))
+                        return FALSE;
 
-                          if (!flatpak_cp_a (ext_deploy_files, target, FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))
-                            return FALSE;
+                      if (!flatpak_cp_a (ext_deploy_files, target, FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))
+                        return FALSE;
 
-                          found = TRUE;
-                        }
-                      else
-                        {
-                          g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
-                          return flatpak_fail (error, "Requested extension %s not installed\n", requested_extension);
-                        }
+                      found = TRUE;
                     }
                 }
 
               if (!found)
-                return flatpak_fail (error, "No extension %s in sdk\n", requested_extension);
+                {
+                  g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
+                  return flatpak_fail (error, "Requested extension %s not installed\n", requested_extension);
+                }
             }
           g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
         }
@@ -209,11 +202,9 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     {
       var_ref = flatpak_build_runtime_ref (opt_var, branch, opt_arch);
 
-      var_deploy_base = flatpak_find_deploy_dir_for_ref (var_ref, cancellable, error);
-      if (var_deploy_base == NULL)
+      var_deploy_files = flatpak_find_files_dir_for_ref (var_ref, cancellable, error);
+      if (var_deploy_files == NULL)
         return FALSE;
-
-      var_deploy_files = g_file_get_child (var_deploy_base, "files");
     }
 
   if (opt_update)

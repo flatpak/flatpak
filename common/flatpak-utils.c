@@ -672,13 +672,13 @@ out:
 }
 
 GFile *
-flatpak_find_deploy_dir_for_ref (const char   *ref,
-                                 GCancellable *cancellable,
-                                 GError      **error)
+flatpak_find_files_dir_for_ref (const char   *ref,
+                                GCancellable *cancellable,
+                                GError      **error)
 {
   g_autoptr(FlatpakDir) user_dir = NULL;
   g_autoptr(FlatpakDir) system_dir = NULL;
-  GFile *deploy = NULL;
+  g_autoptr(GFile) deploy = NULL;
 
   user_dir = flatpak_dir_get_user ();
   system_dir = flatpak_dir_get_system ();
@@ -692,8 +692,7 @@ flatpak_find_deploy_dir_for_ref (const char   *ref,
       return NULL;
     }
 
-  return deploy;
-
+  return g_file_get_child (deploy, "files");
 }
 
 FlatpakDeploy *
@@ -2419,22 +2418,24 @@ flatpak_extension_free (FlatpakExtension *extension)
   g_free (extension->installed_id);
   g_free (extension->ref);
   g_free (extension->directory);
+  g_free (extension->files_path);
   g_free (extension);
 }
 
 static FlatpakExtension *
 flatpak_extension_new (const char *id,
                        const char *extension,
-                       const char *arch,
-                       const char *branch,
-                       const char *directory)
+                       const char *ref,
+                       const char *directory,
+                       GFile *files)
 {
   FlatpakExtension *ext = g_new0 (FlatpakExtension, 1);
 
   ext->id = g_strdup (id);
   ext->installed_id = g_strdup (extension);
-  ext->ref = g_build_filename ("runtime", extension, arch, branch, NULL);
+  ext->ref = g_strdup (ref);
   ext->directory = g_strdup (directory);
+  ext->files_path = g_file_get_path (files);
   return ext;
 }
 
@@ -2465,7 +2466,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
           g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
           g_autofree char *ref = NULL;
           const char *branch;
-          g_autoptr(GFile) deploy = NULL;
+          g_autoptr(GFile) files = NULL;
 
           if (directory == NULL)
             continue;
@@ -2477,11 +2478,11 @@ flatpak_list_extensions (GKeyFile   *metakey,
 
           ref = g_build_filename ("runtime", extension, arch, branch, NULL);
 
-          deploy = flatpak_find_deploy_dir_for_ref (ref, NULL, NULL);
+          files = flatpak_find_files_dir_for_ref (ref, NULL, NULL);
           /* Prefer a full extension (org.freedesktop.Locale) over subdirectory ones (org.freedesktop.Locale.sv) */
-          if (deploy != NULL)
+          if (files != NULL)
             {
-              ext = flatpak_extension_new (extension, extension, arch, branch, directory);
+              ext = flatpak_extension_new (extension, extension, ref, directory, files);
               res = g_list_prepend (res, ext);
             }
           else if (g_key_file_get_boolean (metakey, groups[i],
@@ -2496,9 +2497,14 @@ flatpak_list_extensions (GKeyFile   *metakey,
               for (j = 0; refs != NULL && refs[j] != NULL; j++)
                 {
                   g_autofree char *extended_dir = g_build_filename (directory, refs[j] + strlen (prefix), NULL);
+                  g_autofree char *dir_ref = g_build_filename ("runtime", refs[j], arch, branch, NULL);
+                  g_autoptr(GFile) subdir_files = flatpak_find_files_dir_for_ref (dir_ref, NULL, NULL);
 
-                  ext = flatpak_extension_new (extension, refs[j], arch, branch, extended_dir);
-                  res = g_list_prepend (res, ext);
+                  if (subdir_files)
+                    {
+                      ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, subdir_files);
+                      res = g_list_prepend (res, ext);
+                    }
                 }
             }
         }

@@ -1713,20 +1713,18 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   for (l = extensions; l != NULL; l = l->next)
     {
       FlatpakExtension *ext = l->data;
-      g_autoptr(GFile) deploy = NULL;
+      g_autofree char *full_directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
+      g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
+      g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
 
-      deploy = flatpak_find_deploy_dir_for_ref (ext->ref, cancellable, NULL);
-      if (deploy != NULL)
-        {
-          g_autoptr(GFile) files = g_file_get_child (deploy, "files");
-          g_autofree char *full_directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
-          g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
+      add_args (argv_array,
+                "--bind", ext->files_path, full_directory,
+                NULL);
 
-          add_args (argv_array,
-                    "--bind", gs_file_get_path_cached (files), full_directory,
-                    "--lock-file", ref,
-                    NULL);
-        }
+      if (g_file_test (real_ref, G_FILE_TEST_EXISTS))
+        add_args (argv_array,
+                  "--lock-file", ref,
+                  NULL);
     }
 
   g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);

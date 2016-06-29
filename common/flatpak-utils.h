@@ -86,9 +86,9 @@ char * flatpak_build_runtime_ref (const char *runtime,
 char * flatpak_build_app_ref (const char *app,
                               const char *branch,
                               const char *arch);
-GFile * flatpak_find_deploy_dir_for_ref (const char   *ref,
-                                         GCancellable *cancellable,
-                                         GError      **error);
+GFile * flatpak_find_files_dir_for_ref (const char   *ref,
+                                        GCancellable *cancellable,
+                                        GError      **error);
 FlatpakDeploy * flatpak_find_deploy_for_ref (const char   *ref,
                                              GCancellable *cancellable,
                                              GError      **error);
@@ -231,6 +231,7 @@ typedef struct
   char *installed_id;
   char *ref;
   char *directory;
+  char *files_path;
 } FlatpakExtension;
 
 void flatpak_extension_free (FlatpakExtension *extension);
