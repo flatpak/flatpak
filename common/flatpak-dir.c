@@ -4957,40 +4957,21 @@ flatpak_dir_fetch_remote_title (FlatpakDir   *self,
   return g_steal_pointer (&title);
 }
 
-gboolean
-flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
-                             const char   *remote_name,
-                             const char   *ref,
-                             guint64      *download_size,
-                             guint64      *installed_size,
-                             char        **metadata,
-                             GCancellable *cancellable,
-                             GError      **error)
+static gboolean
+flatpak_dir_parse_summary_for_ref (FlatpakDir   *self,
+                                   GVariant     *summary,
+                                   const char   *ref,
+                                   guint64      *download_size,
+                                   guint64      *installed_size,
+                                   char        **metadata,
+                                   GCancellable *cancellable,
+                                   GError      **error)
 {
-  g_autoptr(GBytes) summary_bytes = NULL;
   g_autoptr(GVariant) extensions = NULL;
-  g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) cache_v = NULL;
   g_autoptr(GVariant) cache = NULL;
   g_autoptr(GVariant) res = NULL;
 
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
-    return FALSE;
-
-  if (!flatpak_dir_remote_fetch_summary (self, remote_name,
-                                         &summary_bytes,
-                                         cancellable, error))
-    return FALSE;
-
-  if (summary_bytes == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Data not available; server has no summary file");
-      return FALSE;
-    }
-
-  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                      summary_bytes, FALSE);
   extensions = g_variant_get_child_value (summary, 1);
 
   cache_v = g_variant_lookup_value (extensions, "xa.cache", NULL);
@@ -5028,4 +5009,385 @@ flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
     g_variant_get_child (res, 2, "s", metadata);
 
   return TRUE;
+}
+
+gboolean
+flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
+                             const char   *remote_name,
+                             const char   *ref,
+                             guint64      *download_size,
+                             guint64      *installed_size,
+                             char        **metadata,
+                             GCancellable *cancellable,
+                             GError      **error)
+{
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GVariant) summary = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_remote_fetch_summary (self, remote_name,
+                                         &summary_bytes,
+                                         cancellable, error))
+    return FALSE;
+
+  if (summary_bytes == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Data not available; server has no summary file");
+      return FALSE;
+    }
+
+  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                      summary_bytes, FALSE);
+
+  return flatpak_dir_parse_summary_for_ref (self, summary, ref,
+                                            download_size, installed_size,
+                                            metadata,
+                                            cancellable, error);
+}
+
+void
+flatpak_related_free (FlatpakRelated *self)
+{
+  g_free (self->ref);
+  g_free (self->commit);
+  g_strfreev (self->subpaths);
+  g_free (self);
+}
+
+static gboolean
+string_in_array (GPtrArray *array,
+                 const char *str)
+{
+  int i;
+
+  for (i = 0; i < array->len; i++)
+    {
+      if (strcmp (g_ptr_array_index (array, i), str) == 0)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static void
+add_related (FlatpakDir *self,
+             GPtrArray *related,
+             const char *extension,
+             const char *extension_ref,
+             const char *checksum,
+             gboolean no_autodownload,
+             gboolean autodelete)
+{
+  g_autoptr(GVariant) deploy_data = NULL;
+  const char **old_subpaths = NULL;
+  g_autoptr(GPtrArray) subpaths = g_ptr_array_new_with_free_func (g_free);
+  int i;
+  FlatpakRelated *rel;
+  gboolean download = TRUE;
+  gboolean delete = autodelete;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, extension_ref, NULL, NULL);
+
+  if (deploy_data)
+    old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+
+  /* Only apply no-autodownload for uninstalled refs, we want to update
+     if you manually installed them */
+
+  if (no_autodownload && deploy_data == NULL)
+    download = FALSE;
+
+  if (g_str_has_suffix (extension, ".Debug"))
+    {
+      /* debug files only updated if already installed */
+      if (deploy_data == NULL)
+        download = FALSE;
+
+      /* Always remove debug */
+      delete = TRUE;
+    }
+
+  if (old_subpaths)
+    {
+      for (i = 0; old_subpaths[i] != NULL; i++)
+        g_ptr_array_add (subpaths, g_strdup (old_subpaths[i]));
+    }
+
+  if (g_str_has_suffix (extension, ".Locale"))
+    {
+      g_autofree char ** current_subpaths = flatpak_get_current_locale_subpaths ();
+      for (i = 0; current_subpaths[i] != NULL; i++)
+        {
+          g_autofree char *subpath = current_subpaths[i];
+
+          if (!string_in_array (subpaths, subpath))
+            g_ptr_array_add (subpaths, g_steal_pointer (&subpath));
+        }
+
+      /* Always remove debug */
+      delete = TRUE;
+    }
+
+  g_ptr_array_add (subpaths, NULL);
+
+  rel = g_new0 (FlatpakRelated, 1);
+  rel->ref = g_strdup (extension_ref);
+  rel->commit = g_strdup (checksum);
+  rel->subpaths = (char **)g_ptr_array_free (subpaths, FALSE);
+  rel->download = download;
+  rel->delete = delete;
+
+  g_ptr_array_add (related, rel);
+}
+
+GPtrArray *
+flatpak_dir_find_remote_related (FlatpakDir *self,
+                                 const char *ref,
+                                 const char *remote_name,
+                                 GCancellable *cancellable,
+                                 GError **error)
+{
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autofree char *metadata = NULL;
+  g_autoptr(GKeyFile) metakey = g_key_file_new ();
+  int i;
+  g_auto(GStrv) parts = NULL;
+  g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_related_free);
+
+  parts = flatpak_decompose_ref (ref, error);
+  if (parts == NULL)
+    return NULL;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  if (!flatpak_dir_remote_fetch_summary (self, remote_name,
+                                         &summary_bytes,
+                                         cancellable, error))
+    return NULL;
+
+  if (summary_bytes == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Data not available; server has no summary file");
+      return NULL;
+    }
+
+  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                      summary_bytes, FALSE);
+
+  if (flatpak_dir_parse_summary_for_ref (self, summary, ref,
+                                         NULL, NULL, &metadata,
+                                         NULL, NULL) &&
+      g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
+    {
+      g_auto(GStrv) groups = NULL;
+
+      groups = g_key_file_get_groups (metakey, NULL);
+      for (i = 0; groups[i] != NULL; i++)
+        {
+          char *extension;
+
+          if (g_str_has_prefix (groups[i], "Extension ") &&
+              *(extension = (groups[i] + strlen ("Extension "))) != 0)
+            {
+              g_autofree char *version = g_key_file_get_string (metakey, groups[i],
+                                                                "version", NULL);
+              gboolean subdirectories = g_key_file_get_boolean (metakey, groups[i],
+                                                                "subdirectories", NULL);
+              gboolean no_autodownload = g_key_file_get_boolean (metakey, groups[i],
+                                                                 "no-autodownload", NULL);
+              gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
+                                                            "autodelete", NULL);
+              const char *branch;
+              g_autofree char *extension_ref = NULL;
+              g_autofree char *checksum = NULL;
+
+              if (version)
+                branch = version;
+              else
+                branch = parts[3];
+
+              extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
+
+              if (flatpak_summary_lookup_ref (summary,
+                                              extension_ref,
+                                              &checksum))
+                {
+                  add_related (self, related, extension, extension_ref, checksum, no_autodownload, autodelete);
+                }
+              else if (subdirectories)
+                {
+                  g_auto(GStrv) refs = flatpak_summary_match_subrefs (summary, extension_ref);
+                  int j;
+                  for (j = 0; refs[j] != NULL; j++)
+                    {
+                      if (flatpak_summary_lookup_ref (summary,
+                                                      refs[j],
+                                                      &checksum))
+                        add_related (self, related, extension, refs[j], checksum, no_autodownload, autodelete);
+                    }
+                }
+            }
+        }
+    }
+
+  return g_steal_pointer (&related);
+}
+
+static GPtrArray *
+local_match_prefix (FlatpakDir *self,
+                    const char *extension_ref,
+                    const char *remote)
+{
+  GPtrArray *matches = g_ptr_array_new_with_free_func (g_free);
+  g_auto(GStrv) parts = NULL;
+  g_autofree char *parts_prefix = NULL;
+  g_autoptr(GHashTable) refs = NULL;
+  g_autofree char *list_prefix = NULL;
+
+  parts = g_strsplit (extension_ref, "/", -1);
+  parts_prefix = g_strconcat (parts[1], ".", NULL);
+
+  list_prefix = g_strdup_printf ("%s:%s", remote, parts[0]);
+  if (ostree_repo_list_refs (self->repo, list_prefix, &refs, NULL, NULL))
+    {
+      GHashTableIter hash_iter;
+      gpointer key;
+
+      g_hash_table_iter_init (&hash_iter, refs);
+      while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+        {
+          char *ref = key;
+          g_auto(GStrv) cur_parts = g_strsplit (ref, "/", -1);
+
+          /* Must match type, arch, branch */
+          if (strcmp (parts[0], cur_parts[0]) != 0 ||
+              strcmp (parts[2], cur_parts[2]) != 0 ||
+              strcmp (parts[3], cur_parts[3]) != 0)
+            continue;
+
+          /* But only prefix of id */
+          if (!g_str_has_prefix (cur_parts[1], parts_prefix))
+            continue;
+
+          g_ptr_array_add (matches, g_strdup (ref));
+        }
+    }
+
+  return matches;
+}
+
+GPtrArray *
+flatpak_dir_find_local_related (FlatpakDir *self,
+                                const char *ref,
+                                const char *remote_name,
+                                GCancellable *cancellable,
+                                GError **error)
+{
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GFile) metadata = NULL;
+  g_autofree char *metadata_contents = NULL;
+  gsize metadata_size;
+  g_autoptr(GKeyFile) metakey = g_key_file_new ();
+  int i;
+  g_auto(GStrv) parts = NULL;
+  g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_related_free);
+
+  parts = flatpak_decompose_ref (ref, error);
+  if (parts == NULL)
+    return NULL;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
+  if (deploy_dir == NULL)
+    {
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED, "%s not installed", ref);
+      return NULL;
+    }
+
+  metadata = g_file_get_child (deploy_dir, "metadata");
+  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, NULL))
+    return g_steal_pointer (&related); /* No metadata => no related, but no error */
+
+  if (g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, NULL))
+    {
+      g_auto(GStrv) groups = NULL;
+
+      groups = g_key_file_get_groups (metakey, NULL);
+      for (i = 0; groups[i] != NULL; i++)
+        {
+          char *extension;
+
+          if (g_str_has_prefix (groups[i], "Extension ") &&
+              *(extension = (groups[i] + strlen ("Extension "))) != 0)
+            {
+              g_autofree char *version = g_key_file_get_string (metakey, groups[i],
+                                                                "version", NULL);
+              gboolean subdirectories = g_key_file_get_boolean (metakey, groups[i],
+                                                                "subdirectories", NULL);
+              gboolean no_autodownload = g_key_file_get_boolean (metakey, groups[i],
+                                                                 "no-autodownload", NULL);
+              gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
+                                                            "autodelete", NULL);
+              const char *branch;
+              g_autofree char *extension_ref = NULL;
+              g_autofree char *prefixed_extension_ref = NULL;
+              g_autofree char *checksum = NULL;
+              g_autoptr(GVariant) deploy_data = NULL;
+
+              if (version)
+                branch = version;
+              else
+                branch = parts[3];
+
+              extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
+              prefixed_extension_ref = g_strdup_printf ("%s:%s", remote_name, extension_ref);
+              if (ostree_repo_resolve_rev (self->repo,
+                                           prefixed_extension_ref,
+                                           FALSE,
+                                           &checksum,
+                                           NULL))
+                {
+                  add_related (self, related, extension, extension_ref,
+                               checksum, no_autodownload, autodelete);
+                }
+              else if (subdirectories)
+                {
+                  g_autoptr(GPtrArray) matches = local_match_prefix (self, extension_ref, remote_name);
+                  int j;
+                  for (j = 0; j < matches->len; j++)
+                    {
+                      const char *match = g_ptr_array_index (matches, j);
+                      g_autofree char *prefixed_match = NULL;
+                      g_autoptr(GVariant) ext_deploy_data = NULL;
+                      g_autofree char *match_checksum = NULL;
+
+                      prefixed_match = g_strdup_printf ("%s:%s", remote_name, match);
+
+                      if (ostree_repo_resolve_rev (self->repo,
+                                                   prefixed_match,
+                                                   FALSE,
+                                                   &match_checksum,
+                                                   NULL))
+                        {
+                          add_related (self, related, extension,
+                                       match, match_checksum,
+                                       no_autodownload, autodelete);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+  return g_steal_pointer (&related);
 }

@@ -37,8 +37,20 @@
 GType flatpak_dir_get_type (void);
 GType flatpak_deploy_get_type (void);
 
+typedef struct
+{
+  char           *ref;
+  char           *commit;
+  char          **subpaths;
+  gboolean        download;
+  gboolean        delete;
+} FlatpakRelated;
+
+void         flatpak_related_free (FlatpakRelated *related);
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDir, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakDeploy, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRelated, flatpak_related_free)
 
 typedef enum {
   FLATPAK_HELPER_DEPLOY_FLAGS_NONE = 0,
@@ -398,5 +410,15 @@ gboolean flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                                       char        **metadata,
                                       GCancellable *cancellable,
                                       GError      **error);
+GPtrArray * flatpak_dir_find_remote_related (FlatpakDir *dir,
+                                             const char *ref,
+                                             const char *remote_name,
+                                             GCancellable *cancellable,
+                                             GError **error);
+GPtrArray * flatpak_dir_find_local_related (FlatpakDir *self,
+                                            const char *ref,
+                                            const char *remote_name,
+                                            GCancellable *cancellable,
+                                            GError **error);
 
 #endif /* __FLATPAK_DIR_H__ */
