@@ -420,13 +420,13 @@ gboolean flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                                       GCancellable *cancellable,
                                       GError      **error);
 GPtrArray * flatpak_dir_find_remote_related (FlatpakDir *dir,
-                                             const char *ref,
                                              const char *remote_name,
+                                             const char *ref,
                                              GCancellable *cancellable,
                                              GError **error);
 GPtrArray * flatpak_dir_find_local_related (FlatpakDir *self,
-                                            const char *ref,
                                             const char *remote_name,
+                                            const char *ref,
                                             GCancellable *cancellable,
                                             GError **error);
 

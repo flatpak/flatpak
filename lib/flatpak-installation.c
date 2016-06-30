@@ -26,6 +26,7 @@
 #include "flatpak-utils.h"
 #include "flatpak-installation.h"
 #include "flatpak-installed-ref-private.h"
+#include "flatpak-related-ref-private.h"
 #include "flatpak-remote-private.h"
 #include "flatpak-remote-ref-private.h"
 #include "flatpak-enum-types.h"
@@ -1570,4 +1571,118 @@ flatpak_installation_create_monitor (FlatpakInstallation *self,
 
   return g_file_monitor_file (path, G_FILE_MONITOR_NONE,
                               cancellable, error);
+}
+
+
+/**
+ * flatpak_installation_list_remote_related_refs_sync:
+ * @self: a #FlatpakInstallation
+ * @remote_name: the name of the remote
+ * @ref: the name of the remote
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists all the available refs on @remote_name that are related to
+ * @ref, and the subpaths to use. These are things that are
+ * interesting to install, update, or uninstall together with
+ * @ref. For instance, locale data or debug information.
+ *
+ * The returned list contains all available related refs, but not
+ * everyone should always be installed. For example,
+ * flatpak_related_ref_should_download () returns TRUE if the
+ * reference should be installed/updated with the app, and
+ * flatpak_related_ref_should_delete () returns TRUE if it
+ * should be uninstalled with the main ref.
+ *
+ * Returns: (transfer container) (element-type FlatpakRelatedRef): an GPtrArray of
+ *   #FlatpakRelatedRef instances
+ *
+ * Since: 0.6.7
+ */
+GPtrArray *
+flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
+                                                    const char          *remote_name,
+                                                    const char          *ref,
+                                                    GCancellable        *cancellable,
+                                                    GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(GPtrArray) related = NULL;
+  g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
+  int i;
+
+  related = flatpak_dir_find_remote_related (dir, ref, remote_name,
+                                             cancellable, error);
+  if (related == NULL)
+    return NULL;
+
+  for (i = 0; i < related->len; i++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (related, i);
+      FlatpakRelatedRef *ref;
+
+      ref = flatpak_related_ref_new (rel->ref, rel->commit,
+                                     rel->subpaths, rel->download, rel->delete);
+
+      if (ref)
+        g_ptr_array_add (refs, ref);
+    }
+
+  return g_steal_pointer (&refs);
+}
+
+/**
+ * flatpak_installation_list_installed_related_refs_sync:
+ * @self: a #FlatpakInstallation
+ * @remote_name: the name of the remote
+ * @ref: the name of the remote
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists all the locally installed refs from @remote_name that are
+ * related to @ref. These are things that are interesting to install,
+ * update, or uninstall together with @ref. For instance, locale data
+ * or debug information.
+ *
+ * This function is similar to flatpak_installation_list_remote_related_refs_sync,
+ * but instead of looking at what is available on the remote, it only looks
+ * at the locally installed refs. This is useful for instance when you're
+ * looking for related refs to uninstall, or when you're planning to use
+ * FLATPAK_UPDATE_FLAGS_NO_PULL to install previously pulled refs.
+ *
+ * Returns: (transfer container) (element-type FlatpakRelatedRef): an GPtrArray of
+ *   #FlatpakRelatedRef instances
+ *
+ * Since: 0.6.7
+ */
+GPtrArray *
+flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self,
+                                                       const char          *remote_name,
+                                                       const char          *ref,
+                                                       GCancellable        *cancellable,
+                                                       GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(GPtrArray) related = NULL;
+  g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_object_unref);
+  int i;
+
+  related = flatpak_dir_find_local_related (dir, ref, remote_name,
+                                            cancellable, error);
+  if (related == NULL)
+    return NULL;
+
+  for (i = 0; i < related->len; i++)
+    {
+      FlatpakRelated *rel = g_ptr_array_index (related, i);
+      FlatpakRelatedRef *ref;
+
+      ref = flatpak_related_ref_new (rel->ref, rel->commit,
+                                     rel->subpaths, rel->download, rel->delete);
+
+      if (ref)
+        g_ptr_array_add (refs, ref);
+    }
+
+  return g_steal_pointer (&refs);
 }

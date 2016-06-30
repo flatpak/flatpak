@@ -18,24 +18,20 @@
  *       Alexander Larsson <alexl@redhat.com>
  */
 
-#ifndef __FLATPAK_H__
-#define __FLATPAK_H__
+#if !defined(__FLATPAK_H_INSIDE__) && !defined(FLATPAK_COMPILATION)
+#error "Only <flatpak.h> can be included directly."
+#endif
 
-#define __FLATPAK_H_INSIDE__
+#ifndef __FLATPAK_RELATED_REF_PRIVATE_H__
+#define __FLATPAK_RELATED_REF_PRIVATE_H__
 
-#include <gio/gio.h>
-
-#include <flatpak-version-macros.h>
-#include <flatpak-enum-types.h>
-#include <flatpak-error.h>
-#include <flatpak-ref.h>
-#include <flatpak-installed-ref.h>
-#include <flatpak-remote-ref.h>
 #include <flatpak-related-ref.h>
-#include <flatpak-bundle-ref.h>
-#include <flatpak-remote.h>
-#include <flatpak-installation.h>
+#include <flatpak-dir.h>
 
-#undef __FLATPAK_H_INSIDE__
+FlatpakRelatedRef *flatpak_related_ref_new (const char  *full_ref,
+                                            const char  *commit,
+                                            char       **subpaths,
+                                            gboolean     download,
+                                            gboolean     delete);
 
-#endif /* __FLATPAK_H__ */
+#endif /* __FLATPAK_RELATED_REF_PRIVATE_H__ */

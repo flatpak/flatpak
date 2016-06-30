@@ -251,5 +251,15 @@ FLATPAK_EXTERN gboolean          flatpak_installation_update_appstream_sync (Fla
                                                                              gboolean            *out_changed,
                                                                              GCancellable        *cancellable,
                                                                              GError             **error);
+FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_remote_related_refs_sync (FlatpakInstallation *self,
+                                                                                     const char          *remote_name,
+                                                                                     const char          *ref,
+                                                                                     GCancellable        *cancellable,
+                                                                                     GError             **error);
+FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self,
+                                                                                        const char          *remote_name,
+                                                                                        const char          *ref,
+                                                                                        GCancellable        *cancellable,
+                                                                                        GError             **error);
 
 #endif /* __FLATPAK_INSTALLATION_H__ */

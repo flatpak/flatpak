@@ -9,6 +9,7 @@ flatpakinclude_HEADERS = \
 	lib/flatpak-error.h \
 	lib/flatpak-installed-ref.h \
 	lib/flatpak-remote-ref.h \
+	lib/flatpak-related-ref.h \
 	lib/flatpak-bundle-ref.h \
 	lib/flatpak-installation.h \
 	lib/flatpak-remote.h \
@@ -46,8 +47,10 @@ libflatpak_la_SOURCES = \
 	lib/flatpak-installed-ref.c \
 	lib/flatpak-installed-ref-private.h \
 	lib/flatpak-remote-ref.c \
-	lib/flatpak-bundle-ref.c \
 	lib/flatpak-remote-ref-private.h \
+	lib/flatpak-bundle-ref.c \
+	lib/flatpak-related-ref.c \
+	lib/flatpak-related-ref-private.h \
 	lib/flatpak-remote-private.h \
 	lib/flatpak-remote.c \
 	lib/flatpak-error.c \
