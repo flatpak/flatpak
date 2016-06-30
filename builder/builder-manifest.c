@@ -1777,7 +1777,7 @@ builder_manifest_finish (BuilderManifest *self,
           extension_contents = g_strdup_printf ("\n"
                                                 "[Extension %s.Locale]\n"
                                                 "directory=%s\n"
-                                                "subdirectories=true\n",
+                                                "autodelete=true\n",
                                                 self->id,
                                                 LOCALES_SEPARATE_DIR);
 
@@ -1816,7 +1816,9 @@ builder_manifest_finish (BuilderManifest *self,
 
           extension_contents = g_strdup_printf ("\n"
                                                 "[Extension %s.Debug]\n"
-                                                "directory=lib/debug\n",
+                                                "directory=lib/debug\n"
+                                                "autodelete=true\n"
+                                                "no-autodownload=true\n",
                                                 self->id);
 
           output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
@@ -2039,7 +2041,7 @@ builder_manifest_create_platform (BuilderManifest *self,
           extension_contents = g_strdup_printf ("\n"
                                                 "[Extension %s.Locale]\n"
                                                 "directory=%s\n"
-                                                "subdirectories=true\n",
+                                                "autodelete=true\n",
                                                 self->id_platform,
                                                 LOCALES_SEPARATE_DIR);
 
