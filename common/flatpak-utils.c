@@ -1648,6 +1648,48 @@ flatpak_variant_bsearch_str (GVariant   *array,
   return FALSE;
 }
 
+/* This matches all refs that have ref, followed by '.'  as prefix */
+char **
+flatpak_summary_match_subrefs (GVariant *summary, const char *ref)
+{
+  g_autoptr(GVariant) refs = g_variant_get_child_value (summary, 0);
+  GPtrArray *res = g_ptr_array_new ();
+  gsize n, i;
+  g_auto(GStrv) parts = NULL;
+  g_autofree char *parts_prefix = NULL;
+
+  parts = g_strsplit (ref, "/", 0);
+  parts_prefix = g_strconcat (parts[1], ".", NULL);
+
+  n = g_variant_n_children (refs);
+  for (i = 0; i < n; i++)
+    {
+      g_autoptr(GVariant) child = NULL;
+      g_auto(GStrv) cur_parts = NULL;
+      const char *cur;
+
+      child = g_variant_get_child_value (refs, i);
+      g_variant_get_child (child, 0, "&s", &cur, NULL);
+
+      cur_parts = g_strsplit (cur, "/", 0);
+
+      /* Must match type, arch, branch */
+      if (strcmp (parts[0], cur_parts[0]) != 0 ||
+          strcmp (parts[2], cur_parts[2]) != 0 ||
+          strcmp (parts[3], cur_parts[3]) != 0)
+        continue;
+
+      /* But only prefix of id */
+      if (!g_str_has_prefix (cur_parts[1], parts_prefix))
+        continue;
+
+      g_ptr_array_add (res, g_strdup (cur));
+    }
+
+  g_ptr_array_add (res, NULL);
+  return (char **)g_ptr_array_free (res, FALSE);
+}
+
 gboolean
 flatpak_summary_lookup_ref (GVariant *summary, const char *ref, char **out_checksum)
 {
