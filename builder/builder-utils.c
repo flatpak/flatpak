@@ -282,6 +282,9 @@ migrate_locale_dir (GFile      *source_dir,
           c = strchr (language, '_');
           if (c != NULL)
             *c = 0;
+          c = strchr (language, '.');
+          if (c != NULL)
+            *c = 0;
 
           /* We ship english and C locales always */
           if (strcmp (language, "C") == 0 ||
