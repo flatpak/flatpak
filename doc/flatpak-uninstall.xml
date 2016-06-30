@@ -137,6 +137,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-related</option></term>
+
+                <listitem><para>
+                    Don't uninstall related extensions, such as the locale data.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

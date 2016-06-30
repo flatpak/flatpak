@@ -34,12 +34,14 @@
 static char *opt_arch;
 static gboolean opt_keep_ref;
 static gboolean opt_force_remove;
+static gboolean opt_no_related;
 static gboolean opt_runtime;
 static gboolean opt_app;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to uninstall", "ARCH" },
   { "keep-ref", 0, 0, G_OPTION_ARG_NONE, &opt_keep_ref, "Keep ref in local repository", NULL },
+  { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, "Don't uninstall related refs", },
   { "force-remove", 0, 0, G_OPTION_ARG_NONE, &opt_force_remove, "Remove files even if running", NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
@@ -56,6 +58,8 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   g_autofree char *ref = NULL;
   gboolean is_app;
   FlatpakHelperUninstallFlags flags = 0;
+  g_autoptr(GPtrArray) related = NULL;
+  int i;
 
   context = g_option_context_new ("NAME [BRANCH] - Uninstall an application");
 
@@ -88,9 +92,46 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   if (opt_force_remove)
     flags |= FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
 
+  if (!opt_no_related)
+    {
+      g_autoptr(GError) local_error = NULL;
+      g_autofree char *origin = NULL;
+
+      origin =flatpak_dir_get_origin (dir, ref, NULL, NULL);
+      if (origin)
+        {
+          related = flatpak_dir_find_local_related (dir, ref, origin,
+                                                    NULL, &local_error);
+          if (related == NULL)
+            g_printerr ("Warning: Problem looking for related refs: %s\n",
+                        local_error->message);
+        }
+    }
+
   if (!flatpak_dir_uninstall (dir, ref, flags,
                               cancellable, error))
     return FALSE;
+
+  if (related != NULL)
+    {
+      for (i = 0; i < related->len; i++)
+        {
+          FlatpakRelated *rel = g_ptr_array_index (related, i);
+          g_autoptr(GError) local_error = NULL;
+          g_auto(GStrv) parts = NULL;
+
+          if (!rel->delete)
+            continue;
+
+          parts = g_strsplit (rel->ref, "/", 0);
+          g_print ("Uninstalling related: %s\n", parts[1]);
+
+          if (!flatpak_dir_uninstall (dir, rel->ref, flags,
+                                      cancellable, &local_error))
+            g_printerr ("Warning: Failed to uninstall related ref: %s\n",
+                        rel->ref);
+        }
+    }
 
   return TRUE;
 }

@@ -40,6 +40,7 @@ static char **opt_gpg_file;
 static char **opt_subpaths;
 static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
+static gboolean opt_no_related;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_bundle;
@@ -48,6 +49,7 @@ static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to install for", "ARCH" },
   { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, "Don't pull, only install from local cache", },
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, "Don't deploy, only download to local cache", },
+  { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, "Don't install related refs", },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, "Install from local bundle file", },
@@ -144,6 +146,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   gboolean is_app;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GPtrArray) related = NULL;
+  g_autoptr(GError) local_error = NULL;
+  int i;
 
   context = g_option_context_new ("REPOSITORY NAME [BRANCH] - Install an application or runtime");
 
@@ -185,6 +190,49 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                             NULL,
                             cancellable, error))
     return FALSE;
+
+  if (!opt_no_related)
+    {
+      g_autoptr(GError) local_error = NULL;
+
+      if (opt_no_pull)
+        related = flatpak_dir_find_local_related (dir, ref, repository, NULL, &local_error);
+      else
+        related = flatpak_dir_find_remote_related (dir, ref, repository, NULL, &local_error);
+      if (related == NULL)
+        {
+          g_printerr ("Warning: Problem looking for related refs: %s\n", local_error->message);
+          g_clear_error (&local_error);
+        }
+      else
+        {
+          for (i = 0; i < related->len; i++)
+            {
+              FlatpakRelated *rel = g_ptr_array_index (related, i);
+              g_auto(GStrv) parts = NULL;
+
+              if (!rel->download)
+                continue;
+
+              parts = g_strsplit (rel->ref, "/", 0);
+
+              g_print ("Installing related: %s\n", parts[1]);
+
+              if (!flatpak_dir_install_or_update (dir,
+                                                  opt_no_pull,
+                                                  opt_no_deploy,
+                                                  rel->ref, repository,
+                                                  (const char **)rel->subpaths,
+                                                  NULL,
+                                                  cancellable, &local_error))
+                {
+                  g_printerr ("Warning: Failed to install related ref: %s\n",
+                              rel->ref);
+                  g_clear_error (&local_error);
+                }
+            }
+        }
+    }
 
   return TRUE;
 }

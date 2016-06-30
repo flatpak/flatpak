@@ -158,6 +158,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-related</option></term>
+
+                <listitem><para>
+                    Don't download related extensions, such as the locale data.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--app</option></term>
 
                 <listitem><para>

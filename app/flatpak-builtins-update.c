@@ -37,6 +37,7 @@ static char **opt_subpaths;
 static gboolean opt_force_remove;
 static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
+static gboolean opt_no_related;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_appstream;
@@ -47,6 +48,7 @@ static GOptionEntry options[] = {
   { "force-remove", 0, 0, G_OPTION_ARG_NONE, &opt_force_remove, "Remove old files even if running", NULL },
   { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, "Don't pull, only update from local cache", },
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, "Don't deploy, only download to local cache", },
+  { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, "Don't update related refs", },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Look for runtime with the specified name", },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Look for app with the specified name", },
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, "Update appstream for remote", },
@@ -73,6 +75,8 @@ do_update (FlatpakDir  * dir,
            GError      **error)
 {
   g_autofree char *repository = NULL;
+  g_autoptr(GPtrArray) related = NULL;
+  int i;
 
   repository = flatpak_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
@@ -88,6 +92,53 @@ do_update (FlatpakDir  * dir,
                            NULL,
                            cancellable, error))
     return FALSE;
+
+
+  if (!opt_no_related)
+    {
+      g_autoptr(GError) local_error = NULL;
+
+      if (opt_no_pull)
+        related = flatpak_dir_find_local_related (dir, ref, repository, NULL,
+                                                  &local_error);
+      else
+        related = flatpak_dir_find_remote_related (dir, ref, repository, NULL,
+                                                   &local_error);
+      if (related == NULL)
+        {
+          g_printerr ("Warning: Problem looking for related refs: %s\n",
+                      local_error->message);
+          g_clear_error (&local_error);
+        }
+      else
+        {
+          for (i = 0; i < related->len; i++)
+            {
+              FlatpakRelated *rel = g_ptr_array_index (related, i);
+              g_autoptr(GError) local_error = NULL;
+              g_auto(GStrv) parts = NULL;
+
+              if (!rel->download)
+                continue;
+
+              parts = g_strsplit (rel->ref, "/", 0);
+
+              g_print ("Updating related: %s\n", parts[1]);
+
+              if (!flatpak_dir_install_or_update (dir,
+                                                  opt_no_pull,
+                                                  opt_no_deploy,
+                                                  rel->ref, repository,
+                                                  (const char **)rel->subpaths,
+                                                  NULL,
+                                                  cancellable, &local_error))
+                {
+                  g_printerr ("Warning: Failed to update related ref: %s\n", rel->ref);
+                  g_clear_error (&local_error);
+                }
+            }
+        }
+    }
 
   return TRUE;
 }
