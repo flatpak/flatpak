@@ -3499,3 +3499,36 @@ flatpak_completion_free (FlatpakCompletion *completion)
   g_strfreev (completion->original_argv);
   g_free (completion);
 }
+
+char **
+flatpak_get_current_locale_subpaths (void)
+{
+  const gchar * const *langs = g_get_language_names ();
+  GPtrArray *subpaths = g_ptr_array_new ();
+  int i;
+
+  for (i = 0; langs[i] != NULL; i++)
+    {
+      g_autofree char *dir = g_strconcat ("/", langs[i], NULL);
+      char *c;
+
+      c = strchr (dir, '@');
+      if (c != NULL)
+        *c = 0;
+      c = strchr (dir, '_');
+      if (c != NULL)
+        *c = 0;
+      c = strchr (dir, '.');
+      if (c != NULL)
+        *c = 0;
+
+      if (strcmp (dir, "/C") == 0)
+        continue;
+
+      g_ptr_array_add (subpaths, g_steal_pointer (&dir));
+    }
+
+  g_ptr_array_add (subpaths, NULL);
+
+  return (char **)g_ptr_array_free (subpaths, FALSE);
+}

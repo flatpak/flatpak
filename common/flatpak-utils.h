@@ -46,6 +46,8 @@ const char ** flatpak_get_arches (void);
 
 const char * flatpak_get_bwrap (void);
 
+char ** flatpak_get_current_locale_subpaths (void);
+
 void flatpak_migrate_from_xdg_app (void);
 
 GBytes * flatpak_read_stream (GInputStream *in,
