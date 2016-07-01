@@ -35,13 +35,77 @@ main (int argc, char *argv[])
 
   g_autoptr(GPtrArray) remotes = NULL;
   GError *error = NULL;
-  int i, j;
+  int i, j, k;
 
   installation = flatpak_installation_new_user (NULL, &error);
   if (installation == NULL)
     {
       g_print ("error: %s\n", error->message);
       return 1;
+    }
+
+  if (0)
+    {
+      const char *list[] = { "gnome-apps", "app/org.gnome.iagno/x86_64/stable",
+                             "gnome", "runtime/org.gnome.Sdk/x86_64/3.20" };
+
+      for (j = 0; j < G_N_ELEMENTS(list); j += 2)
+        {
+          g_print ("looking for related to ref: %s\n", list[j+1]);
+
+          for (k = 0; k < 2; k++)
+            {
+              g_autoptr(GError) error = NULL;
+              g_autoptr(GPtrArray) related = NULL;
+
+
+              if (k == 0)
+                related = flatpak_installation_list_remote_related_refs_sync (installation,
+                                                                              list[j],
+                                                                              list[j+1],
+                                                                              NULL,
+                                                                              &error);
+              else
+                related = flatpak_installation_list_installed_related_refs_sync (installation,
+                                                                                 list[j],
+                                                                                 list[j+1],
+                                                                                 NULL,
+                                                                                 &error);
+
+              if (related == NULL)
+                {
+                  g_warning ("Error: %s\n", error->message);
+                  continue;
+                }
+
+              g_print ("%s related:\n", (k == 0) ? "remote" : "local");
+              for (i = 0; i < related->len; i++)
+                {
+                  FlatpakRelatedRef *rel = g_ptr_array_index (related, i);
+                  const char * const *subpaths = flatpak_related_ref_get_subpaths (rel);
+                  g_autofree char *subpaths_str = NULL;
+
+                  if (subpaths)
+                    {
+                      g_autofree char *subpaths_joined = g_strjoinv (",", (char **) subpaths);
+                      subpaths_str = g_strdup_printf (" subpaths: %s", subpaths_joined);
+                    }
+                  else
+                    subpaths_str = g_strdup ("");
+                  g_print ("%d %s %s %s %s dl:%d del:%d%s\n",
+                           flatpak_ref_get_kind (FLATPAK_REF (rel)),
+                           flatpak_ref_get_name (FLATPAK_REF (rel)),
+                           flatpak_ref_get_arch (FLATPAK_REF (rel)),
+                           flatpak_ref_get_branch (FLATPAK_REF (rel)),
+                           flatpak_ref_get_commit (FLATPAK_REF (rel)),
+                           flatpak_related_ref_should_download (rel),
+                           flatpak_related_ref_should_delete (rel),
+                           subpaths_str);
+                }
+            }
+        }
+
+      return 0;
     }
 
   if (argc == 4)
