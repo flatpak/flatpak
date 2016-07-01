@@ -1,3 +1,14 @@
+Major changes in 0.6.7
+======================
+
+ * Automatically download and update related references such
+   as locales when using the CLI.
+ * lib: Support for getting related references
+ * Document metadata format
+ * Support build using system-installed bwrap
+ * Allow access to the journal socket in the sandbox
+ * builder: Support applying patches with git (useful for binary diffs)
+
 Major changes in 0.6.6
 ======================
 
