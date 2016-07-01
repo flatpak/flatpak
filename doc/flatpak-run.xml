@@ -292,6 +292,17 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-desktop</option></term>
+
+                <listitem><para>
+                    Don't require a running session, meaning that no cgroups creation will happen. This can be
+                    useful for certain scenarios when you might want to run a flatpak without a valid user
+                    session available (e.g. from a socket-activated systemd service), and not having a
+                    properly sandboxed environment is not an issue.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--log-session-bus</option></term>
 
                 <listitem><para>
