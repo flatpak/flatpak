@@ -133,9 +133,11 @@
                         xdg-public-share, xdg-templates, xdg-videos, xdg-run,
                         an absolute path, or a homedir-relative path like
                         ~/dir or paths relative to the xdg dirs, like
-                        xdg-download/subdir. Each entry can have a suffix of
+                        xdg-download/subdir. The xdg-* arguments can also
+                        specify a subdirectory, such as xdg-pictures/screenshots.
+                        Each entry can have a suffix of
                         :ro or :rw to indicate if the path should be shared
-                        read-only or read-write.
+                        read-only or read-write (default is read-write).
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -145,6 +147,10 @@
                       the corresponding path in the per-application home directory,
                       allowing the locations to be used for persistent data when
                       the application does not have access to the real homedir.
+                      For instance making ".myapp" persistent would make "~/.myapp"
+                      in the sandbox a bind mount to "~/.var/app/org.my.App/.myapp",
+                      thus allowing an unmodified application to save data in
+                      the per-application location.
                     </para></listitem>
                 </varlistentry>
             </variablelist>
@@ -156,9 +162,19 @@
                 to the D-Bus session bus, then flatpak provides filtered access.
             </para>
             <para>
-                The default policy for the session bus does not allow the
-                application to own any names, but allows it to talk to portal
+                The default policy for the session bus only allows the
+                application to own its own application ID and
+                subnames. For instance if the app is called
+                "org.my.App", it can only own "org.my.App" and
+                "org.my.App.*". Its also only allowed to talk to the
+                bus itself (org.freedesktop.DBus) and the portal APIs
                 APIs (bus names of the form org.freedesktop.portal.*).
+            </para>
+            <para>
+                Additionally the app is always allowed to reply to
+                messages sent to it, and emit broadcast signals (but
+                these will not reach other sandboxed apps unless they
+                are allowed to talk to your app.
             </para>
             <para>
                 If the [Session Bus Policy] group is present, it provides
@@ -189,13 +205,13 @@
                 <varlistentry>
                     <term><option>talk</option></term>
                     <listitem><para>
-                        The application can send messages and receive replies from the bus name or names.
+                        The application can send messages/ and receive replies and signals from the bus name or names.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>own</option></term>
                     <listitem><para>
-                        The application can own the bus name or names.
+                        The application can own the bus name or names (as well as all the above).
                     </para></listitem>
                 </varlistentry>
             </variablelist>
@@ -210,6 +226,7 @@
             </para>
             <para>
                 Entries in this group have the same form as for the [Session Bus Policy] group.
+                However, the app has no permissions by default.
             </para>
         </refsect2>
         <refsect2>
