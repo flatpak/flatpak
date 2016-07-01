@@ -845,6 +845,8 @@ option_persist_cb (const gchar *option_name,
   return TRUE;
 }
 
+static gboolean option_no_desktop;
+
 static GOptionEntry context_options[] = {
   { "share", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_share_cb, "Share with host", "SHARE" },
   { "unshare", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_unshare_cb, "Unshare with host", "SHARE" },
@@ -860,6 +862,7 @@ static GOptionEntry context_options[] = {
   { "system-own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_own_name_cb, "Allow app to own name on the system bus", "DBUS_NAME" },
   { "system-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_talk_name_cb, "Allow app to talk to name on the system bus", "DBUS_NAME" },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, "Persist home directory directory", "FILENAME" },
+  { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_NONE, &option_no_desktop, "Don't require a running session (no cgroups creation)", NULL },
   { NULL }
 };
 
@@ -3160,7 +3163,7 @@ flatpak_run_app (const char     *app_ref,
 
   /* Must run this before spawning the dbus proxy, to ensure it
      ends up in the app cgroup */
-  if (!flatpak_run_in_transient_unit (app_ref_parts[1], error))
+  if (!option_no_desktop && !flatpak_run_in_transient_unit (app_ref_parts[1], error))
     return FALSE;
 
   if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0, sync_fds, error))
