@@ -8,6 +8,7 @@ Major changes in 0.6.7
  * Support build using system-installed bwrap
  * Allow access to the journal socket in the sandbox
  * builder: Support applying patches with git (useful for binary diffs)
+ * Require ostree 2016.6
 
 Major changes in 0.6.6
 ======================
