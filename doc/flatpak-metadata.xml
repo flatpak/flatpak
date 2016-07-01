@@ -1,0 +1,323 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-metadata">
+
+    <refentryinfo>
+        <title>flatpak metadata</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak metadata</refentrytitle>
+        <manvolnum>5</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-metadata</refname>
+        <refpurpose>Information about an application or runtime</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Flatpak uses metadata files to describe applications and runtimes.
+            The <filename>metadata</filename> file for a deployed application or
+            runtime is placed in the toplevel deploy directory. For example, the
+            metadata for the locally installed application org.gnome.Calculator
+            is in
+            <filename>~/.local/share/flatpak/app/org.gnome.Calculator/current/active/metadata</filename>.
+        </para>
+
+        <para>
+            Most aspects of the metadata configuration can be overridden when
+            launching applications, either temporarily via options of the flatpak
+            run command, or permanently with the flatpak override command.
+        </para>
+
+        <para>
+            A metadata file describing the effective configuration is available
+            inside the running sandbox at <filename>/run/user/$UID/flatpak-info</filename>.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>File format</title>
+
+        <para>
+            The metadata file is using the same .ini file format that is used for
+            systemd unit files or application .desktop files.
+        </para>
+
+        <refsect2>
+            <title>[Application] or [Runtime]</title>
+
+            <para>
+                Metadata for applications starts with an [Application] group,
+                metadata for runtimes with a [Runtime] group.
+            </para>
+            <para>
+                The following keys can be present in these groups:
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>name</option> (string)</term>
+                    <listitem><para>The name of the application or runtime. This key is mandatory.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>runtime</option> (string)</term>
+                    <listitem><para>The fully qualified name of the runtime that is used by the application. This key is mandatory for applications.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>sdk</option> (string)</term>
+                    <listitem><para>The fully qualified name of the sdk that matches the runtime.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>command</option> (string)</term>
+                    <listitem><para>The command to run. Only relevant for applications.</para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+        <refsect2>
+            <title>[Context]</title>
+            <para>
+                This group determines various system resources that may be shared
+                with the application when it is run in a flatpak sandbox.
+            </para>
+            <para>
+                All keys in this group (and the group itself) are optional.
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>shared</option> (list)</term>
+                    <listitem><para>
+                        List of subsystems to share with the host system.
+                        Possible subsystems: network, ipc.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>sockets</option> (list)</term>
+                    <listitem><para>
+                        List of well-known sockets to make available in the sandbox.
+                        Possible sockets: x11, wayland, pulseaudio, session-bus, system-bus.
+                        When making a socket available, flatpak also sets
+                        well-known environment variables like DISPLAY or
+                        DBUS_SYSTEM_BUS_ADDRESS to let the application
+                        find sockets that are not in a fixed location.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>devices</option> (list)</term>
+                    <listitem><para>
+                        List of devices to make available in the sandbox.
+                        Possible values: dri, all.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>filesystems</option> (list)</term>
+                    <listitem><para>
+                        List of filesystem subsets to make available to the
+                        application. Possible values: home, host, xdg-desktop,
+                        xdg-documents, xdg-download xdg-music, xdg-pictures,
+                        xdg-public-share, xdg-templates, xdg-videos, xdg-run,
+                        an absolute path, or a homedir-relative path like
+                        ~/dir or paths relative to the xdg dirs, like
+                        xdg-download/subdir. Each entry can have a suffix of
+                        :ro or :rw to indicate if the path should be shared
+                        read-only or read-write.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>persistent</option> (list)</term>
+                    <listitem><para>
+                      List of homedir-relative paths to make available at
+                      the corresponding path in the per-application home directory,
+                      allowing the locations to be used for persistent data when
+                      the application does not have access to the real homedir.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+        <refsect2>
+            <title>[Session Bus Policy]</title>
+            <para>
+                If the <option>sockets</option> key is not allowing full access
+                to the D-Bus session bus, then flatpak provides filtered access.
+            </para>
+            <para>
+                The default policy for the session bus does not allow the
+                application to own any names, but allows it to talk to portal
+                APIs (bus names of the form org.freedesktop.portal.*).
+            </para>
+            <para>
+                If the [Session Bus Policy] group is present, it provides
+                policy for session bus access.
+            </para>
+            <para>
+                Each key in this group has the form of a D-Bus bus name or
+                prefix thereof, for example <option>org.gnome.SessionManager</option>
+                or <option>org.freedesktop.portal.*</option>
+            </para>
+            <para>
+                The possible values for entry are, in increasing order or
+                access:
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>none</option></term>
+                    <listitem><para>
+                        The bus name or names in question is invisible to the application.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>see</option></term>
+                    <listitem><para>
+                        The bus name or names can be enumerated by the application.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>talk</option></term>
+                    <listitem><para>
+                        The application can send messages and receive replies from the bus name or names.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>own</option></term>
+                    <listitem><para>
+                        The application can own the bus name or names.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+        <refsect2>
+            <title>[System Bus Policy]</title>
+            <para>
+                If the <option>sockets</option> key is not allowing full access
+                to the D-Bus system bus, then flatpak does not make the system
+                bus available unless the [System Bus Policy] group is present
+                and provides a policy for filtered access.
+            </para>
+            <para>
+                Entries in this group have the same form as for the [Session Bus Policy] group.
+            </para>
+        </refsect2>
+        <refsect2>
+            <title>[Environment]</title>
+            <para>
+                The [Environment] group specifies environment variables to set
+                when running the application.
+            </para>
+            <para>
+                Entries in this group have the form <option>VAR=VALUE</option>
+                where <option>VAR</option> is the name of an environment variable
+                to set.
+            </para>
+        </refsect2>
+        <refsect2>
+            <title>[Extension NAME]</title>
+            <para>
+                Runtimes and applications can define extensions, which are optional,
+                additional runtimes to be mounted at a specified location inside
+                the sandbox when they are present on the system. Typical uses for
+                extensions include translations for applications, or debuginfo
+                for sdks. The name of the extension is specified as part of the
+                group heading.
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>directory</option> (string)</term>
+                    <listitem><para>
+                        The relative path at which the extension will be mounted in
+                        the sandbox. If the extension is for an application, the
+                        path is relative to <filename>/app</filename>, otherwise
+                        it is relative to <filename>/usr</filename>. This key
+                        is mandatory.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>version</option> (string)</term>
+                    <listitem><para>
+                        The branch to use when looking for the extension. If this is
+                        not specified, it defaults to the branch of the application or
+                        runtime that the extension is for.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>subdirectories</option> (boolean)</term>
+                    <listitem><para>
+                        If this key is set to true, then flatpak will look for
+                        extensions whose name is a prefix of the extension name, and
+                        mount them at the corresponding name below the subdirectory.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>no-autodownload</option> (boolean)</term>
+                    <listitem><para>
+                        Whether to automatically download this extension
+                        when updating or installing a 'related' application
+                        or runtime.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>autodelete</option> (boolean)</term>
+                    <listitem><para>
+                        Whether to automatically delete this extension
+                        when deleting a 'related' application or runtime.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+    </refsect1>
+
+    <refsect1>
+        <title>Example</title>
+<programlisting>
+[Application]
+name=org.gnome.Calculator
+runtime=org.gnome.Platform/x86_64/3.20
+sdk=org.gnome.Sdk/x86_64/3.20
+command=gnome-calculator
+
+[Context]
+shared=network;ipc;
+sockets=x11;wayland;
+filesystems=xdg-run/dconf;~/.config/dconf:ro;
+
+[Session Bus Policy]
+ca.desrt.dconf=talk
+
+[Environment]
+DCONF_USER_CONFIG_DIR=.config/dconf
+
+[Extension org.gnome.Calculator.Locale]
+directory=share/runtime/locale
+subdirectories=true
+
+[Extension org.gnome.Calculator.Debug]
+directory=lib/debug
+</programlisting>
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-run</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-override</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>
