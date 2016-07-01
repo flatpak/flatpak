@@ -1046,8 +1046,8 @@ fixup_python_timestamp (int dfd,
             (buffer[6] << 8*2) |
             (buffer[7] << 8*3);
 
-          if (mtime == 0)
-            continue; /* Already zero, ignore */
+          if (mtime == 1)
+            continue; /* Already 1 (which is what ostree checkout uses), ignore */
 
           if (strcmp (rel_path, "__pycache__") == 0)
             {
@@ -1079,7 +1079,9 @@ fixup_python_timestamp (int dfd,
           if (stbuf.st_mtime != mtime)
             continue;
 
-          buffer[4] = buffer[5] = buffer[6] = buffer[7] = 0;
+          /* Change to mtime 1 which is what ostree uses for checkouts */
+          buffer[4] = 1;
+          buffer[5] = buffer[6] = buffer[7] = 0;
 
           res = pwrite (fd, buffer, 8, 0);
           if (res != 8)
