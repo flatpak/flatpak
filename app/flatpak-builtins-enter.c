@@ -276,7 +276,6 @@ gboolean
 flatpak_complete_enter (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(GError) error = NULL;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))

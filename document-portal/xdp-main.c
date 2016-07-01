@@ -681,8 +681,6 @@ portal_lookup (GDBusMethodInvocation *invocation,
   if (st_buf.st_dev == fuse_dev)
     {
       /* The passed in fd is on the fuse filesystem itself */
-      g_autoptr(FlatpakDbEntry) old_entry = NULL;
-
       id = xdp_fuse_lookup_id_for_inode (st_buf.st_ino);
       g_debug ("path on fuse, id %s", id);
     }

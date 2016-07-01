@@ -3143,7 +3143,6 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
   g_autofree char *ref = NULL;
   gboolean added_remote = FALSE;
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(FlatpakDir) dir_clone = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *origin = NULL;
   g_auto(GStrv) parts = NULL;
@@ -5326,8 +5325,6 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                                 GCancellable *cancellable,
                                 GError **error)
 {
-  g_autoptr(GBytes) summary_bytes = NULL;
-  g_autoptr(GVariant) summary = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
@@ -5379,7 +5376,6 @@ flatpak_dir_find_local_related (FlatpakDir *self,
               g_autofree char *extension_ref = NULL;
               g_autofree char *prefixed_extension_ref = NULL;
               g_autofree char *checksum = NULL;
-              g_autoptr(GVariant) deploy_data = NULL;
 
               if (version)
                 branch = version;
@@ -5405,7 +5401,6 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                     {
                       const char *match = g_ptr_array_index (matches, j);
                       g_autofree char *prefixed_match = NULL;
-                      g_autoptr(GVariant) ext_deploy_data = NULL;
                       g_autofree char *match_checksum = NULL;
 
                       prefixed_match = g_strdup_printf ("%s:%s", remote_name, match);

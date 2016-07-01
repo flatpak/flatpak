@@ -145,9 +145,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autofree char *ref = NULL;
   gboolean is_app;
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(GPtrArray) related = NULL;
-  g_autoptr(GError) local_error = NULL;
   int i;
 
   context = g_option_context_new ("REPOSITORY NAME [BRANCH] - Install an application or runtime");
