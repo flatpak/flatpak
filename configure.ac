@@ -28,6 +28,8 @@ AC_INIT([Flatpak],
         [flatpak],
         [http://flatpak.org/])
 
+GLIB_REQS=2.40
+
 AC_USE_SYSTEM_EXTENSIONS
 
 IT_PROG_INTLTOOL([0.35.0])
@@ -125,7 +127,7 @@ AC_SUBST([GDBUS_CODEGEN], [`$PKG_CONFIG --variable gdbus_codegen gio-2.0`])
 
 POLKIT_GOBJECT_REQUIRED=0.98
 
-PKG_CHECK_MODULES(BASE, [glib-2.0 gio-2.0 gio-unix-2.0])
+PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0])
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
 
 AC_ARG_ENABLE([system-helper],
