@@ -933,7 +933,7 @@ session_bus_closed (GDBusConnection *connection,
                     gboolean         remote_peer_vanished,
                     GError          *bus_error)
 {
-  g_set_error (&exit_error, G_IO_ERROR, G_IO_ERROR_NOT_CONNECTED, "Disconnected from session bus");
+  g_set_error (&exit_error, G_IO_ERROR, G_IO_ERROR_BROKEN_PIPE, "Disconnected from session bus");
   g_main_loop_quit (loop);
 }
 
