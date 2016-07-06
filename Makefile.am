@@ -95,18 +95,20 @@ flatpak_bwrap_LDADD = $(bwrap_LDADD)
 bwrapdir = $(libexecdir)
 include bubblewrap/Makefile-bwrap.am.inc
 
+endif # !WITH_SYSTEM_BWRAP
+
 # NOTE: bwrap is install-bwrapPROGS which is run from install-data, not install-exec, this data-hook is used
 install-data-hook:
 	$(MAKE) $(AM_MAKEFLAGS) install-test-data-hook
+if !WITH_SYSTEM_BWRAP
 if PRIV_MODE_SETUID
 	$(SUDO_BIN) chown root $(DESTDIR)$(libexecdir)/flatpak-bwrap
 	$(SUDO_BIN) chmod u+s $(DESTDIR)$(libexecdir)/flatpak-bwrap
 else
 if PRIV_MODE_FILECAPS
 	$(SUDO_BIN) setcap cap_sys_admin,cap_net_admin,cap_sys_chroot,cap_setuid,cap_setgid+ep $(DESTDIR)$(libexecdir)/flatpak-bwrap
-endif
-endif
-
+endif # PRIV_MODE_FILECAPS
+endif # !PRIV_MODE_SETUID
 endif # !WITH_SYSTEM_BWRAP
 
 completiondir = $(datadir)/bash-completion/completions
