@@ -255,7 +255,7 @@ glnx_link_tmpfile_at (int dfd,
               g_set_error (error, G_IO_ERROR, G_IO_ERROR_EXISTS,
                "Exhausted %u attempts to create temporary file", count);
             }
-          if (renameat (dfd, tmpname_buf, target_dfd, target) < 0)
+          if (renameat (target_dfd, tmpname_buf, target_dfd, target) < 0)
             {
               glnx_set_error_from_errno (error);
               return FALSE;
