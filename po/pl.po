@@ -1,0 +1,114 @@
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Aviary.pl
+# Jeśli masz jakiekolwiek uwagi odnoszące się do tłumaczenia lub chcesz
+# pomóc w jego rozwijaniu i pielęgnowaniu, napisz do nas:
+# gnomepl@aviary.pl
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# Piotr Drąg <piotrdrag@gmail.com>, 2016.
+# Aviary.pl <gnomepl@aviary.pl>, 2016.
+msgid ""
+msgstr ""
+"Project-Id-Version: flatpak\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-07-08 22:25+0200\n"
+"PO-Revision-Date: 2016-07-08 22:30+0200\n"
+"Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
+"Language-Team: Polish <gnomepl@aviary.pl>\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Poedit-Language: Polish\n"
+"X-Poedit-Country: Poland\n"
+
+#. SECURITY:
+#. - Normal users do not need authentication to install signed applications
+#. from signed repositories, as this cannot exploit a system.
+#. - Paranoid users (or parents!) can change this to 'auth_admin' or
+#. 'auth_admin_keep'.
+#.
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:7
+msgid "Install signed application"
+msgstr "Instalacja podpisanego programu"
+
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:8
+msgid "Authentication is required to install software"
+msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
+
+#. SECURITY:
+#. - Normal users do not need authentication to install signed applications
+#. from signed repositories, as this cannot exploit a system.
+#. - Paranoid users (or parents!) can change this to 'auth_admin' or
+#. 'auth_admin_keep'.
+#.
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:15
+msgid "Install signed runtime"
+msgstr "Instalacja podpisanego środowiska wykonawczego"
+
+#. SECURITY:
+#. - Normal users do not require admin authentication to update an
+#. app as the commit will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#.
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:23
+msgid "Update signed application"
+msgstr "Aktualizacja podpisanego programu"
+
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:24
+msgid "Authentication is required to update software"
+msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować oprogramowanie"
+
+#. SECURITY:
+#. - Normal users do not require admin authentication to update a
+#. runtime as the commit will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#.
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:32
+msgid "Update signed runtime"
+msgstr "Aktualizacja podpisanego środowiska wykonawczego"
+
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:33
+msgid "Install bundle"
+msgstr "Instalacja pakietu"
+
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:34
+msgid "Authentication is install software"
+msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
+
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:35
+msgid "Uninstall runtime"
+msgstr "Deinstalacja środowiska wykonawczego"
+
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:36
+msgid "Authentication is required to uninstall software"
+msgstr "Wymagane jest uwierzytelnienie, aby odinstalować oprogramowanie"
+
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:37
+msgid "Uninstall app"
+msgstr "Deinstalacja programu"
+
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:38
+msgid "Configure Remote"
+msgstr "Konfiguracja repozytorium"
+
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:39
+msgid "Authentication is required to configure software repositories"
+msgstr ""
+"Wymagane jest uwierzytelnienie, aby skonfigurować repozytoria oprogramowania"
+
+#. SECURITY:
+#. - Normal users do not require admin authentication to update
+#. appstream data as it will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#.
+#: ../system-helper/org.freedesktop.Flatpak.policy.in.h:47
+msgid "Update appstream"
+msgstr "Aktualizacja danych AppStream"
