@@ -199,6 +199,7 @@ glnx_link_tmpfile_at (int dfd,
            */
           if (renameat (dfd, tmpfile_path, target_dfd, target) < 0)
             {
+              (void) unlinkat (dfd, tmpfile_path, 0);
               glnx_set_error_from_errno (error);
               return FALSE;
             }
@@ -209,7 +210,10 @@ glnx_link_tmpfile_at (int dfd,
           if (!rename_file_noreplace_at (dfd, tmpfile_path, target_dfd, target,
                                          ignore_eexist,
                                          error))
-            return FALSE;
+            {
+              (void) unlinkat (dfd, tmpfile_path, 0);
+              return FALSE;
+            }
         }
     }
   else
@@ -257,6 +261,10 @@ glnx_link_tmpfile_at (int dfd,
             }
           if (renameat (target_dfd, tmpname_buf, target_dfd, target) < 0)
             {
+              /* This is currently the only case where we need to have
+               * a cleanup unlinkat() still with O_TMPFILE.
+               */
+              (void) unlinkat (target_dfd, tmpname_buf, 0);
               glnx_set_error_from_errno (error);
               return FALSE;
             }
