@@ -16,6 +16,8 @@
 #include "xdp-util.h"
 #include "flatpak-db.h"
 #include "flatpak-dbus.h"
+#include "flatpak-installation.h"
+#include "flatpak-installed-ref.h"
 #include "flatpak-utils.h"
 #include "flatpak-portal-error.h"
 #include "permission-store/permission-store-dbus.h"
@@ -365,6 +367,45 @@ validate_fd_common (int fd,
   return TRUE;
 }
 
+static char *
+resolve_flatpak_path (const char *path,
+                      const char *app_id)
+{
+  g_autoptr(FlatpakInstalledRef) app_ref = NULL;
+
+  g_autoptr(FlatpakInstallation) user_install =
+    flatpak_installation_new_user (NULL, NULL);
+
+  if (user_install)
+    {
+      app_ref =
+        flatpak_installation_get_current_installed_app (user_install,
+                                                        app_id,
+                                                        NULL, NULL);
+    }
+
+  if (!app_ref)
+    {
+      g_autoptr(FlatpakInstallation) system_install =
+        flatpak_installation_new_system (NULL, NULL);
+
+      if (system_install)
+        {
+          app_ref =
+            flatpak_installation_get_current_installed_app (system_install,
+                                                            app_id,
+                                                            NULL, NULL);
+        }
+    }
+
+  if (!app_ref)
+    return NULL;
+
+  const char *deploy_dir = flatpak_installed_ref_get_deploy_dir (app_ref);
+
+  return g_build_filename (deploy_dir, "files", path, NULL);
+}
+
 static gboolean
 validate_parent_dir (const char *path,
                      struct stat *st_buf,
@@ -395,6 +436,45 @@ validate_parent_dir (const char *path,
                    "Invalid fd passed");
       return FALSE;
     }
+
+  return TRUE;
+}
+
+static gboolean
+validate_sandboxed_fd (int fd,
+                       const char *app_id,
+                       struct stat *st_buf,
+                       struct stat *real_parent_st_buf,
+                       char *path_buffer,
+                       GError **error)
+{
+  char sandboxed_path_buffer[PATH_MAX + 1];
+  char *rel_path;
+  g_autofree char *app_path = NULL;
+
+  if (!validate_fd_common (fd, st_buf, sandboxed_path_buffer, error))
+    return FALSE;
+
+  rel_path = strstr (sandboxed_path_buffer, "/app");
+  if (rel_path != NULL)
+    {
+
+      rel_path += strlen ("/app");
+      app_path = resolve_flatpak_path (rel_path, app_id);
+    }
+
+  if (app_path == NULL)
+    {
+      g_set_error (error,
+                   FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                   "Invalid fd passed");
+      return FALSE;
+    }
+
+  strncpy (path_buffer, app_path, PATH_MAX);
+
+  if (!validate_parent_dir (path_buffer, st_buf, real_parent_st_buf, error))
+    return FALSE;
 
   return TRUE;
 }
@@ -443,10 +523,23 @@ portal_add (GDBusMethodInvocation *invocation,
         fd = fds[fd_id];
     }
 
-  if (!validate_fd (fd, &st_buf, &real_parent_st_buf, path_buffer, &error))
+  if (strcmp (app_id, "") != 0)
     {
-      g_dbus_method_invocation_take_error (invocation, error);
-      return;
+      /* Called from inside the sandbox */
+      if (!validate_sandboxed_fd (fd, app_id, &st_buf, &real_parent_st_buf, path_buffer, &error))
+        {
+          g_dbus_method_invocation_take_error (invocation, error);
+          return;
+        }
+    }
+  else
+    {
+      /* Called from outside of the sandbox */
+      if (!validate_fd (fd, &st_buf, &real_parent_st_buf, path_buffer, &error))
+        {
+          g_dbus_method_invocation_take_error (invocation, error);
+          return;
+        }
     }
 
   if (st_buf.st_dev == fuse_dev)
