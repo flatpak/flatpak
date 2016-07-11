@@ -16,6 +16,8 @@
 #include "xdp-util.h"
 #include "flatpak-db.h"
 #include "flatpak-dbus.h"
+#include "flatpak-installation.h"
+#include "flatpak-installed-ref.h"
 #include "flatpak-utils.h"
 #include "flatpak-portal-error.h"
 #include "permission-store/permission-store-dbus.h"
@@ -329,19 +331,14 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
 }
 
 static gboolean
-validate_fd (int fd,
-             struct stat *st_buf,
-             struct stat *real_parent_st_buf,
-             char *path_buffer,
-             GError **error)
+validate_fd_common (int fd,
+                    struct stat *st_buf,
+                    char *path_buffer,
+                    GError **error)
 {
   g_autofree char *proc_path = NULL;
   ssize_t symlink_size;
-  g_autofree char *dirname = NULL;
-  g_autofree char *name = NULL;
   int fd_flags;
-  glnx_fd_close int dir_fd = -1;
-  struct stat real_st_buf;
 
   proc_path = g_strdup_printf ("/proc/self/fd/%d", fd);
 
@@ -367,13 +364,65 @@ validate_fd (int fd,
     }
 
   path_buffer[symlink_size] = 0;
+  return TRUE;
+}
+
+static char *
+resolve_flatpak_path (const char *path,
+                      const char *app_id)
+{
+  g_autoptr(FlatpakInstalledRef) app_ref = NULL;
+
+  g_autoptr(FlatpakInstallation) user_install =
+    flatpak_installation_new_user (NULL, NULL);
+
+  if (user_install)
+    {
+      app_ref =
+        flatpak_installation_get_current_installed_app (user_install,
+                                                        app_id,
+                                                        NULL, NULL);
+    }
+
+  if (!app_ref)
+    {
+      g_autoptr(FlatpakInstallation) system_install =
+        flatpak_installation_new_system (NULL, NULL);
+
+      if (system_install)
+        {
+          app_ref =
+            flatpak_installation_get_current_installed_app (system_install,
+                                                            app_id,
+                                                            NULL, NULL);
+        }
+    }
+
+  if (!app_ref)
+    return NULL;
+
+  const char *deploy_dir = flatpak_installed_ref_get_deploy_dir (app_ref);
+
+  return g_build_filename (deploy_dir, "files", path, NULL);
+}
+
+static gboolean
+validate_parent_dir (const char *path,
+                     struct stat *st_buf,
+                     struct stat *real_parent_st_buf,
+                     GError **error)
+{
+  g_autofree char *dirname = NULL;
+  g_autofree char *name = NULL;
+  glnx_fd_close int dir_fd = -1;
+  struct stat real_st_buf;
 
   /* We open the parent directory and do the stat in that, so that we have
    * trustworthy parent dev/ino for later verification. Otherwise the caller
    * could later replace a parent with a symlink and make us read some other file
    */
-  dirname = g_path_get_dirname (path_buffer);
-  name = g_path_get_basename (path_buffer);
+  dirname = g_path_get_dirname (path);
+  name = g_path_get_basename (path);
   dir_fd = open (dirname, O_CLOEXEC | O_PATH);
 
   if (fstat (dir_fd, real_parent_st_buf) < 0 ||
@@ -387,6 +436,61 @@ validate_fd (int fd,
                    "Invalid fd passed");
       return FALSE;
     }
+
+  return TRUE;
+}
+
+static gboolean
+validate_sandboxed_fd (int fd,
+                       const char *app_id,
+                       struct stat *st_buf,
+                       struct stat *real_parent_st_buf,
+                       char *path_buffer,
+                       GError **error)
+{
+  char sandboxed_path_buffer[PATH_MAX + 1];
+  char *rel_path;
+  g_autofree char *app_path = NULL;
+
+  if (!validate_fd_common (fd, st_buf, sandboxed_path_buffer, error))
+    return FALSE;
+
+  rel_path = strstr (sandboxed_path_buffer, "/app");
+  if (rel_path != NULL)
+    {
+
+      rel_path += strlen ("/app");
+      app_path = resolve_flatpak_path (rel_path, app_id);
+    }
+
+  if (app_path == NULL)
+    {
+      g_set_error (error,
+                   FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                   "Invalid fd passed");
+      return FALSE;
+    }
+
+  strncpy (path_buffer, app_path, PATH_MAX);
+
+  if (!validate_parent_dir (path_buffer, st_buf, real_parent_st_buf, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+validate_fd (int fd,
+             struct stat *st_buf,
+             struct stat *real_parent_st_buf,
+             char *path_buffer,
+             GError **error)
+{
+  if (!validate_fd_common (fd, st_buf, path_buffer, error))
+    return FALSE;
+
+  if (!validate_parent_dir (path_buffer, st_buf, real_parent_st_buf, error))
+    return FALSE;
 
   return TRUE;
 }
@@ -419,10 +523,23 @@ portal_add (GDBusMethodInvocation *invocation,
         fd = fds[fd_id];
     }
 
-  if (!validate_fd (fd, &st_buf, &real_parent_st_buf, path_buffer, &error))
+  if (strcmp (app_id, "") != 0)
     {
-      g_dbus_method_invocation_take_error (invocation, error);
-      return;
+      /* Called from inside the sandbox */
+      if (!validate_sandboxed_fd (fd, app_id, &st_buf, &real_parent_st_buf, path_buffer, &error))
+        {
+          g_dbus_method_invocation_take_error (invocation, error);
+          return;
+        }
+    }
+  else
+    {
+      /* Called from outside of the sandbox */
+      if (!validate_fd (fd, &st_buf, &real_parent_st_buf, path_buffer, &error))
+        {
+          g_dbus_method_invocation_take_error (invocation, error);
+          return;
+        }
     }
 
   if (st_buf.st_dev == fuse_dev)
@@ -506,14 +623,14 @@ portal_add_named (GDBusMethodInvocation *invocation,
   GUnixFDList *fd_list;
   g_autofree char *id = NULL;
   g_autofree char *proc_path = NULL;
-  int parent_fd_id, parent_fd, fds_len, fd_flags;
+  int parent_fd_id, parent_fd, fds_len;
   const int *fds;
   char parent_path_buffer[PATH_MAX + 1];
   g_autofree char *path = NULL;
-  ssize_t symlink_size;
   struct stat parent_st_buf;
   const char *filename;
   gboolean reuse_existing, persistent;
+  g_autoptr(GError) error = NULL;
 
   g_autoptr(GVariant) filename_v = NULL;
 
@@ -548,26 +665,9 @@ portal_add_named (GDBusMethodInvocation *invocation,
       return;
     }
 
-  proc_path = g_strdup_printf ("/proc/self/fd/%d", parent_fd);
-
-  if (parent_fd == -1 ||
-      /* Must be able to get fd flags */
-      (fd_flags = fcntl (parent_fd, F_GETFL)) == -1 ||
-      /* Must be O_PATH */
-      ((fd_flags & O_PATH) != O_PATH) ||
-      /* Must not be O_NOFOLLOW (because we want the target file) */
-      ((fd_flags & O_NOFOLLOW) == O_PATH) ||
-      /* Must be able to fstat */
-      fstat (parent_fd, &parent_st_buf) < 0 ||
-      /* Must be a directory file */
-      (parent_st_buf.st_mode & S_IFMT) != S_IFDIR ||
-      /* Must be able to read path from /proc/self/fd */
-      /* This is an absolute and (at least at open time) symlink-expanded path */
-      (symlink_size = readlink (proc_path, parent_path_buffer, sizeof (parent_path_buffer) - 1)) < 0)
+  if (!validate_fd_common (parent_fd, &parent_st_buf, parent_path_buffer, &error))
     {
-      g_dbus_method_invocation_return_error (invocation,
-                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
-                                             "Invalid fd passed");
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return;
     }
 
@@ -578,8 +678,6 @@ portal_add_named (GDBusMethodInvocation *invocation,
                                              "Invalid fd passed");
       return;
     }
-
-  parent_path_buffer[symlink_size] = 0;
 
   path = g_build_filename (parent_path_buffer, filename, NULL);
 

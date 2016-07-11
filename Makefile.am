@@ -46,6 +46,8 @@ AM_CPPFLAGS =							\
 	-I$(srcdir)/libglnx					\
 	-I$(srcdir)/common					\
 	-I$(builddir)/common					\
+	-I$(srcdir)/lib						\
+	-I$(builddir)/lib					\
 	$(NULL)
 
 if WITH_SYSTEM_BWRAP
