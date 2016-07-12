@@ -326,6 +326,37 @@ AM_CONDITIONAL([ENABLE_GTK_DOC], [false])
 ])
 AM_CONDITIONAL([ENABLE_GTK_DOC_CHECK], [test "x$enable_gtk_doc_check" = xyes])
 
+
+AC_ARG_ENABLE(docbook-docs,
+        [AS_HELP_STRING([--enable-docbook-docs],[build documentation (requires xmlto)])],
+        enable_docbook_docs=$enableval, enable_docbook_docs=auto)
+AC_PATH_PROG(XMLTO, xmlto, no)
+AC_MSG_CHECKING([whether to build DocBook documentation])
+if test x$XMLTO = xno ; then
+        have_docbook=no
+else
+        have_docbook=yes
+fi
+if test x$enable_docbook_docs = xauto ; then
+        if test x$have_docbook = xno ; then
+                enable_docbook_docs=no
+        else
+                enable_docbook_docs=yes
+        fi
+fi
+if test x$enable_docbook_docs = xyes; then
+        if test x$have_docbook = xno; then
+                AC_MSG_ERROR([Building DocBook docs explicitly required, but DocBook not found])
+        fi
+        AC_MSG_RESULT(yes)
+else
+        AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL(DOCBOOK_DOCS_ENABLED, test x$enable_docbook_docs = xyes)
+AC_ARG_VAR([XMLTO],[Define/override the 'xmlto' location.])
+AC_ARG_VAR([XMLTO_FLAGS],[Define/override 'xmlto' options, like '--skip-validation'.])
+
+
 ##################################################
 # Visibility handling
 ##################################################
@@ -391,6 +422,7 @@ doc/reference/Makefile
 flatpak.pc
 lib/flatpak-version-macros.h
 doc/reference/version.xml
+doc/flatpak-docs.xml
 po/Makefile.in
 ])
 AC_OUTPUT

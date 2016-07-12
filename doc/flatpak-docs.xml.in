@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+               "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+<!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
+]>
+<reference xmlns:xi="http://www.w3.org/2003/XInclude">
+    <referenceinfo>
+      <releaseinfo>Version @VERSION@</releaseinfo>
+    </referenceinfo>
+    <title>Flatpak Command Reference</title>
+    <partintro>
+      <para>
+        Flatpak comes with a rich commandline interface.
+      </para>
+    </partintro>
+    <xi:include href="flatpak-install.xml"/>
+    <xi:include href="flatpak-update.xml"/>
+    <xi:include href="flatpak-uninstall.xml"/>
+    <xi:include href="flatpak-list.xml"/>
+    <xi:include href="flatpak-info.xml"/>
+    <xi:include href="flatpak-run.xml"/>
+    <xi:include href="flatpak-override.xml"/>
+    <xi:include href="flatpak-enter.xml"/>
+    <xi:include href="flatpak-document-export.xml"/>
+    <xi:include href="flatpak-document-unexport.xml"/>
+    <xi:include href="flatpak-document-info.xml"/>
+    <xi:include href="flatpak-document-list.xml"/>
+    <xi:include href="flatpak-remote-add.xml"/>
+    <xi:include href="flatpak-remote-modify.xml"/>
+    <xi:include href="flatpak-remote-delete.xml"/>
+    <xi:include href="flatpak-remote-list.xml"/>
+    <xi:include href="flatpak-remote-ls.xml"/>
+    <xi:include href="flatpak-build-init.xml"/>
+    <xi:include href="flatpak-build.xml"/>
+    <xi:include href="flatpak-build-finish.xml"/>
+    <xi:include href="flatpak-build-export.xml"/>
+    <xi:include href="flatpak-build-bundle.xml"/>
+    <xi:include href="flatpak-build-import-bundle.xml"/>
+    <xi:include href="flatpak-build-update-repo.xml"/>
+    <xi:include href="flatpak-build-sign.xml"/>
+    <xi:include href="flatpak-builder.xml"/>
+    <xi:include href="flatpak-metadata.xml"/>
+    <xi:include href="flatpak-make-current.xml"/>
+</reference>

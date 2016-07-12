@@ -1,0 +1,78 @@
+body
+{
+  font-family: sans-serif;
+}
+h1.title
+{
+}
+.permission
+{
+  color: #ee0000;
+  text-decoration: underline;
+}
+.synopsis, .classsynopsis
+{
+  background: #eeeeee;
+  border: solid 1px #aaaaaa;
+  padding: 0.5em;
+}
+.programlisting
+{
+  background: #eeeeff;
+  border: solid 1px #aaaaff;
+  padding: 0.5em;
+}
+.variablelist
+{
+  padding: 4px;
+  margin-left: 3em;
+}
+.variablelist td:first-child
+{
+  vertical-align: top;
+}
+td.shortcuts
+{
+  color: #770000;
+  font-size: 80%;
+}
+div.refnamediv
+{
+  margin-top: 2em;
+}
+div.toc
+{
+  border: 2em;
+}
+a
+{
+  text-decoration: none;
+}
+a:hover
+{
+  text-decoration: underline;
+  color: #FF0000;
+}
+
+div.table table
+{
+  border-collapse: collapse;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #777777;
+  border-width: 1px;
+}
+
+div.table table td, div.table table th
+{
+  border-style: solid;
+  border-color: #777777;
+  border-width: 1px;
+  padding: 3px;
+  vertical-align: top;
+}
+
+div.table table th
+{
+  background-color: #eeeeee;
+}
