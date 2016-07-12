@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<book xmlns="http://www.devhelp.net/book" title="Flatpak Library Reference Manual" link="index.html" author="" name="flatpak" version="2" language="c">
+  <chapters>
+    <sub name="Flatpak" link="ch01.html">
+      <sub name="FlatpakInstallation" link="FlatpakInstallation.html"/>
+      <sub name="FlatpakRef" link="FlatpakRef.html"/>
+      <sub name="FlatpakInstalledRef" link="FlatpakInstalledRef.html"/>
+      <sub name="FlatpakRemoteRef" link="FlatpakRemoteRef.html"/>
+      <sub name="FlatpakRemote" link="FlatpakRemote.html"/>
+      <sub name="flatpak-bundle-ref" link="flatpak-flatpak-bundle-ref.html"/>
+      <sub name="Error codes" link="flatpak-Error-codes.html"/>
+      <sub name="Version information" link="flatpak-Version-information.html"/>
+    </sub>
+    <sub name="Object Hierarchy" link="object-tree.html"/>
+    <sub name="API Index" link="full-api-index.html"/>
+    <sub name="Annotation Glossary" link="annotation-glossary.html"/>
+  </chapters>
+  <functions>
+    <keyword type="function" name="flatpak_installation_new_system ()" link="FlatpakInstallation.html#flatpak-installation-new-system"/>
+    <keyword type="function" name="flatpak_installation_new_user ()" link="FlatpakInstallation.html#flatpak-installation-new-user"/>
+    <keyword type="function" name="flatpak_installation_new_for_path ()" link="FlatpakInstallation.html#flatpak-installation-new-for-path"/>
+    <keyword type="function" name="flatpak_installation_get_is_user ()" link="FlatpakInstallation.html#flatpak-installation-get-is-user"/>
+    <keyword type="function" name="flatpak_installation_get_path ()" link="FlatpakInstallation.html#flatpak-installation-get-path"/>
+    <keyword type="function" name="flatpak_installation_create_monitor ()" link="FlatpakInstallation.html#flatpak-installation-create-monitor"/>
+    <keyword type="function" name="flatpak_installation_install ()" link="FlatpakInstallation.html#flatpak-installation-install"/>
+    <keyword type="function" name="flatpak_installation_update ()" link="FlatpakInstallation.html#flatpak-installation-update"/>
+    <keyword type="function" name="flatpak_installation_uninstall ()" link="FlatpakInstallation.html#flatpak-installation-uninstall"/>
+    <keyword type="function" name="flatpak_installation_launch ()" link="FlatpakInstallation.html#flatpak-installation-launch"/>
+    <keyword type="function" name="flatpak_installation_get_current_installed_app ()" link="FlatpakInstallation.html#flatpak-installation-get-current-installed-app"/>
+    <keyword type="function" name="flatpak_installation_get_installed_ref ()" link="FlatpakInstallation.html#flatpak-installation-get-installed-ref"/>
+    <keyword type="function" name="flatpak_installation_list_installed_refs ()" link="FlatpakInstallation.html#flatpak-installation-list-installed-refs"/>
+    <keyword type="function" name="flatpak_installation_list_installed_refs_by_kind ()" link="FlatpakInstallation.html#flatpak-installation-list-installed-refs-by-kind"/>
+    <keyword type="function" name="flatpak_installation_list_installed_refs_for_update ()" link="FlatpakInstallation.html#flatpak-installation-list-installed-refs-for-update"/>
+    <keyword type="function" name="flatpak_installation_list_remote_refs_sync ()" link="FlatpakInstallation.html#flatpak-installation-list-remote-refs-sync"/>
+    <keyword type="function" name="flatpak_installation_list_remotes ()" link="FlatpakInstallation.html#flatpak-installation-list-remotes"/>
+    <keyword type="function" name="flatpak_installation_get_remote_by_name ()" link="FlatpakInstallation.html#flatpak-installation-get-remote-by-name"/>
+    <keyword type="function" name="flatpak_installation_fetch_remote_metadata_sync ()" link="FlatpakInstallation.html#flatpak-installation-fetch-remote-metadata-sync"/>
+    <keyword type="function" name="flatpak_installation_fetch_remote_ref_sync ()" link="FlatpakInstallation.html#flatpak-installation-fetch-remote-ref-sync"/>
+    <keyword type="function" name="flatpak_installation_fetch_remote_size_sync ()" link="FlatpakInstallation.html#flatpak-installation-fetch-remote-size-sync"/>
+    <keyword type="function" name="flatpak_installation_load_app_overrides ()" link="FlatpakInstallation.html#flatpak-installation-load-app-overrides"/>
+    <keyword type="function" name="flatpak_installation_update_appstream_sync ()" link="FlatpakInstallation.html#flatpak-installation-update-appstream-sync"/>
+    <keyword type="function" name="flatpak_installation_install_bundle ()" link="FlatpakInstallation.html#flatpak-installation-install-bundle"/>
+    <keyword type="function" name="flatpak_installation_drop_caches ()" link="FlatpakInstallation.html#flatpak-installation-drop-caches"/>
+    <keyword type="function" name="flatpak_installation_modify_remote ()" link="FlatpakInstallation.html#flatpak-installation-modify-remote"/>
+    <keyword type="function" name="flatpak_installation_remove_remote ()" link="FlatpakInstallation.html#flatpak-installation-remove-remote"/>
+    <keyword type="function" name="flatpak_get_default_arch ()" link="FlatpakInstallation.html#flatpak-get-default-arch"/>
+    <keyword type="function" name="FlatpakProgressCallback ()" link="FlatpakInstallation.html#FlatpakProgressCallback"/>
+    <keyword type="struct" name="struct FlatpakInstallation" link="FlatpakInstallation.html#FlatpakInstallation-struct"/>
+    <keyword type="enum" name="enum FlatpakUpdateFlags" link="FlatpakInstallation.html#FlatpakUpdateFlags"/>
+    <keyword type="function" name="flatpak_ref_format_ref ()" link="FlatpakRef.html#flatpak-ref-format-ref"/>
+    <keyword type="function" name="flatpak_ref_get_arch ()" link="FlatpakRef.html#flatpak-ref-get-arch"/>
+    <keyword type="function" name="flatpak_ref_get_branch ()" link="FlatpakRef.html#flatpak-ref-get-branch"/>
+    <keyword type="function" name="flatpak_ref_get_commit ()" link="FlatpakRef.html#flatpak-ref-get-commit"/>
+    <keyword type="function" name="flatpak_ref_get_kind ()" link="FlatpakRef.html#flatpak-ref-get-kind"/>
+    <keyword type="function" name="flatpak_ref_get_name ()" link="FlatpakRef.html#flatpak-ref-get-name"/>
+    <keyword type="function" name="flatpak_ref_parse ()" link="FlatpakRef.html#flatpak-ref-parse"/>
+    <keyword type="struct" name="struct FlatpakRef" link="FlatpakRef.html#FlatpakRef-struct"/>
+    <keyword type="enum" name="enum FlatpakRefKind" link="FlatpakRef.html#FlatpakRefKind"/>
+    <keyword type="property" name="The “arch” property" link="FlatpakRef.html#FlatpakRef--arch"/>
+    <keyword type="property" name="The “branch” property" link="FlatpakRef.html#FlatpakRef--branch"/>
+    <keyword type="property" name="The “commit” property" link="FlatpakRef.html#FlatpakRef--commit"/>
+    <keyword type="property" name="The “kind” property" link="FlatpakRef.html#FlatpakRef--kind"/>
+    <keyword type="property" name="The “name” property" link="FlatpakRef.html#FlatpakRef--name"/>
+    <keyword type="function" name="flatpak_installed_ref_get_deploy_dir ()" link="FlatpakInstalledRef.html#flatpak-installed-ref-get-deploy-dir"/>
+    <keyword type="function" name="flatpak_installed_ref_get_installed_size ()" link="FlatpakInstalledRef.html#flatpak-installed-ref-get-installed-size"/>
+    <keyword type="function" name="flatpak_installed_ref_get_is_current ()" link="FlatpakInstalledRef.html#flatpak-installed-ref-get-is-current"/>
+    <keyword type="function" name="flatpak_installed_ref_get_latest_commit ()" link="FlatpakInstalledRef.html#flatpak-installed-ref-get-latest-commit"/>
+    <keyword type="function" name="flatpak_installed_ref_get_origin ()" link="FlatpakInstalledRef.html#flatpak-installed-ref-get-origin"/>
+    <keyword type="function" name="flatpak_installed_ref_load_metadata ()" link="FlatpakInstalledRef.html#flatpak-installed-ref-load-metadata"/>
+    <keyword type="function" name="flatpak_installed_ref_get_subpaths ()" link="FlatpakInstalledRef.html#flatpak-installed-ref-get-subpaths"/>
+    <keyword type="struct" name="struct FlatpakInstalledRef" link="FlatpakInstalledRef.html#FlatpakInstalledRef-struct"/>
+    <keyword type="property" name="The “deploy-dir” property" link="FlatpakInstalledRef.html#FlatpakInstalledRef--deploy-dir"/>
+    <keyword type="property" name="The “installed-size” property" link="FlatpakInstalledRef.html#FlatpakInstalledRef--installed-size"/>
+    <keyword type="property" name="The “is-current” property" link="FlatpakInstalledRef.html#FlatpakInstalledRef--is-current"/>
+    <keyword type="property" name="The “latest-commit” property" link="FlatpakInstalledRef.html#FlatpakInstalledRef--latest-commit"/>
+    <keyword type="property" name="The “origin” property" link="FlatpakInstalledRef.html#FlatpakInstalledRef--origin"/>
+    <keyword type="property" name="The “subpaths” property" link="FlatpakInstalledRef.html#FlatpakInstalledRef--subpaths"/>
+    <keyword type="function" name="flatpak_remote_ref_get_remote_name ()" link="FlatpakRemoteRef.html#flatpak-remote-ref-get-remote-name"/>
+    <keyword type="struct" name="struct FlatpakRemoteRef" link="FlatpakRemoteRef.html#FlatpakRemoteRef-struct"/>
+    <keyword type="property" name="The “remote-name” property" link="FlatpakRemoteRef.html#FlatpakRemoteRef--remote-name"/>
+    <keyword type="function" name="flatpak_remote_new ()" link="FlatpakRemote.html#flatpak-remote-new"/>
+    <keyword type="function" name="flatpak_remote_get_name ()" link="FlatpakRemote.html#flatpak-remote-get-name"/>
+    <keyword type="function" name="flatpak_remote_get_appstream_dir ()" link="FlatpakRemote.html#flatpak-remote-get-appstream-dir"/>
+    <keyword type="function" name="flatpak_remote_get_appstream_timestamp ()" link="FlatpakRemote.html#flatpak-remote-get-appstream-timestamp"/>
+    <keyword type="function" name="flatpak_remote_get_gpg_verify ()" link="FlatpakRemote.html#flatpak-remote-get-gpg-verify"/>
+    <keyword type="function" name="flatpak_remote_set_gpg_verify ()" link="FlatpakRemote.html#flatpak-remote-set-gpg-verify"/>
+    <keyword type="function" name="flatpak_remote_set_gpg_key ()" link="FlatpakRemote.html#flatpak-remote-set-gpg-key"/>
+    <keyword type="function" name="flatpak_remote_get_noenumerate ()" link="FlatpakRemote.html#flatpak-remote-get-noenumerate"/>
+    <keyword type="function" name="flatpak_remote_set_noenumerate ()" link="FlatpakRemote.html#flatpak-remote-set-noenumerate"/>
+    <keyword type="function" name="flatpak_remote_get_prio ()" link="FlatpakRemote.html#flatpak-remote-get-prio"/>
+    <keyword type="function" name="flatpak_remote_set_prio ()" link="FlatpakRemote.html#flatpak-remote-set-prio"/>
+    <keyword type="function" name="flatpak_remote_get_title ()" link="FlatpakRemote.html#flatpak-remote-get-title"/>
+    <keyword type="function" name="flatpak_remote_set_title ()" link="FlatpakRemote.html#flatpak-remote-set-title"/>
+    <keyword type="function" name="flatpak_remote_get_url ()" link="FlatpakRemote.html#flatpak-remote-get-url"/>
+    <keyword type="function" name="flatpak_remote_set_url ()" link="FlatpakRemote.html#flatpak-remote-set-url"/>
+    <keyword type="function" name="flatpak_remote_get_disabled ()" link="FlatpakRemote.html#flatpak-remote-get-disabled"/>
+    <keyword type="function" name="flatpak_remote_set_disabled ()" link="FlatpakRemote.html#flatpak-remote-set-disabled"/>
+    <keyword type="struct" name="struct FlatpakRemote" link="FlatpakRemote.html#FlatpakRemote-struct"/>
+    <keyword type="property" name="The “name” property" link="FlatpakRemote.html#FlatpakRemote--name"/>
+    <keyword type="function" name="flatpak_bundle_ref_new ()" link="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-new"/>
+    <keyword type="function" name="flatpak_bundle_ref_get_file ()" link="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-file"/>
+    <keyword type="function" name="flatpak_bundle_ref_get_metadata ()" link="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-metadata"/>
+    <keyword type="function" name="flatpak_bundle_ref_get_appstream ()" link="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-appstream"/>
+    <keyword type="function" name="flatpak_bundle_ref_get_icon ()" link="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-icon"/>
+    <keyword type="function" name="flatpak_bundle_ref_get_origin ()" link="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-origin"/>
+    <keyword type="function" name="flatpak_bundle_ref_get_installed_size ()" link="flatpak-flatpak-bundle-ref.html#flatpak-bundle-ref-get-installed-size"/>
+    <keyword type="struct" name="struct FlatpakBundleRef" link="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef-struct"/>
+    <keyword type="property" name="The “file” property" link="flatpak-flatpak-bundle-ref.html#FlatpakBundleRef--file"/>
+    <keyword type="function" name="flatpak_error_quark ()" link="flatpak-Error-codes.html#flatpak-error-quark"/>
+    <keyword type="macro" name="FLATPAK_ERROR" link="flatpak-Error-codes.html#FLATPAK-ERROR:CAPS"/>
+    <keyword type="enum" name="enum FlatpakError" link="flatpak-Error-codes.html#FlatpakError"/>
+    <keyword type="macro" name="FLATPAK_MAJOR_VERSION" link="flatpak-Version-information.html#FLATPAK-MAJOR-VERSION:CAPS"/>
+    <keyword type="macro" name="FLATPAK_MINOR_VERSION" link="flatpak-Version-information.html#FLATPAK-MINOR-VERSION:CAPS"/>
+    <keyword type="macro" name="FLATPAK_MICRO_VERSION" link="flatpak-Version-information.html#FLATPAK-MICRO-VERSION:CAPS"/>
+    <keyword type="macro" name="FLATPAK_EXTERN" link="flatpak-Version-information.html#FLATPAK-EXTERN:CAPS"/>
+    <keyword type="constant" name="FLATPAK_UPDATE_FLAGS_NONE" link="FlatpakInstallation.html#FLATPAK-UPDATE-FLAGS-NONE:CAPS"/>
+    <keyword type="constant" name="FLATPAK_UPDATE_FLAGS_NO_DEPLOY" link="FlatpakInstallation.html#FLATPAK-UPDATE-FLAGS-NO-DEPLOY:CAPS"/>
+    <keyword type="constant" name="FLATPAK_UPDATE_FLAGS_NO_PULL" link="FlatpakInstallation.html#FLATPAK-UPDATE-FLAGS-NO-PULL:CAPS"/>
+    <keyword type="constant" name="FLATPAK_REF_KIND_APP" link="FlatpakRef.html#FLATPAK-REF-KIND-APP:CAPS"/>
+    <keyword type="constant" name="FLATPAK_REF_KIND_RUNTIME" link="FlatpakRef.html#FLATPAK-REF-KIND-RUNTIME:CAPS"/>
+    <keyword type="constant" name="FLATPAK_ERROR_ALREADY_INSTALLED" link="flatpak-Error-codes.html#FLATPAK-ERROR-ALREADY-INSTALLED:CAPS"/>
+    <keyword type="constant" name="FLATPAK_ERROR_NOT_INSTALLED" link="flatpak-Error-codes.html#FLATPAK-ERROR-NOT-INSTALLED:CAPS"/>
+  </functions>
+</book>

@@ -1,0 +1,1612 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Flatpak Command Reference</title><link rel="stylesheet" type="text/css" href="docbook.css" /><meta name="generator" content="DocBook XSL Stylesheets V1.78.1" /></head><body><div class="reference"><div class="titlepage"><div><div><h1 class="title"><a id="idm139925460057248"></a>Flatpak Command Reference</h1></div><div><p class="releaseinfo">Version 0.6.7</p></div></div><hr /></div><div class="partintro"><div></div><p>
+        Flatpak comes with a rich commandline interface.
+      </p><div class="toc"><p><strong>Table of Contents</strong></p><dl class="toc"><dt><span class="refentrytitle"><a href="#flatpak-install">flatpak install</a></span><span class="refpurpose"> — Install an application or runtime</span></dt><dt><span class="refentrytitle"><a href="#flatpak-update">flatpak update</a></span><span class="refpurpose"> — Update a runtime</span></dt><dt><span class="refentrytitle"><a href="#flatpak-uninstall">flatpak uninstall</a></span><span class="refpurpose"> — Uninstall an application or runtime</span></dt><dt><span class="refentrytitle"><a href="#flatpak-list">flatpak list</a></span><span class="refpurpose"> — List installed applications and/or runtimes</span></dt><dt><span class="refentrytitle"><a href="#flatpak-info">flatpak info</a></span><span class="refpurpose"> — Show information about installed application and/or runtime</span></dt><dt><span class="refentrytitle"><a href="#flatpak-run">flatpak run</a></span><span class="refpurpose"> — Run an application</span></dt><dt><span class="refentrytitle"><a href="#flatpak-override">flatpak override</a></span><span class="refpurpose"> — Override application requirements</span></dt><dt><span class="refentrytitle"><a href="#flatpak-enter">flatpak enter</a></span><span class="refpurpose"> — Enter an application</span></dt><dt><span class="refentrytitle"><a href="#flatpak-document-export">flatpak document-export</a></span><span class="refpurpose"> — Export a file to a sandboxed application</span></dt><dt><span class="refentrytitle"><a href="#flatpak-document-unexport">flatpak document-unexport</a></span><span class="refpurpose"> — Stop exporting a file</span></dt><dt><span class="refentrytitle"><a href="#flatpak-document-info">flatpak document-info</a></span><span class="refpurpose"> — Show information about exported files</span></dt><dt><span class="refentrytitle"><a href="#flatpak-document-list">flatpak document-list</a></span><span class="refpurpose"> — List exported files</span></dt><dt><span class="refentrytitle"><a href="#flatpak-remote-add">flatpak remote-add</a></span><span class="refpurpose"> — Add a remote repository</span></dt><dt><span class="refentrytitle"><a href="#flatpak-remote-modify">flatpak remote-modify</a></span><span class="refpurpose"> — Modify a remote repository</span></dt><dt><span class="refentrytitle"><a href="#flatpak-remote-delete">flatpak remote-delete</a></span><span class="refpurpose"> — Delete a remote repository</span></dt><dt><span class="refentrytitle"><a href="#flatpak-remote-list">flatpak remote-list</a></span><span class="refpurpose"> — List remote repositories</span></dt><dt><span class="refentrytitle"><a href="#flatpak-remote-ls">flatpak remote-ls</a></span><span class="refpurpose"> — Show available runtimes and applications</span></dt><dt><span class="refentrytitle"><a href="#flatpak-build-init">flatpak build-init</a></span><span class="refpurpose"> — Initialize a build directory</span></dt><dt><span class="refentrytitle"><a href="#flatpak-build">flatpak build</a></span><span class="refpurpose"> — Build in a directory</span></dt><dt><span class="refentrytitle"><a href="#flatpak-build-finish">flatpak build-finish</a></span><span class="refpurpose"> — Finalize a build directory</span></dt><dt><span class="refentrytitle"><a href="#flatpak-build-export">flatpak build-export</a></span><span class="refpurpose"> — Create a repository from a build directory</span></dt><dt><span class="refentrytitle"><a href="#flatpak-build-bundle">flatpak build-bundle</a></span><span class="refpurpose"> — Create a single-file bundle from a local repository</span></dt><dt><span class="refentrytitle"><a href="#flatpak-build-import-bundle">flatpak build-import-bundle</a></span><span class="refpurpose"> — Import a file bundle into a local repository</span></dt><dt><span class="refentrytitle"><a href="#flatpak-build-update-repo">flatpak build-update-repo</a></span><span class="refpurpose"> — Create a repository from a build directory</span></dt><dt><span class="refentrytitle"><a href="#flatpak-build-export">flatpak build-sign</a></span><span class="refpurpose"> — Sign an application or runtime</span></dt><dt><span class="refentrytitle"><a href="#flatpak-builder">flatpak-builder</a></span><span class="refpurpose"> — Help build application dependencies</span></dt><dt><span class="refentrytitle"><a href="#flatpak-metadata">flatpak metadata</a></span><span class="refpurpose"> — Information about an application or runtime</span></dt><dt><span class="refentrytitle"><a href="#flatpak-make-current">flatpak make-current</a></span><span class="refpurpose"> — Make a specific version of an app current</span></dt></dl></div></div><div class="refentry"><a id="flatpak-install"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-install — Install an application or runtime</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak install</code>  [OPTION...]  REMOTE   NAME  [BRANCH]</p></div><div class="cmdsynopsis"><p><code class="command">flatpak install</code>  [OPTION...]  --bundle   FILENAME </p></div></div><div class="refsect1"><a id="idm139925450185776"></a><h2>Description</h2><p>
+            Installs an application or runtime.  REMOTE  must name
+            an existing remote and   NAME  is the name of the
+            application or runtime to install. Optionally,   BRANCH  can
+            be specified to install a branch other than the default branch. This required
+            if there are multiple matches in the selected remote.
+        </p><p>
+            By default this looks for both apps and runtime with the given  NAME  in
+            the specified   REMOTE , but you can limit this by using the --app or --runtime option.
+        </p><p>
+            Note that flatpak allows one to have multiple branches of an application and runtimes
+            installed and used at the same time. However, only version of an application one can be current,
+            meaning its exported files (for instance desktop files and icons) are
+            visible to the host. The last installed version is made current by
+            default, but you can manually change with make-current.
+        </p><p>
+            Unless overridden with the --user option, this command creates a
+            system-wide installation.
+        </p><p>
+            The alternative form of the command installs an application from a
+            single-file bundle instead of a configured remote. Such bundles can
+            be created with the flatpak build-bundle command.
+        </p></div><div class="refsect1"><a id="idm139925450087360"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--bundle</code></span></dt><dd><p>
+                    Install from a bundle file instead
+                    of a configured remote.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Create a per-user installation.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Create a per-user installation.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Create a system-wide installation.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    The architecture to install for.
+                </p></dd><dt><span class="term"><code class="option">--subpath=PATH</code></span></dt><dd><p>
+                  Install only a subpath of the ref. This is mainly used to install a subset of locales.
+                  This can be added multiple times to install multiple subpaths.,
+                </p></dd><dt><span class="term"><code class="option">--no-deploy</code></span></dt><dd><p>
+                    Download the latest version, but don't deploy it.
+                </p></dd><dt><span class="term"><code class="option">--no-pull</code></span></dt><dd><p>
+                    Don't download the latest version, deploy it whatever is locally available.
+                </p></dd><dt><span class="term"><code class="option">--no-related</code></span></dt><dd><p>
+                    Don't download related extensions, such as the locale data.
+                </p></dd><dt><span class="term"><code class="option">--app</code></span></dt><dd><p>
+                    Only look for an app with the given name.
+                </p></dd><dt><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    Only look for an runtime with the given name.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925451149040"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user install test-repo org.gnome.GEdit</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925452156048"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-update-app</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-list-apps</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-bundle</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-update"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-update — Update a runtime</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak update</code>  [OPTION...] [NAME] [BRANCH]</p></div></div><div class="refsect1"><a id="idm139925450461104"></a><h2>Description</h2><p>
+            Updates an application or runtime.  NAME  is the
+            name of an installed application or runtime. Optionally,
+              BRANCH  can be specified to update a
+            specific branch, otherwise all installed branches are updated. If
+            no   NAME  is given, then everything installed
+            is updated.
+        </p><p>
+            By default this looks for both installed applications and
+            runtimes, but you can limit this by using the --app or
+            --runtime option.
+        </p><p>
+            Normally, this command updates the application to the tip
+            of its branch. But it is possible to check out another commit,
+            with the --commit option.
+        </p><p>
+            Note that updating a is different from installing
+            a different branch, and runtime updates are expected to keep
+            strict compatibility. If an application update does cause
+            a problem, it is possible to go back to the previous
+            version, with the --commit option.
+        </p><p>
+            Unless overridden with the --user option, this command updates
+            a system-wide installation.
+        </p></div><div class="refsect1"><a id="idm139925453667776"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Update a per-user installation.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Update a system-wide installation.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    The architecture to update for.
+                </p></dd><dt><span class="term"><code class="option">--subpath=PATH</code></span></dt><dd><p>
+                  Install only a subpath of the ref. This is mainly used to install a subset of locales.
+                  This can be added multiple times to install multiple subpaths.
+                  If this is not specified the subpaths specified at install time are reused.
+                </p></dd><dt><span class="term"><code class="option">--commit=COMMIT</code></span></dt><dd><p>
+                    Update to this commit, instead of the tip of the branch.
+                </p></dd><dt><span class="term"><code class="option">--no-deploy</code></span></dt><dd><p>
+                    Download the latest version, but don't deploy it.
+                </p></dd><dt><span class="term"><code class="option">--no-pull</code></span></dt><dd><p>
+                    Don't download the latest version, deploy it whatever is locally available.
+                </p></dd><dt><span class="term"><code class="option">--no-related</code></span></dt><dd><p>
+                    Don't download related extensions, such as the locale data.
+                </p></dd><dt><span class="term"><code class="option">--app</code></span></dt><dd><p>
+                    Only look for an app with the given name.
+                </p></dd><dt><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    Only look for an runtime with the given name.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925451792432"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user update org.gnome.GEdit</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925451790400"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-install-app</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-list-apps</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-uninstall"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-uninstall — Uninstall an application or runtime</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak uninstall</code>  [OPTION...]  NAME  [BRANCH]</p></div></div><div class="refsect1"><a id="idm139925449836912"></a><h2>Description</h2><p>
+            Uninstalls an application or runtime. The  NAME ,
+              ARCH  and   BRANCH 
+            arguments must identify an installed application.
+            If   BRANCH  is not specified, it defaults
+            to whatever is installed, unless there are multiple versions, then you
+            have to specify a branch.
+        </p><p>
+            By default this looks for both installed apps and runtime
+            with the given  NAME , but you can
+            limit this by using the --app or --runtime option.
+        </p><p>
+            Normally, this command removes the ref for this application/runtime from the
+            local OSTree repository and purges and objects that are no longer
+            needed to free up disk space. If the same application is later
+            reinstalled, the objects will be pulled from the remote repository
+            again. The --keep-ref option can be used to prevent this.
+        </p><p>
+            If all branches of the application/runtime are removed, this command
+            also purges the data directory for the application.
+        </p><p>
+            Unless overridden with the --user option, this command updates
+            a system-wide installation.
+        </p></div><div class="refsect1"><a id="idm139925453486496"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--keep-ref</code></span></dt><dd><p>
+                    Keep the ref for the application and the objects belonging to it
+                    in the local repository.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Remove a per-user installation.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Remove a system-wide installation.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    The architecture to uninstall, instead of the architecture of
+                    the host system.
+                </p></dd><dt><span class="term"><code class="option">--app</code></span></dt><dd><p>
+                    Only look for an app with the given name.
+                </p></dd><dt><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    Only look for an runtime with the given name.
+                </p></dd><dt><span class="term"><code class="option">--no-related</code></span></dt><dd><p>
+                    Don't uninstall related extensions, such as the locale data.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925450037072"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user uninstall org.gnome.GEdit</strong></span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-list"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-list — List installed applications and/or runtimes</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak list</code>  [OPTION...]</p></div></div><div class="refsect1"><a id="idm139925450314064"></a><h2>Description</h2><p>
+            Lists the names of the installed applications and/or runtime.
+        </p><p>
+            By default, both per-user and system-wide installations
+            are shown. Use the --user or --system options to change
+            this.
+        </p><p>
+            By default this lists the installed apps, but you can
+            change this by using the --app or --runtime option.
+        </p></div><div class="refsect1"><a id="idm139925449856448"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    List per-user installations.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    List system-wide installations.
+                </p></dd><dt><span class="term"><code class="option">--show-details</code></span></dt><dd><p>
+                    Show arches and branches, in addition to the application names.
+                </p></dd><dt><span class="term"><code class="option">--app</code></span></dt><dd><p>
+                    List applications.
+                </p></dd><dt><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    List runtimes.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925451093376"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user list</strong></span>
+        </p><pre class="programlisting">
+org.gnome.Builder
+org.freedesktop.glxgears
+org.gnome.MyApp
+org.gnome.GEdit
+</pre></div><div class="refsect1"><a id="idm139925451090624"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-install-app</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-update-app</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-info"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-info — Show information about installed application and/or runtime</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak info</code>  [OPTION...]  NAME  [BRANCH]</p></div></div><div class="refsect1"><a id="idm139925451704640"></a><h2>Description</h2><p>
+            Show info about and installed application and/or runtime.
+        </p><p>
+            By default, both per-user and system-wide installations
+            are queried. Use the --user or --system options to change
+            this.
+        </p><p>
+            By default this queries the installed apps and runtimes, but you can
+            limit this by using the --app or --runtime option.
+        </p></div><div class="refsect1"><a id="idm139925451515488"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Query per-user installations.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Query system-wide installations.
+                </p></dd><dt><span class="term"><code class="option">--app</code></span></dt><dd><p>
+                    Query for applications.
+                </p></dd><dt><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    Query for runtimes.
+                </p></dd><dt><span class="term"><code class="option">-r</code>, </span><span class="term"><code class="option">--show-ref</code></span></dt><dd><p>
+                    Show the installed ref.
+                </p></dd><dt><span class="term"><code class="option">-o</code>, </span><span class="term"><code class="option">--show-origin</code></span></dt><dd><p>
+                    Show the remote the ref is installed from.
+                </p></dd><dt><span class="term"><code class="option">-c</code>, </span><span class="term"><code class="option">--show-commit</code></span></dt><dd><p>
+                    Show the installed commit id.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925452777856"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user list</strong></span>
+        </p><pre class="programlisting">
+org.gnome.Builder
+org.freedesktop.glxgears
+org.gnome.MyApp
+org.gnome.GEdit
+</pre></div><div class="refsect1"><a id="idm139925452775104"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-install-app</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-update-app</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-run"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-run — Run an application</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak run</code>  [OPTION...]  APP  [ARG...]</p></div></div><div class="refsect1"><a id="idm139925450178464"></a><h2>Description</h2><p>
+            Runs an application in a sandboxed environment.
+             APP  must name an installed application.
+            Extra arguments are passed on to the application.
+        </p><p>
+            flatpak creates a sandboxed environment for the application to run in
+            by mounting the right runtime at <code class="filename">/usr</code> and a writable
+            directory at <code class="filename">/var</code>, whose content is preserved between
+            application runs. The application itself is mounted at <code class="filename">/app</code>.
+        </p><p>
+            The details of the sandboxed environment are controlled by the application
+            metadata and various options like --share and --socket that are passed to the run
+            command: Access is allowed if it was requested either in the application
+            metadata file or with an option and the user hasn't overridden it.
+        </p></div><div class="refsect1"><a id="idm139925453116464"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    The architecture to install for.
+                </p></dd><dt><span class="term"><code class="option">--command=COMMAND</code></span></dt><dd><p>
+                    The command to run instead of the one listed in the application metadata.
+                </p></dd><dt><span class="term"><code class="option">--branch=BRANCH</code></span></dt><dd><p>
+                    The branch to use.
+                </p></dd><dt><span class="term"><code class="option">-d</code>, </span><span class="term"><code class="option">--devel</code></span></dt><dd><p>
+                    Use the devel runtime that is specified in the application metadata instead of the regular runtime, and use a seccomp profile that is less likely to break development tools.
+                </p></dd><dt><span class="term"><code class="option">--runtime=RUNTIME</code></span></dt><dd><p>
+                  Use this runtime instead of the one that is specified in the application metadata.
+                  This is a full tuple, like for example  org.freedesktop.Sdk/x86_64/1.2 , but
+                  partial tuples are allowed. Any empty or missing parts are filled in with the corresponding
+                  values specified by the app.
+                </p></dd><dt><span class="term"><code class="option">--runtime-version=VERSION</code></span></dt><dd><p>
+                  Use this version of the runtime instead of the one that is specified in the application metadata.
+                  This overrides any version specified with the --runtime option.
+                </p></dd><dt><span class="term"><code class="option">--share=SUBSYSTEM</code></span></dt><dd><p>
+                    Share a subsystem with the host session. This overrides
+                    the Context section from the application metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--unshare=SUBSYSTEM</code></span></dt><dd><p>
+                    Don't share a subsystem with the host session. This overrides
+                    the Context section from the application metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--socket=SOCKET</code></span></dt><dd><p>
+                    Expose a well known socket to the application. This overrides to
+                    the Context section from the application metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--nosocket=SOCKET</code></span></dt><dd><p>
+                    Don't expose a well known socket to the application. This overrides to
+                    the Context section from the application metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--device=DEVICE</code></span></dt><dd><p>
+                    Expose a device to the application. This overrides to
+                    the Context section from the application metadata.
+                    DEVICE must be one of: dri, all.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--nodevice=DEVICE</code></span></dt><dd><p>
+                    Don't expose a device to the application. This overrides to
+                    the Context section from the application metadata.
+                    DEVICE must be one of: dri, all.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--filesystem=FS</code></span></dt><dd><p>
+                    Allow the application access to a subset of the filesystem.
+                    This overrides to the Context section from the application metadata.
+                    FS can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos, xdg-run,
+                    an absolute path, or a homedir-relative path like ~/dir or paths
+                    relative to the xdg dirs, like xdg-download/subdir.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--env=VAR=VALUE</code></span></dt><dd><p>
+                    Set an environment variable in the application.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--own-name=NAME</code></span></dt><dd><p>
+                    Allow the application to own the well known name NAME on the session bus.
+                    If NAME ends with .*, it allows the application to own all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--talk-name=NAME</code></span></dt><dd><p>
+                    Allow the application to talk to the well known name NAME on the session bus.
+                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--system-own-name=NAME</code></span></dt><dd><p>
+                    Allow the application to own the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to own all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--system-talk-name=NAME</code></span></dt><dd><p>
+                    Allow the application to talk to the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--persist=FILENAME</code></span></dt><dd><p>
+                    If the application doesn't have access to the real homedir, make the (homedir-relative) path
+                    FILENAME a bind mount to the corresponding path in the per-application directory,
+                    allowing that location to be used for persistent data.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--no-desktop</code></span></dt><dd><p>
+                    Don't require a running session, meaning that no cgroups creation will happen. This can be
+                    useful for certain scenarios when you might want to run a flatpak without a valid user
+                    session available (e.g. from a socket-activated systemd service), and not having a
+                    properly sandboxed environment is not an issue.
+                </p></dd><dt><span class="term"><code class="option">--log-session-bus</code></span></dt><dd><p>
+                    Log session bus traffic. This can be useful to see what access you need to allow in
+                    your D-Bus policy.
+                </p></dd><dt><span class="term"><code class="option">--log-system-bus</code></span></dt><dd><p>
+                    Log system bus traffic. This can be useful to see what access you need to allow in
+                    your D-Bus policy.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925452580784"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak run org.gnome.GEdit</strong></span>
+        </p><p>
+            <span class="command"><strong>$ flatpak run --devel --command=bash org.gnome.Builder</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925452577568"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-override</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-enter</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-override"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-override — Override application requirements</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak override</code>  [OPTION...]  APP </p></div></div><div class="refsect1"><a id="idm139925450845792"></a><h2>Description</h2><p>
+            Overrides the application specified runtime requirements. This can be used
+            to grant a sandboxed application more or less resources than it requested.
+        </p><p>
+          By default the application gets access to the resources it
+          requested when it is started. But the user can override it
+          on a particular instance by specifying extra arguments to
+          flatpak run, or every time by using flatpak override.
+        </p></div><div class="refsect1"><a id="idm139925449828368"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--share=SUBSYSTEM</code></span></dt><dd><p>
+                    Share a subsystem with the host session. This overrides
+                    the Context section from the application metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--unshare=SUBSYSTEM</code></span></dt><dd><p>
+                    Don't share a subsystem with the host session. This overrides
+                    the Context section from the application metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--socket=SOCKET</code></span></dt><dd><p>
+                    Expose a well-known socket to the application. This overrides to
+                    the Context section from the application metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--nosocket=SOCKET</code></span></dt><dd><p>
+                    Don't expose a well-known socket to the application. This overrides to
+                    the Context section from the application metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--device=DEVICE</code></span></dt><dd><p>
+                    Expose a device to the application. This overrides to
+                    the Context section from the application metadata.
+                    DEVICE must be one of: dri, all.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--nodevice=DEVICE</code></span></dt><dd><p>
+                    Don't expose a device to the application. This overrides to
+                    the Context section from the application metadata.
+                    DEVICE must be one of: dri, all.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--filesystem=FS</code></span></dt><dd><p>
+                    Allow the application access to a subset of the filesystem.
+                    This overrides to the Context section from the application metadata.
+                    FS can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos, xdg-run,
+                    an absolute path, or a homedir-relative path like ~/dir or paths
+                    relative to the xdg dirs, like xdg-download/subdir.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--env=VAR=VALUE</code></span></dt><dd><p>
+                    Set an environment variable in the application.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--own-name=NAME</code></span></dt><dd><p>
+                    Allow the application to own the well-known name NAME on the session bus.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--talk-name=NAME</code></span></dt><dd><p>
+                    Allow the application to talk to the well-known name NAME on the session bus.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--system-own-name=NAME</code></span></dt><dd><p>
+                    Allow the application to own the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to own all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--system-talk-name=NAME</code></span></dt><dd><p>
+                    Allow the application to talk to the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--persist=FILENAME</code></span></dt><dd><p>
+                    If the application doesn't have access to the real homedir, make the (homedir-relative) path
+                    FILENAME a bind mount to the corresponding path in the per-application directory,
+                    allowing that location to be used for persistent data.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925449948288"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak override --nosocket=wayland org.gnome.GEdit</strong></span>
+        </p><p>
+            <span class="command"><strong>$ flatpak override --filesystem=home org.mozilla.Firefox</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925449945120"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-run</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-enter"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-enter — Enter an application</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak enter</code>  [OPTION...]  MONITORPID   COMMAND  [ARG...]</p></div></div><div class="refsect1"><a id="idm139925453141904"></a><h2>Description</h2><p>
+            Enter a running sandbox.
+             MONITORPID  must be the pid of the monitor process for a running sandbox.
+              COMMAND  is the command to run in the sandbox.
+            Extra arguments are passed on to the command.
+        </p><p>
+            This creates a new process within the running sandbox, with the same environment. This is useful
+            when you want to debug a problem with a running application.
+        </p></div><div class="refsect1"><a id="idm139925460194320"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925450789872"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak enter 15345 sh</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925450330864"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-run</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-document-export"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-document-export — Export a file to a sandboxed application</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak document-export</code>  [OPTION...]  FILE </p></div></div><div class="refsect1"><a id="idm139925452970880"></a><h2>Description</h2><p>
+            Creates a document id for a local file that can be exposed to
+            sandboxed applications, allowing them access to files that they
+            would not otherwise see. The exported files are exposed in a
+            fuse filesystem at /run/user/$UID/doc/.
+        </p><p>
+            This command also lets you modify the per-application
+            permissions of the documents, granting or revoking access
+            to the file on a per-application basis.
+        </p></div><div class="refsect1"><a id="idm139925453526224"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--unique</code></span></dt><dd><p> Don't reuse an existing document id
+                for the file.  This makes it safe to later remove the
+                document when you're finished with it.
+                </p></dd><dt><span class="term"><code class="option">--transient</code></span></dt><dd><p>
+                  The document will only exist for the length of
+                  the session. This is useful for temporary grants.
+                </p></dd><dt><span class="term"><code class="option">--app=APPID</code></span></dt><dd><p>
+                  Grant read access to the specified application. The
+                  --allow and --forbid options can be used to grant
+                  or remove additional privileges.
+                  This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--allow-read</code></span></dt><dd><p>
+                  Grant read access to the applications specified with --app.
+                  This defaults to TRUE.
+                </p></dd><dt><span class="term"><code class="option">--forbid-read</code></span></dt><dd><p>
+                  Revoke read access for the applications specified with --app.
+                </p></dd><dt><span class="term"><code class="option">--allow-write</code></span></dt><dd><p>
+                  Grant write access to the applications specified with --app.
+                </p></dd><dt><span class="term"><code class="option">--forbid-write</code></span></dt><dd><p>
+                  Revoke write access for the applications specified with --app.
+                </p></dd><dt><span class="term"><code class="option">--allow-delete</code></span></dt><dd><p>
+                  Grant the ability to remove the document from the document portal to the applications specified with --app.
+                </p></dd><dt><span class="term"><code class="option">--forbid-delete</code></span></dt><dd><p>
+                  Revoke the ability to remove the document from the document portal from the applications specified with --app.
+                </p></dd><dt><span class="term"><code class="option">--allow-grant-permission</code></span></dt><dd><p>
+                  Grant the ability to grant further permissions to the applications specified with --app.
+                </p></dd><dt><span class="term"><code class="option">--forbid-grant-permission</code></span></dt><dd><p>
+                  Revoke the ability to grant further permissions for the applications specified with --app.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925453376000"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak document-export --app=org.gnome.GEdit ~/test.txt</strong></span>
+        </p><pre class="programlisting">
+/run/user/1000/doc/e52f9c6a/test.txt
+</pre></div><div class="refsect1"><a id="idm139925453373232"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-unexport</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-info</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-list</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-document-unexport"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-document-unexport — Stop exporting a file</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak document-export</code>  [OPTION...]  FILE </p></div></div><div class="refsect1"><a id="idm139925450853280"></a><h2>Description</h2><p>
+            Removes the document id for the file from the
+            document portal. This will make the document unavailable
+            to all sandboxed applications.
+        </p></div><div class="refsect1"><a id="idm139925451084992"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925451871712"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-export</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-info</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-list</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-document-info"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-document-info — Show information about exported files</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak document-info</code>  [OPTION...]  FILE </p></div></div><div class="refsect1"><a id="idm139925450218656"></a><h2>Description</h2><p>
+            Shows information about an exported file, such as the
+            document id, the fuse path, the original location in the
+            filesystem, and the per-application permissions.
+        </p><p>
+            FILE can either be a file in the fuse filesystem at /run/user/$UID/doc/,
+            or a file anywhere else.
+        </p></div><div class="refsect1"><a id="idm139925452702672"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925450816096"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak document-info ~/Sources/gtk/gail-3.0.pc</strong></span>
+        </p><pre class="programlisting">
+id: dd32c34a
+path: /run/user/1000/doc/dd32c34a/gail-3.0.pc
+origin: /home/mclasen/Sources/gtk/gail-3.0.pc
+permissions:
+        org.gnome.gedit read, write
+</pre></div><div class="refsect1"><a id="idm139925451914848"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-export</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-unexport</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-list</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-document-list"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-document-list — List exported files</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak document-list</code>  [OPTION...] [APPID]</p></div></div><div class="refsect1"><a id="idm139925450050160"></a><h2>Description</h2><p>
+            Lists exported files, with their document id and the
+            full path to their origin. If an APPID is specified,
+            only the files exported to this app are listed.
+        </p></div><div class="refsect1"><a id="idm139925453200528"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925454335392"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-export</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-unexport</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-document-info</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-remote-add"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-remote-add — Add a remote repository</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak remote-add</code>  [OPTION...]  NAME   LOCATION </p></div></div><div class="refsect1"><a id="idm139925453839872"></a><h2>Description</h2><p>
+            Adds a remote repository to the flatpak repository configuration.
+             NAME  is the name for the new remote, and
+              LOCATION  is the url or pathname for the repository.
+        </p><p>
+            Unless overridden with the --user option, this command changes
+            the system-wide configuration.
+        </p></div><div class="refsect1"><a id="idm139925450194768"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Modify the per-user configuration.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Modify the system-wide configuration.
+                </p></dd><dt><span class="term"><code class="option">--no-gpg-verify</code></span></dt><dd><p>
+                    Disable GPG verification for the added remote.
+                </p></dd><dt><span class="term"><code class="option">--prio=PRIO</code></span></dt><dd><p>
+                    Set the priority for the remote. Default is 1, higher is more prioritized. This is
+                    mainly used for graphical installation tools.
+                </p></dd><dt><span class="term"><code class="option">--no-enumerate</code></span></dt><dd><p>
+                    Mark the remote as not enumerated. This means the remote will
+                    not be used to list applications, for instance in graphical
+                    installation tools.
+                </p></dd><dt><span class="term"><code class="option">--if-not-exists</code></span></dt><dd><p>
+                    Do nothing if the provided remote already exists.
+                </p></dd><dt><span class="term"><code class="option">--disable</code></span></dt><dd><p>
+                    Disable the added remote.
+                </p></dd><dt><span class="term"><code class="option">--title=TITLE</code></span></dt><dd><p>
+                    A title for the remote, e.g. for display in a UI.
+                </p></dd><dt><span class="term"><code class="option">--gpg-import=FILE</code></span></dt><dd><p>
+                     Import gpg keys from the specified keyring file as
+                     trusted for the new remote. If the file is - the
+                     keyring is read from standard input.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925449702864"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user remote-add --no-gpg-verify test-repo https://people.gnome.org/~alexl/gnome-sdk/repo/</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925449700720"></a><h2>See also</h2><p>
+                <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-modify-remote</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-delete-remote</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-list-remotes</span>(1)</span>
+            </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-remote-modify"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-remote-modify — Modify a remote repository</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak remote-modify</code>  [OPTION...]  NAME </p></div></div><div class="refsect1"><a id="idm139925453978704"></a><h2>Description</h2><p>
+            Modifies options for an existing remote repository in the flatpak repository configuration.
+             NAME  is the name for the remote.
+        </p><p>
+            Unless overridden with the --user option, this command changes
+            the system-wide configuration.
+        </p></div><div class="refsect1"><a id="idm139925450308176"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Modify the per-user configuration.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Modify the system-wide configuration.
+                </p></dd><dt><span class="term"><code class="option">--no-gpg-verify</code></span></dt><dd><p>
+                    Disable GPG verification for the added remote.
+                </p></dd><dt><span class="term"><code class="option">--gpg-verify</code></span></dt><dd><p>
+                    Enable GPG verification for the added remote.
+                </p></dd><dt><span class="term"><code class="option">--prio=PRIO</code></span></dt><dd><p>
+                    Set the priority for the remote. Default is 1, higher is more prioritized. This is
+                    mainly used for graphical installation tools.
+                </p></dd><dt><span class="term"><code class="option">--no-enumerate</code></span></dt><dd><p>
+                    Mark the remote as not enumerated. This means the remote will
+                    not be used to list applications, for instance in graphical
+                    installation tools.
+                </p></dd><dt><span class="term"><code class="option">--disable</code></span></dt><dd><p>
+                    Disable the remote. Disabled remotes will not be automatically updated from.
+                </p></dd><dt><span class="term"><code class="option">--enable</code></span></dt><dd><p>
+                    Enable the remote.
+                </p></dd><dt><span class="term"><code class="option">--enumerate</code></span></dt><dd><p>
+                    Mark the remote as enumerated. This means the remote will
+                    be used to list applications, for instance in graphical
+                    installation tools.
+                </p></dd><dt><span class="term"><code class="option">--title=TITLE</code></span></dt><dd><p>
+                    A title for the remote, e.g. for display in a UI.
+                </p></dd><dt><span class="term"><code class="option">--gpg-import=FILE</code></span></dt><dd><p>
+                     Import gpg keys from the specified keyring file as
+                     trusted for the new remote. If the file is - the
+                     keyring is read from standard input.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925451143360"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user remote-modify --no-gpg-verify test-repo</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925451141328"></a><h2>See also</h2><p>
+                <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-remote-add</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-remote-delete</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-remote-list</span>(1)</span>
+            </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-remote-delete"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-remote-delete — Delete a remote repository</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak remote-delete</code>  [OPTION...]  NAME </p></div></div><div class="refsect1"><a id="idm139925450810192"></a><h2>Description</h2><p>
+            Removes a remote repository from the flatpak repository configuration.
+             NAME  is the name of an existing remote.
+        </p><p>
+            Unless overridden with the --user option, this command changes
+            the system-wide configuration.
+        </p></div><div class="refsect1"><a id="idm139925452042512"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Modify the per-user configuration.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Modify the system-wide configuration.
+                </p></dd><dt><span class="term"><code class="option">--force</code></span></dt><dd><p>
+                    Remove remote even if its in use by installed apps or runtimes.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925449607200"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user remote-delete dried-raisins</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925449605168"></a><h2>See also</h2><p>
+                <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-add-remote</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-modify-remote</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-list-remotes</span>(1)</span>
+            </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-remote-list"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-remote-list — List remote repositories</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak remote-list</code>  [OPTION...]</p></div></div><div class="refsect1"><a id="idm139925450895808"></a><h2>Description</h2><p>
+            Lists the known remote repositories, in priority order.
+        </p><p>
+            By default, both per-user and system-wide installations
+            are shown. Use the --user or --system options to change
+            this.
+        </p></div><div class="refsect1"><a id="idm139925451764368"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Show the per-user configuration.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Show the system-wide configuration.
+                </p></dd><dt><span class="term"><code class="option">--show-details</code></span></dt><dd><p>
+                    Show more information each repository in addition to the name.
+                </p></dd><dt><span class="term"><code class="option">--show-disabled</code></span></dt><dd><p>
+                    Show disabled repos.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925453389376"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak remote-list --user --show-details</strong></span>
+        </p><pre class="programlisting">
+testrepo	Test Repository	 http://209.132.179.91/repo/ no-gpg-verify
+</pre></div><div class="refsect1"><a id="idm139925453386656"></a><h2>See also</h2><p>
+                <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-add-remote</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-delete-remote</span>(1)</span>
+            </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-remote-ls"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-remote-ls — Show available runtimes and applications</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak remote-ls</code>  [OPTION...]  REMOTE </p></div></div><div class="refsect1"><a id="idm139925451248576"></a><h2>Description</h2><p>
+            Shows runtimes and applications that are available in the
+            remote repository with the name  REMOTE .
+            You can find all configured remote repositories with flatpak list-repos.
+        </p><p>
+            Unless overridden with the --user option, this command uses
+            the system-wide configuration.
+        </p></div><div class="refsect1"><a id="idm139925452012048"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Use the per-user configuration.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Use the system-wide configuration.
+                </p></dd><dt><span class="term"><code class="option">-d</code>, </span><span class="term"><code class="option">--show-details</code></span></dt><dd><p>
+                    Show arches, branches and commit ids, in addition to the names.
+                </p></dd><dt><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    Show only runtimes, omit applications.
+                </p></dd><dt><span class="term"><code class="option">--app</code></span></dt><dd><p>
+                    Show only applications, omit runtimes.
+                </p></dd><dt><span class="term"><code class="option">--updates</code></span></dt><dd><p>
+                    Show only those which have updates available.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    Show only those matching the specied architecture. By default, only
+                    supported architectures are shown. Use --arch=* to show all archtectures.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925452516192"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user remote-ls --only-apps testrepo</strong></span>
+        </p><pre class="programlisting">
+org.gnome.Builder
+org.freedesktop.glxgears
+</pre></div><div class="refsect1"><a id="idm139925452355104"></a><h2>See also</h2><p>
+                <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+                <span class="citerefentry"><span class="refentrytitle">flatpak-remote-list</span>(1)</span>
+            </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-build-init"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-build-init — Initialize a build directory</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak build-init</code>  [OPTION...]  DIRECTORY   APPNAME   SDK   RUNTIME  [BRANCH]</p></div></div><div class="refsect1"><a id="idm139925453424272"></a><h2>Description</h2><p>
+            Initializes a directory for building an application.
+             DIRECTORY  is the name of the directory.
+              APPNAME  is the application id of the app
+            that will be built.
+              SDK  and   RUNTIME 
+            specify the sdk and runtime that the application should be built
+            against and run in.
+        </p><p>
+            The result of this command is that a <code class="filename">metadata</code>
+            file is created inside the given directory. Additionally, empty
+            <code class="filename">files</code> and <code class="filename">var</code> subdirectories
+            are created.
+        </p><p>
+            It is an error to run build-init on a directory that has already
+            been initialized as a build directory.
+        </p></div><div class="refsect1"><a id="idm139925454196816"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    The architecture to use.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--var=RUNTIME</code></span></dt><dd><p>
+                    Initialize var from the named runtime.
+                </p></dd><dt><span class="term"><code class="option">-w</code>, </span><span class="term"><code class="option">--writable-sdk</code></span></dt><dd><p>
+                    Initialize /usr with a copy of the sdk, which is writable during flatpak build. This can be used
+                    if you need to install build tools in /usr during the build. This is stored in the
+                    <code class="filename">usr</code> subdirectory of the app dir, but will not be part of the final
+                    app.
+                </p></dd><dt><span class="term"><code class="option">--tag=TAG</code></span></dt><dd><p>
+                    Add a tag to the metadata file.
+                </p></dd><dt><span class="term"><code class="option">--sdk-extension=EXTENSION</code></span></dt><dd><p>
+                    When using --writable-sdk, in addition to the sdk, also install the specified extension.
+                </p></dd><dt><span class="term"><code class="option">--sdk-dir</code></span></dt><dd><p>
+                    Specify a custom subdirectory to use instead of <code class="filename">usr</code> for --writable-sdk.
+                </p></dd><dt><span class="term"><code class="option">--update</code></span></dt><dd><p>
+                    Re-initialize the sdk and var, don't fail if already initialized.
+                </p></dd><dt><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925452529488"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak build-init /build/my-app org.gnome.Sdk org.gnome.Platform 3.16</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925452527456"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-finish</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-export</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-build"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-build — Build in a directory</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak build</code>  [OPTION...]  DIRECTORY  [COMMAND [ARG...]]</p></div></div><div class="refsect1"><a id="idm139925451729168"></a><h2>Description</h2><p>
+            Runs a build command in a directory.  DIRECTORY 
+            must have been initialized with <span class="command"><strong>flatpak build-init</strong></span>.
+        </p><p>
+            The sdk that is specified in the <code class="filename">metadata</code> file
+            in the directory is mounted at <code class="filename">/usr</code> and the
+            <code class="filename">files</code> and <code class="filename">var</code> subdirectories
+            are mounted at <code class="filename">/app</code> and <code class="filename">/var</code>,
+            respectively. They are writable, and their contents are preserved between
+            build commands, to allow accumulating build artifacts there.
+        </p></div><div class="refsect1"><a id="idm139925449545344"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd><dt><span class="term"><code class="option">-r</code>, </span><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    Use the non-devel runtime that is specified in the application metadata instead of the devel runtime.
+                </p></dd><dt><span class="term"><code class="option">--bind-mount=DEST=SOURCE</code></span></dt><dd><p>
+                    Add a custom bind mount in the build namespace. Can be specified multiple times.
+                </p></dd><dt><span class="term"><code class="option">--build-dir=PATH</code></span></dt><dd><p>
+                    Start the build in this directory (default is in the current directory).
+                </p></dd><dt><span class="term"><code class="option">--share=SUBSYSTEM</code></span></dt><dd><p>
+                    Share a subsystem with the host session. This overrides
+                    the Context section from the application metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--unshare=SUBSYSTEM</code></span></dt><dd><p>
+                    Don't share a subsystem with the host session. This overrides
+                    the Context section from the application metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--socket=SOCKET</code></span></dt><dd><p>
+                    Expose a well-known socket to the application. This overrides to
+                    the Context section from the application metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--nosocket=SOCKET</code></span></dt><dd><p>
+                    Don't expose a well-known socket to the application. This overrides to
+                    the Context section from the application metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--device=DEVICE</code></span></dt><dd><p>
+                    Expose a device to the application. This overrides to
+                    the Context section from the application metadata.
+                    DEVICE must be one of: dri, all.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--nodevice=DEVICE</code></span></dt><dd><p>
+                    Don't expose a device to the application. This overrides to
+                    the Context section from the application metadata.
+                    DEVICE must be one of: dri, all.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--filesystem=FILESYSTEM[:ro]</code></span></dt><dd><p>
+                    Allow the application access to a subset of the filesystem.
+                    This overrides to the Context section from the application metadata.
+                    FILESYSTEM can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos,
+                    an absolute path, or a homedir-relative path like ~/dir.
+                    The optional :ro suffix indicates that the location will be read-only.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--nofilesystem=FILESYSTEM</code></span></dt><dd><p>
+                    Remove access to the specified subset of the filesystem from
+                    the application. This overrides to the Context section from the
+                    application metadata.
+                    FILESYSTEM can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos,
+                    an absolute path, or a homedir-relative path like ~/dir.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--env=VAR=VALUE</code></span></dt><dd><p>
+                    Set an environment variable in the application.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--own-name=NAME</code></span></dt><dd><p>
+                    Allow the application to own the well-known name NAME on the session bus.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--talk-name=NAME</code></span></dt><dd><p>
+                    Allow the application to talk to the well-known name NAME on the session bus.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--system-own-name=NAME</code></span></dt><dd><p>
+                    Allow the application to own the well-known name NAME on the system bus.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--system-talk-name=NAME</code></span></dt><dd><p>
+                    Allow the application to talk to the well-known name NAME on the system bus.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--persist=FILENAME</code></span></dt><dd><p>
+                    If the application doesn't have access to the real homedir, make the (homedir-relative) path
+                    FILENAME a bind mount to the corresponding path in the per-application directory,
+                    allowing that location to be used for persistent data.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925449263856"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak build /build/my-app rpmbuild my-app.src.rpm</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925449261824"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-init</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-finish</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-export</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-build-finish"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-build-finish — Finalize a build directory</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak build-finish</code>  [OPTION...]  DIRECTORY </p></div></div><div class="refsect1"><a id="idm139925451752944"></a><h2>Description</h2><p>
+            Finalizes a build directory, to prepare it for exporting.
+             DIRECTORY  is the name of the directory.
+        </p><p>
+            The result of this command is that desktop files, icons and
+            D-Bus service files from the <code class="filename">files</code> subdirectory
+            are copied to a new <code class="filename">export</code> subdirectory. In the
+            <code class="filename">metadata</code> file, the command key is set in the
+            [Application] group, and the supported keys in the [Environment]
+            group are set according to the options.
+        </p><p>
+            You should review the exported files and the application metadata
+            before creating and distributing an application bundle.
+        </p><p>
+            It is an error to run build-finish on a directory that has not
+            been initialized as a build directory, or has already been finalized.
+        </p></div><div class="refsect1"><a id="idm139925453852960"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--command=COMMAND</code></span></dt><dd><p>
+                    The command to use. If this option is not specified,
+                    the first executable found in <code class="filename">files/bin</code>
+                    is used.
+                </p></dd><dt><span class="term"><code class="option">--share=SUBSYSTEM</code></span></dt><dd><p>
+                    Share a subsystem with the host session. This updates
+                    the [Context] group in the metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--unshare=SUBSYSTEM</code></span></dt><dd><p>
+                    Don't share a subsystem with the host session. This updates
+                    the [Context] group in the metadata.
+                    SUBSYSTEM must be one of: network, ipc.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--socket=SOCKET</code></span></dt><dd><p>
+                    Expose a well known socket to the application. This updates
+                    the [Context] group in the metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--nosocket=SOCKET</code></span></dt><dd><p>
+                    Don't expose a well known socket to the application. This updates
+                    the [Context] group in the metadata.
+                    SOCKET must be one of: x11, wayland, pulseaudio, system-bus, session-bus.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--device=DEVICE</code></span></dt><dd><p>
+                    Expose a device to the application. This updates
+                    the [Context] group in the metadata.
+                    DEVICE must be one of: dri, all.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--nodevice=DEVICE</code></span></dt><dd><p>
+                    Don't expose a device to the application. This updates
+                    the [Context] group in the metadata.
+                    DEVICE must be one of: dri, all.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--filesystem=FS</code></span></dt><dd><p>
+                    Allow the application access to a subset of the filesystem.
+                    This updates the [Context] group in the metadata.
+                    FS can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos, xdg-run,
+                    an absolute path, or a homedir-relative path like ~/dir or paths
+                    relative to the xdg dirs, like xdg-download/subdir.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--env=VAR=VALUE</code></span></dt><dd><p>
+                    Set an environment variable in the application.
+                    This updates the [Environment] group in the metadata.
+                    This overrides to the Context section from the application metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--own-name=NAME</code></span></dt><dd><p>
+                    Allow the application to own the well known name NAME on the session bus.
+                    If NAME ends with .*, it allows the application to own all matching names.
+
+                    This updates the [Session Bus Policy] group in the metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--talk-name=NAME</code></span></dt><dd><p>
+                    Allow the application to talk to the well known name NAME on the session bus.
+                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    This updates the [Session Bus Policy] group in the metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--system-own-name=NAME</code></span></dt><dd><p>
+                    Allow the application to own the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to own all matching names.
+                    This updates the [System Bus Policy] group in the metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--system-talk-name=NAME</code></span></dt><dd><p>
+                    Allow the application to talk to the well known name NAME on the system bus.
+                    If NAME ends with .*, it allows the application to talk to all matching names.
+                    This updates the [System Bus Policy] group in the metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--persist=FILENAME</code></span></dt><dd><p>
+                    If the application doesn't have access to the real homedir, make the (homedir-relative) path
+                    FILENAME a bind mount to the corresponding path in the per-application directory,
+                    allowing that location to be used for persistent data.
+                    This updates the [Context] group in the metadata.
+                    This option can be used multiple times.
+                </p></dd><dt><span class="term"><code class="option">--no-exports</code></span></dt><dd><p>
+                    Don't look for exports in the build.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925452558512"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak build-finish /build/my-app --socket=x11 --share=ipc</strong></span>
+        </p><pre class="programlisting">
+Exporting share/applications/gnome-calculator.desktop
+Exporting share/dbus-1/services/org.gnome.Calculator.SearchProvider.service
+More than one executable
+Using gcalccmd as command
+Please review the exported files and the metadata
+</pre></div><div class="refsect1"><a id="idm139925452555536"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-init</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-export</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-build-export"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-build-export — Create a repository from a build directory</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak build-export</code>  [OPTION...]  LOCATION   DIRECTORY  [BRANCH]</p></div></div><div class="refsect1"><a id="idm139925452621472"></a><h2>Description</h2><p>
+            Creates or updates a repository with an application build.
+             LOCATION  is the location of the
+            repository.   DIRECTORY  must be a
+            finalized build directory. If   BRANCH 
+            is not specified, it is assumed to be "master".
+        </p><p>
+            If  LOCATION  exists, it is assumed to
+            be an OSTree repository, otherwise a new OSTree repository is
+            created at this location. The repository can be inspected with
+            the <span class="command"><strong>ostree</strong></span> tool.
+        </p><p>
+            The contents of  DIRECTORY  are committed
+            on the branch with name <code class="literal">app/APPNAME/ARCH/BRANCH</code>,
+            where ARCH is the architecture of the runtime that the application
+            is using. A commit filter is used to enforce that only the contents
+            of the <code class="filename">files/</code> and <code class="filename">export/</code>
+            subdirectories and the <code class="filename">metadata</code> file are included
+            in the commit, anything else is ignored.
+        </p><p>
+            The repo-update command should be used to update repository
+            metadata whenever application builds are added to a repository.
+        </p></div><div class="refsect1"><a id="idm139925450149792"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">-s</code>, </span><span class="term"><code class="option">--subject=SUBJECT</code></span></dt><dd><p>
+                    One line subject for the commit message.
+                </p></dd><dt><span class="term"><code class="option">-b</code>, </span><span class="term"><code class="option">--body=BODY</code></span></dt><dd><p>
+                    Full description for the commit message.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    Specify the architecture component of the branch to export. Only host compatible architectures can be specified.
+                </p></dd><dt><span class="term"><code class="option">--exclude=PATTERN</code></span></dt><dd><p>
+                    Exclude files matching PATTERN from the commit.
+                </p></dd><dt><span class="term"><code class="option">--include=PATTERN</code></span></dt><dd><p>
+                    Don't exclude files matching PATTERN from the commit, even if they match the --export patterns.
+                </p></dd><dt><span class="term"><code class="option">--metadata=FILENAME</code></span></dt><dd><p>
+                  Use the specified filename as metadata in the exported app instead of
+                  the default file (called <code class="filename">metadata</code>). This is useful
+                  if you want to commit multiple things from a single build tree, typically
+                  used in combination with --files and --exclude.
+                </p></dd><dt><span class="term"><code class="option">--files=SUBDIR</code></span></dt><dd><p>
+                  Use the files in the specified subdirectory as the file contents, rather
+                  than the regular <code class="filename">files</code> directory.
+                </p></dd><dt><span class="term"><code class="option">--update-appstream</code></span></dt><dd><p>
+                    Run appstream-builder and to update the appstream branch after build.
+                </p></dd><dt><span class="term"><code class="option">--gpg-sign=KEYID</code></span></dt><dd><p>
+                    Sign the commit with this GPG key
+                </p></dd><dt><span class="term"><code class="option">--gpg-homedir=PATH</code></span></dt><dd><p>
+                    GPG Homedir to use when looking for keyrings
+                </p></dd><dt><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    Export a runtime instead for an app (this uses the usr subdir as files).
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925449560528"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak build-export ~/repos/gnome-calculator/ ~/build/gnome-calculator/ org.gnome.Calculator</strong></span>
+        </p><pre class="programlisting">
+Commit: 9d0044ea480297114d03aec85c3d7ae3779438f9d2cb69d717fb54237acacb8c
+Metadata Total: 605
+Metadata Written: 5
+Content Total: 1174
+Content Written: 1
+Content Bytes Written: 305
+</pre></div><div class="refsect1"><a id="idm139925449557504"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">ostree</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-init</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-finish</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-sign</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-repo-update</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-build-bundle"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-build-bundle — Create a single-file bundle from a local repository</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak build-bundle</code>  [OPTION...]  LOCATION   FILENAME   NAME  [BRANCH]</p></div></div><div class="refsect1"><a id="idm139925451554624"></a><h2>Description</h2><p>
+            Creates a single-file named  FILENAME 
+            for the application (or runtime) named   NAME 
+            in the repository at   LOCATION . If
+            a   BRANCH  is specified, this branch of
+            the application is used.
+        </p><p>
+            The format of the bundle file is that of an ostree static delta
+            (against an empty base) with some flatpak specific metadata for
+            the application icons and appdata.
+        </p></div><div class="refsect1"><a id="idm139925449431728"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    Export a runtime instead of an application.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    The arch to create a bundle for.
+                </p></dd><dt><span class="term"><code class="option">--repo-url=URL</code></span></dt><dd><p>
+                    The URL for the repository from which the
+                    application can be updated. Installing the
+                    bundle will automatically configure a remote
+                    for this URL.
+                </p></dd><dt><span class="term"><code class="option">--gpg-keys=FILE</code></span></dt><dd><p>
+                    Add the GPG key from FILE (use - for stdin).
+                </p></dd><dt><span class="term"><code class="option">--gpg-homedir=PATH</code></span></dt><dd><p>
+                    GPG Homedir to use when looking for keyrings.
+                </p></dd><dt><span class="term"><code class="option">--oci</code></span></dt><dd><p>
+                    Export to an OCI image instead of a Flatpak bundle.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925453857488"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">ostree</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-init</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-finish</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-import-bundle</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-repo-update</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-build-import-bundle"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-build-import-bundle — Import a file bundle into a local repository</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak build-import-bundle</code>  [OPTION...]  LOCATION   FILENAME </p></div></div><div class="refsect1"><a id="idm139925451352480"></a><h2>Description</h2><p>
+            Imports a bundle from a file named  FILENAME 
+            into the repository at   LOCATION .
+        </p><p>
+            The format of the bundle file is that generated by build-bundle.
+        </p></div><div class="refsect1"><a id="idm139925452834624"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--ref=REF</code></span></dt><dd><p>
+                    Override the ref specified in the bundle.
+                </p></dd><dt><span class="term"><code class="option">--oci</code></span></dt><dd><p>
+                    Import an OCI image instead of a Flatpak bundle.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925451045744"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">ostree</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-bundle</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-repo-update</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-build-update-repo"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-build-update-repo — Create a repository from a build directory</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak build-update-repo</code>  [OPTION...]  LOCATION </p></div></div><div class="refsect1"><a id="idm139925452083376"></a><h2>Description</h2><p>
+            Updates repository metadata for the repository at
+             LOCATION . This command generates
+            an OSTree summary file that lists the contents of the repository.
+            The summary is used by flatpak repo-contents and other commands
+            to display the contents of remote repositories.
+        </p><p>
+            After this command,  LOCATION  can be
+            used as the repository location for flatpak add-repo, either by
+            exporting it over http, or directly with a file: url.
+        </p></div><div class="refsect1"><a id="idm139925451282464"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--title=TITLE</code></span></dt><dd><p>
+                    A title for the repository, e.g. for display in a UI.
+                    The title is stored in the repository summary.
+                </p></dd><dt><span class="term"><code class="option">--gpg-sign=KEYID</code></span></dt><dd><p>
+                    Sign the commit with this GPG key
+                </p></dd><dt><span class="term"><code class="option">--gpg-homedir=PATH</code></span></dt><dd><p>
+                    GPG Homedir to use when looking for keyrings
+                </p></dd><dt><span class="term"><code class="option">--generate-static-deltas</code></span></dt><dd><p>
+                  Generate static deltas for all references. This generates from-empty and
+                  delta static files that allow for faster download.
+                </p></dd><dt><span class="term"><code class="option">--prune</code></span></dt><dd><p>
+                    Remove unreferences objects in repo.
+                </p></dd><dt><span class="term"><code class="option">--prune-depth</code></span></dt><dd><p>
+                    Only keep at most this number of old versions for any particular ref. Default is -1 which means infinite.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925449884256"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">ostree</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-repo-contents</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-export</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-build-export"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-build-sign — Sign an application or runtime</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak build-sign</code>  [OPTION...]  LOCATION   ID  [BRANCH]</p></div></div><div class="refsect1"><a id="idm139925451152496"></a><h2>Description</h2><p>
+            Signs the commit for a specified application or runtime in
+            a local repository.   LOCATION  is
+            the location of the repository.   ID  is the name of the application, or
+            runtime if --runtime is specified. If   BRANCH  is not specified, it is
+            assumed to be "master".
+        </p><p>
+            Applications can also be signed during build-export, but
+            it is sometimes useful to add additional signatures later.
+        </p></div><div class="refsect1"><a id="idm139925452359040"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--gpg-sign=KEYID</code></span></dt><dd><p>
+                    Sign the commit with this GPG key
+                </p></dd><dt><span class="term"><code class="option">--gpg-homedir=PATH</code></span></dt><dd><p>
+                    GPG Homedir to use when looking for keyrings
+                </p></dd><dt><span class="term"><code class="option">--runtime</code></span></dt><dd><p>
+                    Sign a runtime instead of an app.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    The architecture to use.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925449683072"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak build-export ~/repos/gnome-calculator/ ~/build/gnome-calculator/ org.gnome.Calculator</strong></span>
+        </p><pre class="programlisting">
+Commit: 9d0044ea480297114d03aec85c3d7ae3779438f9d2cb69d717fb54237acacb8c
+Metadata Total: 605
+Metadata Written: 5
+Content Total: 1174
+Content Written: 1
+Content Bytes Written: 305
+</pre></div><div class="refsect1"><a id="idm139925453764544"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">ostree</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-export</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build</span>(1)</span>,
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-builder"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-builder — Help build application dependencies</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak-builder</code>  [OPTION...]  DIRECTORY   MANIFEST </p></div><div class="cmdsynopsis"><p><code class="command">flatpak-builder</code>   --run  [OPTION...]  DIRECTORY   MANIFEST   COMMAND </p></div></div><div class="refsect1"><a id="idm139925448786880"></a><h2>Description</h2><p>
+            <span class="command"><strong>flatpak-builder</strong></span> is a wrapper around the <span class="command"><strong>flatpak build</strong></span> command
+            that automates the building of applications and their dependencies. It is one option you can use
+            to build applications.
+        </p><p>
+            The goal of <span class="command"><strong>flatpak-builder</strong></span> is to push as much knowledge about how to build modules to
+            the individual upstream projects. It does this by assuming that the modules adhere to the Build API specified
+            at https://github.com/cgwalters/build-api. This essentially  means that it follows the <span class="command"><strong>./configure
+            &amp;&amp; make &amp;&amp; make install</strong></span> scheme with an optional autogen script. If the upstream
+            does not adhere to the API you can make it do so by adding patches and extra files.
+        </p><p>
+            An invocation of <span class="command"><strong>flatpak-builder</strong></span> proceeds in these stages, each being specified
+            in detail in json format in   MANIFEST :
+            </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc"><p>Download all sources</p></li><li class="listitem" style="list-style-type: disc"><p>Initialize the application directory with <span class="command"><strong>flatpak build-init</strong></span></p></li><li class="listitem" style="list-style-type: disc"><p>Build and install each module with <span class="command"><strong>flatpak build</strong></span></p></li><li class="listitem" style="list-style-type: disc"><p>Clean up the final build tree by removing unwanted files and e.g. stripping binaries</p></li><li class="listitem" style="list-style-type: disc"><p>Finish the application directory with <span class="command"><strong>flatpak build-finish</strong></span></p></li></ul></div><p>
+
+            After this you will end up with a build of the application in   DIRECTORY , which you can
+            export to a repository with the <span class="command"><strong>flatpak build-export</strong></span> command. If you use the <code class="option">--repo</code>
+            option, flatpack-builder will do the export for you at the end of the build process. When flatpak-builder does the
+            export, it also stores the manifest that was used for the build in /app/manifest.json. The manifest is 'resolved',
+            i.e. git branch names are replaced by the actual commit IDs that were used in the build.
+        </p><p>
+            At each of the above steps flatpak caches the result, and if you build the same file again, it will start
+            of at the first step where something changes. For instance the first version controlled source that had
+            new commits added, or the first module where some changes to the  MANIFEST  file caused
+            the build environment to change. This makes flatpak-builder very efficient for incremental builds.
+        </p></div><div class="refsect1"><a id="idm139925452386064"></a><h2>Manifest format</h2><div class="refsect2"><a id="idm139925452385328"></a><h3>Toplevel</h3><p>
+                The top level of the json file describes global
+                attributes of the application, and how it can be
+                build, and the list of modules that need to be
+                built.
+            </p><p>
+                These are the properties that are accepted:
+            </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">id</code> or <code class="option">app-id</code> (string)</span></dt><dd><p>A string defining the application id.</p></dd><dt><span class="term"><code class="option">branch</code> (string)</span></dt><dd><p>The branch of the application, defaults to master.</p></dd><dt><span class="term"><code class="option">runtime</code> (string)</span></dt><dd><p>The name of the runtime that the application uses.</p></dd><dt><span class="term"><code class="option">runtime-version</code> (string)</span></dt><dd><p>The version of the runtime that the application uses, defaults to master.</p></dd><dt><span class="term"><code class="option">sdk</code> (string)</span></dt><dd><p>The name of the development runtime that the application builds with.</p></dd><dt><span class="term"><code class="option">var</code> (string)</span></dt><dd><p>Initialize the (otherwise empty) writable /var in the build with a copy of this runtime.</p></dd><dt><span class="term"><code class="option">metadata</code> (string)</span></dt><dd><p>Use this file as the base metadata file when finishing.</p></dd><dt><span class="term"><code class="option">command</code> (string)</span></dt><dd><p>The filename or path to the main binary of the application. Note that this is really just a single file, not a commandline. If you want to pass arguments, install a shell script wrapper and use that as the command.</p></dd><dt><span class="term"><code class="option">build-runtime</code> (boolean)</span></dt><dd><p>Build a new runtime instead of an application.</p></dd><dt><span class="term"><code class="option">separate-locales</code> (boolean)</span></dt><dd><p>Separate out locale files and translations to an extension runtime. Defaults to true.</p></dd><dt><span class="term"><code class="option">id-platform</code> (string)</span></dt><dd><p>When building a runtime sdk, also create a platform based on it with this id.</p></dd><dt><span class="term"><code class="option">metadata-platform</code> (string)</span></dt><dd><p>The metadata file to use for the platform we create.</p></dd><dt><span class="term"><code class="option">writable-sdk</code> (boolean)</span></dt><dd><p>If true, use a writable copy of the sdk for /usr.
+                    Defaults to true if --build-runtime is specified.</p></dd><dt><span class="term"><code class="option">appstream-compose</code> (boolean)</span></dt><dd><p>Run appstream-compose during cleanup phase. Defaults to true.</p></dd><dt><span class="term"><code class="option">sdk-extensions</code> (array of strings)</span></dt><dd><p>Install these extra sdk extensions in /usr.</p></dd><dt><span class="term"><code class="option">platform-extensions</code> (array of strings)</span></dt><dd><p>Install these extra sdk extensions when creating the platform.</p></dd><dt><span class="term"><code class="option">tags</code> (array of strings)</span></dt><dd><p>Add these tags to the metadata file.</p></dd><dt><span class="term"><code class="option">build-options</code> (object)</span></dt><dd><p>Object specifying the build environment. See below for details.</p></dd><dt><span class="term"><code class="option">modules</code> (array of objects or string)</span></dt><dd><p>An array of object specifying the modules to be built in order.
+                    String members in the array are interpreted as the name of a separate json file that contains a module.
+                    See below for details.</p></dd><dt><span class="term"><code class="option">cleanup</code> (array of strings)</span></dt><dd><p>An array of file patterns that should be removed at the end.
+                    Patterns starting with / are taken to be full pathnames (without the /app prefix), otherwise they just match
+                    the basename.</p></dd><dt><span class="term"><code class="option">cleanup-commands</code> (array of strings)</span></dt><dd><p>An array of commandlines that are run during the cleanup phase.</p></dd><dt><span class="term"><code class="option">cleanup-platform</code> (array of strings)</span></dt><dd><p>Extra files to clean up in the platform.</p></dd><dt><span class="term"><code class="option">finish-args</code> (array of strings)</span></dt><dd><p>An array of arguments passed to the <span class="command"><strong>flatpak build-finish</strong></span> command.</p></dd><dt><span class="term"><code class="option">rename-desktop-file</code> (string)</span></dt><dd><p>Any desktop file with this name will be renamed to a name based on id during the cleanup phase.</p></dd><dt><span class="term"><code class="option">rename-appdata-file</code> (string)</span></dt><dd><p>Any appdata file with this name will be renamed to a name based on id during the cleanup phase.</p></dd><dt><span class="term"><code class="option">rename-icon</code> (string)</span></dt><dd><p>Any icon with this name will be renamed to a name based on id during the cleanup phase.</p></dd><dt><span class="term"><code class="option">copy-icon</code> (boolean)</span></dt><dd><p>If rename-icon is set, keep a copy of the old icon file.</p></dd><dt><span class="term"><code class="option">desktop-file-name-prefix</code> (string)</span></dt><dd><p>This string will be prefixed to the Name key in the main application desktop file.</p></dd><dt><span class="term"><code class="option">desktop-file-name-suffix</code> (string)</span></dt><dd><p>This string will be suffixed to the Name key in the main application desktop file.</p></dd></dl></div></div><div class="refsect2"><a id="idm139925449216192"></a><h3>Build Options</h3><p>
+                Build options specify the build environment of a module, and can be specified globally as
+                well as per-module. Options can also be specified on a per-architecture basis using the arch property.
+            </p><p>
+                These are the properties that are accepted:
+            </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">cflags</code> (string)</span></dt><dd><p>This is set in the environment variable CFLAGS during the build.</p></dd><dt><span class="term"><code class="option">cxxflags</code> (string)</span></dt><dd><p>This is set in the environment variable CXXFLAGS during the build.</p></dd><dt><span class="term"><code class="option">prefix</code> (string)</span></dt><dd><p>The build prefix for the modules (defaults to <code class="filename">/app</code> for
+                    applications and <code class="filename">/usr</code> for runtimes).</p></dd><dt><span class="term"><code class="option">env</code> (object)</span></dt><dd><p>This is a dictionary defining environment variables to be set during the build.</p></dd><dt><span class="term"><code class="option">build-args</code> (array of strings)</span></dt><dd><p>This is an array containing extra options to pass to flatpak build.</p></dd><dt><span class="term"><code class="option">strip</code> (boolean)</span></dt><dd><p>If this is true (the default is false) then all ELF files will be stripped after install.</p></dd><dt><span class="term"><code class="option">no-debuginfo</code> (boolean)</span></dt><dd><p>If this is true (the default is false) and strip is not set then all ELF files will have their debug info extracted to a separate file.</p></dd><dt><span class="term"><code class="option">arch</code> (object)</span></dt><dd><p>This is a dictionary defining for each arch a separate build options object that override the main one.</p></dd></dl></div></div><div class="refsect2"><a id="idm139925449197728"></a><h3>Module</h3><p>
+                Each module specifies a source that has to be separately built and installed. It contains
+                the build options and a list of sources to download and extract before building.
+            </p><p>
+                Modules can be nested, in order to turn related modules on and off with a single key.
+            </p><p>
+                These are the properties that are accepted:
+            </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">name</code> (string)</span></dt><dd><p>The name of the module, used in e.g. build logs. The name is also used for constructing filenames and commandline arguments, therefore using spaces or '/' in this string is a bad idea.</p></dd><dt><span class="term"><code class="option">disabled</code> (boolean)</span></dt><dd><p>If true, skip this module</p></dd><dt><span class="term"><code class="option">sources</code> (array of objects)</span></dt><dd><p>An array of objects defining sources that will be downloaded and extracted in order</p></dd><dt><span class="term"><code class="option">config-opts</code> (array of strings)</span></dt><dd><p>An array of options that will be passed to configure</p></dd><dt><span class="term"><code class="option">make-args</code> (array of strings)</span></dt><dd><p>An array of arguments that will be passed to make</p></dd><dt><span class="term"><code class="option">make-install-args</code> (array of strings)</span></dt><dd><p>An array of arguments that will be passed to make install</p></dd><dt><span class="term"><code class="option">rm-configure</code> (boolean)</span></dt><dd><p>If true, remove the configure script before starting build</p></dd><dt><span class="term"><code class="option">no-autogen</code> (boolean)</span></dt><dd><p>Ignore the existence of an autogen script</p></dd><dt><span class="term"><code class="option">no-parallel-make</code> (boolean)</span></dt><dd><p>Don't call make with arguments to build in parallel</p></dd><dt><span class="term"><code class="option">no-python-timestamp-fix</code> (boolean)</span></dt><dd><p>Don't fix up the *.py[oc] header timestamps for ostree use.</p></dd><dt><span class="term"><code class="option">cmake</code> (boolean)</span></dt><dd><p>Use cmake instead of configure</p></dd><dt><span class="term"><code class="option">builddir</code> (boolean)</span></dt><dd><p>Use a build directory that is separate from the source directory</p></dd><dt><span class="term"><code class="option">subdir</code> (string)</span></dt><dd><p>Build inside this subdirectory of the extracted sources</p></dd><dt><span class="term"><code class="option">build-options</code> (object)</span></dt><dd><p>A build options object that can override global options</p></dd><dt><span class="term"><code class="option">post-install</code> (array of strings)</span></dt><dd><p>An array of shell command that are run after the install phase. Can for example
+                    clean up the install dir, or install extra files.
+                    </p></dd><dt><span class="term"><code class="option">cleanup</code> (array of strings)</span></dt><dd><p>An array of file patterns that should be removed at the end.
+                    Patterns starting with / are taken to be full pathnames (without the /app prefix), otherwise they just match
+                    the basename. Note that any patterns will only match files installed by this module.
+                    </p></dd><dt><span class="term"><code class="option">cleanup-platform</code> (array of strings)</span></dt><dd><p>Extra files to clean up in the platform.</p></dd><dt><span class="term"><code class="option">modules</code> (array of objects or strings)</span></dt><dd><p>An array of object specifying nested modules to be built before this one.
+                    String members in the array are interpreted as names of a separate json file that contains a module.</p></dd></dl></div></div><div class="refsect2"><a id="idm139925449162096"></a><h3>Sources</h3><p>
+                These contain a pointer to the source that will be extracted into the source directory before
+                the build starts. They can be of several types, distinguished by the type property.
+            </p><div class="refsect3"><a id="idm139925449160704"></a><h4>Archive sources (tar, zip)</h4><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">type</code></span></dt><dd><p>"archive"</p></dd><dt><span class="term"><code class="option">path</code> (string)</span></dt><dd><p>The path of the archive</p></dd><dt><span class="term"><code class="option">url</code> (string)</span></dt><dd><p>The url of a remote archive that will be downloaded. This overrides path if both are specified.</p></dd><dt><span class="term"><code class="option">sha256</code> (string)</span></dt><dd><p>The sha256 checksum of the file, verified after download</p></dd><dt><span class="term"><code class="option">strip-components</code> (integer)</span></dt><dd><p>The number of initial pathname components to strip during extraction. Defaults to 1.</p></dd><dt><span class="term"><code class="option">dest</code> (string)</span></dt><dd><p>Directory inside the source dir where the archive will be extracted.</p></dd></dl></div></div><div class="refsect3"><a id="idm139925449148512"></a><h4>Git sources</h4><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">type</code></span></dt><dd><p>"git"</p></dd><dt><span class="term"><code class="option">url</code> (string)</span></dt><dd><p>URL of the git repository</p></dd><dt><span class="term"><code class="option">branch</code> (string)</span></dt><dd><p>The branch/tag/commit to use from the git repository</p></dd><dt><span class="term"><code class="option">dest</code> (string)</span></dt><dd><p>Directory inside the source dir where the repository will be checked out.</p></dd></dl></div></div><div class="refsect3"><a id="idm139925449140112"></a><h4>Bzr sources</h4><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">type</code></span></dt><dd><p>"bzr"</p></dd><dt><span class="term"><code class="option">url</code> (string)</span></dt><dd><p>URL of the bzr repository</p></dd><dt><span class="term"><code class="option">revision</code> (string)</span></dt><dd><p>A specific revision to use in the branch</p></dd><dt><span class="term"><code class="option">dest</code> (string)</span></dt><dd><p>Directory inside the source dir where the repository will be checked out.</p></dd></dl></div></div><div class="refsect3"><a id="idm139925449131712"></a><h4>File sources</h4><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">type</code></span></dt><dd><p>"file"</p></dd><dt><span class="term"><code class="option">path</code> (string)</span></dt><dd><p>The path of a local file that will be copied into the source dir</p></dd><dt><span class="term"><code class="option">url</code> (string)</span></dt><dd><p>The url of a remote file that will be downloaded and copied into the source dir. This overrides path if both are specified.</p></dd><dt><span class="term"><code class="option">sha256</code> (string)</span></dt><dd><p>The sha256 checksum of the file, verified after download. This is optional for local files.</p></dd><dt><span class="term"><code class="option">dest-filename</code> (string)</span></dt><dd><p>Filename to use inside the source dir, default to the basename of path.</p></dd><dt><span class="term"><code class="option">dest</code> (string)</span></dt><dd><p>Directory inside the source dir where the file will be copied.</p></dd></dl></div></div><div class="refsect3"><a id="idm139925449119440"></a><h4>Script sources</h4><p>
+                    This is a way to create a shell (/bin/sh) script from an inline set of commands.
+                </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">type</code></span></dt><dd><p>"script"</p></dd><dt><span class="term"><code class="option">commands</code> (array of strings)</span></dt><dd><p>An array of shell commands that will be put in a shellscript file</p></dd><dt><span class="term"><code class="option">dest-filename</code> (string)</span></dt><dd><p>Filename to use inside the source dir, default to the basename of path.</p></dd><dt><span class="term"><code class="option">dest</code> (string)</span></dt><dd><p>Directory inside the source dir where the file will be copied.</p></dd></dl></div></div><div class="refsect3"><a id="idm139925449110400"></a><h4>Shell sources</h4><p>
+                    This is a to create/modify the sources by running shell commands.
+                </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">type</code></span></dt><dd><p>"shell"</p></dd><dt><span class="term"><code class="option">commands</code> (array of strings)</span></dt><dd><p>An array of shell commands that will be run during source extraction</p></dd></dl></div></div><div class="refsect3"><a id="idm139925449105056"></a><h4>Patch sources</h4><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">type</code></span></dt><dd><p>"patch"</p></dd><dt><span class="term"><code class="option">path</code> (string)</span></dt><dd><p>The path of a patch file that will be applied in the source dir</p></dd><dt><span class="term"><code class="option">strip-components</code> (integer)</span></dt><dd><p>The value of the -p argument to patch, defaults to 1.</p></dd><dt><span class="term"><code class="option">dest</code> (string)</span></dt><dd><p>Directory inside the source dir where the patch will be applied.</p></dd><dt><span class="term"><code class="option">use-git</code> (boolean)</span></dt><dd><p>Whether to use "git apply" rather than "patch" to apply the patch, required when the patch file contains binary diffs.</p></dd></dl></div></div></div></div><div class="refsect1"><a id="idm139925449094432"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    Specify the machine architecture to build for. If no architecture is specified, the host architecture will be automatically detected. Only host compatible architectures can be specified.
+                </p></dd><dt><span class="term"><code class="option">--disable-cache</code></span></dt><dd><p>
+                    Don't look at the existing cache for a previous build, instead always rebuild modules.
+                </p></dd><dt><span class="term"><code class="option">--disable-download</code></span></dt><dd><p>
+                     Don't download any sources. This only works if some version of all sources are downloaded
+                     already. This is useful if you want to guarantee that no network i/o is done. However, the
+                     build will fail if some source is not locally available.
+                </p></dd><dt><span class="term"><code class="option">--disable-updates</code></span></dt><dd><p>
+                  Download missing sources, but don't update local mirrors of version control repos. This is useful
+                  to rebuild things but without updating git or bzr repositories from the remote repository.
+                </p></dd><dt><span class="term"><code class="option">--run</code></span></dt><dd><p>
+                  Run a command in a sandbox based on the build dir. This starts flatpak build, with some extra
+                  arguments to give the same environment as the build, and the same permissions the final app
+                  will have. The command to run must be the last argument passed to
+                  flatpak-builder, after the directory and the manifest.
+                </p></dd><dt><span class="term"><code class="option">--download-only</code></span></dt><dd><p>
+                     Exit successfully after downloading the required sources.
+                </p></dd><dt><span class="term"><code class="option">--build-only</code></span></dt><dd><p>
+                     Don't do the cleanup and finish stages, which is useful if you
+                     want to build more things into the app.
+                </p></dd><dt><span class="term"><code class="option">--require-changes</code></span></dt><dd><p>
+                    Do nothing, leaving a non-existent  DIRECTORY  if nothing changes since
+                    last cached build. If this is not specified, the latest version from the cache will be put
+                    into   DIRECTORY .
+                </p></dd><dt><span class="term"><code class="option">--keep-build-dirs</code></span></dt><dd><p>
+                    Don't remove the sources and build after having built and installed each module.
+                    This also creates a symlink to the build directory with a stable name ("build-modulename").
+                </p></dd><dt><span class="term"><code class="option">--ccache</code></span></dt><dd><p>
+                     Enable use of ccache in the build (needs ccache in the sdk)
+                </p></dd><dt><span class="term"><code class="option">--repo=DIR</code></span></dt><dd><p>
+                    When build is done, run export the result to this repository.
+                </p></dd><dt><span class="term"><code class="option">-s</code>, </span><span class="term"><code class="option">--subject=SUBJECT</code></span></dt><dd><p>
+                    One line subject for the commit message.
+                    Used when exporting the build results.
+                </p></dd><dt><span class="term"><code class="option">-b</code>, </span><span class="term"><code class="option">--body=BODY</code></span></dt><dd><p>
+                    Full description for the commit message.
+                    Used when exporting the build results.
+                </p></dd><dt><span class="term"><code class="option">--gpg-sign=KEYID</code></span></dt><dd><p>
+                    Sign the commit with this GPG key.
+                    Used when exporting the build results.
+                </p></dd><dt><span class="term"><code class="option">--gpg-homedir=PATH</code></span></dt><dd><p>
+                    GPG Homedir to use when looking for keyrings.
+                    Used when exporting the build results.
+                </p></dd><dt><span class="term"><code class="option">--force-clean</code></span></dt><dd><p>
+                    Erase the previous contents of DIRECTORY if it is
+                    not empty.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925449055136"></a><h2>Caching</h2><p>
+            flatpak-builder caches sources and partial build results in
+            the .flatpak-builder subdirectory of the current directory. If you
+            use <code class="option">--keep-build-dirs</code>, build directories for each
+            module are also stored here.
+        </p><p>
+            It is safe to remove the contents of the .flatpak-builder
+            directory. This will force a full build the next time you build.
+        </p></div><div class="refsect1"><a id="idm139925449052528"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak-builder my-app-dir manifest.json</strong></span>
+        </p><p>
+            Example manifest file:
+        </p><pre class="programlisting">
+{
+    "id": "org.test.TestApp",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "1.2",
+    "sdk": "org.freedesktop.Sdk",
+    "command": "test",
+    "clean": [ "/include", "*.la" ],
+    "build-options" : {
+        "cflags": "-O2 -g",
+        "cxxflags": "-O2 -g",
+        "env": {
+            "V": "1"
+        },
+        "arch": {
+            "x86_64": {
+                "cflags": "-O3 -g",
+            }
+        }
+    },
+    "modules": [
+        {
+            "name": "pygobject",
+            "config-opts": [ "--disable-introspection" ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "http://ftp.gnome.org/pub/GNOME/sources/pygobject/2.28/pygobject-2.28.6.tar.xz",
+                    "sha256": "fb8a1d4f665130a125011659bd347c7339c944232163dbb9a34fd0686577adb8"
+                },
+                {
+                    "type": "patch",
+                    "path": "required-pygobject-fix.patch"
+                },
+                {
+                    "type": "file",
+                    "path": "pygobject-extra-file",
+                    "dest-filename": "extra-file"
+                }
+            ]
+        },
+        {
+            "name": "babl",
+            "build-options" : { "cxxflags": "-O2 -g -std=c++11" },
+            "cleanup": [ "/bin" ],
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "git://git.gnome.org/babl"
+                }
+            ]
+        },
+        {
+            "name": "testapp",
+            "sources": [
+                {
+                    "type": "bzr",
+                    "url": "lp:testapp"
+                }
+            ]
+        }
+    ]
+}
+</pre></div><div class="refsect1"><a id="idm139925449047648"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-init</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-finish</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-build-export</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-metadata"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-metadata — Information about an application or runtime</p></div><div class="refsect1"><a id="idm139925452189056"></a><h2>Description</h2><p>
+            Flatpak uses metadata files to describe applications and runtimes.
+            The <code class="filename">metadata</code> file for a deployed application or
+            runtime is placed in the toplevel deploy directory. For example, the
+            metadata for the locally installed application org.gnome.Calculator
+            is in
+            <code class="filename">~/.local/share/flatpak/app/org.gnome.Calculator/current/active/metadata</code>.
+        </p><p>
+            Most aspects of the metadata configuration can be overridden when
+            launching applications, either temporarily via options of the flatpak
+            run command, or permanently with the flatpak override command.
+        </p><p>
+            A metadata file describing the effective configuration is available
+            inside the running sandbox at <code class="filename">/run/user/$UID/flatpak-info</code>.
+        </p></div><div class="refsect1"><a id="idm139925452886848"></a><h2>File format</h2><p>
+            The metadata file is using the same .ini file format that is used for
+            systemd unit files or application .desktop files.
+        </p><div class="refsect2"><a id="idm139925449041600"></a><h3>[Application] or [Runtime]</h3><p>
+                Metadata for applications starts with an [Application] group,
+                metadata for runtimes with a [Runtime] group.
+            </p><p>
+                The following keys can be present in these groups:
+            </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">name</code> (string)</span></dt><dd><p>The name of the application or runtime. This key is mandatory.</p></dd><dt><span class="term"><code class="option">runtime</code> (string)</span></dt><dd><p>The fully qualified name of the runtime that is used by the application. This key is mandatory for applications.</p></dd><dt><span class="term"><code class="option">sdk</code> (string)</span></dt><dd><p>The fully qualified name of the sdk that matches the runtime.</p></dd><dt><span class="term"><code class="option">command</code> (string)</span></dt><dd><p>The command to run. Only relevant for applications.</p></dd></dl></div></div><div class="refsect2"><a id="idm139925452250704"></a><h3>[Context]</h3><p>
+                This group determines various system resources that may be shared
+                with the application when it is run in a flatpak sandbox.
+            </p><p>
+                All keys in this group (and the group itself) are optional.
+            </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">shared</code> (list)</span></dt><dd><p>
+                        List of subsystems to share with the host system.
+                        Possible subsystems: network, ipc.
+                    </p></dd><dt><span class="term"><code class="option">sockets</code> (list)</span></dt><dd><p>
+                        List of well-known sockets to make available in the sandbox.
+                        Possible sockets: x11, wayland, pulseaudio, session-bus, system-bus.
+                        When making a socket available, flatpak also sets
+                        well-known environment variables like DISPLAY or
+                        DBUS_SYSTEM_BUS_ADDRESS to let the application
+                        find sockets that are not in a fixed location.
+                    </p></dd><dt><span class="term"><code class="option">devices</code> (list)</span></dt><dd><p>
+                        List of devices to make available in the sandbox.
+                        Possible values: dri, all.
+                    </p></dd><dt><span class="term"><code class="option">filesystems</code> (list)</span></dt><dd><p>
+                        List of filesystem subsets to make available to the
+                        application. Possible values: home, host, xdg-desktop,
+                        xdg-documents, xdg-download xdg-music, xdg-pictures,
+                        xdg-public-share, xdg-templates, xdg-videos, xdg-run,
+                        an absolute path, or a homedir-relative path like
+                        ~/dir or paths relative to the xdg dirs, like
+                        xdg-download/subdir. The xdg-* arguments can also
+                        specify a subdirectory, such as xdg-pictures/screenshots.
+                        Each entry can have a suffix of
+                        :ro or :rw to indicate if the path should be shared
+                        read-only or read-write (default is read-write).
+                    </p></dd><dt><span class="term"><code class="option">persistent</code> (list)</span></dt><dd><p>
+                      List of homedir-relative paths to make available at
+                      the corresponding path in the per-application home directory,
+                      allowing the locations to be used for persistent data when
+                      the application does not have access to the real homedir.
+                      For instance making ".myapp" persistent would make "~/.myapp"
+                      in the sandbox a bind mount to "~/.var/app/org.my.App/.myapp",
+                      thus allowing an unmodified application to save data in
+                      the per-application location.
+                    </p></dd></dl></div></div><div class="refsect2"><a id="idm139925448247520"></a><h3>[Session Bus Policy]</h3><p>
+                If the <code class="option">sockets</code> key is not allowing full access
+                to the D-Bus session bus, then flatpak provides filtered access.
+            </p><p>
+                The default policy for the session bus only allows the
+                application to own its own application ID and
+                subnames. For instance if the app is called
+                "org.my.App", it can only own "org.my.App" and
+                "org.my.App.*". Its also only allowed to talk to the
+                bus itself (org.freedesktop.DBus) and the portal APIs
+                APIs (bus names of the form org.freedesktop.portal.*).
+            </p><p>
+                Additionally the app is always allowed to reply to
+                messages sent to it, and emit broadcast signals (but
+                these will not reach other sandboxed apps unless they
+                are allowed to talk to your app.
+            </p><p>
+                If the [Session Bus Policy] group is present, it provides
+                policy for session bus access.
+            </p><p>
+                Each key in this group has the form of a D-Bus bus name or
+                prefix thereof, for example <code class="option">org.gnome.SessionManager</code>
+                or <code class="option">org.freedesktop.portal.*</code>
+            </p><p>
+                The possible values for entry are, in increasing order or
+                access:
+            </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">none</code></span></dt><dd><p>
+                        The bus name or names in question is invisible to the application.
+                    </p></dd><dt><span class="term"><code class="option">see</code></span></dt><dd><p>
+                        The bus name or names can be enumerated by the application.
+                    </p></dd><dt><span class="term"><code class="option">talk</code></span></dt><dd><p>
+                        The application can send messages/ and receive replies and signals from the bus name or names.
+                    </p></dd><dt><span class="term"><code class="option">own</code></span></dt><dd><p>
+                        The application can own the bus name or names (as well as all the above).
+                    </p></dd></dl></div></div><div class="refsect2"><a id="idm139925449579072"></a><h3>[System Bus Policy]</h3><p>
+                If the <code class="option">sockets</code> key is not allowing full access
+                to the D-Bus system bus, then flatpak does not make the system
+                bus available unless the [System Bus Policy] group is present
+                and provides a policy for filtered access.
+            </p><p>
+                Entries in this group have the same form as for the [Session Bus Policy] group.
+                However, the app has no permissions by default.
+            </p></div><div class="refsect2"><a id="idm139925453925920"></a><h3>[Environment]</h3><p>
+                The [Environment] group specifies environment variables to set
+                when running the application.
+            </p><p>
+                Entries in this group have the form <code class="option">VAR=VALUE</code>
+                where <code class="option">VAR</code> is the name of an environment variable
+                to set.
+            </p></div><div class="refsect2"><a id="idm139925453961360"></a><h3>[Extension NAME]</h3><p>
+                Runtimes and applications can define extensions, which are optional,
+                additional runtimes to be mounted at a specified location inside
+                the sandbox when they are present on the system. Typical uses for
+                extensions include translations for applications, or debuginfo
+                for sdks. The name of the extension is specified as part of the
+                group heading.
+            </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">directory</code> (string)</span></dt><dd><p>
+                        The relative path at which the extension will be mounted in
+                        the sandbox. If the extension is for an application, the
+                        path is relative to <code class="filename">/app</code>, otherwise
+                        it is relative to <code class="filename">/usr</code>. This key
+                        is mandatory.
+                    </p></dd><dt><span class="term"><code class="option">version</code> (string)</span></dt><dd><p>
+                        The branch to use when looking for the extension. If this is
+                        not specified, it defaults to the branch of the application or
+                        runtime that the extension is for.
+                    </p></dd><dt><span class="term"><code class="option">subdirectories</code> (boolean)</span></dt><dd><p>
+                        If this key is set to true, then flatpak will look for
+                        extensions whose name is a prefix of the extension name, and
+                        mount them at the corresponding name below the subdirectory.
+                    </p></dd><dt><span class="term"><code class="option">no-autodownload</code> (boolean)</span></dt><dd><p>
+                        Whether to automatically download this extension
+                        when updating or installing a 'related' application
+                        or runtime.
+                    </p></dd><dt><span class="term"><code class="option">autodelete</code> (boolean)</span></dt><dd><p>
+                        Whether to automatically delete this extension
+                        when deleting a 'related' application or runtime.
+                    </p></dd></dl></div></div></div><div class="refsect1"><a id="idm139925450131856"></a><h2>Example</h2><pre class="programlisting">
+[Application]
+name=org.gnome.Calculator
+runtime=org.gnome.Platform/x86_64/3.20
+sdk=org.gnome.Sdk/x86_64/3.20
+command=gnome-calculator
+
+[Context]
+shared=network;ipc;
+sockets=x11;wayland;
+filesystems=xdg-run/dconf;~/.config/dconf:ro;
+
+[Session Bus Policy]
+ca.desrt.dconf=talk
+
+[Environment]
+DCONF_USER_CONFIG_DIR=.config/dconf
+
+[Extension org.gnome.Calculator.Locale]
+directory=share/runtime/locale
+subdirectories=true
+
+[Extension org.gnome.Calculator.Debug]
+directory=lib/debug
+</pre></div><div class="refsect1"><a id="idm139925451953200"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-run</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-override</span>(1)</span>
+        </p></div></div><div class="refentry"><div class="refentry.separator"><hr /></div><a id="flatpak-make-current"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>flatpak-make-current — Make a specific version of an app current</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">flatpak make-current</code>  [OPTION...]  APP   BRANCH </p></div></div><div class="refsect1"><a id="idm139925451552848"></a><h2>Description</h2><p>
+            Makes a particular branch of an application current. Only the current branch
+            of an app has its exported files (such as desktop files and icons) made visible
+            to the host.
+        </p><p>
+            When a new branch is installed it will automatically be made current, so this
+            command is often not needed.
+        </p><p>
+            Unless overridden with the --user option, this command creates a
+            system-wide installation.
+        </p></div><div class="refsect1"><a id="idm139925451014912"></a><h2>Options</h2><p>The following options are understood:</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-h</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>
+                    Show help options and exit.
+                </p></dd><dt><span class="term"><code class="option">--user</code></span></dt><dd><p>
+                    Create a per-user installation.
+                </p></dd><dt><span class="term"><code class="option">--system</code></span></dt><dd><p>
+                    Create a system-wide installation.
+                </p></dd><dt><span class="term"><code class="option">--arch=ARCH</code></span></dt><dd><p>
+                    The architecture to install for.
+                </p></dd><dt><span class="term"><code class="option">-v</code>, </span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>
+                    Print debug information during command processing.
+                </p></dd><dt><span class="term"><code class="option">--version</code></span></dt><dd><p>
+                    Print version information and exit.
+                </p></dd></dl></div></div><div class="refsect1"><a id="idm139925453896384"></a><h2>Examples</h2><p>
+            <span class="command"><strong>$ flatpak --user make-current org.gnome.GEdit 3.14</strong></span>
+        </p></div><div class="refsect1"><a id="idm139925453894352"></a><h2>See also</h2><p>
+            <span class="citerefentry"><span class="refentrytitle">flatpak</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-install-app</span>(1)</span>,
+            <span class="citerefentry"><span class="refentrytitle">flatpak-list-apps</span>(1)</span>
+        </p></div></div></div></body></html>
