@@ -122,8 +122,8 @@ flatpak_deploy_finalize (GObject *object)
 
   g_clear_object (&self->dir);
   g_clear_pointer (&self->metadata, g_key_file_unref);
-  g_clear_pointer (&self->system_overrides, g_key_file_unref);
-  g_clear_pointer (&self->user_overrides, g_key_file_unref);
+  g_clear_pointer (&self->system_overrides, flatpak_context_free);
+  g_clear_pointer (&self->user_overrides, flatpak_context_free);
 
   G_OBJECT_CLASS (flatpak_deploy_parent_class)->finalize (object);
 }
