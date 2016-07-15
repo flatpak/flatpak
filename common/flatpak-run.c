@@ -1403,7 +1403,7 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
                           char    ***envp_p,
                           gboolean allowed)
 {
-  char *x11_socket = NULL;
+  g_autofree char *x11_socket = NULL;
   const char *display;
 
   /* Always cover /tmp/.X11-unix, that way we never see the host one in case
@@ -1503,7 +1503,7 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
                                  GArray    *fd_array,
                                  char    ***envp_p)
 {
-  char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
+  g_autofree char *pulseaudio_socket = g_build_filename (g_get_user_runtime_dir (), "pulse/native", NULL);
 
   *envp_p = g_environ_unsetenv (*envp_p, "PULSE_SERVER");
   if (g_file_test (pulseaudio_socket, G_FILE_TEST_EXISTS))
@@ -1537,8 +1537,8 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
 static void
 flatpak_run_add_journal_args (GPtrArray *argv_array)
 {
-  const char *journal_socket_socket = g_strdup ("/run/systemd/journal/socket");
-  const char *journal_stdout_socket = g_strdup ("/run/systemd/journal/stdout");
+  g_autofree char *journal_socket_socket = g_strdup ("/run/systemd/journal/socket");
+  g_autofree char *journal_stdout_socket = g_strdup ("/run/systemd/journal/stdout");
 
   if (g_file_test (journal_socket_socket, G_FILE_TEST_EXISTS))
     {
