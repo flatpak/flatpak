@@ -32,8 +32,6 @@ GLIB_REQS=2.40
 
 AC_USE_SYSTEM_EXTENSIONS
 
-IT_PROG_INTLTOOL([0.35.0])
-
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_DISABLE_STATIC
@@ -47,9 +45,9 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.11 no-define no-dist-gzip dist-xz tar-ustar foreign subdir-objects])
 AC_PROG_SED
 
-AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$PACKAGE_NAME"],[gettext domain])
-
-AM_GLIB_GNU_GETTEXT
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.19.7])
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$PACKAGE", [gettext domain])
 
 # Enable silent rules is available
 AM_SILENT_RULES([yes])

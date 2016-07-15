@@ -42,7 +42,5 @@ fi
 
 autoreconf --force --install --verbose || exit $?
 
-intltoolize || exit 1
-
 cd "$olddir"
 test -n "$NOCONFIGURE" || "$srcdir/configure" "$@"

@@ -33,7 +33,8 @@ polkit_policydir = $(datadir)/polkit-1/actions
 polkit_policy_DATA =					\
 	system-helper/org.freedesktop.Flatpak.policy
 
-@INTLTOOL_POLICY_RULE@
+%.policy: %.policy.in
+	$(AM_V_GEN) $(MSGFMT) --xml -d $(top_srcdir)/po --template $< -o $@ || cp $< $@
 
 EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf system-helper/org.freedesktop.Flatpak.rules.in
 DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy system-helper/org.freedesktop.Flatpak.rules system-helper/flatpak-system-helper.service system-helper/org.freedesktop.Flatpak.SystemHelper.service
