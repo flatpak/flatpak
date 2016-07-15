@@ -60,6 +60,7 @@ enum {
 
 typedef enum {
   UNKNOWN,
+  RPM,
   TAR,
   TAR_GZIP,
   TAR_COMPRESS,
@@ -409,6 +410,22 @@ unzip (GFile   *dir,
   return res;
 }
 
+static gboolean
+unrpm (GFile   *dir,
+       const char *rpm_path,
+       GError **error)
+{
+  gboolean res;
+  const gchar *argv[] = { "sh", "-c", NULL, NULL };
+  char *unrpm_cmdline = g_strdup_printf("rpm2cpio %s | cpio -i -d", rpm_path);
+
+  argv[2] = unrpm_cmdline;
+  res = flatpak_spawnv (dir, NULL, error, argv);
+  g_free(unrpm_cmdline);
+
+  return res;
+}
+
 BuilderArchiveType
 get_type (GFile *archivefile)
 {
@@ -451,6 +468,9 @@ get_type (GFile *archivefile)
 
   if (g_str_has_suffix (lower, ".zip"))
     return ZIP;
+
+  if (g_str_has_suffix (lower, ".rpm"))
+    return RPM;
 
   return UNKNOWN;
 }
@@ -576,6 +596,23 @@ builder_source_archive_extract (BuilderSource  *source,
       if (self->strip_components > 0)
         {
           if (!strip_components_into (dest, zip_dest, self->strip_components, error))
+            return FALSE;
+        }
+    }
+  else if (type == RPM)
+    {
+      g_autoptr(GFile) rpm_dest = NULL;
+
+      rpm_dest = create_uncompress_directory (self, dest, error);
+      if (rpm_dest == NULL)
+        return FALSE;
+
+      if (!unrpm (rpm_dest, archive_path, error))
+        return FALSE;
+
+      if (self->strip_components > 0)
+        {
+          if (!strip_components_into (dest, rpm_dest, self->strip_components, error))
             return FALSE;
         }
     }
