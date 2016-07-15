@@ -22,6 +22,7 @@
 
 #include <locale.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <gio/gio.h>
 #include "permission-store-dbus.h"
@@ -51,12 +52,50 @@ on_name_lost (GDBusConnection *connection,
   exit (1);
 }
 
+static gboolean opt_verbose;
+static gboolean opt_replace;
+
+static GOptionEntry entries[] = {
+  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
+  { "replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace", NULL },
+  { NULL }
+};
+
+static void
+message_handler (const gchar   *log_domain,
+                 GLogLevelFlags log_level,
+                 const gchar   *message,
+                 gpointer       user_data)
+{
+  /* Make this look like normal console output */
+  if (log_level & G_LOG_LEVEL_DEBUG)
+    printf ("XDP: %s\n", message);
+  else
+    printf ("%s: %s\n", g_get_prgname (), message);
+}
+
+static void
+printerr_handler (const gchar *string)
+{
+  int is_tty = isatty (1);
+  const char *prefix = "";
+  const char *suffix = "";
+  if (is_tty)
+    {
+      prefix = "\x1b[31m\x1b[1m"; /* red, bold */
+      suffix = "\x1b[22m\x1b[0m"; /* bold off, color reset */
+    }
+  fprintf (stderr, "%serror: %s%s\n", prefix, suffix, string);
+}
+
 int
 main (int    argc,
       char **argv)
 {
   guint owner_id;
   GMainLoop *loop;
+  GOptionContext *context;
+  g_autoptr(GError) error = NULL;
 
   setlocale (LC_ALL, "");
 
@@ -66,9 +105,25 @@ main (int    argc,
 
   flatpak_migrate_from_xdg_app ();
 
+  g_set_printerr_handler (printerr_handler);
+
+  context = g_option_context_new ("- permission store");
+  g_option_context_add_main_entries (context, entries, NULL);
+  if (!g_option_context_parse (context, &argc, &argv, &error))
+    {
+      g_printerr ("Option parsing failed: %s", error->message);
+      return 1;
+    }
+
+  if (opt_verbose)
+    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+
+  g_set_prgname (argv[0]);
+
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
                              "org.freedesktop.impl.portal.PermissionStore",
-                             G_BUS_NAME_OWNER_FLAGS_NONE,
+                             G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT | (opt_replace ? G_BUS_NAME_OWNER_FLAGS_REPLACE : 0),
+
                              on_bus_acquired,
                              on_name_acquired,
                              on_name_lost,
