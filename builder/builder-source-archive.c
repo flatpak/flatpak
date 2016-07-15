@@ -60,6 +60,7 @@ enum {
 
 typedef enum {
   UNKNOWN,
+  RPM,
   TAR,
   TAR_GZIP,
   TAR_COMPRESS,
@@ -409,6 +410,22 @@ unzip (GFile   *dir,
   return res;
 }
 
+static gboolean
+unrpm (GFile   *dir,
+       const char *rpm_path,
+       GError **error)
+{
+  gboolean res;
+  const gchar *argv[] = { "sh", "-c", NULL, NULL };
+  char *unrpm_cmdline = g_strdup_printf("rpm2cpio %s | cpio -i -d", rpm_path);
+
+  argv[2] = unrpm_cmdline;
+  res = flatpak_spawnv (dir, NULL, error, argv);
+  g_free(unrpm_cmdline);
+
+  return res;
+}
+
 BuilderArchiveType
 get_type (GFile *archivefile)
 {
@@ -451,6 +468,9 @@ get_type (GFile *archivefile)
 
   if (g_str_has_suffix (lower, ".zip"))
     return ZIP;
+
+  if (g_str_has_suffix (lower, ".rpm"))
+    return RPM;
 
   return UNKNOWN;
 }
@@ -508,6 +528,31 @@ strip_components_into (GFile   *dest,
   return TRUE;
 }
 
+static GFile *
+create_uncompress_directory (BuilderSourceArchive *self, GFile *dest, GError **error)
+{
+  GFile *uncompress_dest = NULL;
+
+  if (self->strip_components > 0)
+    {
+      g_autoptr(GFile) tmp_dir_template = g_file_get_child (dest, ".uncompressXXXXXX");
+      g_autofree char *tmp_dir_path = g_file_get_path (tmp_dir_template);
+
+      if (g_mkdtemp (tmp_dir_path) == NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create uncompress directory");
+          return NULL;
+        }
+
+      uncompress_dest = g_file_new_for_path (tmp_dir_path);
+    }
+  else
+    {
+      uncompress_dest = g_object_ref (dest);
+    }
+
+  return uncompress_dest;
+}
 
 static gboolean
 builder_source_archive_extract (BuilderSource  *source,
@@ -541,23 +586,9 @@ builder_source_archive_extract (BuilderSource  *source,
     {
       g_autoptr(GFile) zip_dest = NULL;
 
-      if (self->strip_components > 0)
-        {
-          g_autoptr(GFile) tmp_dir_template = g_file_get_child (dest, ".uncompressXXXXXX");
-          g_autofree char *tmp_dir_path = g_file_get_path (tmp_dir_template);
-
-          if (g_mkdtemp (tmp_dir_path) == NULL)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create uncompress directory");
-              return FALSE;
-            }
-
-          zip_dest = g_file_new_for_path (tmp_dir_path);
-        }
-      else
-        {
-          zip_dest = g_object_ref (dest);
-        }
+      zip_dest = create_uncompress_directory (self, dest, error);
+      if (zip_dest == NULL)
+        return FALSE;
 
       if (!unzip (zip_dest, error, archive_path, NULL))
         return FALSE;
@@ -565,6 +596,23 @@ builder_source_archive_extract (BuilderSource  *source,
       if (self->strip_components > 0)
         {
           if (!strip_components_into (dest, zip_dest, self->strip_components, error))
+            return FALSE;
+        }
+    }
+  else if (type == RPM)
+    {
+      g_autoptr(GFile) rpm_dest = NULL;
+
+      rpm_dest = create_uncompress_directory (self, dest, error);
+      if (rpm_dest == NULL)
+        return FALSE;
+
+      if (!unrpm (rpm_dest, archive_path, error))
+        return FALSE;
+
+      if (self->strip_components > 0)
+        {
+          if (!strip_components_into (dest, rpm_dest, self->strip_components, error))
             return FALSE;
         }
     }
