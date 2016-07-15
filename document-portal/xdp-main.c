@@ -1065,11 +1065,13 @@ set_one_signal_handler (int    sig,
 static gboolean opt_verbose;
 static gboolean opt_daemon;
 static gboolean opt_replace;
+static gboolean opt_version;
 
 static GOptionEntry entries[] = {
-  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
+  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information", NULL },
   { "daemon", 'd', 0, G_OPTION_ARG_NONE, &opt_daemon, "Run in background", NULL },
   { "replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace", NULL },
+  { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version and exit", NULL },
   { NULL }
 };
 
@@ -1127,6 +1129,12 @@ main (int    argc,
     {
       g_printerr ("Option parsing failed: %s", error->message);
       return 1;
+    }
+
+  if (opt_version)
+    {
+      g_print ("%s\n", PACKAGE_STRING);
+      exit (EXIT_SUCCESS);
     }
 
   if (opt_daemon)
