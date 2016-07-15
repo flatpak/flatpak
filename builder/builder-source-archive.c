@@ -508,6 +508,31 @@ strip_components_into (GFile   *dest,
   return TRUE;
 }
 
+static GFile *
+create_uncompress_directory (BuilderSourceArchive *self, GFile *dest, GError **error)
+{
+  GFile *uncompress_dest = NULL;
+
+  if (self->strip_components > 0)
+    {
+      g_autoptr(GFile) tmp_dir_template = g_file_get_child (dest, ".uncompressXXXXXX");
+      g_autofree char *tmp_dir_path = g_file_get_path (tmp_dir_template);
+
+      if (g_mkdtemp (tmp_dir_path) == NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create uncompress directory");
+          return NULL;
+        }
+
+      uncompress_dest = g_file_new_for_path (tmp_dir_path);
+    }
+  else
+    {
+      uncompress_dest = g_object_ref (dest);
+    }
+
+  return uncompress_dest;
+}
 
 static gboolean
 builder_source_archive_extract (BuilderSource  *source,
@@ -541,23 +566,9 @@ builder_source_archive_extract (BuilderSource  *source,
     {
       g_autoptr(GFile) zip_dest = NULL;
 
-      if (self->strip_components > 0)
-        {
-          g_autoptr(GFile) tmp_dir_template = g_file_get_child (dest, ".uncompressXXXXXX");
-          g_autofree char *tmp_dir_path = g_file_get_path (tmp_dir_template);
-
-          if (g_mkdtemp (tmp_dir_path) == NULL)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create uncompress directory");
-              return FALSE;
-            }
-
-          zip_dest = g_file_new_for_path (tmp_dir_path);
-        }
-      else
-        {
-          zip_dest = g_object_ref (dest);
-        }
+      zip_dest = create_uncompress_directory (self, dest, error);
+      if (zip_dest == NULL)
+        return FALSE;
 
       if (!unzip (zip_dest, error, archive_path, NULL))
         return FALSE;
