@@ -108,13 +108,6 @@
                     Create a per-user installation.
                 </para></listitem>
             </varlistentry>
-            <varlistentry>
-                <term><option>--user</option></term>
-
-                <listitem><para>
-                    Create a per-user installation.
-                </para></listitem>
-            </varlistentry>
 
             <varlistentry>
                 <term><option>--system</option></term>
