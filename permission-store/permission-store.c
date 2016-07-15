@@ -54,10 +54,12 @@ on_name_lost (GDBusConnection *connection,
 
 static gboolean opt_verbose;
 static gboolean opt_replace;
+static gboolean opt_version;
 
 static GOptionEntry entries[] = {
-  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
+  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information", NULL },
   { "replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace", NULL },
+  { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version and exit", NULL },
   { NULL }
 };
 
@@ -113,6 +115,12 @@ main (int    argc,
     {
       g_printerr ("Option parsing failed: %s", error->message);
       return 1;
+    }
+
+  if (opt_version)
+    {
+      g_print ("%s\n", PACKAGE_STRING);
+      exit (EXIT_SUCCESS);
     }
 
   if (opt_verbose)
