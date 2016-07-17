@@ -153,9 +153,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (opt_show_commit)
     {
-      if (first)
-        first = FALSE;
-      else
+      if (!first)
         g_print (" ");
 
       g_print ("%s", commit);

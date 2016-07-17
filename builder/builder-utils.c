@@ -262,10 +262,7 @@ migrate_locale_dir (GFile      *source_dir,
   while ((next = g_file_enumerator_next_file (dir_enum, NULL, &temp_error)))
     {
       g_autoptr(GFileInfo) child_info = next;
-      g_autoptr(GFile) child = NULL;
       g_autoptr(GFile) locale_subdir = NULL;
-
-      child = g_file_get_child (source_dir, g_file_info_get_name (child_info));
 
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY)
         {

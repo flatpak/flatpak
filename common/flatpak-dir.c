@@ -4299,14 +4299,13 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
                              GCancellable *cancellable,
                              GError      **error)
 {
-  g_autofree char *refspec_prefix = NULL;
   g_autoptr(GHashTable) remote_refs = NULL;
   GPtrArray *matched_refs;
 
   if (!flatpak_dir_ensure_repo (self, NULL, error))
     return NULL;
 
-  refspec_prefix = g_strconcat (remote, ":.", NULL);
+  g_strconcat (remote, ":.", NULL);
 
   if (!flatpak_dir_remote_list_refs (self, remote,
                                      &remote_refs, cancellable, error))
@@ -4333,15 +4332,12 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              GCancellable *cancellable,
                              GError      **error)
 {
-  g_autofree char *refspec_prefix = NULL;
   g_autofree char *remote_ref = NULL;
   g_autoptr(GHashTable) remote_refs = NULL;
   g_autoptr(GError) my_error = NULL;
 
   if (!flatpak_dir_ensure_repo (self, NULL, error))
     return NULL;
-
-  refspec_prefix = g_strconcat (remote, ":.", NULL);
 
   if (!flatpak_dir_remote_list_refs (self, remote,
                                      &remote_refs, cancellable, error))

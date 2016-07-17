@@ -2087,7 +2087,6 @@ builder_manifest_run (BuilderManifest *self,
                       GError         **error)
 {
   g_autoptr(GPtrArray) args = NULL;
-  g_autofree char *commandline = NULL;
   g_autofree char *build_dir_path = NULL;
   g_autofree char *ccache_dir_path = NULL;
   g_auto(GStrv) env = NULL;
@@ -2149,8 +2148,6 @@ builder_manifest_run (BuilderManifest *self,
   for (i = 0; i < argc; i++)
     g_ptr_array_add (args, g_strdup (argv[i]));
   g_ptr_array_add (args, NULL);
-
-  commandline = g_strjoinv (" ", (char **) args->pdata);
 
   if (execvp ((char *) args->pdata[0], (char **) args->pdata) == -1)
     {
