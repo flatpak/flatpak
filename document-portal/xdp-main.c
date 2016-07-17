@@ -622,7 +622,6 @@ portal_add_named (GDBusMethodInvocation *invocation,
   GDBusMessage *message;
   GUnixFDList *fd_list;
   g_autofree char *id = NULL;
-  g_autofree char *proc_path = NULL;
   int parent_fd_id, parent_fd, fds_len;
   const int *fds;
   char parent_path_buffer[PATH_MAX + 1];
