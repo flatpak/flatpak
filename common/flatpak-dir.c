@@ -4305,8 +4305,6 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
   if (!flatpak_dir_ensure_repo (self, NULL, error))
     return NULL;
 
-  g_strconcat (remote, ":.", NULL);
-
   if (!flatpak_dir_remote_list_refs (self, remote,
                                      &remote_refs, cancellable, error))
     return NULL;
