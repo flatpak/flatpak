@@ -192,6 +192,12 @@ is_elf_file (const char *path,
   if (!S_ISREG (stbuf.st_mode))
     return FALSE;
 
+  /* Self-extracting .zip files can be ELF-executables, but shouldn't be
+     treated like them - for example, stripping them breaks their
+     operation */
+  if (g_str_has_suffix (filename, ".zip"))
+    return FALSE;
+
   if ((strstr (filename, ".so.") != NULL ||
        g_str_has_suffix (filename, ".so")) ||
       (stbuf.st_mode & 0111) != 0)
