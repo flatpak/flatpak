@@ -1670,6 +1670,7 @@ builder_manifest_finish (BuilderManifest *self,
   g_autoptr(GFile) locale_parent_dir = NULL;
   g_autofree char *app_dir_path = g_file_get_path (app_dir);
   g_autofree char *json = NULL;
+  g_autofree char *commandline = NULL;
   g_autoptr(GPtrArray) args = NULL;
   g_autoptr(GSubprocess) subp = NULL;
   int i;
@@ -1725,6 +1726,9 @@ builder_manifest_finish (BuilderManifest *self,
 
       g_ptr_array_add (args, g_strdup (app_dir_path));
       g_ptr_array_add (args, NULL);
+
+      commandline = g_strjoinv (" ", (char **) args->pdata);
+      g_print ("Running: %s\n", commandline);
 
       subp =
         g_subprocess_newv ((const gchar * const *) args->pdata,
