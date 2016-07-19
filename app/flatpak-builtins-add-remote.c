@@ -203,11 +203,12 @@ load_options (char *filename,
 {
   g_autoptr(GError) error = NULL;
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_autofree char *expanded_filename = flatpak_expand_path (filename);
   char *str;
 
-  if (!g_key_file_load_from_file (keyfile, filename, 0, &error))
+  if (!g_key_file_load_from_file (keyfile, expanded_filename, 0, &error))
     {
-      g_printerr ("Can't load file %s: %s\n", filename, error->message);
+      g_printerr ("Can't load file %s: %s\n", expanded_filename, error->message);
       exit (1);
     }
 
