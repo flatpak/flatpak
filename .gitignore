@@ -3,6 +3,7 @@
 *.lo
 .deps
 .libs
+ABOUT-NLS
 INSTALL
 Makefile
 Makefile.in
@@ -10,6 +11,7 @@ aclocal.m4
 autom4te.cache/
 test-driver
 compile
+config.rpath
 config.guess
 config.h
 config.log
@@ -60,6 +62,9 @@ Flatpak-1.0.*
 /doc/reference/gtkdoc-check.test
 /doc/reference/gtkdoc-check.trs
 /doc/reference/version.xml
+/doc/flatpak-docs.html
+/doc/flatpak-docs.xml
+/doc/flatpak-metadata.5
 /test-doc-portal
 /test-doc-portal.log
 /test-doc-portal.trs
@@ -80,6 +85,11 @@ po/.intltool-merge-cache
 po/Makefile.in.in
 po/POTFILES
 po/Flatpak.pot
+po/Makevars.template
+po/Rules-quot
+po/*.sed
+po/*.header
+po/*.sin
 system-helper/org.freedesktop.Flatpak.policy
 system-helper/org.freedesktop.Flatpak.rules
 flatpak-bwrap
