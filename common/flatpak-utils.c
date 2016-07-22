@@ -2201,7 +2201,8 @@ extract_appstream (OstreeRepo   *repo,
           component_id_text_node = flatpak_xml_find (component_id, NULL, NULL);
 
           component_id_text = g_strstrip (g_strdup (component_id_text_node->text));
-          if (!g_str_has_suffix (component_id_text, ".desktop"))
+          if (!g_str_has_prefix (component_id_text, id) ||
+              !g_str_has_suffix (component_id_text, ".desktop"))
             {
               component = component->next_sibling;
               continue;
@@ -2221,7 +2222,8 @@ extract_appstream (OstreeRepo   *repo,
               g_clear_error (&my_error);
             }
 
-          component = component->next_sibling;
+          /* We updated icons for our component, so we're done */
+          break;
         }
     }
 
