@@ -221,9 +221,11 @@ text_percent_internal (const char *text,
 
   if (percentage == -1)
     {
-      const guint spacelen = ncolumns - input_textlen;
       fwrite (text, 1, input_textlen, stdout);
-      printpad (spaces, n_spaces, spacelen);
+
+      /* Overwrite remaining space, if any */
+      if (ncolumns > input_textlen)
+        printpad (spaces, n_spaces, ncolumns - input_textlen);
     }
   else
     {
