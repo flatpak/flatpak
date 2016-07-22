@@ -701,6 +701,7 @@
                 <listitem><para>
                     Sign the commit with this GPG key.
                     Used when exporting the build results.
+                    This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 

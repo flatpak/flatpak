@@ -115,6 +115,7 @@
 
                 <listitem><para>
                     Exclude files matching PATTERN from the commit.
+                    This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 
@@ -123,6 +124,7 @@
 
                 <listitem><para>
                     Don't exclude files matching PATTERN from the commit, even if they match the --export patterns.
+                    This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 
@@ -158,7 +160,8 @@
                 <term><option>--gpg-sign=KEYID</option></term>
 
                 <listitem><para>
-                    Sign the commit with this GPG key
+                    Sign the commit with this GPG key.
+                    This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 

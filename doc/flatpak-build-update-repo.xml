@@ -81,7 +81,8 @@
                 <term><option>--gpg-sign=KEYID</option></term>
 
                 <listitem><para>
-                    Sign the commit with this GPG key
+                    Sign the commit with this GPG key.
+                    This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 
