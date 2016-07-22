@@ -184,7 +184,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>modules</option> (array of objects or string)</term>
-                    <listitem><para>An array of object specifying the modules to be built in order.
+                    <listitem><para>An array of objects specifying the modules to be built in order.
                     String members in the array are interpreted as the name of a separate json file that contains a module.
                     See below for details.</para></listitem>
                 </varlistentry>
@@ -349,7 +349,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>post-install</option> (array of strings)</term>
-                    <listitem><para>An array of shell command that are run after the install phase. Can for example
+                    <listitem><para>An array of shell commands that are run after the install phase. Can for example
                     clean up the install dir, or install extra files.
                     </para></listitem>
                 </varlistentry>
@@ -366,7 +366,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>modules</option> (array of objects or strings)</term>
-                    <listitem><para>An array of object specifying nested modules to be built before this one.
+                    <listitem><para>An array of objects specifying nested modules to be built before this one.
                     String members in the array are interpreted as names of a separate json file that contains a module.</para></listitem>
                 </varlistentry>
             </variablelist>
@@ -390,7 +390,7 @@
                     </varlistentry>
                     <varlistentry>
                         <term><option>url</option> (string)</term>
-                        <listitem><para>The url of a remote archive that will be downloaded. This overrides path if both are specified.</para></listitem>
+                        <listitem><para>The URL of a remote archive that will be downloaded. This overrides path if both are specified.</para></listitem>
                     </varlistentry>
                     <varlistentry>
                         <term><option>sha256</option> (string)</term>
@@ -461,7 +461,7 @@
                     </varlistentry>
                     <varlistentry>
                         <term><option>url</option> (string)</term>
-                        <listitem><para>The url of a remote file that will be downloaded and copied into the source dir. This overrides path if both are specified.</para></listitem>
+                        <listitem><para>The URL of a remote file that will be downloaded and copied into the source dir. This overrides path if both are specified.</para></listitem>
                     </varlistentry>
                     <varlistentry>
                         <term><option>sha256</option> (string)</term>
@@ -504,7 +504,7 @@
             <refsect3>
                 <title>Shell sources</title>
                 <para>
-                    This is a to create/modify the sources by running shell commands.
+                    This is a way to create/modify the sources by running shell commands.
                 </para>
                 <variablelist>
                     <varlistentry>
