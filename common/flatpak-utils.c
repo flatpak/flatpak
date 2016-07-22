@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -3576,4 +3577,42 @@ flatpak_get_current_locale_subpaths (void)
   g_ptr_array_add (subpaths, NULL);
 
   return (char **)g_ptr_array_free (subpaths, FALSE);
+}
+
+char *
+flatpak_expand_path (char const *path)
+{
+  if (g_path_is_absolute (path) || path[0] != '~')
+    {
+      return g_strdup (path);
+    }
+  else if (!path[1] || path[1] == '/')
+    {
+      return g_build_filename (g_get_home_dir(), path + 1, NULL);
+    }
+  else
+    {
+      char *user = g_strdup (path + 1);
+      char *slash_pos = strchr (user, '/');
+      struct passwd *pw;
+
+      if (slash_pos)
+        *slash_pos = '\0';
+
+      pw = getpwnam (user);
+      g_free (user);
+
+      if (pw)
+        {
+          slash_pos = strchr (path, '/');
+          if (!slash_pos)
+            return g_strdup (pw->pw_dir);
+
+          return g_strconcat (pw->pw_dir, slash_pos, NULL);
+        }
+      else
+        {
+          return g_strdup (path);
+        }
+    }
 }

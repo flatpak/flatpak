@@ -41,6 +41,8 @@ gint flatpak_strcmp0_ptr (gconstpointer a,
 const char * flatpak_path_match_prefix (const char *pattern,
                                         const char *path);
 
+char *flatpak_expand_path (char const *path);
+
 const char * flatpak_get_arch (void);
 const char ** flatpak_get_arches (void);
 
