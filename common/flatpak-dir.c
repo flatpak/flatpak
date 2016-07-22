@@ -1936,6 +1936,7 @@ out:
 
 gboolean
 flatpak_dir_run_triggers (FlatpakDir   *self,
+                          gboolean	errors_are_fatal,
                           GCancellable *cancellable,
                           GError      **error)
 {
@@ -1979,6 +1980,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
              at that exact path. */
           g_autofree char *basedir_orig = g_file_get_path (self->basedir);
           g_autofree char *basedir = canonicalize_file_name (basedir_orig);
+          gint retv;
 
           g_debug ("running trigger %s", name);
 
@@ -2006,16 +2008,25 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
           g_ptr_array_add (argv_array, g_strdup (basedir));
           g_ptr_array_add (argv_array, NULL);
 
-          if (!g_spawn_sync ("/",
-                             (char **) argv_array->pdata,
-                             NULL,
-                             G_SPAWN_SEARCH_PATH,
-                             NULL, NULL,
-                             NULL, NULL,
-                             NULL, &trigger_error))
+          g_spawn_sync ("/",
+                        (char **) argv_array->pdata,
+                        NULL,
+                        G_SPAWN_SEARCH_PATH,
+                        NULL, NULL,
+                        NULL, NULL,
+                        &retv, &trigger_error);
+          g_spawn_check_exit_status (retv, &trigger_error);
+
+          if (trigger_error)
             {
               g_warning ("Error running trigger %s: %s", name, trigger_error->message);
-              g_clear_error (&trigger_error);
+              if (errors_are_fatal)
+                {
+                  temp_error = trigger_error;
+                  goto out;
+                }
+              else
+                g_clear_error (&trigger_error);
             }
         }
 
@@ -2023,13 +2034,13 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
     }
 
   if (temp_error != NULL)
-    {
-      g_propagate_error (error, temp_error);
-      goto out;
-    }
+    goto out;
 
   ret = TRUE;
 out:
+  if (temp_error != NULL)
+    g_propagate_error (error, temp_error);
+
   return ret;
 }
 
@@ -2550,7 +2561,7 @@ flatpak_dir_update_exports (FlatpakDir   *self,
   if (!flatpak_remove_dangling_symlinks (exports, cancellable, error))
     goto out;
 
-  if (!flatpak_dir_run_triggers (self, cancellable, error))
+  if (!flatpak_dir_run_triggers (self, TRUE, cancellable, error))
     goto out;
 
   ret = TRUE;
