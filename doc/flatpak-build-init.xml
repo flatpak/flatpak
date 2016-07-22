@@ -113,6 +113,7 @@
 
                 <listitem><para>
                     Add a tag to the metadata file.
+                    This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 
@@ -121,6 +122,7 @@
 
                 <listitem><para>
                     When using --writable-sdk, in addition to the sdk, also install the specified extension.
+                    This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
 
