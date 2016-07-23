@@ -148,11 +148,11 @@ flatpak_option_context_new_with_commands (FlatpakCommand *commands)
             {
               g_string_append_printf (summary, "\n  %s", commands->name);
               if (commands->description)
-                g_string_append_printf (summary, "%*s%s", (int) (20 - strlen (commands->name)), "", commands->description);
+                g_string_append_printf (summary, "%*s%s", (int) (20 - strlen (commands->name)), "", _(commands->description));
             }
           else
             {
-              g_string_append_printf (summary, "\n%s", commands->name);
+              g_string_append_printf (summary, "\n%s", _(commands->name));
             }
         }
       commands++;
