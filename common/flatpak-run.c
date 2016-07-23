@@ -208,8 +208,12 @@ flatpak_context_share_from_string (const char *string, GError **error)
   FlatpakContextShares shares = flatpak_context_bitmask_from_string (string, flatpak_context_shares);
 
   if (shares == 0)
-    g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                 _("Unknown share type %s, valid types are: network, ipc\n"), string);
+    {
+      g_autofree char *values = g_strjoinv (", ", (char **)flatpak_context_shares);
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   _("Unknown share type %s, valid types are: %s"), string, values);
+    }
+
   return shares;
 }
 
@@ -230,17 +234,20 @@ flatpak_context_shared_to_args (FlatpakContextShares shares,
 static FlatpakPolicy
 flatpak_policy_from_string (const char *string, GError **error)
 {
-  if (strcmp (string, "none") == 0)
-    return FLATPAK_POLICY_NONE;
-  if (strcmp (string, "see") == 0)
-    return FLATPAK_POLICY_SEE;
-  if (strcmp (string, "talk") == 0)
-    return FLATPAK_POLICY_TALK;
-  if (strcmp (string, "own") == 0)
-    return FLATPAK_POLICY_OWN;
+  const char *policies[] = { "none", "see", "talk", "own", NULL };
+  int i;
+  g_autofree char *values = NULL;
 
+  for (i = 0; policies[i]; i++)
+    {
+      if (strcmp (string, policies[i]) == 0)
+        return i;
+    }
+
+  values = g_strjoinv (", ", (char **)policies);
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               _("Unknown policy type %s, valid types are: none,see,talk,own\n"), string);
+               _("Unknown policy type %s, valid types are: %s"), string, values);
+
   return -1;
 }
 
@@ -287,8 +294,12 @@ flatpak_context_socket_from_string (const char *string, GError **error)
   FlatpakContextSockets sockets = flatpak_context_bitmask_from_string (string, flatpak_context_sockets);
 
   if (sockets == 0)
-    g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                 _("Unknown socket type %s, valid types are: x11,wayland,pulseaudio,session-bus,system-bus\n"), string);
+    {
+      g_autofree char *values = g_strjoinv (", ", (char **)flatpak_context_sockets);
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   _("Unknown socket type %s, valid types are: %s"), string, values);
+    }
+
   return sockets;
 }
 
@@ -312,8 +323,11 @@ flatpak_context_device_from_string (const char *string, GError **error)
   FlatpakContextDevices devices = flatpak_context_bitmask_from_string (string, flatpak_context_devices);
 
   if (devices == 0)
-    g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                 _("Unknown device type %s, valid types are: dri\n"), string);
+    {
+      g_autofree char *values = g_strjoinv (", ", (char **)flatpak_context_devices);
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   _("Unknown device type %s, valid types are: %s"), string, values);
+    }
   return devices;
 }
 
@@ -557,7 +571,7 @@ flatpak_context_verify_filesystem (const char *filesystem_and_mode,
     return TRUE;
 
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               _("Unknown filesystem location %s, valid types are: host,home,xdg-*[/...],~/dir,/dir,\n"), filesystem);
+               _("Unknown filesystem location %s, valid types are: host, home, xdg-*[/...], ~/dir, /dir"), filesystem);
   return FALSE;
 }
 
