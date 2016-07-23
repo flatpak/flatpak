@@ -194,7 +194,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
               if (!found)
                 {
                   g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
-                  return flatpak_fail (error, _("Requested extension %s not installed\n"), requested_extension);
+                  return flatpak_fail (error, _("Requested extension %s not installed"), requested_extension);
                 }
             }
           g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);

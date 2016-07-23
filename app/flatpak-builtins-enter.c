@@ -177,7 +177,7 @@ flatpak_builtin_enter (int           argc,
 
   pid = atoi (pid_s);
   if (pid <= 0)
-    return flatpak_fail (error, _("Invalid pid %s\n"), pid_s);
+    return flatpak_fail (error, _("Invalid pid %s"), pid_s);
 
   environment_path = g_strdup_printf ("/proc/%d/environ", pid);
   if (!g_file_get_contents (environment_path, &environment, &environment_len, error))
@@ -190,12 +190,12 @@ flatpak_builtin_enter (int           argc,
 
       pid_ns_len = readlink (path, pid_ns, sizeof (pid_ns) - 1);
       if (pid_ns_len <= 0)
-        return flatpak_fail (error, _("Invalid %s namespace for pid %d\n"), ns_name[i], pid);
+        return flatpak_fail (error, _("Invalid %s namespace for pid %d"), ns_name[i], pid);
       pid_ns[pid_ns_len] = 0;
 
       self_ns_len = readlink (self_path, self_ns, sizeof (self_ns) - 1);
       if (self_ns_len <= 0)
-        return flatpak_fail (error, _("Invalid %s namespace for self\n"), ns_name[i]);
+        return flatpak_fail (error, _("Invalid %s namespace for self"), ns_name[i]);
       self_ns[self_ns_len] = 0;
 
       if (strcmp (self_ns, pid_ns) == 0)
