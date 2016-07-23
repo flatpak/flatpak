@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -44,17 +46,17 @@ static char *opt_files;
 static char *opt_metadata;
 
 static GOptionEntry options[] = {
-  { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, "One line subject", "SUBJECT" },
-  { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description", "BODY" },
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Architecture to export for (must be host compatible)", "ARCH" },
-  { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Commit runtime (/usr), not /app" },
-  { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, "Update the appstream branch" },
-  { "files", 0, 0, G_OPTION_ARG_STRING, &opt_files, "Use alternative directory for the files", "SUBDIR"},
-  { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, "Use alternative file for the metadata", "FILE"},
-  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, "GPG Key ID to sign the commit with", "KEY-ID"},
-  { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, "Files to exclude", "PATTERN"},
-  { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, "Excluded files to include", "PATTERN"},
-  { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
+  { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, N_("One line subject"), N_("SUBJECT") },
+  { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, N_("Full description"), N_("BODY") },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Architecture to export for (must be host compatible)"), N_("ARCH") },
+  { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Commit runtime (/usr), not /app"), NULL },
+  { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
+  { "files", 0, 0, G_OPTION_ARG_STRING, &opt_files, N_("Use alternative directory for the files"), N_("SUBDIR") },
+  { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, N_("Use alternative file for the metadata"), N_("FILE") },
+  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
+  { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, N_("Files to exclude"), N_("PATTERN") },
+  { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, N_("Excluded files to include"), N_("PATTERN") },
+  { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
 
   { NULL }
 };
@@ -251,7 +253,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
   CommitData commit_data = {0};
 
-  context = g_option_context_new ("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory");
+  context = g_option_context_new (_("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     goto out;

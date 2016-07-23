@@ -27,6 +27,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -49,7 +51,8 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
   g_autoptr(FlatpakContext) overrides = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  context = g_option_context_new ("APP - Override settings for application");
+  context = g_option_context_new (_("APP - Override settings for application"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   arg_context = flatpak_context_new ();
   g_option_context_add_group (context, flatpak_context_get_options (arg_context));

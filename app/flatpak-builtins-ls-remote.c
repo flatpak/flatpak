@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -38,11 +40,11 @@ static gboolean opt_only_updates;
 static char *opt_arch;
 
 static GOptionEntry options[] = {
-  { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show arches and branches", NULL },
-  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "Show only runtimes", NULL },
-  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "Show only apps", NULL },
-  { "updates", 0, 0, G_OPTION_ARG_NONE, &opt_only_updates, "Show only those where updates are available", NULL },
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Limit to this arch (* for all)", "ARCH" },
+  { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show arches and branches"), NULL },
+  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Show only runtimes"), NULL },
+  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Show only apps"), NULL },
+  { "updates", 0, 0, G_OPTION_ARG_NONE, &opt_only_updates, N_("Show only those where updates are available"), NULL },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Limit to this arch (* for all)"), N_("ARCH") },
   { NULL }
 };
 
@@ -63,7 +65,8 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   const char **arches = flatpak_get_arches ();
   const char *opt_arches[] = {NULL, NULL};
 
-  context = g_option_context_new (" REMOTE - Show available runtimes and applications");
+  context = g_option_context_new (_(" REMOTE - Show available runtimes and applications"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;

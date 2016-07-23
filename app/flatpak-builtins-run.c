@@ -27,6 +27,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -45,14 +47,14 @@ static char *opt_runtime;
 static char *opt_runtime_version;
 
 static GOptionEntry options[] = {
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
-  { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to run", "COMMAND" },
-  { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, "Branch to use", "BRANCH" },
-  { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, "Use development runtime", NULL },
-  { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, "Runtime to use", "RUNTIME" },
-  { "runtime-version", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_version, "Runtime version to use", "VERSION" },
-  { "log-session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_session_bus, "Log session bus calls", NULL },
-  { "log-system-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_system_bus, "Log system bus calls", NULL },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
+  { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, N_("Command to run"), N_("COMMAND") },
+  { "branch", 0, 0, G_OPTION_ARG_STRING, &opt_branch, N_("Branch to use"), N_("BRANCH") },
+  { "devel", 'd', 0, G_OPTION_ARG_NONE, &opt_devel, N_("Use development runtime"), NULL },
+  { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Runtime to use"), N_("RUNTIME") },
+  { "runtime-version", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_version, N_("Runtime version to use"), N_("VERSION") },
+  { "log-session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_session_bus, N_("Log session bus calls"), NULL },
+  { "log-system-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_system_bus, N_("Log system bus calls"), NULL },
   { NULL }
 };
 
@@ -68,7 +70,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   int rest_argv_start, rest_argc;
   g_autoptr(FlatpakContext) arg_context = NULL;
 
-  context = g_option_context_new ("APP [args...] - Run an app");
+  context = g_option_context_new (_("APP [args...] - Run an app"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   rest_argc = 0;
   for (i = 1; i < argc; i++)

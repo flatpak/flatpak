@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -35,8 +37,8 @@ static char *opt_ref;
 static gboolean opt_oci = FALSE;
 
 static GOptionEntry options[] = {
-  { "ref", 0, 0, G_OPTION_ARG_STRING, &opt_ref, "Override the ref used for the imported bundle", "REF" },
-  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, "Import oci image instead of flatpak bundle"},
+  { "ref", 0, 0, G_OPTION_ARG_STRING, &opt_ref, N_("Override the ref used for the imported bundle"), N_("REF") },
+  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Import oci image instead of flatpak bundle"), NULL },
   { NULL }
 };
 
@@ -279,7 +281,8 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   const char *location;
   const char *filename;
 
-  context = g_option_context_new ("LOCATION FILENAME - Import a file bundle into a local repository");
+  context = g_option_context_new (_("LOCATION FILENAME - Import a file bundle into a local repository"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;

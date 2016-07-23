@@ -25,6 +25,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -37,10 +39,10 @@ static gboolean opt_system;
 static gboolean opt_show_disabled;
 
 static GOptionEntry options[] = {
-  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Show user installations", NULL },
-  { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Show system-wide installations", NULL },
-  { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, "Show remote details", NULL },
-  { "show-disabled", 0, 0, G_OPTION_ARG_NONE, &opt_show_disabled, "Show disabled remotes", NULL },
+  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
+  { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
+  { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show remote details"), NULL },
+  { "show-disabled", 0, 0, G_OPTION_ARG_NONE, &opt_show_disabled, N_("Show disabled remotes"), NULL },
   { NULL }
 };
 
@@ -54,7 +56,8 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   guint i = 0, n_dirs = 0, j;
   FlatpakTablePrinter *printer;
 
-  context = g_option_context_new (" - List remote repositories");
+  context = g_option_context_new (_(" - List remote repositories"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;

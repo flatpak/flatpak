@@ -27,6 +27,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -146,7 +148,8 @@ flatpak_builtin_enter (int           argc,
   uid = getuid ();
   gid = getgid ();
 
-  context = g_option_context_new ("MONITORPID [COMMAND [args...]] - Run a command inside a running sandbox");
+  context = g_option_context_new (_("MONITORPID [COMMAND [args...]] - Run a command inside a running sandbox"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   rest_argc = 0;
   for (i = 1; i < argc; i++)

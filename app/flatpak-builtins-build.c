@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -38,9 +40,9 @@ static char *opt_build_dir;
 static char **opt_bind_mounts;
 
 static GOptionEntry options[] = {
-  { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, "Use non-devel runtime", NULL },
-  { "bind-mount", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_bind_mounts, "Add bind mount", "DEST=SRC" },
-  { "build-dir", 0, 0, G_OPTION_ARG_STRING, &opt_build_dir, "Start build in this directory", "DIR" },
+  { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Use non-devel runtime"), NULL },
+  { "bind-mount", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_bind_mounts, N_("Add bind mount"), N_("DEST=SRC") },
+  { "build-dir", 0, 0, G_OPTION_ARG_STRING, &opt_build_dir, N_("Start build in this directory"), N_("DIR") },
   { NULL }
 };
 
@@ -85,7 +87,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   gboolean custom_usr;
   g_auto(GStrv) runtime_ref_parts = NULL;
 
-  context = g_option_context_new ("DIRECTORY [COMMAND [args...]] - Build in directory");
+  context = g_option_context_new (_("DIRECTORY [COMMAND [args...]] - Build in directory"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   rest_argc = 0;
   for (i = 1; i < argc; i++)

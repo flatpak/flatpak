@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -34,7 +36,7 @@
 static char *opt_arch;
 
 static GOptionEntry options[] = {
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to make current for", "ARCH" },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to make current for"), N_("ARCH") },
   { NULL }
 };
 
@@ -49,7 +51,8 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   g_autofree char *ref = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
-  context = g_option_context_new ("APP BRANCH - Make branch of application current");
+  context = g_option_context_new (_("APP BRANCH - Make branch of application current"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;

@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -39,12 +41,12 @@ static gboolean opt_generate_deltas;
 static gint opt_prune_depth = -1;
 
 static GOptionEntry options[] = {
-  { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, "A nice name to use for this repository", "TITLE" },
-  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, "GPG Key ID to sign the summary with", "KEY-ID"},
-  { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, "GPG Homedir to use when looking for keyrings", "HOMEDIR"},
-  { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, "Generate delta files", NULL },
-  { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, "Prune unused objects", NULL },
-  { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, "Only traverse DEPTH parents for each commit (default: -1=infinite)", "DEPTH" },
+  { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this repository"), N_("TITLE") },
+  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
+  { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+  { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, N_("Generate delta files"), NULL },
+  { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, N_("Prune unused objects"), NULL },
+  { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, N_("Only traverse DEPTH parents for each commit (default: -1=infinite)"), N_("DEPTH") },
   { NULL }
 };
 
@@ -58,7 +60,8 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
   const char *location;
   g_autoptr(GError) my_error = NULL;
 
-  context = g_option_context_new ("LOCATION - Update repository metadata");
+  context = g_option_context_new (_("LOCATION - Update repository metadata"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;

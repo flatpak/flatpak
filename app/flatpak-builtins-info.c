@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -41,14 +43,14 @@ static gboolean opt_show_origin;
 static char *opt_arch;
 
 static GOptionEntry options[] = {
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
-  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Show user installations", NULL },
-  { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, "Show system-wide installations", NULL },
-  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, "List installed runtimes", },
-  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, "List installed applications", },
-  { "show-ref", 'r', 0, G_OPTION_ARG_NONE, &opt_show_ref, "Show ref", },
-  { "show-commit", 'c', 0, G_OPTION_ARG_NONE, &opt_show_commit, "Show commit", },
-  { "show-origin", 'o', 0, G_OPTION_ARG_NONE, &opt_show_origin, "Show origin", },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
+  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
+  { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
+  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
+  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
+  { "show-ref", 'r', 0, G_OPTION_ARG_NONE, &opt_show_ref, N_("Show ref"), NULL },
+  { "show-commit", 'c', 0, G_OPTION_ARG_NONE, &opt_show_commit, N_("Show commit"), NULL },
+  { "show-origin", 'o', 0, G_OPTION_ARG_NONE, &opt_show_origin, N_("Show origin"), NULL },
   { NULL }
 };
 
@@ -69,7 +71,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   gboolean is_app = FALSE;
   gboolean first = TRUE;
 
-  context = g_option_context_new ("NAME [BRANCH] - Get info about installed app and/or runtime");
+  context = g_option_context_new (_("NAME [BRANCH] - Get info about installed app and/or runtime"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;

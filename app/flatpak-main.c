@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#include <glib/gi18n.h>
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
 #include "libgsystem.h"
@@ -52,61 +53,66 @@ typedef struct
 } FlatpakCommand;
 
 static FlatpakCommand commands[] = {
-  { " Manage installed apps and runtimes" },
-  { "install", "Install an application or runtime from a remote", flatpak_builtin_install, flatpak_complete_install },
-  { "update", "Update an installed application or runtime", flatpak_builtin_update, flatpak_complete_update },
-  { "uninstall", "Uninstall an installed application or runtime", flatpak_builtin_uninstall, flatpak_complete_uninstall },
-  { "list", "List installed apps and/or runtimes", flatpak_builtin_list, flatpak_complete_list },
-  { "info", "Show info for installed app or runtime", flatpak_builtin_info, flatpak_complete_info },
+   /* translators: please keep the leading space */
+  { N_(" Manage installed apps and runtimes") },
+  { "install", N_("Install an application or runtime from a remote"), flatpak_builtin_install, flatpak_complete_install },
+  { "update", N_("Update an installed application or runtime"), flatpak_builtin_update, flatpak_complete_update },
+  { "uninstall", N_("Uninstall an installed application or runtime"), flatpak_builtin_uninstall, flatpak_complete_uninstall },
+  { "list", N_("List installed apps and/or runtimes"), flatpak_builtin_list, flatpak_complete_list },
+  { "info", N_("Show info for installed app or runtime"), flatpak_builtin_info, flatpak_complete_info },
 
-  { "\n Running applications" },
-  { "run", "Run an application", flatpak_builtin_run, flatpak_complete_run },
-  { "override", "Override permissions for an application", flatpak_builtin_override, flatpak_complete_override },
-  { "make-current", "Specify default version to run", flatpak_builtin_make_current_app, flatpak_complete_make_current_app },
-  { "enter", "Enter the namespace of a running application", flatpak_builtin_enter, flatpak_complete_enter },
+   /* translators: please keep the leading newline and space */
+  { N_("\n Running applications") },
+  { "run", N_("Run an application"), flatpak_builtin_run, flatpak_complete_run },
+  { "override", N_("Override permissions for an application"), flatpak_builtin_override, flatpak_complete_override },
+  { "make-current", N_("Specify default version to run"), flatpak_builtin_make_current_app, flatpak_complete_make_current_app },
+  { "enter", N_("Enter the namespace of a running application"), flatpak_builtin_enter, flatpak_complete_enter },
 
-  { "\n Manage file access" },
-  { "document-export", "Grant an application access to a specific file", flatpak_builtin_document_export, flatpak_complete_document_export },
-  { "document-unexport", "Revoke access to a specific file", flatpak_builtin_document_unexport, flatpak_complete_document_unexport },
-  { "document-info", "Show information about a specific file", flatpak_builtin_document_info, flatpak_complete_document_info },
-  { "document-list", "List exported files", flatpak_builtin_document_list, flatpak_complete_document_list },
+   /* translators: please keep the leading newline and space */
+  { N_("\n Manage file access") },
+  { "document-export", N_("Grant an application access to a specific file"), flatpak_builtin_document_export, flatpak_complete_document_export },
+  { "document-unexport", N_("Revoke access to a specific file"), flatpak_builtin_document_unexport, flatpak_complete_document_unexport },
+  { "document-info", N_("Show information about a specific file"), flatpak_builtin_document_info, flatpak_complete_document_info },
+  { "document-list", N_("List exported files"), flatpak_builtin_document_list, flatpak_complete_document_list },
 
-  { "\n Manage remote repositories" },
-  { "remote-add", "Add a new remote repository (by URL)", flatpak_builtin_add_remote, flatpak_complete_add_remote },
-  { "remote-modify", "Modify properties of a configured remote", flatpak_builtin_modify_remote, flatpak_complete_modify_remote },
-  { "remote-delete", "Delete a configured remote", flatpak_builtin_delete_remote, flatpak_complete_delete_remote },
-  { "remote-list", "List all configured remotes", flatpak_builtin_list_remotes, flatpak_complete_list_remotes },
-  { "remote-ls", "List contents of a configured remote", flatpak_builtin_ls_remote, flatpak_complete_ls_remote },
+   /* translators: please keep the leading newline and space */
+  { N_("\n Manage remote repositories") },
+  { "remote-add", N_("Add a new remote repository (by URL)"), flatpak_builtin_add_remote, flatpak_complete_add_remote },
+  { "remote-modify", N_("Modify properties of a configured remote"), flatpak_builtin_modify_remote, flatpak_complete_modify_remote },
+  { "remote-delete", N_("Delete a configured remote"), flatpak_builtin_delete_remote, flatpak_complete_delete_remote },
+  { "remote-list", N_("List all configured remotes"), flatpak_builtin_list_remotes, flatpak_complete_list_remotes },
+  { "remote-ls", N_("List contents of a configured remote"), flatpak_builtin_ls_remote, flatpak_complete_ls_remote },
 
-  { "\n Build applications" },
-  { "build-init", "Initialize a directory for building", flatpak_builtin_build_init, flatpak_complete_build_init },
-  { "build", "Run a build command inside the build dir", flatpak_builtin_build, flatpak_complete_build  },
-  { "build-finish", "Finish a build dir for export", flatpak_builtin_build_finish, flatpak_complete_build_finish },
-  { "build-export", "Export a build dir to a repository", flatpak_builtin_build_export, flatpak_complete_build_export },
-  { "build-bundle", "Create a bundle file from a build directory", flatpak_builtin_build_bundle, flatpak_complete_build_bundle },
-  { "build-import-bundle", "Import a bundle file", flatpak_builtin_build_import, flatpak_complete_build_import },
-  { "build-sign", "Sign an application or runtime", flatpak_builtin_build_sign, flatpak_complete_build_sign },
-  { "build-update-repo", "Update the summary file in a repository", flatpak_builtin_build_update_repo, flatpak_complete_build_update_repo },
+   /* translators: please keep the leading newline and space */
+  { N_("\n Build applications") },
+  { "build-init", N_("Initialize a directory for building"), flatpak_builtin_build_init, flatpak_complete_build_init },
+  { "build", N_("Run a build command inside the build dir"), flatpak_builtin_build, flatpak_complete_build  },
+  { "build-finish", N_("Finish a build dir for export"), flatpak_builtin_build_finish, flatpak_complete_build_finish },
+  { "build-export", N_("Export a build dir to a repository"), flatpak_builtin_build_export, flatpak_complete_build_export },
+  { "build-bundle", N_("Create a bundle file from a build directory"), flatpak_builtin_build_bundle, flatpak_complete_build_bundle },
+  { "build-import-bundle", N_("Import a bundle file"), flatpak_builtin_build_import, flatpak_complete_build_import },
+  { "build-sign", N_("Sign an application or runtime"), flatpak_builtin_build_sign, flatpak_complete_build_sign },
+  { "build-update-repo", N_("Update the summary file in a repository"), flatpak_builtin_build_update_repo, flatpak_complete_build_update_repo },
 
   { NULL }
 };
 
 GOptionEntry global_entries[] = {
-  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
-  { "help", '?', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, "Show help options", NULL, NULL },
+  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, N_("Print debug information during command processing"), NULL },
+  { "help", '?', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, N_("Show help options"), NULL, NULL },
   { NULL }
 };
 
 static GOptionEntry empty_entries[] = {
-  { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version information and exit", NULL },
-  { "default-arch", 0, 0, G_OPTION_ARG_NONE, &opt_default_arch, "Print default arch and exit", NULL },
-  { "supported-arches", 0, 0, G_OPTION_ARG_NONE, &opt_supported_arches, "Print supported arches and exit", NULL },
+  { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, N_("Print version information and exit"), NULL },
+  { "default-arch", 0, 0, G_OPTION_ARG_NONE, &opt_default_arch, N_("Print default arch and exit"), NULL },
+  { "supported-arches", 0, 0, G_OPTION_ARG_NONE, &opt_supported_arches, N_("Print supported arches and exit"), NULL },
   { NULL }
 };
 
 GOptionEntry user_entries[] = {
-  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Work on user installations", NULL },
-  { "system", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_user, "Work on system-wide installations (default)", NULL },
+  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Work on user installations"), NULL },
+  { "system", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_user, N_("Work on system-wide installations (default)"), NULL },
   { NULL }
 };
 
@@ -129,9 +135,10 @@ flatpak_option_context_new_with_commands (FlatpakCommand *commands)
   GOptionContext *context;
   GString *summary;
 
-  context = g_option_context_new ("COMMAND");
+  context = g_option_context_new (_("COMMAND"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
-  summary = g_string_new ("Builtin Commands:");
+  summary = g_string_new (_("Builtin Commands:"));
 
   while (commands->name != NULL)
     {
@@ -417,6 +424,9 @@ main (int    argc,
   int ret;
 
   setlocale (LC_ALL, "");
+  bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+  bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+  textdomain (GETTEXT_PACKAGE);
 
   g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, message_handler, NULL);
 

@@ -34,4 +34,5 @@ flatpak_SOURCES = \
 	$(NULL)
 
 flatpak_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(LIBARCHIVE_LIBS) libglnx.la libflatpak-common.la
-flatpak_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(LIBARCHIVE_CFLAGS)
+flatpak_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(LIBARCHIVE_CFLAGS) \
+        -DLOCALEDIR=\"$(localedir)\"

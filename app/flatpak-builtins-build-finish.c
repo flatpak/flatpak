@@ -26,6 +26,8 @@
 #include <string.h>
 #include <ftw.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -37,8 +39,8 @@ static char *opt_command;
 static gboolean opt_no_exports;
 
 static GOptionEntry options[] = {
-  { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, "Command to set", "COMMAND" },
-  { "no-exports", 0, 0, G_OPTION_ARG_NONE, &opt_no_exports, "Don't process exports" },
+  { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, N_("Command to set"), N_("COMMAND") },
+  { "no-exports", 0, 0, G_OPTION_ARG_NONE, &opt_no_exports, N_("Don't process exports"), NULL },
   { NULL }
 };
 
@@ -349,7 +351,8 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(FlatpakContext) arg_context = NULL;
 
-  context = g_option_context_new ("DIRECTORY - Convert a directory to a bundle");
+  context = g_option_context_new (_("DIRECTORY - Convert a directory to a bundle"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   arg_context = flatpak_context_new ();
   g_option_context_add_group (context, flatpak_context_get_options (arg_context));

@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 #include "document-portal/xdp-dbus.h"
@@ -50,18 +52,18 @@ static gboolean opt_forbid_grant_permissions = FALSE;
 static char **opt_apps = NULL;
 
 static GOptionEntry options[] = {
-  { "unique", 'u', 0, G_OPTION_ARG_NONE, &opt_unique, "Create a unique document reference", NULL },
-  { "transient", 't', 0, G_OPTION_ARG_NONE, &opt_transient, "Make the document transient for the current session", NULL },
-  { "noexist", 'n', 0, G_OPTION_ARG_NONE, &opt_noexist, "Don't require the file to exist already", NULL },
-  { "allow-read", 'r', 0, G_OPTION_ARG_NONE, &opt_allow_read, "Give the app read permissions", NULL },
-  { "allow-write", 'w', 0, G_OPTION_ARG_NONE, &opt_allow_write, "Give the app write permissions", NULL },
-  { "allow-delete", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_delete, "Give the app delete permissions", NULL },
-  { "allow-grant-permission", 'g', 0, G_OPTION_ARG_NONE, &opt_allow_grant_permissions, "Give the app permissions to grant further permissions", NULL },
-  { "forbid-read", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_read, "Revoke read permissions of the app", NULL },
-  { "forbid-write", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_write, "Revoke write permissions of the app", NULL },
-  { "forbid-delete", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_delete, "Revoke delete permissions of the app", NULL },
-  { "forbid-grant-permission", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_grant_permissions, "Revoke the permission to grant further permissions", NULL },
-  { "app", 'a', 0, G_OPTION_ARG_STRING_ARRAY, &opt_apps, "Add permissions for this app", "APPID" },
+  { "unique", 'u', 0, G_OPTION_ARG_NONE, &opt_unique, N_("Create a unique document reference"), NULL },
+  { "transient", 't', 0, G_OPTION_ARG_NONE, &opt_transient, N_("Make the document transient for the current session"), NULL },
+  { "noexist", 'n', 0, G_OPTION_ARG_NONE, &opt_noexist, N_("Don't require the file to exist already"), NULL },
+  { "allow-read", 'r', 0, G_OPTION_ARG_NONE, &opt_allow_read, N_("Give the app read permissions"), NULL },
+  { "allow-write", 'w', 0, G_OPTION_ARG_NONE, &opt_allow_write, N_("Give the app write permissions"), NULL },
+  { "allow-delete", 'd', 0, G_OPTION_ARG_NONE, &opt_allow_delete, N_("Give the app delete permissions"), NULL },
+  { "allow-grant-permission", 'g', 0, G_OPTION_ARG_NONE, &opt_allow_grant_permissions, N_("Give the app permissions to grant further permissions"), NULL },
+  { "forbid-read", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_read, N_("Revoke read permissions of the app"), NULL },
+  { "forbid-write", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_write, N_("Revoke write permissions of the app"), NULL },
+  { "forbid-delete", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_delete, N_("Revoke delete permissions of the app"), NULL },
+  { "forbid-grant-permission", 0, 0, G_OPTION_ARG_NONE, &opt_forbid_grant_permissions, N_("Revoke the permission to grant further permissions"), NULL },
+  { "app", 'a', 0, G_OPTION_ARG_STRING_ARRAY, &opt_apps, N_("Add permissions for this app"), N_("APPID") },
   { NULL }
 };
 
@@ -86,7 +88,8 @@ flatpak_builtin_document_export (int argc, char **argv,
   GUnixFDList *fd_list = NULL;
   const char *doc_id;
 
-  context = g_option_context_new ("FILE - Export a file to apps");
+  context = g_option_context_new (_("FILE - Export a file to apps"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
                                      FLATPAK_BUILTIN_FLAG_NO_DIR,

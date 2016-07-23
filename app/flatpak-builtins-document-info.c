@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 #include "document-portal/xdp-dbus.h"
@@ -59,7 +61,8 @@ flatpak_builtin_document_info (int argc, char **argv,
   g_autoptr(GVariant) apps = NULL;
   g_autoptr(GVariantIter) iter = NULL;
 
-  context = g_option_context_new ("FILE - Get information about an exported file");
+  context = g_option_context_new (_("FILE - Get information about an exported file"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
                                      FLATPAK_BUILTIN_FLAG_NO_DIR,

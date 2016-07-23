@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
@@ -40,13 +42,13 @@ static gboolean opt_writable_sdk;
 static gboolean opt_update;
 
 static GOptionEntry options[] = {
-  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Arch to use", "ARCH" },
-  { "var", 'v', 0, G_OPTION_ARG_STRING, &opt_var, "Initialize var from named runtime", "RUNTIME" },
-  { "writable-sdk", 'w', 0, G_OPTION_ARG_NONE, &opt_writable_sdk, "Initialize /usr with a writable copy of the sdk",  },
-  { "tag", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_tags, "Add a tag",  },
-  { "sdk-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sdk_extensions, "include this sdk extension in /usr",  "EXTENSION"},
-  { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, "Where to store sdk (defaults to 'usr')", "DIR" },
-  { "update", 0, 0, G_OPTION_ARG_NONE, &opt_update, "Re-initialize the sdk/var",  },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
+  { "var", 'v', 0, G_OPTION_ARG_STRING, &opt_var, N_("Initialize var from named runtime"), N_("RUNTIME") },
+  { "writable-sdk", 'w', 0, G_OPTION_ARG_NONE, &opt_writable_sdk, N_("Initialize /usr with a writable copy of the sdk"), NULL },
+  { "tag", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_tags, N_("Add a tag"), N_("TAG") },
+  { "sdk-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sdk_extensions, N_("Include this sdk extension in /usr"), N_("EXTENSION") },
+  { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, N_("Where to store sdk (defaults to 'usr')"), N_("DIR") },
+  { "update", 0, 0, G_OPTION_ARG_NONE, &opt_update, N_("Re-initialize the sdk/var"), NULL },
   { NULL }
 };
 
@@ -73,7 +75,8 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autofree char *sdk_ref = NULL;
   int i;
 
-  context = g_option_context_new ("DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building");
+  context = g_option_context_new (_("DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;

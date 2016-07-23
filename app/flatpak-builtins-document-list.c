@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <glib/gi18n.h>
+
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 #include "document-portal/xdp-dbus.h"
@@ -52,7 +54,8 @@ flatpak_builtin_document_list (int argc, char **argv,
   const char *id;
   const char *path;
 
-  context = g_option_context_new ("[APPID] - List exported files");
+  context = g_option_context_new (_("[APPID] - List exported files"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv,
                                      FLATPAK_BUILTIN_FLAG_NO_DIR,
