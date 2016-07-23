@@ -110,7 +110,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   if (rest_argc == 0)
-    return usage_error (context, "DIRECTORY must be specified", error);
+    return usage_error (context, _("DIRECTORY must be specified"), error);
 
   directory = argv[rest_argv_start];
   if (rest_argc >= 2)
@@ -204,7 +204,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       char *split = strchr (opt_bind_mounts[i], '=');
       if (split == NULL)
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Missing '=' in bind mount option '%s'", opt_bind_mounts[i]);
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                       _("Missing '=' in bind mount option '%s'"), opt_bind_mounts[i]);
           return FALSE;
         }
 
@@ -229,7 +230,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   if (execvpe (flatpak_get_bwrap (), (char **) argv_array->pdata, envp) == -1)
     {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                   _("Unable to start app"));
       return FALSE;
     }
 

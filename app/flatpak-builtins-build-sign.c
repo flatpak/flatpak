@@ -68,7 +68,7 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
 
   if (argc < 3)
     {
-      usage_error (context, "LOCATION and DIRECTORY must be specified", error);
+      usage_error (context, _("LOCATION and DIRECTORY must be specified"), error);
       return FALSE;
     }
 
@@ -81,13 +81,13 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
     branch = "master";
 
   if (!flatpak_is_valid_name (id))
-    return flatpak_fail (error, "'%s' is not a valid name", id);
+    return flatpak_fail (error, _("'%s' is not a valid name"), id);
 
   if (!flatpak_is_valid_branch (branch))
-    return flatpak_fail (error, "'%s' is not a valid branch name", branch);
+    return flatpak_fail (error, _("'%s' is not a valid branch name"), branch);
 
   if (opt_gpg_key_ids == NULL)
-    return flatpak_fail (error, "No gpg key ids specified");
+    return flatpak_fail (error, _("No gpg key ids specified"));
 
   if (opt_runtime)
     ref = flatpak_build_runtime_ref (id, branch, opt_arch);

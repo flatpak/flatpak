@@ -335,7 +335,7 @@ flatpak_run (int      argc,
       if (command_name != NULL)
         {
           g_set_error (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "Unknown command '%s'", command_name);
+                       _("Unknown command '%s'"), command_name);
         }
       else
         {
@@ -343,7 +343,7 @@ flatpak_run (int      argc,
           if (flatpak_option_context_parse (context, empty_entries, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, &error))
             {
               g_set_error_literal (&error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                                   "No command specified");
+                                   _("No command specified"));
             }
         }
 
@@ -460,7 +460,7 @@ main (int    argc,
           prefix = "\x1b[31m\x1b[1m"; /* red, bold */
           suffix = "\x1b[22m\x1b[0m"; /* bold off, color reset */
         }
-      g_printerr ("%serror: %s%s\n", prefix, suffix, error->message);
+      g_printerr ("%s%s %s%s\n", prefix, _("error:"), suffix, error->message);
       g_error_free (error);
     }
 

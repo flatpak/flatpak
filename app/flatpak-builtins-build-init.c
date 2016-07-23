@@ -82,7 +82,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     return FALSE;
 
   if (argc < 5)
-    return usage_error (context, "RUNTIME must be specified", error);
+    return usage_error (context, _("RUNTIME must be specified"), error);
 
   directory = argv[1];
   app_id = argv[2];
@@ -92,16 +92,16 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     branch = argv[5];
 
   if (!flatpak_is_valid_name (app_id))
-    return flatpak_fail (error, "'%s' is not a valid application name", app_id);
+    return flatpak_fail (error, _("'%s' is not a valid application name"), app_id);
 
   if (!flatpak_is_valid_name (runtime))
-    return flatpak_fail (error, "'%s' is not a valid runtime name", runtime);
+    return flatpak_fail (error, _("'%s' is not a valid runtime name"), runtime);
 
   if (!flatpak_is_valid_name (sdk))
-    return flatpak_fail (error, "'%s' is not a valid sdk name", sdk);
+    return flatpak_fail (error, _("'%s' is not a valid sdk name"), sdk);
 
   if (!flatpak_is_valid_branch (branch))
-    return flatpak_fail (error, "'%s' is not a valid branch name", branch);
+    return flatpak_fail (error, _("'%s' is not a valid branch name"), branch);
 
   runtime_ref = flatpak_build_untyped_ref (runtime, branch, opt_arch);
   sdk_ref = flatpak_build_untyped_ref (sdk, branch, opt_arch);
@@ -123,7 +123,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   if (!opt_update &&
       g_file_query_exists (files_dir, cancellable))
-    return flatpak_fail (error, "Build directory %s already initialized", directory);
+    return flatpak_fail (error, _("Build directory %s already initialized"), directory);
 
   if (opt_writable_sdk)
     {
@@ -194,7 +194,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
               if (!found)
                 {
                   g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
-                  return flatpak_fail (error, "Requested extension %s not installed\n", requested_extension);
+                  return flatpak_fail (error, _("Requested extension %s not installed\n"), requested_extension);
                 }
             }
           g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);

@@ -276,10 +276,10 @@ flatpak_builtin_add_remote (int argc, char **argv,
     load_options (opt_from, &gpg_data);
 
   if (argc < 2)
-    return usage_error (context, "NAME must be specified", error);
+    return usage_error (context, _("NAME must be specified"), error);
 
   if (argc < 3 && opt_url == NULL)
-    return usage_error (context, "LOCATION must be specified", error);
+    return usage_error (context, _("LOCATION must be specified"), error);
 
   remote_name = argv[1];
 
@@ -292,7 +292,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
       if (opt_if_not_exists)
         return TRUE; /* Do nothing */
 
-      return flatpak_fail (error, "Remote %s already exists", remote_name);
+      return flatpak_fail (error, _("Remote %s already exists"), remote_name);
     }
 
   if (opt_url == NULL)
@@ -377,12 +377,12 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "remote NAME must be specified", error);
+    return usage_error (context, _("Remote NAME must be specified"), error);
 
   remote_name = argv[1];
 
   if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, NULL, NULL))
-    return flatpak_fail (error, "No remote %s", remote_name);
+    return flatpak_fail (error, _("No remote %s"), remote_name);
 
   config = get_config_from_opts (dir, remote_name);
 

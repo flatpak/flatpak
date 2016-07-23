@@ -75,7 +75,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
     opt_app = opt_runtime = TRUE;
 
   if (argc < 2)
-    return usage_error (context, "REMOTE must be specified", error);
+    return usage_error (context, _("REMOTE must be specified"), error);
 
   repository = argv[1];
 

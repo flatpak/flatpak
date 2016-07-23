@@ -62,7 +62,7 @@ flatpak_builtin_document_unexport (int argc, char **argv,
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "FILE must be specified", error);
+    return usage_error (context, _("FILE must be specified"), error);
 
   file = argv[1];
 
@@ -82,7 +82,7 @@ flatpak_builtin_document_unexport (int argc, char **argv,
 
   if (strcmp (doc_id, "") == 0)
     {
-      g_print ("Not exported\n");
+      g_print (_("Not exported\n"));
       return TRUE;
     }
 

@@ -97,7 +97,7 @@ flatpak_builtin_document_export (int argc, char **argv,
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "FILE must be specified", error);
+    return usage_error (context, _("FILE must be specified"), error);
 
   file = argv[1];
   dirname = g_path_get_dirname (file);

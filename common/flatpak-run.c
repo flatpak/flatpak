@@ -209,7 +209,7 @@ flatpak_context_share_from_string (const char *string, GError **error)
 
   if (shares == 0)
     g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                 "Unknown share type %s, valid types are: network, ipc\n", string);
+                 _("Unknown share type %s, valid types are: network, ipc\n"), string);
   return shares;
 }
 
@@ -240,7 +240,7 @@ flatpak_policy_from_string (const char *string, GError **error)
     return FLATPAK_POLICY_OWN;
 
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               "Unknown policy type %s, valid types are: none,see,talk,own\n", string);
+               _("Unknown policy type %s, valid types are: none,see,talk,own\n"), string);
   return -1;
 }
 
@@ -276,7 +276,8 @@ flatpak_verify_dbus_name (const char *name, GError **error)
   if (g_dbus_is_name (name_part) && !g_dbus_is_unique_name (name_part))
     return TRUE;
 
-  g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED, "Invalid dbus name %s\n", name);
+  g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+               _("Invalid dbus name %s\n"), name);
   return FALSE;
 }
 
@@ -287,7 +288,7 @@ flatpak_context_socket_from_string (const char *string, GError **error)
 
   if (sockets == 0)
     g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                 "Unknown socket type %s, valid types are: x11,wayland,pulseaudio,session-bus,system-bus\n", string);
+                 _("Unknown socket type %s, valid types are: x11,wayland,pulseaudio,session-bus,system-bus\n"), string);
   return sockets;
 }
 
@@ -312,7 +313,7 @@ flatpak_context_device_from_string (const char *string, GError **error)
 
   if (devices == 0)
     g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                 "Unknown device type %s, valid types are: dri\n", string);
+                 _("Unknown device type %s, valid types are: dri\n"), string);
   return devices;
 }
 
@@ -556,7 +557,7 @@ flatpak_context_verify_filesystem (const char *filesystem_and_mode,
     return TRUE;
 
   g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-               "Unknown filesystem location %s, valid types are: host,home,xdg-*[/...],~/dir,/dir,\n", filesystem);
+               _("Unknown filesystem location %s, valid types are: host,home,xdg-*[/...],~/dir,/dir,\n"), filesystem);
   return FALSE;
 }
 
@@ -767,7 +768,8 @@ option_env_cb (const gchar *option_name,
 
   if (split == NULL || split[0] == NULL || split[0][0] == 0 || split[1] == NULL)
     {
-      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED, "Invalid env format %s", value);
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   _("Invalid env format %s"), value);
       return FALSE;
     }
 
@@ -1361,13 +1363,15 @@ create_tmp_fd (const char *contents,
   fd = g_mkstemp (template);
   if (fd < 0)
     {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to create temporary file");
+      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           _("Failed to create temporary file"));
       return -1;
     }
 
   if (unlink (template) != 0)
     {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to unlink temporary file");
+      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           _("Failed to unlink temporary file"));
       close (fd);
       return -1;
     }
@@ -1384,7 +1388,8 @@ create_tmp_fd (const char *contents,
           if (saved_errno == EINTR)
             continue;
 
-          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (saved_errno), "Failed to write to temporary file");
+          g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (saved_errno),
+                               _("Failed to write to temporary file"));
           close (fd);
           return -1;
         }
@@ -2415,7 +2420,8 @@ add_app_info_args (GPtrArray      *argv_array,
       fd = open (tmp_path, O_RDONLY);
       if (fd == -1)
         {
-          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to open temp file");
+          g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                               _("Failed to open temp file"));
           return FALSE;
         }
       unlink (tmp_path);
@@ -2558,7 +2564,8 @@ add_dbus_proxy_args (GPtrArray *argv_array,
 
       if (pipe (sync_fds) < 0)
         {
-          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to create sync pipe");
+          g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                               _("Unable to create sync pipe"));
           return FALSE;
         }
 
@@ -2593,7 +2600,8 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   /* Sync with proxy, i.e. wait until its listening on the sockets */
   if (read (sync_fds[0], &x, 1) != 1)
     {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Failed to sync with dbus proxy");
+      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           _("Failed to sync with dbus proxy"));
 
       close (sync_fds[0]);
       close (sync_fds[1]);
@@ -3248,7 +3256,8 @@ flatpak_run_app (const char     *app_ref,
     {
       if (execvpe (flatpak_get_bwrap (), (char **) real_argv_array->pdata, envp) == -1)
         {
-          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start app");
+          g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                               _("Unable to start app"));
           return FALSE;
         }
       /* Not actually reached... */

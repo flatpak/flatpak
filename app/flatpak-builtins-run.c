@@ -93,7 +93,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     return FALSE;
 
   if (rest_argc == 0)
-    return usage_error (context, "APP must be specified", error);
+    return usage_error (context, _("APP must be specified"), error);
 
   app = argv[rest_argv_start];
 

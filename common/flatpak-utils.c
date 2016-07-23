@@ -26,6 +26,8 @@
 #include "flatpak-portal-error.h"
 #include "flatpak-run.h"
 
+#include <glib/gi18n.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -688,7 +690,7 @@ flatpak_find_files_dir_for_ref (const char   *ref,
     deploy = flatpak_dir_get_if_deployed (system_dir, ref, NULL, cancellable);
   if (deploy == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "%s not installed", ref);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("%s not installed"), ref);
       return NULL;
     }
 

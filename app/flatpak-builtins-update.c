@@ -165,7 +165,7 @@ flatpak_builtin_update (int           argc,
     return FALSE;
 
   if (argc < 1)
-    return usage_error (context, "NAME must be specified", error);
+    return usage_error (context, _("NAME must be specified"), error);
 
   if (argc >= 2)
     name = argv[1];
@@ -205,7 +205,7 @@ flatpak_builtin_update (int           argc,
           if (branch != NULL && strcmp (parts[3], branch) != 0)
             continue;
 
-          g_print ("Updating application %s %s\n", parts[1], parts[3]);
+          g_print (_("Updating application %s %s\n"), parts[1], parts[3]);
 
           if (!do_update (dir, refs[i],
                           cancellable, error))
@@ -239,10 +239,10 @@ flatpak_builtin_update (int           argc,
           if (branch != NULL && strcmp (parts[3], branch) != 0)
             continue;
 
-          g_print ("Updating runtime %s %s\n", parts[1], parts[3]);
+          g_print (_("Updating runtime %s %s\n"), parts[1], parts[3]);
           if (!do_update (dir, refs[i], cancellable, &local_error))
             {
-              g_printerr ("error updating: %s\n", local_error->message);
+              g_printerr (_("Error updating: %s\n"), local_error->message);
               failed = TRUE;
             }
         }
@@ -251,7 +251,7 @@ flatpak_builtin_update (int           argc,
   flatpak_dir_cleanup_removed (dir, cancellable, NULL);
 
   if (failed)
-    return flatpak_fail (error, "One or more updates failed");
+    return flatpak_fail (error, _("One or more updates failed"));
 
   return TRUE;
 }

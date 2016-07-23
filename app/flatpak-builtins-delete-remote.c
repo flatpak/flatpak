@@ -56,7 +56,7 @@ flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "NAME must be specified", error);
+    return usage_error (context, _("NAME must be specified"), error);
 
   remote_name = argv[1];
 

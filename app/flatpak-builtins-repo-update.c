@@ -67,7 +67,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "LOCATION must be specified", error);
+    return usage_error (context, _("LOCATION must be specified"), error);
 
   location = argv[1];
 
@@ -81,12 +81,12 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       !flatpak_repo_set_title (repo, opt_title, error))
     return FALSE;
 
-  g_print ("Updating appstream branch\n");
+  g_print (_("Updating appstream branch\n"));
   if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
     {
       if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
         {
-          g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");
+          g_print (_("Warning: Can't find appstream-builder, unable to update appstream branch\n"));
         }
       else
         {
@@ -153,10 +153,10 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
 
           /* From empty */
-          g_print ("looking for %s\n", commit);
+          g_print (_("Looking for %s\n"), commit);
           if (!g_hash_table_contains (all_deltas_hash, commit))
             {
-              g_print ("Generating from-empty delta for %s (%s)\n", ref, commit);
+              g_print (_("Generating from-empty delta for %s (%s)\n"), ref, commit);
               if (!ostree_repo_static_delta_generate (repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
                                                       NULL, commit, NULL,
                                                       params,
@@ -175,7 +175,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
               if (!g_hash_table_contains (all_deltas_hash, from_parent))
                 {
-                  g_print ("Generating from-parent delta for %s (%s)\n", ref, from_parent);
+                  g_print (_("Generating from-parent delta for %s (%s)\n"), ref, from_parent);
                   if (!ostree_repo_static_delta_generate (repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
                                                           parent_commit, commit, NULL,
                                                           params,
@@ -189,7 +189,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
         }
     }
 
-  g_print ("Updating summary\n");
+  g_print (_("Updating summary\n"));
   if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
 
@@ -207,11 +207,11 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
       formatted_freed_size = g_format_size_full (objsize_total, 0);
 
-      g_print ("Total objects: %u\n", n_objects_total);
+      g_print (_("Total objects: %u\n"), n_objects_total);
       if (n_objects_pruned == 0)
-        g_print ("No unreachable objects\n");
+        g_print (_("No unreachable objects\n"));
       else
-        g_print ("Deleted %u objects, %s freed\n",
+        g_print (_("Deleted %u objects, %s freed\n"),
                  n_objects_pruned, formatted_freed_size);
     }
 

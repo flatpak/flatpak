@@ -361,7 +361,7 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "DIRECTORY must be specified", error);
+    return usage_error (context, _("DIRECTORY must be specified"), error);
 
   directory = argv[1];
 
@@ -373,7 +373,7 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
 
   if (!g_file_query_exists (files_dir, cancellable) ||
       !g_file_query_exists (metadata_file, cancellable))
-    return flatpak_fail (error, "Build directory %s not initialized", directory);
+    return flatpak_fail (error, _("Build directory %s not initialized"), directory);
 
   if (!g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, error))
     return FALSE;
@@ -387,12 +387,12 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
     {
       id = g_key_file_get_string (metakey, "Runtime", "name", NULL);
       if (id == NULL)
-        return flatpak_fail (error, "No name specified in the metadata");
+        return flatpak_fail (error, _("No name specified in the metadata"));
       is_runtime = TRUE;
     }
 
   if (g_file_query_exists (export_dir, cancellable))
-    return flatpak_fail (error, "Build directory %s already finalized", directory);
+    return flatpak_fail (error, _("Build directory %s already finalized"), directory);
 
   g_debug ("Collecting exports");
   if (!collect_exports (base, id, is_runtime, cancellable, error))
@@ -402,7 +402,7 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   if (!update_metadata (base, arg_context, cancellable, error))
     return FALSE;
 
-  g_print ("Please review the exported files and the metadata\n");
+  g_print (_("Please review the exported files and the metadata\n"));
 
   return TRUE;
 }

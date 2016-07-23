@@ -78,7 +78,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "NAME must be specified", error);
+    return usage_error (context, _("NAME must be specified"), error);
   name = argv[1];
 
   if (argc >= 3)

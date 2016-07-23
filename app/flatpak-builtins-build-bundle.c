@@ -902,7 +902,7 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
     return FALSE;
 
   if (argc < 4)
-    return usage_error (context, "LOCATION, FILENAME and NAME must be specified", error);
+    return usage_error (context, _("LOCATION, FILENAME and NAME must be specified"), error);
 
   location = argv[1];
   filename = argv[2];
@@ -917,15 +917,15 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   repo = ostree_repo_new (repofile);
 
   if (!g_file_query_exists (repofile, cancellable))
-    return flatpak_fail (error, "'%s' is not a valid repository", location);
+    return flatpak_fail (error, _("'%s' is not a valid repository"), location);
 
   file = g_file_new_for_commandline_arg (filename);
 
   if (!flatpak_is_valid_name (name))
-    return flatpak_fail (error, "'%s' is not a valid name", name);
+    return flatpak_fail (error, _("'%s' is not a valid name"), name);
 
   if (!flatpak_is_valid_branch (branch))
-    return flatpak_fail (error, "'%s' is not a valid branch name", branch);
+    return flatpak_fail (error, _("'%s' is not a valid branch name"), branch);
 
   if (opt_runtime)
     full_branch = flatpak_build_runtime_ref (name, branch, opt_arch);

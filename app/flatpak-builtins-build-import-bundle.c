@@ -50,11 +50,11 @@ import_oci (OstreeRepo *repo, GFile *file,
   /* This code actually doesn't user path_prefix, but it need the support
      for reading commits from the transaction that was added at the same time. */
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-               "This version of ostree is to old to support OCI exports");
+               _("This version of ostree is to old to support OCI exports"));
   return FALSE;
 #elif !defined(HAVE_LIBARCHIVE)
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-               "This version of flatpak is not compiled with libarchive support");
+               _("This version of flatpak is not compiled with libarchive support"));
   return FALSE;
 #else
   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
@@ -288,7 +288,7 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
     return FALSE;
 
   if (argc < 3)
-    return usage_error (context, "LOCATION and FILENAME must be specified", error);
+    return usage_error (context, _("LOCATION and FILENAME must be specified"), error);
 
   location = argv[1];
   filename = argv[2];
@@ -297,7 +297,7 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   repo = ostree_repo_new (repofile);
 
   if (!g_file_query_exists (repofile, cancellable))
-    return flatpak_fail (error, "'%s' is not a valid repository", location);
+    return flatpak_fail (error, _("'%s' is not a valid repository"), location);
 
   file = g_file_new_for_commandline_arg (filename);
 

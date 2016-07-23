@@ -114,7 +114,7 @@ install_bundle (FlatpakDir *dir,
   g_autoptr(GBytes) gpg_data = NULL;
 
   if (argc < 2)
-    return usage_error (context, "bundle filename must be specified", error);
+    return usage_error (context, _("Bundle filename must be specified"), error);
 
   filename = argv[1];
 
@@ -160,7 +160,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     return install_bundle (dir, context, argc, argv, cancellable, error);
 
   if (argc < 3)
-    return usage_error (context, "REPOSITORY and NAME must be specified", error);
+    return usage_error (context, _("REPOSITORY and NAME must be specified"), error);
 
   repository = argv[1];
   name  = argv[2];
@@ -180,8 +180,10 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     {
       g_auto(GStrv) parts =  flatpak_decompose_ref (ref, error);
 
-      return flatpak_fail (error, "%s %s, branch %s is already installed",
-                           is_app ? "App" : "Runtime", name, parts[3]);
+      return flatpak_fail (error,
+                           is_app ? _("App %s, branch %s is already installed")
+                                  : _("Runtime %s, branch %s is already installed"),
+                           name, parts[3]);
     }
 
   if (!flatpak_dir_install (dir,
@@ -202,7 +204,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
         related = flatpak_dir_find_remote_related (dir, ref, repository, NULL, &local_error);
       if (related == NULL)
         {
-          g_printerr ("Warning: Problem looking for related refs: %s\n", local_error->message);
+          g_printerr (_("Warning: Problem looking for related refs: %s\n"), local_error->message);
           g_clear_error (&local_error);
         }
       else
@@ -217,7 +219,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
               parts = g_strsplit (rel->ref, "/", 0);
 
-              g_print ("Installing related: %s\n", parts[1]);
+              g_print (_("Installing related: %s\n"), parts[1]);
 
               if (!flatpak_dir_install_or_update (dir,
                                                   opt_no_pull,
@@ -227,7 +229,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                                   NULL,
                                                   cancellable, &local_error))
                 {
-                  g_printerr ("Warning: Failed to install related ref: %s\n",
+                  g_printerr (_("Warning: Failed to install related ref: %s\n"),
                               rel->ref);
                   g_clear_error (&local_error);
                 }

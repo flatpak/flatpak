@@ -261,7 +261,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (argc < 3)
     {
-      usage_error (context, "LOCATION and DIRECTORY must be specified", error);
+      usage_error (context, _("LOCATION and DIRECTORY must be specified"), error);
       goto out;
     }
 
@@ -275,7 +275,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (!flatpak_is_valid_branch (branch))
     {
-      flatpak_fail (error, "'%s' is not a valid branch name", branch);
+      flatpak_fail (error, _("'%s' is not a valid branch name"), branch);
       goto out;
     }
 
@@ -297,7 +297,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!g_file_query_exists (files, cancellable) ||
       !g_file_query_exists (metadata, cancellable))
     {
-      flatpak_fail (error, "Build directory %s not initialized", directory);
+      flatpak_fail (error, _("Build directory %s not initialized"), directory);
       goto out;
     }
 

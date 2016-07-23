@@ -58,7 +58,7 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
     return FALSE;
 
   if (argc < 3)
-    return usage_error (context, "APP and BRANCH must be specified", error);
+    return usage_error (context, _("APP and BRANCH must be specified"), error);
 
   app  = argv[1];
   branch = argv[2];
@@ -78,7 +78,7 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
 
   deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
-    return flatpak_fail (error, "App %s branch %s is not installed", app, branch);
+    return flatpak_fail (error, _("App %s branch %s is not installed"), app, branch);
 
   if (!flatpak_dir_make_current_ref (dir, ref, cancellable, error))
     return FALSE;

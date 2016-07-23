@@ -70,7 +70,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, "APP must be specified", error);
+    return usage_error (context, _("APP must be specified"), error);
 
   name = argv[1];
   if (argc > 2)
@@ -106,7 +106,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
           related = flatpak_dir_find_local_related (dir, ref, origin,
                                                     NULL, &local_error);
           if (related == NULL)
-            g_printerr ("Warning: Problem looking for related refs: %s\n",
+            g_printerr (_("Warning: Problem looking for related refs: %s\n"),
                         local_error->message);
         }
     }
@@ -127,11 +127,11 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
             continue;
 
           parts = g_strsplit (rel->ref, "/", 0);
-          g_print ("Uninstalling related: %s\n", parts[1]);
+          g_print (_("Uninstalling related: %s\n"), parts[1]);
 
           if (!flatpak_dir_uninstall (dir, rel->ref, flags,
                                       cancellable, &local_error))
-            g_printerr ("Warning: Failed to uninstall related ref: %s\n",
+            g_printerr (_("Warning: Failed to uninstall related ref: %s\n"),
                         rel->ref);
         }
     }
