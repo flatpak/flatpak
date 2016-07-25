@@ -348,7 +348,7 @@ validate_fd_common (int fd,
       /* Must be O_PATH */
       ((fd_flags & O_PATH) != O_PATH) ||
       /* Must not be O_NOFOLLOW (because we want the target file) */
-      ((fd_flags & O_NOFOLLOW) == O_PATH) ||
+      ((fd_flags & O_NOFOLLOW) == O_NOFOLLOW) ||
       /* Must be able to fstat */
       fstat (fd, st_buf) < 0 ||
       /* Must be a regular file */
