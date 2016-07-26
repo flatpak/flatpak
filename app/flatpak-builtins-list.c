@@ -38,6 +38,7 @@ static gboolean opt_user;
 static gboolean opt_system;
 static gboolean opt_runtime;
 static gboolean opt_app;
+static char *opt_arch;
 
 static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
@@ -45,6 +46,7 @@ static GOptionEntry options[] = {
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show arches and branches"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
+  { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to show"), N_("ARCH") },
   { NULL }
 };
 
@@ -74,7 +76,7 @@ join_strv (char **a, char **b)
 }
 
 static gboolean
-print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gboolean print_user, GCancellable *cancellable, GError **error)
+print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gboolean print_user, const char *arch, GCancellable *cancellable, GError **error)
 {
   g_autofree char *last = NULL;
 
@@ -149,6 +151,9 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
 
       parts = g_strsplit (ref, "/", -1);
       partial_ref = strchr (ref, '/') + 1;
+
+      if (arch != NULL && strcmp (arch, parts[1]) != 0)
+        continue;
 
       deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, error);
       if (deploy_data == NULL)
@@ -260,6 +265,7 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (!print_installed_refs (opt_app, opt_runtime,
                              opt_system || (!opt_user && !opt_system),
                              opt_user || (!opt_user && !opt_system),
+                             opt_arch,
                              cancellable, error))
     return FALSE;
 
