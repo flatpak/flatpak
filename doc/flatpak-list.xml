@@ -85,6 +85,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    List installations for this architecture.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--show-details</option></term>
 
                 <listitem><para>
