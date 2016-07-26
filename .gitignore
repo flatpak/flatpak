@@ -46,6 +46,7 @@ permission-store-dbus.[ch]
 flatpak-system-helper
 xdg-desktop-portal
 *.service
+flatpak.conf
 flatpak.env
 flatpak.sh
 document-portal/xdp-dbus.[ch]
