@@ -2159,7 +2159,8 @@ xdp_fuse_access (fuse_req_t req, fuse_ino_t ino, int mask)
   else
     {
       if (((mask & R_OK) && !app_can_see_doc (entry, inode->app_id)) ||
-          ((mask & W_OK) && !app_can_write_doc (entry, inode->app_id)))
+          ((mask & W_OK) && !app_can_write_doc (entry, inode->app_id)) ||
+           (mask & X_OK))
         {
           fuse_reply_err (req, EACCES);
           return;
