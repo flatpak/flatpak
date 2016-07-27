@@ -2109,6 +2109,66 @@ xdp_fuse_rename (fuse_req_t  req,
     fuse_reply_err (req, 0);
 }
 
+static void
+xdp_fuse_access (fuse_req_t req, fuse_ino_t ino, int mask)
+{
+  g_autoptr(XdpInode) inode = NULL;
+  g_autoptr(FlatpakDbEntry) entry = NULL;
+
+  g_debug ("xdp_fuse_access %lx %d", ino, mask);
+
+  if (mask != F_OK && (mask & ~(R_OK|W_OK|X_OK)) != 0)
+    {
+      g_debug ("xdp_fuse_access <- error EINVAL");
+      fuse_reply_err (req, EINVAL);
+      return;
+    }
+
+  inode = xdp_inode_lookup (ino);
+  if (inode == NULL)
+    {
+      g_debug ("xdp_fuse_access <- error ENOENT");
+      fuse_reply_err (req, ENOENT);
+      return;
+    }
+
+  if (inode->type != XDP_INODE_DOC_FILE)
+    {
+      g_debug ("xdp_fuse_access <- not file ENOSYS");
+      fuse_reply_err (req, ENOSYS);
+      return;
+    }
+
+  entry = xdp_lookup_doc (inode->doc_id);
+  if (entry == NULL ||
+      !app_can_see_doc (entry, inode->app_id))
+    {
+      g_debug ("xdp_fuse_access <- no entry error ENOENT");
+      fuse_reply_err (req, ENOENT);
+      return;
+    }
+
+  if (mask == F_OK)
+    {
+      if (!app_can_see_doc (entry, inode->app_id))
+        {
+          fuse_reply_err (req, EACCES);
+          return;
+        }
+    }
+  else
+    {
+      if (((mask & R_OK) && !app_can_see_doc (entry, inode->app_id)) ||
+          ((mask & W_OK) && !app_can_write_doc (entry, inode->app_id)))
+        {
+          fuse_reply_err (req, EACCES);
+          return;
+        }
+    }
+
+  fuse_reply_err (req, 0);
+}
+
 static struct fuse_lowlevel_ops xdp_fuse_oper = {
   .lookup       = xdp_fuse_lookup,
   .forget       = xdp_fuse_forget,
@@ -2127,6 +2187,7 @@ static struct fuse_lowlevel_ops xdp_fuse_oper = {
   .create       = xdp_fuse_create,
   .unlink       = xdp_fuse_unlink,
   .rename       = xdp_fuse_rename,
+  .access       = xdp_fuse_access,
 };
 
 /* Called when a apps permissions to see a document is changed,
