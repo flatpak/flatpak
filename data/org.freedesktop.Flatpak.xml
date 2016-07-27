@@ -29,6 +29,16 @@
     <method name="RequestMonitor">
       <arg type='ay' name='path' direction='out'/>
     </method>
+
+    <method name="RequestSelinuxLabel">
+      <arg type='s' name='app_id' direction='in'/>
+      <arg type='s' name='exec_label' direction='out'/>
+      <arg type='s' name='file_label' direction='out'/>
+    </method>
+
+    <method name="ReleaseSelinuxLabel">
+      <arg type='s' name='app_id' direction='in'/>
+    </method>
   </interface>
 
   <interface name='org.freedesktop.Flatpak.SystemHelper'>
@@ -68,7 +78,6 @@
         <annotation name="org.gtk.GDBus.C.ForceGVariant" value="true"/>
       </arg>
     </method>
-
   </interface>
 
 </node>
