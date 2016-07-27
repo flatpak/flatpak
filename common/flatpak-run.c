@@ -2847,11 +2847,48 @@ setup_seccomp (GPtrArray  *argv_array,
 }
 #endif
 
+static void
+setup_selinux (gboolean use_session_helper,
+               const char *app_id,
+               GPtrArray *argv_array,
+               GArray *fd_array,
+               GError **error)
+{
+  g_autoptr(AutoFlatpakSessionHelper) session_helper = NULL;
+  g_autofree char *exec_label = NULL;
+  g_autofree char *file_label = NULL;
+
+  if (!use_session_helper || app_id == NULL)
+    return;
+
+  session_helper =
+    flatpak_session_helper_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION,
+                                                   G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES | G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                   "org.freedesktop.Flatpak",
+                                                   "/org/freedesktop/Flatpak/SessionHelper",
+                                                   NULL, NULL);
+
+  if (session_helper &&
+      flatpak_session_helper_call_request_selinux_label_sync (session_helper,
+                                                              app_id,
+                                                              &exec_label,
+                                                              &file_label,
+                                                              NULL, NULL))
+    {
+      if (exec_label[0] != '\0')
+        add_args (argv_array,
+                  "--exec-label", exec_label,
+                  "--file-label", file_label,
+                  NULL);
+    }
+}
+
 gboolean
 flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                              GArray         *fd_array,
                              GFile          *runtime_files,
                              GFile          *app_id_dir,
+                             const char     *app_id,
                              const char     *arch,
                              FlatpakRunFlags flags,
                              GError        **error)
@@ -3002,6 +3039,10 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                       error))
     return FALSE;
 #endif
+
+  setup_selinux ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0,
+                 app_id,
+                 argv_array, fd_array, error);
 
   add_monitor_path_args ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0, argv_array);
 
@@ -3225,7 +3266,7 @@ flatpak_run_app (const char     *app_ref,
             "--lock-file", "/app/.ref",
             NULL);
 
-  if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
+  if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[1], app_ref_parts[2], flags, error))
     return FALSE;
 
   if (!add_app_info_args (argv_array, fd_array, app_deploy, app_ref_parts[1], runtime_ref, app_context, error))

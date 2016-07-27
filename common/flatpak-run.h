@@ -106,6 +106,7 @@ gboolean flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                                       GArray         *fd_array,
                                       GFile          *runtime_files,
                                       GFile          *app_id_dir,
+                                      const char     *app_id,
                                       const char     *arch,
                                       FlatpakRunFlags flags,
                                       GError        **error);
