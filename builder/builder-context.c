@@ -75,6 +75,11 @@ builder_context_finalize (GObject *object)
 {
   BuilderContext *self = (BuilderContext *) object;
 
+  g_clear_object (&self->state_dir);
+  g_clear_object (&self->download_dir);
+  g_clear_object (&self->build_dir);
+  g_clear_object (&self->cache_dir);
+  g_clear_object (&self->ccache_dir);
   g_clear_object (&self->app_dir);
   g_clear_object (&self->base_dir);
   g_clear_object (&self->soup_session);

@@ -170,7 +170,7 @@ main (int    argc,
 
   g_autoptr(GError) error = NULL;
   g_autoptr(BuilderManifest) manifest = NULL;
-  GOptionContext *context;
+  g_autoptr(GOptionContext) context = NULL;
   const char *app_dir_path, *manifest_path;
   g_autofree gchar *json = NULL;
   g_autoptr(BuilderContext) build_context = NULL;
