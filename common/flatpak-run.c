@@ -2571,6 +2571,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
 {
   char x = 'x';
   const char *proxy;
+  g_autofree char *commandline = NULL;
 
   if (dbus_proxy_argv->len == 0)
     return TRUE;
@@ -2597,9 +2598,12 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (proxy));
   g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_fds[1]));
   if (enable_logging)
-    g_ptr_array_insert (dbus_proxy_argv, 2, g_strdup ("--log"));
+    g_ptr_array_add (dbus_proxy_argv, g_strdup ("--log"));
 
   g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
+
+  commandline = g_strjoinv (" ", (char **) dbus_proxy_argv->pdata);
+  g_debug ("Running %s", commandline);
 
   if (!g_spawn_async (NULL,
                       (char **) dbus_proxy_argv->pdata,
