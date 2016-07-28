@@ -42,9 +42,6 @@
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
-#include <syslog.h>
-#include <systemd/sd-journal.h>
-
 #include "flatpak-run.h"
 #include "flatpak-proxy.h"
 #include "flatpak-utils.h"
@@ -3037,34 +3034,6 @@ clear_fd (gpointer data)
     close (*fd_p);
 }
 
-static gboolean
-connect_journal (const char *app_id, GError **error)
-{
-  int fd;
-
-  /* redirect stdout and stderr to the systemd journal */
-  fd = sd_journal_stream_fd (app_id, LOG_INFO, TRUE);
-  if (fd < 0)
-    {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                   _("Failed to create journal stream fd"));
-      return FALSE;
-    }
-
-  if (dup3 (fd, STDOUT_FILENO, 0) < 0 ||
-      dup3 (fd, STDERR_FILENO, 0) < 0)
-    {
-      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                   _("Failed to duplicate journal stream fd"));
-      return FALSE;
-    }
-
-  if (fd >= 3)
-    close (fd);
-
-  return TRUE;
-}
-
 static void
 child_setup (gpointer user_data)
 {
@@ -3080,25 +3049,6 @@ child_setup (gpointer user_data)
     fcntl (g_array_index (fd_array, int, i), F_SETFD, 0);
 }
 
-static void
-child_setup_with_journal (gpointer user_data)
-{
-  connect_journal ("", NULL);
-  child_setup (user_data);
-}
-
-static gboolean
-should_use_journal (FlatpakRunFlags flags)
-{
-  if ((flags & FLATPAK_RUN_FLAG_NO_JOURNAL) != 0)
-    return FALSE;
-  else if ((flags & FLATPAK_RUN_FLAG_JOURNAL) != 0)
-    return TRUE;
-  else if (isatty (fileno (stderr)))
-    return FALSE;
-  else
-    return TRUE;
-}
 
 gboolean
 flatpak_run_app (const char     *app_ref,
@@ -3315,19 +3265,13 @@ flatpak_run_app (const char     *app_ref,
                           (char **) real_argv_array->pdata,
                           envp,
                           G_SPAWN_DEFAULT,
-                          should_use_journal (flags)
-                            ? child_setup_with_journal
-                            : child_setup,
-                          fd_array,
+                          child_setup, fd_array,
                           NULL,
                           error))
         return FALSE;
     }
   else
     {
-      if (should_use_journal (flags) && !connect_journal (app_ref_parts[1], error))
-        return FALSE;
-
       if (execvpe (flatpak_get_bwrap (), (char **) real_argv_array->pdata, envp) == -1)
         {
           g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),

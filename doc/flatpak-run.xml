@@ -319,14 +319,6 @@
                     your D-Bus policy.
                 </para></listitem>
             </varlistentry>
-
-            <varlistentry>
-                <term><option>--journal=VALUE</option></term>
-
-                <listitem><para>
-                    Control whether to redirect stdout and stderr of the sandbox to the systemd journal. Possible values are yes, no or auto. In the latter case, only redirect if stderr is not a tty. The default is auto.
-                </para></listitem>
-            </varlistentry>
         </variablelist>
     </refsect1>
 
