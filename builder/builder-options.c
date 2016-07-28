@@ -83,6 +83,7 @@ builder_options_finalize (GObject *object)
   g_strfreev (self->env);
   g_strfreev (self->build_args);
   g_strfreev (self->config_opts);
+  g_hash_table_destroy (self->arch);
 
   G_OBJECT_CLASS (builder_options_parent_class)->finalize (object);
 }

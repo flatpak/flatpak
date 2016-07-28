@@ -75,9 +75,11 @@ builder_cache_finalize (GObject *object)
 
   g_clear_object (&self->cache_dir);
   g_clear_object (&self->app_dir);
+  g_clear_object (&self->repo);
   g_checksum_free (self->checksum);
   g_free (self->branch);
   g_free (self->last_parent);
+  g_free (self->stage);
   if (self->unused_stages)
     g_hash_table_unref (self->unused_stages);
 
