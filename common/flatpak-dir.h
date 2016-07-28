@@ -223,7 +223,6 @@ gboolean    flatpak_dir_pull (FlatpakDir          *self,
                               const char         **subpaths,
                               OstreeRepo          *repo,
                               OstreeRepoPullFlags  flags,
-                              gboolean             force_disable_deltas,
                               OstreeAsyncProgress *progress,
                               GCancellable        *cancellable,
                               GError             **error);

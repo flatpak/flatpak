@@ -1154,7 +1154,6 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
       if (!flatpak_dir_pull (self, remote, branch, NULL,
                              child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
-                             /* TODO: forcing no-deltas due to issue #144 */ TRUE,
                              progress, cancellable, error))
         return FALSE;
 
@@ -1183,7 +1182,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       return TRUE;
     }
 
-  if (!flatpak_dir_pull (self, remote, branch, NULL, NULL, OSTREE_REPO_PULL_FLAGS_NONE, FALSE, progress,
+  if (!flatpak_dir_pull (self, remote, branch, NULL, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                          cancellable, error))
     return FALSE;
 
@@ -1214,12 +1213,12 @@ repo_pull_one_dir (OstreeRepo          *self,
                    const char          *dir_to_pull,
                    char               **refs_to_fetch,
                    OstreeRepoPullFlags  flags,
-                   gboolean             force_disable_deltas,
                    OstreeAsyncProgress *progress,
                    GCancellable        *cancellable,
                    GError             **error)
 {
   GVariantBuilder builder;
+  gboolean force_disable_deltas = FALSE;
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
 
@@ -1252,7 +1251,6 @@ flatpak_dir_pull (FlatpakDir          *self,
                   const char         **subpaths,
                   OstreeRepo          *repo,
                   OstreeRepoPullFlags  flags,
-                  gboolean             force_disable_deltas,
                   OstreeAsyncProgress *progress,
                   GCancellable        *cancellable,
                   GError             **error)
@@ -1297,7 +1295,7 @@ flatpak_dir_pull (FlatpakDir          *self,
   if (subpaths == NULL || subpaths[0] == NULL)
     {
       if (!repo_pull_one_dir (repo, repository, NULL,
-                              (char **) refs, flags, force_disable_deltas,
+                              (char **) refs, flags,
                               progress,
                               cancellable, error))
         {
@@ -1311,7 +1309,7 @@ flatpak_dir_pull (FlatpakDir          *self,
 
       if (!repo_pull_one_dir (repo, repository,
                               "/metadata",
-                              (char **) refs, flags, force_disable_deltas,
+                              (char **) refs, flags,
                               progress,
                               cancellable, error))
         {
@@ -1325,7 +1323,7 @@ flatpak_dir_pull (FlatpakDir          *self,
           g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
           if (!repo_pull_one_dir (repo, repository,
                                   subpath,
-                                  (char **) refs, flags, force_disable_deltas,
+                                  (char **) refs, flags,
                                   progress,
                                   cancellable, error))
             {
@@ -3092,7 +3090,7 @@ flatpak_dir_install (FlatpakDir          *self,
             return FALSE;
 
           if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
-                                 child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR, FALSE,
+                                 child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
 
@@ -3118,7 +3116,7 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, remote_name, ref, opt_subpaths, NULL, OSTREE_REPO_PULL_FLAGS_NONE, FALSE, progress,
+      if (!flatpak_dir_pull (self, remote_name, ref, opt_subpaths, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                              cancellable, error))
         return FALSE;
     }
@@ -3333,7 +3331,6 @@ flatpak_dir_update (FlatpakDir          *self,
 
           if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
                                  child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
-                                 /* TODO: forcing no-deltas due to issue #144 */ TRUE,
                                  progress, cancellable, error))
             return FALSE;
 
@@ -3367,7 +3364,7 @@ flatpak_dir_update (FlatpakDir          *self,
   if (!no_pull)
     {
       if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
-                             NULL, OSTREE_REPO_PULL_FLAGS_NONE, FALSE, progress,
+                             NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                              cancellable, error))
         return FALSE;
     }
