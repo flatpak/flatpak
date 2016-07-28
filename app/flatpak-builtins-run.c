@@ -45,30 +45,6 @@ static gboolean opt_log_session_bus;
 static gboolean opt_log_system_bus;
 static char *opt_runtime;
 static char *opt_runtime_version;
-static FlatpakRunFlags journal_flags;
-
-static gboolean
-opt_journal_cb (const char  *option_name,
-                const char  *value,
-                gpointer     data,
-                GError     **error)
-{
-  if (strcmp (value, "yes") == 0)
-    journal_flags = FLATPAK_RUN_FLAG_JOURNAL;
-  else if (strcmp (value, "no") == 0)
-    journal_flags = FLATPAK_RUN_FLAG_NO_JOURNAL;
-  else if (strcmp (value, "auto") == 0)
-    journal_flags = 0;
-  else
-    {
-      journal_flags = 0;
-      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-                   _("Unknown journal option %s, valid options are: yes, no, auto"), value);
-      return FALSE;
-    }
-
-  return TRUE;
-}
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
@@ -79,7 +55,6 @@ static GOptionEntry options[] = {
   { "runtime-version", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_version, N_("Runtime version to use"), N_("VERSION") },
   { "log-session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_session_bus, N_("Log session bus calls"), NULL },
   { "log-system-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_system_bus, N_("Log system bus calls"), NULL },
-  { "journal", 0, 0, G_OPTION_ARG_CALLBACK, &opt_journal_cb, N_("Redirect stdout and stderr to the journal"), N_("VALUE") },
   { NULL }
 };
 
@@ -152,8 +127,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         opt_runtime_version,
                         (opt_devel ? FLATPAK_RUN_FLAG_DEVEL : 0) |
                         (opt_log_session_bus ? FLATPAK_RUN_FLAG_LOG_SESSION_BUS : 0) |
-                        (opt_log_system_bus ? FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS : 0) |
-                        journal_flags,
+                        (opt_log_system_bus ? FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS : 0),
                         opt_command,
                         &argv[rest_argv_start + 1],
                         rest_argc - 1,
