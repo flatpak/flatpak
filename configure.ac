@@ -424,3 +424,21 @@ doc/flatpak-docs.xml
 po/Makefile.in
 ])
 AC_OUTPUT
+
+if test x$BWRAP = xfalse ; then
+  build_bwrap="yes"
+else
+  build_bwrap="no"
+fi
+
+echo ""
+echo "          Flatpak $FLATPAK_VERSION"
+echo "          ============="
+echo ""
+echo "          Build system helper:    $enable_system_helper"
+echo "          Build bubblewrap:       $build_bwrap"
+echo "          Use sandboxed triggers: $enable_sandboxed_triggers"
+echo "          Use seccomp:            $enable_seccomp"
+echo "          Privileged group:       $PRIVILEGED_GROUP"
+echo "          Privilege mode:         $with_priv_mode"
+echo ""
