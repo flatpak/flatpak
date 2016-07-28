@@ -153,7 +153,7 @@ builder_manifest_finalize (GObject *object)
 }
 
 static gboolean
-expand_modules (GList *modules, GList **expanded, GHashTable *names, GError **error)
+_expand_modules (GList *modules, GList **expanded, GHashTable *names, GError **error)
 {
   GList *l;
 
@@ -166,7 +166,7 @@ expand_modules (GList *modules, GList **expanded, GHashTable *names, GError **er
       if (builder_module_get_disabled (m))
         continue;
 
-      if (!expand_modules (builder_module_get_modules (m), &submodules, names, error))
+      if (!_expand_modules (builder_module_get_modules (m), &submodules, names, error))
         return FALSE;
 
       *expanded = g_list_concat (*expanded, submodules);
@@ -183,6 +183,18 @@ expand_modules (GList *modules, GList **expanded, GHashTable *names, GError **er
     }
 
   return TRUE;
+}
+
+gboolean
+expand_modules (BuilderManifest *self, GError** error)
+{
+  if (self->expanded_modules)
+    return TRUE;
+  else
+    {
+      g_autoptr(GHashTable) names = g_hash_table_new (g_str_hash, g_str_equal);
+      return _expand_modules (self->modules, &self->expanded_modules, names, error);
+    }
 }
 
 static void
@@ -930,7 +942,7 @@ builder_manifest_start (BuilderManifest *self,
                          self->runtime,
                          builder_manifest_get_runtime_version (self));
 
-  if (!expand_modules (self->modules, &self->expanded_modules, names, error))
+  if (!expand_modules (self, error))
     return FALSE;
 
   stop_at = builder_context_get_stop_at (context);
@@ -2173,4 +2185,171 @@ builder_manifest_run (BuilderManifest *self,
 
   /* Not reached */
   return TRUE;
+}
+
+void
+builder_manifest_apply_overrides (BuilderManifest *self,
+                                  BuilderManifest *overrides)
+{
+  if (overrides->id)
+    {
+      g_free (self->id);
+      self->id = g_strdup (overrides->id);
+    }
+  if (overrides->branch)
+    {
+      g_free (self->branch);
+      self->branch = g_strdup (overrides->branch);
+    }
+  if (overrides->runtime)
+    {
+      g_free (self->runtime);
+      self->runtime = g_strdup (overrides->runtime);
+    }
+  if (overrides->runtime_version)
+    {
+      g_free (self->runtime_version);
+      self->runtime_version = g_strdup (overrides->runtime_version);
+    }
+  if (overrides->sdk)
+    {
+      g_free (self->sdk);
+      self->sdk = g_strdup (overrides->sdk);
+    }
+  if (overrides->var)
+    {
+      g_free (self->var);
+      self->var = g_strdup (overrides->var);
+    }
+  if (overrides->metadata)
+    {
+      g_free (self->metadata);
+      self->metadata = g_strdup (overrides->metadata);
+    }
+  if (overrides->command)
+    {
+      g_free (self->command);
+      self->command = g_strdup (overrides->command);
+    }
+  if (overrides->build_runtime)
+    {
+      self->build_runtime = overrides->build_runtime;
+    }
+  if (overrides->separate_locales)
+    {
+      self->separate_locales = overrides->separate_locales;
+    }
+  if (overrides->id_platform)
+    {
+      g_free (self->id_platform);
+      self->id_platform = g_strdup (overrides->id_platform);
+    }
+  if (overrides->metadata_platform)
+    {
+      g_free (self->metadata_platform);
+      self->metadata_platform = g_strdup (overrides->metadata_platform);
+    }
+  if (overrides->writable_sdk)
+    {
+      self->writable_sdk = overrides->writable_sdk;
+    }
+  if (overrides->appstream_compose)
+    {
+      self->appstream_compose = overrides->appstream_compose;
+    }
+  if (overrides->sdk_extensions)
+    {
+      g_strfreev (self->sdk_extensions);
+      self->sdk_extensions = g_strdupv (overrides->sdk_extensions);
+    }
+  if (overrides->platform_extensions)
+    {
+      g_strfreev (self->platform_extensions);
+      self->platform_extensions = g_strdupv (overrides->platform_extensions);
+    }
+  if (overrides->tags)
+    {
+      g_strfreev (self->tags);
+      self->tags = g_strdupv (overrides->tags);
+    }
+  if (overrides->cleanup)
+    {
+      g_strfreev (self->cleanup);
+      self->cleanup = g_strdupv (overrides->cleanup);
+    }
+  if (overrides->cleanup_commands)
+    {
+      g_strfreev (self->cleanup_commands);
+      self->cleanup_commands = g_strdupv (overrides->cleanup_commands);
+    }
+  if (overrides->cleanup_platform)
+    {
+      g_strfreev (self->cleanup_platform);
+      self->cleanup_platform = g_strdupv (overrides->cleanup_platform);
+    }
+  if (overrides->finish_args)
+    {
+      g_strfreev (self->finish_args);
+      self->finish_args = g_strdupv (overrides->finish_args);
+    }
+  if (overrides->rename_desktop_file)
+    {
+      g_free (self->rename_desktop_file);
+      self->rename_desktop_file = g_strdup (overrides->rename_desktop_file);
+    }
+  if (overrides->rename_appdata_file)
+    {
+      g_free (self->rename_appdata_file);
+      self->rename_appdata_file = g_strdup (overrides->rename_appdata_file);
+    }
+  if (overrides->rename_icon)
+    {
+      g_free (self->rename_icon);
+      self->rename_icon = g_strdup (overrides->rename_icon);
+    }
+  if (overrides->copy_icon)
+    {
+      self->copy_icon = overrides->copy_icon;
+    }
+  if (overrides->desktop_file_name_prefix)
+    {
+      g_free (self->desktop_file_name_prefix);
+      self->desktop_file_name_prefix = g_strdup (overrides->desktop_file_name_prefix);
+    }
+  if (overrides->desktop_file_name_suffix)
+    {
+      g_free (self->desktop_file_name_suffix);
+      self->desktop_file_name_suffix = g_strdup (overrides->desktop_file_name_suffix);
+    }
+
+  if (overrides->build_options)
+    {
+      if (self->build_options)
+        builder_options_apply_overrides (self->build_options, overrides->build_options);
+      else
+        self->build_options = g_object_ref (overrides->build_options);
+    }
+
+  if (overrides->modules)
+    {
+      GList *l;
+      GList *l2;
+
+      expand_modules (self, NULL);
+      expand_modules (overrides, NULL);
+
+      for (l = overrides->expanded_modules; l != NULL; l = l->next)
+        {
+          BuilderModule *m = l->data;
+          for (l2 = self->expanded_modules; l2 != NULL; l2 = l2->next)
+            {
+              BuilderModule *m2 = l2->data;
+              if (!g_strcmp0 (builder_module_get_name (m), builder_module_get_name (m2)))
+                {
+                  builder_module_apply_overrides (m2, m);
+                  break;
+                }
+            }
+        }
+    }
 }

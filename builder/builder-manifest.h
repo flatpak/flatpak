@@ -86,6 +86,9 @@ gboolean        builder_manifest_create_platform (BuilderManifest *self,
                                                   BuilderContext  *context,
                                                   GError         **error);
 
+void            builder_manifest_apply_overrides (BuilderManifest *self,
+                                                  BuilderManifest *overrides);
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderManifest, g_object_unref)
 
 G_END_DECLS

@@ -60,6 +60,9 @@ gboolean    builder_options_get_no_debuginfo (BuilderOptions *self,
 gboolean    builder_options_get_strip (BuilderOptions *self,
                                        BuilderContext *context);
 
+void        builder_options_apply_overrides (BuilderOptions *self,
+                                             BuilderOptions *overrides);
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderOptions, g_object_unref)
 
 G_END_DECLS

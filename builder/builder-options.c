@@ -712,3 +712,47 @@ builder_options_checksum (BuilderOptions *self,
   if (arch_options)
     builder_options_checksum (arch_options, cache, context);
 }
+
+void
+builder_options_apply_overrides (BuilderOptions *self,
+                                 BuilderOptions *overrides)
+{
+  if (overrides->cflags)
+    {
+      g_clear_pointer (&self->cflags, g_free);
+      self->cflags = g_strdup (overrides->cflags);
+    }
+  if (overrides->cxxflags)
+    {
+      g_clear_pointer (&self->cxxflags, g_free);
+      self->cxxflags = g_strdup (overrides->cxxflags);
+    }
+  if (overrides->prefix)
+    {
+      g_clear_pointer (&self->prefix, g_free);
+      self->prefix = g_strdup (overrides->prefix);
+    }
+  if (overrides->env)
+    {
+      g_strfreev (self->env);
+      self->env = g_strdupv (overrides->env);
+    }
+  if (overrides->build_args)
+    {
+      g_strfreev (self->build_args);
+      self->build_args = g_strdupv (overrides->build_args);
+    }
+  if (overrides->strip)
+    {
+      self->strip = overrides->strip;
+    }
+  if (overrides->no_debuginfo)
+    {
+      self->no_debuginfo = overrides->no_debuginfo;
+    }
+  if (overrides->arch)
+    {
+      g_hash_table_destroy (self->arch);
+      self->arch = g_hash_table_ref (overrides->arch);
+    }
+}

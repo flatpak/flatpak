@@ -73,6 +73,9 @@ void     builder_module_cleanup_collect (BuilderModule  *self,
                                          BuilderContext *context,
                                          GHashTable     *to_remove_ht);
 
+void     builder_module_apply_overrides (BuilderModule *self,
+                                         BuilderModule *overrides);
+
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderModule, g_object_unref)
 
 G_END_DECLS
