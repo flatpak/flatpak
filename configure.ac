@@ -160,7 +160,7 @@ if test "x$enable_sandboxed_triggers" = "xno"; then
       [Define if sandboxed triggers are disabled])
 fi
 
-PKG_CHECK_MODULES(OSTREE, [libgsystem >= 2015.1 ostree-1 >= 2016.6])
+PKG_CHECK_MODULES(OSTREE, [libgsystem >= 2015.1 ostree-1 >= 2016.7])
 save_LIBS=$LIBS
 save_CFLAGS=$CFLAGS
 LIBS=$OSTREE_LIBS
