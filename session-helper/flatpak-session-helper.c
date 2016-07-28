@@ -27,6 +27,8 @@
 #include "flatpak-db.h"
 #include "flatpak-dbus.h"
 #include "flatpak-utils.h"
+
+#ifdef ENABLE_SELINUX
 #include <selinux/selinux.h>
 
 #define TABLE_NAME "selinux"
@@ -343,6 +345,33 @@ out:
   return TRUE;
 }
 
+#else /* !ENABLE_SELINUX */
+
+static gboolean
+handle_request_selinux_label (FlatpakSessionHelper *object,
+                              GDBusMethodInvocation *invocation,
+                              const char *arg_app_id)
+{
+  g_dbus_method_invocation_return_error (invocation,
+                                         G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED,
+                                         "Flatpak was built without SELinux support");
+  return TRUE;
+}
+
+static gboolean
+handle_release_selinux_label (FlatpakSessionHelper *object,
+                              GDBusMethodInvocation *invocation,
+                              const char *arg_app_id)
+{
+  g_dbus_method_invocation_return_error (invocation,
+                                         G_DBUS_ERROR, G_DBUS_ERROR_NOT_SUPPORTED,
+                                         "Flatpak was built without SELinux support");
+  return TRUE;
+}
+
+#endif
+
+
 static char *monitor_dir;
 
 static gboolean
@@ -367,6 +396,7 @@ on_bus_acquired (GDBusConnection *connection,
   helper = flatpak_session_helper_skeleton_new ();
 
   g_signal_connect (helper, "handle-request-monitor", G_CALLBACK (handle_request_monitor), NULL);
+
   g_signal_connect (helper, "handle-request-selinux-label", G_CALLBACK (handle_request_selinux_label), NULL);
   g_signal_connect (helper, "handle-release-selinux-label", G_CALLBACK (handle_release_selinux_label), NULL);
 
@@ -464,6 +494,7 @@ main (int    argc,
   setup_file_monitor ("/etc/resolv.conf");
   setup_file_monitor ("/etc/localtime");
 
+#ifdef ENABLE_SELINUX
   path = g_build_filename (g_get_user_data_dir (), "flatpak/db", TABLE_NAME, NULL);
   db = flatpak_db_new (path, FALSE, &error);
   if (db == NULL)
@@ -471,8 +502,8 @@ main (int    argc,
       g_printerr ("Failed to load db: %s", error->message);
       exit (2);
     }
-
   load_existing_mcs_labels ();
+#endif
 
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
                              "org.freedesktop.Flatpak",

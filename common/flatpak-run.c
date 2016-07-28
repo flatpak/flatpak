@@ -2847,6 +2847,7 @@ setup_seccomp (GPtrArray  *argv_array,
 }
 #endif
 
+#ifdef ENABLE_SELINUX
 static void
 setup_selinux (gboolean use_session_helper,
                const char *app_id,
@@ -2882,6 +2883,7 @@ setup_selinux (gboolean use_session_helper,
                   NULL);
     }
 }
+#endif
 
 gboolean
 flatpak_run_setup_base_argv (GPtrArray      *argv_array,
@@ -3040,9 +3042,11 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
     return FALSE;
 #endif
 
+#ifdef ENABLE_SELINUX
   setup_selinux ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0,
                  app_id,
                  argv_array, fd_array, error);
+#endif
 
   add_monitor_path_args ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0, argv_array);
 
