@@ -26,26 +26,6 @@
 #include <glnx-errors.h>
 #include <glnx-local-alloc.h>
 
-static unsigned char
-struct_stat_to_dt (struct stat *stbuf)
-{
-  if (S_ISDIR (stbuf->st_mode))
-    return DT_DIR;
-  if (S_ISREG (stbuf->st_mode))
-    return DT_REG;
-  if (S_ISCHR (stbuf->st_mode))
-    return DT_CHR;
-  if (S_ISBLK (stbuf->st_mode))
-    return DT_BLK;
-  if (S_ISFIFO (stbuf->st_mode))
-    return DT_FIFO;
-  if (S_ISLNK (stbuf->st_mode))
-    return DT_LNK;
-  if (S_ISSOCK (stbuf->st_mode))
-    return DT_SOCK;
-  return DT_UNKNOWN;
-}
-
 static gboolean
 glnx_shutil_rm_rf_children (GLnxDirFdIterator    *dfd_iter,
                             GCancellable       *cancellable,
@@ -56,30 +36,11 @@ glnx_shutil_rm_rf_children (GLnxDirFdIterator    *dfd_iter,
 
   while (TRUE)
     {
-      if (!glnx_dirfd_iterator_next_dent (dfd_iter, &dent, cancellable, error))
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (dfd_iter, &dent, cancellable, error))
         goto out;
 
       if (dent == NULL)
         break;
-
-      if (dent->d_type == DT_UNKNOWN)
-        {
-          struct stat stbuf;
-          if (fstatat (dfd_iter->fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == -1)
-            {
-              if (errno == ENOENT)
-                continue;
-              else
-                {
-                  glnx_set_error_from_errno (error);
-                  goto out;
-                }
-            }
-          dent->d_type = struct_stat_to_dt (&stbuf);
-          /* Assume unknown types are just treated like regular files */
-          if (dent->d_type == DT_UNKNOWN)
-            dent->d_type = DT_REG;
-        }
 
       if (dent->d_type == DT_DIR)
         {
