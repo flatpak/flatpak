@@ -1553,8 +1553,10 @@ builder_manifest_cleanup (BuilderManifest *self,
 
           if (!found_icon)
             {
+              g_autofree char *icon_path = g_file_get_path (icons_dir);
               g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "icon %s not found", self->rename_icon);
+                           "icon %s not found below %s",
+                           self->rename_icon, icon_path);
               return FALSE;
             }
         }
@@ -1575,7 +1577,8 @@ builder_manifest_cleanup (BuilderManifest *self,
           if (!g_file_load_contents (desktop, NULL,
                                      &desktop_contents, &desktop_size, NULL, error))
             {
-              g_prefix_error (error, "Can't load desktop file %s: ", desktop_basename);
+              g_autofree char *desktop_path = g_file_get_path (desktop);
+              g_prefix_error (error, "Can't load desktop file %s: ", desktop_path);
               return FALSE;
             }
 
