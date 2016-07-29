@@ -218,6 +218,268 @@ add_file_to_mtree (GFile             *file,
   return TRUE;
 }
 
+static gboolean
+find_file_in_tree (GFile *base, const char *filename)
+{
+  g_autoptr(GFileEnumerator) enumerator = NULL;
+
+  enumerator = g_file_enumerate_children (base,
+                                          G_FILE_ATTRIBUTE_STANDARD_TYPE ","
+                                          G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                          G_FILE_QUERY_INFO_NONE,
+                                          NULL,
+                                          NULL);
+  if (!enumerator)
+    return FALSE;
+
+  do {
+    g_autoptr(GFileInfo) info = g_file_enumerator_next_file (enumerator, NULL, NULL);
+    GFileType type;
+    const char *name;
+
+    if (!info)
+      return FALSE;
+
+    type = g_file_info_get_file_type (info);
+    name = g_file_info_get_name (info);
+
+    if (type == G_FILE_TYPE_REGULAR && strcmp (name, filename) == 0)
+      return TRUE;
+    else if (type == G_FILE_TYPE_DIRECTORY)
+      {
+        g_autoptr(GFile) dir = g_file_get_child (base, name);
+        if (find_file_in_tree (dir, filename))
+          return TRUE;
+      }
+  } while (1);
+
+  return FALSE;
+}
+
+static gboolean
+validate_desktop_file (GFile *desktop_file,
+                       GFile *export,
+                       GFile *files,
+                       const char *app_id,
+                       char **icon,
+                       gboolean *activatable,
+                       GError **error)
+{
+  g_autofree char *path = g_file_get_path (desktop_file);
+  g_autoptr(GSubprocess) subprocess = NULL;
+  g_autofree char *stdout_buf = NULL;
+  g_autofree char *stderr_buf = NULL;
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GKeyFile) key_file = NULL;
+  g_autofree char *command = NULL;
+  g_auto(GStrv) argv = NULL;
+  g_autofree char *exec_path = NULL;
+  g_autoptr(GFile) bin_file = NULL;
+
+  if (!g_file_query_exists (desktop_file, NULL))
+    return TRUE;
+
+  subprocess = g_subprocess_new (G_SUBPROCESS_FLAGS_STDOUT_PIPE |
+                                 G_SUBPROCESS_FLAGS_STDERR_PIPE |
+                                 G_SUBPROCESS_FLAGS_STDERR_MERGE,
+                                 &local_error, "desktop-file-validate", path, NULL);
+  if (!subprocess)
+    {
+      if (g_error_matches (local_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
+        goto check_refs;
+
+      g_propagate_error (error, local_error);
+      local_error = NULL;
+      return FALSE;
+    }
+
+  if (!g_subprocess_communicate_utf8 (subprocess, NULL, NULL, &stdout_buf, &stderr_buf, &local_error))
+    {
+      g_propagate_error (error, local_error);
+      local_error = NULL;
+      return FALSE;
+    }
+
+  if (g_subprocess_get_if_exited (subprocess))
+    {
+      if (g_subprocess_get_exit_status (subprocess) != 0)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "%s", stdout_buf);
+          return FALSE;
+        }
+    }
+
+check_refs:
+  /* Test that references to other files are valid */
+
+  key_file = g_key_file_new ();
+  if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, error))
+    return FALSE;
+
+  command = g_key_file_get_string (key_file,
+                                   G_KEY_FILE_DESKTOP_GROUP,
+                                   G_KEY_FILE_DESKTOP_KEY_EXEC,
+                                   error);
+  if (!command)
+    {
+      g_prefix_error (error, "Invalid desktop file %s: ", path);
+      return FALSE;
+    }
+
+  argv = g_strsplit (command, " ", 0);
+  exec_path = g_strconcat ("bin/", argv[0], NULL);
+  bin_file = g_file_resolve_relative_path (files, exec_path);
+  if (!g_file_query_exists (bin_file, NULL))
+    {
+      g_set_error (error,
+                   G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Binary not found for Exec line in %s: %s", path, command);
+      return FALSE;
+    }
+
+  *icon = g_key_file_get_string (key_file,
+                                 G_KEY_FILE_DESKTOP_GROUP,
+                                 G_KEY_FILE_DESKTOP_KEY_ICON,
+                                 NULL);
+  if (*icon && !g_str_has_prefix (*icon, app_id))
+    {
+      g_set_error (error,
+                   G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Icon not matching app id in %s: %s", path, *icon);
+      return FALSE;
+    }
+
+  *activatable = g_key_file_get_boolean (key_file,
+                                         G_KEY_FILE_DESKTOP_GROUP,
+                                         G_KEY_FILE_DESKTOP_KEY_DBUS_ACTIVATABLE,
+                                         NULL);
+
+  return TRUE;
+}
+
+static gboolean
+validate_icon (const char *icon,
+               GFile *export,
+               GError **error)
+{
+  g_autoptr(GFile) icondir = NULL;
+  g_autofree char *png = NULL;
+  g_autofree char *svg  = NULL;
+
+  if (!icon)
+    return TRUE;
+
+  icondir = g_file_resolve_relative_path (export, "share/icons/hicolor");
+  png = g_strconcat (icon, ".png", NULL);
+  svg  = g_strconcat (icon, ".svg", NULL);
+  if (!find_file_in_tree (icondir, png) &&
+      !find_file_in_tree (icondir, svg))
+    {
+      g_set_error (error,
+                   G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Icon referenced in desktop file but not exported: %s", icon);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+validate_service_file (GFile *service_file,
+                       gboolean activatable,
+                       GFile *files,
+                       const char *app_id,
+                       GError **error)
+{
+  g_autofree char *path = g_file_get_path (service_file);
+  g_autoptr(GKeyFile) key_file = NULL;
+  g_autofree char *name = NULL;
+  g_autofree char *command = NULL;
+  g_auto(GStrv) argv = NULL;
+  g_autofree char *exec_path = NULL;
+  g_autoptr(GFile) bin_file = NULL;
+
+  if (!g_file_query_exists (service_file, NULL))
+    {
+      if (activatable)
+        {
+          g_set_error (error,
+                       G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Desktop file D-Bus activatable, but service file not exported: %s", path);
+          return FALSE;
+        }
+
+      return TRUE;
+    }
+
+  key_file = g_key_file_new ();
+  if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, error))
+    return FALSE;
+
+  name = g_key_file_get_string (key_file, "D-BUS Service", "Name", error);
+  if (!name)
+    {
+      g_prefix_error (error, "Invalid service file %s: ", path);
+      return FALSE;
+    }
+
+  if (strcmp (name, app_id) != 0)
+    {
+      g_set_error (error,
+                   G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Name in service file %s does not match app id: %s", path, name);
+      return FALSE;
+    }
+
+  command = g_key_file_get_string (key_file, "D-BUS Service", "Exec", error);
+  if (!command)
+    {
+      g_prefix_error (error, "Invalid service file %s: ", path);
+      return FALSE;
+    }
+  argv = g_strsplit (command, " ", 0);
+  exec_path = g_strconcat ("bin/", argv[0], NULL);
+  bin_file = g_file_resolve_relative_path (files, exec_path);
+
+  if (!g_file_query_exists (bin_file, NULL))
+    {
+      g_set_error (error,
+                   G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Binary not found for Exec line in %s: %s", path, command);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+validate_exports (GFile *export, GFile *files, const char *app_id, GError **error)
+{
+  g_autofree char *desktop_path = NULL;
+  g_autoptr(GFile) desktop_file = NULL;
+  g_autofree char *service_path = NULL;
+  g_autoptr(GFile) service_file = NULL;
+  g_autofree char *icon = NULL;
+  gboolean activatable = FALSE;
+
+  desktop_path = g_strconcat ("share/applications/", app_id, ".desktop", NULL);
+  desktop_file = g_file_resolve_relative_path (export, desktop_path);
+
+  if (!validate_desktop_file (desktop_file, export, files, app_id, &icon, &activatable, error))
+    return FALSE;
+
+  if (!validate_icon (icon, export, error))
+    return FALSE;
+
+  service_path = g_strconcat ("share/dbus-1/services/", app_id, ".service", NULL);
+  service_file = g_file_resolve_relative_path (export, service_path);
+
+  if (!validate_service_file (service_file, activatable, files, app_id, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -317,6 +579,9 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       flatpak_fail (error, "Build directory %s not finalized", directory);
       goto out;
     }
+
+  if (!validate_exports (export, files, app_id, error))
+    goto out;
 
   if (!metadata_get_arch (metadata, &arch, error))
     goto out;
