@@ -320,7 +320,7 @@ main (int    argc,
     {
       if (opt_force_clean)
         {
-          g_print ("Emptying app dir\n");
+          g_print ("Emptying app dir '%s'\n", app_dir_path);
           if (!gs_shutil_rm_rf (app_dir, NULL, &error))
             {
               g_printerr ("Couldn't empty app dir '%s': %s",
