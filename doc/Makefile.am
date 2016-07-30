@@ -58,6 +58,7 @@ EXTRA_DIST = \
 	xmlto-config.xsl	\
 	$(NULL)
 
+CLEANFILES = $(NULL)
 DISTCLEANFILES = \
 	$(man_MANS)		\
 	flatpak-docs.xml	\
@@ -69,6 +70,8 @@ doc_DATA =                      \
         flatpak-docs.html	\
         docbook.css             \
         $(NULL)
+
+CLEANFILES += flatpak-docs.html
 
 flatpak-docs.html: flatpak-docs.xml $(xml_files) xmlto-config.xsl
 	$(AM_V_GEN) $(XMLTO) $(XMLTO_FLAGS) --skip-validation xhtml-nochunks -m $(srcdir)/xmlto-config.xsl $<
