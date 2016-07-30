@@ -21,9 +21,10 @@ cat > ${DIR}/files/share/applications/org.test.Hello.desktop <<EOF
 [Desktop Entry]
 Version=1.0
 Type=Application
+Name=Hello
 Exec=hello.sh
 Icon=org.test.Hello
-MimeType=x-test/Hello
+MimeType=x-test/Hello;
 EOF
 
 mkdir -p ${DIR}/files/share/icons/hicolor/64x64/apps
