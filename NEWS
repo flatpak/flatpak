@@ -1,3 +1,20 @@
+Major changes in 0.6.8
+======================
+
+ * Requires OSTree 2016.7, allowing us to enable use of static delta
+   for system downloads again.
+ * Support --no-desktop which allows you to run a flatpak app outside
+   a desktop, with some loss of functionallity (for example, there
+   will be no systemd --user scope created for the app)..
+ * More documentation.
+ * Memory leak fixes.
+ * Initial support for rpms as flatpak-builder archive sources.
+ * Start work on translating the CLI.
+ * Install systemd config snippet to set the right XDG_DATA_DIRS path.
+ * Support --arch in flatpak list.
+ * Support access() in the document portal.
+ * Validate exported desktop files.
+
 Major changes in 0.6.7
 ======================
 
