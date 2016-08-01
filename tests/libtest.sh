@@ -231,7 +231,14 @@ skip_without_bwrap () {
 }
 
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf
-eval `dbus-launch --config-file=session.conf --sh-syntax`
+dbus-daemon --fork --config-file=session.conf --print-address=3 --print-pid=4 \
+    3> dbus-session-bus-address 4> dbus-session-bus-pid
+export DBUS_SESSION_BUS_ADDRESS="$(cat dbus-session-bus-address)"
+DBUS_SESSION_BUS_PID="$(cat dbus-session-bus-pid)"
+
+if ! /bin/kill -0 "$DBUS_SESSION_BUS_PID"; then
+    assert_not_reached "Failed to start dbus-daemon"
+fi
 
 cleanup () {
     /bin/kill $DBUS_SESSION_BUS_PID
