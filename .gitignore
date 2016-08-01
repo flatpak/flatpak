@@ -30,6 +30,7 @@ config.h.in
 stamp-*
 gtk-doc.make
 flatpak
+flatpak-*.tar.xz
 flatpak-session-helper
 xdg-document-portal
 xdg-permission-store
