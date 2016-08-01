@@ -88,6 +88,8 @@ po/POTFILES
 po/Flatpak.pot
 po/Makevars.template
 po/Rules-quot
+po/flatpak.pot
+po/*.gmo
 po/*.sed
 po/*.header
 po/*.sin
