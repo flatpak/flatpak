@@ -49,7 +49,7 @@ man_MANS = \
 	flatpak-metadata.5		\
 	$(NULL)
 
-xml_files = $(man_MANS:.1=.xml)
+xml_files = $(man_MANS:.1=.xml) $(man_MANS:.5=.xml)
 
 EXTRA_DIST = \
 	$(xml_files) 		\
