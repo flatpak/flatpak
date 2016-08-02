@@ -30,6 +30,7 @@ config.h.in
 stamp-*
 gtk-doc.make
 flatpak
+flatpak-*.tar.xz
 flatpak-session-helper
 xdg-document-portal
 xdg-permission-store
@@ -88,6 +89,8 @@ po/POTFILES
 po/Flatpak.pot
 po/Makevars.template
 po/Rules-quot
+po/flatpak.pot
+po/*.gmo
 po/*.sed
 po/*.header
 po/*.sin
