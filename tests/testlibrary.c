@@ -255,19 +255,21 @@ quit (gpointer data)
 }
 
 static void
-test_install (void)
+test_install_launch_uninstall (void)
 {
   g_autoptr(FlatpakInstallation) inst = NULL;
   g_autoptr(GFileMonitor) monitor = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(FlatpakInstalledRef) ref = NULL;
-  GPtrArray *refs = NULL;
+  g_autoptr(FlatpakInstalledRef) runtime_ref = NULL;
   FlatpakInstalledRef *ref1 = NULL;
+  GPtrArray *refs = NULL;
   g_autofree char *s = NULL;
   g_autofree char *s1 = NULL;
   int progress_count;
   g_autoptr(GMainLoop) loop = NULL;
   guint quit_id;
+  gboolean res;
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
@@ -328,6 +330,7 @@ test_install (void)
 
   g_ptr_array_unref (refs);
 
+  runtime_ref = g_object_ref (ref);
   g_clear_object (&ref);
 
   changed_count = 0;
@@ -363,6 +366,66 @@ test_install (void)
   refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
   g_assert_no_error (error);
   g_assert_cmpint (refs->len, ==, 2);
+
+  g_ptr_array_unref (refs);
+
+  res = flatpak_installation_launch (inst, "org.test.Hello", NULL, NULL, NULL, NULL, &error);
+  g_assert_true (res);
+  g_assert_no_error (error);
+
+  quit_id = g_timeout_add (500, quit, loop);
+  g_main_loop_run (loop);
+  g_source_remove (quit_id);
+
+  changed_count = 0;
+  progress_count = 0;
+  res = flatpak_installation_uninstall (inst,
+                                        flatpak_ref_get_kind (FLATPAK_REF (ref)),
+                                        flatpak_ref_get_name (FLATPAK_REF (ref)),
+                                        flatpak_ref_get_arch (FLATPAK_REF (ref)),
+                                        flatpak_ref_get_branch (FLATPAK_REF (ref)),
+                                        progress_cb,
+                                        &progress_count,
+                                        NULL,
+                                        &error);
+  g_assert_true (res);
+  g_assert_no_error (error);
+  //FIXME: no progress for uninstall
+  //g_assert_cmpint (progress_count, >, 0);
+
+  quit_id = g_timeout_add (500, quit, loop);
+  g_main_loop_run (loop);
+  g_source_remove (quit_id);
+
+  refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpint (refs->len, ==, 1);
+
+  g_ptr_array_unref (refs);
+
+  changed_count = 0;
+  progress_count = 0;
+  res = flatpak_installation_uninstall (inst,
+                                        flatpak_ref_get_kind (FLATPAK_REF (runtime_ref)),
+                                        flatpak_ref_get_name (FLATPAK_REF (runtime_ref)),
+                                        flatpak_ref_get_arch (FLATPAK_REF (runtime_ref)),
+                                        flatpak_ref_get_branch (FLATPAK_REF (runtime_ref)),
+                                        progress_cb,
+                                        &progress_count,
+                                        NULL,
+                                        &error);
+  g_assert_true (res);
+  g_assert_no_error (error);
+  //FIXME: no progress for uninstall
+  //g_assert_cmpint (progress_count, >, 0);
+
+  quit_id = g_timeout_add (500, quit, loop);
+  g_main_loop_run (loop);
+  g_source_remove (quit_id);
+
+  refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
+  g_assert_no_error (error);
+  g_assert_cmpint (refs->len, ==, 0);
 
   g_ptr_array_unref (refs);
 }
@@ -614,7 +677,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/remote-by-name", test_remote_by_name);
   g_test_add_func ("/library/remote", test_remote);
   g_test_add_func ("/library/list-refs", test_list_refs);
-  g_test_add_func ("/library/install", test_install);
+  g_test_add_func ("/library/install-launch-uninstall", test_install_launch_uninstall);
 
   global_setup ();
 
