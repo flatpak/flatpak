@@ -579,7 +579,7 @@ flatpak_remote_commit (FlatpakRemote   *self,
     g_key_file_set_string (config, group, "url", priv->local_url);
 
   if (priv->local_title_set)
-    g_key_file_set_string (config, group, "title", priv->local_title);
+    g_key_file_set_string (config, group, "xa.title", priv->local_title);
 
   if (priv->local_gpg_verify_set)
     {
