@@ -926,12 +926,15 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
     len = strlen ((char*)buf);
 
   /* Note that posix_fallocate does *not* set errno but returns it. */
-  r = posix_fallocate (fd, 0, len);
-  if (r != 0)
+  if (len > 0)
     {
-      errno = r;
-      glnx_set_error_from_errno (error);
-      return FALSE;
+      r = posix_fallocate (fd, 0, len);
+      if (r != 0)
+        {
+          errno = r;
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
     }
 
   if ((r = glnx_loop_write (fd, buf, len)) != 0)
