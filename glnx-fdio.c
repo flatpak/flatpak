@@ -122,7 +122,7 @@ glnx_open_tmpfile_linkable_at (int dfd,
    * tempoary path name used is returned in "ret_path". Use
    * link_tmpfile() below to rename the result after writing the file
    * in full. */
-#ifdef O_TMPFILE
+#if defined(O_TMPFILE) && !defined(DISABLE_OTMPFILE)
   fd = openat (dfd, subpath, O_TMPFILE|flags, 0600);
   if (fd == -1 && !(errno == ENOSYS || errno == EISDIR || errno == EOPNOTSUPP))
     {

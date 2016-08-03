@@ -12,4 +12,13 @@ AC_CHECK_DECLS([
 #include <linux/loop.h>
 #include <linux/random.h>
 ]])
+
+AC_ARG_ENABLE(otmpfile,
+              [AS_HELP_STRING([--disable-otmpfile],
+                              [Disable use of O_TMPFILE [default=no]])],,
+              [enable_otmpfile=yes])
+AS_IF([test $enable_otmpfile = yes], [], [
+  AC_DEFINE([DISABLE_OTMPFILE], 1, [Define if we should avoid using O_TMPFILE])])
+
 ])
+
