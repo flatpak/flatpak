@@ -414,8 +414,12 @@
                         <listitem><para>"git"</para></listitem>
                     </varlistentry>
                     <varlistentry>
+                        <term><option>path</option> (string)</term>
+                        <listitem><para>The path to a local checkout of the git repository. Due to how git-clone works, this will be much faster than specifying a URL of file:///...</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
                         <term><option>url</option> (string)</term>
-                        <listitem><para>URL of the git repository</para></listitem>
+                        <listitem><para>URL of the git repository. This overrides path if both are specified.</para></listitem>
                     </varlistentry>
                     <varlistentry>
                         <term><option>branch</option> (string)</term>

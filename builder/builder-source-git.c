@@ -39,6 +39,7 @@ struct BuilderSourceGit
   BuilderSource parent;
 
   char         *url;
+  char         *path;
   char         *branch;
 };
 
@@ -52,6 +53,7 @@ G_DEFINE_TYPE (BuilderSourceGit, builder_source_git, BUILDER_TYPE_SOURCE);
 enum {
   PROP_0,
   PROP_URL,
+  PROP_PATH,
   PROP_BRANCH,
   LAST_PROP
 };
@@ -69,6 +71,7 @@ builder_source_git_finalize (GObject *object)
   BuilderSourceGit *self = (BuilderSourceGit *) object;
 
   g_free (self->url);
+  g_free (self->path);
   g_free (self->branch);
 
   G_OBJECT_CLASS (builder_source_git_parent_class)->finalize (object);
@@ -86,6 +89,10 @@ builder_source_git_get_property (GObject    *object,
     {
     case PROP_URL:
       g_value_set_string (value, self->url);
+      break;
+
+    case PROP_PATH:
+      g_value_set_string (value, self->path);
       break;
 
     case PROP_BRANCH:
@@ -110,6 +117,11 @@ builder_source_git_set_property (GObject      *object,
     case PROP_URL:
       g_free (self->url);
       self->url = g_value_dup_string (value);
+      break;
+
+    case PROP_PATH:
+      g_free (self->path);
+      self->path = g_value_dup_string (value);
       break;
 
     case PROP_BRANCH:
@@ -139,7 +151,7 @@ git (GFile   *dir,
 }
 
 static GFile *
-git_get_mirror_dir (const char     *url,
+git_get_mirror_dir (const char     *url_or_path,
                     BuilderContext *context)
 {
   g_autoptr(GFile) git_dir = NULL;
@@ -152,7 +164,8 @@ git_get_mirror_dir (const char     *url,
   git_dir_path = g_file_get_path (git_dir);
   g_mkdir_with_parents (git_dir_path, 0755);
 
-  filename = builder_uri_to_filename (url);
+  /* Technically a path isn't a uri but if it's absolute it should still be unique. */
+  filename = builder_uri_to_filename (url_or_path);
   return g_file_get_child (git_dir, filename);
 }
 
@@ -166,30 +179,36 @@ get_branch (BuilderSourceGit *self)
 }
 
 static char *
-get_url (BuilderSourceGit *self,
-         BuilderContext   *context,
-         GError          **error)
+get_url_or_path (BuilderSourceGit *self,
+                 BuilderContext   *context,
+                 GError          **error)
 {
-  g_autofree char *scheme = NULL;
+  g_autoptr(GFile) repo = NULL;
 
-  if (self->url == NULL)
+  if (self->url == NULL && self->path == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "URL not specified");
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "No URL or path specified");
       return NULL;
     }
 
-  scheme = g_uri_parse_scheme (self->url);
-  if (scheme == NULL)
+  if (self->url)
     {
-      g_autoptr(GFile) repo =
-        g_file_resolve_relative_path (builder_context_get_base_dir (context),
-                                      self->url);
-      return g_file_get_uri (repo);
+      g_autofree char *scheme = NULL;
+      scheme = g_uri_parse_scheme (self->url);
+      if (scheme == NULL)
+        {
+          repo = g_file_resolve_relative_path (builder_context_get_base_dir (context),
+                                               self->url);
+          return g_file_get_uri (repo);
+        }
+
+      return g_strdup (self->url);
     }
 
-  return g_strdup (self->url);
+  repo = g_file_resolve_relative_path (builder_context_get_base_dir (context),
+                                       self->path);
+  return g_file_get_path (repo);
 }
-
 
 static char *
 git_get_current_commit (GFile          *repo_dir,
@@ -210,11 +229,11 @@ git_get_current_commit (GFile          *repo_dir,
 }
 
 char *
-make_absolute_url (const char *orig_parent, const char *orig_relpath, GError **error)
+make_absolute (const char *orig_parent, const char *orig_relpath, GError **error)
 {
   g_autofree char *parent = g_strdup (orig_parent);
   const char *relpath = orig_relpath;
-  char *method;
+  char *start;
   char *parent_path;
 
   if (!g_str_has_prefix (relpath, "../"))
@@ -223,17 +242,15 @@ make_absolute_url (const char *orig_parent, const char *orig_relpath, GError **e
   if (parent[strlen (parent) - 1] == '/')
     parent[strlen (parent) - 1] = 0;
 
-  method = strstr (parent, "://");
-  if (method == NULL)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid uri %s", orig_parent);
-      return NULL;
-    }
+  if ((start = strstr (parent, "://")))
+    start = start + 3;
+  else
+    start = parent;
 
-  parent_path = strchr (method + 3, '/');
+  parent_path = strchr (start, '/');
   if (parent_path == NULL)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid uri %s", orig_parent);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid uri or path %s", orig_parent);
       return NULL;
     }
 
@@ -242,7 +259,7 @@ make_absolute_url (const char *orig_parent, const char *orig_relpath, GError **e
       char *last_slash = strrchr (parent_path, '/');
       if (last_slash == NULL)
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid relative path %s for uri %s", orig_relpath, orig_parent);
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid relative path %s for uri or path %s", orig_relpath, orig_parent);
           return NULL;
         }
       relpath += 3;
@@ -253,7 +270,7 @@ make_absolute_url (const char *orig_parent, const char *orig_relpath, GError **e
 }
 
 static gboolean
-git_mirror_submodules (const char     *repo_url,
+git_mirror_submodules (const char     *repo_location,
                        gboolean        update,
                        GFile          *mirror_dir,
                        const char     *revision,
@@ -314,7 +331,7 @@ git_mirror_submodules (const char     *repo_url,
           g_strchomp (url);
 
           old = url;
-          url = make_absolute_url (repo_url, old, error);
+          url = make_absolute (repo_location, old, error);
           if (url == NULL)
             return FALSE;
 
@@ -330,7 +347,7 @@ git_mirror_submodules (const char     *repo_url,
 }
 
 static gboolean
-git_mirror_repo (const char     *repo_url,
+git_mirror_repo (const char     *repo_location,
                  gboolean        update,
                  const char     *ref,
                  BuilderContext *context,
@@ -339,7 +356,7 @@ git_mirror_repo (const char     *repo_url,
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *current_commit = NULL;
 
-  mirror_dir = git_get_mirror_dir (repo_url, context);
+  mirror_dir = git_get_mirror_dir (repo_location, context);
 
   if (!g_file_query_exists (mirror_dir, NULL))
     {
@@ -348,16 +365,16 @@ git_mirror_repo (const char     *repo_url,
       g_autofree char *filename_tmp = g_strconcat (filename, ".clone_tmp", NULL);
       g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
 
-      g_print ("Cloning git repo %s\n", repo_url);
+      g_print ("Cloning git repo %s\n", repo_location);
 
       if (!git (parent, NULL, error,
-                "clone", "--mirror", repo_url,  filename_tmp, NULL) ||
+                "clone", "--mirror", repo_location,  filename_tmp, NULL) ||
           !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
         return FALSE;
     }
   else if (update)
     {
-      g_print ("Fetching git repo %s\n", repo_url);
+      g_print ("Fetching git repo %s\n", repo_location);
       if (!git (mirror_dir, NULL, error,
                 "fetch", "-p", NULL))
         return FALSE;
@@ -367,7 +384,7 @@ git_mirror_repo (const char     *repo_url,
   if (current_commit == NULL)
     return FALSE;
 
-  if (!git_mirror_submodules (repo_url, update, mirror_dir, current_commit, context, error))
+  if (!git_mirror_submodules (repo_location, update, mirror_dir, current_commit, context, error))
     return FALSE;
 
   return TRUE;
@@ -381,12 +398,13 @@ builder_source_git_download (BuilderSource  *source,
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
   g_autofree char *url = NULL;
+  g_autofree char *location = NULL;
 
-  url = get_url (self, context, error);
-  if (url == NULL)
+  location = get_url_or_path (self, context, error);
+  if (location == NULL)
     return FALSE;
 
-  if (!git_mirror_repo (url,
+  if (!git_mirror_repo (location,
                         update_vcs,
                         get_branch (self),
                         context,
@@ -397,7 +415,7 @@ builder_source_git_download (BuilderSource  *source,
 }
 
 static gboolean
-git_extract_submodule (const char     *repo_url,
+git_extract_submodule (const char     *repo_location,
                        GFile          *checkout_dir,
                        BuilderContext *context,
                        GError        **error)
@@ -449,7 +467,7 @@ git_extract_submodule (const char     *repo_url,
 
           g_print ("processing submodule %s\n", words[1]);
 
-          child_url = make_absolute_url (repo_url, child_relative_url, error);
+          child_url = make_absolute (repo_location, child_relative_url, error);
           if (child_url == NULL)
             return FALSE;
 
@@ -486,13 +504,13 @@ builder_source_git_extract (BuilderSource  *source,
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *mirror_dir_path = NULL;
   g_autofree char *dest_path = NULL;
-  g_autofree char *url = NULL;
+  g_autofree char *location = NULL;
 
-  url = get_url (self, context, error);
-  if (url == NULL)
+  location = get_url_or_path (self, context, error);
+  if (location == NULL)
     return FALSE;
 
-  mirror_dir = git_get_mirror_dir (url, context);
+  mirror_dir = git_get_mirror_dir (location, context);
 
   mirror_dir_path = g_file_get_path (mirror_dir);
   dest_path = g_file_get_path (dest);
@@ -505,11 +523,12 @@ builder_source_git_extract (BuilderSource  *source,
             "checkout", get_branch (self), NULL))
     return FALSE;
 
-  if (!git_extract_submodule (url, dest, context, error))
+  if (!git_extract_submodule (location, dest, context, error))
     return FALSE;
 
   if (!git (dest, NULL, error,
-            "config", "--local", "remote.origin.url", url, NULL))
+            "config", "--local", "remote.origin.url",
+            location, NULL))
     return FALSE;
 
   return TRUE;
@@ -525,15 +544,16 @@ builder_source_git_checksum (BuilderSource  *source,
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *current_commit = NULL;
   g_autoptr(GError) error = NULL;
-  g_autofree char *url = NULL;
+  g_autofree char *location = NULL;
 
   builder_cache_checksum_str (cache, self->url);
+  builder_cache_checksum_str (cache, self->path);
   builder_cache_checksum_str (cache, self->branch);
 
-  url = get_url (self, context, &error);
-  if (url != NULL)
+  location = get_url_or_path (self, context, &error);
+  if (location != NULL)
     {
-      mirror_dir = git_get_mirror_dir (url, context);
+      mirror_dir = git_get_mirror_dir (location, context);
 
       current_commit = git_get_current_commit (mirror_dir, get_branch (self), context, &error);
       if (current_commit)
@@ -543,7 +563,7 @@ builder_source_git_checksum (BuilderSource  *source,
     }
   else
     {
-      g_warning ("No url");
+      g_warning ("No url or path");
     }
 }
 
@@ -556,13 +576,13 @@ builder_source_git_update (BuilderSource  *source,
 
   g_autoptr(GFile) mirror_dir = NULL;
   char *current_commit;
-  g_autofree char *url = NULL;
+  g_autofree char *location = NULL;
 
-  url = get_url (self, context, error);
-  if (url == NULL)
+  location = get_url_or_path (self, context, error);
+  if (location == NULL)
     return FALSE;
 
-  mirror_dir = git_get_mirror_dir (url, context);
+  mirror_dir = git_get_mirror_dir (location, context);
 
   current_commit = git_get_current_commit (mirror_dir, get_branch (self), context, NULL);
   if (current_commit)
@@ -592,6 +612,13 @@ builder_source_git_class_init (BuilderSourceGitClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_URL,
                                    g_param_spec_string ("url",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_PATH,
+                                   g_param_spec_string ("path",
                                                         "",
                                                         "",
                                                         NULL,
