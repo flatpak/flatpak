@@ -104,7 +104,6 @@ EXTRA_DIST += $(installed_test_data)
 dist_test_scripts = \
 	tests/test-basic.sh \
 	tests/test-run.sh \
-	tests/test-library.sh \
 	tests/test-run-system.sh \
 	tests/test-run-deltas.sh \
 	tests/test-run-system-deltas.sh \
