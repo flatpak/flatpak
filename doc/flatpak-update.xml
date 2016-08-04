@@ -32,8 +32,7 @@
             <cmdsynopsis>
                 <command>flatpak update</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="opt">NAME</arg>
-                <arg choice="opt">BRANCH</arg>
+                <arg choice="opt">NAME <arg choice="opt">BRANCH</arg></arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
