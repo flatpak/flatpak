@@ -2928,15 +2928,8 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            checksum_or_latest,
                            opt_subpaths ? opt_subpaths : old_subpaths,
                            old_deploy_data,
-                           cancellable, &my_error))
-    {
-      if (g_error_matches (my_error, FLATPAK_ERROR,
-                           FLATPAK_ERROR_ALREADY_INSTALLED))
-        return TRUE;
-
-      g_propagate_error (error, my_error);
-      return FALSE;
-    }
+                           cancellable, error))
+    return FALSE;
 
   if (!flatpak_dir_undeploy (self, ref, old_active,
                              FALSE,
