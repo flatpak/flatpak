@@ -166,9 +166,6 @@ flatpak_builtin_update (int           argc,
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
-  if (argc < 1)
-    return usage_error (context, _("NAME must be specified"), error);
-
   if (argc >= 2)
     name = argv[1];
   if (argc >= 3)
