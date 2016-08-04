@@ -342,12 +342,7 @@ check_refs:
                                  G_KEY_FILE_DESKTOP_KEY_ICON,
                                  NULL);
   if (*icon && !g_str_has_prefix (*icon, app_id))
-    {
-      g_set_error (error,
-                   G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Icon not matching app id in %s: %s", path, *icon);
-      return FALSE;
-    }
+    g_warning ("Icon not matching app id in %s: %s", path, *icon);
 
   *activatable = g_key_file_get_boolean (key_file,
                                          G_KEY_FILE_DESKTOP_GROUP,
@@ -360,6 +355,7 @@ check_refs:
 static gboolean
 validate_icon (const char *icon,
                GFile *export,
+               const char *app_id,
                GError **error)
 {
   g_autoptr(GFile) icondir = NULL;
@@ -375,10 +371,15 @@ validate_icon (const char *icon,
   if (!find_file_in_tree (icondir, png) &&
       !find_file_in_tree (icondir, svg))
     {
-      g_set_error (error,
-                   G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Icon referenced in desktop file but not exported: %s", icon);
-      return FALSE;
+      if (g_str_has_prefix (icon, app_id))
+        {
+          g_set_error (error,
+                       G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Icon referenced in desktop file but not exported: %s", icon);
+          return FALSE;
+        }
+      else
+        g_warning ("Icon referenced in desktop file but not exported: %s", icon);
     }
 
   return TRUE;
@@ -468,7 +469,7 @@ validate_exports (GFile *export, GFile *files, const char *app_id, GError **erro
   if (!validate_desktop_file (desktop_file, export, files, app_id, &icon, &activatable, error))
     return FALSE;
 
-  if (!validate_icon (icon, export, error))
+  if (!validate_icon (icon, export, app_id, error))
     return FALSE;
 
   service_path = g_strconcat ("share/dbus-1/services/", app_id, ".service", NULL);
