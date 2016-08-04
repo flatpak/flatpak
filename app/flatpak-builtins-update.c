@@ -77,24 +77,59 @@ do_update (FlatpakDir  * dir,
            GCancellable *cancellable,
            GError      **error)
 {
+  g_auto(GStrv) parts = flatpak_decompose_ref (ref, error);
   g_autofree char *repository = NULL;
   g_autoptr(GPtrArray) related = NULL;
+  g_autoptr(GError) update_error = NULL;
   int i;
+
+  if (parts == NULL)
+    return FALSE;
 
   repository = flatpak_dir_get_origin (dir, ref, cancellable, error);
   if (repository == NULL)
     return FALSE;
 
+  if (strcmp (parts[0], "app") == 0)
+    g_print (_("Updating application %s, branch %s\n"), parts[1], parts[3]);
+  else
+    g_print (_("Updating runtime %s, branch %s\n"), parts[1], parts[3]);
+
   if (flatpak_dir_get_remote_disabled (dir, repository))
-    g_print ("Not updating %s due to disabled remote %s\n", ref, repository);
+    {
+      g_print (_("Remote %s disabled\n"), repository);
+      return TRUE;
+    }
 
   if (!flatpak_dir_update (dir,
                            opt_no_pull,
                            opt_no_deploy,
                            ref, repository, opt_commit, (const char **)opt_subpaths,
                            NULL,
-                           cancellable, error))
-    return FALSE;
+                           cancellable, &update_error))
+    {
+      if (g_error_matches (update_error, FLATPAK_ERROR,
+                           FLATPAK_ERROR_ALREADY_INSTALLED))
+        {
+          g_print (_("No updates.\n"));
+        }
+      else
+        {
+          g_propagate_error (error, update_error);
+          update_error = NULL;
+          return FALSE;
+        }
+    }
+  else
+    {
+      g_autofree char *current = NULL;
+      g_autoptr(GVariant) deploy_data = NULL;
+      g_autofree char *commit = NULL;
+      current = flatpak_dir_current_ref (dir, parts[1],  NULL);
+      deploy_data = flatpak_dir_get_deploy_data (dir, current, NULL, NULL);
+      commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
+      g_print (_("Now at %s.\n"), commit);
+    }
 
 
   if (!opt_no_related)
@@ -109,7 +144,7 @@ do_update (FlatpakDir  * dir,
                                                    &local_error);
       if (related == NULL)
         {
-          g_printerr ("Warning: Problem looking for related refs: %s\n",
+          g_printerr (_("Warning: Problem looking for related refs: %s\n"),
                       local_error->message);
           g_clear_error (&local_error);
         }
@@ -126,7 +161,7 @@ do_update (FlatpakDir  * dir,
 
               parts = g_strsplit (rel->ref, "/", 0);
 
-              g_print ("Updating related: %s\n", parts[1]);
+              g_print (_("Updating related: %s\n"), parts[1]);
 
               if (!flatpak_dir_install_or_update (dir,
                                                   opt_no_pull,
@@ -136,8 +171,22 @@ do_update (FlatpakDir  * dir,
                                                   NULL,
                                                   cancellable, &local_error))
                 {
-                  g_printerr ("Warning: Failed to update related ref: %s\n", rel->ref);
+                  if (g_error_matches (local_error, FLATPAK_ERROR,
+                                       FLATPAK_ERROR_ALREADY_INSTALLED))
+                    g_print (_("No updates.\n"));
+                  else
+                    g_printerr ("%s\n", local_error->message);
                   g_clear_error (&local_error);
+                }
+              else
+                {
+                  g_autofree char *current = NULL;
+                  g_autoptr(GVariant) deploy_data = NULL;
+                  g_autofree char *commit = NULL;
+                  current = flatpak_dir_current_ref (dir, parts[1],  NULL);
+                  deploy_data = flatpak_dir_get_deploy_data (dir, current, NULL, NULL);
+                  commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
+                  g_print (_("Now at %s.\n"), commit);
                 }
             }
         }
@@ -205,8 +254,6 @@ flatpak_builtin_update (int           argc,
             continue;
 
           found = TRUE;
-          g_print (_("Updating application %s %s\n"), parts[1], parts[3]);
-
           if (!do_update (dir, refs[i], cancellable, error))
             return FALSE;
         }
@@ -239,8 +286,6 @@ flatpak_builtin_update (int           argc,
             continue;
 
           found = TRUE;
-          g_print (_("Updating runtime %s %s\n"), parts[1], parts[3]);
-
           if (!do_update (dir, refs[i], cancellable, &local_error))
             {
               g_printerr (_("Error updating: %s\n"), local_error->message);
@@ -249,7 +294,7 @@ flatpak_builtin_update (int           argc,
         }
     }
 
-  if (!found)
+  if (name && !found)
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                    "%s not installed", name);
