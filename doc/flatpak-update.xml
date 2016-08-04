@@ -162,6 +162,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--appstream</option></term>
+
+                <listitem><para>
+                    Update appstream for the remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--runtime</option></term>
 
                 <listitem><para>
