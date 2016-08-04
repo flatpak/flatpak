@@ -32,6 +32,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "flatpak-error.h"
 
 static char *opt_arch;
 static char *opt_commit;
@@ -156,6 +157,7 @@ flatpak_builtin_update (int           argc,
   const char *name = NULL;
   const char *branch = NULL;
   gboolean failed = FALSE;
+  gboolean found = FALSE;
   int i;
 
   context = g_option_context_new (_("[NAME [BRANCH]] - Update an application or runtime"));
@@ -205,10 +207,10 @@ flatpak_builtin_update (int           argc,
           if (branch != NULL && strcmp (parts[3], branch) != 0)
             continue;
 
+          found = TRUE;
           g_print (_("Updating application %s %s\n"), parts[1], parts[3]);
 
-          if (!do_update (dir, refs[i],
-                          cancellable, error))
+          if (!do_update (dir, refs[i], cancellable, error))
             return FALSE;
         }
     }
@@ -239,13 +241,22 @@ flatpak_builtin_update (int           argc,
           if (branch != NULL && strcmp (parts[3], branch) != 0)
             continue;
 
+          found = TRUE;
           g_print (_("Updating runtime %s %s\n"), parts[1], parts[3]);
+
           if (!do_update (dir, refs[i], cancellable, &local_error))
             {
               g_printerr (_("Error updating: %s\n"), local_error->message);
               failed = TRUE;
             }
         }
+    }
+
+  if (!found)
+    {
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                   "%s not installed", name);
+      return FALSE;
     }
 
   flatpak_dir_cleanup_removed (dir, cancellable, NULL);
