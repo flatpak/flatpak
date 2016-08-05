@@ -37,6 +37,8 @@ libglnx_la_SOURCES = \
 	$(libglnx_srcpath)/glnx-lockfile.c \
 	$(libglnx_srcpath)/glnx-libcontainer.h \
 	$(libglnx_srcpath)/glnx-libcontainer.c \
+	$(libglnx_srcpath)/glnx-missing-syscall.h \
+	$(libglnx_srcpath)/glnx-missing.h \
 	$(libglnx_srcpath)/glnx-xattrs.h \
 	$(libglnx_srcpath)/glnx-xattrs.c \
 	$(libglnx_srcpath)/glnx-shutil.h \
