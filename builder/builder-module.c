@@ -790,7 +790,7 @@ build (GFile          *app_dir,
   va_end (ap);
 
   commandline = g_strjoinv (" ", (char **) args->pdata);
-  g_print ("Running: %s\n", commandline);
+  g_debug ("Running '%s'", commandline);
 
   launcher = g_subprocess_launcher_new (0);
 
