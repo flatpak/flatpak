@@ -40,7 +40,7 @@ static char *opt_build_dir;
 static char **opt_bind_mounts;
 
 static GOptionEntry options[] = {
-  { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Use non-devel runtime"), NULL },
+  { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Use Platform runtime rather than Sdk"), NULL },
   { "bind-mount", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_bind_mounts, N_("Add bind mount"), N_("DEST=SRC") },
   { "build-dir", 0, 0, G_OPTION_ARG_STRING, &opt_build_dir, N_("Start build in this directory"), N_("DIR") },
   { NULL }
