@@ -31,6 +31,10 @@
 #include <sys/capability.h>
 #include <sched.h>
 
+pid_t glnx_libcontainer_run_chroot_at_private (int          root_dfd,
+                                               const char  *binary,
+                                               char **argv);
+
 pid_t glnx_libcontainer_run_chroot_private (const char  *dest,
                                             const char  *binary,
                                             char **argv);

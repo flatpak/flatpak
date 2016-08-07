@@ -33,6 +33,7 @@
 #include <gio/gunixoutputstream.h>
 
 #include "glnx-libcontainer.h"
+#include "glnx-dirfd.h"
 
 #include "glnx-backport-autocleanups.h"
 #include "glnx-local-alloc.h"
@@ -104,9 +105,9 @@ glnx_libcontainer_bind_mount_readonly (const char *path, GError **error)
 }
 #endif
 
-/* Based on code from nspawn.c */
+/* Based on code from nspawn.c; assumes process cwd is the target */
 static int
-glnx_libcontainer_make_api_mounts (const char *dest)
+glnx_libcontainer_make_api_mounts (void)
 {
   typedef struct MountPoint {
     const char *what;
@@ -134,10 +135,11 @@ glnx_libcontainer_make_api_mounts (const char *dest)
 
   for (k = 0; k < G_N_ELEMENTS(mount_table); k++)
     {
-      g_autofree char *where = NULL;
+      const char *where = mount_table[k].where;
       int t;
 
-      where = g_build_filename (dest, mount_table[k].where, NULL);
+      g_assert (where[0] == '/');
+      where++;
 
       t = mkdir (where, 0755);
       if (t < 0 && errno != EEXIST)
@@ -201,9 +203,9 @@ glnx_libcontainer_prep_dev (const char  *dest_devdir)
 }
 
 pid_t
-glnx_libcontainer_run_chroot_private (const char  *dest,
-                                      const char  *binary,
-                                      char **argv)
+glnx_libcontainer_run_chroot_at_private (int          dfd,
+                                         const char  *binary,
+                                         char       **argv)
 {
   /* Make most new namespaces; note our use of CLONE_NEWNET means we
    * have no networking in the container root.
@@ -250,12 +252,12 @@ glnx_libcontainer_run_chroot_private (const char  *dest,
         }
     }
 
-  if (chdir (dest) != 0)
-    _perror_fatal ("chdir: ");
+  if (fchdir (dfd) != 0)
+    _perror_fatal ("fchdir: ");
 
   if (!in_container)
     {
-      if (glnx_libcontainer_make_api_mounts (dest) != 0)
+      if (glnx_libcontainer_make_api_mounts () != 0)
         _perror_fatal ("preparing api mounts: ");
 
       if (glnx_libcontainer_prep_dev ("dev") != 0)
@@ -264,7 +266,7 @@ glnx_libcontainer_run_chroot_private (const char  *dest,
       if (mount (".", ".", NULL, MS_BIND | MS_PRIVATE, NULL) != 0)
         _perror_fatal ("mount (MS_BIND)");
       
-      if (mount (dest, "/", NULL, MS_MOVE, NULL) != 0)
+      if (mount (".", "/", NULL, MS_MOVE, NULL) != 0)
         _perror_fatal ("mount (MS_MOVE)");
     }
 
@@ -294,4 +296,18 @@ glnx_libcontainer_run_chroot_private (const char  *dest,
     }
 
   g_assert_not_reached ();
+}
+
+pid_t
+glnx_libcontainer_run_chroot_private (const char  *dest,
+                                      const char  *binary,
+                                      char **argv)
+{
+  glnx_fd_close int dfd = -1;
+
+  dfd = glnx_opendirat_with_errno (AT_FDCWD, dest, TRUE);
+  if (dfd < 0)
+    return -1;
+
+  return glnx_libcontainer_run_chroot_at_private (dfd, binary, argv);
 }
