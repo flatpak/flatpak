@@ -193,6 +193,12 @@ setup_sdk_repo () {
     update_repo
 }
 
+setup_python2_repo () {
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.PythonPlatform bash python2 ls cat echo readlink > /dev/null
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.PythonSdk python2 bash ls cat echo readlink make mkdir cp touch > /dev/null
+    update_repo
+}
+
 install_repo () {
     ${FLATPAK} ${U} install test-repo org.test.Platform master
     ${FLATPAK} ${U} install test-repo org.test.Hello master
@@ -200,6 +206,11 @@ install_repo () {
 
 install_sdk_repo () {
     ${FLATPAK} ${U} install test-repo org.test.Sdk master
+}
+
+install_python2_repo () {
+    ${FLATPAK} ${U} install test-repo org.test.PythonPlatform master
+    ${FLATPAK} ${U} install test-repo org.test.PythonSdk master
 }
 
 run () {
@@ -229,6 +240,14 @@ skip_without_bwrap () {
         exit 0
     fi
 }
+
+skip_without_python2 () {
+    if ! test -f /usr/bin/python2 || ! test -f /usr/lib*/python2.7/os.py ; then
+        echo "1..0 # SKIP this test requires /usr/bin/python2 (2.7) support"
+        exit 0
+    fi
+}
+
 
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf
 dbus-daemon --fork --config-file=session.conf --print-address=3 --print-pid=4 \

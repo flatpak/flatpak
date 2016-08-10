@@ -1,0 +1,9 @@
+#!/bin/sh
+
+cat <<EOF > Makefile
+all:
+	echo Building
+
+install:
+	echo Installing
+EOF
