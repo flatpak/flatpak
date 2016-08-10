@@ -1016,9 +1016,10 @@ fixup_python_timestamp (int dfd,
           glnx_fd_close int fd = -1;
           guint8 buffer[8];
           ssize_t res;
-          guint32 mtime;
-          g_autofree char *new_path = NULL;
+          guint32 pyc_mtime;
+          g_autofree char *py_path = NULL;
           struct stat stbuf;
+          gboolean remove_pyc = FALSE;
 
           fd = openat (dfd_iter.fd, dent->d_name, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
           if (fd == -1)
@@ -1040,14 +1041,11 @@ fixup_python_timestamp (int dfd,
               continue;
             }
 
-          mtime =
+          pyc_mtime =
             (buffer[4] << 8*0) |
             (buffer[5] << 8*1) |
             (buffer[6] << 8*2) |
             (buffer[7] << 8*3);
-
-          if (mtime == 1)
-            continue; /* Already 1 (which is what ostree checkout uses), ignore */
 
           if (strcmp (rel_path, "__pycache__") == 0)
             {
@@ -1065,19 +1063,51 @@ fixup_python_timestamp (int dfd,
                 continue;
               *dot = 0;
 
-              new_path = g_strconcat ("../", base, ".py", NULL);
+              py_path = g_strconcat ("../", base, ".py", NULL);
             }
           else
             {
               /* Python2 */
-              new_path = g_strndup (dent->d_name, strlen (dent->d_name) - 1);
+              py_path = g_strndup (dent->d_name, strlen (dent->d_name) - 1);
             }
 
-          if (fstatat (dfd_iter.fd, new_path, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
-            continue;
+          /* Here we found a .pyc (or .pyo) file an a possible .py file that apply for it.
+           * There are several possible cases wrt their mtimes:
+           *
+           * py not existing: pyc is stale, remove it
+           * pyc mtime == 1: (.pyc is from an old commited module)
+           *     py mtime == 1: Do nothing, already correct
+           *     py mtime != 1: The py changed in this module, remove pyc
+           * pyc mtime != 1: (.pyc changed this module)
+           *     py == 1: Shouldn't really happen, but for safety, remove pyc
+           *     py mtime != pyc mtime: new pyc doesn't match last py written in this module, remove it
+           *     py mtime == pyc mtime: These match, but the py will be set to mtime 1 by ostree, so update timestamp in pyc.
+           */
 
-          if (stbuf.st_mtime != mtime)
-            continue;
+          if (fstatat (dfd_iter.fd, py_path, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
+            {
+              remove_pyc = TRUE;
+            }
+          else if (pyc_mtime == 1)
+            {
+              if (stbuf.st_mtime == 1)
+                continue; /* Previously handled pyc */
+
+              remove_pyc = TRUE;
+            }
+          else /* pyc_mtime != 1 */
+            {
+              if (pyc_mtime == stbuf.st_mtime || stbuf.st_mtime == 1)
+                remove_pyc = TRUE;
+              /* else change mtime */
+            }
+
+          if (remove_pyc)
+            {
+              if (unlinkat(dfd_iter.fd, dent->d_name, 0) != 0)
+                g_warning ("Unable to delete %s", dent->d_name);
+              continue;
+            }
 
           /* Change to mtime 1 which is what ostree uses for checkouts */
           buffer[4] = 1;
