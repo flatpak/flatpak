@@ -1104,8 +1104,10 @@ fixup_python_timestamp (int dfd,
 
           if (remove_pyc)
             {
-              if (unlinkat(dfd_iter.fd, dent->d_name, 0) != 0)
-                g_warning ("Unable to delete %s", dent->d_name);
+              g_autofree char *child_full_path = g_build_filename (full_path, dent->d_name, NULL);
+              g_print ("Removing stale python bytecode file %s\n", child_full_path);
+              if (unlinkat (dfd_iter.fd, dent->d_name, 0) != 0)
+                g_warning ("Unable to delete %s", child_full_path);
               continue;
             }
 
