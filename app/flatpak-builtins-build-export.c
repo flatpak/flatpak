@@ -327,7 +327,18 @@ check_refs:
     }
 
   argv = g_strsplit (command, " ", 0);
-  exec_path = g_strconcat ("bin/", argv[0], NULL);
+  if (g_path_is_absolute (argv[0]))
+    {
+      if (g_str_has_prefix (argv[0], "/app/"))
+        exec_path = g_strdup (argv[0] + 5);
+      else
+        exec_path = g_strdup (argv[0]);
+    }
+  else
+    {
+      exec_path = g_strconcat ("bin/", argv[0], NULL);
+    }
+
   bin_file = g_file_resolve_relative_path (files, exec_path);
   if (!g_file_query_exists (bin_file, NULL))
     {
