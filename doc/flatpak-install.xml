@@ -146,7 +146,7 @@
                 <term><option>--no-pull</option></term>
 
                 <listitem><para>
-                    Don't download the latest version, deploy it whatever is locally available.
+                    Don't download the latest version, deploy whatever is locally available.
                 </para></listitem>
             </varlistentry>
 
@@ -207,8 +207,8 @@
 
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-update-app</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-list-apps</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
