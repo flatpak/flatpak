@@ -88,7 +88,6 @@ installed_test_data = \
 	tests/org.test.Python.json \
 	tests/empty-configure \
 	tests/testpython.py \
-	tests/testpython.py \
 	tests/importme.py \
 	tests/importme2.py \
 	$(NULL)
