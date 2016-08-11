@@ -1078,8 +1078,8 @@ fixup_python_timestamp (int dfd,
            * pyc mtime == 1: (.pyc is from an old commited module)
            *     py mtime == 1: Do nothing, already correct
            *     py mtime != 1: The py changed in this module, remove pyc
-           * pyc mtime != 1: (.pyc changed this module)
-           *     py == 1: Shouldn't really happen, but for safety, remove pyc
+           * pyc mtime != 1: (.pyc changed this module, or was never rewritten in base layer)
+           *     py == 1: Shouldn't happen in flatpak-builder, but could be an un-rewritten ctime lower layer, assume it matches and update timestamp
            *     py mtime != pyc mtime: new pyc doesn't match last py written in this module, remove it
            *     py mtime == pyc mtime: These match, but the py will be set to mtime 1 by ostree, so update timestamp in pyc.
            */
@@ -1097,7 +1097,7 @@ fixup_python_timestamp (int dfd,
             }
           else /* pyc_mtime != 1 */
             {
-              if (pyc_mtime == stbuf.st_mtime || stbuf.st_mtime == 1)
+              if (pyc_mtime != stbuf.st_mtime && stbuf.st_mtime != 1)
                 remove_pyc = TRUE;
               /* else change mtime */
             }
