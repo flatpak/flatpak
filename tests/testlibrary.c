@@ -4,6 +4,27 @@
 #include "libglnx/libglnx.h"
 #include "flatpak.h"
 
+#if GLIB_CHECK_VERSION (2, 44, 0)
+#define strv_contains(strv, str) g_strv_contains (strv, str)
+#else
+static gboolean
+strv_contains (const gchar * const *strv,
+               const gchar *str)
+{
+  guint i;
+
+  g_return_val_if_fail (strv != NULL, FALSE);
+
+  for (i = 0; strv[i] != NULL; i++)
+    {
+      if (strcmp (strv[i], str) == 0)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+#endif
+
 static char *testdir;
 static char *flatpak_runtimedir;
 static char *flatpak_systemdir;
@@ -79,7 +100,7 @@ test_arches (void)
   g_assert_cmpstr (default_arch, !=, "");
 
   g_assert_nonnull (supported_arches);
-  g_assert (g_strv_contains (supported_arches, default_arch));
+  g_assert (strv_contains (supported_arches, default_arch));
 }
 
 static void
