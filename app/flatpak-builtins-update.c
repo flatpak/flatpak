@@ -122,11 +122,9 @@ do_update (FlatpakDir  * dir,
     }
   else
     {
-      g_autofree char *current = NULL;
       g_autoptr(GVariant) deploy_data = NULL;
       g_autofree char *commit = NULL;
-      current = flatpak_dir_current_ref (dir, parts[1],  NULL);
-      deploy_data = flatpak_dir_get_deploy_data (dir, current, NULL, NULL);
+      deploy_data = flatpak_dir_get_deploy_data (dir, ref, NULL, NULL);
       commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
       g_print (_("Now at %s.\n"), commit);
     }
@@ -180,11 +178,9 @@ do_update (FlatpakDir  * dir,
                 }
               else
                 {
-                  g_autofree char *current = NULL;
                   g_autoptr(GVariant) deploy_data = NULL;
                   g_autofree char *commit = NULL;
-                  current = flatpak_dir_current_ref (dir, parts[1],  NULL);
-                  deploy_data = flatpak_dir_get_deploy_data (dir, current, NULL, NULL);
+                  deploy_data = flatpak_dir_get_deploy_data (dir, rel->ref, NULL, NULL);
                   commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
                   g_print (_("Now at %s.\n"), commit);
                 }
