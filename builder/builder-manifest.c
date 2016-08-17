@@ -1755,10 +1755,29 @@ builder_manifest_finish (BuilderManifest *self,
       else
         manifest_file = g_file_resolve_relative_path (app_dir, "files/manifest.json");
 
+      if (g_file_query_exists (manifest_file, NULL))
+        {
+          /* Move existing base manifest aside */
+          g_autoptr(GFile) manifest_dir = g_file_get_parent (manifest_file);
+          g_autoptr(GFile) old_manifest = NULL;
+          int ver = 0;
+
+          do
+            {
+              g_autofree char *basename = g_strdup_printf ("manifest-base-%d.json", ++ver);
+              g_clear_object (&old_manifest);
+              old_manifest = g_file_get_child (manifest_dir, basename);
+            }
+          while (g_file_query_exists (old_manifest, NULL));
+
+          if (!g_file_move (manifest_file, old_manifest, 0,
+                            NULL, NULL, NULL, error))
+            return FALSE;
+        }
+
       if (!g_file_replace_contents (manifest_file, json, strlen (json), NULL, FALSE,
                                     0, NULL, NULL, error))
         return FALSE;
-
 
       if (self->build_runtime)
         {
