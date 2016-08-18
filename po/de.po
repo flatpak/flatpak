@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-08-12 14:24+0000\n"
-"PO-Revision-Date: 2016-08-12 20:36+0200\n"
-"Last-Translator: Christian Kirbach <christian.kirbach@gmail.com>\n"
+"POT-Creation-Date: 2016-08-18 02:24+0000\n"
+"PO-Revision-Date: 2016-08-17 17:04+0200\n"
+"Last-Translator: Wolfgang Stoeggl <c72578@yahoo.de>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -39,7 +39,7 @@ msgstr "GPG-Überprüfung aktivieren"
 
 #: app/flatpak-builtins-add-remote.c:66
 msgid "Mark the remote as enumerate"
-msgstr ""
+msgstr "Entfernte Quelle markieren als »berücksichtigen«"
 
 #: app/flatpak-builtins-add-remote.c:67
 msgid "Set a new url"
@@ -57,9 +57,11 @@ msgstr "Entfernte Quelle aktivieren"
 msgid "Disable GPG verification"
 msgstr "GPG-Überprüfung deaktivieren"
 
+# Bedeutung aus flatpak-remote-add.xml
+# Mark the remote as not enumerated. This means the remote will not be used to list applications, for instance in graphical installation tools.
 #: app/flatpak-builtins-add-remote.c:74
 msgid "Mark the remote as don't enumerate"
-msgstr ""
+msgstr "Entfernte Quelle markieren als »nicht berücksichtigen«"
 
 #: app/flatpak-builtins-add-remote.c:75
 msgid "Set priority (default 1, higher is more prioritized)"
@@ -199,7 +201,7 @@ msgstr "Zu exportierende Architektur (muss kompatibel mit dem Rechner sein)"
 
 #: app/flatpak-builtins-build-export.c:52
 msgid "Commit runtime (/usr), not /app"
-msgstr ""
+msgstr "Commit von Laufzeit (/usr), nicht /app"
 
 #: app/flatpak-builtins-build-export.c:53
 msgid "Update the appstream branch"
@@ -431,7 +433,7 @@ msgstr "Plattform-Laufzeit eher verwenden als Sdk"
 
 #: app/flatpak-builtins-build.c:44
 msgid "Add bind mount"
-msgstr ""
+msgstr "»Bind-Mount« hinzufügen"
 
 #: app/flatpak-builtins-build.c:44
 msgid "DEST=SRC"
@@ -448,7 +450,7 @@ msgstr "ORDNER [BEFEHL [Argumente …]] - In Ordner Erstellen"
 #: app/flatpak-builtins-build.c:208
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
-msgstr ""
+msgstr "Fehlendes »=« in Bind-Mount-Option »%s«"
 
 #: app/flatpak-builtins-build.c:234 common/flatpak-run.c:3278
 msgid "Unable to start app"
@@ -615,11 +617,11 @@ msgstr ""
 
 #: app/flatpak-builtins-install.c:52
 msgid "Don't pull, only install from local cache"
-msgstr ""
+msgstr "Keinen »Pull« ausführen, Installation nur aus lokalem Zwischenspeicher"
 
 #: app/flatpak-builtins-install.c:53 app/flatpak-builtins-update.c:53
 msgid "Don't deploy, only download to local cache"
-msgstr ""
+msgstr "Nicht bereitstellen, nur in lokalen Zwischenspeicher herunterladen"
 
 #: app/flatpak-builtins-install.c:54
 msgid "Don't install related refs"
@@ -671,7 +673,7 @@ msgid "Runtime %s, branch %s is already installed"
 msgstr "Laufzeitumgebung %s, Zweig %s ist bereits installiert"
 
 #: app/flatpak-builtins-install.c:207 app/flatpak-builtins-uninstall.c:109
-#: app/flatpak-builtins-update.c:147
+#: app/flatpak-builtins-update.c:145
 #, c-format
 msgid "Warning: Problem looking for related refs: %s\n"
 msgstr "Warnung: Problem bei der Suche nach zugehörigen Referenzen: %s\n"
@@ -779,10 +781,12 @@ msgstr "Ungenutzte Objekte abschneiden"
 #: app/flatpak-builtins-repo-update.c:49
 msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
 msgstr ""
+"Nur übergeordnete Ebenen der angegebenen TIEFE für jeden Commit durchqueren "
+"(Standard: -1=unendlich)"
 
 #: app/flatpak-builtins-repo-update.c:49
 msgid "DEPTH"
-msgstr ""
+msgstr "TIEFE"
 
 #: app/flatpak-builtins-repo-update.c:63
 msgid "LOCATION - Update repository metadata"
@@ -919,9 +923,11 @@ msgstr "COMMIT"
 msgid "Remove old files even if running"
 msgstr "Alte Dateien entfernen, selbst wenn sie in Verwendung sind"
 
+# Alternative: Nicht herunterziehen, …
 #: app/flatpak-builtins-update.c:52
 msgid "Don't pull, only update from local cache"
 msgstr ""
+"Keinen »Pull« ausführen, nur aus lokalem Zwischenspeicher aktualisieren"
 
 #: app/flatpak-builtins-update.c:54
 msgid "Don't update related refs"
@@ -950,30 +956,30 @@ msgstr "Laufzeitumgebung %s, Zweig %s wird aktualisiert\n"
 msgid "Remote %s disabled\n"
 msgstr "Entfernte Quelle %s deaktiviert\n"
 
-#: app/flatpak-builtins-update.c:114 app/flatpak-builtins-update.c:176
+#: app/flatpak-builtins-update.c:114 app/flatpak-builtins-update.c:174
 msgid "No updates.\n"
 msgstr "Keine Aktualisierungen.\n"
 
-#: app/flatpak-builtins-update.c:131 app/flatpak-builtins-update.c:189
+#: app/flatpak-builtins-update.c:129 app/flatpak-builtins-update.c:185
 #, c-format
 msgid "Now at %s.\n"
 msgstr "Jetzt bei %s.\n"
 
-#: app/flatpak-builtins-update.c:164
+#: app/flatpak-builtins-update.c:162
 #, c-format
 msgid "Updating related: %s\n"
 msgstr "Zugehörige werden aktualisiert: %s\n"
 
-#: app/flatpak-builtins-update.c:212
+#: app/flatpak-builtins-update.c:208
 msgid "[NAME [BRANCH]] - Update an application or runtime"
 msgstr "[NAME [ZWEIG]] - Eine Anwendung oder Laufzeitumgebung aktualisieren"
 
-#: app/flatpak-builtins-update.c:291
+#: app/flatpak-builtins-update.c:287
 #, c-format
 msgid "Error updating: %s\n"
 msgstr "Fehler bei der Aktualisierung: %s\n"
 
-#: app/flatpak-builtins-update.c:307
+#: app/flatpak-builtins-update.c:303
 msgid "One or more updates failed"
 msgstr "Eine oder mehrere Aktualisierungen sind fehlgeschlagen"
 
@@ -1322,7 +1328,7 @@ msgstr "Temporäre Datei konnte nicht geöffnet werden"
 
 #: common/flatpak-run.c:2583
 msgid "Unable to create sync pipe"
-msgstr ""
+msgstr "»Sync-Pipe« konnte nicht erstellt werden"
 
 #: common/flatpak-run.c:2622
 msgid "Failed to sync with dbus proxy"
@@ -1331,7 +1337,7 @@ msgstr "Abgleich mit Dbus-Proxy ist fehlgeschlagen"
 #: common/flatpak-dir.c:437
 #, c-format
 msgid "No overrides found for %s"
-msgstr ""
+msgstr "Keine Ersetzungen für %s gefunden"
 
 #: common/flatpak-dir.c:544 common/flatpak-dir.c:778 common/flatpak-dir.c:814
 #: common/flatpak-dir.c:836 common/flatpak-dir.c:5336
@@ -1352,17 +1358,18 @@ msgstr "Bereitstellungsordner konnte nicht erstellt werden"
 #: common/flatpak-dir.c:1302 common/flatpak-dir.c:1516
 #, c-format
 msgid "While pulling %s from remote %s: "
-msgstr ""
+msgstr "Während des Holens von %s von der entfernten Quelle %s: "
 
 #: common/flatpak-dir.c:1316 common/flatpak-dir.c:1528
 #, c-format
 msgid "While pulling %s from remote %s, metadata: "
-msgstr ""
+msgstr "Während des Holens von %s von der entfernten Quelle %s, Metadaten: "
 
 #: common/flatpak-dir.c:1330 common/flatpak-dir.c:1540
 #, c-format
 msgid "While pulling %s from remote %s, subpath %s: "
 msgstr ""
+"Während des Holens von %s von der entfernten Quelle %s: Unterordner %s: "
 
 #: common/flatpak-dir.c:1472 common/flatpak-dir.c:4359
 #, c-format
@@ -1401,11 +1408,13 @@ msgstr "Commit %s konnte nicht gelesen werden: "
 #: common/flatpak-dir.c:2665
 #, c-format
 msgid "While trying to checkout %s into %s: "
-msgstr ""
+msgstr "Während des Versuchs, eine Arbeitskopie von %s nach %s zu erstellen: "
 
 #: common/flatpak-dir.c:2690 common/flatpak-dir.c:2721
 msgid "While trying to checkout metadata subpath: "
 msgstr ""
+"Während des Versuchs, eine Arbeitskopie des Metadaten-Unterordners zu "
+"erstellen: "
 
 #: common/flatpak-dir.c:3508
 #, c-format
