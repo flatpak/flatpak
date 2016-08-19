@@ -256,6 +256,24 @@ find_file_in_tree (GFile *base, const char *filename)
   return FALSE;
 }
 
+static GFile *
+convert_app_absolute_path (const char *path, GFile *files)
+{
+  g_autofree char *exec_path = NULL;
+
+  if (g_path_is_absolute (path))
+    {
+      if (g_str_has_prefix (path, "/app/"))
+        exec_path = g_strdup (path + 5);
+      else
+        exec_path = g_strdup (path);
+    }
+  else
+    exec_path = g_strconcat ("bin/", path, NULL);
+
+  return g_file_resolve_relative_path (files, exec_path);
+}
+
 static gboolean
 validate_desktop_file (GFile *desktop_file,
                        GFile *export,
@@ -273,7 +291,6 @@ validate_desktop_file (GFile *desktop_file,
   g_autoptr(GKeyFile) key_file = NULL;
   g_autofree char *command = NULL;
   g_auto(GStrv) argv = NULL;
-  g_autofree char *exec_path = NULL;
   g_autoptr(GFile) bin_file = NULL;
 
   if (!g_file_query_exists (desktop_file, NULL))
@@ -327,19 +344,8 @@ check_refs:
     }
 
   argv = g_strsplit (command, " ", 0);
-  if (g_path_is_absolute (argv[0]))
-    {
-      if (g_str_has_prefix (argv[0], "/app/"))
-        exec_path = g_strdup (argv[0] + 5);
-      else
-        exec_path = g_strdup (argv[0]);
-    }
-  else
-    {
-      exec_path = g_strconcat ("bin/", argv[0], NULL);
-    }
 
-  bin_file = g_file_resolve_relative_path (files, exec_path);
+  bin_file = convert_app_absolute_path (argv[0], files);
   if (!g_file_query_exists (bin_file, NULL))
     {
       g_set_error (error,
@@ -408,7 +414,6 @@ validate_service_file (GFile *service_file,
   g_autofree char *name = NULL;
   g_autofree char *command = NULL;
   g_auto(GStrv) argv = NULL;
-  g_autofree char *exec_path = NULL;
   g_autoptr(GFile) bin_file = NULL;
 
   if (!g_file_query_exists (service_file, NULL))
@@ -449,10 +454,10 @@ validate_service_file (GFile *service_file,
       g_prefix_error (error, "Invalid service file %s: ", path);
       return FALSE;
     }
-  argv = g_strsplit (command, " ", 0);
-  exec_path = g_strconcat ("bin/", argv[0], NULL);
-  bin_file = g_file_resolve_relative_path (files, exec_path);
 
+  argv = g_strsplit (command, " ", 0);
+
+  bin_file = convert_app_absolute_path (argv[0], files);
   if (!g_file_query_exists (bin_file, NULL))
     {
       g_set_error (error,
