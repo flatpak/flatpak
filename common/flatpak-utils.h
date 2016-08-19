@@ -289,8 +289,34 @@ flatpak_temp_dir_destroy (void *p)
 }
 
 typedef GFile FlatpakTempDir;
-
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakTempDir, flatpak_temp_dir_destroy)
+
+
+typedef OstreeRepo FlatpakRepoTransaction;
+
+static inline void
+flatpak_repo_transaction_cleanup (void *p)
+{
+  OstreeRepo *repo = p;
+
+  if (repo)
+    {
+      g_autoptr(GError) error = NULL;
+      if (!ostree_repo_abort_transaction (repo, NULL, &error))
+        g_warning ("Error aborting ostree transaction: %s", error->message);
+    }
+}
+
+static inline FlatpakRepoTransaction *
+flatpak_repo_transaction_start (OstreeRepo     *repo,
+                                GCancellable   *cancellable,
+                                GError        **error)
+{
+  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+    return NULL;
+  return (FlatpakRepoTransaction *)repo;
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRepoTransaction, flatpak_repo_transaction_cleanup)
 
 #define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup (flatpak_auto_unlock_helper))) GMutex * G_PASTE (auto_unlock, __LINE__) = flatpak_auto_lock_helper (&G_LOCK_NAME (name))
 
