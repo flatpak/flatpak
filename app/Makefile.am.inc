@@ -24,6 +24,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-build-export.c \
 	app/flatpak-builtins-build-bundle.c \
 	app/flatpak-builtins-build-import-bundle.c \
+	app/flatpak-builtins-build-commit-from.c \
 	app/flatpak-builtins-build-sign.c \
 	app/flatpak-builtins-repo-update.c \
 	app/flatpak-builtins-document-export.c \

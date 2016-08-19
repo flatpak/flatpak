@@ -1,0 +1,199 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-build-commit-from">
+
+    <refentryinfo>
+        <title>flatpak build-commit-from</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak build-commit-from</refentrytitle>
+        <manvolnum>1</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-build-commit-from</refname>
+        <refpurpose>Create a new commit based on an previous one (possibly from another repository)</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+            <cmdsynopsis>
+                <command>flatpak build-commit-from</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">DST-REPO</arg>
+                <arg choice="plain">DST-REF</arg>
+            </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Creates a new commit on the <arg choice="plain">DST-REF</arg>
+            branch in the <arg choice="plain">DST-REPO</arg>, with the
+            contents (and most of the metadata) taken from another
+            branch, either from another repo, or from another branch in
+            the same repository.
+        </para>
+        <para>
+            This command is very useful when you want to maintain a branch
+            with a clean history that has no unsigned or broken commits.
+            For instance, you can import the head from a different repository
+            from an automatic builder when you've verified that it worked.
+            The new commit will have no parents or signatures from the
+            autobuilder, and can be properly signed with the official
+            key.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>Options</title>
+
+        <para>The following options are understood:</para>
+
+        <variablelist>
+            <varlistentry>
+                <term><option>-h</option></term>
+                <term><option>--help</option></term>
+
+                <listitem><para>
+                    Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--src-repo=SRC-REPO</option></term>
+
+                <listitem><para>
+                    The (local) repository to pull the source branch from. Defaults to the
+                    destination repository.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--src-ref=SRC-REF</option></term>
+
+                <listitem><para>
+                    The branch to use as the source for the new commit. Defaults to the same
+                    as the destination ref, which is useful only if a different source repo
+                    has been specified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--untrusted</option></term>
+
+                <listitem><para>
+                    The source repostory is not trusted, all objects are copied (not hardlinked) and
+                    all checksums are verified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-s</option></term>
+                <term><option>--subject=SUBJECT</option></term>
+
+                <listitem><para>
+                    One line subject for the commit message. If not specified, will be taken from the source commit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-b</option></term>
+                <term><option>--body=BODY</option></term>
+
+                <listitem><para>
+                    Full description for the commit message. If not specified, will be taken from the source commit.
+                </para></listitem>
+            </varlistentry>
+
+
+            <varlistentry>
+                <term><option>--update-appstream</option></term>
+
+                <listitem><para>
+                    Run appstream-builder and to update the appstream branch after build.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-sign=KEYID</option></term>
+
+                <listitem><para>
+                    Sign the commit with this GPG key.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-homedir=PATH</option></term>
+
+                <listitem><para>
+                    GPG Homedir to use when looking for keyrings
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <term><option>--verbose</option></term>
+
+                <listitem><para>
+                    Print debug information during command processing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--version</option></term>
+
+                <listitem><para>
+                    Print version information and exit.
+                </para></listitem>
+            </varlistentry>
+        </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+        <para>
+            <command>$ flatpak build-export ~/repos/gnome-calculator/ ~/build/gnome-calculator/ org.gnome.Calculator</command>
+        </para>
+<programlisting>
+Commit: 9d0044ea480297114d03aec85c3d7ae3779438f9d2cb69d717fb54237acacb8c
+Metadata Total: 605
+Metadata Written: 5
+Content Total: 1174
+Content Written: 1
+Content Bytes Written: 305
+</programlisting>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-init</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-finish</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-repo-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>
