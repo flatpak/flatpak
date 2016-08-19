@@ -392,6 +392,8 @@ FlatpakCompletion *flatpak_completion_new   (const char        *arg_line,
 void               flatpak_complete_word    (FlatpakCompletion *completion,
                                              char              *format,
                                              ...);
+void               flatpak_complete_ref     (FlatpakCompletion *completion,
+                                             OstreeRepo        *repo);
 void               flatpak_complete_file    (FlatpakCompletion *completion);
 void               flatpak_complete_dir     (FlatpakCompletion *completion);
 void               flatpak_complete_options (FlatpakCompletion *completion,

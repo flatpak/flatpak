@@ -3289,6 +3289,32 @@ flatpak_complete_word (FlatpakCompletion *completion,
   g_print ("%s\n", rest);
 }
 
+void
+flatpak_complete_ref (FlatpakCompletion *completion,
+                      OstreeRepo *repo)
+{
+  g_autoptr(GHashTable) refs = NULL;
+  flatpak_completion_debug ("completing REF");
+
+  if (ostree_repo_list_refs (repo,
+                             NULL,
+                             &refs, NULL, NULL))
+    {
+      GHashTableIter hashiter;
+      gpointer hashkey, hashvalue;
+
+      g_hash_table_iter_init (&hashiter, refs);
+      while ((g_hash_table_iter_next (&hashiter, &hashkey, &hashvalue)))
+        {
+          const char *ref = (const char *)hashkey;
+          if (!(g_str_has_prefix (ref, "runtime/") ||
+                g_str_has_prefix (ref, "app/")))
+            continue;
+          flatpak_complete_word (completion, "%s", ref);
+        }
+    }
+}
+
 static gboolean
 switch_already_in_line (FlatpakCompletion *completion,
                         GOptionEntry      *entry)
