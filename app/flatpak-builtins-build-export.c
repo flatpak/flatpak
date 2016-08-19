@@ -347,12 +347,7 @@ check_refs:
 
   bin_file = convert_app_absolute_path (argv[0], files);
   if (!g_file_query_exists (bin_file, NULL))
-    {
-      g_set_error (error,
-                   G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Binary not found for Exec line in %s: %s", path, command);
-      return FALSE;
-    }
+    g_warning ("Binary not found for Exec line in %s: %s", path, command);
 
   *icon = g_key_file_get_string (key_file,
                                  G_KEY_FILE_DESKTOP_GROUP,
@@ -459,12 +454,7 @@ validate_service_file (GFile *service_file,
 
   bin_file = convert_app_absolute_path (argv[0], files);
   if (!g_file_query_exists (bin_file, NULL))
-    {
-      g_set_error (error,
-                   G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Binary not found for Exec line in %s: %s", path, command);
-      return FALSE;
-    }
+    g_warning ("Binary not found for Exec line in %s: %s", path, command);
 
   return TRUE;
 }
