@@ -906,6 +906,7 @@ builder_manifest_start (BuilderManifest *self,
 {
   g_autofree char *arch_option = NULL;
   g_autoptr(GHashTable) names = g_hash_table_new (g_str_hash, g_str_equal);
+  const char *stop_at;
 
   if (self->sdk == NULL)
     {
@@ -932,6 +933,10 @@ builder_manifest_start (BuilderManifest *self,
 
   if (!expand_modules (self->modules, &self->expanded_modules, names, error))
     return FALSE;
+
+  stop_at = builder_context_get_stop_at (context);
+  if (stop_at != NULL && g_hash_table_lookup (names, stop_at) == NULL)
+    return flatpak_fail (error, "No module named %s (specified with --stop-at)", stop_at);
 
   return TRUE;
 }
@@ -1153,6 +1158,7 @@ builder_manifest_build (BuilderManifest *self,
                         BuilderContext  *context,
                         GError         **error)
 {
+  const char *stop_at = builder_context_get_stop_at (context);
   GList *l;
 
   builder_context_set_options (context, self->build_options);
@@ -1166,12 +1172,19 @@ builder_manifest_build (BuilderManifest *self,
     {
       BuilderModule *m = l->data;
       g_autoptr(GPtrArray) changes = NULL;
+      const char *name = builder_module_get_name (m);
 
-      g_autofree char *stage = g_strdup_printf ("build-%s", builder_module_get_name (m));
+      g_autofree char *stage = g_strdup_printf ("build-%s", name);
+
+      if (stop_at != NULL && strcmp (name, stop_at) == 0)
+        {
+          g_print ("Stopping at module %s\n", stop_at);
+          return TRUE;
+        }
 
       if (!builder_module_get_sources (m))
         {
-          g_print ("Skipping module %s (no sources)\n", builder_module_get_name (m));
+          g_print ("Skipping module %s (no sources)\n", name);
           continue;
         }
 
@@ -1180,7 +1193,7 @@ builder_manifest_build (BuilderManifest *self,
       if (!builder_cache_lookup (cache, stage))
         {
           g_autofree char *body =
-            g_strdup_printf ("Built %s\n", builder_module_get_name (m));
+            g_strdup_printf ("Built %s\n", name);
           if (!builder_module_build (m, cache, context, error))
             return FALSE;
           if (!builder_cache_commit (cache, body, error))
@@ -1188,8 +1201,7 @@ builder_manifest_build (BuilderManifest *self,
         }
       else
         {
-          g_print ("Cache hit for %s, skipping build\n",
-                   builder_module_get_name (m));
+          g_print ("Cache hit for %s, skipping build\n", name);
         }
 
       changes = builder_cache_get_changes (cache, error);

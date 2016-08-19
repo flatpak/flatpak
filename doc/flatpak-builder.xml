@@ -672,6 +672,18 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--stop-at=MODULENAME</option></term>
+
+                <listitem><para>
+                     Stop building at the specified module, ignoring all the following ones.
+                     This is useful for debugging and development. For instance, you can
+                     build all the dependencies, but stop at the main application so that
+                     you can then do a build from a pre-existing checkout.
+                     Implies --build-only.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--repo=DIR</option></term>
 
                 <listitem><para>

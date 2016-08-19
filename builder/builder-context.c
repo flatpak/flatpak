@@ -39,6 +39,7 @@ struct BuilderContext
   GFile          *base_dir;
   SoupSession    *soup_session;
   char           *arch;
+  char           *stop_at;
 
   GFile          *download_dir;
   GFile          *state_dir;
@@ -85,6 +86,7 @@ builder_context_finalize (GObject *object)
   g_clear_object (&self->soup_session);
   g_clear_object (&self->options);
   g_free (self->arch);
+  g_free (self->stop_at);
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_platform);
 
@@ -264,6 +266,20 @@ builder_context_set_arch (BuilderContext *self,
 {
   g_free (self->arch);
   self->arch = g_strdup (arch);
+}
+
+const char *
+builder_context_get_stop_at (BuilderContext *self)
+{
+  return self->stop_at;
+}
+
+void
+builder_context_set_stop_at (BuilderContext *self,
+                             const char     *module)
+{
+  g_free (self->stop_at);
+  self->stop_at = g_strdup (module);
 }
 
 BuilderOptions *
