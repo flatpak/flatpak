@@ -695,23 +695,9 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
     goto out;
 
-  if (opt_update_appstream)
-    {
-      g_autoptr(GError) my_error = NULL;
-
-      if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
-        {
-          if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
-            {
-              g_print ("WARNING: Can't find appstream-builder, unable to update appstream branch\n");
-            }
-          else
-            {
-              g_propagate_error (error, g_steal_pointer (&my_error));
-              return FALSE;
-            }
-        }
-    }
+  if (opt_update_appstream &&
+      !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+    return FALSE;
 
   if (!flatpak_repo_update (repo,
                             (const char **) opt_gpg_key_ids,

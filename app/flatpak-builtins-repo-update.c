@@ -58,7 +58,6 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   const char *location;
-  g_autoptr(GError) my_error = NULL;
 
   context = g_option_context_new (_("LOCATION - Update repository metadata"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -82,18 +81,8 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
     return FALSE;
 
   g_print (_("Updating appstream branch\n"));
-  if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, &my_error))
-    {
-      if (g_error_matches (my_error, G_SPAWN_ERROR, G_SPAWN_ERROR_NOENT))
-        {
-          g_print (_("Warning: Can't find appstream-builder, unable to update appstream branch\n"));
-        }
-      else
-        {
-          g_propagate_error (error, g_steal_pointer (&my_error));
-          return FALSE;
-        }
-    }
+  if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+    return FALSE;
 
   if (opt_generate_deltas)
     {
