@@ -983,13 +983,13 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   g_autoptr(GFile) active_link = NULL;
   g_autofree char *branch = NULL;
   g_autoptr(GFile) old_checkout_dir = NULL;
-  g_autofree char *tmpname = NULL;
   g_autoptr(GFile) active_tmp_link = NULL;
   g_autoptr(GError) tmp_error = NULL;
   g_autofree char *checkout_dir_path = NULL;
   OstreeRepoCheckoutOptions options = { 0, };
   glnx_fd_close int dfd = -1;
   g_autoptr(GFileInfo) file_info = NULL;
+  g_autofree char *tmpname = g_strdup (".active-XXXXXX");
 
   appstream_dir = g_file_get_child (flatpak_dir_get_path (self), "appstream");
   remote_dir = g_file_get_child (appstream_dir, remote);
@@ -1058,7 +1058,7 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
                                      cancellable, error))
     return FALSE;
 
-  tmpname = gs_fileutil_gen_tmp_name (".active-", NULL);
+  glnx_gen_temp_name (tmpname);
   active_tmp_link = g_file_get_child (arch_dir, tmpname);
 
   if (!g_file_make_symbolic_link (active_tmp_link, new_checksum, cancellable, error))
@@ -1885,17 +1885,17 @@ flatpak_dir_set_active (FlatpakDir   *self,
   gboolean ret = FALSE;
 
   g_autoptr(GFile) deploy_base = NULL;
-  g_autofree char *tmpname = NULL;
   g_autoptr(GFile) active_tmp_link = NULL;
   g_autoptr(GFile) active_link = NULL;
   g_autoptr(GError) my_error = NULL;
+  g_autofree char *tmpname = g_strdup (".active-XXXXXX");
 
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
   active_link = g_file_get_child (deploy_base, "active");
 
   if (checksum != NULL)
     {
-      tmpname = gs_fileutil_gen_tmp_name (".active-", NULL);
+      glnx_gen_temp_name (tmpname);
       active_tmp_link = g_file_get_child (deploy_base, tmpname);
       if (!g_file_make_symbolic_link (active_tmp_link, checksum, cancellable, error))
         goto out;
@@ -3665,7 +3665,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) removed_subdir = NULL;
   g_autoptr(GFile) removed_dir = NULL;
-  g_autofree char *tmpname = NULL;
+  g_autofree char *tmpname = g_strdup_printf ("removed-%s-XXXXXX", checksum);
   g_autofree char *active = NULL;
   int i;
 
@@ -3717,7 +3717,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   if (!flatpak_mkdir_p (removed_dir, cancellable, error))
     goto out;
 
-  tmpname = gs_fileutil_gen_tmp_name ("", checksum);
+  glnx_gen_temp_name (tmpname);
   removed_subdir = g_file_get_child (removed_dir, tmpname);
 
   if (!gs_file_rename (checkoutdir,
