@@ -42,6 +42,7 @@
 #include "libgsystem.h"
 #include "libglnx/libglnx.h"
 #include <libsoup/soup.h>
+#include <gio/gunixoutputstream.h>
 
 /* This is also here so the common code can report these errors to the lib */
 static const GDBusErrorEntry flatpak_error_entries[] = {
@@ -1673,6 +1674,49 @@ gboolean flatpak_file_rename (GFile *from,
       glnx_set_error_from_errno (error);
       return FALSE;
     }
+
+  return TRUE;
+}
+
+gboolean
+flatpak_open_in_tmpdir_at (int                tmpdir_fd,
+                           int                mode,
+                           char              *tmpl,
+                           GOutputStream    **out_stream,
+                           GCancellable      *cancellable,
+                           GError           **error)
+{
+  const int max_attempts = 128;
+  int i;
+  int fd;
+
+  /* 128 attempts seems reasonable... */
+  for (i = 0; i < max_attempts; i++)
+    {
+      glnx_gen_temp_name (tmpl);
+
+      do
+        fd = openat (tmpdir_fd, tmpl, O_WRONLY | O_CREAT | O_EXCL, mode);
+      while (fd == -1 && errno == EINTR);
+      if (fd < 0 && errno != EEXIST)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+      else if (fd != -1)
+        break;
+    }
+  if (i == max_attempts)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Exhausted attempts to open temporary file");
+      return FALSE;
+    }
+
+  if (out_stream)
+    *out_stream = g_unix_output_stream_new (fd, TRUE);
+  else
+    (void) close (fd);
 
   return TRUE;
 }

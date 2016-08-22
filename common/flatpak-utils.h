@@ -295,6 +295,13 @@ gboolean flatpak_file_rename (GFile *from,
                               GCancellable  *cancellable,
                               GError       **error);
 
+gboolean flatpak_open_in_tmpdir_at (int                tmpdir_fd,
+                                    int                mode,
+                                    char              *tmpl,
+                                    GOutputStream    **out_stream,
+                                    GCancellable      *cancellable,
+                                    GError           **error);
+
 #define flatpak_autorm_rf _GLIB_CLEANUP (g_autoptr_cleanup_generic_gfree)
 
 static inline void

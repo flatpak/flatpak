@@ -2124,8 +2124,7 @@ export_desktop_file (const char   *app,
 {
   gboolean ret = FALSE;
   glnx_fd_close int desktop_fd = -1;
-  g_autofree char *tmpfile_name = NULL;
-
+  g_autofree char *tmpfile_name = g_strdup_printf ("export-desktop-XXXXXX");
   g_autoptr(GOutputStream) out_stream = NULL;
   g_autofree gchar *data = NULL;
   gsize data_len;
@@ -2226,7 +2225,7 @@ export_desktop_file (const char   *app,
   if (new_data == NULL)
     goto out;
 
-  if (!gs_file_open_in_tmpdir_at (parent_fd, 0755, &tmpfile_name, &out_stream, cancellable, error))
+  if (!flatpak_open_in_tmpdir_at (parent_fd, 0755, tmpfile_name, &out_stream, cancellable, error))
     goto out;
 
   if (!g_output_stream_write_all (out_stream, new_data, new_data_len, NULL, cancellable, error))
