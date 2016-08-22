@@ -278,69 +278,65 @@ git_mirror_submodules (const char     *repo_location,
 {
   g_autofree char *mirror_dir_path = NULL;
 
-  g_autoptr(GFile) checkout_dir_template = NULL;
-  g_autoptr(GFile) checkout_dir = NULL;
-  g_autofree char *checkout_dir_path = NULL;
-  g_autofree char *submodule_status = NULL;
+  g_autoptr(GKeyFile) key_file = g_key_file_new ();
+  g_autofree gchar *submodule_data = NULL;
+  g_autofree gchar **submodules = NULL;
+  g_autofree gchar *gitmodules = g_strconcat (revision, ":.gitmodules", NULL);
+  gsize num_submodules;
 
-  mirror_dir_path = g_file_get_path (mirror_dir);
-
-  checkout_dir_template = g_file_get_child (builder_context_get_state_dir (context),
-                                            "tmp-checkout-XXXXXX");
-  checkout_dir_path = g_file_get_path (checkout_dir_template);
-
-  if (g_mkdtemp (checkout_dir_path) == NULL)
+  if (git (mirror_dir, &submodule_data, NULL, "show", gitmodules, NULL))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't create temporary checkout directory");
-      return FALSE;
-    }
+      if (!g_key_file_load_from_data (key_file, submodule_data, -1,
+                                      G_KEY_FILE_NONE, error))
+        return FALSE;
 
-  checkout_dir = g_file_new_for_path (checkout_dir_path);
+      submodules = g_key_file_get_groups (key_file, &num_submodules);
 
-  if (!git (NULL, NULL, error,
-            "clone", "-q", "--no-checkout", mirror_dir_path, checkout_dir_path, NULL))
-    return FALSE;
-
-  if (!git (checkout_dir, NULL, error, "checkout", "-q", "-f", revision, NULL))
-    return FALSE;
-
-  if (!git (checkout_dir, &submodule_status, error,
-            "submodule", "status", NULL))
-    return FALSE;
-
-  if (submodule_status)
-    {
       int i;
-      g_auto(GStrv) lines = g_strsplit (submodule_status, "\n", -1);
-      for (i = 0; lines[i] != NULL; i++)
+      for (i = 0; i < num_submodules; i++)
         {
-          g_autofree char *url = NULL;
-          g_autofree char *option = NULL;
-          g_autofree char *old = NULL;
+          g_autofree gchar *submodule = NULL;
+          g_autofree gchar *path = NULL;
+          g_autofree gchar *url = NULL;
+          g_autofree gchar *ls_tree = NULL;
+          g_auto(GStrv) lines = NULL;
           g_auto(GStrv) words = NULL;
-          if (*lines[i] == 0)
+
+          submodule = submodules[i];
+
+          if (!g_str_has_prefix (submodule, "submodule \""))
             continue;
-          words = g_strsplit (lines[i] + 1, " ", 3);
 
-          option = g_strdup_printf ("submodule.%s.url", words[1]);
-          if (!git (checkout_dir, &url, error,
-                    "config", "-f", ".gitmodules", option, NULL))
+          path = g_key_file_get_string (key_file, submodule, "path", error);
+          if (path == NULL)
             return FALSE;
-          /* Trim trailing whitespace */
-          g_strchomp (url);
 
-          old = url;
-          url = make_absolute (repo_location, old, error);
+          url = g_key_file_get_string (key_file, submodule, "url", error);
           if (url == NULL)
             return FALSE;
 
-          if (!git_mirror_repo (url, update, words[0], context, error))
+          if (!git (mirror_dir, &ls_tree, error, "ls-tree", revision, path, NULL))
+            return FALSE;
+
+          lines = g_strsplit (g_strstrip (ls_tree), "\n", 0);
+          if (g_strv_length (lines) != 1)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Not a gitlink tree: %s", path);
+              return FALSE;
+            }
+
+          words = g_strsplit_set (lines[0], " \t", 4);
+
+          if (g_strcmp0 (words[1], "commit") != 0)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Not a gitlink tree: %s", path);
+              return FALSE;
+            }
+
+          if (!git_mirror_repo (url, update, words[2], context, error))
             return FALSE;
         }
     }
-
-  if (!flatpak_rm_rf (checkout_dir, NULL, error))
-    return FALSE;
 
   return TRUE;
 }
@@ -416,75 +412,96 @@ builder_source_git_download (BuilderSource  *source,
 static gboolean
 git_extract_submodule (const char     *repo_location,
                        GFile          *checkout_dir,
+                       const char     *revision,
                        BuilderContext *context,
                        GError        **error)
 {
-  g_autofree char *submodule_status = NULL;
+  g_autoptr(GKeyFile) key_file = g_key_file_new ();
+  g_autofree gchar *submodule_data = NULL;
+  g_autofree gchar **submodules = NULL;
+  g_autofree gchar *gitmodules = g_strconcat (revision, ":.gitmodules", NULL);
+  gsize num_submodules;
 
-  if (!git (checkout_dir, &submodule_status, error,
-            "submodule", "status", NULL))
-    return FALSE;
-
-  if (submodule_status)
+  if (git (checkout_dir, &submodule_data, NULL, "show", gitmodules, NULL))
     {
+      if (!g_key_file_load_from_data (key_file, submodule_data, -1,
+                                      G_KEY_FILE_NONE, error))
+        return FALSE;
+
+      submodules = g_key_file_get_groups (key_file, &num_submodules);
+
       int i;
-      g_auto(GStrv) lines = g_strsplit (submodule_status, "\n", -1);
-      for (i = 0; lines[i] != NULL; i++)
+      for (i = 0; i < num_submodules; i++)
         {
+          g_autofree gchar *submodule = NULL;
+          g_autofree gchar *name = NULL;
+          g_autofree gchar *update_method = NULL;
+          g_autofree gchar *path = NULL;
+          g_autofree gchar *url = NULL;
+          g_autofree gchar *ls_tree = NULL;
+          g_auto(GStrv) lines = NULL;
+          g_auto(GStrv) words = NULL;
           g_autoptr(GFile) mirror_dir = NULL;
           g_autoptr(GFile) child_dir = NULL;
-          g_autofree char *child_url = NULL;
-          g_autofree char *option = NULL;
-          g_autofree char *update_method = NULL;
-          g_autofree char *child_relative_url = NULL;
-          g_autofree char *mirror_dir_as_url = NULL;
-          g_auto(GStrv) words = NULL;
-          if (*lines[i] == 0)
+          g_autofree gchar *mirror_dir_as_url = NULL;
+          g_autofree gchar *option = NULL;
+          gsize len;
+
+          submodule = submodules[i];
+          len = strlen (submodule);
+
+          if (!g_str_has_prefix (submodule, "submodule \""))
             continue;
-          words = g_strsplit (lines[i] + 1, " ", 3);
+
+          name = g_strndup (submodule + 11, len - 12);
 
           /* Skip any submodules that are disabled (have the update method set to "none")
              Only check if the command succeeds. If it fails, the update method is not set. */
-          option = g_strdup_printf ("submodule.%s.update", words[1]);
-          if (git (checkout_dir, &update_method, NULL,
-                   "config", "-f", ".gitmodules", option, NULL))
-            {
-              /* Trim trailing whitespace */
-              g_strchomp (update_method);
+          update_method = g_key_file_get_string (key_file, submodule, "update", NULL);
+          if (g_strcmp0 (update_method, "none") == 0)
+            continue;
 
-              if (g_strcmp0 (update_method, "none") == 0)
-                continue;
+          path = g_key_file_get_string (key_file, submodule, "path", error);
+          if (path == NULL)
+            return FALSE;
+
+          url = g_key_file_get_string (key_file, submodule, "url", error);
+          if (url == NULL)
+            return FALSE;
+
+          if (!git (checkout_dir, &ls_tree, error, "ls-tree", revision, path, NULL))
+            return FALSE;
+
+          lines = g_strsplit (g_strstrip (ls_tree), "\n", 0);
+          if (g_strv_length (lines) != 1)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Not a gitlink tree: %s", path);
+              return FALSE;
             }
 
-          option = g_strdup_printf ("submodule.%s.url", words[1]);
-          if (!git (checkout_dir, &child_relative_url, error,
-                    "config", "-f", ".gitmodules", option, NULL))
-            return FALSE;
+          words = g_strsplit_set (lines[0], " \t", 4);
 
-          /* Trim trailing whitespace */
-          g_strchomp (child_relative_url);
+          if (g_strcmp0 (words[1], "commit") != 0)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Not a gitlink tree: %s", path);
+              return FALSE;
+            }
 
-          g_print ("processing submodule %s\n", words[1]);
-
-          child_url = make_absolute (repo_location, child_relative_url, error);
-          if (child_url == NULL)
-            return FALSE;
-
-          mirror_dir = git_get_mirror_dir (child_url, context);
-
+          mirror_dir = git_get_mirror_dir (url, context);
           mirror_dir_as_url = g_file_get_uri (mirror_dir);
+          option = g_strdup_printf ("submodule.%s.url", name);
 
           if (!git (checkout_dir, NULL, error,
                     "config", option, mirror_dir_as_url, NULL))
             return FALSE;
 
           if (!git (checkout_dir, NULL, error,
-                    "submodule", "update", "--init", words[1], NULL))
+                    "submodule", "update", "--init", path, NULL))
             return FALSE;
 
-          child_dir = g_file_resolve_relative_path (checkout_dir, words[1]);
+          child_dir = g_file_resolve_relative_path (checkout_dir, path);
 
-          if (!git_extract_submodule (child_url, child_dir, context, error))
+          if (!git_extract_submodule (url, child_dir, words[2], context, error))
             return FALSE;
         }
     }
@@ -522,7 +539,7 @@ builder_source_git_extract (BuilderSource  *source,
             "checkout", get_branch (self), NULL))
     return FALSE;
 
-  if (!git_extract_submodule (location, dest, context, error))
+  if (!git_extract_submodule (location, dest, get_branch (self), context, error))
     return FALSE;
 
   if (!git (dest, NULL, error,
