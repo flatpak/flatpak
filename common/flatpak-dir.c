@@ -1218,6 +1218,19 @@ repo_pull_one_dir (OstreeRepo          *self,
 {
   GVariantBuilder builder;
   gboolean force_disable_deltas = FALSE;
+  g_auto(GLnxConsoleRef) console = { 0, };
+  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  gboolean res;
+
+  if (progress == NULL)
+    {
+      glnx_console_lock (&console);
+      if (console.is_tty)
+        {
+          console_progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, &console);
+          progress = console_progress;
+        }
+    }
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
 
@@ -1238,10 +1251,14 @@ repo_pull_one_dir (OstreeRepo          *self,
     g_variant_builder_add (&builder, "{s@v}", "refs",
                            g_variant_new_variant (g_variant_new_strv ((const char * const *) refs_to_fetch, -1)));
 
-  return ostree_repo_pull_with_options (self, remote_name, g_variant_builder_end (&builder),
-                                        progress, cancellable, error);
-}
+  res = ostree_repo_pull_with_options (self, remote_name, g_variant_builder_end (&builder),
+                                       progress, cancellable, error);
 
+  if (progress)
+    ostree_async_progress_finish (progress);
+
+  return res;
+}
 
 gboolean
 flatpak_dir_pull (FlatpakDir          *self,
@@ -1255,9 +1272,6 @@ flatpak_dir_pull (FlatpakDir          *self,
                   GError             **error)
 {
   gboolean ret = FALSE;
-  GSConsole *console = NULL;
-
-  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   const char *refs[2];
   g_autofree char *url = NULL;
 
@@ -1275,18 +1289,6 @@ flatpak_dir_pull (FlatpakDir          *self,
 
   if (repo == NULL)
     repo = self->repo;
-
-  if (progress == NULL)
-    {
-      console = gs_console_get ();
-      if (console)
-        {
-          gs_console_begin_status_line (console, "", NULL, NULL);
-          console_progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, console);
-          progress = console_progress;
-        }
-    }
-
 
   refs[0] = ref;
   refs[1] = NULL;
@@ -1336,11 +1338,6 @@ flatpak_dir_pull (FlatpakDir          *self,
   ret = TRUE;
 
 out:
-  if (console)
-    {
-      ostree_async_progress_finish (progress);
-      gs_console_end_status_line (console, NULL, NULL);
-    }
 
   return ret;
 }
@@ -1358,10 +1355,22 @@ repo_pull_one_untrusted (OstreeRepo          *self,
 {
   OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED;
   GVariantBuilder builder;
-
+  g_auto(GLnxConsoleRef) console = { 0, };
+  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  gboolean res;
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
   const char *refs[2] = { NULL, NULL };
   const char *commits[2] = { NULL, NULL };
+
+  if (progress == NULL)
+    {
+      glnx_console_lock (&console);
+      if (console.is_tty)
+        {
+          console_progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, &console);
+          progress = console_progress;
+        }
+    }
 
   refs[0] = ref;
   commits[0] = checksum;
@@ -1387,8 +1396,13 @@ repo_pull_one_untrusted (OstreeRepo          *self,
                              g_variant_new_variant (g_variant_new_boolean (TRUE)));
     }
 
-  return ostree_repo_pull_with_options (self, url, g_variant_builder_end (&builder),
-                                        progress, cancellable, error);
+  res = ostree_repo_pull_with_options (self, url, g_variant_builder_end (&builder),
+                                       progress, cancellable, error);
+
+  if (progress)
+    ostree_async_progress_finish (progress);
+
+  return res;
 }
 
 gboolean
@@ -1401,10 +1415,6 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                   GCancellable        *cancellable,
                                   GError             **error)
 {
-  gboolean ret = FALSE;
-  GSConsole *console = NULL;
-
-  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GFile) path_file = g_file_new_for_path (src_path);
   g_autoptr(GFile) summary_file = g_file_get_child (path_file, "summary");
   g_autoptr(GFile) summary_sig_file = g_file_get_child (path_file, "summary.sig");
@@ -1494,18 +1504,6 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
         return flatpak_fail (error, "Not allowed to downgrade %s", ref);
     }
 
-
-  if (progress == NULL)
-    {
-      console = gs_console_get ();
-      if (console)
-        {
-          gs_console_begin_status_line (console, "", NULL, NULL);
-          console_progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, console);
-          progress = console_progress;
-        }
-    }
-
   if (subpaths == NULL || subpaths[0] == NULL)
     {
       if (!repo_pull_one_untrusted (self->repo, remote_name, url,
@@ -1513,7 +1511,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                     cancellable, error))
         {
           g_prefix_error (error, _("While pulling %s from remote %s: "), ref, remote_name);
-          goto out;
+          return FALSE;
         }
     }
   else
@@ -1526,7 +1524,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
         {
           g_prefix_error (error, _("While pulling %s from remote %s, metadata: "),
                           ref, remote_name);
-          goto out;
+          return FALSE;
         }
 
       for (i = 0; subpaths[i] != NULL; i++)
@@ -1538,21 +1536,12 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
             {
               g_prefix_error (error, _("While pulling %s from remote %s, subpath %s: "),
                               ref, remote_name, subpaths[i]);
-              goto out;
+              return FALSE;
             }
         }
     }
 
-  ret = TRUE;
-
-out:
-  if (console)
-    {
-      ostree_async_progress_finish (progress);
-      gs_console_end_status_line (console, NULL, NULL);
-    }
-
-  return ret;
+  return TRUE;
 }
 
 

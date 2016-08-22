@@ -131,19 +131,16 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       OstreeRepoPullFlags pullflags = 0;
       GVariantBuilder builder;
       g_autoptr(OstreeAsyncProgress) progress = NULL;
-      GSConsole *console = NULL;
+      g_auto(GLnxConsoleRef) console = { 0, };
       const char *refs_to_fetch[] = { resolved_ref, NULL};
       gboolean res;
 
       if (opt_untrusted)
         pullflags |= OSTREE_REPO_PULL_FLAGS_UNTRUSTED;
 
-      console = gs_console_get ();
-      if (console)
-        {
-          gs_console_begin_status_line (console, "", NULL, NULL);
-          progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, console);
-        }
+      glnx_console_lock (&console);
+      if (console.is_tty)
+        progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, &console);
 
       g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
       g_variant_builder_add (&builder, "{s@v}", "flags",
@@ -158,11 +155,8 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
                                            progress,
                                            cancellable, error);
 
-      if (console)
-        {
-          ostree_async_progress_finish (progress);
-          gs_console_end_status_line (console, NULL, NULL);
-        }
+      if (progress)
+        ostree_async_progress_finish (progress);
 
       if (!res)
         return FALSE;
