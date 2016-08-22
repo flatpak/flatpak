@@ -2151,13 +2151,12 @@ builder_manifest_run (BuilderManifest *self,
       g_ptr_array_add (args, g_strdup_printf ("--bind-mount=/run/ccache=%s", ccache_dir_path));
     }
 
-  build_args = builder_options_get_build_args (self->build_options, context);
+  build_args = builder_options_get_build_args (self->build_options, context, error);
+  if (build_args == NULL)
+    return FALSE;
 
-  if (build_args)
-    {
-      for (i = 0; build_args[i] != NULL; i++)
-        g_ptr_array_add (args, g_strdup (build_args[i]));
-    }
+  for (i = 0; build_args[i] != NULL; i++)
+    g_ptr_array_add (args, g_strdup (build_args[i]));
 
   env = builder_options_get_env (self->build_options, context);
   if (env)

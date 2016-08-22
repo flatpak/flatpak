@@ -1239,8 +1239,11 @@ builder_module_build (BuilderModule  *self,
       source_subdir = g_object_ref (source_dir);
     }
 
+  build_args = builder_options_get_build_args (self->build_options, context, error);
+  if (build_args == NULL)
+    return FALSE;
+
   env = builder_options_get_env (self->build_options, context);
-  build_args = builder_options_get_build_args (self->build_options, context);
   config_opts = builder_options_get_config_opts (self->build_options, context, self->config_opts);
 
   if (self->cmake)

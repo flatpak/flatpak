@@ -47,7 +47,8 @@ const char *builder_options_get_prefix (BuilderOptions *self,
 char **     builder_options_get_env (BuilderOptions *self,
                                      BuilderContext *context);
 char **     builder_options_get_build_args (BuilderOptions *self,
-                                            BuilderContext *context);
+                                            BuilderContext *context,
+                                            GError **error);
 char **     builder_options_get_config_opts (BuilderOptions *self,
                                              BuilderContext *context,
                                              char          **base_opts);

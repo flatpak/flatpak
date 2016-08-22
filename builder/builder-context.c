@@ -54,6 +54,7 @@ struct BuilderContext
   gboolean        use_ccache;
   gboolean        build_runtime;
   gboolean        separate_locales;
+  gboolean        sandboxed;
 };
 
 typedef struct
@@ -340,6 +341,19 @@ gboolean
 builder_context_get_keep_build_dirs (BuilderContext *self)
 {
   return self->keep_build_dirs;
+}
+
+void
+builder_context_set_sandboxed (BuilderContext *self,
+                               gboolean        sandboxed)
+{
+  self->sandboxed = sandboxed;
+}
+
+gboolean
+builder_context_get_sandboxed (BuilderContext *self)
+{
+  return self->sandboxed;
 }
 
 gboolean

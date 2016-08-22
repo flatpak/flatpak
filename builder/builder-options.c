@@ -622,7 +622,8 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
 
 char **
 builder_options_get_build_args (BuilderOptions *self,
-                                BuilderContext *context)
+                                BuilderContext *context,
+                                GError **error)
 {
   g_autoptr(GList) options = get_all_options (self, context);
   GList *l;
@@ -641,6 +642,12 @@ builder_options_get_build_args (BuilderOptions *self,
           for (i = 0; o->build_args[i] != NULL; i++)
             g_ptr_array_add (array, g_strdup (o->build_args[i]));
         }
+    }
+
+  if (array->len > 0 && builder_context_get_sandboxed (context))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't specify build-args in sandboxed build");
+      return NULL;
     }
 
   g_ptr_array_add (array, NULL);

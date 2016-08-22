@@ -739,6 +739,17 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--sandbox</option></term>
+
+                <listitem><para>
+                    Disable the possibility to specify build-args that
+                    are passed to flatpak build. This means the build
+                    process can't break out of its sandbox, and is
+                    useful when building less trusted software.
+                </para></listitem>
+            </varlistentry>
+
           </variablelist>
     </refsect1>
 
