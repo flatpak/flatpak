@@ -28,7 +28,6 @@
 #include <sys/statfs.h>
 
 #include "builder-utils.h"
-#include "libgsystem.h"
 
 #include "builder-source-git.h"
 #include "builder-utils.h"

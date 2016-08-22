@@ -39,7 +39,6 @@
 #include <sys/utsname.h>
 
 #include <glib.h>
-#include "libgsystem.h"
 #include "libglnx/libglnx.h"
 #include <libsoup/soup.h>
 #include <gio/gunixoutputstream.h>

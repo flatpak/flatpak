@@ -23,7 +23,6 @@
 
 #include <string.h>
 
-#include "libgsystem.h"
 #include "libglnx/libglnx.h"
 #include <gio/gio.h>
 #include <libsoup/soup.h>

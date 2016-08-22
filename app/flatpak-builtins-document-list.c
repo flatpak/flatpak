@@ -28,7 +28,6 @@
 
 #include <glib/gi18n.h>
 
-#include "libgsystem.h"
 #include "libglnx/libglnx.h"
 #include "document-portal/xdp-dbus.h"
 

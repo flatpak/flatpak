@@ -29,7 +29,6 @@
 #include <glib/gi18n.h>
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
-#include "libgsystem.h"
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"

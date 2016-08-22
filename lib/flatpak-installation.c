@@ -22,7 +22,6 @@
 
 #include <string.h>
 
-#include "libgsystem.h"
 #include "flatpak-utils.h"
 #include "flatpak-installation.h"
 #include "flatpak-installed-ref-private.h"

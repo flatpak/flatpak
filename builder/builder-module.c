@@ -29,7 +29,6 @@
 
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
-#include "libgsystem.h"
 
 #include "flatpak-utils.h"
 #include "builder-utils.h"

@@ -11,6 +11,6 @@ Name: flatpak
 Description: Application sandboxing framework
 Version: @VERSION@
 Requires: glib-2.0 gio-2.0
-Requires.private: gio-unix-2.0 ostree-1 libgsystem
+Requires.private: gio-unix-2.0 ostree-1
 Libs: -L${libdir} -lflatpak
 Cflags: -I${includedir}/flatpak

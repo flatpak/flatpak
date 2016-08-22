@@ -31,7 +31,6 @@
 #include "builder-utils.h"
 #include "flatpak-utils.h"
 
-#include "libgsystem.h"
 #include "libglnx/libglnx.h"
 
 #define LOCALES_SEPARATE_DIR "share/runtime/locale"

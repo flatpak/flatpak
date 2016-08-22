@@ -27,7 +27,6 @@
 
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
-#include "libgsystem.h"
 
 #include "builder-manifest.h"
 #include "builder-utils.h"
