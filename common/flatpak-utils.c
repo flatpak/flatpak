@@ -1472,6 +1472,8 @@ flatpak_cp_a (GFile         *src,
   gboolean merge = (flags & FLATPAK_CP_FLAGS_MERGE) != 0;
   gboolean no_chown = (flags & FLATPAK_CP_FLAGS_NO_CHOWN) != 0;
   gboolean move = (flags & FLATPAK_CP_FLAGS_MOVE) != 0;
+  g_autoptr(GFileInfo) child_info = NULL;
+  GError *temp_error = NULL;
   int r;
 
   enumerator = g_file_enumerate_children (src, "standard::type,standard::name,unix::uid,unix::gid,unix::mode",
@@ -1525,22 +1527,16 @@ flatpak_cp_a (GFile         *src,
       dest_dfd = -1;
     }
 
-  while (TRUE)
+  while ((child_info = g_file_enumerator_next_file (enumerator, cancellable, &temp_error)))
     {
-      GFileInfo *file_info = NULL;
-      GFile *src_child = NULL;
-
-      if (!gs_file_enumerator_iterate (enumerator, &file_info, &src_child,
-                                       cancellable, error))
-        goto out;
-      if (!file_info)
-        break;
+      const char *name = g_file_info_get_name (child_info);
+      g_autoptr(GFile) src_child = g_file_get_child (src, name);
 
       if (dest_child)
         g_object_unref (dest_child);
-      dest_child = g_file_get_child (dest, g_file_info_get_name (file_info));
+      dest_child = g_file_get_child (dest, name);
 
-      if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
+      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY)
         {
           if (!flatpak_cp_a (src_child, dest_child, flags,
                              cancellable, error))
@@ -1565,6 +1561,14 @@ flatpak_cp_a (GFile         *src,
                 goto out;
             }
         }
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      goto out;
     }
 
   if (move &&
