@@ -290,6 +290,11 @@ gboolean flatpak_rm_rf (GFile         *dir,
                         GCancellable  *cancellable,
                         GError       **error);
 
+gboolean flatpak_file_rename (GFile *from,
+                              GFile *to,
+                              GCancellable  *cancellable,
+                              GError       **error);
+
 #define flatpak_autorm_rf _GLIB_CLEANUP (g_autoptr_cleanup_generic_gfree)
 
 static inline void

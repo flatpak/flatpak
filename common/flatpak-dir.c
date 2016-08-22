@@ -1083,9 +1083,9 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
       return FALSE;
     }
 
-  if (!gs_file_rename (active_tmp_link,
-                       active_link,
-                       cancellable, error))
+  if (!flatpak_file_rename (active_tmp_link,
+                            active_link,
+                            cancellable, error))
     return FALSE;
 
   if (old_checksum != NULL &&
@@ -1900,9 +1900,9 @@ flatpak_dir_set_active (FlatpakDir   *self,
       if (!g_file_make_symbolic_link (active_tmp_link, checksum, cancellable, error))
         goto out;
 
-      if (!gs_file_rename (active_tmp_link,
-                           active_link,
-                           cancellable, error))
+      if (!flatpak_file_rename (active_tmp_link,
+                                active_link,
+                                cancellable, error))
         goto out;
     }
   else
@@ -3720,9 +3720,9 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   glnx_gen_temp_name (tmpname);
   removed_subdir = g_file_get_child (removed_dir, tmpname);
 
-  if (!gs_file_rename (checkoutdir,
-                       removed_subdir,
-                       cancellable, error))
+  if (!flatpak_file_rename (checkoutdir,
+                            removed_subdir,
+                            cancellable, error))
     goto out;
 
   if (force_remove || !dir_is_locked (removed_subdir))
