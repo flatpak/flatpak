@@ -233,7 +233,7 @@ builder_cache_open (BuilderCache *self,
     {
       g_autoptr(GFile) parent = g_file_get_parent (self->cache_dir);
 
-      if (!gs_file_ensure_directory (parent, TRUE, NULL, error))
+      if (!flatpak_mkdir_p (parent, NULL, error))
         return FALSE;
 
       if (!ostree_repo_create (self->repo, OSTREE_REPO_MODE_BARE_USER, NULL, error))

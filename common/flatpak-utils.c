@@ -808,7 +808,7 @@ flatpak_overlay_symlink_tree (GFile        *source,
 {
   gboolean ret = FALSE;
 
-  if (!gs_file_ensure_directory (destination, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (destination, cancellable, error))
     goto out;
 
   /* The fds are closed by this call */
@@ -1573,6 +1573,20 @@ flatpak_zero_mtime (int parent_dfd,
   return TRUE;
 }
 
+/* Make a directory, and its parent. Don't error if it already exists.
+ * If you want a failure mode with EEXIST, use g_file_make_directory_with_parents. */
+gboolean
+flatpak_mkdir_p (GFile         *dir,
+                 GCancellable  *cancellable,
+                 GError       **error)
+{
+  return glnx_shutil_mkdir_p_at (AT_FDCWD,
+                                 gs_file_get_path_cached (dir),
+                                 0777,
+                                 cancellable,
+                                 error);
+}
+
 gboolean
 flatpak_variant_save (GFile        *dest,
                       GVariant     *variant,
@@ -2116,7 +2130,7 @@ copy_icon (const char *id,
   if (!in)
     return FALSE;
 
-  if (!gs_file_ensure_directory (dest_size_dir, TRUE, NULL, error))
+  if (!flatpak_mkdir_p (dest_size_dir, NULL, error))
     return FALSE;
 
   out = (GOutputStream *) g_file_replace (dest_file, NULL, FALSE,

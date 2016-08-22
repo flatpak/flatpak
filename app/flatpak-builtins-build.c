@@ -147,7 +147,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   runtime_metakey = flatpak_deploy_get_metadata (runtime_deploy);
 
   var = g_file_get_child (app_deploy, "var");
-  if (!gs_file_ensure_directory (var, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (var, cancellable, error))
     return FALSE;
 
   app_files = g_file_get_child (app_deploy, "files");

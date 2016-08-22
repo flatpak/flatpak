@@ -937,7 +937,7 @@ builder_module_handle_debuginfo (BuilderModule  *self,
                               g_autoptr(GFile) dst_parent = g_file_get_parent (dst);
                               GFileType file_type;
 
-                              if (!gs_file_ensure_directory (dst_parent, TRUE, NULL, error))
+                              if (!flatpak_mkdir_p (dst_parent, NULL, error))
                                 {
                                   g_prefix_error (error, "module %s: ", self->name);
                                   return FALSE;
@@ -946,7 +946,7 @@ builder_module_handle_debuginfo (BuilderModule  *self,
                               file_type = g_file_query_file_type (src, 0, NULL);
                               if (file_type == G_FILE_TYPE_DIRECTORY)
                                 {
-                                  if (!gs_file_ensure_directory (dst, FALSE, NULL, error))
+                                  if (!flatpak_mkdir_p (dst, NULL, error))
                                     {
                                       g_prefix_error (error, "module %s: ", self->name);
                                       return FALSE;
@@ -1169,8 +1169,8 @@ builder_module_build (BuilderModule  *self,
 
   build_parent_dir = builder_context_get_build_dir (context);
 
-  if (!gs_file_ensure_directory (build_parent_dir, TRUE,
-                                 NULL, error))
+  if (!flatpak_mkdir_p (build_parent_dir,
+                        NULL, error))
     {
       g_prefix_error (error, "module %s: ", self->name);
       return FALSE;

@@ -274,6 +274,10 @@ gboolean flatpak_zero_mtime (int parent_dfd,
                              GCancellable  *cancellable,
                              GError       **error);
 
+gboolean flatpak_mkdir_p (GFile         *dir,
+                          GCancellable  *cancellable,
+                          GError       **error);
+
 #define flatpak_autorm_rf _GLIB_CLEANUP (g_autoptr_cleanup_generic_gfree)
 
 static inline void

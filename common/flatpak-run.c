@@ -2210,13 +2210,13 @@ flatpak_ensure_data_dir (const char   *app_id,
   g_autoptr(GFile) cache_dir = g_file_get_child (dir, "cache");
   g_autoptr(GFile) config_dir = g_file_get_child (dir, "config");
 
-  if (!gs_file_ensure_directory (data_dir, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (data_dir, cancellable, error))
     return NULL;
 
-  if (!gs_file_ensure_directory (cache_dir, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (cache_dir, cancellable, error))
     return NULL;
 
-  if (!gs_file_ensure_directory (config_dir, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (config_dir, cancellable, error))
     return NULL;
 
   return g_object_ref (dir);

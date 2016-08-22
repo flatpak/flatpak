@@ -169,7 +169,7 @@ copy_exports (GFile        *source,
               GCancellable *cancellable,
               GError      **error)
 {
-  if (!gs_file_ensure_directory (destination, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (destination, cancellable, error))
     return FALSE;
 
   /* The fds are closed by this call */
@@ -212,7 +212,7 @@ collect_exports (GFile *base, const char *app_id, gboolean is_runtime, GCancella
 
   export = g_file_get_child (base, "export");
 
-  if (!gs_file_ensure_directory (export, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (export, cancellable, error))
     return FALSE;
 
   if (opt_no_exports)
@@ -230,7 +230,7 @@ collect_exports (GFile *base, const char *app_id, gboolean is_runtime, GCancella
           dest = g_file_resolve_relative_path (export, paths[i]);
           dest_parent = g_file_get_parent (dest);
           g_debug ("Ensuring export/%s parent exists", paths[i]);
-          if (!gs_file_ensure_directory (dest_parent, TRUE, cancellable, error))
+          if (!flatpak_mkdir_p (dest_parent, cancellable, error))
             return FALSE;
           g_debug ("Copying from files/%s", paths[i]);
           if (!copy_exports (src, dest, paths[i], app_id, cancellable, error))

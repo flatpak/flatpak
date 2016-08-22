@@ -2028,14 +2028,14 @@ builder_manifest_create_platform (BuilderManifest *self,
 
           if (g_file_info_get_file_type (info) == G_FILE_TYPE_DIRECTORY)
             {
-              if (!gs_file_ensure_directory (dest, TRUE, NULL, error))
+              if (!flatpak_mkdir_p (dest, NULL, error))
                 return FALSE;
             }
           else
             {
               g_autoptr(GFile) dest_parent = g_file_get_parent (dest);
 
-              if (!gs_file_ensure_directory (dest_parent, TRUE, NULL, error))
+              if (!flatpak_mkdir_p (dest_parent, NULL, error))
                 return FALSE;
 
               if (!g_file_delete (dest, NULL, &my_error) &&
@@ -2133,8 +2133,8 @@ builder_manifest_run (BuilderManifest *self,
   g_auto(GStrv) build_args = NULL;
   int i;
 
-  if (!gs_file_ensure_directory (builder_context_get_build_dir (context), TRUE,
-                                 NULL, error))
+  if (!flatpak_mkdir_p (builder_context_get_build_dir (context),
+                        NULL, error))
     return FALSE;
 
   args = g_ptr_array_new_with_free_func (g_free);

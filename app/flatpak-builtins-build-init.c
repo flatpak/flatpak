@@ -108,7 +108,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   base = g_file_new_for_commandline_arg (directory);
 
-  if (!gs_file_ensure_directory (base, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (base, cancellable, error))
     return FALSE;
 
   files_dir = g_file_get_child (base, "files");
@@ -177,7 +177,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                       g_autoptr(GFile) target = g_file_resolve_relative_path (usr_dir, ext->directory);
                       g_autoptr(GFile) target_parent = g_file_get_parent (target);
 
-                      if (!gs_file_ensure_directory (target_parent, TRUE, cancellable, error))
+                      if (!flatpak_mkdir_p (target_parent, cancellable, error))
                         return FALSE;
 
                       /* An extension overrides whatever is there before, so we clean up first */
@@ -227,7 +227,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
         return FALSE;
     }
 
-  if (!gs_file_ensure_directory (var_tmp_dir, FALSE, cancellable, error))
+  if (!flatpak_mkdir_p (var_tmp_dir, cancellable, error))
     return FALSE;
 
   if (!g_file_query_exists (var_run_dir, cancellable) &&

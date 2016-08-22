@@ -849,7 +849,7 @@ flatpak_dir_ensure_path (FlatpakDir   *self,
                          GCancellable *cancellable,
                          GError      **error)
 {
-  return gs_file_ensure_directory (self->basedir, TRUE, cancellable, error);
+  return flatpak_mkdir_p (self->basedir, cancellable, error);
 }
 
 gboolean
@@ -2491,7 +2491,7 @@ flatpak_export_dir (GFile        *source,
 {
   gboolean ret = FALSE;
 
-  if (!gs_file_ensure_directory (destination, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (destination, cancellable, error))
     goto out;
 
   /* The fds are closed by this call */
@@ -2521,7 +2521,7 @@ flatpak_dir_update_exports (FlatpakDir   *self,
 
   exports = flatpak_dir_get_exports_dir (self);
 
-  if (!gs_file_ensure_directory (exports, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (exports, cancellable, error))
     goto out;
 
   if (changed_app &&
@@ -3727,7 +3727,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
     }
 
   removed_dir = flatpak_dir_get_removed_dir (self);
-  if (!gs_file_ensure_directory (removed_dir, TRUE, cancellable, error))
+  if (!flatpak_mkdir_p (removed_dir, cancellable, error))
     goto out;
 
   tmpname = gs_fileutil_gen_tmp_name ("", checksum);

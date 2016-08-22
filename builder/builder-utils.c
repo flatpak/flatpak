@@ -295,8 +295,7 @@ migrate_locale_dir (GFile      *source_dir,
 
           relative = g_build_filename (language, subdir, name, NULL);
           locale_subdir = g_file_resolve_relative_path (separate_dir, relative);
-          if (!gs_file_ensure_directory (locale_subdir, TRUE,
-                                         NULL, error))
+          if (!flatpak_mkdir_p (locale_subdir, NULL, error))
             return FALSE;
 
           if (!flatpak_cp_a (child, locale_subdir,
