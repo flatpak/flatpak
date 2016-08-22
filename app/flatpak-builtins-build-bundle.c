@@ -241,7 +241,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
   g_variant_builder_add (&param_builder, "{sv}", "bsdiff-enabled", g_variant_new_boolean (FALSE));
   g_variant_builder_add (&param_builder, "{sv}", "inline-parts", g_variant_new_boolean (TRUE));
   g_variant_builder_add (&param_builder, "{sv}", "include-detached", g_variant_new_boolean (TRUE));
-  g_variant_builder_add (&param_builder, "{sv}", "filename", g_variant_new_bytestring (gs_file_get_path_cached (file)));
+  g_variant_builder_add (&param_builder, "{sv}", "filename", g_variant_new_bytestring (flatpak_file_get_path_cached (file)));
 
   if (!ostree_repo_static_delta_generate (repo,
                                           OSTREE_STATIC_DELTA_GENERATE_OPT_LOWLATENCY,
@@ -783,7 +783,7 @@ build_oci (OstreeRepo *repo, GFile *file,
   if (archive_write_add_filter_none (a) != ARCHIVE_OK)
     return propagate_libarchive_error (error, a);
 
-  if (archive_write_open_filename (a, gs_file_get_path_cached (file)) != ARCHIVE_OK)
+  if (archive_write_open_filename (a, flatpak_file_get_path_cached (file)) != ARCHIVE_OK)
     return propagate_libarchive_error (error, a);
 
   opts.timestamp_secs = ostree_commit_get_timestamp (commit_data);

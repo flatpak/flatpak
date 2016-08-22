@@ -325,7 +325,7 @@ flatpak_dir_set_property (GObject      *object,
     {
     case PROP_PATH:
       /* Canonicalize */
-      self->basedir = g_file_new_for_path (gs_file_get_path_cached (g_value_get_object (value)));
+      self->basedir = g_file_new_for_path (flatpak_file_get_path_cached (g_value_get_object (value)));
       break;
 
     case PROP_USER:
@@ -1167,7 +1167,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       else
         {
           if (!flatpak_system_helper_call_deploy_appstream_sync (system_helper,
-                                                                 gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
+                                                                 flatpak_file_get_path_cached (ostree_repo_get_path (child_repo)),
                                                                  remote,
                                                                  arch,
                                                                  cancellable,
@@ -2375,7 +2375,7 @@ flatpak_rewrite_export_dir (const char   *app,
 
   /* The fds are closed by this call */
   if (!rewrite_export_dir (app, branch, arch, metadata,
-                           AT_FDCWD, gs_file_get_path_cached (source),
+                           AT_FDCWD, flatpak_file_get_path_cached (source),
                            cancellable, error))
     goto out;
 
@@ -2494,8 +2494,8 @@ flatpak_export_dir (GFile        *source,
     goto out;
 
   /* The fds are closed by this call */
-  if (!export_dir (AT_FDCWD, gs_file_get_path_cached (source), symlink_prefix, "",
-                   AT_FDCWD, gs_file_get_path_cached (destination),
+  if (!export_dir (AT_FDCWD, flatpak_file_get_path_cached (source), symlink_prefix, "",
+                   AT_FDCWD, flatpak_file_get_path_cached (destination),
                    cancellable, error))
     goto out;
 
@@ -2979,7 +2979,7 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
     return NULL;
 
   if (!flatpak_allocate_tmpdir (AT_FDCWD,
-                                gs_file_get_path_cached (cache_dir),
+                                flatpak_file_get_path_cached (cache_dir),
                                 "repo-", &tmpdir_name,
                                 NULL,
                                 file_lock,
@@ -3008,7 +3008,7 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   /* Ensure the config is updated */
   config = ostree_repo_copy_config (new_repo);
   g_key_file_set_string (config, "core", "parent",
-                         gs_file_get_path_cached (ostree_repo_get_path (self->repo)));
+                         flatpak_file_get_path_cached (ostree_repo_get_path (self->repo)));
 
   if (!ostree_repo_write_config (new_repo, config, error))
     return NULL;
@@ -3158,7 +3158,7 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
         gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
 
       if (!flatpak_system_helper_call_install_bundle_sync (system_helper,
-                                                           gs_file_get_path_cached (file),
+                                                           flatpak_file_get_path_cached (file),
                                                            0, gpg_data_v,
                                                            &ref,
                                                            cancellable,
@@ -3648,7 +3648,7 @@ dir_is_locked (GFile *dir)
 
   reffile = g_file_resolve_relative_path (dir, "files/.ref");
 
-  ref_fd = open (gs_file_get_path_cached (reffile), O_RDWR | O_CLOEXEC);
+  ref_fd = open (flatpak_file_get_path_cached (reffile), O_RDWR | O_CLOEXEC);
   if (ref_fd != -1)
     {
       lock.l_type = F_WRLCK;

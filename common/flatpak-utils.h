@@ -256,6 +256,8 @@ gboolean            flatpak_spawnv (GFile                *dir,
                                     GError              **error,
                                     const gchar * const  *argv);
 
+const char *flatpak_file_get_path_cached (GFile *file);
+
 typedef enum {
   FLATPAK_CP_FLAGS_NONE = 0,
   FLATPAK_CP_FLAGS_MERGE = 1<<0,

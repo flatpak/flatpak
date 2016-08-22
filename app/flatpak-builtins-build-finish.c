@@ -173,8 +173,8 @@ copy_exports (GFile        *source,
     return FALSE;
 
   /* The fds are closed by this call */
-  if (!export_dir (AT_FDCWD, gs_file_get_path_cached (source), source_prefix,
-                   AT_FDCWD, gs_file_get_path_cached (destination),
+  if (!export_dir (AT_FDCWD, flatpak_file_get_path_cached (source), source_prefix,
+                   AT_FDCWD, flatpak_file_get_path_cached (destination),
                    required_prefix, cancellable, error))
     return FALSE;
 

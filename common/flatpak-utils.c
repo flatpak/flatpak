@@ -812,9 +812,9 @@ flatpak_overlay_symlink_tree (GFile        *source,
     goto out;
 
   /* The fds are closed by this call */
-  if (!overlay_symlink_tree_dir (AT_FDCWD, gs_file_get_path_cached (source),
+  if (!overlay_symlink_tree_dir (AT_FDCWD, flatpak_file_get_path_cached (source),
                                  symlink_prefix,
-                                 AT_FDCWD, gs_file_get_path_cached (destination),
+                                 AT_FDCWD, flatpak_file_get_path_cached (destination),
                                  cancellable, error))
     goto out;
 
@@ -878,7 +878,7 @@ flatpak_remove_dangling_symlinks (GFile        *dir,
   gboolean ret = FALSE;
 
   /* The fd is closed by this call */
-  if (!remove_dangling_symlinks (AT_FDCWD, gs_file_get_path_cached (dir),
+  if (!remove_dangling_symlinks (AT_FDCWD, flatpak_file_get_path_cached (dir),
                                  cancellable, error))
     goto out;
 
@@ -1393,6 +1393,35 @@ flatpak_spawnv (GFile                *dir,
   return TRUE;
 }
 
+const char *
+flatpak_file_get_path_cached (GFile *file)
+{
+  const char *path;
+  static GQuark _file_path_quark = 0;
+
+  if (G_UNLIKELY (_file_path_quark) == 0)
+    _file_path_quark = g_quark_from_static_string ("flatpak-file-path");
+
+  do
+    {
+      path = g_object_get_qdata ((GObject*)file, _file_path_quark);
+      if (path == NULL)
+        {
+          g_autofree char *new_path = NULL;
+          new_path = g_file_get_path (file);
+          if (new_path == NULL)
+            return NULL;
+
+          if (g_object_replace_qdata ((GObject*)file, _file_path_quark,
+                                      NULL, new_path, g_free, NULL))
+            path = g_steal_pointer (&new_path);
+        }
+    }
+  while (path == NULL);
+
+  return path;
+}
+
 gboolean
 flatpak_cp_a (GFile         *src,
               GFile         *dest,
@@ -1424,7 +1453,7 @@ flatpak_cp_a (GFile         *src,
     goto out;
 
   do
-    r = mkdir (gs_file_get_path_cached (dest), 0755);
+    r = mkdir (flatpak_file_get_path_cached (dest), 0755);
   while (G_UNLIKELY (r == -1 && errno == EINTR));
   if (r == -1 &&
       (!merge || errno != EEXIST))
@@ -1485,7 +1514,7 @@ flatpak_cp_a (GFile         *src,
         }
       else
         {
-          (void) unlink (gs_file_get_path_cached (dest_child));
+          (void) unlink (flatpak_file_get_path_cached (dest_child));
           GFileCopyFlags copyflags = G_FILE_COPY_OVERWRITE | G_FILE_COPY_NOFOLLOW_SYMLINKS;
           if (!no_chown)
             copyflags |= G_FILE_COPY_ALL_METADATA;
@@ -1581,7 +1610,7 @@ flatpak_mkdir_p (GFile         *dir,
                  GError       **error)
 {
   return glnx_shutil_mkdir_p_at (AT_FDCWD,
-                                 gs_file_get_path_cached (dir),
+                                 flatpak_file_get_path_cached (dir),
                                  0777,
                                  cancellable,
                                  error);
@@ -1593,7 +1622,7 @@ flatpak_rm_rf (GFile         *dir,
                GError       **error)
 {
   return glnx_shutil_rm_rf_at (AT_FDCWD,
-                               gs_file_get_path_cached (dir),
+                               flatpak_file_get_path_cached (dir),
                                cancellable, error);
 }
 
@@ -2914,7 +2943,7 @@ flatpak_bundle_load (GFile   *file,
   guint8 endianness_char;
   gboolean byte_swap = FALSE;
 
-  GMappedFile *mfile = g_mapped_file_new (gs_file_get_path_cached (file), FALSE, error);
+  GMappedFile *mfile = g_mapped_file_new (flatpak_file_get_path_cached (file), FALSE, error);
 
   if (mfile == NULL)
     return NULL;

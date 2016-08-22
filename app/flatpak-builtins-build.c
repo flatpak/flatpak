@@ -168,8 +168,8 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     }
 
   add_args (argv_array,
-            custom_usr ? "--bind" : "--ro-bind", gs_file_get_path_cached (runtime_files), "/usr",
-            "--bind", gs_file_get_path_cached (app_files), "/app",
+            custom_usr ? "--bind" : "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
+            "--bind", flatpak_file_get_path_cached (app_files), "/app",
             NULL);
 
   if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, NULL, runtime_ref_parts[2],
@@ -179,7 +179,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   /* After setup_base to avoid conflicts with /var symlinks */
   add_args (argv_array,
-            "--bind", gs_file_get_path_cached (var), "/var",
+            "--bind", flatpak_file_get_path_cached (var), "/var",
             NULL);
 
   app_context = flatpak_context_new ();

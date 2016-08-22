@@ -1340,8 +1340,8 @@ foreach_file (BuilderManifest *self,
               GError         **error)
 {
   return foreach_file_helper (self, func, AT_FDCWD,
-                              gs_file_get_path_cached (root),
-                              gs_file_get_path_cached (root),
+                              flatpak_file_get_path_cached (root),
+                              flatpak_file_get_path_cached (root),
                               "",
                               found, 0,
                               error);

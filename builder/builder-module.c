@@ -1441,7 +1441,7 @@ builder_module_build (BuilderModule  *self,
   if (!self->no_python_timestamp_fix)
     {
       if (!fixup_python_timestamp (AT_FDCWD,
-                                   gs_file_get_path_cached (app_dir), "/",
+                                   flatpak_file_get_path_cached (app_dir), "/",
                                    NULL,
                                    error))
         return FALSE;
