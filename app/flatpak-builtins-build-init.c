@@ -218,7 +218,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   if (var_deploy_files)
     {
-      if (!gs_shutil_cp_a (var_deploy_files, var_dir, cancellable, error))
+      if (!flatpak_cp_a (var_deploy_files, var_dir, FLATPAK_CP_FLAGS_NONE, cancellable, error))
         return FALSE;
     }
   else
