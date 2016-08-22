@@ -278,6 +278,10 @@ gboolean flatpak_mkdir_p (GFile         *dir,
                           GCancellable  *cancellable,
                           GError       **error);
 
+gboolean flatpak_rm_rf (GFile         *dir,
+                        GCancellable  *cancellable,
+                        GError       **error);
+
 #define flatpak_autorm_rf _GLIB_CLEANUP (g_autoptr_cleanup_generic_gfree)
 
 static inline void
@@ -287,7 +291,7 @@ flatpak_temp_dir_destroy (void *p)
 
   if (dir)
     {
-      gs_shutil_rm_rf (dir, NULL, NULL);
+      flatpak_rm_rf (dir, NULL, NULL);
       g_object_unref (dir);
     }
 }

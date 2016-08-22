@@ -136,7 +136,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
       if (sdk_deploy == NULL)
         return FALSE;
 
-      if (!gs_shutil_rm_rf (usr_dir, NULL, &my_error))
+      if (!flatpak_rm_rf (usr_dir, NULL, &my_error))
         {
           if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
             {
@@ -181,7 +181,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
                         return FALSE;
 
                       /* An extension overrides whatever is there before, so we clean up first */
-                      if (!gs_shutil_rm_rf (target, cancellable, error))
+                      if (!flatpak_rm_rf (target, cancellable, error))
                         return FALSE;
 
                       if (!flatpak_cp_a (ext_deploy_files, target, FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))

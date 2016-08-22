@@ -340,7 +340,7 @@ git_mirror_submodules (const char     *repo_location,
         }
     }
 
-  if (!gs_shutil_rm_rf (checkout_dir, NULL, error))
+  if (!flatpak_rm_rf (checkout_dir, NULL, error))
     return FALSE;
 
   return TRUE;

@@ -329,7 +329,7 @@ main (int    argc,
       if (opt_force_clean)
         {
           g_print ("Emptying app dir '%s'\n", app_dir_path);
-          if (!gs_shutil_rm_rf (app_dir, NULL, &error))
+          if (!flatpak_rm_rf (app_dir, NULL, &error))
             {
               g_printerr ("Couldn't empty app dir '%s': %s",
                           app_dir_path, error->message);

@@ -896,7 +896,7 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
                                    OSTREE_REPO_MODE_BARE_USER,
                                    cancellable, error))
             {
-              gs_shutil_rm_rf (repodir, cancellable, NULL);
+              flatpak_rm_rf (repodir, cancellable, NULL);
               goto out;
             }
 
@@ -955,7 +955,7 @@ flatpak_dir_remove_appstream (FlatpakDir   *self,
   remote_dir = g_file_get_child (appstream_dir, remote);
 
   if (g_file_query_exists (remote_dir, cancellable) &&
-      !gs_shutil_rm_rf (remote_dir, cancellable, error))
+      !flatpak_rm_rf (remote_dir, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -1092,7 +1092,7 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
       g_strcmp0 (old_checksum, new_checksum) != 0)
     {
       old_checkout_dir = g_file_get_child (arch_dir, old_checksum);
-      if (!gs_shutil_rm_rf (old_checkout_dir, cancellable, &tmp_error))
+      if (!flatpak_rm_rf (old_checkout_dir, cancellable, &tmp_error))
         g_warning ("Unable to remove old appstream checkout: %s\n", tmp_error->message);
     }
 
@@ -1175,9 +1175,8 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
             return FALSE;
         }
 
-      (void) glnx_shutil_rm_rf_at (AT_FDCWD,
-                                   gs_file_get_path_cached (ostree_repo_get_path (child_repo)),
-                                   NULL, NULL);
+      (void) flatpak_rm_rf (ostree_repo_get_path (child_repo),
+                            NULL, NULL);
 
       return TRUE;
     }
@@ -2889,7 +2888,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
 
 out:
   if (created_deploy_base && !ret)
-    gs_shutil_rm_rf (deploy_base, cancellable, NULL);
+    flatpak_rm_rf (deploy_base, cancellable, NULL);
 
   return ret;
 }
@@ -3742,7 +3741,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
     {
       GError *tmp_error = NULL;
 
-      if (!gs_shutil_rm_rf (removed_subdir, cancellable, &tmp_error))
+      if (!flatpak_rm_rf (removed_subdir, cancellable, &tmp_error))
         {
           g_warning ("Unable to remove old checkout: %s\n", tmp_error->message);
           g_error_free (tmp_error);
@@ -3785,7 +3784,7 @@ flatpak_dir_undeploy_all (FlatpakDir   *self,
   if (was_deployed)
     {
       g_debug ("removing deploy base");
-      if (!gs_shutil_rm_rf (deploy_base, cancellable, error))
+      if (!flatpak_rm_rf (deploy_base, cancellable, error))
         return FALSE;
     }
 
@@ -3865,7 +3864,7 @@ flatpak_dir_cleanup_removed (FlatpakDir   *self,
           !dir_is_locked (child))
         {
           GError *tmp_error = NULL;
-          if (!gs_shutil_rm_rf (child, cancellable, &tmp_error))
+          if (!flatpak_rm_rf (child, cancellable, &tmp_error))
             {
               g_warning ("Unable to remove old checkout: %s\n", tmp_error->message);
               g_error_free (tmp_error);

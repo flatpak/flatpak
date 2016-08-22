@@ -1588,6 +1588,16 @@ flatpak_mkdir_p (GFile         *dir,
 }
 
 gboolean
+flatpak_rm_rf (GFile         *dir,
+               GCancellable  *cancellable,
+               GError       **error)
+{
+  return glnx_shutil_rm_rf_at (AT_FDCWD,
+                               gs_file_get_path_cached (dir),
+                               cancellable, error);
+}
+
+gboolean
 flatpak_variant_save (GFile        *dest,
                       GVariant     *variant,
                       GCancellable *cancellable,

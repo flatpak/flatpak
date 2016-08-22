@@ -1460,7 +1460,7 @@ builder_module_build (BuilderModule  *self,
           return FALSE;
         }
 
-      if (!gs_shutil_rm_rf (source_dir, NULL, error))
+      if (!flatpak_rm_rf (source_dir, NULL, error))
         {
           g_prefix_error (error, "module %s: ", self->name);
           return FALSE;
