@@ -24,15 +24,17 @@ for i in $@; do
         mkdir -p ${DIR}/usr/lib/python2.7/lib-dynload
         # This is a hardcoded minimal set of modules we need in the current tests.
         # Pretty hacky stuff. Add modules as needed.
+        PYDIR=/usr/lib/python2.7
+        if test -d /usr/lib64/python2.7; then PYDIR=/usr/lib64/python2.7; fi
         for py in site os stat posixpath genericpath warnings \
                        linecache types UserDict abc _abcoll \
                        _weakrefset copy_reg traceback sysconfig \
                        re sre_compile sre_parse sre_constants \
                        _sysconfigdata ; do
-            cp /usr/lib*/python2.7/$py.py ${DIR}/usr/lib/python2.7
+            cp ${PYDIR}/$py.py ${DIR}/usr/lib/python2.7
         done
         for so in _locale strop ; do
-            cp /usr/lib*/python2.7/lib-dynload/${so}module.so ${DIR}/usr/lib/python2.7/lib-dynload
+            cp ${PYDIR}/lib-dynload/${so}module.so ${DIR}/usr/lib/python2.7/lib-dynload
         done
     fi
 done
