@@ -258,6 +258,12 @@ gboolean            flatpak_spawnv (GFile                *dir,
 
 const char *flatpak_file_get_path_cached (GFile *file);
 
+gboolean flatpak_openat_noatime (int            dfd,
+                                 const char    *name,
+                                 int           *ret_fd,
+                                 GCancellable  *cancellable,
+                                 GError       **error);
+
 typedef enum {
   FLATPAK_CP_FLAGS_NONE = 0,
   FLATPAK_CP_FLAGS_MERGE = 1<<0,

@@ -754,9 +754,8 @@ overlay_symlink_tree_dir (int           source_parent_fd,
         }
     }
 
-  if (!gs_file_open_dir_fd_at (destination_parent_fd, destination_name,
-                               &destination_dfd,
-                               cancellable, error))
+  if (!glnx_opendirat (destination_parent_fd, destination_name, TRUE,
+                       &destination_dfd, error))
     goto out;
 
   while (TRUE)
@@ -1423,6 +1422,41 @@ flatpak_file_get_path_cached (GFile *file)
 }
 
 gboolean
+flatpak_openat_noatime (int            dfd,
+                        const char    *name,
+                        int           *ret_fd,
+                        GCancellable  *cancellable,
+                        GError       **error)
+{
+  int fd;
+  int flags = O_RDONLY | O_CLOEXEC;
+
+#ifdef O_NOATIME
+  do
+    fd = openat (dfd, name, flags | O_NOATIME, 0);
+  while (G_UNLIKELY (fd == -1 && errno == EINTR));
+  /* Only the owner or superuser may use O_NOATIME; so we may get
+   * EPERM.  EINVAL may happen if the kernel is really old...
+   */
+  if (fd == -1 && (errno == EPERM || errno == EINVAL))
+#endif
+    do
+      fd = openat (dfd, name, flags, 0);
+    while (G_UNLIKELY (fd == -1 && errno == EINTR));
+
+  if (fd == -1)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+  else
+    {
+      *ret_fd = fd;
+      return TRUE;
+    }
+}
+
+gboolean
 flatpak_cp_a (GFile         *src,
               GFile         *dest,
               FlatpakCpFlags flags,
@@ -1462,10 +1496,9 @@ flatpak_cp_a (GFile         *src,
       goto out;
     }
 
-  if (!gs_file_open_dir_fd (dest, &dest_dfd,
-                            cancellable, error))
+  if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (dest), TRUE,
+                       &dest_dfd, error))
     goto out;
-
 
   if (!no_chown)
     {

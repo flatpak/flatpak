@@ -2153,7 +2153,7 @@ export_desktop_file (const char   *app,
   g_autofree char *escaped_arch = maybe_quote (arch);
   int i;
 
-  if (!gs_file_openat_noatime (parent_fd, name, &desktop_fd, cancellable, error))
+  if (!flatpak_openat_noatime (parent_fd, name, &desktop_fd, cancellable, error))
     goto out;
 
   if (!read_fd (desktop_fd, stat_buf, &data, &data_len, error))
@@ -2418,9 +2418,8 @@ export_dir (int           source_parent_fd,
         }
     }
 
-  if (!gs_file_open_dir_fd_at (destination_parent_fd, destination_name,
-                               &destination_dfd,
-                               cancellable, error))
+  if (!glnx_opendirat (destination_parent_fd, destination_name, TRUE,
+                       &destination_dfd, error))
     goto out;
 
   while (TRUE)
