@@ -25,7 +25,7 @@
 
     <refnamediv>
         <refname>flatpak-build-commit-from</refname>
-        <refpurpose>Create a new commit based on an previous one (possibly from another repository)</refpurpose>
+        <refpurpose>Create new commits based on existing one (possibly from another repository)</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
@@ -33,7 +33,7 @@
                 <command>flatpak build-commit-from</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">DST-REPO</arg>
-                <arg choice="plain">DST-REF</arg>
+                <arg choice="plain" rep="repeat">DST-REF</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -41,7 +41,7 @@
         <title>Description</title>
 
         <para>
-            Creates a new commit on the <arg choice="plain">DST-REF</arg>
+            Creates new commits on the <arg choice="plain">DST-REF</arg>
             branch in the <arg choice="plain">DST-REPO</arg>, with the
             contents (and most of the metadata) taken from another
             branch, either from another repo, or from another branch in
