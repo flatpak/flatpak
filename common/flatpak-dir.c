@@ -3265,6 +3265,8 @@ flatpak_dir_update (FlatpakDir          *self,
   g_autofree const char **old_subpaths = NULL;
   const char **subpaths;
   g_autoptr(GBytes) summary_bytes = NULL;
+  g_autofree char *url = NULL;
+  gboolean is_local;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
@@ -3278,9 +3280,14 @@ flatpak_dir_update (FlatpakDir          *self,
   else
     subpaths = old_subpaths;
 
+  if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, error))
+    return FALSE;
+
+  is_local = g_str_has_prefix (url, "file:");
+
   /* Quick check to terminate early if nothing changed in cached summary
      (and subpaths didn't change) */
-  if (deploy_data != NULL &&
+  if (!is_local && deploy_data != NULL &&
       _g_strv_equal0 ((char **)subpaths, (char **)old_subpaths))
     {
       const char *installed_commit = flatpak_deploy_data_get_commit (deploy_data);
