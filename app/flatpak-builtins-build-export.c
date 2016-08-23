@@ -37,6 +37,7 @@ static char *opt_body;
 static char *opt_arch;
 static gboolean opt_runtime;
 static gboolean opt_update_appstream;
+static gboolean opt_no_update_summary;
 static char **opt_gpg_key_ids;
 static char **opt_exclude;
 static char **opt_include;
@@ -50,6 +51,7 @@ static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Architecture to export for (must be host compatible)"), N_("ARCH") },
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Commit runtime (/usr), not /app"), NULL },
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
+  { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "files", 0, 0, G_OPTION_ARG_STRING, &opt_files, N_("Use alternative directory for the files"), N_("SUBDIR") },
   { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, N_("Use alternative file for the metadata"), N_("FILE") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
@@ -698,7 +700,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
 
-  if (!flatpak_repo_update (repo,
+  if (!opt_no_update_summary &&
+      !flatpak_repo_update (repo,
                             (const char **) opt_gpg_key_ids,
                             opt_gpg_homedir,
                             cancellable,

@@ -37,6 +37,7 @@ static char *opt_src_ref;
 static char *opt_subject;
 static char *opt_body;
 static gboolean opt_update_appstream;
+static gboolean opt_no_update_summary;
 static gboolean opt_untrusted;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
@@ -48,6 +49,7 @@ static GOptionEntry options[] = {
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, N_("One line subject"), N_("SUBJECT") },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, N_("Full description"), N_("BODY") },
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
+  { "no-update-summary", 0, 0, G_OPTION_ARG_NONE, &opt_no_update_summary, N_("Don't update the summary"), NULL },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the commit with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
   { NULL }
@@ -256,7 +258,8 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       !flatpak_repo_generate_appstream (dst_repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
 
-  if (!flatpak_repo_update (dst_repo,
+  if (!opt_no_update_summary &&
+      !flatpak_repo_update (dst_repo,
                             (const char **) opt_gpg_key_ids,
                             opt_gpg_homedir,
                             cancellable,
