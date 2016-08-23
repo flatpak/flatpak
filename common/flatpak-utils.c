@@ -2261,11 +2261,21 @@ copy_icon (const char *id,
   g_autoptr(GFile) dest_file = g_file_get_child (dest_size_dir, icon_name);
   g_autoptr(GInputStream) in = NULL;
   g_autoptr(GOutputStream) out = NULL;
+  g_autoptr(GError) my_error = NULL;
   gssize n_bytes_written;
 
-  in = (GInputStream *) g_file_read (icon_file, NULL, error);
+  in = (GInputStream *) g_file_read (icon_file, NULL, &my_error);
   if (!in)
-    return FALSE;
+    {
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_debug ("No icon at size %s", size);
+          return TRUE;
+        }
+
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      return FALSE;
+    }
 
   if (!flatpak_mkdir_p (dest_size_dir, NULL, error))
     return FALSE;
@@ -2512,7 +2522,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                   ref, split[1], tmpdir_file,
                                   cancellable, &my_error))
             {
-              g_print ("No appstream data for %s: %s\n", ref, my_error->message);
+              if (g_str_has_prefix (ref, "app/"))
+                g_print ("No appstream data for %s: %s\n", ref, my_error->message);
               continue;
             }
         }
