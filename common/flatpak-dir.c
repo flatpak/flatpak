@@ -47,6 +47,11 @@ static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                                           GLnxLockFile *file_lock,
                                                           GError      **error);
 
+static gboolean flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
+                                                  const char   *name,
+                                                  GBytes      **out_summary,
+                                                  GCancellable *cancellable,
+                                                  GError      **error);
 
 typedef struct
 {
@@ -3222,6 +3227,27 @@ out:
   return ret;
 }
 
+static gboolean
+_g_strv_equal0 (gchar **a, gchar **b)
+{
+  gboolean ret = FALSE;
+  guint n;
+  if (a == NULL && b == NULL)
+    {
+      ret = TRUE;
+      goto out;
+    }
+  if (a == NULL || b == NULL)
+    goto out;
+  if (g_strv_length (a) != g_strv_length (b))
+    goto out;
+  for (n = 0; a[n] != NULL; n++)
+    if (g_strcmp0 (a[n], b[n]) != 0)
+      goto out;
+  ret = TRUE;
+out:
+  return ret;
+}
 
 gboolean
 flatpak_dir_update (FlatpakDir          *self,
@@ -3237,24 +3263,58 @@ flatpak_dir_update (FlatpakDir          *self,
 {
   g_autoptr(GVariant) deploy_data = NULL;
   g_autofree const char **old_subpaths = NULL;
-  const char *empty_subpaths[] = {NULL};
   const char **subpaths;
+  g_autoptr(GBytes) summary_bytes = NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
+  if (deploy_data != NULL)
+    old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+  else
+    old_subpaths = g_new0 (const char *, 1); /* Empty strv == all subpatsh*/
 
   if (opt_subpaths)
-    {
-      subpaths = opt_subpaths;
-    }
-  else if (deploy_data != NULL)
-    {
-      old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
-      subpaths = old_subpaths;
-    }
+    subpaths = opt_subpaths;
   else
+    subpaths = old_subpaths;
+
+  /* Quick check to terminate early if nothing changed in cached summary
+     (and subpaths didn't change) */
+  if (deploy_data != NULL &&
+      _g_strv_equal0 ((char **)subpaths, (char **)old_subpaths))
     {
-      subpaths = empty_subpaths;
+      const char *installed_commit = flatpak_deploy_data_get_commit (deploy_data);
+
+      if (checksum_or_latest != NULL)
+        {
+          if (strcmp (checksum_or_latest, installed_commit) == 0)
+            {
+                  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                               _("%s branch %s already installed"), ref, installed_commit);
+              return FALSE;
+            }
+        }
+      else if (flatpak_dir_remote_fetch_summary (self, remote_name,
+                                                 &summary_bytes,
+                                                 cancellable, error))
+        {
+          g_autoptr(GVariant) summary =
+            g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                          summary_bytes, FALSE));
+          g_autofree char *latest = NULL;
+
+          if (flatpak_summary_lookup_ref (summary,
+                                          ref,
+                                          &latest))
+            {
+              if (strcmp (latest, installed_commit) == 0)
+                {
+                  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                               _("%s branch %s already installed"), ref, installed_commit);
+                  return FALSE;
+                }
+            }
+        }
     }
 
   if (flatpak_dir_use_system_helper (self))
@@ -4095,8 +4155,8 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
                                 "Check the URL passed to remote-add was valid\n");
 
   ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                      summary_bytes, FALSE);
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                          summary_bytes, FALSE));
 
   ref_map = g_variant_get_child_value (summary, 0);
 
@@ -4948,8 +5008,8 @@ flatpak_dir_fetch_remote_title (FlatpakDir   *self,
       return FALSE;
     }
 
-  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                      summary_bytes, FALSE);
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                          summary_bytes, FALSE));
   extensions = g_variant_get_child_value (summary, 1);
 
   g_variant_dict_init (&dict, extensions);
@@ -5048,8 +5108,8 @@ flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
       return FALSE;
     }
 
-  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                      summary_bytes, FALSE);
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                          summary_bytes, FALSE));
 
   return flatpak_dir_parse_summary_for_ref (self, summary, ref,
                                             download_size, installed_size,
@@ -5186,8 +5246,8 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
       return NULL;
     }
 
-  summary = g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                      summary_bytes, FALSE);
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                          summary_bytes, FALSE));
 
   if (flatpak_dir_parse_summary_for_ref (self, summary, ref,
                                          NULL, NULL, &metadata,
