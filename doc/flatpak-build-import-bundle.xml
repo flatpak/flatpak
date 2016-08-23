@@ -90,6 +90,31 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--update-appstream</option></term>
+
+                <listitem><para>
+                    Run appstream-builder and to update the appstream branch after build.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-sign=KEYID</option></term>
+
+                <listitem><para>
+                    Sign the commit with this GPG key.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-homedir=PATH</option></term>
+
+                <listitem><para>
+                    GPG Homedir to use when looking for keyrings
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--version</option></term>
 
                 <listitem><para>
