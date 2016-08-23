@@ -49,6 +49,303 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+typedef struct {
+  OstreeRepo *repo;
+  GVariant *params;
+  char *ref;
+  char *from;
+  char *to;
+} DeltaData;
+
+static void
+delta_data_free (DeltaData *data)
+{
+  g_object_unref (data->repo);
+  g_variant_unref (data->params);
+  g_free (data->ref);
+  g_free (data->from);
+  g_free (data->to);
+  g_free (data);
+}
+
+static DeltaData *
+delta_data_push (GThreadPool *pool,
+                 OstreeRepo *repo,
+                 GVariant *params,
+                 const char *ref,
+                 const char *from,
+                 const char *to,
+                 GError **error)
+{
+  DeltaData *data = g_new0 (DeltaData, 1);
+
+  data->repo = g_object_ref (repo);
+  data->params = g_variant_ref (params);
+  data->ref = g_strdup (ref);
+  data->from = g_strdup (from);
+  data->to = g_strdup (to);
+
+  if (!g_thread_pool_push (pool, data, error))
+    {
+      delta_data_free (data);
+      return NULL;
+    }
+
+  return data;
+}
+
+static void
+generate_delta_thread (gpointer       _data,
+                       gpointer       user_data)
+{
+  DeltaData *data = (DeltaData*) _data;
+  g_autoptr(GError) error = NULL;
+
+  if (data->from == NULL)
+    g_print (_("Generating delta: %s (%.10s)\n"), data->ref, data->to);
+  else
+    g_print (_("Generating delta: %s (%.10s-%.10s)\n"), data->ref, data->from, data->to);
+
+  if (!ostree_repo_static_delta_generate (data->repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
+                                          data->from, data->to, NULL,
+                                          data->params,
+                                          NULL, &error))
+    {
+      if (data->from == NULL)
+        g_printerr (_("Failed to generate delta %s (%.10s): %s\n"),
+                    data->ref, data->to, error->message);
+      else
+        g_printerr (_("Failed to generate delta %s (%.10s-%.10s): %s\n"),
+                    data->ref, data->from, data->to, error->message);
+    }
+}
+
+static void
+_ostree_parse_delta_name (const char  *delta_name,
+                          char        **out_from,
+                          char        **out_to)
+{
+  g_auto(GStrv) parts = g_strsplit (delta_name, "-", 2);
+
+  if (parts[0] && parts[1])
+    {
+      *out_from = g_steal_pointer (&parts[0]);
+      *out_to = g_steal_pointer (&parts[1]);
+    }
+  else
+    {
+      *out_from = NULL;
+      *out_to = g_steal_pointer (&parts[0]);
+    }
+}
+
+static char *
+_ostree_get_relative_static_delta_path (const char *from,
+                                        const char *to,
+                                        const char *target)
+{
+  guint8 csum_to[OSTREE_SHA256_DIGEST_LEN];
+  char to_b64[44];
+  guint8 csum_to_copy[OSTREE_SHA256_DIGEST_LEN];
+  GString *ret = g_string_new ("deltas/");
+
+  ostree_checksum_inplace_to_bytes (to, csum_to);
+  ostree_checksum_b64_inplace_from_bytes (csum_to, to_b64);
+  ostree_checksum_b64_inplace_to_bytes (to_b64, csum_to_copy);
+
+  g_assert (memcmp (csum_to, csum_to_copy, OSTREE_SHA256_DIGEST_LEN) == 0);
+
+  if (from != NULL)
+    {
+      guint8 csum_from[OSTREE_SHA256_DIGEST_LEN];
+      char from_b64[44];
+
+      ostree_checksum_inplace_to_bytes (from, csum_from);
+      ostree_checksum_b64_inplace_from_bytes (csum_from, from_b64);
+
+      g_string_append_c (ret, from_b64[0]);
+      g_string_append_c (ret, from_b64[1]);
+      g_string_append_c (ret, '/');
+      g_string_append (ret, from_b64 + 2);
+      g_string_append_c (ret, '-');
+    }
+
+  g_string_append_c (ret, to_b64[0]);
+  g_string_append_c (ret, to_b64[1]);
+  if (from == NULL)
+    g_string_append_c (ret, '/');
+  g_string_append (ret, to_b64 + 2);
+
+  if (target != NULL)
+    {
+      g_string_append_c (ret, '/');
+      g_string_append (ret, target);
+    }
+
+  return g_string_free (ret, FALSE);
+}
+
+static gboolean
+_ostree_repo_static_delta_delete (OstreeRepo                    *self,
+                                  const char                    *delta_id,
+                                  GCancellable                  *cancellable,
+                                  GError                      **error)
+{
+  gboolean ret = FALSE;
+  g_autofree char *from = NULL;
+  g_autofree char *to = NULL;
+  g_autofree char *deltadir = NULL;
+  struct stat buf;
+  int repo_dir_fd = ostree_repo_get_dfd (self);
+
+  _ostree_parse_delta_name (delta_id, &from, &to);
+  deltadir = _ostree_get_relative_static_delta_path (from, to, NULL);
+
+  if (fstatat (repo_dir_fd, deltadir, &buf, 0) != 0)
+    {
+      if (errno == ENOENT)
+        g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                     "Can't find delta %s", delta_id);
+      else
+        glnx_set_error_from_errno (error);
+
+      goto out;
+    }
+
+  if (!glnx_shutil_rm_rf_at (repo_dir_fd, deltadir,
+                             cancellable, error))
+    goto out;
+
+  ret = TRUE;
+ out:
+  return ret;
+}
+
+
+static gboolean
+generate_all_deltas (OstreeRepo *repo, GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GHashTable) all_refs = NULL;
+  g_autoptr(GHashTable) all_deltas_hash = NULL;
+  g_autoptr(GHashTable) wanted_deltas_hash = NULL;
+  g_autoptr(GPtrArray) all_deltas = NULL;
+  int i;
+  GHashTableIter iter;
+  gpointer key, value;
+  g_autoptr(GVariantBuilder) parambuilder = NULL;
+  g_autoptr(GVariant) params = NULL;
+  GThreadPool *thread_pool;
+
+  g_print ("Generating static deltas\n");
+
+  parambuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  /* Fall back for 1 meg files */
+  g_variant_builder_add (parambuilder, "{sv}",
+                         "min-fallback-size", g_variant_new_uint32 (1));
+  params = g_variant_ref_sink (g_variant_builder_end (parambuilder));
+
+  if (!ostree_repo_list_static_delta_names (repo, &all_deltas,
+                                            cancellable, error))
+    return FALSE;
+
+  wanted_deltas_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  all_deltas_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  for (i = 0; i < all_deltas->len; i++)
+    g_hash_table_insert (all_deltas_hash,
+                         g_strdup (g_ptr_array_index (all_deltas, i)),
+                         NULL);
+
+  if (!ostree_repo_list_refs (repo, NULL, &all_refs,
+                              cancellable, error))
+    return FALSE;
+
+  thread_pool = g_thread_pool_new (generate_delta_thread, NULL,
+                                   g_get_num_processors (), FALSE,
+                                   error);
+  if (thread_pool == NULL)
+    return FALSE;
+
+  g_hash_table_iter_init (&iter, all_refs);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *ref = key;
+      const char *commit = value;
+      const char *from_parent = NULL;
+      g_autoptr(GVariant) variant = NULL;
+      g_autoptr(GVariant) parent_variant = NULL;
+      g_autofree char *parent_commit = NULL;
+
+      if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
+                                     &variant, NULL))
+        {
+          g_warning ("Couldn't load commit %s\n", commit);
+          continue;
+        }
+
+      /* From empty */
+      if (!g_hash_table_contains (all_deltas_hash, commit))
+        {
+          if (!delta_data_push (thread_pool, repo, params,
+                                ref, NULL, commit,
+                                error))
+            goto error;
+        }
+
+      /* Mark this one as wanted */
+      g_hash_table_insert (wanted_deltas_hash, g_strdup (commit), GINT_TO_POINTER (1));
+
+      parent_commit = ostree_commit_get_parent (variant);
+
+      if (parent_commit != NULL &&
+          !ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, parent_commit,
+                                     &parent_variant, NULL))
+        {
+          g_warning ("Couldn't load parent commit %s\n", parent_commit);
+          continue;
+        }
+
+      /* From parent */
+      if (parent_variant != NULL)
+        {
+          from_parent = g_strdup_printf ("%s-%s", parent_commit, commit);
+          if (!g_hash_table_contains (all_deltas_hash, from_parent))
+            {
+              if (!delta_data_push (thread_pool, repo, params,
+                                    ref, parent_commit, commit,
+                                    error))
+                goto error;
+            }
+
+          /* Mark this one as wanted */
+          g_hash_table_insert (wanted_deltas_hash, g_strdup (from_parent), GINT_TO_POINTER (1));
+        }
+    }
+
+  for (i = 0; i < all_deltas->len; i++)
+    {
+      const char *delta = g_ptr_array_index (all_deltas, i);
+      if (!g_hash_table_contains (wanted_deltas_hash, delta))
+        {
+          g_print ("Deleting unwanted delta: %s\n", delta);
+          g_autoptr(GError) my_error = NULL;
+          if (!_ostree_repo_static_delta_delete (repo, delta, cancellable, &my_error))
+            g_printerr ("Unable to delete delta %s: %s\n", delta, my_error->message);
+        }
+    }
+
+  /* This block until all are done */
+  g_thread_pool_free (thread_pool, FALSE, TRUE);
+
+  return TRUE;
+
+ error:
+  /* TODO: In this error case we're leaking all the DeltaDatas we have not yet
+     processed. I don't know how to fix this though... */
+  g_thread_pool_free (thread_pool, TRUE, FALSE);
+  return FALSE;
+}
+
 gboolean
 flatpak_builtin_build_update_repo (int argc, char **argv,
                                    GCancellable *cancellable, GError **error)
@@ -83,99 +380,9 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
   if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
 
-  if (opt_generate_deltas)
-    {
-      g_autoptr(GHashTable) all_refs = NULL;
-      g_autoptr(GHashTable) all_deltas_hash = NULL;
-      g_autoptr(GPtrArray) all_deltas = NULL;
-      int i;
-      GHashTableIter iter;
-      gpointer key, value;
-      g_autoptr(GVariantBuilder) parambuilder = NULL;
-      g_autoptr(GVariant) params = NULL;
-
-      parambuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
-      /* Fall back for 1 meg files */
-      g_variant_builder_add (parambuilder, "{sv}",
-                             "min-fallback-size", g_variant_new_uint32 (1));
-      g_variant_builder_add (parambuilder, "{sv}", "verbose",
-                             g_variant_new_boolean (TRUE));
-      params = g_variant_ref_sink (g_variant_builder_end (parambuilder));
-
-      if (!ostree_repo_list_static_delta_names (repo, &all_deltas,
-                                                cancellable, error))
-        return FALSE;
-
-      all_deltas_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-      for (i = 0; i < all_deltas->len; i++)
-        {
-          g_print ("adding %s\n", (char *) g_ptr_array_index (all_deltas, i));
-          g_hash_table_insert (all_deltas_hash,
-                               g_strdup (g_ptr_array_index (all_deltas, i)),
-                               NULL);
-        }
-
-      if (!ostree_repo_list_refs (repo, NULL, &all_refs,
-                                  cancellable, error))
-        return FALSE;
-
-      g_hash_table_iter_init (&iter, all_refs);
-      while (g_hash_table_iter_next (&iter, &key, &value))
-        {
-          const char *ref = key;
-          const char *commit = value;
-          const char *from_parent = NULL;
-          g_autoptr(GVariant) variant = NULL;
-          g_autoptr(GVariant) parent_variant = NULL;
-          g_autofree char *parent_commit = NULL;
-
-          if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
-                                         &variant, NULL))
-            return FALSE;
-
-          parent_commit = ostree_commit_get_parent (variant);
-
-          if (parent_commit != NULL)
-            ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, parent_commit,
-                                      &parent_variant, NULL);
-
-
-          /* From empty */
-          g_print (_("Looking for %s\n"), commit);
-          if (!g_hash_table_contains (all_deltas_hash, commit))
-            {
-              g_print (_("Generating from-empty delta for %s (%s)\n"), ref, commit);
-              if (!ostree_repo_static_delta_generate (repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
-                                                      NULL, commit, NULL,
-                                                      params,
-                                                      cancellable, error))
-                return FALSE;
-            }
-
-          /* Mark this one as wanted */
-          g_hash_table_insert (all_deltas_hash, g_strdup (commit), GINT_TO_POINTER (1));
-
-          /* From parent */
-          if (parent_variant != NULL)
-            {
-              from_parent = g_strdup_printf ("%s-%s", parent_commit, commit);
-
-
-              if (!g_hash_table_contains (all_deltas_hash, from_parent))
-                {
-                  g_print (_("Generating from-parent delta for %s (%s)\n"), ref, from_parent);
-                  if (!ostree_repo_static_delta_generate (repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
-                                                          parent_commit, commit, NULL,
-                                                          params,
-                                                          cancellable, error))
-                    return FALSE;
-                }
-
-              /* Mark this one as wanted */
-              g_hash_table_insert (all_deltas_hash, g_strdup (from_parent), GINT_TO_POINTER (1));
-            }
-        }
-    }
+  if (opt_generate_deltas &&
+      !generate_all_deltas (repo, cancellable, error))
+    return FALSE;
 
   g_print (_("Updating summary\n"));
   if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
