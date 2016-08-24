@@ -1895,6 +1895,20 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
         }
     }
 
+  {
+    g_autofree char *run_user_app_dst = g_strdup_printf ("/run/user/%d/app/%s", getuid (), app_id);
+    g_autofree char *run_user_app_src = g_build_filename (g_get_user_runtime_dir (), "app", app_id, NULL);
+
+    if (glnx_shutil_mkdir_p_at (AT_FDCWD,
+                                run_user_app_src,
+                                0700,
+                                NULL,
+                                NULL))
+        add_args (argv_array,
+                  "--bind", run_user_app_src, run_user_app_dst,
+                  NULL);
+  }
+
   g_hash_table_iter_init (&iter, context->filesystems);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
