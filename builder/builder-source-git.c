@@ -297,7 +297,8 @@ git_mirror_submodules (const char     *repo_location,
         {
           g_autofree gchar *submodule = NULL;
           g_autofree gchar *path = NULL;
-          g_autofree gchar *url = NULL;
+          g_autofree gchar *relative_url = NULL;
+          g_autofree gchar *absolute_url = NULL;
           g_autofree gchar *ls_tree = NULL;
           g_auto(GStrv) lines = NULL;
           g_auto(GStrv) words = NULL;
@@ -311,8 +312,9 @@ git_mirror_submodules (const char     *repo_location,
           if (path == NULL)
             return FALSE;
 
-          url = g_key_file_get_string (key_file, submodule, "url", error);
-          if (url == NULL)
+          relative_url = g_key_file_get_string (key_file, submodule, "url", error);
+          absolute_url = make_absolute (repo_location, relative_url, error);
+          if (absolute_url == NULL)
             return FALSE;
 
           if (!git (mirror_dir, &ls_tree, error, "ls-tree", revision, path, NULL))
@@ -333,7 +335,7 @@ git_mirror_submodules (const char     *repo_location,
               return FALSE;
             }
 
-          if (!git_mirror_repo (url, update, words[2], context, error))
+          if (!git_mirror_repo (absolute_url, update, words[2], context, error))
             return FALSE;
         }
     }
@@ -437,7 +439,8 @@ git_extract_submodule (const char     *repo_location,
           g_autofree gchar *name = NULL;
           g_autofree gchar *update_method = NULL;
           g_autofree gchar *path = NULL;
-          g_autofree gchar *url = NULL;
+          g_autofree gchar *relative_url = NULL;
+          g_autofree gchar *absolute_url = NULL;
           g_autofree gchar *ls_tree = NULL;
           g_auto(GStrv) lines = NULL;
           g_auto(GStrv) words = NULL;
@@ -465,8 +468,9 @@ git_extract_submodule (const char     *repo_location,
           if (path == NULL)
             return FALSE;
 
-          url = g_key_file_get_string (key_file, submodule, "url", error);
-          if (url == NULL)
+          relative_url = g_key_file_get_string (key_file, submodule, "url", error);
+          absolute_url = make_absolute (repo_location, relative_url, error);
+          if (absolute_url == NULL)
             return FALSE;
 
           if (!git (checkout_dir, &ls_tree, error, "ls-tree", revision, path, NULL))
@@ -487,7 +491,7 @@ git_extract_submodule (const char     *repo_location,
               return FALSE;
             }
 
-          mirror_dir = git_get_mirror_dir (url, context);
+          mirror_dir = git_get_mirror_dir (absolute_url, context);
           mirror_dir_as_url = g_file_get_uri (mirror_dir);
           option = g_strdup_printf ("submodule.%s.url", name);
 
@@ -501,7 +505,7 @@ git_extract_submodule (const char     *repo_location,
 
           child_dir = g_file_resolve_relative_path (checkout_dir, path);
 
-          if (!git_extract_submodule (url, child_dir, words[2], context, error))
+          if (!git_extract_submodule (absolute_url, child_dir, words[2], context, error))
             return FALSE;
         }
     }
