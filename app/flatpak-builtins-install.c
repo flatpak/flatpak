@@ -141,8 +141,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   const char *repository;
-  const char *name;
-  const char *branch = NULL;
+  char *name;
+  char *branch = NULL;
   g_autofree char *ref = NULL;
   gboolean is_app;
   g_autoptr(GFile) deploy_dir = NULL;
@@ -165,6 +165,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   name  = argv[2];
   if (argc >= 4)
     branch = argv[3];
+
+  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
+    return FALSE;
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;

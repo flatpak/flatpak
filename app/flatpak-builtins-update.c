@@ -198,8 +198,8 @@ flatpak_builtin_update (int           argc,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  const char *name = NULL;
-  const char *branch = NULL;
+  char *name = NULL;
+  char *branch = NULL;
   gboolean failed = FALSE;
   gboolean found = FALSE;
   int i;
@@ -217,6 +217,9 @@ flatpak_builtin_update (int           argc,
 
   if (opt_arch == NULL)
     opt_arch = (char *)flatpak_get_arch ();
+
+  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
+    return FALSE;
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;

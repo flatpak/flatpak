@@ -63,8 +63,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   FlatpakDir *dir = NULL;
   g_autoptr(GError) lookup_error = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
-  const char *name;
-  const char *branch = NULL;
+  char *name;
+  char *branch = NULL;
   const char *commit = NULL;
   const char *origin = NULL;
   gboolean is_app = FALSE;
@@ -82,6 +82,9 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (argc >= 3)
     branch = argv[2];
+
+  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
+    return FALSE;
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;

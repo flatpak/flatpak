@@ -74,6 +74,11 @@ gboolean flatpak_is_valid_branch (const char *string);
 char **flatpak_decompose_ref (const char *ref,
                               GError    **error);
 
+gboolean flatpak_split_partial_ref_arg (char *partial_ref,
+                                        char **inout_arch,
+                                        char **inout_branch,
+                                        GError    **error);
+
 char * flatpak_compose_ref (gboolean    app,
                             const char *name,
                             const char *branch,

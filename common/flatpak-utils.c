@@ -562,6 +562,57 @@ flatpak_decompose_ref (const char *full_ref,
   return g_steal_pointer (&parts);
 }
 
+gboolean
+flatpak_split_partial_ref_arg (char *partial_ref,
+                               char **inout_arch,
+                               char **inout_branch,
+                               GError    **error)
+{
+  char *slash;
+  char *arch = NULL;
+  char *branch = NULL;
+
+  slash = strchr (partial_ref, '/');
+  if (slash != NULL)
+    *slash = 0;
+
+  if (!flatpak_is_valid_name (partial_ref))
+    return flatpak_fail (error, "Invalid name %s", partial_ref);
+
+  if (slash == NULL)
+    goto out;
+
+  arch = slash + 1;
+  slash = strchr (arch, '/');
+  if (slash != NULL)
+    *slash = 0;
+
+  if (strlen (arch) == 0)
+    arch = NULL;
+
+  if (slash == NULL)
+    goto out;
+
+  branch = slash + 1;
+  if (strlen (branch) > 0)
+    {
+      if (!flatpak_is_valid_branch (branch))
+        return flatpak_fail (error, "Invalid branch %s", branch);
+    }
+  else
+    branch = NULL;
+
+ out:
+
+  if (*inout_arch == NULL)
+    *inout_arch = arch;
+
+  if (*inout_branch == NULL)
+    *inout_branch = branch;
+
+  return TRUE;
+}
+
 char *
 flatpak_compose_ref (gboolean    app,
                      const char *name,

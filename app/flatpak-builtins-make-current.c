@@ -45,8 +45,8 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
-  const char *app;
-  const char *branch = "master";
+  char *app;
+  char *branch = NULL;
   g_autofree char *ref = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
@@ -56,11 +56,19 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
-  if (argc < 3)
-    return usage_error (context, _("APP and BRANCH must be specified"), error);
+  if (argc < 2)
+    return usage_error (context, _("APP must be specified"), error);
 
   app  = argv[1];
-  branch = argv[2];
+
+  if (argc >= 3)
+    branch = argv[2];
+
+  if (!flatpak_split_partial_ref_arg (app, &opt_arch, &branch, error))
+    return FALSE;
+
+  if (branch == NULL)
+    return usage_error (context, _("BRANCH must be specified"), error);
 
   ref = flatpak_dir_find_installed_ref (dir,
                                         app,

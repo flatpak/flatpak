@@ -54,8 +54,8 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  const char *name = NULL;
-  const char *branch = NULL;
+  char *name = NULL;
+  char *branch = NULL;
   g_autofree char *ref = NULL;
   gboolean is_app;
   FlatpakHelperUninstallFlags flags = 0;
@@ -69,11 +69,14 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
     return FALSE;
 
   if (argc < 2)
-    return usage_error (context, _("APP must be specified"), error);
+    return usage_error (context, _("NAME must be specified"), error);
 
   name = argv[1];
   if (argc > 2)
     branch = argv[2];
+
+  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
+    return FALSE;
 
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;

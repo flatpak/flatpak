@@ -63,8 +63,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
   g_autofree char *app_ref = NULL;
-  const char *app;
-  const char *branch = "master";
+  char *app;
   int i;
   int rest_argv_start, rest_argc;
   g_autoptr(FlatpakContext) arg_context = NULL;
@@ -96,8 +95,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   app = argv[rest_argv_start];
 
-  if (opt_branch)
-    branch = opt_branch;
+  if (!flatpak_split_partial_ref_arg (app, &opt_arch, &opt_branch, error))
+    return FALSE;
 
   if (opt_branch == NULL && opt_arch == NULL)
     {
@@ -111,7 +110,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (app_ref == NULL)
     {
-      app_ref = flatpak_compose_ref (TRUE, app, branch, opt_arch, error);
+      app_ref = flatpak_compose_ref (TRUE, app, opt_branch, opt_arch, error);
       if (app_ref == NULL)
         return FALSE;
     }
