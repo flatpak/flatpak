@@ -572,6 +572,9 @@ flatpak_split_partial_ref_arg (char *partial_ref,
   char *arch = NULL;
   char *branch = NULL;
 
+  if (partial_ref == NULL)
+    return TRUE;
+
   slash = strchr (partial_ref, '/');
   if (slash != NULL)
     *slash = 0;
