@@ -5212,7 +5212,7 @@ add_related (FlatpakDir *self,
   rel = g_new0 (FlatpakRelated, 1);
   rel->ref = g_strdup (extension_ref);
   rel->commit = g_strdup (checksum);
-  rel->subpaths = (char **)g_ptr_array_free (subpaths, FALSE);
+  rel->subpaths = (char **)g_ptr_array_free (g_steal_pointer (&subpaths), FALSE);
   rel->download = download;
   rel->delete = delete;
 
