@@ -223,7 +223,10 @@ _ostree_repo_static_delta_delete (OstreeRepo                    *self,
 
 
 static gboolean
-generate_all_deltas (OstreeRepo *repo, GCancellable *cancellable, GError **error)
+generate_all_deltas (OstreeRepo *repo,
+                     GPtrArray **unwanted_deltas,
+                     GCancellable *cancellable,
+                     GError **error)
 {
   g_autoptr(GHashTable) all_refs = NULL;
   g_autoptr(GHashTable) all_deltas_hash = NULL;
@@ -322,16 +325,12 @@ generate_all_deltas (OstreeRepo *repo, GCancellable *cancellable, GError **error
         }
     }
 
+  *unwanted_deltas = g_ptr_array_new_with_free_func (g_free);
   for (i = 0; i < all_deltas->len; i++)
     {
       const char *delta = g_ptr_array_index (all_deltas, i);
       if (!g_hash_table_contains (wanted_deltas_hash, delta))
-        {
-          g_print ("Deleting unwanted delta: %s\n", delta);
-          g_autoptr(GError) my_error = NULL;
-          if (!_ostree_repo_static_delta_delete (repo, delta, cancellable, &my_error))
-            g_printerr ("Unable to delete delta %s: %s\n", delta, my_error->message);
-        }
+        g_ptr_array_add (*unwanted_deltas, g_strdup (delta));
     }
 
   /* This block until all are done */
@@ -354,6 +353,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
   g_autoptr(GFile) repofile = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
   const char *location;
+  g_autoptr(GPtrArray) unwanted_deltas = NULL;
 
   context = g_option_context_new (_("LOCATION - Update repository metadata"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -381,12 +381,25 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
     return FALSE;
 
   if (opt_generate_deltas &&
-      !generate_all_deltas (repo, cancellable, error))
+      !generate_all_deltas (repo, &unwanted_deltas, cancellable, error))
     return FALSE;
 
   g_print (_("Updating summary\n"));
   if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
+
+  if (unwanted_deltas != NULL)
+    {
+      int i;
+      for (i = 0; i < unwanted_deltas->len; i++)
+        {
+          const char *delta = g_ptr_array_index (unwanted_deltas, i);
+          g_print ("Deleting unwanted delta: %s\n", delta);
+          g_autoptr(GError) my_error = NULL;
+          if (!_ostree_repo_static_delta_delete (repo, delta, cancellable, &my_error))
+            g_printerr ("Unable to delete delta %s: %s\n", delta, my_error->message);
+        }
+    }
 
   if (opt_prune)
     {
