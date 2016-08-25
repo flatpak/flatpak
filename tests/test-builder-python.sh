@@ -41,6 +41,7 @@ cp -a $(dirname $0)/empty-configure .
 cp -a $(dirname $0)/testpython.py .
 cp $(dirname $0)/importme.py .
 cp $(dirname $0)/importme2.py .
+chmod u+w *.py
 flatpak-builder --force-clean appdir org.test.Python.json
 
 assert_has_file appdir/files/bin/importme.pyc
