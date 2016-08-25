@@ -1,3 +1,25 @@
+Major changes in 0.6.9
+======================
+
+ * Dropped dependency on libgsystem
+ * Allow passing partial refs whenever a CLI command takes
+   an app or runtime name.
+ * New command build-commit-from creates a new commit based
+   on the contents of another commit (optionally from another
+   local repo).
+ * The sandbox now contains $XDG_RUNTIME_DIR/app/$APPID from the
+   host (and the directory is created if needed).
+ * update: Better output, and faster for the no updates case
+ * build-export: Don't make most validation errors fail, instead
+   just print a warning.
+ * builder: Support local path references for git sources
+ * builder: Better handling of recursive git submodules
+ * builder: Fixed issues with the .pyc mtime rewriting
+ * builder: Handle symbolic icons for rename-icon
+ * builder: Add --stop-at=$module to do partial builds
+ * builder: Add --sandbox flag to disable the build from escaping
+   from the sandbox via build-args.
+
 Major changes in 0.6.8
 ======================
 
