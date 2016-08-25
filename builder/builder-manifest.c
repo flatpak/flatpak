@@ -1403,6 +1403,7 @@ appstream_compose (GFile   *app_dir,
   const gchar *arg;
   g_autofree char *commandline = NULL;
   va_list ap;
+  g_autoptr(GError) local_error = NULL;
 
   args = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (args, g_strdup ("flatpak"));
@@ -1422,12 +1423,12 @@ appstream_compose (GFile   *app_dir,
 
   launcher = g_subprocess_launcher_new (0);
 
-  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
+  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, &local_error);
   g_ptr_array_free (args, TRUE);
 
   if (subp == NULL ||
-      !g_subprocess_wait_check (subp, NULL, error))
-    return FALSE;
+      !g_subprocess_wait_check (subp, NULL, &local_error))
+    g_print ("WARNING: appstream-compose failed: %s\n", local_error->message);
 
   return TRUE;
 }
