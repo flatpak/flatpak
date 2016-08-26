@@ -416,12 +416,12 @@ unrpm (GFile   *dir,
        GError **error)
 {
   gboolean res;
-  const gchar *argv[] = { "sh", "-c", NULL, NULL };
-  char *unrpm_cmdline = g_strdup_printf("rpm2cpio %s | cpio -i -d", rpm_path);
+  const gchar *argv[] = { "sh", "-c", "rpm2cpio \"$1\" | cpio -i -d",
+      "sh", /* shell's $0 */
+      rpm_path, /* shell's $1 */
+      NULL };
 
-  argv[2] = unrpm_cmdline;
   res = flatpak_spawnv (dir, NULL, error, argv);
-  g_free(unrpm_cmdline);
 
   return res;
 }
