@@ -299,8 +299,6 @@ flatpak_builtin_update (int           argc,
       return FALSE;
     }
 
-  flatpak_dir_cleanup_removed (dir, cancellable, NULL);
-
   if (failed)
     return flatpak_fail (error, _("One or more updates failed"));
 
