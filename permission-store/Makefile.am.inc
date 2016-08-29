@@ -13,6 +13,7 @@ BUILT_SOURCES += $(nodist_xdg_permission_store_SOURCES)
 CLEANFILES += $(nodist_xdg_permission_store_SOURCES)
 
 $(nodist_xdg_permission_store_SOURCES) : data/org.freedesktop.impl.portal.PermissionStore.xml
+	mkdir -p $(builddir)/permission-store
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.impl.portal.	\
 		--c-namespace Xdg				\
