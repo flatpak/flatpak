@@ -1,8 +1,8 @@
 #include "config.h"
 #include <string.h>
 #include <glib.h>
+#include "libglnx/libglnx.h"
 #include "flatpak.h"
-#include "glnx-shutil.h"
 
 static char *testdir;
 static char *flatpak_runtimedir;
