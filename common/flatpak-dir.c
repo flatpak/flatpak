@@ -3283,6 +3283,9 @@ flatpak_dir_update (FlatpakDir          *self,
   if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, error))
     return FALSE;
 
+  if (*url == 0)
+    return TRUE; /* Empty URL => disabled */
+
   is_local = g_str_has_prefix (url, "file:");
 
   /* Quick check to terminate early if nothing changed in cached summary
@@ -4151,7 +4154,6 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
   g_autoptr(GVariant) ref_map = NULL;
   GVariantIter iter;
   GVariant *child;
-
   if (!flatpak_dir_remote_fetch_summary (self, remote_name,
                                          &summary_bytes,
                                          cancellable, error))
@@ -4608,11 +4610,16 @@ flatpak_dir_get_remote_disabled (FlatpakDir *self,
 {
   GKeyFile *config = ostree_repo_get_config (self->repo);
   g_autofree char *group = get_group (remote_name);
+  g_autofree char *url = NULL;
 
-  if (config)
-    return g_key_file_get_boolean (config, group, "xa.disable", NULL);
+  if (config &&
+      g_key_file_get_boolean (config, group, "xa.disable", NULL))
+    return TRUE;
 
-  return TRUE;
+  if (ostree_repo_remote_get_url (self->repo, remote_name, &url, NULL) && *url == 0)
+    return TRUE; /* Empty URL => disabled */
+
+  return FALSE;
 }
 
 gint
