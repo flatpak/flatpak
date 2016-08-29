@@ -1,5 +1,7 @@
 
-# ![](flatpak.png) Flatpak
+<p align="center">
+  <img src="https://github.com/flatpak/flatpak/blob/master/flatpak.png?raw=true" alt="Flatpak icon"/>
+</p>
 
 Flatpak is a system for building, distributing and running sandboxed
 desktop applications on Linux.
