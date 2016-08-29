@@ -270,6 +270,20 @@ test_install_launch_uninstall (void)
   g_autoptr(GMainLoop) loop = NULL;
   guint quit_id;
   gboolean res;
+  const char *bwrap = g_getenv ("FLATPAK_BWRAP");
+
+  if (bwrap != NULL)
+    {
+      gint exit_code = 0;
+      char *argv[] = { (char *)bwrap, "--ro-bind", "/", "/", "/bin/true", NULL };
+      g_spawn_sync (NULL, argv, NULL, 0, NULL, NULL, NULL, NULL, &exit_code, &error);
+      g_assert_no_error (error);
+      if (exit_code != 0)
+        {
+          g_test_skip ("bwrap not supported");
+          return;
+        }
+    }
 
   inst = flatpak_installation_new_user (NULL, &error);
   g_assert_no_error (error);
