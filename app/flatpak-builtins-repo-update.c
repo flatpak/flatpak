@@ -408,6 +408,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       guint64 objsize_total;
       g_autofree char *formatted_freed_size = NULL;
 
+      g_print ("Pruning old commits\n");
       if (!ostree_repo_prune (repo, OSTREE_REPO_PRUNE_FLAGS_REFS_ONLY, opt_prune_depth,
                               &n_objects_total, &n_objects_pruned, &objsize_total,
                               cancellable, error))
