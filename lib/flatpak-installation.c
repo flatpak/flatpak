@@ -1003,7 +1003,7 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
-  if (flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
   if (!flatpak_dir_install_bundle (dir_clone, file, NULL, &ref,
@@ -1073,7 +1073,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
-  if (flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
@@ -1199,7 +1199,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
-  if (flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return NULL;
 
   /* Work around ostree-pull spinning the default main context for the sync calls */
@@ -1305,7 +1305,7 @@ flatpak_installation_uninstall (FlatpakInstallation    *self,
 
   /* prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
-  if (flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return FALSE;
 
   if (!flatpak_dir_uninstall (dir_clone, ref, FLATPAK_HELPER_UNINSTALL_FLAGS_NONE,
@@ -1528,7 +1528,7 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
   dir_clone = flatpak_dir_clone (dir);
-  if (flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return FALSE;
 
   if (main_context)
