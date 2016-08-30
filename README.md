@@ -10,7 +10,6 @@ Features:
  - APIs also have a `GError` parameter
  - High level "shutil", somewhat inspired by Python's
  - A "console" API for tty output
- - Some basic container utility functions
  - A backport of the GLib cleanup macros for projects which can't yet take
    a dependency on 2.40.
 
