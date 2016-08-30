@@ -2613,7 +2613,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
 
   commandline = g_strjoinv (" ", (char **) dbus_proxy_argv->pdata);
-  g_debug ("Running %s", commandline);
+  g_debug ("Running '%s'", commandline);
 
   if (!g_spawn_async (NULL,
                       (char **) dbus_proxy_argv->pdata,

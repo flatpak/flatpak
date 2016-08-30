@@ -1005,7 +1005,7 @@ builder_manifest_init_app_dir (BuilderManifest *self,
   g_ptr_array_add (args, NULL);
 
   commandline = g_strjoinv (" ", (char **) args->pdata);
-  g_print ("Running: %s\n", commandline);
+  g_debug ("Running '%s'", commandline);
 
   subp =
     g_subprocess_newv ((const gchar * const *) args->pdata,
@@ -1245,7 +1245,7 @@ command (GFile      *app_dir,
   g_ptr_array_add (args, g_strdup (commandline));
   g_ptr_array_add (args, NULL);
 
-  g_print ("Running: %s\n", commandline);
+  g_debug ("Running '%s'", commandline);
 
   launcher = g_subprocess_launcher_new (0);
 
@@ -1419,7 +1419,7 @@ appstream_compose (GFile   *app_dir,
   va_end (ap);
 
   commandline = g_strjoinv (" ", (char **) args->pdata);
-  g_print ("Running: %s\n", commandline);
+  g_debug ("Running '%s'", commandline);
 
   launcher = g_subprocess_launcher_new (0);
 
@@ -1744,7 +1744,7 @@ builder_manifest_finish (BuilderManifest *self,
       g_ptr_array_add (args, NULL);
 
       commandline = g_strjoinv (" ", (char **) args->pdata);
-      g_print ("Running: %s\n", commandline);
+      g_debug ("Running '%s'", commandline);
 
       subp =
         g_subprocess_newv ((const gchar * const *) args->pdata,
@@ -1942,7 +1942,7 @@ builder_manifest_create_platform (BuilderManifest *self,
       g_ptr_array_add (args, NULL);
 
       commandline = g_strjoinv (" ", (char **) args->pdata);
-      g_print ("Running: %s\n", commandline);
+      g_debug ("Running '%s'", commandline);
 
       subp =
         g_subprocess_newv ((const gchar * const *) args->pdata,

@@ -1382,6 +1382,7 @@ flatpak_spawnv (GFile                *dir,
   g_autoptr(GOutputStream) out = NULL;
   g_autoptr(GMainLoop) loop = NULL;
   SpawnData data = {0};
+  g_autofree gchar *commandline = NULL;
 
   launcher = g_subprocess_launcher_new (0);
 
@@ -1393,6 +1394,9 @@ flatpak_spawnv (GFile                *dir,
       g_autofree char *path = g_file_get_path (dir);
       g_subprocess_launcher_set_cwd (launcher, path);
     }
+
+  commandline = g_strjoinv (" ", (gchar **) argv);
+  g_debug ("Running '%s'", commandline);
 
   subp = g_subprocess_launcher_spawnv (launcher, argv, error);
 
