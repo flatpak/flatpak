@@ -368,8 +368,8 @@ validate_fd_common (int fd,
 }
 
 static char *
-resolve_flatpak_path (const char *path,
-                      const char *app_id)
+resolve_flatpak_app_path (const char *path,
+                          const char *app_id)
 {
   g_autoptr(FlatpakDeploy) deploy = NULL;
   g_autoptr(GError) my_error = NULL;
@@ -447,7 +447,7 @@ validate_fd (int fd,
           char *rel_path = path_buffer + strlen ("/newroot/app/");
           g_autofree char *app_path = NULL;
 
-          app_path = resolve_flatpak_path (rel_path, app_id);
+          app_path = resolve_flatpak_app_path (rel_path, app_id);
           if (app_path == NULL)
             {
               g_set_error (error,
