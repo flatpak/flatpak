@@ -15,7 +15,11 @@
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
-EXTRA_DIST += $(libglnx_srcpath)/README.md $(libglnx_srcpath)/COPYING
+EXTRA_DIST += \
+	$(libglnx_srcpath)/README.md \
+	$(libglnx_srcpath)/COPYING \
+	$(libglnx_srcpath)/libglnx.m4 \
+	$(NULL)
 
 libglnx_la_SOURCES = \
 	$(libglnx_srcpath)/glnx-alloca.h \
