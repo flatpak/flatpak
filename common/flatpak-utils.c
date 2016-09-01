@@ -2018,6 +2018,20 @@ flatpak_repo_collect_sizes (OstreeRepo   *repo,
   return _flatpak_repo_collect_sizes (repo, root, NULL, installed_size, download_size, cancellable, error);
 }
 
+typedef struct {
+  guint64 installed_size;
+  guint64 download_size;
+  char *metadata_contents;
+} CommitData;
+
+static void
+commit_data_free (gpointer data)
+{
+  CommitData *rev_data = data;
+  g_free (rev_data->metadata_contents);
+  g_free (rev_data);
+}
+
 gboolean
 flatpak_repo_update (OstreeRepo   *repo,
                      const char  **gpg_key_ids,
@@ -2035,6 +2049,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   const char **prefix;
   g_autoptr(GList) ordered_keys = NULL;
   GList *l = NULL;
+  g_autoptr(GHashTable) commit_data_cache = NULL;
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
 
@@ -2076,16 +2091,24 @@ flatpak_repo_update (OstreeRepo   *repo,
   ordered_keys = g_hash_table_get_keys (refs);
   ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
 
+  commit_data_cache = g_hash_table_new_full (g_str_hash, g_str_equal,
+                                             g_free, commit_data_free);
   for (l = ordered_keys; l; l = l->next)
     {
       const char *ref = l->data;
+      const char *rev = g_hash_table_lookup (refs, ref);
       g_autoptr(GFile) root = NULL;
       g_autoptr(GFile) metadata = NULL;
       guint64 installed_size = 0;
       guint64 download_size = 0;
       g_autofree char *metadata_contents = NULL;
+      CommitData *rev_data;
 
-      if (!ostree_repo_read_commit (repo, ref, &root, NULL, NULL, error))
+      /* See if we already have the info on this revision */
+      if (g_hash_table_lookup (commit_data_cache, rev))
+        continue;
+
+      if (!ostree_repo_read_commit (repo, rev, &root, NULL, NULL, error))
         return FALSE;
 
       if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
@@ -2095,11 +2118,26 @@ flatpak_repo_update (OstreeRepo   *repo,
       if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
         metadata_contents = g_strdup ("");
 
+      rev_data = g_new (CommitData, 1);
+      rev_data->installed_size = installed_size;
+      rev_data->download_size = download_size;
+      rev_data->metadata_contents = g_strdup (metadata_contents);
+
+      g_hash_table_insert (commit_data_cache, g_strdup (rev), rev_data);
+    }
+
+  for (l = ordered_keys; l; l = l->next)
+    {
+      const char *ref = l->data;
+      const char *rev = g_hash_table_lookup (refs, ref);
+      const CommitData *rev_data = g_hash_table_lookup (commit_data_cache,
+                                                        rev);
+
       g_variant_builder_add (&ref_data_builder, "{s(tts)}",
                              ref,
-                             GUINT64_TO_BE (installed_size),
-                             GUINT64_TO_BE (download_size),
-                             metadata_contents);
+                             GUINT64_TO_BE (rev_data->installed_size),
+                             GUINT64_TO_BE (rev_data->download_size),
+                             rev_data->metadata_contents);
     }
 
   g_variant_builder_add (&builder, "{sv}", "xa.cache",
