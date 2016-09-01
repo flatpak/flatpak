@@ -29,6 +29,30 @@
     <method name="RequestMonitor">
       <arg type='ay' name='path' direction='out'/>
     </method>
+
+    <!-- This methods let you start processes, sandboxed or not on the
+         host, so its not generally safe to allow access to it to any
+         application. However, at times it is very useful to be able
+         to do this. For instance for developer tools this lets you
+         build flatpaks from inside a flatpak. -->
+    <method name="HostCommand">
+      <arg type='ay' name='cwd_path' direction='in'/>
+      <arg type='aay' name='argv' direction='in'/>
+      <arg type='a{uh}' name='fds' direction='in'/>
+      <arg type='a{ss}' name='envs' direction='in'/>
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='u' name='pid' direction='out'/>
+    </method>
+    <method name="HostCommandSignal">
+      <arg type='u' name='pid' direction='in'/>
+      <arg type='u' name='signal' direction='in'/>
+      <arg type='b' name='to_process_group' direction='in'/>
+    </method>
+    <signal name="HostCommandExited">
+      <arg type='u' name='pid' direction='out'/>
+      <arg type='u' name='exit_status' direction='out'/>
+    </signal>
+
   </interface>
 
   <interface name='org.freedesktop.Flatpak.SystemHelper'>

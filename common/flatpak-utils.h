@@ -30,6 +30,11 @@
 #include "flatpak-dir.h"
 #include <ostree.h>
 
+typedef enum {
+  FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
+} FlatpakHostCommandFlags;
+
+
 gboolean flatpak_fail (GError    **error,
                        const char *format,
                        ...);
