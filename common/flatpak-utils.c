@@ -2031,6 +2031,8 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *title = NULL;
 
   g_autoptr(GHashTable) refs = NULL;
+  const char *prefixes[] = { "appstream", "app", "runtime", NULL };
+  const char **prefix;
   g_autoptr(GList) ordered_keys = NULL;
   GList *l = NULL;
 
@@ -2048,8 +2050,28 @@ flatpak_repo_update (OstreeRepo   *repo,
 
   g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE ("a{s(tts)}"));
 
-  if (!ostree_repo_list_refs (repo, NULL, &refs, cancellable, error))
-    return FALSE;
+  /* Only operate on flatpak relevant refs */
+  refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  for (prefix = prefixes; *prefix != NULL; prefix++)
+    {
+      g_autoptr(GHashTable) prefix_refs = NULL;
+      GHashTableIter hashiter;
+      gpointer key, value;
+
+      if (!ostree_repo_list_refs_ext (repo, *prefix, &prefix_refs,
+                                      OSTREE_REPO_LIST_REFS_EXT_NONE,
+                                      cancellable, error))
+        return FALSE;
+
+      /* Merge the prefix refs to the full refs table */
+      g_hash_table_iter_init (&hashiter, prefix_refs);
+      while (g_hash_table_iter_next (&hashiter, &key, &value))
+        {
+          char *ref = g_strdup (key);
+          char *rev = g_strdup (value);
+          g_hash_table_replace (refs, ref, rev);
+        }
+    }
 
   ordered_keys = g_hash_table_get_keys (refs);
   ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
