@@ -2031,7 +2031,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *title = NULL;
 
   g_autoptr(GHashTable) refs = NULL;
-  GList *ordered_keys = NULL;
+  g_autoptr(GList) ordered_keys = NULL;
   GList *l = NULL;
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
