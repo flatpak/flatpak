@@ -119,18 +119,74 @@ setup_file_monitor (const char *source)
     g_signal_connect (monitor, "changed", G_CALLBACK (file_changed), (char *) source);
 }
 
+static void
+message_handler (const gchar   *log_domain,
+                 GLogLevelFlags log_level,
+                 const gchar   *message,
+                 gpointer       user_data)
+{
+  /* Make this look like normal console output */
+  if (log_level & G_LOG_LEVEL_DEBUG)
+    g_printerr ("XA: %s\n", message);
+  else
+    g_printerr ("%s: %s\n", g_get_prgname (), message);
+}
+
 int
 main (int    argc,
       char **argv)
 {
   guint owner_id;
   GMainLoop *loop;
+  gboolean replace;
+  gboolean verbose;
+  gboolean show_version;
+  GOptionContext *context;
+  GBusNameOwnerFlags flags;
+  g_autoptr(GError) error = NULL;
+  const GOptionEntry options[] = {
+    { "replace", 'r', 0, G_OPTION_ARG_NONE, &replace,  "Replace old daemon.", NULL },
+    { "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,  "Enable debug output.", NULL },
+    { "version", 0, 0, G_OPTION_ARG_NONE, &show_version, "Show program version.", NULL},
+    { NULL }
+  };
 
   setlocale (LC_ALL, "");
 
   g_setenv ("GIO_USE_VFS", "local", TRUE);
 
   g_set_prgname (argv[0]);
+
+  g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE, message_handler, NULL);
+
+  context = g_option_context_new ("");
+
+  g_option_context_set_summary (context, "Flatpak session helper");
+  g_option_context_add_main_entries (context, options, GETTEXT_PACKAGE);
+
+  replace = FALSE;
+  verbose = FALSE;
+  show_version = FALSE;
+
+  if (!g_option_context_parse (context, &argc, &argv, &error))
+    {
+      g_printerr ("%s: %s", g_get_application_name(), error->message);
+      g_printerr ("\n");
+      g_printerr ("Try \"%s --help\" for more information.",
+                  g_get_prgname ());
+      g_printerr ("\n");
+      g_option_context_free (context);
+      return 1;
+    }
+
+  if (show_version)
+    {
+      g_print (PACKAGE_STRING "\n");
+      return 0;
+    }
+
+  if (verbose)
+    g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
   flatpak_migrate_from_xdg_app ();
 
@@ -144,9 +200,13 @@ main (int    argc,
   setup_file_monitor ("/etc/resolv.conf");
   setup_file_monitor ("/etc/localtime");
 
+  flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;
+  if (replace)
+    flags |= G_BUS_NAME_OWNER_FLAGS_REPLACE;
+
   owner_id = g_bus_own_name (G_BUS_TYPE_SESSION,
                              "org.freedesktop.Flatpak",
-                             G_BUS_NAME_OWNER_FLAGS_NONE,
+                             flags,
                              on_bus_acquired,
                              on_name_acquired,
                              on_name_lost,
