@@ -189,6 +189,15 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   flatpak_context_allow_host_fs (app_context);
   flatpak_context_merge (app_context, arg_context);
 
+  if (!flatpak_run_add_app_info_args (argv_array,
+                                      NULL,
+                                      app_files,
+                                      app_id,
+                                      runtime_ref,
+                                      app_context,
+                                      error))
+    return FALSE;
+
   envp = flatpak_run_get_minimal_env (TRUE);
   envp = flatpak_run_apply_env_vars (envp, app_context);
   flatpak_run_add_environment_args (argv_array, NULL, &envp, NULL, NULL, app_id,
