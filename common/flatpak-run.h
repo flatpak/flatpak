@@ -107,6 +107,14 @@ gboolean flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                                       const char     *arch,
                                       FlatpakRunFlags flags,
                                       GError        **error);
+gboolean flatpak_run_add_app_info_args (GPtrArray      *argv_array,
+                                        GArray         *fd_array,
+                                        GFile          *app_files,
+                                        const char     *app_id,
+                                        const char     *runtime_ref,
+                                        FlatpakContext *final_app_context,
+                                        GError        **error);
+
 gboolean flatpak_run_app (const char     *app_ref,
                           FlatpakDeploy  *app_deploy,
                           FlatpakContext *extra_context,

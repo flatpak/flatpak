@@ -2406,14 +2406,14 @@ compute_permissions (GKeyFile *app_metadata,
   return g_steal_pointer (&app_context);
 }
 
-static gboolean
-add_app_info_args (GPtrArray      *argv_array,
-                   GArray         *fd_array,
-                   GFile          *app_files,
-                   const char     *app_id,
-                   const char     *runtime_ref,
-                   FlatpakContext *final_app_context,
-                   GError        **error)
+gboolean
+flatpak_run_add_app_info_args (GPtrArray      *argv_array,
+                               GArray         *fd_array,
+                               GFile          *app_files,
+                               const char     *app_id,
+                               const char     *runtime_ref,
+                               FlatpakContext *final_app_context,
+                               GError        **error)
 {
   g_autofree char *tmp_path = NULL;
   int fd;
@@ -3190,7 +3190,7 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
-  if (!add_app_info_args (argv_array, fd_array, app_files, app_ref_parts[1], runtime_ref, app_context, error))
+  if (!flatpak_run_add_app_info_args (argv_array, fd_array, app_files, app_ref_parts[1], runtime_ref, app_context, error))
     return FALSE;
 
   if (!flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
