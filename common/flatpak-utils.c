@@ -2018,6 +2018,31 @@ flatpak_repo_collect_sizes (OstreeRepo   *repo,
   return _flatpak_repo_collect_sizes (repo, root, NULL, installed_size, download_size, cancellable, error);
 }
 
+/* Loads a summary file from a local repo */
+GVariant *
+flatpak_repo_load_summary (OstreeRepo *repo,
+                           GError **error)
+{
+  glnx_fd_close int fd = -1;
+  g_autoptr(GMappedFile) mfile = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+
+  fd = openat (ostree_repo_get_dfd (repo), "summary", O_RDONLY | O_CLOEXEC);
+  if (fd < 0)
+    {
+      glnx_set_error_from_errno (error);
+      return NULL;
+    }
+
+  mfile = g_mapped_file_new_from_fd (fd, FALSE, error);
+  if (!mfile)
+    return NULL;
+
+  bytes = g_mapped_file_get_bytes (mfile);
+
+  return g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, bytes, TRUE));
+}
+
 typedef struct {
   guint64 installed_size;
   guint64 download_size;

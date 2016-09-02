@@ -60,6 +60,8 @@ gboolean flatpak_variant_save (GFile        *dest,
 gboolean flatpak_variant_bsearch_str (GVariant   *array,
                                       const char *str,
                                       int        *out_pos);
+GVariant *flatpak_repo_load_summary (OstreeRepo *repo,
+                                     GError **error);
 char **  flatpak_summary_match_subrefs (GVariant *summary,
                                         const char *ref);
 gboolean flatpak_summary_lookup_ref (GVariant   *summary,
