@@ -2409,7 +2409,7 @@ compute_permissions (GKeyFile *app_metadata,
 static gboolean
 add_app_info_args (GPtrArray      *argv_array,
                    GArray         *fd_array,
-                   FlatpakDeploy  *deploy,
+                   GFile          *app_files,
                    const char     *app_id,
                    const char     *runtime_ref,
                    FlatpakContext *final_app_context,
@@ -2434,8 +2434,7 @@ add_app_info_args (GPtrArray      *argv_array,
       g_key_file_set_string (keyfile, "Application", "name", app_id);
       g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
 
-      files = flatpak_deploy_get_files (deploy);
-      files_path = g_file_get_path (files);
+      files_path = g_file_get_path (app_files);
 
       g_key_file_set_string (keyfile, "Application", "app-path", files_path);
 
@@ -3191,7 +3190,7 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
-  if (!add_app_info_args (argv_array, fd_array, app_deploy, app_ref_parts[1], runtime_ref, app_context, error))
+  if (!add_app_info_args (argv_array, fd_array, app_files, app_ref_parts[1], runtime_ref, app_context, error))
     return FALSE;
 
   if (!flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
