@@ -40,6 +40,8 @@ gint flatpak_strcmp0_ptr (gconstpointer a,
 const char * flatpak_path_match_prefix (const char *pattern,
                                         const char *path);
 
+gboolean flatpak_is_in_sandbox (void);
+
 const char * flatpak_get_arch (void);
 const char ** flatpak_get_arches (void);
 

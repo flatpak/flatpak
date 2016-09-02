@@ -307,7 +307,25 @@ flatpak_get_arches (void)
   return (const char **)arches;
 }
 
+gboolean
+flatpak_is_in_sandbox (void)
+{
+  static gsize in_sandbox = 0;
 
+  if (g_once_init_enter (&in_sandbox))
+    {
+      g_autofree char *path = g_build_filename (g_get_user_runtime_dir (), "flatpak-info", NULL);
+      gsize new_in_sandbox;
+
+      new_in_sandbox = 2;
+      if (g_file_test (path, G_FILE_TEST_IS_REGULAR))
+        new_in_sandbox = 1;
+
+      g_once_init_leave (&in_sandbox, new_in_sandbox);
+ }
+
+  return in_sandbox == 1;
+}
 
 const char *
 flatpak_get_bwrap (void)
