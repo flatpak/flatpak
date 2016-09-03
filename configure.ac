@@ -179,6 +179,18 @@ PKG_CHECK_MODULES(FUSE, [fuse])
 
 PKG_CHECK_MODULES(JSON, [json-glib-1.0])
 
+AC_ARG_ENABLE([selinux],
+              AC_HELP_STRING([--disable-selinux],
+                             [Disable SELinux]),
+              [],
+              [enable_selinux=yes])
+
+if test "x$enable_selinux" = "xyes"; then
+   PKG_CHECK_MODULES(LIBSELINUX, [libselinux])
+   AC_DEFINE([ENABLE_SELINUX], [1],
+      [Define if using SELinux])
+fi
+
 AC_ARG_ENABLE([seccomp],
               AC_HELP_STRING([--disable-seccomp],
                              [Disable seccomp]),
@@ -439,6 +451,7 @@ echo "          Build system helper:    $enable_system_helper"
 echo "          Build bubblewrap:       $build_bwrap"
 echo "          Use sandboxed triggers: $enable_sandboxed_triggers"
 echo "          Use seccomp:            $enable_seccomp"
+echo "          Use SELinux:            $enable_selinux"
 echo "          Privileged group:       $PRIVILEGED_GROUP"
 echo "          Privilege mode:         $with_priv_mode"
 echo ""
