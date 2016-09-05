@@ -113,6 +113,7 @@ builder_source_shell_download (BuilderSource  *source,
 
 static gboolean
 run_script (BuilderContext *context,
+            BuilderOptions *build_options,
             GFile          *source_dir,
             const gchar    *script,
             GError        **error)
@@ -125,6 +126,8 @@ run_script (BuilderContext *context,
   g_autofree char *source_dir_path = g_file_get_path (source_dir);
   g_autofree char *source_dir_path_canonical = NULL;
   g_autoptr(GFile) source_dir_path_canonical_file = NULL;
+  g_auto(GStrv) build_args = NULL;
+  int i;
 
   args = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (args, g_strdup ("flatpak"));
@@ -134,6 +137,13 @@ run_script (BuilderContext *context,
 
   g_ptr_array_add (args, g_strdup ("--nofilesystem=host"));
   g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", source_dir_path_canonical));
+
+  build_args = builder_options_get_build_args (build_options, context, error);
+  if (build_args == NULL)
+    return FALSE;
+
+  for (i = 0; build_args[i] != NULL; i++)
+    g_ptr_array_add (args, g_strdup (build_args[i]));
 
   g_ptr_array_add (args, g_file_get_path (app_dir));
   g_ptr_array_add (args, g_strdup ("/bin/sh"));
@@ -150,6 +160,7 @@ run_script (BuilderContext *context,
 static gboolean
 builder_source_shell_extract (BuilderSource  *source,
                               GFile          *dest,
+                              BuilderOptions *build_options,
                               BuilderContext *context,
                               GError        **error)
 {
@@ -160,7 +171,7 @@ builder_source_shell_extract (BuilderSource  *source,
     {
       for (i = 0; self->commands[i] != NULL; i++)
         {
-          if (!run_script (context,
+          if (!run_script (context, build_options,
                            dest, self->commands[i], error))
             return FALSE;
         }

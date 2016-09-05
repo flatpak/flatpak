@@ -112,6 +112,7 @@ builder_source_real_download (BuilderSource  *self,
 static gboolean
 builder_source_real_extract (BuilderSource  *self,
                              GFile          *dest,
+                             BuilderOptions *build_options,
                              BuilderContext *context,
                              GError        **error)
 {
@@ -239,6 +240,7 @@ builder_source_download (BuilderSource  *self,
 gboolean
 builder_source_extract (BuilderSource  *self,
                         GFile          *dest,
+                        BuilderOptions *build_options,
                         BuilderContext *context,
                         GError        **error)
 {
@@ -262,7 +264,7 @@ builder_source_extract (BuilderSource  *self,
     }
 
 
-  return class->extract (self, real_dest, context, error);
+  return class->extract (self, real_dest, build_options, context, error);
 }
 
 gboolean

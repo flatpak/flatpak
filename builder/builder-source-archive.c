@@ -557,6 +557,7 @@ create_uncompress_directory (BuilderSourceArchive *self, GFile *dest, GError **e
 static gboolean
 builder_source_archive_extract (BuilderSource  *source,
                                 GFile          *dest,
+                                BuilderOptions *build_options,
                                 BuilderContext *context,
                                 GError        **error)
 {

@@ -691,7 +691,7 @@ builder_module_extract_sources (BuilderModule  *self,
     {
       BuilderSource *source = l->data;
 
-      if (!builder_source_extract (source, dest, context, error))
+      if (!builder_source_extract (source, dest, self->build_options, context, error))
         {
           g_prefix_error (error, "module %s: ", self->name);
           return FALSE;

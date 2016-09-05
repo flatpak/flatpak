@@ -54,6 +54,7 @@ typedef struct
                         GError        **error);
   gboolean (* extract)(BuilderSource  *self,
                        GFile          *dest,
+                       BuilderOptions *build_options,
                        BuilderContext *context,
                        GError        **error);
   gboolean (* update)(BuilderSource  *self,
@@ -75,6 +76,7 @@ gboolean builder_source_download (BuilderSource  *self,
                                   GError        **error);
 gboolean builder_source_extract (BuilderSource  *self,
                                  GFile          *dest,
+                                 BuilderOptions *build_options,
                                  BuilderContext *context,
                                  GError        **error);
 gboolean builder_source_update (BuilderSource  *self,

@@ -516,6 +516,7 @@ git_extract_submodule (const char     *repo_location,
 static gboolean
 builder_source_git_extract (BuilderSource  *source,
                             GFile          *dest,
+                            BuilderOptions *build_options,
                             BuilderContext *context,
                             GError        **error)
 {
