@@ -790,7 +790,7 @@ build (GFile          *app_dir,
 
   source_dir_path_canonical_file = g_file_new_for_path (source_dir_path_canonical);
 
-  if (!flatpak_spawnv (source_dir_path_canonical_file, NULL, error, (const char * const *)args->pdata))
+  if (!builder_maybe_host_spawnv (source_dir_path_canonical_file, NULL, error, (const char * const *)args->pdata))
     {
       g_prefix_error (error, "module %s: ", module_name);
       return FALSE;

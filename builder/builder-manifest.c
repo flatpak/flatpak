@@ -1245,7 +1245,7 @@ command (GFile      *app_dir,
   g_ptr_array_add (args, g_strdup (commandline));
   g_ptr_array_add (args, NULL);
 
-  return flatpak_spawnv (NULL, NULL, error, (const char * const *)args->pdata);
+  return builder_maybe_host_spawnv (NULL, NULL, error, (const char * const *)args->pdata);
 }
 
 typedef gboolean (*ForeachFileFunc) (BuilderManifest *self,
@@ -1406,7 +1406,7 @@ appstream_compose (GFile   *app_dir,
   g_ptr_array_add (args, NULL);
   va_end (ap);
 
-  if (!flatpak_spawnv (NULL, NULL, &local_error, (const char * const *)args->pdata))
+  if (!builder_maybe_host_spawnv (NULL, NULL, &local_error, (const char * const *)args->pdata))
     g_print ("WARNING: appstream-compose failed: %s\n", local_error->message);
 
   return TRUE;

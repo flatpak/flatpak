@@ -53,6 +53,16 @@ void     flatpak_collect_matches_for_path_pattern (const char *path,
 gboolean builder_migrate_locale_dirs (GFile   *root_dir,
                                       GError **error);
 
+gboolean builder_host_spawnv (GFile                *dir,
+                              char                **output,
+                              GError              **error,
+                              const gchar * const  *argv);
+gboolean builder_maybe_host_spawnv (GFile                *dir,
+                                    char                **output,
+                                    GError              **error,
+                                    const gchar * const  *argv);
+
+
 G_END_DECLS
 
 #endif /* __BUILDER_UTILS_H__ */

@@ -29,6 +29,11 @@
 
 #include <string.h>
 
+#include <glib-unix.h>
+#include <gio/gunixfdlist.h>
+#include <gio/gunixoutputstream.h>
+#include <gio/gunixinputstream.h>
+
 #include "flatpak-utils.h"
 #include "builder-utils.h"
 
@@ -1336,4 +1341,257 @@ builder_get_debuginfo_file_references (const char *filename, GError **error)
   res = (char **) g_hash_table_get_keys_as_array (files, NULL);
   g_hash_table_steal_all (files);
   return res;
+}
+
+typedef struct {
+  GDBusConnection *connection;
+  GMainLoop *loop;
+  GError    *splice_error;
+  guint32 client_pid;
+  guint32 exit_status;
+  int refs;
+} HostCommandCallData;
+
+static void
+host_command_call_exit (HostCommandCallData *data)
+{
+  data->refs--;
+  if (data->refs == 0)
+    g_main_loop_quit (data->loop);
+}
+
+static void
+output_spliced_cb (GObject      *obj,
+                   GAsyncResult *result,
+                   gpointer      user_data)
+{
+  HostCommandCallData *data = user_data;
+
+  g_output_stream_splice_finish (G_OUTPUT_STREAM (obj), result, &data->splice_error);
+  host_command_call_exit (data);
+}
+
+static void
+host_command_exited_cb (GDBusConnection *connection,
+                        const gchar     *sender_name,
+                        const gchar     *object_path,
+                        const gchar     *interface_name,
+                        const gchar     *signal_name,
+                        GVariant        *parameters,
+                        gpointer         user_data)
+{
+  guint32 client_pid, exit_status;
+  HostCommandCallData *data = (HostCommandCallData *)user_data;
+
+  if (!g_variant_is_of_type (parameters, G_VARIANT_TYPE ("(uu)")))
+    return;
+
+  g_variant_get (parameters, "(uu)", &client_pid, &exit_status);
+
+  if (client_pid == data->client_pid)
+    {
+      g_print ("host_command_exited_cb %d %d\n", client_pid, exit_status);
+      data->exit_status = exit_status;
+      host_command_call_exit (data);
+    }
+}
+
+static gboolean
+sigterm_handler (gpointer user_data)
+{
+  HostCommandCallData *data = (HostCommandCallData *)user_data;
+
+  g_dbus_connection_call_sync (data->connection,
+                               "org.freedesktop.Flatpak",
+                               "/org/freedesktop/Flatpak/SessionHelper",
+                               "org.freedesktop.Flatpak.SessionHelper",
+                               "HostCommandSignal",
+                               g_variant_new ("(uub)", data->client_pid, SIGTERM, TRUE),
+                               NULL,
+                               G_DBUS_CALL_FLAGS_NONE, -1,
+                               NULL, NULL);
+
+  kill (getpid (), SIGTERM);
+  return TRUE;
+}
+
+static gboolean
+sigint_handler (gpointer user_data)
+{
+  HostCommandCallData *data = (HostCommandCallData *)user_data;
+
+  g_dbus_connection_call_sync (data->connection,
+                               "org.freedesktop.Flatpak",
+                               "/org/freedesktop/Flatpak/SessionHelper",
+                               "org.freedesktop.Flatpak.SessionHelper",
+                               "HostCommandSignal",
+                               g_variant_new ("(uub)", data->client_pid, SIGINT, TRUE),
+                               NULL,
+                               G_DBUS_CALL_FLAGS_NONE, -1,
+                               NULL, NULL);
+
+  kill (getpid (), SIGTERM);
+  return TRUE;
+}
+
+gboolean
+builder_host_spawnv (GFile                *dir,
+                     char                **output,
+                     GError              **error,
+                     const gchar * const  *argv)
+{
+  guint32 client_pid;
+  GVariantBuilder *fd_builder = g_variant_builder_new (G_VARIANT_TYPE("a{uh}"));
+  GVariantBuilder *env_builder = g_variant_builder_new (G_VARIANT_TYPE("a{ss}"));
+  g_autoptr(GUnixFDList) fd_list = g_unix_fd_list_new ();
+  gint stdout_handle, stdin_handle, stderr_handle;
+  g_autoptr(GDBusConnection) connection = NULL;
+  g_autoptr(GVariant) ret = NULL;
+  g_autoptr(GMainLoop) loop = NULL;
+  g_auto(GStrv) env_vars = NULL;
+  guint subscription;
+  HostCommandCallData data = { NULL };
+  guint sigterm_id = 0, sigint_id = 0;
+  g_autofree gchar *commandline = NULL;
+  g_autoptr(GOutputStream) out = NULL;
+  int pipefd[2];
+  int i;
+
+  commandline = g_strjoinv (" ", (gchar **) argv);
+  g_debug ("Running '%s' on host", commandline);
+
+  connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
+  if (connection == NULL)
+    return FALSE;
+
+  loop = g_main_loop_new (NULL, FALSE);
+  data.connection = connection;
+  data.loop = loop;
+  data.refs = 1;
+
+  subscription = g_dbus_connection_signal_subscribe (connection,
+                                                     NULL,
+                                                     "org.freedesktop.Flatpak.SessionHelper",
+                                                     "HostCommandExited",
+                                                     "/org/freedesktop/Flatpak/SessionHelper",
+                                                     NULL,
+                                                     G_DBUS_SIGNAL_FLAGS_NONE,
+                                                     host_command_exited_cb,
+                                                     &data, NULL);
+
+  stdin_handle = g_unix_fd_list_append (fd_list, 0, error);
+  if (stdin_handle == -1)
+    return FALSE;
+
+  if (output)
+    {
+      g_autoptr(GInputStream) in = NULL;
+
+      if (pipe2 (pipefd, O_CLOEXEC) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+
+      data.refs++;
+      in = g_unix_input_stream_new (pipefd[0], TRUE);
+      out = g_memory_output_stream_new_resizable ();
+      g_output_stream_splice_async (out,
+                                    in,
+                                    G_OUTPUT_STREAM_SPLICE_NONE,
+                                    0,
+                                    NULL,
+                                    output_spliced_cb,
+                                    &data);
+      stdout_handle = g_unix_fd_list_append (fd_list, pipefd[1], error);
+      close (pipefd[1]);
+      if (stdout_handle == -1)
+        return FALSE;
+    }
+  else
+    {
+      stdout_handle = g_unix_fd_list_append (fd_list, 1, error);
+      if (stdout_handle == -1)
+        return FALSE;
+    }
+
+  stderr_handle = g_unix_fd_list_append (fd_list, 2, error);
+  if (stderr_handle == -1)
+    return FALSE;
+
+  g_variant_builder_add (fd_builder, "{uh}", 0, stdin_handle);
+  g_variant_builder_add (fd_builder, "{uh}", 1, stdout_handle);
+  g_variant_builder_add (fd_builder, "{uh}", 2, stderr_handle);
+
+  env_vars = g_listenv ();
+  for (i = 0; env_vars[i] != NULL; i++)
+    {
+      const char *env_var = env_vars[i];
+      g_variant_builder_add (env_builder, "{ss}", env_var, g_getenv (env_var));
+    }
+
+  sigterm_id = g_unix_signal_add (SIGTERM, sigterm_handler, &data);
+  sigint_id = g_unix_signal_add (SIGINT, sigint_handler, &data);
+
+  ret = g_dbus_connection_call_with_unix_fd_list_sync (connection,
+                                                       "org.freedesktop.Flatpak",
+                                                       "/org/freedesktop/Flatpak/SessionHelper",
+                                                       "org.freedesktop.Flatpak.SessionHelper",
+                                                       "HostCommand",
+                                                       g_variant_new ("(^ay^aay@a{uh}@a{ss}u)",
+                                                                      dir ? flatpak_file_get_path_cached (dir) : "",
+                                                                      argv,
+                                                                      g_variant_builder_end (fd_builder),
+                                                                      g_variant_builder_end (env_builder),
+                                                                      FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV),
+                                                       G_VARIANT_TYPE ("(u)"),
+                                                       G_DBUS_CALL_FLAGS_NONE, -1,
+                                                       fd_list, NULL,
+                                                       NULL, error);
+
+  if (ret == NULL)
+    return FALSE;
+
+
+  g_variant_get (ret, "(u)", &client_pid);
+  data.client_pid = client_pid;
+
+  g_main_loop_run (loop);
+
+  g_source_remove (sigterm_id);
+  g_source_remove (sigint_id);
+  g_dbus_connection_signal_unsubscribe (connection, subscription);
+
+  if (!g_spawn_check_exit_status (data.exit_status, error))
+    return FALSE;
+
+  if (out)
+    {
+      if (data.splice_error)
+        {
+          g_propagate_error (error, data.splice_error);
+          return FALSE;
+        }
+
+      /* Null terminate */
+      g_output_stream_write (out, "\0", 1, NULL, NULL);
+      g_output_stream_close (out, NULL, NULL);
+      *output = g_memory_output_stream_steal_data (G_MEMORY_OUTPUT_STREAM (out));
+    }
+
+  return TRUE;
+}
+
+/* Similar to flatpak_spawnv, except uses the session helper HostCommand operation
+   if in a sandbox */
+gboolean
+builder_maybe_host_spawnv (GFile                *dir,
+                           char                **output,
+                           GError              **error,
+                           const gchar * const  *argv)
+{
+  if (flatpak_is_in_sandbox ())
+    return builder_host_spawnv (dir, output, error, argv);
+
+  return flatpak_spawnv (dir, output, error, argv);
 }
