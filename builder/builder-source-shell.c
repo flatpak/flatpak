@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <sys/statfs.h>
 
+#include "flatpak-utils.h"
 #include "builder-utils.h"
 #include "builder-source-shell.h"
 
@@ -121,9 +122,9 @@ run_script (BuilderContext *context,
   g_autoptr(GSubprocessLauncher) launcher = NULL;
   g_autoptr(GSubprocess) subp = NULL;
   g_autoptr(GPtrArray) args = NULL;
-  g_autofree char *commandline = NULL;
   g_autofree char *source_dir_path = g_file_get_path (source_dir);
   g_autofree char *source_dir_path_canonical = NULL;
+  g_autoptr(GFile) source_dir_path_canonical_file = NULL;
 
   args = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (args, g_strdup ("flatpak"));
@@ -140,21 +141,9 @@ run_script (BuilderContext *context,
   g_ptr_array_add (args, g_strdup (script));
   g_ptr_array_add (args, NULL);
 
-  commandline = g_strjoinv (" ", (char **) args->pdata);
-  g_debug ("Running '%s'", commandline);
+  source_dir_path_canonical_file = g_file_new_for_path (source_dir_path_canonical);
 
-  launcher = g_subprocess_launcher_new (0);
-
-  g_subprocess_launcher_set_cwd (launcher, source_dir_path_canonical);
-
-  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
-  g_ptr_array_free (args, TRUE);
-
-  if (subp == NULL ||
-      !g_subprocess_wait_check (subp, NULL, error))
-    return FALSE;
-
-  return TRUE;
+  return flatpak_spawnv (source_dir_path_canonical_file, NULL, error, (const char * const *)args->pdata);
 }
 
 

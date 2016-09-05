@@ -721,10 +721,10 @@ build (GFile          *app_dir,
   g_autoptr(GPtrArray) args = NULL;
   const gchar *arg;
   const gchar **argv;
-  g_autofree char *commandline = NULL;
   g_autofree char *source_dir_path = g_file_get_path (source_dir);
   g_autofree char *source_dir_path_canonical = NULL;
   g_autofree char *ccache_dir_path = NULL;
+  g_autoptr(GFile) source_dir_path_canonical_file = NULL;
   const char *builddir;
   va_list ap;
   int i;
@@ -788,18 +788,9 @@ build (GFile          *app_dir,
   g_ptr_array_add (args, NULL);
   va_end (ap);
 
-  commandline = g_strjoinv (" ", (char **) args->pdata);
-  g_debug ("Running '%s'", commandline);
+  source_dir_path_canonical_file = g_file_new_for_path (source_dir_path_canonical);
 
-  launcher = g_subprocess_launcher_new (0);
-
-  g_subprocess_launcher_set_cwd (launcher, source_dir_path_canonical);
-
-  subp = g_subprocess_launcher_spawnv (launcher, (const gchar * const *) args->pdata, error);
-  g_ptr_array_free (args, TRUE);
-
-  if (subp == NULL ||
-      !g_subprocess_wait_check (subp, NULL, error))
+  if (!flatpak_spawnv (source_dir_path_canonical_file, NULL, error, (const char * const *)args->pdata))
     {
       g_prefix_error (error, "module %s: ", module_name);
       return FALSE;
