@@ -214,9 +214,25 @@ flatpak_get_system_base_dir_location (void)
 GFile *
 flatpak_get_user_base_dir_location (void)
 {
-  g_autofree char *base = g_build_filename (g_get_user_data_dir (), "flatpak", NULL);
+  static gsize file = 0;
 
-  return g_file_new_for_path (base);
+  if (g_once_init_enter (&file))
+    {
+      gsize setup_value = 0;
+      const char *path;
+      g_autofree char *free_me = NULL;
+      const char *user_dir = g_getenv ("FLATPAK_USER_DIR");
+      if (user_dir != NULL && *user_dir != 0)
+        path = user_dir;
+      else
+        path = free_me = g_build_filename (g_get_user_data_dir (), "flatpak", NULL);
+
+      setup_value = (gsize) g_file_new_for_path (path);
+
+      g_once_init_leave (&file, setup_value);
+    }
+
+  return g_object_ref ((GFile *)file);
 }
 
 GFile *
