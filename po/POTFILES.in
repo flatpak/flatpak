@@ -1,12 +1,14 @@
-system-helper/org.freedesktop.Flatpak.policy.in
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
 app/flatpak-builtins-add-remote.c
 app/flatpak-builtins-build-bundle.c
+app/flatpak-builtins-build.c
+app/flatpak-builtins-build-commit-from.c
 app/flatpak-builtins-build-export.c
 app/flatpak-builtins-build-finish.c
 app/flatpak-builtins-build-import-bundle.c
 app/flatpak-builtins-build-init.c
 app/flatpak-builtins-build-sign.c
-app/flatpak-builtins-build.c
 app/flatpak-builtins-delete-remote.c
 app/flatpak-builtins-document-export.c
 app/flatpak-builtins-document-info.c
@@ -15,8 +17,8 @@ app/flatpak-builtins-document-unexport.c
 app/flatpak-builtins-enter.c
 app/flatpak-builtins-info.c
 app/flatpak-builtins-install.c
-app/flatpak-builtins-list-remotes.c
 app/flatpak-builtins-list.c
+app/flatpak-builtins-list-remotes.c
 app/flatpak-builtins-ls-remote.c
 app/flatpak-builtins-make-current.c
 app/flatpak-builtins-override.c
@@ -25,6 +27,7 @@ app/flatpak-builtins-run.c
 app/flatpak-builtins-uninstall.c
 app/flatpak-builtins-update.c
 app/flatpak-main.c
-common/flatpak-run.c
 common/flatpak-dir.c
+common/flatpak-run.c
 common/flatpak-utils.c
+system-helper/org.freedesktop.Flatpak.policy.in
