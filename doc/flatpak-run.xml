@@ -212,6 +212,28 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--allow=FEATURE</option></term>
+
+                <listitem><para>
+                    Allow access to a specific feature. This overrides to
+                    the Context section from the application metadata.
+                    FEATURE must be one of: devel.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--disallow=FEATURE</option></term>
+
+                <listitem><para>
+                    Disallow access to a specific feature. This overrides to
+                    the Context section from the application metadata.
+                    FEATURE must be one of: devel.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--filesystem=FS</option></term>
 
                 <listitem><para>

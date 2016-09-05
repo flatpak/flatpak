@@ -3756,6 +3756,11 @@ flatpak_complete_options (FlatpakCompletion *completion,
                   for (i = 0; flatpak_context_devices[i] != NULL; i++)
                     flatpak_complete_word (completion, "%s%s ", prefix, flatpak_context_devices[i]);
                 }
+              else if (strcmp (e->arg_description, "FEATURE") == 0)
+                {
+                  for (i = 0; flatpak_context_features[i] != NULL; i++)
+                    flatpak_complete_word (completion, "%s%s ", prefix, flatpak_context_features[i]);
+                }
               else if (strcmp (e->arg_description, "SOCKET") == 0)
                 {
                   for (i = 0; flatpak_context_sockets[i] != NULL; i++)

@@ -101,6 +101,15 @@ const char *flatpak_context_devices[] = {
   NULL
 };
 
+typedef enum {
+  FLATPAK_CONTEXT_FEATURE_DEVEL        = 1 << 0,
+} FlatpakContextFeatures;
+
+const char *flatpak_context_features[] = {
+  "devel",
+  NULL
+};
+
 struct FlatpakContext
 {
   FlatpakContextShares  shares;
@@ -109,6 +118,8 @@ struct FlatpakContext
   FlatpakContextSockets sockets_valid;
   FlatpakContextDevices devices;
   FlatpakContextDevices devices_valid;
+  FlatpakContextFeatures  features;
+  FlatpakContextFeatures  features_valid;
   GHashTable           *env_vars;
   GHashTable           *persistent;
   GHashTable           *filesystems;
@@ -344,6 +355,35 @@ flatpak_context_devices_to_args (FlatpakContextDevices devices,
   return flatpak_context_bitmask_to_args (devices, valid, flatpak_context_devices, "--device", "--nodevice", args);
 }
 
+static FlatpakContextFeatures
+flatpak_context_feature_from_string (const char *string, GError **error)
+{
+  FlatpakContextFeatures feature = flatpak_context_bitmask_from_string (string, flatpak_context_features);
+
+  if (feature == 0)
+    {
+      g_autofree char *values = g_strjoinv (", ", (char **)flatpak_context_features);
+      g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+                   _("Unknown feature type %s, valid types are: %s"), string, values);
+    }
+
+  return feature;
+}
+
+static char **
+flatpak_context_features_to_string (FlatpakContextFeatures features, FlatpakContextFeatures valid)
+{
+  return flatpak_context_bitmask_to_string (features, valid, flatpak_context_features);
+}
+
+static void
+flatpak_context_features_to_args (FlatpakContextFeatures features,
+                                FlatpakContextFeatures valid,
+                                GPtrArray *args)
+{
+  return flatpak_context_bitmask_to_args (features, valid, flatpak_context_features, "--allow", "--disallow", args);
+}
+
 static void
 flatpak_context_add_shares (FlatpakContext      *context,
                             FlatpakContextShares shares)
@@ -390,6 +430,22 @@ flatpak_context_remove_devices (FlatpakContext       *context,
 {
   context->devices_valid |= devices;
   context->devices &= ~devices;
+}
+
+static void
+flatpak_context_add_features (FlatpakContext       *context,
+                           FlatpakContextFeatures   features)
+{
+  context->features_valid |= features;
+  context->features |= features;
+}
+
+static void
+flatpak_context_remove_features (FlatpakContext       *context,
+                               FlatpakContextFeatures  features)
+{
+  context->features_valid |= features;
+  context->features &= ~features;
 }
 
 static void
@@ -609,6 +665,9 @@ flatpak_context_merge (FlatpakContext *context,
   context->devices &= ~other->devices_valid;
   context->devices |= other->devices;
   context->devices_valid |= other->devices_valid;
+  context->features &= ~other->features_valid;
+  context->features |= other->features;
+  context->features_valid |= other->features_valid;
 
   g_hash_table_iter_init (&iter, other->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -735,6 +794,42 @@ option_nodevice_cb (const gchar *option_name,
     return FALSE;
 
   flatpak_context_remove_devices (context, device);
+
+  return TRUE;
+}
+
+static gboolean
+option_allow_cb (const gchar *option_name,
+                 const gchar *value,
+                 gpointer     data,
+                 GError     **error)
+{
+  FlatpakContext *context = data;
+  FlatpakContextFeatures feature;
+
+  feature = flatpak_context_feature_from_string (value, error);
+  if (feature == 0)
+    return FALSE;
+
+  flatpak_context_add_features (context, feature);
+
+  return TRUE;
+}
+
+static gboolean
+option_disallow_cb (const gchar *option_name,
+                    const gchar *value,
+                    gpointer     data,
+                    GError     **error)
+{
+  FlatpakContext *context = data;
+  FlatpakContextFeatures feature;
+
+  feature = flatpak_context_feature_from_string (value, error);
+  if (feature == 0)
+    return FALSE;
+
+  flatpak_context_remove_features (context, feature);
 
   return TRUE;
 }
@@ -871,6 +966,8 @@ static GOptionEntry context_options[] = {
   { "nosocket", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nosocket_cb, N_("Don't expose socket to app"), N_("SOCKET") },
   { "device", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_device_cb, N_("Expose device to app"), N_("DEVICE") },
   { "nodevice", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nodevice_cb, N_("Don't expose device to app"), N_("DEVICE") },
+  { "allow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_allow_cb, N_("Allow feature"), N_("FEATURE") },
+  { "disallow", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_disallow_cb, N_("Don't allow feature"), N_("FEATURE") },
   { "filesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_filesystem_cb, N_("Expose filesystem to app (:ro for read-only)"), N_("FILESYSTEM[:ro]") },
   { "nofilesystem", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_nofilesystem_cb, N_("Don't expose filesystem to app"), N_("FILESYSTEM") },
   { "env", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_env_cb, N_("Set environment variable"), N_("VAR=VALUE") },
@@ -990,6 +1087,26 @@ flatpak_context_load_metadata (FlatpakContext *context,
         }
     }
 
+  if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FEATURES, NULL))
+    {
+      g_auto(GStrv) features = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
+                                                         FLATPAK_METADATA_KEY_FEATURES, NULL, error);
+      if (features == NULL)
+        return FALSE;
+
+
+      for (i = 0; features[i] != NULL; i++)
+        {
+          FlatpakContextFeatures feature = flatpak_context_feature_from_string (parse_negated (features[i], &remove), error);
+          if (feature == 0)
+            return FALSE;
+          if (remove)
+            flatpak_context_remove_features (context, feature);
+          else
+            flatpak_context_add_features (context, feature);
+        }
+    }
+
   if (g_key_file_has_key (metakey, FLATPAK_METADATA_GROUP_CONTEXT, FLATPAK_METADATA_KEY_FILESYSTEMS, NULL))
     {
       g_auto(GStrv) filesystems = g_key_file_get_string_list (metakey, FLATPAK_METADATA_GROUP_CONTEXT,
@@ -1091,6 +1208,7 @@ flatpak_context_save_metadata (FlatpakContext *context,
   g_auto(GStrv) shared = flatpak_context_shared_to_string (context->shares, context->shares_valid);
   g_auto(GStrv) sockets = flatpak_context_sockets_to_string (context->sockets, context->sockets_valid);
   g_auto(GStrv) devices = flatpak_context_devices_to_string (context->devices, context->devices_valid);
+  g_auto(GStrv) features = flatpak_context_features_to_string (context->features, context->features_valid);
   GHashTableIter iter;
   gpointer key, value;
 
@@ -1136,6 +1254,21 @@ flatpak_context_save_metadata (FlatpakContext *context,
       g_key_file_remove_key (metakey,
                              FLATPAK_METADATA_GROUP_CONTEXT,
                              FLATPAK_METADATA_KEY_DEVICES,
+                             NULL);
+    }
+
+  if (features[0] != NULL)
+    {
+      g_key_file_set_string_list (metakey,
+                                  FLATPAK_METADATA_GROUP_CONTEXT,
+                                  FLATPAK_METADATA_KEY_FEATURES,
+                                  (const char * const *) features, g_strv_length (features));
+    }
+  else
+    {
+      g_key_file_remove_key (metakey,
+                             FLATPAK_METADATA_GROUP_CONTEXT,
+                             FLATPAK_METADATA_KEY_FEATURES,
                              NULL);
     }
 
@@ -1232,6 +1365,7 @@ flatpak_context_to_args (FlatpakContext *context,
   flatpak_context_shared_to_args (context->shares, context->shares_valid, args);
   flatpak_context_sockets_to_args (context->sockets, context->sockets_valid, args);
   flatpak_context_devices_to_args (context->devices, context->devices_valid, args);
+  flatpak_context_features_to_args (context->features, context->features_valid, args);
 
   g_hash_table_iter_init (&iter, context->env_vars);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -3186,6 +3320,9 @@ flatpak_run_app (const char     *app_ref,
             "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
             "--lock-file", "/app/.ref",
             NULL);
+
+  if (app_context->features & FLATPAK_CONTEXT_FEATURE_DEVEL)
+    flags |= FLATPAK_RUN_FLAG_DEVEL;
 
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;

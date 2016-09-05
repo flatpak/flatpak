@@ -38,9 +38,11 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_FILESYSTEMS "filesystems"
 #define FLATPAK_METADATA_KEY_PERSISTENT "persistent"
 #define FLATPAK_METADATA_KEY_DEVICES "devices"
+#define FLATPAK_METADATA_KEY_FEATURES "features"
 
 extern const char *flatpak_context_sockets[];
 extern const char *flatpak_context_devices[];
+extern const char *flatpak_context_features[];
 extern const char *flatpak_context_shares[];
 
 FlatpakContext *flatpak_context_new (void);
