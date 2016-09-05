@@ -440,22 +440,29 @@ validate_fd (int fd,
   if (!validate_fd_common (fd, st_buf, path_buffer, error))
     return FALSE;
 
-  if (app_id != NULL && *app_id != 0 &&
-      g_str_has_prefix (path_buffer, "/newroot/app/"))
+  if (app_id != NULL && *app_id != 0)
     {
-      char *rel_path = path_buffer + strlen ("/newroot/app/");
-      g_autofree char *app_path = NULL;
-
-      app_path = resolve_flatpak_path (rel_path, app_id);
-      if (app_path == NULL)
+      if (g_str_has_prefix (path_buffer, "/newroot/app/"))
         {
-          g_set_error (error,
-                       FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
-                       "Invalid fd passed");
-          return FALSE;
-        }
+          char *rel_path = path_buffer + strlen ("/newroot/app/");
+          g_autofree char *app_path = NULL;
 
-      strncpy (path_buffer, app_path, PATH_MAX);
+          app_path = resolve_flatpak_path (rel_path, app_id);
+          if (app_path == NULL)
+            {
+              g_set_error (error,
+                           FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                           "Invalid fd passed");
+              return FALSE;
+            }
+
+          strncpy (path_buffer, app_path, PATH_MAX);
+        }
+      else if (g_str_has_prefix (path_buffer, "/newroot/"))
+        {
+          char *rel_path = path_buffer + strlen ("/newroot");
+          g_strlcpy (path_buffer, rel_path, PATH_MAX);
+        }
     }
 
   if (!validate_parent_dir (path_buffer, st_buf, real_parent_st_buf, error))
