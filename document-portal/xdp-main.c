@@ -16,8 +16,6 @@
 #include "xdp-util.h"
 #include "flatpak-db.h"
 #include "flatpak-dbus.h"
-#include "flatpak-installation.h"
-#include "flatpak-installed-ref.h"
 #include "flatpak-utils.h"
 #include "flatpak-portal-error.h"
 #include "permission-store/permission-store-dbus.h"
@@ -47,6 +45,8 @@ static GError *exit_error = NULL;
 static dev_t fuse_dev = 0;
 static GQueue get_mount_point_invocations = G_QUEUE_INIT;
 static XdpDbusDocuments *dbus_api;
+FlatpakDir *user_dir = NULL;
+FlatpakDir *system_dir = NULL;
 
 G_LOCK_DEFINE (db);
 
@@ -371,39 +371,27 @@ static char *
 resolve_flatpak_path (const char *path,
                       const char *app_id)
 {
-  g_autoptr(FlatpakInstalledRef) app_ref = NULL;
+  g_autoptr(FlatpakDeploy) deploy = NULL;
+  g_autoptr(GError) my_error = NULL;
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autofree char *ref = NULL;
 
-  g_autoptr(FlatpakInstallation) user_install =
-    flatpak_installation_new_user (NULL, NULL);
+  ref = flatpak_dir_current_ref (user_dir, app_id, NULL);
+  if (ref == NULL)
+    ref = flatpak_dir_current_ref (system_dir, app_id, NULL);
 
-  if (user_install)
-    {
-      app_ref =
-        flatpak_installation_get_current_installed_app (user_install,
-                                                        app_id,
-                                                        NULL, NULL);
-    }
-
-  if (!app_ref)
-    {
-      g_autoptr(FlatpakInstallation) system_install =
-        flatpak_installation_new_system (NULL, NULL);
-
-      if (system_install)
-        {
-          app_ref =
-            flatpak_installation_get_current_installed_app (system_install,
-                                                            app_id,
-                                                            NULL, NULL);
-        }
-    }
-
-  if (!app_ref)
+  if (ref == NULL)
     return NULL;
 
-  const char *deploy_dir = flatpak_installed_ref_get_deploy_dir (app_ref);
+  deploy_dir = flatpak_dir_get_if_deployed (user_dir, ref, NULL, NULL);
+  if (deploy_dir == NULL)
+    deploy_dir = flatpak_dir_get_if_deployed (system_dir, ref, NULL, NULL);
 
-  return g_build_filename (deploy_dir, "files", path, NULL);
+  if (deploy_dir == NULL)
+    return NULL;
+
+  return g_build_filename (flatpak_file_get_path_cached (deploy_dir),
+                           "files", path, NULL);
 }
 
 static gboolean
@@ -441,53 +429,34 @@ validate_parent_dir (const char *path,
 }
 
 static gboolean
-validate_sandboxed_fd (int fd,
-                       const char *app_id,
-                       struct stat *st_buf,
-                       struct stat *real_parent_st_buf,
-                       char *path_buffer,
-                       GError **error)
-{
-  char sandboxed_path_buffer[PATH_MAX + 1];
-  char *rel_path;
-  g_autofree char *app_path = NULL;
-
-  if (!validate_fd_common (fd, st_buf, sandboxed_path_buffer, error))
-    return FALSE;
-
-  rel_path = strstr (sandboxed_path_buffer, "/app");
-  if (rel_path != NULL)
-    {
-
-      rel_path += strlen ("/app");
-      app_path = resolve_flatpak_path (rel_path, app_id);
-    }
-
-  if (app_path == NULL)
-    {
-      g_set_error (error,
-                   FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
-                   "Invalid fd passed");
-      return FALSE;
-    }
-
-  strncpy (path_buffer, app_path, PATH_MAX);
-
-  if (!validate_parent_dir (path_buffer, st_buf, real_parent_st_buf, error))
-    return FALSE;
-
-  return TRUE;
-}
-
-static gboolean
 validate_fd (int fd,
+             const char *app_id,
              struct stat *st_buf,
              struct stat *real_parent_st_buf,
              char *path_buffer,
              GError **error)
 {
+
   if (!validate_fd_common (fd, st_buf, path_buffer, error))
     return FALSE;
+
+  if (app_id != NULL && *app_id != 0 &&
+      g_str_has_prefix (path_buffer, "/newroot/app/"))
+    {
+      char *rel_path = path_buffer + strlen ("/newroot/app/");
+      g_autofree char *app_path = NULL;
+
+      app_path = resolve_flatpak_path (rel_path, app_id);
+      if (app_path == NULL)
+        {
+          g_set_error (error,
+                       FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                       "Invalid fd passed");
+          return FALSE;
+        }
+
+      strncpy (path_buffer, app_path, PATH_MAX);
+    }
 
   if (!validate_parent_dir (path_buffer, st_buf, real_parent_st_buf, error))
     return FALSE;
@@ -523,23 +492,10 @@ portal_add (GDBusMethodInvocation *invocation,
         fd = fds[fd_id];
     }
 
-  if (strcmp (app_id, "") != 0)
+  if (!validate_fd (fd, app_id, &st_buf, &real_parent_st_buf, path_buffer, &error))
     {
-      /* Called from inside the sandbox */
-      if (!validate_sandboxed_fd (fd, app_id, &st_buf, &real_parent_st_buf, path_buffer, &error))
-        {
-          g_dbus_method_invocation_take_error (invocation, error);
-          return;
-        }
-    }
-  else
-    {
-      /* Called from outside of the sandbox */
-      if (!validate_fd (fd, &st_buf, &real_parent_st_buf, path_buffer, &error))
-        {
-          g_dbus_method_invocation_take_error (invocation, error);
-          return;
-        }
+      g_dbus_method_invocation_take_error (invocation, error);
+      return;
     }
 
   if (st_buf.st_dev == fuse_dev)
@@ -769,7 +725,7 @@ portal_lookup (GDBusMethodInvocation *invocation,
       return TRUE;
     }
 
-  if (!validate_fd (fd, &st_buf, &real_parent_st_buf, path_buffer, &error))
+  if (!validate_fd (fd, app_id, &st_buf, &real_parent_st_buf, path_buffer, &error))
     {
       g_dbus_method_invocation_take_error (invocation, error);
       return TRUE;
@@ -1185,6 +1141,9 @@ main (int    argc,
       g_print ("No permission store: %s", error->message);
       do_exit (4);
     }
+
+  user_dir = flatpak_dir_get_user ();
+  system_dir = flatpak_dir_get_system ();
 
   /* We want do do our custom post-mainloop exit */
   g_dbus_connection_set_exit_on_close (session_bus, FALSE);
