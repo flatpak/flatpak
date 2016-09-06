@@ -126,7 +126,7 @@ open_source_stream (GInputStream **out_source_stream,
   return TRUE;
 }
 
-GBytes *
+static GBytes *
 load_keys (GCancellable *cancellable,
            GError      **error)
 {
