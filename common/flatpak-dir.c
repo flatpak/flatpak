@@ -2938,7 +2938,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
     return FALSE;
 
   if (!flatpak_dir_undeploy (self, ref, old_active,
-                             FALSE,
+                             TRUE, FALSE,
                              cancellable, error))
     return FALSE;
 
@@ -3739,6 +3739,7 @@ gboolean
 flatpak_dir_undeploy (FlatpakDir   *self,
                       const char   *ref,
                       const char   *checksum,
+                      gboolean      is_update,
                       gboolean      force_remove,
                       GCancellable *cancellable,
                       GError      **error)
@@ -3751,6 +3752,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   g_autoptr(GFile) removed_dir = NULL;
   g_autofree char *tmpname = g_strdup_printf ("removed-%s-XXXXXX", checksum);
   g_autofree char *active = NULL;
+  g_autoptr(GFile) change_file = NULL;
   int i;
 
   g_assert (ref != NULL);
@@ -3809,6 +3811,13 @@ flatpak_dir_undeploy (FlatpakDir   *self,
                             cancellable, error))
     goto out;
 
+  if (is_update)
+    change_file = g_file_resolve_relative_path (removed_subdir, "files/.updated");
+  else
+    change_file = g_file_resolve_relative_path (removed_subdir, "files/.removed");
+  g_file_replace_contents (change_file, "", 0, NULL, FALSE,
+                           G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, NULL);
+
   if (force_remove || !dir_is_locked (removed_subdir))
     {
       GError *tmp_error = NULL;
@@ -3847,7 +3856,7 @@ flatpak_dir_undeploy_all (FlatpakDir   *self,
   for (i = 0; deployed[i] != NULL; i++)
     {
       g_debug ("undeploying %s", deployed[i]);
-      if (!flatpak_dir_undeploy (self, ref, deployed[i], force_remove, cancellable, error))
+      if (!flatpak_dir_undeploy (self, ref, deployed[i], FALSE, force_remove, cancellable, error))
         return FALSE;
     }
 

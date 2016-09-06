@@ -340,6 +340,7 @@ gboolean flatpak_dir_uninstall (FlatpakDir          *self,
 gboolean    flatpak_dir_undeploy (FlatpakDir   *self,
                                   const char   *ref,
                                   const char   *checksum,
+                                  gboolean      is_update,
                                   gboolean      force_remove,
                                   GCancellable *cancellable,
                                   GError      **error);
