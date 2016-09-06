@@ -972,8 +972,13 @@ on_name_lost (GDBusConnection *connection,
               gpointer         user_data)
 {
   g_debug ("%s lost", name);
-  final_exit_status = 20;
-  g_set_error (&exit_error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "D-Bus name \"%s\" lost", name);
+
+  if (final_exit_status == 0)
+    final_exit_status = 20;
+
+  if (exit_error == NULL)
+    g_set_error (&exit_error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "D-Bus name \"%s\" lost", name);
+
   g_main_loop_quit (loop);
 }
 
@@ -991,7 +996,9 @@ session_bus_closed (GDBusConnection *connection,
                     gboolean         remote_peer_vanished,
                     GError          *bus_error)
 {
-  g_set_error (&exit_error, G_IO_ERROR, G_IO_ERROR_BROKEN_PIPE, "Disconnected from session bus");
+  if (exit_error == NULL)
+    g_set_error (&exit_error, G_IO_ERROR, G_IO_ERROR_BROKEN_PIPE, "Disconnected from session bus");
+
   g_main_loop_quit (loop);
 }
 
