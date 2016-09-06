@@ -33,8 +33,16 @@ for i in $@; do
                        _sysconfigdata ; do
             cp ${PYDIR}/$py.py ${DIR}/usr/lib/python2.7
         done
+        # These might not exist, depending how Python was configured; and the
+        # part after ${so} might be "module" or ".x86_64-linux-gnu" or
+        # something else
         for so in _locale strop ; do
-            cp ${PYDIR}/lib-dynload/${so}module.so ${DIR}/usr/lib/python2.7/lib-dynload
+            cp ${PYDIR}/lib-dynload/${so}*.so ${DIR}/usr/lib/python2.7/lib-dynload || :
+        done
+        for plat in $( cd ${PYDIR} && echo plat-* ); do
+            test -e ${PYDIR}/${plat} || continue
+            mkdir -p ${DIR}/usr/lib/python2.7/${plat}
+            cp ${PYDIR}/${plat}/*.py ${DIR}/usr/lib/python2.7/${plat}/
         done
     fi
 done
