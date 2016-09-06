@@ -3413,7 +3413,7 @@ flatpak_run_app (const char     *app_ref,
       if (!g_spawn_async (NULL,
                           (char **) real_argv_array->pdata,
                           envp,
-                          G_SPAWN_DEFAULT,
+                          G_SPAWN_SEARCH_PATH,
                           child_setup, fd_array,
                           NULL,
                           error))
