@@ -29,6 +29,9 @@
     <method name="RequestMonitor">
       <arg type='ay' name='path' direction='out'/>
     </method>
+  </interface>
+
+  <interface name='org.freedesktop.Flatpak.Development'>
 
     <!-- This methods let you start processes, sandboxed or not on the
          host, so its not generally safe to allow access to it to any

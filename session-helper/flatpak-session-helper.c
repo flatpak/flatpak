@@ -74,8 +74,8 @@ child_watch_died (GPid     pid,
   signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", client_pid, status));
   g_dbus_connection_emit_signal (session_bus,
                                  pid_data->client,
-                                 "/org/freedesktop/Flatpak/SessionHelper",
-                                 "org.freedesktop.Flatpak.SessionHelper",
+                                 "/org/freedesktop/Flatpak/Development",
+                                 "org.freedesktop.Flatpak.Development",
                                  "HostCommandExited",
                                  signal_variant,
                                  NULL);
@@ -150,7 +150,7 @@ child_setup_func (gpointer user_data)
 
 
 static gboolean
-handle_host_command (FlatpakSessionHelper *object,
+handle_host_command (FlatpakDevelopment *object,
                      GDBusMethodInvocation *invocation,
                      const gchar *arg_cwd_path,
                      const gchar *const *arg_argv,
@@ -302,13 +302,13 @@ handle_host_command (FlatpakSessionHelper *object,
                         pid_data);
 
 
-  flatpak_session_helper_complete_host_command (object, invocation,
-                                                pid_data->client_pid);
+  flatpak_development_complete_host_command (object, invocation,
+                                             pid_data->client_pid);
   return TRUE;
 }
 
 static gboolean
-handle_host_command_signal (FlatpakSessionHelper *object,
+handle_host_command_signal (FlatpakDevelopment *object,
                             GDBusMethodInvocation *invocation,
                             guint arg_pid,
                             guint arg_signal,
@@ -333,7 +333,7 @@ handle_host_command_signal (FlatpakSessionHelper *object,
   else
     kill (pid_data->pid, arg_signal);
 
-  flatpak_session_helper_complete_host_command_signal (object, invocation);
+  flatpak_development_complete_host_command_signal (object, invocation);
 
   return TRUE;
 }
@@ -344,17 +344,28 @@ on_bus_acquired (GDBusConnection *connection,
                  gpointer         user_data)
 {
   FlatpakSessionHelper *helper;
+  FlatpakDevelopment *devel;
   GError *error = NULL;
 
   helper = flatpak_session_helper_skeleton_new ();
-
   g_signal_connect (helper, "handle-request-monitor", G_CALLBACK (handle_request_monitor), NULL);
-  g_signal_connect (helper, "handle-host-command", G_CALLBACK (handle_host_command), NULL);
-  g_signal_connect (helper, "handle-host-command-signal", G_CALLBACK (handle_host_command_signal), NULL);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
                                          connection,
                                          "/org/freedesktop/Flatpak/SessionHelper",
+                                         &error))
+    {
+      g_warning ("error: %s\n", error->message);
+      g_error_free (error);
+    }
+
+  devel = flatpak_development_skeleton_new ();
+  g_signal_connect (devel, "handle-host-command", G_CALLBACK (handle_host_command), NULL);
+  g_signal_connect (devel, "handle-host-command-signal", G_CALLBACK (handle_host_command_signal), NULL);
+
+  if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (devel),
+                                         connection,
+                                         "/org/freedesktop/Flatpak/Development",
                                          &error))
     {
       g_warning ("error: %s\n", error->message);
