@@ -193,7 +193,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       NULL,
                                       app_files,
                                       runtime_files,
-                                      app_id,
+                                      app_id, NULL,
                                       runtime_ref,
                                       app_context,
                                       error))

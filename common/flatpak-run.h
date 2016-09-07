@@ -114,6 +114,7 @@ gboolean flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                         GFile          *app_files,
                                         GFile          *runtime_files,
                                         const char     *app_id,
+                                        const char     *app_branch,
                                         const char     *runtime_ref,
                                         FlatpakContext *final_app_context,
                                         GError        **error);

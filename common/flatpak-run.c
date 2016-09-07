@@ -2546,6 +2546,7 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                GFile          *app_files,
                                GFile          *runtime_files,
                                const char     *app_id,
+                               const char     *app_branch,
                                const char     *runtime_ref,
                                FlatpakContext *final_app_context,
                                GError        **error)
@@ -2568,6 +2569,8 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
       keyfile = g_key_file_new ();
 
       g_key_file_set_string (keyfile, "Application", "name", app_id);
+      if (app_branch != NULL)
+        g_key_file_set_string (keyfile, "Application", "branch", app_branch);
       g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
 
       app_path = g_file_get_path (app_files);
@@ -3335,7 +3338,7 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
-  if (!flatpak_run_add_app_info_args (argv_array, fd_array, app_files, runtime_files, app_ref_parts[1], runtime_ref, app_context, error))
+  if (!flatpak_run_add_app_info_args (argv_array, fd_array, app_files, runtime_files, app_ref_parts[1], app_ref_parts[3], runtime_ref, app_context, error))
     return FALSE;
 
   if (!flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
