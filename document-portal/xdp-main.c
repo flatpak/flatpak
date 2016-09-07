@@ -368,25 +368,75 @@ validate_fd_common (int fd,
 }
 
 static char *
-resolve_flatpak_path (const char *path,
-                      const char *app_id)
+get_current_ref (const gchar *app_id, gboolean *user)
 {
-  g_autoptr(FlatpakDeploy) deploy = NULL;
-  g_autoptr(GError) my_error = NULL;
-  g_autoptr(GFile) deploy_dir = NULL;
-  g_autofree char *ref = NULL;
+  char *ref = NULL;
 
-  ref = flatpak_dir_current_ref (user_dir, app_id, NULL);
-  if (ref == NULL)
+  if ((ref = flatpak_dir_current_ref (user_dir, app_id, NULL)))
+    *user = TRUE;
+  else
     ref = flatpak_dir_current_ref (system_dir, app_id, NULL);
 
+  return ref;
+}
+
+static char *
+resolve_flatpak_usr_path (const char *path,
+                          const char *app_id)
+{
+  g_autofree char *ref = NULL;
+  g_autoptr(FlatpakDeploy) app_deploy = NULL;
+  gboolean user = FALSE;
+
+  ref = get_current_ref (app_id, &user);
   if (ref == NULL)
     return NULL;
 
-  deploy_dir = flatpak_dir_get_if_deployed (user_dir, ref, NULL, NULL);
-  if (deploy_dir == NULL)
-    deploy_dir = flatpak_dir_get_if_deployed (system_dir, ref, NULL, NULL);
+  app_deploy = flatpak_dir_load_deployed ((user) ? user_dir : system_dir,
+                                          ref, NULL, NULL, NULL);
+  if (app_deploy == NULL)
+    return NULL;
 
+  g_autoptr(GKeyFile) key_file = flatpak_deploy_get_metadata (app_deploy);
+  g_autofree char *runtime =
+    g_key_file_get_string (key_file, "Application", "runtime", NULL);
+  if (runtime == NULL)
+    return NULL;
+
+  g_auto(GStrv) tokens = g_strsplit (runtime, "/", 0);
+  if (g_strv_length (tokens) != 3)
+    return NULL;
+
+  g_autofree char *runtime_ref =
+    flatpak_build_runtime_ref (tokens[0], tokens[2], tokens[1]);
+  if (runtime_ref == NULL)
+    return NULL;
+
+  g_autoptr(FlatpakDeploy) runtime_deploy =
+    flatpak_find_deploy_for_ref (runtime_ref, NULL, NULL);
+  if (runtime_deploy == NULL)
+    return NULL;
+
+  g_autoptr(GFile) deploy_dir = flatpak_deploy_get_files (runtime_deploy);
+
+  return g_build_filename (flatpak_file_get_path_cached (deploy_dir),
+                           path, NULL);
+}
+
+static char *
+resolve_flatpak_app_path (const char *path,
+                          const char *app_id)
+{
+  g_autoptr(GFile) deploy_dir = NULL;
+  g_autofree char *ref = NULL;
+  gboolean user = FALSE;
+
+  ref = get_current_ref (app_id, &user);
+  if (ref == NULL)
+    return NULL;
+
+  deploy_dir = flatpak_dir_get_if_deployed ((user) ? user_dir : system_dir,
+                                            ref, NULL, NULL);
   if (deploy_dir == NULL)
     return NULL;
 
@@ -440,15 +490,23 @@ validate_fd (int fd,
   if (!validate_fd_common (fd, st_buf, path_buffer, error))
     return FALSE;
 
-  if (app_id != NULL && *app_id != 0)
+  if (app_id != NULL && *app_id != 0 &&
+      g_str_has_prefix (path_buffer, "/newroot/"))
     {
-      if (g_str_has_prefix (path_buffer, "/newroot/app/"))
-        {
-          char *rel_path = path_buffer + strlen ("/newroot/app/");
-          g_autofree char *app_path = NULL;
+      char *path = path_buffer + strlen ("/newroot");
+      gboolean has_app_prefix;
 
-          app_path = resolve_flatpak_path (rel_path, app_id);
-          if (app_path == NULL)
+      has_app_prefix = g_str_has_prefix (path, "/app/");
+
+      if (has_app_prefix || g_str_has_prefix (path, "/usr/"))
+        {
+          g_autofree char *real_path = NULL;
+
+          real_path = (has_app_prefix) ?
+                       resolve_flatpak_app_path (path + strlen ("/app/"), app_id) :
+                       resolve_flatpak_usr_path (path + strlen ("/usr/"), app_id);
+
+          if (real_path == NULL)
             {
               g_set_error (error,
                            FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
@@ -456,12 +514,11 @@ validate_fd (int fd,
               return FALSE;
             }
 
-          strncpy (path_buffer, app_path, PATH_MAX);
+          strncpy (path_buffer, real_path, PATH_MAX);
         }
-      else if (g_str_has_prefix (path_buffer, "/newroot/"))
+      else
         {
-          char *rel_path = path_buffer + strlen ("/newroot");
-          g_strlcpy (path_buffer, rel_path, PATH_MAX);
+          g_strlcpy (path_buffer, path, PATH_MAX);
         }
     }
 
