@@ -6,7 +6,9 @@ TESTS_ENVIRONMENT += FLATPAK_TESTS_DEBUG=1 \
 	PATH=$$(cd $(top_builddir) && pwd):$${PATH} \
 	$(NULL)
 
-if !WITH_SYSTEM_BWRAP
+if WITH_SYSTEM_BWRAP
+TESTS_ENVIRONMENT += FLATPAK_BWRAP=$(BWRAP)
+else
 TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
 endif
 

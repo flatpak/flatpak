@@ -276,7 +276,7 @@ test_install_launch_uninstall (void)
     {
       gint exit_code = 0;
       char *argv[] = { (char *)bwrap, "--ro-bind", "/", "/", "/bin/true", NULL };
-      g_spawn_sync (NULL, argv, NULL, 0, NULL, NULL, NULL, NULL, &exit_code, &error);
+      g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &exit_code, &error);
       g_assert_no_error (error);
       if (exit_code != 0)
         {
