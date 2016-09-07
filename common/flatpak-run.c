@@ -2544,6 +2544,7 @@ gboolean
 flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                GArray         *fd_array,
                                GFile          *app_files,
+                               GFile          *runtime_files,
                                const char     *app_id,
                                const char     *runtime_ref,
                                FlatpakContext *final_app_context,
@@ -2557,7 +2558,8 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
     {
       g_autoptr(GKeyFile) keyfile = NULL;
       g_autoptr(GFile) files = NULL;
-      g_autofree char *files_path = NULL;
+      g_autofree char *app_path = NULL;
+      g_autofree char *runtime_path = NULL;
       g_autofree char *fd_str = NULL;
       g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
 
@@ -2568,9 +2570,12 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
       g_key_file_set_string (keyfile, "Application", "name", app_id);
       g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
 
-      files_path = g_file_get_path (app_files);
+      app_path = g_file_get_path (app_files);
+      g_key_file_set_string (keyfile, "Application", "app-path", app_path);
 
-      g_key_file_set_string (keyfile, "Application", "app-path", files_path);
+      runtime_path = g_file_get_path (runtime_files);
+      g_key_file_set_string (keyfile, "Application", "runtime-path", runtime_path);
+
 
       flatpak_context_save_metadata (final_app_context, keyfile);
 
@@ -3330,7 +3335,7 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
-  if (!flatpak_run_add_app_info_args (argv_array, fd_array, app_files, app_ref_parts[1], runtime_ref, app_context, error))
+  if (!flatpak_run_add_app_info_args (argv_array, fd_array, app_files, runtime_files, app_ref_parts[1], runtime_ref, app_context, error))
     return FALSE;
 
   if (!flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
