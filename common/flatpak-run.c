@@ -2559,7 +2559,7 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
       g_autoptr(GFile) files = NULL;
       g_autofree char *files_path = NULL;
       g_autofree char *fd_str = NULL;
-      g_autofree char *dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
+      g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
 
       close (fd);
 
@@ -2589,7 +2589,10 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
       if (fd_array)
         g_array_append_val (fd_array, fd);
 
-      add_args (argv_array, "--file", fd_str, dest, NULL);
+      add_args (argv_array,
+                "--ro-bind-data", fd_str, "/.flatpak-info",
+                "--symlink", "../../../.flatpak-info", old_dest,
+                NULL);
     }
 
   return TRUE;
