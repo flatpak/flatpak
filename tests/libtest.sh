@@ -264,6 +264,7 @@ fi
 
 cleanup () {
     /bin/kill $DBUS_SESSION_BUS_PID
+    gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
     fusermount -u $XDG_RUNTIME_DIR/doc || :
     rm -rf $TEST_DATA_DIR
 }

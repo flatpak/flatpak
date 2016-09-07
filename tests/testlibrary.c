@@ -668,8 +668,32 @@ global_setup (void)
 static void
 global_teardown (void)
 {
+  int status;
+  g_autoptr (GError) error = NULL;
+  char *argv[] = { "gpg-connect-agent", "--homedir", "<placeholder>", "killagent", "/bye", NULL };
+  GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
+
   if (g_getenv ("SKIP_TEARDOWN"))
     return;
+
+  argv[2] = gpg_homedir;
+
+  if (g_test_verbose ())
+    {
+      g_autofree char *commandline = g_strjoinv (" ", argv);
+      g_print ("running %s\n", commandline);
+    }
+  else
+    {
+      flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
+    }
+
+  /* mostly ignore failure here */
+  if (!g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error) ||
+      !g_spawn_check_exit_status (status, &error))
+    {
+      g_print ("# failed to run gpg-connect-agent to stop gpg-agent: %s\n", error->message);
+    }
 
   glnx_shutil_rm_rf_at (-1, testdir, NULL, NULL);
   g_free (testdir);
