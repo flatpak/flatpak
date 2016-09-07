@@ -314,8 +314,8 @@ test_install_launch_uninstall (void)
                                       &progress_count,
                                       NULL,
                                       &error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_no_error (error);
+  g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
   quit_id = g_timeout_add (500, quit, NULL);
@@ -359,8 +359,8 @@ test_install_launch_uninstall (void)
                                       &progress_count,
                                       NULL,
                                       &error);
-  g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_no_error (error);
+  g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
   quit_id = g_timeout_add (500, quit, loop);
@@ -384,8 +384,8 @@ test_install_launch_uninstall (void)
   g_ptr_array_unref (refs);
 
   res = flatpak_installation_launch (inst, "org.test.Hello", NULL, NULL, NULL, NULL, &error);
-  g_assert_true (res);
   g_assert_no_error (error);
+  g_assert_true (res);
 
   quit_id = g_timeout_add (500, quit, loop);
   g_main_loop_run (loop);
@@ -402,8 +402,8 @@ test_install_launch_uninstall (void)
                                         &progress_count,
                                         NULL,
                                         &error);
-  g_assert_true (res);
   g_assert_no_error (error);
+  g_assert_true (res);
   //FIXME: no progress for uninstall
   //g_assert_cmpint (progress_count, >, 0);
 
@@ -428,8 +428,8 @@ test_install_launch_uninstall (void)
                                         &progress_count,
                                         NULL,
                                         &error);
-  g_assert_true (res);
   g_assert_no_error (error);
+  g_assert_true (res);
   //FIXME: no progress for uninstall
   //g_assert_cmpint (progress_count, >, 0);
 
