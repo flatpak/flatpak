@@ -81,7 +81,7 @@ dist_installed_test_extra_scripts += \
 	tests/make-test-bundles.sh \
 	$(NULL)
 
-installed_test_data = \
+dist_installed_test_data = \
 	tests/libtest.sh \
 	tests/org.test.Hello.png \
 	tests/package_version.txt \
@@ -105,8 +105,6 @@ dist_installed_test_keyring_DATA = \
 	$(NULL)
 dist_installed_test_dbs_DATA = tests/dbs/no_tables
 endif
-
-EXTRA_DIST += $(installed_test_data)
 
 dist_test_scripts = \
 	tests/test-basic.sh \
