@@ -74,6 +74,7 @@ tests/test-basic.sh: tests/package_version.txt
 
 dist_installed_test_extra_scripts += \
 	buildutil/tap-driver.sh \
+	tests/empty-configure \
 	tests/test-configure \
 	tests/make-test-app.sh \
 	tests/make-test-runtime.sh \
@@ -88,7 +89,6 @@ installed_test_data = \
 	tests/session.conf.in \
 	tests/0001-Add-test-logo.patch \
 	tests/org.test.Python.json \
-	tests/empty-configure \
 	tests/testpython.py \
 	tests/importme.py \
 	tests/importme2.py \
