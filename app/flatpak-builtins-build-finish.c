@@ -319,7 +319,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, GCancellable *cancell
   if (!flatpak_context_load_metadata (app_context, keyfile, error))
     goto out;
   flatpak_context_merge (app_context, arg_context);
-  flatpak_context_save_metadata (app_context, keyfile);
+  flatpak_context_save_metadata (app_context, FALSE, keyfile);
 
   if (!g_key_file_save_to_file (keyfile, path, error))
     goto out;

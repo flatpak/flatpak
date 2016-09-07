@@ -1203,14 +1203,48 @@ flatpak_context_load_metadata (FlatpakContext *context,
 
 void
 flatpak_context_save_metadata (FlatpakContext *context,
+                               gboolean        flatten,
                                GKeyFile       *metakey)
 {
-  g_auto(GStrv) shared = flatpak_context_shared_to_string (context->shares, context->shares_valid);
-  g_auto(GStrv) sockets = flatpak_context_sockets_to_string (context->sockets, context->sockets_valid);
-  g_auto(GStrv) devices = flatpak_context_devices_to_string (context->devices, context->devices_valid);
-  g_auto(GStrv) features = flatpak_context_features_to_string (context->features, context->features_valid);
+  g_auto(GStrv) shared = NULL;
+  g_auto(GStrv) sockets = NULL;
+  g_auto(GStrv) devices = NULL;
+  g_auto(GStrv) features = NULL;
   GHashTableIter iter;
   gpointer key, value;
+  FlatpakContextShares shares_mask = context->shares;
+  FlatpakContextShares shares_valid = context->shares_valid;
+  FlatpakContextSockets sockets_mask = context->sockets;
+  FlatpakContextSockets sockets_valid = context->sockets_valid;
+  FlatpakContextDevices devices_mask = context->devices;
+  FlatpakContextDevices devices_valid = context->devices_valid;
+  FlatpakContextFeatures features_mask = context->features;
+  FlatpakContextFeatures features_valid = context->features;
+
+  if (flatten)
+    {
+      /* A flattened format means we don't expect this to be merged on top of
+         another context. In that case we never need to negate any flags.
+         We calculate this by removing the zero parts of the mask from the valid set.
+      */
+      /* First we make sure only the valid parts of the mask are set, in case we
+         got some leftover */
+      shares_mask &= shares_valid;
+      sockets_mask &= sockets_valid;
+      devices_mask &= devices_valid;
+      features_mask &= devices_valid;
+
+      /* Then just set the valid set to be the mask set */
+      shares_valid = shares_mask;
+      sockets_valid = sockets_mask;
+      devices_valid = devices_mask;
+      features_valid = devices_mask;
+    }
+
+  shared = flatpak_context_shared_to_string (shares_mask, shares_valid);
+  sockets = flatpak_context_sockets_to_string (sockets_mask, sockets_valid);
+  devices = flatpak_context_devices_to_string (devices_mask, devices_valid);
+  features = flatpak_context_features_to_string (features_mask, features_valid);
 
   if (shared[0] != NULL)
     {
@@ -2579,8 +2613,7 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
       runtime_path = g_file_get_path (runtime_files);
       g_key_file_set_string (keyfile, "Application", "runtime-path", runtime_path);
 
-
-      flatpak_context_save_metadata (final_app_context, keyfile);
+      flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
 
       if (!g_key_file_save_to_file (keyfile, tmp_path, error))
         return FALSE;
