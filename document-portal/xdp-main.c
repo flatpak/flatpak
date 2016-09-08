@@ -367,33 +367,6 @@ validate_fd_common (int fd,
   return TRUE;
 }
 
-static char *
-resolve_flatpak_path (const char *path,
-                      const char *app_id)
-{
-  g_autoptr(FlatpakDeploy) deploy = NULL;
-  g_autoptr(GError) my_error = NULL;
-  g_autoptr(GFile) deploy_dir = NULL;
-  g_autofree char *ref = NULL;
-
-  ref = flatpak_dir_current_ref (user_dir, app_id, NULL);
-  if (ref == NULL)
-    ref = flatpak_dir_current_ref (system_dir, app_id, NULL);
-
-  if (ref == NULL)
-    return NULL;
-
-  deploy_dir = flatpak_dir_get_if_deployed (user_dir, ref, NULL, NULL);
-  if (deploy_dir == NULL)
-    deploy_dir = flatpak_dir_get_if_deployed (system_dir, ref, NULL, NULL);
-
-  if (deploy_dir == NULL)
-    return NULL;
-
-  return g_build_filename (flatpak_file_get_path_cached (deploy_dir),
-                           "files", path, NULL);
-}
-
 static gboolean
 validate_parent_dir (const char *path,
                      struct stat *st_buf,
@@ -430,33 +403,38 @@ validate_parent_dir (const char *path,
 
 static gboolean
 validate_fd (int fd,
-             const char *app_id,
+             GKeyFile *app_info,
              struct stat *st_buf,
              struct stat *real_parent_st_buf,
              char *path_buffer,
              GError **error)
 {
+  g_autofree char *app_path = NULL;
+  g_autofree char *runtime_path = NULL;
 
   if (!validate_fd_common (fd, st_buf, path_buffer, error))
     return FALSE;
 
-  if (app_id != NULL && *app_id != 0)
+  /* For apps we translate /app and /usr to the installed locations.
+     Also, we need to rewrite to drop the /newroot prefix added by
+     bubblewrap for other files to work. */
+  app_path = g_key_file_get_string (app_info, "Application", "app-path", NULL);
+  runtime_path = g_key_file_get_string (app_info, "Application", "runtime-path", NULL);
+  if (app_path != NULL || runtime_path != NULL)
     {
-      if (g_str_has_prefix (path_buffer, "/newroot/app/"))
+      if (app_path != NULL &&
+          g_str_has_prefix (path_buffer, "/newroot/app/"))
         {
           char *rel_path = path_buffer + strlen ("/newroot/app/");
-          g_autofree char *app_path = NULL;
-
-          app_path = resolve_flatpak_path (rel_path, app_id);
-          if (app_path == NULL)
-            {
-              g_set_error (error,
-                           FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
-                           "Invalid fd passed");
-              return FALSE;
-            }
-
-          strncpy (path_buffer, app_path, PATH_MAX);
+          g_autofree char *real_path = g_build_filename (app_path, rel_path, NULL);
+          strncpy (path_buffer, real_path, PATH_MAX);
+        }
+      else if (runtime_path != NULL &&
+               g_str_has_prefix (path_buffer, "/newroot/usr/"))
+        {
+          char *rel_path = path_buffer + strlen ("/newroot/usr/");
+          g_autofree char *real_path = g_build_filename (runtime_path, rel_path, NULL);
+          strncpy (path_buffer, real_path, PATH_MAX);
         }
       else if (g_str_has_prefix (path_buffer, "/newroot/"))
         {
@@ -485,6 +463,7 @@ portal_add (GDBusMethodInvocation *invocation,
   struct stat st_buf, real_parent_st_buf;
   gboolean reuse_existing, persistent;
   GError *error = NULL;
+  GKeyFile *app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
 
   g_variant_get (parameters, "(hbb)", &fd_id, &reuse_existing, &persistent);
 
@@ -499,7 +478,7 @@ portal_add (GDBusMethodInvocation *invocation,
         fd = fds[fd_id];
     }
 
-  if (!validate_fd (fd, app_id, &st_buf, &real_parent_st_buf, path_buffer, &error))
+  if (!validate_fd (fd, app_info, &st_buf, &real_parent_st_buf, path_buffer, &error))
     {
       g_dbus_method_invocation_take_error (invocation, error);
       return;
@@ -677,7 +656,10 @@ got_app_id_cb (GObject      *source_object,
   if (app_id == NULL)
     g_dbus_method_invocation_return_gerror (invocation, error);
   else
-    portal_method (invocation, g_dbus_method_invocation_get_parameters (invocation), app_id);
+    {
+      g_object_set_data_full (G_OBJECT (invocation), "app-info", g_steal_pointer (&app_info), (GDestroyNotify)g_key_file_unref);
+      portal_method (invocation, g_dbus_method_invocation_get_parameters (invocation), app_id);
+    }
 }
 
 static gboolean
@@ -716,6 +698,7 @@ portal_lookup (GDBusMethodInvocation *invocation,
   g_auto(GStrv) ids = NULL;
   g_autofree char *id = NULL;
   GError *error = NULL;
+  GKeyFile *app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
 
   if (strcmp (app_id, "") != 0)
     {
@@ -735,7 +718,7 @@ portal_lookup (GDBusMethodInvocation *invocation,
       return TRUE;
     }
 
-  if (!validate_fd (fd, app_id, &st_buf, &real_parent_st_buf, path_buffer, &error))
+  if (!validate_fd (fd, app_info, &st_buf, &real_parent_st_buf, path_buffer, &error))
     {
       g_dbus_method_invocation_take_error (invocation, error);
       return TRUE;
