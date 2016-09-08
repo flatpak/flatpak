@@ -957,7 +957,7 @@ option_persist_cb (const gchar *option_name,
   return TRUE;
 }
 
-static gboolean option_no_desktop;
+static gboolean option_no_desktop_deprecated;
 
 static GOptionEntry context_options[] = {
   { "share", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_share_cb, N_("Share with host"), N_("SHARE") },
@@ -976,7 +976,8 @@ static GOptionEntry context_options[] = {
   { "system-own-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_own_name_cb, N_("Allow app to own name on the system bus"), N_("DBUS_NAME") },
   { "system-talk-name", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_system_talk_name_cb, N_("Allow app to talk to name on the system bus"), N_("DBUS_NAME") },
   { "persist", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_CALLBACK, &option_persist_cb, N_("Persist home directory"), N_("FILENAME") },
-  { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN, G_OPTION_ARG_NONE, &option_no_desktop, N_("Don't require a running session (no cgroups creation)"), NULL },
+  /* This is not needed/used anymore, so hidden, but we accept it for backwards compat */
+  { "no-desktop", 0, G_OPTION_FLAG_IN_MAIN |  G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &option_no_desktop_deprecated, N_("Don't require a running session (no cgroups creation)"), NULL },
   { NULL }
 };
 
