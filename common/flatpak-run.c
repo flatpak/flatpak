@@ -2609,15 +2609,14 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   keyfile = g_key_file_new ();
 
   g_key_file_set_string (keyfile, "Application", "name", app_id);
-  if (app_branch != NULL)
-    g_key_file_set_string (keyfile, "Application", "branch", app_branch);
   g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
 
   app_path = g_file_get_path (app_files);
-  g_key_file_set_string (keyfile, "Application", "app-path", app_path);
-
+  g_key_file_set_string (keyfile, "Instance", "app-path", app_path);
   runtime_path = g_file_get_path (runtime_files);
-  g_key_file_set_string (keyfile, "Application", "runtime-path", runtime_path);
+  g_key_file_set_string (keyfile, "Instance", "runtime-path", runtime_path);
+  if (app_branch != NULL)
+    g_key_file_set_string (keyfile, "Instance", "branch", app_branch);
 
   flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
 

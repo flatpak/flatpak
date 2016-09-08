@@ -418,8 +418,8 @@ validate_fd (int fd,
   /* For apps we translate /app and /usr to the installed locations.
      Also, we need to rewrite to drop the /newroot prefix added by
      bubblewrap for other files to work. */
-  app_path = g_key_file_get_string (app_info, "Application", "app-path", NULL);
-  runtime_path = g_key_file_get_string (app_info, "Application", "runtime-path", NULL);
+  app_path = g_key_file_get_string (app_info, "Instance", "app-path", NULL);
+  runtime_path = g_key_file_get_string (app_info, "Instance", "runtime-path", NULL);
   if (app_path != NULL || runtime_path != NULL)
     {
       if (app_path != NULL &&
