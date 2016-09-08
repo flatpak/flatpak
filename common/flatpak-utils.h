@@ -126,14 +126,14 @@ gboolean flatpak_remove_dangling_symlinks (GFile        *dir,
                                            GCancellable *cancellable,
                                            GError      **error);
 
-void  flatpak_invocation_lookup_app_id (GDBusMethodInvocation *invocation,
-                                        GCancellable          *cancellable,
-                                        GAsyncReadyCallback    callback,
-                                        gpointer               user_data);
+void  flatpak_invocation_lookup_app_info (GDBusMethodInvocation *invocation,
+                                          GCancellable          *cancellable,
+                                          GAsyncReadyCallback    callback,
+                                          gpointer               user_data);
 
-char *flatpak_invocation_lookup_app_id_finish (GDBusMethodInvocation *invocation,
-                                               GAsyncResult          *result,
-                                               GError               **error);
+GKeyFile *flatpak_invocation_lookup_app_info_finish (GDBusMethodInvocation *invocation,
+                                                     GAsyncResult          *result,
+                                                     GError               **error);
 
 void  flatpak_connection_track_name_owners (GDBusConnection *connection);
 

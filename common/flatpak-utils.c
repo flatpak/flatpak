@@ -1124,17 +1124,17 @@ static GHashTable *app_ids;
 
 typedef struct
 {
-  char    *name;
-  char    *app_id;
-  gboolean exited;
-  GList   *pending;
-} AppIdInfo;
+  char     *name;
+  GKeyFile *app_info;
+  gboolean  exited;
+  GList    *pending;
+} AppInfo;
 
 static void
-app_id_info_free (AppIdInfo *info)
+app_info_free (AppInfo *info)
 {
   g_free (info->name);
-  g_free (info->app_id);
+  g_key_file_unref (info->app_info);
   g_free (info);
 }
 
@@ -1143,11 +1143,11 @@ ensure_app_ids (void)
 {
   if (app_ids == NULL)
     app_ids = g_hash_table_new_full (g_str_hash, g_str_equal,
-                                     NULL, (GDestroyNotify) app_id_info_free);
+                                     NULL, (GDestroyNotify) app_info_free);
 }
 
-/* Returns NULL on failure, "" if not sandboxed, and the app-id otherwise */
-static char *
+/* Returns NULL on failure, keyfile with name "" if not sandboxed, and full app-info otherwise */
+static GKeyFile *
 parse_app_id_from_fileinfo (int pid)
 {
   g_autofree char *root_path = NULL;
@@ -1172,11 +1172,18 @@ parse_app_id_from_fileinfo (int pid)
       return NULL;
     }
 
+  metadata = g_key_file_new ();
+
   info_fd = openat (root_fd, ".flatpak-info", O_RDONLY | O_CLOEXEC | O_NOCTTY);
   if (info_fd == -1)
     {
       if (errno == ENOENT)
-        return g_strdup (""); /* No file => on the host */
+        {
+          /* No file => on the host */
+          g_key_file_set_string (metadata, "Application", "name", "");
+          return g_steal_pointer (&metadata);
+        }
+
       return NULL; /* Some weird error => failure */
     }
 
@@ -1190,8 +1197,6 @@ parse_app_id_from_fileinfo (int pid)
       return NULL;
     }
 
-  metadata = g_key_file_new ();
-
   if (!g_key_file_load_from_data (metadata,
                                   g_mapped_file_get_contents (mapped),
                                   g_mapped_file_get_length (mapped),
@@ -1201,14 +1206,7 @@ parse_app_id_from_fileinfo (int pid)
       return NULL;
     }
 
-  app_id = g_key_file_get_string (metadata, "Application", "name", &local_error);
-  if (app_id == NULL)
-    {
-      g_warning ("Can't get name from .flatpak-info file: %s", local_error->message);
-      return NULL;
-    }
-
-  return g_steal_pointer (&app_id);
+  return g_steal_pointer (&metadata);
 }
 
 static void
@@ -1216,7 +1214,7 @@ got_credentials_cb (GObject      *source_object,
                     GAsyncResult *res,
                     gpointer      user_data)
 {
-  AppIdInfo *info = user_data;
+  AppInfo *info = user_data;
 
   g_autoptr(GDBusMessage) reply = NULL;
   g_autoptr(GError) error = NULL;
@@ -1232,38 +1230,38 @@ got_credentials_cb (GObject      *source_object,
 
       g_variant_get (body, "(u)", &pid);
 
-      info->app_id = parse_app_id_from_fileinfo (pid);
+      info->app_info = parse_app_id_from_fileinfo (pid);
     }
 
   for (l = info->pending; l != NULL; l = l->next)
     {
       GTask *task = l->data;
 
-      if (info->app_id == NULL)
+      if (info->app_info == NULL)
         g_task_return_new_error (task, FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_FAILED,
                                  "Can't find app id");
       else
-        g_task_return_pointer (task, g_strdup (info->app_id), g_free);
+        g_task_return_pointer (task, g_key_file_ref (info->app_info), (GDestroyNotify)g_key_file_unref);
     }
 
   g_list_free_full (info->pending, g_object_unref);
   info->pending = NULL;
 
-  if (info->app_id == NULL)
+  if (info->app_info == NULL)
     g_hash_table_remove (app_ids, info->name);
 }
 
 void
-flatpak_invocation_lookup_app_id (GDBusMethodInvocation *invocation,
-                                  GCancellable          *cancellable,
-                                  GAsyncReadyCallback    callback,
-                                  gpointer               user_data)
+flatpak_invocation_lookup_app_info (GDBusMethodInvocation *invocation,
+                                    GCancellable          *cancellable,
+                                    GAsyncReadyCallback    callback,
+                                    gpointer               user_data)
 {
   GDBusConnection *connection = g_dbus_method_invocation_get_connection (invocation);
   const gchar *sender = g_dbus_method_invocation_get_sender (invocation);
 
   g_autoptr(GTask) task = NULL;
-  AppIdInfo *info;
+  AppInfo *info;
 
   task = g_task_new (invocation, cancellable, callback, user_data);
 
@@ -1273,14 +1271,14 @@ flatpak_invocation_lookup_app_id (GDBusMethodInvocation *invocation,
 
   if (info == NULL)
     {
-      info = g_new0 (AppIdInfo, 1);
+      info = g_new0 (AppInfo, 1);
       info->name = g_strdup (sender);
       g_hash_table_insert (app_ids, info->name, info);
     }
 
-  if (info->app_id)
+  if (info->app_info)
     {
-      g_task_return_pointer (task, g_strdup (info->app_id), g_free);
+      g_task_return_pointer (task, g_key_file_ref (info->app_info), (GDestroyNotify)g_key_file_unref);
     }
   else
     {
@@ -1305,10 +1303,10 @@ flatpak_invocation_lookup_app_id (GDBusMethodInvocation *invocation,
     }
 }
 
-char *
-flatpak_invocation_lookup_app_id_finish (GDBusMethodInvocation *invocation,
-                                         GAsyncResult          *result,
-                                         GError               **error)
+GKeyFile *
+flatpak_invocation_lookup_app_info_finish (GDBusMethodInvocation *invocation,
+                                           GAsyncResult          *result,
+                                           GError               **error)
 {
   return g_task_propagate_pointer (G_TASK (result), error);
 }
@@ -1332,7 +1330,7 @@ name_owner_changed (GDBusConnection *connection,
       strcmp (name, from) == 0 &&
       strcmp (to, "") == 0)
     {
-      AppIdInfo *info = g_hash_table_lookup (app_ids, name);
+      AppInfo *info = g_hash_table_lookup (app_ids, name);
 
       if (info != NULL)
         {

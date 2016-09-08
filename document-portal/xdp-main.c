@@ -666,10 +666,13 @@ got_app_id_cb (GObject      *source_object,
   GDBusMethodInvocation *invocation = G_DBUS_METHOD_INVOCATION (source_object);
 
   g_autoptr(GError) error = NULL;
+  g_autoptr(GKeyFile) app_info = NULL;
   g_autofree char *app_id = NULL;
   PortalMethod portal_method = user_data;
 
-  app_id = flatpak_invocation_lookup_app_id_finish (invocation, res, &error);
+  app_info = flatpak_invocation_lookup_app_info_finish (invocation, res, &error);
+  if (app_info != NULL)
+    app_id = g_key_file_get_string (app_info, "Application", "name", &error);
 
   if (app_id == NULL)
     g_dbus_method_invocation_return_gerror (invocation, error);
@@ -681,7 +684,7 @@ static gboolean
 handle_method (GCallback              method_callback,
                GDBusMethodInvocation *invocation)
 {
-  flatpak_invocation_lookup_app_id (invocation, NULL, got_app_id_cb, method_callback);
+  flatpak_invocation_lookup_app_info (invocation, NULL, got_app_id_cb, method_callback);
 
   return TRUE;
 }
