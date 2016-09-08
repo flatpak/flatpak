@@ -1175,7 +1175,6 @@ parse_app_id_from_fileinfo (int pid)
   info_fd = openat (root_fd, ".flatpak-info", O_RDONLY | O_CLOEXEC | O_NOCTTY);
   if (info_fd == -1)
     {
-      g_print ("errno = %s\n", strerror(errno));
       if (errno == ENOENT)
         return g_strdup (""); /* No file => on the host */
       return NULL; /* Some weird error => failure */
