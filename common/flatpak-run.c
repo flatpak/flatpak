@@ -2587,54 +2587,59 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
 {
   g_autofree char *tmp_path = NULL;
   int fd;
+  g_autoptr(GKeyFile) keyfile = NULL;
+  g_autoptr(GFile) files = NULL;
+  g_autofree char *app_path = NULL;
+  g_autofree char *runtime_path = NULL;
+  g_autofree char *fd_str = NULL;
+  g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
 
   fd = g_file_open_tmp ("flatpak-context-XXXXXX", &tmp_path, NULL);
-  if (fd >= 0)
+  if (fd < 0)
     {
-      g_autoptr(GKeyFile) keyfile = NULL;
-      g_autoptr(GFile) files = NULL;
-      g_autofree char *app_path = NULL;
-      g_autofree char *runtime_path = NULL;
-      g_autofree char *fd_str = NULL;
-      g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
-
-      close (fd);
-
-      keyfile = g_key_file_new ();
-
-      g_key_file_set_string (keyfile, "Application", "name", app_id);
-      if (app_branch != NULL)
-        g_key_file_set_string (keyfile, "Application", "branch", app_branch);
-      g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
-
-      app_path = g_file_get_path (app_files);
-      g_key_file_set_string (keyfile, "Application", "app-path", app_path);
-
-      runtime_path = g_file_get_path (runtime_files);
-      g_key_file_set_string (keyfile, "Application", "runtime-path", runtime_path);
-
-      flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
-
-      if (!g_key_file_save_to_file (keyfile, tmp_path, error))
-        return FALSE;
-
-      fd = open (tmp_path, O_RDONLY);
-      if (fd == -1)
-        {
-          g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                               _("Failed to open temp file"));
-          return FALSE;
-        }
-      unlink (tmp_path);
-      fd_str = g_strdup_printf ("%d", fd);
-      if (fd_array)
-        g_array_append_val (fd_array, fd);
-
-      add_args (argv_array,
-                "--ro-bind-data", fd_str, "/.flatpak-info",
-                "--symlink", "../../../.flatpak-info", old_dest,
-                NULL);
+      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           _("Failed to open flatpak-info temp file"));
+      return FALSE;
     }
+
+  close (fd);
+
+  keyfile = g_key_file_new ();
+
+  g_key_file_set_string (keyfile, "Application", "name", app_id);
+  if (app_branch != NULL)
+    g_key_file_set_string (keyfile, "Application", "branch", app_branch);
+  g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
+
+  app_path = g_file_get_path (app_files);
+  g_key_file_set_string (keyfile, "Application", "app-path", app_path);
+
+  runtime_path = g_file_get_path (runtime_files);
+  g_key_file_set_string (keyfile, "Application", "runtime-path", runtime_path);
+
+  flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
+
+  if (!g_key_file_save_to_file (keyfile, tmp_path, error))
+    return FALSE;
+
+  fd = open (tmp_path, O_RDONLY);
+  if (fd == -1)
+    {
+      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
+                           _("Failed to open temp file"));
+      return FALSE;
+    }
+
+  unlink (tmp_path);
+
+  fd_str = g_strdup_printf ("%d", fd);
+  if (fd_array)
+    g_array_append_val (fd_array, fd);
+
+  add_args (argv_array,
+            "--ro-bind-data", fd_str, "/.flatpak-info",
+            "--symlink", "../../../.flatpak-info", old_dest,
+            NULL);
 
   return TRUE;
 }
