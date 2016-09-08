@@ -2583,6 +2583,7 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                const char     *app_branch,
                                const char     *runtime_ref,
                                FlatpakContext *final_app_context,
+                               char          **app_info_path_out,
                                GError        **error)
 {
   g_autofree char *tmp_path = NULL;
@@ -2640,6 +2641,9 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
             "--ro-bind-data", fd_str, "/.flatpak-info",
             "--symlink", "../../../.flatpak-info", old_dest,
             NULL);
+
+  if (app_info_path_out != NULL)
+    *app_info_path_out = g_strdup_printf ("/proc/self/fd/%d", fd);
 
   return TRUE;
 }
@@ -2746,12 +2750,122 @@ add_document_portal_args (GPtrArray  *argv_array,
     }
 }
 
+gchar *
+join_args (GPtrArray *argv_array, gsize *len_out)
+{
+  gchar *string;
+  gchar *ptr;
+  gint i;
+  gsize len = 0;
+
+  for (i = 0; i < argv_array->len; i++)
+    len +=  strlen (argv_array->pdata[i]) + 1;
+
+  string = g_new (gchar, len);
+  *string = 0;
+  ptr = string;
+  for (i = 0; i < argv_array->len; i++)
+    ptr = g_stpcpy (ptr, argv_array->pdata[i]) + 1;
+
+  *len_out = len;
+  return string;
+}
+
+typedef struct {
+  int sync_fd;
+  int app_info_fd;
+  int bwrap_args_fd;
+} DbusProxySpawnData;
+
 static void
 dbus_spawn_child_setup (gpointer user_data)
 {
-  int fd = GPOINTER_TO_INT (user_data);
+  DbusProxySpawnData *data = user_data;
 
-  fcntl (fd, F_SETFD, 0);
+  /* Unset CLOEXEC */
+  fcntl (data->sync_fd, F_SETFD, 0);
+  fcntl (data->app_info_fd, F_SETFD, 0);
+  fcntl (data->bwrap_args_fd, F_SETFD, 0);
+}
+
+/* This wraps the argv in a bwrap call, primary to allow the
+   command to be run with a proper /.flatpak-info with data
+   taken from app_info_fd */
+static gboolean
+prepend_bwrap_argv_wrapper (GPtrArray *argv,
+                            int app_info_fd,
+                            int *bwrap_fd_out,
+                            GError **error)
+{
+  int i = 0;
+  g_auto(GLnxDirFdIterator) dir_iter = { 0 };
+  struct dirent *dent;
+  g_autoptr(GPtrArray) bwrap_args = g_ptr_array_new_with_free_func (g_free);
+  gsize bwrap_args_len;
+  glnx_fd_close int bwrap_args_fd = -1;
+  g_autofree char *bwrap_args_data = NULL;
+
+  if (!glnx_dirfd_iterator_init_at (AT_FDCWD, "/", FALSE, &dir_iter, error))
+    return FALSE;
+
+  while (TRUE)
+    {
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&dir_iter, &dent, NULL, error))
+        return FALSE;
+
+      if (dent == NULL)
+        break;
+
+      if (strcmp (dent->d_name, ".flatpak-info") == 0)
+        continue;
+
+      if (dent->d_type == DT_DIR)
+        {
+          if (strcmp (dent->d_name, "tmp") == 0 ||
+              strcmp (dent->d_name, "var") == 0 ||
+              strcmp (dent->d_name, "run") == 0)
+            g_ptr_array_add (bwrap_args, g_strdup ("--bind"));
+          else
+            g_ptr_array_add (bwrap_args, g_strdup ("--ro-bind"));
+          g_ptr_array_add (bwrap_args, g_strconcat ("/", dent->d_name, NULL));
+          g_ptr_array_add (bwrap_args, g_strconcat ("/", dent->d_name, NULL));
+        }
+      else if (dent->d_type == DT_LNK)
+        {
+          ssize_t symlink_size;
+          char path_buffer[PATH_MAX + 1];
+
+          symlink_size = readlinkat (dir_iter.fd, dent->d_name, path_buffer, sizeof (path_buffer) - 1);
+          if (symlink_size < 0)
+            {
+              glnx_set_error_from_errno (error);
+              return FALSE;
+            }
+          path_buffer[symlink_size] = 0;
+
+          g_ptr_array_add (bwrap_args, g_strdup ("--symlink"));
+          g_ptr_array_add (bwrap_args, g_strdup (path_buffer));
+          g_ptr_array_add (bwrap_args, g_strconcat ("/", dent->d_name, NULL));
+        }
+    }
+
+  g_ptr_array_add (bwrap_args, g_strdup ("--ro-bind-data"));
+  g_ptr_array_add (bwrap_args, g_strdup_printf ("%d", app_info_fd));
+  g_ptr_array_add (bwrap_args, g_strdup ("/.flatpak-info"));
+
+  bwrap_args_data = join_args (bwrap_args, &bwrap_args_len);
+  bwrap_args_fd = create_tmp_fd (bwrap_args_data, bwrap_args_len, error);
+  if (bwrap_args_fd < 0)
+    return FALSE;
+
+  g_ptr_array_insert (argv, i++, g_strdup (flatpak_get_bwrap ()));
+  g_ptr_array_insert (argv, i++, g_strdup ("--args"));
+  g_ptr_array_insert (argv, i++, g_strdup_printf ("%d", bwrap_args_fd));
+
+  *bwrap_fd_out = bwrap_args_fd;
+  bwrap_args_fd = -1; /* Steal it */
+
+  return TRUE;
 }
 
 static gboolean
@@ -2759,11 +2873,15 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      GPtrArray *dbus_proxy_argv,
                      gboolean   enable_logging,
                      int        sync_fds[2],
+                     const char *app_info_path,
                      GError   **error)
 {
   char x = 'x';
   const char *proxy;
   g_autofree char *commandline = NULL;
+  DbusProxySpawnData spawn_data;
+  glnx_fd_close int app_info_fd = -1;
+  glnx_fd_close int bwrap_args_fd = -1;
 
   if (dbus_proxy_argv->len == 0)
     return TRUE;
@@ -2789,20 +2907,36 @@ add_dbus_proxy_args (GPtrArray *argv_array,
 
   g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (proxy));
   g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_fds[1]));
+
   if (enable_logging)
     g_ptr_array_add (dbus_proxy_argv, g_strdup ("--log"));
 
   g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
 
+  app_info_fd = open (app_info_path, O_RDONLY);
+  if (app_info_fd == -1)
+    {
+      int errsv = errno;
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
+                   _("Failed to open app info file: %s"), strerror (errsv));
+      return FALSE;
+    }
+
+  if (!prepend_bwrap_argv_wrapper (dbus_proxy_argv, app_info_fd, &bwrap_args_fd, error))
+    return FALSE;
+
   commandline = g_strjoinv (" ", (char **) dbus_proxy_argv->pdata);
   g_debug ("Running '%s'", commandline);
 
+  spawn_data.sync_fd = sync_fds[1];
+  spawn_data.app_info_fd = app_info_fd;
+  spawn_data.bwrap_args_fd = bwrap_args_fd;
   if (!g_spawn_async (NULL,
                       (char **) dbus_proxy_argv->pdata,
                       NULL,
                       G_SPAWN_SEARCH_PATH,
                       dbus_spawn_child_setup,
-                      GINT_TO_POINTER (sync_fds[1]),
+                      &spawn_data,
                       NULL, error))
     {
       close (sync_fds[0]);
@@ -3200,27 +3334,6 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   return TRUE;
 }
 
-gchar *
-join_args (GPtrArray *argv_array, gsize *len_out)
-{
-  gchar *string;
-  gchar *ptr;
-  gint i;
-  gsize len = 0;
-
-  for (i = 0; i < argv_array->len; i++)
-    len +=  strlen (argv_array->pdata[i]) + 1;
-
-  string = g_new (gchar, len);
-  *string = 0;
-  ptr = string;
-  for (i = 0; i < argv_array->len; i++)
-    ptr = g_stpcpy (ptr, argv_array->pdata[i]) + 1;
-
-  *len_out = len;
-  return string;
-}
-
 static void
 clear_fd (gpointer data)
 {
@@ -3278,6 +3391,7 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(GError) my_error = NULL;
   g_auto(GStrv) runtime_parts = NULL;
   int i;
+  g_autofree char *app_info_path = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
   g_auto(GStrv) app_ref_parts = NULL;
@@ -3376,7 +3490,8 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
 
-  if (!flatpak_run_add_app_info_args (argv_array, fd_array, app_files, runtime_files, app_ref_parts[1], app_ref_parts[3], runtime_ref, app_context, error))
+  if (!flatpak_run_add_app_info_args (argv_array, fd_array, app_files, runtime_files, app_ref_parts[1], app_ref_parts[3],
+                                      runtime_ref, app_context, &app_info_path, error))
     return FALSE;
 
   if (!flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
@@ -3399,10 +3514,12 @@ flatpak_run_app (const char     *app_ref,
   if (!option_no_desktop && !flatpak_run_in_transient_unit (app_ref_parts[1], error))
     return FALSE;
 
-  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0, sync_fds, error))
+  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
+                            sync_fds, app_info_path, error))
     return FALSE;
 
-  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0, sync_fds, error))
+  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
+                            sync_fds, app_info_path, error))
     return FALSE;
 
   if (sync_fds[1] != -1)

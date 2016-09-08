@@ -118,6 +118,7 @@ gboolean flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                         const char     *app_branch,
                                         const char     *runtime_ref,
                                         FlatpakContext *final_app_context,
+                                        char          **app_info_path_out,
                                         GError        **error);
 
 gboolean flatpak_run_app (const char     *app_ref,

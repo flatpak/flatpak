@@ -196,6 +196,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       app_id, NULL,
                                       runtime_ref,
                                       app_context,
+                                      NULL,
                                       error))
     return FALSE;
 
