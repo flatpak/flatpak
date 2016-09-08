@@ -3511,8 +3511,13 @@ flatpak_run_app (const char     *app_ref,
 
   /* Must run this before spawning the dbus proxy, to ensure it
      ends up in the app cgroup */
-  if (!option_no_desktop && !flatpak_run_in_transient_unit (app_ref_parts[1], error))
-    return FALSE;
+  if (!flatpak_run_in_transient_unit (app_ref_parts[1], &my_error))
+    {
+      /* We still run along even if we don't get a cgroup, as nothing
+         really depends on it. Its just nice to have */
+      g_debug ("Failed to run in transient scope: %s\n", my_error->message);
+      g_clear_error (&my_error);
+    }
 
   if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
                             sync_fds, app_info_path, error))
