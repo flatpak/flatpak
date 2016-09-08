@@ -1146,6 +1146,72 @@ ensure_app_ids (void)
                                      NULL, (GDestroyNotify) app_id_info_free);
 }
 
+/* Returns NULL on failure, "" if not sandboxed, and the app-id otherwise */
+static char *
+parse_app_id_from_fileinfo (int pid)
+{
+  g_autofree char *root_path = NULL;
+  g_autofree char *path = NULL;
+  g_autofree char *content = NULL;
+  g_autofree char *app_id = NULL;
+  glnx_fd_close int root_fd = -1;
+  glnx_fd_close int info_fd = -1;
+  struct stat stat_buf;
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GMappedFile) mapped = NULL;
+  g_autoptr(GKeyFile) metadata = NULL;
+
+  root_path = g_strdup_printf ("/proc/%u/root", pid);
+  root_fd = openat (AT_FDCWD, root_path, O_RDONLY | O_NONBLOCK | O_DIRECTORY | O_CLOEXEC | O_NOCTTY);
+  if (root_fd == -1)
+    {
+      /* Not able to open the root dir shouldn't happen. Probably the app died and
+         we're failing due to /proc/$pid not existing. In that case fail instead
+         of treating this as privileged. */
+      g_debug ("Unable to open %s", root_path);
+      return NULL;
+    }
+
+  info_fd = openat (root_fd, ".flatpak-info", O_RDONLY | O_CLOEXEC | O_NOCTTY);
+  if (info_fd == -1)
+    {
+      g_print ("errno = %s\n", strerror(errno));
+      if (errno == ENOENT)
+        return g_strdup (""); /* No file => on the host */
+      return NULL; /* Some weird error => failure */
+    }
+
+  if (fstat (info_fd, &stat_buf) != 0 || !S_ISREG (stat_buf.st_mode))
+    return NULL; /* Some weird fd => failure */
+
+  mapped = g_mapped_file_new_from_fd  (info_fd, FALSE, &local_error);
+  if (mapped == NULL)
+    {
+      g_warning ("Can't map .flatpak-info file: %s", local_error->message);
+      return NULL;
+    }
+
+  metadata = g_key_file_new ();
+
+  if (!g_key_file_load_from_data (metadata,
+                                  g_mapped_file_get_contents (mapped),
+                                  g_mapped_file_get_length (mapped),
+                                  G_KEY_FILE_NONE, &local_error))
+    {
+      g_warning ("Can't load .flatpak-info file: %s", local_error->message);
+      return NULL;
+    }
+
+  app_id = g_key_file_get_string (metadata, "Application", "name", &local_error);
+  if (app_id == NULL)
+    {
+      g_warning ("Can't get name from .flatpak-info file: %s", local_error->message);
+      return NULL;
+    }
+
+  return g_steal_pointer (&app_id);
+}
+
 static void
 got_credentials_cb (GObject      *source_object,
                     GAsyncResult *res,
@@ -1164,44 +1230,10 @@ got_credentials_cb (GObject      *source_object,
     {
       GVariant *body = g_dbus_message_get_body (reply);
       guint32 pid;
-      g_autofree char *path = NULL;
-      g_autofree char *content = NULL;
 
       g_variant_get (body, "(u)", &pid);
 
-      path = g_strdup_printf ("/proc/%u/cgroup", pid);
-
-      if (g_file_get_contents (path, &content, NULL, NULL))
-        {
-          gchar **lines =  g_strsplit (content, "\n", -1);
-          int i;
-
-          for (i = 0; lines[i] != NULL; i++)
-            {
-              if (g_str_has_prefix (lines[i], "1:name=systemd:"))
-                {
-                  const char *unit = lines[i] + strlen ("1:name=systemd:");
-                  g_autofree char *scope = g_path_get_basename (unit);
-
-                  if (g_str_has_prefix (scope, "flatpak-") &&
-                      g_str_has_suffix (scope, ".scope"))
-                    {
-                      const char *name = scope + strlen ("flatpak-");
-                      char *dash = strchr (name, '-');
-                      if (dash != NULL)
-                        {
-                          *dash = 0;
-                          info->app_id = g_strdup (name);
-                        }
-                    }
-                  else
-                    {
-                      info->app_id = g_strdup ("");
-                    }
-                }
-            }
-          g_strfreev (lines);
-        }
+      info->app_id = parse_app_id_from_fileinfo (pid);
     }
 
   for (l = info->pending; l != NULL; l = l->next)
