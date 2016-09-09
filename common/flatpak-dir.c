@@ -3140,7 +3140,7 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
 {
   g_autofree char *ref = NULL;
   gboolean added_remote = FALSE;
-  g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *origin = NULL;
   g_auto(GStrv) parts = NULL;
@@ -3178,6 +3178,9 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
       return TRUE;
     }
 
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
   metadata = flatpak_bundle_load (file, &to_checksum,
                                   &ref,
                                   &origin,
@@ -3193,31 +3196,49 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
   if (parts == NULL)
     return FALSE;
 
-  deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
-  if (deploy_dir != NULL)
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, cancellable, NULL);
+  if (deploy_data != NULL)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                   _("%s branch %s already installed"), parts[1], parts[3]);
-      return FALSE;
+      if (strcmp (flatpak_deploy_data_get_commit (deploy_data), to_checksum) == 0)
+        {
+          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                       _("This version of %s is already installed"), parts[1]);
+          return FALSE;
+        }
+      remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
+
+      /* We need to import any gpg keys because otherwise the pull will fail */
+      if (gpg_data != NULL)
+        {
+          g_autoptr(GInputStream) input_stream = g_memory_input_stream_new_from_bytes (gpg_data);
+          guint imported = 0;
+
+          if (!ostree_repo_remote_gpg_import (self->repo, remote, input_stream,
+                                              NULL, &imported, cancellable, error))
+            return FALSE;
+
+          /* XXX If we ever add internationalization, use ngettext() here. */
+          g_debug ("Imported %u GPG key%s to remote \"%s\"",
+                   imported, (imported == 1) ? "" : "s", remote);
+        }
     }
+  else
+    {
+      /* Add a remote for later updates */
+      basename = g_file_get_basename (file);
+      remote = flatpak_dir_create_origin_remote (self,
+                                                 origin,
+                                                 parts[1],
+                                                 basename,
+                                                 gpg_data,
+                                                 cancellable,
+                                                 error);
+      if (remote == NULL)
+        return FALSE;
 
-  /* Add a remote for later updates */
-  basename = g_file_get_basename (file);
-  remote = flatpak_dir_create_origin_remote (self,
-                                             origin,
-                                             parts[1],
-                                             basename,
-                                             gpg_data,
-                                             cancellable,
-                                             error);
-  if (remote == NULL)
-    return FALSE;
-
-  /* From here we need to goto out on error, to clean up */
-  added_remote = TRUE;
-
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
-    goto out;
+      /* From here we need to goto out on error, to clean up */
+      added_remote = TRUE;
+    }
 
   if (!flatpak_pull_from_bundle (self->repo,
                                  file,
@@ -3228,8 +3249,45 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
                                  error))
     goto out;
 
-  if (!flatpak_dir_deploy_install (self, ref, remote, NULL, cancellable, error))
-    goto out;
+  if (deploy_data != NULL)
+    {
+      g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote);
+      g_autofree char *old_url = NULL;
+      g_autoptr(GKeyFile) new_config = NULL;
+
+      /* The pull succeeded, and this is an update. So, we need to update the repo config
+         if anything changed */
+
+      ostree_repo_remote_get_url (self->repo,
+                                  remote,
+                                  &old_url,
+                                  NULL);
+      if (origin != NULL &&
+          (old_url == NULL || strcmp (old_url, origin) != 0))
+        {
+          if (new_config == NULL)
+            new_config = ostree_repo_copy_config (self->repo);
+
+          g_key_file_set_value (new_config, group, "url", origin);
+        }
+
+      if (new_config)
+        {
+          if (!ostree_repo_write_config (self->repo, new_config, error))
+            return FALSE;
+        }
+    }
+
+  if (deploy_data)
+    {
+      if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, cancellable, error))
+        goto out;
+    }
+  else
+    {
+      if (!flatpak_dir_deploy_install (self, ref, remote, NULL, cancellable, error))
+        goto out;
+    }
 
   if (out_ref)
     *out_ref = g_steal_pointer (&ref);

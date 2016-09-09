@@ -145,7 +145,6 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   char *branch = NULL;
   g_autofree char *ref = NULL;
   gboolean is_app;
-  g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GPtrArray) related = NULL;
   int i;
 
@@ -176,17 +175,6 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                      opt_app, opt_runtime, &is_app, cancellable, error);
   if (ref == NULL)
     return FALSE;
-
-  deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
-  if (deploy_dir != NULL)
-    {
-      g_auto(GStrv) parts =  flatpak_decompose_ref (ref, error);
-
-      return flatpak_fail (error,
-                           is_app ? _("App %s, branch %s is already installed")
-                                  : _("Runtime %s, branch %s is already installed"),
-                           name, parts[3]);
-    }
 
   if (!flatpak_dir_install (dir,
                             opt_no_pull,
