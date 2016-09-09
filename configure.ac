@@ -29,6 +29,7 @@ AC_INIT([Flatpak],
         [http://flatpak.org/])
 
 GLIB_REQS=2.40
+SYSTEM_BWRAP_REQS=0.1.2
 
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -112,7 +113,14 @@ AS_CASE([$BWRAP],
             [BWRAP=false],
         [auto],
             [AC_CHECK_PROG([BWRAP], [bwrap], [bwrap], [false])])
-AM_CONDITIONAL([WITH_SYSTEM_BWRAP], [test "x$BWRAP" != xfalse])
+if test "x$BWRAP" != xfalse; then
+   BWRAP_VERSION=`$BWRAP --version | sed 's,.*\ \([0-9]*\.[0-9]*\.[0-9]*\)$,\1,'`
+   AX_COMPARE_VERSION([$SYSTEM_BWRAP_REQS],[gt],[$BWRAP_VERSION],
+         AC_MSG_ERROR([You need at least version $SYSTEM_BWRAP_REQS of bubblewrap to use the system installed version]))
+   AM_CONDITIONAL([WITH_SYSTEM_BWRAP], [true])
+else
+   AM_CONDITIONAL([WITH_SYSTEM_BWRAP], [false])
+fi
 
 AC_CHECK_FUNCS(fdwalk)
 
