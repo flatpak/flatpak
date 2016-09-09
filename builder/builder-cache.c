@@ -305,7 +305,7 @@ builder_cache_checkout (BuilderCache *self, const char *commit, GError **error)
     return FALSE;
 
   /* There is a bug in ostree (https://github.com/ostreedev/ostree/issues/326) that
-     causes it to not reset mtime to 1 in this case (mismatching modes). So
+     causes it to not reset mtime to 0 in this case (mismatching modes). So
      we do that manually */
   if (!flatpak_zero_mtime (AT_FDCWD, flatpak_file_get_path_cached (self->app_dir),
                            NULL, error))
@@ -418,7 +418,7 @@ builder_cache_commit (BuilderCache *self,
 
   g_print ("Committing stage %s to cache\n", self->stage);
 
-  /* We set all mtimes to 1 during a commit, to simulate what would happen when
+  /* We set all mtimes to 0 during a commit, to simulate what would happen when
      running via flatpak deploy (and also if we checked out from the cache). */
   if (!flatpak_zero_mtime (AT_FDCWD, flatpak_file_get_path_cached (self->app_dir),
                            NULL, NULL))

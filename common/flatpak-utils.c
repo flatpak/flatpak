@@ -1729,10 +1729,10 @@ flatpak_zero_mtime (int parent_dfd,
         }
     }
 
-  /* OSTree checks out to mtime 1, so we do the same */
-  if (stbuf.st_mtime != 1)
+  /* OSTree checks out to mtime 0, so we do the same */
+  if (stbuf.st_mtime != OSTREE_TIMESTAMP)
     {
-      const struct timespec times[2] = { { 0, UTIME_OMIT }, { 1, } };
+      const struct timespec times[2] = { { 0, UTIME_OMIT }, { OSTREE_TIMESTAMP, } };
 
       if (TEMP_FAILURE_RETRY (utimensat (parent_dfd, rel_path, times, AT_SYMLINK_NOFOLLOW)) != 0)
         {

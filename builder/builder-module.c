@@ -1065,29 +1065,29 @@ fixup_python_timestamp (int dfd,
            * There are several possible cases wrt their mtimes:
            *
            * py not existing: pyc is stale, remove it
-           * pyc mtime == 1: (.pyc is from an old commited module)
-           *     py mtime == 1: Do nothing, already correct
-           *     py mtime != 1: The py changed in this module, remove pyc
-           * pyc mtime != 1: (.pyc changed this module, or was never rewritten in base layer)
-           *     py == 1: Shouldn't happen in flatpak-builder, but could be an un-rewritten ctime lower layer, assume it matches and update timestamp
+           * pyc mtime == 0: (.pyc is from an old commited module)
+           *     py mtime == 0: Do nothing, already correct
+           *     py mtime != 0: The py changed in this module, remove pyc
+           * pyc mtime != 0: (.pyc changed this module, or was never rewritten in base layer)
+           *     py == 0: Shouldn't happen in flatpak-builder, but could be an un-rewritten ctime lower layer, assume it matches and update timestamp
            *     py mtime != pyc mtime: new pyc doesn't match last py written in this module, remove it
-           *     py mtime == pyc mtime: These match, but the py will be set to mtime 1 by ostree, so update timestamp in pyc.
+           *     py mtime == pyc mtime: These match, but the py will be set to mtime 0 by ostree, so update timestamp in pyc.
            */
 
           if (fstatat (dfd_iter.fd, py_path, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
             {
               remove_pyc = TRUE;
             }
-          else if (pyc_mtime == 1)
+          else if (pyc_mtime == OSTREE_TIMESTAMP)
             {
-              if (stbuf.st_mtime == 1)
+              if (stbuf.st_mtime == OSTREE_TIMESTAMP)
                 continue; /* Previously handled pyc */
 
               remove_pyc = TRUE;
             }
-          else /* pyc_mtime != 1 */
+          else /* pyc_mtime != 0 */
             {
-              if (pyc_mtime != stbuf.st_mtime && stbuf.st_mtime != 1)
+              if (pyc_mtime != stbuf.st_mtime && stbuf.st_mtime != OSTREE_TIMESTAMP)
                 remove_pyc = TRUE;
               /* else change mtime */
             }
@@ -1101,8 +1101,8 @@ fixup_python_timestamp (int dfd,
               continue;
             }
 
-          /* Change to mtime 1 which is what ostree uses for checkouts */
-          buffer[4] = 1;
+          /* Change to mtime 0 which is what ostree uses for checkouts */
+          buffer[4] = OSTREE_TIMESTAMP;
           buffer[5] = buffer[6] = buffer[7] = 0;
 
           res = pwrite (fd, buffer, 8, 0);
