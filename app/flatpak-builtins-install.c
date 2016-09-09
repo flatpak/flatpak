@@ -45,6 +45,7 @@ static gboolean opt_no_related;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_bundle;
+static gboolean opt_from;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -54,6 +55,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Install from local bundle file"), NULL },
+  { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Load options from file"), N_("FILE") },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { NULL }
@@ -101,7 +103,7 @@ read_gpg_data (GCancellable *cancellable,
   return flatpak_read_stream (source_stream, FALSE, error);
 }
 
-gboolean
+static gboolean
 install_bundle (FlatpakDir *dir,
                 GOptionContext *context,
                 int argc, char **argv,
@@ -135,51 +137,24 @@ install_bundle (FlatpakDir *dir,
   return TRUE;
 }
 
-gboolean
-flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
+static gboolean
+do_install (FlatpakDir          *dir,
+            gboolean             no_pull,
+            gboolean             no_deploy,
+            const char          *ref,
+            const char          *remote_name,
+            const char         **opt_subpaths,
+            GCancellable        *cancellable,
+            GError             **error)
 {
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) dir = NULL;
-  const char *repository;
-  char *name;
-  char *branch = NULL;
-  g_autofree char *ref = NULL;
-  gboolean is_app;
   g_autoptr(GPtrArray) related = NULL;
   int i;
-
-  context = g_option_context_new (_("REPOSITORY NAME [BRANCH] - Install an application or runtime"));
-  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
-
-  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
-    return FALSE;
-
-  if (opt_bundle)
-    return install_bundle (dir, context, argc, argv, cancellable, error);
-
-  if (argc < 3)
-    return usage_error (context, _("REPOSITORY and NAME must be specified"), error);
-
-  repository = argv[1];
-  name  = argv[2];
-  if (argc >= 4)
-    branch = argv[3];
-
-  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
-    return FALSE;
-
-  if (!opt_app && !opt_runtime)
-    opt_app = opt_runtime = TRUE;
-
-  ref = flatpak_dir_find_remote_ref (dir, repository, name, branch, opt_arch,
-                                     opt_app, opt_runtime, &is_app, cancellable, error);
-  if (ref == NULL)
-    return FALSE;
 
   if (!flatpak_dir_install (dir,
                             opt_no_pull,
                             opt_no_deploy,
-                            ref, repository, (const char **)opt_subpaths,
+                            ref, remote_name,
+                            (const char **)opt_subpaths,
                             NULL,
                             cancellable, error))
     return FALSE;
@@ -189,9 +164,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autoptr(GError) local_error = NULL;
 
       if (opt_no_pull)
-        related = flatpak_dir_find_local_related (dir, ref, repository, NULL, &local_error);
+        related = flatpak_dir_find_local_related (dir, ref, remote_name, NULL, &local_error);
       else
-        related = flatpak_dir_find_remote_related (dir, ref, repository, NULL, &local_error);
+        related = flatpak_dir_find_remote_related (dir, ref, remote_name, NULL, &local_error);
       if (related == NULL)
         {
           g_printerr (_("Warning: Problem looking for related refs: %s\n"), local_error->message);
@@ -214,7 +189,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
               if (!flatpak_dir_install_or_update (dir,
                                                   opt_no_pull,
                                                   opt_no_deploy,
-                                                  rel->ref, repository,
+                                                  rel->ref, remote_name,
                                                   (const char **)rel->subpaths,
                                                   NULL,
                                                   cancellable, &local_error))
@@ -226,6 +201,110 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
             }
         }
     }
+
+  return TRUE;
+}
+
+static gboolean
+install_from (FlatpakDir *dir,
+              GOptionContext *context,
+              int argc, char **argv,
+              GCancellable *cancellable,
+              GError **error)
+{
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GBytes) file_data = NULL;
+  g_autofree char *data = NULL;
+  gsize data_len;
+  const char *filename;
+  g_autofree char *remote = NULL;
+  g_autofree char *ref = NULL;
+  g_auto(GStrv) parts = NULL;
+  FlatpakDir *clone;
+
+  if (argc < 2)
+    return usage_error (context, _("Filename must be specified"), error);
+
+  filename = argv[1];
+
+  file = g_file_new_for_commandline_arg (filename);
+
+  if (!g_file_load_contents (file, cancellable, &data, &data_len, NULL, error))
+      return FALSE;
+
+  file_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
+
+  if (!flatpak_dir_create_remote_for_ref_file (dir, file_data, &remote, &ref, error))
+    return FALSE;
+
+  /* Need to pick up the new config, in case it was applied in the system helper. */
+  clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (clone, cancellable, error))
+    return FALSE;
+
+  parts = g_strsplit (ref, "/", 0);
+  g_print (_("Installing: %s\n"), parts[1]);
+
+  if (!do_install (clone,
+                   opt_no_pull,
+                   opt_no_deploy,
+                   ref, remote,
+                   (const char **)opt_subpaths,
+                   cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(FlatpakDir) dir = NULL;
+  const char *repository;
+  char *name;
+  char *branch = NULL;
+  g_autofree char *ref = NULL;
+  gboolean is_app;
+
+  context = g_option_context_new (_("REPOSITORY NAME [BRANCH] - Install an application or runtime"));
+  g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
+
+  if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
+    return FALSE;
+
+  if (opt_bundle)
+    return install_bundle (dir, context, argc, argv, cancellable, error);
+
+  if (opt_from)
+    return install_from (dir, context, argc, argv, cancellable, error);
+
+  if (argc < 3)
+    return usage_error (context, _("REPOSITORY and NAME must be specified"), error);
+
+  repository = argv[1];
+  name  = argv[2];
+  if (argc >= 4)
+    branch = argv[3];
+
+  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
+    return FALSE;
+
+  if (!opt_app && !opt_runtime)
+    opt_app = opt_runtime = TRUE;
+
+  ref = flatpak_dir_find_remote_ref (dir, repository, name, branch, opt_arch,
+                                     opt_app, opt_runtime, &is_app, cancellable, error);
+  if (ref == NULL)
+    return FALSE;
+
+  if (!do_install (dir,
+                   opt_no_pull,
+                   opt_no_deploy,
+                   ref, repository,
+                   (const char **)opt_subpaths,
+                   cancellable, error))
+    return FALSE;
 
   return TRUE;
 }
