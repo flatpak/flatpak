@@ -30,6 +30,7 @@ AC_INIT([Flatpak],
 
 GLIB_REQS=2.40
 SYSTEM_BWRAP_REQS=0.1.2
+OSTREE_REQS=2016.10
 
 AC_USE_SYSTEM_EXTENSIONS
 
@@ -168,7 +169,7 @@ if test "x$enable_sandboxed_triggers" = "xno"; then
       [Define if sandboxed triggers are disabled])
 fi
 
-PKG_CHECK_MODULES(OSTREE, [ostree-1 >= 2016.7])
+PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
 save_LIBS=$LIBS
 save_CFLAGS=$CFLAGS
 LIBS=$OSTREE_LIBS
