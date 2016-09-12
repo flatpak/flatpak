@@ -848,16 +848,16 @@ write_uint32 (Header *header, guint8 *ptr, guint32 val)
     *(guint32 *) ptr = GUINT32_TO_LE (val);
 }
 
-static guint32
+static inline guint32
 align_by_8 (guint32 offset)
 {
-  return 8 * ((offset + 7) / 8);
+  return (offset + 8 - 1) & ~(8 - 1);
 }
 
-static guint32
+static inline guint32
 align_by_4 (guint32 offset)
 {
-  return 4 * ((offset + 3) / 4);
+  return (offset + 4 - 1) & ~(4 - 1);
 }
 
 static const char *
