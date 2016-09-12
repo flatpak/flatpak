@@ -6,7 +6,9 @@ TESTS_ENVIRONMENT += FLATPAK_TESTS_DEBUG=1 \
 	PATH=$$(cd $(top_builddir) && pwd):$${PATH} \
 	$(NULL)
 
-if !WITH_SYSTEM_BWRAP
+if WITH_SYSTEM_BWRAP
+TESTS_ENVIRONMENT += FLATPAK_BWRAP=$(BWRAP)
+else
 TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
 endif
 
@@ -72,13 +74,14 @@ tests/test-basic.sh: tests/package_version.txt
 
 dist_installed_test_extra_scripts += \
 	buildutil/tap-driver.sh \
+	tests/empty-configure \
 	tests/test-configure \
 	tests/make-test-app.sh \
 	tests/make-test-runtime.sh \
 	tests/make-test-bundles.sh \
 	$(NULL)
 
-installed_test_data = \
+dist_installed_test_data = \
 	tests/libtest.sh \
 	tests/org.test.Hello.png \
 	tests/package_version.txt \
@@ -86,7 +89,6 @@ installed_test_data = \
 	tests/session.conf.in \
 	tests/0001-Add-test-logo.patch \
 	tests/org.test.Python.json \
-	tests/empty-configure \
 	tests/testpython.py \
 	tests/importme.py \
 	tests/importme2.py \
@@ -103,8 +105,6 @@ dist_installed_test_keyring_DATA = \
 	$(NULL)
 dist_installed_test_dbs_DATA = tests/dbs/no_tables
 endif
-
-EXTRA_DIST += $(installed_test_data)
 
 dist_test_scripts = \
 	tests/test-basic.sh \

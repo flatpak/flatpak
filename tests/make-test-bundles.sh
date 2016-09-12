@@ -25,3 +25,5 @@ flatpak build-bundle repo --repo-url=${URL} --gpg-keys=test-keyring/pubring.gpg 
 REF=`(cd repo/refs/heads; echo runtime/org.test.Platform/*/master)`
 ostree gpg-sign --repo=repo --gpg-homedir=test-keyring ${REF} 7B0961FD
 flatpak build-bundle --runtime repo --repo-url=${URL} --gpg-keys=test-keyring/pubring.gpg platform.flatpak org.test.Platform
+
+gpg-connect-agent --homedir test-keyring killagent /bye || true
