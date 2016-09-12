@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-09-12 13:34+0200\n"
-"PO-Revision-Date: 2016-08-05 15:15+0200\n"
+"POT-Creation-Date: 2016-09-12 17:58+0200\n"
+"PO-Revision-Date: 2016-09-12 18:02+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -100,6 +100,7 @@ msgstr "Należy podać NAZWĘ"
 msgid "LOCATION must be specified"
 msgstr "Należy podać POŁOŻENIE"
 
+#. Do nothing
 #: app/flatpak-builtins-add-remote.c:294
 #, c-format
 msgid "Remote %s already exists"
@@ -298,8 +299,8 @@ msgstr "KATALOG-DOMOWY"
 #: app/flatpak-builtins-build-commit-from.c:76
 msgid "DST-REPO [DST-REF]... - Make a new commit based on existing commit(s)"
 msgstr ""
-"REPOZYTORIUM-DOCELOWE [ODNIESIENIE-DOCELOWE]… — tworzy nowe zatwierdzenie "
-"w oparciu o istniejące zatwierdzenia"
+"REPOZYTORIUM-DOCELOWE [ODNIESIENIE-DOCELOWE]… — tworzy nowe zatwierdzenie na "
+"podstawie istniejącego zatwierdzenia"
 
 #: app/flatpak-builtins-build-commit-from.c:83
 msgid "DST-REPO must be specified"
@@ -521,10 +522,9 @@ msgid "Look for runtime with the specified name"
 msgstr "Wyszukuje środowisko wykonawcze o podanej nazwie"
 
 #: app/flatpak-builtins-build-sign.c:62
-#, fuzzy
 msgid "LOCATION ID [BRANCH] - Sign an application or runtime"
 msgstr ""
-"REPOZYTORIUM NAZWA [GAŁĄŹ] — instaluje program lub środowisko wykonawcze"
+"POŁOŻENIE IDENTYFIKATOR [GAŁĄŹ] — podpisuje program lub środowisko wykonawcze"
 
 #: app/flatpak-builtins-build-sign.c:89
 msgid "No gpg key ids specified"
@@ -745,14 +745,13 @@ msgstr ""
 "Ostrzeżenie: zainstalowanie powiązanego odniesienia się nie powiodło: %s\n"
 
 #: app/flatpak-builtins-install.c:226
-#, fuzzy
 msgid "Filename must be specified"
-msgstr "Należy podać nazwę pliku pakietu"
+msgstr "Należy podać nazwę pliku"
 
 #: app/flatpak-builtins-install.c:246
-#, fuzzy, c-format
+#, c-format
 msgid "Installing: %s\n"
-msgstr "Instalowanie powiązanych: %s\n"
+msgstr "Instalowanie: %s\n"
 
 #: app/flatpak-builtins-install.c:270
 msgid "REPOSITORY NAME [BRANCH] - Install an application or runtime"
@@ -1056,6 +1055,7 @@ msgstr "Błąd podczas aktualizowania: %s\n"
 msgid "One or more updates failed"
 msgstr "Jedna lub więcej aktualizacji się nie powiodła"
 
+#. translators: please keep the leading space
 #: app/flatpak-main.c:56
 msgid " Manage installed apps and runtimes"
 msgstr " Zarządza zainstalowanymi programami i środowiskami wykonawczymi"
@@ -1081,6 +1081,7 @@ msgid "Show info for installed app or runtime"
 msgstr ""
 "Wyświetla informacje o zainstalowanym programie lub środowisku wykonawczym"
 
+#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:64
 msgid ""
 "\n"
@@ -1105,6 +1106,7 @@ msgstr "Określa domyślnie uruchamianą wersję"
 msgid "Enter the namespace of a running application"
 msgstr "Przestrzeń nazw działającego programu"
 
+#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:71
 msgid ""
 "\n"
@@ -1129,6 +1131,7 @@ msgstr "Wyświetla informacje o podanym pliku"
 msgid "List exported files"
 msgstr "Wyświetla listę wyeksportowanych plików"
 
+#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:78
 msgid ""
 "\n"
@@ -1157,6 +1160,7 @@ msgstr "Wyświetla listę wszystkich skonfigurowanych repozytoriów"
 msgid "List contents of a configured remote"
 msgstr "Wyświetla listę zawartości skonfigurowanego repozytorium"
 
+#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:86
 msgid ""
 "\n"
@@ -1199,7 +1203,7 @@ msgstr "Aktualizuje plik podsumowania w repozytorium"
 
 #: app/flatpak-main.c:95
 msgid "Create new commit based on existing ref"
-msgstr "Tworzy nowe zatwierdzenie w oparciu o istniejące odniesienie"
+msgstr "Tworzy nowe zatwierdzenie na podstawie istniejącego odniesienia"
 
 #: app/flatpak-main.c:101
 msgid "Print debug information during command processing"
@@ -1326,9 +1330,9 @@ msgid "While trying to checkout metadata subpath: "
 msgstr "Podczas wymeldowywania podścieżki metadanych: "
 
 #: common/flatpak-dir.c:3204
-#, fuzzy, c-format
+#, c-format
 msgid "This version of %s is already installed"
-msgstr "Już zainstalowano program %s, gałąź %s"
+msgstr "Ta wersja programu %s jest już zainstalowana"
 
 #: common/flatpak-dir.c:3637
 #, c-format
@@ -1407,9 +1411,9 @@ msgid "Unknown device type %s, valid types are: %s"
 msgstr "Nieznany typ urządzenia %s, prawidłowe typy: %s"
 
 #: common/flatpak-run.c:367
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown feature type %s, valid types are: %s"
-msgstr "Nieznany typ udziału %s, prawidłowe typy: %s"
+msgstr "Nieznany typ funkcji %s, prawidłowe typy: %s"
 
 #: common/flatpak-run.c:629
 #, c-format
@@ -1463,16 +1467,15 @@ msgstr "Nie udostępnia urządzenia programowi"
 
 #: common/flatpak-run.c:969
 msgid "Allow feature"
-msgstr ""
+msgstr "Zezwala na funkcję"
 
 #: common/flatpak-run.c:969 common/flatpak-run.c:970
 msgid "FEATURE"
-msgstr ""
+msgstr "FUNKCJA"
 
 #: common/flatpak-run.c:970
-#, fuzzy
 msgid "Don't allow feature"
-msgstr "Bez instalowania powiązanych odniesień"
+msgstr "Bez zezwolenia na funkcję"
 
 #: common/flatpak-run.c:971
 msgid "Expose filesystem to app (:ro for read-only)"
@@ -1527,6 +1530,7 @@ msgstr "Trwały katalog domowy"
 msgid "FILENAME"
 msgstr "NAZWA-PLIKU"
 
+#. This is not needed/used anymore, so hidden, but we accept it for backwards compat
 #: common/flatpak-run.c:980
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
@@ -1544,9 +1548,8 @@ msgid "Failed to write to temporary file"
 msgstr "Zapisanie do pliku tymczasowego się nie powiodło"
 
 #: common/flatpak-run.c:2602
-#, fuzzy
 msgid "Failed to open flatpak-info temp file"
-msgstr "Otwarcie pliku tymczasowego się nie powiodło"
+msgstr "Otwarcie pliku tymczasowego „flatpak-info” się nie powiodło"
 
 #: common/flatpak-run.c:2629
 msgid "Failed to open temp file"
@@ -1557,76 +1560,159 @@ msgid "Unable to create sync pipe"
 msgstr "Utworzenie potoku synchronizacji się nie powiodło"
 
 #: common/flatpak-run.c:2920
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open app info file: %s"
-msgstr "Otwarcie pliku tymczasowego się nie powiodło"
+msgstr "Otwarcie pliku informacji o programie się nie powiodło: %s"
 
 #: common/flatpak-run.c:2950
 msgid "Failed to sync with dbus proxy"
 msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 
-#~ msgid "LOCATION ID [BRANCH] - Create a repository from a build directory"
-#~ msgstr ""
-#~ "POŁOŻENIE IDENTYFIKATOR [GAŁĄŹ] — tworzy repozytorium z katalogu budowania"
+#.
+#. Policy definitions for Flatpak system actions.
+#. Copyright (c) 2016 Alexander Larsson <alexl@redhat.com>
+#: system-helper/org.freedesktop.Flatpak.policy.in:12
+msgid "The Flatpak Project"
+msgstr "Projekt Flatpak"
 
-#~ msgid "The Flatpak Project"
-#~ msgstr "Projekt Flatpak"
+#: system-helper/org.freedesktop.Flatpak.policy.in:13
+msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
 
-#~ msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
-#~ msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+#: system-helper/org.freedesktop.Flatpak.policy.in:14
+#: system-helper/org.freedesktop.Flatpak.policy.in:25
+#: system-helper/org.freedesktop.Flatpak.policy.in:42
+#: system-helper/org.freedesktop.Flatpak.policy.in:60
+#: system-helper/org.freedesktop.Flatpak.policy.in:78
+#: system-helper/org.freedesktop.Flatpak.policy.in:89
+#: system-helper/org.freedesktop.Flatpak.policy.in:100
+#: system-helper/org.freedesktop.Flatpak.policy.in:111
+#: system-helper/org.freedesktop.Flatpak.policy.in:122
+#: system-helper/org.freedesktop.Flatpak.policy.in:140
+msgid "package-x-generic"
+msgstr "package-x-generic"
 
-#~ msgid "package-x-generic"
-#~ msgstr "package-x-generic"
+#. SECURITY:
+#. - Normal users do not need authentication to install signed applications
+#. from signed repositories, as this cannot exploit a system.
+#. - Paranoid users (or parents!) can change this to 'auth_admin' or
+#. 'auth_admin_keep'.
+#: system-helper/org.freedesktop.Flatpak.policy.in:23
+msgid "Install signed application"
+msgstr "Instalacja podpisanego programu"
 
-#~ msgid "Install signed application"
-#~ msgstr "Instalacja podpisanego programu"
+#: system-helper/org.freedesktop.Flatpak.policy.in:24
+#: system-helper/org.freedesktop.Flatpak.policy.in:41
+msgid "Authentication is required to install software"
+msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
 
-#~ msgid "Authentication is required to install software"
-#~ msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
+#: system-helper/org.freedesktop.Flatpak.policy.in:27
+#: system-helper/org.freedesktop.Flatpak.policy.in:28
+#: system-helper/org.freedesktop.Flatpak.policy.in:44
+#: system-helper/org.freedesktop.Flatpak.policy.in:45
+#: system-helper/org.freedesktop.Flatpak.policy.in:62
+#: system-helper/org.freedesktop.Flatpak.policy.in:63
+#: system-helper/org.freedesktop.Flatpak.policy.in:80
+#: system-helper/org.freedesktop.Flatpak.policy.in:81
+#: system-helper/org.freedesktop.Flatpak.policy.in:91
+#: system-helper/org.freedesktop.Flatpak.policy.in:92
+#: system-helper/org.freedesktop.Flatpak.policy.in:102
+#: system-helper/org.freedesktop.Flatpak.policy.in:103
+#: system-helper/org.freedesktop.Flatpak.policy.in:113
+#: system-helper/org.freedesktop.Flatpak.policy.in:114
+#: system-helper/org.freedesktop.Flatpak.policy.in:124
+#: system-helper/org.freedesktop.Flatpak.policy.in:125
+#: system-helper/org.freedesktop.Flatpak.policy.in:126
+#: system-helper/org.freedesktop.Flatpak.policy.in:142
+#: system-helper/org.freedesktop.Flatpak.policy.in:143
+msgid "auth_admin"
+msgstr "auth_admin"
 
-#~ msgid "auth_admin"
-#~ msgstr "auth_admin"
+#: system-helper/org.freedesktop.Flatpak.policy.in:29
+#: system-helper/org.freedesktop.Flatpak.policy.in:46
+#: system-helper/org.freedesktop.Flatpak.policy.in:93
+#: system-helper/org.freedesktop.Flatpak.policy.in:104
+#: system-helper/org.freedesktop.Flatpak.policy.in:115
+msgid "auth_admin_keep"
+msgstr "auth_admin_keep"
 
-#~ msgid "auth_admin_keep"
-#~ msgstr "auth_admin_keep"
+#. SECURITY:
+#. - Normal users do not need authentication to install signed applications
+#. from signed repositories, as this cannot exploit a system.
+#. - Paranoid users (or parents!) can change this to 'auth_admin' or
+#. 'auth_admin_keep'.
+#: system-helper/org.freedesktop.Flatpak.policy.in:40
+msgid "Install signed runtime"
+msgstr "Instalacja podpisanego środowiska wykonawczego"
 
-#~ msgid "Install signed runtime"
-#~ msgstr "Instalacja podpisanego środowiska wykonawczego"
+#. SECURITY:
+#. - Normal users do not require admin authentication to update an
+#. app as the commit will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:58
+msgid "Update signed application"
+msgstr "Aktualizacja podpisanego programu"
 
-#~ msgid "Update signed application"
-#~ msgstr "Aktualizacja podpisanego programu"
+#: system-helper/org.freedesktop.Flatpak.policy.in:59
+#: system-helper/org.freedesktop.Flatpak.policy.in:77
+#: system-helper/org.freedesktop.Flatpak.policy.in:139
+msgid "Authentication is required to update software"
+msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować oprogramowanie"
 
-#~ msgid "Authentication is required to update software"
-#~ msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować oprogramowanie"
+#: system-helper/org.freedesktop.Flatpak.policy.in:64
+#: system-helper/org.freedesktop.Flatpak.policy.in:82
+#: system-helper/org.freedesktop.Flatpak.policy.in:144
+msgid "yes"
+msgstr "yes"
 
-#~ msgid "yes"
-#~ msgstr "yes"
+#. SECURITY:
+#. - Normal users do not require admin authentication to update a
+#. runtime as the commit will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:76
+msgid "Update signed runtime"
+msgstr "Aktualizacja podpisanego środowiska wykonawczego"
 
-#~ msgid "Update signed runtime"
-#~ msgstr "Aktualizacja podpisanego środowiska wykonawczego"
+#: system-helper/org.freedesktop.Flatpak.policy.in:87
+msgid "Install bundle"
+msgstr "Instalacja pakietu"
 
-#~ msgid "Install bundle"
-#~ msgstr "Instalacja pakietu"
+#: system-helper/org.freedesktop.Flatpak.policy.in:88
+msgid "Authentication is install software"
+msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
 
-#~ msgid "Authentication is install software"
-#~ msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
+#: system-helper/org.freedesktop.Flatpak.policy.in:98
+msgid "Uninstall runtime"
+msgstr "Deinstalacja środowiska wykonawczego"
 
-#~ msgid "Uninstall runtime"
-#~ msgstr "Deinstalacja środowiska wykonawczego"
+#: system-helper/org.freedesktop.Flatpak.policy.in:99
+#: system-helper/org.freedesktop.Flatpak.policy.in:110
+msgid "Authentication is required to uninstall software"
+msgstr "Wymagane jest uwierzytelnienie, aby odinstalować oprogramowanie"
 
-#~ msgid "Authentication is required to uninstall software"
-#~ msgstr "Wymagane jest uwierzytelnienie, aby odinstalować oprogramowanie"
+#: system-helper/org.freedesktop.Flatpak.policy.in:109
+msgid "Uninstall app"
+msgstr "Deinstalacja programu"
 
-#~ msgid "Uninstall app"
-#~ msgstr "Deinstalacja programu"
+#: system-helper/org.freedesktop.Flatpak.policy.in:120
+msgid "Configure Remote"
+msgstr "Konfiguracja repozytorium"
 
-#~ msgid "Configure Remote"
-#~ msgstr "Konfiguracja repozytorium"
+#: system-helper/org.freedesktop.Flatpak.policy.in:121
+msgid "Authentication is required to configure software repositories"
+msgstr ""
+"Wymagane jest uwierzytelnienie, aby skonfigurować repozytoria oprogramowania"
 
-#~ msgid "Authentication is required to configure software repositories"
-#~ msgstr ""
-#~ "Wymagane jest uwierzytelnienie, aby skonfigurować repozytoria "
-#~ "oprogramowania"
-
-#~ msgid "Update appstream"
-#~ msgstr "Aktualizacja danych AppStream"
+#. SECURITY:
+#. - Normal users do not require admin authentication to update
+#. appstream data as it will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:138
+msgid "Update appstream"
+msgstr "Aktualizacja danych AppStream"
