@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-09-11 02:24+0000\n"
+"POT-Creation-Date: 2016-09-12 13:07+0200\n"
 "PO-Revision-Date: 2016-09-11 21:29+0200\n"
+"Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 1 : (n>=2 && n<=4) ? 2 : 0;\n"
-"Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "X-Generator: Poedit 1.8.8\n"
 
 #: app/flatpak-builtins-add-remote.c:58
@@ -101,7 +101,6 @@ msgstr "NÁZOV musí byť určený"
 msgid "LOCATION must be specified"
 msgstr "UMIESTNENIE musí byť určené"
 
-#. Do nothing
 #: app/flatpak-builtins-add-remote.c:294
 #, c-format
 msgid "Remote %s already exists"
@@ -161,8 +160,8 @@ msgid "LOCATION, FILENAME and NAME must be specified"
 msgstr ""
 
 #: app/flatpak-builtins-build-bundle.c:919
-#: app/flatpak-builtins-build-commit-from.c:102
-#: app/flatpak-builtins-build-commit-from.c:112
+#: app/flatpak-builtins-build-commit-from.c:101
+#: app/flatpak-builtins-build-commit-from.c:111
 #: app/flatpak-builtins-build-import-bundle.c:307
 #, c-format
 msgid "'%s' is not a valid repository"
@@ -213,7 +212,7 @@ msgstr "ADRESÁR musí byť určený"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:244 common/flatpak-run.c:3598
+#: app/flatpak-builtins-build.c:244 common/flatpak-run.c:3597
 msgid "Unable to start app"
 msgstr "Nie je možné spustiť aplikáciu"
 
@@ -293,29 +292,29 @@ msgstr ""
 msgid "HOMEDIR"
 msgstr ""
 
-#: app/flatpak-builtins-build-commit-from.c:77
+#: app/flatpak-builtins-build-commit-from.c:76
 msgid "DST-REPO [DST-REF]... - Make a new commit based on existing commit(s)"
 msgstr ""
 
-#: app/flatpak-builtins-build-commit-from.c:84
+#: app/flatpak-builtins-build-commit-from.c:83
 msgid "DST-REPO must be specified"
 msgstr ""
 
-#: app/flatpak-builtins-build-commit-from.c:92
+#: app/flatpak-builtins-build-commit-from.c:91
 msgid ""
 "If --src-repo is not specified, exactly one destination ref must be specified"
 msgstr ""
 
-#: app/flatpak-builtins-build-commit-from.c:95
+#: app/flatpak-builtins-build-commit-from.c:94
 msgid ""
 "If --src-ref is specified, exactly one destination ref must be specified"
 msgstr ""
 
-#: app/flatpak-builtins-build-commit-from.c:98
+#: app/flatpak-builtins-build-commit-from.c:97
 msgid "Either --src-repo or --src-ref must be specified."
 msgstr ""
 
-#: app/flatpak-builtins-build-commit-from.c:247
+#: app/flatpak-builtins-build-commit-from.c:246
 msgid "Can't commit from partial source commit."
 msgstr ""
 
@@ -510,8 +509,9 @@ msgid "Look for runtime with the specified name"
 msgstr ""
 
 #: app/flatpak-builtins-build-sign.c:62
-msgid "LOCATION ID [BRANCH] - Create a repository from a build directory"
-msgstr ""
+#, fuzzy
+msgid "LOCATION ID [BRANCH] - Sign an application or runtime"
+msgstr "Podpíše aplikáciu alebo rozhranie"
 
 #: app/flatpak-builtins-build-sign.c:89
 msgid "No gpg key ids specified"
@@ -1029,7 +1029,6 @@ msgstr "Chyba počas aktualizácie: %s\n"
 msgid "One or more updates failed"
 msgstr "Jedna alebo viacero aktualizácií zlyhali"
 
-#. translators: please keep the leading space
 #: app/flatpak-main.c:56
 msgid " Manage installed apps and runtimes"
 msgstr " Správa nainštalovaných aplikácií a rozhraní"
@@ -1054,7 +1053,6 @@ msgstr ""
 msgid "Show info for installed app or runtime"
 msgstr ""
 
-#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:64
 msgid ""
 "\n"
@@ -1079,7 +1077,6 @@ msgstr ""
 msgid "Enter the namespace of a running application"
 msgstr ""
 
-#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:71
 msgid ""
 "\n"
@@ -1104,7 +1101,6 @@ msgstr ""
 msgid "List exported files"
 msgstr ""
 
-#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:78
 msgid ""
 "\n"
@@ -1133,7 +1129,6 @@ msgstr "Zoznam všetkých konfigurovaných vzdialených repozitárov"
 msgid "List contents of a configured remote"
 msgstr ""
 
-#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:86
 msgid ""
 "\n"
@@ -1229,7 +1224,7 @@ msgid "No overrides found for %s"
 msgstr ""
 
 #: common/flatpak-dir.c:564 common/flatpak-dir.c:798 common/flatpak-dir.c:834
-#: common/flatpak-dir.c:856 common/flatpak-dir.c:5596
+#: common/flatpak-dir.c:856 common/flatpak-dir.c:5599
 #: common/flatpak-utils.c:765
 #, c-format
 msgid "%s not installed"
@@ -1302,7 +1297,7 @@ msgstr ""
 msgid "While trying to checkout metadata subpath: "
 msgstr ""
 
-#: common/flatpak-dir.c:3205
+#: common/flatpak-dir.c:3204
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Táto verzia aplikácie %s je už nainštalovaná"
@@ -1327,34 +1322,34 @@ msgstr "Nič nevyhovuje názvu %s"
 msgid "%s %s not installed"
 msgstr "Aplikácia %s %s nie je nainštalovaná"
 
-#: common/flatpak-dir.c:4894
+#: common/flatpak-dir.c:4897
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Rozhranie %s, vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:4895
+#: common/flatpak-dir.c:4898
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr ""
 
-#: common/flatpak-dir.c:5222
+#: common/flatpak-dir.c:5225
 msgid "Remote title not available; server has no summary file"
 msgstr ""
 
-#: common/flatpak-dir.c:5237
+#: common/flatpak-dir.c:5240
 msgid "Remote title not set"
 msgstr ""
 
-#: common/flatpak-dir.c:5265
+#: common/flatpak-dir.c:5268
 msgid "Data not found"
 msgstr "Údaje sa nenašli"
 
-#: common/flatpak-dir.c:5274
+#: common/flatpak-dir.c:5277
 #, c-format
 msgid "Data not found for ref %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5322 common/flatpak-dir.c:5460
+#: common/flatpak-dir.c:5325 common/flatpak-dir.c:5463
 msgid "Data not available; server has no summary file"
 msgstr ""
 
@@ -1501,7 +1496,6 @@ msgstr ""
 msgid "FILENAME"
 msgstr "NÁZOV_SÚBORU"
 
-#. This is not needed/used anymore, so hidden, but we accept it for backwards compat
 #: common/flatpak-run.c:980
 msgid "Don't require a running session (no cgroups creation)"
 msgstr ""
@@ -1518,172 +1512,57 @@ msgstr ""
 msgid "Failed to write to temporary file"
 msgstr "Zlyhal zápis dočasného súboru"
 
-#: common/flatpak-run.c:2603
+#: common/flatpak-run.c:2602
 msgid "Failed to open flatpak-info temp file"
 msgstr "Zlyhalo otvorenie dočasného súboru flatpak-info"
 
-#: common/flatpak-run.c:2630
+#: common/flatpak-run.c:2629
 msgid "Failed to open temp file"
 msgstr "Zlyhalo otvorenie súboru temp"
 
-#: common/flatpak-run.c:2896
+#: common/flatpak-run.c:2895
 msgid "Unable to create sync pipe"
 msgstr ""
 
-#: common/flatpak-run.c:2921
+#: common/flatpak-run.c:2920
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Zlyhalo otvorenie súboru s informáciami o aplikácii: %s"
 
-#: common/flatpak-run.c:2951
+#: common/flatpak-run.c:2950
 msgid "Failed to sync with dbus proxy"
 msgstr ""
 
-#.
-#. Policy definitions for Flatpak system actions.
-#. Copyright (c) 2016 Alexander Larsson <alexl@redhat.com>
-#: system-helper/org.freedesktop.Flatpak.policy.in:12
-msgid "The Flatpak Project"
-msgstr "Projekt Flatpak"
+#~ msgid "The Flatpak Project"
+#~ msgstr "Projekt Flatpak"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:13
-msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
-msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+#~ msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+#~ msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:14
-#: system-helper/org.freedesktop.Flatpak.policy.in:25
-#: system-helper/org.freedesktop.Flatpak.policy.in:42
-#: system-helper/org.freedesktop.Flatpak.policy.in:60
-#: system-helper/org.freedesktop.Flatpak.policy.in:78
-#: system-helper/org.freedesktop.Flatpak.policy.in:89
-#: system-helper/org.freedesktop.Flatpak.policy.in:100
-#: system-helper/org.freedesktop.Flatpak.policy.in:111
-#: system-helper/org.freedesktop.Flatpak.policy.in:122
-#: system-helper/org.freedesktop.Flatpak.policy.in:140
-msgid "package-x-generic"
-msgstr "package-x-generic"
+#~ msgid "package-x-generic"
+#~ msgstr "package-x-generic"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:23
-msgid "Install signed application"
-msgstr "Inštalácia podpísanej aplikácie"
+#~ msgid "Install signed application"
+#~ msgstr "Inštalácia podpísanej aplikácie"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:24
-#: system-helper/org.freedesktop.Flatpak.policy.in:41
-msgid "Authentication is required to install software"
-msgstr "Na inštaláciu softvéru sa vyžaduje overenie totožnosti"
+#~ msgid "Authentication is required to install software"
+#~ msgstr "Na inštaláciu softvéru sa vyžaduje overenie totožnosti"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:27
-#: system-helper/org.freedesktop.Flatpak.policy.in:28
-#: system-helper/org.freedesktop.Flatpak.policy.in:44
-#: system-helper/org.freedesktop.Flatpak.policy.in:45
-#: system-helper/org.freedesktop.Flatpak.policy.in:62
-#: system-helper/org.freedesktop.Flatpak.policy.in:63
-#: system-helper/org.freedesktop.Flatpak.policy.in:80
-#: system-helper/org.freedesktop.Flatpak.policy.in:81
-#: system-helper/org.freedesktop.Flatpak.policy.in:91
-#: system-helper/org.freedesktop.Flatpak.policy.in:92
-#: system-helper/org.freedesktop.Flatpak.policy.in:102
-#: system-helper/org.freedesktop.Flatpak.policy.in:103
-#: system-helper/org.freedesktop.Flatpak.policy.in:113
-#: system-helper/org.freedesktop.Flatpak.policy.in:114
-#: system-helper/org.freedesktop.Flatpak.policy.in:124
-#: system-helper/org.freedesktop.Flatpak.policy.in:125
-#: system-helper/org.freedesktop.Flatpak.policy.in:126
-#: system-helper/org.freedesktop.Flatpak.policy.in:142
-#: system-helper/org.freedesktop.Flatpak.policy.in:143
-msgid "auth_admin"
-msgstr "auth_admin"
+#~ msgid "auth_admin"
+#~ msgstr "auth_admin"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:29
-#: system-helper/org.freedesktop.Flatpak.policy.in:46
-#: system-helper/org.freedesktop.Flatpak.policy.in:93
-#: system-helper/org.freedesktop.Flatpak.policy.in:104
-#: system-helper/org.freedesktop.Flatpak.policy.in:115
-msgid "auth_admin_keep"
-msgstr "auth_admin_keep"
+#~ msgid "auth_admin_keep"
+#~ msgstr "auth_admin_keep"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:40
-msgid "Install signed runtime"
-msgstr "Inštalácia podpísaného rozhrania"
+#~ msgid "Install signed runtime"
+#~ msgstr "Inštalácia podpísaného rozhrania"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update an
-#. app as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:58
-msgid "Update signed application"
-msgstr ""
+#~ msgid "Authentication is required to update software"
+#~ msgstr "Na aktualizáciu softvéru sa vyžaduje overenie totožnosti"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:59
-#: system-helper/org.freedesktop.Flatpak.policy.in:77
-#: system-helper/org.freedesktop.Flatpak.policy.in:139
-msgid "Authentication is required to update software"
-msgstr "Na aktualizáciu softvéru sa vyžaduje overenie totožnosti"
+#~ msgid "yes"
+#~ msgstr "áno"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:64
-#: system-helper/org.freedesktop.Flatpak.policy.in:82
-#: system-helper/org.freedesktop.Flatpak.policy.in:144
-msgid "yes"
-msgstr "áno"
-
-#. SECURITY:
-#. - Normal users do not require admin authentication to update a
-#. runtime as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:76
-msgid "Update signed runtime"
-msgstr ""
-
-#: system-helper/org.freedesktop.Flatpak.policy.in:87
-msgid "Install bundle"
-msgstr ""
-
-#: system-helper/org.freedesktop.Flatpak.policy.in:88
-msgid "Authentication is install software"
-msgstr ""
-
-#: system-helper/org.freedesktop.Flatpak.policy.in:98
-msgid "Uninstall runtime"
-msgstr ""
-
-#: system-helper/org.freedesktop.Flatpak.policy.in:99
-#: system-helper/org.freedesktop.Flatpak.policy.in:110
-msgid "Authentication is required to uninstall software"
-msgstr ""
-
-#: system-helper/org.freedesktop.Flatpak.policy.in:109
-msgid "Uninstall app"
-msgstr ""
-
-#: system-helper/org.freedesktop.Flatpak.policy.in:120
-msgid "Configure Remote"
-msgstr ""
-
-#: system-helper/org.freedesktop.Flatpak.policy.in:121
-msgid "Authentication is required to configure software repositories"
-msgstr ""
-"Na konfiguráciu softvérových repozitárov sa vyžaduje overenie totožnosti"
-
-#. SECURITY:
-#. - Normal users do not require admin authentication to update
-#. appstream data as it will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:138
-msgid "Update appstream"
-msgstr ""
+#~ msgid "Authentication is required to configure software repositories"
+#~ msgstr ""
+#~ "Na konfiguráciu softvérových repozitárov sa vyžaduje overenie totožnosti"

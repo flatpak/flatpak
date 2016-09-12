@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-09-10 02:24+0000\n"
+"POT-Creation-Date: 2016-09-12 13:07+0200\n"
 "PO-Revision-Date: 2016-09-10 11:06+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
@@ -101,7 +101,6 @@ msgstr "Має бути вказано НАЗВУ"
 msgid "LOCATION must be specified"
 msgstr "Слід вказати РОЗТАШУВАННЯ"
 
-#. Do nothing
 #: app/flatpak-builtins-add-remote.c:294
 #, c-format
 msgid "Remote %s already exists"
@@ -163,8 +162,8 @@ msgid "LOCATION, FILENAME and NAME must be specified"
 msgstr "Слід вказати РОЗТАШУВАННЯ, НАЗВУ_ФАЙЛА та НАЗВУ"
 
 #: app/flatpak-builtins-build-bundle.c:919
-#: app/flatpak-builtins-build-commit-from.c:102
-#: app/flatpak-builtins-build-commit-from.c:112
+#: app/flatpak-builtins-build-commit-from.c:101
+#: app/flatpak-builtins-build-commit-from.c:111
 #: app/flatpak-builtins-build-import-bundle.c:307
 #, c-format
 msgid "'%s' is not a valid repository"
@@ -215,7 +214,7 @@ msgstr "Слід вказати КАТАЛОГ"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Пропущено «=» у параметрі монтування прив’язки «%s»"
 
-#: app/flatpak-builtins-build.c:244 common/flatpak-run.c:3598
+#: app/flatpak-builtins-build.c:244 common/flatpak-run.c:3597
 msgid "Unable to start app"
 msgstr "Не вдалося запустити програму"
 
@@ -295,32 +294,31 @@ msgstr "Домашній каталог GPG, яким слід користув�
 msgid "HOMEDIR"
 msgstr "ДОМАШНІЙ-КАТАЛОГ"
 
-#: app/flatpak-builtins-build-commit-from.c:77
+#: app/flatpak-builtins-build-commit-from.c:76
 msgid "DST-REPO [DST-REF]... - Make a new commit based on existing commit(s)"
 msgstr "СХОВ-ПР [ПОС-ПР]... - створити новий внесок на основі наявних внесків"
 
-#: app/flatpak-builtins-build-commit-from.c:84
-#| msgid "REMOTE must be specified"
+#: app/flatpak-builtins-build-commit-from.c:83
 msgid "DST-REPO must be specified"
 msgstr "Слід вказати СХОВ-ПР"
 
-#: app/flatpak-builtins-build-commit-from.c:92
+#: app/flatpak-builtins-build-commit-from.c:91
 msgid ""
 "If --src-repo is not specified, exactly one destination ref must be specified"
 msgstr ""
 "Якщо не вказано --src-repo, має бути вказано точно одне посилання призначення"
 
-#: app/flatpak-builtins-build-commit-from.c:95
+#: app/flatpak-builtins-build-commit-from.c:94
 msgid ""
 "If --src-ref is specified, exactly one destination ref must be specified"
 msgstr ""
 "Якщо вказано --src-ref, має бути вказано точно одне посилання призначення"
 
-#: app/flatpak-builtins-build-commit-from.c:98
+#: app/flatpak-builtins-build-commit-from.c:97
 msgid "Either --src-repo or --src-ref must be specified."
 msgstr "Слід вказати або --src-repo, або --src-ref."
 
-#: app/flatpak-builtins-build-commit-from.c:247
+#: app/flatpak-builtins-build-commit-from.c:246
 msgid "Can't commit from partial source commit."
 msgstr "Неможливо створити внесок на основі часткового внеску до джерела."
 
@@ -519,10 +517,9 @@ msgid "Look for runtime with the specified name"
 msgstr "Шукати середовище виконання із вказаною назвою"
 
 #: app/flatpak-builtins-build-sign.c:62
-msgid "LOCATION ID [BRANCH] - Create a repository from a build directory"
-msgstr ""
-"РОЗТАШУВАННЯ ІДЕНТИФІКАТОР [ГІЛКА] - Створити сховище на основі каталогу "
-"збирання"
+#, fuzzy
+msgid "LOCATION ID [BRANCH] - Sign an application or runtime"
+msgstr "СХОВИЩЕ НАЗВА [ГІЛКА]] - Встановити програму або середовище виконання"
 
 #: app/flatpak-builtins-build-sign.c:89
 msgid "No gpg key ids specified"
@@ -743,13 +740,11 @@ msgid "Warning: Failed to install related ref: %s\n"
 msgstr "Попередження: не вдалося встановити пов’язане посилання: %s\n"
 
 #: app/flatpak-builtins-install.c:226
-#| msgid "Bundle filename must be specified"
 msgid "Filename must be specified"
 msgstr "Слід вказати назву файла"
 
 #: app/flatpak-builtins-install.c:246
 #, c-format
-#| msgid "Installing related: %s\n"
 msgid "Installing: %s\n"
 msgstr "Встановлюємо: %s\n"
 
@@ -1051,7 +1046,6 @@ msgstr "Помилка під час спроби оновлення: %s\n"
 msgid "One or more updates failed"
 msgstr "Помилка під час одного або декількох оновлень"
 
-#. translators: please keep the leading space
 #: app/flatpak-main.c:56
 msgid " Manage installed apps and runtimes"
 msgstr " Керування встановленими програмами і середовищами виконання"
@@ -1077,7 +1071,6 @@ msgid "Show info for installed app or runtime"
 msgstr ""
 "Показати інформацію щодо встановленої програми або середовища виконання"
 
-#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:64
 msgid ""
 "\n"
@@ -1102,7 +1095,6 @@ msgstr "Вказати типову версію для запуску"
 msgid "Enter the namespace of a running application"
 msgstr "Введіть простір назв для запущеної програми"
 
-#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:71
 msgid ""
 "\n"
@@ -1127,7 +1119,6 @@ msgstr "Показати інформацію щодо вказаного фай
 msgid "List exported files"
 msgstr "Вивести список експортованих файлів"
 
-#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:78
 msgid ""
 "\n"
@@ -1156,7 +1147,6 @@ msgstr "Вивести список усіх налаштованих відда
 msgid "List contents of a configured remote"
 msgstr "Вивести список вмісту налаштованого віддаленого сховища"
 
-#. translators: please keep the leading newline and space
 #: app/flatpak-main.c:86
 msgid ""
 "\n"
@@ -1252,7 +1242,7 @@ msgid "No overrides found for %s"
 msgstr "Не знайдено перевизначень для %s"
 
 #: common/flatpak-dir.c:564 common/flatpak-dir.c:798 common/flatpak-dir.c:834
-#: common/flatpak-dir.c:856 common/flatpak-dir.c:5596
+#: common/flatpak-dir.c:856 common/flatpak-dir.c:5599
 #: common/flatpak-utils.c:765
 #, c-format
 msgid "%s not installed"
@@ -1325,9 +1315,8 @@ msgstr "Під час спроби вивантаження %s до %s: "
 msgid "While trying to checkout metadata subpath: "
 msgstr "Під час спроби вивантаження підшляху метаданих: "
 
-#: common/flatpak-dir.c:3205
+#: common/flatpak-dir.c:3204
 #, c-format
-#| msgid "App %s, branch %s is already installed"
 msgid "This version of %s is already installed"
 msgstr "Цю версію %s вже встановлено"
 
@@ -1351,35 +1340,35 @@ msgstr "Немає відповідників %s"
 msgid "%s %s not installed"
 msgstr "Не встановлено %s %s"
 
-#: common/flatpak-dir.c:4894
+#: common/flatpak-dir.c:4897
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Середовище виконання %s, гілка %s вже встановлено"
 
-#: common/flatpak-dir.c:4895
+#: common/flatpak-dir.c:4898
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Програму %s, гілка %s вже встановлено"
 
-#: common/flatpak-dir.c:5222
+#: common/flatpak-dir.c:5225
 msgid "Remote title not available; server has no summary file"
 msgstr ""
 "Заголовок віддаленого сховища недоступний; на сервері немає файла резюме"
 
-#: common/flatpak-dir.c:5237
+#: common/flatpak-dir.c:5240
 msgid "Remote title not set"
 msgstr "Заголовок віддаленого сховища не встановлено"
 
-#: common/flatpak-dir.c:5265
+#: common/flatpak-dir.c:5268
 msgid "Data not found"
 msgstr "Дані не знайдено"
 
-#: common/flatpak-dir.c:5274
+#: common/flatpak-dir.c:5277
 #, c-format
 msgid "Data not found for ref %s"
 msgstr "Дані для посилання %s не знайдено"
 
-#: common/flatpak-dir.c:5322 common/flatpak-dir.c:5460
+#: common/flatpak-dir.c:5325 common/flatpak-dir.c:5463
 msgid "Data not available; server has no summary file"
 msgstr "Дані недоступні; на сервері немає файла резюме"
 
@@ -1410,7 +1399,6 @@ msgstr "Невідомий тип пристрою, %s. Коректними т�
 
 #: common/flatpak-run.c:367
 #, c-format
-#| msgid "Unknown share type %s, valid types are: %s"
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Невідомий тип можливості %s, коректними типами є такі: %s"
 
@@ -1473,7 +1461,6 @@ msgid "FEATURE"
 msgstr "МОЖЛИВІСТЬ"
 
 #: common/flatpak-run.c:970
-#| msgid "Don't install related refs"
 msgid "Don't allow feature"
 msgstr "Вимкнути можливість"
 
@@ -1530,7 +1517,6 @@ msgstr "Примусово встановити домашній каталог"
 msgid "FILENAME"
 msgstr "НАЗВА ФАЙЛА"
 
-#. This is not needed/used anymore, so hidden, but we accept it for backwards compat
 #: common/flatpak-run.c:980
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Не вимагати запущеного сеансу (без створення cgroup)"
@@ -1547,183 +1533,98 @@ msgstr "Не вдалося відв’язати тимчасовий файл"
 msgid "Failed to write to temporary file"
 msgstr "Не вдалося виконати запис до тимчасового файла"
 
-#: common/flatpak-run.c:2603
-#| msgid "Failed to open temp file"
+#: common/flatpak-run.c:2602
 msgid "Failed to open flatpak-info temp file"
 msgstr "Не вдалося відкрити тимчасовий файл flatpak-info"
 
-#: common/flatpak-run.c:2630
+#: common/flatpak-run.c:2629
 msgid "Failed to open temp file"
 msgstr "Не вдалося відкрити тимчасовий файл"
 
-#: common/flatpak-run.c:2896
+#: common/flatpak-run.c:2895
 msgid "Unable to create sync pipe"
 msgstr "Не вдалося створити канал синхронізації"
 
-#: common/flatpak-run.c:2921
+#: common/flatpak-run.c:2920
 #, c-format
-#| msgid "Failed to open temp file"
 msgid "Failed to open app info file: %s"
 msgstr "Не вдалося відкрити файл інформації щодо програми: %s"
 
-#: common/flatpak-run.c:2951
+#: common/flatpak-run.c:2950
 msgid "Failed to sync with dbus proxy"
 msgstr "Не вдалося виконати синхронізацію із проміжним D-Bus"
 
-#.
-#. Policy definitions for Flatpak system actions.
-#. Copyright (c) 2016 Alexander Larsson <alexl@redhat.com>
-#: system-helper/org.freedesktop.Flatpak.policy.in:12
-msgid "The Flatpak Project"
-msgstr "Проект Flatpak"
+#~ msgid "LOCATION ID [BRANCH] - Create a repository from a build directory"
+#~ msgstr ""
+#~ "РОЗТАШУВАННЯ ІДЕНТИФІКАТОР [ГІЛКА] - Створити сховище на основі каталогу "
+#~ "збирання"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:13
-msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
-msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+#~ msgid "The Flatpak Project"
+#~ msgstr "Проект Flatpak"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:14
-#: system-helper/org.freedesktop.Flatpak.policy.in:25
-#: system-helper/org.freedesktop.Flatpak.policy.in:42
-#: system-helper/org.freedesktop.Flatpak.policy.in:60
-#: system-helper/org.freedesktop.Flatpak.policy.in:78
-#: system-helper/org.freedesktop.Flatpak.policy.in:89
-#: system-helper/org.freedesktop.Flatpak.policy.in:100
-#: system-helper/org.freedesktop.Flatpak.policy.in:111
-#: system-helper/org.freedesktop.Flatpak.policy.in:122
-#: system-helper/org.freedesktop.Flatpak.policy.in:140
-msgid "package-x-generic"
-msgstr "package-x-generic"
+#~ msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+#~ msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:23
-#| msgid "List installed applications"
-msgid "Install signed application"
-msgstr "Встановлення підписаної програми"
+#~ msgid "package-x-generic"
+#~ msgstr "package-x-generic"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:24
-#: system-helper/org.freedesktop.Flatpak.policy.in:41
-msgid "Authentication is required to install software"
-msgstr "Для встановлення програмного забезпечення слід пройти розпізнавання"
+#~| msgid "List installed applications"
+#~ msgid "Install signed application"
+#~ msgstr "Встановлення підписаної програми"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:27
-#: system-helper/org.freedesktop.Flatpak.policy.in:28
-#: system-helper/org.freedesktop.Flatpak.policy.in:44
-#: system-helper/org.freedesktop.Flatpak.policy.in:45
-#: system-helper/org.freedesktop.Flatpak.policy.in:62
-#: system-helper/org.freedesktop.Flatpak.policy.in:63
-#: system-helper/org.freedesktop.Flatpak.policy.in:80
-#: system-helper/org.freedesktop.Flatpak.policy.in:81
-#: system-helper/org.freedesktop.Flatpak.policy.in:91
-#: system-helper/org.freedesktop.Flatpak.policy.in:92
-#: system-helper/org.freedesktop.Flatpak.policy.in:102
-#: system-helper/org.freedesktop.Flatpak.policy.in:103
-#: system-helper/org.freedesktop.Flatpak.policy.in:113
-#: system-helper/org.freedesktop.Flatpak.policy.in:114
-#: system-helper/org.freedesktop.Flatpak.policy.in:124
-#: system-helper/org.freedesktop.Flatpak.policy.in:125
-#: system-helper/org.freedesktop.Flatpak.policy.in:126
-#: system-helper/org.freedesktop.Flatpak.policy.in:142
-#: system-helper/org.freedesktop.Flatpak.policy.in:143
-msgid "auth_admin"
-msgstr "auth_admin"
+#~ msgid "Authentication is required to install software"
+#~ msgstr "Для встановлення програмного забезпечення слід пройти розпізнавання"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:29
-#: system-helper/org.freedesktop.Flatpak.policy.in:46
-#: system-helper/org.freedesktop.Flatpak.policy.in:93
-#: system-helper/org.freedesktop.Flatpak.policy.in:104
-#: system-helper/org.freedesktop.Flatpak.policy.in:115
-msgid "auth_admin_keep"
-msgstr "auth_admin_keep"
+#~ msgid "auth_admin"
+#~ msgstr "auth_admin"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:40
-#| msgid "List installed runtimes"
-msgid "Install signed runtime"
-msgstr "Встановлення підписаного середовища виконання"
+#~ msgid "auth_admin_keep"
+#~ msgstr "auth_admin_keep"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update an
-#. app as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:58
-#| msgid "List installed applications"
-msgid "Update signed application"
-msgstr "Оновлення підписаної програми"
+#~| msgid "List installed runtimes"
+#~ msgid "Install signed runtime"
+#~ msgstr "Встановлення підписаного середовища виконання"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:59
-#: system-helper/org.freedesktop.Flatpak.policy.in:77
-#: system-helper/org.freedesktop.Flatpak.policy.in:139
-msgid "Authentication is required to update software"
-msgstr "Для оновлення програмного забезпечення слід пройти розпізнавання"
+#~| msgid "List installed applications"
+#~ msgid "Update signed application"
+#~ msgstr "Оновлення підписаної програми"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:64
-#: system-helper/org.freedesktop.Flatpak.policy.in:82
-#: system-helper/org.freedesktop.Flatpak.policy.in:144
-msgid "yes"
-msgstr "так"
+#~ msgid "Authentication is required to update software"
+#~ msgstr "Для оновлення програмного забезпечення слід пройти розпізнавання"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update a
-#. runtime as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:76
-#| msgid "List installed runtimes"
-msgid "Update signed runtime"
-msgstr "Оновлення підписаного середовища виконання"
+#~ msgid "yes"
+#~ msgstr "так"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:87
-#| msgid "Install from local bundle file"
-msgid "Install bundle"
-msgstr "Встановлення пакунка"
+#~| msgid "List installed runtimes"
+#~ msgid "Update signed runtime"
+#~ msgstr "Оновлення підписаного середовища виконання"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:88
-msgid "Authentication is install software"
-msgstr "Розпізнавання для встановлення програмного забезпечення"
+#~| msgid "Install from local bundle file"
+#~ msgid "Install bundle"
+#~ msgstr "Встановлення пакунка"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:98
-#| msgid "List installed runtimes"
-msgid "Uninstall runtime"
-msgstr "Вилучення середовища виконання"
+#~ msgid "Authentication is install software"
+#~ msgstr "Розпізнавання для встановлення програмного забезпечення"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:99
-#: system-helper/org.freedesktop.Flatpak.policy.in:110
-msgid "Authentication is required to uninstall software"
-msgstr "Для вилучення програмного забезпечення слід пройти розпізнавання"
+#~| msgid "List installed runtimes"
+#~ msgid "Uninstall runtime"
+#~ msgstr "Вилучення середовища виконання"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:109
-msgid "Uninstall app"
-msgstr "Вилучення програми"
+#~ msgid "Authentication is required to uninstall software"
+#~ msgstr "Для вилучення програмного забезпечення слід пройти розпізнавання"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:120
-#| msgid "Delete a configured remote"
-msgid "Configure Remote"
-msgstr "Налаштовування сховищ"
+#~ msgid "Uninstall app"
+#~ msgstr "Вилучення програми"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:121
-msgid "Authentication is required to configure software repositories"
-msgstr ""
-"Для налаштовування сховище програмного забезпечення слід пройти розпізнавання"
+#~| msgid "Delete a configured remote"
+#~ msgid "Configure Remote"
+#~ msgstr "Налаштовування сховищ"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update
-#. appstream data as it will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:138
-#| msgid "Update appstream for remote"
-msgid "Update appstream"
-msgstr "Оновлення appstream"
+#~ msgid "Authentication is required to configure software repositories"
+#~ msgstr ""
+#~ "Для налаштовування сховище програмного забезпечення слід пройти "
+#~ "розпізнавання"
 
+#~| msgid "Update appstream for remote"
+#~ msgid "Update appstream"
+#~ msgstr "Оновлення appstream"
