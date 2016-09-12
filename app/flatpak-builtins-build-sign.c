@@ -59,7 +59,7 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   g_autofree char *ref = NULL;
   char **iter;
 
-  context = g_option_context_new (_("LOCATION ID [BRANCH] - Create a repository from a build directory"));
+  context = g_option_context_new (_("LOCATION ID [BRANCH] - Sign an application or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
