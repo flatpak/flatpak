@@ -1018,6 +1018,45 @@ flatpak_installation_install_bundle (FlatpakInstallation    *self,
 }
 
 /**
+ * flatpak_installation_install_ref_file:
+ * @self: a #FlatpakInstallation
+ * @ref_file_data: The ref file contents
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Creates a remote based on the passed in .flatpakref file contents
+ * in @ref_file_data and returns the #FlatpakRemoteRef that can be used
+ * to install it.
+ *
+ * Note, the #FlatpakRemoteRef will not have the commit field set, to
+ * avoid unnecessary roundtrips. If you need that you have to resolve it
+ * explicitly with flatpak_installation_fetch_remote_ref_sync ().
+ *
+ * Returns: (transfer full): a #FlatpakRemoteRef if the remote has been added successfully, %NULL
+ * on error.
+ *
+ * Since: 0.6.10
+ */
+FlatpakRemoteRef *
+flatpak_installation_install_ref_file (FlatpakInstallation *self,
+                                       GBytes              *ref_file_data,
+                                       GCancellable        *cancellable,
+                                       GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autofree char *remote = NULL;
+  g_autofree char *ref = NULL;
+
+  if (!flatpak_dir_create_remote_for_ref_file (dir, ref_file_data, &remote, &ref, error))
+    return NULL;
+
+  if (!flatpak_installation_drop_caches (self, cancellable, error))
+    return NULL;
+
+  return flatpak_remote_ref_new (ref, NULL, remote);
+}
+
+/**
  * flatpak_installation_install_full:
  * @self: a #FlatpakInstallation
  * @flags: set of #FlatpakInstallFlags flag

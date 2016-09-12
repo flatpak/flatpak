@@ -211,6 +211,10 @@ FLATPAK_EXTERN FlatpakInstalledRef * flatpak_installation_install_bundle (Flatpa
                                                                           gpointer                progress_data,
                                                                           GCancellable           *cancellable,
                                                                           GError                **error);
+FLATPAK_EXTERN FlatpakRemoteRef *   flatpak_installation_install_ref_file (FlatpakInstallation *self,
+                                                                           GBytes              *ref_file_data,
+                                                                           GCancellable        *cancellable,
+                                                                           GError             **error);
 FLATPAK_EXTERN gboolean             flatpak_installation_uninstall (FlatpakInstallation    *self,
                                                                     FlatpakRefKind          kind,
                                                                     const char             *name,
