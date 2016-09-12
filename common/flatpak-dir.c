@@ -3229,6 +3229,7 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
                                                  origin,
                                                  parts[1],
                                                  basename,
+                                                 ref,
                                                  gpg_data,
                                                  cancellable,
                                                  error);
@@ -4725,6 +4726,7 @@ create_origin_remote_config (OstreeRepo   *repo,
                              const char   *url,
                              const char   *id,
                              const char   *title,
+                             const char   *main_ref,
                              GKeyFile     *new_config)
 {
   g_autofree char *remote = NULL;
@@ -4757,6 +4759,8 @@ create_origin_remote_config (OstreeRepo   *repo,
   g_key_file_set_string (new_config, group, "xa.prio", "0");
   g_key_file_set_string (new_config, group, "gpg-verify", "true");
   g_key_file_set_string (new_config, group, "gpg-verify-summary", "true");
+  if (main_ref)
+    g_key_file_set_string (new_config, group, "xa.main-ref", main_ref);
 
   return g_steal_pointer (&remote);
 }
@@ -4766,6 +4770,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                   const char   *url,
                                   const char   *id,
                                   const char   *title,
+                                  const char   *main_ref,
                                   GBytes       *gpg_data,
                                   GCancellable *cancellable,
                                   GError      **error)
@@ -4773,7 +4778,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = g_key_file_new ();
   g_autofree char *remote = NULL;
 
-  remote = create_origin_remote_config (self->repo, url, id, title, new_config);
+  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, new_config);
 
   if (!flatpak_dir_modify_remote (self, remote, new_config,
                                   gpg_data, cancellable, error))
@@ -4895,7 +4900,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
       return FALSE;
     }
 
-  remote = flatpak_dir_create_origin_remote (self, url, name, title,
+  remote = flatpak_dir_create_origin_remote (self, url, name, title, ref,
                                              gpg_data, NULL, error);
   if (remote == NULL)
     return FALSE;

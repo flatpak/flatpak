@@ -385,6 +385,7 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *url,
                                              const char   *id,
                                              const char   *title,
+                                             const char   *main_ref,
                                              GBytes       *gpg_data,
                                              GCancellable *cancellable,
                                              GError      **error);
