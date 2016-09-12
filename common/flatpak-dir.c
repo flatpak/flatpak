@@ -2909,7 +2909,6 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            GCancellable *cancellable,
                            GError      **error)
 {
-  g_autoptr(GError) my_error = NULL;
   g_autoptr(GVariant) old_deploy_data = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autofree const char **old_subpaths = NULL;
@@ -4731,7 +4730,6 @@ create_origin_remote_config (OstreeRepo   *repo,
   g_autofree char *remote = NULL;
   g_auto(GStrv) remotes = NULL;
   int version = 0;
-  g_autoptr(GVariantBuilder) optbuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autofree char *group = NULL;
 
   remotes = ostree_repo_remote_list (repo, NULL);

@@ -276,8 +276,6 @@ git_mirror_submodules (const char     *repo_location,
                        BuilderContext *context,
                        GError        **error)
 {
-  g_autofree char *mirror_dir_path = NULL;
-
   g_autoptr(GKeyFile) key_file = g_key_file_new ();
   g_autofree gchar *submodule_data = NULL;
   g_autofree gchar **submodules = NULL;
@@ -394,7 +392,6 @@ builder_source_git_download (BuilderSource  *source,
                              GError        **error)
 {
   BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
-  g_autofree char *url = NULL;
   g_autofree char *location = NULL;
 
   location = get_url_or_path (self, context, error);

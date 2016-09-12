@@ -716,8 +716,6 @@ build (GFile          *app_dir,
        const gchar    *argv1,
        ...)
 {
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
   g_autoptr(GPtrArray) args = NULL;
   const gchar *arg;
   const gchar **argv;

@@ -1151,9 +1151,6 @@ static GKeyFile *
 parse_app_id_from_fileinfo (int pid)
 {
   g_autofree char *root_path = NULL;
-  g_autofree char *path = NULL;
-  g_autofree char *content = NULL;
-  g_autofree char *app_id = NULL;
   glnx_fd_close int root_fd = -1;
   glnx_fd_close int info_fd = -1;
   struct stat stat_buf;

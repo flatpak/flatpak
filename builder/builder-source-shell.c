@@ -119,9 +119,6 @@ run_script (BuilderContext *context,
             GError        **error)
 {
   GFile *app_dir = builder_context_get_app_dir (context);
-
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
   g_autoptr(GPtrArray) args = NULL;
   g_autofree char *source_dir_path = g_file_get_path (source_dir);
   g_autofree char *source_dir_path_canonical = NULL;

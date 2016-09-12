@@ -67,7 +67,6 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
   const char *dst_repo_arg;
   const char **dst_refs;
   int n_dst_refs = 0;
-  g_autofree char *resolved_ref = NULL;
   g_autoptr(FlatpakRepoTransaction) transaction = NULL;
   g_autoptr(GPtrArray) src_refs = NULL;
   g_autoptr(GPtrArray) resolved_src_refs = NULL;

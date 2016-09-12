@@ -2590,7 +2590,6 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   g_autofree char *tmp_path = NULL;
   int fd;
   g_autoptr(GKeyFile) keyfile = NULL;
-  g_autoptr(GFile) files = NULL;
   g_autofree char *app_path = NULL;
   g_autofree char *runtime_path = NULL;
   g_autofree char *fd_str = NULL;

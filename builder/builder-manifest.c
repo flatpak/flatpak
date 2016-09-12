@@ -1221,8 +1221,6 @@ command (GFile      *app_dir,
          const char *commandline,
          GError    **error)
 {
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
   g_autoptr(GPtrArray) args = NULL;
   int i;
 
@@ -1386,8 +1384,6 @@ appstream_compose (GFile   *app_dir,
                    GError **error,
                    ...)
 {
-  g_autoptr(GSubprocessLauncher) launcher = NULL;
-  g_autoptr(GSubprocess) subp = NULL;
   g_autoptr(GPtrArray) args = NULL;
   const gchar *arg;
   va_list ap;
