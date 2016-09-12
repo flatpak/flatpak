@@ -327,7 +327,7 @@ git_mirror_submodules (const char     *repo_location,
 
           words = g_strsplit_set (lines[0], " \t", 4);
 
-          if (g_strcmp0 (words[1], "commit") != 0)
+          if (g_strcmp0 (words[0], "160000") != 0)
             {
               g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Not a gitlink tree: %s", path);
               return FALSE;
@@ -482,7 +482,7 @@ git_extract_submodule (const char     *repo_location,
 
           words = g_strsplit_set (lines[0], " \t", 4);
 
-          if (g_strcmp0 (words[1], "commit") != 0)
+          if (g_strcmp0 (words[0], "160000") != 0)
             {
               g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Not a gitlink tree: %s", path);
               return FALSE;
