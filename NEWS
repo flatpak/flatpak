@@ -1,3 +1,49 @@
+Major changes in 0.6.10
+=======================
+
+ * Dropped requirement for systemd --user.
+   The way we detect if an process we're talking to is sandboxed, and
+   what application id it has doesn't use cgroups anymore, which means
+   that the dependency on systemd in the user session is now optional.
+   This also means the --no-desktop argument is not needed any more.
+   (It is still accepted but does nothing.)
+ * Initial support has been added for .flatpakref files. These are simple key
+   value files similar to .flatpakrepo files, however they specify an application
+   to install in addition to the repo information. For example, gedit can be
+   installed by downloading https://sdk.gnome.org/gedit.flatpakref and running:
+     flatpak install --from gedit.flatpakref
+   There is also library support for this so it can be added to graphical
+   installers (such as gnome-software).
+ * Requires OSTree 2016.10. The change in how OSTree handles mtimes in
+   checkouts that was introduced in 2016.7 has been reverted, and
+   the required changes in Flatpak has been made. This means that
+   flatpak now depends on OSTree 2016.10.
+ * Requires Bubblewrap 0.1.2 for builds using the system bubblewrap.
+   Builds using the included copy need no changes.
+ * The $XDG_RUNTIME_DIR/flatpak-info file has added information
+   about the running application, and is now also securely available
+   for a running application from the host as "/proc/$fd/root/.flatpak-info".
+   This is what is used to identify remote apps instead of the cgroup
+   info.
+ * A new run permission --allow=devel has been added. An application with
+   this permission is allowed to use ptrace and perf. This was previously
+   only available during "flatpak build" and "flatpak run -d". This
+   is useful if you're packaging e.g. an IDE.
+ * When an application is updated or removed a /app/.updated or /app/.removed
+   file is created for running instances. This can be used by applications to
+   trigger e.g. a restart for the new version.
+ * A new dbus request "HostCommand" has been added to org.freedesktop.Flatpak.
+   This lets you run any command on the host, and is therefore clearly not
+   sandboxed, so access to this should be limited. However, it is very useful
+   if you're using flatpak mainly as a distribution mechanism, for a non-sandboxed
+   application.
+ * flatpak-builder now supports running from inside a flatpak, by auto-detecting
+   this and using the HostCommand service to run recursive flatpaks.
+ * Consecutive calls to flatpak build-update-repo has been speed up.
+ * The document portal now allows sandboxed applications to create references
+   to files in /app and /usr (in the app/runtime).
+ * The update process noew doesn't stop at the first failure.
+
 Major changes in 0.6.9
 ======================
 
