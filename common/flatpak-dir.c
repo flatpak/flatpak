@@ -1006,7 +1006,7 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   g_autoptr(GFile) active_tmp_link = NULL;
   g_autoptr(GError) tmp_error = NULL;
   g_autofree char *checkout_dir_path = NULL;
-  OstreeRepoCheckoutOptions options = { 0, };
+  OstreeRepoCheckoutAtOptions options = { 0, };
   glnx_fd_close int dfd = -1;
   g_autoptr(GFileInfo) file_info = NULL;
   g_autofree char *tmpname = g_strdup (".active-XXXXXX");
@@ -1071,11 +1071,11 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
 
   options.mode = OSTREE_REPO_CHECKOUT_MODE_USER;
   options.overwrite_mode = OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES;
-  options.disable_fsync = TRUE; /* We checkout to a temp dir and sync before moving it in place */
+  options.enable_fsync = FALSE; /* We checkout to a temp dir and sync before moving it in place */
 
-  if (!ostree_repo_checkout_tree_at (self->repo, &options,
-                                     AT_FDCWD, checkout_dir_path, new_checksum,
-                                     cancellable, error))
+  if (!ostree_repo_checkout_at (self->repo, &options,
+                                AT_FDCWD, checkout_dir_path, new_checksum,
+                                cancellable, error))
     return FALSE;
 
   glnx_gen_temp_name (tmpname);
@@ -2590,7 +2590,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) export = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
   guint64 installed_size = 0;
-  OstreeRepoCheckoutOptions options = { 0, };
+  OstreeRepoCheckoutAtOptions options = { 0, };
   const char *checksum;
   glnx_fd_close int checkoutdir_dfd = -1;
   g_autoptr(GFile) tmp_dir_template = NULL;
@@ -2658,15 +2658,15 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   options.mode = OSTREE_REPO_CHECKOUT_MODE_USER;
   options.overwrite_mode = OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES;
-  options.disable_fsync = TRUE; /* We checkout to a temp dir and sync before moving it in place */
+  options.enable_fsync = FALSE; /* We checkout to a temp dir and sync before moving it in place */
   checkoutdirpath = g_file_get_path (checkoutdir);
 
   if (subpaths == NULL || *subpaths == NULL)
     {
-      if (!ostree_repo_checkout_tree_at (self->repo, &options,
-                                         AT_FDCWD, checkoutdirpath,
-                                         checksum,
-                                         cancellable, error))
+      if (!ostree_repo_checkout_at (self->repo, &options,
+                                    AT_FDCWD, checkoutdirpath,
+                                    checksum,
+                                    cancellable, error))
         {
           g_prefix_error (error, _("While trying to checkout %s into %s: "), checksum, checkoutdirpath);
           return FALSE;
@@ -2688,10 +2688,10 @@ flatpak_dir_deploy (FlatpakDir          *self,
       if (!ostree_repo_read_commit (self->repo, checksum, &root,  &commit, cancellable, error))
         return FALSE;
 
-      if (!ostree_repo_checkout_tree_at (self->repo, &options,
-                                         AT_FDCWD, checkoutdirpath,
-                                         checksum,
-                                         cancellable, error))
+      if (!ostree_repo_checkout_at (self->repo, &options,
+                                    AT_FDCWD, checkoutdirpath,
+                                    checksum,
+                                    cancellable, error))
         {
           g_prefix_error (error, _("While trying to checkout metadata subpath: "));
           return FALSE;
@@ -2719,10 +2719,10 @@ flatpak_dir_deploy (FlatpakDir          *self,
             }
 
           options.subpath = subpath;
-          if (!ostree_repo_checkout_tree_at (self->repo, &options,
-                                             AT_FDCWD, dstpath,
-                                             checksum,
-                                             cancellable, error))
+          if (!ostree_repo_checkout_at (self->repo, &options,
+                                        AT_FDCWD, dstpath,
+                                        checksum,
+                                        cancellable, error))
             {
               g_prefix_error (error, _("While trying to checkout metadata subpath: "));
               return FALSE;
