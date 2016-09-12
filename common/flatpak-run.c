@@ -1233,13 +1233,13 @@ flatpak_context_save_metadata (FlatpakContext *context,
       shares_mask &= shares_valid;
       sockets_mask &= sockets_valid;
       devices_mask &= devices_valid;
-      features_mask &= devices_valid;
+      features_mask &= features_valid;
 
       /* Then just set the valid set to be the mask set */
       shares_valid = shares_mask;
       sockets_valid = sockets_mask;
       devices_valid = devices_mask;
-      features_valid = devices_mask;
+      features_valid = features_mask;
     }
 
   shared = flatpak_context_shared_to_string (shares_mask, shares_valid);
