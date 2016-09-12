@@ -283,6 +283,7 @@ handle_host_command (FlatpakDevelopment *object,
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, code,
                                              "Failed to start command: %s",
                                              error->message);
+      return TRUE;
     }
 
   pid_data = g_new0 (PidData, 1);
