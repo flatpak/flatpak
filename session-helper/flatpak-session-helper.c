@@ -173,14 +173,13 @@ handle_host_command (FlatpakDevelopment *object,
   if (*arg_cwd_path == 0)
     arg_cwd_path = NULL;
 
-  if (*arg_argv[0] == 0)
+  if (arg_argv == NULL || *arg_argv == NULL || *arg_argv[0] == 0)
     {
       g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR,
                                              G_DBUS_ERROR_INVALID_ARGS,
                                              "No command given");
       return TRUE;
     }
-
 
   g_debug ("Running host command %s", arg_argv[0]);
 
