@@ -416,8 +416,19 @@ flatpak_is_valid_name (const char *string,
   ret = FALSE;
 
   len = strlen (string);
-  if (G_UNLIKELY (len == 0 || len > 255))
-    goto out;
+  if (G_UNLIKELY (len == 0))
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Name can't be empty");
+      goto out;
+    }
+
+  if (G_UNLIKELY (len > 255))
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Name can't be longer than 255 characters");
+      goto out;
+    }
 
   end = string + len;
 
