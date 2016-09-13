@@ -29,6 +29,12 @@
 #define FLATPAK_MINOR_VERSION (@FLATPAK_MINOR_VERSION@)
 #define FLATPAK_MICRO_VERSION (@FLATPAK_MICRO_VERSION@)
 
+#define FLATPAK_CHECK_VERSION(major,minor,micro)        \
+    (FLATPAK_MAJOR_VERSION > (major) || \
+     (FLATPAK_MAJOR_VERSION == (major) && FLATPAK_MINOR_VERSION > (minor)) || \
+     (FLATPAK_MAJOR_VERSION == (major) && FLATPAK_MINOR_VERSION == (minor) && \
+      FLATPAK_MICRO_VERSION >= (micro)))
+
 #ifndef FLATPAK_EXTERN
 #define FLATPAK_EXTERN extern
 #endif
