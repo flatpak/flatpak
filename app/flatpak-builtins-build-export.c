@@ -499,6 +499,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(OstreeMutableTree) files_mtree = NULL;
   g_autoptr(OstreeMutableTree) export_mtree = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
+  g_autoptr(GError) my_error = NULL;
   gsize metadata_size;
   g_autofree char *subject = NULL;
   g_autofree char *body = NULL;
@@ -526,9 +527,9 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   else
     branch = "master";
 
-  if (!flatpak_is_valid_branch (branch))
+  if (!flatpak_is_valid_branch (branch, &my_error))
     {
-      flatpak_fail (error, _("'%s' is not a valid branch name"), branch);
+      flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
       goto out;
     }
 

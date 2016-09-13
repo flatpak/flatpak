@@ -527,6 +527,7 @@ is_valid_branch_character (gint c)
 
 /** flatpak_is_valid_branch:
  * @string: The string to check
+ * @error: return location for an error
  *
  * Checks if @string is a valid branch name.
  *
@@ -540,7 +541,8 @@ is_valid_branch_character (gint c)
  * Since: 2.26
  */
 gboolean
-flatpak_is_valid_branch (const char *string)
+flatpak_is_valid_branch (const char *string,
+                         GError **error)
 {
   guint len;
   gboolean ret;
@@ -553,19 +555,31 @@ flatpak_is_valid_branch (const char *string)
 
   len = strlen (string);
   if (G_UNLIKELY (len == 0))
-    goto out;
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Branch can't be empty");
+      goto out;
+    }
 
   end = string + len;
 
   s = string;
   if (G_UNLIKELY (!is_valid_initial_branch_character (*s)))
-    goto out;
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Branch can't start with %c", *s);
+      goto out;
+    }
 
   s += 1;
   while (s != end)
     {
       if (G_UNLIKELY (!is_valid_branch_character (*s)))
-        goto out;
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Branch can't contain %c", *s);
+          goto out;
+        }
       s += 1;
     }
 
@@ -607,9 +621,9 @@ flatpak_decompose_ref (const char *full_ref,
       return NULL;
     }
 
-  if (!flatpak_is_valid_branch (parts[3]))
+  if (!flatpak_is_valid_branch (parts[3], &local_error))
     {
-      flatpak_fail (error, "Invalid branch %s", parts[3]);
+      flatpak_fail (error, "Invalid branch %s: %s", parts[3], local_error->message);
       return NULL;
     }
 
@@ -654,8 +668,8 @@ flatpak_split_partial_ref_arg (char *partial_ref,
   branch = slash + 1;
   if (strlen (branch) > 0)
     {
-      if (!flatpak_is_valid_branch (branch))
-        return flatpak_fail (error, "Invalid branch %s", branch);
+      if (!flatpak_is_valid_branch (branch, &local_error))
+        return flatpak_fail (error, "Invalid branch %s: %s", branch, local_error->message);
     }
   else
     branch = NULL;
@@ -686,9 +700,9 @@ flatpak_compose_ref (gboolean    app,
       return NULL;
     }
 
-  if (branch && !flatpak_is_valid_branch (branch))
+  if (branch && !flatpak_is_valid_branch (branch, &local_error))
     {
-      flatpak_fail (error, "'%s' is not a valid branch name", branch);
+      flatpak_fail (error, "'%s' is not a valid branch name: %s", branch, local_error->message);
       return NULL;
     }
 

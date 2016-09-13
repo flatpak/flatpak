@@ -924,8 +924,8 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   if (!flatpak_is_valid_name (name, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid name: %s"), name, my_error->message);
 
-  if (!flatpak_is_valid_branch (branch))
-    return flatpak_fail (error, _("'%s' is not a valid branch name"), branch);
+  if (!flatpak_is_valid_branch (branch, &my_error))
+    return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, &my_error);
 
   if (opt_runtime)
     full_branch = flatpak_build_runtime_ref (name, branch, opt_arch);

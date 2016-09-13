@@ -83,8 +83,8 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   if (!flatpak_is_valid_name (id, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid name: %s"), id, my_error->message);
 
-  if (!flatpak_is_valid_branch (branch))
-    return flatpak_fail (error, _("'%s' is not a valid branch name"), branch);
+  if (!flatpak_is_valid_branch (branch, &my_error))
+    return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
 
   if (opt_gpg_key_ids == NULL)
     return flatpak_fail (error, _("No gpg key ids specified"));
