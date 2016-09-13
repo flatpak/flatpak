@@ -327,11 +327,8 @@ git_mirror_submodules (const char     *repo_location,
 
           words = g_strsplit_set (lines[0], " \t", 4);
 
-          if (g_strcmp0 (words[1], "commit") != 0)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Not a gitlink tree: %s", path);
-              return FALSE;
-            }
+          if (g_strcmp0 (words[0], "160000") != 0)
+            continue;
 
           if (!git_mirror_repo (absolute_url, update, words[2], context, error))
             return FALSE;
@@ -482,11 +479,8 @@ git_extract_submodule (const char     *repo_location,
 
           words = g_strsplit_set (lines[0], " \t", 4);
 
-          if (g_strcmp0 (words[1], "commit") != 0)
-            {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Not a gitlink tree: %s", path);
-              return FALSE;
-            }
+          if (g_strcmp0 (words[0], "160000") != 0)
+            continue;
 
           mirror_dir = git_get_mirror_dir (absolute_url, context);
           mirror_dir_as_url = g_file_get_uri (mirror_dir);
