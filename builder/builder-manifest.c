@@ -172,6 +172,17 @@ expand_modules (GList *modules, GList **expanded, GHashTable *names, GError **er
       *expanded = g_list_concat (*expanded, submodules);
 
       name = builder_module_get_name (m);
+
+      if (name == NULL)
+        {
+          /* FIXME: We'd like to report *something* for the user
+                    to locate the errornous module definition.
+           */
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Module has no 'name' attribute set");
+          return FALSE;
+        }
+
       if (g_hash_table_lookup (names, name) != NULL)
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
