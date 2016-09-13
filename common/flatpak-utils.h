@@ -78,7 +78,8 @@ gboolean flatpak_summary_lookup_ref (GVariant   *summary,
 
 gboolean flatpak_has_name_prefix (const char *string,
                                   const char *name);
-gboolean flatpak_is_valid_name (const char *string);
+gboolean flatpak_is_valid_name (const char *string,
+                                GError **error);
 gboolean flatpak_is_valid_branch (const char *string);
 
 char **flatpak_decompose_ref (const char *ref,

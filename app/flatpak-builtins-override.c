@@ -67,8 +67,8 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
 
   app = argv[1];
 
-  if (!flatpak_is_valid_name (app))
-    return flatpak_fail (error, _("'%s' is not a valid application name"), app);
+  if (!flatpak_is_valid_name (app, &my_error))
+    return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app, my_error->message);
 
   metakey = flatpak_load_override_keyfile (app, flatpak_dir_is_user (dir), &my_error);
   if (metakey == NULL)

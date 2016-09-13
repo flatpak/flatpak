@@ -402,7 +402,8 @@ is_valid_name_character (gint c)
  * Since: 2.26
  */
 gboolean
-flatpak_is_valid_name (const char *string)
+flatpak_is_valid_name (const char *string,
+                       GError **error)
 {
   guint len;
   gboolean ret;
@@ -422,10 +423,17 @@ flatpak_is_valid_name (const char *string)
 
   s = string;
   if (G_UNLIKELY (*s == '.'))
-    /* can't start with a . */
-    goto out;
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Name can't start with a period");
+      goto out;
+    }
   else if (G_UNLIKELY (!is_valid_initial_name_character (*s)))
-    goto out;
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Name can't start with %c", *s);
+      goto out;
+    }
 
   s += 1;
   dot_count = 0;
@@ -434,19 +442,35 @@ flatpak_is_valid_name (const char *string)
       if (*s == '.')
         {
           s += 1;
-          if (G_UNLIKELY (s == end || !is_valid_initial_name_character (*s)))
-            goto out;
+          if (G_UNLIKELY (s == end))
+            {
+              g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                                   "Name can't end with a period");
+              goto out;
+            }
+          if (!is_valid_initial_name_character (*s))
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Name segment can't start with %c", *s);
+              goto out;
+            }
           dot_count++;
         }
       else if (G_UNLIKELY (!is_valid_name_character (*s)))
         {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Name can't contain %c", *s);
           goto out;
         }
       s += 1;
     }
 
   if (G_UNLIKELY (dot_count < 2))
-    goto out;
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Names must contain at least 2 periods");
+      goto out;
+    }
 
   ret = TRUE;
 
@@ -469,7 +493,6 @@ flatpak_has_name_prefix (const char *string,
     *rest == '.' ||
     !is_valid_name_character (*rest);
 }
-
 
 static gboolean
 is_valid_initial_branch_character (gint c)
@@ -545,6 +568,7 @@ flatpak_decompose_ref (const char *full_ref,
                        GError    **error)
 {
   g_auto(GStrv) parts = NULL;
+  g_autoptr(GError) local_error = NULL;
 
   parts = g_strsplit (full_ref, "/", 0);
   if (g_strv_length (parts) != 4)
@@ -559,9 +583,9 @@ flatpak_decompose_ref (const char *full_ref,
       return NULL;
     }
 
-  if (!flatpak_is_valid_name (parts[1]))
+  if (!flatpak_is_valid_name (parts[1], &local_error))
     {
-      flatpak_fail (error, "Invalid name %s", parts[1]);
+      flatpak_fail (error, "Invalid name %s: %s", parts[1], local_error->message);
       return NULL;
     }
 
@@ -589,6 +613,7 @@ flatpak_split_partial_ref_arg (char *partial_ref,
   char *slash;
   char *arch = NULL;
   char *branch = NULL;
+  g_autoptr(GError) local_error = NULL;
 
   if (partial_ref == NULL)
     return TRUE;
@@ -597,8 +622,8 @@ flatpak_split_partial_ref_arg (char *partial_ref,
   if (slash != NULL)
     *slash = 0;
 
-  if (!flatpak_is_valid_name (partial_ref))
-    return flatpak_fail (error, "Invalid name %s", partial_ref);
+  if (!flatpak_is_valid_name (partial_ref, &local_error))
+    return flatpak_fail (error, "Invalid name %s: %s", partial_ref, local_error->message);
 
   if (slash == NULL)
     goto out;
@@ -641,9 +666,11 @@ flatpak_compose_ref (gboolean    app,
                      const char *arch,
                      GError    **error)
 {
-  if (!flatpak_is_valid_name (name))
+  g_autoptr(GError) local_error = NULL;
+
+  if (!flatpak_is_valid_name (name, &local_error))
     {
-      flatpak_fail (error, "'%s' is not a valid name", name);
+      flatpak_fail (error, "'%s' is not a valid name: %s", name, local_error->message);
       return NULL;
     }
 
