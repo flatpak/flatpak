@@ -112,6 +112,7 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
                           GVariant              *parameters,
                           const char            *app_id)
 {
+  g_autoptr(GError) my_error = NULL;
   const char *target_app_id;
   const char *id;
   g_autofree const char **permissions = NULL;
@@ -133,11 +134,11 @@ portal_grant_permissions (GDBusMethodInvocation *invocation,
         return;
       }
 
-    if (!flatpak_is_valid_name (target_app_id))
+    if (!flatpak_is_valid_name (target_app_id, &my_error))
       {
         g_dbus_method_invocation_return_error (invocation,
                                                FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
-                                               "Invalid app name: %s", target_app_id);
+                                               "'%s' is not a valid app name: %s", target_app_id, my_error->message);
         return;
       }
 
@@ -173,6 +174,7 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
   g_autofree const char **permissions = NULL;
 
   g_autoptr(FlatpakDbEntry) entry = NULL;
+  g_autoptr(GError) my_error = NULL;
   XdpPermissionFlags perms;
 
   g_variant_get (parameters, "(&s&s^a&s)", &id, &target_app_id, &permissions);
@@ -189,11 +191,11 @@ portal_revoke_permissions (GDBusMethodInvocation *invocation,
         return;
       }
 
-    if (!flatpak_is_valid_name (target_app_id))
+    if (!flatpak_is_valid_name (target_app_id, &my_error))
       {
         g_dbus_method_invocation_return_error (invocation,
                                                FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
-                                               "Invalid app name: %s", target_app_id);
+                                               "'%s' is not a valid app name: %s", target_app_id, my_error->message);
         return;
       }
 

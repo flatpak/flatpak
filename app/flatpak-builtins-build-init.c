@@ -64,6 +64,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GFile) var_run_dir = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GString) metadata_contents = NULL;
+  g_autoptr(GError) my_error = NULL;
   const char *app_id;
   const char *directory;
   const char *sdk;
@@ -90,14 +91,14 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (argc >= 6)
     branch = argv[5];
 
-  if (!flatpak_is_valid_name (app_id))
-    return flatpak_fail (error, _("'%s' is not a valid application name"), app_id);
+  if (!flatpak_is_valid_name (app_id, &my_error))
+    return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app_id, my_error->message);
 
-  if (!flatpak_is_valid_name (runtime))
-    return flatpak_fail (error, _("'%s' is not a valid runtime name"), runtime);
+  if (!flatpak_is_valid_name (runtime, &my_error))
+    return flatpak_fail (error, _("'%s' is not a valid runtime name: %s"), runtime, my_error->message);
 
-  if (!flatpak_is_valid_name (sdk))
-    return flatpak_fail (error, _("'%s' is not a valid sdk name"), sdk);
+  if (!flatpak_is_valid_name (sdk, &my_error))
+    return flatpak_fail (error, _("'%s' is not a valid sdk name: %s"), sdk, my_error->message);
 
   if (!flatpak_is_valid_branch (branch))
     return flatpak_fail (error, _("'%s' is not a valid branch name"), branch);

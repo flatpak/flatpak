@@ -4300,13 +4300,14 @@ find_matching_refs (GHashTable *refs,
   const char *opt_arches[] = {opt_arch, NULL};
   GHashTableIter hash_iter;
   gpointer key;
+  g_autoptr(GError) local_error = NULL;
 
   if (opt_arch != NULL)
     arches = opt_arches;
 
-  if (opt_name && !flatpak_is_valid_name (opt_name))
+  if (opt_name && !flatpak_is_valid_name (opt_name, &local_error))
     {
-      flatpak_fail (error, "'%s' is not a valid name", opt_name);
+      flatpak_fail (error, "'%s' is not a valid name: %s", opt_name, local_error->message);
       return NULL;
     }
 
