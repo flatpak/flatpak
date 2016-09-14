@@ -2598,8 +2598,9 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   fd = g_file_open_tmp ("flatpak-context-XXXXXX", &tmp_path, NULL);
   if (fd < 0)
     {
-      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                           _("Failed to open flatpak-info temp file"));
+      int errsv = errno;
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
+                   _("Failed to open flatpak-info temp file: %s"), g_strerror (errsv));
       return FALSE;
     }
 
@@ -2625,8 +2626,9 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   fd = open (tmp_path, O_RDONLY);
   if (fd == -1)
     {
-      g_set_error_literal (error, G_IO_ERROR, g_io_error_from_errno (errno),
-                           _("Failed to open temp file"));
+      int errsv = errno;
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
+                   _("Failed to open temp file: %s"), g_strerror (errsv));
       return FALSE;
     }
 
