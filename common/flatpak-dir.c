@@ -4311,9 +4311,9 @@ find_matching_refs (GHashTable *refs,
       return NULL;
     }
 
-  if (opt_branch && !flatpak_is_valid_branch (opt_branch))
+  if (opt_branch && !flatpak_is_valid_branch (opt_branch, &local_error))
     {
-      flatpak_fail (error, "'%s' is not a valid branch name", opt_branch);
+      flatpak_fail (error, "'%s' is not a valid branch name: %s", opt_branch, local_error->message);
       return NULL;
     }
 

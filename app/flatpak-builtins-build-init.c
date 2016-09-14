@@ -100,8 +100,8 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (!flatpak_is_valid_name (sdk, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid sdk name: %s"), sdk, my_error->message);
 
-  if (!flatpak_is_valid_branch (branch))
-    return flatpak_fail (error, _("'%s' is not a valid branch name"), branch);
+  if (!flatpak_is_valid_branch (branch, &my_error))
+    return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
 
   runtime_ref = flatpak_build_untyped_ref (runtime, branch, opt_arch);
   sdk_ref = flatpak_build_untyped_ref (sdk, branch, opt_arch);
