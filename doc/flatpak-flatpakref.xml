@@ -113,6 +113,7 @@ GPGKey=mQENBFUUCGcBCAC/K9WeV4xCaKr3NKRqPXeY5mpaXAJyasLqCtrDx92WUgbu0voWrhohNAKpq
         <para>
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-install</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-flatpakrepo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
         </para>
 
     </refsect1>
