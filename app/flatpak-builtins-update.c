@@ -212,14 +212,14 @@ flatpak_builtin_update (int           argc,
   if (opt_arch == NULL)
     opt_arch = (char *)flatpak_get_arch ();
 
-  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
-    return FALSE;
-
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
 
   if (opt_appstream)
     return update_appstream (dir, name, cancellable, error);
+
+  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
+    return FALSE;
 
   if (opt_app)
     {
