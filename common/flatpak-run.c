@@ -2917,7 +2917,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
     {
       int errsv = errno;
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
-                   _("Failed to open app info file: %s"), strerror (errsv));
+                   _("Failed to open app info file: %s"), g_strerror (errsv));
       return FALSE;
     }
 

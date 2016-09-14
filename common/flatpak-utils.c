@@ -355,7 +355,7 @@ flatpak_migrate_from_xdg_app (void)
           if (errno != ENOENT &&
               errno != ENOTEMPTY &&
               errno != EEXIST)
-            g_print ("Error during migration: %s\n", strerror (errno));
+            g_print ("Error during migration: %s\n", g_strerror (errno));
         }
     }
 }

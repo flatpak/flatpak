@@ -936,9 +936,9 @@ on_name_acquired (GDBusConnection *connection,
 
   if (stat (xdp_fuse_get_mountpoint (), &stbuf) != 0)
     {
-      g_set_error (&exit_error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "fuse stat failed: %s", strerror (errno));
+      g_set_error (&exit_error, G_DBUS_ERROR, G_DBUS_ERROR_FAILED, "fuse stat failed: %s", g_strerror (errno));
       final_exit_status = 7;
-      g_printerr ("fuse stat failed: %s", strerror (errno));
+      g_printerr ("fuse stat failed: %s", g_strerror (errno));
       g_main_loop_quit (loop);
       return;
     }
