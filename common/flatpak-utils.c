@@ -3716,6 +3716,7 @@ flatpak_complete_word (FlatpakCompletion *completion,
 {
   va_list args;
   const char *rest;
+  const char *shell_cur;
   g_autofree char *string = NULL;
 
   g_return_if_fail (format != NULL);
@@ -3727,11 +3728,13 @@ flatpak_complete_word (FlatpakCompletion *completion,
   if (!g_str_has_prefix (string, completion->cur))
     return;
 
+  shell_cur = completion->shell_cur ? completion->shell_cur : "";
+
   /* I'm not sure exactly what bash is doing here, but this seems to work... */
-  if (strcmp (completion->shell_cur, "=") == 0)
-    rest = string + strlen (completion->cur) - strlen (completion->shell_cur) + 1;
+  if (strcmp (shell_cur, "=") == 0)
+    rest = string + strlen (completion->cur) - strlen (shell_cur) + 1;
   else
-    rest = string + strlen (completion->cur) - strlen (completion->shell_cur);
+    rest = string + strlen (completion->cur) - strlen (shell_cur);
 
   flatpak_completion_debug ("completing word: '%s' (%s)", string, rest);
 
