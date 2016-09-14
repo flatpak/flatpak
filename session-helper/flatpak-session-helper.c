@@ -31,13 +31,11 @@
 
 static char *monitor_dir;
 
-static guint32 next_client_pid = 0;
 static GHashTable *client_pid_data_hash = NULL;
 static GDBusConnection *session_bus = NULL;
 
 typedef struct {
   GPid pid;
-  guint32 client_pid;
   char *client;
   guint child_watch;
 } PidData;
@@ -66,12 +64,11 @@ child_watch_died (GPid     pid,
                   gpointer user_data)
 {
   PidData *pid_data = user_data;
-  guint32 client_pid = pid_data->client_pid;
   g_autoptr(GVariant) signal_variant = NULL;
 
-  g_debug ("Client Pid %d (%d) died", pid_data->client_pid, pid);
+  g_debug ("Client Pid %d died", pid_data->pid);
 
-  signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", client_pid, status));
+  signal_variant = g_variant_ref_sink (g_variant_new ("(uu)", pid, status));
   g_dbus_connection_emit_signal (session_bus,
                                  pid_data->client,
                                  "/org/freedesktop/Flatpak/Development",
@@ -81,7 +78,7 @@ child_watch_died (GPid     pid,
                                  NULL);
 
   /* This frees the pid_data, so be careful */
-  g_hash_table_remove (client_pid_data_hash, GUINT_TO_POINTER(client_pid));
+  g_hash_table_remove (client_pid_data_hash, GUINT_TO_POINTER(pid_data->pid));
 }
 
 typedef struct {
@@ -288,7 +285,6 @@ handle_host_command (FlatpakDevelopment *object,
 
   pid_data = g_new0 (PidData, 1);
   pid_data->pid = pid;
-  pid_data->client_pid = ++next_client_pid;
   pid_data->client = g_strdup (g_dbus_method_invocation_get_sender (invocation));
   pid_data->child_watch = g_child_watch_add_full (G_PRIORITY_DEFAULT,
                                                   pid,
@@ -296,14 +292,14 @@ handle_host_command (FlatpakDevelopment *object,
                                                   pid_data,
                                                   NULL);
 
-  g_debug ("Client Pid is %d (%d)", pid_data->client_pid, pid);
+  g_debug ("Client Pid is %d", pid_data->pid);
 
-  g_hash_table_replace (client_pid_data_hash, GUINT_TO_POINTER(pid_data->client_pid),
+  g_hash_table_replace (client_pid_data_hash, GUINT_TO_POINTER(pid_data->pid),
                         pid_data);
 
 
   flatpak_development_complete_host_command (object, invocation,
-                                             pid_data->client_pid);
+                                             pid_data->pid);
   return TRUE;
 }
 
