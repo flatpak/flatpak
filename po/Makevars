@@ -18,7 +18,7 @@ XGETTEXT_OPTIONS = --from-code=UTF-8 --keyword=_ --keyword=N_ --keyword=C_:1c,2 
 # or entity, or to disclaim their copyright.  The empty string stands for
 # the public domain; in this case the translators are expected to disclaim
 # their copyright.
-COPYRIGHT_HOLDER = Free Software Foundation, Inc.
+COPYRIGHT_HOLDER = Flatpak team and others.
 
 # This is the email address or URL to which the translators shall report
 # bugs in the untranslated strings:
@@ -51,3 +51,21 @@ USE_MSGCTXT = yes
 #   --previous            to keep previous msgids of translated messages,
 #   --quiet               to reduce the verbosity.
 MSGMERGE_OPTIONS =
+
+# These options get passed to msginit.
+# If you want to disable line wrapping when writing PO files, add
+# --no-wrap to MSGMERGE_OPTIONS, XGETTEXT_OPTIONS, and
+# MSGINIT_OPTIONS.
+MSGINIT_OPTIONS =
+
+# This tells whether or not to regenerate a PO file when $(DOMAIN).pot
+# has changed.  Possible values are "yes" and "no".  Set this to no if
+# the POT file is checked in the repository and the version control
+# program ignores timestamps.
+PO_DEPENDS_ON_POT = no
+
+# This tells whether or not to forcibly update $(DOMAIN).pot and
+# regenerate PO files on "make dist".  Possible values are "yes" and
+# "no".  Set this to no if the POT file and PO files are maintained
+# externally.
+DIST_DEPENDS_ON_UPDATE_PO = no
