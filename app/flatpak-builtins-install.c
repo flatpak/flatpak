@@ -55,7 +55,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Install from local bundle file"), NULL },
-  { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Load options from file"), N_("FILE") },
+  { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Load options from file"), NULL },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { NULL }
