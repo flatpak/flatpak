@@ -103,7 +103,7 @@ child_setup (gpointer user_data)
 
       if (unshare (CLONE_NEWUSER))
         {
-          g_warning ("Can't unshare user namespace: %s", strerror (errno));
+          g_warning ("Can't unshare user namespace: %s", g_strerror (errno));
           return;
         }
 
@@ -206,7 +206,7 @@ flatpak_builtin_enter (int           argc,
         {
           ns_fd[i] = open (path, O_RDONLY);
           if (ns_fd[i] == -1)
-            return flatpak_fail (error, _("Can't open %s namespace: %s"), ns_name[i], strerror (errno));
+            return flatpak_fail (error, _("Can't open %s namespace: %s"), ns_name[i], g_strerror (errno));
         }
     }
 
@@ -215,7 +215,7 @@ flatpak_builtin_enter (int           argc,
       if (ns_fd[i] != -1)
         {
           if (setns (ns_fd[i], 0) == -1)
-            return flatpak_fail (error, _("Can't enter %s namespace: %s"), ns_name[i], strerror (errno));
+            return flatpak_fail (error, _("Can't enter %s namespace: %s"), ns_name[i], g_strerror (errno));
           close (ns_fd[i]);
         }
     }

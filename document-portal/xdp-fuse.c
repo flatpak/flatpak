@@ -1378,7 +1378,7 @@ xdp_inode_locked_close_unneeded_fds (XdpInode *inode)
               g_debug ("moving %s to %s", inode->trunc_filename, inode->backing_filename);
               if (renameat (inode->dir_fd, inode->trunc_filename,
                             inode->dir_fd, inode->backing_filename) != 0)
-                g_warning ("Unable to replace truncated document: %s", strerror (errno));
+                g_warning ("Unable to replace truncated document: %s", g_strerror (errno));
             }
 
           inode->truncated = FALSE;
