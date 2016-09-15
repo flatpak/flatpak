@@ -40,5 +40,7 @@
     <xi:include href="@srcdir@/flatpak-build-sign.xml"/>
     <xi:include href="@srcdir@/flatpak-builder.xml"/>
     <xi:include href="@srcdir@/flatpak-metadata.xml"/>
+    <xi:include href="@srcdir@/flatpak-flatpakrepo.xml"/>
+    <xi:include href="@srcdir@/flatpak-flatpakref.xml"/>
     <xi:include href="@srcdir@/flatpak-make-current.xml"/>
 </reference>

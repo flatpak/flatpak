@@ -35,6 +35,12 @@
                 <arg choice="plain">NAME</arg>
                 <arg choice="plain">LOCATION</arg>
             </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak remote-add</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">--from</arg>
+                <arg choice="plain">FILENAME</arg>
+            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -48,6 +54,10 @@
         <para>
             Unless overridden with the --user option, this command changes
             the system-wide configuration.
+        </para>
+        <para>
+            The alternative form of the command adds a remote from a flatpakrepo
+            file.
         </para>
 
     </refsect1>
@@ -64,6 +74,14 @@
 
                 <listitem><para>
                     Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--from</option></term>
+
+                <listitem><para>
+                    Add from a flatpakrepo file instead of from commandline arguments.
                 </para></listitem>
             </varlistentry>
 
@@ -178,7 +196,8 @@
                 <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>flatpak-modify-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>flatpak-delete-remote</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-                <citerefentry><refentrytitle>flatpak-list-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+                <citerefentry><refentrytitle>flatpak-list-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-flatpakrepo</refentrytitle><manvolnum>1</manvolnum></citerefentry>
             </para>
     </refsect1>
 

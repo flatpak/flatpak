@@ -51,6 +51,8 @@ man1 = \
 
 man5 = \
 	flatpak-metadata.5		\
+	flatpak-flatpakrepo.5		\
+	flatpak-flatpakref.5		\
 	$(NULL)
 
 man_MANS = \

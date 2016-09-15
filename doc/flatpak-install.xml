@@ -39,7 +39,10 @@
             <cmdsynopsis>
                 <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">--bundle</arg>
+                <group choice="opt">
+                    <arg choice="plain">--bundle</arg>
+                    <arg choice="plain">--from</arg>
+                </group>
                 <arg choice="plain">FILENAME</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
@@ -71,8 +74,9 @@
         </para>
         <para>
             The alternative form of the command installs an application from a
-            single-file bundle instead of a configured remote. Such bundles can
-            be created with the flatpak build-bundle command.
+            single-file bundle or a flatpakref file instead of a configured remote.
+            Bundles can be created with the flatpak build-bundle command, flatpakref
+            files are simple references to a remote repo for an application.
         </para>
 
     </refsect1>
@@ -97,6 +101,15 @@
 
                 <listitem><para>
                     Install from a bundle file instead
+                    of a configured remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--from</option></term>
+
+                <listitem><para>
+                    Install from a flatpakref file instead
                     of a configured remote.
                 </para></listitem>
             </varlistentry>
@@ -209,7 +222,8 @@
             <citerefentry><refentrytitle>flatpak</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-update</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
             <citerefentry><refentrytitle>flatpak-list</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-            <citerefentry><refentrytitle>flatpak-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            <citerefentry><refentrytitle>flatpak-build-bundle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>flatpak-flatpakref</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         </para>
 
     </refsect1>
