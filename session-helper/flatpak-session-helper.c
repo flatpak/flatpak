@@ -142,7 +142,21 @@ child_setup_func (gpointer user_data)
   setpgid (0, 0);
 
   if (data->set_tty)
-    ioctl (data->tty, TIOCSCTTY, 0);
+    {
+      /* data->tty is our from fd which is closed at this point.
+       * so locate the destnation fd and use it for the ioctl.
+       */
+      for (i = 0; i < data->fd_map_len; i++)
+        {
+          if (fd_map[i].from == data->tty)
+            {
+              if (ioctl (fd_map[i].final, TIOCSCTTY, 0) == -1)
+                g_warning ("ioctl(%d, TIOCSCTTY, 0) failed: %s",
+                           fd_map[i].final, strerror (errno));
+              break;
+            }
+        }
+    }
 }
 
 
