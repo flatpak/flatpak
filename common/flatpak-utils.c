@@ -366,7 +366,7 @@ is_valid_initial_name_character (gint c)
   return
     (c >= 'A' && c <= 'Z') ||
     (c >= 'a' && c <= 'z') ||
-    (c == '_');
+    (c == '_') || (c == '-');
 }
 
 static gboolean
@@ -387,9 +387,11 @@ is_valid_name_character (gint c)
  * ('.') character. All elements must contain at least one character.
  *
  * Each element must only contain the ASCII characters
- * "[A-Z][a-z][0-9]_". Elements may not begin with a digit.
+ * "[A-Z][a-z][0-9]_-". Elements may not begin with a digit.
  *
  * App names must not begin with a '.' (period) character.
+ *
+ * App names must not end with "-symbolic".
  *
  * App names must not exceed 255 characters in length.
  *
@@ -428,6 +430,16 @@ flatpak_is_valid_name (const char *string,
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                            "Name can't be longer than 255 characters");
+      goto out;
+    }
+
+  /* To special case symbolic icons we allow org.foo.Bar to export
+     files named "org.foo.Bar-symbolic.*". To avoid conflicts for
+     we then forbid app names ending with "-symbolic". */
+  if (G_UNLIKELY (g_str_has_suffix (string, "-symbolic")))
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Name are not allowed to end with '-symbolic'");
       goto out;
     }
 
@@ -503,7 +515,9 @@ flatpak_has_name_prefix (const char *string,
   return
     *rest == 0 ||
     *rest == '.' ||
-    !is_valid_name_character (*rest);
+    !is_valid_name_character (*rest) ||
+    /* Special case -symbolic icon names */
+    g_str_has_prefix (rest, "-symbolic.");
 }
 
 static gboolean
