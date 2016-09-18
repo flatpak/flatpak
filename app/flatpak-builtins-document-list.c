@@ -126,7 +126,7 @@ flatpak_complete_document_list (FlatpakCompletion *completion)
           }
       }
 
-      system_dir = flatpak_dir_get_user ();
+      system_dir = flatpak_dir_get_system ();
       {
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, NULL,
                                                               TRUE, FALSE, &error);
