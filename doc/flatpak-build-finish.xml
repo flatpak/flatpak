@@ -160,6 +160,10 @@
                     the [Context] group in the metadata.
                     FEATURE must be one of: devel.
                     This option can be used multiple times.
+                 </para><para>
+                    The <code>devel</code> feature allows the application to
+                    access certain syscalls such as <code>ptrace()</code>, and
+                    <code>perf_event_open()</code>.
                 </para></listitem>
             </varlistentry>
 
