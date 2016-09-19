@@ -1,3 +1,15 @@
+Major changes in 0.6.11
+=======================
+
+ * Dashes are now allowed in application ids. However, to still work  with
+   symbolic icon names, they may not end with "-symbolic".
+ * HostCommand now handles ptys correctly
+ * Various documentation updates
+ * New FLATPAK_CHECK_VERSION macro in libflatpak
+ * HostCommand now returns the real PID rather than a fake one.
+ * Fix regression in flatpak update --appstream
+ * Fix regression installing bundles without origin urls
+
 Major changes in 0.6.10
 =======================
 
