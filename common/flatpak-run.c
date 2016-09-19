@@ -2618,6 +2618,8 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   if (app_branch != NULL)
     g_key_file_set_string (keyfile, "Instance", "branch", app_branch);
 
+  g_key_file_set_string (keyfile, "Instance", "flatpak-version", PACKAGE_VERSION);
+
   flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
 
   if (!g_key_file_save_to_file (keyfile, tmp_path, error))
