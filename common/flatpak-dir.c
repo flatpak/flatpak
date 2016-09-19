@@ -5081,9 +5081,9 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
   else
     url = g_key_file_get_string (config, group, "url", NULL);
 
-  if (url == NULL || *url == 0)
-    return flatpak_fail (error, "No url for remote %s specified",
-                         remote_name);
+  /* No url => disabled */
+  if (url == NULL)
+    url = g_strdup ("");
 
   /* Add it if its not there yet */
   if (!ostree_repo_remote_change (self->repo, NULL,
