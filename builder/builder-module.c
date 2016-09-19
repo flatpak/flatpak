@@ -1650,3 +1650,80 @@ builder_module_cleanup_collect (BuilderModule  *self,
         }
     }
 }
+
+void
+builder_module_apply_overrides (BuilderModule *self,
+                                BuilderModule *overrides)
+{
+  if (overrides->sources)
+    {
+      g_list_free_full (self->sources, g_object_unref);
+      self->sources = g_list_copy_deep (overrides->sources, (GCopyFunc) g_object_ref, NULL);
+    }
+  if (overrides->config_opts)
+    {
+      g_strfreev (self->config_opts);
+      self->config_opts = g_strdupv (overrides->config_opts);
+    }
+  if (overrides->make_args)
+    {
+      g_strfreev (self->make_args);
+      self->make_args = g_strdupv (overrides->make_args);
+    }
+  if (overrides->make_install_args)
+    {
+      g_strfreev (self->make_install_args);
+      self->make_install_args = g_strdupv (overrides->make_install_args);
+    }
+  if (overrides->rm_configure)
+    {
+      self->rm_configure = overrides->rm_configure;
+    }
+  if (overrides->no_autogen)
+    {
+      self->no_autogen = overrides->no_autogen;
+    }
+  if (overrides->no_parallel_make)
+    {
+      self->no_parallel_make = overrides->no_parallel_make;
+    }
+  if (overrides->no_python_timestamp_fix)
+    {
+      self->no_python_timestamp_fix = overrides->no_python_timestamp_fix;
+    }
+  if (overrides->cmake)
+    {
+      self->cmake = overrides->cmake;
+    }
+  if (overrides->builddir)
+    {
+      self->builddir = overrides->builddir;
+    }
+  if (overrides->subdir)
+    {
+      g_clear_pointer (&self->subdir, g_free);
+      self->subdir = g_strdup (overrides->subdir);
+    }
+  if (overrides->build_options)
+    {
+      if (self->build_options)
+        builder_options_apply_overrides (self->build_options, overrides->build_options);
+      else
+        self->build_options = g_object_ref (overrides->build_options);
+    }
+  if (overrides->post_install)
+    {
+      g_strfreev (self->post_install);
+      self->post_install = g_strdupv (overrides->post_install);
+    }
+  if (overrides->cleanup)
+    {
+      g_strfreev (self->cleanup);
+      self->cleanup = g_strdupv (overrides->cleanup);
+    }
+  if (overrides->cleanup_platform)
+    {
+      g_strfreev (self->cleanup_platform);
+      self->cleanup_platform = g_strdupv (overrides->cleanup_platform);
+    }
+}

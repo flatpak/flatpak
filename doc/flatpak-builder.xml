@@ -750,6 +750,19 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--override-manifest=PATH</option></term>
+
+                <listitem><para>
+                    Prefer the values in the JSON file at PATH over those in the
+                    MANIFEST with the same keys. For example, you may want to use
+                    a local checkout of a git repo rather than a remote URL. For
+                    build-options and modules, each member is copied individually
+                    rather than replacing the whole object, but the lists of
+                    sources are copied as a unit.
+                </para></listitem>
+            </varlistentry>
+
           </variablelist>
     </refsect1>
 

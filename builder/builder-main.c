@@ -50,6 +50,7 @@ static char *opt_repo;
 static char *opt_subject;
 static char *opt_body;
 static char *opt_gpg_homedir;
+static char *opt_override_manifest;
 static char **opt_key_ids;
 
 static GOptionEntry entries[] = {
@@ -73,6 +74,7 @@ static GOptionEntry entries[] = {
   { "force-clean", 0, 0, G_OPTION_ARG_NONE, &opt_force_clean, "Erase previous contents of DIRECTORY", NULL },
   { "sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_sandboxed, "Enforce sandboxing, disabling build-args", NULL },
   { "stop-at", 0, 0, G_OPTION_ARG_STRING, &opt_stop_at, "Stop building at this module (implies --build-only)", "MODULENAME"},
+  { "override-manifest", 0, 0, G_OPTION_ARG_STRING, &opt_override_manifest, "Prefer the values in the JSON file at PATH over those in the MANIFEST", "PATH" },
   { NULL }
 };
 
@@ -174,8 +176,10 @@ main (int    argc,
   g_autoptr(GError) error = NULL;
   g_autoptr(BuilderManifest) manifest = NULL;
   g_autoptr(GOptionContext) context = NULL;
+  g_autoptr(BuilderManifest) override_manifest = NULL;
   const char *app_dir_path, *manifest_path;
-  g_autofree gchar *json = NULL;
+  g_autofree gchar *manifest_json = NULL;
+  g_autofree gchar *manifest_override_json = NULL;
   g_autoptr(BuilderContext) build_context = NULL;
   g_autoptr(GFile) base_dir = NULL;
   g_autoptr(GFile) manifest_file = NULL;
@@ -260,18 +264,39 @@ main (int    argc,
 
   manifest_path = argv[2];
 
-  if (!g_file_get_contents (manifest_path, &json, NULL, &error))
+  if (!g_file_get_contents (manifest_path, &manifest_json, NULL, &error))
     {
       g_printerr ("Can't load '%s': %s\n", manifest_path, error->message);
       return 1;
     }
 
   manifest = (BuilderManifest *) json_gobject_from_data (BUILDER_TYPE_MANIFEST,
-                                                         json, -1, &error);
+                                                         manifest_json, -1,
+                                                         &error);
   if (manifest == NULL)
     {
       g_printerr ("Can't parse '%s': %s\n", manifest_path, error->message);
       return 1;
+    }
+
+  if (opt_override_manifest)
+    {
+      if (!g_file_get_contents (opt_override_manifest, &manifest_override_json, NULL, &error))
+        {
+          g_printerr ("Can't load '%s': %s\n", opt_override_manifest, error->message);
+          return 1;
+        }
+
+      override_manifest = (BuilderManifest *) json_gobject_from_data (BUILDER_TYPE_MANIFEST,
+                                                                      manifest_override_json, -1,
+                                                                      &error);
+      if (override_manifest == NULL)
+        {
+          g_printerr ("Can't parse '%s': %s\n", opt_override_manifest, error->message);
+          return 1;
+        }
+
+      builder_manifest_apply_overrides (manifest, override_manifest);
     }
 
   if (is_run && argc == 3)
