@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-09-14 14:24+0000\n"
+"POT-Creation-Date: 2016-09-19 16:36+0200\n"
 "PO-Revision-Date: 2016-09-15 00:32+0800\n"
 "Last-Translator: Sebastian Rasmussen <sebras@gmail.com>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -28,8 +28,7 @@ msgstr "Läs in inställningar från fil"
 
 #: app/flatpak-builtins-add-remote.c:59 app/flatpak-builtins-add-remote.c:76
 #: app/flatpak-builtins-build-bundle.c:53
-#: app/flatpak-builtins-build-export.c:56 app/flatpak-builtins-install.c:58
-#: app/flatpak-builtins-install.c:59
+#: app/flatpak-builtins-build-export.c:56 app/flatpak-builtins-install.c:59
 msgid "FILE"
 msgstr "FIL"
 
@@ -214,7 +213,7 @@ msgstr "KATALOG måste anges"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:244 common/flatpak-run.c:3597
+#: app/flatpak-builtins-build.c:244 common/flatpak-run.c:3601
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
 
@@ -1245,7 +1244,7 @@ msgstr "Inga åsidosättningar funna för %s"
 
 #: common/flatpak-dir.c:564 common/flatpak-dir.c:798 common/flatpak-dir.c:834
 #: common/flatpak-dir.c:856 common/flatpak-dir.c:5600
-#: common/flatpak-utils.c:818
+#: common/flatpak-utils.c:832
 #, c-format
 msgid "%s not installed"
 msgstr "%s inte installerad"
@@ -1540,176 +1539,90 @@ msgstr "Misslyckades med att avlänka temporärfil"
 msgid "Failed to write to temporary file"
 msgstr "Misslyckades med att skriva till temporärfil"
 
-#: common/flatpak-run.c:2602
-msgid "Failed to open flatpak-info temp file"
+#: common/flatpak-run.c:2603
+#, fuzzy, c-format
+msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Misslyckades med att öppna temporär flatpak-info-fil: %s"
 
-#: common/flatpak-run.c:2629
-msgid "Failed to open temp file"
+#: common/flatpak-run.c:2633
+#, fuzzy, c-format
+msgid "Failed to open temp file: %s"
 msgstr "Misslyckades med att öppna temporärfil: %s"
 
 # sebras: sync?
-#: common/flatpak-run.c:2895
+#: common/flatpak-run.c:2899
 msgid "Unable to create sync pipe"
 msgstr "Kan inte skapa sync-rör"
 
-#: common/flatpak-run.c:2920
+#: common/flatpak-run.c:2924
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Misslyckades med att öppna prog-info-fil: %s"
 
-#: common/flatpak-run.c:2950
+#: common/flatpak-run.c:2954
 msgid "Failed to sync with dbus proxy"
 msgstr "Misslyckades med att synkronisera med dbus-proxy"
 
-#.
-#. Policy definitions for Flatpak system actions.
-#. Copyright (c) 2016 Alexander Larsson <alexl@redhat.com>
-#: system-helper/org.freedesktop.Flatpak.policy.in:12
-msgid "The Flatpak Project"
-msgstr "Flatpak-projektet"
+#~ msgid "The Flatpak Project"
+#~ msgstr "Flatpak-projektet"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:13
-msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
-msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+#~ msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+#~ msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:14
-#: system-helper/org.freedesktop.Flatpak.policy.in:25
-#: system-helper/org.freedesktop.Flatpak.policy.in:42
-#: system-helper/org.freedesktop.Flatpak.policy.in:60
-#: system-helper/org.freedesktop.Flatpak.policy.in:78
-#: system-helper/org.freedesktop.Flatpak.policy.in:89
-#: system-helper/org.freedesktop.Flatpak.policy.in:100
-#: system-helper/org.freedesktop.Flatpak.policy.in:111
-#: system-helper/org.freedesktop.Flatpak.policy.in:122
-#: system-helper/org.freedesktop.Flatpak.policy.in:140
-msgid "package-x-generic"
-msgstr "package-x-generic"
+#~ msgid "package-x-generic"
+#~ msgstr "package-x-generic"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:23
-msgid "Install signed application"
-msgstr "Installera signerat program"
+#~ msgid "Install signed application"
+#~ msgstr "Installera signerat program"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:24
-#: system-helper/org.freedesktop.Flatpak.policy.in:41
-msgid "Authentication is required to install software"
-msgstr "Autentisering krävs för att installera program"
+#~ msgid "Authentication is required to install software"
+#~ msgstr "Autentisering krävs för att installera program"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:27
-#: system-helper/org.freedesktop.Flatpak.policy.in:28
-#: system-helper/org.freedesktop.Flatpak.policy.in:44
-#: system-helper/org.freedesktop.Flatpak.policy.in:45
-#: system-helper/org.freedesktop.Flatpak.policy.in:62
-#: system-helper/org.freedesktop.Flatpak.policy.in:63
-#: system-helper/org.freedesktop.Flatpak.policy.in:80
-#: system-helper/org.freedesktop.Flatpak.policy.in:81
-#: system-helper/org.freedesktop.Flatpak.policy.in:91
-#: system-helper/org.freedesktop.Flatpak.policy.in:92
-#: system-helper/org.freedesktop.Flatpak.policy.in:102
-#: system-helper/org.freedesktop.Flatpak.policy.in:103
-#: system-helper/org.freedesktop.Flatpak.policy.in:113
-#: system-helper/org.freedesktop.Flatpak.policy.in:114
-#: system-helper/org.freedesktop.Flatpak.policy.in:124
-#: system-helper/org.freedesktop.Flatpak.policy.in:125
-#: system-helper/org.freedesktop.Flatpak.policy.in:126
-#: system-helper/org.freedesktop.Flatpak.policy.in:142
-#: system-helper/org.freedesktop.Flatpak.policy.in:143
-msgid "auth_admin"
-msgstr "auth_admin"
+#~ msgid "auth_admin"
+#~ msgstr "auth_admin"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:29
-#: system-helper/org.freedesktop.Flatpak.policy.in:46
-#: system-helper/org.freedesktop.Flatpak.policy.in:93
-#: system-helper/org.freedesktop.Flatpak.policy.in:104
-#: system-helper/org.freedesktop.Flatpak.policy.in:115
-msgid "auth_admin_keep"
-msgstr "auth_admin_keep"
+#~ msgid "auth_admin_keep"
+#~ msgstr "auth_admin_keep"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:40
-msgid "Install signed runtime"
-msgstr "Installera signerad exekveringsmiljö"
+#~ msgid "Install signed runtime"
+#~ msgstr "Installera signerad exekveringsmiljö"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update an
-#. app as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:58
-msgid "Update signed application"
-msgstr "Uppdatera signerat program"
+#~ msgid "Update signed application"
+#~ msgstr "Uppdatera signerat program"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:59
-#: system-helper/org.freedesktop.Flatpak.policy.in:77
-#: system-helper/org.freedesktop.Flatpak.policy.in:139
-msgid "Authentication is required to update software"
-msgstr "Autentisering krävs för att uppdatera program"
+#~ msgid "Authentication is required to update software"
+#~ msgstr "Autentisering krävs för att uppdatera program"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:64
-#: system-helper/org.freedesktop.Flatpak.policy.in:82
-#: system-helper/org.freedesktop.Flatpak.policy.in:144
-msgid "yes"
-msgstr "yes"
+#~ msgid "yes"
+#~ msgstr "yes"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update a
-#. runtime as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:76
-msgid "Update signed runtime"
-msgstr "Uppdatera signerad exekveringsmiljö"
+#~ msgid "Update signed runtime"
+#~ msgstr "Uppdatera signerad exekveringsmiljö"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:87
-msgid "Install bundle"
-msgstr "Installera paket"
+#~ msgid "Install bundle"
+#~ msgstr "Installera paket"
 
 # sebras: https://github.com/flatpak/flatpak/pull/308
-#: system-helper/org.freedesktop.Flatpak.policy.in:88
-msgid "Authentication is install software"
-msgstr "Autentisering är installera program"
+#~ msgid "Authentication is install software"
+#~ msgstr "Autentisering är installera program"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:98
-msgid "Uninstall runtime"
-msgstr "Avinstallera exekveringsmiljö"
+#~ msgid "Uninstall runtime"
+#~ msgstr "Avinstallera exekveringsmiljö"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:99
-#: system-helper/org.freedesktop.Flatpak.policy.in:110
-msgid "Authentication is required to uninstall software"
-msgstr "Autentisering krävs för att avinstallera program"
+#~ msgid "Authentication is required to uninstall software"
+#~ msgstr "Autentisering krävs för att avinstallera program"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:109
-msgid "Uninstall app"
-msgstr "Avinstallera program"
+#~ msgid "Uninstall app"
+#~ msgstr "Avinstallera program"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:120
-msgid "Configure Remote"
-msgstr "Konfigurera fjärr"
+#~ msgid "Configure Remote"
+#~ msgstr "Konfigurera fjärr"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:121
-msgid "Authentication is required to configure software repositories"
-msgstr "Autentisering krävs för att konfigurera programarkiv"
+#~ msgid "Authentication is required to configure software repositories"
+#~ msgstr "Autentisering krävs för att konfigurera programarkiv"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update
-#. appstream data as it will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:138
-msgid "Update appstream"
-msgstr "Uppdatera appstream"
+#~ msgid "Update appstream"
+#~ msgstr "Uppdatera appstream"
 
 #~ msgid "LOCATION ID [BRANCH] - Create a repository from a build directory"
 #~ msgstr "PLATS ID [ GREN] - Skapa ett arkiv från en byggkatalog"
