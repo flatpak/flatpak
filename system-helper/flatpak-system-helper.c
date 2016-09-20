@@ -783,11 +783,14 @@ main (int    argc,
   if (verbose)
     g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
-  authority = polkit_authority_get_sync (NULL, &error);
-  if (authority == NULL)
+  if (!on_session_bus)
     {
-      g_printerr ("Can't get polkit authority: %s\n", error->message);
-      return 1;
+      authority = polkit_authority_get_sync (NULL, &error);
+      if (authority == NULL)
+        {
+          g_printerr ("Can't get polkit authority: %s\n", error->message);
+          return 1;
+        }
     }
 
   exe_path_len = readlink ("/proc/self/exe", exe_path, sizeof (exe_path) - 1);
