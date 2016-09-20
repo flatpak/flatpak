@@ -70,6 +70,8 @@ gboolean        builder_manifest_run (BuilderManifest *self,
                                       char           **argv,
                                       int              argc,
                                       GError         **error);
+gboolean        builder_manifest_show_deps (BuilderManifest *self,
+                                            GError         **error);
 void            builder_manifest_checksum (BuilderManifest *self,
                                            BuilderCache    *cache,
                                            BuilderContext  *context);

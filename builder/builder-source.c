@@ -97,6 +97,12 @@ builder_source_set_property (GObject      *object,
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
 }
+static gboolean
+builder_source_real_show_deps (BuilderSource  *self,
+                               GError        **error)
+{
+  return TRUE;
+}
 
 static gboolean
 builder_source_real_download (BuilderSource  *self,
@@ -138,6 +144,7 @@ builder_source_class_init (BuilderSourceClass *klass)
   object_class->get_property = builder_source_get_property;
   object_class->set_property = builder_source_set_property;
 
+  klass->show_deps = builder_source_real_show_deps;
   klass->download = builder_source_real_download;
   klass->extract = builder_source_real_extract;
   klass->update = builder_source_real_update;
@@ -222,6 +229,17 @@ builder_source_from_json (JsonNode *node)
     g_warning ("Unknown source type %s", type);
 
   return NULL;
+}
+
+gboolean
+builder_source_show_deps (BuilderSource  *self,
+                          GError        **error)
+{
+  BuilderSourceClass *class;
+
+  class = BUILDER_SOURCE_GET_CLASS (self);
+
+  return class->show_deps (self, error);
 }
 
 gboolean

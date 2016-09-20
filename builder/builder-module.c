@@ -38,6 +38,7 @@ struct BuilderModule
 {
   GObject         parent;
 
+  char           *json_path;
   char           *name;
   char           *subdir;
   char          **post_install;
@@ -98,6 +99,7 @@ builder_module_finalize (GObject *object)
 {
   BuilderModule *self = (BuilderModule *) object;
 
+  g_free (self->json_path);
   g_free (self->name);
   g_free (self->subdir);
   g_strfreev (self->post_install);
@@ -651,6 +653,25 @@ GList *
 builder_module_get_modules (BuilderModule *self)
 {
   return self->modules;
+}
+
+gboolean
+builder_module_show_deps (BuilderModule *self,
+                          GError         **error)
+{
+  GList *l;
+  if (self->json_path)
+    g_print ("%s\n", self->json_path);
+
+  for (l = self->sources; l != NULL; l = l->next)
+    {
+      BuilderSource *source = l->data;
+
+      if (!builder_source_show_deps (source, error))
+        return FALSE;
+    }
+
+  return TRUE;
 }
 
 gboolean
@@ -1523,6 +1544,13 @@ builder_module_checksum_for_cleanup (BuilderModule  *self,
   builder_cache_checksum_str (cache, BUILDER_MODULE_CHECKSUM_VERSION);
   builder_cache_checksum_str (cache, self->name);
   builder_cache_checksum_strv (cache, self->cleanup);
+}
+
+void
+builder_module_set_json_path (BuilderModule *self,
+                              const char *json_path)
+{
+  self->json_path = g_strdup (json_path);
 }
 
 GPtrArray *

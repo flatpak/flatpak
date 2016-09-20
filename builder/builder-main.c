@@ -37,6 +37,7 @@ static gboolean opt_run;
 static gboolean opt_disable_cache;
 static gboolean opt_download_only;
 static gboolean opt_build_only;
+static gboolean opt_show_deps;
 static gboolean opt_disable_download;
 static gboolean opt_disable_updates;
 static gboolean opt_ccache;
@@ -63,6 +64,7 @@ static GOptionEntry entries[] = {
   { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
+  { "show-deps", 0, 0, G_OPTION_ARG_NONE, &opt_show_deps, "List the dependencies of the json file (see --show-deps --help)", NULL },
   { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir or export if no changes", NULL },
   { "keep-build-dirs", 0, 0, G_OPTION_ARG_NONE, &opt_keep_build_dirs, "Don't remove build directories after install", NULL },
   { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo, "Repo to export into", "DIR"},
@@ -81,6 +83,12 @@ static GOptionEntry run_entries[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Architecture to build for (must be host compatible)", "ARCH" },
   { "run", 0, 0, G_OPTION_ARG_NONE, &opt_run, "Run a command in the build directory", NULL },
   { "ccache", 0, 0, G_OPTION_ARG_NONE, &opt_ccache, "Use ccache", NULL },
+  { NULL }
+};
+
+static GOptionEntry show_deps_entries[] = {
+  { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
+  { "show-deps", 0, 0, G_OPTION_ARG_NONE, &opt_show_deps, "List the dependencies of the json file (see --show-deps --help)", NULL },
   { NULL }
 };
 
@@ -174,7 +182,7 @@ main (int    argc,
   g_autoptr(GError) error = NULL;
   g_autoptr(BuilderManifest) manifest = NULL;
   g_autoptr(GOptionContext) context = NULL;
-  const char *app_dir_path, *manifest_path;
+  const char *app_dir_path = NULL, *manifest_path;
   g_autofree gchar *json = NULL;
   g_autoptr(BuilderContext) build_context = NULL;
   g_autoptr(GFile) base_dir = NULL;
@@ -188,8 +196,10 @@ main (int    argc,
   const char *platform_id = NULL;
   g_autofree char **orig_argv;
   gboolean is_run = FALSE;
+  gboolean is_show_deps = FALSE;
   g_autoptr(FlatpakContext) arg_context = NULL;
   int i, first_non_arg, orig_argc;
+  int argnr;
 
   setlocale (LC_ALL, "");
 
@@ -217,6 +227,8 @@ main (int    argc,
       first_non_arg = i + 1;
       if (strcmp (argv[i], "--run") == 0)
         is_run = TRUE;
+      if (strcmp (argv[i], "--show-deps") == 0)
+        is_show_deps = TRUE;
     }
 
   if (is_run)
@@ -228,6 +240,11 @@ main (int    argc,
 
       /* We drop the post-command part from the args, these go with the command in the sandbox */
       argc = MIN (first_non_arg + 3, argc);
+    }
+  else if (is_show_deps)
+    {
+      context = g_option_context_new ("MANIFEST - Show manifest dependencies");
+      g_option_context_add_main_entries (context, show_deps_entries, NULL);
     }
   else
     {
@@ -250,15 +267,18 @@ main (int    argc,
   if (opt_verbose)
     g_log_set_handler (NULL, G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
-  if (argc == 1)
-    return usage (context, "DIRECTORY must be specified");
+  argnr = 1;
 
-  app_dir_path = argv[1];
+  if (!is_show_deps)
+    {
+      if (argc == argnr)
+        return usage (context, "DIRECTORY must be specified");
+      app_dir_path = argv[argnr++];
+    }
 
-  if (argc == 2)
+  if (argc == argnr)
     return usage (context, "MANIFEST must be specified");
-
-  manifest_path = argv[2];
+  manifest_path = argv[argnr++];
 
   if (!g_file_get_contents (manifest_path, &json, NULL, &error))
     {
@@ -276,6 +296,17 @@ main (int    argc,
 
   if (is_run && argc == 3)
     return usage (context, "Program to run must be specified");
+
+  if (is_show_deps)
+    {
+      if (!builder_manifest_show_deps (manifest, &error))
+        {
+          g_printerr ("Error running %s: %s\n", argv[3], error->message);
+          return 1;
+        }
+
+      return 0;
+    }
 
   manifest_file = g_file_new_for_path (manifest_path);
   base_dir = g_file_get_parent (manifest_file);
@@ -325,6 +356,7 @@ main (int    argc,
     }
 
   g_assert (!opt_run);
+  g_assert (!opt_show_deps);
 
   if (g_file_query_exists (app_dir, NULL) && !directory_is_empty (app_dir_path))
     {

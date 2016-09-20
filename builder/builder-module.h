@@ -43,10 +43,14 @@ const char * builder_module_get_name (BuilderModule *self);
 gboolean     builder_module_get_disabled (BuilderModule *self);
 GList *      builder_module_get_sources (BuilderModule *self);
 GList *      builder_module_get_modules (BuilderModule *self);
+void         builder_module_set_json_path (BuilderModule *self,
+                                           const char *json_path);
 GPtrArray *  builder_module_get_changes (BuilderModule *self);
 void         builder_module_set_changes (BuilderModule *self,
                                          GPtrArray     *changes);
 
+gboolean     builder_module_show_deps (BuilderModule *self,
+                                       GError         **error);
 gboolean builder_module_download_sources (BuilderModule  *self,
                                           gboolean        update_vcs,
                                           BuilderContext *context,

@@ -9,6 +9,8 @@ Major changes in 0.6.11
  * HostCommand now returns the real PID rather than a fake one.
  * Fix regression in flatpak update --appstream
  * Fix regression installing bundles without origin urls
+ * New flatpak-builder option --show-deps lists all the files
+   the manifest depends on.
 
 Major changes in 0.6.10
 =======================

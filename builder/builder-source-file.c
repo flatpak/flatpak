@@ -258,6 +258,18 @@ download_uri (const char     *url,
 }
 
 static gboolean
+builder_source_file_show_deps (BuilderSource  *source,
+                               GError        **error)
+{
+  BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
+
+  if (self->path && self->path[0] != 0)
+    g_print ("%s\n", self->path);
+
+  return TRUE;
+}
+
+static gboolean
 builder_source_file_download (BuilderSource  *source,
                               gboolean        update_vcs,
                               BuilderContext *context,
@@ -501,6 +513,7 @@ builder_source_file_class_init (BuilderSourceFileClass *klass)
   object_class->get_property = builder_source_file_get_property;
   object_class->set_property = builder_source_file_set_property;
 
+  source_class->show_deps = builder_source_file_show_deps;
   source_class->download = builder_source_file_download;
   source_class->extract = builder_source_file_extract;
   source_class->update = builder_source_file_update;

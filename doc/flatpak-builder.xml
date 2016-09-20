@@ -43,6 +43,12 @@
                 <arg choice="plain">MANIFEST</arg>
                 <arg choice="plain">COMMAND</arg>
             </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak-builder</command>
+                <arg choice="plain">--show-deps</arg>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="plain">MANIFEST</arg>
+            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -624,6 +630,14 @@
                   arguments to give the same environment as the build, and the same permissions the final app
                   will have. The command to run must be the last argument passed to
                   flatpak-builder, after the directory and the manifest.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--show-deps</option></term>
+
+                <listitem><para>
+                  List all the (local) files that the manifest depends on.
                 </para></listitem>
             </varlistentry>
 

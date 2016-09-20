@@ -136,6 +136,18 @@ get_source_file (BuilderSourcePatch *self,
 }
 
 static gboolean
+builder_source_patch_show_deps (BuilderSource  *source,
+                                GError        **error)
+{
+  BuilderSourcePatch *self = BUILDER_SOURCE_PATCH (source);
+
+  if (self->path && self->path[0] != 0)
+    g_print ("%s\n", self->path);
+
+  return TRUE;
+}
+
+static gboolean
 builder_source_patch_download (BuilderSource  *source,
                                gboolean        update_vcs,
                                BuilderContext *context,
@@ -255,6 +267,7 @@ builder_source_patch_class_init (BuilderSourcePatchClass *klass)
   object_class->get_property = builder_source_patch_get_property;
   object_class->set_property = builder_source_patch_set_property;
 
+  source_class->show_deps = builder_source_patch_show_deps;
   source_class->download = builder_source_patch_download;
   source_class->extract = builder_source_patch_extract;
   source_class->checksum = builder_source_patch_checksum;

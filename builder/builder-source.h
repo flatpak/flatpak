@@ -48,6 +48,8 @@ typedef struct
 {
   GObjectClass parent_class;
 
+  gboolean (* show_deps)(BuilderSource  *self,
+                         GError        **error);
   gboolean (* download)(BuilderSource  *self,
                         gboolean        update_vcs,
                         BuilderContext *context,
@@ -70,6 +72,8 @@ GType builder_source_get_type (void);
 BuilderSource * builder_source_from_json (JsonNode *node);
 JsonNode *      builder_source_to_json (BuilderSource *self);
 
+gboolean builder_source_show_deps (BuilderSource  *self,
+                                   GError        **error);
 gboolean builder_source_download (BuilderSource  *self,
                                   gboolean        update_vcs,
                                   BuilderContext *context,

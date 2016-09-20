@@ -815,8 +815,12 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
                   g_autofree char *json = NULL;
 
                   if (g_file_get_contents (module_path, &json, NULL, NULL))
-                    module = json_gobject_from_data (BUILDER_TYPE_MODULE,
-                                                     json, -1, NULL);
+                    {
+                      module = json_gobject_from_data (BUILDER_TYPE_MODULE,
+                                                       json, -1, NULL);
+                      if (module)
+                        builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                    }
                 }
               else if (JSON_NODE_HOLDS_OBJECT (element_node))
                 module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
@@ -2102,6 +2106,27 @@ builder_manifest_create_platform (BuilderManifest *self,
   return TRUE;
 }
 
+
+gboolean
+builder_manifest_show_deps (BuilderManifest *self,
+                            GError         **error)
+{
+  g_autoptr(GHashTable) names = g_hash_table_new (g_str_hash, g_str_equal);
+  GList *l;
+
+  if (!expand_modules (self->modules, &self->expanded_modules, names, error))
+    return FALSE;
+
+  for (l = self->expanded_modules; l != NULL; l = l->next)
+    {
+      BuilderModule *module = l->data;
+
+      if (!builder_module_show_deps (module, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
 
 gboolean
 builder_manifest_run (BuilderManifest *self,
