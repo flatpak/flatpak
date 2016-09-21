@@ -280,6 +280,9 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (argc < 3 && opt_url == NULL)
     return usage_error (context, _("LOCATION must be specified"), error);
 
+  if (argc > 3)
+    return usage_error (context, _("Too many arguments"), error);
+
   remote_name = argv[1];
 
   remotes = flatpak_dir_list_remotes (dir, cancellable, error);
@@ -289,6 +292,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (g_strv_contains ((const char **)remotes, remote_name))
     {
       if (opt_if_not_exists)
+
         return TRUE; /* Do nothing */
 
       return flatpak_fail (error, _("Remote %s already exists"), remote_name);
