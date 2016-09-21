@@ -3028,6 +3028,11 @@ setup_seccomp (GPtrArray  *argv_array,
     /* Don't allow reading current quota use */
     {SCMP_SYS (quotactl)},
 
+    /* Don't allow access to the kernel keyring */
+    {SCMP_SYS (add_key)},
+    {SCMP_SYS (keyctl)},
+    {SCMP_SYS (request_key)},
+
     /* Scary VM/NUMA ops */
     {SCMP_SYS (move_pages)},
     {SCMP_SYS (mbind)},
