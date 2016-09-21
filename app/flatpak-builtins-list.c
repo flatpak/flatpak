@@ -258,6 +258,9 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
+  if (argc > 1)
+    return usage_error (context, _("Too many arguments"), error);
+
   if (!opt_app && !opt_runtime)
     opt_app = TRUE;
 
