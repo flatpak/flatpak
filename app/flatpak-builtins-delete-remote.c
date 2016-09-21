@@ -59,6 +59,9 @@ flatpak_builtin_delete_remote (int argc, char **argv, GCancellable *cancellable,
 
   remote_name = argv[1];
 
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
   if (!flatpak_dir_remove_remote (dir, opt_force, remote_name,
                                   cancellable, error))
     return FALSE;
