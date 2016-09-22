@@ -1506,9 +1506,25 @@ builder_manifest_cleanup (BuilderManifest *self,
           g_autoptr(GFile) src = g_file_get_child (applications_dir, self->rename_desktop_file);
           g_autofree char *desktop_basename = g_strdup_printf ("%s.desktop", self->id);
           g_autoptr(GFile) dest = g_file_get_child (applications_dir, desktop_basename);
+          g_autoptr(GKeyFile) key_file = g_key_file_new ();
+          g_autofree char *src_path = g_file_get_path (src);
+          g_autofree char *dest_path = g_file_get_path (dest);
+          g_autofree char *wmclass = g_strndup (self->rename_desktop_file, strlen (self->rename_desktop_file) - 8);
 
           g_print ("Renaming %s to %s\n", self->rename_desktop_file, desktop_basename);
-          if (!g_file_move (src, dest, 0, NULL, NULL, NULL, error))
+
+          if (!g_key_file_load_from_file (key_file, src_path,
+                                          G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS,
+                                          error))
+            return FALSE;
+
+          g_key_file_set_string (key_file, G_KEY_FILE_DESKTOP_GROUP,
+                                 G_KEY_FILE_DESKTOP_KEY_STARTUP_WM_CLASS, wmclass);
+
+          if (!g_key_file_save_to_file (key_file, dest_path, error))
+            return FALSE;
+
+          if (!g_file_delete (src, NULL, error))
             return FALSE;
 
           if (g_file_query_exists (appdata_file, NULL))
