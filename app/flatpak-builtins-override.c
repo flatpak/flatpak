@@ -60,10 +60,10 @@ flatpak_builtin_override (int argc, char **argv, GCancellable *cancellable, GErr
     return FALSE;
 
   if (argc < 2)
-    {
-      usage_error (context, _("APP must be specified"), error);
-      return FALSE;
-    }
+    return usage_error (context, _("APP must be specified"), error);
+
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
 
   app = argv[1];
 
