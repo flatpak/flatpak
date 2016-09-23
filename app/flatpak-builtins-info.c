@@ -83,6 +83,9 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (argc >= 3)
     branch = argv[2];
 
+  if (argc > 3)
+    return usage_error (context, _("Too many arguments"), error);
+
   if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
     return FALSE;
 
