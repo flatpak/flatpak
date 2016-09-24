@@ -209,6 +209,9 @@ flatpak_builtin_update (int           argc,
   if (argc >= 3)
     branch = argv[2];
 
+  if (argc > 3)
+    return usage_error (context, _("Too many arguments"), error);
+
   if (opt_arch == NULL)
     opt_arch = (char *)flatpak_get_arch ();
 
