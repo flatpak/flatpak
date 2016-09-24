@@ -76,6 +76,9 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   if (argc < 2)
     return usage_error (context, _("REMOTE must be specified"), error);
 
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
   repository = argv[1];
 
 
