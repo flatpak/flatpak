@@ -519,6 +519,12 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       goto out;
     }
 
+  if (argc > 4)
+    {
+      usage_error (context, _("Too many arguments"), error);
+      goto out;
+    }
+
   location = argv[1];
   directory = argv[2];
 
