@@ -63,6 +63,9 @@ flatpak_builtin_document_unexport (int argc, char **argv,
   if (argc < 2)
     return usage_error (context, _("FILE must be specified"), error);
 
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
   file = argv[1];
 
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
