@@ -71,6 +71,9 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   if (argc < 2)
     return usage_error (context, _("NAME must be specified"), error);
 
+  if (argc > 3)
+    return usage_error (context, _("Too many arguments"), error);
+
   name = argv[1];
   if (argc > 2)
     branch = argv[2];
