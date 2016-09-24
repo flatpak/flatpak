@@ -67,10 +67,10 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
     return FALSE;
 
   if (argc < 3)
-    {
-      usage_error (context, _("LOCATION and DIRECTORY must be specified"), error);
-      return FALSE;
-    }
+    return usage_error (context, _("LOCATION and DIRECTORY must be specified"), error);
+
+  if (argc > 4)
+    return usage_error (context, _("Too many arguments"), error);
 
   location = argv[1];
   id = argv[2];
