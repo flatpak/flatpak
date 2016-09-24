@@ -98,6 +98,9 @@ flatpak_builtin_document_export (int argc, char **argv,
   if (argc < 2)
     return usage_error (context, _("FILE must be specified"), error);
 
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
   file = argv[1];
   dirname = g_path_get_dirname (file);
   basename = g_path_get_basename (file);
