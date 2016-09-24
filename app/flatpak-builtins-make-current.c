@@ -59,6 +59,9 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   if (argc < 2)
     return usage_error (context, _("APP must be specified"), error);
 
+  if (argc > 3)
+    return usage_error (context, _("Too many arguments"), error);
+
   app  = argv[1];
 
   if (argc >= 3)
