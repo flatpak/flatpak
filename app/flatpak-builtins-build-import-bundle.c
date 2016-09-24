@@ -297,6 +297,9 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   if (argc < 3)
     return usage_error (context, _("LOCATION and FILENAME must be specified"), error);
 
+  if (argc > 3)
+    return usage_error (context, _("Too many arguments"), error);
+
   location = argv[1];
   filename = argv[2];
 
