@@ -71,6 +71,9 @@ flatpak_builtin_document_info (int argc, char **argv,
   if (argc < 2)
     return usage_error (context, _("FILE must be specified"), error);
 
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
   file = argv[1];
   basename = g_path_get_basename (file);
 
