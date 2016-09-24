@@ -84,6 +84,9 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (argc < 5)
     return usage_error (context, _("RUNTIME must be specified"), error);
 
+  if (argc > 6)
+    return usage_error (context, _("Too many arguments"), error);
+
   directory = argv[1];
   app_id = argv[2];
   sdk = argv[3];
