@@ -117,6 +117,9 @@ install_bundle (FlatpakDir *dir,
   if (argc < 2)
     return usage_error (context, _("Bundle filename must be specified"), error);
 
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
   filename = argv[1];
 
   file = g_file_new_for_commandline_arg (filename);
@@ -225,6 +228,9 @@ install_from (FlatpakDir *dir,
   if (argc < 2)
     return usage_error (context, _("Filename must be specified"), error);
 
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
   filename = argv[1];
 
   file = g_file_new_for_commandline_arg (filename);
@@ -281,6 +287,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   if (argc < 3)
     return usage_error (context, _("REPOSITORY and NAME must be specified"), error);
+
+  if (argc > 4)
+    return usage_error (context, _("Too many arguments"), error);
 
   repository = argv[1];
   name  = argv[2];
