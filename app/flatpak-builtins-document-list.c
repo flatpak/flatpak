@@ -66,6 +66,9 @@ flatpak_builtin_document_list (int argc, char **argv,
   else
     app_id = argv[1];
 
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
   session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
   if (session_bus == NULL)
     return FALSE;
