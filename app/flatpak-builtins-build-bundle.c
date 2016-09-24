@@ -904,6 +904,9 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   if (argc < 4)
     return usage_error (context, _("LOCATION, FILENAME and NAME must be specified"), error);
 
+  if (argc > 5)
+    return usage_error (context, _("Too many arguments"), error);
+
   location = argv[1];
   filename = argv[2];
   name = argv[3];
