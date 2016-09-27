@@ -228,6 +228,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       const char *subject;
       const char *body;
       g_autofree char *commit_checksum = NULL;
+      GVariantBuilder metadata_builder;
 
       if (!ostree_repo_resolve_rev (dst_repo, dst_ref, TRUE, &dst_parent, error))
         return FALSE;
@@ -269,7 +270,13 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       if (opt_body)
         body = (const char *)opt_body;
 
-      if (!ostree_repo_write_commit_with_time (dst_repo, dst_parent, subject, body, commitv_metadata,
+      flatpak_variant_builder_init_from_variant (&metadata_builder, "a{sv}", commitv_metadata);
+      /* Additionally record the source commit. This is nice to have, but it also means
+         the commit-from gets a different commit id, which avoids problems with e.g.
+         sharing .commitmeta files (signatures) */
+      g_variant_builder_add (&metadata_builder, "{sv}", "xa.from_commit", g_variant_new_string (resolved_ref));
+
+      if (!ostree_repo_write_commit_with_time (dst_repo, dst_parent, subject, body, g_variant_builder_end (&metadata_builder),
                                                OSTREE_REPO_FILE (dst_root),
                                                ostree_commit_get_timestamp (src_commitv),
                                                &commit_checksum, cancellable, error))
