@@ -292,7 +292,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (g_strv_contains ((const char **)remotes, remote_name))
     {
       if (opt_if_not_exists)
-
         return TRUE; /* Do nothing */
 
       return flatpak_fail (error, _("Remote %s already exists"), remote_name);
