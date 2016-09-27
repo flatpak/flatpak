@@ -34,6 +34,7 @@
 #include "flatpak-utils.h"
 
 static gboolean opt_verbose;
+static gboolean opt_ostree_verbose;
 static gboolean opt_version;
 static gboolean opt_default_arch;
 static gboolean opt_supported_arches;
@@ -99,6 +100,7 @@ static FlatpakCommand commands[] = {
 
 GOptionEntry global_entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, N_("Print debug information during command processing"), NULL },
+  { "ostree-verbose", 0, 0, G_OPTION_ARG_NONE, &opt_ostree_verbose, N_("Print OSTree debug information during command processing"), NULL },
   { "help", '?', G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, N_("Show help options"), NULL, NULL },
   { NULL }
 };
@@ -246,6 +248,9 @@ flatpak_option_context_parse (GOptionContext     *context,
 
   if (opt_verbose)
     g_log_set_handler (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, message_handler, NULL);
+
+  if (opt_ostree_verbose)
+    g_log_set_handler ("OSTree", G_LOG_LEVEL_DEBUG, message_handler, NULL);
 
   if (out_dir)
     *out_dir = g_steal_pointer (&dir);
