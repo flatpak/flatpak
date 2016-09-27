@@ -1922,6 +1922,23 @@ flatpak_variant_save (GFile        *dest,
   return TRUE;
 }
 
+void
+flatpak_variant_builder_init_from_variant (GVariantBuilder *builder,
+                                           const char      *type,
+                                           GVariant        *variant)
+{
+  gint i, n;
+
+  g_variant_builder_init (builder, G_VARIANT_TYPE (type));
+
+  n = g_variant_n_children (variant);
+  for (i = 0; i < n; i++)
+    {
+      GVariant *child = g_variant_get_child_value (variant, i);
+      g_variant_builder_add_value (builder, child);
+      g_variant_unref (child);
+    }
+}
 
 gboolean
 flatpak_variant_bsearch_str (GVariant   *array,

@@ -65,6 +65,9 @@ gboolean flatpak_variant_save (GFile        *dest,
                                GVariant     *variant,
                                GCancellable *cancellable,
                                GError      **error);
+void    flatpak_variant_builder_init_from_variant (GVariantBuilder *builder,
+                                                   const char      *type,
+                                                   GVariant        *variant);
 gboolean flatpak_variant_bsearch_str (GVariant   *array,
                                       const char *str,
                                       int        *out_pos);
