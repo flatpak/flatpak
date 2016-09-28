@@ -74,7 +74,15 @@
                     <term><option>GPGKey</option> (string)</term>
                     <listitem><para>The base64-encoded gpg key for the remote.</para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>GPGKeyUrl</option> (string)</term>
+                    <listitem><para>The url for a file containing the gpg key for the remote.</para></listitem>
+                </varlistentry>
             </variablelist>
+            <para>
+                If neither GPGKey nor GPGKeyUrl are specified, GPG verification is
+                disabled. If both keys are specified, GPGKey takes precedence.
+            </para>
         </refsect2>
     </refsect1>
 

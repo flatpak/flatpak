@@ -39,6 +39,7 @@
 #define FLATPAK_REPO_URL_KEY "Url"
 #define FLATPAK_REPO_TITLE_KEY "Title"
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
+#define FLATPAK_REPO_GPGKEYURL_KEY "GPGKeyUrl"
 
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
@@ -230,6 +231,7 @@ load_options (char *filename,
 
   str = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
                                FLATPAK_REPO_GPGKEY_KEY, NULL);
+
   if (str != NULL)
     {
       guchar *decoded;
@@ -245,6 +247,39 @@ load_options (char *filename,
 
       *gpg_data = g_bytes_new_take (decoded, decoded_len);
       opt_do_gpg_verify = TRUE;
+
+      g_free (str);
+    }
+
+  if (gpg_data == NULL)
+    {
+      str = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_GPGKEYURL_KEY, NULL);
+
+      if (str != NULL)
+        {
+          g_autoptr(GFile) file = NULL;
+          char *contents;
+          gsize length;
+
+          file = g_file_new_for_uri (str);
+
+          if (!g_file_load_contents (file, NULL, &contents, &length, NULL, NULL))
+            {
+              g_printerr ("Failed to load gpg key from %s", str);
+              exit (1);
+            }
+          if (length < 10) /* Check some minimal size so we don't get crap */
+            {
+              g_printerr ("Invalid gpg key");
+              exit (1);
+            }
+
+          *gpg_data = g_bytes_new_take (contents, length);
+          opt_do_gpg_verify = TRUE;
+
+          g_free (str);
+        }
     }
 }
 
@@ -264,6 +299,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
   g_autoptr(GBytes) gpg_data = NULL;
 
   context = g_option_context_new (_("NAME [LOCATION] - Add a remote repository"));
+
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   g_option_context_add_main_entries (context, common_options, NULL);
