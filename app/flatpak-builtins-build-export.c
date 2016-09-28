@@ -557,7 +557,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!g_file_query_exists (files, cancellable) ||
       !g_file_query_exists (metadata, cancellable))
     {
-      flatpak_fail (error, _("Build directory %s not initialized"), directory);
+      flatpak_fail (error, _("Build directory %s not initialized, use flatpak build-init"), directory);
       goto out;
     }
 
@@ -574,7 +574,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (!opt_runtime && !g_file_query_exists (export, cancellable))
     {
-      flatpak_fail (error, "Build directory %s not finalized", directory);
+      flatpak_fail (error, "Build directory %s not finalized, use flatpak build-finish", directory);
       goto out;
     }
 
