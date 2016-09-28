@@ -116,8 +116,12 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     command = argv[rest_argv_start + 1];
 
   app_deploy = g_file_new_for_commandline_arg (directory);
-
   metadata = g_file_get_child (app_deploy, "metadata");
+
+  if (!g_file_query_exists (app_deploy, NULL) ||
+      !g_file_query_exists (metadata, NULL))
+    return flatpak_fail (error, _("Build directory %s not initialized, use flatpak build-init"), directory);
+
   if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
     return FALSE;
 
