@@ -41,81 +41,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-static gboolean
-write_to_file (int fd, const char *content, ssize_t len)
-{
-  ssize_t res;
-
-  while (len > 0)
-    {
-      res = write (fd, content, len);
-      if (res < 0 && errno == EINTR)
-        continue;
-      if (res <= 0)
-        return FALSE;
-      len -= res;
-      content += res;
-    }
-
-  return TRUE;
-}
-
-static gboolean
-write_file (const char *path, const char *content)
-{
-  int fd;
-  gboolean res;
-  int errsv;
-
-  fd = open (path, O_RDWR | O_CLOEXEC, 0);
-  if (fd == -1)
-    return FALSE;
-
-  res = TRUE;
-  if (content)
-    res = write_to_file (fd, content, strlen (content));
-
-  errsv = errno;
-  close (fd);
-  errno = errsv;
-
-  return res;
-}
-
-static uid_t uid;
-static gid_t gid;
-
-static void
-child_setup (gpointer user_data)
-{
-  g_autofree char *uid_map = NULL;
-  g_autofree char *gid_map = NULL;
-  uid_t ns_uid;
-  gid_t ns_gid;
-
-  ns_uid = getuid ();
-  ns_gid = getgid ();
-
-  if (ns_uid != uid || ns_gid != gid)
-    {
-      /* Work around user namespace devpts issue by creating a new
-         userspace and map our uid like the helper does */
-
-      if (unshare (CLONE_NEWUSER))
-        {
-          g_warning ("Can't unshare user namespace: %s", g_strerror (errno));
-          return;
-        }
-
-      uid_map = g_strdup_printf ("%d %d 1\n", uid, ns_uid);
-      if (!write_file ("/proc/self/uid_map", uid_map))
-        g_warning ("setting up uid map");
-
-      gid_map = g_strdup_printf ("%d %d 1\n", gid, ns_gid);
-      if (!write_file ("/proc/self/gid_map", gid_map))
-        g_warning ("setting up gid map");
-    }
-}
 
 gboolean
 flatpak_builtin_enter (int           argc,
@@ -125,9 +50,9 @@ flatpak_builtin_enter (int           argc,
 {
   g_autoptr(GOptionContext) context = NULL;
   int rest_argv_start, rest_argc;
-  const char *ns_name[5] = { "user", "ipc", "net", "pid", "mnt" };
+  const char *ns_name[] = { "ipc", "net", "pid", "mnt", "user" };
   int ns_fd[G_N_ELEMENTS (ns_name)];
-  char pid_ns[256];
+  char pid_ns[256] = { 0 };
   ssize_t pid_ns_len;
   char self_ns[256];
   ssize_t self_ns_len;
@@ -142,12 +67,19 @@ flatpak_builtin_enter (int           argc,
   g_autofree char *pulse_path = NULL;
   g_autofree char *session_bus_path = NULL;
   g_autofree char *xdg_runtime_dir = NULL;
+  g_autofree char *stat_path = NULL;
+  g_autofree char *root_path = NULL;
+  char root_link[256] = { 0 };
+  gssize root_link_len;
+  g_autofree char *cwd_path = NULL;
+  char cwd_link[256] = { 0 };
+  gssize cwd_link_len;
   int status;
+  struct stat stat_buf;
+  uid_t uid;
+  gid_t gid;
 
-  uid = getuid ();
-  gid = getgid ();
-
-  context = g_option_context_new (_("MONITORPID [COMMAND [args...]] - Run a command inside a running sandbox"));
+  context = g_option_context_new (_("SANDBOXEDPID [COMMAND [args...]] - Run a command inside a running sandbox"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   rest_argc = 0;
@@ -168,7 +100,7 @@ flatpak_builtin_enter (int           argc,
 
   if (rest_argc < 2)
     {
-      usage_error (context, _("MONITORPID and COMMAND must be specified"), error);
+      usage_error (context, _("SANDBOXEDPID and COMMAND must be specified"), error);
       return FALSE;
     }
 
@@ -178,9 +110,26 @@ flatpak_builtin_enter (int           argc,
   if (pid <= 0)
     return flatpak_fail (error, _("Invalid pid %s"), pid_s);
 
+  stat_path = g_strdup_printf ("/proc/%d/root", pid);
+  if (stat (stat_path, &stat_buf))
+    return flatpak_fail (error, _("No such pid %s"), pid_s);
+
+  uid = stat_buf.st_uid;
+  gid = stat_buf.st_gid;
+
   environment_path = g_strdup_printf ("/proc/%d/environ", pid);
   if (!g_file_get_contents (environment_path, &environment, &environment_len, error))
     return FALSE;
+
+  cwd_path = g_strdup_printf ("/proc/%d/cwd", pid);
+  cwd_link_len = readlink (cwd_path, cwd_link, sizeof (cwd_link) - 1);
+  if (cwd_link_len <= 0)
+    return flatpak_fail (error, _("Can't read cwd"));
+
+  root_path = g_strdup_printf ("/proc/%d/root", pid);
+  root_link_len = readlink (root_path, root_link, sizeof (root_link) - 1);
+  if (root_link_len <= 0)
+    return flatpak_fail (error, _("Can't read root"));
 
   for (i = 0; i < G_N_ELEMENTS (ns_name); i++)
     {
@@ -219,6 +168,12 @@ flatpak_builtin_enter (int           argc,
           close (ns_fd[i]);
         }
     }
+
+  if (chdir (cwd_link))
+    return flatpak_fail (error, _("Can't chdir"));
+
+  if (chroot (root_link))
+    return flatpak_fail (error, _("Can't chroot"));
 
   envp_array = g_ptr_array_new_with_free_func (g_free);
   for (e = environment; e < environment + environment_len; e = e + strlen (e) + 1)
@@ -264,9 +219,15 @@ flatpak_builtin_enter (int           argc,
     g_ptr_array_add (argv_array, g_strdup (argv[rest_argv_start + i]));
   g_ptr_array_add (argv_array, NULL);
 
+  if (setgid (gid))
+    return flatpak_fail (error, _("Can't switch gid"));
+
+  if (setuid (uid))
+    return flatpak_fail (error, _("Can't switch uid"));
+
   if (!g_spawn_sync (NULL, (char **) argv_array->pdata, (char **) envp_array->pdata,
                      G_SPAWN_SEARCH_PATH_FROM_ENVP | G_SPAWN_CHILD_INHERITS_STDIN,
-                     child_setup, NULL,
+                     NULL, NULL,
                      NULL, NULL,
                      &status, error))
     return FALSE;
