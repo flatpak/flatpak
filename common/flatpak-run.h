@@ -101,6 +101,7 @@ typedef enum {
   FLATPAK_RUN_FLAG_LOG_SESSION_BUS    = (1 << 2),
   FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS     = (1 << 3),
   FLATPAK_RUN_FLAG_NO_SESSION_HELPER  = (1 << 4),
+  FLATPAK_RUN_FLAG_MULTIARCH          = (1 << 5),
 } FlatpakRunFlags;
 
 gboolean flatpak_run_setup_base_argv (GPtrArray      *argv_array,

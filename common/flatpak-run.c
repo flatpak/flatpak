@@ -105,10 +105,12 @@ const char *flatpak_context_devices[] = {
 
 typedef enum {
   FLATPAK_CONTEXT_FEATURE_DEVEL        = 1 << 0,
+  FLATPAK_CONTEXT_FEATURE_MULTIARCH    = 1 << 1,
 } FlatpakContextFeatures;
 
 const char *flatpak_context_features[] = {
   "devel",
+  "multiarch",
   NULL
 };
 
@@ -2970,6 +2972,12 @@ add_dbus_proxy_args (GPtrArray *argv_array,
 }
 
 #ifdef ENABLE_SECCOMP
+static const uint32_t seccomp_x86_64_extra_arches[] = { SCMP_ARCH_X86, 0, };
+
+#ifdef SCMP_ARCH_AARCH64
+static const uint32_t seccomp_aarch64_extra_arches[] = { SCMP_ARCH_ARM, 0 };
+#endif
+
 static inline void
 cleanup_seccomp (void *p)
 {
@@ -2983,6 +2991,7 @@ static gboolean
 setup_seccomp (GPtrArray  *argv_array,
                GArray     *fd_array,
                const char *arch,
+               gboolean    multiarch,
                gboolean    devel,
                GError    **error)
 {
@@ -3094,16 +3103,27 @@ setup_seccomp (GPtrArray  *argv_array,
   if (arch != NULL)
     {
       uint32_t arch_id = 0;
+      const uint32_t *extra_arches = NULL;
 
       if (strcmp (arch, "i386") == 0)
-        arch_id = SCMP_ARCH_X86;
+        {
+          arch_id = SCMP_ARCH_X86;
+        }
       else if (strcmp (arch, "x86_64") == 0)
-        arch_id = SCMP_ARCH_X86_64;
+        {
+          arch_id = SCMP_ARCH_X86_64;
+          extra_arches = seccomp_x86_64_extra_arches;
+        }
       else if (strcmp (arch, "arm") == 0)
-        arch_id = SCMP_ARCH_ARM;
+        {
+          arch_id = SCMP_ARCH_ARM;
+        }
 #ifdef SCMP_ARCH_AARCH64
       else if (strcmp (arch, "aarch64") == 0)
-        arch_id = SCMP_ARCH_AARCH64;
+        {
+          arch_id = SCMP_ARCH_AARCH64;
+          extra_arches = seccomp_aarch64_extra_arches;
+        }
 #endif
 
       /* We only really need to handle arches on multiarch systems.
@@ -3118,6 +3138,17 @@ setup_seccomp (GPtrArray  *argv_array,
           r = seccomp_arch_add (seccomp, arch_id);
           if (r < 0 && r != -EEXIST)
             return flatpak_fail (error, "Failed to add architecture to seccomp filter");
+
+          if (multiarch && extra_arches != NULL)
+            {
+              unsigned i;
+              for (i = 0; extra_arches[i] != 0; i++)
+                {
+                  r = seccomp_arch_add (seccomp, extra_arches[i]);
+                  if (r < 0 && r != -EEXIST)
+                    return flatpak_fail (error, "Failed to add multiarch architecture to seccomp filter");
+                }
+            }
         }
     }
 
@@ -3340,6 +3371,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   if (!setup_seccomp (argv_array,
                       fd_array,
                       arch,
+                      (flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0,
                       (flags & FLATPAK_RUN_FLAG_DEVEL) != 0,
                       error))
     return FALSE;
@@ -3502,6 +3534,9 @@ flatpak_run_app (const char     *app_ref,
 
   if (app_context->features & FLATPAK_CONTEXT_FEATURE_DEVEL)
     flags |= FLATPAK_RUN_FLAG_DEVEL;
+
+  if (app_context->features & FLATPAK_CONTEXT_FEATURE_MULTIARCH)
+    flags |= FLATPAK_RUN_FLAG_MULTIARCH;
 
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
