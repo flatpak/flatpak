@@ -217,7 +217,7 @@
                 <listitem><para>
                     Allow access to a specific feature. This overrides to
                     the Context section from the application metadata.
-                    FEATURE must be one of: devel.
+                    FEATURE must be one of: devel, multiarch.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
@@ -228,7 +228,7 @@
                 <listitem><para>
                     Disallow access to a specific feature. This overrides to
                     the Context section from the application metadata.
-                    FEATURE must be one of: devel.
+                    FEATURE must be one of: devel, multiarch.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
