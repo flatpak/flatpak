@@ -93,11 +93,13 @@ const char *dont_mount_in_root[] = {
 typedef enum {
   FLATPAK_CONTEXT_DEVICE_DRI         = 1 << 0,
   FLATPAK_CONTEXT_DEVICE_ALL         = 1 << 1,
+  FLATPAK_CONTEXT_DEVICE_KVM         = 1 << 2,
 } FlatpakContextDevices;
 
 const char *flatpak_context_devices[] = {
   "dri",
   "all",
+  "kvm",
   NULL
 };
 
@@ -2005,6 +2007,12 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                         "--dev-bind", "/dev/nvidia0", "/dev/nvidia0",
                         NULL);
             }
+        }
+      if (context->devices & FLATPAK_CONTEXT_DEVICE_KVM)
+        {
+          g_debug ("Allowing kvm access");
+          if (g_file_test ("/dev/kvm", G_FILE_TEST_EXISTS))
+            add_args (argv_array, "--dev-bind", "/dev/kvm", "/dev/kvm", NULL);
         }
     }
 

@@ -121,7 +121,7 @@
                     <term><option>devices</option> (list)</term>
                     <listitem><para>
                         List of devices to make available in the sandbox.
-                        Possible values: dri, all.
+                        Possible values: dri, kvm, all.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
