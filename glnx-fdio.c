@@ -60,6 +60,7 @@ rename_file_noreplace_at (int olddirfd, const char *oldpath,
                           gboolean ignore_eexist,
                           GError **error)
 {
+#ifndef ENABLE_WRPSEUDO_COMPAT
   if (renameat2 (olddirfd, oldpath, newdirfd, newpath, RENAME_NOREPLACE) < 0)
     {
       if (errno == EINVAL || errno == ENOSYS)
@@ -80,6 +81,7 @@ rename_file_noreplace_at (int olddirfd, const char *oldpath,
     }
   else
     return TRUE;
+#endif
 
   if (linkat (olddirfd, oldpath, newdirfd, newpath, 0) < 0)
     {
@@ -122,7 +124,7 @@ glnx_open_tmpfile_linkable_at (int dfd,
    * tempoary path name used is returned in "ret_path". Use
    * link_tmpfile() below to rename the result after writing the file
    * in full. */
-#if defined(O_TMPFILE) && !defined(DISABLE_OTMPFILE)
+#if defined(O_TMPFILE) && !defined(DISABLE_OTMPFILE) && !defined(ENABLE_WRPSEUDO_COMPAT)
   fd = openat (dfd, subpath, O_TMPFILE|flags, 0600);
   if (fd == -1 && !(errno == ENOSYS || errno == EISDIR || errno == EOPNOTSUPP))
     {
