@@ -990,7 +990,6 @@ xdp_fuse_lookup (fuse_req_t  req,
     case XDP_INODE_APP_DOC_DIR:
     case XDP_INODE_DOC_DIR:
       {
-        g_autoptr(XdpInode) doc_inode = NULL;
         entry = xdp_lookup_doc (parent_inode->doc_id);
         if (entry == NULL)
           {
@@ -1000,7 +999,7 @@ xdp_fuse_lookup (fuse_req_t  req,
           }
 
         /* Ensure it is alive at least during lookup_child () */
-        doc_inode = xdp_inode_ensure_document_file (parent_inode);
+        xdp_inode_ensure_document_file (parent_inode);
 
         child_inode = xdp_inode_lookup_child (parent_inode, name);
 
@@ -1201,7 +1200,6 @@ xdp_fuse_opendir (fuse_req_t             req,
     case XDP_INODE_DOC_DIR:
       {
         GList *children, *l;
-        g_autoptr(XdpInode) doc_inode = NULL;
         g_autoptr(FlatpakDbEntry) entry = NULL;
 
         entry = xdp_lookup_doc (inode->doc_id);
@@ -1215,7 +1213,7 @@ xdp_fuse_opendir (fuse_req_t             req,
         dirbuf_add (req, &b, "..", inode->parent->ino, S_IFDIR);
 
         /* Ensure it is alive at least during list_children () */
-        doc_inode = xdp_inode_ensure_document_file (inode);
+        xdp_inode_ensure_document_file (inode);
 
         children = xdp_inode_list_children (inode);
 

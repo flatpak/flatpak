@@ -577,11 +577,10 @@ side_closed (ProxySide *side)
   g_socket_close (socket, NULL);
   side->closed = TRUE;
 
-  other_socket = g_socket_connection_get_socket (other_side->connection);
   if (!other_side->closed && other_side->buffers == NULL)
     {
-      other_socket = g_socket_connection_get_socket (other_side->connection);
-      g_socket_close (other_socket, NULL);
+      g_socket_close (g_socket_connection_get_socket (other_side->connection),
+                      NULL);
       other_side->closed = TRUE;
     }
 
