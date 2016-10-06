@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-10-06 11:44+0200\n"
+"POT-Creation-Date: 2016-10-06 14:28+0200\n"
 "PO-Revision-Date: 2016-08-24 19:27+0200\n"
 "Last-Translator: Gabor Kelemen <kelemeng at ubuntu dot com>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
@@ -100,7 +100,7 @@ msgid "NAME [LOCATION] - Add a remote repository"
 msgstr "NÉV [HELY] - Egy távoli tároló hozzáadása"
 
 #: app/flatpak-builtins-add-remote.c:289
-#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:80
+#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:90
 #: app/flatpak-builtins-uninstall.c:72
 msgid "NAME must be specified"
 msgstr "A NÉV megadása kötelező"
@@ -118,7 +118,7 @@ msgstr "A HELY megadása kötelező"
 #: app/flatpak-builtins-document-export.c:102
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:70
-#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:87
+#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:97
 #: app/flatpak-builtins-install.c:121 app/flatpak-builtins-install.c:232
 #: app/flatpak-builtins-install.c:292 app/flatpak-builtins-list.c:262
 #: app/flatpak-builtins-list-remotes.c:65 app/flatpak-builtins-ls-remote.c:80
@@ -737,7 +737,7 @@ msgstr "Kommit megjelenítése"
 msgid "Show origin"
 msgstr "Kezdőpont megjelenítése"
 
-#: app/flatpak-builtins-info.c:73
+#: app/flatpak-builtins-info.c:83
 msgid "NAME [BRANCH] - Get info about installed app and/or runtime"
 msgstr ""
 "NÉV [ÁG] - Információk lekérése a telepített alkalmazásról és/vagy "
@@ -1313,7 +1313,7 @@ msgid "No overrides found for %s"
 msgstr "Nem találhatók felülbírálások ehhez: %s"
 
 #: common/flatpak-dir.c:564 common/flatpak-dir.c:798 common/flatpak-dir.c:834
-#: common/flatpak-dir.c:856 common/flatpak-dir.c:5613
+#: common/flatpak-dir.c:856 common/flatpak-dir.c:5607
 #: common/flatpak-utils.c:834
 #, c-format
 msgid "%s not installed"
@@ -1343,7 +1343,7 @@ msgstr "A(z) %s lekérése közben a(z) %s távoliról, metaadatok: "
 msgid "While pulling %s from remote %s, subpath %s: "
 msgstr "A(z) %s lekérése közben a(z) %s távoliról, %s alútvonal: "
 
-#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4497
+#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4491
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "A(z) %s nem található a(z) %s távolin"
@@ -1406,39 +1406,39 @@ msgstr "A(z) %s %s ág nincs telepítve"
 msgid "Nothing matches %s"
 msgstr "Semmi sem egyezik: %s"
 
-#: common/flatpak-dir.c:4607
+#: common/flatpak-dir.c:4601
 #, c-format
 msgid "%s %s not installed"
 msgstr "A(z) %s %s nincs telepítve"
 
-#: common/flatpak-dir.c:4911
+#: common/flatpak-dir.c:4905
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "A(z) %s futtatókörnyezet, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:4912
+#: common/flatpak-dir.c:4906
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "A(z) %s alkalmazás, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:5239
+#: common/flatpak-dir.c:5233
 msgid "Remote title not available; server has no summary file"
 msgstr "A távoli cím nem érhető el, a kiszolgálónak nincs összegzőfájlja"
 
-#: common/flatpak-dir.c:5254
+#: common/flatpak-dir.c:5248
 msgid "Remote title not set"
 msgstr "A távoli cím nincs beállítva"
 
-#: common/flatpak-dir.c:5282
+#: common/flatpak-dir.c:5276
 msgid "Data not found"
 msgstr "Az adatok nem találhatók"
 
-#: common/flatpak-dir.c:5291
+#: common/flatpak-dir.c:5285
 #, c-format
 msgid "Data not found for ref %s"
 msgstr "Az adatok nem találhatók a(z) %s hivatkozáshoz"
 
-#: common/flatpak-dir.c:5339 common/flatpak-dir.c:5477
+#: common/flatpak-dir.c:5333 common/flatpak-dir.c:5471
 msgid "Data not available; server has no summary file"
 msgstr "Az adatok nem érhetők el, a kiszolgálónak nincs összegzőfájlja"
 

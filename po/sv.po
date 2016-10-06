@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-10-06 11:44+0200\n"
+"POT-Creation-Date: 2016-10-06 14:28+0200\n"
 "PO-Revision-Date: 2016-09-15 00:32+0800\n"
 "Last-Translator: Sebastian Rasmussen <sebras@gmail.com>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -98,7 +98,7 @@ msgid "NAME [LOCATION] - Add a remote repository"
 msgstr "NAMN [PLATS] - Lägg till ett fjärrarkiv"
 
 #: app/flatpak-builtins-add-remote.c:289
-#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:80
+#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:90
 #: app/flatpak-builtins-uninstall.c:72
 msgid "NAME must be specified"
 msgstr "NAMN måste anges"
@@ -116,7 +116,7 @@ msgstr "PLATS måste anges"
 #: app/flatpak-builtins-document-export.c:102
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:70
-#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:87
+#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:97
 #: app/flatpak-builtins-install.c:121 app/flatpak-builtins-install.c:232
 #: app/flatpak-builtins-install.c:292 app/flatpak-builtins-list.c:262
 #: app/flatpak-builtins-list-remotes.c:65 app/flatpak-builtins-ls-remote.c:80
@@ -738,7 +738,7 @@ msgstr "Visa incheckning"
 msgid "Show origin"
 msgstr "Visa ursprung"
 
-#: app/flatpak-builtins-info.c:73
+#: app/flatpak-builtins-info.c:83
 msgid "NAME [BRANCH] - Get info about installed app and/or runtime"
 msgstr ""
 "NAMN [GREN] - Hämta information om installerat program och/eller "
@@ -1312,7 +1312,7 @@ msgid "No overrides found for %s"
 msgstr "Inga åsidosättningar funna för %s"
 
 #: common/flatpak-dir.c:564 common/flatpak-dir.c:798 common/flatpak-dir.c:834
-#: common/flatpak-dir.c:856 common/flatpak-dir.c:5613
+#: common/flatpak-dir.c:856 common/flatpak-dir.c:5607
 #: common/flatpak-utils.c:834
 #, c-format
 msgid "%s not installed"
@@ -1343,7 +1343,7 @@ msgid "While pulling %s from remote %s, subpath %s: "
 msgstr "Medan %s hämtas från fjärr %s, undersökväg %s: "
 
 # sebras: how to translate in here?
-#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4497
+#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4491
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "Kan inte hitta %s hos fjärr %s"
@@ -1406,39 +1406,39 @@ msgstr "%s gren %s inte installerad"
 msgid "Nothing matches %s"
 msgstr "Ingenting matchar %s"
 
-#: common/flatpak-dir.c:4607
+#: common/flatpak-dir.c:4601
 #, c-format
 msgid "%s %s not installed"
 msgstr "%s %s inte installerad"
 
-#: common/flatpak-dir.c:4911
+#: common/flatpak-dir.c:4905
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Exekveringsmiljö %s, gren %s är redan installerad"
 
-#: common/flatpak-dir.c:4912
+#: common/flatpak-dir.c:4906
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Program %s, gren %s är redan installerad"
 
-#: common/flatpak-dir.c:5239
+#: common/flatpak-dir.c:5233
 msgid "Remote title not available; server has no summary file"
 msgstr "Fjärrtitel inte tillgänglig; servern har ingen sammanfattningsfil"
 
-#: common/flatpak-dir.c:5254
+#: common/flatpak-dir.c:5248
 msgid "Remote title not set"
 msgstr "Fjärrtitel inte inställd"
 
-#: common/flatpak-dir.c:5282
+#: common/flatpak-dir.c:5276
 msgid "Data not found"
 msgstr "Data inte funnen"
 
-#: common/flatpak-dir.c:5291
+#: common/flatpak-dir.c:5285
 #, c-format
 msgid "Data not found for ref %s"
 msgstr "Data inte funnen för ref %s"
 
-#: common/flatpak-dir.c:5339 common/flatpak-dir.c:5477
+#: common/flatpak-dir.c:5333 common/flatpak-dir.c:5471
 msgid "Data not available; server has no summary file"
 msgstr "Data inte tillgänglig; servern har ingen sammanfattningsfil"
 

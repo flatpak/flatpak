@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-10-06 11:44+0200\n"
+"POT-Creation-Date: 2016-10-06 14:28+0200\n"
 "PO-Revision-Date: 2016-09-11 21:29+0200\n"
 "Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
@@ -99,7 +99,7 @@ msgid "NAME [LOCATION] - Add a remote repository"
 msgstr "NÁZOV [UMIESTNENIE] - Pridanie vzdialeného repozitára"
 
 #: app/flatpak-builtins-add-remote.c:289
-#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:80
+#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:90
 #: app/flatpak-builtins-uninstall.c:72
 msgid "NAME must be specified"
 msgstr "NÁZOV musí byť určený"
@@ -117,7 +117,7 @@ msgstr "UMIESTNENIE musí byť určené"
 #: app/flatpak-builtins-document-export.c:102
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:70
-#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:87
+#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:97
 #: app/flatpak-builtins-install.c:121 app/flatpak-builtins-install.c:232
 #: app/flatpak-builtins-install.c:292 app/flatpak-builtins-list.c:262
 #: app/flatpak-builtins-list-remotes.c:65 app/flatpak-builtins-ls-remote.c:80
@@ -728,7 +728,7 @@ msgstr ""
 msgid "Show origin"
 msgstr ""
 
-#: app/flatpak-builtins-info.c:73
+#: app/flatpak-builtins-info.c:83
 msgid "NAME [BRANCH] - Get info about installed app and/or runtime"
 msgstr ""
 
@@ -1296,7 +1296,7 @@ msgid "No overrides found for %s"
 msgstr ""
 
 #: common/flatpak-dir.c:564 common/flatpak-dir.c:798 common/flatpak-dir.c:834
-#: common/flatpak-dir.c:856 common/flatpak-dir.c:5613
+#: common/flatpak-dir.c:856 common/flatpak-dir.c:5607
 #: common/flatpak-utils.c:834
 #, c-format
 msgid "%s not installed"
@@ -1326,7 +1326,7 @@ msgstr ""
 msgid "While pulling %s from remote %s, subpath %s: "
 msgstr ""
 
-#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4497
+#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4491
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr ""
@@ -1389,39 +1389,39 @@ msgstr "Aplikácia %s vetva %s nie je nainštalovaná"
 msgid "Nothing matches %s"
 msgstr "Nič nevyhovuje názvu %s"
 
-#: common/flatpak-dir.c:4607
+#: common/flatpak-dir.c:4601
 #, c-format
 msgid "%s %s not installed"
 msgstr "Aplikácia %s %s nie je nainštalovaná"
 
-#: common/flatpak-dir.c:4911
+#: common/flatpak-dir.c:4905
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Rozhranie %s, vetva %s je už nainštalovaná"
 
-#: common/flatpak-dir.c:4912
+#: common/flatpak-dir.c:4906
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr ""
 
-#: common/flatpak-dir.c:5239
+#: common/flatpak-dir.c:5233
 msgid "Remote title not available; server has no summary file"
 msgstr ""
 
-#: common/flatpak-dir.c:5254
+#: common/flatpak-dir.c:5248
 msgid "Remote title not set"
 msgstr ""
 
-#: common/flatpak-dir.c:5282
+#: common/flatpak-dir.c:5276
 msgid "Data not found"
 msgstr "Údaje sa nenašli"
 
-#: common/flatpak-dir.c:5291
+#: common/flatpak-dir.c:5285
 #, c-format
 msgid "Data not found for ref %s"
 msgstr ""
 
-#: common/flatpak-dir.c:5339 common/flatpak-dir.c:5477
+#: common/flatpak-dir.c:5333 common/flatpak-dir.c:5471
 msgid "Data not available; server has no summary file"
 msgstr ""
 

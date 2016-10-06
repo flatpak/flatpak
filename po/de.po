@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-10-06 11:44+0200\n"
+"POT-Creation-Date: 2016-10-06 14:28+0200\n"
 "PO-Revision-Date: 2016-08-17 17:04+0200\n"
 "Last-Translator: Wolfgang Stoeggl <c72578@yahoo.de>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
@@ -101,7 +101,7 @@ msgid "NAME [LOCATION] - Add a remote repository"
 msgstr "NAME [ORT] - eine ferne Quelle hinzufügen"
 
 #: app/flatpak-builtins-add-remote.c:289
-#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:80
+#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:90
 #: app/flatpak-builtins-uninstall.c:72
 msgid "NAME must be specified"
 msgstr "NAME muss angegeben werden"
@@ -119,7 +119,7 @@ msgstr "ORT muss angegeben werden"
 #: app/flatpak-builtins-document-export.c:102
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:70
-#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:87
+#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:97
 #: app/flatpak-builtins-install.c:121 app/flatpak-builtins-install.c:232
 #: app/flatpak-builtins-install.c:292 app/flatpak-builtins-list.c:262
 #: app/flatpak-builtins-list-remotes.c:65 app/flatpak-builtins-ls-remote.c:80
@@ -741,7 +741,7 @@ msgstr "Commit anzeigen"
 msgid "Show origin"
 msgstr "Ursprung anzeigen"
 
-#: app/flatpak-builtins-info.c:73
+#: app/flatpak-builtins-info.c:83
 msgid "NAME [BRANCH] - Get info about installed app and/or runtime"
 msgstr ""
 "NAME [ZWEIG] - Informationen über installierte Anwendung und/oder Laufzeit "
@@ -1319,7 +1319,7 @@ msgid "No overrides found for %s"
 msgstr "Keine Ersetzungen für %s gefunden"
 
 #: common/flatpak-dir.c:564 common/flatpak-dir.c:798 common/flatpak-dir.c:834
-#: common/flatpak-dir.c:856 common/flatpak-dir.c:5613
+#: common/flatpak-dir.c:856 common/flatpak-dir.c:5607
 #: common/flatpak-utils.c:834
 #, c-format
 msgid "%s not installed"
@@ -1350,7 +1350,7 @@ msgid "While pulling %s from remote %s, subpath %s: "
 msgstr ""
 "Während des Holens von %s von der entfernten Quelle %s: Unterordner %s: "
 
-#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4497
+#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4491
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "%s konnte nicht in entfernter Quelle %s gefunden werden"
@@ -1415,40 +1415,40 @@ msgstr "%s Zweig %s ist nicht installiert"
 msgid "Nothing matches %s"
 msgstr "Kein Treffer für %s"
 
-#: common/flatpak-dir.c:4607
+#: common/flatpak-dir.c:4601
 #, c-format
 msgid "%s %s not installed"
 msgstr "%s %s ist nicht installiert"
 
-#: common/flatpak-dir.c:4911
+#: common/flatpak-dir.c:4905
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Laufzeitumgebung %s, Zweig %s ist bereits installiert"
 
-#: common/flatpak-dir.c:4912
+#: common/flatpak-dir.c:4906
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Anwendung %s, Zweig %s ist bereits installiert"
 
-#: common/flatpak-dir.c:5239
+#: common/flatpak-dir.c:5233
 msgid "Remote title not available; server has no summary file"
 msgstr ""
 "Entfernter Titel nicht verfügbar; Server hat keine Zusammenfassungsdatei"
 
-#: common/flatpak-dir.c:5254
+#: common/flatpak-dir.c:5248
 msgid "Remote title not set"
 msgstr "Entfernter Titel nicht festgelegt"
 
-#: common/flatpak-dir.c:5282
+#: common/flatpak-dir.c:5276
 msgid "Data not found"
 msgstr "Daten wurden nicht gefunden"
 
-#: common/flatpak-dir.c:5291
+#: common/flatpak-dir.c:5285
 #, c-format
 msgid "Data not found for ref %s"
 msgstr "Daten für Referenz %s nicht gefunden"
 
-#: common/flatpak-dir.c:5339 common/flatpak-dir.c:5477
+#: common/flatpak-dir.c:5333 common/flatpak-dir.c:5471
 msgid "Data not available; server has no summary file"
 msgstr "Daten sind nicht verfügbar, der Server hat keine Summary-Datei"
 

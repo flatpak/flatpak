@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-10-06 11:44+0200\n"
+"POT-Creation-Date: 2016-10-06 14:28+0200\n"
 "PO-Revision-Date: 2016-09-25 19:48+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -99,7 +99,7 @@ msgid "NAME [LOCATION] - Add a remote repository"
 msgstr "NAZWA [POŁOŻENIE] — dodaje zdalne repozytorium"
 
 #: app/flatpak-builtins-add-remote.c:289
-#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:80
+#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:90
 #: app/flatpak-builtins-uninstall.c:72
 msgid "NAME must be specified"
 msgstr "Należy podać NAZWĘ"
@@ -117,7 +117,7 @@ msgstr "Należy podać POŁOŻENIE"
 #: app/flatpak-builtins-document-export.c:102
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:70
-#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:87
+#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:97
 #: app/flatpak-builtins-install.c:121 app/flatpak-builtins-install.c:232
 #: app/flatpak-builtins-install.c:292 app/flatpak-builtins-list.c:262
 #: app/flatpak-builtins-list-remotes.c:65 app/flatpak-builtins-ls-remote.c:80
@@ -744,7 +744,7 @@ msgstr "Wyświetla zatwierdzenie"
 msgid "Show origin"
 msgstr "Wyświetla pochodzenie"
 
-#: app/flatpak-builtins-info.c:73
+#: app/flatpak-builtins-info.c:83
 msgid "NAME [BRANCH] - Get info about installed app and/or runtime"
 msgstr ""
 "NAZWA [GAŁĄŹ] — pobiera informacje o zainstalowanym programie i/lub "
@@ -1324,7 +1324,7 @@ msgid "No overrides found for %s"
 msgstr "Nie odnaleziono zastępników dla %s"
 
 #: common/flatpak-dir.c:564 common/flatpak-dir.c:798 common/flatpak-dir.c:834
-#: common/flatpak-dir.c:856 common/flatpak-dir.c:5613
+#: common/flatpak-dir.c:856 common/flatpak-dir.c:5607
 #: common/flatpak-utils.c:834
 #, c-format
 msgid "%s not installed"
@@ -1354,7 +1354,7 @@ msgstr "Podczas pobierania %s z repozytorium %s, metadane: "
 msgid "While pulling %s from remote %s, subpath %s: "
 msgstr "Podczas pobierania %s z repozytorium %s, podścieżka %s: "
 
-#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4497
+#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4491
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "Nie można odnaleźć %s w repozytorium %s"
@@ -1417,39 +1417,39 @@ msgstr "Nie zainstalowano %s gałęzi %s"
 msgid "Nothing matches %s"
 msgstr "Nic nie pasuje do %s"
 
-#: common/flatpak-dir.c:4607
+#: common/flatpak-dir.c:4601
 #, c-format
 msgid "%s %s not installed"
 msgstr "Nie zainstalowano %s %s"
 
-#: common/flatpak-dir.c:4911
+#: common/flatpak-dir.c:4905
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Już zainstalowano środowisko wykonawcze %s, gałąź %s"
 
-#: common/flatpak-dir.c:4912
+#: common/flatpak-dir.c:4906
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Już zainstalowano program %s, gałąź %s"
 
-#: common/flatpak-dir.c:5239
+#: common/flatpak-dir.c:5233
 msgid "Remote title not available; server has no summary file"
 msgstr "Tytuł repozytorium jest niedostępne. Serwer nie ma pliku podsumowania"
 
-#: common/flatpak-dir.c:5254
+#: common/flatpak-dir.c:5248
 msgid "Remote title not set"
 msgstr "Nie ustawiono tytułu repozytorium"
 
-#: common/flatpak-dir.c:5282
+#: common/flatpak-dir.c:5276
 msgid "Data not found"
 msgstr "Nie odnaleziono danych"
 
-#: common/flatpak-dir.c:5291
+#: common/flatpak-dir.c:5285
 #, c-format
 msgid "Data not found for ref %s"
 msgstr "Nie odnaleziono danych dla odniesienia %s"
 
-#: common/flatpak-dir.c:5339 common/flatpak-dir.c:5477
+#: common/flatpak-dir.c:5333 common/flatpak-dir.c:5471
 msgid "Data not available; server has no summary file"
 msgstr "Dane są niedostępne, serwer nie ma pliku podsumowania"
 
