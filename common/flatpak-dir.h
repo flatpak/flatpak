@@ -411,6 +411,8 @@ gboolean   flatpak_dir_remove_remote (FlatpakDir   *self,
                                       GError      **error);
 char      *flatpak_dir_get_remote_title (FlatpakDir *self,
                                          const char *remote_name);
+char      *flatpak_dir_get_remote_default_branch (FlatpakDir *self,
+                                                  const char *remote_name);
 int        flatpak_dir_get_remote_prio (FlatpakDir *self,
                                         const char *remote_name);
 gboolean   flatpak_dir_get_remote_noenumerate (FlatpakDir *self,

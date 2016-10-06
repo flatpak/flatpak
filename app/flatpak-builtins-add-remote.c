@@ -38,6 +38,7 @@
 #define FLATPAK_REPO_GROUP "Flatpak Repo"
 #define FLATPAK_REPO_URL_KEY "Url"
 #define FLATPAK_REPO_TITLE_KEY "Title"
+#define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
 
 static gboolean opt_no_gpg_verify;
@@ -49,6 +50,7 @@ static gboolean opt_enable;
 static gboolean opt_disable;
 static int opt_prio = -1;
 static char *opt_title;
+static char *opt_default_branch;
 static char *opt_url;
 static char *opt_from;
 static char **opt_gpg_import;
@@ -73,6 +75,7 @@ static GOptionEntry common_options[] = {
   { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_no_enumerate, N_("Mark the remote as don't enumerate"), NULL },
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, N_("Set priority (default 1, higher is more prioritized)"), N_("PRIORITY") },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this remote"), N_("TITLE") },
+  { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this remote"), N_("BRANCH") },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import GPG key from FILE (- for stdin)"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
   { NULL }
@@ -178,6 +181,9 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name)
   if (opt_title)
     g_key_file_set_string (config, group, "xa.title", opt_title);
 
+  if (opt_default_branch)
+    g_key_file_set_string (config, group, "xa.default-branch", opt_default_branch);
+
   if (opt_no_enumerate)
     g_key_file_set_boolean (config, group, "xa.noenumerate", TRUE);
 
@@ -227,6 +233,11 @@ load_options (char *filename,
                                       FLATPAK_REPO_TITLE_KEY, NULL, NULL);
   if (str != NULL)
     opt_title = str;
+
+  str = g_key_file_get_locale_string (keyfile, FLATPAK_REPO_GROUP,
+                                      FLATPAK_REPO_DEFAULT_BRANCH_KEY, NULL, NULL);
+  if (str != NULL)
+    opt_default_branch = str;
 
   str = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
                                FLATPAK_REPO_GPGKEY_KEY, NULL);

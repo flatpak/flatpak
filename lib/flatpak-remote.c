@@ -55,6 +55,7 @@ struct _FlatpakRemotePrivate
 
   char       *local_url;
   char       *local_title;
+  char       *local_default_branch;
   gboolean    local_gpg_verify;
   gboolean    local_noenumerate;
   gboolean    local_disabled;
@@ -62,6 +63,7 @@ struct _FlatpakRemotePrivate
 
   guint       local_url_set : 1;
   guint       local_title_set : 1;
+  guint       local_default_branch_set : 1;
   guint       local_gpg_verify_set : 1;
   guint       local_noenumerate_set : 1;
   guint       local_disabled_set : 1;
@@ -92,6 +94,7 @@ flatpak_remote_finalize (GObject *object)
 
   g_free (priv->local_url);
   g_free (priv->local_title);
+  g_free (priv->local_default_branch);
 
   G_OBJECT_CLASS (flatpak_remote_parent_class)->finalize (object);
 }
@@ -325,6 +328,54 @@ flatpak_remote_set_title (FlatpakRemote *self,
   g_free (priv->local_title);
   priv->local_title = g_strdup (title);
   priv->local_title_set = TRUE;
+}
+
+/**
+ * flatpak_remote_get_default_branch:
+ * @self: a #FlatpakRemote
+ *
+ * Returns the default branch configured for the remote.
+ *
+ * Returns: (transfer full): the default branch, or %NULL
+ *
+ * Since: 0.6.12
+ */
+char *
+flatpak_remote_get_default_branch (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_default_branch_set)
+    return g_strdup (priv->local_default_branch);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_default_branch (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_default_branch:
+ * @self: a #FlatpakRemote
+ * @default_branch: The new default_branch
+ *
+ * Sets the default branch configured for this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ *
+ * Since: 0.6.12
+ */
+void
+flatpak_remote_set_default_branch (FlatpakRemote *self,
+                                   const char    *default_branch)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_default_branch);
+  priv->local_default_branch = g_strdup (default_branch);
+  priv->local_default_branch_set = TRUE;
 }
 
 /**
@@ -580,6 +631,9 @@ flatpak_remote_commit (FlatpakRemote   *self,
 
   if (priv->local_title_set)
     g_key_file_set_string (config, group, "xa.title", priv->local_title);
+
+  if (priv->local_default_branch_set)
+    g_key_file_set_string (config, group, "xa.default-branch", priv->local_default_branch);
 
   if (priv->local_gpg_verify_set)
     {
