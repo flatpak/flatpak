@@ -1,3 +1,21 @@
+Major changes in 0.6.12
+=======================
+ * Partial revert in application id rules. Application ids
+   can now only have dashes in the last element. This allows
+   apps to export files such as org.my.App-extra.desktop which
+   was used by the libreoffice builds.
+ * By default the kernel keyring is not accessable, as it is
+   not containable.
+ * Some robustness fixes for build-commit-from
+ * Better error messages
+ * flatpak update --appstream now updates for all remotes
+ * Made flatpak enter work, and you can now use any pid in the sandbox.
+   However, it requires root permissions.
+ * Support for --device=kvm for /dev/kvm access
+ * Support for --allow=multiarch to support non-primary arch support.
+   For example running i686 code in an x86_64 app.
+ * Add new default-branch setting for the remote configuration
+
 Major changes in 0.6.11
 =======================
 
