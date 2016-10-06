@@ -53,6 +53,16 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+/* Print space unless this is the first item */
+static void
+maybe_print_space (gboolean *first)
+{
+  if (*first)
+    *first = FALSE;
+  else
+    g_print (" ");
+}
+
 gboolean
 flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -141,30 +151,21 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (opt_show_ref)
     {
-      if (first)
-        first = FALSE;
-      else
-        g_print (" ");
+      maybe_print_space (&first);
 
       g_print ("%s", ref);
     }
 
   if (opt_show_origin)
     {
-      if (first)
-        first = FALSE;
-      else
-        g_print (" ");
+      maybe_print_space (&first);
 
       g_print ("%s", origin ? origin : "-");
     }
 
   if (opt_show_commit)
     {
-      if (first)
-        first = FALSE;
-      else
-        g_print (" ");
+      maybe_print_space (&first);
 
       g_print ("%s", commit);
     }
