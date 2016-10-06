@@ -3190,9 +3190,9 @@ setup_seccomp (GPtrArray  *argv_array,
     {
       int family = socket_family_blacklist[i];
       if (i == G_N_ELEMENTS (socket_family_blacklist) - 1)
-        r = seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, family));
+        seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_GE, family));
       else
-        r = seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, family));
+        seccomp_rule_add_exact (seccomp, SCMP_ACT_ERRNO (EAFNOSUPPORT), SCMP_SYS (socket), 1, SCMP_A0 (SCMP_CMP_EQ, family));
     }
 
   fd = g_file_open_tmp ("flatpak-seccomp-XXXXXX", &path, error);
