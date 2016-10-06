@@ -580,7 +580,6 @@ side_closed (ProxySide *side)
   other_socket = g_socket_connection_get_socket (other_side->connection);
   if (!other_side->closed && other_side->buffers == NULL)
     {
-      other_socket = g_socket_connection_get_socket (other_side->connection);
       g_socket_close (other_socket, NULL);
       other_side->closed = TRUE;
     }
@@ -593,7 +592,6 @@ side_closed (ProxySide *side)
     {
       GError *error = NULL;
 
-      other_socket = g_socket_connection_get_socket (other_side->connection);
       if (!g_socket_shutdown (other_socket, TRUE, FALSE, &error))
         {
           g_warning ("Unable to shutdown read side: %s", error->message);
