@@ -2200,6 +2200,7 @@ builder_manifest_run (BuilderManifest *self,
   g_ptr_array_add (args, NULL);
 
   commandline = g_strjoinv (" ", (char **) args->pdata);
+  g_debug ("Running '%s'", commandline);
 
   if (execvp ((char *) args->pdata[0], (char **) args->pdata) == -1)
     {
