@@ -361,19 +361,19 @@ flatpak_migrate_from_xdg_app (void)
 }
 
 static gboolean
-is_valid_initial_name_character (gint c)
+is_valid_initial_name_character (gint c, gboolean allow_dash)
 {
   return
     (c >= 'A' && c <= 'Z') ||
     (c >= 'a' && c <= 'z') ||
-    (c == '_') || (c == '-');
+    (c == '_') || (allow_dash && c == '-');
 }
 
 static gboolean
-is_valid_name_character (gint c)
+is_valid_name_character (gint c, gboolean allow_dash)
 {
   return
-    is_valid_initial_name_character (c) ||
+    is_valid_initial_name_character (c, allow_dash) ||
     (c >= '0' && c <= '9');
 }
 
@@ -388,16 +388,15 @@ is_valid_name_character (gint c)
  *
  * Each element must only contain the ASCII characters
  * "[A-Z][a-z][0-9]_-". Elements may not begin with a digit.
+ * Additionally "-" is only allowed in the last element.
  *
  * App names must not begin with a '.' (period) character.
- *
- * App names must not end with "-symbolic".
  *
  * App names must not exceed 255 characters in length.
  *
  * The above means that any app name is also a valid DBus well known
  * bus name, but not all DBus names are valid app names. The difference are:
- * 1) DBus name elements may contain '-'
+ * 1) DBus name elements may contain '-' in the non-last element.
  * 2) DBus names require only two elements
  *
  * Returns: %TRUE if valid, %FALSE otherwise.
@@ -412,7 +411,9 @@ flatpak_is_valid_name (const char *string,
   gboolean ret;
   const gchar *s;
   const gchar *end;
+  const gchar *last_dot;
   int dot_count;
+  gboolean last_element;
 
   g_return_val_if_fail (string != NULL, FALSE);
 
@@ -433,17 +434,10 @@ flatpak_is_valid_name (const char *string,
       goto out;
     }
 
-  /* To special case symbolic icons we allow org.foo.Bar to export
-     files named "org.foo.Bar-symbolic.*". To avoid conflicts for
-     we then forbid app names ending with "-symbolic". */
-  if (G_UNLIKELY (g_str_has_suffix (string, "-symbolic")))
-    {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Name are not allowed to end with '-symbolic'");
-      goto out;
-    }
-
   end = string + len;
+
+  last_dot = strrchr (string, '.');
+  last_element = FALSE;
 
   s = string;
   if (G_UNLIKELY (*s == '.'))
@@ -452,7 +446,7 @@ flatpak_is_valid_name (const char *string,
                            "Name can't start with a period");
       goto out;
     }
-  else if (G_UNLIKELY (!is_valid_initial_name_character (*s)))
+  else if (G_UNLIKELY (!is_valid_initial_name_character (*s, last_element)))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                    "Name can't start with %c", *s);
@@ -465,6 +459,8 @@ flatpak_is_valid_name (const char *string,
     {
       if (*s == '.')
         {
+          if (s == last_dot)
+            last_element = TRUE;
           s += 1;
           if (G_UNLIKELY (s == end))
             {
@@ -472,18 +468,26 @@ flatpak_is_valid_name (const char *string,
                                    "Name can't end with a period");
               goto out;
             }
-          if (!is_valid_initial_name_character (*s))
+          if (!is_valid_initial_name_character (*s, last_element))
             {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           "Name segment can't start with %c", *s);
+              if (*s == '-')
+                g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                             "Only last name segment can contain -");
+              else
+                g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                             "Name segment can't start with %c", *s);
               goto out;
             }
           dot_count++;
         }
-      else if (G_UNLIKELY (!is_valid_name_character (*s)))
+      else if (G_UNLIKELY (!is_valid_name_character (*s, last_element)))
         {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "Name can't contain %c", *s);
+          if (*s == '-')
+            g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                         "Only last name segment can contain -");
+          else
+            g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                         "Name can't contain %c", *s);
           goto out;
         }
       s += 1;
@@ -515,9 +519,7 @@ flatpak_has_name_prefix (const char *string,
   return
     *rest == 0 ||
     *rest == '.' ||
-    !is_valid_name_character (*rest) ||
-    /* Special case -symbolic icon names */
-    g_str_has_prefix (rest, "-symbolic.");
+    !is_valid_name_character (*rest, FALSE);
 }
 
 static gboolean
