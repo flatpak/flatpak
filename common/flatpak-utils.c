@@ -3331,8 +3331,7 @@ maybe_swap_endian_u64 (gboolean swap,
 static guint64
 flatpak_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
 {
-  guint64 total_size = 0, total_usize = 0;
-
+  guint64 total_usize = 0;
   g_autoptr(GVariant) meta_entries = NULL;
   guint i, n_parts;
 
@@ -3349,7 +3348,6 @@ flatpak_bundle_get_installed_size (GVariant *bundle, gboolean byte_swap)
       g_variant_get_child (meta_entries, i, "(u@aytt@ay)",
                            &version, NULL, &size, &usize, &objects);
 
-      total_size += maybe_swap_endian_u64 (byte_swap, size);
       total_usize += maybe_swap_endian_u64 (byte_swap, usize);
     }
 
@@ -3387,12 +3385,6 @@ flatpak_bundle_load (GFile   *file,
   if (!ostree_validate_structureof_csum_v (to_csum_v, error))
     return NULL;
 
-  if (commit)
-    *commit = ostree_checksum_from_bytes_v (to_csum_v);
-
-  if (installed_size)
-    *installed_size = flatpak_bundle_get_installed_size (delta, byte_swap);
-
   metadata = g_variant_get_child_value (delta, 0);
 
   if (g_variant_lookup (metadata, "ostree.endianness", "y", &endianness_char))
@@ -3414,6 +3406,11 @@ flatpak_bundle_load (GFile   *file,
       byte_swap = (G_BYTE_ORDER != file_byte_order);
     }
 
+  if (commit)
+    *commit = ostree_checksum_from_bytes_v (to_csum_v);
+
+  if (installed_size)
+    *installed_size = flatpak_bundle_get_installed_size (delta, byte_swap);
 
   if (ref != NULL)
     {
