@@ -151,6 +151,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--default-branch=BRANCH</option></term>
+
+                <listitem><para>
+                    A default branch to for the remote, mainly for use in a UI.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--gpg-import=FILE</option></term>
 
                 <listitem><para>
