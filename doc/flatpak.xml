@@ -50,7 +50,7 @@
         <para>
             flatpak can operate in system-wide or per-user mode. The system-wide
             data (runtimes, applications and configuration) is located in
-            <filename>$prefix/share/flatpak/</filename>, and the per-user
+            <filename>$prefix/var/lib/flatpak/</filename>, and the per-user
             data is in <filename>$HOME/.local/share/flatpak/</filename>.
             Below these locations, there is a local repository in the
             <filename>repo/</filename> subdirectory and installed runtimes
