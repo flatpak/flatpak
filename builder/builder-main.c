@@ -45,6 +45,7 @@ static gboolean opt_ccache;
 static gboolean opt_require_changes;
 static gboolean opt_keep_build_dirs;
 static gboolean opt_force_clean;
+static gboolean opt_allow_missing_runtimes;
 static gboolean opt_sandboxed;
 static char *opt_stop_at;
 static char *opt_arch;
@@ -66,6 +67,7 @@ static GOptionEntry entries[] = {
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "finish-only", 0, 0, G_OPTION_ARG_NONE, &opt_finish_only, "Only run clean and finish and export phases", NULL },
+  { "allow-missing-runtimes", 0, 0, G_OPTION_ARG_NONE, &opt_allow_missing_runtimes, "Don't fail if runtime and sdk missing", NULL },
   { "show-deps", 0, 0, G_OPTION_ARG_NONE, &opt_show_deps, "List the dependencies of the json file (see --show-deps --help)", NULL },
   { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir or export if no changes", NULL },
   { "keep-build-dirs", 0, 0, G_OPTION_ARG_NONE, &opt_keep_build_dirs, "Don't remove build directories after install", NULL },
@@ -388,7 +390,7 @@ main (int    argc,
       return 1;
     }
 
-  if (!builder_manifest_start (manifest, build_context, &error))
+  if (!builder_manifest_start (manifest, opt_allow_missing_runtimes, build_context, &error))
     {
       g_printerr ("Failed to init: %s\n", error->message);
       return 1;

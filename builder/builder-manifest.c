@@ -915,6 +915,7 @@ flatpak (GError **error,
 
 gboolean
 builder_manifest_start (BuilderManifest *self,
+                        gboolean allow_missing_runtimes,
                         BuilderContext  *context,
                         GError         **error)
 {
@@ -933,14 +934,14 @@ builder_manifest_start (BuilderManifest *self,
 
   self->sdk_commit = flatpak (NULL, "info", arch_option, "--show-commit", self->sdk,
                               builder_manifest_get_runtime_version (self), NULL);
-  if (self->sdk_commit == NULL)
+  if (!allow_missing_runtimes && self->sdk_commit == NULL)
     return flatpak_fail (error, "Unable to find sdk %s version %s",
                          self->sdk,
                          builder_manifest_get_runtime_version (self));
 
   self->runtime_commit = flatpak (NULL, "info", arch_option, "--show-commit", self->runtime,
                                   builder_manifest_get_runtime_version (self), NULL);
-  if (self->runtime_commit == NULL)
+  if (!allow_missing_runtimes && self->runtime_commit == NULL)
     return flatpak_fail (error, "Unable to find runtime %s version %s",
                          self->runtime,
                          builder_manifest_get_runtime_version (self));
