@@ -659,6 +659,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--finish-only</option></term>
+
+                <listitem><para>
+                     Only do the cleanup, finish and export stages, picking up
+                     where a --build-only command left off.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--require-changes</option></term>
 
                 <listitem><para>
