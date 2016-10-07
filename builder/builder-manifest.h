@@ -51,6 +51,7 @@ GList *         builder_manifest_get_modules (BuilderManifest *self);
 const char *    builder_manifest_get_branch (BuilderManifest *self);
 
 gboolean        builder_manifest_start (BuilderManifest *self,
+                                        gboolean         allow_missing_runtimes,
                                         BuilderContext  *context,
                                         GError         **error);
 gboolean        builder_manifest_init_app_dir (BuilderManifest *self,

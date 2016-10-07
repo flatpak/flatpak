@@ -773,6 +773,18 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--allow-missing-runtimes</option></term>
+
+                <listitem><para>
+                    Do not immediately fail if the sdk or platform runtimes
+                    are not installed on this system. Attempting to build any
+                    manifest modules will still fail if the sdk is missing, but
+                    may be useful for apps that install files without a sandbox
+                    build.
+                </para></listitem>
+            </varlistentry>
+
           </variablelist>
     </refsect1>
 
