@@ -5260,6 +5260,55 @@ flatpak_dir_fetch_remote_title (FlatpakDir   *self,
   return g_steal_pointer (&title);
 }
 
+char *
+flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
+                                         const char   *remote,
+                                         GCancellable *cancellable,
+                                         GError      **error)
+{
+  g_autoptr(GError) my_error = NULL;
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) extensions = NULL;
+  GVariantDict dict;
+  g_autofree char *default_branch = NULL;
+
+  if (error == NULL)
+    error = &my_error;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  if (!flatpak_dir_remote_fetch_summary (self, remote,
+                                         &summary_bytes,
+                                         cancellable, error))
+    return FALSE;
+
+  if (summary_bytes == NULL)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           _("Remote default-branch not available; server has no summary file"));
+      return FALSE;
+    }
+
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                          summary_bytes, FALSE));
+  extensions = g_variant_get_child_value (summary, 1);
+
+  g_variant_dict_init (&dict, extensions);
+  g_variant_dict_lookup (&dict, "xa.default-branch", "s", &default_branch);
+  g_variant_dict_end (&dict);
+
+  if (default_branch == NULL)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                           _("Remote default-branch not set"));
+      return FALSE;
+    }
+
+  return g_steal_pointer (&default_branch);
+}
+
 static gboolean
 flatpak_dir_parse_summary_for_ref (FlatpakDir   *self,
                                    GVariant     *summary,

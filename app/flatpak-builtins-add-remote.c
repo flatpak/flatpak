@@ -267,6 +267,7 @@ update_remote_with_extra_metadata (FlatpakDir* dir,
                                    GError **error)
 {
   g_autofree char *title = NULL;
+  g_autofree char *default_branch = NULL;
   g_autoptr(GKeyFile) config = NULL;
 
   if (opt_title == NULL)
@@ -279,7 +280,17 @@ update_remote_with_extra_metadata (FlatpakDir* dir,
         opt_title = title;
     }
 
-    if (title != NULL)
+    if (opt_default_branch == NULL)
+    {
+      default_branch = flatpak_dir_fetch_remote_default_branch (dir,
+                                                                remote,
+                                                                NULL,
+                                                                NULL);
+      if (default_branch)
+        opt_default_branch = default_branch;
+    }
+
+    if (title != NULL || default_branch != NULL)
       {
         config = get_config_from_opts (dir, remote);
         return flatpak_dir_modify_remote (dir, remote, config, gpg_data, cancellable, error);
