@@ -259,6 +259,35 @@ load_options (char *filename,
     }
 }
 
+static gboolean
+update_remote_with_extra_metadata (FlatpakDir* dir,
+                                   const char *remote,
+                                   GBytes *gpg_data,
+                                   GCancellable *cancellable,
+                                   GError **error)
+{
+  g_autofree char *title = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+
+  if (opt_title == NULL)
+    {
+      title = flatpak_dir_fetch_remote_title (dir,
+                                              remote,
+                                              NULL,
+                                              NULL);
+      if (title)
+        opt_title = title;
+    }
+
+    if (title != NULL)
+      {
+        config = get_config_from_opts (dir, remote);
+        return flatpak_dir_modify_remote (dir, remote, config, gpg_data, cancellable, error);
+      }
+
+    return TRUE;
+}
+
 gboolean
 flatpak_builtin_add_remote (int argc, char **argv,
                             GCancellable *cancellable, GError **error)
@@ -267,7 +296,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) file = NULL;
   g_auto(GStrv) remotes = NULL;
-  g_autofree char *title = NULL;
   g_autofree char *remote_url = NULL;
   const char *remote_name;
   const char *url_or_path = NULL;
@@ -323,17 +351,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (!opt_no_gpg_verify)
     opt_do_gpg_verify = TRUE;
 
-
-  if (opt_title == NULL)
-    {
-      title = flatpak_dir_fetch_remote_title (dir,
-                                              remote_name,
-                                              NULL,
-                                              NULL);
-      if (title)
-        opt_title = title;
-    }
-
   config = get_config_from_opts (dir, remote_name);
 
   if (opt_gpg_import != NULL)
@@ -343,7 +360,12 @@ flatpak_builtin_add_remote (int argc, char **argv,
         return FALSE;
     }
 
-  return flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error);
+  if (!flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error))
+    return FALSE;
+
+  /* We can't retrieve the extra metadata until the remote has been added locally, since
+     ostree_repo_remote_fetch_summary() works with the repository's name, not its URL. */
+  return update_remote_with_extra_metadata (dir, remote_name, gpg_data, cancellable, error);
 }
 
 gboolean
