@@ -4362,6 +4362,7 @@ static char *
 find_matching_ref (GHashTable *refs,
                    const char   *name,
                    const char   *opt_branch,
+                   const char   *opt_default_branch,
                    const char   *opt_arch,
                    FlatpakKinds  kinds,
                    GError      **error)
@@ -4377,6 +4378,7 @@ find_matching_ref (GHashTable *refs,
   for (i = 0; arches[i] != NULL; i++)
     {
       g_autoptr(GPtrArray) matched_refs = NULL;
+      int j;
 
       matched_refs = find_matching_refs (refs, name, opt_branch, arches[i],
                                          kinds, error);
@@ -4386,25 +4388,36 @@ find_matching_ref (GHashTable *refs,
       if (matched_refs->len == 0)
         continue;
 
-      if (matched_refs->len > 1)
+      if (matched_refs->len == 1)
+        return g_strdup (g_ptr_array_index (matched_refs, 0));
+
+      /* Multiple refs found, see if some belongs to the default branch, if passed */
+      if (opt_default_branch != NULL)
         {
-          int i;
-          g_autoptr(GString) err = g_string_new ("");
-          g_string_printf (err, "Multiple branches available for %s, you must specify one of: ", name);
-          for (i = 0; i < matched_refs->len; i++)
+          for (j = 0; j < matched_refs->len; j++)
             {
-              g_auto(GStrv) parts = flatpak_decompose_ref (g_ptr_array_index (matched_refs, i), NULL);
-              if (i != 0)
-                g_string_append (err, ", ");
+              char *current_ref = g_ptr_array_index (matched_refs, j);
+              g_auto(GStrv) parts = flatpak_decompose_ref (current_ref, NULL);
 
-              g_string_append (err, parts[3]);
+              if (g_strcmp0 (opt_default_branch, parts[3]) == 0)
+                return g_strdup (current_ref);
             }
-
-          flatpak_fail (error, err->str);
-          return NULL;
         }
 
-      return g_strdup (g_ptr_array_index (matched_refs, 0));
+      /* Nothing to do other than reporting the different choices */
+      g_autoptr(GString) err = g_string_new ("");
+      g_string_printf (err, "Multiple branches available for %s, you must specify one of: ", name);
+      for (j = 0; j < matched_refs->len; j++)
+        {
+          g_auto(GStrv) parts = flatpak_decompose_ref (g_ptr_array_index (matched_refs, j), NULL);
+          if (j != 0)
+            g_string_append (err, ", ");
+
+          g_string_append (err, parts[3]);
+        }
+
+      flatpak_fail (error, err->str);
+      return NULL;
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
@@ -4446,6 +4459,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              const char   *remote,
                              const char   *name,
                              const char   *opt_branch,
+                             const char   *opt_default_branch,
                              const char   *opt_arch,
                              FlatpakKinds  kinds,
                              FlatpakKinds *out_kind,
@@ -4463,7 +4477,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                      &remote_refs, cancellable, error))
     return NULL;
 
-  remote_ref = find_matching_ref (remote_refs, name, opt_branch,
+  remote_ref = find_matching_ref (remote_refs, name, opt_branch, opt_default_branch,
                                   opt_arch, kinds, &my_error);
   if (remote_ref == NULL)
     {
@@ -4580,7 +4594,7 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   if (local_refs == NULL)
     return NULL;
 
-  local_ref = find_matching_ref (local_refs, opt_name, opt_branch,
+  local_ref = find_matching_ref (local_refs, opt_name, opt_branch, NULL,
                                   opt_arch, kinds, &my_error);
   if (local_ref == NULL)
     {
