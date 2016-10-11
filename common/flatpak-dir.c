@@ -5211,18 +5211,14 @@ flatpak_dir_list_remote_refs (FlatpakDir   *self,
   return TRUE;
 }
 
-char *
-flatpak_dir_fetch_remote_title (FlatpakDir   *self,
-                                const char   *remote,
-                                GCancellable *cancellable,
-                                GError      **error)
+static GVariant *
+fetch_remote_summary_file (FlatpakDir   *self,
+                           const char   *remote,
+                           GCancellable *cancellable,
+                           GError      **error)
 {
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GBytes) summary_bytes = NULL;
-  g_autoptr(GVariant) summary = NULL;
-  g_autoptr(GVariant) extensions = NULL;
-  GVariantDict dict;
-  g_autofree char *title = NULL;
 
   if (error == NULL)
     error = &my_error;
@@ -5233,17 +5229,35 @@ flatpak_dir_fetch_remote_title (FlatpakDir   *self,
   if (!flatpak_dir_remote_fetch_summary (self, remote,
                                          &summary_bytes,
                                          cancellable, error))
-    return FALSE;
+    return NULL;
 
   if (summary_bytes == NULL)
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           _("Remote title not available; server has no summary file"));
-      return FALSE;
+                           _("Remote extra metadata not available; server has no summary file"));
+      return NULL;
     }
 
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                          summary_bytes, FALSE));
+  return g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                       summary_bytes, FALSE));
+}
+
+
+char *
+flatpak_dir_fetch_remote_title (FlatpakDir   *self,
+                                const char   *remote,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) extensions = NULL;
+  GVariantDict dict;
+  g_autofree char *title = NULL;
+
+  summary = fetch_remote_summary_file (self, remote, cancellable, error);
+  if (summary == NULL)
+    return NULL;
+
   extensions = g_variant_get_child_value (summary, 1);
 
   g_variant_dict_init (&dict, extensions);
@@ -5266,33 +5280,15 @@ flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error)
 {
-  g_autoptr(GError) my_error = NULL;
-  g_autoptr(GBytes) summary_bytes = NULL;
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) extensions = NULL;
   GVariantDict dict;
   g_autofree char *default_branch = NULL;
 
-  if (error == NULL)
-    error = &my_error;
-
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+  summary = fetch_remote_summary_file (self, remote, cancellable, error);
+  if (summary == NULL)
     return NULL;
 
-  if (!flatpak_dir_remote_fetch_summary (self, remote,
-                                         &summary_bytes,
-                                         cancellable, error))
-    return FALSE;
-
-  if (summary_bytes == NULL)
-    {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           _("Remote default-branch not available; server has no summary file"));
-      return FALSE;
-    }
-
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                          summary_bytes, FALSE));
   extensions = g_variant_get_child_value (summary, 1);
 
   g_variant_dict_init (&dict, extensions);
