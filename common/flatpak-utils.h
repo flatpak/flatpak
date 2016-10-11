@@ -229,6 +229,9 @@ void                flatpak_table_printer_print (FlatpakTablePrinter *printer);
 gboolean flatpak_repo_set_title (OstreeRepo *repo,
                                  const char *title,
                                  GError    **error);
+gboolean flatpak_repo_set_default_branch (OstreeRepo *repo,
+                                          const char *branch,
+                                          GError    **error);
 gboolean flatpak_repo_update (OstreeRepo   *repo,
                               const char  **gpg_key_ids,
                               const char   *gpg_homedir,
