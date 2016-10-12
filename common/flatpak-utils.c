@@ -2336,6 +2336,42 @@ flatpak_repo_collect_sizes (OstreeRepo   *repo,
   return _flatpak_repo_collect_sizes (repo, root, NULL, installed_size, download_size, cancellable, error);
 }
 
+
+static void
+flatpak_repo_collect_extra_data_sizes (OstreeRepo   *repo,
+                                       const char   *rev,
+                                       guint64      *installed_size,
+                                       guint64      *download_size)
+{
+  g_autoptr(GVariant) extra_data_sources = NULL;
+  gsize n_extra_data;
+  int i;
+
+  extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, NULL, NULL);
+  if (extra_data_sources == NULL)
+    return;
+
+  n_extra_data = g_variant_n_children (extra_data_sources);
+  if (n_extra_data == 0)
+    return;
+
+  for (i = 0; i < n_extra_data; i++)
+    {
+      guint64 extra_download_size;
+      guint64 extra_installed_size;
+
+      flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
+                                             NULL,
+                                             &extra_download_size,
+                                             &extra_installed_size,
+                                             NULL, NULL);
+      if (installed_size)
+        *installed_size += extra_installed_size;
+      if (download_size)
+        *download_size += extra_download_size;
+    }
+}
+
 /* Loads a summary file from a local repo */
 GVariant *
 flatpak_repo_load_summary (OstreeRepo *repo,
@@ -2510,6 +2546,8 @@ flatpak_repo_update (OstreeRepo   *repo,
 
       if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
         return FALSE;
+
+      flatpak_repo_collect_extra_data_sizes (repo, rev, &installed_size, &download_size);
 
       metadata = g_file_get_child (root, "metadata");
       if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
