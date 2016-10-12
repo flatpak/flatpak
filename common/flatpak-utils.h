@@ -243,7 +243,19 @@ gboolean flatpak_repo_collect_sizes (OstreeRepo   *repo,
                                      guint64      *download_size,
                                      GCancellable *cancellable,
                                      GError      **error);
-
+GVariant *flatpak_commit_get_extra_data_sources (GVariant *commitv,
+                                                 GError  **error);
+GVariant *flatpak_repo_get_extra_data_sources (OstreeRepo   *repo,
+                                               const char   *rev,
+                                               GCancellable *cancellable,
+                                               GError      **error);
+void flatpak_repo_parse_extra_data_sources (GVariant *extra_data_sources,
+                                            int index,
+                                            const char **name,
+                                            guint64 *download_size,
+                                            guint64 *installed_size,
+                                            const guchar **sha256,
+                                            const char **uri);
 gboolean flatpak_mtree_create_root (OstreeRepo        *repo,
                                     OstreeMutableTree *mtree,
                                     GCancellable      *cancellable,

@@ -84,6 +84,12 @@ typedef enum {
 
 #define FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_ALL (FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_FORCE_REMOVE)
 
+typedef enum {
+  FLATPAK_PULL_FLAGS_NONE = 0,
+  FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA = 1 << 0,
+  FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA = 1 << 1,
+} FlatpakPullFlags;
+
 GQuark       flatpak_dir_error_quark (void);
 
 /**
@@ -232,8 +238,10 @@ gboolean    flatpak_dir_update_appstream (FlatpakDir          *self,
 gboolean    flatpak_dir_pull (FlatpakDir          *self,
                               const char          *repository,
                               const char          *ref,
+                              const char          *opt_rev,
                               const char         **subpaths,
                               OstreeRepo          *repo,
+                              FlatpakPullFlags     flatpak_flags,
                               OstreeRepoPullFlags  flags,
                               OstreeAsyncProgress *progress,
                               GCancellable        *cancellable,

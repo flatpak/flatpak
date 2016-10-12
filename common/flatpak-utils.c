@@ -2200,6 +2200,72 @@ flatpak_repo_set_default_branch (OstreeRepo *repo,
   return TRUE;
 }
 
+GVariant *
+flatpak_commit_get_extra_data_sources (GVariant *commitv,
+                                       GError      **error)
+{
+  g_autoptr(GVariant) commit_metadata = NULL;
+  g_autoptr(GVariant) extra_data_sources = NULL;
+
+  commit_metadata = g_variant_get_child_value (commitv, 0);
+  extra_data_sources = g_variant_lookup_value (commit_metadata,
+                                               "xa.extra-data-sources",
+                                               G_VARIANT_TYPE ("a(ayttays)"));
+
+  if (extra_data_sources == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("No extra data sources"));
+      return NULL;
+    }
+
+  return g_steal_pointer (&extra_data_sources);
+}
+
+
+GVariant *
+flatpak_repo_get_extra_data_sources (OstreeRepo   *repo,
+                                     const char   *rev,
+                                     GCancellable *cancellable,
+                                     GError      **error)
+{
+  g_autoptr(GVariant) commitv = NULL;
+
+  if (!ostree_repo_load_variant (repo,
+                                 OSTREE_OBJECT_TYPE_COMMIT,
+                                 rev, &commitv, error))
+    return NULL;
+
+  return flatpak_commit_get_extra_data_sources (commitv, error);
+}
+
+void
+flatpak_repo_parse_extra_data_sources (GVariant *extra_data_sources,
+                                       int index,
+                                       const char **name,
+                                       guint64 *download_size,
+                                       guint64 *installed_size,
+                                       const guchar **sha256,
+                                       const char **uri)
+{
+  g_autoptr(GVariant) sha256_v = NULL;
+  g_variant_get_child (extra_data_sources, index, "(^aytt@ay&s)",
+                       name,
+                       download_size,
+                       installed_size,
+                       &sha256_v,
+                       uri);
+
+  if (download_size)
+    *download_size = GUINT64_FROM_BE (*download_size);
+
+  if (installed_size)
+    *installed_size = GUINT64_FROM_BE (*installed_size);
+
+  if (sha256)
+    *sha256 = ostree_checksum_bytes_peek (sha256_v);
+}
+
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
 

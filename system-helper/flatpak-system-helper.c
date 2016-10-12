@@ -242,8 +242,8 @@ handle_deploy (FlatpakSystemHelper   *object,
       main_context = g_main_context_new ();
       g_main_context_push_thread_default (main_context);
 
-      if (!flatpak_dir_pull (system, arg_origin, arg_ref, (const char **)arg_subpaths, NULL,
-                             OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
+      if (!flatpak_dir_pull (system, arg_origin, arg_ref, NULL, (const char **)arg_subpaths, NULL,
+                             FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_UNTRUSTED, NULL,
                              NULL, &error))
         {
           g_main_context_pop_thread_default (main_context);

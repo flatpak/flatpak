@@ -617,7 +617,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   OstreeRepoTransactionStats stats;
   g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
   CommitData commit_data = {0};
-  g_auto(GVariantDict) metadata_dict = {{0,}};
+  g_auto(GVariantDict) metadata_dict = {0};
   g_autoptr(GVariant) metadata_dict_v = NULL;
 
   context = g_option_context_new (_("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"));

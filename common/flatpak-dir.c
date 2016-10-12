@@ -26,10 +26,12 @@
 #include <sys/file.h>
 #include <sys/types.h>
 #include <utime.h>
+#include <glnx-console.h>
 
 #include <glib/gi18n.h>
 
 #include <gio/gio.h>
+#include <gio/gunixsocketaddress.h>
 #include "libglnx/libglnx.h"
 #include "lib/flatpak-error.h"
 
@@ -410,6 +412,8 @@ flatpak_dir_class_init (FlatpakDirClass *klass)
 static void
 flatpak_dir_init (FlatpakDir *self)
 {
+  /* Work around possible deadlock due to: https://bugzilla.gnome.org/show_bug.cgi?id=674885 */
+  g_type_ensure (G_TYPE_UNIX_SOCKET_ADDRESS);
 }
 
 gboolean
@@ -1172,8 +1176,8 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
       g_assert (system_helper != NULL);
 
-      if (!flatpak_dir_pull (self, remote, branch, NULL,
-                             child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+      if (!flatpak_dir_pull (self, remote, branch, NULL, NULL,
+                             child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
                              progress, cancellable, error))
         return FALSE;
 
@@ -1202,7 +1206,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       return TRUE;
     }
 
-  if (!flatpak_dir_pull (self, remote, branch, NULL, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
+  if (!flatpak_dir_pull (self, remote, branch, NULL, NULL, NULL, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                          cancellable, error))
     return FALSE;
 
@@ -1225,13 +1229,37 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                        error);
 }
 
+static void
+default_progress_changed (OstreeAsyncProgress *progress,
+                          gpointer             user_data)
+{
+  guint outstanding_extra_data;
+  guint64 transferred_extra_data_bytes;
+  guint64 total_extra_data_bytes;
+
+  outstanding_extra_data = ostree_async_progress_get_uint (progress, "outstanding-extra-data");
+  total_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "total-extra-data-bytes");
+  transferred_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "transferred-extra-data-bytes");
+
+  if (outstanding_extra_data > 0)
+    {
+      g_autofree char *transferred = g_format_size (transferred_extra_data_bytes);
+      g_autofree char *total = g_format_size (total_extra_data_bytes);
+      g_autofree char *line = g_strdup_printf ("Downloading extra data %s/%s", transferred, total);
+      glnx_console_text (line);
+    }
+  else
+    ostree_repo_pull_default_console_progress_changed (progress, user_data);
+}
+
 /* This is a copy of ostree_repo_pull_one_dir that always disables
    static deltas if subdir is used */
 static gboolean
 repo_pull_one_dir (OstreeRepo          *self,
                    const char          *remote_name,
                    const char          *dir_to_pull,
-                   char               **refs_to_fetch,
+                   const char          *ref_to_fetch,
+                   const char          *rev_to_fetch,
                    OstreeRepoPullFlags  flags,
                    OstreeAsyncProgress *progress,
                    GCancellable        *cancellable,
@@ -1239,19 +1267,9 @@ repo_pull_one_dir (OstreeRepo          *self,
 {
   GVariantBuilder builder;
   gboolean force_disable_deltas = FALSE;
-  g_auto(GLnxConsoleRef) console = { 0, };
-  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  const char *refs_to_fetch[2];
+  const char *revs_to_fetch[2];
   gboolean res;
-
-  if (progress == NULL)
-    {
-      glnx_console_lock (&console);
-      if (console.is_tty)
-        {
-          console_progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, &console);
-          progress = console_progress;
-        }
-    }
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
 
@@ -1268,33 +1286,254 @@ repo_pull_one_dir (OstreeRepo          *self,
 
   g_variant_builder_add (&builder, "{s@v}", "flags",
                          g_variant_new_variant (g_variant_new_int32 (flags)));
-  if (refs_to_fetch)
-    g_variant_builder_add (&builder, "{s@v}", "refs",
-                           g_variant_new_variant (g_variant_new_strv ((const char * const *) refs_to_fetch, -1)));
+
+  refs_to_fetch[0] = ref_to_fetch;
+  refs_to_fetch[1] = NULL;
+  g_variant_builder_add (&builder, "{s@v}", "refs",
+                         g_variant_new_variant (g_variant_new_strv ((const char * const *) refs_to_fetch, -1)));
+
+  revs_to_fetch[0] = rev_to_fetch;
+  revs_to_fetch[1] = NULL;
+  g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
+                         g_variant_new_variant (g_variant_new_strv ((const char * const *) revs_to_fetch, -1)));
 
   res = ostree_repo_pull_with_options (self, remote_name, g_variant_builder_end (&builder),
                                        progress, cancellable, error);
 
-  if (progress)
-    ostree_async_progress_finish (progress);
-
   return res;
+}
+
+static void
+ensure_soup_session (FlatpakDir *self)
+{
+  const char *http_proxy;
+
+  if (g_once_init_enter (&self->soup_session))
+    {
+      SoupSession *soup_session;
+
+      soup_session =
+        soup_session_new_with_options (SOUP_SESSION_USER_AGENT, "ostree ",
+                                       SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE,
+                                       SOUP_SESSION_USE_THREAD_CONTEXT, TRUE,
+                                       SOUP_SESSION_TIMEOUT, 60,
+                                       SOUP_SESSION_IDLE_TIMEOUT, 60,
+                                       NULL);
+      http_proxy = g_getenv ("http_proxy");
+      if (http_proxy)
+        {
+          g_autoptr(SoupURI) proxy_uri = soup_uri_new (http_proxy);
+
+          if (!proxy_uri)
+            g_warning ("Invalid proxy URI '%s'", http_proxy);
+          else
+            g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
+        }
+
+      if (g_getenv ("OSTREE_DEBUG_HTTP"))
+        soup_session_add_feature (soup_session, (SoupSessionFeature *) soup_logger_new (SOUP_LOGGER_LOG_BODY, 500));
+
+      g_once_init_leave (&self->soup_session, soup_session);
+    }
+}
+
+typedef struct {
+  OstreeAsyncProgress *progress;
+  guint64 previous_dl;
+} ExtraDataProgress;
+
+static void
+extra_data_progress_report (guint64 downloaded_bytes,
+                            gpointer user_data)
+{
+  ExtraDataProgress *extra_progress = user_data;
+
+  if (extra_progress->progress)
+    ostree_async_progress_set_uint64 (extra_progress->progress, "transferred-extra-data-bytes",
+                                      extra_progress->previous_dl + downloaded_bytes);
+
+}
+
+static gboolean
+flatpak_dir_pull_extra_data (FlatpakDir          *self,
+                             OstreeRepo          *repo,
+                             const char          *repository,
+                             const char          *ref,
+                             const char          *rev,
+                             FlatpakPullFlags     flatpak_flags,
+                             OstreeAsyncProgress *progress,
+                             GCancellable        *cancellable,
+                             GError             **error)
+{
+  g_autoptr(GFile) root = NULL;
+  g_autoptr(GVariant) extra_data_sources = NULL;
+  g_autoptr(GVariant) detached_metadata = NULL;
+  g_auto(GVariantDict) new_metadata_dict = {0};
+  g_autoptr(GVariantBuilder) extra_data_builder = NULL;
+  g_autoptr(GVariant) new_detached_metadata = NULL;
+  g_autoptr(GVariant) extra_data = NULL;
+  int i;
+  gsize n_extra_data;
+  guint64 total_download_size;
+  ExtraDataProgress extra_data_progress = { NULL };
+
+  extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
+  if (extra_data_sources == NULL)
+    return TRUE;
+
+  n_extra_data = g_variant_n_children (extra_data_sources);
+  if (n_extra_data == 0)
+    return TRUE;
+
+  if ((flatpak_flags & FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA) == 0)
+    return flatpak_fail (error, "extra data not supported for non-gpg-verified local system installs");
+
+  extra_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(ayay)"));
+
+  total_download_size = 0;
+  for (i = 0; i < n_extra_data; i++)
+    {
+      guint64 download_size;
+
+      flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
+                                             NULL,
+                                             &download_size,
+                                             NULL,
+                                             NULL,
+                                             NULL);
+
+      total_download_size += download_size;
+    }
+
+  if (progress)
+    {
+      ostree_async_progress_set_uint (progress, "outstanding-extra-data", n_extra_data);
+      ostree_async_progress_set_uint (progress, "total-extra-data", n_extra_data);
+      ostree_async_progress_set_uint64 (progress, "total-extra-data-bytes", total_download_size);
+      ostree_async_progress_set_uint64 (progress, "transferred-extra-data-bytes", 0);
+    }
+
+  extra_data_progress.progress = progress;
+
+  for (i = 0; i < n_extra_data; i++)
+    {
+      const char *extra_data_uri = NULL;
+      g_autofree char *extra_data_sha256 = NULL;
+      const char *extra_data_name = NULL;
+      guint64 download_size;
+      guint64 installed_size;
+      g_autofree char *sha256 = NULL;
+      const guchar *sha256_bytes;
+      g_autoptr(GBytes) bytes = NULL;
+
+      flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
+                                             &extra_data_name,
+                                             &download_size,
+                                             &installed_size,
+                                             &sha256_bytes,
+                                             &extra_data_uri);
+
+      if (sha256_bytes == NULL)
+        return flatpak_fail (error, _("Invalid sha256 for extra data uri %s"), extra_data_uri);
+
+      extra_data_sha256 = ostree_checksum_from_bytes (sha256_bytes);
+
+      if (*extra_data_name == 0)
+        return flatpak_fail (error, _("Empty name for extra data uri %s"), extra_data_uri);
+
+      /* Don't allow file uris here as that could read local files based on remote data */
+      if (!g_str_has_prefix (extra_data_uri, "http:") &&
+          !g_str_has_prefix (extra_data_uri, "https:"))
+        return flatpak_fail (error, _("Unsupported extra data uri %s"), extra_data_uri);
+
+      /* TODO: Download to disk to support resumed downloads on error */
+
+      ensure_soup_session (self);
+      bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri,
+                                     extra_data_progress_report, &extra_data_progress,
+                                     cancellable, error);
+      if (bytes == NULL)
+        {
+          g_prefix_error (error, _("While downloading %s: "), extra_data_uri);
+          return FALSE;
+        }
+
+      if (g_bytes_get_size (bytes) != download_size)
+        return flatpak_fail (error, _("Wrong size for extra data %s"), extra_data_uri);
+
+      extra_data_progress.previous_dl += download_size;
+      if (progress)
+        ostree_async_progress_set_uint (progress, "outstanding-extra-data", n_extra_data - i - 1);
+
+      sha256 = g_compute_checksum_for_bytes (G_CHECKSUM_SHA256, bytes);
+      if (strcmp (sha256, extra_data_sha256) != 0)
+        return flatpak_fail (error, _("Invalid checksum for extra data %s"), extra_data_uri);
+
+      g_variant_builder_add (extra_data_builder,
+                             "(^ay@ay)",
+                             extra_data_name,
+                             g_variant_new_from_bytes (G_VARIANT_TYPE ("ay"), bytes, TRUE));
+    }
+
+  extra_data = g_variant_ref_sink (g_variant_builder_end (extra_data_builder));
+
+  if (!ostree_repo_read_commit_detached_metadata (repo, rev, &detached_metadata,
+                                                  cancellable, error))
+    return FALSE;
+
+  g_variant_dict_init (&new_metadata_dict, detached_metadata);
+  g_variant_dict_insert_value (&new_metadata_dict, "xa.extra-data", extra_data);
+  new_detached_metadata = g_variant_dict_end (&new_metadata_dict);
+
+  /* There is a commitmeta size limit when pulling, so we have to side-load it
+     when installing in the system repo */
+  if (flatpak_flags & FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA)
+    {
+      int dfd =  ostree_repo_get_dfd (repo);
+      g_autoptr(GVariant) normalized = g_variant_get_normal_form (new_detached_metadata);
+      gsize normalized_size = g_variant_get_size (normalized);
+      const guint8 *data = g_variant_get_data (normalized);
+      g_autofree char *filename = NULL;
+
+      filename = g_strconcat (rev, ".commitmeta", NULL);
+      if (!glnx_file_replace_contents_at (dfd, filename,
+                                          data, normalized_size,
+                                          0, cancellable, error))
+        {
+          g_prefix_error (error, "Unable to write sideloaded detached metadata: ");
+          return FALSE;
+        }
+    }
+  else
+    {
+      if (!ostree_repo_write_commit_detached_metadata (repo, rev, new_detached_metadata,
+                                                       cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
 }
 
 gboolean
 flatpak_dir_pull (FlatpakDir          *self,
                   const char          *repository,
                   const char          *ref,
+                  const char          *opt_rev,
                   const char         **subpaths,
                   OstreeRepo          *repo,
+                  FlatpakPullFlags     flatpak_flags,
                   OstreeRepoPullFlags  flags,
                   OstreeAsyncProgress *progress,
                   GCancellable        *cancellable,
                   GError             **error)
 {
   gboolean ret = FALSE;
-  const char *refs[2];
+  const char *rev;
   g_autofree char *url = NULL;
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autofree char *latest_rev = NULL;
+  g_auto(GLnxConsoleRef) console = { 0, };
+  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -1308,16 +1547,52 @@ flatpak_dir_pull (FlatpakDir          *self,
   if (*url == 0)
     return TRUE; /* Empty url, silently disables updates */
 
+  /* We get the rev ahead of time so that we know it for looking up e.g. extra-data
+     and to make sure we're atomically using a single rev if we happen to do multiple
+     pulls (e.g. with subpaths) */
+  if (opt_rev != NULL)
+    rev = opt_rev;
+  else
+    {
+      g_autoptr(GVariant) summary = NULL;
+
+      if (!flatpak_dir_remote_fetch_summary (self, repository,
+                                             &summary_bytes,
+                                             cancellable, error))
+        return FALSE;
+
+      summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                              summary_bytes, FALSE));
+      if (!flatpak_summary_lookup_ref (summary,
+                                       ref,
+                                       &latest_rev))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "No such branch '%s' in repository summary",
+                       ref);
+          return FALSE;
+        }
+
+      rev = latest_rev;
+    }
+
   if (repo == NULL)
     repo = self->repo;
 
-  refs[0] = ref;
-  refs[1] = NULL;
+  if (progress == NULL)
+    {
+      glnx_console_lock (&console);
+      if (console.is_tty)
+        {
+          console_progress = ostree_async_progress_new_and_connect (default_progress_changed, &console);
+          progress = console_progress;
+        }
+    }
 
   if (subpaths == NULL || subpaths[0] == NULL)
     {
       if (!repo_pull_one_dir (repo, repository, NULL,
-                              (char **) refs, flags,
+                              ref, rev, flags,
                               progress,
                               cancellable, error))
         {
@@ -1331,7 +1606,7 @@ flatpak_dir_pull (FlatpakDir          *self,
 
       if (!repo_pull_one_dir (repo, repository,
                               "/metadata",
-                              (char **) refs, flags,
+                              ref, rev, flags,
                               progress,
                               cancellable, error))
         {
@@ -1345,7 +1620,7 @@ flatpak_dir_pull (FlatpakDir          *self,
           g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
           if (!repo_pull_one_dir (repo, repository,
                                   subpath,
-                                  (char **) refs, flags,
+                                  ref, rev, flags,
                                   progress,
                                   cancellable, error))
             {
@@ -1356,9 +1631,21 @@ flatpak_dir_pull (FlatpakDir          *self,
         }
     }
 
+  if (g_str_has_prefix (ref, "app/") &&
+      !flatpak_dir_pull_extra_data (self, repo,
+                                    repository,
+                                    ref, rev,
+                                    flatpak_flags,
+                                    progress,
+                                    cancellable,
+                                    error))
+    goto out;
+
   ret = TRUE;
 
 out:
+  if (progress)
+    ostree_async_progress_finish (progress);
 
   return ret;
 }
@@ -1388,7 +1675,7 @@ repo_pull_one_untrusted (OstreeRepo          *self,
       glnx_console_lock (&console);
       if (console.is_tty)
         {
-          console_progress = ostree_async_progress_new_and_connect (ostree_repo_pull_default_console_progress_changed, &console);
+          console_progress = ostree_async_progress_new_and_connect (default_progress_changed, &console);
           progress = console_progress;
         }
     }
@@ -1451,7 +1738,9 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) old_commit = NULL;
-
+  g_autoptr(OstreeRepo) src_repo = NULL;
+  g_autoptr(GVariant) new_commit = NULL;
+  g_autoptr(GVariant) extra_data_sources = NULL;
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
@@ -1463,6 +1752,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                           &gpg_verify, error))
     return FALSE;
 
+  /* This was verified in the client, but lets do it here too */
   if (!gpg_verify_summary || !gpg_verify)
     return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
 
@@ -1505,18 +1795,17 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   (void) ostree_repo_load_commit (self->repo, checksum, &old_commit, NULL, NULL);
 
+  src_repo = ostree_repo_new (path_file);
+  if (!ostree_repo_open (src_repo, cancellable, error))
+    return FALSE;
+
+  if (!ostree_repo_load_commit (src_repo, checksum, &new_commit, NULL, error))
+    return FALSE;
+
   if (old_commit)
     {
-      g_autoptr(OstreeRepo) src_repo = ostree_repo_new (path_file);
-      g_autoptr(GVariant) new_commit = NULL;
       guint64 old_timestamp;
       guint64 new_timestamp;
-
-      if (!ostree_repo_open (src_repo, cancellable, error))
-        return FALSE;
-
-      if (!ostree_repo_load_commit (src_repo, checksum, &new_commit, NULL, error))
-        return FALSE;
 
       old_timestamp = ostree_commit_get_timestamp (old_commit);
       new_timestamp = ostree_commit_get_timestamp (new_commit);
@@ -1560,6 +1849,35 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
               return FALSE;
             }
         }
+    }
+
+  /* Get the out of bands extra-data required due to an ostree pull
+     commitmeta size limit */
+  extra_data_sources = flatpak_commit_get_extra_data_sources (new_commit, NULL);
+  if (extra_data_sources)
+    {
+      GFile *dir = ostree_repo_get_path (src_repo);
+      g_autoptr(GFile) file = NULL;
+      g_autofree char *filename = NULL;
+      g_autofree char *commitmeta = NULL;
+      gsize commitmeta_size;
+      g_autoptr(GVariant) new_metadata = NULL;
+
+      filename = g_strconcat (checksum, ".commitmeta", NULL);
+      file = g_file_get_child (dir, filename);
+      if (!g_file_load_contents (file, cancellable,
+                                 &commitmeta, &commitmeta_size,
+                                 NULL, error))
+        return FALSE;
+
+      new_metadata = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("a{sv}"),
+                                                                  commitmeta, commitmeta_size,
+                                                                  FALSE,
+                                                                  g_free, commitmeta));
+      g_steal_pointer (&commitmeta); /* steal into the variant */
+
+      if (!ostree_repo_write_commit_detached_metadata (self->repo, checksum, new_metadata, cancellable, error))
+        return FALSE;
     }
 
   return TRUE;
@@ -2566,6 +2884,276 @@ out:
   return ret;
 }
 
+static gboolean
+extract_extra_data (FlatpakDir          *self,
+                    const char          *checksum,
+                    GFile               *extradir,
+                    gboolean            *created_extra_data,
+                    GCancellable        *cancellable,
+                    GError             **error)
+{
+  g_autoptr(GVariant) detached_metadata = NULL;
+  g_autoptr(GVariant) extra_data = NULL;
+  g_autoptr(GVariant) extra_data_sources = NULL;
+  gsize i, n_extra_data = 0;
+  gsize n_extra_data_sources;
+
+  extra_data_sources = flatpak_repo_get_extra_data_sources (self->repo, checksum,
+                                                            cancellable, NULL);
+  if (extra_data_sources == NULL)
+    return TRUE;
+
+  n_extra_data_sources = g_variant_n_children (extra_data_sources);
+  if (n_extra_data_sources == 0)
+    return TRUE;
+
+  g_debug ("extracting extra data to %s", g_file_get_path (extradir));
+
+  if (!ostree_repo_read_commit_detached_metadata (self->repo, checksum, &detached_metadata,
+                                                  cancellable, error))
+    {
+      g_prefix_error (error, _("While getting detached metadata: "));
+      return FALSE;
+    }
+
+  if (detached_metadata == NULL)
+    return flatpak_fail (error, "Extra data missing in detached metadata");
+
+  extra_data = g_variant_lookup_value (detached_metadata, "xa.extra-data",
+                                       G_VARIANT_TYPE ("a(ayay)"));
+  if (extra_data == NULL)
+    return flatpak_fail (error, "Extra data missing in detached metadata");
+
+  n_extra_data = g_variant_n_children (extra_data);
+  if (n_extra_data < n_extra_data_sources)
+    return flatpak_fail (error, "Extra data missing in detached metadata");
+
+  if (!flatpak_mkdir_p (extradir, cancellable, error))
+    {
+      g_prefix_error (error, _("While creating extradir: "));
+      return FALSE;
+    }
+
+  for (i = 0; i < n_extra_data_sources; i++)
+    {
+      g_autofree char *extra_data_sha256 = NULL;
+      const guchar *extra_data_sha256_bytes;
+      const char *extra_data_source_name = NULL;
+      guint64 download_size;
+      g_autoptr(GBytes) bytes = NULL;
+      gboolean found;
+      int j;
+
+      flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
+                                             &extra_data_source_name,
+                                             &download_size,
+                                             NULL,
+                                             &extra_data_sha256_bytes,
+                                             NULL);
+
+      if (extra_data_sha256_bytes == NULL)
+        return flatpak_fail (error, _("Invalid sha256 for extra data"));
+
+      extra_data_sha256 = ostree_checksum_from_bytes (extra_data_sha256_bytes);
+
+      /* We need to verify the data in the commitmeta again, because the only signed
+         thing is the commit, which has the source info. We could have accidentally
+         picked up some other commitmeta stuff from the remote, or via the untrusted
+         local-pull of the system helper. */
+      found = FALSE;
+      for (j = 0; j < n_extra_data; j++)
+        {
+          g_autoptr(GVariant) content = NULL;
+          g_autoptr(GFile) dest = NULL;
+          g_autofree char *sha256 = NULL;
+          const char *extra_data_name = NULL;
+          const guchar  *data;
+          gsize len;
+
+          g_variant_get_child (extra_data, j, "(^ay@ay)",
+                               &extra_data_name,
+                               &content);
+
+          if (strcmp (extra_data_source_name, extra_data_name) != 0)
+            continue;
+
+          data = g_variant_get_data (content);
+          len = g_variant_get_size (content);
+
+          if (len != download_size)
+            return flatpak_fail (error, _("Wrong size for extra data"));
+
+          sha256 = g_compute_checksum_for_data (G_CHECKSUM_SHA256, data, len);
+          if (strcmp (sha256, extra_data_sha256) != 0)
+            return flatpak_fail (error, _("Invalid checksum for extra data"));
+
+          dest = g_file_get_child (extradir, extra_data_name);
+          if (!g_file_replace_contents (dest,
+                                        g_variant_get_data (content),
+                                        g_variant_get_size (content),
+                                        NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
+                                        NULL, cancellable, error))
+            {
+              g_prefix_error (error, _("While writing extra data file '%s': "), extra_data_name);
+              return FALSE;
+            }
+          found = TRUE;
+        }
+
+      if (!found)
+        return flatpak_fail (error, "Extra data %s missing in detached metadata", extra_data_source_name);
+    }
+
+  *created_extra_data = TRUE;
+
+  return TRUE;
+}
+
+static void
+add_args (GPtrArray *argv_array, ...)
+{
+  va_list args;
+  const gchar *arg;
+
+  va_start (args, argv_array);
+  while ((arg = va_arg (args, const gchar *)))
+    g_ptr_array_add (argv_array, g_strdup (arg));
+  va_end (args);
+}
+
+static void
+clear_fd (gpointer data)
+{
+  int *fd_p = data;
+  if (fd_p != NULL && *fd_p != -1)
+    close (*fd_p);
+}
+
+static void
+child_setup (gpointer user_data)
+{
+  GArray *fd_array = user_data;
+  int i;
+
+  /* If no fd_array was specified, don't care. */
+  if (fd_array == NULL)
+    return;
+
+  /* Otherwise, mark not - close-on-exec all the fds in the array */
+  for (i = 0; i < fd_array->len; i++)
+    fcntl (g_array_index (fd_array, int, i), F_SETFD, 0);
+}
+
+static gboolean
+apply_extra_data (FlatpakDir          *self,
+                  GFile               *checkoutdir,
+                  GCancellable        *cancellable,
+                  GError             **error)
+{
+  g_autoptr(GFile) metadata = NULL;
+  g_autofree char *metadata_contents = NULL;
+  gsize metadata_size;
+  g_autoptr(GKeyFile) metakey = NULL;
+  g_autofree char *app_id = NULL;
+  g_autofree char *runtime = NULL;
+  g_autofree char *runtime_ref = NULL;
+  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
+  g_autoptr(GFile) app_files = NULL;
+  g_autoptr(GFile) apply_extra_file = NULL;
+  g_autoptr(GFile) extra_files = NULL;
+  g_autoptr(GFile) runtime_files = NULL;
+  g_autoptr(GPtrArray) argv_array = NULL;
+  g_auto(GStrv) runtime_ref_parts = NULL;
+  g_autoptr(FlatpakContext) app_context = NULL;
+  g_autoptr(GArray) fd_array = NULL;
+  g_auto(GStrv) envp = NULL;
+  int exit_status;
+
+  apply_extra_file = g_file_resolve_relative_path (checkoutdir, "files/bin/apply_extra");
+  if (!g_file_query_exists (apply_extra_file, cancellable))
+    return TRUE;
+
+  metadata = g_file_get_child (checkoutdir, "metadata");
+
+  if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
+    return FALSE;
+
+  metakey = g_key_file_new ();
+  if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
+    return FALSE;
+
+  app_id = g_key_file_get_string (metakey, "Application", "name", error);
+  if (app_id == NULL)
+    return FALSE;
+
+  runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
+  if (runtime == NULL)
+    return FALSE;
+
+  runtime_ref = g_build_filename ("runtime", runtime, NULL);
+
+  runtime_ref_parts = flatpak_decompose_ref (runtime_ref, error);
+  if (runtime_ref_parts == NULL)
+    return FALSE;
+
+  runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
+  if (runtime_deploy == NULL)
+    return FALSE;
+
+  app_files = g_file_get_child (checkoutdir, "files");
+  extra_files = g_file_get_child (app_files, "extra");
+  runtime_files = flatpak_deploy_get_files (runtime_deploy);
+
+  argv_array = g_ptr_array_new_with_free_func (g_free);
+  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
+  g_array_set_clear_func (fd_array, clear_fd);
+  g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
+
+  add_args (argv_array,
+            "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
+            "--lock-file", "/usr/.ref",
+            "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
+            "--bind", flatpak_file_get_path_cached (extra_files), "/app/extra",
+            "--chdir", "/app/extra",
+            NULL);
+
+  if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, NULL, runtime_ref_parts[2],
+                                    FLATPAK_RUN_FLAG_NO_SESSION_HELPER,
+                                    error))
+    return FALSE;
+
+  app_context = flatpak_context_new ();
+
+  envp = flatpak_run_get_minimal_env (FALSE);
+  flatpak_run_add_environment_args (argv_array, fd_array, &envp, NULL, NULL, app_id,
+                                    app_context, NULL);
+
+  g_ptr_array_add (argv_array, g_strdup ("/app/bin/apply_extra"));
+
+  g_ptr_array_add (argv_array, NULL);
+
+  g_debug ("Running /app/bin/apply_extra ");
+
+  if (!g_spawn_sync (NULL,
+                     (char **) argv_array->pdata,
+                     envp,
+                     G_SPAWN_SEARCH_PATH,
+                     child_setup, fd_array,
+                     NULL, NULL,
+                     &exit_status,
+                     error))
+    return FALSE;
+
+  if (exit_status != 0)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           _("apply_extra script failed"));
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_deploy (FlatpakDir          *self,
                     const char          *origin,
@@ -2589,6 +3177,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GFile) deploy_data_file = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(GFile) export = NULL;
+  g_autoptr(GFile) extradir = NULL;
   g_autoptr(GKeyFile) keyfile = NULL;
   guint64 installed_size = 0;
   OstreeRepoCheckoutAtOptions options = { 0, };
@@ -2596,6 +3185,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   glnx_fd_close int checkoutdir_dfd = -1;
   g_autoptr(GFile) tmp_dir_template = NULL;
   g_autofree char *tmp_dir_path = NULL;
+  gboolean created_extra_data = FALSE;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -2728,6 +3318,26 @@ flatpak_dir_deploy (FlatpakDir          *self,
               g_prefix_error (error, _("While trying to checkout metadata subpath: "));
               return FALSE;
             }
+        }
+    }
+
+  /* Extract any extra data */
+  extradir = g_file_resolve_relative_path (checkoutdir, "files/extra");
+  if (!flatpak_rm_rf (extradir, cancellable, error))
+    {
+      g_prefix_error (error, _("While trying to remove existing extra dir: "));
+      return FALSE;
+    }
+
+  if (!extract_extra_data (self, checksum, extradir, &created_extra_data, cancellable, error))
+    return FALSE;
+
+  if (created_extra_data)
+    {
+      if (!apply_extra_data (self, checkoutdir, cancellable, error))
+        {
+          g_prefix_error (error, _("While trying to apply extra data: "));
+          return FALSE;
         }
     }
 
@@ -3049,6 +3659,8 @@ flatpak_dir_install (FlatpakDir          *self,
       FlatpakSystemHelper *system_helper;
       FlatpakHelperDeployFlags helper_flags = 0;
       g_autofree char *url = NULL;
+      gboolean gpg_verify_summary;
+      gboolean gpg_verify;
 
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
@@ -3067,16 +3679,30 @@ flatpak_dir_install (FlatpakDir          *self,
                                        error))
         return FALSE;
 
+      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote_name,
+                                                      &gpg_verify_summary, error))
+        return FALSE;
+
+      if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
+                                              &gpg_verify, error))
+        return FALSE;
+
       if (no_pull)
         {
           /* Do nothing */
         }
-      else if (g_str_has_prefix (url, "file:"))
+      else if (!gpg_verify_summary || !gpg_verify)
         {
-          /* In the local case we let the system-helper do all the work. That way we can trust its
-             reading from the right source, and its not doing any network i/o. */
-
-          helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
+          /* The remote is not gpg verified, so we don't want to allow installation via
+             a download in the home directory, as there is no way to verify you're not
+             injecting anything into the remote. However, in the case of a remote
+             configured to a local filesystem we can just let the system helper do
+             the installation, as it can then avoid network i/o and be certain the
+             data comes from the right place. */
+          if (g_str_has_prefix (url, "file:"))
+            helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
+          else
+            return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
         }
       else
         {
@@ -3088,8 +3714,10 @@ flatpak_dir_install (FlatpakDir          *self,
           if (child_repo == NULL)
             return FALSE;
 
-          if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
-                                 child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+          if (!flatpak_dir_pull (self, remote_name, ref, NULL, subpaths,
+                                 child_repo,
+                                 FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA | FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA,
+                                 OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
 
@@ -3116,8 +3744,9 @@ flatpak_dir_install (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, remote_name, ref, opt_subpaths, NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
-                             cancellable, error))
+      if (!flatpak_dir_pull (self, remote_name, ref, NULL, opt_subpaths, NULL,
+                             FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA, OSTREE_REPO_PULL_FLAGS_NONE,
+                             progress, cancellable, error))
         return FALSE;
     }
 
@@ -3344,6 +3973,8 @@ flatpak_dir_update (FlatpakDir          *self,
   g_autoptr(GBytes) summary_bytes = NULL;
   g_autofree char *url = NULL;
   gboolean is_local;
+  g_autofree char *latest_rev = NULL;
+  const char *rev = NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
@@ -3362,6 +3993,8 @@ flatpak_dir_update (FlatpakDir          *self,
 
   if (*url == 0)
     return TRUE; /* Empty URL => disabled */
+
+  rev = checksum_or_latest;
 
   is_local = g_str_has_prefix (url, "file:");
 
@@ -3388,18 +4021,18 @@ flatpak_dir_update (FlatpakDir          *self,
           g_autoptr(GVariant) summary =
             g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                           summary_bytes, FALSE));
-          g_autofree char *latest = NULL;
 
           if (flatpak_summary_lookup_ref (summary,
                                           ref,
-                                          &latest))
+                                          &latest_rev))
             {
-              if (strcmp (latest, installed_commit) == 0)
+              if (strcmp (latest_rev, installed_commit) == 0)
                 {
                   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                                _("%s branch %s already installed"), ref, installed_commit);
                   return FALSE;
                 }
+              rev = latest_rev;
             }
         }
     }
@@ -3414,6 +4047,8 @@ flatpak_dir_update (FlatpakDir          *self,
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
       g_autofree char *url = NULL;
+      gboolean gpg_verify_summary;
+      gboolean gpg_verify;
 
       if (checksum_or_latest != NULL)
         return flatpak_fail (error, "Can't update to a specific commit without root permissions");
@@ -3432,17 +4067,31 @@ flatpak_dir_update (FlatpakDir          *self,
 
       helper_flags = FLATPAK_HELPER_DEPLOY_FLAGS_UPDATE;
 
+      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote_name,
+                                                      &gpg_verify_summary, error))
+        return FALSE;
+
+      if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
+                                              &gpg_verify, error))
+        return FALSE;
+
       if (no_pull)
         {
           if (!ostree_repo_resolve_rev (self->repo, ref, FALSE, &latest_checksum, error))
             return FALSE;
         }
-      else if (g_str_has_prefix (url, "file:"))
+      else if (!gpg_verify_summary || !gpg_verify)
         {
-          /* In the local case we let the system-helper do all the work. That way we can trust its
-             reading from the right source, and its not doing any network i/o. */
-
-          helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
+          /* The remote is not gpg verified, so we don't want to allow installation via
+             a download in the home directory, as there is no way to verify you're not
+             injecting anything into the remote. However, in the case of a remote
+             configured to a local filesystem we can just let the system helper do
+             the installation, as it can then avoid network i/o and be certain the
+             data comes from the right place. */
+          if (g_str_has_prefix (url, "file:"))
+            helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
+          else
+            return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
         }
       else
         {
@@ -3454,8 +4103,10 @@ flatpak_dir_update (FlatpakDir          *self,
           if (child_repo == NULL)
             return FALSE;
 
-          if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
-                                 child_repo, OSTREE_REPO_PULL_FLAGS_MIRROR,
+          if (!flatpak_dir_pull (self, remote_name, ref, rev, subpaths,
+                                 child_repo,
+                                 FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA | FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA,
+                                 OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
 
@@ -3489,9 +4140,9 @@ flatpak_dir_update (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, remote_name, checksum_or_latest != NULL ? checksum_or_latest : ref, subpaths,
-                             NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
-                             cancellable, error))
+      if (!flatpak_dir_pull (self, remote_name, ref, rev, subpaths,
+                             NULL, FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA, OSTREE_REPO_PULL_FLAGS_NONE,
+                             progress, cancellable, error))
         return FALSE;
     }
 
