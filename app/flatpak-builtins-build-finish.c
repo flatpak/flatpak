@@ -35,11 +35,14 @@
 #include "flatpak-run.h"
 
 static char *opt_command;
+static char **opt_extra_data;
 static gboolean opt_no_exports;
 
 static GOptionEntry options[] = {
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, N_("Command to set"), N_("COMMAND") },
   { "no-exports", 0, 0, G_OPTION_ARG_NONE, &opt_no_exports, N_("Don't process exports"), NULL },
+  { "extra-data", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_data, N_("Extra data info"),
+    N_("NAME:SHA256:DOWNLOAD-SIZE:INSTALL-SIZE:URL") },
   { NULL }
 };
 
@@ -250,6 +253,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, GCancellable *cancell
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   GError *temp_error = NULL;
+  int i;
 
   metadata = g_file_get_child (base, "metadata");
   if (!g_file_query_exists (metadata, cancellable))
@@ -320,6 +324,44 @@ update_metadata (GFile *base, FlatpakContext *arg_context, GCancellable *cancell
     goto out;
   flatpak_context_merge (app_context, arg_context);
   flatpak_context_save_metadata (app_context, FALSE, keyfile);
+
+  for (i = 0; opt_extra_data != NULL && opt_extra_data[i] != NULL; i++)
+    {
+      char *extra_data = opt_extra_data[i];
+      g_auto(GStrv) elements = NULL;
+      g_autofree char *suffix = NULL;
+      g_autofree char *uri_key = NULL;
+      g_autofree char *name_key = NULL;
+      g_autofree char *size_key = NULL;
+      g_autofree char *installed_size_key = NULL;
+      g_autofree char *checksum_key = NULL;
+
+      if (i == 0)
+        suffix = g_strdup ("");
+      else
+        suffix = g_strdup_printf ("%d", i);
+
+      elements = g_strsplit (extra_data, ":", 5);
+      if (g_strv_length (elements) != 5)
+        {
+          flatpak_fail (error, _("To few elements in --extra-data argument %s"), extra_data);
+          goto out;
+        }
+
+      uri_key = g_strconcat ("uri", suffix, NULL);
+      name_key = g_strconcat ("name", suffix, NULL);
+      checksum_key = g_strconcat ("checksum", suffix, NULL);
+      size_key = g_strconcat ("size", suffix, NULL);
+      installed_size_key = g_strconcat ("installed-size", suffix, NULL);
+
+      if (strlen (elements[0]) > 0)
+        g_key_file_set_string (keyfile, "Extra Data", name_key, elements[0]);
+      g_key_file_set_string (keyfile, "Extra Data", checksum_key, elements[1]);
+      g_key_file_set_string (keyfile, "Extra Data", size_key, elements[2]);
+      if (strlen (elements[3]) > 0)
+        g_key_file_set_string (keyfile, "Extra Data", installed_size_key, elements[3]);
+      g_key_file_set_string (keyfile, "Extra Data", uri_key, elements[4]);
+    }
 
   if (!g_key_file_save_to_file (keyfile, path, error))
     goto out;

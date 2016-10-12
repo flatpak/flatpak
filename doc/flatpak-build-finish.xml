@@ -267,6 +267,17 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--extra-data=NAME:SHA256:DOWNLOAD-SIZE:INSTALL-SIZE:URL</option></term>
+
+                <listitem><para>
+                    Adds information about extra data uris to the app. These will be downloaded
+                    and verified by the client when the app is installed and placed in the
+                    /app/extra directory. You can also supply an /app/bin/apply_extra script
+                    that will be run after the files are downloaded.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--no-exports</option></term>
 
                 <listitem><para>
