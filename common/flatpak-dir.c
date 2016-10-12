@@ -3060,6 +3060,8 @@ apply_extra_data (FlatpakDir          *self,
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(GFile) app_files = NULL;
   g_autoptr(GFile) apply_extra_file = NULL;
+  g_autoptr(GFile) app_export_file = NULL;
+  g_autoptr(GFile) extra_export_file = NULL;
   g_autoptr(GFile) extra_files = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
@@ -3101,7 +3103,9 @@ apply_extra_data (FlatpakDir          *self,
     return FALSE;
 
   app_files = g_file_get_child (checkoutdir, "files");
+  app_export_file = g_file_get_child (checkoutdir, "export");
   extra_files = g_file_get_child (app_files, "extra");
+  extra_export_file = g_file_get_child (extra_files, "export");
   runtime_files = flatpak_deploy_get_files (runtime_deploy);
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
@@ -3149,6 +3153,17 @@ apply_extra_data (FlatpakDir          *self,
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
                            _("apply_extra script failed"));
       return FALSE;
+    }
+
+  if (g_file_query_exists (extra_export_file, cancellable))
+    {
+      if (!flatpak_mkdir_p (app_export_file, cancellable, error))
+        return FALSE;
+      if (!flatpak_cp_a (extra_export_file,
+                         app_export_file,
+                         FLATPAK_CP_FLAGS_MERGE,
+                         cancellable, error))
+        return FALSE;
     }
 
   return TRUE;
