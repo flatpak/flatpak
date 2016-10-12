@@ -175,6 +175,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             "--bind", flatpak_file_get_path_cached (app_files), "/app",
             NULL);
 
+  if (!custom_usr)
+    add_args (argv_array,
+              "--lock-file", "/usr/.ref",
+              NULL);
+
   if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, NULL, runtime_ref_parts[2],
                                     FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER,
                                     error))

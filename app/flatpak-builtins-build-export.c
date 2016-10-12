@@ -471,6 +471,117 @@ validate_exports (GFile *export, GFile *files, const char *app_id, GError **erro
   return TRUE;
 }
 
+static gboolean
+collect_extra_data (GKeyFile *metakey, GVariantDict *metadata_dict, GError **error)
+{
+  g_auto(GStrv) keys = NULL;
+  g_autoptr(GVariantBuilder) extra_data_sources_builder = NULL;
+  g_autoptr(GVariant) extra_data_sources = NULL;
+  int i;
+
+  keys = g_key_file_get_keys (metakey, "Extra Data", NULL, NULL);
+  if (keys == NULL)
+    return TRUE;
+
+  extra_data_sources_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(ayttays)"));
+
+  for (i = 0; keys[i] != NULL; i++)
+    {
+      const char *key = keys[i];
+      if (g_str_has_prefix (key, "uri"))
+        {
+          const char *suffix = key + 3;
+          g_autofree char *uri = NULL;
+          g_autofree char *checksum_key = NULL;
+          g_autofree char *size_key = NULL;
+          g_autofree char *installed_size_key = NULL;
+          g_autofree char *name_key = NULL;
+          g_autofree char *checksum = NULL;
+          g_autofree char *name = NULL;
+          guint64 size, installed_size;
+
+          checksum_key = g_strconcat ("checksum", suffix, NULL);
+          size_key = g_strconcat ("size", suffix, NULL);
+          installed_size_key = g_strconcat ("installed-size", suffix, NULL);
+          name_key = g_strconcat ("name", suffix, NULL);
+
+          uri = g_key_file_get_string (metakey, "Extra Data", key, error);
+          if (uri == NULL)
+            return FALSE;
+
+          if (!g_str_has_prefix (uri, "http:") &&
+              !g_str_has_prefix (uri, "https:"))
+            {
+              g_set_error (error, G_KEY_FILE_ERROR,
+                           G_KEY_FILE_ERROR_INVALID_VALUE,
+                           _("Invalid uri type %s, only http/https supported"), uri);
+              return FALSE;
+            }
+
+          if (g_key_file_has_key (metakey, "Extra Data", name_key, NULL))
+            {
+              name = g_key_file_get_string (metakey, "Extra Data", name_key, error);
+              if (name == NULL)
+                return FALSE;
+            }
+          else
+            {
+              g_autoptr(GFile) file = g_file_new_for_uri (uri);
+              name = g_file_get_basename (file);
+              if (name == NULL || *name == 0)
+                {
+                  g_set_error (error, G_KEY_FILE_ERROR,
+                               G_KEY_FILE_ERROR_INVALID_VALUE,
+                               _("Unable to find basename in %s, specify a name explicitly"), uri);
+                  return FALSE;
+                }
+            }
+
+          if (strchr (name, '/') != NULL)
+            {
+              g_set_error (error, G_KEY_FILE_ERROR,
+                           G_KEY_FILE_ERROR_INVALID_VALUE,
+                           _("No slashes allowed in extra data name"));
+              return FALSE;
+            }
+
+          checksum = g_key_file_get_string (metakey, "Extra Data", checksum_key, error);
+          if (checksum == NULL)
+            return FALSE;
+
+          if (!ostree_validate_checksum_string (checksum, NULL))
+            {
+              g_set_error (error, G_KEY_FILE_ERROR,
+                           G_KEY_FILE_ERROR_INVALID_VALUE,
+                           _("Invalid format for sha256 checksum: '%s'"), checksum);
+              return FALSE;
+            }
+
+          size = g_key_file_get_uint64 (metakey, "Extra Data", size_key, error);
+          if (size == 0)
+            {
+              if (error != NULL && *error == NULL)
+                g_set_error (error, G_KEY_FILE_ERROR,
+                             G_KEY_FILE_ERROR_INVALID_VALUE,
+                             _("Extra data sizes of zero not supported"));
+              return FALSE;
+            }
+
+          installed_size = g_key_file_get_uint64 (metakey, "Extra Data", installed_size_key, NULL);
+
+          g_variant_builder_add (extra_data_sources_builder,
+                                 "(^aytt@ay&s)",
+                                 name, GUINT64_TO_BE (size), GUINT64_TO_BE (installed_size),
+                                 ostree_checksum_to_bytes_v (checksum), uri);
+        }
+    }
+
+  extra_data_sources = g_variant_ref_sink (g_variant_builder_end (extra_data_sources_builder));
+  g_variant_dict_insert_value (metadata_dict, "xa.extra-data-sources", extra_data_sources);
+
+  return TRUE;
+}
+
 gboolean
 flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -506,6 +617,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   OstreeRepoTransactionStats stats;
   g_autoptr(OstreeRepoCommitModifier) modifier = NULL;
   CommitData commit_data = {0};
+  g_auto(GVariantDict) metadata_dict = {{0,}};
+  g_autoptr(GVariant) metadata_dict_v = NULL;
 
   context = g_option_context_new (_("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -577,6 +690,11 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
       flatpak_fail (error, "Build directory %s not finalized, use flatpak build-finish", directory);
       goto out;
     }
+
+  g_variant_dict_init (&metadata_dict, NULL);
+
+  if (!collect_extra_data (metakey, &metadata_dict, error))
+    goto out;
 
   if (!validate_exports (export, files, app_id, error))
     goto out;
@@ -658,7 +776,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
     goto out;
 
-  if (!ostree_repo_write_commit (repo, parent, subject, body, NULL,
+  metadata_dict_v = g_variant_ref_sink (g_variant_dict_end (&metadata_dict));
+  if (!ostree_repo_write_commit (repo, parent, subject, body, metadata_dict_v,
                                  OSTREE_REPO_FILE (root),
                                  &commit_checksum, cancellable, error))
     goto out;
