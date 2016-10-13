@@ -43,7 +43,7 @@
  *
  * An FlatpakInstallation object provides information about an installation
  * location for flatpak applications. Typical installation locations are either
- * system-wide (in /var/lib/flatpak) or per-user (in ~/.local/share/flatpak).
+ * system-wide (in $prefix/var/lib/flatpak) or per-user (in ~/.local/share/flatpak).
  *
  * FlatpakInstallation can list configured remotes as well as installed application
  * and runtime references (in short: refs). It can also run, install, update and
