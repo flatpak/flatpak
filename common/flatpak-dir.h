@@ -429,6 +429,10 @@ char *   flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
                                                   const char   *remote,
                                                   GCancellable *cancellable,
                                                   GError      **error);
+gboolean flatpak_dir_update_remote_configuration (FlatpakDir   *self,
+                                                  const char   *remote,
+                                                  GCancellable *cancellable,
+                                                  GError      **error);
 gboolean flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                                       const char   *remote_name,
                                       const char   *ref,

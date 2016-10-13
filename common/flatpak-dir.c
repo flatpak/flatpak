@@ -5319,6 +5319,84 @@ flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
   return g_steal_pointer (&default_branch);
 }
 
+gboolean
+flatpak_dir_update_remote_configuration (FlatpakDir   *self,
+                                         const char   *remote,
+                                         GCancellable *cancellable,
+                                         GError      **error)
+{
+  /* We only support those configuration parameters that can
+     be set in the server when building the repo (see the
+     flatpak_repo_set_* () family of functions) */
+  static const char *const supported_params[] = {
+    "xa.title",
+    "xa.default-branch", NULL
+  };
+
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) extensions = NULL;
+  g_autoptr(GPtrArray) updated_params = g_ptr_array_new_with_free_func (g_free);
+  GVariantIter iter;
+
+  summary = fetch_remote_summary_file (self, remote, cancellable, error);
+  if (summary == NULL)
+    return FALSE;
+
+  extensions = g_variant_get_child_value (summary, 1);
+
+  g_variant_iter_init (&iter, extensions);
+  if (g_variant_iter_n_children (&iter) > 0)
+    {
+      GVariant *value_var = NULL;
+      char *key = NULL;
+
+      while (g_variant_iter_next (&iter, "{sv}", &key, &value_var))
+        {
+          /* At the moment, every supported parameter are strings */
+          if (g_strv_contains (supported_params, key) &&
+              g_variant_get_type_string (value_var))
+            {
+              const char *value = g_variant_get_string(value_var, NULL);
+              if (value != NULL && *value != 0)
+                {
+                  g_ptr_array_add (updated_params, g_strdup (key));
+                  g_ptr_array_add (updated_params, g_strdup (value));
+                }
+            }
+
+          g_variant_unref (value_var);
+          g_free (key);
+        }
+    }
+
+  if (updated_params->len > 0)
+  {
+    g_autoptr(GKeyFile) config = NULL;
+    g_autofree char *group = NULL;
+    int i;
+
+    config = ostree_repo_copy_config (flatpak_dir_get_repo (self));
+    group = g_strdup_printf ("remote \"%s\"", remote);
+
+    i = 0;
+    while (i < (updated_params->len - 1))
+      {
+        /* This array should have an even number of elements with
+           keys in the odd positions and values on even ones. */
+        g_key_file_set_string (config, group,
+                               g_ptr_array_index (updated_params, i),
+                               g_ptr_array_index (updated_params, i+1));
+        i += 2;
+      }
+
+    /* Update the local remote configuration with the updated info. */
+    if (!flatpak_dir_modify_remote (self, remote, config, NULL, cancellable, error))
+      return FALSE;
+  }
+
+  return TRUE;
+}
+
 static gboolean
 flatpak_dir_parse_summary_for_ref (FlatpakDir   *self,
                                    GVariant     *summary,
