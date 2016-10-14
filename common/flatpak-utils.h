@@ -91,10 +91,15 @@ char **flatpak_decompose_ref (const char *ref,
 
 FlatpakKinds flatpak_kinds_from_bools (gboolean app, gboolean runtime);
 
-gboolean flatpak_split_partial_ref_arg (char *partial_ref,
-                                        char **inout_arch,
-                                        char **inout_branch,
-                                        GError    **error);
+gboolean flatpak_split_partial_ref_arg (const char   *partial_ref,
+                                        FlatpakKinds  default_kinds,
+                                        const char   *default_arch,
+                                        const char   *default_branch,
+                                        FlatpakKinds *out_kinds,
+                                        char        **out_id,
+                                        char        **out_arch,
+                                        char        **out_branch,
+                                        GError      **error);
 
 char * flatpak_compose_ref (gboolean    app,
                             const char *name,

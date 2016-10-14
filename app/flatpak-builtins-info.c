@@ -73,13 +73,16 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   FlatpakDir *dir = NULL;
   g_autoptr(GError) lookup_error = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
-  char *name;
-  char *branch = NULL;
   const char *commit = NULL;
+  const char *pref = NULL;
+  const char *default_branch = NULL;
   const char *origin = NULL;
   gboolean first = TRUE;
   FlatpakKinds kinds;
   FlatpakKinds kind = 0;
+  g_autofree char *id = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
 
   context = g_option_context_new (_("NAME [BRANCH] - Get info about installed app and/or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -89,18 +92,19 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (argc < 2)
     return usage_error (context, _("NAME must be specified"), error);
-  name = argv[1];
+  pref = argv[1];
 
   if (argc >= 3)
-    branch = argv[2];
+    default_branch = argv[2];
 
   if (argc > 3)
     return usage_error (context, _("Too many arguments"), error);
 
-  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
-    return FALSE;
-
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
+
+  if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
+                                      &kinds, &id, &arch, &branch, error))
+    return FALSE;
 
   if (!opt_user && !opt_system)
     opt_user = opt_system = TRUE;
@@ -110,9 +114,9 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       user_dir = flatpak_dir_get_user ();
 
       ref = flatpak_dir_find_installed_ref (user_dir,
-                                            name,
+                                            id,
                                             branch,
-                                            opt_arch,
+                                            arch,
                                             kinds, &kind,
                                             &lookup_error);
       if (ref)
@@ -124,9 +128,9 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       system_dir = flatpak_dir_get_system ();
 
       ref = flatpak_dir_find_installed_ref (system_dir,
-                                            name,
+                                            id,
                                             branch,
-                                            opt_arch,
+                                            arch,
                                             kinds, &kind,
                                             lookup_error == NULL ? &lookup_error : NULL);
       if (ref)

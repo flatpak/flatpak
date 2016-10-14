@@ -45,10 +45,14 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) deploy_base = NULL;
-  char *app;
-  char *branch = NULL;
+  const char *pref;
+  const char *default_branch = NULL;
   g_autofree char *ref = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_autofree char *id = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
+  FlatpakKinds kinds;
 
   context = g_option_context_new (_("APP BRANCH - Make branch of application current"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -62,23 +66,20 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
   if (argc > 3)
     return usage_error (context, _("Too many arguments"), error);
 
-  app  = argv[1];
+  pref = argv[1];
 
   if (argc >= 3)
-    branch = argv[2];
+    default_branch = argv[2];
 
-  if (!flatpak_split_partial_ref_arg (app, &opt_arch, &branch, error))
+  if (!flatpak_split_partial_ref_arg (pref, FLATPAK_KINDS_APP, opt_arch, default_branch,
+                                      &kinds, &id, &arch, &branch, error))
     return FALSE;
 
   if (branch == NULL)
     return usage_error (context, _("BRANCH must be specified"), error);
 
-  ref = flatpak_dir_find_installed_ref (dir,
-                                        app,
-                                        branch,
-                                        opt_arch,
-                                        FLATPAK_KINDS_APP, NULL,
-                                        error);
+  ref = flatpak_dir_find_installed_ref (dir, id, branch, arch, FLATPAK_KINDS_APP,
+                                        NULL, error);
   if (ref == NULL)
     return FALSE;
 
@@ -88,12 +89,12 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
 
   deploy_base = flatpak_dir_get_deploy_dir (dir, ref);
   if (!g_file_query_exists (deploy_base, cancellable))
-    return flatpak_fail (error, _("App %s branch %s is not installed"), app, branch);
+    return flatpak_fail (error, _("App %s branch %s is not installed"), id, branch);
 
   if (!flatpak_dir_make_current_ref (dir, ref, cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_update_exports (dir, app, cancellable, error))
+  if (!flatpak_dir_update_exports (dir, id, cancellable, error))
     return FALSE;
 
   glnx_release_lock_file (&lock);

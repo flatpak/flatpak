@@ -63,6 +63,9 @@ update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable
 {
   gboolean changed;
 
+  if (opt_arch == NULL)
+    opt_arch = (char *)flatpak_get_arch ();
+
   if (remote == NULL)
     {
       g_auto(GStrv) remotes = NULL;
@@ -215,11 +218,14 @@ flatpak_builtin_update (int           argc,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  char *name = NULL;
-  char *branch = NULL;
+  const char *pref = NULL;
+  const char *default_branch = NULL;
   gboolean failed = FALSE;
   gboolean found = FALSE;
   FlatpakKinds kinds;
+  g_autofree char *id = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
   int i;
 
   context = g_option_context_new (_("[NAME [BRANCH]] - Update an application or runtime"));
@@ -229,22 +235,20 @@ flatpak_builtin_update (int           argc,
     return FALSE;
 
   if (argc >= 2)
-    name = argv[1];
+    pref = argv[1];
   if (argc >= 3)
-    branch = argv[2];
+    default_branch = argv[2];
 
   if (argc > 3)
     return usage_error (context, _("Too many arguments"), error);
 
-  if (opt_arch == NULL)
-    opt_arch = (char *)flatpak_get_arch ();
+  if (opt_appstream)
+    return update_appstream (dir, pref, cancellable, error);
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  if (opt_appstream)
-    return update_appstream (dir, name, cancellable, error);
-
-  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
+  if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
+                                      &kinds, &id, &arch, &branch, error))
     return FALSE;
 
   if (kinds & FLATPAK_KINDS_APP)
@@ -262,10 +266,10 @@ flatpak_builtin_update (int           argc,
           if (parts == NULL)
             return FALSE;
 
-          if (name != NULL && strcmp (parts[1], name) != 0)
+          if (id != NULL && strcmp (parts[1], id) != 0)
             continue;
 
-          if (strcmp (parts[2], opt_arch) != 0)
+          if (arch != NULL && strcmp (parts[2], arch) != 0)
             continue;
 
           if (branch != NULL && strcmp (parts[3], branch) != 0)
@@ -294,10 +298,10 @@ flatpak_builtin_update (int           argc,
           if (parts == NULL)
             return FALSE;
 
-          if (name != NULL && strcmp (parts[1], name) != 0)
+          if (id != NULL && strcmp (parts[1], id) != 0)
             continue;
 
-          if (strcmp (parts[2], opt_arch) != 0)
+          if (arch != NULL && strcmp (parts[2], arch) != 0)
             continue;
 
           if (branch != NULL && strcmp (parts[3], branch) != 0)
@@ -312,10 +316,10 @@ flatpak_builtin_update (int           argc,
         }
     }
 
-  if (name && !found)
+  if (pref && !found)
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   "%s not installed", name);
+                   "%s not installed", pref);
       return FALSE;
     }
 

@@ -646,6 +646,26 @@ flatpak_decompose_ref (const char *full_ref,
   return g_steal_pointer (&parts);
 }
 
+static const char *
+next_element (const char **partial_ref)
+{
+  const char *slash;
+  const char *end;
+  slash = (const char *)strchr (*partial_ref, '/');
+  if (slash != NULL)
+    {
+      end = slash;
+      *partial_ref = slash + 1;
+    }
+  else
+    {
+      end = *partial_ref + strlen (*partial_ref);
+      *partial_ref = end;
+    }
+
+  return end;
+}
+
 FlatpakKinds
 flatpak_kinds_from_bools (gboolean app, gboolean runtime)
 {
@@ -664,56 +684,73 @@ flatpak_kinds_from_bools (gboolean app, gboolean runtime)
 }
 
 gboolean
-flatpak_split_partial_ref_arg (char *partial_ref,
-                               char **inout_arch,
-                               char **inout_branch,
-                               GError    **error)
+flatpak_split_partial_ref_arg (const char   *partial_ref,
+                               FlatpakKinds  default_kinds,
+                               const char   *default_arch,
+                               const char   *default_branch,
+                               FlatpakKinds *out_kinds,
+                               char        **out_id,
+                               char        **out_arch,
+                               char        **out_branch,
+                               GError      **error)
 {
-  char *slash;
-  char *arch = NULL;
-  char *branch = NULL;
+  const char *id_start = NULL;
+  const char *id_end = NULL;
+  g_autofree char *id = NULL;
+  const char *arch_start = NULL;
+  const char *arch_end = NULL;
+  g_autofree char *arch = NULL;
+  const char *branch_start = NULL;
+  const char *branch_end = NULL;
+  g_autofree char *branch = NULL;
   g_autoptr(GError) local_error = NULL;
+  FlatpakKinds kinds = 0;
 
-  if (partial_ref == NULL)
-    return TRUE;
-
-  slash = strchr (partial_ref, '/');
-  if (slash != NULL)
-    *slash = 0;
-
-  if (!flatpak_is_valid_name (partial_ref, &local_error))
-    return flatpak_fail (error, "Invalid name %s: %s", partial_ref, local_error->message);
-
-  if (slash == NULL)
-    goto out;
-
-  arch = slash + 1;
-  slash = strchr (arch, '/');
-  if (slash != NULL)
-    *slash = 0;
-
-  if (strlen (arch) == 0)
-    arch = NULL;
-
-  if (slash == NULL)
-    goto out;
-
-  branch = slash + 1;
-  if (strlen (branch) > 0)
+  if (g_str_has_prefix (partial_ref, "app/"))
     {
-      if (!flatpak_is_valid_branch (branch, &local_error))
-        return flatpak_fail (error, "Invalid branch %s: %s", branch, local_error->message);
+      partial_ref += strlen ("app/");
+      kinds = FLATPAK_KINDS_APP;
+    }
+  else if (g_str_has_prefix (partial_ref, "runtime/"))
+    {
+      partial_ref += strlen ("runtime/");
+      kinds = FLATPAK_KINDS_RUNTIME;
     }
   else
-    branch = NULL;
+    kinds = default_kinds;
 
- out:
+  id_start = partial_ref;
+  id_end = next_element (&partial_ref);
+  id = g_strndup (id_start, id_end - id_start);
 
-  if (*inout_arch == NULL)
-    *inout_arch = arch;
+  if (!flatpak_is_valid_name (id, &local_error))
+    return flatpak_fail (error, "Invalid id %s: %s", id, local_error->message);
 
-  if (*inout_branch == NULL)
-    *inout_branch = branch;
+  arch_start = partial_ref;
+  arch_end = next_element (&partial_ref);
+  if (arch_end != arch_start)
+    arch = g_strndup (arch_start, arch_end - arch_start);
+  else
+    arch = g_strdup (default_arch);
+
+  branch_start = partial_ref;
+  branch_end = next_element (&partial_ref);
+  if (branch_end != branch_start)
+    branch = g_strndup (branch_start, branch_end - branch_start);
+  else
+    branch = g_strdup (default_branch);
+
+  if (branch != NULL && !flatpak_is_valid_branch (branch, &local_error))
+    return flatpak_fail (error, "Invalid branch %s: %s", branch, local_error->message);
+
+  if (out_kinds)
+    *out_kinds = kinds;
+  if (out_id != NULL)
+    *out_id = g_steal_pointer (&id);
+  if (out_arch != NULL)
+    *out_arch = g_steal_pointer (&arch);
+  if (out_branch != NULL)
+    *out_branch = g_steal_pointer (&branch);
 
   return TRUE;
 }

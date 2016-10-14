@@ -54,13 +54,16 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  char *name = NULL;
-  char *branch = NULL;
+  const char *pref = NULL;
+  const char *default_branch = NULL;
   g_autofree char *ref = NULL;
   FlatpakHelperUninstallFlags flags = 0;
   g_autoptr(GPtrArray) related = NULL;
   FlatpakKinds kinds;
   FlatpakKinds kind;
+  g_autofree char *id = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
   int i;
 
   context = g_option_context_new (_("NAME [BRANCH] - Uninstall an application"));
@@ -75,21 +78,18 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   if (argc > 3)
     return usage_error (context, _("Too many arguments"), error);
 
-  name = argv[1];
+  pref = argv[1];
   if (argc > 2)
-    branch = argv[2];
+    default_branch = argv[2];
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
+  if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
+                                      &kinds, &id, &arch, &branch, error))
     return FALSE;
 
-  ref = flatpak_dir_find_installed_ref (dir,
-                                        name,
-                                        branch,
-                                        opt_arch,
-                                        kinds, &kind,
-                                        error);
+  ref = flatpak_dir_find_installed_ref (dir, id, branch, arch,
+                                        kinds, &kind, error);
   if (ref == NULL)
     return FALSE;
 
@@ -105,7 +105,7 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
       g_autoptr(GError) local_error = NULL;
       g_autofree char *origin = NULL;
 
-      origin =flatpak_dir_get_origin (dir, ref, NULL, NULL);
+      origin = flatpak_dir_get_origin (dir, ref, NULL, NULL);
       if (origin)
         {
           related = flatpak_dir_find_local_related (dir, ref, origin,

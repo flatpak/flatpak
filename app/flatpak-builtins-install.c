@@ -268,11 +268,14 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   const char *repository;
-  char *name;
-  char *branch = NULL;
+  const char *pref = NULL;
+  const char *default_branch = NULL;
   g_autofree char *ref = NULL;
   FlatpakKinds kinds;
   FlatpakKinds kind;
+  g_autofree char *id = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
 
   context = g_option_context_new (_("REPOSITORY NAME [BRANCH] - Install an application or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -293,16 +296,17 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     return usage_error (context, _("Too many arguments"), error);
 
   repository = argv[1];
-  name  = argv[2];
+  pref  = argv[2];
   if (argc >= 4)
-    branch = argv[3];
+    default_branch = argv[3];
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
+  if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
+                                      &kinds, &id, &arch, &branch, error))
     return FALSE;
 
-  ref = flatpak_dir_find_remote_ref (dir, repository, name, branch, opt_arch,
+  ref = flatpak_dir_find_remote_ref (dir, repository, id, branch, arch,
                                      kinds, &kind, cancellable, error);
   if (ref == NULL)
     return FALSE;
