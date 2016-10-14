@@ -125,7 +125,7 @@ flatpak_complete_override (FlatpakCompletion *completion)
       user_dir = flatpak_dir_get_user ();
       {
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, NULL,
-                                                              TRUE, FALSE, &error);
+                                                              FLATPAK_KINDS_APP, &error);
         if (refs == NULL)
           flatpak_completion_debug ("find local refs error: %s", error->message);
         for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -139,7 +139,7 @@ flatpak_complete_override (FlatpakCompletion *completion)
       system_dir = flatpak_dir_get_system ();
       {
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, NULL,
-                                                              TRUE, FALSE, &error);
+                                                              FLATPAK_KINDS_APP, &error);
         if (refs == NULL)
           flatpak_completion_debug ("find local refs error: %s", error->message);
         for (i = 0; refs != NULL && refs[i] != NULL; i++)

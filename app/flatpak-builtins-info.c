@@ -77,8 +77,9 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   char *branch = NULL;
   const char *commit = NULL;
   const char *origin = NULL;
-  gboolean is_app = FALSE;
   gboolean first = TRUE;
+  FlatpakKinds kinds;
+  FlatpakKinds kind = 0;
 
   context = g_option_context_new (_("NAME [BRANCH] - Get info about installed app and/or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -99,8 +100,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
     return FALSE;
 
-  if (!opt_app && !opt_runtime)
-    opt_app = opt_runtime = TRUE;
+  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   if (!opt_user && !opt_system)
     opt_user = opt_system = TRUE;
@@ -113,7 +113,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
                                             name,
                                             branch,
                                             opt_arch,
-                                            opt_app, opt_runtime, &is_app,
+                                            kinds, &kind,
                                             &lookup_error);
       if (ref)
         dir = user_dir;
@@ -127,7 +127,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
                                             name,
                                             branch,
                                             opt_arch,
-                                            opt_app, opt_runtime, &is_app,
+                                            kinds, &kind,
                                             lookup_error == NULL ? &lookup_error : NULL);
       if (ref)
         dir = system_dir;
@@ -182,14 +182,14 @@ flatpak_complete_info (FlatpakCompletion *completion)
   g_autoptr(FlatpakDir) user_dir = NULL;
   g_autoptr(FlatpakDir) system_dir = NULL;
   g_autoptr(GError) error = NULL;
+  FlatpakKinds kinds;
   int i;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
     return FALSE;
 
-  if (!opt_app && !opt_runtime)
-    opt_app = opt_runtime = TRUE;
+  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   if (!opt_user && !opt_system)
     opt_user = opt_system = TRUE;
@@ -210,7 +210,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
       if (user_dir)
         {
           g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, NULL, NULL, opt_arch,
-                                                                opt_app, opt_runtime, &error);
+                                                                kinds, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find local refs error: %s", error->message);
           for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -224,7 +224,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
       if (system_dir)
         {
           g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, opt_arch,
-                                                                opt_app, opt_runtime, &error);
+                                                                kinds, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find local refs error: %s", error->message);
           for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -240,7 +240,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
       if (user_dir)
         {
           g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, completion->argv[1], NULL, opt_arch,
-                                                                opt_app, opt_runtime, &error);
+                                                                kinds, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find remote refs error: %s", error->message);
           for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -253,7 +253,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
       if (user_dir)
         {
           g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, completion->argv[1], NULL, opt_arch,
-                                                                opt_app, opt_runtime, &error);
+                                                                kinds, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find remote refs error: %s", error->message);
           for (i = 0; refs != NULL && refs[i] != NULL; i++)

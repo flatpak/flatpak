@@ -21,6 +21,11 @@
 #ifndef __FLATPAK_COMMON_TYPES_H__
 #define __FLATPAK_COMMON_TYPES_H__
 
+typedef enum {
+  FLATPAK_KINDS_APP = 1 << 0,
+  FLATPAK_KINDS_RUNTIME = 1 << 1,
+} FlatpakKinds;
+
 typedef struct FlatpakDir     FlatpakDir;
 typedef struct FlatpakDeploy  FlatpakDeploy;
 typedef struct FlatpakContext FlatpakContext;

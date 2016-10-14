@@ -57,9 +57,10 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   char *name = NULL;
   char *branch = NULL;
   g_autofree char *ref = NULL;
-  gboolean is_app;
   FlatpakHelperUninstallFlags flags = 0;
   g_autoptr(GPtrArray) related = NULL;
+  FlatpakKinds kinds;
+  FlatpakKinds kind;
   int i;
 
   context = g_option_context_new (_("NAME [BRANCH] - Uninstall an application"));
@@ -78,17 +79,16 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   if (argc > 2)
     branch = argv[2];
 
+  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
+
   if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
     return FALSE;
-
-  if (!opt_app && !opt_runtime)
-    opt_app = opt_runtime = TRUE;
 
   ref = flatpak_dir_find_installed_ref (dir,
                                         name,
                                         branch,
                                         opt_arch,
-                                        opt_app, opt_runtime, &is_app,
+                                        kinds, &kind,
                                         error);
   if (ref == NULL)
     return FALSE;
@@ -151,14 +151,14 @@ flatpak_complete_uninstall (FlatpakCompletion *completion)
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GError) error = NULL;
   g_auto(GStrv) refs = NULL;
+  FlatpakKinds kinds;
   int i;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
     return FALSE;
 
-  if (!opt_app && !opt_runtime)
-    opt_app = opt_runtime = TRUE;
+  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   switch (completion->argc)
     {
@@ -169,7 +169,7 @@ flatpak_complete_uninstall (FlatpakCompletion *completion)
       flatpak_complete_options (completion, user_entries);
 
       refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
-                                              opt_app, opt_runtime, &error);
+                                              kinds, &error);
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);
       for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -182,7 +182,7 @@ flatpak_complete_uninstall (FlatpakCompletion *completion)
 
     case 2: /* Branch */
       refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
-                                              opt_app, opt_runtime, &error);
+                                              kinds, &error);
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);
       for (i = 0; refs != NULL && refs[i] != NULL; i++)

@@ -17,6 +17,7 @@
 #include "flatpak-db.h"
 #include "flatpak-dbus.h"
 #include "flatpak-utils.h"
+#include "flatpak-dir.h"
 #include "flatpak-portal-error.h"
 #include "permission-store/permission-store-dbus.h"
 #include "xdp-fuse.h"

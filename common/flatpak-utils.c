@@ -646,6 +646,23 @@ flatpak_decompose_ref (const char *full_ref,
   return g_steal_pointer (&parts);
 }
 
+FlatpakKinds
+flatpak_kinds_from_bools (gboolean app, gboolean runtime)
+{
+  FlatpakKinds kinds = 0;
+
+  if (app)
+    kinds |= FLATPAK_KINDS_APP;
+
+  if (runtime)
+    kinds |= FLATPAK_KINDS_RUNTIME;
+
+  if (kinds == 0)
+    kinds = FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME;
+
+  return kinds;
+}
+
 gboolean
 flatpak_split_partial_ref_arg (char *partial_ref,
                                char **inout_arch,

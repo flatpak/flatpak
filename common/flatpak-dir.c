@@ -4291,8 +4291,7 @@ find_matching_refs (GHashTable *refs,
                     const char   *opt_name,
                     const char   *opt_branch,
                     const char   *opt_arch,
-                    gboolean      app,
-                    gboolean      runtime,
+                    FlatpakKinds  kinds,
                     GError      **error)
 {
   g_autoptr(GPtrArray) matched_refs = NULL;
@@ -4334,8 +4333,8 @@ find_matching_refs (GHashTable *refs,
       is_app = g_str_has_prefix (ref, "app/");
       is_runtime = g_str_has_prefix (ref, "runtime/");
 
-      if ((!app && is_app) ||
-          (!runtime && is_runtime) ||
+      if ((!(kinds & FLATPAK_KINDS_APP) && is_app) ||
+          (!(kinds & FLATPAK_KINDS_RUNTIME) && is_runtime) ||
           (!is_app && !is_runtime))
         continue;
 
@@ -4364,8 +4363,7 @@ find_matching_ref (GHashTable *refs,
                    const char   *name,
                    const char   *opt_branch,
                    const char   *opt_arch,
-                   gboolean      app,
-                   gboolean      runtime,
+                   FlatpakKinds  kinds,
                    GError      **error)
 {
   const char **arches = flatpak_get_arches ();
@@ -4381,7 +4379,7 @@ find_matching_ref (GHashTable *refs,
       g_autoptr(GPtrArray) matched_refs = NULL;
 
       matched_refs = find_matching_refs (refs, name, opt_branch, arches[i],
-                                         app, runtime, error);
+                                         kinds, error);
       if (matched_refs == NULL)
         return NULL;
 
@@ -4420,8 +4418,7 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
                              const char   *name,
                              const char   *opt_branch,
                              const char   *opt_arch,
-                             gboolean      app,
-                             gboolean      runtime,
+                             FlatpakKinds  kinds,
                              GCancellable *cancellable,
                              GError      **error)
 {
@@ -4436,7 +4433,7 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
     return NULL;
 
   matched_refs = find_matching_refs (remote_refs, name, opt_branch,
-                                      opt_arch, app, runtime, error);
+                                      opt_arch, kinds, error);
   if (matched_refs == NULL)
     return NULL;
 
@@ -4450,9 +4447,8 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              const char   *name,
                              const char   *opt_branch,
                              const char   *opt_arch,
-                             gboolean      app,
-                             gboolean      runtime,
-                             gboolean     *is_app,
+                             FlatpakKinds  kinds,
+                             FlatpakKinds *out_kind,
                              GCancellable *cancellable,
                              GError      **error)
 {
@@ -4468,7 +4464,7 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
     return NULL;
 
   remote_ref = find_matching_ref (remote_refs, name, opt_branch,
-                                  opt_arch, app, runtime, &my_error);
+                                  opt_arch, kinds, &my_error);
   if (remote_ref == NULL)
     {
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -4481,8 +4477,13 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
     }
   else
     {
-      if (is_app)
-        *is_app = g_str_has_prefix (remote_ref, "app/");
+      if (out_kind != NULL)
+        {
+          if (g_str_has_prefix (remote_ref, "app/"))
+            *out_kind = FLATPAK_KINDS_APP;
+          else
+            *out_kind = FLATPAK_KINDS_RUNTIME;
+        }
 
       return g_steal_pointer (&remote_ref);
     }
@@ -4495,10 +4496,9 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
 
 
 static GHashTable *
-flatpak_dir_get_all_installed_refs (FlatpakDir *self,
-                                    gboolean    app,
-                                    gboolean    runtime,
-                                    GError    **error)
+flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
+                                    FlatpakKinds kinds,
+                                    GError     **error)
 {
   g_autoptr(GHashTable) local_refs = NULL;
   int i;
@@ -4507,7 +4507,7 @@ flatpak_dir_get_all_installed_refs (FlatpakDir *self,
     return NULL;
 
   local_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  if (app)
+  if (kinds & FLATPAK_KINDS_APP)
     {
       g_auto(GStrv) app_refs = NULL;
 
@@ -4518,7 +4518,7 @@ flatpak_dir_get_all_installed_refs (FlatpakDir *self,
         g_hash_table_insert (local_refs, g_strdup (app_refs[i]),
                              GINT_TO_POINTER (1));
     }
-  if (runtime)
+  if (kinds & FLATPAK_KINDS_RUNTIME)
     {
       g_auto(GStrv) runtime_refs = NULL;
 
@@ -4538,19 +4538,18 @@ flatpak_dir_find_installed_refs (FlatpakDir *self,
                                  const char *opt_name,
                                  const char *opt_branch,
                                  const char *opt_arch,
-                                 gboolean    app,
-                                 gboolean    runtime,
+                                 FlatpakKinds kinds,
                                  GError    **error)
 {
   g_autoptr(GHashTable) local_refs = NULL;
   GPtrArray *matched_refs;
 
-  local_refs = flatpak_dir_get_all_installed_refs (self, app, runtime, error);
+  local_refs = flatpak_dir_get_all_installed_refs (self, kinds, error);
   if (local_refs == NULL)
     return NULL;
 
   matched_refs = find_matching_refs (local_refs, opt_name, opt_branch,
-                                      opt_arch, app, runtime, error);
+                                      opt_arch, kinds, error);
   if (matched_refs == NULL)
     return NULL;
 
@@ -4560,25 +4559,24 @@ flatpak_dir_find_installed_refs (FlatpakDir *self,
 }
 
 char *
-flatpak_dir_find_installed_ref (FlatpakDir *self,
-                                const char *opt_name,
-                                const char *opt_branch,
-                                const char *opt_arch,
-                                gboolean    app,
-                                gboolean    runtime,
-                                gboolean   *is_app,
-                                GError    **error)
+flatpak_dir_find_installed_ref (FlatpakDir   *self,
+                                const char   *opt_name,
+                                const char   *opt_branch,
+                                const char   *opt_arch,
+                                FlatpakKinds  kinds,
+                                FlatpakKinds *out_kind,
+                                GError      **error)
 {
   g_autofree char *local_ref = NULL;
   g_autoptr(GHashTable) local_refs = NULL;
   g_autoptr(GError) my_error = NULL;
 
-  local_refs = flatpak_dir_get_all_installed_refs (self, app, runtime, error);
+  local_refs = flatpak_dir_get_all_installed_refs (self, kinds, error);
   if (local_refs == NULL)
     return NULL;
 
   local_ref = find_matching_ref (local_refs, opt_name, opt_branch,
-                                  opt_arch, app, runtime, &my_error);
+                                  opt_arch, kinds, &my_error);
   if (local_ref == NULL)
     {
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -4591,8 +4589,13 @@ flatpak_dir_find_installed_ref (FlatpakDir *self,
     }
   else
     {
-      if (is_app)
-        *is_app = g_str_has_prefix (local_ref, "app/");
+      if (out_kind != NULL)
+        {
+          if (g_str_has_prefix (local_ref, "app/"))
+            *out_kind = FLATPAK_KINDS_APP;
+          else
+            *out_kind = FLATPAK_KINDS_RUNTIME;
+        }
 
       return g_steal_pointer (&local_ref);
     }

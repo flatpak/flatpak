@@ -44,6 +44,7 @@
 #include "flatpak-run.h"
 #include "flatpak-proxy.h"
 #include "flatpak-utils.h"
+#include "flatpak-dir.h"
 #include "flatpak-systemd-dbus.h"
 
 #define DEFAULT_SHELL "/bin/sh"

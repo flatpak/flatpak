@@ -24,11 +24,11 @@
 #include <string.h>
 
 #include "libglnx/libglnx.h"
+#include <flatpak-common-types.h>
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include <libsoup/soup.h>
 #include "flatpak-dbus.h"
-#include "flatpak-dir.h"
 #include <ostree.h>
 
 typedef enum {
@@ -88,6 +88,8 @@ gboolean flatpak_is_valid_branch (const char *string,
 
 char **flatpak_decompose_ref (const char *ref,
                               GError    **error);
+
+FlatpakKinds flatpak_kinds_from_bools (gboolean app, gboolean runtime);
 
 gboolean flatpak_split_partial_ref_arg (char *partial_ref,
                                         char **inout_arch,

@@ -77,7 +77,7 @@ flatpak_builtin_make_current_app (int argc, char **argv, GCancellable *cancellab
                                         app,
                                         branch,
                                         opt_arch,
-                                        TRUE, FALSE, NULL,
+                                        FLATPAK_KINDS_APP, NULL,
                                         error);
   if (ref == NULL)
     return FALSE;
@@ -126,7 +126,7 @@ flatpak_complete_make_current_app (FlatpakCompletion *completion)
       flatpak_complete_options (completion, user_entries);
 
       refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
-                                              TRUE, FALSE, &error);
+                                              FLATPAK_KINDS_APP, &error);
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);
       for (i = 0; refs != NULL && refs[i] != NULL; i++)
@@ -139,7 +139,7 @@ flatpak_complete_make_current_app (FlatpakCompletion *completion)
 
     case 2: /* Branch */
       refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
-                                              TRUE, FALSE, &error);
+                                              FLATPAK_KINDS_APP, &error);
       if (refs == NULL)
         flatpak_completion_debug ("find installed refs error: %s", error->message);
       for (i = 0; refs != NULL && refs[i] != NULL; i++)

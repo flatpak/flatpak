@@ -271,7 +271,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   char *name;
   char *branch = NULL;
   g_autofree char *ref = NULL;
-  gboolean is_app;
+  FlatpakKinds kinds;
+  FlatpakKinds kind;
 
   context = g_option_context_new (_("REPOSITORY NAME [BRANCH] - Install an application or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -296,14 +297,13 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (argc >= 4)
     branch = argv[3];
 
+  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
+
   if (!flatpak_split_partial_ref_arg (name, &opt_arch, &branch, error))
     return FALSE;
 
-  if (!opt_app && !opt_runtime)
-    opt_app = opt_runtime = TRUE;
-
   ref = flatpak_dir_find_remote_ref (dir, repository, name, branch, opt_arch,
-                                     opt_app, opt_runtime, &is_app, cancellable, error);
+                                     kinds, &kind, cancellable, error);
   if (ref == NULL)
     return FALSE;
 
@@ -325,14 +325,14 @@ flatpak_complete_install (FlatpakCompletion *completion)
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GError) error = NULL;
   g_auto(GStrv) refs = NULL;
+  FlatpakKinds kinds;
   int i;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
     return FALSE;
 
-  if (!opt_app && !opt_runtime)
-    opt_app = opt_runtime = TRUE;
+  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   flatpak_completion_debug ("install argc %d", completion->argc);
 
@@ -356,7 +356,7 @@ flatpak_complete_install (FlatpakCompletion *completion)
 
     case 2: /* Name */
       refs = flatpak_dir_find_remote_refs (dir, completion->argv[1], NULL, NULL,
-                                           opt_arch, opt_app, opt_runtime,
+                                           opt_arch, kinds,
                                            NULL, &error);
       if (refs == NULL)
         flatpak_completion_debug ("find remote refs error: %s", error->message);
@@ -371,7 +371,7 @@ flatpak_complete_install (FlatpakCompletion *completion)
 
     case 3: /* Branch */
       refs = flatpak_dir_find_remote_refs (dir, completion->argv[1], completion->argv[2], NULL,
-                                           opt_arch, opt_app, opt_runtime,
+                                           opt_arch, kinds,
                                            NULL, &error);
       if (refs == NULL)
         flatpak_completion_debug ("find remote refs error: %s", error->message);
