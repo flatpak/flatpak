@@ -47,6 +47,7 @@ static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
 static gboolean opt_if_not_exists;
 static gboolean opt_enable;
+static gboolean opt_update_metadata;
 static gboolean opt_disable;
 static int opt_prio = -1;
 static char *opt_title;
@@ -67,6 +68,7 @@ static GOptionEntry modify_options[] = {
   { "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, N_("Mark the remote as enumerate"), NULL },
   { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url, N_("Set a new url"), N_("URL") },
   { "enable", 0, 0, G_OPTION_ARG_NONE, &opt_enable, N_("Enable the remote"), NULL },
+  { "update-metadata", 0, 0, G_OPTION_ARG_NONE, &opt_update_metadata, N_("Update extra metadata from the summary file"), NULL },
   { NULL }
 };
 
@@ -429,6 +431,18 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, NULL, NULL))
     return flatpak_fail (error, _("No remote %s"), remote_name);
+
+  if (opt_update_metadata)
+    {
+      g_autoptr(GError) local_error = NULL;
+
+      g_print (_("Updating extra metadata from remote summary for %s\n"), remote_name);
+      if (!flatpak_dir_update_remote_configuration (dir, remote_name, cancellable, &local_error))
+        {
+          g_printerr (_("Error updating extra metadata for '%s': %s\n"), remote_name, local_error->message);
+          return flatpak_fail (error, _("Could not update extra metadata for %s"), remote_name);
+        }
+    }
 
   config = get_config_from_opts (dir, remote_name);
 
