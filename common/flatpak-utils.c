@@ -684,15 +684,16 @@ flatpak_kinds_from_bools (gboolean app, gboolean runtime)
 }
 
 gboolean
-flatpak_split_partial_ref_arg (const char   *partial_ref,
-                               FlatpakKinds  default_kinds,
-                               const char   *default_arch,
-                               const char   *default_branch,
-                               FlatpakKinds *out_kinds,
-                               char        **out_id,
-                               char        **out_arch,
-                               char        **out_branch,
-                               GError      **error)
+_flatpak_split_partial_ref_arg (const char   *partial_ref,
+                                gboolean      validate,
+                                FlatpakKinds  default_kinds,
+                                const char   *default_arch,
+                                const char   *default_branch,
+                                FlatpakKinds *out_kinds,
+                                char        **out_id,
+                                char        **out_arch,
+                                char        **out_branch,
+                                GError      **error)
 {
   const char *id_start = NULL;
   const char *id_end = NULL;
@@ -723,7 +724,7 @@ flatpak_split_partial_ref_arg (const char   *partial_ref,
   id_end = next_element (&partial_ref);
   id = g_strndup (id_start, id_end - id_start);
 
-  if (!flatpak_is_valid_name (id, &local_error))
+  if (validate && !flatpak_is_valid_name (id, &local_error))
     return flatpak_fail (error, "Invalid id %s: %s", id, local_error->message);
 
   arch_start = partial_ref;
@@ -740,7 +741,7 @@ flatpak_split_partial_ref_arg (const char   *partial_ref,
   else
     branch = g_strdup (default_branch);
 
-  if (branch != NULL && !flatpak_is_valid_branch (branch, &local_error))
+  if (validate && branch != NULL && !flatpak_is_valid_branch (branch, &local_error))
     return flatpak_fail (error, "Invalid branch %s: %s", branch, local_error->message);
 
   if (out_kinds)
@@ -754,6 +755,52 @@ flatpak_split_partial_ref_arg (const char   *partial_ref,
 
   return TRUE;
 }
+
+gboolean
+flatpak_split_partial_ref_arg (const char   *partial_ref,
+                               FlatpakKinds  default_kinds,
+                               const char   *default_arch,
+                               const char   *default_branch,
+                               FlatpakKinds *out_kinds,
+                               char        **out_id,
+                               char        **out_arch,
+                               char        **out_branch,
+                               GError      **error)
+{
+  return _flatpak_split_partial_ref_arg (partial_ref,
+                                         TRUE,
+                                         default_kinds,
+                                         default_arch,
+                                         default_branch,
+                                         out_kinds,
+                                         out_id,
+                                         out_arch,
+                                         out_branch,
+                                         error);
+}
+
+gboolean
+flatpak_split_partial_ref_arg_novalidate (const char   *partial_ref,
+                                          FlatpakKinds  default_kinds,
+                                          const char   *default_arch,
+                                          const char   *default_branch,
+                                          FlatpakKinds *out_kinds,
+                                          char        **out_id,
+                                          char        **out_arch,
+                                          char        **out_branch)
+{
+  return _flatpak_split_partial_ref_arg (partial_ref,
+                                         FALSE,
+                                         default_kinds,
+                                         default_arch,
+                                         default_branch,
+                                         out_kinds,
+                                         out_id,
+                                         out_arch,
+                                         out_branch,
+                                         NULL);
+}
+
 
 char *
 flatpak_compose_ref (gboolean    app,
@@ -3848,6 +3895,91 @@ flatpak_complete_ref (FlatpakCompletion *completion,
             continue;
           flatpak_complete_word (completion, "%s", ref);
         }
+    }
+}
+
+int
+find_current_element (const char *str)
+{
+  int count = 0;
+
+  if (g_str_has_prefix (str, "app/"))
+    str += strlen ("app/");
+  else if (g_str_has_prefix (str, "runtime/"))
+    str += strlen ("runtime/");
+
+  while (str != NULL && count <= 3)
+    {
+      str = strchr (str, '/');
+      count++;
+      if (str != NULL)
+        str = str + 1;
+    }
+
+  return count;
+}
+
+void
+flatpak_complete_partial_remote_ref (FlatpakCompletion *completion,
+                                     FlatpakKinds kinds,
+                                     const char *only_arch,
+                                     FlatpakDir *dir,
+                                     const char *remote)
+{
+  FlatpakKinds matched_kinds;
+  const char *pref;
+  g_autofree char *id = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
+  g_auto(GStrv) refs = NULL;
+  int element;
+  const char *cur_parts[4] = { NULL };
+  g_autoptr(GError) error = NULL;
+  int i;
+
+  pref = completion->cur;
+  element = find_current_element (pref);
+
+  flatpak_split_partial_ref_arg_novalidate (pref, kinds,
+                                            NULL, NULL,
+                                            &matched_kinds, &id, &arch, &branch);
+
+  cur_parts[1] = id;
+  cur_parts[2] = arch ? arch : "";
+  cur_parts[3] = branch ? branch : "";
+
+  refs = flatpak_dir_find_remote_refs (dir, completion->argv[1],
+                                       (element > 1) ? id : NULL,
+                                       (element > 3) ? branch : NULL,
+                                       (element > 2 )? arch : only_arch,
+                                       matched_kinds, NULL, &error);
+  if (refs == NULL)
+    flatpak_completion_debug ("find remote refs error: %s", error->message);
+  for (i = 0; refs != NULL && refs[i] != NULL; i++)
+    {
+      int j;
+      g_autoptr(GString) comp = NULL;
+      g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
+      if (parts == NULL)
+        continue;
+
+      if (!g_str_has_prefix (parts[element], cur_parts[element]))
+        continue;
+
+      comp = g_string_new (pref);
+      g_string_append (comp, parts[element] + strlen (cur_parts[element]));
+
+      /* Only complete on the last part if the user explicitly adds a / */
+      if (element >= 2)
+        {
+          for (j = element + 1; j < 4; j++)
+            {
+              g_string_append (comp, "/");
+              g_string_append (comp, parts[j]);
+            }
+        }
+
+      flatpak_complete_word (completion, "%s", comp->str);
     }
 }
 

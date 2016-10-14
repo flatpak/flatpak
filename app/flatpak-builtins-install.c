@@ -151,7 +151,11 @@ do_install (FlatpakDir          *dir,
             GError             **error)
 {
   g_autoptr(GPtrArray) related = NULL;
+  const char *slash;
   int i;
+
+  slash = strchr (ref, '/');
+  g_print (_("Installing: %s\n"), slash + 1);
 
   if (!flatpak_dir_install (dir,
                             opt_no_pull,
@@ -223,6 +227,7 @@ install_from (FlatpakDir *dir,
   g_autofree char *remote = NULL;
   g_autofree char *ref = NULL;
   g_auto(GStrv) parts = NULL;
+  const char *slash;
   FlatpakDir *clone;
 
   if (argc < 2)
@@ -248,8 +253,8 @@ install_from (FlatpakDir *dir,
   if (!flatpak_dir_ensure_repo (clone, cancellable, error))
     return FALSE;
 
-  parts = g_strsplit (ref, "/", 0);
-  g_print (_("Installing: %s\n"), parts[1]);
+  slash = strchr (ref, '/');
+  g_print (_("Installing: %s\n"), slash + 1);
 
   if (!do_install (clone,
                    opt_no_pull,
@@ -262,22 +267,37 @@ install_from (FlatpakDir *dir,
   return TRUE;
 }
 
+static gboolean
+looks_like_branch (const char *branch)
+{
+  /* In particular, / is not a valid branch char, so
+     this lets us distinguish full or partial refs as
+     non-branches. */
+  if (!flatpak_is_valid_branch (branch, NULL))
+    return FALSE;
+
+  /* Dots are allowed in branches, but not really used much, while
+     they are required for app ids, so thats a good check to
+     distinguish the two */
+  if (strchr (branch, '.') != NULL)
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
   const char *repository;
-  const char *pref = NULL;
+  char **prefs = NULL;
+  int i, n_prefs;
   const char *default_branch = NULL;
-  g_autofree char *ref = NULL;
   FlatpakKinds kinds;
-  FlatpakKinds kind;
-  g_autofree char *id = NULL;
-  g_autofree char *arch = NULL;
-  g_autofree char *branch = NULL;
+  g_autoptr(GPtrArray) refs = NULL;
 
-  context = g_option_context_new (_("REPOSITORY NAME [BRANCH] - Install an application or runtime"));
+  context = g_option_context_new (_("REPOSITORY REF... - Install applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
@@ -290,34 +310,58 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     return install_from (dir, context, argc, argv, cancellable, error);
 
   if (argc < 3)
-    return usage_error (context, _("REPOSITORY and NAME must be specified"), error);
+    return usage_error (context, _("REPOSITORY and REF must be specified"), error);
 
   if (argc > 4)
     return usage_error (context, _("Too many arguments"), error);
 
   repository = argv[1];
-  pref  = argv[2];
-  if (argc >= 4)
-    default_branch = argv[3];
+  prefs = &argv[2];
+  n_prefs = argc - 2;
+
+  /* Backwards compat for old "REPOSITORY NAME [BRANCH]" argument version */
+  if (argc == 4 && looks_like_branch (argv[3]))
+    {
+      default_branch = argv[3];
+      n_prefs = 1;
+    }
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
-                                      &kinds, &id, &arch, &branch, error))
-    return FALSE;
+  refs = g_ptr_array_new_with_free_func (g_free);
+  for (i = 0; i < n_prefs; i++)
+    {
+      const char *pref = prefs[i];
+      FlatpakKinds matched_kinds;
+      g_autofree char *id = NULL;
+      g_autofree char *arch = NULL;
+      g_autofree char *branch = NULL;
+      FlatpakKinds kind;
+      g_autofree char *ref = NULL;
 
-  ref = flatpak_dir_find_remote_ref (dir, repository, id, branch, arch,
-                                     kinds, &kind, cancellable, error);
-  if (ref == NULL)
-    return FALSE;
+      if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
+                                          &matched_kinds, &id, &arch, &branch, error))
+        return FALSE;
 
-  if (!do_install (dir,
-                   opt_no_pull,
-                   opt_no_deploy,
-                   ref, repository,
-                   (const char **)opt_subpaths,
-                   cancellable, error))
-    return FALSE;
+      ref = flatpak_dir_find_remote_ref (dir, repository, id, branch, arch,
+                                         matched_kinds, &kind, cancellable, error);
+      if (ref == NULL)
+        return FALSE;
+
+      g_ptr_array_add (refs, g_steal_pointer (&ref));
+    }
+
+  for (i = 0; i < refs->len; i++)
+    {
+      const char *ref = g_ptr_array_index (refs, i);
+      if (!do_install (dir,
+                       opt_no_pull,
+                       opt_no_deploy,
+                       ref, repository,
+                       (const char **)opt_subpaths,
+                       cancellable, error))
+        return FALSE;
+    }
 
   return TRUE;
 }
@@ -327,8 +371,6 @@ flatpak_complete_install (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GError) error = NULL;
-  g_auto(GStrv) refs = NULL;
   FlatpakKinds kinds;
   int i;
 
@@ -337,8 +379,6 @@ flatpak_complete_install (FlatpakCompletion *completion)
     return FALSE;
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
-
-  flatpak_completion_debug ("install argc %d", completion->argc);
 
   switch (completion->argc)
     {
@@ -358,37 +398,8 @@ flatpak_complete_install (FlatpakCompletion *completion)
 
       break;
 
-    case 2: /* Name */
-      refs = flatpak_dir_find_remote_refs (dir, completion->argv[1], NULL, NULL,
-                                           opt_arch, kinds,
-                                           NULL, &error);
-      if (refs == NULL)
-        flatpak_completion_debug ("find remote refs error: %s", error->message);
-      for (i = 0; refs != NULL && refs[i] != NULL; i++)
-        {
-          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-          if (parts)
-            flatpak_complete_word (completion, "%s ", parts[1]);
-        }
-
-      break;
-
-    case 3: /* Branch */
-      refs = flatpak_dir_find_remote_refs (dir, completion->argv[1], completion->argv[2], NULL,
-                                           opt_arch, kinds,
-                                           NULL, &error);
-      if (refs == NULL)
-        flatpak_completion_debug ("find remote refs error: %s", error->message);
-      for (i = 0; refs != NULL && refs[i] != NULL; i++)
-        {
-          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-          if (parts)
-            flatpak_complete_word (completion, "%s ", parts[3]);
-        }
-
-      break;
-
     default:
+      flatpak_complete_partial_remote_ref (completion, kinds, opt_arch, dir, completion->argv[1]);
       break;
     }
 

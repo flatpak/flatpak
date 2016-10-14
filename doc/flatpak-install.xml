@@ -33,8 +33,7 @@
                 <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">REMOTE</arg>
-                <arg choice="plain">NAME</arg>
-                <arg choice="opt">BRANCH</arg>
+                <arg choice="plain" rep="repeat">REF</arg>
             </cmdsynopsis>
             <cmdsynopsis>
                 <command>flatpak install</command>
@@ -52,14 +51,21 @@
 
         <para>
             Installs an application or runtime. <arg choice="plain">REMOTE</arg> must name
-            an existing remote and <arg choice="plain">NAME</arg> is the name of the
-            application or runtime to install. Optionally, <arg choice="plain">BRANCH</arg> can
-            be specified to install a branch other than the default branch. This required
-            if there are multiple matches in the selected remote.
+            an existing remote and <arg choice="plain">REF</arg> is a reference to the
+            application or runtime to install.
         </para>
         <para>
-            By default this looks for both apps and runtime with the given <arg choice="plain">NAME</arg> in
-            the specified <arg choice="plain">REMOTE</arg>, but you can limit this by using the --app or --runtime option.
+            Each <arg choice="plain">REF</arg> arguments is a full or partial indentifier in the
+            flatpak ref format, which looks like "(app|runtime)/ID/ARCH/BRANCH". All elements
+            except ID are optional and can be left out, including the slashes,
+            so most of the time you need only specify ID. Any part left out will be matched
+            against what is in the remote, and if there are multiple matches an error message
+            will list the alternatives.
+        </para>
+        <para>
+            By default this looks for both apps and runtime with the given <arg choice="plain">REF</arg> in
+            the specified <arg choice="plain">REMOTE</arg>, but you can limit this by using the --app or
+            --runtime option, or by supplying the initial element in the REF.
         </para>
         <para>
             Note that flatpak allows one to have multiple branches of an application and runtimes
@@ -134,7 +140,7 @@
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
-                    The architecture to install for.
+                    The default architecture to install for, if not given explicitly in the <arg choice="plain">REF</arg>.
                 </para></listitem>
             </varlistentry>
 
@@ -175,15 +181,14 @@
                 <term><option>--app</option></term>
 
                 <listitem><para>
-                    Only look for an app with the given name.
+                    Assume that all <arg choice="plain">REF</arg>s are apps if not explicitly specified.
                 </para></listitem>
             </varlistentry>
 
             <varlistentry>
                 <term><option>--runtime</option></term>
-
                 <listitem><para>
-                    Only look for an runtime with the given name.
+                    Assume that all <arg choice="plain">REF</arg>s are runtimes if not explicitly specified.
                 </para></listitem>
             </varlistentry>
 

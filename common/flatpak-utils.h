@@ -100,6 +100,14 @@ gboolean flatpak_split_partial_ref_arg (const char   *partial_ref,
                                         char        **out_arch,
                                         char        **out_branch,
                                         GError      **error);
+gboolean flatpak_split_partial_ref_arg_novalidate (const char   *partial_ref,
+                                                   FlatpakKinds  default_kinds,
+                                                   const char   *default_arch,
+                                                   const char   *default_branch,
+                                                   FlatpakKinds *out_kinds,
+                                                   char        **out_id,
+                                                   char        **out_arch,
+                                                   char        **out_branch);
 
 char * flatpak_compose_ref (gboolean    app,
                             const char *name,
@@ -478,6 +486,11 @@ void               flatpak_complete_word    (FlatpakCompletion *completion,
                                              ...);
 void               flatpak_complete_ref     (FlatpakCompletion *completion,
                                              OstreeRepo        *repo);
+void               flatpak_complete_partial_remote_ref (FlatpakCompletion *completion,
+                                                        FlatpakKinds kinds,
+                                                        const char *only_arch,
+                                                        FlatpakDir *dir,
+                                                        const char *remote);
 void               flatpak_complete_file    (FlatpakCompletion *completion);
 void               flatpak_complete_dir     (FlatpakCompletion *completion);
 void               flatpak_complete_options (FlatpakCompletion *completion,
