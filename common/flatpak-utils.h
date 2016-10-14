@@ -486,11 +486,11 @@ void               flatpak_complete_word    (FlatpakCompletion *completion,
                                              ...);
 void               flatpak_complete_ref     (FlatpakCompletion *completion,
                                              OstreeRepo        *repo);
-void               flatpak_complete_partial_remote_ref (FlatpakCompletion *completion,
-                                                        FlatpakKinds kinds,
-                                                        const char *only_arch,
-                                                        FlatpakDir *dir,
-                                                        const char *remote);
+void               flatpak_complete_partial_ref (FlatpakCompletion *completion,
+                                                 FlatpakKinds kinds,
+                                                 const char *only_arch,
+                                                 FlatpakDir *dir,
+                                                 const char *remote);
 void               flatpak_complete_file    (FlatpakCompletion *completion);
 void               flatpak_complete_dir     (FlatpakCompletion *completion);
 void               flatpak_complete_options (FlatpakCompletion *completion,

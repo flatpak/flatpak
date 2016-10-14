@@ -210,6 +210,24 @@ do_update (FlatpakDir  * dir,
   return TRUE;
 }
 
+static gboolean
+looks_like_branch (const char *branch)
+{
+  /* In particular, / is not a valid branch char, so
+     this lets us distinguish full or partial refs as
+     non-branches. */
+  if (!flatpak_is_valid_branch (branch, NULL))
+    return FALSE;
+
+  /* Dots are allowed in branches, but not really used much, while
+     they are required for app ids, so thats a good check to
+     distinguish the two */
+  if (strchr (branch, '.') != NULL)
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_builtin_update (int           argc,
                         char        **argv,
@@ -218,109 +236,135 @@ flatpak_builtin_update (int           argc,
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  const char *pref = NULL;
+  char **prefs = NULL;
+  int i, j, n_prefs;
   const char *default_branch = NULL;
   gboolean failed = FALSE;
-  gboolean found = FALSE;
   FlatpakKinds kinds;
-  g_autofree char *id = NULL;
-  g_autofree char *arch = NULL;
-  g_autofree char *branch = NULL;
-  int i;
+  g_autoptr(GHashTable) update_refs = NULL;
+  g_autofree char **keys = NULL;
+  guint n_keys;
 
-  context = g_option_context_new (_("[NAME [BRANCH]] - Update an application or runtime"));
+  context = g_option_context_new (_("[REF...] - Update applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
-  if (argc >= 2)
-    pref = argv[1];
-  if (argc >= 3)
-    default_branch = argv[2];
-
-  if (argc > 3)
-    return usage_error (context, _("Too many arguments"), error);
-
   if (opt_appstream)
-    return update_appstream (dir, pref, cancellable, error);
+    return update_appstream (dir, argc >= 2 ? argv[2] : NULL, cancellable, error);
 
+  prefs = &argv[1];
+  n_prefs = argc - 1;
+
+  /* Backwards compat for old "REPOSITORY NAME [BRANCH]" argument version */
+  if (argc == 3 && looks_like_branch (argv[2]))
+    {
+      default_branch = argv[2];
+      n_prefs = 1;
+    }
+
+  update_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
-                                      &kinds, &id, &arch, &branch, error))
-    return FALSE;
-
-  if (kinds & FLATPAK_KINDS_APP)
+  for (j = 0; j == 0 || j < n_prefs; j++)
     {
-      g_auto(GStrv) refs = NULL;
+      const char *pref = NULL;
+      FlatpakKinds matched_kinds;
+      g_autofree char *id = NULL;
+      g_autofree char *arch = NULL;
+      g_autofree char *branch = NULL;
+      gboolean found = FALSE;
 
-      if (!flatpak_dir_list_refs (dir, "app", &refs,
-                                  cancellable,
-                                  error))
-        return FALSE;
-
-      for (i = 0; refs != NULL && refs[i] != NULL; i++)
+      if (n_prefs == 0)
         {
-          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
-          if (parts == NULL)
-            return FALSE;
-
-          if (id != NULL && strcmp (parts[1], id) != 0)
-            continue;
-
-          if (arch != NULL && strcmp (parts[2], arch) != 0)
-            continue;
-
-          if (branch != NULL && strcmp (parts[3], branch) != 0)
-            continue;
-
-          found = TRUE;
-          if (!do_update (dir, refs[i], cancellable, error))
+          matched_kinds = kinds;
+        }
+      else
+        {
+          pref = prefs[j];
+          if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
+                                              &matched_kinds, &id, &arch, &branch, error))
             return FALSE;
         }
-    }
 
-  if (kinds & FLATPAK_KINDS_RUNTIME)
-    {
-      g_auto(GStrv) refs = NULL;
-
-      if (!flatpak_dir_list_refs (dir, "runtime", &refs,
-                                  cancellable,
-                                  error))
-        return FALSE;
-
-      for (i = 0; refs != NULL && refs[i] != NULL; i++)
+      if (kinds & FLATPAK_KINDS_APP)
         {
-          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
-          g_autoptr(GError) local_error = NULL;
+          g_auto(GStrv) refs = NULL;
 
-          if (parts == NULL)
+          if (!flatpak_dir_list_refs (dir, "app", &refs,
+                                      cancellable,
+                                      error))
             return FALSE;
 
-          if (id != NULL && strcmp (parts[1], id) != 0)
-            continue;
-
-          if (arch != NULL && strcmp (parts[2], arch) != 0)
-            continue;
-
-          if (branch != NULL && strcmp (parts[3], branch) != 0)
-            continue;
-
-          found = TRUE;
-          if (!do_update (dir, refs[i], cancellable, &local_error))
+          for (i = 0; refs != NULL && refs[i] != NULL; i++)
             {
-              g_printerr (_("Error updating: %s\n"), local_error->message);
-              failed = TRUE;
+              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
+              if (parts == NULL)
+                return FALSE;
+
+              if (id != NULL && strcmp (parts[1], id) != 0)
+                continue;
+
+              if (arch != NULL && strcmp (parts[2], arch) != 0)
+                continue;
+
+              if (branch != NULL && strcmp (parts[3], branch) != 0)
+                continue;
+
+              found = TRUE;
+              g_hash_table_insert (update_refs, g_strdup (refs[i]), NULL);
             }
         }
+
+      if (kinds & FLATPAK_KINDS_RUNTIME)
+        {
+          g_auto(GStrv) refs = NULL;
+
+          if (!flatpak_dir_list_refs (dir, "runtime", &refs,
+                                      cancellable,
+                                      error))
+            return FALSE;
+
+          for (i = 0; refs != NULL && refs[i] != NULL; i++)
+            {
+              g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], error);
+
+              if (parts == NULL)
+                return FALSE;
+
+              if (id != NULL && strcmp (parts[1], id) != 0)
+                continue;
+
+              if (arch != NULL && strcmp (parts[2], arch) != 0)
+                continue;
+
+              if (branch != NULL && strcmp (parts[3], branch) != 0)
+                continue;
+
+              found = TRUE;
+              g_hash_table_insert (update_refs, g_strdup (refs[i]), NULL);
+            }
+        }
+
+      if (n_prefs > 0 && !found)
+        {
+          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+                       "%s not installed", pref);
+          return FALSE;
+        }
     }
 
-  if (pref && !found)
+  keys = (char **)g_hash_table_get_keys_as_array (update_refs, &n_keys);
+  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+  for (i = 0; i < n_keys; i++)
     {
-      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   "%s not installed", pref);
-      return FALSE;
+      g_autoptr(GError) local_error = NULL;
+      if (!do_update (dir, keys[i], cancellable, &local_error))
+        {
+          g_printerr (_("Error updating: %s\n"), local_error->message);
+          failed = TRUE;
+        }
     }
 
   if (failed)
@@ -337,7 +381,6 @@ flatpak_complete_update (FlatpakCompletion *completion)
   g_autoptr(GError) error = NULL;
   g_auto(GStrv) refs = NULL;
   FlatpakKinds kinds;
-  int i;
 
   context = g_option_context_new ("");
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, 0, &dir, NULL, NULL))
@@ -348,37 +391,8 @@ flatpak_complete_update (FlatpakCompletion *completion)
   switch (completion->argc)
     {
     case 0:
-    case 1: /* NAME */
-      flatpak_complete_options (completion, global_entries);
-      flatpak_complete_options (completion, options);
-      flatpak_complete_options (completion, user_entries);
-
-      refs = flatpak_dir_find_installed_refs (dir, NULL, NULL, opt_arch,
-                                              kinds, &error);
-      if (refs == NULL)
-        flatpak_completion_debug ("find local refs error: %s", error->message);
-      for (i = 0; refs != NULL && refs[i] != NULL; i++)
-        {
-          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-          if (parts)
-            flatpak_complete_word (completion, "%s \n", parts[1]);
-        }
-      break;
-
-    case 2: /* Branch */
-      refs = flatpak_dir_find_installed_refs (dir, completion->argv[1], NULL, opt_arch,
-                                              kinds, &error);
-      if (refs == NULL)
-        flatpak_completion_debug ("find remote refs error: %s", error->message);
-      for (i = 0; refs != NULL && refs[i] != NULL; i++)
-        {
-          g_auto(GStrv) parts = flatpak_decompose_ref (refs[i], NULL);
-          if (parts)
-            flatpak_complete_word (completion, "%s ", parts[3]);
-        }
-      break;
-
-    default:
+    default: /* REF */
+      flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, NULL);
       break;
     }
 

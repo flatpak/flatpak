@@ -398,8 +398,8 @@ flatpak_complete_install (FlatpakCompletion *completion)
 
       break;
 
-    default:
-      flatpak_complete_partial_remote_ref (completion, kinds, opt_arch, dir, completion->argv[1]);
+    default: /* REF */
+      flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, completion->argv[1]);
       break;
     }
 

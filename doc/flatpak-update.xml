@@ -32,7 +32,7 @@
             <cmdsynopsis>
                 <command>flatpak update</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="opt">NAME <arg choice="opt">BRANCH</arg></arg>
+                <arg choice="opt" rep="repeat">REF</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -40,17 +40,22 @@
         <title>Description</title>
 
         <para>
-            Updates an application or runtime. <arg choice="plain">NAME</arg> is the
-            name of an installed application or runtime. Optionally,
-            <arg choice="plain">BRANCH</arg> can be specified to update a
-            specific branch, otherwise all installed branches are updated. If
-            no <arg choice="plain">NAME</arg> is given, then everything installed
+            Updates applications and runtimes. <arg choice="plain">REF</arg> is a reference to the
+            application or runtime to install. If no <arg choice="plain">REF</arg> is given, everything
             is updated.
         </para>
         <para>
-            By default this looks for both installed applications and
-            runtimes, but you can limit this by using the --app or
-            --runtime option.
+            Each <arg choice="plain">REF</arg> arguments is a full or partial indentifier in the
+            flatpak ref format, which looks like "(app|runtime)/ID/ARCH/BRANCH". All elements
+            except ID are optional and can be left out, including the slashes,
+            so most of the time you need only specify ID. Any part left out will be matched
+            against what is installed, and if there are multiple matches an error message
+            will list the alternatives.
+        </para>
+        <para>
+            By default this looks for both apps and runtime with the given <arg choice="plain">REF</arg> in
+            the specified <arg choice="plain">REMOTE</arg>, but you can limit this by using the --app or
+            --runtime option, or by supplying the initial element in the REF.
         </para>
         <para>
             Normally, this command updates the application to the tip

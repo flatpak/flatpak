@@ -3920,11 +3920,11 @@ find_current_element (const char *str)
 }
 
 void
-flatpak_complete_partial_remote_ref (FlatpakCompletion *completion,
-                                     FlatpakKinds kinds,
-                                     const char *only_arch,
-                                     FlatpakDir *dir,
-                                     const char *remote)
+flatpak_complete_partial_ref (FlatpakCompletion *completion,
+                              FlatpakKinds kinds,
+                              const char *only_arch,
+                              FlatpakDir *dir,
+                              const char *remote)
 {
   FlatpakKinds matched_kinds;
   const char *pref;
@@ -3948,13 +3948,24 @@ flatpak_complete_partial_remote_ref (FlatpakCompletion *completion,
   cur_parts[2] = arch ? arch : "";
   cur_parts[3] = branch ? branch : "";
 
-  refs = flatpak_dir_find_remote_refs (dir, completion->argv[1],
-                                       (element > 1) ? id : NULL,
-                                       (element > 3) ? branch : NULL,
-                                       (element > 2 )? arch : only_arch,
-                                       matched_kinds, NULL, &error);
+  if (remote)
+    {
+      refs = flatpak_dir_find_remote_refs (dir, completion->argv[1],
+                                           (element > 1) ? id : NULL,
+                                           (element > 3) ? branch : NULL,
+                                           (element > 2 )? arch : only_arch,
+                                           matched_kinds, NULL, &error);
+    }
+  else
+    {
+      refs = flatpak_dir_find_installed_refs (dir,
+                                              (element > 1) ? id : NULL,
+                                              (element > 3) ? branch : NULL,
+                                              (element > 2 )? arch : only_arch,
+                                              matched_kinds, &error);
+    }
   if (refs == NULL)
-    flatpak_completion_debug ("find remote refs error: %s", error->message);
+    flatpak_completion_debug ("find refs error: %s", error->message);
   for (i = 0; refs != NULL && refs[i] != NULL; i++)
     {
       int j;
