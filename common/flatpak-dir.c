@@ -4489,7 +4489,12 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
     }
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-               _("Can't find %s in remote %s"), name, remote);
+               _("Can't find %s%s%s%s%s in remote %s"), name,
+               (opt_arch != NULL || opt_branch != NULL) ? "/" : "",
+               opt_arch ? opt_arch : "",
+               opt_branch ? "/" : "",
+               opt_branch ? opt_branch : "",
+               remote);
 
   return NULL;
 }
