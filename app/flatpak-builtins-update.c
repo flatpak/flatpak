@@ -241,9 +241,8 @@ flatpak_builtin_update (int           argc,
   const char *default_branch = NULL;
   gboolean failed = FALSE;
   FlatpakKinds kinds;
-  g_autoptr(GHashTable) update_refs = NULL;
-  g_autofree char **keys = NULL;
-  guint n_keys;
+  g_autoptr(GHashTable) update_refs_hash = NULL;
+  g_autoptr(GPtrArray) update_refs = NULL;
 
   context = g_option_context_new (_("[REF...] - Update applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -264,7 +263,8 @@ flatpak_builtin_update (int           argc,
       n_prefs = 1;
     }
 
-  update_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  update_refs = g_ptr_array_new_with_free_func (g_free);
+  update_refs_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   for (j = 0; j == 0 || j < n_prefs; j++)
@@ -313,7 +313,8 @@ flatpak_builtin_update (int           argc,
                 continue;
 
               found = TRUE;
-              g_hash_table_insert (update_refs, g_strdup (refs[i]), NULL);
+              if (g_hash_table_insert (update_refs_hash, g_strdup (refs[i]), NULL))
+                g_ptr_array_add (update_refs, g_strdup (refs[i]));
             }
         }
 
@@ -343,7 +344,8 @@ flatpak_builtin_update (int           argc,
                 continue;
 
               found = TRUE;
-              g_hash_table_insert (update_refs, g_strdup (refs[i]), NULL);
+              if (g_hash_table_insert (update_refs_hash, g_strdup (refs[i]), NULL))
+                g_ptr_array_add (update_refs, g_strdup (refs[i]));
             }
         }
 
@@ -355,12 +357,11 @@ flatpak_builtin_update (int           argc,
         }
     }
 
-  keys = (char **)g_hash_table_get_keys_as_array (update_refs, &n_keys);
-  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
-  for (i = 0; i < n_keys; i++)
+  for (i = 0; i < update_refs->len; i++)
     {
+      const char *ref = (char *)g_ptr_array_index (update_refs, i);
       g_autoptr(GError) local_error = NULL;
-      if (!do_update (dir, keys[i], cancellable, &local_error))
+      if (!do_update (dir, ref, cancellable, &local_error))
         {
           g_printerr (_("Error updating: %s\n"), local_error->message);
           failed = TRUE;
