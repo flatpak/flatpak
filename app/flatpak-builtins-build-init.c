@@ -37,12 +37,18 @@ static char *opt_var;
 static char *opt_sdk_dir;
 static char **opt_sdk_extensions;
 static char **opt_tags;
+static char *opt_base;
+static char *opt_base_version;
+static char **opt_base_extensions;
 static gboolean opt_writable_sdk;
 static gboolean opt_update;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
   { "var", 'v', 0, G_OPTION_ARG_STRING, &opt_var, N_("Initialize var from named runtime"), N_("RUNTIME") },
+  { "base", 0, 0, G_OPTION_ARG_STRING, &opt_base, N_("Initialize apps from named app"), N_("APP") },
+  { "base-version", 0, 0, G_OPTION_ARG_STRING, &opt_base_version, N_("Specify version for --base"), N_("VERSION") },
+  { "base-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_base_extensions, N_("Include this base extension"), N_("EXTENSION") },
   { "writable-sdk", 'w', 0, G_OPTION_ARG_NONE, &opt_writable_sdk, N_("Initialize /usr with a writable copy of the sdk"), NULL },
   { "tag", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_tags, N_("Add a tag"), N_("TAG") },
   { "sdk-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sdk_extensions, N_("Include this sdk extension in /usr"), N_("EXTENSION") },
@@ -228,6 +234,32 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   if (!g_file_make_directory (files_dir, cancellable, error))
     return FALSE;
+
+  if (opt_base)
+    {
+      const char *base_branch;
+      g_autofree char *base_ref = NULL;
+      g_autoptr(GError) my_error = NULL;
+      g_autoptr(GFile) base_deploy_files = NULL;
+      g_autoptr(FlatpakDeploy) base_deploy = NULL;
+
+      base_branch = opt_base_version ? opt_base_version : "master";
+      base_ref = flatpak_build_app_ref (opt_base, base_branch, opt_arch);
+      base_deploy = flatpak_find_deploy_for_ref (base_ref, cancellable, error);
+      if (base_deploy == NULL)
+        return FALSE;
+
+      base_deploy_files = flatpak_deploy_get_files (base_deploy);
+      if (!flatpak_cp_a (base_deploy_files, files_dir,
+                         FLATPAK_CP_FLAGS_MERGE | FLATPAK_CP_FLAGS_NO_CHOWN,
+                         cancellable, error))
+        return FALSE;
+
+
+      if (opt_base_extensions &&
+          !copy_extensions (base_deploy, base_branch, opt_base_extensions, files_dir, cancellable, error))
+        return FALSE;
+    }
 
   if (var_deploy_files)
     {

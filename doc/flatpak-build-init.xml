@@ -143,6 +143,31 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--base=APP</option></term>
+
+                <listitem><para>
+                    Initialize the application with files from another specified application.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--base-version=VERSION</option></term>
+
+                <listitem><para>
+                    Specify the version to use for --base. If not specified, will default to
+                    "master".
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><option>--base-extension=EXTENSION</option></term>
+
+                <listitem><para>
+                    When using --base, also install the specified extension from the app.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--verbose</option></term>
 
                 <listitem><para>
