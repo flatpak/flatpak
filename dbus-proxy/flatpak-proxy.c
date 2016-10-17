@@ -1331,12 +1331,26 @@ typedef enum {
 } BusHandler;
 
 static gboolean
+is_for_bus (Header *header)
+{
+  return g_strcmp0 (header->destination, "org.freedesktop.DBus") == 0;
+}
+
+static gboolean
 is_dbus_method_call (Header *header)
 {
   return
+    is_for_bus (header) &&
     header->type == G_DBUS_MESSAGE_TYPE_METHOD_CALL &&
-    g_strcmp0 (header->destination, "org.freedesktop.DBus") == 0 &&
     g_strcmp0 (header->interface, "org.freedesktop.DBus") == 0;
+}
+
+static gboolean
+is_introspection_call (Header *header)
+{
+  return
+    header->type == G_DBUS_MESSAGE_TYPE_METHOD_CALL &&
+    g_strcmp0 (header->interface, "org.freedesktop.DBus.Introspectable") == 0;
 }
 
 static BusHandler
@@ -1362,50 +1376,61 @@ get_dbus_method_handler (FlatpakProxyClient *client, Header *header)
   if (policy < FLATPAK_POLICY_TALK)
     return HANDLE_DENY;
 
-  if (!is_dbus_method_call (header))
+  if (!is_for_bus (header))
     return HANDLE_PASS;
 
-  method = header->member;
-  if (method == NULL)
-    return HANDLE_DENY;
+  if (is_introspection_call (header))
+    {
+      return HANDLE_PASS;
+    }
+  else if (is_dbus_method_call (header))
+    {
+      method = header->member;
+      if (method == NULL)
+        return HANDLE_DENY;
 
-  if (strcmp (method, "Hello") == 0 ||
-      strcmp (method, "AddMatch") == 0 ||
-      strcmp (method, "RemoveMatch") == 0 ||
-      strcmp (method, "GetId") == 0)
-    return HANDLE_PASS;
+      if (strcmp (method, "Hello") == 0 ||
+          strcmp (method, "AddMatch") == 0 ||
+          strcmp (method, "RemoveMatch") == 0 ||
+          strcmp (method, "GetId") == 0)
+        return HANDLE_PASS;
 
-  if (strcmp (method, "UpdateActivationEnvironment") == 0 ||
-      strcmp (method, "BecomeMonitor") == 0)
-    return HANDLE_DENY;
+      if (strcmp (method, "UpdateActivationEnvironment") == 0 ||
+          strcmp (method, "BecomeMonitor") == 0)
+        return HANDLE_DENY;
 
-  if (strcmp (method, "RequestName") == 0 ||
-      strcmp (method, "ReleaseName") == 0 ||
-      strcmp (method, "ListQueuedOwners") == 0)
-    return HANDLE_VALIDATE_OWN;
+      if (strcmp (method, "RequestName") == 0 ||
+          strcmp (method, "ReleaseName") == 0 ||
+          strcmp (method, "ListQueuedOwners") == 0)
+        return HANDLE_VALIDATE_OWN;
 
-  if (strcmp (method, "NameHasOwner") == 0)
-    return HANDLE_FILTER_HAS_OWNER_REPLY;
+      if (strcmp (method, "NameHasOwner") == 0)
+        return HANDLE_FILTER_HAS_OWNER_REPLY;
 
-  if (strcmp (method, "GetNameOwner") == 0)
-    return HANDLE_FILTER_GET_OWNER_REPLY;
+      if (strcmp (method, "GetNameOwner") == 0)
+        return HANDLE_FILTER_GET_OWNER_REPLY;
 
-  if (strcmp (method, "GetConnectionUnixProcessID") == 0 ||
-      strcmp (method, "GetConnectionCredentials") == 0 ||
-      strcmp (method, "GetAdtAuditSessionData") == 0 ||
-      strcmp (method, "GetConnectionSELinuxSecurityContext") == 0 ||
-      strcmp (method, "GetConnectionUnixUser") == 0)
-    return HANDLE_VALIDATE_SEE;
+      if (strcmp (method, "GetConnectionUnixProcessID") == 0 ||
+          strcmp (method, "GetConnectionCredentials") == 0 ||
+          strcmp (method, "GetAdtAuditSessionData") == 0 ||
+          strcmp (method, "GetConnectionSELinuxSecurityContext") == 0 ||
+          strcmp (method, "GetConnectionUnixUser") == 0)
+        return HANDLE_VALIDATE_SEE;
 
-  if (strcmp (method, "StartServiceByName") == 0)
-    return HANDLE_VALIDATE_TALK;
+      if (strcmp (method, "StartServiceByName") == 0)
+        return HANDLE_VALIDATE_TALK;
 
-  if (strcmp (method, "ListNames") == 0 ||
-      strcmp (method, "ListActivatableNames") == 0)
-    return HANDLE_FILTER_NAME_LIST_REPLY;
+      if (strcmp (method, "ListNames") == 0 ||
+          strcmp (method, "ListActivatableNames") == 0)
+        return HANDLE_FILTER_NAME_LIST_REPLY;
 
-  g_warning ("Unknown bus method %s\n", method);
-  return HANDLE_DENY;
+      g_warning ("Unknown bus method %s\n", method);
+      return HANDLE_DENY;
+    }
+  else
+    {
+      return HANDLE_DENY;
+    }
 }
 
 static FlatpakPolicy
