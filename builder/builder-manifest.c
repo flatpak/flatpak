@@ -91,6 +91,7 @@ enum {
   PROP_BRANCH,
   PROP_RUNTIME,
   PROP_RUNTIME_VERSION,
+  PROP_RUNTIME_COMMIT,
   PROP_SDK,
   PROP_SDK_COMMIT,
   PROP_VAR,
@@ -224,6 +225,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_RUNTIME:
       g_value_set_string (value, self->runtime);
+      break;
+
+    case PROP_RUNTIME_COMMIT:
+      g_value_set_string (value, self->runtime_commit);
       break;
 
     case PROP_RUNTIME_VERSION:
@@ -369,6 +374,11 @@ builder_manifest_set_property (GObject      *object,
     case PROP_RUNTIME:
       g_free (self->runtime);
       self->runtime = g_value_dup_string (value);
+      break;
+
+    case PROP_RUNTIME_COMMIT:
+      g_free (self->runtime_commit);
+      self->runtime_commit = g_value_dup_string (value);
       break;
 
     case PROP_RUNTIME_VERSION:
@@ -548,6 +558,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_RUNTIME,
                                    g_param_spec_string ("runtime",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_RUNTIME_COMMIT,
+                                   g_param_spec_string ("runtime-commit",
                                                         "",
                                                         "",
                                                         NULL,
