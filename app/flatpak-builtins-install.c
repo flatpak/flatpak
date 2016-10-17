@@ -201,8 +201,9 @@ do_install (FlatpakDir          *dir,
                                                   NULL,
                                                   cancellable, &local_error))
                 {
-                  g_printerr (_("Warning: Failed to install related ref: %s\n"),
-                              rel->ref);
+                  if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+                    g_printerr (_("Warning: Failed to install related ref %s: %s\n"),
+                                rel->ref, local_error->message);
                   g_clear_error (&local_error);
                 }
             }
