@@ -799,6 +799,45 @@ flatpak_installation_remove_remote (FlatpakInstallation *self,
 }
 
 /**
+ * flatpak_installation_update_remote_sync:
+ * @self: a #FlatpakInstallation
+ * @name: the name of the remote to update
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Updates the local configuration of a remote repository by fetching
+ * the related information from the summary file in the remote OSTree
+ * repository and committing the changes to the local installation.
+ *
+ * Returns: %TRUE if the remote has been updated successfully
+ *
+ * Since: 0.6.13
+ */
+gboolean
+flatpak_installation_update_remote_sync (FlatpakInstallation *self,
+                                         const char          *name,
+                                         GCancellable        *cancellable,
+                                         GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+  g_autoptr(FlatpakDir) dir_clone = NULL;
+
+  /* We clone the dir here to make sure we re-read the latest ostree repo config, in case
+     it has local changes */
+  dir_clone = flatpak_dir_clone (dir);
+  if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
+    return FALSE;
+
+  if (!flatpak_dir_update_remote_configuration (dir, name, cancellable, error))
+    return FALSE;
+
+  /* Make sure we pick up the new config */
+  flatpak_installation_drop_caches (self, NULL, NULL);
+
+  return TRUE;
+}
+
+/**
  * flatpak_installation_get_remote_by_name:
  * @self: a #FlatpakInstallation
  * @name: a remote name

@@ -33,6 +33,7 @@
 #include "flatpak-utils.h"
 
 static char *opt_title;
+static char *opt_default_branch;
 static char *opt_gpg_homedir;
 static char **opt_gpg_key_ids;
 static gboolean opt_prune;
@@ -41,6 +42,7 @@ static gint opt_prune_depth = -1;
 
 static GOptionEntry options[] = {
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this repository"), N_("TITLE") },
+  { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this repository"), N_("BRANCH") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
   { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, N_("Generate delta files"), NULL },
@@ -374,6 +376,10 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
   if (opt_title &&
       !flatpak_repo_set_title (repo, opt_title, error))
+    return FALSE;
+
+  if (opt_default_branch &&
+      !flatpak_repo_set_default_branch (repo, opt_default_branch, error))
     return FALSE;
 
   g_print (_("Updating appstream branch\n"));

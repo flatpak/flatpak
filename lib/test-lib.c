@@ -357,11 +357,12 @@ main (int argc, char *argv[])
     {
       FlatpakRemote *remote = g_ptr_array_index (remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
-      g_print ("\nRemote: %s %d %s %s %d %d %s\n",
+      g_print ("\nRemote: %s %d %s %s %s %d %d %s\n",
                flatpak_remote_get_name (remote),
                flatpak_remote_get_prio (remote),
                flatpak_remote_get_url (remote),
                flatpak_remote_get_title (remote),
+               flatpak_remote_get_default_branch (remote),
                flatpak_remote_get_gpg_verify (remote),
                flatpak_remote_get_noenumerate (remote),
                g_file_get_path (flatpak_remote_get_appstream_dir (remote, NULL)));

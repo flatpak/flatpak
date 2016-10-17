@@ -2179,6 +2179,27 @@ flatpak_repo_set_title (OstreeRepo *repo,
   return TRUE;
 }
 
+
+gboolean
+flatpak_repo_set_default_branch (OstreeRepo *repo,
+                                 const char *branch,
+                                 GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  if (branch)
+    g_key_file_set_string (config, "flatpak", "default-branch", branch);
+  else
+    g_key_file_remove_key (config, "flatpak", "default-branch", NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
 
@@ -2299,6 +2320,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   GVariantBuilder ref_data_builder;
   GKeyFile *config;
   g_autofree char *title = NULL;
+  g_autofree char *default_branch = NULL;
   g_autoptr(GVariant) old_summary = NULL;
   g_autoptr(GHashTable) refs = NULL;
   const char *prefixes[] = { "appstream", "app", "runtime", NULL };
@@ -2312,12 +2334,18 @@ flatpak_repo_update (OstreeRepo   *repo,
   config = ostree_repo_get_config (repo);
 
   if (config)
-    title = g_key_file_get_string (config, "flatpak", "title", NULL);
+    {
+      title = g_key_file_get_string (config, "flatpak", "title", NULL);
+      default_branch = g_key_file_get_string (config, "flatpak", "default-branch", NULL);
+    }
 
   if (title)
     g_variant_builder_add (&builder, "{sv}", "xa.title",
                            g_variant_new_string (title));
 
+  if (default_branch)
+    g_variant_builder_add (&builder, "{sv}", "xa.default-branch",
+                           g_variant_new_string (default_branch));
 
   g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE ("a{s(tts)}"));
 

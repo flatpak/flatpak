@@ -47,6 +47,7 @@ static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
 static gboolean opt_if_not_exists;
 static gboolean opt_enable;
+static gboolean opt_update_metadata;
 static gboolean opt_disable;
 static int opt_prio = -1;
 static char *opt_title;
@@ -67,6 +68,7 @@ static GOptionEntry modify_options[] = {
   { "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, N_("Mark the remote as enumerate"), NULL },
   { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url, N_("Set a new url"), N_("URL") },
   { "enable", 0, 0, G_OPTION_ARG_NONE, &opt_enable, N_("Enable the remote"), NULL },
+  { "update-metadata", 0, 0, G_OPTION_ARG_NONE, &opt_update_metadata, N_("Update extra metadata from the summary file"), NULL },
   { NULL }
 };
 
@@ -259,6 +261,46 @@ load_options (char *filename,
     }
 }
 
+static gboolean
+update_remote_with_extra_metadata (FlatpakDir* dir,
+                                   const char *remote,
+                                   GBytes *gpg_data,
+                                   GCancellable *cancellable,
+                                   GError **error)
+{
+  g_autofree char *title = NULL;
+  g_autofree char *default_branch = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+
+  if (opt_title == NULL)
+    {
+      title = flatpak_dir_fetch_remote_title (dir,
+                                              remote,
+                                              NULL,
+                                              NULL);
+      if (title)
+        opt_title = title;
+    }
+
+    if (opt_default_branch == NULL)
+    {
+      default_branch = flatpak_dir_fetch_remote_default_branch (dir,
+                                                                remote,
+                                                                NULL,
+                                                                NULL);
+      if (default_branch)
+        opt_default_branch = default_branch;
+    }
+
+    if (title != NULL || default_branch != NULL)
+      {
+        config = get_config_from_opts (dir, remote);
+        return flatpak_dir_modify_remote (dir, remote, config, gpg_data, cancellable, error);
+      }
+
+    return TRUE;
+}
+
 gboolean
 flatpak_builtin_add_remote (int argc, char **argv,
                             GCancellable *cancellable, GError **error)
@@ -267,7 +309,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
   g_autoptr(FlatpakDir) dir = NULL;
   g_autoptr(GFile) file = NULL;
   g_auto(GStrv) remotes = NULL;
-  g_autofree char *title = NULL;
   g_autofree char *remote_url = NULL;
   const char *remote_name;
   const char *url_or_path = NULL;
@@ -323,17 +364,6 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (!opt_no_gpg_verify)
     opt_do_gpg_verify = TRUE;
 
-
-  if (opt_title == NULL)
-    {
-      title = flatpak_dir_fetch_remote_title (dir,
-                                              remote_name,
-                                              NULL,
-                                              NULL);
-      if (title)
-        opt_title = title;
-    }
-
   config = get_config_from_opts (dir, remote_name);
 
   if (opt_gpg_import != NULL)
@@ -343,7 +373,12 @@ flatpak_builtin_add_remote (int argc, char **argv,
         return FALSE;
     }
 
-  return flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error);
+  if (!flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error))
+    return FALSE;
+
+  /* We can't retrieve the extra metadata until the remote has been added locally, since
+     ostree_repo_remote_fetch_summary() works with the repository's name, not its URL. */
+  return update_remote_with_extra_metadata (dir, remote_name, gpg_data, cancellable, error);
 }
 
 gboolean
@@ -396,6 +431,18 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   if (!ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, NULL, NULL))
     return flatpak_fail (error, _("No remote %s"), remote_name);
+
+  if (opt_update_metadata)
+    {
+      g_autoptr(GError) local_error = NULL;
+
+      g_print (_("Updating extra metadata from remote summary for %s\n"), remote_name);
+      if (!flatpak_dir_update_remote_configuration (dir, remote_name, cancellable, &local_error))
+        {
+          g_printerr (_("Error updating extra metadata for '%s': %s\n"), remote_name, local_error->message);
+          return flatpak_fail (error, _("Could not update extra metadata for %s"), remote_name);
+        }
+    }
 
   config = get_config_from_opts (dir, remote_name);
 
