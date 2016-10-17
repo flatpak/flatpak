@@ -392,6 +392,9 @@ flatpak_complete_update (FlatpakCompletion *completion)
     {
     case 0:
     default: /* REF */
+      flatpak_complete_options (completion, global_entries);
+      flatpak_complete_options (completion, options);
+      flatpak_complete_options (completion, user_entries);
       flatpak_complete_partial_ref (completion, kinds, opt_arch, dir, NULL);
       break;
     }
