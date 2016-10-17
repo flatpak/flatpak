@@ -313,9 +313,6 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   if (argc < 3)
     return usage_error (context, _("REPOSITORY and REF must be specified"), error);
 
-  if (argc > 4)
-    return usage_error (context, _("Too many arguments"), error);
-
   repository = argv[1];
   prefs = &argv[2];
   n_prefs = argc - 2;
