@@ -326,6 +326,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       n_prefs = 1;
     }
 
+  if (default_branch == NULL)
+    default_branch = flatpak_dir_get_remote_default_branch (dir, repository);
+
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   refs = g_ptr_array_new_with_free_func (g_free);
@@ -343,7 +346,6 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                           &matched_kinds, &id, &arch, &branch, error))
         return FALSE;
 
-      default_branch = flatpak_dir_get_remote_default_branch (dir, repository);
       ref = flatpak_dir_find_remote_ref (dir, repository, id, branch, default_branch, arch,
                                          matched_kinds, &kind, cancellable, error);
       if (ref == NULL)
