@@ -51,6 +51,61 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+static gboolean
+copy_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
+                 char *src_extensions[], GFile *top_dir, GCancellable *cancellable, GError **error)
+{
+  g_autoptr(GKeyFile) metakey = flatpak_deploy_get_metadata (src_deploy);
+  GList *extensions = NULL, *l;
+  int i;
+
+  /* We leak this on failure, as we have no autoptr for deep lists.. */
+  extensions = flatpak_list_extensions (metakey, opt_arch, default_branch);
+
+  for (i = 0; src_extensions[i] != NULL; i++)
+    {
+      const char *requested_extension = src_extensions[i];
+      gboolean found = FALSE;
+
+      for (l = extensions; l != NULL; l = l->next)
+        {
+          FlatpakExtension *ext = l->data;
+
+          if (strcmp (ext->installed_id, requested_extension) == 0 ||
+              strcmp (ext->id, requested_extension) == 0)
+            {
+              g_autoptr(GFile) target = g_file_resolve_relative_path (top_dir, ext->directory);
+              g_autoptr(GFile) target_parent = g_file_get_parent (target);
+              g_autoptr(GFile) ext_deploy_files = g_file_new_for_path (ext->files_path);
+
+              if (!flatpak_mkdir_p (target_parent, cancellable, error))
+                return FALSE;
+
+              /* An extension overrides whatever is there before, so we clean up first */
+              if (!flatpak_rm_rf (target, cancellable, error))
+                return FALSE;
+
+              if (!flatpak_cp_a (ext_deploy_files, target,
+                                 FLATPAK_CP_FLAGS_NO_CHOWN,
+                                 cancellable, error))
+                return FALSE;
+
+              found = TRUE;
+            }
+        }
+
+      if (!found)
+        {
+          g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
+          return flatpak_fail (error, _("Requested extension %s not installed"), requested_extension);
+        }
+    }
+
+  g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
+
+  return TRUE;
+}
+
 gboolean
 flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -154,54 +209,9 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
       if (!flatpak_cp_a (sdk_deploy_files, usr_dir, FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))
         return FALSE;
 
-      if (opt_sdk_extensions)
-        {
-          g_autoptr(GKeyFile) metakey = flatpak_deploy_get_metadata (sdk_deploy);
-          GList *extensions = NULL, *l;
-
-          /* We leak this on failure, as we have no autoptr for deep lists.. */
-          extensions = flatpak_list_extensions (metakey,
-                                                opt_arch,
-                                                branch);
-
-          for (i = 0; opt_sdk_extensions[i] != NULL; i++)
-            {
-              const char *requested_extension = opt_sdk_extensions[i];
-              gboolean found = FALSE;
-
-              for (l = extensions; l != NULL; l = l->next)
-                {
-                  FlatpakExtension *ext = l->data;
-
-                  if (strcmp (ext->installed_id, requested_extension) == 0 ||
-                      strcmp (ext->id, requested_extension) == 0)
-                    {
-                      g_autoptr(GFile) ext_deploy_files = g_file_new_for_path (ext->files_path);
-                      g_autoptr(GFile) target = g_file_resolve_relative_path (usr_dir, ext->directory);
-                      g_autoptr(GFile) target_parent = g_file_get_parent (target);
-
-                      if (!flatpak_mkdir_p (target_parent, cancellable, error))
-                        return FALSE;
-
-                      /* An extension overrides whatever is there before, so we clean up first */
-                      if (!flatpak_rm_rf (target, cancellable, error))
-                        return FALSE;
-
-                      if (!flatpak_cp_a (ext_deploy_files, target, FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))
-                        return FALSE;
-
-                      found = TRUE;
-                    }
-                }
-
-              if (!found)
-                {
-                  g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
-                  return flatpak_fail (error, _("Requested extension %s not installed"), requested_extension);
-                }
-            }
-          g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
-        }
+      if (opt_sdk_extensions &&
+          !copy_extensions (sdk_deploy, branch, opt_sdk_extensions, usr_dir, cancellable, error))
+        return FALSE;
     }
 
   if (opt_var)
