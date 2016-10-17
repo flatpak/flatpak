@@ -48,6 +48,10 @@ struct BuilderManifest
   char           *sdk;
   char           *sdk_commit;
   char           *var;
+  char           *base;
+  char           *base_commit;
+  char           *base_version;
+  char          **base_extensions;
   char           *metadata;
   char           *metadata_platform;
   gboolean        separate_locales;
@@ -94,6 +98,10 @@ enum {
   PROP_RUNTIME_COMMIT,
   PROP_SDK,
   PROP_SDK_COMMIT,
+  PROP_BASE,
+  PROP_BASE_VERSION,
+  PROP_BASE_COMMIT,
+  PROP_BASE_EXTENSIONS,
   PROP_VAR,
   PROP_METADATA,
   PROP_METADATA_PLATFORM,
@@ -132,6 +140,9 @@ builder_manifest_finalize (GObject *object)
   g_free (self->runtime_version);
   g_free (self->sdk);
   g_free (self->sdk_commit);
+  g_free (self->base);
+  g_free (self->base_commit);
+  g_free (self->base_version);
   g_free (self->var);
   g_free (self->metadata);
   g_free (self->metadata_platform);
@@ -241,6 +252,22 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_SDK_COMMIT:
       g_value_set_string (value, self->sdk_commit);
+      break;
+
+    case PROP_BASE:
+      g_value_set_string (value, self->base);
+      break;
+
+    case PROP_BASE_COMMIT:
+      g_value_set_string (value, self->base_commit);
+      break;
+
+    case PROP_BASE_VERSION:
+      g_value_set_string (value, self->base_version);
+      break;
+
+    case PROP_BASE_EXTENSIONS:
+      g_value_set_boxed (value, self->base_extensions);
       break;
 
     case PROP_VAR:
@@ -394,6 +421,27 @@ builder_manifest_set_property (GObject      *object,
     case PROP_SDK_COMMIT:
       g_free (self->sdk_commit);
       self->sdk_commit = g_value_dup_string (value);
+      break;
+
+    case PROP_BASE:
+      g_free (self->base);
+      self->base = g_value_dup_string (value);
+      break;
+
+    case PROP_BASE_COMMIT:
+      g_free (self->base_commit);
+      self->base_commit = g_value_dup_string (value);
+      break;
+
+    case PROP_BASE_VERSION:
+      g_free (self->base_version);
+      self->base_version = g_value_dup_string (value);
+      break;
+
+    case PROP_BASE_EXTENSIONS:
+      tmp = self->base_extensions;
+      self->base_extensions = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
       break;
 
     case PROP_VAR:
@@ -590,6 +638,34 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                         "",
                                                         NULL,
                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_BASE,
+                                   g_param_spec_string ("base",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_BASE_COMMIT,
+                                   g_param_spec_string ("base-commit",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_BASE_VERSION,
+                                   g_param_spec_string ("base-version",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_BASE_EXTENSIONS,
+                                   g_param_spec_boxed ("base-extensions",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_VAR,
                                    g_param_spec_string ("var",
@@ -910,6 +986,12 @@ builder_manifest_get_branch (BuilderManifest *self)
   return self->branch ? self->branch : "master";
 }
 
+static const char *
+builder_manifest_get_base_version (BuilderManifest *self)
+{
+  return self->base_version ? self->base_version : builder_manifest_get_branch (self);
+}
+
 static char *
 flatpak (GError **error,
          ...)
@@ -962,6 +1044,15 @@ builder_manifest_start (BuilderManifest *self,
     return flatpak_fail (error, "Unable to find runtime %s version %s",
                          self->runtime,
                          builder_manifest_get_runtime_version (self));
+
+  if (self->base != NULL && *self->base != 0)
+    {
+      self->base_commit = flatpak (NULL, "info", arch_option, "--show-commit", self->base,
+                                   builder_manifest_get_base_version (self), NULL);
+      if (self->base_commit == NULL)
+        return flatpak_fail (error, "Unable to find app %s version %s",
+                             self->base, builder_manifest_get_base_version (self));
+    }
 
   if (!expand_modules (self->modules, &self->expanded_modules, names, error))
     return FALSE;
@@ -1029,6 +1120,19 @@ builder_manifest_init_app_dir (BuilderManifest *self,
     }
   if (self->var)
     g_ptr_array_add (args, g_strdup_printf ("--var=%s", self->var));
+
+  if (self->base)
+    {
+      g_ptr_array_add (args, g_strdup_printf ("--base=%s", self->base));
+      g_ptr_array_add (args, g_strdup_printf ("--base-version=%s", builder_manifest_get_base_version (self)));
+
+      for (i = 0; self->base_extensions != NULL && self->base_extensions[i] != NULL; i++)
+        {
+          const char *ext = self->base_extensions[i];
+          g_ptr_array_add (args, g_strdup_printf ("--base-extension=%s", ext));
+        }
+    }
+
   g_ptr_array_add (args, g_strdup_printf ("--arch=%s", builder_context_get_arch (context)));
   g_ptr_array_add (args, g_file_get_path (app_dir));
   g_ptr_array_add (args, g_strdup (self->id));
@@ -1082,6 +1186,10 @@ builder_manifest_checksum (BuilderManifest *self,
   builder_cache_checksum_strv (cache, self->sdk_extensions);
   builder_cache_checksum_boolean (cache, self->build_runtime);
   builder_cache_checksum_boolean (cache, self->separate_locales);
+  builder_cache_checksum_str (cache, self->base);
+  builder_cache_checksum_str (cache, self->base_version);
+  builder_cache_checksum_str (cache, self->base_commit);
+  builder_cache_checksum_strv (cache, self->base_extensions);
 
   if (self->build_options)
     builder_options_checksum (self->build_options, cache, context);

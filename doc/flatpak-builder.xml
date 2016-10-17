@@ -180,6 +180,23 @@
                     <term><option>platform-extensions</option> (array of strings)</term>
                     <listitem><para>Install these extra sdk extensions when creating the platform.</para></listitem>
                 </varlistentry>
+
+                <varlistentry>
+                    <term><option>base</option> (string)</term>
+                    <listitem><para>Start with the files from the specified application. This can be
+                    used to create applications that extend another application.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>base-version</option> (string)</term>
+                    <listitem><para>Use this specific version of the application specified in base.
+                    If unspecified, this uses the value specified in branch</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>base-extensions</option> (array of strings)</term>
+                    <listitem><para>Install these extra extensions from the base application when initializing
+                    the application directory.</para></listitem>
+                </varlistentry>
+
                 <varlistentry>
                     <term><option>tags</option> (array of strings)</term>
                     <listitem><para>Add these tags to the metadata file.</para></listitem>
