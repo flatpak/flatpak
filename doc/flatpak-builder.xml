@@ -276,7 +276,8 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>no-debuginfo</option> (boolean)</term>
-                    <listitem><para>If this is true (the default is false) and strip is not set then all ELF files will have their debug info extracted to a separate file.</para></listitem>
+                    <listitem><para>By default (if strip is not true) flatpak-builder extracts all debug info in ELF files to a separate files
+                    and puts this in an extension. If you want to disable this, set no-debuginfo to true.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>arch</option> (object)</term>
