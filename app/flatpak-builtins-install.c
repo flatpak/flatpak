@@ -42,6 +42,7 @@ static char **opt_subpaths;
 static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
 static gboolean opt_no_related;
+static gboolean opt_no_deps;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_bundle;
@@ -52,6 +53,7 @@ static GOptionEntry options[] = {
   { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, N_("Don't pull, only install from local cache"), NULL },
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, N_("Don't deploy, only download to local cache"), NULL },
   { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, N_("Don't install related refs"), NULL },
+  { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify runtime dependencies"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Install from local bundle file"), NULL },
@@ -297,6 +299,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autofree char *default_branch = NULL;
   FlatpakKinds kinds;
   g_autoptr(GPtrArray) refs = NULL;
+  g_autoptr(GHashTable) refs_hash = NULL;
 
   context = g_option_context_new (_("REPOSITORY REF... - Install applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -330,6 +333,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   refs = g_ptr_array_new_with_free_func (g_free);
+  refs_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   for (i = 0; i < n_prefs; i++)
     {
       const char *pref = prefs[i];
@@ -339,6 +343,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autofree char *branch = NULL;
       FlatpakKinds kind;
       g_autofree char *ref = NULL;
+      g_autofree char *metadata = NULL;
+      g_autoptr(GKeyFile) metakey = NULL;
 
       if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
                                           &matched_kinds, &id, &arch, &branch, error))
@@ -349,7 +355,28 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (ref == NULL)
         return FALSE;
 
-      g_ptr_array_add (refs, g_steal_pointer (&ref));
+      metakey = g_key_file_new ();
+      if (!opt_no_deps &&
+          flatpak_dir_fetch_ref_cache (dir, repository, ref, NULL, NULL, &metadata, cancellable, NULL) &&
+          g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
+        {
+          g_autofree char *runtime_ref = NULL;
+          g_autofree char *full_runtime_ref = NULL;
+          runtime_ref = g_key_file_get_string (metakey, "Application", "runtime", NULL);
+          full_runtime_ref = g_strconcat ("runtime/", runtime_ref, NULL);
+          if (runtime_ref && !g_hash_table_lookup_extended (refs_hash, full_runtime_ref, NULL, NULL))
+            {
+              g_autoptr(FlatpakDeploy) deploy = flatpak_find_deploy_for_ref (full_runtime_ref, NULL, NULL);
+
+              if (deploy == NULL)
+                return flatpak_fail (error,
+                                     "The Application %s requires the runtime %s which is not installed",
+                                     id, runtime_ref);
+            }
+        }
+
+      if (g_hash_table_insert (refs_hash, g_strdup (ref), NULL))
+        g_ptr_array_add (refs, g_steal_pointer (&ref));
     }
 
   for (i = 0; i < refs->len; i++)

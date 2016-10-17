@@ -178,6 +178,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-deps</option></term>
+
+                <listitem><para>
+                    Don't verify runtime dependencies when installing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--app</option></term>
 
                 <listitem><para>
