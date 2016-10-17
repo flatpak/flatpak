@@ -3373,8 +3373,8 @@ flatpak_dir_update (FlatpakDir          *self,
         {
           if (strcmp (checksum_or_latest, installed_commit) == 0)
             {
-                  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                               _("%s branch %s already installed"), ref, installed_commit);
+              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                           _("%s branch %s already installed"), ref, installed_commit);
               return FALSE;
             }
         }
