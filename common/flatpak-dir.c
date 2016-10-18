@@ -5270,7 +5270,6 @@ flatpak_dir_fetch_remote_title (FlatpakDir   *self,
 {
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) extensions = NULL;
-  GVariantDict dict;
   g_autofree char *title = NULL;
 
   summary = fetch_remote_summary_file (self, remote, cancellable, error);
@@ -5279,9 +5278,7 @@ flatpak_dir_fetch_remote_title (FlatpakDir   *self,
 
   extensions = g_variant_get_child_value (summary, 1);
 
-  g_variant_dict_init (&dict, extensions);
-  g_variant_dict_lookup (&dict, "xa.title", "s", &title);
-  g_variant_dict_end (&dict);
+  g_variant_lookup (extensions, "xa.title", "s", &title);
 
   if (title == NULL)
     {
@@ -5301,7 +5298,6 @@ flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
 {
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) extensions = NULL;
-  GVariantDict dict;
   g_autofree char *default_branch = NULL;
 
   summary = fetch_remote_summary_file (self, remote, cancellable, error);
@@ -5309,10 +5305,7 @@ flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
     return NULL;
 
   extensions = g_variant_get_child_value (summary, 1);
-
-  g_variant_dict_init (&dict, extensions);
-  g_variant_dict_lookup (&dict, "xa.default-branch", "s", &default_branch);
-  g_variant_dict_end (&dict);
+  g_variant_lookup (extensions, "xa.default-branch", "s", &default_branch);
 
   if (default_branch == NULL)
     {
