@@ -4193,6 +4193,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
 {
   g_autofree char *url = NULL;
   gboolean is_local;
+  g_autoptr(GError) local_error = NULL;
 
   if (!ostree_repo_remote_get_url (self->repo, name, &url, error))
     return FALSE;
@@ -4209,6 +4210,10 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
           return TRUE;
         }
     }
+
+  /* Seems ostree asserts if this is NULL */
+  if (error == NULL)
+    error = &local_error;
 
   if (!ostree_repo_remote_fetch_summary (self->repo, name,
                                          out_summary, NULL,
