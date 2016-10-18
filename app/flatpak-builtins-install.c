@@ -296,6 +296,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   const char *repository;
   char **prefs = NULL;
   int i, n_prefs;
+  g_autofree char *target_branch = NULL;
   g_autofree char *default_branch = NULL;
   FlatpakKinds kinds;
   g_autoptr(GPtrArray) refs = NULL;
@@ -323,13 +324,11 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   /* Backwards compat for old "REPOSITORY NAME [BRANCH]" argument version */
   if (argc == 4 && looks_like_branch (argv[3]))
     {
-      default_branch = g_strdup (argv[3]);
+      target_branch = g_strdup (argv[3]);
       n_prefs = 1;
     }
 
-  if (default_branch == NULL)
-    default_branch = flatpak_dir_get_remote_default_branch (dir, repository);
-
+  default_branch = flatpak_dir_get_remote_default_branch (dir, repository);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   refs = g_ptr_array_new_with_free_func (g_free);
@@ -346,7 +345,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autofree char *metadata = NULL;
       g_autoptr(GKeyFile) metakey = NULL;
 
-      if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
+      if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, target_branch,
                                           &matched_kinds, &id, &arch, &branch, error))
         return FALSE;
 
