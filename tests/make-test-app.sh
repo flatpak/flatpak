@@ -29,6 +29,9 @@ EOF
 
 mkdir -p ${DIR}/files/share/icons/hicolor/64x64/apps
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/
+cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/hicolor/64x64/apps/dont-export.png
+mkdir -p ${DIR}/files/share/icons/HighContrast/64x64/apps
+cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/icons/HighContrast/64x64/apps/
 
 
 mkdir -p ${DIR}/files/share/app-info/xmls
