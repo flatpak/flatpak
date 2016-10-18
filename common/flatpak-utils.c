@@ -3823,6 +3823,75 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
   return TRUE;
 }
 
+gboolean
+flatpak_yes_no_prompt (const char *prompt, ...)
+{
+  char buf[512];
+  va_list var_args;
+  gchar *s;
+
+  va_start (var_args, prompt);
+  s = g_strdup_vprintf (prompt, var_args);
+
+  while (TRUE)
+    {
+      g_print ("%s %s: ", s, "[y/n]");
+      if (fgets (buf, sizeof (buf), stdin) == NULL)
+        return FALSE;
+
+      g_strstrip (buf);
+      if (g_ascii_strcasecmp  (buf, "y") == 0 ||
+          g_ascii_strcasecmp  (buf, "yes") == 0)
+        return TRUE;
+
+      if (g_ascii_strcasecmp  (buf, "n") == 0 ||
+          g_ascii_strcasecmp  (buf, "no") == 0)
+        return FALSE;
+    }
+}
+
+static gboolean
+is_number (const char *s)
+{
+  while (*s != 0)
+    {
+      if (!g_ascii_isdigit (*s))
+        return FALSE;
+      s++;
+    }
+
+  return TRUE;
+}
+
+long
+flatpak_number_prompt (int min, int max, const char *prompt, ...)
+{
+  char buf[512];
+  va_list var_args;
+  gchar *s;
+
+  va_start (var_args, prompt);
+  s = g_strdup_vprintf (prompt, var_args);
+
+  while (TRUE)
+    {
+      g_print ("%s [%d-%d]: ", s, min, max);
+      if (fgets (buf, sizeof (buf), stdin) == NULL)
+        return FALSE;
+
+      g_strstrip (buf);
+
+      if (is_number (buf))
+        {
+          long res = strtol (buf, NULL, 10);
+
+          if (res >= min && res <= max)
+            return res;
+        }
+    }
+}
+
+
 /* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
  * to not have it interfere with stdout/stderr)
  */

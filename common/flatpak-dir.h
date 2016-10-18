@@ -153,6 +153,13 @@ GFile *     flatpak_dir_get_if_deployed (FlatpakDir   *self,
                                          const char   *ref,
                                          const char   *checksum,
                                          GCancellable *cancellable);
+gboolean    flatpak_dir_remote_has_ref (FlatpakDir   *self,
+                                        const char   *remote,
+                                        const char   *ref);
+char **     flatpak_dir_search_for_dependency (FlatpakDir   *self,
+                                               const char   *runtime_ref,
+                                               GCancellable *cancellable,
+                                               GError      **error);
 char *      flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                          const char   *remote,
                                          const char   *name,
@@ -395,6 +402,9 @@ gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir   *self,
 char     **flatpak_dir_list_remotes (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
+char     **flatpak_dir_list_enumerated_remotes (FlatpakDir   *self,
+                                                GCancellable *cancellable,
+                                                GError      **error);
 gboolean   flatpak_dir_modify_remote (FlatpakDir   *self,
                                       const char   *remote_name,
                                       GKeyFile     *config,

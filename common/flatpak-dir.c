@@ -4227,6 +4227,29 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   return TRUE;
 }
 
+gboolean
+flatpak_dir_remote_has_ref (FlatpakDir   *self,
+                            const char   *remote,
+                            const char   *ref)
+{
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  if (!flatpak_dir_remote_fetch_summary (self, remote,
+                                         &summary_bytes,
+                                         NULL, &local_error))
+    {
+      g_debug ("Can't get summary for remote %s: %s\n", remote, local_error->message);
+      return FALSE;
+    }
+
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                          summary_bytes, FALSE));
+
+  return flatpak_summary_lookup_ref (summary, ref, NULL);
+}
+
 /* This duplicates ostree_repo_list_refs so it can use flatpak_dir_remote_fetch_summary
    and get caching */
 static gboolean
@@ -4976,6 +4999,66 @@ flatpak_dir_list_remotes (FlatpakDir   *self,
                      cmp_remote, self);
 
   return res;
+}
+
+char **
+flatpak_dir_list_enumerated_remotes (FlatpakDir   *self,
+                                     GCancellable *cancellable,
+                                     GError      **error)
+{
+  g_autoptr(GPtrArray) res = g_ptr_array_new_with_free_func (g_free);
+  g_auto(GStrv) remotes = NULL;
+  int i;
+
+  remotes = flatpak_dir_list_remotes (self, cancellable, error);
+  if (remotes == NULL)
+    return NULL;
+
+  for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
+    {
+      const char *remote = remotes[i];
+
+      if (flatpak_dir_get_remote_disabled (self, remote))
+        continue;
+
+      if (flatpak_dir_get_remote_noenumerate (self, remote))
+        continue;
+
+      g_ptr_array_add (res, g_strdup (remote));
+    }
+
+  g_ptr_array_add (res, NULL);
+  return (char **)g_ptr_array_free (g_steal_pointer (&res), FALSE);
+}
+
+char **
+flatpak_dir_search_for_dependency (FlatpakDir   *self,
+                                   const char   *runtime_ref,
+                                   GCancellable *cancellable,
+                                   GError      **error)
+{
+  g_autoptr(GPtrArray) found = g_ptr_array_new_with_free_func (g_free);
+  g_auto(GStrv) remotes = NULL;
+  int i;
+
+  remotes = flatpak_dir_list_enumerated_remotes (self, cancellable, error);
+  if (remotes == NULL)
+    return NULL;
+
+  for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
+    {
+      const char *remote = remotes[i];
+
+      if (flatpak_dir_get_remote_nodeps (self, remote))
+        continue;
+
+      if (flatpak_dir_remote_has_ref (self, remote, runtime_ref))
+        g_ptr_array_add (found, g_strdup (remote));
+    }
+
+  g_ptr_array_add (found, NULL);
+
+  return (char **)g_ptr_array_free (g_steal_pointer (&found), FALSE);
 }
 
 gboolean

@@ -158,6 +158,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-deps</option></term>
+
+                <listitem><para>
+                    Don't update or install runtime dependencies when installing.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--app</option></term>
 
                 <listitem><para>

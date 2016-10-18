@@ -32,6 +32,8 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
+#include "flatpak-transaction.h"
 #include "flatpak-utils.h"
 #include "lib/flatpak-error.h"
 #include "flatpak-chain-input-stream.h"
@@ -53,7 +55,7 @@ static GOptionEntry options[] = {
   { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, N_("Don't pull, only install from local cache"), NULL },
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, N_("Don't deploy, only download to local cache"), NULL },
   { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, N_("Don't install related refs"), NULL },
-  { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify runtime dependencies"), NULL },
+  { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify/install runtime dependencies"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Install from local bundle file"), NULL },
@@ -142,78 +144,6 @@ install_bundle (FlatpakDir *dir,
   return TRUE;
 }
 
-static gboolean
-do_install (FlatpakDir          *dir,
-            gboolean             no_pull,
-            gboolean             no_deploy,
-            const char          *ref,
-            const char          *remote_name,
-            const char         **opt_subpaths,
-            GCancellable        *cancellable,
-            GError             **error)
-{
-  g_autoptr(GPtrArray) related = NULL;
-  const char *slash;
-  int i;
-
-  slash = strchr (ref, '/');
-  g_print (_("Installing: %s\n"), slash + 1);
-
-  if (!flatpak_dir_install (dir,
-                            opt_no_pull,
-                            opt_no_deploy,
-                            ref, remote_name,
-                            (const char **)opt_subpaths,
-                            NULL,
-                            cancellable, error))
-    return FALSE;
-
-  if (!opt_no_related)
-    {
-      g_autoptr(GError) local_error = NULL;
-
-      if (opt_no_pull)
-        related = flatpak_dir_find_local_related (dir, ref, remote_name, NULL, &local_error);
-      else
-        related = flatpak_dir_find_remote_related (dir, ref, remote_name, NULL, &local_error);
-      if (related == NULL)
-        {
-          g_printerr (_("Warning: Problem looking for related refs: %s\n"), local_error->message);
-          g_clear_error (&local_error);
-        }
-      else
-        {
-          for (i = 0; i < related->len; i++)
-            {
-              FlatpakRelated *rel = g_ptr_array_index (related, i);
-              g_auto(GStrv) parts = NULL;
-
-              if (!rel->download)
-                continue;
-
-              parts = g_strsplit (rel->ref, "/", 0);
-
-              g_print (_("Installing related: %s\n"), parts[1]);
-
-              if (!flatpak_dir_install_or_update (dir,
-                                                  opt_no_pull,
-                                                  opt_no_deploy,
-                                                  rel->ref, remote_name,
-                                                  (const char **)rel->subpaths,
-                                                  NULL,
-                                                  cancellable, &local_error))
-                {
-                  if (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
-                    g_printerr (_("Warning: Failed to install related ref %s: %s\n"),
-                                rel->ref, local_error->message);
-                  g_clear_error (&local_error);
-                }
-            }
-        }
-    }
-
-  return TRUE;
-}
 
 static gboolean
 install_from (FlatpakDir *dir,
@@ -232,6 +162,7 @@ install_from (FlatpakDir *dir,
   g_auto(GStrv) parts = NULL;
   const char *slash;
   FlatpakDir *clone;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
 
   if (argc < 2)
     return usage_error (context, _("Filename must be specified"), error);
@@ -259,30 +190,13 @@ install_from (FlatpakDir *dir,
   slash = strchr (ref, '/');
   g_print (_("Installing: %s\n"), slash + 1);
 
-  if (!do_install (clone,
-                   opt_no_pull,
-                   opt_no_deploy,
-                   ref, remote,
-                   (const char **)opt_subpaths,
-                   cancellable, error))
+  transaction = flatpak_transaction_new (dir, opt_no_pull, opt_no_deploy,
+                                         !opt_no_deps, !opt_no_related);
+
+  if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
     return FALSE;
 
-  return TRUE;
-}
-
-static gboolean
-looks_like_branch (const char *branch)
-{
-  /* In particular, / is not a valid branch char, so
-     this lets us distinguish full or partial refs as
-     non-branches. */
-  if (!flatpak_is_valid_branch (branch, NULL))
-    return FALSE;
-
-  /* Dots are allowed in branches, but not really used much, while
-     they are required for app ids, so thats a good check to
-     distinguish the two */
-  if (strchr (branch, '.') != NULL)
+  if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
     return FALSE;
 
   return TRUE;
@@ -293,16 +207,17 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  const char *repository;
+  const char *remote;
   char **prefs = NULL;
   int i, n_prefs;
   g_autofree char *target_branch = NULL;
   g_autofree char *default_branch = NULL;
   FlatpakKinds kinds;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
   g_autoptr(GPtrArray) refs = NULL;
   g_autoptr(GHashTable) refs_hash = NULL;
 
-  context = g_option_context_new (_("REPOSITORY REF... - Install applications or runtimes"));
+  context = g_option_context_new (_("REMOTE REF... - Install applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
@@ -315,24 +230,25 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
     return install_from (dir, context, argc, argv, cancellable, error);
 
   if (argc < 3)
-    return usage_error (context, _("REPOSITORY and REF must be specified"), error);
+    return usage_error (context, _("REMOTE and REF must be specified"), error);
 
-  repository = argv[1];
+  remote = argv[1];
   prefs = &argv[2];
   n_prefs = argc - 2;
 
-  /* Backwards compat for old "REPOSITORY NAME [BRANCH]" argument version */
+  /* Backwards compat for old "REMOTE NAME [BRANCH]" argument version */
   if (argc == 4 && looks_like_branch (argv[3]))
     {
       target_branch = g_strdup (argv[3]);
       n_prefs = 1;
     }
 
-  default_branch = flatpak_dir_get_remote_default_branch (dir, repository);
+  default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  refs = g_ptr_array_new_with_free_func (g_free);
-  refs_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  transaction = flatpak_transaction_new (dir, opt_no_pull, opt_no_deploy,
+                                         !opt_no_deps, !opt_no_related);
+
   for (i = 0; i < n_prefs; i++)
     {
       const char *pref = prefs[i];
@@ -342,53 +258,23 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autofree char *branch = NULL;
       FlatpakKinds kind;
       g_autofree char *ref = NULL;
-      g_autofree char *metadata = NULL;
-      g_autoptr(GKeyFile) metakey = NULL;
+      g_autofree char *runtime_ref = NULL;
 
       if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, target_branch,
                                           &matched_kinds, &id, &arch, &branch, error))
         return FALSE;
 
-      ref = flatpak_dir_find_remote_ref (dir, repository, id, branch, default_branch, arch,
+      ref = flatpak_dir_find_remote_ref (dir, remote, id, branch, default_branch, arch,
                                          matched_kinds, &kind, cancellable, error);
       if (ref == NULL)
         return FALSE;
 
-      metakey = g_key_file_new ();
-      if (!opt_no_deps &&
-          flatpak_dir_fetch_ref_cache (dir, repository, ref, NULL, NULL, &metadata, cancellable, NULL) &&
-          g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
-        {
-          g_autofree char *runtime_ref = NULL;
-          g_autofree char *full_runtime_ref = NULL;
-          runtime_ref = g_key_file_get_string (metakey, "Application", "runtime", NULL);
-          full_runtime_ref = g_strconcat ("runtime/", runtime_ref, NULL);
-          if (runtime_ref && !g_hash_table_lookup_extended (refs_hash, full_runtime_ref, NULL, NULL))
-            {
-              g_autoptr(FlatpakDeploy) deploy = flatpak_find_deploy_for_ref (full_runtime_ref, NULL, NULL);
-
-              if (deploy == NULL)
-                return flatpak_fail (error,
-                                     "The Application %s requires the runtime %s which is not installed",
-                                     id, runtime_ref);
-            }
-        }
-
-      if (g_hash_table_insert (refs_hash, g_strdup (ref), NULL))
-        g_ptr_array_add (refs, g_steal_pointer (&ref));
-    }
-
-  for (i = 0; i < refs->len; i++)
-    {
-      const char *ref = g_ptr_array_index (refs, i);
-      if (!do_install (dir,
-                       opt_no_pull,
-                       opt_no_deploy,
-                       ref, repository,
-                       (const char **)opt_subpaths,
-                       cancellable, error))
+      if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
         return FALSE;
     }
+
+  if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
+    return FALSE;
 
   return TRUE;
 }

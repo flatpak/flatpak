@@ -30,6 +30,8 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
+#include "flatpak-transaction.h"
 #include "flatpak-utils.h"
 #include "flatpak-error.h"
 
@@ -40,6 +42,7 @@ static gboolean opt_force_remove;
 static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
 static gboolean opt_no_related;
+static gboolean opt_no_deps;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_appstream;
@@ -51,6 +54,7 @@ static GOptionEntry options[] = {
   { "no-pull", 0, 0, G_OPTION_ARG_NONE, &opt_no_pull, N_("Don't pull, only update from local cache"), NULL },
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, N_("Don't deploy, only download to local cache"), NULL },
   { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, N_("Don't update related refs"), NULL},
+  { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify/install runtime dependencies"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, N_("Update appstream for remote"), NULL },
@@ -96,138 +100,6 @@ update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable
   return TRUE;
 }
 
-static gboolean
-do_update (FlatpakDir  * dir,
-           const char   *ref,
-           GCancellable *cancellable,
-           GError      **error)
-{
-  g_auto(GStrv) parts = flatpak_decompose_ref (ref, error);
-  g_autofree char *repository = NULL;
-  g_autoptr(GPtrArray) related = NULL;
-  g_autoptr(GError) update_error = NULL;
-  int i;
-
-  if (parts == NULL)
-    return FALSE;
-
-  repository = flatpak_dir_get_origin (dir, ref, cancellable, error);
-  if (repository == NULL)
-    return FALSE;
-
-  if (strcmp (parts[0], "app") == 0)
-    g_print (_("Updating application %s, branch %s\n"), parts[1], parts[3]);
-  else
-    g_print (_("Updating runtime %s, branch %s\n"), parts[1], parts[3]);
-
-  if (flatpak_dir_get_remote_disabled (dir, repository))
-    {
-      g_print (_("Remote %s disabled\n"), repository);
-      return TRUE;
-    }
-
-  if (!flatpak_dir_update (dir,
-                           opt_no_pull,
-                           opt_no_deploy,
-                           ref, repository, opt_commit, (const char **)opt_subpaths,
-                           NULL,
-                           cancellable, &update_error))
-    {
-      if (g_error_matches (update_error, FLATPAK_ERROR,
-                           FLATPAK_ERROR_ALREADY_INSTALLED))
-        g_print (_("No updates.\n"));
-      else
-        g_printerr ("Error updating: %s\n", update_error->message);
-    }
-  else
-    {
-      g_autoptr(GVariant) deploy_data = NULL;
-      g_autofree char *commit = NULL;
-      deploy_data = flatpak_dir_get_deploy_data (dir, ref, NULL, NULL);
-      commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
-      g_print (_("Now at %s.\n"), commit);
-    }
-
-
-  if (!opt_no_related)
-    {
-      g_autoptr(GError) local_error = NULL;
-
-      if (opt_no_pull)
-        related = flatpak_dir_find_local_related (dir, ref, repository, NULL,
-                                                  &local_error);
-      else
-        related = flatpak_dir_find_remote_related (dir, ref, repository, NULL,
-                                                   &local_error);
-      if (related == NULL)
-        {
-          g_printerr (_("Warning: Problem looking for related refs: %s\n"),
-                      local_error->message);
-          g_clear_error (&local_error);
-        }
-      else
-        {
-          for (i = 0; i < related->len; i++)
-            {
-              FlatpakRelated *rel = g_ptr_array_index (related, i);
-              g_autoptr(GError) local_error = NULL;
-              g_auto(GStrv) parts = NULL;
-
-              if (!rel->download)
-                continue;
-
-              parts = g_strsplit (rel->ref, "/", 0);
-
-              g_print (_("Updating related: %s\n"), parts[1]);
-
-              if (!flatpak_dir_install_or_update (dir,
-                                                  opt_no_pull,
-                                                  opt_no_deploy,
-                                                  rel->ref, repository,
-                                                  (const char **)rel->subpaths,
-                                                  NULL,
-                                                  cancellable, &local_error))
-                {
-                  if (g_error_matches (local_error, FLATPAK_ERROR,
-                                       FLATPAK_ERROR_ALREADY_INSTALLED))
-                    g_print (_("No updates.\n"));
-                  else
-                    g_printerr ("Error updating: %s\n", local_error->message);
-                  g_clear_error (&local_error);
-                }
-              else
-                {
-                  g_autoptr(GVariant) deploy_data = NULL;
-                  g_autofree char *commit = NULL;
-                  deploy_data = flatpak_dir_get_deploy_data (dir, rel->ref, NULL, NULL);
-                  commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
-                  g_print (_("Now at %s.\n"), commit);
-                }
-            }
-        }
-    }
-
-  return TRUE;
-}
-
-static gboolean
-looks_like_branch (const char *branch)
-{
-  /* In particular, / is not a valid branch char, so
-     this lets us distinguish full or partial refs as
-     non-branches. */
-  if (!flatpak_is_valid_branch (branch, NULL))
-    return FALSE;
-
-  /* Dots are allowed in branches, but not really used much, while
-     they are required for app ids, so thats a good check to
-     distinguish the two */
-  if (strchr (branch, '.') != NULL)
-    return FALSE;
-
-  return TRUE;
-}
-
 gboolean
 flatpak_builtin_update (int           argc,
                         char        **argv,
@@ -239,10 +111,8 @@ flatpak_builtin_update (int           argc,
   char **prefs = NULL;
   int i, j, n_prefs;
   const char *default_branch = NULL;
-  gboolean failed = FALSE;
   FlatpakKinds kinds;
-  g_autoptr(GHashTable) update_refs_hash = NULL;
-  g_autoptr(GPtrArray) update_refs = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
 
   context = g_option_context_new (_("[REF...] - Update applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -263,9 +133,11 @@ flatpak_builtin_update (int           argc,
       n_prefs = 1;
     }
 
-  update_refs = g_ptr_array_new_with_free_func (g_free);
-  update_refs_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  transaction = flatpak_transaction_new (dir, opt_no_pull, opt_no_deploy,
+                                         !opt_no_deps, !opt_no_related);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
+
+  g_print ("Looking for updates...\n");
 
   for (j = 0; j == 0 || j < n_prefs; j++)
     {
@@ -313,8 +185,8 @@ flatpak_builtin_update (int           argc,
                 continue;
 
               found = TRUE;
-              if (g_hash_table_insert (update_refs_hash, g_strdup (refs[i]), NULL))
-                g_ptr_array_add (update_refs, g_strdup (refs[i]));
+              if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, error))
+                return FALSE;
             }
         }
 
@@ -344,8 +216,8 @@ flatpak_builtin_update (int           argc,
                 continue;
 
               found = TRUE;
-              if (g_hash_table_insert (update_refs_hash, g_strdup (refs[i]), NULL))
-                g_ptr_array_add (update_refs, g_strdup (refs[i]));
+              if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, error))
+                return FALSE;
             }
         }
 
@@ -357,19 +229,8 @@ flatpak_builtin_update (int           argc,
         }
     }
 
-  for (i = 0; i < update_refs->len; i++)
-    {
-      const char *ref = (char *)g_ptr_array_index (update_refs, i);
-      g_autoptr(GError) local_error = NULL;
-      if (!do_update (dir, ref, cancellable, &local_error))
-        {
-          g_printerr (_("Error updating: %s\n"), local_error->message);
-          failed = TRUE;
-        }
-    }
-
-  if (failed)
-    return flatpak_fail (error, _("One or more updates failed"));
+  if (!flatpak_transaction_run (transaction, FALSE, cancellable, error))
+    return FALSE;
 
   return TRUE;
 }

@@ -30,6 +30,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-utils.h"
 
 static char *opt_arch;
@@ -48,24 +49,6 @@ static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { NULL }
 };
-
-static gboolean
-looks_like_branch (const char *branch)
-{
-  /* In particular, / is not a valid branch char, so
-     this lets us distinguish full or partial refs as
-     non-branches. */
-  if (!flatpak_is_valid_branch (branch, NULL))
-    return FALSE;
-
-  /* Dots are allowed in branches, but not really used much, while
-     they are required for app ids, so thats a good check to
-     distinguish the two */
-  if (strchr (branch, '.') != NULL)
-    return FALSE;
-
-  return TRUE;
-}
 
 gboolean
 flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GError **error)
