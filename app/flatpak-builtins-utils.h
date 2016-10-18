@@ -24,6 +24,8 @@
 #include <glib.h>
 #include "libglnx/libglnx.h"
 
-gboolean looks_like_branch (const char *branch);
+gboolean    looks_like_branch (const char  *branch);
+GBytes *    download_uri      (const char  *url,
+                               GError     **error);
 
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */

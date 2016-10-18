@@ -32,6 +32,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-utils.h"
 #include "flatpak-chain-input-stream.h"
 
@@ -62,7 +63,7 @@ static char **opt_gpg_import;
 
 static GOptionEntry add_options[] = {
   { "if-not-exists", 0, 0, G_OPTION_ARG_NONE, &opt_if_not_exists, N_("Do nothing if the provided remote exists"), NULL },
-  { "from", 0, 0, G_OPTION_ARG_FILENAME, &opt_from, N_("Load options from file"), N_("FILE") },
+  { "from", 0, 0, G_OPTION_ARG_FILENAME, &opt_from, N_("Load options from file or uri"), N_("FILE/URI") },
   { NULL }
 };
 
@@ -225,12 +226,34 @@ load_options (char *filename,
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   char *str;
   gboolean nodeps;
+  g_autoptr(GBytes) bytes = NULL;
 
-  if (!g_key_file_load_from_file (keyfile, filename, 0, &error))
+  if (g_str_has_prefix (filename, "http:") ||
+      g_str_has_prefix (filename, "https:"))
     {
-      g_printerr ("Can't load file %s: %s\n", filename, error->message);
-      exit (1);
+      bytes = download_uri (filename, &error);
+
+      if (bytes == NULL)
+        {
+          g_printerr ("Can't load uri %s: %s\n", filename, error->message);
+          exit (1);
+        }
+
+      if (!g_key_file_load_from_bytes (keyfile, bytes, 0, &error))
+        {
+          g_printerr ("Can't load uri %s: %s\n", filename, error->message);
+          exit (1);
+        }
     }
+  else
+    {
+      if (!g_key_file_load_from_file (keyfile, filename, 0, &error))
+        {
+          g_printerr ("Can't load file %s: %s\n", filename, error->message);
+          exit (1);
+        }
+    }
+
 
   if (!g_key_file_has_group (keyfile, FLATPAK_REPO_GROUP))
     {

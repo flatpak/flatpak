@@ -39,7 +39,7 @@
                 <command>flatpak remote-add</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
                 <arg choice="plain">--from</arg>
-                <arg choice="plain">FILENAME</arg>
+                <arg choice="plain">FILENAME or URL</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -81,7 +81,7 @@
                 <term><option>--from</option></term>
 
                 <listitem><para>
-                    Add from a flatpakrepo file instead of from commandline arguments.
+                    Add from a flatpakrepo file (local or http uri) instead of from commandline arguments.
                 </para></listitem>
             </varlistentry>
 
