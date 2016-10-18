@@ -760,7 +760,13 @@ build (GFile          *app_dir,
     builddir = "/run/build/";
 
   g_ptr_array_add (args, g_strdup ("--nofilesystem=host"));
+
+  /* We mount the canonical location, because bind-mounts of symlinks don't really work */
   g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", source_dir_path_canonical));
+
+  /* Also make sure the original path is available (if it was not canonical, in case something references that. */
+  if (strcmp (source_dir_path_canonical, source_dir_path) != 0)
+  g_ptr_array_add (args, g_strdup_printf ("--bind-mount=%s=%s", source_dir_path, source_dir_path_canonical));
 
   g_ptr_array_add (args, g_strdup_printf ("--bind-mount=%s%s=%s", builddir, module_name, source_dir_path_canonical));
   if (cwd_subdir)
