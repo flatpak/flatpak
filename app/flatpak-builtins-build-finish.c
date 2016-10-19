@@ -349,7 +349,7 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(FlatpakContext) arg_context = NULL;
 
-  context = g_option_context_new (_("DIRECTORY - Convert a directory to a bundle"));
+  context = g_option_context_new (_("DIRECTORY - Finalize a build directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   arg_context = flatpak_context_new ();
