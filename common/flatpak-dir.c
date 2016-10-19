@@ -1186,6 +1186,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
         }
       else
         {
+          g_debug ("Calling system helper: DeployAppstream");
           if (!flatpak_system_helper_call_deploy_appstream_sync (system_helper,
                                                                  flatpak_file_get_path_cached (ostree_repo_get_path (child_repo)),
                                                                  remote,
@@ -3098,6 +3099,7 @@ flatpak_dir_install (FlatpakDir          *self,
       if (no_deploy)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY;
 
+      g_debug ("Calling system helper: Deploy");
       if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                    child_repo_path ? child_repo_path : "",
                                                    helper_flags, ref, remote_name,
@@ -3163,6 +3165,7 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
       else
         gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
 
+      g_debug ("Calling system helper: InstallBundle");
       if (!flatpak_system_helper_call_install_bundle_sync (system_helper,
                                                            flatpak_file_get_path_cached (file),
                                                            0, gpg_data_v,
@@ -3468,6 +3471,7 @@ flatpak_dir_update (FlatpakDir          *self,
       active_checksum = flatpak_dir_read_active (self, ref, NULL);
       if (g_strcmp0 (active_checksum, latest_checksum) != 0)
         {
+          g_debug ("Calling system helper: Deploy");
           if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                        child_repo_path ? child_repo_path : "",
                                                        helper_flags, ref, remote_name,
@@ -3568,6 +3572,7 @@ flatpak_dir_uninstall (FlatpakDir          *self,
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
 
+      g_debug ("Calling system helper: Uninstall");
       if (!flatpak_system_helper_call_uninstall_sync (system_helper,
                                                       flags, ref,
                                                       cancellable, error))
@@ -5087,6 +5092,7 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
       if (force_remove)
         flags |= FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_FORCE_REMOVE;
 
+      g_debug ("Calling system helper: ConfigureRemote");
       if (!flatpak_system_helper_call_configure_remote_sync (system_helper,
                                                              flags, remote_name,
                                                              "",
@@ -5195,6 +5201,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
 
+      g_debug ("Calling system helper: ConfigureRemote");
       if (!flatpak_system_helper_call_configure_remote_sync (system_helper,
                                                              0, remote_name,
                                                              config_data,
