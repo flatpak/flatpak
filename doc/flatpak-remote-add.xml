@@ -35,12 +35,6 @@
                 <arg choice="plain">NAME</arg>
                 <arg choice="plain">LOCATION</arg>
             </cmdsynopsis>
-            <cmdsynopsis>
-                <command>flatpak remote-add</command>
-                <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">--from</arg>
-                <arg choice="plain">FILENAME or URL</arg>
-            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -81,7 +75,7 @@
                 <term><option>--from</option></term>
 
                 <listitem><para>
-                    Add from a flatpakrepo file (local or http uri) instead of from commandline arguments.
+                    Add from a flatpakrepo file (local or http uri) instead of from commandline arguments. This means the LOCATION argument specifies the filename/uri of a flatpakref rather than a repo url.
                 </para></listitem>
             </varlistentry>
 

@@ -57,13 +57,13 @@ static int opt_prio = -1;
 static char *opt_title;
 static char *opt_default_branch;
 static char *opt_url;
-static char *opt_from;
+static gboolean opt_from;
 static char **opt_gpg_import;
 
 
 static GOptionEntry add_options[] = {
   { "if-not-exists", 0, 0, G_OPTION_ARG_NONE, &opt_if_not_exists, N_("Do nothing if the provided remote exists"), NULL },
-  { "from", 0, 0, G_OPTION_ARG_FILENAME, &opt_from, N_("Load options from file or uri"), N_("FILE/URI") },
+  { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Load options from file or uri"), NULL },
   { NULL }
 };
 
@@ -219,7 +219,7 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name)
 }
 
 static void
-load_options (char *filename,
+load_options (const char *filename,
               GBytes **gpg_data)
 {
   g_autoptr(GError) error = NULL;
@@ -354,7 +354,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
   g_auto(GStrv) remotes = NULL;
   g_autofree char *remote_url = NULL;
   const char *remote_name;
-  const char *url_or_path = NULL;
+  const char *location = NULL;
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
 
@@ -366,19 +366,17 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (!flatpak_option_context_parse (context, add_options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
 
-  if (opt_from)
-    load_options (opt_from, &gpg_data);
-
   if (argc < 2)
     return usage_error (context, _("NAME must be specified"), error);
 
-  if (argc < 3 && opt_url == NULL)
+  if (argc < 3)
     return usage_error (context, _("LOCATION must be specified"), error);
 
   if (argc > 3)
     return usage_error (context, _("Too many arguments"), error);
 
   remote_name = argv[1];
+  location = argv[2];
 
   remotes = flatpak_dir_list_remotes (dir, cancellable, error);
   if (remotes == NULL)
@@ -392,14 +390,19 @@ flatpak_builtin_add_remote (int argc, char **argv,
       return flatpak_fail (error, _("Remote %s already exists"), remote_name);
     }
 
-  if (opt_url == NULL)
+  if (opt_from)
     {
-      url_or_path  = argv[2];
-      file = g_file_new_for_commandline_arg (url_or_path);
+      load_options (location, &gpg_data);
+      if (opt_url == NULL)
+        return flatpak_fail (error, _("No url specified in flatpakrepo file"));
+    }
+  else
+    {
+      file = g_file_new_for_commandline_arg (location);
       if (g_file_is_native (file))
         remote_url = g_file_get_uri (file);
       else
-        remote_url = g_strdup (url_or_path);
+        remote_url = g_strdup (location);
       opt_url = remote_url;
     }
 
