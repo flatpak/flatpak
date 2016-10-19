@@ -33,7 +33,7 @@ struct FlatpakTransactionOp {
   char *remote;
   char *ref;
   char **subpaths;
-  char *commit; /* TODO: handle */
+  char *commit;
   gboolean update;
   gboolean install;
   gboolean non_fatal;
@@ -100,6 +100,7 @@ static FlatpakTransactionOp *
 flatpak_transaction_operation_new (const char *remote,
                                    const char *ref,
                                    const char **subpaths,
+                                   const char *commit,
                                    gboolean install,
                                    gboolean update)
 {
@@ -108,6 +109,7 @@ flatpak_transaction_operation_new (const char *remote,
   self->remote = g_strdup (remote);
   self->ref = g_strdup (ref);
   self->subpaths = g_strdupv ((char **)subpaths);
+  self->commit = g_strdup (commit);
   self->update = update;
   self->install = install;
 
@@ -193,6 +195,7 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
                             const char *remote,
                             const char *ref,
                             const char **subpaths,
+                            const char *commit,
                             gboolean install,
                             gboolean update)
 {
@@ -227,7 +230,7 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
       return op;
     }
 
-  op = flatpak_transaction_operation_new (remote, ref, subpaths, install, update);
+  op = flatpak_transaction_operation_new (remote, ref, subpaths, commit, install, update);
   g_hash_table_insert (self->refs, g_strdup (ref), op);
   self->ops = g_list_prepend (self->ops, op);
 
@@ -296,7 +299,7 @@ add_related (FlatpakTransaction *self,
 
           op = flatpak_transaction_add_op (self, remote, rel->ref,
                                            (const char **)rel->subpaths,
-                                           TRUE, TRUE);
+                                           NULL, TRUE, TRUE);
           op->non_fatal = TRUE;
         }
     }
@@ -348,14 +351,14 @@ add_deps (FlatpakTransaction *self,
                                  "The Application %s requires the runtime %s which is not installed",
                                  pref, runtime_ref);
 
-          flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, TRUE, TRUE);
+          flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, TRUE, TRUE);
         }
       else
         {
           /* Update if in same dir */
           if (dir_ref_is_installed (self->dir, full_runtime_ref, &runtime_remote))
             {
-              flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, FALSE, TRUE);
+              flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, FALSE, TRUE);
             }
         }
     }
@@ -372,6 +375,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
                              const char *remote,
                              const char *ref,
                              const char **subpaths,
+                             const char *commit,
                              gboolean is_update,
                              GError **error)
 {
@@ -410,7 +414,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   if (self->add_deps)
     add_deps (self, remote, ref, error);
 
-  flatpak_transaction_add_op (self, remote, ref, subpaths, !is_update, is_update);
+  flatpak_transaction_add_op (self, remote, ref, subpaths, commit, !is_update, is_update);
 
   if (!add_related (self, remote, ref, error))
     return FALSE;
@@ -431,16 +435,17 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
   if (subpaths == NULL)
     subpaths = all_paths;
 
-  return flatpak_transaction_add_ref (self, remote, ref, subpaths, FALSE, error);
+  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, FALSE, error);
 }
 
 gboolean
 flatpak_transaction_add_update (FlatpakTransaction *self,
                                 const char *ref,
                                 const char **subpaths,
+                                const char *commit,
                                 GError **error)
 {
-  return flatpak_transaction_add_ref (self, NULL, ref, subpaths, TRUE, error);
+  return flatpak_transaction_add_ref (self, NULL, ref, subpaths, commit, TRUE, error);
 }
 
 

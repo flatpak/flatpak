@@ -46,6 +46,7 @@ gboolean            flatpak_transaction_add_install (FlatpakTransaction  *self,
 gboolean            flatpak_transaction_add_update  (FlatpakTransaction  *self,
                                                      const char          *ref,
                                                      const char         **subpaths,
+                                                     const char          *commit,
                                                      GError             **error);
 
 

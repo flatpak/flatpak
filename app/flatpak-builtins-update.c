@@ -185,7 +185,7 @@ flatpak_builtin_update (int           argc,
                 continue;
 
               found = TRUE;
-              if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, error))
+              if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, opt_commit, error))
                 return FALSE;
             }
         }
@@ -216,7 +216,7 @@ flatpak_builtin_update (int           argc,
                 continue;
 
               found = TRUE;
-              if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, error))
+              if (!flatpak_transaction_add_update (transaction, refs[i], (const char **)opt_subpaths, opt_commit, error))
                 return FALSE;
             }
         }
