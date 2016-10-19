@@ -32,6 +32,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_GROUP_CONTEXT "Context"
 #define FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
 #define FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
+#define FLATPAK_METADATA_GROUP_PREFIX_POLICY "Policy "
 #define FLATPAK_METADATA_GROUP_ENVIRONMENT "Environment"
 #define FLATPAK_METADATA_KEY_SHARED "shared"
 #define FLATPAK_METADATA_KEY_SOCKETS "sockets"
