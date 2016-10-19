@@ -414,6 +414,8 @@ int        flatpak_dir_get_remote_prio (FlatpakDir *self,
                                         const char *remote_name);
 gboolean   flatpak_dir_get_remote_noenumerate (FlatpakDir *self,
                                                const char *remote_name);
+gboolean   flatpak_dir_get_remote_nodeps (FlatpakDir *self,
+                                          const char *remote_name);
 gboolean   flatpak_dir_get_remote_disabled (FlatpakDir *self,
                                             const char *remote_name);
 gboolean   flatpak_dir_list_remote_refs (FlatpakDir   *self,

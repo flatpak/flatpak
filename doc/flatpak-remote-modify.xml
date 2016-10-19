@@ -117,6 +117,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-use-for-deps</option></term>
+
+                <listitem><para>
+                    Mark the remote as not to be used for automatic runtime
+                    dependency resolution.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--disable</option></term>
 
                 <listitem><para>
@@ -139,6 +148,15 @@
                     Mark the remote as enumerated. This means the remote will
                     be used to list applications, for instance in graphical
                     installation tools.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--use-for-deps</option></term>
+
+                <listitem><para>
+                    Mark the remote as to be used for automatic runtime
+                    dependency resolution.
                 </para></listitem>
             </varlistentry>
 

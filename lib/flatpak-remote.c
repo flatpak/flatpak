@@ -58,6 +58,7 @@ struct _FlatpakRemotePrivate
   char       *local_default_branch;
   gboolean    local_gpg_verify;
   gboolean    local_noenumerate;
+  gboolean    local_nodeps;
   gboolean    local_disabled;
   int         local_prio;
 
@@ -66,6 +67,7 @@ struct _FlatpakRemotePrivate
   guint       local_default_branch_set : 1;
   guint       local_gpg_verify_set : 1;
   guint       local_noenumerate_set : 1;
+  guint       local_nodeps_set : 1;
   guint       local_disabled_set : 1;
   guint       local_prio_set : 1;
 
@@ -419,6 +421,49 @@ flatpak_remote_set_noenumerate (FlatpakRemote *self,
 
   priv->local_noenumerate = noenumerate;
   priv->local_noenumerate_set = TRUE;
+}
+
+/**
+ * flatpak_remote_get_nodeps:
+ * @self: a #FlatpakRemote
+ *
+ * Returns whether this remote should be used to find dependencies.
+ *
+ * Returns: whether the remote is marked as "don't use for dependencies"
+ */
+gboolean
+flatpak_remote_get_nodeps (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_nodeps_set)
+    return priv->local_nodeps;
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_nodeps (priv->dir, priv->name);
+
+  return FALSE;
+}
+
+/**
+ * flatpak_remote_set_nodeps:
+ * @self: a #FlatpakRemote
+ * @nodeps: a bool
+ *
+ * Sets the nodeps config of this remote. See flatpak_remote_get_nodeps().
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_nodeps (FlatpakRemote *self,
+                           gboolean nodeps)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  priv->local_nodeps = nodeps;
+  priv->local_nodeps_set = TRUE;
 }
 
 /**

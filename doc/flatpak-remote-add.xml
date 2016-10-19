@@ -129,6 +129,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--no-use-for-deps</option></term>
+
+                <listitem><para>
+                    Mark the remote as not to be used for automatic runtime
+                    dependency resolution.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--if-not-exists</option></term>
 
                 <listitem><para>

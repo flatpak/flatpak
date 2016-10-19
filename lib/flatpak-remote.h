@@ -74,6 +74,9 @@ FLATPAK_EXTERN void          flatpak_remote_set_gpg_key (FlatpakRemote *self,
 FLATPAK_EXTERN gboolean      flatpak_remote_get_noenumerate (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_noenumerate (FlatpakRemote *self,
                                                              gboolean       noenumerate);
+FLATPAK_EXTERN gboolean      flatpak_remote_get_nodeps (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_nodeps (FlatpakRemote *self,
+                                                        gboolean       nodeps);
 FLATPAK_EXTERN gboolean      flatpak_remote_get_disabled (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_disabled (FlatpakRemote *self,
                                                           gboolean       disabled);

@@ -40,11 +40,14 @@
 #define FLATPAK_REPO_TITLE_KEY "Title"
 #define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
+#define FLATPAK_REPO_NODEPS_KEY "NoDeps"
 
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
 static gboolean opt_do_enumerate;
 static gboolean opt_no_enumerate;
+static gboolean opt_do_deps;
+static gboolean opt_no_deps;
 static gboolean opt_if_not_exists;
 static gboolean opt_enable;
 static gboolean opt_update_metadata;
@@ -66,6 +69,7 @@ static GOptionEntry add_options[] = {
 static GOptionEntry modify_options[] = {
   { "gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_do_gpg_verify, N_("Enable GPG verification"), NULL },
   { "enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_do_enumerate, N_("Mark the remote as enumerate"), NULL },
+  { "use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_do_deps, N_("Mark the remote as used for dependencies"), NULL },
   { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url, N_("Set a new url"), N_("URL") },
   { "enable", 0, 0, G_OPTION_ARG_NONE, &opt_enable, N_("Enable the remote"), NULL },
   { "update-metadata", 0, 0, G_OPTION_ARG_NONE, &opt_update_metadata, N_("Update extra metadata from the summary file"), NULL },
@@ -75,6 +79,7 @@ static GOptionEntry modify_options[] = {
 static GOptionEntry common_options[] = {
   { "no-gpg-verify", 0, 0, G_OPTION_ARG_NONE, &opt_no_gpg_verify, N_("Disable GPG verification"), NULL },
   { "no-enumerate", 0, 0, G_OPTION_ARG_NONE, &opt_no_enumerate, N_("Mark the remote as don't enumerate"), NULL },
+  { "no-use-for-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Mark the remote as don't use for deps"), NULL },
   { "prio", 0, 0, G_OPTION_ARG_INT, &opt_prio, N_("Set priority (default 1, higher is more prioritized)"), N_("PRIORITY") },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this remote"), N_("TITLE") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this remote"), N_("BRANCH") },
@@ -192,6 +197,12 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name)
   if (opt_do_enumerate)
     g_key_file_set_boolean (config, group, "xa.noenumerate", FALSE);
 
+  if (opt_no_deps)
+    g_key_file_set_boolean (config, group, "xa.nodeps", TRUE);
+
+  if (opt_do_deps)
+    g_key_file_set_boolean (config, group, "xa.nodeps", FALSE);
+
   if (opt_disable)
     g_key_file_set_boolean (config, group, "xa.disable", TRUE);
   else if (opt_enable)
@@ -213,6 +224,7 @@ load_options (char *filename,
   g_autoptr(GError) error = NULL;
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
   char *str;
+  gboolean nodeps;
 
   if (!g_key_file_load_from_file (keyfile, filename, 0, &error))
     {
@@ -240,6 +252,14 @@ load_options (char *filename,
                                       FLATPAK_REPO_DEFAULT_BRANCH_KEY, NULL, NULL);
   if (str != NULL)
     opt_default_branch = str;
+
+  nodeps = g_key_file_get_boolean (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_NODEPS_KEY, NULL);
+  if (nodeps)
+    {
+      opt_no_deps = TRUE;
+      opt_do_deps = FALSE;
+    }
 
   str = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
                                FLATPAK_REPO_GPGKEY_KEY, NULL);

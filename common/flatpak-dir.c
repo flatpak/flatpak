@@ -4723,6 +4723,19 @@ flatpak_dir_get_remote_noenumerate (FlatpakDir *self,
 }
 
 gboolean
+flatpak_dir_get_remote_nodeps (FlatpakDir *self,
+                               const char *remote_name)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_boolean (config, group, "xa.nodeps", NULL);
+
+  return TRUE;
+}
+
+gboolean
 flatpak_dir_get_remote_disabled (FlatpakDir *self,
                                  const char *remote_name)
 {
