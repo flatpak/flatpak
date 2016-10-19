@@ -2580,7 +2580,8 @@ compute_permissions (GKeyFile *app_metadata,
   if (!flatpak_context_load_metadata (app_context, runtime_metadata, error))
     return NULL;
 
-  if (!flatpak_context_load_metadata (app_context, app_metadata, error))
+  if (app_metadata != NULL &&
+      !flatpak_context_load_metadata (app_context, app_metadata, error))
     return NULL;
 
   return g_steal_pointer (&app_context);
@@ -2601,10 +2602,10 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   g_autofree char *tmp_path = NULL;
   int fd;
   g_autoptr(GKeyFile) keyfile = NULL;
-  g_autofree char *app_path = NULL;
   g_autofree char *runtime_path = NULL;
   g_autofree char *fd_str = NULL;
   g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
+  const char *group;
 
   fd = g_file_open_tmp ("flatpak-context-XXXXXX", &tmp_path, NULL);
   if (fd < 0)
@@ -2619,11 +2620,19 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
 
   keyfile = g_key_file_new ();
 
-  g_key_file_set_string (keyfile, "Application", "name", app_id);
-  g_key_file_set_string (keyfile, "Application", "runtime", runtime_ref);
+  if (app_files)
+    group = "Application";
+  else
+    group = "Runtime";
 
-  app_path = g_file_get_path (app_files);
-  g_key_file_set_string (keyfile, "Instance", "app-path", app_path);
+  g_key_file_set_string (keyfile, group, "name", app_id);
+  g_key_file_set_string (keyfile, group, "runtime", runtime_ref);
+
+  if (app_files)
+    {
+      g_autofree char *app_path = g_file_get_path (app_files);
+      g_key_file_set_string (keyfile, "Instance", "app-path", app_path);
+    }
   runtime_path = g_file_get_path (runtime_files);
   g_key_file_set_string (keyfile, "Instance", "runtime-path", runtime_path);
   if (app_branch != NULL)
@@ -3449,8 +3458,6 @@ flatpak_run_app (const char     *app_ref,
   if (app_ref_parts == NULL)
     return FALSE;
 
-  metakey = flatpak_deploy_get_metadata (app_deploy);
-
   argv_array = g_ptr_array_new_with_free_func (g_free);
   fd_array = g_array_new (FALSE, TRUE, sizeof (int));
   g_array_set_clear_func (fd_array, clear_fd);
@@ -3458,13 +3465,22 @@ flatpak_run_app (const char     *app_ref,
   session_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
   system_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
 
-  default_runtime = g_key_file_get_string (metakey, "Application",
-                                           (flags & FLATPAK_RUN_FLAG_DEVEL) != 0 ? "sdk" : "runtime",
-                                           &my_error);
-  if (my_error)
+  if (app_deploy == NULL)
     {
-      g_propagate_error (error, g_steal_pointer (&my_error));
-      return FALSE;
+      g_assert (g_str_has_prefix (app_ref, "runtime/"));
+      default_runtime = g_strdup (app_ref + strlen ("runtime/"));
+    }
+  else
+    {
+      metakey = flatpak_deploy_get_metadata (app_deploy);
+      default_runtime = g_key_file_get_string (metakey, "Application",
+                                               (flags & FLATPAK_RUN_FLAG_DEVEL) != 0 ? "sdk" : "runtime",
+                                               &my_error);
+      if (my_error)
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
     }
 
   runtime_parts = g_strsplit (default_runtime, "/", 0);
@@ -3509,29 +3525,43 @@ flatpak_run_app (const char     *app_ref,
   if (app_context == NULL)
     return FALSE;
 
-  overrides = flatpak_deploy_get_overrides (app_deploy);
-  flatpak_context_merge (app_context, overrides);
+  if (app_deploy != NULL)
+    {
+      overrides = flatpak_deploy_get_overrides (app_deploy);
+      flatpak_context_merge (app_context, overrides);
+    }
 
   if (extra_context)
     flatpak_context_merge (app_context, extra_context);
 
   runtime_files = flatpak_deploy_get_files (runtime_deploy);
-  app_files = flatpak_deploy_get_files (app_deploy);
-
-  if ((app_id_dir = flatpak_ensure_data_dir (app_ref_parts[1], cancellable, error)) == NULL)
-    return FALSE;
+  if (app_deploy != NULL)
+    {
+      app_files = flatpak_deploy_get_files (app_deploy);
+      if ((app_id_dir = flatpak_ensure_data_dir (app_ref_parts[1], cancellable, error)) == NULL)
+        return FALSE;
+    }
 
   envp = g_get_environ ();
   envp = flatpak_run_apply_env_default (envp);
   envp = flatpak_run_apply_env_vars (envp, app_context);
-  envp = flatpak_run_apply_env_appid (envp, app_id_dir);
+  if (app_id_dir != NULL)
+    envp = flatpak_run_apply_env_appid (envp, app_id_dir);
 
   add_args (argv_array,
             "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
             "--lock-file", "/usr/.ref",
-            "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
-            "--lock-file", "/app/.ref",
             NULL);
+
+  if (app_files != NULL)
+    add_args (argv_array,
+              "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
+              "--lock-file", "/app/.ref",
+              NULL);
+  else
+    add_args (argv_array,
+              "--dir", "/app",
+              NULL);
 
   if (app_context->features & FLATPAK_CONTEXT_FEATURE_DEVEL)
     flags |= FLATPAK_RUN_FLAG_DEVEL;
@@ -3546,7 +3576,8 @@ flatpak_run_app (const char     *app_ref,
                                       runtime_ref, app_context, &app_info_path, error))
     return FALSE;
 
-  if (!flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
+  if (metakey != NULL &&
+      !flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
     return FALSE;
 
   if (!flatpak_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
@@ -3592,7 +3623,7 @@ flatpak_run_app (const char     *app_ref,
     {
       command = custom_command;
     }
-  else
+  else if (metakey)
     {
       default_command = g_key_file_get_string (metakey, "Application", "command", &my_error);
       if (my_error)
@@ -3600,7 +3631,6 @@ flatpak_run_app (const char     *app_ref,
           g_propagate_error (error, g_steal_pointer (&my_error));
           return FALSE;
         }
-
       command = default_command;
     }
 

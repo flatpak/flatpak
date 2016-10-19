@@ -33,6 +33,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "flatpak-error.h"
 #include "flatpak-dbus.h"
 #include "flatpak-run.h"
 
@@ -63,6 +64,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDeploy) app_deploy = NULL;
   g_autofree char *app_ref = NULL;
+  g_autofree char *runtime_ref = NULL;
   const char *pref;
   int i;
   int rest_argv_start, rest_argc;
@@ -71,6 +73,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   g_autofree char *arch = NULL;
   g_autofree char *branch = NULL;
   FlatpakKinds kinds;
+  g_autoptr(GError) local_error = NULL;
 
   context = g_option_context_new (_("APP [args...] - Run an app"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -99,7 +102,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   pref = argv[rest_argv_start];
 
-  if (!flatpak_split_partial_ref_arg (pref, FLATPAK_KINDS_APP, opt_arch, opt_branch,
+  if (!flatpak_split_partial_ref_arg (pref, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME,
+                                      opt_arch, opt_branch,
                                       &kinds, &id, &arch, &branch, error))
     return FALSE;
 
@@ -126,18 +130,46 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
         }
     }
 
-  if (app_ref == NULL)
+  if ((kinds & FLATPAK_KINDS_APP) != 0)
     {
-      app_ref = flatpak_compose_ref (TRUE, id, branch, arch, error);
+      app_ref = flatpak_compose_ref (TRUE, id, branch, arch, &local_error);
       if (app_ref == NULL)
         return FALSE;
+
+      app_deploy = flatpak_find_deploy_for_ref (app_ref, cancellable, &local_error);
+      if (app_deploy == NULL &&
+          (!g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED) ||
+           (kinds & FLATPAK_KINDS_RUNTIME) == 0))
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+      /* On error, local_error is set after this point so we can reuse
+         this error rather than later errors, as the app-kind error
+         is more likely interesting. */
     }
 
-  app_deploy = flatpak_find_deploy_for_ref (app_ref, cancellable, error);
   if (app_deploy == NULL)
-    return FALSE;
+    {
+      g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
 
-  if (!flatpak_run_app (app_ref, app_deploy,
+      runtime_ref = flatpak_compose_ref (FALSE, id, branch, arch, error);
+      if (runtime_ref == NULL)
+        return FALSE;
+
+      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, NULL);
+      if (runtime_deploy == NULL)
+        {
+          /* Report old app-kind error, as its more likely right */
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+      /* Clear app-kind error */
+      g_clear_error (&local_error);
+    }
+
+  if (!flatpak_run_app (app_deploy ? app_ref : runtime_ref,
+                        app_deploy,
                         arg_context,
                         opt_runtime,
                         opt_runtime_version,
