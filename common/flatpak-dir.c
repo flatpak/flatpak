@@ -4179,7 +4179,7 @@ flatpak_dir_cache_summary (FlatpakDir  *self,
   g_assert (self->summary_cache != NULL);
 
   summary = cached_summary_new (bytes, name, url);
-  g_hash_table_insert (self->summary_cache, summary->remote, summary);
+  g_hash_table_replace (self->summary_cache, summary->remote, summary);
 
   G_UNLOCK (cache);
 }
