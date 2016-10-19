@@ -135,14 +135,15 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
         {
           FlatpakRelated *rel = g_ptr_array_index (related, i);
           g_autoptr(GError) local_error = NULL;
-          g_auto(GStrv) parts = NULL;
+          g_autoptr(GVariant) deploy_data = NULL;
 
           if (!rel->delete)
             continue;
 
-          parts = g_strsplit (rel->ref, "/", 0);
+          deploy_data = flatpak_dir_get_deploy_data (dir, rel->ref, NULL, NULL);
 
-          if (g_hash_table_insert (uninstall_refs_hash, g_strdup (rel->ref), NULL))
+          if (deploy_data != NULL &&
+              g_hash_table_insert (uninstall_refs_hash, g_strdup (rel->ref), NULL))
             g_ptr_array_add (uninstall_refs, g_strdup (rel->ref));
         }
     }
@@ -155,7 +156,8 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
   for (i = 0; i < uninstall_refs->len; i++)
     {
       const char *ref = (char *)g_ptr_array_index (uninstall_refs, i);
-      g_print ("uninstalling %s\n", ref);
+      const char *pref = strchr (ref, '/') + 1;
+      g_print ("Uninstalling %s\n", pref);
       if (!flatpak_dir_uninstall (dir, ref, flags,
                                   cancellable, error))
         return FALSE;
