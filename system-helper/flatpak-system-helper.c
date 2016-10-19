@@ -261,8 +261,12 @@ handle_deploy (FlatpakSystemHelper   *object,
           if (!flatpak_dir_deploy_update (system, arg_ref,
                                           NULL, (const char **)arg_subpaths, NULL, &error))
             {
-              g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                     "Error deploying: %s", error->message);
+              if (g_error_matches (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+                g_dbus_method_invocation_return_error (invocation, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                                                       "%s", error->message);
+              else
+                g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                       "Error deploying: %s", error->message);
               return TRUE;
             }
         }
