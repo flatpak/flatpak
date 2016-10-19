@@ -1,1 +1,13 @@
 # Use this to suppress "possibly lost" for global statics
+
+# https://github.com/ostreedev/ostree/issues/533
+{
+   ignore_static_delta_uninitialized
+   Memcheck:Cond
+   ...
+   fun:_ostree_lzma_compressor_convert
+   fun:write_internal
+   fun:g_output_stream_real_splice
+   fun:g_output_stream_splice
+   fun:ostree_repo_static_delta_generate
+}
