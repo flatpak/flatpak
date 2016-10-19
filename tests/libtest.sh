@@ -62,6 +62,8 @@ if test -n "${FLATPAK_TESTS_DEBUG:-}"; then
 fi
 
 if test -n "${FLATPAK_TESTS_VALGRIND:-}"; then
+    CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=no --error-exitcode=1 --num-callers=30 --suppressions=${test_srcdir}/flatpak.supp --suppressions=${test_srcdir}/glib.supp"
+elif test -n "${FLATPAK_TESTS_VALGRIND_LEAKS:-}"; then
     CMD_PREFIX="env G_SLICE=always-malloc valgrind -q --leak-check=full --error-exitcode=1 --num-callers=30 --suppressions=${test_srcdir}/flatpak.supp --suppressions=${test_srcdir}/glib.supp"
 else
     CMD_PREFIX=""
