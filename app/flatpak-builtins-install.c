@@ -59,7 +59,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Install from local bundle file"), NULL },
-  { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Load options from file"), NULL },
+  { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Load options from file or uri"), NULL },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { NULL }
@@ -163,21 +163,36 @@ install_from (FlatpakDir *dir,
   const char *slash;
   FlatpakDir *clone;
   g_autoptr(FlatpakTransaction) transaction = NULL;
+  g_autoptr(GBytes) bytes = NULL;
 
   if (argc < 2)
-    return usage_error (context, _("Filename must be specified"), error);
+    return usage_error (context, _("Filename or uri must be specified"), error);
 
   if (argc > 2)
     return usage_error (context, _("Too many arguments"), error);
 
+
   filename = argv[1];
 
-  file = g_file_new_for_commandline_arg (filename);
+  if (g_str_has_prefix (filename, "http:") ||
+      g_str_has_prefix (filename, "https:"))
+    {
+      file_data = download_uri (filename, error);
+      if (file_data == NULL)
+        {
+          g_prefix_error (error, "Can't load uri %s", filename);
+          return FALSE;
+        }
+    }
+  else
+    {
+      file = g_file_new_for_commandline_arg (filename);
 
-  if (!g_file_load_contents (file, cancellable, &data, &data_len, NULL, error))
-      return FALSE;
+      if (!g_file_load_contents (file, cancellable, &data, &data_len, NULL, error))
+        return FALSE;
 
-  file_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
+      file_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
+    }
 
   if (!flatpak_dir_create_remote_for_ref_file (dir, file_data, &remote, &ref, error))
     return FALSE;
