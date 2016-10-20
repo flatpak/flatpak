@@ -4138,15 +4138,25 @@ flatpak_dir_get_if_deployed (FlatpakDir   *self,
 
 GFile *
 flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
-                                            const char *ref,
-                                            GCancellable *cancellable)
+                                                      const char *ref,
+                                                      GCancellable *cancellable)
 {
   g_autoptr(GFile) extension_dir = NULL;
+  g_autoptr(GFile) extension_metadata = NULL;
+  g_autoptr(GFile) extension_files = NULL;
   g_autoptr(GFileInfo) extension_dir_info = NULL;
 
   extension_dir = flatpak_dir_get_unmaintained_extension_dir(self, ref);
 
   if (extension_dir == NULL)
+    return NULL;
+
+  extension_metadata = g_file_get_child (extension_dir, "metadata");
+  if (!g_file_query_exists (extension_metadata, cancellable))
+    return NULL;
+
+  extension_files = g_file_get_child (extension_dir, "files");
+  if (!g_file_query_exists (extension_files, cancellable))
     return NULL;
 
   extension_dir_info = g_file_query_info (extension_dir,
