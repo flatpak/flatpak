@@ -557,9 +557,7 @@ flatpak_dir_load_deployed (FlatpakDir   *self,
   FlatpakDeploy *deploy;
   gsize metadata_size;
 
-  deploy_dir = flatpak_dir_get_unmaintained_extension_dir_if_exists (self, ref, cancellable);
-  if (deploy_dir == NULL)
-    deploy_dir = flatpak_dir_get_if_deployed (self, ref, checksum, cancellable);
+  deploy_dir = flatpak_dir_get_if_deployed (self, ref, checksum, cancellable);
   if (deploy_dir == NULL)
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
@@ -4103,6 +4101,11 @@ flatpak_dir_get_if_deployed (FlatpakDir   *self,
 {
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
+  g_autoptr(GFile) unmaintained_extension_dir = NULL;
+
+  unmaintained_extension_dir = flatpak_dir_get_unmaintained_extension_dir_if_exists(self, ret);
+  if (unmaintained_extension_dir)
+    return g_steal_pointer(&unmaintained_extension_dir);
 
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
 
