@@ -3743,8 +3743,12 @@ flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
               //FIXME: is it really org.gnome.Platform/3.22/x86_64 or org.gnome.Platform/x86_64/3.22
               g_autoptr(GFile) child2 = g_file_get_child (child1, branch);
               g_autoptr(GFile) child3 = g_file_get_child (child2, arch);
+              g_autoptr(GFile) metadata = g_file_get_child (child3, "metadata");
+              g_autoptr(GFile) files = g_file_get_child (child3, "files");
 
-              if (g_file_query_exists (child3, cancellable) && !g_hash_table_contains(hash, name))
+              if (!g_hash_table_contains(hash, name) &&
+                  g_file_query_exists (metadata, cancellable) &&
+                  g_file_query_exists (files, cancellable))
                 g_hash_table_add (hash, g_strdup (name));
             }
 
