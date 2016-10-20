@@ -470,6 +470,16 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
 gboolean flatpak_yes_no_prompt (const char *prompt, ...);
 long flatpak_number_prompt (int min, int max, const char *prompt, ...);
 
+typedef void (*FlatpakLoadUriProgress) (guint64 downloaded_bytes,
+                                        gpointer user_data);
+
+GBytes * flatpak_load_http_uri (SoupSession *soup_session,
+                                const char   *uri,
+                                FlatpakLoadUriProgress progress,
+                                gpointer      user_data,
+                                GCancellable *cancellable,
+                                GError      **error);
+
 typedef struct {
   char *shell_cur;
   char *cur;

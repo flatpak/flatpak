@@ -3892,6 +3892,154 @@ flatpak_number_prompt (int min, int max, const char *prompt, ...)
 }
 
 
+typedef struct {
+  GMainLoop *loop;
+  GError *error;
+  GString *content;
+  char buffer[16*1024];
+  FlatpakLoadUriProgress progress;
+  gpointer user_data;
+  guint64 last_progress_time;
+} LoadUriData;
+
+static void
+stream_closed (GObject *source, GAsyncResult *res, gpointer user_data)
+{
+  LoadUriData *data = user_data;
+  GInputStream *stream = G_INPUT_STREAM (source);
+  g_autoptr(GError) error = NULL;
+
+  if (!g_input_stream_close_finish (stream, res, &error))
+    g_warning ("Error closing http stream: %s\n", error->message);
+
+  g_main_loop_quit (data->loop);
+}
+
+static void
+load_uri_read_cb (GObject *source, GAsyncResult *res, gpointer user_data)
+{
+  LoadUriData *data = user_data;
+  GInputStream *stream = G_INPUT_STREAM (source);
+  gsize nread;
+
+  nread = g_input_stream_read_finish (stream, res, &data->error);
+  if (nread == -1 || nread == 0)
+    {
+      data->progress (data->content->len, data->user_data);
+      g_input_stream_close_async (stream,
+                                  G_PRIORITY_DEFAULT, NULL,
+                                  stream_closed, data);
+      return;
+    }
+
+  g_string_append_len (data->content, data->buffer, nread);
+
+  if (g_get_monotonic_time () - data->last_progress_time > 1 * G_USEC_PER_SEC)
+    {
+      data->progress (data->content->len, data->user_data);
+      data->last_progress_time = g_get_monotonic_time ();
+    }
+
+  g_input_stream_read_async (stream, data->buffer, sizeof (data->buffer),
+                             G_PRIORITY_DEFAULT, NULL,
+                             load_uri_read_cb, data);
+}
+
+static void
+load_uri_callback (GObject *source_object,
+                   GAsyncResult *res,
+                   gpointer user_data)
+{
+  SoupRequestHTTP *request = SOUP_REQUEST_HTTP(source_object);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GInputStream) in = NULL;
+  LoadUriData *data = user_data;
+
+  in = soup_request_send_finish (SOUP_REQUEST (request), res, &data->error);
+  if (in == NULL)
+    {
+      g_main_loop_quit (data->loop);
+      return;
+    }
+
+  g_autoptr(SoupMessage) msg = soup_request_http_get_message ((SoupRequestHTTP*) request);
+  if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
+    {
+      GIOErrorEnum code;
+
+      switch (msg->status_code)
+        {
+        case 404:
+        case 410:
+          code = G_IO_ERROR_NOT_FOUND;
+          break;
+        default:
+          code = G_IO_ERROR_FAILED;
+        }
+
+      data->error = g_error_new (G_IO_ERROR, code,
+                                 "Server returned status %u: %s",
+                                 msg->status_code,
+                                 soup_status_get_phrase (msg->status_code));
+      g_main_loop_quit (data->loop);
+      return;
+    }
+
+  g_input_stream_read_async (in, data->buffer, sizeof (data->buffer),
+                             G_PRIORITY_DEFAULT, NULL,
+                             load_uri_read_cb, data);
+}
+
+GBytes *
+flatpak_load_http_uri (SoupSession *soup_session,
+                       const char   *uri,
+                       FlatpakLoadUriProgress progress,
+                       gpointer      user_data,
+                       GCancellable *cancellable,
+                       GError      **error)
+{
+  GBytes *bytes = NULL;
+  g_autoptr(SoupMessage) msg = NULL;
+  g_autoptr(SoupRequestHTTP) request = NULL;
+  g_autoptr(GMainLoop) loop = NULL;
+  g_autoptr(GString) content = g_string_new ("");
+  LoadUriData data = { NULL };
+
+  g_debug ("Loading %s using libsoup", uri);
+
+  loop = g_main_loop_new (NULL, TRUE);
+  data.loop = loop;
+  data.content = content;
+  data.progress = progress;
+  data.user_data = user_data;
+  data.last_progress_time = g_get_monotonic_time ();
+
+  request = soup_session_request_http (soup_session, "GET",
+                                       uri, error);
+  if (request == NULL)
+    return NULL;
+
+  soup_request_send_async (SOUP_REQUEST(request),
+                           cancellable,
+                           load_uri_callback, &data);
+
+  g_main_loop_run (loop);
+
+  if (data.error)
+    {
+      g_propagate_error (error, data.error);
+      return NULL;
+    }
+
+  bytes = g_string_free_to_bytes (g_steal_pointer (&content));
+  g_debug ("Received %" G_GSIZE_FORMAT " bytes", g_bytes_get_size (bytes));
+
+  return bytes;
+}
+
+
+
+
 /* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
  * to not have it interfere with stdout/stderr)
  */
