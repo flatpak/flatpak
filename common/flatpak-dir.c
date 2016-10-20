@@ -557,7 +557,9 @@ flatpak_dir_load_deployed (FlatpakDir   *self,
   FlatpakDeploy *deploy;
   gsize metadata_size;
 
-  deploy_dir = flatpak_dir_get_if_deployed (self, ref, checksum, cancellable);
+  deploy_dir = flatpak_dir_get_unmaintained_extension_dir_if_exists (self, ref, cancellable);
+  if (deploy_dir == NULL)
+    deploy_dir = flatpak_dir_get_if_deployed (self, ref, checksum, cancellable);
   if (deploy_dir == NULL)
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
@@ -603,6 +605,39 @@ flatpak_dir_get_deploy_dir (FlatpakDir *self,
                             const char *ref)
 {
   return g_file_resolve_relative_path (self->basedir, ref);
+}
+
+GFile *
+flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
+                                            const char *ref,
+                                            GCancellable *cancellable)
+{
+  g_auto(GStrv) ref_parts = NULL;
+  g_autoptr(GFile) extension_dir = NULL;
+  g_autoptr(GFileInfo) extension_dir_info = NULL;
+  const char *unmaintained_ref;
+
+  ref_parts = g_strsplit (ref, "/", -1);
+  g_assert (g_strv_length (ref_parts) == 4);
+
+  if (strcmp (ref_parts[0], "runtime") == 0)
+    {
+      unmaintained_ref = g_build_filename ("extension", ref_parts[1], ref_parts[2], ref_parts[3], NULL);
+      extension_dir = g_file_resolve_relative_path (self->basedir, unmaintained_ref);
+      extension_dir_info = g_file_query_info (extension_dir,
+                                              G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                              G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                              cancellable,
+                                              NULL);
+      if (extension_dir_info == NULL)
+        return NULL;
+
+      if (g_file_info_get_is_symlink (extension_dir_info))
+          return g_file_new_for_path (g_file_info_get_symlink_target (extension_dir_info));
+      else
+          return g_steal_pointer(&extension_dir);
+    }
+  return NULL;
 }
 
 GFile *

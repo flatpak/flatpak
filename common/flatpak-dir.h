@@ -135,6 +135,9 @@ GFile *     flatpak_dir_get_path (FlatpakDir *self);
 GFile *     flatpak_dir_get_changed_path (FlatpakDir *self);
 GFile *     flatpak_dir_get_deploy_dir (FlatpakDir *self,
                                         const char *ref);
+GFile *     flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
+                                                                  const char *ref,
+                                                                  GCancellable *cancellable);
 GVariant *  flatpak_dir_get_deploy_data (FlatpakDir   *dir,
                                          const char   *ref,
                                          GCancellable *cancellable,
