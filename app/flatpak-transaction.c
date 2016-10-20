@@ -486,7 +486,6 @@ flatpak_transaction_run (FlatpakTransaction *self,
         {
           opname = _("install");
           g_print (_("Installing: %s from %s\n"), pref, op->remote);
-          res = TRUE;
           res = flatpak_dir_install (self->dir,
                                      self->no_pull,
                                      self->no_deploy,
@@ -544,7 +543,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
             }
           else
             {
-              g_propagate_error (error, local_error);
+              g_propagate_error (error, g_steal_pointer (&local_error));
               return FALSE;
             }
         }
