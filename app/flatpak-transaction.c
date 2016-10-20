@@ -213,8 +213,11 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
   else
     opname = "update";
   subpaths_str = subpaths_to_string (subpaths);
-  g_debug ("Transaction: %s %s:%s%s",
-           opname, remote, ref, subpaths_str);
+  g_debug ("Transaction: %s %s:%s%s%s%s",
+           opname, remote, ref,
+           commit != NULL ? "@" : "",
+           commit != NULL ? commit : "",
+           subpaths_str);
 
   op = g_hash_table_lookup (self->refs, ref);
   if (op != NULL)

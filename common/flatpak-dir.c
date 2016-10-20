@@ -3489,7 +3489,7 @@ flatpak_dir_update (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, remote_name, ref, subpaths,
+      if (!flatpak_dir_pull (self, remote_name, checksum_or_latest != NULL ? checksum_or_latest : ref, subpaths,
                              NULL, OSTREE_REPO_PULL_FLAGS_NONE, progress,
                              cancellable, error))
         return FALSE;
