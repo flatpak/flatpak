@@ -608,13 +608,11 @@ flatpak_dir_get_deploy_dir (FlatpakDir *self,
 }
 
 GFile *
-flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
-                                            const char *ref,
-                                            GCancellable *cancellable)
+flatpak_dir_get_unmaintained_extension_dir (FlatpakDir *self,
+                                            const char *ref)
 {
   g_auto(GStrv) ref_parts = NULL;
   g_autoptr(GFile) extension_dir = NULL;
-  g_autoptr(GFileInfo) extension_dir_info = NULL;
   const char *unmaintained_ref;
 
   ref_parts = g_strsplit (ref, "/", -1);
@@ -623,21 +621,12 @@ flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
   if (strcmp (ref_parts[0], "runtime") == 0)
     {
       unmaintained_ref = g_build_filename ("extension", ref_parts[1], ref_parts[2], ref_parts[3], NULL);
-      extension_dir = g_file_resolve_relative_path (self->basedir, unmaintained_ref);
-      extension_dir_info = g_file_query_info (extension_dir,
-                                              G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
-                                              G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                              cancellable,
-                                              NULL);
-      if (extension_dir_info == NULL)
-        return NULL;
-
-      if (g_file_info_get_is_symlink (extension_dir_info))
-          return g_file_new_for_path (g_file_info_get_symlink_target (extension_dir_info));
-      else
-          return g_steal_pointer(&extension_dir);
+      return g_file_resolve_relative_path (self->basedir, unmaintained_ref);
     }
-  return NULL;
+  else
+    {
+      return NULL;
+    }
 }
 
 GFile *
@@ -4144,6 +4133,34 @@ flatpak_dir_get_if_deployed (FlatpakDir   *self,
 
   if (g_file_query_file_type (deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
     return g_object_ref (deploy_dir);
+  return NULL;
+}
+
+GFile *
+flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
+                                            const char *ref,
+                                            GCancellable *cancellable)
+{
+  g_autoptr(GFile) extension_dir = NULL;
+  g_autoptr(GFileInfo) extension_dir_info = NULL;
+
+  extension_dir = flatpak_dir_get_unmaintained_extension_dir(self, ref);
+
+  if (extension_dir == NULL)
+    return NULL;
+
+  extension_dir_info = g_file_query_info (extension_dir,
+                                          G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                          G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                          cancellable,
+                                          NULL);
+  if (extension_dir_info == NULL)
+    return NULL;
+
+  if (g_file_info_get_is_symlink (extension_dir_info))
+      return g_file_new_for_path (g_file_info_get_symlink_target (extension_dir_info));
+  else
+      return g_steal_pointer(&extension_dir);
   return NULL;
 }
 
