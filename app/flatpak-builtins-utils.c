@@ -29,6 +29,8 @@
 gboolean
 looks_like_branch (const char *branch)
 {
+  const char *dot;
+
   /* In particular, / is not a valid branch char, so
      this lets us distinguish full or partial refs as
      non-branches. */
@@ -36,10 +38,14 @@ looks_like_branch (const char *branch)
     return FALSE;
 
   /* Dots are allowed in branches, but not really used much, while
-     they are required for app ids, so thats a good check to
+     app ids require at least two, so thats a good check to
      distinguish the two */
-  if (strchr (branch, '.') != NULL)
-    return FALSE;
+  dot = strchr (branch, '.');
+  if (dot != NULL)
+    {
+      if (strchr (dot + 1, '.') != NULL)
+        return FALSE;
+    }
 
   return TRUE;
 }
