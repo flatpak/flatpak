@@ -38,6 +38,11 @@ echo "ok create bundles"
 
 ${FLATPAK} install ${U} --bundle hello.flatpak
 
+assert_has_file $FL_DIR/repo/refs/remotes/org.test.Hello-origin/app/org.test.Hello/$ARCH/master
+APP_COMMIT=`cat $FL_DIR/repo/refs/remotes/org.test.Hello-origin/app/org.test.Hello/$ARCH/master`
+assert_has_file $FL_DIR/repo/objects/$(echo $APP_COMMIT | cut -b 1-2)/$(echo $APP_COMMIT | cut -b 3-).commit
+assert_has_file $FL_DIR/repo/objects/$(echo $APP_COMMIT | cut -b 1-2)/$(echo $APP_COMMIT | cut -b 3-).commitmeta
+
 assert_has_dir $FL_DIR/app/org.test.Hello
 assert_has_symlink $FL_DIR/app/org.test.Hello/current
 assert_symlink_has_content $FL_DIR/app/org.test.Hello/current ^$ARCH/master$
@@ -76,6 +81,11 @@ assert_has_file $FL_DIR/repo/org.test.Hello-origin.trustedkeys.gpg
 echo "ok install app bundle"
 
 ${FLATPAK} install ${U} --bundle platform.flatpak
+
+assert_has_file $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master
+RUNTIME_COMMIT=`cat $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master`
+assert_has_file $FL_DIR/repo/objects/$(echo $RUNTIME_COMMIT | cut -b 1-2)/$(echo $RUNTIME_COMMIT | cut -b 3-).commit
+assert_has_file $FL_DIR/repo/objects/$(echo $RUNTIME_COMMIT | cut -b 1-2)/$(echo $RUNTIME_COMMIT | cut -b 3-).commitmeta
 
 assert_has_dir $FL_DIR/runtime/org.test.Platform
 assert_has_dir $FL_DIR/runtime/org.test.Platform/$ARCH/master
