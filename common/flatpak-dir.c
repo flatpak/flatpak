@@ -1257,7 +1257,7 @@ default_progress_changed (OstreeAsyncProgress *progress,
 static gboolean
 repo_pull_one_dir (OstreeRepo          *self,
                    const char          *remote_name,
-                   const char          *dir_to_pull,
+                   const char         **dirs_to_pull,
                    const char          *ref_to_fetch,
                    const char          *rev_to_fetch,
                    OstreeRepoPullFlags  flags,
@@ -1273,10 +1273,10 @@ repo_pull_one_dir (OstreeRepo          *self,
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
 
-  if (dir_to_pull)
+  if (dirs_to_pull)
     {
-      g_variant_builder_add (&builder, "{s@v}", "subdir",
-                             g_variant_new_variant (g_variant_new_string (dir_to_pull)));
+      g_variant_builder_add (&builder, "{s@v}", "subdirs",
+                             g_variant_new_variant (g_variant_new_strv ((const char * const *)dirs_to_pull, -1)));
       force_disable_deltas = TRUE;
     }
 
@@ -1534,6 +1534,7 @@ flatpak_dir_pull (FlatpakDir          *self,
   g_autofree char *latest_rev = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  g_autoptr(GPtrArray) subdirs_arg = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     goto out;
@@ -1589,46 +1590,25 @@ flatpak_dir_pull (FlatpakDir          *self,
         }
     }
 
-  if (subpaths == NULL || subpaths[0] == NULL)
+  if (subpaths != NULL && subpaths[0] != NULL)
     {
-      if (!repo_pull_one_dir (repo, repository, NULL,
-                              ref, rev, flags,
-                              progress,
-                              cancellable, error))
-        {
-          g_prefix_error (error, _("While pulling %s from remote %s: "), ref, repository);
-          goto out;
-        }
-    }
-  else
-    {
+      subdirs_arg = g_ptr_array_new_with_free_func (g_free);
       int i;
-
-      if (!repo_pull_one_dir (repo, repository,
-                              "/metadata",
-                              ref, rev, flags,
-                              progress,
-                              cancellable, error))
-        {
-          g_prefix_error (error, _("While pulling %s from remote %s, metadata: "),
-                          ref, repository);
-          goto out;
-        }
-
+      g_ptr_array_add (subdirs_arg, g_strdup ("/metadata"));
       for (i = 0; subpaths[i] != NULL; i++)
-        {
-          g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
-          if (!repo_pull_one_dir (repo, repository,
-                                  subpath,
-                                  ref, rev, flags,
-                                  progress,
-                                  cancellable, error))
-            {
-              g_prefix_error (error, _("While pulling %s from remote %s, subpath %s: "),
-                              ref, repository, subpaths[i]);
-              goto out;
-            }
-        }
+        g_ptr_array_add (subdirs_arg,
+                         g_build_filename ("/files", subpaths[i], NULL));
+      g_ptr_array_add (subdirs_arg, NULL);
+    }
+
+  if (!repo_pull_one_dir (repo, repository,
+                          subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
+                          ref, rev, flags,
+                          progress,
+                          cancellable, error))
+    {
+      g_prefix_error (error, _("While pulling %s from remote %s: "), ref, repository);
+      goto out;
     }
 
   if (g_str_has_prefix (ref, "app/") &&
@@ -1654,7 +1634,7 @@ static gboolean
 repo_pull_one_untrusted (OstreeRepo          *self,
                          const char          *remote_name,
                          const char          *url,
-                         const char          *dir_to_pull,
+                         const char         **dirs_to_pull,
                          const char          *ref,
                          const char          *checksum,
                          OstreeAsyncProgress *progress,
@@ -1696,10 +1676,10 @@ repo_pull_one_untrusted (OstreeRepo          *self,
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify-summary",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
 
-  if (dir_to_pull)
+  if (dirs_to_pull)
     {
-      g_variant_builder_add (&builder, "{s@v}", "subdir",
-                             g_variant_new_variant (g_variant_new_string (dir_to_pull)));
+      g_variant_builder_add (&builder, "{s@v}", "subdirs",
+                             g_variant_new_variant (g_variant_new_strv ((const char * const *)dirs_to_pull, -1)));
       g_variant_builder_add (&builder, "{s@v}", "disable-static-deltas",
                              g_variant_new_variant (g_variant_new_boolean (TRUE)));
     }
@@ -1741,6 +1721,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autoptr(OstreeRepo) src_repo = NULL;
   g_autoptr(GVariant) new_commit = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
+  g_autoptr(GPtrArray) subdirs_arg = NULL;
+
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
@@ -1814,41 +1796,24 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
         return flatpak_fail (error, "Not allowed to downgrade %s", ref);
     }
 
-  if (subpaths == NULL || subpaths[0] == NULL)
+  if (subpaths != NULL && subpaths[0] != NULL)
     {
-      if (!repo_pull_one_untrusted (self->repo, remote_name, url,
-                                    NULL, ref, checksum, progress,
-                                    cancellable, error))
-        {
-          g_prefix_error (error, _("While pulling %s from remote %s: "), ref, remote_name);
-          return FALSE;
-        }
-    }
-  else
-    {
+      subdirs_arg = g_ptr_array_new_with_free_func (g_free);
       int i;
-
-      if (!repo_pull_one_untrusted (self->repo, remote_name, url,
-                                    "/metadata", ref, checksum, progress,
-                                    cancellable, error))
-        {
-          g_prefix_error (error, _("While pulling %s from remote %s, metadata: "),
-                          ref, remote_name);
-          return FALSE;
-        }
-
+      g_ptr_array_add (subdirs_arg, g_strdup ("/metadata"));
       for (i = 0; subpaths[i] != NULL; i++)
-        {
-          g_autofree char *subpath = g_build_filename ("/files", subpaths[i], NULL);
-          if (!repo_pull_one_untrusted (self->repo, remote_name, url,
-                                        subpath, ref, checksum, progress,
-                                        cancellable, error))
-            {
-              g_prefix_error (error, _("While pulling %s from remote %s, subpath %s: "),
-                              ref, remote_name, subpaths[i]);
-              return FALSE;
-            }
-        }
+        g_ptr_array_add (subdirs_arg,
+                         g_build_filename ("/files", subpaths[i], NULL));
+      g_ptr_array_add (subdirs_arg, NULL);
+    }
+
+  if (!repo_pull_one_untrusted (self->repo, remote_name, url,
+                                subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
+                                ref, checksum, progress,
+                                cancellable, error))
+    {
+      g_prefix_error (error, _("While pulling %s from remote %s: "), ref, remote_name);
+      return FALSE;
     }
 
   /* Get the out of bands extra-data required due to an ostree pull
