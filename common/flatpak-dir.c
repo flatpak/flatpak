@@ -3730,7 +3730,10 @@ flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
                                                          cancellable,
                                                          error);
       if (!unmaintained_dir_enum)
-        goto out;
+        {
+          ret = TRUE;
+          goto out;
+        }
 
       while ((child_info = g_file_enumerator_next_file (unmaintained_dir_enum, cancellable, &temp_error)) != NULL)
         {
