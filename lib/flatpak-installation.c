@@ -638,6 +638,9 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
       g_autoptr(GPtrArray) refs = NULL;
       g_autoptr(GError) local_error = NULL;
 
+      if (flatpak_remote_get_disabled (remote))
+        continue;
+
       /* We ignore errors here. we don't want one remote to fail us */
       refs = flatpak_installation_list_remote_refs_sync (self,
                                                          flatpak_remote_get_name (remote),
