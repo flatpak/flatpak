@@ -1284,6 +1284,9 @@ repo_pull_one_dir (OstreeRepo          *self,
     g_variant_builder_add (&builder, "{s@v}", "disable-static-deltas",
                            g_variant_new_variant (g_variant_new_boolean (TRUE)));
 
+  g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
   g_variant_builder_add (&builder, "{s@v}", "flags",
                          g_variant_new_variant (g_variant_new_int32 (flags)));
 
@@ -1590,6 +1593,9 @@ flatpak_dir_pull (FlatpakDir          *self,
         }
     }
 
+  /* Past this we must use goto out, so we clean up console and
+     abort the transaction on error */
+
   if (subpaths != NULL && subpaths[0] != NULL)
     {
       subdirs_arg = g_ptr_array_new_with_free_func (g_free);
@@ -1600,6 +1606,9 @@ flatpak_dir_pull (FlatpakDir          *self,
                          g_build_filename ("/files", subpaths[i], NULL));
       g_ptr_array_add (subdirs_arg, NULL);
     }
+
+  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+    goto out;
 
   if (!repo_pull_one_dir (repo, repository,
                           subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
@@ -1621,9 +1630,16 @@ flatpak_dir_pull (FlatpakDir          *self,
                                     error))
     goto out;
 
+
+  if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
+    goto out;
+
   ret = TRUE;
 
 out:
+  if (!ret)
+    ostree_repo_abort_transaction (repo, cancellable, NULL);
+
   if (progress)
     ostree_async_progress_finish (progress);
 
@@ -1675,6 +1691,8 @@ repo_pull_one_untrusted (OstreeRepo          *self,
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
   g_variant_builder_add (&builder, "{s@v}", "gpg-verify-summary",
                          g_variant_new_variant (g_variant_new_boolean (TRUE)));
+  g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
 
   if (dirs_to_pull)
     {
@@ -1722,6 +1740,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autoptr(GVariant) new_commit = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
+  gboolean ret = FALSE;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -1807,13 +1826,18 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       g_ptr_array_add (subdirs_arg, NULL);
     }
 
+  if (!ostree_repo_prepare_transaction (self->repo, NULL, cancellable, error))
+    goto out;
+
+  /* Past this we must use goto out, so we abort the transaction on error */
+
   if (!repo_pull_one_untrusted (self->repo, remote_name, url,
                                 subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
                                 ref, checksum, progress,
                                 cancellable, error))
     {
       g_prefix_error (error, _("While pulling %s from remote %s: "), ref, remote_name);
-      return FALSE;
+      goto out;
     }
 
   /* Get the out of bands extra-data required due to an ostree pull
@@ -1833,7 +1857,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       if (!g_file_load_contents (file, cancellable,
                                  &commitmeta, &commitmeta_size,
                                  NULL, error))
-        return FALSE;
+        goto out;
 
       new_metadata = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("a{sv}"),
                                                                   commitmeta, commitmeta_size,
@@ -1842,12 +1866,23 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       g_steal_pointer (&commitmeta); /* steal into the variant */
 
       if (!ostree_repo_write_commit_detached_metadata (self->repo, checksum, new_metadata, cancellable, error))
-        return FALSE;
+        goto out;
     }
 
-  return TRUE;
-}
+  if (!ostree_repo_commit_transaction (self->repo, NULL, cancellable, error))
+    goto out;
 
+  ret = TRUE;
+
+out:
+  if (!ret)
+    ostree_repo_abort_transaction (self->repo, cancellable, NULL);
+
+  if (progress)
+    ostree_async_progress_finish (progress);
+
+  return ret;
+}
 
 char *
 flatpak_dir_current_ref (FlatpakDir   *self,
