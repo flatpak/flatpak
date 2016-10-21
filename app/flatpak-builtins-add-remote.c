@@ -390,7 +390,8 @@ flatpak_builtin_add_remote (int argc, char **argv,
       return flatpak_fail (error, _("Remote %s already exists"), remote_name);
     }
 
-  if (opt_from)
+  if (opt_from ||
+      g_str_has_suffix (location, ".flatpakrepo"))
     {
       load_options (location, &gpg_data);
       if (opt_url == NULL)
