@@ -3722,7 +3722,7 @@ flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
       goto out;
     }
 
-  if (strcmp(type, "runtime"))
+  if (g_str_has_prefix(type, "runtime"))
     {
       unmaintained_dir = g_file_get_child (self->basedir, "extension");
       unmaintained_dir_enum = g_file_enumerate_children (unmaintained_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
