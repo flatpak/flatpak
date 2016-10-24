@@ -395,6 +395,13 @@ gboolean    flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
                                                GHashTable   *hash,
                                                GCancellable *cancellable,
                                                GError      **error);
+gboolean    flatpak_dir_collect_unmaintained_refs (FlatpakDir   *self,
+                                                   const char   *name_prefix,
+                                                   const char   *arch,
+                                                   const char   *branch,
+                                                   GHashTable   *hash,
+                                                   GCancellable *cancellable,
+                                                   GError      **error);
 char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *url,
                                              const char   *id,

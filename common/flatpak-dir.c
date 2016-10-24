@@ -3670,9 +3670,7 @@ flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
   gboolean ret = FALSE;
 
   g_autoptr(GFile) dir = NULL;
-  g_autoptr(GFile) unmaintained_dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
-  g_autoptr(GFileEnumerator) unmaintained_dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;
 
@@ -3712,44 +3710,60 @@ flatpak_dir_collect_deployed_refs (FlatpakDir   *self,
       goto out;
     }
 
-  if (g_str_has_prefix(type, "runtime"))
+  ret = TRUE;
+out:
+  return ret;
+}
+
+gboolean
+flatpak_dir_collect_unmaintained_refs (FlatpakDir   *self,
+                                       const char   *name_prefix,
+                                       const char   *arch,
+                                       const char   *branch,
+                                       GHashTable   *hash,
+                                       GCancellable *cancellable,
+                                       GError      **error)
+{
+  gboolean ret = FALSE;
+
+  g_autoptr(GFile) unmaintained_dir = NULL;
+  g_autoptr(GFileEnumerator) unmaintained_dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
+  GError *temp_error = NULL;
+
+  unmaintained_dir = g_file_get_child (self->basedir, "extension");
+  if (!g_file_query_exists (unmaintained_dir, cancellable))
+    return TRUE;
+
+  unmaintained_dir_enum = g_file_enumerate_children (unmaintained_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                                     G_FILE_QUERY_INFO_NONE,
+                                                     cancellable,
+                                                     error);
+  if (!unmaintained_dir_enum)
+    goto out;
+
+  while ((child_info = g_file_enumerator_next_file (unmaintained_dir_enum, cancellable, &temp_error)) != NULL)
     {
-      unmaintained_dir = g_file_get_child (self->basedir, "extension");
-      unmaintained_dir_enum = g_file_enumerate_children (unmaintained_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
-                                                         G_FILE_QUERY_INFO_NONE,
-                                                         cancellable,
-                                                         error);
-      if (!unmaintained_dir_enum)
+      const char *name = g_file_info_get_name (child_info);
+
+      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
+          name[0] != '.' && (name_prefix == NULL || g_str_has_prefix (name, name_prefix)))
         {
-          ret = TRUE;
-          goto out;
+          g_autoptr(GFile) child1 = g_file_get_child (unmaintained_dir, name);
+          g_autoptr(GFile) child2 = g_file_get_child (child1, arch);
+          g_autoptr(GFile) child3 = g_file_get_child (child2, branch);
+
+          if (g_file_query_exists (child3, cancellable))
+            g_hash_table_add (hash, g_strdup (name));
         }
 
-      while ((child_info = g_file_enumerator_next_file (unmaintained_dir_enum, cancellable, &temp_error)) != NULL)
-        {
-          const char *name = g_file_info_get_name (child_info);
+      g_clear_object (&child_info);
+    }
 
-          if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
-              name[0] != '.' && (name_prefix == NULL || g_str_has_prefix (name, name_prefix)))
-            {
-              g_autoptr(GFile) child1 = g_file_get_child (unmaintained_dir, name);
-              //FIXME: is it really org.gnome.Platform/3.22/x86_64 or org.gnome.Platform/x86_64/3.22
-              g_autoptr(GFile) child2 = g_file_get_child (child1, branch);
-              g_autoptr(GFile) child3 = g_file_get_child (child2, arch);
-
-              if (!g_hash_table_contains(hash, name) &&
-                  g_file_query_exists (child3, cancellable))
-                g_hash_table_add (hash, g_strdup (name));
-            }
-
-          g_clear_object (&child_info);
-        }
-
-      if (temp_error != NULL)
-        {
-          g_propagate_error (error, temp_error);
-          goto out;
-        }
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      goto out;
     }
 
   ret = TRUE;
