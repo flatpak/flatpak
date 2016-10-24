@@ -3158,9 +3158,13 @@ flatpak_list_extensions (GKeyFile   *metakey,
 
           ref = g_build_filename ("runtime", extension, arch, branch, NULL);
 
-          //TODO: move getting unmaintained extension here
+          files = flatpak_find_unmaintained_extension_dir_if_exists (extension, arch, branch, NULL);
 
-          files = flatpak_find_files_dir_for_ref (ref, NULL, NULL);
+          if (files == NULL)
+            {
+              files = flatpak_find_files_dir_for_ref (ref, NULL, NULL);
+            }
+
           /* Prefer a full extension (org.freedesktop.Locale) over subdirectory ones (org.freedesktop.Locale.sv) */
           if (files != NULL)
             {
