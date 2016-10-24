@@ -607,24 +607,14 @@ flatpak_dir_get_deploy_dir (FlatpakDir *self,
 
 GFile *
 flatpak_dir_get_unmaintained_extension_dir (FlatpakDir *self,
-                                            const char *ref)
+                                            const char *name,
+                                            const char *arch,
+                                            const char *branch)
 {
-  g_auto(GStrv) ref_parts = NULL;
-  g_autoptr(GFile) extension_dir = NULL;
   const char *unmaintained_ref;
 
-  ref_parts = g_strsplit (ref, "/", -1);
-  g_assert (g_strv_length (ref_parts) == 4);
-
-  if (strcmp (ref_parts[0], "runtime") == 0)
-    {
-      unmaintained_ref = g_build_filename ("extension", ref_parts[1], ref_parts[2], ref_parts[3], NULL);
-      return g_file_resolve_relative_path (self->basedir, unmaintained_ref);
-    }
-  else
-    {
-      return NULL;
-    }
+  unmaintained_ref = g_build_filename ("extension", name, arch, branch, NULL);
+  return g_file_resolve_relative_path (self->basedir, unmaintained_ref);
 }
 
 GFile *
@@ -4143,13 +4133,6 @@ flatpak_dir_get_if_deployed (FlatpakDir   *self,
 {
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
-  g_autoptr(GFile) unmaintained_extension_dir = NULL;
-
-  unmaintained_extension_dir = flatpak_dir_get_unmaintained_extension_dir_if_exists(self, ref, cancellable);
-  if (unmaintained_extension_dir)
-    return g_steal_pointer(&unmaintained_extension_dir);
-
-  deploy_base = flatpak_dir_get_deploy_dir (self, ref);
 
   if (checksum != NULL)
     {
@@ -4183,26 +4166,15 @@ flatpak_dir_get_if_deployed (FlatpakDir   *self,
 
 GFile *
 flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
-                                                      const char *ref,
+                                                      const char *name,
+                                                      const char *arch,
+                                                      const char *branch,
                                                       GCancellable *cancellable)
 {
   g_autoptr(GFile) extension_dir = NULL;
-  g_autoptr(GFile) extension_metadata = NULL;
-  g_autoptr(GFile) extension_files = NULL;
   g_autoptr(GFileInfo) extension_dir_info = NULL;
 
-  extension_dir = flatpak_dir_get_unmaintained_extension_dir(self, ref);
-
-  if (extension_dir == NULL)
-    return NULL;
-
-  extension_metadata = g_file_get_child (extension_dir, "metadata");
-  if (!g_file_query_exists (extension_metadata, cancellable))
-    return NULL;
-
-  extension_files = g_file_get_child (extension_dir, "files");
-  if (!g_file_query_exists (extension_files, cancellable))
-    return NULL;
+  extension_dir = flatpak_dir_get_unmaintained_extension_dir(self, name, arch, branch);
 
   extension_dir_info = g_file_query_info (extension_dir,
                                           G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
