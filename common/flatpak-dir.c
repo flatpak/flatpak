@@ -4134,6 +4134,8 @@ flatpak_dir_get_if_deployed (FlatpakDir   *self,
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
 
+  deploy_base = flatpak_dir_get_deploy_dir (self, ref);
+
   if (checksum != NULL)
     {
       deploy_dir = g_file_get_child (deploy_base, checksum);
