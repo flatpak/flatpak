@@ -231,6 +231,9 @@ load_options (const char *filename,
   if (g_str_has_prefix (filename, "http:") ||
       g_str_has_prefix (filename, "https:"))
     {
+      const char *options_data;
+      gsize options_size;
+
       bytes = download_uri (filename, &error);
 
       if (bytes == NULL)
@@ -239,7 +242,8 @@ load_options (const char *filename,
           exit (1);
         }
 
-      if (!g_key_file_load_from_bytes (keyfile, bytes, 0, &error))
+      options_data = g_bytes_get_data (bytes, &options_size);
+      if (!g_key_file_load_from_data (keyfile, options_data, options_size, 0, &error))
         {
           g_printerr ("Can't load uri %s: %s\n", filename, error->message);
           exit (1);
