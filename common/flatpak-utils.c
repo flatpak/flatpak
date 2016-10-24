@@ -915,6 +915,50 @@ out:
   return ret;
 }
 
+char **
+flatpak_list_unmaintained_refs (const char   *name_prefix,
+                                const char   *branch,
+                                const char   *arch,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  gchar **ret = NULL;
+
+  g_autoptr(GPtrArray) names = NULL;
+  g_autoptr(GHashTable) hash = NULL;
+  g_autoptr(FlatpakDir) user_dir = NULL;
+  g_autoptr(FlatpakDir) system_dir = NULL;
+  const char *key;
+  GHashTableIter iter;
+
+  hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  user_dir = flatpak_dir_get_user ();
+  system_dir = flatpak_dir_get_system ();
+
+  if ((!flatpak_dir_collect_unmaintained_refs (user_dir, name_prefix,
+                                              branch, arch, hash, cancellable,
+                                              error)) &&
+      (!flatpak_dir_collect_unmaintained_refs (system_dir, name_prefix,
+                                              branch, arch, hash, cancellable,
+                                              error)))
+    goto out;
+
+  names = g_ptr_array_new ();
+  g_hash_table_iter_init (&iter, hash);
+  while (g_hash_table_iter_next (&iter, (gpointer *) &key, NULL))
+    g_ptr_array_add (names, g_strdup (key));
+
+  g_ptr_array_sort (names, flatpak_strcmp0_ptr);
+  g_ptr_array_add (names, NULL);
+
+  ret = (char **) g_ptr_array_free (names, FALSE);
+  names = NULL;
+
+out:
+  return ret;
+}
+
 GFile *
 flatpak_find_files_dir_for_ref (const char   *ref,
                                 GCancellable *cancellable,
@@ -3176,6 +3220,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
             {
               g_autofree char *prefix = g_strconcat (extension, ".", NULL);
               g_auto(GStrv) refs = NULL;
+              g_auto(GStrv) unmaintained_refs = NULL;
               int j;
               gboolean needs_tmpfs = TRUE;
 
@@ -3185,14 +3230,28 @@ flatpak_list_extensions (GKeyFile   *metakey,
                 {
                   g_autofree char *extended_dir = g_build_filename (directory, refs[j] + strlen (prefix), NULL);
                   g_autofree char *dir_ref = g_build_filename ("runtime", refs[j], arch, branch, NULL);
-                  g_autoptr(GFile) subdir_files = flatpak_find_unmaintained_extension_dir_if_exists (refs[j], arch, branch, NULL);
-
-                  if (subdir_files == NULL)
-                    subdir_files = flatpak_find_files_dir_for_ref (dir_ref, NULL, NULL);
+                  g_autoptr(GFile) subdir_files = flatpak_find_files_dir_for_ref (dir_ref, NULL, NULL);
 
                   if (subdir_files)
                     {
                       ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, subdir_files);
+                      ext->needs_tmpfs = needs_tmpfs;
+                      needs_tmpfs = FALSE; /* Only first subdir needs a tmpfs */
+                      res = g_list_prepend (res, ext);
+                    }
+                }
+
+              unmaintained_refs = flatpak_list_unmaintained_refs (prefix, arch, branch,
+                                                                  NULL, NULL);
+              for (j = 0; unmaintained_refs != NULL && unmaintained_refs[j] != NULL; j++)
+                {
+                  g_autofree char *extended_dir = g_build_filename (directory, unmaintained_refs[j] + strlen (prefix), NULL);
+                  g_autofree char *dir_ref = g_build_filename ("runtime", unmaintained_refs[j], arch, branch, NULL);
+                  g_autoptr(GFile) subdir_files = flatpak_find_unmaintained_extension_dir_if_exists (unmaintained_refs[j], arch, branch, NULL);
+
+                  if (subdir_files)
+                    {
+                      ext = flatpak_extension_new (extension, unmaintained_refs[j], dir_ref, extended_dir, subdir_files);
                       ext->needs_tmpfs = needs_tmpfs;
                       needs_tmpfs = FALSE; /* Only first subdir needs a tmpfs */
                       res = g_list_prepend (res, ext);

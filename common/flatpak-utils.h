@@ -140,6 +140,11 @@ char ** flatpak_list_deployed_refs (const char   *type,
                                     const char   *arch,
                                     GCancellable *cancellable,
                                     GError      **error);
+char ** flatpak_list_unmaintained_refs (const char   *name_prefix,
+                                        const char   *branch,
+                                        const char   *arch,
+                                        GCancellable *cancellable,
+                                        GError      **error);
 
 gboolean flatpak_overlay_symlink_tree (GFile        *source,
                                        GFile        *destination,
