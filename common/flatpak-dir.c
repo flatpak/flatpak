@@ -5131,7 +5131,11 @@ find_matching_ref (GHashTable *refs,
           if (j != 0)
             g_string_append (err, ", ");
 
-          g_string_append (err, parts[3]);
+          g_string_append (err,
+                           g_strdup_printf ("%s/%s/%s",
+                                            name,
+                                            opt_arch ? opt_arch : "",
+                                            parts[3]));
         }
 
       flatpak_fail (error, err->str);
