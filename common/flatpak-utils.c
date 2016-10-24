@@ -3185,7 +3185,10 @@ flatpak_list_extensions (GKeyFile   *metakey,
                 {
                   g_autofree char *extended_dir = g_build_filename (directory, refs[j] + strlen (prefix), NULL);
                   g_autofree char *dir_ref = g_build_filename ("runtime", refs[j], arch, branch, NULL);
-                  g_autoptr(GFile) subdir_files = flatpak_find_files_dir_for_ref (dir_ref, NULL, NULL);
+                  g_autoptr(GFile) subdir_files = flatpak_find_unmaintained_extension_dir_if_exists (refs[j], arch, branch, NULL);
+
+                  if (subdir_files == NULL)
+                    subdir_files = flatpak_find_files_dir_for_ref (dir_ref, NULL, NULL);
 
                   if (subdir_files)
                     {
