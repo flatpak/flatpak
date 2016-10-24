@@ -142,6 +142,7 @@ glnx_dirfd_iterator_init_take_fd (int                dfd,
 
   real_dfd_iter->fd = dfd;
   real_dfd_iter->d = d;
+  real_dfd_iter->initialized = TRUE;
 
   ret = TRUE;
  out:
@@ -169,6 +170,7 @@ glnx_dirfd_iterator_next_dent (GLnxDirFdIterator  *dfd_iter,
   GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
 
   g_return_val_if_fail (out_dent, FALSE);
+  g_return_val_if_fail (dfd_iter->initialized, FALSE);
 
   if (g_cancellable_set_error_if_cancelled (cancellable, error))
     goto out;
@@ -250,6 +252,8 @@ glnx_dirfd_iterator_clear (GLnxDirFdIterator *dfd_iter)
 {
   GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
   /* fd is owned by dfd_iter */
+  if (!real_dfd_iter->initialized)
+    return;
   (void) closedir (real_dfd_iter->d);
   real_dfd_iter->initialized = FALSE;
 }
