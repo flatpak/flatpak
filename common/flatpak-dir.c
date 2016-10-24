@@ -303,6 +303,11 @@ flatpak_dir_use_system_helper (FlatpakDir *self)
 {
   FlatpakSystemHelper *system_helper;
 
+#ifndef USE_SYSTEM_HELPER
+  if (TRUE)
+    return FALSE;
+#endif
+
   if (self->no_system_helper || self->user || getuid () == 0)
     return FALSE;
 
