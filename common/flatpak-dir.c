@@ -1267,6 +1267,7 @@ repo_pull_one_dir (OstreeRepo          *self,
 {
   GVariantBuilder builder;
   gboolean force_disable_deltas = FALSE;
+  g_autoptr(GVariant) options = NULL;
   const char *refs_to_fetch[2];
   const char *revs_to_fetch[2];
   gboolean res;
@@ -1300,8 +1301,21 @@ repo_pull_one_dir (OstreeRepo          *self,
   g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
                          g_variant_new_variant (g_variant_new_strv ((const char * const *) revs_to_fetch, -1)));
 
-  res = ostree_repo_pull_with_options (self, remote_name, g_variant_builder_end (&builder),
+  options = g_variant_ref_sink (g_variant_builder_end (&builder));
+  res = ostree_repo_pull_with_options (self, remote_name, options,
                                        progress, cancellable, error);
+  if (res && dirs_to_pull != NULL)
+    {
+      /* This works around an issue with ostree where it doesn't pull
+       * all dependencies (stops are first locally available object)
+       * unless the commit itself is a commitpartial:
+       * https://github.com/ostreedev/ostree/issues/543
+       * The workaround works by pulling again, and on the new pull
+       * the commit *will* have a commitpartial.
+       */
+        res = ostree_repo_pull_with_options (self, remote_name, options,
+                                             progress, cancellable, error);
+    }
 
   return res;
 }
