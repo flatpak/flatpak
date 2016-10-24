@@ -939,6 +939,28 @@ flatpak_find_files_dir_for_ref (const char   *ref,
   return g_file_get_child (deploy, "files");
 }
 
+GFile *
+flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
+                                                   const char   *arch,
+                                                   const char   *branch,
+                                                   GCancellable *cancellable)
+{
+  g_autoptr(FlatpakDir) user_dir = NULL;
+  g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(GFile) extension_dir = NULL;
+
+  user_dir = flatpak_dir_get_user ();
+  system_dir = flatpak_dir_get_system ();
+
+  extension_dir = flatpak_dir_get_unmaintained_extension_dir_if_exists (user_dir, name, arch, branch, cancellable);
+  if (extension_dir == NULL)
+    extension_dir = flatpak_dir_get_unmaintained_extension_dir_if_exists (system_dir, name, arch, branch, cancellable);
+  if (extension_dir == NULL)
+    return NULL;
+
+  return g_steal_pointer(&extension_dir);
+}
+
 FlatpakDeploy *
 flatpak_find_deploy_for_ref (const char   *ref,
                              GCancellable *cancellable,
@@ -3135,6 +3157,8 @@ flatpak_list_extensions (GKeyFile   *metakey,
             branch = default_branch;
 
           ref = g_build_filename ("runtime", extension, arch, branch, NULL);
+
+          //TODO: move getting unmaintained extension here
 
           files = flatpak_find_files_dir_for_ref (ref, NULL, NULL);
           /* Prefer a full extension (org.freedesktop.Locale) over subdirectory ones (org.freedesktop.Locale.sv) */
