@@ -46,8 +46,6 @@ static GError *exit_error = NULL;
 static dev_t fuse_dev = 0;
 static GQueue get_mount_point_invocations = G_QUEUE_INIT;
 static XdpDbusDocuments *dbus_api;
-FlatpakDir *user_dir = NULL;
-FlatpakDir *system_dir = NULL;
 
 G_LOCK_DEFINE (db);
 
@@ -1144,9 +1142,6 @@ main (int    argc,
       g_print ("No permission store: %s", error->message);
       do_exit (4);
     }
-
-  user_dir = flatpak_dir_get_user ();
-  system_dir = flatpak_dir_get_system ();
 
   /* We want do do our custom post-mainloop exit */
   g_dbus_connection_set_exit_on_close (session_bus, FALSE);
