@@ -205,7 +205,7 @@ install_from (FlatpakDir *dir,
   slash = strchr (ref, '/');
   g_print (_("Installing: %s\n"), slash + 1);
 
-  transaction = flatpak_transaction_new (dir, opt_no_pull, opt_no_deploy,
+  transaction = flatpak_transaction_new (clone, opt_no_pull, opt_no_deploy,
                                          !opt_no_deps, !opt_no_related);
 
   if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
