@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-10-06 14:28+0200\n"
+"POT-Creation-Date: 2016-10-25 11:36+0200\n"
 "PO-Revision-Date: 2016-08-24 19:27+0200\n"
 "Last-Translator: Gabor Kelemen <kelemeng at ubuntu dot com>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
@@ -19,132 +19,165 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Lokalize 1.5\n"
 
-#: app/flatpak-builtins-add-remote.c:60
+#: app/flatpak-builtins-add-remote.c:65
 msgid "Do nothing if the provided remote exists"
 msgstr "Ne tegyen semmit, ha a megadott távoli létezik"
 
-#: app/flatpak-builtins-add-remote.c:61 app/flatpak-builtins-install.c:58
-msgid "Load options from file"
+#: app/flatpak-builtins-add-remote.c:66 app/flatpak-builtins-install.c:62
+#, fuzzy
+msgid "Load options from file or uri"
 msgstr "Beállítások betöltése fájlból"
 
-#: app/flatpak-builtins-add-remote.c:61 app/flatpak-builtins-add-remote.c:79
-#: app/flatpak-builtins-build-bundle.c:53
-#: app/flatpak-builtins-build-export.c:56 app/flatpak-builtins-install.c:59
-msgid "FILE"
-msgstr "FÁJL"
-
-#: app/flatpak-builtins-add-remote.c:66
+#: app/flatpak-builtins-add-remote.c:71
 msgid "Enable GPG verification"
 msgstr "GPG ellenőrzés engedélyezése"
 
-#: app/flatpak-builtins-add-remote.c:67
+#: app/flatpak-builtins-add-remote.c:72
 msgid "Mark the remote as enumerate"
 msgstr "A távoli megjelölése felsorolásként"
 
-#: app/flatpak-builtins-add-remote.c:68
+#: app/flatpak-builtins-add-remote.c:73
+#, fuzzy
+msgid "Mark the remote as used for dependencies"
+msgstr "A távoli megjelölése nem felsorolandóként"
+
+#: app/flatpak-builtins-add-remote.c:74
 msgid "Set a new url"
 msgstr "Új URL beállítása"
 
-#: app/flatpak-builtins-add-remote.c:68 app/flatpak-builtins-build-bundle.c:52
+#: app/flatpak-builtins-add-remote.c:74 app/flatpak-builtins-build-bundle.c:52
 msgid "URL"
 msgstr "URL"
 
-#: app/flatpak-builtins-add-remote.c:69
+#: app/flatpak-builtins-add-remote.c:75
 msgid "Enable the remote"
 msgstr "A távoli engedélyezése"
 
-#: app/flatpak-builtins-add-remote.c:74
+#: app/flatpak-builtins-add-remote.c:76
+msgid "Update extra metadata from the summary file"
+msgstr ""
+
+#: app/flatpak-builtins-add-remote.c:81
 msgid "Disable GPG verification"
 msgstr "GPG ellenőrzés letiltása"
 
-#: app/flatpak-builtins-add-remote.c:75
+#: app/flatpak-builtins-add-remote.c:82
 msgid "Mark the remote as don't enumerate"
 msgstr "A távoli megjelölése nem felsorolandóként"
 
-#: app/flatpak-builtins-add-remote.c:76
+#: app/flatpak-builtins-add-remote.c:83
+#, fuzzy
+msgid "Mark the remote as don't use for deps"
+msgstr "A távoli megjelölése nem felsorolandóként"
+
+#: app/flatpak-builtins-add-remote.c:84
 msgid "Set priority (default 1, higher is more prioritized)"
 msgstr ""
 "Prioritás beállítása (alapértelmezetten 1, a magasabb nagyobb prioritású)"
 
-#: app/flatpak-builtins-add-remote.c:76
+#: app/flatpak-builtins-add-remote.c:84
 msgid "PRIORITY"
 msgstr "PRIORITÁS"
 
-#: app/flatpak-builtins-add-remote.c:77
+#: app/flatpak-builtins-add-remote.c:85
 msgid "A nice name to use for this remote"
 msgstr "Egy szép, ehhez a távolihoz használandó név"
 
-#: app/flatpak-builtins-add-remote.c:77 app/flatpak-builtins-repo-update.c:43
+#: app/flatpak-builtins-add-remote.c:85 app/flatpak-builtins-repo-update.c:44
 msgid "TITLE"
 msgstr "CÍM"
 
-#: app/flatpak-builtins-add-remote.c:78
+#: app/flatpak-builtins-add-remote.c:86
 #, fuzzy
 msgid "Default branch to use for this remote"
 msgstr "Egy szép, ehhez a távolihoz használandó név"
 
-#: app/flatpak-builtins-add-remote.c:78 app/flatpak-builtins-run.c:51
+#: app/flatpak-builtins-add-remote.c:86 app/flatpak-builtins-repo-update.c:45
+#: app/flatpak-builtins-run.c:52
 msgid "BRANCH"
 msgstr "ÁG"
 
-#: app/flatpak-builtins-add-remote.c:79
+#: app/flatpak-builtins-add-remote.c:87
 msgid "Import GPG key from FILE (- for stdin)"
 msgstr "GPG kulcs importálása a FÁJLBÓL (- a szabványos bemenethez)"
 
-#: app/flatpak-builtins-add-remote.c:80
+#: app/flatpak-builtins-add-remote.c:87 app/flatpak-builtins-build-bundle.c:53
+#: app/flatpak-builtins-build-export.c:56 app/flatpak-builtins-install.c:63
+msgid "FILE"
+msgstr "FÁJL"
+
+#: app/flatpak-builtins-add-remote.c:88
 msgid "Disable the remote"
 msgstr "A távoli letiltása"
 
-#: app/flatpak-builtins-add-remote.c:277
+#: app/flatpak-builtins-add-remote.c:365
 msgid "NAME [LOCATION] - Add a remote repository"
 msgstr "NÉV [HELY] - Egy távoli tároló hozzáadása"
 
-#: app/flatpak-builtins-add-remote.c:289
-#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:90
-#: app/flatpak-builtins-uninstall.c:72
+#: app/flatpak-builtins-add-remote.c:374
+#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:94
 msgid "NAME must be specified"
 msgstr "A NÉV megadása kötelező"
 
-#: app/flatpak-builtins-add-remote.c:292 app/flatpak-builtins-repo-update.c:365
+#: app/flatpak-builtins-add-remote.c:377 app/flatpak-builtins-repo-update.c:367
 msgid "LOCATION must be specified"
 msgstr "A HELY megadása kötelező"
 
-#: app/flatpak-builtins-add-remote.c:295
+#: app/flatpak-builtins-add-remote.c:380
 #: app/flatpak-builtins-build-bundle.c:908
-#: app/flatpak-builtins-build-export.c:524
+#: app/flatpak-builtins-build-export.c:637
 #: app/flatpak-builtins-build-import-bundle.c:301
-#: app/flatpak-builtins-build-init.c:88 app/flatpak-builtins-build-sign.c:73
+#: app/flatpak-builtins-build-init.c:149 app/flatpak-builtins-build-sign.c:73
 #: app/flatpak-builtins-delete-remote.c:63
 #: app/flatpak-builtins-document-export.c:102
 #: app/flatpak-builtins-document-info.c:75
 #: app/flatpak-builtins-document-list.c:70
-#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:97
-#: app/flatpak-builtins-install.c:121 app/flatpak-builtins-install.c:232
-#: app/flatpak-builtins-install.c:292 app/flatpak-builtins-list.c:262
-#: app/flatpak-builtins-list-remotes.c:65 app/flatpak-builtins-ls-remote.c:80
-#: app/flatpak-builtins-make-current.c:63 app/flatpak-builtins-override.c:66
-#: app/flatpak-builtins-uninstall.c:75 app/flatpak-builtins-update.c:236
+#: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:101
+#: app/flatpak-builtins-install.c:125 app/flatpak-builtins-install.c:172
+#: app/flatpak-builtins-list.c:262 app/flatpak-builtins-list-remotes.c:65
+#: app/flatpak-builtins-ls-remote.c:80 app/flatpak-builtins-make-current.c:67
+#: app/flatpak-builtins-override.c:66
 msgid "Too many arguments"
 msgstr ""
 
 #. Do nothing
-#: app/flatpak-builtins-add-remote.c:308
+#: app/flatpak-builtins-add-remote.c:394
 #, c-format
 msgid "Remote %s already exists"
 msgstr "A távoli %s már létezik"
 
-#: app/flatpak-builtins-add-remote.c:384
+#: app/flatpak-builtins-add-remote.c:402
+#, fuzzy
+msgid "No url specified in flatpakrepo file"
+msgstr "Nincs név megadva a metaadatokban"
+
+#: app/flatpak-builtins-add-remote.c:470
 msgid "NAME - Modify a remote repository"
 msgstr "NÉV - Egy távoli tároló módosítása"
 
-#: app/flatpak-builtins-add-remote.c:393
+#: app/flatpak-builtins-add-remote.c:479
 msgid "Remote NAME must be specified"
 msgstr "A távoli NÉV megadása kötelező"
 
-#: app/flatpak-builtins-add-remote.c:398
+#: app/flatpak-builtins-add-remote.c:484
 #, c-format
 msgid "No remote %s"
 msgstr "Nincs távoli %s"
+
+#: app/flatpak-builtins-add-remote.c:490
+#, fuzzy, c-format
+msgid "Updating extra metadata from remote summary for %s\n"
+msgstr "Az AppStream frissítése a távolihoz"
+
+#: app/flatpak-builtins-add-remote.c:493
+#, fuzzy, c-format
+msgid "Error updating extra metadata for '%s': %s\n"
+msgstr "Hiba a frissítéskor: %s\n"
+
+#: app/flatpak-builtins-add-remote.c:494
+#, c-format
+msgid "Could not update extra metadata for %s"
+msgstr ""
 
 #: app/flatpak-builtins-build-bundle.c:50
 msgid "Export runtime instead of app"
@@ -155,12 +188,12 @@ msgid "Arch to bundle for"
 msgstr "Csomagolás ezen architektúrához"
 
 #: app/flatpak-builtins-build-bundle.c:51
-#: app/flatpak-builtins-build-export.c:51 app/flatpak-builtins-build-init.c:44
+#: app/flatpak-builtins-build-export.c:51 app/flatpak-builtins-build-init.c:47
 #: app/flatpak-builtins-build-sign.c:41 app/flatpak-builtins-info.c:45
-#: app/flatpak-builtins-install.c:51 app/flatpak-builtins-list.c:48
+#: app/flatpak-builtins-install.c:54 app/flatpak-builtins-list.c:48
 #: app/flatpak-builtins-ls-remote.c:46 app/flatpak-builtins-make-current.c:38
-#: app/flatpak-builtins-run.c:49 app/flatpak-builtins-uninstall.c:43
-#: app/flatpak-builtins-update.c:48
+#: app/flatpak-builtins-run.c:50 app/flatpak-builtins-uninstall.c:44
+#: app/flatpak-builtins-update.c:51
 msgid "ARCH"
 msgstr "ARCHITEKTÚRA"
 
@@ -201,8 +234,8 @@ msgid "'%s' is not a valid name: %s"
 msgstr "A(z) „%s” nem érvényes név"
 
 #: app/flatpak-builtins-build-bundle.c:931
-#: app/flatpak-builtins-build-export.c:538
-#: app/flatpak-builtins-build-init.c:107 app/flatpak-builtins-build-sign.c:87
+#: app/flatpak-builtins-build-export.c:651
+#: app/flatpak-builtins-build-init.c:168 app/flatpak-builtins-build-sign.c:87
 #, fuzzy, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "A(z) „%s” nem érvényes ágnév"
@@ -223,7 +256,7 @@ msgstr "CÉL=FORRÁS"
 msgid "Start build in this directory"
 msgstr "Összeállítás indítása ebben a könyvtárban"
 
-#: app/flatpak-builtins-build.c:44 app/flatpak-builtins-build-init.c:49
+#: app/flatpak-builtins-build.c:44 app/flatpak-builtins-build-init.c:55
 msgid "DIR"
 msgstr "KÖNYVTÁR"
 
@@ -231,21 +264,21 @@ msgstr "KÖNYVTÁR"
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
 msgstr "KÖNYVTÁR [PARANCS [argumentumok…]] - Összeállítás a könyvtárban"
 
-#: app/flatpak-builtins-build.c:112 app/flatpak-builtins-build-finish.c:362
+#: app/flatpak-builtins-build.c:112 app/flatpak-builtins-build-finish.c:404
 msgid "DIRECTORY must be specified"
 msgstr "A KÖNYVTÁR megadása kötelező"
 
-#: app/flatpak-builtins-build.c:123 app/flatpak-builtins-build-export.c:560
+#: app/flatpak-builtins-build.c:123 app/flatpak-builtins-build-export.c:673
 #, fuzzy, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "A(z) „%s” összeállítási könyvtár nincs előkészítve"
 
-#: app/flatpak-builtins-build.c:222
+#: app/flatpak-builtins-build.c:227
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Hiányzó „=” a(z) „%s” kötési csatolás kapcsolóban"
 
-#: app/flatpak-builtins-build.c:248 common/flatpak-run.c:3649
+#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:3856
 msgid "Unable to start app"
 msgstr "Nem indítható el az alkalmazás"
 
@@ -307,21 +340,21 @@ msgstr "GPG kulcsazonosító a kommit aláírásához"
 #: app/flatpak-builtins-build-commit-from.c:53
 #: app/flatpak-builtins-build-export.c:57
 #: app/flatpak-builtins-build-import-bundle.c:45
-#: app/flatpak-builtins-build-sign.c:43 app/flatpak-builtins-repo-update.c:44
+#: app/flatpak-builtins-build-sign.c:43 app/flatpak-builtins-repo-update.c:46
 msgid "KEY-ID"
 msgstr "KULCSAZONOSÍTÓ"
 
 #: app/flatpak-builtins-build-commit-from.c:54
 #: app/flatpak-builtins-build-export.c:60
 #: app/flatpak-builtins-build-import-bundle.c:46
-#: app/flatpak-builtins-build-sign.c:44 app/flatpak-builtins-repo-update.c:45
+#: app/flatpak-builtins-build-sign.c:44 app/flatpak-builtins-repo-update.c:47
 msgid "GPG Homedir to use when looking for keyrings"
 msgstr "A kulcstartók keresésekor használandó GPG saját könyvtár"
 
 #: app/flatpak-builtins-build-commit-from.c:54
 #: app/flatpak-builtins-build-export.c:60
 #: app/flatpak-builtins-build-import-bundle.c:46
-#: app/flatpak-builtins-build-sign.c:44 app/flatpak-builtins-repo-update.c:45
+#: app/flatpak-builtins-build-sign.c:44 app/flatpak-builtins-repo-update.c:47
 msgid "HOMEDIR"
 msgstr "SAJÁTKÖNYVTÁR"
 
@@ -385,47 +418,84 @@ msgstr "MINTA"
 msgid "Excluded files to include"
 msgstr "Felvenni kívánt kizárt fájlok"
 
-#: app/flatpak-builtins-build-export.c:510
+#: app/flatpak-builtins-build-export.c:517
+#, c-format
+msgid "Invalid uri type %s, only http/https supported"
+msgstr ""
+
+#: app/flatpak-builtins-build-export.c:535
+#, c-format
+msgid "Unable to find basename in %s, specify a name explicitly"
+msgstr ""
+
+#: app/flatpak-builtins-build-export.c:544
+msgid "No slashes allowed in extra data name"
+msgstr ""
+
+#: app/flatpak-builtins-build-export.c:556
+#, c-format
+msgid "Invalid format for sha256 checksum: '%s'"
+msgstr ""
+
+#: app/flatpak-builtins-build-export.c:566
+msgid "Extra data sizes of zero not supported"
+msgstr ""
+
+#: app/flatpak-builtins-build-export.c:623
 msgid ""
 "LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"
 msgstr "HELY KÖNYVTÁR [ÁG] - Tároló létrehozása egy összeállítási könyvtárból"
 
-#: app/flatpak-builtins-build-export.c:518 app/flatpak-builtins-build-sign.c:70
+#: app/flatpak-builtins-build-export.c:631 app/flatpak-builtins-build-sign.c:70
 msgid "LOCATION and DIRECTORY must be specified"
 msgstr "A HELY és KÖNYVTÁR megadása kötelező"
 
-#: app/flatpak-builtins-build-finish.c:41
+#: app/flatpak-builtins-build-finish.c:42
 msgid "Command to set"
 msgstr "Beállítandó parancs"
 
-#: app/flatpak-builtins-build-finish.c:41 app/flatpak-builtins-run.c:50
+#: app/flatpak-builtins-build-finish.c:42 app/flatpak-builtins-run.c:51
 #: app/flatpak-main.c:140
 msgid "COMMAND"
 msgstr "PARANCS"
 
-#: app/flatpak-builtins-build-finish.c:42
+#: app/flatpak-builtins-build-finish.c:43
 msgid "Don't process exports"
 msgstr "Ne dolgozza fel az exportokat"
 
-#: app/flatpak-builtins-build-finish.c:352
-msgid "DIRECTORY - Convert a directory to a bundle"
+#: app/flatpak-builtins-build-finish.c:44
+msgid "Extra data info"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:45
+msgid "NAME:SHA256:DOWNLOAD-SIZE:INSTALL-SIZE:URL"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:347
+#, c-format
+msgid "To few elements in --extra-data argument %s"
+msgstr ""
+
+#: app/flatpak-builtins-build-finish.c:394
+#, fuzzy
+msgid "DIRECTORY - Finalize a build directory"
 msgstr "KÖNYVTÁR - Könyvtár átalakítása egy csomaggá"
 
-#: app/flatpak-builtins-build-finish.c:374
+#: app/flatpak-builtins-build-finish.c:416
 #, c-format
 msgid "Build directory %s not initialized"
 msgstr "A(z) „%s” összeállítási könyvtár nincs előkészítve"
 
-#: app/flatpak-builtins-build-finish.c:388
+#: app/flatpak-builtins-build-finish.c:430
 msgid "No name specified in the metadata"
 msgstr "Nincs név megadva a metaadatokban"
 
-#: app/flatpak-builtins-build-finish.c:393
+#: app/flatpak-builtins-build-finish.c:435
 #, c-format
 msgid "Build directory %s already finalized"
 msgstr "A(z) „%s” összeállítási könyvtár már be lett fejezve"
 
-#: app/flatpak-builtins-build-finish.c:403
+#: app/flatpak-builtins-build-finish.c:445
 msgid "Please review the exported files and the metadata\n"
 msgstr "Nézze át az exportált fájlokat és a metaadatokat\n"
 
@@ -457,89 +527,113 @@ msgstr "HELY FÁJLNÉV - Egy fájlcsomag importálása egy helyi tárolóba"
 msgid "LOCATION and FILENAME must be specified"
 msgstr "A HELY és FÁJLNÉV megadása kötelező"
 
-#: app/flatpak-builtins-build-init.c:44 app/flatpak-builtins-info.c:45
-#: app/flatpak-builtins-run.c:49
+#: app/flatpak-builtins-build-init.c:47 app/flatpak-builtins-info.c:45
+#: app/flatpak-builtins-run.c:50
 msgid "Arch to use"
 msgstr "Használandó architektúra"
 
-#: app/flatpak-builtins-build-init.c:45
+#: app/flatpak-builtins-build-init.c:48
 msgid "Initialize var from named runtime"
 msgstr "Változó előkészítése egy elnevezett futtatókörnyezetből"
 
-#: app/flatpak-builtins-build-init.c:45 app/flatpak-builtins-run.c:53
+#: app/flatpak-builtins-build-init.c:48 app/flatpak-builtins-run.c:54
 msgid "RUNTIME"
 msgstr "FUTTATÓKÖRNYEZET"
 
-#: app/flatpak-builtins-build-init.c:46
-msgid "Initialize /usr with a writable copy of the sdk"
-msgstr "Az /usr előkészítése az sdk írható másolatával"
+#: app/flatpak-builtins-build-init.c:49
+#, fuzzy
+msgid "Initialize apps from named app"
+msgstr "Változó előkészítése egy elnevezett futtatókörnyezetből"
 
-#: app/flatpak-builtins-build-init.c:47
-msgid "Add a tag"
-msgstr "Címke hozzáadása"
+#: app/flatpak-builtins-build-init.c:49
+#, fuzzy
+msgid "APP"
+msgstr "ALKALMAZÁSAZONOSÍTÓ"
 
-#: app/flatpak-builtins-build-init.c:47
-msgid "TAG"
-msgstr "CÍMKE"
+#: app/flatpak-builtins-build-init.c:50
+#, fuzzy
+msgid "Specify version for --base"
+msgstr "Alapértelmezett verzió megadása a futtatáshoz"
 
-#: app/flatpak-builtins-build-init.c:48
-msgid "Include this sdk extension in /usr"
+#: app/flatpak-builtins-build-init.c:50 app/flatpak-builtins-run.c:55
+msgid "VERSION"
+msgstr "VERZIÓ"
+
+#: app/flatpak-builtins-build-init.c:51
+#, fuzzy
+msgid "Include this base extension"
 msgstr "Ezen sdk kiterjesztés felvétele az /usr könyvtárba"
 
-#: app/flatpak-builtins-build-init.c:48
+#: app/flatpak-builtins-build-init.c:51 app/flatpak-builtins-build-init.c:54
 msgid "EXTENSION"
 msgstr "KITERJESZTÉS"
 
-#: app/flatpak-builtins-build-init.c:49
+#: app/flatpak-builtins-build-init.c:52
+msgid "Initialize /usr with a writable copy of the sdk"
+msgstr "Az /usr előkészítése az sdk írható másolatával"
+
+#: app/flatpak-builtins-build-init.c:53
+msgid "Add a tag"
+msgstr "Címke hozzáadása"
+
+#: app/flatpak-builtins-build-init.c:53
+msgid "TAG"
+msgstr "CÍMKE"
+
+#: app/flatpak-builtins-build-init.c:54
+msgid "Include this sdk extension in /usr"
+msgstr "Ezen sdk kiterjesztés felvétele az /usr könyvtárba"
+
+#: app/flatpak-builtins-build-init.c:55
 msgid "Where to store sdk (defaults to 'usr')"
 msgstr "Hol tárolja az sdk-t (alapértelmezetten „usr”)"
 
-#: app/flatpak-builtins-build-init.c:50
+#: app/flatpak-builtins-build-init.c:56
 msgid "Re-initialize the sdk/var"
 msgstr "Az sdk vagy változó újra előkészítése"
 
-#: app/flatpak-builtins-build-init.c:78
+#: app/flatpak-builtins-build-init.c:106
+#, c-format
+msgid "Requested extension %s not installed"
+msgstr "A szükséges %s kiterjesztés nincs telepítve"
+
+#: app/flatpak-builtins-build-init.c:139
 msgid ""
 "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
 msgstr ""
 "KÖNYVTÁR ALKALMAZÁSNÉV SDK FUTTATÓKÖRNYEZET [ÁG] - Könyvtár előkészítése az "
 "összeállításhoz"
 
-#: app/flatpak-builtins-build-init.c:85
+#: app/flatpak-builtins-build-init.c:146
 msgid "RUNTIME must be specified"
 msgstr "A FUTTATÓKÖRNYEZET megadása kötelező"
 
-#: app/flatpak-builtins-build-init.c:98 app/flatpak-builtins-override.c:71
+#: app/flatpak-builtins-build-init.c:159 app/flatpak-builtins-override.c:71
 #, fuzzy, c-format
 msgid "'%s' is not a valid application name: %s"
 msgstr "A(z) „%s” nem érvényes alkalmazásnév"
 
-#: app/flatpak-builtins-build-init.c:101
+#: app/flatpak-builtins-build-init.c:162
 #, fuzzy, c-format
 msgid "'%s' is not a valid runtime name: %s"
 msgstr "A(z) „%s” nem érvényes futtatókörnyezet-név"
 
-#: app/flatpak-builtins-build-init.c:104
+#: app/flatpak-builtins-build-init.c:165
 #, fuzzy, c-format
 msgid "'%s' is not a valid sdk name: %s"
 msgstr "A(z) „%s” nem érvényes sdk név"
 
-#: app/flatpak-builtins-build-init.c:129
+#: app/flatpak-builtins-build-init.c:190
 #, c-format
 msgid "Build directory %s already initialized"
 msgstr "A(z) „%s” összeállítási könyvtár már elő van készítve"
 
-#: app/flatpak-builtins-build-init.c:200
-#, c-format
-msgid "Requested extension %s not installed"
-msgstr "A szükséges %s kiterjesztés nincs telepítve"
-
-#: app/flatpak-builtins-build-sign.c:41 app/flatpak-builtins-install.c:51
+#: app/flatpak-builtins-build-sign.c:41 app/flatpak-builtins-install.c:54
 msgid "Arch to install for"
 msgstr "Telepítés ezen architektúrára"
 
-#: app/flatpak-builtins-build-sign.c:42 app/flatpak-builtins-install.c:55
-#: app/flatpak-builtins-uninstall.c:47 app/flatpak-builtins-update.c:54
+#: app/flatpak-builtins-build-sign.c:42 app/flatpak-builtins-install.c:59
+#: app/flatpak-builtins-uninstall.c:48 app/flatpak-builtins-update.c:58
 msgid "Look for runtime with the specified name"
 msgstr "A megadott nevű futtatókörnyezet keresése"
 
@@ -737,84 +831,74 @@ msgstr "Kommit megjelenítése"
 msgid "Show origin"
 msgstr "Kezdőpont megjelenítése"
 
-#: app/flatpak-builtins-info.c:83
+#: app/flatpak-builtins-info.c:87
 msgid "NAME [BRANCH] - Get info about installed app and/or runtime"
 msgstr ""
 "NÉV [ÁG] - Információk lekérése a telepített alkalmazásról és/vagy "
 "futtatókörnyezetről"
 
-#: app/flatpak-builtins-install.c:52
+#: app/flatpak-builtins-install.c:55
 msgid "Don't pull, only install from local cache"
 msgstr "Ne kérje le, csak telepítse a helyi gyorsítótárból"
 
-#: app/flatpak-builtins-install.c:53 app/flatpak-builtins-update.c:52
+#: app/flatpak-builtins-install.c:56 app/flatpak-builtins-update.c:55
 msgid "Don't deploy, only download to local cache"
 msgstr "Ne telepítse, csak töltse le a helyi gyorsítótárba"
 
-#: app/flatpak-builtins-install.c:54
+#: app/flatpak-builtins-install.c:57
 msgid "Don't install related refs"
 msgstr "Ne telepítse a kapcsolódó hivatkozásokat"
 
-#: app/flatpak-builtins-install.c:56 app/flatpak-builtins-uninstall.c:48
-#: app/flatpak-builtins-update.c:55
+#: app/flatpak-builtins-install.c:58 app/flatpak-builtins-update.c:57
+msgid "Don't verify/install runtime dependencies"
+msgstr ""
+
+#: app/flatpak-builtins-install.c:60 app/flatpak-builtins-uninstall.c:49
+#: app/flatpak-builtins-update.c:59
 msgid "Look for app with the specified name"
 msgstr "Alkalmazás keresése a megadott névvel"
 
-#: app/flatpak-builtins-install.c:57
+#: app/flatpak-builtins-install.c:61
 msgid "Install from local bundle file"
 msgstr "Telepítés helyi csomagfájlból"
 
-#: app/flatpak-builtins-install.c:59
+#: app/flatpak-builtins-install.c:63
 msgid "Check bundle signatures with GPG key from FILE (- for stdin)"
 msgstr ""
 "Csomag aláírásának ellenőrzése GPG kulccsal a FÁJLBÓL (- a szabványos "
 "bemenethez)"
 
-#: app/flatpak-builtins-install.c:60
+#: app/flatpak-builtins-install.c:64
 msgid "Only install this subpath"
 msgstr "Csak ezen alútvonal telepítése"
 
-#: app/flatpak-builtins-install.c:60 app/flatpak-builtins-update.c:57
+#: app/flatpak-builtins-install.c:64 app/flatpak-builtins-update.c:61
 msgid "PATH"
 msgstr "ÚTVONAL"
 
-#: app/flatpak-builtins-install.c:118
+#: app/flatpak-builtins-install.c:122
 msgid "Bundle filename must be specified"
 msgstr "A csomagfájlnév megadása kötelező"
 
-#: app/flatpak-builtins-install.c:175 app/flatpak-builtins-uninstall.c:114
-#: app/flatpak-builtins-update.c:161
-#, c-format
-msgid "Warning: Problem looking for related refs: %s\n"
-msgstr "Figyelmeztetés: hiba a kapcsolódó hivatkozások keresésekor: %s\n"
-
-#: app/flatpak-builtins-install.c:190
-#, c-format
-msgid "Installing related: %s\n"
-msgstr "Kapcsolódó telepítése: %s\n"
-
-#: app/flatpak-builtins-install.c:200
-#, c-format
-msgid "Warning: Failed to install related ref: %s\n"
-msgstr "Figyelmeztetés: a kapcsolódó hivatkozás telepítése sikertelen: %s\n"
-
-#: app/flatpak-builtins-install.c:229
+#: app/flatpak-builtins-install.c:169
 #, fuzzy
-msgid "Filename must be specified"
+msgid "Filename or uri must be specified"
 msgstr "A csomagfájlnév megadása kötelező"
 
-#: app/flatpak-builtins-install.c:252
+#: app/flatpak-builtins-install.c:206
 #, fuzzy, c-format
 msgid "Installing: %s\n"
 msgstr "Kapcsolódó telepítése: %s\n"
 
-#: app/flatpak-builtins-install.c:276
-msgid "REPOSITORY NAME [BRANCH] - Install an application or runtime"
+#: app/flatpak-builtins-install.c:235
+#, fuzzy
+msgid "REMOTE REF... - Install applications or runtimes"
 msgstr "TÁROLÓ NÉV [ÁG] - Egy alkalmazás vagy futtatókörnyezet telepítése"
 
-#: app/flatpak-builtins-install.c:289
-msgid "REPOSITORY and NAME must be specified"
-msgstr "A TÁROLÓ és NÉV megadása kötelező"
+#: app/flatpak-builtins-install.c:248
+#, fuzzy
+msgid "REMOTE and REF must be specified"
+msgstr "A TÁVOLI megadása kötelező"
 
 #: app/flatpak-builtins-list.c:45 app/flatpak-builtins-ls-remote.c:42
 msgid "Show arches and branches"
@@ -868,20 +952,20 @@ msgstr "A TÁVOLI megadása kötelező"
 msgid "Arch to make current for"
 msgstr "Aktuálissá tétel ezen architektúrára"
 
-#: app/flatpak-builtins-make-current.c:53
+#: app/flatpak-builtins-make-current.c:57
 msgid "APP BRANCH - Make branch of application current"
 msgstr "ALKALMAZÁS ÁG - Az alkalmazás ágának aktuálissá tétele"
 
-#: app/flatpak-builtins-make-current.c:60 app/flatpak-builtins-override.c:63
-#: app/flatpak-builtins-run.c:94
+#: app/flatpak-builtins-make-current.c:64 app/flatpak-builtins-override.c:63
+#: app/flatpak-builtins-run.c:101
 msgid "APP must be specified"
 msgstr "Az ALKALMAZÁS megadása kötelező"
 
-#: app/flatpak-builtins-make-current.c:74
+#: app/flatpak-builtins-make-current.c:79
 msgid "BRANCH must be specified"
 msgstr "Az ÁG megadása kötelező"
 
-#: app/flatpak-builtins-make-current.c:91
+#: app/flatpak-builtins-make-current.c:92
 #, c-format
 msgid "App %s branch %s is not installed"
 msgstr "A(z) %s alkalmazás, %s ág nincs telepítve"
@@ -890,222 +974,186 @@ msgstr "A(z) %s alkalmazás, %s ág nincs telepítve"
 msgid "APP - Override settings for application"
 msgstr "ALKALMAZÁS - Beállítások felülbírálása az alkalmazáshoz"
 
-#: app/flatpak-builtins-repo-update.c:43
+#: app/flatpak-builtins-repo-update.c:44
 msgid "A nice name to use for this repository"
 msgstr "Egy szép, ehhez a tárolóhoz használandó név"
 
-#: app/flatpak-builtins-repo-update.c:44
+#: app/flatpak-builtins-repo-update.c:45
+#, fuzzy
+msgid "Default branch to use for this repository"
+msgstr "Egy szép, ehhez a távolihoz használandó név"
+
+#: app/flatpak-builtins-repo-update.c:46
 msgid "GPG Key ID to sign the summary with"
 msgstr "GPG kulcsazonosító az összegzés aláírásához"
 
-#: app/flatpak-builtins-repo-update.c:46
+#: app/flatpak-builtins-repo-update.c:48
 msgid "Generate delta files"
 msgstr "Delta fájlok előállítása"
 
-#: app/flatpak-builtins-repo-update.c:47
+#: app/flatpak-builtins-repo-update.c:49
 msgid "Prune unused objects"
 msgstr "Nem használt objektumok törlése"
 
-#: app/flatpak-builtins-repo-update.c:48
+#: app/flatpak-builtins-repo-update.c:50
 msgid "Only traverse DEPTH parents for each commit (default: -1=infinite)"
 msgstr ""
 "Csak MÉLYSÉG szülők bejárása az egyes kommitoknál (alapértelmezett: -1 = "
 "végtelen)"
 
-#: app/flatpak-builtins-repo-update.c:48
+#: app/flatpak-builtins-repo-update.c:50
 msgid "DEPTH"
 msgstr "MÉLYSÉG"
 
-#: app/flatpak-builtins-repo-update.c:105
+#: app/flatpak-builtins-repo-update.c:107
 #, c-format
 msgid "Generating delta: %s (%.10s)\n"
 msgstr "Delta előállítása: %s (%.10s)\n"
 
-#: app/flatpak-builtins-repo-update.c:107
+#: app/flatpak-builtins-repo-update.c:109
 #, c-format
 msgid "Generating delta: %s (%.10s-%.10s)\n"
 msgstr "Delta előállítása: %s (%.10s-%.10s)\n"
 
-#: app/flatpak-builtins-repo-update.c:115
+#: app/flatpak-builtins-repo-update.c:117
 #, c-format
 msgid "Failed to generate delta %s (%.10s): %s\n"
 msgstr "Nem sikerült a(z) %s (%.10s) delta előállítása: %s\n"
 
-#: app/flatpak-builtins-repo-update.c:118
+#: app/flatpak-builtins-repo-update.c:120
 #, c-format
 msgid "Failed to generate delta %s (%.10s-%.10s): %s\n"
 msgstr "Nem sikerült a(z) %s (%.10s-%.10s) delta előállítása: %s\n"
 
-#: app/flatpak-builtins-repo-update.c:358
+#: app/flatpak-builtins-repo-update.c:360
 msgid "LOCATION - Update repository metadata"
 msgstr "HELY - Tároló metaadatainak frissítése"
 
-#: app/flatpak-builtins-repo-update.c:379
+#: app/flatpak-builtins-repo-update.c:385
 msgid "Updating appstream branch\n"
 msgstr "Az AppStream ág frissítése\n"
 
-#: app/flatpak-builtins-repo-update.c:387
+#: app/flatpak-builtins-repo-update.c:393
 msgid "Updating summary\n"
 msgstr "Összegzés frissítése\n"
 
-#: app/flatpak-builtins-repo-update.c:419
+#: app/flatpak-builtins-repo-update.c:425
 #, c-format
 msgid "Total objects: %u\n"
 msgstr "Objektumok összesen: %u\n"
 
-#: app/flatpak-builtins-repo-update.c:421
+#: app/flatpak-builtins-repo-update.c:427
 msgid "No unreachable objects\n"
 msgstr "Nincsenek elérhetetlen objektumok\n"
 
-#: app/flatpak-builtins-repo-update.c:423
+#: app/flatpak-builtins-repo-update.c:429
 #, c-format
 msgid "Deleted %u objects, %s freed\n"
 msgstr "%u objektum törölve, %s felszabadítva\n"
 
-#: app/flatpak-builtins-run.c:50
+#: app/flatpak-builtins-run.c:51
 msgid "Command to run"
 msgstr "Futtatandó parancs"
 
-#: app/flatpak-builtins-run.c:51
+#: app/flatpak-builtins-run.c:52
 msgid "Branch to use"
 msgstr "Használandó ág"
 
-#: app/flatpak-builtins-run.c:52
+#: app/flatpak-builtins-run.c:53
 msgid "Use development runtime"
 msgstr "Fejlesztői futtatókörnyezet használata"
 
-#: app/flatpak-builtins-run.c:53
+#: app/flatpak-builtins-run.c:54
 msgid "Runtime to use"
 msgstr "Használandó futtatókörnyezet"
 
-#: app/flatpak-builtins-run.c:54
+#: app/flatpak-builtins-run.c:55
 msgid "Runtime version to use"
 msgstr "Használandó futtatókörnyezet-verzió"
 
-#: app/flatpak-builtins-run.c:54
-msgid "VERSION"
-msgstr "VERZIÓ"
-
-#: app/flatpak-builtins-run.c:55
+#: app/flatpak-builtins-run.c:56
 msgid "Log session bus calls"
 msgstr "Munkamenetbusz-hívások naplózása"
 
-#: app/flatpak-builtins-run.c:56
+#: app/flatpak-builtins-run.c:57
 msgid "Log system bus calls"
 msgstr "Rendszerbusz-hívások naplózása"
 
-#: app/flatpak-builtins-run.c:71
+#: app/flatpak-builtins-run.c:78
 msgid "APP [args...] - Run an app"
 msgstr "ALKALMAZÁS [argumentumok…] - Alkalmazás futtatása"
 
-#: app/flatpak-builtins-uninstall.c:43
+#: app/flatpak-builtins-uninstall.c:44
 msgid "Arch to uninstall"
 msgstr "Eltávolítandó architektúra"
 
-#: app/flatpak-builtins-uninstall.c:44
+#: app/flatpak-builtins-uninstall.c:45
 msgid "Keep ref in local repository"
 msgstr "Hivatkozás megtartása a helyi tárolóban"
 
-#: app/flatpak-builtins-uninstall.c:45
+#: app/flatpak-builtins-uninstall.c:46
 msgid "Don't uninstall related refs"
 msgstr "Ne távolítsa el a kapcsolódó hivatkozásokat"
 
-#: app/flatpak-builtins-uninstall.c:46
+#: app/flatpak-builtins-uninstall.c:47
 msgid "Remove files even if running"
 msgstr "Fájlok eltávolítása akkor is, ha futnak"
 
-#: app/flatpak-builtins-uninstall.c:65
-msgid "NAME [BRANCH] - Uninstall an application"
+#: app/flatpak-builtins-uninstall.c:69
+#, fuzzy
+msgid "REF... - Uninstall an application"
 msgstr "NÉV [ÁG] - Alkalmazás eltávolítása"
 
-#: app/flatpak-builtins-uninstall.c:135
-#, c-format
-msgid "Uninstalling related: %s\n"
-msgstr "Kapcsolódó eltávolítása: %s\n"
+#: app/flatpak-builtins-uninstall.c:76
+msgid "Must specify at least one REF"
+msgstr ""
 
-#: app/flatpak-builtins-uninstall.c:139
+#: app/flatpak-builtins-uninstall.c:129
 #, c-format
-msgid "Warning: Failed to uninstall related ref: %s\n"
-msgstr "Figyelmeztetés: a kapcsolódó hivatkozás eltávolítása sikertelen: %s\n"
+msgid "Warning: Problem looking for related refs: %s\n"
+msgstr "Figyelmeztetés: hiba a kapcsolódó hivatkozások keresésekor: %s\n"
 
-#: app/flatpak-builtins-update.c:48
+#: app/flatpak-builtins-update.c:51
 msgid "Arch to update for"
 msgstr "Frissítés ezen architektúrára"
 
-#: app/flatpak-builtins-update.c:49
+#: app/flatpak-builtins-update.c:52
 msgid "Commit to deploy"
 msgstr "Telepítendő kommit"
 
-#: app/flatpak-builtins-update.c:49
+#: app/flatpak-builtins-update.c:52
 msgid "COMMIT"
 msgstr "KOMMIT"
 
-#: app/flatpak-builtins-update.c:50
+#: app/flatpak-builtins-update.c:53
 msgid "Remove old files even if running"
 msgstr "Régi fájlok eltávolítása akkor is, ha futnak"
 
-#: app/flatpak-builtins-update.c:51
+#: app/flatpak-builtins-update.c:54
 msgid "Don't pull, only update from local cache"
 msgstr "Ne kérje le, csak frissítse a helyi gyorsítótárból"
 
-#: app/flatpak-builtins-update.c:53
+#: app/flatpak-builtins-update.c:56
 msgid "Don't update related refs"
 msgstr "Ne frissítse a kapcsolódó hivatkozásokat"
 
-#: app/flatpak-builtins-update.c:56
+#: app/flatpak-builtins-update.c:60
 msgid "Update appstream for remote"
 msgstr "Az AppStream frissítése a távolihoz"
 
-#: app/flatpak-builtins-update.c:57
+#: app/flatpak-builtins-update.c:61
 msgid "Only update this subpath"
 msgstr "Csak ezen alútvonal frissítése"
 
-#: app/flatpak-builtins-update.c:80
+#: app/flatpak-builtins-update.c:87
 #, fuzzy, c-format
 msgid "Updating appstream for remote %s\n"
 msgstr "Az AppStream frissítése a távolihoz"
 
-#: app/flatpak-builtins-update.c:116
-#, c-format
-msgid "Updating application %s, branch %s\n"
-msgstr "A(z) %s alkalmazás, %s ág frissítése\n"
-
-#: app/flatpak-builtins-update.c:118
-#, c-format
-msgid "Updating runtime %s, branch %s\n"
-msgstr "A(z) %s futtatókörnyezet, %s ág frissítése\n"
-
-#: app/flatpak-builtins-update.c:122
-#, c-format
-msgid "Remote %s disabled\n"
-msgstr "A(z) %s távoli le van tiltva\n"
-
-#: app/flatpak-builtins-update.c:135 app/flatpak-builtins-update.c:190
-msgid "No updates.\n"
-msgstr "Nincsenek frissítések.\n"
-
-#: app/flatpak-builtins-update.c:145 app/flatpak-builtins-update.c:201
-#, c-format
-msgid "Now at %s.\n"
-msgstr "Most: %s.\n"
-
-#: app/flatpak-builtins-update.c:178
-#, c-format
-msgid "Updating related: %s\n"
-msgstr "Kapcsolódó frissítése: %s\n"
-
-#: app/flatpak-builtins-update.c:224
-msgid "[NAME [BRANCH]] - Update an application or runtime"
+#: app/flatpak-builtins-update.c:117
+#, fuzzy
+msgid "[REF...] - Update applications or runtimes"
 msgstr "[NÉV [ÁG]] - Egy alkalmazás vagy futtatókörnyezet frissítése"
-
-#: app/flatpak-builtins-update.c:309
-#, c-format
-msgid "Error updating: %s\n"
-msgstr "Hiba a frissítéskor: %s\n"
-
-#: app/flatpak-builtins-update.c:323
-msgid "One or more updates failed"
-msgstr "Egy vagy több frissítés sikertelen"
 
 #. translators: please keep the leading space
 #: app/flatpak-main.c:57
@@ -1307,172 +1355,243 @@ msgstr "Nincs parancs megadva"
 msgid "error:"
 msgstr "hiba:"
 
-#: common/flatpak-dir.c:457
+#: common/flatpak-dir.c:466
 #, c-format
 msgid "No overrides found for %s"
 msgstr "Nem találhatók felülbírálások ehhez: %s"
 
-#: common/flatpak-dir.c:564 common/flatpak-dir.c:798 common/flatpak-dir.c:834
-#: common/flatpak-dir.c:856 common/flatpak-dir.c:5607
-#: common/flatpak-utils.c:834
+#: common/flatpak-dir.c:573 common/flatpak-dir.c:819 common/flatpak-dir.c:855
+#: common/flatpak-dir.c:877 common/flatpak-dir.c:6636
+#: common/flatpak-utils.c:979
 #, c-format
 msgid "%s not installed"
 msgstr "A(z) %s nincs telepítve"
 
-#: common/flatpak-dir.c:933
+#: common/flatpak-dir.c:954
 #, c-format
 msgid "While opening repository %s: "
 msgstr "A(z) %s tároló megnyitása közben: "
 
-#: common/flatpak-dir.c:1066 common/flatpak-dir.c:2644
+#: common/flatpak-dir.c:1087 common/flatpak-dir.c:3281
 msgid "Can't create deploy directory"
 msgstr "Nem lehet létrehozni a telepítési könyvtárat"
 
-#: common/flatpak-dir.c:1323 common/flatpak-dir.c:1533
+#: common/flatpak-dir.c:1471
+#, c-format
+msgid "Invalid sha256 for extra data uri %s"
+msgstr ""
+
+#: common/flatpak-dir.c:1476
+#, c-format
+msgid "Empty name for extra data uri %s"
+msgstr ""
+
+#: common/flatpak-dir.c:1481
+#, c-format
+msgid "Unsupported extra data uri %s"
+msgstr ""
+
+#: common/flatpak-dir.c:1491
+#, fuzzy, c-format
+msgid "While downloading %s: "
+msgstr "A(z) %s tároló megnyitása közben: "
+
+#: common/flatpak-dir.c:1496
+#, c-format
+msgid "Wrong size for extra data %s"
+msgstr ""
+
+#: common/flatpak-dir.c:1504
+#, fuzzy, c-format
+msgid "Invalid checksum for extra data %s"
+msgstr "Érvénytelen %s env formátum"
+
+#: common/flatpak-dir.c:1650 common/flatpak-dir.c:1870
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "A(z) %s lekérése közben a(z) %s távoliról: "
 
-#: common/flatpak-dir.c:1337 common/flatpak-dir.c:1545
-#, c-format
-msgid "While pulling %s from remote %s, metadata: "
-msgstr "A(z) %s lekérése közben a(z) %s távoliról, metaadatok: "
-
-#: common/flatpak-dir.c:1351 common/flatpak-dir.c:1557
-#, c-format
-msgid "While pulling %s from remote %s, subpath %s: "
-msgstr "A(z) %s lekérése közben a(z) %s távoliról, %s alútvonal: "
-
-#: common/flatpak-dir.c:1501 common/flatpak-dir.c:4491
+#: common/flatpak-dir.c:1824
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "A(z) %s nem található a(z) %s távolin"
 
-#: common/flatpak-dir.c:2064
+#: common/flatpak-dir.c:2414
 msgid "Not enough memory"
 msgstr "Nincs elég memória"
 
-#: common/flatpak-dir.c:2083
+#: common/flatpak-dir.c:2433
 msgid "Failed to read from exported file"
 msgstr "Nem sikerült olvasni az exportált fájlból"
 
-#: common/flatpak-dir.c:2611
+#: common/flatpak-dir.c:2946
+#, fuzzy
+msgid "While getting detached metadata: "
+msgstr "A metaadatok alútvonalának átváltására tett kísérlet közben: "
+
+#: common/flatpak-dir.c:2964
+msgid "While creating extradir: "
+msgstr ""
+
+#: common/flatpak-dir.c:2986
+msgid "Invalid sha256 for extra data"
+msgstr ""
+
+#: common/flatpak-dir.c:3015
+msgid "Wrong size for extra data"
+msgstr ""
+
+#: common/flatpak-dir.c:3019
+msgid "Invalid checksum for extra data"
+msgstr ""
+
+#: common/flatpak-dir.c:3028
+#, c-format
+msgid "While writing extra data file '%s': "
+msgstr ""
+
+#: common/flatpak-dir.c:3185
+msgid "apply_extra script failed"
+msgstr ""
+
+#: common/flatpak-dir.c:3248
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "A(z) %s hivatkozás feloldására tett kísérlet közben: "
 
-#: common/flatpak-dir.c:2626
+#: common/flatpak-dir.c:3263
 #, c-format
 msgid "%s is not available"
 msgstr "A(z) %s nem érhető el"
 
-#: common/flatpak-dir.c:2633 common/flatpak-dir.c:2856
-#: common/flatpak-dir.c:3377 common/flatpak-dir.c:3397
+#: common/flatpak-dir.c:3270 common/flatpak-dir.c:3513
+#: common/flatpak-dir.c:4059 common/flatpak-dir.c:4078
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "A(z) %s %s ág már telepítve van"
 
-#: common/flatpak-dir.c:2652
+#: common/flatpak-dir.c:3289
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Nem sikerült olvasni a(z) %s kommitot: "
 
-#: common/flatpak-dir.c:2671
+#: common/flatpak-dir.c:3308
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "A(z) %s -> %s átváltására tett kísérlet közben: "
 
-#: common/flatpak-dir.c:2696 common/flatpak-dir.c:2727
+#: common/flatpak-dir.c:3333 common/flatpak-dir.c:3364
 msgid "While trying to checkout metadata subpath: "
 msgstr "A metaadatok alútvonalának átváltására tett kísérlet közben: "
 
-#: common/flatpak-dir.c:3204
+#: common/flatpak-dir.c:3374
+#, fuzzy
+msgid "While trying to remove existing extra dir: "
+msgstr "A(z) %s hivatkozás feloldására tett kísérlet közben: "
+
+#: common/flatpak-dir.c:3385
+#, fuzzy
+msgid "While trying to apply extra data: "
+msgstr "A metaadatok alútvonalának átváltására tett kísérlet közben: "
+
+#: common/flatpak-dir.c:3882
 #, fuzzy, c-format
 msgid "This version of %s is already installed"
 msgstr "A(z) %s alkalmazás, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:3637
+#: common/flatpak-dir.c:4339
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "A(z) %s %s ág nincs telepítve"
 
-#: common/flatpak-dir.c:3825
+#: common/flatpak-dir.c:4583
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "A(z) %s %s ág nincs telepítve"
 
-#: common/flatpak-dir.c:4413
+#: common/flatpak-dir.c:5240
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Semmi sem egyezik: %s"
 
-#: common/flatpak-dir.c:4601
+#: common/flatpak-dir.c:5322
+#, fuzzy, c-format
+msgid "Can't find %s%s%s%s%s in remote %s"
+msgstr "A(z) %s nem található a(z) %s távolin"
+
+#: common/flatpak-dir.c:5439
 #, c-format
 msgid "%s %s not installed"
 msgstr "A(z) %s %s nincs telepítve"
 
-#: common/flatpak-dir.c:4905
+#: common/flatpak-dir.c:5756
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "A(z) %s futtatókörnyezet, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:4906
+#: common/flatpak-dir.c:5757
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "A(z) %s alkalmazás, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:5233
-msgid "Remote title not available; server has no summary file"
+#: common/flatpak-dir.c:6142
+#, fuzzy
+msgid "Remote extra metadata not available; server has no summary file"
 msgstr "A távoli cím nem érhető el, a kiszolgálónak nincs összegzőfájlja"
 
-#: common/flatpak-dir.c:5248
+#: common/flatpak-dir.c:6172
 msgid "Remote title not set"
 msgstr "A távoli cím nincs beállítva"
 
-#: common/flatpak-dir.c:5276
+#: common/flatpak-dir.c:6199
+#, fuzzy
+msgid "Remote default-branch not set"
+msgstr "A távoli cím nincs beállítva"
+
+#: common/flatpak-dir.c:6305
 msgid "Data not found"
 msgstr "Az adatok nem találhatók"
 
-#: common/flatpak-dir.c:5285
+#: common/flatpak-dir.c:6314
 #, c-format
 msgid "Data not found for ref %s"
 msgstr "Az adatok nem találhatók a(z) %s hivatkozáshoz"
 
-#: common/flatpak-dir.c:5333 common/flatpak-dir.c:5471
+#: common/flatpak-dir.c:6362 common/flatpak-dir.c:6500
 msgid "Data not available; server has no summary file"
 msgstr "Az adatok nem érhetők el, a kiszolgálónak nincs összegzőfájlja"
 
-#: common/flatpak-run.c:228
+#: common/flatpak-run.c:233
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Ismeretlen %s megosztástípus, az érvényes típusok: %s"
 
-#: common/flatpak-run.c:263
+#: common/flatpak-run.c:268
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Ismeretlen %s házirendtípus, az érvényes típusok: %s"
 
-#: common/flatpak-run.c:301
+#: common/flatpak-run.c:306
 #, c-format
 msgid "Invalid dbus name %s\n"
 msgstr "Ismeretlen %s D-Bus név\n"
 
-#: common/flatpak-run.c:314
+#: common/flatpak-run.c:319
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Ismeretlen %s foglalattípus, az érvényes típusok: %s"
 
-#: common/flatpak-run.c:343
+#: common/flatpak-run.c:348
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Ismeretlen %s eszköztípus, az érvényes típusok: %s"
 
-#: common/flatpak-run.c:371
+#: common/flatpak-run.c:376
 #, fuzzy, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Ismeretlen %s megosztástípus, az érvényes típusok: %s"
 
-#: common/flatpak-run.c:633
+#: common/flatpak-run.c:670
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid types are: host, home, xdg-*[/...], ~/"
@@ -1481,154 +1600,213 @@ msgstr ""
 "Ismeretlen %s fájlrendszer hely, az érvényes típusok: gép, saját könyvtár, "
 "xdg-*[/...], ~/könyvtár, /könyvtár"
 
-#: common/flatpak-run.c:884
+#: common/flatpak-run.c:936
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Érvénytelen %s env formátum"
 
-#: common/flatpak-run.c:967
+#: common/flatpak-run.c:1076
 msgid "Share with host"
 msgstr "Megosztás a gazdagéppel"
 
-#: common/flatpak-run.c:967 common/flatpak-run.c:968
+#: common/flatpak-run.c:1076 common/flatpak-run.c:1077
 msgid "SHARE"
 msgstr "MEGOSZTÁS"
 
-#: common/flatpak-run.c:968
+#: common/flatpak-run.c:1077
 msgid "Unshare with host"
 msgstr "Megosztás megszüntetése a gazdagéppel"
 
-#: common/flatpak-run.c:969
+#: common/flatpak-run.c:1078
 msgid "Expose socket to app"
 msgstr "Foglalat elérhetővé tétele az alkalmazásnak"
 
-#: common/flatpak-run.c:969 common/flatpak-run.c:970
+#: common/flatpak-run.c:1078 common/flatpak-run.c:1079
 msgid "SOCKET"
 msgstr "FOGLALAT"
 
-#: common/flatpak-run.c:970
+#: common/flatpak-run.c:1079
 msgid "Don't expose socket to app"
 msgstr "Ne tegye elérhetővé a foglalatot az alkalmazásnak"
 
-#: common/flatpak-run.c:971
+#: common/flatpak-run.c:1080
 msgid "Expose device to app"
 msgstr "Eszköz elérhetővé tétele az alkalmazásnak"
 
-#: common/flatpak-run.c:971 common/flatpak-run.c:972
+#: common/flatpak-run.c:1080 common/flatpak-run.c:1081
 msgid "DEVICE"
 msgstr "ESZKÖZ"
 
-#: common/flatpak-run.c:972
+#: common/flatpak-run.c:1081
 msgid "Don't expose device to app"
 msgstr "Ne tegye elérhetővé az eszközt az alkalmazásnak"
 
-#: common/flatpak-run.c:973
+#: common/flatpak-run.c:1082
 msgid "Allow feature"
 msgstr ""
 
-#: common/flatpak-run.c:973 common/flatpak-run.c:974
+#: common/flatpak-run.c:1082 common/flatpak-run.c:1083
 msgid "FEATURE"
 msgstr ""
 
-#: common/flatpak-run.c:974
+#: common/flatpak-run.c:1083
 #, fuzzy
 msgid "Don't allow feature"
 msgstr "Ne telepítse a kapcsolódó hivatkozásokat"
 
-#: common/flatpak-run.c:975
+#: common/flatpak-run.c:1084
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr ""
 "Fájlrendszer elérhetővé tétele az alkalmazásnak (:ro a csak olvashatóhoz)"
 
-#: common/flatpak-run.c:975
+#: common/flatpak-run.c:1084
 msgid "FILESYSTEM[:ro]"
 msgstr "FÁJLRENDSZER[:ro]"
 
-#: common/flatpak-run.c:976
+#: common/flatpak-run.c:1085
 msgid "Don't expose filesystem to app"
 msgstr "Ne tegye elérhetővé a fájlrendszert az alkalmazásnak"
 
-#: common/flatpak-run.c:976
+#: common/flatpak-run.c:1085
 msgid "FILESYSTEM"
 msgstr "FÁJLRENDSZER"
 
-#: common/flatpak-run.c:977
+#: common/flatpak-run.c:1086
 msgid "Set environment variable"
 msgstr "Környezeti változó beállítása"
 
-#: common/flatpak-run.c:977
+#: common/flatpak-run.c:1086
 msgid "VAR=VALUE"
 msgstr "VÁLTOZÓ=ÉRTÉK"
 
-#: common/flatpak-run.c:978
+#: common/flatpak-run.c:1087
 msgid "Allow app to own name on the session bus"
 msgstr "Név birtoklásának lehetővé tétele az alkalmazásnak a munkamenetbuszon"
 
-#: common/flatpak-run.c:978 common/flatpak-run.c:979 common/flatpak-run.c:980
-#: common/flatpak-run.c:981
+#: common/flatpak-run.c:1087 common/flatpak-run.c:1088
+#: common/flatpak-run.c:1089 common/flatpak-run.c:1090
 msgid "DBUS_NAME"
 msgstr "DBUS_NÉV"
 
-#: common/flatpak-run.c:979
+#: common/flatpak-run.c:1088
 msgid "Allow app to talk to name on the session bus"
 msgstr ""
 "A névhez való beszéd lehetővé tétele az alkalmazásnak a munkamenetbuszon"
 
-#: common/flatpak-run.c:980
+#: common/flatpak-run.c:1089
 msgid "Allow app to own name on the system bus"
 msgstr "Név birtoklásának lehetővé tétele az alkalmazásnak a rendszerbuszon"
 
-#: common/flatpak-run.c:981
+#: common/flatpak-run.c:1090
 msgid "Allow app to talk to name on the system bus"
 msgstr "A névhez való beszéd lehetővé tétele az alkalmazásnak a rendszerbuszon"
 
-#: common/flatpak-run.c:982
+#: common/flatpak-run.c:1091
+msgid "Add generic policy option"
+msgstr ""
+
+#: common/flatpak-run.c:1091 common/flatpak-run.c:1092
+msgid "SUBSYSTEM.KEY=VALUE"
+msgstr ""
+
+#: common/flatpak-run.c:1092
+msgid "Remove generic policy option"
+msgstr ""
+
+#: common/flatpak-run.c:1093
 msgid "Persist home directory"
 msgstr "Saját könyvtár megőrzése"
 
-#: common/flatpak-run.c:982
+#: common/flatpak-run.c:1093
 msgid "FILENAME"
 msgstr "FÁJLNÉV"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-run.c:984
+#: common/flatpak-run.c:1095
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Ne követeljen meg egy futó munkamenetet (nincs cgroups létrehozás)"
 
-#: common/flatpak-run.c:1553
+#: common/flatpak-run.c:1730
 msgid "Failed to create temporary file"
 msgstr "Nem sikerült létrehozni az átmeneti fájlt"
 
-#: common/flatpak-run.c:1560
+#: common/flatpak-run.c:1737
 msgid "Failed to unlink temporary file"
 msgstr "Nem sikerült törölni az átmeneti fájlt"
 
-#: common/flatpak-run.c:1578
+#: common/flatpak-run.c:1755
 msgid "Failed to write to temporary file"
 msgstr "Nem sikerült írni az átmeneti fájlba"
 
-#: common/flatpak-run.c:2613
+#: common/flatpak-run.c:2791
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Nem sikerült megnyitni az átmeneti fájlt"
 
-#: common/flatpak-run.c:2643
+#: common/flatpak-run.c:2829
 #, fuzzy, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Nem sikerült megnyitni az átmeneti fájlt"
 
-#: common/flatpak-run.c:2909
+#: common/flatpak-run.c:3095
 msgid "Unable to create sync pipe"
 msgstr "Nem hozható létre szinkronizálási cső"
 
-#: common/flatpak-run.c:2934
+#: common/flatpak-run.c:3120
 #, fuzzy, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Nem sikerült megnyitni az átmeneti fájlt"
 
-#: common/flatpak-run.c:2964
+#: common/flatpak-run.c:3150
 msgid "Failed to sync with dbus proxy"
 msgstr "Nem sikerült szinkronizálni a dbus proxyval"
+
+#: common/flatpak-utils.c:2284
+msgid "No extra data sources"
+msgstr ""
+
+#~ msgid "Installing related: %s\n"
+#~ msgstr "Kapcsolódó telepítése: %s\n"
+
+#~ msgid "Warning: Failed to install related ref: %s\n"
+#~ msgstr "Figyelmeztetés: a kapcsolódó hivatkozás telepítése sikertelen: %s\n"
+
+#~ msgid "REPOSITORY and NAME must be specified"
+#~ msgstr "A TÁROLÓ és NÉV megadása kötelező"
+
+#~ msgid "Uninstalling related: %s\n"
+#~ msgstr "Kapcsolódó eltávolítása: %s\n"
+
+#~ msgid "Warning: Failed to uninstall related ref: %s\n"
+#~ msgstr ""
+#~ "Figyelmeztetés: a kapcsolódó hivatkozás eltávolítása sikertelen: %s\n"
+
+#~ msgid "Updating application %s, branch %s\n"
+#~ msgstr "A(z) %s alkalmazás, %s ág frissítése\n"
+
+#~ msgid "Updating runtime %s, branch %s\n"
+#~ msgstr "A(z) %s futtatókörnyezet, %s ág frissítése\n"
+
+#~ msgid "Remote %s disabled\n"
+#~ msgstr "A(z) %s távoli le van tiltva\n"
+
+#~ msgid "No updates.\n"
+#~ msgstr "Nincsenek frissítések.\n"
+
+#~ msgid "Now at %s.\n"
+#~ msgstr "Most: %s.\n"
+
+#~ msgid "Updating related: %s\n"
+#~ msgstr "Kapcsolódó frissítése: %s\n"
+
+#~ msgid "One or more updates failed"
+#~ msgstr "Egy vagy több frissítés sikertelen"
+
+#~ msgid "While pulling %s from remote %s, metadata: "
+#~ msgstr "A(z) %s lekérése közben a(z) %s távoliról, metaadatok: "
+
+#~ msgid "While pulling %s from remote %s, subpath %s: "
+#~ msgstr "A(z) %s lekérése közben a(z) %s távoliról, %s alútvonal: "
 
 #~ msgid "LOCATION ID [BRANCH] - Create a repository from a build directory"
 #~ msgstr ""
