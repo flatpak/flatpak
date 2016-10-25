@@ -4875,7 +4875,7 @@ flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
   g_autoptr(GFile) extension_dir = NULL;
   g_autoptr(GFileInfo) extension_dir_info = NULL;
 
-  extension_dir = flatpak_dir_get_unmaintained_extension_dir(self, name, arch, branch);
+  extension_dir = flatpak_dir_get_unmaintained_extension_dir (self, name, arch, branch);
 
   extension_dir_info = g_file_query_info (extension_dir,
                                           G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
@@ -4888,8 +4888,7 @@ flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
   if (g_file_info_get_is_symlink (extension_dir_info))
       return g_file_new_for_path (g_file_info_get_symlink_target (extension_dir_info));
   else
-      return g_steal_pointer(&extension_dir);
-  return NULL;
+      return g_steal_pointer (&extension_dir);
 }
 
 G_LOCK_DEFINE_STATIC (cache);
