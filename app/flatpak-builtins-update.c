@@ -121,7 +121,7 @@ flatpak_builtin_update (int           argc,
     return FALSE;
 
   if (opt_appstream)
-    return update_appstream (dir, argc >= 2 ? argv[2] : NULL, cancellable, error);
+    return update_appstream (dir, argc >= 2 ? argv[1] : NULL, cancellable, error);
 
   prefs = &argv[1];
   n_prefs = argc - 1;
