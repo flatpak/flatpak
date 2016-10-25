@@ -130,9 +130,9 @@ int
 glnx_loop_write (int fd, const void *buf, size_t nbytes);
 
 typedef enum {
-  GLNX_FILE_COPY_OVERWRITE,
-  GLNX_FILE_COPY_NOXATTRS,
-  GLNX_FILE_COPY_DATASYNC
+  GLNX_FILE_COPY_OVERWRITE = (1 << 0),
+  GLNX_FILE_COPY_NOXATTRS = (1 << 1),
+  GLNX_FILE_COPY_DATASYNC = (1 << 2)
 } GLnxFileCopyFlags;
 
 gboolean
