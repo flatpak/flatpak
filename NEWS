@@ -1,3 +1,82 @@
+Major changes in 0.6.13
+=======================
+ * The command line arguments for install/update/uninstall changed
+
+   These used to take an application id and an optional branch name as
+   two arguments. This meant you could not specify multiple apps
+   to install in a single command. So, instead of having the branch
+   as a separate argument we now support partial references.
+   If you only specify an id we try to match the rest as best we
+   can depending on what is installed/available, but if this
+   matches multiple things you have to specify more details.
+
+   For example you can use:
+     * org.my.App//stable - Any compatible arch, stable branch
+     * org.my.App/x86_64 - x86-64, look for available branch
+     * org.my.App/x86_64/stable - exact reference
+
+   This means install/update/uninstall can now install multiple apps
+   in a single operation.
+
+ * Application runtime depencenies are checked/downloaded
+
+   Whenever you install or update an application we check that the
+   required runtime is installed. If not, we check if it is available
+   in any configured remote, and if found asks the user if/where to
+   install it from. If it is not found, the install/update fails.
+
+   You can mark remotes as --no-use-for-deps, which means flatpak will
+   never search for runtime dependencies in such remotes. This makes
+   the dependency search faster if you have app-only remotes.
+   It is recommended that app-only .flatpakrepo file define this
+   by specifying NoDeps=true.
+
+ * remote-add and install --from now supports uris
+
+   This means you can install flatpakrefs and flatpakrepos in a
+   single command like so:
+
+    * flatpak remote-add --from gnome https://sdk.gnome.org/gnome.flatpakrepo
+    * flatpak install --from https://sdk.gnome.org/gedit.flatpakref
+
+ * flatpak run can now launch a runtime directly
+
+   For example, "flatpak run org.gnome.Platform//3.22" will launch a shell
+   inside a sandboxy with the gnome 3.22 runtime and an empty /app.
+   This is useful for development and testing.
+
+ * included bubblewrap was bumped to 0.1.3 which has a security fix
+ * Support for defining the default branch per remote
+ * remote-add/modify: --update-metadata pulls current title and default branch
+   from remote summary file
+ * Applications can now list a set of URIs that will be downloaded with the
+   application. The app can then extract these and use as a part of the
+   application data. This is useful for applications using freely downloadable
+   parts that can't be redistributed elsewhere.
+ * flatpak-builder: Support --finish-only and --allow-missing-runtimes
+ * flatpak-builder: Support app layering
+
+   An app can define a "base" application which is used for the initial
+   content before the application is built. This way applications can
+   be built in a layered fashion.
+
+ * dbus proxy: The filtering has been tightened up
+ * build-finish: Now exports icons for themes other than hicolor too
+ * There is support in the app metadata for generic policies.
+
+   These are read and propagated and supports overriding, but are
+   not otherwise interpreted by flatpak. They can be used by other
+   host services as static permissions for the application.
+
+ * Support for extensions directories
+
+   In addition to using flatpak maintained runtime as an extensions
+   flatpak can now use raw directories in ~/.local/share/flatpak/extension
+   and /var/lib/flatpak/extension. For example, if you create a
+   directory called org.freedesktop.Platform.GStreamer.MyPlugins/x86_64/1.4
+   there it will be used as a source for gstreamer plugins for all
+   runtimes based on the freedesktop 1.4 runtime.
+
 Major changes in 0.6.12
 =======================
  * Partial revert in application id rules. Application ids
