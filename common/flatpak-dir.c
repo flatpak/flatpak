@@ -615,6 +615,18 @@ flatpak_dir_get_deploy_dir (FlatpakDir *self,
 }
 
 GFile *
+flatpak_dir_get_unmaintained_extension_dir (FlatpakDir *self,
+                                            const char *name,
+                                            const char *arch,
+                                            const char *branch)
+{
+  const char *unmaintained_ref;
+
+  unmaintained_ref = g_build_filename ("extension", name, arch, branch, NULL);
+  return g_file_resolve_relative_path (self->basedir, unmaintained_ref);
+}
+
+GFile *
 flatpak_dir_get_exports_dir (FlatpakDir *self)
 {
   return g_file_get_child (self->basedir, "exports");
@@ -4389,6 +4401,62 @@ out:
 }
 
 gboolean
+flatpak_dir_collect_unmaintained_refs (FlatpakDir   *self,
+                                       const char   *name_prefix,
+                                       const char   *arch,
+                                       const char   *branch,
+                                       GHashTable   *hash,
+                                       GCancellable *cancellable,
+                                       GError      **error)
+{
+  gboolean ret = FALSE;
+
+  g_autoptr(GFile) unmaintained_dir = NULL;
+  g_autoptr(GFileEnumerator) unmaintained_dir_enum = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
+  GError *temp_error = NULL;
+
+  unmaintained_dir = g_file_get_child (self->basedir, "extension");
+  if (!g_file_query_exists (unmaintained_dir, cancellable))
+    return TRUE;
+
+  unmaintained_dir_enum = g_file_enumerate_children (unmaintained_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                                     G_FILE_QUERY_INFO_NONE,
+                                                     cancellable,
+                                                     error);
+  if (!unmaintained_dir_enum)
+    goto out;
+
+  while ((child_info = g_file_enumerator_next_file (unmaintained_dir_enum, cancellable, &temp_error)) != NULL)
+    {
+      const char *name = g_file_info_get_name (child_info);
+
+      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
+          name[0] != '.' && (name_prefix == NULL || g_str_has_prefix (name, name_prefix)))
+        {
+          g_autoptr(GFile) child1 = g_file_get_child (unmaintained_dir, name);
+          g_autoptr(GFile) child2 = g_file_get_child (child1, arch);
+          g_autoptr(GFile) child3 = g_file_get_child (child2, branch);
+
+          if (g_file_query_exists (child3, cancellable))
+            g_hash_table_add (hash, g_strdup (name));
+        }
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      goto out;
+    }
+
+  ret = TRUE;
+out:
+  return ret;
+}
+
+gboolean
 flatpak_dir_list_deployed (FlatpakDir   *self,
                            const char   *ref,
                            char       ***deployed_checksums,
@@ -4794,6 +4862,33 @@ flatpak_dir_get_if_deployed (FlatpakDir   *self,
 
   if (g_file_query_file_type (deploy_dir, G_FILE_QUERY_INFO_NONE, cancellable) == G_FILE_TYPE_DIRECTORY)
     return g_object_ref (deploy_dir);
+  return NULL;
+}
+
+GFile *
+flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
+                                                      const char *name,
+                                                      const char *arch,
+                                                      const char *branch,
+                                                      GCancellable *cancellable)
+{
+  g_autoptr(GFile) extension_dir = NULL;
+  g_autoptr(GFileInfo) extension_dir_info = NULL;
+
+  extension_dir = flatpak_dir_get_unmaintained_extension_dir(self, name, arch, branch);
+
+  extension_dir_info = g_file_query_info (extension_dir,
+                                          G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET,
+                                          G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                          cancellable,
+                                          NULL);
+  if (extension_dir_info == NULL)
+    return NULL;
+
+  if (g_file_info_get_is_symlink (extension_dir_info))
+      return g_file_new_for_path (g_file_info_get_symlink_target (extension_dir_info));
+  else
+      return g_steal_pointer(&extension_dir);
   return NULL;
 }
 
