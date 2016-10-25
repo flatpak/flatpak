@@ -416,6 +416,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepoCommitModifier, ostree_repo_commit_modi
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupSession, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupMessage, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequest, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequestHTTP, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupURI, soup_uri_free)
 #endif
 
