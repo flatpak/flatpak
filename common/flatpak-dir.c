@@ -289,7 +289,10 @@ flatpak_dir_get_system_helper (FlatpakDir *self)
           g_warning ("Can't find org.freedesktop.Flatpak.SystemHelper: %s\n", error->message);
           system_helper = NO_SYSTEM_HELPER;
         }
-      g_dbus_proxy_set_default_timeout (G_DBUS_PROXY (system_helper), G_MAXINT);
+      else
+        {
+          g_dbus_proxy_set_default_timeout (G_DBUS_PROXY (system_helper), G_MAXINT);
+        }
       g_once_init_leave (&self->system_helper, system_helper);
     }
 
@@ -332,7 +335,8 @@ flatpak_dir_finalize (GObject *object)
   g_clear_object (&self->repo);
   g_clear_object (&self->basedir);
 
-  g_clear_object (&self->system_helper);
+  if (self->system_helper != NO_SYSTEM_HELPER)
+    g_clear_object (&self->system_helper);
 
   g_clear_object (&self->soup_session);
   g_clear_pointer (&self->summary_cache, g_hash_table_unref);
