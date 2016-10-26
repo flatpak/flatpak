@@ -5219,6 +5219,7 @@ find_matching_ref (GHashTable *refs,
       /* Nothing to do other than reporting the different choices */
       g_autoptr(GString) err = g_string_new ("");
       g_string_printf (err, "Multiple branches available for %s, you must specify one of: ", name);
+      g_ptr_array_sort (matched_refs, flatpak_strcmp0_ptr);
       for (j = 0; j < matched_refs->len; j++)
         {
           g_auto(GStrv) parts = flatpak_decompose_ref (g_ptr_array_index (matched_refs, j), NULL);
