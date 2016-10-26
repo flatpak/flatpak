@@ -59,6 +59,11 @@
         </para>
 
         <para>
+            System-wide remotes can be statically preconfigured by dropping
+            config fragments into <filename>/etc/flatpak/remotes.d/</filename>.
+        </para>
+
+        <para>
             flatpak uses OSTree to distribute and deploy data. The repositories
             it uses are OSTree repositories and can be manipulated with the
             <command>ostree</command> utility. Installed runtimes and
