@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-10-25 11:36+0200\n"
-"PO-Revision-Date: 2016-09-10 11:06+0300\n"
+"POT-Creation-Date: 2016-10-25 14:24+0000\n"
+"PO-Revision-Date: 2016-10-26 19:02+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -24,9 +24,8 @@ msgid "Do nothing if the provided remote exists"
 msgstr "Нічого не робити, якщо вказане сховище існує"
 
 #: app/flatpak-builtins-add-remote.c:66 app/flatpak-builtins-install.c:62
-#, fuzzy
 msgid "Load options from file or uri"
-msgstr "Завантажити параметри з файла"
+msgstr "Завантажити параметри з файла або адресу"
 
 #: app/flatpak-builtins-add-remote.c:71
 msgid "Enable GPG verification"
@@ -37,9 +36,9 @@ msgid "Mark the remote as enumerate"
 msgstr "Позначити віддалене сховище як таке, яке входить до переліку"
 
 #: app/flatpak-builtins-add-remote.c:73
-#, fuzzy
 msgid "Mark the remote as used for dependencies"
-msgstr "Позначити віддалене сховище як таке, яке не входить до переліку"
+msgstr ""
+"Позначити віддалене сховище як таке, що використовується для залежностей"
 
 #: app/flatpak-builtins-add-remote.c:74
 msgid "Set a new url"
@@ -55,7 +54,7 @@ msgstr "Увімкнути віддалене сховище"
 
 #: app/flatpak-builtins-add-remote.c:76
 msgid "Update extra metadata from the summary file"
-msgstr ""
+msgstr "Оновити додаткові метадані з файла резюме"
 
 #: app/flatpak-builtins-add-remote.c:81
 msgid "Disable GPG verification"
@@ -66,9 +65,9 @@ msgid "Mark the remote as don't enumerate"
 msgstr "Позначити віддалене сховище як таке, яке не входить до переліку"
 
 #: app/flatpak-builtins-add-remote.c:83
-#, fuzzy
 msgid "Mark the remote as don't use for deps"
-msgstr "Позначити віддалене сховище як таке, яке не входить до переліку"
+msgstr ""
+"Позначити віддалене сховище як таке, яке не використовується для залежностей"
 
 #: app/flatpak-builtins-add-remote.c:84
 msgid "Set priority (default 1, higher is more prioritized)"
@@ -88,9 +87,8 @@ msgid "TITLE"
 msgstr "ЗАГОЛОВОК"
 
 #: app/flatpak-builtins-add-remote.c:86
-#, fuzzy
 msgid "Default branch to use for this remote"
-msgstr "Зрозуміла назва для використання цього віддаленого сховища"
+msgstr "Типова гілка для цього віддаленого сховища"
 
 #: app/flatpak-builtins-add-remote.c:86 app/flatpak-builtins-repo-update.c:45
 #: app/flatpak-builtins-run.c:52
@@ -138,7 +136,7 @@ msgstr "Слід вказати РОЗТАШУВАННЯ"
 #: app/flatpak-builtins-ls-remote.c:80 app/flatpak-builtins-make-current.c:67
 #: app/flatpak-builtins-override.c:66
 msgid "Too many arguments"
-msgstr ""
+msgstr "Забагато аргументів"
 
 #. Do nothing
 #: app/flatpak-builtins-add-remote.c:394
@@ -147,9 +145,8 @@ msgid "Remote %s already exists"
 msgstr "Запис віддаленого сховища %s вже існує"
 
 #: app/flatpak-builtins-add-remote.c:402
-#, fuzzy
 msgid "No url specified in flatpakrepo file"
-msgstr "У метаданих не вказано назви"
+msgstr "У файлі flatpakrepo не вказано адреси"
 
 #: app/flatpak-builtins-add-remote.c:470
 msgid "NAME - Modify a remote repository"
@@ -165,19 +162,19 @@ msgid "No remote %s"
 msgstr "Немає сховища %s"
 
 #: app/flatpak-builtins-add-remote.c:490
-#, fuzzy, c-format
+#, c-format
 msgid "Updating extra metadata from remote summary for %s\n"
-msgstr "Оновити дані appstream для віддаленого сховища"
+msgstr "Оновлюємо додаткові метадані з резюме віддаленого сховища для %s\n"
 
 #: app/flatpak-builtins-add-remote.c:493
-#, fuzzy, c-format
+#, c-format
 msgid "Error updating extra metadata for '%s': %s\n"
-msgstr "Помилка під час спроби оновлення: %s\n"
+msgstr "Помилка під час оновлення додаткових метаданих для «%s»: %s\n"
 
 #: app/flatpak-builtins-add-remote.c:494
 #, c-format
 msgid "Could not update extra metadata for %s"
-msgstr ""
+msgstr "Не вдалося оновити додаткові метадані для %s"
 
 #: app/flatpak-builtins-build-bundle.c:50
 msgid "Export runtime instead of app"
@@ -230,16 +227,16 @@ msgid "'%s' is not a valid repository"
 msgstr "«%s» не є коректним сховищем"
 
 #: app/flatpak-builtins-build-bundle.c:928 app/flatpak-builtins-build-sign.c:84
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid name: %s"
-msgstr "«%s» не є коректною назвою"
+msgstr "«%s» не є коректною назвою: %s"
 
 #: app/flatpak-builtins-build-bundle.c:931
 #: app/flatpak-builtins-build-export.c:651
 #: app/flatpak-builtins-build-init.c:168 app/flatpak-builtins-build-sign.c:87
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid branch name: %s"
-msgstr "«%s» не коректною назвою гілки"
+msgstr "«%s» не є коректною назвою гілки: %s"
 
 #: app/flatpak-builtins-build.c:42
 msgid "Use Platform runtime rather than Sdk"
@@ -270,9 +267,11 @@ msgid "DIRECTORY must be specified"
 msgstr "Слід вказати КАТАЛОГ"
 
 #: app/flatpak-builtins-build.c:123 app/flatpak-builtins-build-export.c:673
-#, fuzzy, c-format
+#, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
-msgstr "Каталог збирання %s не ініціалізовано"
+msgstr ""
+"Каталог збирання %s не ініціалізовано, скористайтеся командою flatpak "
+"build-init"
 
 #: app/flatpak-builtins-build.c:227
 #, c-format
@@ -423,25 +422,25 @@ msgstr "Виключені файли для включення"
 #: app/flatpak-builtins-build-export.c:517
 #, c-format
 msgid "Invalid uri type %s, only http/https supported"
-msgstr ""
+msgstr "Некоректний тип адреси %s, передбачено підтримку лише http/https"
 
 #: app/flatpak-builtins-build-export.c:535
 #, c-format
 msgid "Unable to find basename in %s, specify a name explicitly"
-msgstr ""
+msgstr "Не вдалося знайти базову назву у %s, вкажіть назву явним чином"
 
 #: app/flatpak-builtins-build-export.c:544
 msgid "No slashes allowed in extra data name"
-msgstr ""
+msgstr "У назві додаткових даних не можна використовувати навскісні риски"
 
 #: app/flatpak-builtins-build-export.c:556
 #, c-format
 msgid "Invalid format for sha256 checksum: '%s'"
-msgstr ""
+msgstr "Некоректний формат контрольної суми sha256: «%s»"
 
 #: app/flatpak-builtins-build-export.c:566
 msgid "Extra data sizes of zero not supported"
-msgstr ""
+msgstr "Підтримки нульових розмірів додаткових даних не передбачено"
 
 #: app/flatpak-builtins-build-export.c:623
 msgid ""
@@ -468,21 +467,20 @@ msgstr "Не обробляти експортування"
 
 #: app/flatpak-builtins-build-finish.c:44
 msgid "Extra data info"
-msgstr ""
+msgstr "Відомості щодо додаткових даних"
 
 #: app/flatpak-builtins-build-finish.c:45
 msgid "NAME:SHA256:DOWNLOAD-SIZE:INSTALL-SIZE:URL"
-msgstr ""
+msgstr "НАЗВА:SHA256:РОЗМІР_ОТРИМАНОГО:РОЗМІР_ВСТАНОВЛЕНОГО:АДРЕСА"
 
 #: app/flatpak-builtins-build-finish.c:347
 #, c-format
 msgid "To few elements in --extra-data argument %s"
-msgstr ""
+msgstr "Замало елементів у аргументі --extra-data %s"
 
 #: app/flatpak-builtins-build-finish.c:394
-#, fuzzy
 msgid "DIRECTORY - Finalize a build directory"
-msgstr "КАТАЛОГ — перетворити каталог на пакунок"
+msgstr "КАТАЛОГ — завершити обробку каталогу збирання"
 
 #: app/flatpak-builtins-build-finish.c:416
 #, c-format
@@ -545,28 +543,24 @@ msgid "RUNTIME"
 msgstr "СЕРЕДОВИЩЕ ВИКОНАННЯ"
 
 #: app/flatpak-builtins-build-init.c:49
-#, fuzzy
 msgid "Initialize apps from named app"
-msgstr "Ініціалізувати змінну на основі іменованого середовища виконання"
+msgstr "Ініціалізувати програми з названої програми"
 
 #: app/flatpak-builtins-build-init.c:49
-#, fuzzy
 msgid "APP"
-msgstr "ІДЕНТИФІКАТОРПРОГРАМИ"
+msgstr "ПРОГРАМА"
 
 #: app/flatpak-builtins-build-init.c:50
-#, fuzzy
 msgid "Specify version for --base"
-msgstr "Вказати типову версію для запуску"
+msgstr "Вказати версію для --base"
 
 #: app/flatpak-builtins-build-init.c:50 app/flatpak-builtins-run.c:55
 msgid "VERSION"
 msgstr "ВЕРСІЯ"
 
 #: app/flatpak-builtins-build-init.c:51
-#, fuzzy
 msgid "Include this base extension"
-msgstr "Включити це розширення середовища програмування до /usr"
+msgstr "Включити це базове розширення"
 
 #: app/flatpak-builtins-build-init.c:51 app/flatpak-builtins-build-init.c:54
 msgid "EXTENSION"
@@ -613,19 +607,19 @@ msgid "RUNTIME must be specified"
 msgstr "Має бути вказано СЕРЕДОВИЩЕ-ВИКОНАННЯ"
 
 #: app/flatpak-builtins-build-init.c:159 app/flatpak-builtins-override.c:71
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid application name: %s"
-msgstr "«%s» не є коректною назвою програми"
+msgstr "«%s» не є коректною назвою програми: %s"
 
 #: app/flatpak-builtins-build-init.c:162
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid runtime name: %s"
-msgstr "«%s» не є коректною назвою середовища виконання"
+msgstr "«%s» не є коректною назвою середовища виконання: %s"
 
 #: app/flatpak-builtins-build-init.c:165
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a valid sdk name: %s"
-msgstr "«%s» не є коректною назвою sdk"
+msgstr "«%s» не є коректною назвою sdk: %s"
 
 #: app/flatpak-builtins-build-init.c:190
 #, c-format
@@ -642,9 +636,8 @@ msgid "Look for runtime with the specified name"
 msgstr "Шукати середовище виконання із вказаною назвою"
 
 #: app/flatpak-builtins-build-sign.c:63
-#, fuzzy
 msgid "LOCATION ID [BRANCH] - Sign an application or runtime"
-msgstr "СХОВИЩЕ НАЗВА [ГІЛКА]] - Встановити програму або середовище виконання"
+msgstr "РОЗТАШУВАННЯ ІД [ГІЛКА]  - Підписати програму або середовище виконання"
 
 #: app/flatpak-builtins-build-sign.c:90
 msgid "No gpg key ids specified"
@@ -739,17 +732,15 @@ msgid "FILE - Unexport a file to apps"
 msgstr "ФАЙЛ - Скасувати експортування файла до програм"
 
 #: app/flatpak-builtins-enter.c:82
-#, fuzzy
 msgid ""
 "SANDBOXEDPID [COMMAND [args...]] - Run a command inside a running sandbox"
 msgstr ""
-"PID_МОНІТОРА [КОМАНДА [аргументи...]] - Виконати команду у запущеній "
+"PID_ПІСОЧНИЦІ [КОМАНДА [аргументи...]] - Виконати команду у запущеній "
 "пісочниці"
 
 #: app/flatpak-builtins-enter.c:103
-#, fuzzy
 msgid "SANDBOXEDPID and COMMAND must be specified"
-msgstr "Слід вказати PID_МОНІТОРА та КОМАНДУ"
+msgstr "Слід вказати PID_ПІСОЧНИЦІ та КОМАНДУ"
 
 #: app/flatpak-builtins-enter.c:111
 #, c-format
@@ -759,15 +750,15 @@ msgstr "Некоректний pid %s"
 #: app/flatpak-builtins-enter.c:115
 #, c-format
 msgid "No such pid %s"
-msgstr ""
+msgstr "Немає такого pid, %s"
 
 #: app/flatpak-builtins-enter.c:127
 msgid "Can't read cwd"
-msgstr ""
+msgstr "Не вдалося прочитати cwd"
 
 #: app/flatpak-builtins-enter.c:132
 msgid "Can't read root"
-msgstr ""
+msgstr "Не вдалося прочитати вміст кореневої теки"
 
 #: app/flatpak-builtins-enter.c:141
 #, c-format
@@ -791,19 +782,19 @@ msgstr "Не вдалося увійти до простору назв %s: %s"
 
 #: app/flatpak-builtins-enter.c:173
 msgid "Can't chdir"
-msgstr ""
+msgstr "Не вдалося змінити каталог"
 
 #: app/flatpak-builtins-enter.c:176
 msgid "Can't chroot"
-msgstr ""
+msgstr "Не вдалося змінити кореневий каталог"
 
 #: app/flatpak-builtins-enter.c:223
 msgid "Can't switch gid"
-msgstr ""
+msgstr "Не вдалося перемкнути gid"
 
 #: app/flatpak-builtins-enter.c:226
 msgid "Can't switch uid"
-msgstr ""
+msgstr "Не вдалося перемкнути uid"
 
 #: app/flatpak-builtins-info.c:46 app/flatpak-builtins-list.c:43
 #: app/flatpak-builtins-list-remotes.c:41
@@ -855,7 +846,7 @@ msgstr "Не встановлювати пов’язані посилання"
 
 #: app/flatpak-builtins-install.c:58 app/flatpak-builtins-update.c:57
 msgid "Don't verify/install runtime dependencies"
-msgstr ""
+msgstr "Не перевіряти або не встановлювати залежності для виконання"
 
 #: app/flatpak-builtins-install.c:60 app/flatpak-builtins-uninstall.c:49
 #: app/flatpak-builtins-update.c:59
@@ -885,9 +876,8 @@ msgid "Bundle filename must be specified"
 msgstr "Слід вказати назву файла пакунка"
 
 #: app/flatpak-builtins-install.c:169
-#, fuzzy
 msgid "Filename or uri must be specified"
-msgstr "Слід вказати назву файла"
+msgstr "Слід вказати назву файла або адресу"
 
 #: app/flatpak-builtins-install.c:206
 #, c-format
@@ -895,14 +885,12 @@ msgid "Installing: %s\n"
 msgstr "Встановлюємо: %s\n"
 
 #: app/flatpak-builtins-install.c:235
-#, fuzzy
 msgid "REMOTE REF... - Install applications or runtimes"
-msgstr "СХОВИЩЕ НАЗВА [ГІЛКА]] - Встановити програму або середовище виконання"
+msgstr "СХОВИЩЕ НАЗВА… - Встановити програму або середовища виконання"
 
 #: app/flatpak-builtins-install.c:248
-#, fuzzy
 msgid "REMOTE and REF must be specified"
-msgstr "Має бути вказано СХОВИЩЕ"
+msgstr "Має бути вказано СХОВИЩЕ і НАЗВУ"
 
 #: app/flatpak-builtins-list.c:45 app/flatpak-builtins-ls-remote.c:42
 msgid "Show arches and branches"
@@ -983,9 +971,8 @@ msgid "A nice name to use for this repository"
 msgstr "Зручна назва для цього сховища"
 
 #: app/flatpak-builtins-repo-update.c:45
-#, fuzzy
 msgid "Default branch to use for this repository"
-msgstr "Зрозуміла назва для використання цього віддаленого сховища"
+msgstr "Типова гілка для цього сховища"
 
 #: app/flatpak-builtins-repo-update.c:46
 msgid "GPG Key ID to sign the summary with"
@@ -1104,13 +1091,12 @@ msgid "Remove files even if running"
 msgstr "Вилучити файли, навіть якщо роботу ще не завершено"
 
 #: app/flatpak-builtins-uninstall.c:69
-#, fuzzy
 msgid "REF... - Uninstall an application"
-msgstr "НАЗВА [ГІЛКА] - Вилучити програму"
+msgstr "ПОСИЛАННЯ… - Вилучити програму"
 
 #: app/flatpak-builtins-uninstall.c:76
 msgid "Must specify at least one REF"
-msgstr ""
+msgstr "Слід вказати принаймні одне посилання"
 
 #: app/flatpak-builtins-uninstall.c:129
 #, c-format
@@ -1149,15 +1135,14 @@ msgstr "Оновити дані appstream для віддаленого схов
 msgid "Only update this subpath"
 msgstr "Оновити лише вказаний підшлях"
 
-#: app/flatpak-builtins-update.c:87
-#, fuzzy, c-format
+#: app/flatpak-builtins-update.c:89
+#, c-format
 msgid "Updating appstream for remote %s\n"
-msgstr "Оновити дані appstream для віддаленого сховища"
+msgstr "Оновлюємо appstream для віддаленого сховища %s\n"
 
-#: app/flatpak-builtins-update.c:117
-#, fuzzy
+#: app/flatpak-builtins-update.c:119
 msgid "[REF...] - Update applications or runtimes"
-msgstr "[НАЗВА [ГІЛКА]] - Оновити програму або середовище виконання"
+msgstr "[НАЗВА…] - Оновити програми або середовища виконання"
 
 #. translators: please keep the leading space
 #: app/flatpak-main.c:57
@@ -1314,9 +1299,8 @@ msgid "Print debug information during command processing"
 msgstr "Вивести діагностичні дані під час обробки команди"
 
 #: app/flatpak-main.c:103
-#, fuzzy
 msgid "Print OSTree debug information during command processing"
-msgstr "Вивести діагностичні дані під час обробки команди"
+msgstr "Вивести діагностичні дані OSTree під час обробки команди"
 
 #: app/flatpak-main.c:104
 msgid "Show help options"
@@ -1383,32 +1367,32 @@ msgstr "Не вдалося створити каталог розгортанн
 #: common/flatpak-dir.c:1471
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
-msgstr ""
+msgstr "Некоректна сума sha256 для адреси додаткових даних %s"
 
 #: common/flatpak-dir.c:1476
 #, c-format
 msgid "Empty name for extra data uri %s"
-msgstr ""
+msgstr "Порожня назва для адреси додаткових даних %s"
 
 #: common/flatpak-dir.c:1481
 #, c-format
 msgid "Unsupported extra data uri %s"
-msgstr ""
+msgstr "Непідтримувана адреса додаткових даних %s"
 
 #: common/flatpak-dir.c:1491
-#, fuzzy, c-format
+#, c-format
 msgid "While downloading %s: "
-msgstr "Під час спроби відкрити сховище %s: "
+msgstr "Під час спроби отримання %s: "
 
 #: common/flatpak-dir.c:1496
 #, c-format
 msgid "Wrong size for extra data %s"
-msgstr ""
+msgstr "Помилковий розмір додаткових даних %s"
 
 #: common/flatpak-dir.c:1504
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid checksum for extra data %s"
-msgstr "Некоректне форматування середовища, %s"
+msgstr "Некоректна контрольна сума додаткових даних, %s"
 
 #: common/flatpak-dir.c:1650 common/flatpak-dir.c:1870
 #, c-format
@@ -1429,34 +1413,33 @@ msgid "Failed to read from exported file"
 msgstr "Не вдалося виконати читання з експортованого файла"
 
 #: common/flatpak-dir.c:2946
-#, fuzzy
 msgid "While getting detached metadata: "
-msgstr "Під час спроби вивантаження підшляху метаданих: "
+msgstr "Під час спроби отримання від’єднаних метаданих: "
 
 #: common/flatpak-dir.c:2964
 msgid "While creating extradir: "
-msgstr ""
+msgstr "Під час створення каталогу додаткових даних: "
 
 #: common/flatpak-dir.c:2986
 msgid "Invalid sha256 for extra data"
-msgstr ""
+msgstr "Некоректна контрольна сума sha256 для додаткових даних"
 
 #: common/flatpak-dir.c:3015
 msgid "Wrong size for extra data"
-msgstr ""
+msgstr "Помилковий розмір додаткових даних"
 
 #: common/flatpak-dir.c:3019
 msgid "Invalid checksum for extra data"
-msgstr ""
+msgstr "Некоректна контрольна сума додаткових даних"
 
 #: common/flatpak-dir.c:3028
 #, c-format
 msgid "While writing extra data file '%s': "
-msgstr ""
+msgstr "Під час записування файла додаткових даних «%s»: "
 
 #: common/flatpak-dir.c:3185
 msgid "apply_extra script failed"
-msgstr ""
+msgstr "Помилка скрипту apply_extra"
 
 #: common/flatpak-dir.c:3248
 #, c-format
@@ -1489,14 +1472,12 @@ msgid "While trying to checkout metadata subpath: "
 msgstr "Під час спроби вивантаження підшляху метаданих: "
 
 #: common/flatpak-dir.c:3374
-#, fuzzy
 msgid "While trying to remove existing extra dir: "
-msgstr "Під час спроби визначити посилання %s: "
+msgstr "Під час спроби вилучення наявного додаткового каталогу: "
 
 #: common/flatpak-dir.c:3385
-#, fuzzy
 msgid "While trying to apply extra data: "
-msgstr "Під час спроби вивантаження підшляху метаданих: "
+msgstr "Під час спроби застосування додаткових даних: "
 
 #: common/flatpak-dir.c:3882
 #, c-format
@@ -1519,9 +1500,9 @@ msgid "Nothing matches %s"
 msgstr "Немає відповідників %s"
 
 #: common/flatpak-dir.c:5322
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find %s%s%s%s%s in remote %s"
-msgstr "Не вдалося знайти %s у віддаленому сховищі %s"
+msgstr "Не вдалося знайти %s%s%s%s%s у віддаленому сховищі %s"
 
 #: common/flatpak-dir.c:5439
 #, c-format
@@ -1539,19 +1520,18 @@ msgid "App %s, branch %s is already installed"
 msgstr "Програму %s, гілка %s вже встановлено"
 
 #: common/flatpak-dir.c:6142
-#, fuzzy
 msgid "Remote extra metadata not available; server has no summary file"
 msgstr ""
-"Заголовок віддаленого сховища недоступний; на сервері немає файла резюме"
+"Додаткові метадані віддаленого сховища недоступні; на сервері немає файла "
+"резюме"
 
 #: common/flatpak-dir.c:6172
 msgid "Remote title not set"
 msgstr "Заголовок віддаленого сховища не встановлено"
 
 #: common/flatpak-dir.c:6199
-#, fuzzy
 msgid "Remote default-branch not set"
-msgstr "Заголовок віддаленого сховища не встановлено"
+msgstr "Не встановлено типову гілку віддаленого сховища"
 
 #: common/flatpak-dir.c:6305
 msgid "Data not found"
@@ -1705,15 +1685,15 @@ msgstr "Дозволити програмі обмінюватися даним�
 
 #: common/flatpak-run.c:1091
 msgid "Add generic policy option"
-msgstr ""
+msgstr "Додати параметр загальних правил"
 
 #: common/flatpak-run.c:1091 common/flatpak-run.c:1092
 msgid "SUBSYSTEM.KEY=VALUE"
-msgstr ""
+msgstr "ПІДСИСТЕМА.КЛЮЧ=ЗНАЧЕННЯ"
 
 #: common/flatpak-run.c:1092
 msgid "Remove generic policy option"
-msgstr ""
+msgstr "Вилучити параметр загальних правил"
 
 #: common/flatpak-run.c:1093
 msgid "Persist home directory"
@@ -1741,14 +1721,14 @@ msgid "Failed to write to temporary file"
 msgstr "Не вдалося виконати запис до тимчасового файла"
 
 #: common/flatpak-run.c:2791
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open flatpak-info temp file: %s"
-msgstr "Не вдалося відкрити тимчасовий файл flatpak-info"
+msgstr "Не вдалося відкрити тимчасовий файл flatpak-info: %s"
 
 #: common/flatpak-run.c:2829
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open temp file: %s"
-msgstr "Не вдалося відкрити тимчасовий файл"
+msgstr "Не вдалося відкрити тимчасовий файл: %s"
 
 #: common/flatpak-run.c:3095
 msgid "Unable to create sync pipe"
@@ -1765,121 +1745,151 @@ msgstr "Не вдалося виконати синхронізацію із п�
 
 #: common/flatpak-utils.c:2284
 msgid "No extra data sources"
+msgstr "Немає джерел додаткових даних"
+
+#.
+#. Policy definitions for Flatpak system actions.
+#. Copyright (c) 2016 Alexander Larsson <alexl@redhat.com>
+#: system-helper/org.freedesktop.Flatpak.policy.in:12
+msgid "The Flatpak Project"
+msgstr "Проект Flatpak"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:13
+msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:14
+#: system-helper/org.freedesktop.Flatpak.policy.in:25
+#: system-helper/org.freedesktop.Flatpak.policy.in:42
+#: system-helper/org.freedesktop.Flatpak.policy.in:60
+#: system-helper/org.freedesktop.Flatpak.policy.in:78
+#: system-helper/org.freedesktop.Flatpak.policy.in:89
+#: system-helper/org.freedesktop.Flatpak.policy.in:100
+#: system-helper/org.freedesktop.Flatpak.policy.in:111
+#: system-helper/org.freedesktop.Flatpak.policy.in:122
+#: system-helper/org.freedesktop.Flatpak.policy.in:140
+msgid "package-x-generic"
+msgstr "package-x-generic"
+
+#. SECURITY:
+#. - Normal users do not need authentication to install signed applications
+#. from signed repositories, as this cannot exploit a system.
+#. - Paranoid users (or parents!) can change this to 'auth_admin' or
+#. 'auth_admin_keep'.
+#: system-helper/org.freedesktop.Flatpak.policy.in:23
+msgid "Install signed application"
+msgstr "Встановлення підписаної програми"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:24
+#: system-helper/org.freedesktop.Flatpak.policy.in:41
+#: system-helper/org.freedesktop.Flatpak.policy.in:88
+msgid "Authentication is required to install software"
+msgstr "Для встановлення програмного забезпечення слід пройти розпізнавання"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:27
+#: system-helper/org.freedesktop.Flatpak.policy.in:28
+#: system-helper/org.freedesktop.Flatpak.policy.in:44
+#: system-helper/org.freedesktop.Flatpak.policy.in:45
+#: system-helper/org.freedesktop.Flatpak.policy.in:62
+#: system-helper/org.freedesktop.Flatpak.policy.in:63
+#: system-helper/org.freedesktop.Flatpak.policy.in:80
+#: system-helper/org.freedesktop.Flatpak.policy.in:81
+#: system-helper/org.freedesktop.Flatpak.policy.in:91
+#: system-helper/org.freedesktop.Flatpak.policy.in:92
+#: system-helper/org.freedesktop.Flatpak.policy.in:102
+#: system-helper/org.freedesktop.Flatpak.policy.in:103
+#: system-helper/org.freedesktop.Flatpak.policy.in:113
+#: system-helper/org.freedesktop.Flatpak.policy.in:114
+#: system-helper/org.freedesktop.Flatpak.policy.in:124
+#: system-helper/org.freedesktop.Flatpak.policy.in:125
+#: system-helper/org.freedesktop.Flatpak.policy.in:126
+#: system-helper/org.freedesktop.Flatpak.policy.in:142
+#: system-helper/org.freedesktop.Flatpak.policy.in:143
+msgid "auth_admin"
+msgstr "auth_admin"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:29
+#: system-helper/org.freedesktop.Flatpak.policy.in:46
+#: system-helper/org.freedesktop.Flatpak.policy.in:93
+#: system-helper/org.freedesktop.Flatpak.policy.in:104
+#: system-helper/org.freedesktop.Flatpak.policy.in:115
+msgid "auth_admin_keep"
+msgstr "auth_admin_keep"
+
+#. SECURITY:
+#. - Normal users do not need authentication to install signed applications
+#. from signed repositories, as this cannot exploit a system.
+#. - Paranoid users (or parents!) can change this to 'auth_admin' or
+#. 'auth_admin_keep'.
+#: system-helper/org.freedesktop.Flatpak.policy.in:40
+msgid "Install signed runtime"
+msgstr "Встановлення підписаного середовища виконання"
+
+#. SECURITY:
+#. - Normal users do not require admin authentication to update an
+#. app as the commit will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:58
+msgid "Update signed application"
+msgstr "Оновлення підписаної програми"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:59
+#: system-helper/org.freedesktop.Flatpak.policy.in:77
+#: system-helper/org.freedesktop.Flatpak.policy.in:139
+msgid "Authentication is required to update software"
+msgstr "Для оновлення програмного забезпечення слід пройти розпізнавання"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:64
+#: system-helper/org.freedesktop.Flatpak.policy.in:82
+#: system-helper/org.freedesktop.Flatpak.policy.in:144
+msgid "yes"
+msgstr "так"
+
+#. SECURITY:
+#. - Normal users do not require admin authentication to update a
+#. runtime as the commit will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:76
+msgid "Update signed runtime"
+msgstr "Оновлення підписаного середовища виконання"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:87
+msgid "Install bundle"
+msgstr "Встановлення пакунка"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:98
+msgid "Uninstall runtime"
+msgstr "Вилучення середовища виконання"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:99
+#: system-helper/org.freedesktop.Flatpak.policy.in:110
+msgid "Authentication is required to uninstall software"
+msgstr "Для вилучення програмного забезпечення слід пройти розпізнавання"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:109
+msgid "Uninstall app"
+msgstr "Вилучення програми"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:120
+msgid "Configure Remote"
+msgstr "Налаштовування сховищ"
+
+#: system-helper/org.freedesktop.Flatpak.policy.in:121
+msgid "Authentication is required to configure software repositories"
 msgstr ""
+"Для налаштовування сховище програмного забезпечення слід пройти розпізнавання"
 
-#~ msgid "Installing related: %s\n"
-#~ msgstr "Встановлюємо пов’язане: %s\n"
+#. SECURITY:
+#. - Normal users do not require admin authentication to update
+#. appstream data as it will be signed, and the action is required
+#. to update the system when unattended.
+#. - Changing this to anything other than 'yes' will break unattended
+#. updates.
+#: system-helper/org.freedesktop.Flatpak.policy.in:138
+msgid "Update appstream"
+msgstr "Оновлення appstream"
 
-#~ msgid "Warning: Failed to install related ref: %s\n"
-#~ msgstr "Попередження: не вдалося встановити пов’язане посилання: %s\n"
-
-#~ msgid "REPOSITORY and NAME must be specified"
-#~ msgstr "Має бути вказано СХОВИЩЕ і НАЗВУ"
-
-#~ msgid "Uninstalling related: %s\n"
-#~ msgstr "Вилучаємо пов’язане: %s\n"
-
-#~ msgid "Warning: Failed to uninstall related ref: %s\n"
-#~ msgstr "Попередження: не вдалося вилучити пов’язане посилання: %s\n"
-
-#~ msgid "Updating application %s, branch %s\n"
-#~ msgstr "Оновлюємо програму %s, гілка %s\n"
-
-#~ msgid "Updating runtime %s, branch %s\n"
-#~ msgstr "Оновлюємо середовище виконання %s, гілка %s\n"
-
-#~ msgid "Remote %s disabled\n"
-#~ msgstr "Віддалене сховище %s вимкнено\n"
-
-#~ msgid "No updates.\n"
-#~ msgstr "Немає оновлень.\n"
-
-#~ msgid "Now at %s.\n"
-#~ msgstr "Зараз у %s.\n"
-
-#~ msgid "Updating related: %s\n"
-#~ msgstr "Оновлюємо пов’язане: %s\n"
-
-#~ msgid "One or more updates failed"
-#~ msgstr "Помилка під час одного або декількох оновлень"
-
-#~ msgid "While pulling %s from remote %s, metadata: "
-#~ msgstr "Під час отримання %s з віддаленого сховища %s, метадані: "
-
-#~ msgid "While pulling %s from remote %s, subpath %s: "
-#~ msgstr "Під час отримання %s з віддаленого сховища %s, підшлях %s: "
-
-#~ msgid "LOCATION ID [BRANCH] - Create a repository from a build directory"
-#~ msgstr ""
-#~ "РОЗТАШУВАННЯ ІДЕНТИФІКАТОР [ГІЛКА] - Створити сховище на основі каталогу "
-#~ "збирання"
-
-#~ msgid "The Flatpak Project"
-#~ msgstr "Проект Flatpak"
-
-#~ msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
-#~ msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
-
-#~ msgid "package-x-generic"
-#~ msgstr "package-x-generic"
-
-#~| msgid "List installed applications"
-#~ msgid "Install signed application"
-#~ msgstr "Встановлення підписаної програми"
-
-#~ msgid "Authentication is required to install software"
-#~ msgstr "Для встановлення програмного забезпечення слід пройти розпізнавання"
-
-#~ msgid "auth_admin"
-#~ msgstr "auth_admin"
-
-#~ msgid "auth_admin_keep"
-#~ msgstr "auth_admin_keep"
-
-#~| msgid "List installed runtimes"
-#~ msgid "Install signed runtime"
-#~ msgstr "Встановлення підписаного середовища виконання"
-
-#~| msgid "List installed applications"
-#~ msgid "Update signed application"
-#~ msgstr "Оновлення підписаної програми"
-
-#~ msgid "Authentication is required to update software"
-#~ msgstr "Для оновлення програмного забезпечення слід пройти розпізнавання"
-
-#~ msgid "yes"
-#~ msgstr "так"
-
-#~| msgid "List installed runtimes"
-#~ msgid "Update signed runtime"
-#~ msgstr "Оновлення підписаного середовища виконання"
-
-#~| msgid "Install from local bundle file"
-#~ msgid "Install bundle"
-#~ msgstr "Встановлення пакунка"
-
-#~ msgid "Authentication is install software"
-#~ msgstr "Розпізнавання для встановлення програмного забезпечення"
-
-#~| msgid "List installed runtimes"
-#~ msgid "Uninstall runtime"
-#~ msgstr "Вилучення середовища виконання"
-
-#~ msgid "Authentication is required to uninstall software"
-#~ msgstr "Для вилучення програмного забезпечення слід пройти розпізнавання"
-
-#~ msgid "Uninstall app"
-#~ msgstr "Вилучення програми"
-
-#~| msgid "Delete a configured remote"
-#~ msgid "Configure Remote"
-#~ msgstr "Налаштовування сховищ"
-
-#~ msgid "Authentication is required to configure software repositories"
-#~ msgstr ""
-#~ "Для налаштовування сховище програмного забезпечення слід пройти "
-#~ "розпізнавання"
-
-#~| msgid "Update appstream for remote"
-#~ msgid "Update appstream"
-#~ msgstr "Оновлення appstream"
