@@ -304,7 +304,8 @@ load_options (const char *filename,
         }
 
       *gpg_data = g_bytes_new_take (decoded, decoded_len);
-      opt_do_gpg_verify = TRUE;
+      if (!opt_no_gpg_verify)
+        opt_do_gpg_verify = TRUE;
     }
 }
 
