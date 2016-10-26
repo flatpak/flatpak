@@ -51,12 +51,29 @@ struct FlatpakTransaction {
 };
 
 
+/* Check if the ref is in the dir, or in the system dir, in case its a
+ * user-dir. We want to avoid depending on user-installed things when
+ * installing to the system dir.
+ */
 static gboolean
-ref_is_installed (const char *ref)
+ref_is_installed (FlatpakDir *dir, const char *ref)
 {
-  g_autoptr(FlatpakDeploy) deploy = NULL;
-  deploy = flatpak_find_deploy_for_ref (ref, NULL, NULL);
-  return deploy != NULL;
+  g_autoptr(GFile) deploy_dir = NULL;
+
+  deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, NULL);
+  if (deploy_dir != NULL)
+    return TRUE;
+
+  if (flatpak_dir_is_user (dir))
+    {
+      g_autoptr(FlatpakDir) system_dir = flatpak_dir_get_system ();
+
+      deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, NULL);
+      if (deploy_dir != NULL)
+        return TRUE;
+    }
+
+  return FALSE;
 }
 
 static gboolean
@@ -331,7 +348,7 @@ add_deps (FlatpakTransaction *self,
 
   if (!flatpak_transaction_contains_ref (self, full_runtime_ref))
     {
-      if (!ref_is_installed (full_runtime_ref))
+      if (!ref_is_installed (self->dir, full_runtime_ref))
         {
           g_auto(GStrv) remotes = NULL;
 
