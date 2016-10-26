@@ -100,6 +100,7 @@ if [ x${USE_DELTAS-} == xyes ] ; then
 fi
 
 export FLATPAK="${CMD_PREFIX} flatpak"
+export FLATPAK_BUILDER="${CMD_PREFIX} flatpak-builder"
 
 assert_streq () {
     test "$1" = "$2" || (echo 1>&2 "$1 != $2"; exit 1)

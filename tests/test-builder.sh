@@ -39,7 +39,7 @@ cp -a $(dirname $0)/test-configure .
 echo "version1" > app-data
 cp $(dirname $0)/test.json .
 cp $(dirname $0)/0001-Add-test-logo.patch .
-flatpak-builder --repo=$REPO $FL_GPGARGS --force-clean appdir test.json > /dev/null
+${FLATPAK_BUILDER} --repo=$REPO $FL_GPGARGS --force-clean appdir test.json
 
 assert_file_has_content appdir/files/share/app-data version1
 assert_file_has_content appdir/metadata shared=network;
@@ -66,7 +66,7 @@ assert_file_has_content app_data_1 version1
 echo "ok install+run"
 
 echo "version2" > app-data
-flatpak-builder $FL_GPGARGS --repo=$REPO --force-clean appdir test.json > /dev/null
+${FLATPAK_BUILDER} $FL_GPGARGS --repo=$REPO --force-clean appdir test.json
 assert_file_has_content appdir/files/share/app-data version2
 
 ${FLATPAK} ${U} update org.test.Hello2 master
