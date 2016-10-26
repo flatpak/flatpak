@@ -45,7 +45,10 @@ typedef struct BuilderManifest BuilderManifest;
 GType builder_manifest_get_type (void);
 
 const char *    builder_manifest_get_id (BuilderManifest *self);
+char *          builder_manifest_get_locale_id (BuilderManifest *self);
+char *          builder_manifest_get_debug_id (BuilderManifest *self);
 const char *    builder_manifest_get_id_platform (BuilderManifest *self);
+char *          builder_manifest_get_locale_id_platform (BuilderManifest *self);
 BuilderOptions *builder_manifest_get_build_options (BuilderManifest *self);
 GList *         builder_manifest_get_modules (BuilderManifest *self);
 const char *    builder_manifest_get_branch (BuilderManifest *self);

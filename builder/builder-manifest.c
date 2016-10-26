@@ -956,10 +956,28 @@ builder_manifest_get_id (BuilderManifest *self)
   return self->id;
 }
 
+char *
+builder_manifest_get_locale_id (BuilderManifest *self)
+{
+  return g_strdup_printf ("%s.Locale", self->id);
+}
+
+char *
+builder_manifest_get_debug_id (BuilderManifest *self)
+{
+  return g_strdup_printf ("%s.Debug", self->id);
+}
+
 const char *
 builder_manifest_get_id_platform (BuilderManifest *self)
 {
   return self->id_platform;
+}
+
+char *
+builder_manifest_get_locale_id_platform (BuilderManifest *self)
+{
+  return g_strdup_printf ("%s.Locale", self->id_platform);
 }
 
 BuilderOptions *
@@ -1926,14 +1944,15 @@ builder_manifest_finish (BuilderManifest *self,
           g_autoptr(GFileOutputStream) output = NULL;
           g_autoptr(GFile) metadata_locale_file = NULL;
           g_autofree char *metadata_contents = NULL;
+          g_autofree char *locale_id = builder_manifest_get_locale_id (self);
 
           metadata_file = g_file_get_child (app_dir, "metadata");
 
           extension_contents = g_strdup_printf ("\n"
-                                                "[Extension %s.Locale]\n"
+                                                "[Extension %s]\n"
                                                 "directory=%s\n"
                                                 "autodelete=true\n",
-                                                self->id,
+                                                locale_id,
                                                 LOCALES_SEPARATE_DIR);
 
           output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
@@ -1948,7 +1967,7 @@ builder_manifest_finish (BuilderManifest *self,
 
           metadata_locale_file = g_file_get_child (app_dir, "metadata.locale");
           metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s.Locale\n", self->id);
+                                               "name=%s\n", locale_id);
           if (!g_file_replace_contents (metadata_locale_file,
                                         metadata_contents, strlen (metadata_contents),
                                         NULL, FALSE,
@@ -1965,16 +1984,17 @@ builder_manifest_finish (BuilderManifest *self,
           g_autofree char *metadata_contents = NULL;
           g_autofree char *extension_contents = NULL;
           g_autoptr(GFileOutputStream) output = NULL;
+          g_autofree char *debug_id = builder_manifest_get_debug_id (self);
 
           metadata_file = g_file_get_child (app_dir, "metadata");
           metadata_debuginfo_file = g_file_get_child (app_dir, "metadata.debuginfo");
 
           extension_contents = g_strdup_printf ("\n"
-                                                "[Extension %s.Debug]\n"
+                                                "[Extension %s]\n"
                                                 "directory=lib/debug\n"
                                                 "autodelete=true\n"
                                                 "no-autodownload=true\n",
-                                                self->id);
+                                                debug_id);
 
           output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
           if (output == NULL)
@@ -1985,7 +2005,7 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
 
           metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s.Debug\n", self->id);
+                                               "name=%s\n", debug_id);
           if (!g_file_replace_contents (metadata_debuginfo_file,
                                         metadata_contents, strlen (metadata_contents), NULL, FALSE,
                                         G_FILE_CREATE_REPLACE_DESTINATION,
@@ -2190,14 +2210,15 @@ builder_manifest_create_platform (BuilderManifest *self,
           g_autoptr(GFileOutputStream) output = NULL;
           g_autoptr(GFile) metadata_locale_file = NULL;
           g_autofree char *metadata_contents = NULL;
+          g_autofree char *locale_id = builder_manifest_get_locale_id_platform (self);
 
           metadata_file = g_file_get_child (app_dir, "metadata.platform");
 
           extension_contents = g_strdup_printf ("\n"
-                                                "[Extension %s.Locale]\n"
+                                                "[Extension %s]\n"
                                                 "directory=%s\n"
                                                 "autodelete=true\n",
-                                                self->id_platform,
+                                                locale_id,
                                                 LOCALES_SEPARATE_DIR);
 
           output = g_file_append_to (metadata_file, G_FILE_CREATE_NONE, NULL, error);
@@ -2212,7 +2233,7 @@ builder_manifest_create_platform (BuilderManifest *self,
 
           metadata_locale_file = g_file_get_child (app_dir, "metadata.platform.locale");
           metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s.Locale\n", self->id_platform);
+                                               "name=%s\n", locale_id);
           if (!g_file_replace_contents (metadata_locale_file,
                                         metadata_contents, strlen (metadata_contents),
                                         NULL, FALSE,

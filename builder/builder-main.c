@@ -500,9 +500,10 @@ main (int    argc,
           const char *name = g_file_info_get_name (child_info);
           g_autofree char *metadata_arg = NULL;
           g_autofree char *files_arg = NULL;
+          g_autofree char *locale_id = builder_manifest_get_locale_id (manifest);
 
           if (strcmp (name, "metadata.locale") == 0)
-            g_print ("Exporting %s.Locale to repo\n", builder_manifest_get_id (manifest));
+            g_print ("Exporting %s to repo\n", locale_id);
           else
             continue;
 
@@ -523,7 +524,8 @@ main (int    argc,
       debuginfo_metadata = g_file_get_child (app_dir, "metadata.debuginfo");
       if (g_file_query_exists (debuginfo_metadata, NULL))
         {
-          g_print ("Exporting %s.Debug to repo\n", builder_manifest_get_id (manifest));
+          g_autofree char *debug_id = builder_manifest_get_debug_id (manifest);
+          g_print ("Exporting %s to repo\n", debug_id);
 
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.debuginfo",
@@ -564,9 +566,10 @@ main (int    argc,
           const char *name = g_file_info_get_name (child_info);
           g_autofree char *metadata_arg = NULL;
           g_autofree char *files_arg = NULL;
+          g_autofree char *locale_id = builder_manifest_get_locale_id_platform (manifest);
 
           if (strcmp (name, "metadata.platform.locale") == 0)
-            g_print ("Exporting %s.Locale to repo\n", platform_id);
+            g_print ("Exporting %s to repo\n", locale_id);
           else
             continue;
 
