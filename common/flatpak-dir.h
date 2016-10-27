@@ -424,6 +424,8 @@ gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir   *self,
                                                    char   **ref_out,
                                                    GError **error);
 
+char      *flatpak_dir_find_remote_by_uri (FlatpakDir   *self,
+                                           const char   *uri);
 char     **flatpak_dir_list_remotes (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);

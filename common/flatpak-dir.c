@@ -5764,14 +5764,53 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
       return FALSE;
     }
 
-  remote = flatpak_dir_create_origin_remote (self, url, name, title, ref,
-                                             gpg_data, NULL, error);
+  /* First try to reuse existing remote */
+  remote = flatpak_dir_find_remote_by_uri (self, url);
+
   if (remote == NULL)
-    return FALSE;
+    {
+      remote = flatpak_dir_create_origin_remote (self, url, name, title, ref,
+                                                 gpg_data, NULL, error);
+      if (remote == NULL)
+        return FALSE;
+    }
 
   *remote_name_out = g_steal_pointer (&remote);
   *ref_out = (char *)g_steal_pointer (&ref);
   return TRUE;
+}
+
+char *
+flatpak_dir_find_remote_by_uri (FlatpakDir   *self,
+                                const char   *uri)
+{
+  g_auto(GStrv) remotes = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, NULL, NULL))
+    return NULL;
+
+  remotes = flatpak_dir_list_enumerated_remotes (self, NULL, NULL);
+  if (remotes)
+    {
+      int i;
+
+      for (i = 0; remotes != NULL && remotes[i] != NULL; i++)
+        {
+          const char *remote = remotes[i];
+          g_autofree char *remote_uri = NULL;
+
+          if (!ostree_repo_remote_get_url (self->repo,
+                                           remote,
+                                           &remote_uri,
+                                           NULL))
+            continue;
+
+          if (strcmp (uri, remote_uri) == 0)
+            return g_strdup (remote);
+        }
+    }
+
+  return NULL;
 }
 
 char **
