@@ -171,19 +171,6 @@ if test "x$enable_sandboxed_triggers" = "xno"; then
 fi
 
 PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
-save_LIBS=$LIBS
-save_CFLAGS=$CFLAGS
-LIBS=$OSTREE_LIBS
-CFLAGS=$OSTREE_CFLAGS
-
-AC_CHECK_MEMBER([OstreeRepoExportArchiveOptions.path_prefix],
-                [AC_DEFINE([HAVE_OSTREE_EXPORT_PATH_PREFIX], 1,
-                          [Have OstreeRepoExportArchiveOptions.path_prefix])],
-               , [[#include <ostree.h>]])
-
-LIBS=$save_LIBS
-CFLAGS=$save_CFLAGS
-
 
 PKG_CHECK_MODULES(FUSE, [fuse])
 

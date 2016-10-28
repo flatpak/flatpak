@@ -53,13 +53,7 @@ static gboolean
 import_oci (OstreeRepo *repo, GFile *file,
             GCancellable *cancellable, GError **error)
 {
-#if !defined(HAVE_OSTREE_EXPORT_PATH_PREFIX)
-  /* This code actually doesn't user path_prefix, but it need the support
-     for reading commits from the transaction that was added at the same time. */
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-               _("This version of ostree is to old to support OCI exports"));
-  return FALSE;
-#elif !defined(HAVE_LIBARCHIVE)
+#if !defined(HAVE_LIBARCHIVE)
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
                _("This version of flatpak is not compiled with libarchive support"));
   return FALSE;
