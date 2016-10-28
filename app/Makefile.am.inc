@@ -7,6 +7,8 @@ flatpak_SOURCES = \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-utils.h \
 	app/flatpak-builtins-utils.c \
+	app/flatpak-oci.h \
+	app/flatpak-oci.c \
 	app/flatpak-transaction.h \
 	app/flatpak-transaction.c \
 	app/flatpak-builtins-add-remote.c \
@@ -38,6 +40,6 @@ flatpak_SOURCES = \
 	$(xdp_dbus_built_sources)	\
 	$(NULL)
 
-flatpak_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(LIBARCHIVE_LIBS) libglnx.la libflatpak-common.la
-flatpak_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(LIBARCHIVE_CFLAGS) \
+flatpak_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) libglnx.la libflatpak-common.la
+flatpak_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) \
         -DLOCALEDIR=\"$(localedir)\"

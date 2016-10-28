@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <json-glib/json-glib.h>
+
 #include <glib/gi18n.h>
 
 #include <gio/gunixinputstream.h>
@@ -33,12 +35,12 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "flatpak-oci.h"
 #include "flatpak-chain-input-stream.h"
+#include "flatpak-builtins-utils.h"
 
-#ifdef HAVE_LIBARCHIVE
 #include <archive.h>
 #include <archive_entry.h>
-#endif
 
 static char *opt_arch;
 static char *opt_repo_url;
@@ -255,510 +257,157 @@ build_bundle (OstreeRepo *repo, GFile *file,
   return TRUE;
 }
 
-#if defined(HAVE_LIBARCHIVE)
-
-GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_write_archive, archive_write_free)
-#define free_write_archive __attribute__((cleanup (flatpak_local_free_write_archive)))
-
-GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_archive_entry, archive_entry_free)
-#define free_archive_entry __attribute__((cleanup (flatpak_local_free_archive_entry)))
-
-
-typedef struct
+static gchar *
+timestamp_to_iso8601 (guint64 timestamp)
 {
-  GString *str;
-  int      depth;
-  GList   *index;
-} JsonWriter;
+  GTimeVal stamp;
 
-static void
-json_writer_init (JsonWriter *writer)
-{
-  memset (writer, 0, sizeof (*writer));
-  writer->str = g_string_new ("");
-  writer->index = g_list_prepend (writer->index, 0);
+  stamp.tv_sec = timestamp;
+  stamp.tv_usec = 0;
+
+  return g_time_val_to_iso8601 (&stamp);
 }
 
-static void
-json_writer_indent (JsonWriter *writer)
+static GBytes *
+generate_config_json (guint64 timestamp,
+                      const char *layer_sha256,
+                      const char *arch)
 {
-  int i;
+  g_autoptr(FlatpakJsonWriter) writer = flatpak_json_writer_new ();
+  g_autofree char *created = timestamp_to_iso8601 (timestamp);
+  g_autofree char *layer_digest = g_strdup_printf ("sha256:%s", layer_sha256);
 
-  for (i = 0; i < writer->depth; i++)
-    g_string_append (writer->str, "    ");
-}
+  flatpak_json_writer_add_string_property (writer, "created", created);
+  flatpak_json_writer_add_string_property (writer, "architecture", flatpak_arch_to_oci_arch (arch));
+  flatpak_json_writer_add_string_property (writer, "os", "linux");
 
-static void
-json_writer_add_bool (JsonWriter *writer, gboolean val)
-{
-  if (val)
-    g_string_append (writer->str, "true");
-  else
-    g_string_append (writer->str, "false");
-}
-
-static void
-json_writer_add_string (JsonWriter *writer, const gchar *str)
-{
-  const gchar *p;
-
-  g_string_append_c (writer->str, '"');
-
-  for (p = str; *p != 0; p++)
+  flatpak_json_writer_add_struct_property (writer, "rootfs");
+  {
+    flatpak_json_writer_add_array_property (writer, "diff_ids");
     {
-      if (*p == '\\' || *p == '"')
-        {
-          g_string_append_c (writer->str, '\\');
-          g_string_append_c (writer->str, *p);
-        }
-      else if ((*p > 0 && *p < 0x1f) || *p == 0x7f)
-        {
-          switch (*p)
-            {
-            case '\b':
-              g_string_append (writer->str, "\\b");
-              break;
-
-            case '\f':
-              g_string_append (writer->str, "\\f");
-              break;
-
-            case '\n':
-              g_string_append (writer->str, "\\n");
-              break;
-
-            case '\r':
-              g_string_append (writer->str, "\\r");
-              break;
-
-            case '\t':
-              g_string_append (writer->str, "\\t");
-              break;
-
-            default:
-              g_string_append_printf (writer->str, "\\u00%02x", (guint) * p);
-              break;
-            }
-        }
-      else
-        {
-          g_string_append_c (writer->str, *p);
-        }
+      flatpak_json_writer_add_array_string (writer, layer_digest);
+      flatpak_json_writer_close (writer);
     }
+    flatpak_json_writer_add_string_property (writer, "type", "layers");
+    flatpak_json_writer_close (writer);
+  }
 
-  g_string_append_c (writer->str, '"');
+  return flatpak_json_writer_get_result (writer);
 }
 
-static void
-json_writer_start_item (JsonWriter *writer)
+static GBytes *
+generate_manifest_json (guint64 config_size,
+                        const char *config_sha256,
+                        guint64 layer_size,
+                        const char *layer_sha256,
+                        const char *ref,
+                        const char *checksum,
+                        GVariant *commit)
 {
-  int index = GPOINTER_TO_INT (writer->index->data);
+  g_autoptr(FlatpakJsonWriter) writer = flatpak_json_writer_new ();
+  g_autofree char *config_digest = g_strdup_printf ("sha256:%s", config_sha256);
+  g_autofree char *layer_digest = g_strdup_printf ("sha256:%s", layer_sha256);
 
-  if (index != 0)
-    g_string_append (writer->str, ",\n");
-  else
-    g_string_append (writer->str, "\n");
-  json_writer_indent (writer);
-  writer->index->data = GINT_TO_POINTER (index + 1);
-}
+  flatpak_json_writer_add_uint64_property (writer, "schemaVersion", 2);
+  flatpak_json_writer_add_string_property (writer, "mediaType", "application/vnd.oci.image.manifest.v1+json");
+  flatpak_json_writer_add_struct_property (writer, "config");
+  {
+    flatpak_json_writer_add_string_property (writer, "mediaType", "application/vnd.oci.image.config.v1+json");
+    flatpak_json_writer_add_uint64_property (writer, "size", config_size);
+    flatpak_json_writer_add_string_property (writer, "digest", config_digest);
+    flatpak_json_writer_close (writer);
+  }
 
-static void
-json_writer_open_scope (JsonWriter *writer)
-{
-  writer->depth += 1;
-  writer->index = g_list_prepend (writer->index, 0);
-}
+  flatpak_json_writer_add_array_property (writer, "layers");
+  {
+    flatpak_json_writer_add_array_struct (writer);
+    {
+      flatpak_json_writer_add_string_property (writer, "mediaType", "application/vnd.oci.image.layer.v1.tar+gzip");
+      flatpak_json_writer_add_uint64_property (writer, "size", layer_size);
+      flatpak_json_writer_add_string_property (writer, "digest", layer_digest);
+      flatpak_json_writer_close (writer);
+    }
+    flatpak_json_writer_close (writer);
+  }
 
-static void
-json_writer_close_scope (JsonWriter *writer)
-{
-  GList *l;
+  flatpak_json_writer_add_struct_property (writer, "annotations");
+  {
+    g_autofree char *parent = NULL;
+    g_autofree char *subject = NULL;
+    g_autofree char *body = NULL;
+    g_autoptr(GVariant) metadata = NULL;
+    g_autofree char *metadata_base64 = NULL;
 
-  writer->depth -= 1;
-  l = writer->index;
-  writer->index = g_list_remove_link (writer->index, l);
-  g_list_free (l);
-  g_string_append (writer->str, "\n");
-  json_writer_indent (writer);
-}
+    flatpak_json_writer_add_string_property (writer, "org.flatpak.Ref", ref);
 
-static void
-json_writer_open_struct (JsonWriter *writer)
-{
-  g_string_append (writer->str, "{");
-  json_writer_open_scope (writer);
-}
+    parent = ostree_commit_get_parent (commit);
+    flatpak_json_writer_add_string_property (writer, "org.flatpak.ParentCommit", parent);
 
-static void
-json_writer_close_struct (JsonWriter *writer)
-{
-  int index;
+    flatpak_json_writer_add_string_property (writer, "org.flatpak.Commit", checksum);
 
-  json_writer_close_scope (writer);
-  g_string_append (writer->str, "}");
+    metadata = g_variant_get_child_value (commit, 0);
+    if (g_variant_get_size (metadata) > 0)
+      {
+        metadata_base64 = g_base64_encode (g_variant_get_data (metadata), g_variant_get_size (metadata));
+        flatpak_json_writer_add_string_property (writer, "org.flatpak.Metadata", metadata_base64);
+      }
 
-  /* Last newline in file */
-  index = GPOINTER_TO_INT (writer->index->data);
-  if (index == 0)
-    g_string_append (writer->str, "\n");
-}
+    g_variant_get_child (commit, 3, "s", &subject);
+    flatpak_json_writer_add_string_property (writer, "org.flatpak.Subject", subject);
 
-static void
-json_writer_open_array (JsonWriter *writer)
-{
-  g_string_append (writer->str, "[");
-  json_writer_open_scope (writer);
-}
+    g_variant_get_child (commit, 4, "s", &body);
+    flatpak_json_writer_add_string_property (writer, "org.flatpak.Body", body);
 
-static void
-json_writer_close_array (JsonWriter *writer)
-{
-  json_writer_close_scope (writer);
-  g_string_append (writer->str, "]");
-}
+    flatpak_json_writer_close (writer);
+  }
 
-static void
-json_writer_add_property (JsonWriter *writer, const gchar *name)
-{
-  json_writer_start_item (writer);
-  json_writer_add_string (writer, name);
-  g_string_append (writer->str, ": ");
-}
-
-static void
-json_writer_add_struct_property (JsonWriter *writer, const gchar *name)
-{
-  json_writer_add_property (writer, name);
-  json_writer_open_struct (writer);
-}
-
-static void
-json_writer_add_array_property (JsonWriter *writer, const gchar *name)
-{
-  json_writer_add_property (writer, name);
-  json_writer_open_array (writer);
-}
-
-static void
-json_writer_add_string_property (JsonWriter *writer, const gchar *name, const char *value)
-{
-  json_writer_add_property (writer, name);
-  json_writer_add_string (writer, value);
-}
-
-static void
-json_writer_add_bool_property (JsonWriter *writer, const gchar *name, gboolean value)
-{
-  json_writer_add_property (writer, name);
-  json_writer_add_bool (writer, value);
-}
-
-static void
-json_writer_add_array_item (JsonWriter *writer, const gchar *string)
-{
-  json_writer_start_item (writer);
-  json_writer_add_string (writer, string);
-}
-
-static void
-json_writer_add_array_struct (JsonWriter *writer)
-{
-  json_writer_start_item (writer);
-  json_writer_open_struct (writer);
+  return flatpak_json_writer_get_result (writer);
 }
 
 static gboolean
-propagate_libarchive_error (GError        **error,
-                            struct archive *a)
+export_commit_to_archive (OstreeRepo *repo,
+                          GFile *root,
+                          guint64 timestamp,
+                          struct archive *a,
+                          GCancellable *cancellable, GError **error)
 {
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-               "%s", archive_error_string (a));
-  return FALSE;
-}
+  OstreeRepoExportArchiveOptions opts = { 0, };
 
-struct archive_entry *
-new_entry (struct archive                 *a,
-           const char                     *name,
-           OstreeRepoExportArchiveOptions *opts)
-{
-  struct archive_entry *entry = archive_entry_new2 (a);
-  time_t ts = (time_t) opts->timestamp_secs;
+  opts.timestamp_secs = timestamp;
 
-  archive_entry_update_pathname_utf8 (entry, name);
-  archive_entry_set_ctime (entry, ts, 0);
-  archive_entry_set_mtime (entry, ts, 0);
-  archive_entry_set_atime (entry, ts, 0);
-  archive_entry_set_uid (entry, 0);
-  archive_entry_set_gid (entry, 0);
-
-  return entry;
-}
-
-
-static gboolean
-add_dir (struct archive                 *a,
-         const char                     *name,
-         OstreeRepoExportArchiveOptions *opts,
-         GError                        **error)
-{
-  g_autofree char *full_name = g_build_filename ("rootfs", name, NULL);
-
-  free_archive_entry struct archive_entry *entry = new_entry (a, full_name, opts);
-
-  archive_entry_set_mode (entry, AE_IFDIR | 0755);
-
-  if (archive_write_header (a, entry) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
-
-  return TRUE;
-}
-
-static gboolean
-add_symlink (struct archive                 *a,
-             const char                     *name,
-             const char                     *target,
-             OstreeRepoExportArchiveOptions *opts,
-             GError                        **error)
-{
-  g_autofree char *full_name = g_build_filename ("rootfs", name, NULL);
-
-  free_archive_entry struct archive_entry *entry = new_entry (a, full_name, opts);
-
-  archive_entry_set_mode (entry, AE_IFLNK | 0755);
-  archive_entry_set_symlink (entry, target);
-
-  if (archive_write_header (a, entry) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
-
-  return TRUE;
-}
-
-static gboolean
-add_file (struct archive                 *a,
-          const char                     *name,
-          OstreeRepo                     *repo,
-          GFile                          *file,
-          OstreeRepoExportArchiveOptions *opts,
-          GCancellable                   *cancellable,
-          GError                        **error)
-{
-  free_archive_entry struct archive_entry *entry = new_entry (a, name, opts);
-  guint8 buf[8192];
-  g_autoptr(GInputStream) file_in = NULL;
-  g_autoptr(GFileInfo) file_info = NULL;
-  const char *checksum;
-
-  checksum = ostree_repo_file_get_checksum ((OstreeRepoFile *) file);
-
-  if (!ostree_repo_load_file (repo, checksum, &file_in, &file_info, NULL,
-                              cancellable, error))
+  if (!ostree_repo_export_tree_to_archive (repo, &opts, (OstreeRepoFile *) root, a,
+                                           cancellable, error))
     return FALSE;
 
-  archive_entry_set_uid (entry, g_file_info_get_attribute_uint32 (file_info, "unix::uid"));
-  archive_entry_set_gid (entry, g_file_info_get_attribute_uint32 (file_info, "unix::gid"));
-  archive_entry_set_mode (entry, g_file_info_get_attribute_uint32 (file_info, "unix::mode"));
-  archive_entry_set_size (entry, g_file_info_get_size (file_info));
-
-  if (archive_write_header (a, entry) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
-
-  while (TRUE)
-    {
-      ssize_t r;
-      gssize bytes_read = g_input_stream_read (file_in, buf, sizeof (buf),
-                                               cancellable, error);
-      if (bytes_read < 0)
-        return FALSE;
-      if (bytes_read == 0)
-        break;
-
-      r = archive_write_data (a, buf, bytes_read);
-      if (r != bytes_read)
-        return propagate_libarchive_error (error, a);
-    }
-
-  if (archive_write_finish_entry (a) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
-
   return TRUE;
 }
 
 static gboolean
-add_file_from_data (struct archive                 *a,
-                    const char                     *name,
-                    OstreeRepo                     *repo,
-                    const char                     *data,
-                    gsize                           size,
-                    OstreeRepoExportArchiveOptions *opts,
-                    GCancellable                   *cancellable,
-                    GError                        **error)
-{
-  free_archive_entry struct archive_entry *entry = new_entry (a, name, opts);
-  ssize_t r;
-
-  archive_entry_set_mode (entry, AE_IFREG | 0755);
-  archive_entry_set_size (entry, size);
-
-  if (archive_write_header (a, entry) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
-
-  r = archive_write_data (a, data, size);
-  if (r != size)
-    return propagate_libarchive_error (error, a);
-
-  if (archive_write_finish_entry (a) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
-
-  return TRUE;
-}
-
-static const char *
-get_oci_arch (const char *arch)
-{
-  if (strcmp (arch, "x86_64") == 0)
-    return "amd64";
-  if (strcmp (arch, "aarch64") == 0)
-    return "arm64";
-  return arch;
-}
-
-static GString *
-generate_config_json (const char *arch)
-{
-  JsonWriter writer;
-
-  json_writer_init (&writer);
-
-  json_writer_open_struct (&writer);
-  json_writer_add_string_property (&writer, "ociVersion", "0.5.0");
-  json_writer_add_struct_property (&writer, "platform");
-  {
-    json_writer_add_string_property (&writer, "os", "linux");
-    json_writer_add_string_property (&writer, "arch", get_oci_arch (arch));
-    json_writer_close_struct (&writer);
-  }
-  json_writer_add_struct_property (&writer, "process");
-  {
-    json_writer_add_bool_property (&writer, "terminal", TRUE);
-    json_writer_add_array_property (&writer, "args");
-    json_writer_add_array_item (&writer, "/bin/sh");
-    json_writer_close_array (&writer);
-    json_writer_add_array_property (&writer, "envs");
-    json_writer_add_array_item (&writer, "PATH=/app/bin:/usr/bin");
-    json_writer_add_array_item (&writer, "LD_LIBRARY_PATH=/app/lib");
-    json_writer_add_array_item (&writer, "XDG_CONFIG_DIRS=/app/etc/xdg:/etc/xdg");
-    json_writer_add_array_item (&writer, "XDG_DATA_DIRS=/app/share:/usr/share");
-    json_writer_add_array_item (&writer, "SHELL=/bin/sh");
-    json_writer_close_array (&writer);
-    json_writer_add_string_property (&writer, "cwd", "/");
-    json_writer_add_bool_property (&writer, "noNewPrivileges", TRUE);
-    json_writer_close_struct (&writer);
-  }
-  json_writer_add_struct_property (&writer, "root");
-  {
-    json_writer_add_string_property (&writer, "path", "rootfs");
-    json_writer_add_bool_property (&writer, "readonly", TRUE);
-    json_writer_close_struct (&writer);
-  }
-  json_writer_add_array_property (&writer, "mounts");
-  {
-    json_writer_add_array_struct (&writer);
-    {
-      json_writer_add_string_property (&writer, "destination", "/proc");
-      json_writer_add_string_property (&writer, "type", "proc");
-      json_writer_add_string_property (&writer, "source", "proc");
-      json_writer_close_struct (&writer);
-    }
-    json_writer_add_array_struct (&writer);
-    {
-      json_writer_add_string_property (&writer, "destination", "/sys");
-      json_writer_add_string_property (&writer, "type", "sysfs");
-      json_writer_add_string_property (&writer, "source", "sysfs");
-      json_writer_add_array_property (&writer, "options");
-      {
-        json_writer_add_array_item (&writer, "nosuid");
-        json_writer_add_array_item (&writer, "noexec");
-        json_writer_add_array_item (&writer, "nodev");
-        json_writer_close_array (&writer);
-      }
-      json_writer_close_struct (&writer);
-    }
-    json_writer_add_array_struct (&writer);
-    {
-      json_writer_add_string_property (&writer, "destination", "/dev");
-      json_writer_add_string_property (&writer, "type", "tmpfs");
-      json_writer_add_string_property (&writer, "source", "tmpfs");
-      json_writer_add_array_property (&writer, "options");
-      {
-        json_writer_add_array_item (&writer, "nosuid");
-        json_writer_close_array (&writer);
-      }
-      json_writer_close_struct (&writer);
-    }
-    json_writer_close_array (&writer);
-  }
-
-  json_writer_add_struct_property (&writer, "linux");
-  {
-    json_writer_add_string_property (&writer, "rootfsPropagation", "slave");
-    json_writer_add_struct_property (&writer, "resources");
-    {
-      json_writer_close_struct (&writer);
-    }
-
-    json_writer_add_array_property (&writer, "namespaces");
-    {
-      json_writer_add_array_struct (&writer);
-      {
-        json_writer_add_string_property (&writer, "type", "pid");
-        json_writer_close_struct (&writer);
-      }
-      json_writer_add_array_struct (&writer);
-      {
-        json_writer_add_string_property (&writer, "type", "mount");
-        json_writer_close_struct (&writer);
-      }
-      json_writer_close_array (&writer);
-    }
-
-    json_writer_close_struct (&writer);
-  }
-
-  json_writer_add_struct_property (&writer, "annotations");
-  {
-    json_writer_close_struct (&writer);
-  }
-
-  json_writer_close_struct (&writer);
-
-  return writer.str;
-}
-
-#endif
-
-static gboolean
-build_oci (OstreeRepo *repo, GFile *file,
-           const char *name, const char *full_branch,
+build_oci (OstreeRepo *repo, GFile *dir,
+           const char *name, const char *ref,
            GCancellable *cancellable, GError **error)
 {
-#if !defined(HAVE_LIBARCHIVE)
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-               "This version of flatpak is not compiled with libarchive support");
-  return FALSE;
-#else
-  free_write_archive struct archive *a = NULL;
-  OstreeRepoExportArchiveOptions opts = { 0, };
   g_autoptr(GFile) root = NULL;
-  g_autoptr(GFile) files = NULL;
-  g_autoptr(GFile) export = NULL;
-  g_autoptr(GFile) metadata = NULL;
+  g_autoptr(GFile) refs_tag = NULL;
+  g_autoptr(GFile) refs = NULL;
   g_autoptr(GVariant) commit_data = NULL;
   g_autoptr(GVariant) commit_metadata = NULL;
   g_autofree char *commit_checksum = NULL;
-  g_autoptr(GString) str = g_string_new ("");
-  g_auto(GStrv) ref_parts = g_strsplit (full_branch, "/", -1);
+  g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
+  glnx_fd_close int dfd = -1;
+  g_autofree char *layer_compressed_sha256 = NULL;
+  g_autofree char *layer_uncompressed_sha256 = NULL;
+  guint64 layer_compressed_size;
+  guint64 layer_uncompressed_size;
+  g_autoptr(GBytes) config = NULL;
+  g_autofree char *config_sha256 = NULL;
+  g_autoptr(GBytes) manifest = NULL;
+  g_autoptr(FlatpakOciDir) oci_dir = NULL;
+  g_autoptr(FlatpakOciLayerWriter) layer_writer = NULL;
+  g_autofree char *manifest_sha256 = NULL;
+  struct archive *archive;
 
-  if (!ostree_repo_resolve_rev (repo, full_branch, FALSE, &commit_checksum, error))
+  if (!ostree_repo_resolve_rev (repo, ref, FALSE, &commit_checksum, error))
     return FALSE;
 
   if (!ostree_repo_read_commit (repo, commit_checksum, &root, NULL, NULL, error))
@@ -770,111 +419,52 @@ build_oci (OstreeRepo *repo, GFile *file,
   if (!ostree_repo_read_commit_detached_metadata (repo, commit_checksum, &commit_metadata, cancellable, error))
     return FALSE;
 
-  a = archive_write_new ();
+  oci_dir = flatpak_oci_dir_new ();
 
-  if (archive_write_set_format_gnutar (a) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
-
-  if (archive_write_add_filter_none (a) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
-
-  if (archive_write_open_filename (a, flatpak_file_get_path_cached (file)) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
-
-  opts.timestamp_secs = ostree_commit_get_timestamp (commit_data);
-
-  files = g_file_get_child (root, "files");
-  export = g_file_get_child (root, "export");
-  metadata = g_file_get_child (root, "metadata");
-
-  if (opt_runtime)
-    opts.path_prefix = "rootfs/usr/";
-  else
-    opts.path_prefix = "rootfs/app/";
-
-  {
-    const char *root_dirs[] = { "dev", "home", "proc", "run", "sys", "tmp", "var", "opt", "srv", "media", "mnt" };
-    const char *root_symlinks[] = {
-      "etc", "usr/etc",
-      "lib", "usr/lib",
-      "lib64", "usr/lib64",
-      "lib32", "usr/lib32",
-      "bin", "usr/bin",
-      "sbin", "usr/sbin",
-      "var/tmp", "/tmp",
-      "var/run", "/run",
-    };
-    int i;
-
-    /* Add the "other" of /app & /usr */
-    if (!add_dir (a, opt_runtime ? "app" : "usr", &opts, error))
-      return FALSE;
-
-    for (i = 0; i < G_N_ELEMENTS (root_dirs); i++)
-      if (!add_dir (a, root_dirs[i], &opts, error))
-        return FALSE;
-
-    for (i = 0; i < G_N_ELEMENTS (root_symlinks); i += 2)
-      if (!add_symlink (a, root_symlinks[i], root_symlinks[i + 1], &opts, error))
-        return FALSE;
-  }
-
-  if (!ostree_repo_export_tree_to_archive (repo, &opts, (OstreeRepoFile *) files, a,
-                                           cancellable, error))
+  if (!flatpak_oci_dir_ensure (oci_dir, dir, cancellable, error))
     return FALSE;
 
-  if (!opt_runtime && g_file_query_exists (export, NULL))
-    {
-      opts.path_prefix = "rootfs/export/";
-      if (!ostree_repo_export_tree_to_archive (repo, &opts, (OstreeRepoFile *) export, a,
-                                               cancellable, error))
-        return FALSE;
-    }
+  layer_writer = flatpak_oci_layer_writer_new (oci_dir);
 
-  opts.path_prefix = NULL;
-  if (!add_file (a, "rootfs/metadata", repo, metadata, &opts, cancellable, error))
+  archive = flatpak_oci_layer_writer_open (layer_writer, cancellable, error);
+  if (archive == NULL)
     return FALSE;
 
-  if (!add_file_from_data (a, "rootfs/ref",
-                           repo,
-                           full_branch,
-                           strlen (full_branch),
-                           &opts, cancellable, error))
+  if (!export_commit_to_archive (repo, root, ostree_commit_get_timestamp (commit_data),
+                                 archive, cancellable, error))
     return FALSE;
 
-  if (!add_file_from_data (a, "rootfs/commit",
-                           repo,
-                           g_variant_get_data (commit_data),
-                           g_variant_get_size (commit_data),
-                           &opts, cancellable, error))
+  if (!flatpak_oci_layer_writer_close (layer_writer,
+                                       &layer_uncompressed_sha256,
+                                       &layer_uncompressed_size,
+                                       &layer_compressed_sha256,
+                                       &layer_compressed_size,
+                                       cancellable, error))
     return FALSE;
 
-  if (commit_metadata != NULL)
-    {
-      if (!add_file_from_data (a, "rootfs/commitmeta",
-                               repo,
-                               g_variant_get_data (commit_metadata),
-                               g_variant_get_size (commit_metadata),
-                               &opts, cancellable, error))
-        return FALSE;
-    }
-
-  str = generate_config_json (ref_parts[2]);
-  if (!add_file_from_data (a, "config.json",
-                           repo,
-                           str->str,
-                           str->len,
-                           &opts, cancellable, error))
+  config = generate_config_json (ostree_commit_get_timestamp (commit_data),
+                                 layer_uncompressed_sha256,
+                                 ref_parts[2]);
+  config_sha256 = flatpak_oci_dir_write_blob (oci_dir, config, cancellable, error);
+  if (config_sha256 == NULL)
     return FALSE;
 
-  if (archive_write_close (a) != ARCHIVE_OK)
-    return propagate_libarchive_error (error, a);
+  manifest = generate_manifest_json (g_bytes_get_size (config), config_sha256,
+                                     layer_compressed_size, layer_compressed_sha256,
+                                     ref, commit_checksum, commit_data);
+  manifest_sha256 = flatpak_oci_dir_write_blob (oci_dir, manifest, cancellable, error);
+  if (manifest_sha256 == NULL)
+    return FALSE;
+
+  if (!flatpak_oci_dir_set_ref (oci_dir, "latest",
+                                g_bytes_get_size (manifest), manifest_sha256,
+                                cancellable, error))
+    return FALSE;
 
   g_print ("WARNING: the oci format produced by flatpak is experimental and unstable.\n"
            "Don't use this for anything but experiments for now\n");
 
   return TRUE;
-#endif
 }
 
 gboolean

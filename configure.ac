@@ -134,8 +134,13 @@ AC_SUBST([GDBUS_CODEGEN], [`$PKG_CONFIG --variable gdbus_codegen gio-2.0`])
 
 POLKIT_GOBJECT_REQUIRED=0.98
 
-PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0])
+PKG_CHECK_MODULES(BASE, [glib-2.0 >= $GLIB_REQS gio-2.0 gio-unix-2.0 libarchive >= 2.8.0])
 PKG_CHECK_MODULES(SOUP, [libsoup-2.4])
+
+save_LIBS=$LIBS
+LIBS=$BASE_LIBS
+AC_CHECK_FUNCS(archive_read_support_filter_all)
+LIBS=$save_LIBS
 
 AC_ARG_ENABLE([system-helper],
               AC_HELP_STRING([--disable-system-helper],
@@ -201,33 +206,6 @@ AC_ARG_ENABLE(sudo,
               AS_HELP_STRING([--enable-sudo],[Use sudo to set setuid flags on binaries during install (only needed if userns disabled)]),
               [SUDO_BIN="sudo"], [SUDO_BIN=""])
 AC_SUBST([SUDO_BIN])
-
-LIBARCHIVE_DEPENDENCY="libarchive >= 2.8.0"
-
-AC_ARG_WITH(libarchive,
-	    AS_HELP_STRING([--without-libarchive], [Do not use libarchive]),
-	    :, with_libarchive=maybe)
-
-AS_IF([ test x$with_libarchive != xno ], [
-    AC_MSG_CHECKING([for $LIBARCHIVE_DEPENDENCY])
-    PKG_CHECK_EXISTS($LIBARCHIVE_DEPENDENCY, have_libarchive=yes, have_libarchive=no)
-    AC_MSG_RESULT([$have_libarchive])
-    AS_IF([ test x$have_libarchive = xno && test x$with_libarchive != xmaybe ], [
-       AC_MSG_ERROR([libarchive is enabled but could not be found])
-    ])
-    AS_IF([ test x$have_libarchive = xyes], [
-        AC_DEFINE([HAVE_LIBARCHIVE], 1, [Define if we have libarchive.pc])
-	PKG_CHECK_MODULES(LIBARCHIVE, $LIBARCHIVE_DEPENDENCY)
-        save_LIBS=$LIBS
-        LIBS=$LIBARCHIVE_LIBS
-        AC_CHECK_FUNCS(archive_read_support_filter_all)
-        LIBS=$save_LIBS
-	with_libarchive=yes
-    ], [
-	with_libarchive=no
-    ])
-], [ with_libarchive=no ])
-AM_CONDITIONAL(USE_LIBARCHIVE, test $with_libarchive != no)
 
 dnl ************************
 dnl *** check for libelf ***

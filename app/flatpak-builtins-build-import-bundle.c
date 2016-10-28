@@ -31,6 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "flatpak-oci.h"
 
 static char *opt_ref;
 static gboolean opt_oci = FALSE;
@@ -49,41 +50,81 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
+GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_read_archive, archive_read_free)
+#define free_read_archive __attribute__((cleanup (flatpak_local_free_read_archive)))
+
+static void
+propagate_libarchive_error (GError      **error,
+                            struct archive *a)
+{
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "%s", archive_error_string (a));
+}
+
 static gboolean
 import_oci (OstreeRepo *repo, GFile *file,
             GCancellable *cancellable, GError **error)
 {
-#if !defined(HAVE_LIBARCHIVE)
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-               _("This version of flatpak is not compiled with libarchive support"));
-  return FALSE;
-#else
   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
-  g_autoptr(OstreeMutableTree) mtree = NULL;
-  g_autoptr(OstreeMutableTree) files_mtree = NULL;
-  g_autoptr(OstreeMutableTree) export_mtree = NULL;
   g_autoptr(GFile) archive_root = NULL;
-  g_autoptr(GFile) root = NULL;
-  g_autoptr(GFile) files = NULL;
-  g_autoptr(GFile) export = NULL;
-  g_autoptr(GFile) ref = NULL;
-  g_autoptr(GFile) commit = NULL;
-  g_autoptr(GFile) commitmeta = NULL;
-  g_autoptr(GFile) metadata = NULL;
   g_autofree char *commit_checksum = NULL;
-  g_autofree char *ref_data = NULL;
-  g_autofree char *commit_data = NULL;
-  gsize commit_size;
-  g_autofree char *commitmeta_data = NULL;
-  g_autofree char *parent = NULL;
+  g_autofree char *config_digest = NULL;
+  const char *parent = NULL;
+  const char *metadata_base64;
   const char *subject;
   const char *body;
   const char *target_ref;
-  const char *files_source;
-  gsize commitmeta_size;
-  g_autoptr(GVariant) commitv = NULL;
-  g_autoptr(GVariant) commitv_metadata = NULL;
-  g_autoptr(GVariant) commitmetav = NULL;
+  guint64 timestamp;
+  g_autoptr(FlatpakOciDir) oci_dir = NULL;
+  g_autoptr(JsonObject) manifest = NULL;
+  g_autoptr(JsonObject) config = NULL;
+  g_autoptr(GHashTable) annotations = NULL;
+  g_autoptr(GVariant) metadatav = NULL;
+  g_auto(GStrv) layers = NULL;
+  int i;
+
+  oci_dir = flatpak_oci_dir_new ();
+
+  if (!flatpak_oci_dir_open (oci_dir, file, cancellable, error))
+    return FALSE;
+
+  manifest = flatpak_oci_dir_find_manifest (oci_dir, "latest", "linux", "amd64",
+                                            cancellable, error);
+  if (manifest == NULL)
+    return FALSE;
+
+  annotations = flatpak_oci_manifest_get_annotations (manifest);
+
+  if (opt_ref != NULL)
+    target_ref = opt_ref;
+  else
+    {
+      target_ref = g_hash_table_lookup (annotations, "org.flatpak.Ref");
+      if (target_ref == NULL)
+        return flatpak_fail (error, "No flatpak ref specified in image, must manually specify");
+    }
+
+  subject = g_hash_table_lookup (annotations, "org.flatpak.Subject");
+  body = g_hash_table_lookup (annotations, "org.flatpak.Body");
+  parent = g_hash_table_lookup (annotations, "org.flatpak.ParentCommit");
+  metadata_base64 = g_hash_table_lookup (annotations, "org.flatpak.Metadata");
+  if (metadata_base64)
+    {
+      gsize data_len;
+      guchar *data = g_base64_decode (metadata_base64, &data_len);
+      metadatav = g_variant_new_from_data (G_VARIANT_TYPE("a{sv}"), data, data_len,
+                                           FALSE, g_free, data);
+    }
+
+  config_digest = flatpak_oci_manifest_get_config (manifest);
+  if (config_digest == NULL)
+    return flatpak_fail (error, "No oci config specified");
+
+  config = flatpak_oci_dir_load_json (oci_dir, config_digest, cancellable, error);
+  if (config == NULL)
+    return FALSE;
+
+  timestamp = flatpak_oci_config_get_created (config);
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return FALSE;
@@ -91,10 +132,29 @@ import_oci (OstreeRepo *repo, GFile *file,
   /* There is no way to write a subset of the archive to a mtree, so instead
      we write all of it and then build a new mtree with the subset */
   archive_mtree = ostree_mutable_tree_new ();
-  if (!ostree_repo_write_archive_to_mtree (repo, file, archive_mtree, NULL,
-                                           TRUE,
-                                           cancellable, error))
-    return FALSE;
+
+  layers = flatpak_oci_manifest_get_layers (manifest);
+  for (i = 0; layers[i] != NULL; i++)
+    {
+      OstreeRepoImportArchiveOptions opts = { 0, };
+      free_read_archive struct archive *a = NULL;
+
+      opts.autocreate_parents = TRUE;
+
+      a = flatpak_oci_dir_load_layer (oci_dir, layers[i],
+                                      cancellable, error);
+      if (a == NULL)
+        return FALSE;
+
+      if (!ostree_repo_import_archive_to_mtree (repo, &opts, a, archive_mtree, NULL, cancellable, error))
+        return FALSE;
+
+      if (archive_read_close (a) != ARCHIVE_OK)
+        {
+          propagate_libarchive_error (error, a);
+          return FALSE;
+        }
+    }
 
   if (!ostree_repo_write_mtree (repo, archive_mtree, &archive_root, cancellable, error))
     return FALSE;
@@ -102,131 +162,16 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (!ostree_repo_file_ensure_resolved ((OstreeRepoFile *) archive_root, error))
     return FALSE;
 
-  ref = g_file_resolve_relative_path (archive_root, "rootfs/ref");
-  metadata = g_file_resolve_relative_path (archive_root, "rootfs/metadata");
-  commit = g_file_resolve_relative_path (archive_root, "rootfs/commit");
-  commitmeta = g_file_resolve_relative_path (archive_root, "rootfs/commitmeta");
-
-  if (!g_file_query_exists (ref, NULL))
-    return flatpak_fail (error, "Required file ref not in tarfile");
-  if (!g_file_query_exists (metadata, NULL))
-    return flatpak_fail (error, "Required file metadata not in tarfile");
-  if (!g_file_query_exists (commit, NULL))
-    return flatpak_fail (error, "Required file commit not in tarfile");
-
-  if (!g_file_load_contents (ref, cancellable,
-                             &ref_data, NULL,
-                             NULL, error))
-    return FALSE;
-
-  if (g_str_has_prefix (ref_data, "app/"))
-    files_source = "rootfs/app";
-  else
-    files_source = "rootfs/usr";
-
-  files = g_file_resolve_relative_path (archive_root, files_source);
-  if (!g_file_query_exists (files, NULL))
-    return flatpak_fail (error, "Required directory %s not in tarfile", files_source);
-
-  export = g_file_resolve_relative_path (archive_root, "rootfs/export");
-
-  if (!g_file_load_contents (commit, cancellable,
-                             &commit_data, &commit_size,
-                             NULL, error))
-    return FALSE;
-
-  commitv = g_variant_new_from_data (OSTREE_COMMIT_GVARIANT_FORMAT,
-                                     g_steal_pointer (&commit_data), commit_size,
-                                     FALSE, g_free, commit_data);
-  if (!ostree_validate_structureof_commit (commitv, error))
-    return FALSE;
-
-  if (g_file_query_exists (commitmeta, NULL) &&
-      !g_file_load_contents (commitmeta, cancellable,
-                             &commitmeta_data, &commitmeta_size,
-                             NULL, error))
-    return FALSE;
-
-  if (commitmeta_data != NULL)
-    commitmetav = g_variant_new_from_data (G_VARIANT_TYPE ("a{sv}"),
-                                           g_steal_pointer (&commitmeta_data), commitmeta_size,
-                                           FALSE, g_free, commitmeta_data);
-
-  mtree = ostree_mutable_tree_new ();
-
-  if (!flatpak_mtree_create_root (repo, mtree, cancellable, error))
-    return FALSE;
-
-  if (!ostree_mutable_tree_ensure_dir (mtree, "files", &files_mtree, error))
-    return FALSE;
-
-  if (!ostree_repo_write_directory_to_mtree (repo, files, files_mtree, NULL,
-                                             cancellable, error))
-    return FALSE;
-
-  if (g_file_query_exists (export, NULL))
-    {
-      if (!ostree_mutable_tree_ensure_dir (mtree, "export", &export_mtree, error))
-        return FALSE;
-
-      if (!ostree_repo_write_directory_to_mtree (repo, export, export_mtree, NULL,
-                                                 cancellable, error))
-        return FALSE;
-    }
-
-  if (!ostree_mutable_tree_replace_file (mtree, "metadata",
-                                         ostree_repo_file_get_checksum ((OstreeRepoFile *) metadata),
-                                         error))
-    return FALSE;
-
-  if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
-    return FALSE;
-
-  /* Verify that we created the same contents */
-  {
-    g_autoptr(GVariant) tree_contents_bytes = NULL;
-    g_autofree char *tree_contents_checksum = NULL;
-    g_autoptr(GVariant) tree_metadata_bytes = NULL;
-    g_autofree char *tree_metadata_checksum = NULL;
-    tree_contents_bytes = g_variant_get_child_value (commitv, 6);
-    tree_contents_checksum = ostree_checksum_from_bytes_v (tree_contents_bytes);
-    tree_metadata_bytes = g_variant_get_child_value (commitv, 7);
-    tree_metadata_checksum = ostree_checksum_from_bytes_v (tree_metadata_bytes);
-
-    if (strcmp (tree_contents_checksum, ostree_repo_file_tree_get_contents_checksum ((OstreeRepoFile *) root)))
-      return flatpak_fail (error, "Imported content checksum (%s) does not match original checksum (%s)",
-                           tree_contents_checksum, ostree_repo_file_tree_get_contents_checksum ((OstreeRepoFile *) root));
-
-    if (strcmp (tree_metadata_checksum, ostree_repo_file_tree_get_metadata_checksum ((OstreeRepoFile *) root)))
-      return flatpak_fail (error, "Imported metadata checksum (%s) does not match original checksum (%s)",
-                           tree_metadata_checksum, ostree_repo_file_tree_get_metadata_checksum ((OstreeRepoFile *) root));
-  }
-
-  commitv_metadata = g_variant_get_child_value (commitv, 0);
-  parent = ostree_commit_get_parent (commitv);
-  g_variant_get_child (commitv, 3, "s", &subject);
-  g_variant_get_child (commitv, 4, "s", &body);
-
   if (!ostree_repo_write_commit_with_time (repo,
                                            parent,
                                            subject,
                                            body,
-                                           commitv_metadata,
-                                           OSTREE_REPO_FILE (root),
-                                           ostree_commit_get_timestamp (commitv),
+                                           metadatav,
+                                           OSTREE_REPO_FILE (archive_root),
+                                           timestamp,
                                            &commit_checksum,
                                            cancellable, error))
     return FALSE;
-
-  if (commitmetav != NULL &&
-      !ostree_repo_write_commit_detached_metadata (repo, commit_checksum,
-                                                   commitmetav, cancellable, error))
-    return FALSE;
-
-  if (opt_ref != NULL)
-    target_ref = opt_ref;
-  else
-    target_ref = ref_data;
 
   ostree_repo_transaction_set_ref (repo, NULL, target_ref, commit_checksum);
 
@@ -236,7 +181,6 @@ import_oci (OstreeRepo *repo, GFile *file,
   g_print ("Importing %s (%s)\n", target_ref, commit_checksum);
 
   return TRUE;
-#endif
 }
 
 static gboolean
