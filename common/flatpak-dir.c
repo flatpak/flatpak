@@ -1600,6 +1600,13 @@ flatpak_dir_pull (FlatpakDir          *self,
                                              cancellable, error))
         return FALSE;
 
+      if (summary_bytes == NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Failed to get repository summary");
+          return FALSE;
+        }
+
       summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                               summary_bytes, FALSE));
       if (!flatpak_summary_lookup_ref (summary,
