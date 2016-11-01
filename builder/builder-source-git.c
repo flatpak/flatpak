@@ -277,10 +277,14 @@ git_mirror_submodules (const char     *repo_location,
                        GError        **error)
 {
   g_autoptr(GKeyFile) key_file = g_key_file_new ();
+  g_autofree gchar *rev_parse_output = NULL;
   g_autofree gchar *submodule_data = NULL;
   g_autofree gchar **submodules = NULL;
   g_autofree gchar *gitmodules = g_strconcat (revision, ":.gitmodules", NULL);
   gsize num_submodules;
+
+  if (!git (mirror_dir, &rev_parse_output, NULL, "rev-parse", "--verify", "--quiet", gitmodules, NULL))
+    return TRUE;
 
   if (git (mirror_dir, &submodule_data, NULL, "show", gitmodules, NULL))
     {
@@ -413,10 +417,14 @@ git_extract_submodule (const char     *repo_location,
                        GError        **error)
 {
   g_autoptr(GKeyFile) key_file = g_key_file_new ();
+  g_autofree gchar *rev_parse_output = NULL;
   g_autofree gchar *submodule_data = NULL;
   g_autofree gchar **submodules = NULL;
   g_autofree gchar *gitmodules = g_strconcat (revision, ":.gitmodules", NULL);
   gsize num_submodules;
+
+  if (!git (checkout_dir, &rev_parse_output, NULL, "rev-parse", "--verify", "--quiet", gitmodules, NULL))
+    return TRUE;
 
   if (git (checkout_dir, &submodule_data, NULL, "show", gitmodules, NULL))
     {
