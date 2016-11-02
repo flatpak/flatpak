@@ -3306,21 +3306,27 @@ flatpak_list_extensions (GKeyFile   *metakey,
 
           ref = g_build_filename ("runtime", extension, arch, branch, NULL);
 
-          files = flatpak_find_unmaintained_extension_dir_if_exists (extension, arch, branch, NULL);
-
-          if (files == NULL)
+          if (!g_key_file_get_boolean (metakey, groups[i],
+                                      "force-subdirectories", NULL))
             {
-              files = flatpak_find_files_dir_for_ref (ref, NULL, NULL);
+              files = flatpak_find_unmaintained_extension_dir_if_exists (extension, arch, branch, NULL);
+
+              if (files == NULL)
+                {
+                  files = flatpak_find_files_dir_for_ref (ref, NULL, NULL);
+                }
+
+              /* Prefer a full extension (org.freedesktop.Locale) over subdirectory ones (org.freedesktop.Locale.sv) */
+              if (files != NULL)
+                {
+                  ext = flatpak_extension_new (extension, extension, ref, directory, files);
+                  res = g_list_prepend (res, ext);
+                }
             }
 
-          /* Prefer a full extension (org.freedesktop.Locale) over subdirectory ones (org.freedesktop.Locale.sv) */
-          if (files != NULL)
-            {
-              ext = flatpak_extension_new (extension, extension, ref, directory, files);
-              res = g_list_prepend (res, ext);
-            }
-          else if (g_key_file_get_boolean (metakey, groups[i],
-                                           "subdirectories", NULL))
+          if (g_key_file_get_boolean (metakey, groups[i],
+                                      "subdirectories", NULL) &&
+              files == NULL)
             {
               g_autofree char *prefix = g_strconcat (extension, ".", NULL);
               g_auto(GStrv) refs = NULL;
