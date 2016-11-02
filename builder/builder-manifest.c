@@ -1324,12 +1324,20 @@ builder_manifest_download (BuilderManifest *self,
                            BuilderContext  *context,
                            GError         **error)
 {
+  const char *stop_at = builder_context_get_stop_at (context);
   GList *l;
 
   g_print ("Downloading sources\n");
   for (l = self->expanded_modules; l != NULL; l = l->next)
     {
       BuilderModule *m = l->data;
+      const char *name = builder_module_get_name (m);
+
+      if (stop_at != NULL && strcmp (name, stop_at) == 0)
+        {
+          g_print ("Stopping at module %s\n", stop_at);
+          return TRUE;
+        }
 
       if (!builder_module_download_sources (m, update_vcs, context, error))
         return FALSE;

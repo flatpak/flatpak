@@ -716,11 +716,11 @@
                 <term><option>--stop-at=MODULENAME</option></term>
 
                 <listitem><para>
-                     Stop building at the specified module, ignoring all the following ones.
-                     This is useful for debugging and development. For instance, you can
-                     build all the dependencies, but stop at the main application so that
-                     you can then do a build from a pre-existing checkout.
-                     Implies --build-only.
+                     Stop at the specified module, ignoring it and all the following ones
+                     in both the "download" and "build" phases. This is useful for debugging
+                     and development. For instance, you can build all the dependencies, but
+                     stop at the main application so that you can then do a build from a
+                     pre-existing checkout. Implies --build-only.
                 </para></listitem>
             </varlistentry>
 
