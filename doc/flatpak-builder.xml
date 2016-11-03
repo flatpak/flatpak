@@ -95,7 +95,7 @@
         </para>
         <para>
             At each of the above steps flatpak caches the result, and if you build the same file again, it will start
-            of at the first step where something changes. For instance the first version controlled source that had
+            at the first step where something changes. For instance the first version controlled source that had
             new commits added, or the first module where some changes to the <arg choice="plain">MANIFEST</arg> file caused
             the build environment to change. This makes flatpak-builder very efficient for incremental builds.
         </para>
@@ -106,10 +106,8 @@
         <refsect2>
             <title>Toplevel</title>
             <para>
-                The top level of the json file describes global
-                attributes of the application, and how it can be
-                build, and the list of modules that need to be
-                built.
+                The top level of the json file describes global attributes of the application, how it can be
+                built, and the list of modules that need to be built.
             </para>
             <para>
                 These are the properties that are accepted:
