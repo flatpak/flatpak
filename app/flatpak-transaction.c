@@ -68,7 +68,7 @@ ref_is_installed (FlatpakDir *dir, const char *ref)
     {
       g_autoptr(FlatpakDir) system_dir = flatpak_dir_get_system ();
 
-      deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, NULL);
+      deploy_dir = flatpak_dir_get_if_deployed (system_dir, ref, NULL, NULL);
       if (deploy_dir != NULL)
         return TRUE;
     }
