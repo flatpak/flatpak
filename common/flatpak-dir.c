@@ -6270,9 +6270,10 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) extensions = NULL;
-  g_autoptr(GPtrArray) updated_params = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) updated_params = NULL;
   GVariantIter iter;
 
+  updated_params = g_ptr_array_new_with_free_func (g_free);
   summary = fetch_remote_summary_file (self, remote, cancellable, error);
   if (summary == NULL)
     return FALSE;
@@ -6322,6 +6323,28 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                g_ptr_array_index (updated_params, i),
                                g_ptr_array_index (updated_params, i+1));
         i += 2;
+      }
+
+    if (flatpak_dir_use_system_helper (self))
+      {
+        FlatpakSystemHelper *system_helper;
+        g_autofree char *config_data = g_key_file_to_data (config, NULL, NULL);
+        g_autoptr(GVariant) gpg_data_v = NULL;
+
+        gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
+
+        system_helper = flatpak_dir_get_system_helper (self);
+        g_assert (system_helper != NULL);
+
+        g_debug ("Calling system helper: ConfigureRemote");
+        if (!flatpak_system_helper_call_configure_remote_sync (system_helper,
+                                                               0, remote,
+                                                               config_data,
+                                                               gpg_data_v,
+                                                               cancellable, error))
+          return FALSE;
+
+        return TRUE;
       }
 
     /* Update the local remote configuration with the updated info. */
