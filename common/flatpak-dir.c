@@ -6309,6 +6309,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
   {
     g_autoptr(GKeyFile) config = NULL;
     g_autofree char *group = NULL;
+    gboolean has_changed = FALSE;
     int i;
 
     config = ostree_repo_copy_config (flatpak_dir_get_repo (self));
@@ -6319,11 +6320,22 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
       {
         /* This array should have an even number of elements with
            keys in the odd positions and values on even ones. */
-        g_key_file_set_string (config, group,
-                               g_ptr_array_index (updated_params, i),
-                               g_ptr_array_index (updated_params, i+1));
+        const char *key = g_ptr_array_index (updated_params, i);
+        const char *new_val = g_ptr_array_index (updated_params, i+1);
+        g_autofree char *current_val = NULL;
+
+        current_val = g_key_file_get_string (config, group, key, NULL);
+        if (g_strcmp0 (current_val, new_val) != 0)
+          {
+            has_changed = TRUE;
+            g_key_file_set_string (config, group, key, new_val);
+          }
+
         i += 2;
       }
+
+    if (!has_changed)
+      return TRUE;
 
     if (flatpak_dir_use_system_helper (self))
       {
