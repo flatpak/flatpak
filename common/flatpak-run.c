@@ -1830,8 +1830,7 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
                   add_args (argv_array,
                             "--bind-data", tmp_fd_str, dest,
                             NULL);
-                  if (fd_array)
-                    g_array_append_val (fd_array, tmp_fd);
+                  g_array_append_val (fd_array, tmp_fd);
                   *envp_p = g_environ_setenv (*envp_p, "XAUTHORITY", dest, TRUE);
                 }
 
@@ -1892,8 +1891,7 @@ flatpak_run_add_pulseaudio_args (GPtrArray *argv_array,
         return;
 
       fd_str = g_strdup_printf ("%d", fd);
-      if (fd_array)
-        g_array_append_val (fd_array, fd);
+      g_array_append_val (fd_array, fd);
 
       add_args (argv_array,
                 "--bind", pulseaudio_socket, sandbox_socket_path,
@@ -2367,8 +2365,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
               if (tmp_fd != -1)
                 {
                   g_autofree char *tmp_fd_str = g_strdup_printf ("%d", tmp_fd);
-                  if (fd_array)
-                    g_array_append_val (fd_array, tmp_fd);
+                  g_array_append_val (fd_array, tmp_fd);
                   path = g_build_filename (flatpak_file_get_path_cached (app_id_dir),
                                            "config/user-dirs.dirs", NULL);
 
@@ -2833,8 +2830,7 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   unlink (tmp_path);
 
   fd_str = g_strdup_printf ("%d", fd);
-  if (fd_array)
-    g_array_append_val (fd_array, fd);
+  g_array_append_val (fd_array, fd);
 
   add_args (argv_array,
             "--ro-bind-data", fd_str, "/.flatpak-info",
@@ -3393,8 +3389,7 @@ setup_seccomp (GPtrArray  *argv_array,
   lseek (fd, 0, SEEK_SET);
 
   fd_str = g_strdup_printf ("%d", fd);
-  if (fd_array)
-    g_array_append_val (fd_array, fd);
+  g_array_append_val (fd_array, fd);
 
   add_args (argv_array,
             "--seccomp", fd_str,
@@ -3439,8 +3434,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   if ((passwd_fd = create_tmp_fd (passwd_contents, -1, error)) < 0)
     return FALSE;
   passwd_fd_str = g_strdup_printf ("%d", passwd_fd);
-  if (fd_array)
-    g_array_append_val (fd_array, passwd_fd);
+  g_array_append_val (fd_array, passwd_fd);
 
   group_contents = g_strdup_printf ("%s:x:%d:%s\n"
                                     "nfsnobody:x:65534:\n",
@@ -3449,8 +3443,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   if ((group_fd = create_tmp_fd (group_contents, -1, error)) < 0)
     return FALSE;
   group_fd_str = g_strdup_printf ("%d", group_fd);
-  if (fd_array)
-    g_array_append_val (fd_array, group_fd);
+  g_array_append_val (fd_array, group_fd);
 
   add_args (argv_array,
             "--unshare-pid",
