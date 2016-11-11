@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 #include <gio/gio.h>
 #include <gio/gunixfdlist.h>
 #include "flatpak-dbus.h"
@@ -482,12 +483,12 @@ main (int    argc,
 
   context = g_option_context_new ("");
 
-  g_option_context_set_summary (context, "Flatpak session helper");
-  g_option_context_add_main_entries (context, options, GETTEXT_PACKAGE);
-
   replace = FALSE;
   verbose = FALSE;
   show_version = FALSE;
+
+  g_option_context_set_summary (context, "Flatpak session helper");
+  g_option_context_add_main_entries (context, options, GETTEXT_PACKAGE);
 
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
