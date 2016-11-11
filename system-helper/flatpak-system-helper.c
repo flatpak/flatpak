@@ -760,12 +760,12 @@ main (int    argc,
 
   context = g_option_context_new ("");
 
-  g_option_context_set_summary (context, "Flatpak system helper");
-  g_option_context_add_main_entries (context, options, GETTEXT_PACKAGE);
-
   replace = FALSE;
   verbose = FALSE;
   show_version = FALSE;
+
+  g_option_context_set_summary (context, "Flatpak system helper");
+  g_option_context_add_main_entries (context, options, GETTEXT_PACKAGE);
 
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
