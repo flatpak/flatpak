@@ -1833,12 +1833,12 @@ flatpak_run_add_x11_args (GPtrArray *argv_array,
                   if (fd_array)
                     g_array_append_val (fd_array, tmp_fd);
                   *envp_p = g_environ_setenv (*envp_p, "XAUTHORITY", dest, TRUE);
+
+                  lseek (tmp_fd, 0, SEEK_SET);
                 }
 
               fclose (output);
               unlink (tmp_path);
-
-              lseek (tmp_fd, 0, SEEK_SET);
             }
           else
             {
