@@ -1623,8 +1623,8 @@ xdp_fuse_create (fuse_req_t             req,
 
   inode = xdp_inode_create_file (parent_inode, filename,
                                  mode,
-                                 (fi->flags | O_TRUNC) != 0,
-                                 (fi->flags | O_EXCL) != 0);
+                                 (fi->flags & O_TRUNC) != 0,
+                                 (fi->flags & O_EXCL) != 0);
   if (inode == NULL)
     {
       fuse_reply_err (req, errno);
