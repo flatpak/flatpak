@@ -4026,6 +4026,7 @@ flatpak_yes_no_prompt (const char *prompt, ...)
 
   va_start (var_args, prompt);
   s = g_strdup_vprintf (prompt, var_args);
+  va_end (var_args);
 
   while (TRUE)
     {
