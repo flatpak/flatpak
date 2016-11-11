@@ -209,7 +209,9 @@ builder_source_from_json (JsonNode *node)
 
   type = json_object_get_string_member (object, "type");
 
-  if (strcmp (type, "archive") == 0)
+  if (type == NULL)
+    g_warning ("Missing source type");
+  else if (strcmp (type, "archive") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_ARCHIVE, node);
   if (strcmp (type, "file") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_FILE, node);
@@ -223,8 +225,6 @@ builder_source_from_json (JsonNode *node)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_GIT, node);
   if (strcmp (type, "bzr") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_BZR, node);
-  else if (type == NULL)
-    g_warning ("Missing source type");
   else
     g_warning ("Unknown source type %s", type);
 
