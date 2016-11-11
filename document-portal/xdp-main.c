@@ -387,7 +387,8 @@ validate_parent_dir (const char *path,
   name = g_path_get_basename (path);
   dir_fd = open (dirname, O_CLOEXEC | O_PATH);
 
-  if (fstat (dir_fd, real_parent_st_buf) < 0 ||
+  if (dir_fd < 0 ||
+      fstat (dir_fd, real_parent_st_buf) < 0 ||
       fstatat (dir_fd, name, &real_st_buf, AT_SYMLINK_NOFOLLOW) < 0 ||
       st_buf->st_dev != real_st_buf.st_dev ||
       st_buf->st_ino != real_st_buf.st_ino)
