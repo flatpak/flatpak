@@ -694,7 +694,7 @@ portal_lookup (GDBusMethodInvocation *invocation,
 {
   const char *filename;
   char path_buffer[PATH_MAX + 1];
-  int fd;
+  glnx_fd_close int fd = -1;
   struct stat st_buf, real_parent_st_buf;
   g_auto(GStrv) ids = NULL;
   g_autofree char *id = NULL;
