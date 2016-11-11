@@ -92,6 +92,45 @@ flatpak_strcmp0_ptr (gconstpointer a,
   return g_strcmp0 (*(char * const *) a, *(char * const *) b);
 }
 
+/* Compares if str has a specific path prefix. This differs
+   from a regular prefix in two ways. First of all there may
+   be multiple slashes separating the path elements, and
+   secondly, if a prefix is matched that has to be en entire
+   path element. For instance /a/prefix matches /a/prefix/foo/bar,
+   but not /a/prefixfoo/bar. */
+gboolean
+flatpak_has_path_prefix (const char *str,
+                         const char *prefix)
+{
+  while (TRUE)
+    {
+      /* Skip consecutive slashes to reach next path
+         element */
+      while (*str == '/')
+        str++;
+      while (*prefix == '/')
+        prefix++;
+
+      /* No more prefix path elements? Done! */
+      if (*prefix == 0)
+        return TRUE;
+
+      /* Compare path element */
+      while (*prefix != 0 && *prefix != '/')
+        {
+          if (*str != *prefix)
+            return FALSE;
+          str++;
+          prefix++;
+        }
+
+      /* Matched prefix path element,
+         must be entire str path element */
+      if (*str != '/' && *str != 0)
+        return FALSE;
+    }
+}
+
 /* Returns end of matching path prefix, or NULL if no match */
 const char *
 flatpak_path_match_prefix (const char *pattern,
@@ -1999,6 +2038,41 @@ flatpak_rm_rf (GFile         *dir,
   return glnx_shutil_rm_rf_at (AT_FDCWD,
                                flatpak_file_get_path_cached (dir),
                                cancellable, error);
+}
+
+char *
+flatpak_readlink (const char *path,
+                  GError **error)
+{
+  char buf[PATH_MAX + 1];
+  ssize_t symlink_size;
+
+  symlink_size = readlink (path, buf, sizeof (buf) - 1);
+  if (symlink_size < 0)
+    {
+      glnx_set_error_from_errno (error);
+      return NULL;
+    }
+
+  buf[symlink_size] = 0;
+  return g_strdup (buf);
+}
+
+char *
+flatpak_resolve_link (const char *path,
+                      GError **error)
+{
+  g_autofree char *link = flatpak_readlink (path, error);
+  g_autofree char *dirname = NULL;
+
+  if (link == NULL)
+    return NULL;
+
+  if (g_path_is_absolute (link))
+    return g_steal_pointer (&link);
+
+  dirname = g_path_get_dirname (path);
+  return g_build_path (dirname, link, NULL);
 }
 
 gboolean flatpak_file_rename (GFile *from,

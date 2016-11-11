@@ -43,6 +43,9 @@ gboolean flatpak_fail (GError    **error,
 gint flatpak_strcmp0_ptr (gconstpointer a,
                           gconstpointer b);
 
+gboolean  flatpak_has_path_prefix (const char *str,
+                                   const char *prefix);
+
 const char * flatpak_path_match_prefix (const char *pattern,
                                         const char *path);
 
@@ -347,6 +350,11 @@ gboolean flatpak_mkdir_p (GFile         *dir,
 gboolean flatpak_rm_rf (GFile         *dir,
                         GCancellable  *cancellable,
                         GError       **error);
+
+char * flatpak_readlink (const char *path,
+                         GError       **error);
+char * flatpak_resolve_link (const char *path,
+                             GError **error);
 
 gboolean flatpak_file_rename (GFile *from,
                               GFile *to,
