@@ -981,12 +981,12 @@ flatpak_json_writer_get_result (FlatpakJsonWriter *self)
 {
   GBytes *res = NULL;
 
-  flatpak_json_writer_close (self);
-
   if (self->str)
-    res = g_string_free_to_bytes (self->str);
-
-  self->str = NULL;
+    {
+      flatpak_json_writer_close (self);
+      res = g_string_free_to_bytes (self->str);
+      self->str = NULL;
+    }
 
   return res;
 }
