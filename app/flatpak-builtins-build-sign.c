@@ -100,7 +100,7 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
-  if (!ostree_repo_resolve_rev (repo, ref, TRUE, &commit_checksum, error))
+  if (!ostree_repo_resolve_rev (repo, ref, FALSE, &commit_checksum, error))
     return FALSE;
 
   for (iter = opt_gpg_key_ids; iter && *iter; iter++)
