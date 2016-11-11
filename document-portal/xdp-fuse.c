@@ -1744,7 +1744,7 @@ truncateat (int dir_fd, const char *filename, int size)
   int errsv, res;
 
   fd = openat (dir_fd, filename, O_RDWR);
-  if (fd != -1)
+  if (fd == -1)
     return -1;
 
   res = ftruncate (fd, size);
