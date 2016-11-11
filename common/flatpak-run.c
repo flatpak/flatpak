@@ -2114,22 +2114,93 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   return TRUE;
 }
 
+#define FAKE_MODE_SYMLINK G_MAXINT
+
+static gboolean
+is_already_mounted (const char **keys,
+                    guint n_keys,
+                    GHashTable *hash_table,
+                    const char *path)
+{
+  guint i;
+
+  for (i = 0; i < n_keys; i++)
+    {
+      const char *mounted_path = keys[i];
+      FlatpakFilesystemMode mode;
+      mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, mounted_path));
+
+      if (mode != FAKE_MODE_SYMLINK && flatpak_has_path_prefix (path, mounted_path))
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
 static void
-add_file_arg (GPtrArray            *argv_array,
-              FlatpakFilesystemMode mode,
-              const char           *path)
+add_file_args (GPtrArray *argv_array,
+               GHashTable *hash_table)
+{
+  guint n_keys;
+  g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (hash_table, &n_keys);
+  guint i;
+
+  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+
+  for (i = 0; i < n_keys; i++)
+    {
+      const char *path = keys[i];
+      FlatpakFilesystemMode mode;
+
+      mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, path));
+
+      if (mode == FAKE_MODE_SYMLINK)
+        {
+          if (!is_already_mounted (keys, n_keys, hash_table, path))
+            {
+              g_autofree char *resolved = flatpak_resolve_link (path, NULL);
+              if (resolved)
+                add_args (argv_array, "--symlink", resolved, path,  NULL);
+            }
+        }
+      else
+        add_args (argv_array,
+                  (mode == FLATPAK_FILESYSTEM_MODE_READ_WRITE) ? "--bind" : "--ro-bind",
+                  path, path, NULL);
+    }
+}
+
+static void
+add_expose_path (GHashTable *hash_table,
+                 FlatpakFilesystemMode mode,
+                 const char           *path)
 {
   struct stat st;
 
-  if (stat (path, &st) != 0)
+  if (lstat (path, &st) != 0)
     return;
 
   if (S_ISDIR (st.st_mode) ||
-      S_ISREG (st.st_mode))
+      S_ISREG (st.st_mode) ||
+      S_ISLNK (st.st_mode))
     {
-      add_args (argv_array,
-                (mode == FLATPAK_FILESYSTEM_MODE_READ_WRITE) ? "--bind" : "--ro-bind",
-                path, path, NULL);
+      FlatpakFilesystemMode old_mode;
+
+      old_mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, path));
+
+      if (S_ISLNK (st.st_mode))
+        {
+          g_autofree char *resolved = flatpak_resolve_link (path, NULL);
+          if (resolved)
+            {
+              add_expose_path (hash_table, mode, resolved);
+              mode = FAKE_MODE_SYMLINK;
+            }
+          else
+            mode = 0;
+        }
+      if (mode > 0)
+        g_hash_table_insert (hash_table, g_strdup (path), GINT_TO_POINTER ( MAX (old_mode, mode)));
     }
 }
 
@@ -2150,6 +2221,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   gboolean home_access = FALSE;
   GString *xdg_dirs_conf = NULL;
   FlatpakFilesystemMode fs_mode, home_mode;
+  g_autoptr(GHashTable) fs_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
@@ -2216,11 +2288,11 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                 continue;
 
               path = g_build_filename ("/", dirent->d_name, NULL);
-              add_file_arg (argv_array, fs_mode, path);
+              add_expose_path (fs_paths, fs_mode, path);
             }
           closedir (dir);
         }
-      add_file_arg (argv_array, fs_mode, "/run/media");
+      add_expose_path (fs_paths, fs_mode, "/run/media");
     }
 
   home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
@@ -2229,7 +2301,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       g_debug ("Allowing homedir access");
       home_access = TRUE;
 
-      add_file_arg (argv_array, MAX (home_mode, fs_mode), g_get_home_dir ());
+      add_expose_path (fs_paths, MAX (home_mode, fs_mode), g_get_home_dir ());
     }
 
   if (!home_access)
@@ -2310,7 +2382,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                 g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n",
                                         config_key, path);
 
-              add_file_arg (argv_array, mode, subpath);
+              add_expose_path (fs_paths, mode, subpath);
             }
         }
       else if (g_str_has_prefix (filesystem, "~/"))
@@ -2319,18 +2391,20 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
 
           path = g_build_filename (g_get_home_dir (), filesystem + 2, NULL);
           if (g_file_test (path, G_FILE_TEST_EXISTS))
-            add_file_arg (argv_array, mode, path);
+            add_expose_path (fs_paths, mode, path);
         }
       else if (g_str_has_prefix (filesystem, "/"))
         {
           if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
-            add_file_arg (argv_array, mode, filesystem);
+            add_expose_path (fs_paths, mode, filesystem);
         }
       else
         {
           g_warning ("Unexpected filesystem arg %s\n", filesystem);
         }
     }
+
+  add_file_args (argv_array, fs_paths);
 
   /* Do this after setting up everything in the home dir, so its not overwritten */
   if (app_id_dir)
