@@ -1612,9 +1612,6 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
   if (!flatpak_dir_ensure_repo (dir_clone, cancellable, error))
     return FALSE;
 
-  if (main_context)
-    g_main_context_pop_thread_default (main_context);
-
   /* Work around ostree-pull spinning the default main context for the sync calls */
   main_context = g_main_context_new ();
   g_main_context_push_thread_default (main_context);
