@@ -2114,27 +2114,35 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   return TRUE;
 }
 
+#define FAKE_MODE_HIDDEN 0
 #define FAKE_MODE_SYMLINK G_MAXINT
 
 static gboolean
-is_already_mounted (const char **keys,
-                    guint n_keys,
-                    GHashTable *hash_table,
-                    const char *path)
+path_is_visible (const char **keys,
+                 guint n_keys,
+                 GHashTable *hash_table,
+                 const char *path)
 {
   guint i;
+  gboolean is_visible = FALSE;
 
+  /* The keys are sorted so shorter (i.e. parents) are first */
   for (i = 0; i < n_keys; i++)
     {
       const char *mounted_path = keys[i];
       FlatpakFilesystemMode mode;
       mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, mounted_path));
 
-      if (mode != FAKE_MODE_SYMLINK && flatpak_has_path_prefix (path, mounted_path))
-        return TRUE;
+      if (flatpak_has_path_prefix (path, mounted_path))
+        {
+          if (mode == FAKE_MODE_HIDDEN)
+            is_visible = FALSE;
+          else if (mode != FAKE_MODE_SYMLINK)
+            is_visible = TRUE;
+        }
     }
 
-  return FALSE;
+  return is_visible;
 }
 
 static void
@@ -2156,18 +2164,39 @@ add_file_args (GPtrArray *argv_array,
 
       if (mode == FAKE_MODE_SYMLINK)
         {
-          if (!is_already_mounted (keys, n_keys, hash_table, path))
+          if (!path_is_visible (keys, n_keys, hash_table, path))
             {
               g_autofree char *resolved = flatpak_resolve_link (path, NULL);
               if (resolved)
                 add_args (argv_array, "--symlink", resolved, path,  NULL);
             }
         }
+      else if (mode == FAKE_MODE_HIDDEN)
+        {
+          /* Mount a tmpfs to hide the subdirectory, but only if
+             either its not visible (then we can always create the
+             dir on the tmpfs, or if there is a pre-existing dir
+             we can mount the path on. */
+          if (!path_is_visible (keys, n_keys, hash_table, path) ||
+              g_file_test (path, G_FILE_TEST_IS_DIR))
+            add_args (argv_array, "--tmpfs", path, NULL);
+        }
       else
         add_args (argv_array,
                   (mode == FLATPAK_FILESYSTEM_MODE_READ_WRITE) ? "--bind" : "--ro-bind",
                   path, path, NULL);
     }
+}
+
+static void
+add_hide_path (GHashTable *hash_table,
+               const char           *path)
+{
+  FlatpakFilesystemMode old_mode;
+
+  old_mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, path));
+  g_hash_table_insert (hash_table, g_strdup (path),
+                       GINT_TO_POINTER ( MAX (old_mode, FAKE_MODE_HIDDEN)));
 }
 
 static void
@@ -2404,13 +2433,17 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
         }
     }
 
-  add_file_args (argv_array, fs_paths);
-
-  /* Do this after setting up everything in the home dir, so its not overwritten */
   if (app_id_dir)
-    add_args (argv_array,
-              "--bind", flatpak_file_get_path_cached (app_id_dir), flatpak_file_get_path_cached (app_id_dir),
-              NULL);
+    {
+      g_autoptr(GFile) apps_dir = g_file_get_parent (app_id_dir);
+      /* Hide the .var/app dir by default (unless explicitly made visible) */
+      add_hide_path (fs_paths, flatpak_file_get_path_cached (apps_dir));
+      /* But let the app write to the per-app dir in it */
+      add_expose_path (fs_paths, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                       flatpak_file_get_path_cached (app_id_dir));
+    }
+
+  add_file_args (argv_array, fs_paths);
 
   if (home_access  && app_id_dir != NULL)
     {
