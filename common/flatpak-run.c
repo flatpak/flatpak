@@ -58,6 +58,7 @@ typedef enum {
 typedef enum {
   FLATPAK_FILESYSTEM_MODE_READ_ONLY    = 1,
   FLATPAK_FILESYSTEM_MODE_READ_WRITE   = 2,
+  FLATPAK_FILESYSTEM_MODE_CREATE       = 3,
 } FlatpakFilesystemMode;
 
 
@@ -644,6 +645,12 @@ parse_filesystem_flags (const char *filesystem, FlatpakFilesystemMode *mode)
       len -= 3;
       if (mode)
         *mode = FLATPAK_FILESYSTEM_MODE_READ_WRITE;
+    }
+  else if (g_str_has_suffix (filesystem, ":create"))
+    {
+      len -= 7;
+      if (mode)
+        *mode = FLATPAK_FILESYSTEM_MODE_CREATE;
     }
 
   return g_strndup (filesystem, len);
@@ -1463,6 +1470,8 @@ flatpak_context_save_metadata (FlatpakContext *context,
 
           if (mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY)
             g_ptr_array_add (array, g_strconcat (key, ":ro", NULL));
+          else if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
+            g_ptr_array_add (array, g_strconcat (key, ":create", NULL));
           else if (value != NULL)
             g_ptr_array_add (array, g_strdup (key));
         }
@@ -1618,6 +1627,8 @@ flatpak_context_to_args (FlatpakContext *context,
         g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s:ro", (char *)key));
       else if (mode == FLATPAK_FILESYSTEM_MODE_READ_WRITE)
         g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", (char *)key));
+      else if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
+        g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s:create", (char *)key));
       else
         g_ptr_array_add (args, g_strdup_printf ("--nofilesystem=%s", (char *)key));
     }
@@ -2183,7 +2194,7 @@ add_file_args (GPtrArray *argv_array,
         }
       else
         add_args (argv_array,
-                  (mode == FLATPAK_FILESYSTEM_MODE_READ_WRITE) ? "--bind" : "--ro-bind",
+                  (mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
                   path, path, NULL);
     }
 }
@@ -2403,6 +2414,10 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
             }
 
           subpath = g_build_filename (path, rest, NULL);
+
+          if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
+            g_mkdir_with_parents (subpath, 0755);
+
           if (g_file_test (subpath, G_FILE_TEST_EXISTS))
             {
               if (xdg_dirs_conf == NULL)
@@ -2420,11 +2435,18 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
           g_autofree char *path = NULL;
 
           path = g_build_filename (g_get_home_dir (), filesystem + 2, NULL);
+
+          if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
+            g_mkdir_with_parents (path, 0755);
+
           if (g_file_test (path, G_FILE_TEST_EXISTS))
             add_expose_path (fs_paths, mode, path);
         }
       else if (g_str_has_prefix (filesystem, "/"))
         {
+          if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
+            g_mkdir_with_parents (filesystem, 0755);
+
           if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
             add_expose_path (fs_paths, mode, filesystem);
         }

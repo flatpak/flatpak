@@ -178,7 +178,7 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--filesystem=FILESYSTEM[:ro]</option></term>
+                <term><option>--filesystem=FILESYSTEM[:ro|:create]</option></term>
 
                 <listitem><para>
                     Allow the application access to a subset of the filesystem.
@@ -187,6 +187,7 @@
                     xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos,
                     an absolute path, or a homedir-relative path like ~/dir.
                     The optional :ro suffix indicates that the location will be read-only.
+                    The optional :create suffix indicates that the location will be read-write and created if it doesn't exist.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

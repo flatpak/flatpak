@@ -136,8 +136,9 @@
                         xdg-download/subdir. The xdg-* arguments can also
                         specify a subdirectory, such as xdg-pictures/screenshots.
                         Each entry can have a suffix of
-                        :ro or :rw to indicate if the path should be shared
-                        read-only or read-write (default is read-write).
+                        :ro, :rw or :create to indicate if the path should be shared
+                        read-only, read-write or read-write + create if needed
+                        (default is read-write).
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
