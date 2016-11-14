@@ -2250,6 +2250,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   gboolean home_access = FALSE;
   GString *xdg_dirs_conf = NULL;
   FlatpakFilesystemMode fs_mode, home_mode;
+  g_autoptr(GFile) user_flatpak_dir = NULL;
   g_autoptr(GHashTable) fs_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
@@ -2442,6 +2443,10 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       add_expose_path (fs_paths, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
                        flatpak_file_get_path_cached (app_id_dir));
     }
+
+  /* Hide the flatpak dir by default (unless explicitly made visible) */
+  user_flatpak_dir = flatpak_get_user_base_dir_location ();
+  add_hide_path (fs_paths, flatpak_file_get_path_cached (user_flatpak_dir));
 
   add_file_args (argv_array, fs_paths);
 
