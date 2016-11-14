@@ -523,27 +523,69 @@ flatpak_context_set_persistent (FlatpakContext *context,
 
 static gboolean
 get_xdg_dir_from_prefix (const char *prefix,
+                         const char **where,
                          const char **dir)
 {
   if (strcmp (prefix, "xdg-data") == 0)
     {
+      if (where)
+        *where = "data";
       if (dir)
         *dir = g_get_user_data_dir ();
       return TRUE;
     }
   if (strcmp (prefix, "xdg-cache") == 0)
     {
+      if (where)
+        *where = "cache";
       if (dir)
         *dir = g_get_user_cache_dir ();
       return TRUE;
     }
   if (strcmp (prefix, "xdg-config") == 0)
     {
+      if (where)
+        *where = "config";
       if (dir)
         *dir = g_get_user_config_dir ();
       return TRUE;
     }
   return FALSE;
+}
+
+/* This looks only in the xdg dirs (config, cache, data), not the user
+   definable ones */
+static char *
+get_xdg_dir_from_string (const char *filesystem,
+                         const char **suffix,
+                         const char **where)
+{
+  char *slash;
+  const char *rest;
+  g_autofree char *prefix;
+  const char *dir = NULL;
+  gsize len;
+
+  slash = strchr (filesystem, '/');
+
+  if (slash)
+    len = slash - filesystem;
+  else
+    len = strlen (filesystem);
+
+  rest = filesystem + len;
+  while (*rest == '/')
+    rest++;
+
+  if (suffix != NULL)
+    *suffix = rest;
+
+  prefix = g_strndup (filesystem, len);
+
+  if (get_xdg_dir_from_prefix (prefix, where, &dir))
+    return g_build_filename (dir, rest, NULL);
+
+  return NULL;
 }
 
 static gboolean
@@ -637,7 +679,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
         *dir = g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS);
       return TRUE;
     }
-  if (get_xdg_dir_from_prefix (prefix, dir))
+  if (get_xdg_dir_from_prefix (prefix, NULL, dir))
     {
       if (config_key)
         *config_key = NULL;
@@ -2503,6 +2545,42 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
 
   /* This actually outputs the args for the hide/expose operations above */
   add_file_args (argv_array, fs_paths);
+
+  /* Special case subdirectories of the cache, config and data xdg dirs.
+   * If these are accessible explicilty, in a read-write fashion, then
+   * we bind-mount these in the app-id dir. This allows applications to
+   * explicitly opt out of keeping some config/cache/data in the
+   * app-specific directory.
+   */
+  if (app_id_dir)
+    {
+      g_hash_table_iter_init (&iter, context->filesystems);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        {
+          const char *filesystem = key;
+          FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
+          g_autofree char *xdg_path = NULL;
+          const char *rest, *where;
+
+          xdg_path = get_xdg_dir_from_string (filesystem, &rest, &where);
+
+          if (xdg_path != NULL && *rest != 0 &&
+              mode > FLATPAK_FILESYSTEM_MODE_READ_WRITE)
+            {
+              g_autoptr(GFile) app_version = g_file_get_child (app_id_dir, where);
+              g_autoptr(GFile) app_version_subdir = g_file_resolve_relative_path (app_version, rest);
+
+              if (g_file_test (xdg_path, G_FILE_TEST_IS_DIR))
+                {
+                  g_autofree char *xdg_path_in_app = g_file_get_path (app_version_subdir);
+                  g_mkdir_with_parents (xdg_path_in_app, 0755);
+                  add_args (argv_array,
+                            "--bind", xdg_path, xdg_path_in_app,
+                            NULL);
+                }
+            }
+        }
+    }
 
   if (home_access  && app_id_dir != NULL)
     {
