@@ -522,10 +522,35 @@ flatpak_context_set_persistent (FlatpakContext *context,
 }
 
 static gboolean
-get_user_dir_from_string (const char  *filesystem,
-                          const char **config_key,
-                          const char **suffix,
-                          const char **dir)
+get_xdg_dir_from_prefix (const char *prefix,
+                         const char **dir)
+{
+  if (strcmp (prefix, "xdg-data") == 0)
+    {
+      if (dir)
+        *dir = g_get_user_data_dir ();
+      return TRUE;
+    }
+  if (strcmp (prefix, "xdg-cache") == 0)
+    {
+      if (dir)
+        *dir = g_get_user_cache_dir ();
+      return TRUE;
+    }
+  if (strcmp (prefix, "xdg-config") == 0)
+    {
+      if (dir)
+        *dir = g_get_user_config_dir ();
+      return TRUE;
+    }
+  return FALSE;
+}
+
+static gboolean
+get_xdg_user_dir_from_string (const char  *filesystem,
+                              const char **config_key,
+                              const char **suffix,
+                              const char **dir)
 {
   char *slash;
   const char *rest;
@@ -612,6 +637,12 @@ get_user_dir_from_string (const char  *filesystem,
         *dir = g_get_user_special_dir (G_USER_DIRECTORY_VIDEOS);
       return TRUE;
     }
+  if (get_xdg_dir_from_prefix (prefix, dir))
+    {
+      if (config_key)
+        *config_key = NULL;
+      return TRUE;
+    }
   /* Don't support xdg-run without suffix, because that doesn't work */
   if (strcmp (prefix, "xdg-run") == 0 &&
       *rest != 0)
@@ -666,7 +697,7 @@ flatpak_context_verify_filesystem (const char *filesystem_and_mode,
     return TRUE;
   if (strcmp (filesystem, "home") == 0)
     return TRUE;
-  if (get_user_dir_from_string (filesystem, NULL, NULL, NULL))
+  if (get_xdg_user_dir_from_string (filesystem, NULL, NULL, NULL))
     return TRUE;
   if (g_str_has_prefix (filesystem, "~/"))
     return TRUE;
@@ -2395,7 +2426,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
           const char *config_key = NULL;
           g_autofree char *subpath = NULL;
 
-          if (!get_user_dir_from_string (filesystem, &config_key, &rest, &path))
+          if (!get_xdg_user_dir_from_string (filesystem, &config_key, &rest, &path))
             {
               g_warning ("Unsupported xdg dir %s\n", filesystem);
               continue;
@@ -2470,6 +2501,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   user_flatpak_dir = flatpak_get_user_base_dir_location ();
   add_hide_path (fs_paths, flatpak_file_get_path_cached (user_flatpak_dir));
 
+  /* This actually outputs the args for the hide/expose operations above */
   add_file_args (argv_array, fs_paths);
 
   if (home_access  && app_id_dir != NULL)

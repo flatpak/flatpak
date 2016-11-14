@@ -131,6 +131,7 @@
                         application. Possible values: home, host, xdg-desktop,
                         xdg-documents, xdg-download xdg-music, xdg-pictures,
                         xdg-public-share, xdg-templates, xdg-videos, xdg-run,
+                        xdg-config, xdg-cache, xdg-data,
                         an absolute path, or a homedir-relative path like
                         ~/dir or paths relative to the xdg dirs, like
                         xdg-download/subdir. The xdg-* arguments can also

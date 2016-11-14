@@ -192,8 +192,10 @@
                     This updates the [Context] group in the metadata.
                     FS can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
                     xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos, xdg-run,
-                    an absolute path, or a homedir-relative path like ~/dir or paths
-                    relative to the xdg dirs, like xdg-download/subdir.
+                    xdg-config, xdg-cache, xdg-data, an absolute path, or a homedir-relative
+                    path like ~/dir or paths relative to the xdg dirs, like xdg-download/subdir.
+                    The optional :ro suffix indicates that the location will be read-only.
+                    The optional :create suffix indicates that the location will be read-write and created if it doesn't exist.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
