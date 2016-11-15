@@ -1133,7 +1133,7 @@ static void
 xdp_fuse_readdir (fuse_req_t req, fuse_ino_t ino, size_t size,
                   off_t off, struct fuse_file_info *fi)
 {
-  struct dirbuf *b = (struct dirbuf *) (fi->fh);
+  struct dirbuf *b = (struct dirbuf *) (gsize) (fi->fh);
 
   reply_buf_limited (req, b->p, b->size, off, size);
 }
@@ -1242,7 +1242,7 @@ xdp_fuse_opendir (fuse_req_t             req,
       if (fuse_reply_open (req, fi) == -ENOENT)
         {
           g_free (b.p);
-          g_free ((gpointer) (fi->fh));
+          g_free ((gpointer) (gsize) (fi->fh));
         }
     }
 }
@@ -1252,7 +1252,7 @@ xdp_fuse_releasedir (fuse_req_t             req,
                      fuse_ino_t             ino,
                      struct fuse_file_info *fi)
 {
-  struct dirbuf *b = (struct dirbuf *) (fi->fh);
+  struct dirbuf *b = (struct dirbuf *) (gsize) (fi->fh);
 
   g_free (b->p);
   g_free (b);
@@ -1693,7 +1693,7 @@ xdp_fuse_read (fuse_req_t             req,
                off_t                  off,
                struct fuse_file_info *fi)
 {
-  XdpFile *file = (gpointer) fi->fh;
+  XdpFile *file = (gpointer) (gsize) fi->fh;
   XdpInode *inode = file->inode;
   struct fuse_bufvec bufv = FUSE_BUFVEC_INIT (size);
   int fd;
@@ -1729,7 +1729,7 @@ xdp_fuse_release (fuse_req_t             req,
                   fuse_ino_t             ino,
                   struct fuse_file_info *fi)
 {
-  XdpFile *file = (gpointer) fi->fh;
+  XdpFile *file = (gpointer) (gsize) fi->fh;
 
   g_debug ("xdp_fuse_release %lx (fi=%p)", ino, fi);
 
@@ -1895,7 +1895,7 @@ xdp_fuse_write (fuse_req_t             req,
                 off_t                  off,
                 struct fuse_file_info *fi)
 {
-  XdpFile *file = (gpointer) fi->fh;
+  XdpFile *file = (gpointer) (gsize) fi->fh;
   XdpInode *inode = file->inode;
   int fd;
   int res;
@@ -1928,7 +1928,7 @@ xdp_fuse_write_buf (fuse_req_t             req,
                     off_t                  off,
                     struct fuse_file_info *fi)
 {
-  XdpFile *file = (gpointer) fi->fh;
+  XdpFile *file = (gpointer) (gsize) fi->fh;
   struct fuse_bufvec dst = FUSE_BUFVEC_INIT (fuse_buf_size (bufv));
   XdpInode *inode = file->inode;
   int fd;
