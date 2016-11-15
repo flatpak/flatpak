@@ -90,7 +90,7 @@ read_gpg_data (GCancellable *cancellable,
         }
       else
         {
-          g_autoptr(GFile) file = g_file_new_for_path (opt_gpg_file[ii]);
+          g_autoptr(GFile) file = g_file_new_for_commandline_arg (opt_gpg_file[ii]);
           input_stream = G_INPUT_STREAM (g_file_read (file, cancellable, error));
 
           if (input_stream == NULL)

@@ -115,7 +115,7 @@ open_source_stream (GInputStream **out_source_stream,
         }
       else
         {
-          g_autoptr(GFile) file = g_file_new_for_path (opt_gpg_import[ii]);
+          g_autoptr(GFile) file = g_file_new_for_commandline_arg (opt_gpg_import[ii]);
           input_stream = G_INPUT_STREAM (g_file_read (file, cancellable, error));
 
           if (input_stream == NULL)
