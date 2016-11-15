@@ -127,6 +127,10 @@ char * flatpak_build_runtime_ref (const char *runtime,
 char * flatpak_build_app_ref (const char *app,
                               const char *branch,
                               const char *arch);
+GFile *flatpak_find_deploy_dir_for_ref (const char   *ref,
+                                        FlatpakDir **dir_out,
+                                        GCancellable *cancellable,
+                                        GError      **error);
 GFile * flatpak_find_files_dir_for_ref (const char   *ref,
                                         GCancellable *cancellable,
                                         GError      **error);
@@ -298,6 +302,7 @@ typedef struct
   char *directory;
   char *files_path;
   gboolean needs_tmpfs;
+  gboolean is_unmaintained;
 } FlatpakExtension;
 
 void flatpak_extension_free (FlatpakExtension *extension);

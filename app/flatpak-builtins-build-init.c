@@ -84,6 +84,25 @@ copy_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
               g_autoptr(GFile) target_parent = g_file_get_parent (target);
               g_autoptr(GFile) ext_deploy_files = g_file_new_for_path (ext->files_path);
 
+              if (!ext->is_unmaintained)
+                {
+                  g_autoptr(FlatpakDir) src_dir = NULL;
+                  g_autoptr(GFile) deploy = NULL;
+                  g_autoptr(GVariant) deploy_data = NULL;
+                  const char **subpaths;
+
+                  deploy = flatpak_find_deploy_dir_for_ref (ext->ref, &src_dir, cancellable, error);
+                  if (deploy == NULL)
+                    return FALSE;
+                  deploy_data = flatpak_dir_get_deploy_data (src_dir, ext->ref, cancellable, error);
+                  if (deploy_data == NULL)
+                    return FALSE;
+
+                  subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+                  if (subpaths[0] != NULL)
+                    return flatpak_fail (error, _("Requested extension %s is only partially installed"), ext->installed_id);
+                }
+
               if (!flatpak_mkdir_p (target_parent, cancellable, error))
                 return FALSE;
 

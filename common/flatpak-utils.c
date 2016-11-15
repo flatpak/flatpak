@@ -999,25 +999,48 @@ out:
 }
 
 GFile *
-flatpak_find_files_dir_for_ref (const char   *ref,
-                                GCancellable *cancellable,
-                                GError      **error)
+flatpak_find_deploy_dir_for_ref (const char   *ref,
+                                 FlatpakDir **dir_out,
+                                 GCancellable *cancellable,
+                                 GError      **error)
 {
   g_autoptr(FlatpakDir) user_dir = NULL;
   g_autoptr(FlatpakDir) system_dir = NULL;
+  FlatpakDir *dir = NULL;
   g_autoptr(GFile) deploy = NULL;
 
   user_dir = flatpak_dir_get_user ();
   system_dir = flatpak_dir_get_system ();
 
-  deploy = flatpak_dir_get_if_deployed (user_dir, ref, NULL, cancellable);
+  dir = user_dir;
+  deploy = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
   if (deploy == NULL)
-    deploy = flatpak_dir_get_if_deployed (system_dir, ref, NULL, cancellable);
+    {
+      dir = system_dir;
+      deploy = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
+    }
+
   if (deploy == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, _("%s not installed"), ref);
       return NULL;
     }
+
+  if (dir_out)
+    *dir_out = g_object_ref (dir);
+  return g_steal_pointer (&deploy);
+}
+
+GFile *
+flatpak_find_files_dir_for_ref (const char   *ref,
+                                GCancellable *cancellable,
+                                GError      **error)
+{
+  g_autoptr(GFile) deploy = NULL;
+
+  deploy = flatpak_find_deploy_dir_for_ref (ref, NULL, cancellable, error);
+  if (deploy == NULL)
+    return NULL;
 
   return g_file_get_child (deploy, "files");
 }
@@ -3329,7 +3352,8 @@ flatpak_extension_new (const char *id,
                        const char *extension,
                        const char *ref,
                        const char *directory,
-                       GFile *files)
+                       GFile *files,
+                       gboolean is_unmaintained)
 {
   FlatpakExtension *ext = g_new0 (FlatpakExtension, 1);
 
@@ -3338,6 +3362,7 @@ flatpak_extension_new (const char *id,
   ext->ref = g_strdup (ref);
   ext->directory = g_strdup (directory);
   ext->files_path = g_file_get_path (files);
+  ext->is_unmaintained = is_unmaintained;
   return ext;
 }
 
@@ -3368,6 +3393,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
           g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
           g_autofree char *ref = NULL;
           const char *branch;
+          gboolean is_unmaintained = FALSE;
           g_autoptr(GFile) files = NULL;
 
           if (directory == NULL)
@@ -3383,14 +3409,14 @@ flatpak_list_extensions (GKeyFile   *metakey,
           files = flatpak_find_unmaintained_extension_dir_if_exists (extension, arch, branch, NULL);
 
           if (files == NULL)
-            {
-              files = flatpak_find_files_dir_for_ref (ref, NULL, NULL);
-            }
+            files = flatpak_find_files_dir_for_ref (ref, NULL, NULL);
+          else
+            is_unmaintained = TRUE;
 
           /* Prefer a full extension (org.freedesktop.Locale) over subdirectory ones (org.freedesktop.Locale.sv) */
           if (files != NULL)
             {
-              ext = flatpak_extension_new (extension, extension, ref, directory, files);
+              ext = flatpak_extension_new (extension, extension, ref, directory, files, is_unmaintained);
               res = g_list_prepend (res, ext);
             }
           else if (g_key_file_get_boolean (metakey, groups[i],
@@ -3412,7 +3438,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
 
                   if (subdir_files)
                     {
-                      ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, subdir_files);
+                      ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, subdir_files, FALSE);
                       ext->needs_tmpfs = needs_tmpfs;
                       needs_tmpfs = FALSE; /* Only first subdir needs a tmpfs */
                       res = g_list_prepend (res, ext);
@@ -3429,7 +3455,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
 
                   if (subdir_files)
                     {
-                      ext = flatpak_extension_new (extension, unmaintained_refs[j], dir_ref, extended_dir, subdir_files);
+                      ext = flatpak_extension_new (extension, unmaintained_refs[j], dir_ref, extended_dir, subdir_files, TRUE);
                       ext->needs_tmpfs = needs_tmpfs;
                       needs_tmpfs = FALSE; /* Only first subdir needs a tmpfs */
                       res = g_list_prepend (res, ext);
