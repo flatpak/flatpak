@@ -213,17 +213,17 @@ builder_source_from_json (JsonNode *node)
     g_warning ("Missing source type");
   else if (strcmp (type, "archive") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_ARCHIVE, node);
-  if (strcmp (type, "file") == 0)
+  else if (strcmp (type, "file") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_FILE, node);
-  if (strcmp (type, "script") == 0)
+  else if (strcmp (type, "script") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_SCRIPT, node);
-  if (strcmp (type, "shell") == 0)
+  else if (strcmp (type, "shell") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_SHELL, node);
-  if (strcmp (type, "patch") == 0)
+  else if (strcmp (type, "patch") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_PATCH, node);
-  if (strcmp (type, "git") == 0)
+  else if (strcmp (type, "git") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_GIT, node);
-  if (strcmp (type, "bzr") == 0)
+  else if (strcmp (type, "bzr") == 0)
     return (BuilderSource *) json_gobject_deserialize (BUILDER_TYPE_SOURCE_BZR, node);
   else
     g_warning ("Unknown source type %s", type);
