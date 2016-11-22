@@ -2295,7 +2295,8 @@ add_expose_path (GHashTable *hash_table,
 
   if (S_ISDIR (st.st_mode) ||
       S_ISREG (st.st_mode) ||
-      S_ISLNK (st.st_mode))
+      S_ISLNK (st.st_mode) ||
+      S_ISSOCK (st.st_mode))
     {
       FlatpakFilesystemMode old_mode;
 
