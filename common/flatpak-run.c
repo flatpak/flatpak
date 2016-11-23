@@ -3120,28 +3120,41 @@ add_monitor_path_args (gboolean use_session_helper,
       add_args (argv_array,
                 "--symlink", "/run/host/monitor/localtime", "/etc/localtime",
                 NULL);
+      add_args (argv_array,
+                "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
+                NULL);
     }
   else
     {
-      char localtime[PATH_MAX + 1];
-      ssize_t symlink_size;
-
-      add_args (argv_array,
-                "--bind", "/etc/resolv.conf", "/run/host/monitor/resolv.conf",
-                NULL);
-
-      symlink_size = readlink ("/etc/localtime", localtime, sizeof (localtime) - 1);
-      if (symlink_size > 0)
+      /* /etc/localtime and /etc/resolv.conf can not exist (or be symlinks to
+       * non-existing targets), in which case we don't want to attempt to create
+       * bogus symlinks or bind mounts, as that will cause flatpak run to fail.
+       */
+      if (g_file_test ("/etc/localtime", G_FILE_TEST_EXISTS))
         {
-          localtime[symlink_size] = 0;
-          add_args (argv_array,
-                    "--symlink", localtime, "/etc/localtime",
-                    NULL);
+          char localtime[PATH_MAX + 1];
+          ssize_t symlink_size;
+
+          symlink_size = readlink ("/etc/localtime", localtime, sizeof (localtime) - 1);
+          if (symlink_size > 0)
+            {
+              localtime[symlink_size] = 0;
+              add_args (argv_array,
+                        "--symlink", localtime, "/etc/localtime",
+                        NULL);
+            }
+          else
+            {
+              add_args (argv_array,
+                        "--bind", "/etc/localtime", "/etc/localtime",
+                        NULL);
+            }
         }
-      else
+
+      if (g_file_test ("/etc/resolv.conf", G_FILE_TEST_EXISTS))
         {
           add_args (argv_array,
-                    "--bind", "/etc/localtime", "/etc/localtime",
+                    "--bind", "/etc/resolv.conf", "/etc/resolv.conf",
                     NULL);
         }
     }
@@ -3714,7 +3727,6 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
             "--ro-bind", "/sys/devices", "/sys/devices",
             "--bind-data", passwd_fd_str, "/etc/passwd",
             "--bind-data", group_fd_str, "/etc/group",
-            "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
             /* Always create a homedir to start from, although it may be covered later */
             "--dir", g_get_home_dir (),
             NULL);
