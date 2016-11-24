@@ -254,9 +254,9 @@ flatpak_complete_info (FlatpakCompletion *completion)
                 flatpak_complete_word (completion, "%s ", parts[3]);
             }
         }
-      if (user_dir)
+      if (system_dir)
         {
-          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (user_dir, completion->argv[1], NULL, opt_arch,
+          g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, completion->argv[1], NULL, opt_arch,
                                                                 kinds, &error);
           if (refs == NULL)
             flatpak_completion_debug ("find remote refs error: %s", error->message);
