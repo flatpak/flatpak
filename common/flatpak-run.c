@@ -3270,11 +3270,27 @@ add_monitor_path_args (gboolean use_session_helper,
         {
           char localtime[PATH_MAX + 1];
           ssize_t symlink_size;
+          gboolean is_reachable = FALSE;
 
           symlink_size = readlink ("/etc/localtime", localtime, sizeof (localtime) - 1);
           if (symlink_size > 0)
             {
+              g_autoptr(GFile) base_file = NULL;
+              g_autoptr(GFile) target_file = NULL;
+              g_autofree char *target_canonical = NULL;
+
+              /* readlink() does not append a null byte to the buffer. */
               localtime[symlink_size] = 0;
+
+              base_file = g_file_new_for_path ("/etc");
+              target_file = g_file_resolve_relative_path (base_file, localtime);
+              target_canonical = g_file_get_path (target_file);
+
+              is_reachable = g_str_has_prefix (target_canonical, "/usr/");
+            }
+
+          if (is_reachable)
+            {
               add_args (argv_array,
                         "--symlink", localtime, "/etc/localtime",
                         NULL);
