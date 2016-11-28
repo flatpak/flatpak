@@ -1,4 +1,12 @@
 # Use this to suppress "possibly lost" for global statics
+{
+   handle_reflink
+   Memcheck:Param
+   ioctl(generic)
+   fun:ioctl
+   fun:btrfs_reflink_with_progress
+   fun:file_copy_fallback
+}
 
 # https://github.com/ostreedev/ostree/issues/533
 {
@@ -10,4 +18,103 @@
    fun:g_output_stream_real_splice
    fun:g_output_stream_splice
    fun:ostree_repo_static_delta_generate
+}
+
+# There seem to be some leaks in "ostree pull", lets just ignore them for now
+{
+  ignore_ostree_pull1
+  Memcheck:Leak
+  fun:malloc
+  ...
+  fun:ostree_fetcher_session_thread
+}
+{
+  ignore_ostree_pull2
+  Memcheck:Leak
+  fun:realloc
+  ...
+  fun:ostree_fetcher_session_thread
+}
+{
+  ignore_ostree_pull3
+  Memcheck:Leak
+  fun:malloc
+  ...
+  fun:ostree_repo_write_metadata_async
+}
+{
+  ignore_ostree_pull4
+  Memcheck:Leak
+  fun:calloc
+  ...
+  fun:ostree_repo_write_metadata_async
+}
+{
+  ignore_ostree_pull5
+  Memcheck:Leak
+  fun:malloc
+  ...
+  fun:write_metadata_thread
+}
+{
+  ignore_ostree_pull6
+  Memcheck:Leak
+  fun:calloc
+  ...
+  fun:write_metadata_thread
+}
+# static delta generation seem to leak too...
+{
+  ignore_ostree_delta1
+  Memcheck:Leak
+  fun:malloc
+  ...
+  fun:generate_delta_thread
+}
+{
+  ignore_ostree_delta2
+  Memcheck:Leak
+  fun:calloc
+  ...
+  fun:generate_delta_thread
+}
+{
+  ignore_ostree_delta3
+  Memcheck:Leak
+  fun:realloc
+  ...
+  fun:generate_delta_thread
+}
+# writing content...
+{
+  ignore_ostree_write_content1
+  Memcheck:Leak
+  fun:g_type_create_instance
+  ...
+  fun:write_content_thread
+}
+{
+  ignore_ostree_write_content2
+  Memcheck:Leak
+  fun:malloc
+  ...
+  fun:write_content_thread
+}
+{
+  ignore_ostree_write_content3
+  Memcheck:Leak
+  fun:malloc
+  ...
+  fun:ostree_repo_write_content_async
+}
+
+# Some glib threadpool issue?
+{
+  ignore_gthreadpool1
+  Memcheck:Leak
+  fun:calloc
+  ...
+  fun:g_idle_source_new
+  ...
+  fun:g_thread_pool_thread_proxy
 }
