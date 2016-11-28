@@ -120,6 +120,7 @@ generate_delta_thread (gpointer       _data,
         g_printerr (_("Failed to generate delta %s (%.10s-%.10s): %s\n"),
                     data->ref, data->from, data->to, error->message);
     }
+  delta_data_free (data);
 }
 
 static void
