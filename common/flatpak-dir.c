@@ -1325,18 +1325,6 @@ repo_pull_one_dir (OstreeRepo          *self,
   options = g_variant_ref_sink (g_variant_builder_end (&builder));
   res = ostree_repo_pull_with_options (self, remote_name, options,
                                        progress, cancellable, error);
-  if (res && dirs_to_pull != NULL)
-    {
-      /* This works around an issue with ostree where it doesn't pull
-       * all dependencies (stops are first locally available object)
-       * unless the commit itself is a commitpartial:
-       * https://github.com/ostreedev/ostree/issues/543
-       * The workaround works by pulling again, and on the new pull
-       * the commit *will* have a commitpartial.
-       */
-        res = ostree_repo_pull_with_options (self, remote_name, options,
-                                             progress, cancellable, error);
-    }
 
   return res;
 }
