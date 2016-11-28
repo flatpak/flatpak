@@ -434,7 +434,7 @@ builder_options_deserialize_property (JsonSerializable *serializable,
             }
 
           g_ptr_array_add (env, NULL);
-          g_value_set_boxed (value, g_ptr_array_free (g_steal_pointer (&env), FALSE));
+          g_value_take_boxed (value, g_ptr_array_free (g_steal_pointer (&env), FALSE));
           return TRUE;
         }
 
