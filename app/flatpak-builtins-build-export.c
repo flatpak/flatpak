@@ -184,7 +184,7 @@ add_file_to_mtree (GFile             *file,
   g_autoptr(GInputStream) input = NULL;
   guint64 length;
   g_autofree guchar *child_file_csum = NULL;
-  char *tmp_checksum = NULL;
+  g_autofree char *tmp_checksum = NULL;
 
   file_info = g_file_query_info (file,
                                  "standard::size",

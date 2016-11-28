@@ -2443,7 +2443,7 @@ _flatpak_repo_collect_sizes (OstreeRepo   *repo,
 {
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   GFileInfo *child_info_tmp;
-  GError *temp_error = NULL;
+  g_autoptr(GError) temp_error = NULL;
 
   if (file_info != NULL && g_file_info_get_file_type (file_info) == G_FILE_TYPE_REGULAR)
     {
@@ -2587,6 +2587,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autofree char *title = NULL;
   g_autofree char *default_branch = NULL;
   g_autoptr(GVariant) old_summary = NULL;
+  g_autoptr(GVariant) new_summary = NULL;
   g_autoptr(GHashTable) refs = NULL;
   const char *prefixes[] = { "appstream", "app", "runtime", NULL };
   const char **prefix;
@@ -2741,8 +2742,8 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_variant_builder_add (&builder, "{sv}", "xa.cache",
                          g_variant_new_variant (g_variant_builder_end (&ref_data_builder)));
 
-  if (!ostree_repo_regenerate_summary (repo, g_variant_builder_end (&builder),
-                                       cancellable, error))
+  new_summary = g_variant_ref_sink (g_variant_builder_end (&builder));
+  if (!ostree_repo_regenerate_summary (repo, new_summary, cancellable, error))
     return FALSE;
 
   if (gpg_key_ids)
