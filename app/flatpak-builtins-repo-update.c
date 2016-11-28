@@ -277,7 +277,6 @@ generate_all_deltas (OstreeRepo *repo,
     {
       const char *ref = key;
       const char *commit = value;
-      const char *from_parent = NULL;
       g_autoptr(GVariant) variant = NULL;
       g_autoptr(GVariant) parent_variant = NULL;
       g_autofree char *parent_commit = NULL;
@@ -314,7 +313,8 @@ generate_all_deltas (OstreeRepo *repo,
       /* From parent */
       if (parent_variant != NULL)
         {
-          from_parent = g_strdup_printf ("%s-%s", parent_commit, commit);
+          g_autofree char *from_parent = g_strdup_printf ("%s-%s", parent_commit, commit);
+
           if (!g_hash_table_contains (all_deltas_hash, from_parent))
             {
               if (!delta_data_push (thread_pool, repo, params,
