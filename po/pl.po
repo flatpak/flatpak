@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-11-02 03:24+0000\n"
+"POT-Creation-Date: 2016-11-29 10:39+0100\n"
 "PO-Revision-Date: 2016-11-13 13:55+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -114,7 +114,7 @@ msgstr "NAZWA POŁOŻENIE — dodaje zdalne repozytorium"
 msgid "NAME must be specified"
 msgstr "Należy podać NAZWĘ"
 
-#: app/flatpak-builtins-add-remote.c:378 app/flatpak-builtins-repo-update.c:367
+#: app/flatpak-builtins-add-remote.c:378 app/flatpak-builtins-repo-update.c:368
 msgid "LOCATION must be specified"
 msgstr "Należy podać POŁOŻENIE"
 
@@ -122,7 +122,7 @@ msgstr "Należy podać POŁOŻENIE"
 #: app/flatpak-builtins-build-bundle.c:494
 #: app/flatpak-builtins-build-export.c:637
 #: app/flatpak-builtins-build-import-bundle.c:239
-#: app/flatpak-builtins-build-init.c:149 app/flatpak-builtins-build-sign.c:73
+#: app/flatpak-builtins-build-init.c:168 app/flatpak-builtins-build-sign.c:73
 #: app/flatpak-builtins-delete-remote.c:63
 #: app/flatpak-builtins-document-export.c:102
 #: app/flatpak-builtins-document-info.c:75
@@ -231,7 +231,7 @@ msgstr "„%s” nie jest prawidłową nazwą: %s"
 
 #: app/flatpak-builtins-build-bundle.c:517
 #: app/flatpak-builtins-build-export.c:651
-#: app/flatpak-builtins-build-init.c:168 app/flatpak-builtins-build-sign.c:87
+#: app/flatpak-builtins-build-init.c:187 app/flatpak-builtins-build-sign.c:87
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "„%s” nie jest prawidłową nazwą gałęzi: %s"
@@ -277,7 +277,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Brak „=” w opcji montowania dowiązania „%s”"
 
-#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:3856
+#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:4113
 msgid "Unable to start app"
 msgstr "Nie można uruchomić programu"
 
@@ -584,38 +584,43 @@ msgstr "Gdzie przechowywać środowisko programistyczne (domyślnie „usr”)"
 msgid "Re-initialize the sdk/var"
 msgstr "Ponownie inicjuje środowisko programistyczne/zmienną"
 
-#: app/flatpak-builtins-build-init.c:106
+#: app/flatpak-builtins-build-init.c:103
+#, fuzzy, c-format
+msgid "Requested extension %s is only partially installed"
+msgstr "Nie zainstalowano żądanego rozszerzenia %s"
+
+#: app/flatpak-builtins-build-init.c:125
 #, c-format
 msgid "Requested extension %s not installed"
 msgstr "Nie zainstalowano żądanego rozszerzenia %s"
 
-#: app/flatpak-builtins-build-init.c:139
+#: app/flatpak-builtins-build-init.c:158
 msgid ""
 "DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"
 msgstr ""
 "KATALOG NAZWA-PROGRAMU ŚRODOWISKO-PROGRAMISTYCZNE [GAŁĄŹ] — inicjuje katalog "
 "do budowania"
 
-#: app/flatpak-builtins-build-init.c:146
+#: app/flatpak-builtins-build-init.c:165
 msgid "RUNTIME must be specified"
 msgstr "Należy podać ŚRODOWISKO-WYKONAWCZE"
 
-#: app/flatpak-builtins-build-init.c:159 app/flatpak-builtins-override.c:71
+#: app/flatpak-builtins-build-init.c:178 app/flatpak-builtins-override.c:71
 #, c-format
 msgid "'%s' is not a valid application name: %s"
 msgstr "„%s” nie jest prawidłową nazwą programu: %s"
 
-#: app/flatpak-builtins-build-init.c:162
+#: app/flatpak-builtins-build-init.c:181
 #, c-format
 msgid "'%s' is not a valid runtime name: %s"
 msgstr "„%s” nie jest prawidłową nazwą środowiska wykonawczego: %s"
 
-#: app/flatpak-builtins-build-init.c:165
+#: app/flatpak-builtins-build-init.c:184
 #, c-format
 msgid "'%s' is not a valid sdk name: %s"
 msgstr "„%s” nie jest prawidłową nazwą środowiska programistycznego: %s"
 
-#: app/flatpak-builtins-build-init.c:190
+#: app/flatpak-builtins-build-init.c:209
 #, c-format
 msgid "Build directory %s already initialized"
 msgstr "Już zainicjowano katalog budowania %s"
@@ -1017,28 +1022,28 @@ msgstr "Utworzenie delty %s się nie powiodło (%.10s): %s\n"
 msgid "Failed to generate delta %s (%.10s-%.10s): %s\n"
 msgstr "Utworzenie delty %s się nie powiodło (%.10s-%.10s): %s\n"
 
-#: app/flatpak-builtins-repo-update.c:360
+#: app/flatpak-builtins-repo-update.c:361
 msgid "LOCATION - Update repository metadata"
 msgstr "POŁOŻENIE — aktualizuje metadane repozytorium"
 
-#: app/flatpak-builtins-repo-update.c:385
+#: app/flatpak-builtins-repo-update.c:386
 msgid "Updating appstream branch\n"
 msgstr "Aktualizowanie danych AppStream\n"
 
-#: app/flatpak-builtins-repo-update.c:393
+#: app/flatpak-builtins-repo-update.c:394
 msgid "Updating summary\n"
 msgstr "Aktualizowanie podsumowania\n"
 
-#: app/flatpak-builtins-repo-update.c:425
+#: app/flatpak-builtins-repo-update.c:426
 #, c-format
 msgid "Total objects: %u\n"
 msgstr "Razem obiektów: %u\n"
 
-#: app/flatpak-builtins-repo-update.c:427
+#: app/flatpak-builtins-repo-update.c:428
 msgid "No unreachable objects\n"
 msgstr "Brak nieosiągalnych obiektów\n"
 
-#: app/flatpak-builtins-repo-update.c:429
+#: app/flatpak-builtins-repo-update.c:430
 #, c-format
 msgid "Deleted %u objects, %s freed\n"
 msgstr "Usunięto %u obiektów, uwolniono %s\n"
@@ -1445,7 +1450,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:412 common/flatpak-dir.c:577
 #: common/flatpak-dir.c:823 common/flatpak-dir.c:859 common/flatpak-dir.c:881
-#: common/flatpak-dir.c:6687 common/flatpak-utils.c:979
+#: common/flatpak-dir.c:6710 common/flatpak-utils.c:1025
 #, c-format
 msgid "%s not installed"
 msgstr "Nie zainstalowano %s"
@@ -1511,223 +1516,223 @@ msgstr "Nie odnaleziono zastępników dla %s"
 msgid "While opening repository %s: "
 msgstr "Podczas otwierania repozytorium %s: "
 
-#: common/flatpak-dir.c:1091 common/flatpak-dir.c:3292
+#: common/flatpak-dir.c:1091 common/flatpak-dir.c:3280
 msgid "Can't create deploy directory"
 msgstr "Nie można utworzyć katalogu wdrażania"
 
-#: common/flatpak-dir.c:1475
+#: common/flatpak-dir.c:1463
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Nieprawidłowa suma SHA256 dla adresu URI %s dodatkowych danych"
 
-#: common/flatpak-dir.c:1480
+#: common/flatpak-dir.c:1468
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Pusta nazwa dla adresu URI %s dodatkowych danych"
 
-#: common/flatpak-dir.c:1485
+#: common/flatpak-dir.c:1473
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Nieobsługiwany adres URI %s dodatkowych danych"
 
-#: common/flatpak-dir.c:1495
+#: common/flatpak-dir.c:1483
 #, c-format
 msgid "While downloading %s: "
 msgstr "Podczas pobierania %s: "
 
-#: common/flatpak-dir.c:1500
+#: common/flatpak-dir.c:1488
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Błędny rozmiar dodatkowych danych %s"
 
-#: common/flatpak-dir.c:1508
+#: common/flatpak-dir.c:1496
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Nieprawidłowa suma kontrolna dodatkowych danych %s"
 
-#: common/flatpak-dir.c:1661 common/flatpak-dir.c:1881
+#: common/flatpak-dir.c:1649 common/flatpak-dir.c:1869
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Podczas pobierania %s z repozytorium %s: "
 
-#: common/flatpak-dir.c:1835
+#: common/flatpak-dir.c:1823
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "Nie można odnaleźć %s w repozytorium %s"
 
-#: common/flatpak-dir.c:2425
+#: common/flatpak-dir.c:2413
 msgid "Not enough memory"
 msgstr "Za mało pamięci"
 
-#: common/flatpak-dir.c:2444
+#: common/flatpak-dir.c:2432
 msgid "Failed to read from exported file"
 msgstr "Odczytanie z wyeksportowanego pliku się nie powiodło"
 
-#: common/flatpak-dir.c:2957
+#: common/flatpak-dir.c:2945
 msgid "While getting detached metadata: "
 msgstr "Podczas pobierania odłączonych metadanych: "
 
-#: common/flatpak-dir.c:2975
+#: common/flatpak-dir.c:2963
 msgid "While creating extradir: "
 msgstr "Podczas tworzenia dodatkowego katalogu: "
 
-#: common/flatpak-dir.c:2997
+#: common/flatpak-dir.c:2985
 msgid "Invalid sha256 for extra data"
 msgstr "Nieprawidłowa suma SHA256 dodatkowych danych"
 
-#: common/flatpak-dir.c:3026
+#: common/flatpak-dir.c:3014
 msgid "Wrong size for extra data"
 msgstr "Błędny rozmiar dodatkowych danych"
 
-#: common/flatpak-dir.c:3030
+#: common/flatpak-dir.c:3018
 msgid "Invalid checksum for extra data"
 msgstr "Nieprawidłowa suma kontrolna dodatkowych danych"
 
-#: common/flatpak-dir.c:3039
+#: common/flatpak-dir.c:3027
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "Podczas zapisywania pliku dodatkowych danych „%s”: "
 
-#: common/flatpak-dir.c:3196
+#: common/flatpak-dir.c:3184
 msgid "apply_extra script failed"
 msgstr "Skrypt „apply_extra” się nie powiódł"
 
-#: common/flatpak-dir.c:3259
+#: common/flatpak-dir.c:3247
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Podczas rozwiązywania odniesienia %s: "
 
-#: common/flatpak-dir.c:3274
+#: common/flatpak-dir.c:3262
 #, c-format
 msgid "%s is not available"
 msgstr "%s jest niedostępne"
 
-#: common/flatpak-dir.c:3281 common/flatpak-dir.c:3524
-#: common/flatpak-dir.c:4070 common/flatpak-dir.c:4089
+#: common/flatpak-dir.c:3269 common/flatpak-dir.c:3512
+#: common/flatpak-dir.c:4058 common/flatpak-dir.c:4077
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "Już zainstalowano %s gałąź %s"
 
-#: common/flatpak-dir.c:3300
+#: common/flatpak-dir.c:3288
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Odczytanie zatwierdzenia %s się nie powiodło: "
 
-#: common/flatpak-dir.c:3319
+#: common/flatpak-dir.c:3307
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Podczas wymeldowywania %s do %s: "
 
-#: common/flatpak-dir.c:3344 common/flatpak-dir.c:3375
+#: common/flatpak-dir.c:3332 common/flatpak-dir.c:3363
 msgid "While trying to checkout metadata subpath: "
 msgstr "Podczas wymeldowywania podścieżki metadanych: "
 
-#: common/flatpak-dir.c:3385
+#: common/flatpak-dir.c:3373
 msgid "While trying to remove existing extra dir: "
 msgstr "Podczas usuwania istniejącego dodatkowego katalogu: "
 
-#: common/flatpak-dir.c:3396
+#: common/flatpak-dir.c:3384
 msgid "While trying to apply extra data: "
 msgstr "Podczas zastosowywania dodatkowych danych: "
 
-#: common/flatpak-dir.c:3893
+#: common/flatpak-dir.c:3881
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Ta wersja programu %s jest już zainstalowana"
 
-#: common/flatpak-dir.c:4350
+#: common/flatpak-dir.c:4338
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "Nie zainstalowano %s gałęzi %s"
 
-#: common/flatpak-dir.c:4594
+#: common/flatpak-dir.c:4582
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "Nie zainstalowano %s gałęzi %s"
 
-#: common/flatpak-dir.c:5252
+#: common/flatpak-dir.c:5240
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Nic nie pasuje do %s"
 
-#: common/flatpak-dir.c:5334
+#: common/flatpak-dir.c:5322
 #, c-format
 msgid "Can't find %s%s%s%s%s in remote %s"
 msgstr "Nie można odnaleźć %s%s%s%s%s w repozytorium %s"
 
-#: common/flatpak-dir.c:5451
+#: common/flatpak-dir.c:5439
 #, c-format
 msgid "%s %s not installed"
 msgstr "Nie zainstalowano %s %s"
 
-#: common/flatpak-dir.c:5768
+#: common/flatpak-dir.c:5756
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Już zainstalowano środowisko wykonawcze %s, gałąź %s"
 
-#: common/flatpak-dir.c:5769
+#: common/flatpak-dir.c:5757
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Już zainstalowano program %s, gałąź %s"
 
-#: common/flatpak-dir.c:6193
+#: common/flatpak-dir.c:6181
 msgid "Remote extra metadata not available; server has no summary file"
 msgstr ""
 "Dodatkowe metadane repozytorium są niedostępne. Serwer nie ma pliku "
 "podsumowania"
 
-#: common/flatpak-dir.c:6223
+#: common/flatpak-dir.c:6211
 msgid "Remote title not set"
 msgstr "Nie ustawiono tytułu repozytorium"
 
-#: common/flatpak-dir.c:6250
+#: common/flatpak-dir.c:6238
 msgid "Remote default-branch not set"
 msgstr "Nie ustawiono domyślnej gałęzi repozytorium"
 
-#: common/flatpak-dir.c:6356
+#: common/flatpak-dir.c:6379
 msgid "Data not found"
 msgstr "Nie odnaleziono danych"
 
-#: common/flatpak-dir.c:6365
+#: common/flatpak-dir.c:6388
 #, c-format
 msgid "Data not found for ref %s"
 msgstr "Nie odnaleziono danych dla odniesienia %s"
 
-#: common/flatpak-dir.c:6413 common/flatpak-dir.c:6551
+#: common/flatpak-dir.c:6436 common/flatpak-dir.c:6574
 msgid "Data not available; server has no summary file"
 msgstr "Dane są niedostępne, serwer nie ma pliku podsumowania"
 
-#: common/flatpak-run.c:233
+#: common/flatpak-run.c:234
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Nieznany typ udziału %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:268
+#: common/flatpak-run.c:269
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Nieznany typ polityki %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:306
+#: common/flatpak-run.c:307
 #, c-format
 msgid "Invalid dbus name %s\n"
 msgstr "Nieprawidłowa nazwa D-Bus %s\n"
 
-#: common/flatpak-run.c:319
+#: common/flatpak-run.c:320
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Nieznany typ gniazda %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:348
+#: common/flatpak-run.c:349
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Nieznany typ urządzenia %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:376
+#: common/flatpak-run.c:377
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Nieznany typ funkcji %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:670
+#: common/flatpak-run.c:750
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid types are: host, home, xdg-*[/...], ~/"
@@ -1736,310 +1741,223 @@ msgstr ""
 "Nieznane położenie systemu plików %s, prawidłowe typy: host, home, xdg-"
 "*[/...], ~/dir, /dir"
 
-#: common/flatpak-run.c:936
+#: common/flatpak-run.c:1016
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Nieznany format środowiska %s"
 
-#: common/flatpak-run.c:1076
+#: common/flatpak-run.c:1156
 msgid "Share with host"
 msgstr "Udostępnia temu komputerowi"
 
-#: common/flatpak-run.c:1076 common/flatpak-run.c:1077
+#: common/flatpak-run.c:1156 common/flatpak-run.c:1157
 msgid "SHARE"
 msgstr "UDZIAŁ"
 
-#: common/flatpak-run.c:1077
+#: common/flatpak-run.c:1157
 msgid "Unshare with host"
 msgstr "Przestaje udostępniać temu komputerowi"
 
-#: common/flatpak-run.c:1078
+#: common/flatpak-run.c:1158
 msgid "Expose socket to app"
 msgstr "Udostępnia gniazdo programowi"
 
-#: common/flatpak-run.c:1078 common/flatpak-run.c:1079
+#: common/flatpak-run.c:1158 common/flatpak-run.c:1159
 msgid "SOCKET"
 msgstr "GNIAZDO"
 
-#: common/flatpak-run.c:1079
+#: common/flatpak-run.c:1159
 msgid "Don't expose socket to app"
 msgstr "Nie udostępnia gniazda programowi"
 
-#: common/flatpak-run.c:1080
+#: common/flatpak-run.c:1160
 msgid "Expose device to app"
 msgstr "Udostępnia urządzenie programowi"
 
-#: common/flatpak-run.c:1080 common/flatpak-run.c:1081
+#: common/flatpak-run.c:1160 common/flatpak-run.c:1161
 msgid "DEVICE"
 msgstr "URZĄDZENIE"
 
-#: common/flatpak-run.c:1081
+#: common/flatpak-run.c:1161
 msgid "Don't expose device to app"
 msgstr "Nie udostępnia urządzenia programowi"
 
-#: common/flatpak-run.c:1082
+#: common/flatpak-run.c:1162
 msgid "Allow feature"
 msgstr "Zezwala na funkcję"
 
-#: common/flatpak-run.c:1082 common/flatpak-run.c:1083
+#: common/flatpak-run.c:1162 common/flatpak-run.c:1163
 msgid "FEATURE"
 msgstr "FUNKCJA"
 
-#: common/flatpak-run.c:1083
+#: common/flatpak-run.c:1163
 msgid "Don't allow feature"
 msgstr "Bez zezwolenia na funkcję"
 
-#: common/flatpak-run.c:1084
+#: common/flatpak-run.c:1164
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Udostępnia system plików programowi (:ro dla tylko do odczytu)"
 
-#: common/flatpak-run.c:1084
+#: common/flatpak-run.c:1164
 msgid "FILESYSTEM[:ro]"
 msgstr "SYSTEM-PLIKÓW[:ro]"
 
-#: common/flatpak-run.c:1085
+#: common/flatpak-run.c:1165
 msgid "Don't expose filesystem to app"
 msgstr "Nie udostępnia systemu plików programowi"
 
-#: common/flatpak-run.c:1085
+#: common/flatpak-run.c:1165
 msgid "FILESYSTEM"
 msgstr "SYSTEM-PLIKÓW"
 
-#: common/flatpak-run.c:1086
+#: common/flatpak-run.c:1166
 msgid "Set environment variable"
 msgstr "Ustawia zmienną środowiskową"
 
-#: common/flatpak-run.c:1086
+#: common/flatpak-run.c:1166
 msgid "VAR=VALUE"
 msgstr "ZMIENNA=WARTOŚĆ"
 
-#: common/flatpak-run.c:1087
+#: common/flatpak-run.c:1167
 msgid "Allow app to own name on the session bus"
 msgstr "Zezwala programowi na posiadanie nazwy na magistrali sesji"
 
-#: common/flatpak-run.c:1087 common/flatpak-run.c:1088
-#: common/flatpak-run.c:1089 common/flatpak-run.c:1090
+#: common/flatpak-run.c:1167 common/flatpak-run.c:1168
+#: common/flatpak-run.c:1169 common/flatpak-run.c:1170
 msgid "DBUS_NAME"
 msgstr "NAZWA_D-BUS"
 
-#: common/flatpak-run.c:1088
+#: common/flatpak-run.c:1168
 msgid "Allow app to talk to name on the session bus"
 msgstr "Umożliwia programowi rozmawianie z nazwą na magistrali sesji"
 
-#: common/flatpak-run.c:1089
+#: common/flatpak-run.c:1169
 msgid "Allow app to own name on the system bus"
 msgstr "Zezwala programowi na posiadanie nazwy na magistrali systemu"
 
-#: common/flatpak-run.c:1090
+#: common/flatpak-run.c:1170
 msgid "Allow app to talk to name on the system bus"
 msgstr "Umożliwia programowi rozmawianie z nazwą na magistrali systemu"
 
-#: common/flatpak-run.c:1091
+#: common/flatpak-run.c:1171
 msgid "Add generic policy option"
 msgstr "Dodaje ogólną opcję polityki"
 
-#: common/flatpak-run.c:1091 common/flatpak-run.c:1092
+#: common/flatpak-run.c:1171 common/flatpak-run.c:1172
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "PODSYSTEM.KLUCZ=WARTOŚĆ"
 
-#: common/flatpak-run.c:1092
+#: common/flatpak-run.c:1172
 msgid "Remove generic policy option"
 msgstr "Usuwa ogólną opcję polityki"
 
-#: common/flatpak-run.c:1093
+#: common/flatpak-run.c:1173
 msgid "Persist home directory"
 msgstr "Trwały katalog domowy"
 
-#: common/flatpak-run.c:1093
+#: common/flatpak-run.c:1173
 msgid "FILENAME"
 msgstr "NAZWA-PLIKU"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-run.c:1095
+#: common/flatpak-run.c:1175
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
 
-#: common/flatpak-run.c:1730
+#: common/flatpak-run.c:1814
 msgid "Failed to create temporary file"
 msgstr "Utworzenie pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:1737
+#: common/flatpak-run.c:1821
 msgid "Failed to unlink temporary file"
 msgstr "Odwiązanie pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:1755
+#: common/flatpak-run.c:1839
 msgid "Failed to write to temporary file"
 msgstr "Zapisanie do pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:2791
+#: common/flatpak-run.c:3036
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Otwarcie pliku tymczasowego „flatpak-info” się nie powiodło: %s"
 
-#: common/flatpak-run.c:2829
+#: common/flatpak-run.c:3074
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Otwarcie pliku tymczasowego się nie powiodło: %s"
 
-#: common/flatpak-run.c:3095
+#: common/flatpak-run.c:3353
 msgid "Unable to create sync pipe"
 msgstr "Utworzenie potoku synchronizacji się nie powiodło"
 
-#: common/flatpak-run.c:3120
+#: common/flatpak-run.c:3378
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Otwarcie pliku informacji o programie się nie powiodło: %s"
 
-#: common/flatpak-run.c:3150
+#: common/flatpak-run.c:3408
 msgid "Failed to sync with dbus proxy"
 msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 
-#: common/flatpak-utils.c:2284
+#: common/flatpak-utils.c:2381
 msgid "No extra data sources"
 msgstr "Brak źródeł dodatkowych danych"
 
-#.
-#. Policy definitions for Flatpak system actions.
-#. Copyright (c) 2016 Alexander Larsson <alexl@redhat.com>
-#: system-helper/org.freedesktop.Flatpak.policy.in:12
-msgid "The Flatpak Project"
-msgstr "Projekt Flatpak"
+#~ msgid "The Flatpak Project"
+#~ msgstr "Projekt Flatpak"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:13
-msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
-msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+#~ msgid "https://cgit.freedesktop.org/xdg-app/xdg-app/"
+#~ msgstr "https://cgit.freedesktop.org/xdg-app/xdg-app/"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:14
-#: system-helper/org.freedesktop.Flatpak.policy.in:25
-#: system-helper/org.freedesktop.Flatpak.policy.in:42
-#: system-helper/org.freedesktop.Flatpak.policy.in:60
-#: system-helper/org.freedesktop.Flatpak.policy.in:78
-#: system-helper/org.freedesktop.Flatpak.policy.in:89
-#: system-helper/org.freedesktop.Flatpak.policy.in:100
-#: system-helper/org.freedesktop.Flatpak.policy.in:111
-#: system-helper/org.freedesktop.Flatpak.policy.in:122
-#: system-helper/org.freedesktop.Flatpak.policy.in:140
-msgid "package-x-generic"
-msgstr "package-x-generic"
+#~ msgid "package-x-generic"
+#~ msgstr "package-x-generic"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:23
-msgid "Install signed application"
-msgstr "Instalacja podpisanego programu"
+#~ msgid "Install signed application"
+#~ msgstr "Instalacja podpisanego programu"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:24
-#: system-helper/org.freedesktop.Flatpak.policy.in:41
-#: system-helper/org.freedesktop.Flatpak.policy.in:88
-msgid "Authentication is required to install software"
-msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
+#~ msgid "Authentication is required to install software"
+#~ msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:27
-#: system-helper/org.freedesktop.Flatpak.policy.in:28
-#: system-helper/org.freedesktop.Flatpak.policy.in:44
-#: system-helper/org.freedesktop.Flatpak.policy.in:45
-#: system-helper/org.freedesktop.Flatpak.policy.in:62
-#: system-helper/org.freedesktop.Flatpak.policy.in:63
-#: system-helper/org.freedesktop.Flatpak.policy.in:80
-#: system-helper/org.freedesktop.Flatpak.policy.in:81
-#: system-helper/org.freedesktop.Flatpak.policy.in:91
-#: system-helper/org.freedesktop.Flatpak.policy.in:92
-#: system-helper/org.freedesktop.Flatpak.policy.in:102
-#: system-helper/org.freedesktop.Flatpak.policy.in:103
-#: system-helper/org.freedesktop.Flatpak.policy.in:113
-#: system-helper/org.freedesktop.Flatpak.policy.in:114
-#: system-helper/org.freedesktop.Flatpak.policy.in:124
-#: system-helper/org.freedesktop.Flatpak.policy.in:125
-#: system-helper/org.freedesktop.Flatpak.policy.in:126
-#: system-helper/org.freedesktop.Flatpak.policy.in:142
-#: system-helper/org.freedesktop.Flatpak.policy.in:143
-msgid "auth_admin"
-msgstr "auth_admin"
+#~ msgid "auth_admin"
+#~ msgstr "auth_admin"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:29
-#: system-helper/org.freedesktop.Flatpak.policy.in:46
-#: system-helper/org.freedesktop.Flatpak.policy.in:93
-#: system-helper/org.freedesktop.Flatpak.policy.in:104
-#: system-helper/org.freedesktop.Flatpak.policy.in:115
-msgid "auth_admin_keep"
-msgstr "auth_admin_keep"
+#~ msgid "auth_admin_keep"
+#~ msgstr "auth_admin_keep"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:40
-msgid "Install signed runtime"
-msgstr "Instalacja podpisanego środowiska wykonawczego"
+#~ msgid "Install signed runtime"
+#~ msgstr "Instalacja podpisanego środowiska wykonawczego"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update an
-#. app as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:58
-msgid "Update signed application"
-msgstr "Aktualizacja podpisanego programu"
+#~ msgid "Update signed application"
+#~ msgstr "Aktualizacja podpisanego programu"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:59
-#: system-helper/org.freedesktop.Flatpak.policy.in:77
-#: system-helper/org.freedesktop.Flatpak.policy.in:139
-msgid "Authentication is required to update software"
-msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować oprogramowanie"
+#~ msgid "Authentication is required to update software"
+#~ msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować oprogramowanie"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:64
-#: system-helper/org.freedesktop.Flatpak.policy.in:82
-#: system-helper/org.freedesktop.Flatpak.policy.in:144
-msgid "yes"
-msgstr "yes"
+#~ msgid "yes"
+#~ msgstr "yes"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update a
-#. runtime as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:76
-msgid "Update signed runtime"
-msgstr "Aktualizacja podpisanego środowiska wykonawczego"
+#~ msgid "Update signed runtime"
+#~ msgstr "Aktualizacja podpisanego środowiska wykonawczego"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:87
-msgid "Install bundle"
-msgstr "Instalacja pakietu"
+#~ msgid "Install bundle"
+#~ msgstr "Instalacja pakietu"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:98
-msgid "Uninstall runtime"
-msgstr "Deinstalacja środowiska wykonawczego"
+#~ msgid "Uninstall runtime"
+#~ msgstr "Deinstalacja środowiska wykonawczego"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:99
-#: system-helper/org.freedesktop.Flatpak.policy.in:110
-msgid "Authentication is required to uninstall software"
-msgstr "Wymagane jest uwierzytelnienie, aby odinstalować oprogramowanie"
+#~ msgid "Authentication is required to uninstall software"
+#~ msgstr "Wymagane jest uwierzytelnienie, aby odinstalować oprogramowanie"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:109
-msgid "Uninstall app"
-msgstr "Deinstalacja programu"
+#~ msgid "Uninstall app"
+#~ msgstr "Deinstalacja programu"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:120
-msgid "Configure Remote"
-msgstr "Konfiguracja repozytorium"
+#~ msgid "Configure Remote"
+#~ msgstr "Konfiguracja repozytorium"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:121
-msgid "Authentication is required to configure software repositories"
-msgstr ""
-"Wymagane jest uwierzytelnienie, aby skonfigurować repozytoria oprogramowania"
+#~ msgid "Authentication is required to configure software repositories"
+#~ msgstr ""
+#~ "Wymagane jest uwierzytelnienie, aby skonfigurować repozytoria "
+#~ "oprogramowania"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update
-#. appstream data as it will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:138
-msgid "Update appstream"
-msgstr "Aktualizacja danych AppStream"
+#~ msgid "Update appstream"
+#~ msgstr "Aktualizacja danych AppStream"
