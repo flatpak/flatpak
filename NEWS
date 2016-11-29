@@ -1,3 +1,34 @@
+Major changes in 0.6.14
+=======================
+ * Update bundled bubblewrap to 0.1.4 which has some nice bugfixes.
+   If you are using an external bubblewrap it is recommended, but
+   not required to update.
+ * Requires OSTree 2016.14, which allows us to drop some old
+   workarounds.
+ * When installing an application system-wide, don't consider
+   dependencies that are installed for the user only.
+ * Flatpak install --from now tries to re-use existing remotes to
+   avoid creating unnecessary origin remotes.
+ * Using --filesystem=$dir when $dir is a symlink-to-directory now works.
+ * Using --filesystem=$file to expose unix sockets to the app is now
+   allowed.
+ * By default all the directories in ~/.var/app (except the app), as
+   well as ~/.local/share/flatpak are hidden in the sandbox.
+ * New option --filesystem=$dir:create which will create the destination
+   if it did not previously exist.
+ * --filesystem= now supports for xdg-[config|cache|data]. This
+   allows you access to the host versions of these xdg dirs. Additionally
+   if you use these with a subdirectory, like:
+     --filesystem=xdg-config/subdir
+   then that subdirectory on the host will be shared with the per-app
+   instance of the xdg-dir.
+ * Builder now correctly handles app-ids that have dashes in them.
+   Previously this generated invalid ids for the debuginfo and locale
+   extensions.
+ * The experimental OCI file format support was changed from creating an
+   OCI container to creating an OCI image.
+ * Fix regression where "flatpak update --appstream remotename" broke
+
 Major changes in 0.6.13
 =======================
  * The command line arguments for install/update/uninstall changed
