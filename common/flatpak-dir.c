@@ -1563,13 +1563,13 @@ flatpak_dir_pull (FlatpakDir          *self,
   g_autoptr(GPtrArray) subdirs_arg = NULL;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (!ostree_repo_remote_get_url (self->repo,
                                    repository,
                                    &url,
                                    error))
-    goto out;
+    return FALSE;
 
   if (*url == 0)
     return TRUE; /* Empty url, silently disables updates */
