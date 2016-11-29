@@ -75,6 +75,7 @@ libflatpak_la_CFLAGS = \
 	$(BASE_CFLAGS) \
 	$(OSTREE_CFLAGS) \
 	$(SOUP_CFLAGS) \
+	$(JSON_CFLAGS) \
 	$(NULL)
 
 libflatpak_la_LDFLAGS = \

@@ -30,6 +30,7 @@
 #include <libsoup/soup.h>
 #include "flatpak-dbus.h"
 #include <ostree.h>
+#include <json-glib/json-glib.h>
 
 typedef enum {
   FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
@@ -431,6 +432,17 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupMessage, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequest, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequestHTTP, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupURI, soup_uri_free)
+#endif
+
+#if !JSON_CHECK_VERSION(1,2,0)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonArray, json_array_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonBuilder, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonGenerator, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonNode, json_node_free)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonObject, json_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonParser, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonPath, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonReader, g_object_unref)
 #endif
 
 #if !GLIB_CHECK_VERSION(2, 43, 4)

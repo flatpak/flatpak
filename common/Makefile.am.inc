@@ -56,6 +56,7 @@ libflatpak_common_la_CFLAGS = \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
 	$(OSTREE_CFLAGS) \
 	$(SOUP_CFLAGS) \
+	$(JSON_CFLAGS) \
 	$(XAUTH_CFLAGS) \
 	$(LIBSECCOMP_CFLAGS) \
 	-I$(srcdir)/dbus-proxy \

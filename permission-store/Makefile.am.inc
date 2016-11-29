@@ -31,4 +31,4 @@ xdg_permission_store_SOURCES = \
 	$(NULL)
 
 xdg_permission_store_LDADD = $(BASE_LIBS) libflatpak-common.la
-xdg_permission_store_CFLAGS = $(BASE_CFLAGS) $(SOUP_CFLAGS) $(OSTREE_CFLAGS) $(GSYSTEM_CFLAGS) -I$(srcdir)/permission-store -I$(builddir)/permission-store
+xdg_permission_store_CFLAGS = $(BASE_CFLAGS) $(SOUP_CFLAGS) $(JSON_CFLAGS) $(OSTREE_CFLAGS) $(GSYSTEM_CFLAGS) -I$(srcdir)/permission-store -I$(builddir)/permission-store
