@@ -39,6 +39,7 @@ struct BuilderSourcePatch
   char         *path;
   guint         strip_components;
   gboolean      use_git;
+  char        **options;
 };
 
 typedef struct
@@ -53,6 +54,7 @@ enum {
   PROP_PATH,
   PROP_STRIP_COMPONENTS,
   PROP_USE_GIT,
+  PROP_OPTIONS,
   LAST_PROP
 };
 
@@ -62,6 +64,7 @@ builder_source_patch_finalize (GObject *object)
   BuilderSourcePatch *self = (BuilderSourcePatch *) object;
 
   g_free (self->path);
+  g_strfreev (self->options);
 
   G_OBJECT_CLASS (builder_source_patch_parent_class)->finalize (object);
 }
@@ -88,6 +91,10 @@ builder_source_patch_get_property (GObject    *object,
       g_value_set_boolean (value, self->use_git);
       break;
 
+    case PROP_OPTIONS:
+      g_value_set_boxed (value, self->options);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -100,6 +107,7 @@ builder_source_patch_set_property (GObject      *object,
                                    GParamSpec   *pspec)
 {
   BuilderSourcePatch *self = BUILDER_SOURCE_PATCH (object);
+  gchar **tmp;
 
   switch (prop_id)
     {
@@ -114,6 +122,12 @@ builder_source_patch_set_property (GObject      *object,
 
     case PROP_USE_GIT:
       self->use_git = g_value_get_boolean (value);
+      break;
+
+    case PROP_OPTIONS:
+      tmp = self->options;
+      self->options = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
       break;
 
     default:
@@ -174,6 +188,7 @@ static gboolean
 patch (GFile      *dir,
        gboolean    use_git,
        const char *patch_path,
+       char      **extra_options,
        GError    **error,
        ...)
 {
@@ -181,6 +196,7 @@ patch (GFile      *dir,
   GPtrArray *args;
   const gchar *arg;
   va_list ap;
+  int i;
 
   va_start(ap, error);
 
@@ -191,6 +207,8 @@ patch (GFile      *dir,
   } else {
     g_ptr_array_add (args, "patch");
   }
+  for (i = 0; extra_options != NULL && extra_options[i] != NULL; i++)
+    g_ptr_array_add (args, (gchar *) extra_options[i]);
   while ((arg = va_arg (ap, const gchar *)))
     g_ptr_array_add (args, (gchar *) arg);
   if (use_git) {
@@ -229,7 +247,7 @@ builder_source_patch_extract (BuilderSource  *source,
 
   strip_components = g_strdup_printf ("-p%u", self->strip_components);
   patch_path = g_file_get_path (patchfile);
-  if (!patch (dest, self->use_git, patch_path, error, strip_components, NULL))
+  if (!patch (dest, self->use_git, patch_path, self->options, error, strip_components, NULL))
     return FALSE;
 
   return TRUE;
@@ -255,6 +273,7 @@ builder_source_patch_checksum (BuilderSource  *source,
 
   builder_cache_checksum_str (cache, self->path);
   builder_cache_checksum_uint32 (cache, self->strip_components);
+  builder_cache_checksum_strv (cache, self->options);
 }
 
 static void
@@ -294,6 +313,13 @@ builder_source_patch_class_init (BuilderSourcePatchClass *klass)
                                                          "",
                                                          FALSE,
                                                          G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_OPTIONS,
+                                   g_param_spec_boxed ("options",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
 }
 
 static void

@@ -566,6 +566,10 @@
                         <term><option>use-git</option> (boolean)</term>
                         <listitem><para>Whether to use "git apply" rather than "patch" to apply the patch, required when the patch file contains binary diffs.</para></listitem>
                     </varlistentry>
+                    <varlistentry>
+                        <term><option>options</option> (array of strings)</term>
+                        <listitem><para>Extra options to pass to the patch command.</para></listitem>
+                    </varlistentry>
                 </variablelist>
             </refsect3>
         </refsect2>
