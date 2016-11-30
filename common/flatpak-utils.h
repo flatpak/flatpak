@@ -434,7 +434,7 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupRequestHTTP, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupURI, soup_uri_free)
 #endif
 
-#if !JSON_CHECK_VERSION(1,2,0)
+#if !JSON_CHECK_VERSION(1,1,2)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonArray, json_array_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonBuilder, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (JsonGenerator, g_object_unref)
