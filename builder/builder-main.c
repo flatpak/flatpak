@@ -54,6 +54,7 @@ static char *opt_subject;
 static char *opt_body;
 static char *opt_gpg_homedir;
 static char **opt_key_ids;
+static int opt_jobs;
 
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
@@ -79,6 +80,7 @@ static GOptionEntry entries[] = {
   { "force-clean", 0, 0, G_OPTION_ARG_NONE, &opt_force_clean, "Erase previous contents of DIRECTORY", NULL },
   { "sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_sandboxed, "Enforce sandboxing, disabling build-args", NULL },
   { "stop-at", 0, 0, G_OPTION_ARG_STRING, &opt_stop_at, "Stop building at this module (implies --build-only)", "MODULENAME"},
+  { "jobs", 0, 0, G_OPTION_ARG_INT, &opt_jobs, "Number of parallel jobs to build (default=NCPU)", "JOBS"},
   { NULL }
 };
 
@@ -321,6 +323,7 @@ main (int    argc,
 
   builder_context_set_keep_build_dirs (build_context, opt_keep_build_dirs);
   builder_context_set_sandboxed (build_context, opt_sandboxed);
+  builder_context_set_jobs (build_context, opt_jobs);
 
   if (opt_arch)
     builder_context_set_arch (build_context, opt_arch);
@@ -336,7 +339,7 @@ main (int    argc,
     {
       g_printerr ("Can't initialize ccache use: %s\n", error->message);
       return 1;
-    }
+  }
 
   app_dir_is_empty = !g_file_query_exists (app_dir, NULL) ||
                      directory_is_empty (app_dir_path);

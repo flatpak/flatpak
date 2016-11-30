@@ -1414,8 +1414,8 @@ builder_module_build (BuilderModule  *self,
 
   if (!self->no_parallel_make)
     {
-      make_j = g_strdup_printf ("-j%d", builder_context_get_n_cpu (context));
-      make_l = g_strdup_printf ("-l%d", 2 * builder_context_get_n_cpu (context));
+      make_j = g_strdup_printf ("-j%d", builder_context_get_jobs (context));
+      make_l = g_strdup_printf ("-l%d", 2 * builder_context_get_jobs (context));
     }
 
   /* Build and install */

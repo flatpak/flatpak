@@ -49,6 +49,7 @@ struct BuilderContext
 
   BuilderOptions *options;
   gboolean        keep_build_dirs;
+  int             jobs;
   char          **cleanup;
   char          **cleanup_platform;
   gboolean        use_ccache;
@@ -297,9 +298,18 @@ builder_context_set_options (BuilderContext *self,
 }
 
 int
-builder_context_get_n_cpu (BuilderContext *self)
+builder_context_get_jobs (BuilderContext *self)
 {
-  return (int) sysconf (_SC_NPROCESSORS_ONLN);
+  if (self->jobs == 0)
+    return (int) sysconf (_SC_NPROCESSORS_ONLN);
+  return self->jobs;
+}
+
+void
+builder_context_set_jobs (BuilderContext *self,
+                          int jobs)
+{
+  self->jobs = jobs;
 }
 
 void
