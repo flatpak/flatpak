@@ -770,6 +770,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--jobs=JOBS</option></term>
+
+                <listitem><para>
+                     Limit the number of parallel jobs during the build.
+                     The default is the nubmer of CPUs on the machine.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--force-clean</option></term>
 
                 <listitem><para>
