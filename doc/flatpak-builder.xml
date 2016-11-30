@@ -355,7 +355,11 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>cmake</option> (boolean)</term>
-                    <listitem><para>Use cmake instead of configure</para></listitem>
+                    <listitem><para>Use cmake instead of configure (deprecated: use buildsystem instead)</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>buildsystem</option> (string)</term>
+                    <listitem><para>Build system to use: autotools, cmake, meson</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>builddir</option> (boolean)</term>

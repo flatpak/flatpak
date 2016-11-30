@@ -45,6 +45,7 @@ struct BuilderModule
   char          **config_opts;
   char          **make_args;
   char          **make_install_args;
+  char           *buildsystem;
   gboolean        disabled;
   gboolean        rm_configure;
   gboolean        no_autogen;
@@ -80,6 +81,7 @@ enum {
   PROP_NO_PARALLEL_MAKE,
   PROP_NO_PYTHON_TIMESTAMP_FIX,
   PROP_CMAKE,
+  PROP_BUILDSYSTEM,
   PROP_BUILDDIR,
   PROP_CONFIG_OPTS,
   PROP_MAKE_ARGS,
@@ -102,6 +104,7 @@ builder_module_finalize (GObject *object)
   g_free (self->json_path);
   g_free (self->name);
   g_free (self->subdir);
+  g_free (self->buildsystem);
   g_strfreev (self->post_install);
   g_strfreev (self->config_opts);
   g_strfreev (self->make_args);
@@ -158,6 +161,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_CMAKE:
       g_value_set_boolean (value, self->cmake);
+      break;
+
+    case PROP_BUILDSYSTEM:
+      g_value_set_string (value, self->buildsystem);
       break;
 
     case PROP_BUILDDIR:
@@ -252,6 +259,11 @@ builder_module_set_property (GObject      *object,
 
     case PROP_CMAKE:
       self->cmake = g_value_get_boolean (value);
+      break;
+
+    case PROP_BUILDSYSTEM:
+      g_free (self->buildsystem);
+      self->buildsystem = g_value_dup_string (value);
       break;
 
     case PROP_BUILDDIR:
@@ -379,6 +391,13 @@ builder_module_class_init (BuilderModuleClass *klass)
                                                          "",
                                                          "",
                                                          FALSE,
+                                                         G_PARAM_READWRITE|G_PARAM_DEPRECATED));
+  g_object_class_install_property (object_class,
+                                   PROP_BUILDSYSTEM,
+                                   g_param_spec_string ("buildsystem",
+                                                         "",
+                                                         "",
+                                                         NULL,
                                                          G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_BUILDDIR,
@@ -1159,10 +1178,10 @@ builder_module_build (BuilderModule  *self,
   GFile *app_dir = builder_context_get_app_dir (context);
   g_autofree char *make_j = NULL;
   g_autofree char *make_l = NULL;
+  const char *make_cmd = NULL;
 
+  gboolean autotools = FALSE, cmake = FALSE, meson = FALSE;
   g_autoptr(GFile) configure_file = NULL;
-  g_autoptr(GFile) cmake_file = NULL;
-  const char *makefile_names[] =  {"Makefile", "makefile", "GNUmakefile", NULL};
   GFile *build_parent_dir = NULL;
   g_autoptr(GFile) build_dir = NULL;
   g_autoptr(GFile) build_link = NULL;
@@ -1262,8 +1281,30 @@ builder_module_build (BuilderModule  *self,
   env = builder_options_get_env (self->build_options, context);
   config_opts = builder_options_get_config_opts (self->build_options, context, self->config_opts);
 
-  if (self->cmake)
+  if (!self->buildsystem)
     {
+      if (self->cmake)
+        cmake = TRUE;
+      else
+        autotools = TRUE;
+    }
+  else if (!strcmp (self->buildsystem, "cmake"))
+    cmake = TRUE;
+  else if (!strcmp (self->buildsystem, "meson"))
+    meson = TRUE;
+  else if (!strcmp (self->buildsystem, "autotools"))
+    autotools = TRUE;
+  else
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Invalid buildsystem: \"%s\"",
+                   self->name, self->buildsystem);
+      return FALSE;
+    }
+
+  if (cmake)
+    {
+      g_autoptr(GFile) cmake_file = NULL;
+
       cmake_file = g_file_get_child (source_subdir, "CMakeLists.txt");
       if (!g_file_query_exists (cmake_file, NULL))
         {
@@ -1272,7 +1313,19 @@ builder_module_build (BuilderModule  *self,
         }
       configure_file = g_object_ref (cmake_file);
     }
-  else
+  else if (meson)
+    {
+      g_autoptr(GFile) meson_file = NULL;
+
+      meson_file = g_file_get_child (source_subdir, "meson.build");
+      if (!g_file_query_exists (meson_file, NULL))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module: %s: Can't find meson.build", self->name);
+          return FALSE;
+        }
+      configure_file = g_object_ref (meson_file);
+    }
+  else if (autotools)
     {
       configure_file = g_file_get_child (source_subdir, "configure");
 
@@ -1357,9 +1410,14 @@ builder_module_build (BuilderModule  *self,
               return FALSE;
             }
 
-          if (self->cmake)
+          if (cmake)
             {
               configure_cmd = "cmake";
+              configure_final_arg = "..";
+            }
+          else if (meson)
+            {
+              configure_cmd = "meson";
               configure_final_arg = "..";
             }
           else
@@ -1371,12 +1429,17 @@ builder_module_build (BuilderModule  *self,
         {
           build_dir_relative = g_strdup (source_subdir_relative);
           build_dir = g_object_ref (source_subdir);
-          if (self->cmake)
+          if (cmake)
             {
               configure_cmd = "cmake";
               configure_final_arg = ".";
             }
-          else
+          else if (meson)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Meson does not support building in sourcedir, set \"builddir\" to true.", self->name);
+              return FALSE;
+            }
+            else
             {
               configure_cmd = "./configure";
             }
@@ -1385,7 +1448,7 @@ builder_module_build (BuilderModule  *self,
       if (self->cmake)
         configure_prefix_arg = g_strdup_printf ("-DCMAKE_INSTALL_PREFIX:PATH='%s'",
                                                 builder_options_get_prefix (self->build_options, context));
-      else
+      else /* autotools and meson */
         configure_prefix_arg = g_strdup_printf ("--prefix=%s",
                                                 builder_options_get_prefix (self->build_options, context));
 
@@ -1399,17 +1462,31 @@ builder_module_build (BuilderModule  *self,
       build_dir = g_object_ref (source_subdir);
     }
 
-  for (i = 0; makefile_names[i] != NULL; i++)
+  if (meson)
     {
-      g_autoptr(GFile) makefile_file = g_file_get_child (build_dir, makefile_names[i]);
-      if (g_file_query_exists (makefile_file, NULL))
-        break;
+      g_autoptr(GFile) ninja_file = g_file_get_child (build_dir, "build.ninja");
+      if (!g_file_query_exists (ninja_file, NULL))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Can't find ninja file", self->name);
+          return FALSE;
+        }
     }
-
-  if (makefile_names[i] == NULL)
+  else if (autotools || cmake)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Can't find makefile", self->name);
-      return FALSE;
+      const char *makefile_names[] =  {"Makefile", "makefile", "GNUmakefile", NULL};
+
+      for (i = 0; makefile_names[i] != NULL; i++)
+        {
+          g_autoptr(GFile) makefile_file = g_file_get_child (build_dir, makefile_names[i]);
+          if (g_file_query_exists (makefile_file, NULL))
+            break;
+        }
+
+      if (makefile_names[i] == NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Can't find makefile", self->name);
+          return FALSE;
+        }
     }
 
   if (!self->no_parallel_make)
@@ -1420,12 +1497,17 @@ builder_module_build (BuilderModule  *self,
 
   /* Build and install */
 
+  if (meson)
+    make_cmd = "ninja";
+  else
+    make_cmd = "make";
+
   if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
-              "make", make_j ? make_j : skip_arg, make_l ? make_l : skip_arg, strv_arg, self->make_args, NULL))
+              make_cmd, make_j ? make_j : skip_arg, make_l ? make_l : skip_arg, strv_arg, self->make_args, NULL))
     return FALSE;
 
   if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
-              "make", "install", strv_arg, self->make_install_args, NULL))
+              make_cmd, "install", strv_arg, self->make_install_args, NULL))
     return FALSE;
 
   /* Post installation scripts */
