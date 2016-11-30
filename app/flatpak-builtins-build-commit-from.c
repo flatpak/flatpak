@@ -39,6 +39,7 @@ static char *opt_body;
 static gboolean opt_update_appstream;
 static gboolean opt_no_update_summary;
 static gboolean opt_untrusted;
+static gboolean opt_force;
 static char **opt_gpg_key_ids;
 static char *opt_gpg_homedir;
 
@@ -46,6 +47,7 @@ static GOptionEntry options[] = {
   { "src-repo", 's', 0, G_OPTION_ARG_STRING, &opt_src_repo, N_("Source repo dir"), N_("SRC-REPO") },
   { "src-ref", 's', 0, G_OPTION_ARG_STRING, &opt_src_ref, N_("Source repo ref"), N_("SRC-REF") },
   { "untrusted", 0, 0, G_OPTION_ARG_NONE, &opt_untrusted, "Do not trust SRC-REPO", NULL },
+  { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force, "Always commit, even if same content", NULL },
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, N_("One line subject"), N_("SUBJECT") },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, N_("Full description"), N_("BODY") },
   { "update-appstream", 0, 0, G_OPTION_ARG_NONE, &opt_update_appstream, N_("Update the appstream branch"), NULL },
@@ -247,7 +249,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
         return flatpak_fail (error, _("Can't commit from partial source commit."));
 
       /* Don't create a new commit if this is the same tree */
-      if (dst_parent_root != NULL && g_file_equal (dst_parent_root, src_ref_root))
+      if (!opt_force && dst_parent_root != NULL && g_file_equal (dst_parent_root, src_ref_root))
         {
           g_print ("%s: no change\n", dst_ref);
           continue;

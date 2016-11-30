@@ -140,6 +140,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--force</option></term>
+
+                <listitem><para>
+                    Create new commit even if the content didn't change from the existing branch head.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--gpg-sign=KEYID</option></term>
 
                 <listitem><para>
