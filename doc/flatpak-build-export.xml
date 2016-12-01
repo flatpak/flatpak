@@ -64,7 +64,7 @@
             in the commit, anything else is ignored.
         </para>
         <para>
-            The repo-update command should be used to update repository
+            The build-update-repo command should be used to update repository
             metadata whenever application builds are added to a repository.
         </para>
     </refsect1>
