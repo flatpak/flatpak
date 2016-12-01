@@ -61,7 +61,7 @@ propagate_libarchive_error (GError      **error,
                "%s", archive_error_string (a));
 }
 
-static gboolean
+static char *
 import_oci (OstreeRepo *repo, GFile *file,
             GCancellable *cancellable, GError **error)
 {
@@ -86,12 +86,12 @@ import_oci (OstreeRepo *repo, GFile *file,
   oci_dir = flatpak_oci_dir_new ();
 
   if (!flatpak_oci_dir_open (oci_dir, file, cancellable, error))
-    return FALSE;
+    return NULL;
 
   manifest = flatpak_oci_dir_find_manifest (oci_dir, "latest", "linux", "amd64",
                                             cancellable, error);
   if (manifest == NULL)
-    return FALSE;
+    return NULL;
 
   annotations = flatpak_oci_manifest_get_annotations (manifest);
 
@@ -101,7 +101,10 @@ import_oci (OstreeRepo *repo, GFile *file,
     {
       target_ref = g_hash_table_lookup (annotations, "org.flatpak.Ref");
       if (target_ref == NULL)
-        return flatpak_fail (error, "No flatpak ref specified in image, must manually specify");
+        {
+          flatpak_fail (error, "No flatpak ref specified in image, must manually specify");
+          return NULL;
+        }
     }
 
   subject = g_hash_table_lookup (annotations, "org.flatpak.Subject");
@@ -118,16 +121,19 @@ import_oci (OstreeRepo *repo, GFile *file,
 
   config_digest = flatpak_oci_manifest_get_config (manifest);
   if (config_digest == NULL)
-    return flatpak_fail (error, "No oci config specified");
+    {
+      flatpak_fail (error, "No oci config specified");
+      return NULL;
+    }
 
   config = flatpak_oci_dir_load_json (oci_dir, config_digest, cancellable, error);
   if (config == NULL)
-    return FALSE;
+    return NULL;
 
   timestamp = flatpak_oci_config_get_created (config);
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
-    return FALSE;
+    return NULL;
 
   /* There is no way to write a subset of the archive to a mtree, so instead
      we write all of it and then build a new mtree with the subset */
@@ -144,23 +150,23 @@ import_oci (OstreeRepo *repo, GFile *file,
       a = flatpak_oci_dir_load_layer (oci_dir, layers[i],
                                       cancellable, error);
       if (a == NULL)
-        return FALSE;
+        return NULL;
 
       if (!ostree_repo_import_archive_to_mtree (repo, &opts, a, archive_mtree, NULL, cancellable, error))
-        return FALSE;
+        return NULL;
 
       if (archive_read_close (a) != ARCHIVE_OK)
         {
           propagate_libarchive_error (error, a);
-          return FALSE;
+          return NULL;
         }
     }
 
   if (!ostree_repo_write_mtree (repo, archive_mtree, &archive_root, cancellable, error))
-    return FALSE;
+    return NULL;
 
   if (!ostree_repo_file_ensure_resolved ((OstreeRepoFile *) archive_root, error))
-    return FALSE;
+    return NULL;
 
   if (!ostree_repo_write_commit_with_time (repo,
                                            parent,
@@ -171,19 +177,19 @@ import_oci (OstreeRepo *repo, GFile *file,
                                            timestamp,
                                            &commit_checksum,
                                            cancellable, error))
-    return FALSE;
+    return NULL;
 
   ostree_repo_transaction_set_ref (repo, NULL, target_ref, commit_checksum);
 
   if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
-    return FALSE;
+    return NULL;
 
   g_print ("Importing %s (%s)\n", target_ref, commit_checksum);
 
-  return TRUE;
+  return g_strdup (commit_checksum);
 }
 
-static gboolean
+static char *
 import_bundle (OstreeRepo *repo, GFile *file,
                GCancellable *cancellable, GError **error)
 {
@@ -199,7 +205,7 @@ import_bundle (OstreeRepo *repo, GFile *file,
                                   NULL,
                                   error);
   if (metadata == NULL)
-    return FALSE;
+    return NULL;
 
   if (opt_ref != NULL)
     ref = opt_ref;
@@ -211,9 +217,9 @@ import_bundle (OstreeRepo *repo, GFile *file,
                                  NULL, ref, FALSE,
                                  cancellable,
                                  error))
-    return FALSE;
+    return NULL;
 
-  return TRUE;
+  return g_strdup (to_checksum);
 }
 
 gboolean
@@ -225,6 +231,7 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(OstreeRepo) repo = NULL;
   const char *location;
   const char *filename;
+  g_autofree char *commit = NULL;
 
   context = g_option_context_new (_("LOCATION FILENAME - Import a file bundle into a local repository"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -253,14 +260,35 @@ flatpak_builtin_build_import (int argc, char **argv, GCancellable *cancellable, 
     return FALSE;
 
   if (opt_oci)
-    {
-      if (!import_oci (repo, file, cancellable, error))
-        return FALSE;
-    }
+    commit = import_oci (repo, file, cancellable, error);
   else
+    commit = import_bundle (repo, file, cancellable, error);
+  if (commit == NULL)
+    return FALSE;
+
+  if (opt_gpg_key_ids)
     {
-      if (!import_bundle (repo, file, cancellable, error))
-        return FALSE;
+      char **iter;
+
+      for (iter = opt_gpg_key_ids; iter && *iter; iter++)
+        {
+          const char *keyid = *iter;
+          g_autoptr(GError) local_error = NULL;
+
+          if (!ostree_repo_sign_commit (repo,
+                                        commit,
+                                        keyid,
+                                        opt_gpg_homedir,
+                                        cancellable,
+                                        &local_error))
+            {
+              if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
+            }
+        }
     }
 
   if (opt_update_appstream &&
