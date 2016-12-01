@@ -1588,13 +1588,6 @@ flatpak_dir_pull (FlatpakDir          *self,
                                              cancellable, error))
         return FALSE;
 
-      if (summary_bytes == NULL)
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "Failed to get repository summary");
-          return FALSE;
-        }
-
       summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                               summary_bytes, FALSE));
       if (!flatpak_summary_lookup_ref (summary,
@@ -4061,7 +4054,7 @@ flatpak_dir_update (FlatpakDir          *self,
         }
       else if (flatpak_dir_remote_fetch_summary (self, remote_name,
                                                  &summary_bytes,
-                                                 cancellable, error))
+                                                 cancellable, NULL))
         {
           g_autoptr(GVariant) summary =
             g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
@@ -4977,6 +4970,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   g_autofree char *url = NULL;
   gboolean is_local;
   g_autoptr(GError) local_error = NULL;
+  GBytes *summary;
 
   if (!ostree_repo_remote_get_url (self->repo, name, &url, error))
     return FALSE;
@@ -4999,13 +4993,19 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
     error = &local_error;
 
   if (!ostree_repo_remote_fetch_summary (self->repo, name,
-                                         out_summary, NULL,
+                                         &summary, NULL,
                                          cancellable,
                                          error))
     return FALSE;
 
+  if (summary == NULL)
+    return flatpak_fail (error, "Remote listing for %s not available; server has no summary file\n" \
+                         "Check the URL passed to remote-add was valid\n", name);
+
   if (!is_local)
-    flatpak_dir_cache_summary (self, *out_summary, name, url);
+    flatpak_dir_cache_summary (self, summary, name, url);
+
+  *out_summary = summary;
 
   return TRUE;
 }
@@ -5048,14 +5048,11 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
   g_autoptr(GVariant) ref_map = NULL;
   GVariantIter iter;
   GVariant *child;
+
   if (!flatpak_dir_remote_fetch_summary (self, remote_name,
                                          &summary_bytes,
                                          cancellable, error))
     return FALSE;
-
-  if (summary_bytes == NULL)
-    return flatpak_fail (error, "Remote listing not available; server has no summary file\n" \
-                                "Check the URL passed to remote-add was valid\n");
 
   ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
@@ -6175,13 +6172,6 @@ fetch_remote_summary_file (FlatpakDir   *self,
                                          cancellable, error))
     return NULL;
 
-  if (summary_bytes == NULL)
-    {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           _("Remote extra metadata not available; server has no summary file"));
-      return NULL;
-    }
-
   return g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                        summary_bytes, FALSE));
 }
@@ -6430,13 +6420,6 @@ flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                                          cancellable, error))
     return FALSE;
 
-  if (summary_bytes == NULL)
-    {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           _("Data not available; server has no summary file"));
-      return FALSE;
-    }
-
   summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                           summary_bytes, FALSE));
 
@@ -6567,13 +6550,6 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                                          &summary_bytes,
                                          cancellable, error))
     return NULL;
-
-  if (summary_bytes == NULL)
-    {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           _("Data not available; server has no summary file"));
-      return NULL;
-    }
 
   summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                           summary_bytes, FALSE));
