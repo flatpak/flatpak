@@ -897,6 +897,16 @@ flatpak_dir_ensure_path (FlatpakDir   *self,
   return flatpak_mkdir_p (self->basedir, cancellable, error);
 }
 
+/* Warning: This is not threadsafe, don't use in libflatpak */
+gboolean
+flatpak_dir_recreate_repo (FlatpakDir   *self,
+                            GCancellable *cancellable,
+                            GError      **error)
+{
+  g_autoptr(OstreeRepo) old_repo = g_steal_pointer (&self->repo);
+  return flatpak_dir_ensure_repo (self, cancellable, error);
+}
+
 gboolean
 flatpak_dir_ensure_repo (FlatpakDir   *self,
                          GCancellable *cancellable,
@@ -5641,6 +5651,91 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
     return NULL;
 
   return g_steal_pointer (&remote);
+}
+
+GKeyFile *
+flatpak_dir_parse_repofile (FlatpakDir   *self,
+                            const char   *remote_name,
+                            GBytes       *data,
+                            GBytes      **gpg_data_out,
+                            GCancellable *cancellable,
+                            GError      **error)
+{
+  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_autofree char *remote = NULL;
+  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GBytes) gpg_data = NULL;
+  g_autofree char *uri = NULL;
+  g_autofree char *title = NULL;
+  g_autofree char *gpg_key = NULL;
+  g_autofree char *default_branch = NULL;
+  gboolean nodeps;
+  GKeyFile *config = g_key_file_new ();
+  g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
+
+  if (!g_key_file_load_from_data (keyfile,
+                                  g_bytes_get_data (data, NULL),
+                                  g_bytes_get_size (data),
+                                  0, &local_error))
+    {
+      flatpak_fail (error, "Invalid .flatpakref: %s\n", local_error->message);
+      return NULL;
+    }
+
+  if (!g_key_file_has_group (keyfile, FLATPAK_REPO_GROUP))
+    {
+      flatpak_fail (error, "Invalid .flatpakref\n");
+      return NULL;
+    }
+
+  uri = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                               FLATPAK_REPO_URL_KEY, NULL);
+  if (uri == NULL)
+    {
+      flatpak_fail (error, "Invalid .flatpakref\n");
+      return NULL;
+    }
+
+  g_key_file_set_string (config, group, "url", uri);
+
+  title = g_key_file_get_locale_string (keyfile, FLATPAK_REPO_GROUP,
+                                        FLATPAK_REPO_TITLE_KEY, NULL, NULL);
+  if (title != NULL)
+    g_key_file_set_string (config, group, "xa.title", title);
+
+  default_branch = g_key_file_get_locale_string (keyfile, FLATPAK_REPO_GROUP,
+                                                 FLATPAK_REPO_DEFAULT_BRANCH_KEY, NULL, NULL);
+  if (default_branch != NULL)
+    g_key_file_set_string (config, group, "xa.default-branch", default_branch);
+
+  nodeps = g_key_file_get_boolean (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_NODEPS_KEY, NULL);
+  if (nodeps)
+    g_key_file_set_boolean (config, group, "xa.nodeps", TRUE);
+
+  gpg_key = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_GPGKEY_KEY, NULL);
+  if (gpg_key != NULL)
+    {
+      guchar *decoded;
+      gsize decoded_len;
+
+      gpg_key = g_strstrip (gpg_key);
+      decoded = g_base64_decode (gpg_key, &decoded_len);
+      if (decoded_len < 10) /* Check some minimal size so we don't get crap */
+        {
+          flatpak_fail (error, "Invalid gpg key\n");
+          return NULL;
+        }
+
+      gpg_data = g_bytes_new_take (decoded, decoded_len);
+      g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
+      g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
+    }
+
+  *gpg_data_out = g_steal_pointer (&gpg_data);
+
+  return g_steal_pointer (&config);
 }
 
 static gboolean

@@ -36,13 +36,6 @@
 #include "flatpak-utils.h"
 #include "flatpak-chain-input-stream.h"
 
-#define FLATPAK_REPO_GROUP "Flatpak Repo"
-#define FLATPAK_REPO_URL_KEY "Url"
-#define FLATPAK_REPO_TITLE_KEY "Title"
-#define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
-#define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
-#define FLATPAK_REPO_NODEPS_KEY "NoDeps"
-
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
 static gboolean opt_do_enumerate;

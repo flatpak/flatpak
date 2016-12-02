@@ -144,6 +144,96 @@ install_bundle (FlatpakDir *dir,
   return TRUE;
 }
 
+static gboolean
+handle_runtime_repo_deps (FlatpakDir *dir, GBytes *data, GError **error)
+{
+  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_autoptr(GKeyFile) dep_keyfile = g_key_file_new ();
+  g_autofree char *dep_url = NULL;
+  g_autoptr(GBytes) dep_data = NULL;
+  g_autofree char *runtime_url = NULL;
+  g_autofree char *old_remote = NULL;
+  g_autofree char *new_remote = NULL;
+  g_autofree char *basename = NULL;
+  g_autoptr(SoupURI) uri = NULL;
+  g_auto(GStrv) remotes = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+  g_autoptr(GBytes) gpg_key = NULL;
+  g_autofree char *group = NULL;
+  char *t;
+  int i;
+
+  if (!g_key_file_load_from_data (keyfile, g_bytes_get_data (data, NULL), g_bytes_get_size (data),
+                                  0, error))
+    return FALSE;
+
+  dep_url = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                                   FLATPAK_REF_RUNTIME_REPO_KEY, NULL);
+  if (dep_url == NULL)
+    return TRUE;
+
+  dep_data = download_uri (dep_url, error);
+  if (dep_data == NULL)
+    {
+      g_prefix_error (error, "Can't load dependent file %s", dep_url);
+      return FALSE;
+    }
+
+  uri = soup_uri_new (dep_url);
+  basename = g_path_get_basename (soup_uri_get_path (uri));
+  /* Strip suffix */
+  t = strchr (basename, '.');
+  if (t != NULL)
+    *t = 0;
+
+  /* Find a free remote name */
+  remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
+  i = 0;
+  do
+    {
+      g_clear_pointer (&new_remote, g_free);
+
+      if (i == 0)
+        new_remote = g_strdup (basename);
+      else
+        new_remote = g_strdup_printf ("%s-%d", basename, i);
+      i++;
+    }
+  while (remotes != NULL && g_strv_contains ((const char * const*)remotes, new_remote));
+
+  config = flatpak_dir_parse_repofile (dir, new_remote, dep_data, &gpg_key, NULL, error);
+  if (config == NULL)
+    {
+      g_prefix_error (error, "Can't parse dependent file %s", dep_url);
+      return FALSE;
+    }
+
+  /* See if it already exists */
+  group = g_strdup_printf ("remote \"%s\"", new_remote);
+  runtime_url = g_key_file_get_string (config, group, "url", NULL);
+  g_assert (runtime_url != NULL);
+
+  old_remote = flatpak_dir_find_remote_by_uri (dir, runtime_url);
+  if (old_remote == NULL && flatpak_dir_is_user (dir))
+    {
+      g_autoptr(FlatpakDir) system_dir = flatpak_dir_get_system ();
+      old_remote = flatpak_dir_find_remote_by_uri (system_dir, runtime_url);
+    }
+
+  if (old_remote != NULL)
+    return TRUE;
+
+  if (flatpak_yes_no_prompt (_("This application depends on runtimes from:\n  %s\nConfigure this as new remote '%s'"),
+                             runtime_url, new_remote))
+    {
+      if (!flatpak_dir_modify_remote (dir, new_remote, config, gpg_key, NULL, error))
+        return FALSE;
+      if (!flatpak_dir_recreate_repo (dir, NULL, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
 
 static gboolean
 install_from (FlatpakDir *dir,
@@ -193,6 +283,9 @@ install_from (FlatpakDir *dir,
 
       file_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
     }
+
+  if (!handle_runtime_repo_deps (dir, file_data, error))
+    return FALSE;
 
   if (!flatpak_dir_create_remote_for_ref_file (dir, file_data, &remote, &ref, error))
     return FALSE;

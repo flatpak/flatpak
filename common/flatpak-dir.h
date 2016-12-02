@@ -39,11 +39,19 @@ GType flatpak_deploy_get_type (void);
 
 #define FLATPAK_REF_GROUP "Flatpak Ref"
 #define FLATPAK_REF_URL_KEY "Url"
+#define FLATPAK_REF_RUNTIME_REPO_KEY "RuntimeRepo"
 #define FLATPAK_REF_TITLE_KEY "Title"
 #define FLATPAK_REF_GPGKEY_KEY "GPGKey"
 #define FLATPAK_REF_IS_RUNTIME_KEY "IsRuntime"
 #define FLATPAK_REF_NAME_KEY "Name"
 #define FLATPAK_REF_BRANCH_KEY "Branch"
+
+#define FLATPAK_REPO_GROUP "Flatpak Repo"
+#define FLATPAK_REPO_URL_KEY "Url"
+#define FLATPAK_REPO_TITLE_KEY "Title"
+#define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
+#define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
+#define FLATPAK_REPO_NODEPS_KEY "NoDeps"
 
 typedef struct
 {
@@ -223,6 +231,9 @@ gboolean    flatpak_dir_ensure_path (FlatpakDir   *self,
 gboolean    flatpak_dir_use_child_repo (FlatpakDir *self);
 gboolean    flatpak_dir_ensure_system_child_repo (FlatpakDir *self,
                                                   GError    **error);
+gboolean    flatpak_dir_recreate_repo (FlatpakDir   *self,
+                                       GCancellable *cancellable,
+                                       GError      **error);
 gboolean    flatpak_dir_ensure_repo (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);
@@ -423,6 +434,12 @@ gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir   *self,
                                                    char   **remote_name_out,
                                                    char   **ref_out,
                                                    GError **error);
+GKeyFile * flatpak_dir_parse_repofile (FlatpakDir   *self,
+                                       const char   *remote_name,
+                                       GBytes       *data,
+                                       GBytes      **gpg_data_out,
+                                       GCancellable *cancellable,
+                                       GError      **error);
 
 char      *flatpak_dir_find_remote_by_uri (FlatpakDir   *self,
                                            const char   *uri);
