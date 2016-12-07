@@ -270,7 +270,7 @@ install_from (FlatpakDir *dir,
       file_data = download_uri (filename, error);
       if (file_data == NULL)
         {
-          g_prefix_error (error, "Can't load uri %s", filename);
+          g_prefix_error (error, "Can't load uri %s: ", filename);
           return FALSE;
         }
     }
