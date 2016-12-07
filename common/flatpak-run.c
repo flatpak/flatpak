@@ -2307,7 +2307,12 @@ add_expose_path (GHashTable *hash_table,
       if (S_ISLNK (st.st_mode))
         {
           g_autofree char *resolved = flatpak_resolve_link (path, NULL);
-          if (resolved)
+          /* Don't keep symlinks into /app or /usr, as they are not the
+             same as on the host, and we generally can't create the parents
+             for them anyway */
+          if (resolved &&
+              !g_str_has_prefix (resolved, "/app/")  &&
+              !g_str_has_prefix (resolved, "/usr/"))
             {
               add_expose_path (hash_table, mode, resolved);
               mode = FAKE_MODE_SYMLINK;
