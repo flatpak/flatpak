@@ -3063,6 +3063,12 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
 
   g_key_file_set_string (keyfile, "Instance", "flatpak-version", PACKAGE_VERSION);
 
+  if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) == 0)
+    g_key_file_set_boolean (keyfile, "Instance", "session-bus-proxy", TRUE);
+
+  if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) == 0)
+    g_key_file_set_boolean (keyfile, "Instance", "system-bus-proxy", TRUE);
+
   flatpak_context_save_metadata (final_app_context, TRUE, keyfile);
 
   if (!g_key_file_save_to_file (keyfile, tmp_path, error))
