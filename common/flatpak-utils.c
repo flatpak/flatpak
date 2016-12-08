@@ -4299,6 +4299,7 @@ flatpak_create_soup_session (const char *user_agent)
                                                 SOUP_SESSION_TIMEOUT, 60,
                                                 SOUP_SESSION_IDLE_TIMEOUT, 60,
                                                 NULL);
+  soup_session_remove_feature_by_type (soup_session, SOUP_TYPE_CONTENT_DECODER);
   http_proxy = g_getenv ("http_proxy");
   if (http_proxy)
     {
