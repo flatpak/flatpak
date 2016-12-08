@@ -520,6 +520,7 @@ long flatpak_number_prompt (int min, int max, const char *prompt, ...);
 typedef void (*FlatpakLoadUriProgress) (guint64 downloaded_bytes,
                                         gpointer user_data);
 
+SoupSession * flatpak_create_soup_session (const char *user_agent);
 GBytes * flatpak_load_http_uri (SoupSession *soup_session,
                                 const char   *uri,
                                 FlatpakLoadUriProgress progress,

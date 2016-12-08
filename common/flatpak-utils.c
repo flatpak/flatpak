@@ -4287,6 +4287,31 @@ load_uri_callback (GObject *source_object,
                              load_uri_read_cb, data);
 }
 
+SoupSession *
+flatpak_create_soup_session (const char *user_agent)
+{
+  SoupSession *soup_session;
+  const char *http_proxy;
+
+  soup_session = soup_session_new_with_options (SOUP_SESSION_USER_AGENT, user_agent,
+                                                SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE,
+                                                SOUP_SESSION_USE_THREAD_CONTEXT, TRUE,
+                                                SOUP_SESSION_TIMEOUT, 60,
+                                                SOUP_SESSION_IDLE_TIMEOUT, 60,
+                                                NULL);
+  http_proxy = g_getenv ("http_proxy");
+  if (http_proxy)
+    {
+      g_autoptr(SoupURI) proxy_uri = soup_uri_new (http_proxy);
+      if (!proxy_uri)
+        g_warning ("Invalid proxy URI '%s'", http_proxy);
+      else
+        g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
+    }
+
+  return soup_session;
+}
+
 GBytes *
 flatpak_load_http_uri (SoupSession *soup_session,
                        const char   *uri,
