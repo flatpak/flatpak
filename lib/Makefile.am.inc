@@ -89,6 +89,7 @@ libflatpak_la_LIBADD = \
 	$(BASE_LIBS)	\
 	$(OSTREE_LIBS)	\
 	$(SOUP_LIBS)	\
+	$(JSON_LIBS)    \
 	$(NULL)
 
 test_libflatpak_SOURCES = \
