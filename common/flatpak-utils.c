@@ -4192,6 +4192,8 @@ flatpak_number_prompt (int min, int max, const char *prompt, ...)
 typedef struct {
   GMainLoop *loop;
   GError *error;
+  GOutputStream *out;
+  guint64 downloaded_bytes;
   GString *content;
   char buffer[16*1024];
   FlatpakLoadUriProgress progress;
@@ -4222,18 +4224,40 @@ load_uri_read_cb (GObject *source, GAsyncResult *res, gpointer user_data)
   nread = g_input_stream_read_finish (stream, res, &data->error);
   if (nread == -1 || nread == 0)
     {
-      data->progress (data->content->len, data->user_data);
+      if (data->progress)
+        data->progress (data->downloaded_bytes, data->user_data);
       g_input_stream_close_async (stream,
                                   G_PRIORITY_DEFAULT, NULL,
                                   stream_closed, data);
       return;
     }
 
-  g_string_append_len (data->content, data->buffer, nread);
+  if (data->out != NULL)
+    {
+      gsize n_written;
+
+      if (!g_output_stream_write_all (data->out, data->buffer, nread, &n_written,
+                                      NULL, &data->error))
+        {
+          data->downloaded_bytes += n_written;
+          g_input_stream_close_async (stream,
+                                      G_PRIORITY_DEFAULT, NULL,
+                                      stream_closed, data);
+          return;
+        }
+
+      data->downloaded_bytes += n_written;
+    }
+  else
+    {
+      data->downloaded_bytes += nread;
+      g_string_append_len (data->content, data->buffer, nread);
+    }
 
   if (g_get_monotonic_time () - data->last_progress_time > 1 * G_USEC_PER_SEC)
     {
-      data->progress (data->content->len, data->user_data);
+      if (data->progress)
+        data->progress (data->downloaded_bytes, data->user_data);
       data->last_progress_time = g_get_monotonic_time ();
     }
 
@@ -4248,7 +4272,6 @@ load_uri_callback (GObject *source_object,
                    gpointer user_data)
 {
   SoupRequestHTTP *request = SOUP_REQUEST_HTTP(source_object);
-  g_autoptr(GError) error = NULL;
   g_autoptr(GInputStream) in = NULL;
   LoadUriData *data = user_data;
 
@@ -4322,7 +4345,6 @@ flatpak_load_http_uri (SoupSession *soup_session,
                        GError      **error)
 {
   GBytes *bytes = NULL;
-  g_autoptr(SoupMessage) msg = NULL;
   g_autoptr(SoupRequestHTTP) request = NULL;
   g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GString) content = g_string_new ("");
@@ -4355,13 +4377,54 @@ flatpak_load_http_uri (SoupSession *soup_session,
     }
 
   bytes = g_string_free_to_bytes (g_steal_pointer (&content));
-  g_debug ("Received %" G_GSIZE_FORMAT " bytes", g_bytes_get_size (bytes));
+  g_debug ("Received %" G_GSIZE_FORMAT " bytes", data.downloaded_bytes);
 
   return bytes;
 }
 
+gboolean
+flatpak_download_http_uri (SoupSession *soup_session,
+                           const char   *uri,
+                           GOutputStream *out,
+                           FlatpakLoadUriProgress progress,
+                           gpointer      user_data,
+                           GCancellable *cancellable,
+                           GError      **error)
+{
+  g_autoptr(SoupRequestHTTP) request = NULL;
+  g_autoptr(GMainLoop) loop = NULL;
+  LoadUriData data = { NULL };
 
+  g_debug ("Loading %s using libsoup", uri);
 
+  loop = g_main_loop_new (NULL, TRUE);
+  data.loop = loop;
+  data.out = out;
+  data.progress = progress;
+  data.user_data = user_data;
+  data.last_progress_time = g_get_monotonic_time ();
+
+  request = soup_session_request_http (soup_session, "GET",
+                                       uri, error);
+  if (request == NULL)
+    return FALSE;
+
+  soup_request_send_async (SOUP_REQUEST(request),
+                           cancellable,
+                           load_uri_callback, &data);
+
+  g_main_loop_run (loop);
+
+  if (data.error)
+    {
+      g_propagate_error (error, data.error);
+      return FALSE;
+    }
+
+  g_debug ("Received %" G_GSIZE_FORMAT " bytes", data.downloaded_bytes);
+
+  return TRUE;
+}
 
 /* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
  * to not have it interfere with stdout/stderr)
