@@ -334,6 +334,7 @@ do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_exis
 static gboolean
 validate_fd_common (int fd,
                     struct stat *st_buf,
+                    mode_t st_mode,
                     char *path_buffer,
                     GError **error)
 {
@@ -352,8 +353,8 @@ validate_fd_common (int fd,
       ((fd_flags & O_NOFOLLOW) == O_NOFOLLOW) ||
       /* Must be able to fstat */
       fstat (fd, st_buf) < 0 ||
-      /* Must be a regular file */
-      (st_buf->st_mode & S_IFMT) != S_IFREG ||
+      /* Must be a regular file or directory (depending on use) */
+      (st_buf->st_mode & S_IFMT) != st_mode ||
       /* Must be able to read path from /proc/self/fd */
       /* This is an absolute and (at least at open time) symlink-expanded path */
       (symlink_size = readlink (proc_path, path_buffer, PATH_MAX)) < 0)
@@ -414,7 +415,7 @@ validate_fd (int fd,
   g_autofree char *app_path = NULL;
   g_autofree char *runtime_path = NULL;
 
-  if (!validate_fd_common (fd, st_buf, path_buffer, error))
+  if (!validate_fd_common (fd, st_buf, S_IFREG, path_buffer, error))
     return FALSE;
 
   /* For apps we translate /app and /usr to the installed locations.
@@ -608,7 +609,7 @@ portal_add_named (GDBusMethodInvocation *invocation,
       return;
     }
 
-  if (!validate_fd_common (parent_fd, &parent_st_buf, parent_path_buffer, &error))
+  if (!validate_fd_common (parent_fd, &parent_st_buf, S_IFDIR, parent_path_buffer, &error))
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
       return;
