@@ -31,7 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
-#include "flatpak-oci.h"
+#include "flatpak-oci-registry.h"
 
 static char *opt_ref;
 static gboolean opt_oci = FALSE;
@@ -61,6 +61,14 @@ propagate_libarchive_error (GError      **error,
                "%s", archive_error_string (a));
 }
 
+
+static void
+download_layer_progress(guint64 downloaded_bytes,
+                        gpointer user_data)
+{
+  /* TODO: Report progress */
+}
+
 static char *
 import_oci (OstreeRepo *repo, GFile *file,
             GCancellable *cancellable, GError **error)
@@ -68,69 +76,45 @@ import_oci (OstreeRepo *repo, GFile *file,
   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
   g_autoptr(GFile) archive_root = NULL;
   g_autofree char *commit_checksum = NULL;
-  g_autofree char *config_digest = NULL;
+  g_autofree char *dir_uri = NULL;
   const char *parent = NULL;
-  const char *metadata_base64;
-  const char *subject;
-  const char *body;
-  const char *target_ref;
-  guint64 timestamp;
-  g_autoptr(FlatpakOciDir) oci_dir = NULL;
-  g_autoptr(JsonObject) manifest = NULL;
-  g_autoptr(JsonObject) config = NULL;
-  g_autoptr(GHashTable) annotations = NULL;
+  g_autofree char *subject = NULL;
+  g_autofree char *body = NULL;
+  g_autofree char *target_ref = NULL;
+  guint64 timestamp = 0;
+  g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(GVariant) metadatav = NULL;
-  g_auto(GStrv) layers = NULL;
+  g_autoptr(FlatpakOciManifest) manifest = NULL;
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  GHashTable *annotations;
   int i;
 
-  oci_dir = flatpak_oci_dir_new ();
-
-  if (!flatpak_oci_dir_open (oci_dir, file, cancellable, error))
+  dir_uri = g_file_get_uri (file);
+  registry = flatpak_oci_registry_new (dir_uri, FALSE, -1, cancellable, error);
+  if (registry == NULL)
     return NULL;
 
-  manifest = flatpak_oci_dir_find_manifest (oci_dir, "latest", "linux", "amd64",
-                                            cancellable, error);
+  manifest = flatpak_oci_registry_chose_image (registry, "latest",
+                                               cancellable, error);
   if (manifest == NULL)
     return NULL;
 
-  annotations = flatpak_oci_manifest_get_annotations2 (manifest);
+  if (opt_ref)
+    target_ref = g_strdup (opt_ref);
 
-  if (opt_ref != NULL)
-    target_ref = opt_ref;
-  else
-    {
-      target_ref = g_hash_table_lookup (annotations, "org.flatpak.Ref");
-      if (target_ref == NULL)
-        {
-          flatpak_fail (error, "No flatpak ref specified in image, must manually specify");
-          return NULL;
-        }
-    }
+  annotations = flatpak_oci_manifest_get_annotations (manifest);
+  if (annotations)
+    flatpak_oci_parse_commit_annotations (annotations, &timestamp,
+                                          &subject, &body,
+                                          &target_ref, NULL, NULL,
+                                          metadata_builder);
 
-  subject = g_hash_table_lookup (annotations, "org.flatpak.Subject");
-  body = g_hash_table_lookup (annotations, "org.flatpak.Body");
-  parent = g_hash_table_lookup (annotations, "org.flatpak.ParentCommit");
-  metadata_base64 = g_hash_table_lookup (annotations, "org.flatpak.Metadata");
-  if (metadata_base64)
+  if (target_ref == NULL)
     {
-      gsize data_len;
-      guchar *data = g_base64_decode (metadata_base64, &data_len);
-      metadatav = g_variant_new_from_data (G_VARIANT_TYPE("a{sv}"), data, data_len,
-                                           FALSE, g_free, data);
-    }
-
-  config_digest = flatpak_oci_manifest_get_config (manifest);
-  if (config_digest == NULL)
-    {
-      flatpak_fail (error, "No oci config specified");
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "The OCI image didn't specify a ref, use --ref to specify one");
       return NULL;
     }
-
-  config = flatpak_oci_dir_load_json (oci_dir, config_digest, cancellable, error);
-  if (config == NULL)
-    return NULL;
-
-  timestamp = flatpak_oci_config_get_created (config);
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return NULL;
@@ -139,18 +123,34 @@ import_oci (OstreeRepo *repo, GFile *file,
      we write all of it and then build a new mtree with the subset */
   archive_mtree = ostree_mutable_tree_new ();
 
-  layers = flatpak_oci_manifest_get_layers (manifest);
-  for (i = 0; layers[i] != NULL; i++)
+  for (i = 0; manifest->layers[i] != NULL; i++)
     {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
       OstreeRepoImportArchiveOptions opts = { 0, };
       free_read_archive struct archive *a = NULL;
+      glnx_fd_close int layer_fd = -1;
 
       opts.autocreate_parents = TRUE;
+      opts.ignore_unsupported_content = TRUE;
 
-      a = flatpak_oci_dir_load_layer (oci_dir, layers[i],
-                                      cancellable, error);
-      if (a == NULL)
+      layer_fd = flatpak_oci_registry_download_blob (registry, layer->digest,
+                                                     download_layer_progress, NULL,
+                                                     cancellable, error);
+      if (layer_fd == -1)
         return NULL;
+
+      a = archive_read_new ();
+#ifdef HAVE_ARCHIVE_READ_SUPPORT_FILTER_ALL
+      archive_read_support_filter_all (a);
+#else
+      archive_read_support_compression_all (a);
+#endif
+      archive_read_support_format_all (a);
+      if (archive_read_open_fd (a, layer_fd, 8192) != ARCHIVE_OK)
+        {
+          propagate_libarchive_error (error, a);
+          return NULL;
+        }
 
       if (!ostree_repo_import_archive_to_mtree (repo, &opts, a, archive_mtree, NULL, cancellable, error))
         return NULL;

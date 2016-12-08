@@ -7,8 +7,6 @@ flatpak_SOURCES = \
 	app/flatpak-builtins.h \
 	app/flatpak-builtins-utils.h \
 	app/flatpak-builtins-utils.c \
-	app/flatpak-oci.h \
-	app/flatpak-oci.c \
 	app/flatpak-transaction.h \
 	app/flatpak-transaction.c \
 	app/flatpak-builtins-add-remote.c \
