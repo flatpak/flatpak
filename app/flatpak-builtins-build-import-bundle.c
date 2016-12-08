@@ -93,7 +93,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (manifest == NULL)
     return NULL;
 
-  annotations = flatpak_oci_manifest_get_annotations (manifest);
+  annotations = flatpak_oci_manifest_get_annotations2 (manifest);
 
   if (opt_ref != NULL)
     target_ref = opt_ref;
