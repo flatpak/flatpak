@@ -33,10 +33,7 @@
 #define FLATPAK_OCI_REGISTRY(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), FLATPAK_TYPE_OCI_REGISTRY, FlatpakOciRegistry))
 #define FLATPAK_IS_OCI_REGISTRY(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), FLATPAK_TYPE_OCI_REGISTRY))
 
-
 GType flatpak_oci_registry_get_type (void);
-
-typedef struct FlatpakOciRegistry FlatpakOciRegistry;
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciRegistry, g_object_unref)
 

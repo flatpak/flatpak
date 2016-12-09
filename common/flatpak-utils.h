@@ -294,6 +294,12 @@ gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,
                                    GCancellable *cancellable,
                                    GError      **error);
 
+char * flatpak_pull_from_oci (OstreeRepo   *repo,
+                              FlatpakOciRegistry *registry,
+                              FlatpakOciManifest *manifest,
+                              const char *ref,
+                              GCancellable *cancellable,
+                              GError      **error);
 
 typedef struct
 {

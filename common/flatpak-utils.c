@@ -24,6 +24,7 @@
 #include "lib/flatpak-error.h"
 #include "flatpak-dir.h"
 #include "flatpak-portal-error.h"
+#include "flatpak-oci-registry.h"
 #include "flatpak-run.h"
 
 #include <glib/gi18n.h>
@@ -48,6 +49,18 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_ALREADY_INSTALLED,     "org.freedesktop.Flatpak.Error.AlreadyInstalled"},
   {FLATPAK_ERROR_NOT_INSTALLED,         "org.freedesktop.Flatpak.Error.NotInstalled"},
 };
+
+
+GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_read_archive, archive_read_free)
+#define free_read_archive __attribute__((cleanup (flatpak_local_free_read_archive)))
+
+static void
+propagate_libarchive_error (GError      **error,
+                            struct archive *a)
+{
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "%s", archive_error_string (a));
+}
 
 GQuark
 flatpak_error_quark (void)
@@ -3979,6 +3992,112 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
     }
 
   return TRUE;
+}
+
+char *
+flatpak_pull_from_oci (OstreeRepo   *repo,
+                       FlatpakOciRegistry *registry,
+                       FlatpakOciManifest *manifest,
+                       const char *ref,
+                       GCancellable *cancellable,
+                       GError      **error)
+{
+  g_autoptr(OstreeMutableTree) archive_mtree = NULL;
+  g_autoptr(GFile) archive_root = NULL;
+  g_autofree char *commit_checksum = NULL;
+  g_autofree char *dir_uri = NULL;
+  const char *parent = NULL;
+  g_autofree char *subject = NULL;
+  g_autofree char *body = NULL;
+  guint64 timestamp = 0;
+  g_autoptr(GVariant) metadatav = NULL;
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  GHashTable *annotations;
+  int i;
+
+  g_assert (ref != NULL);
+
+  annotations = flatpak_oci_manifest_get_annotations (manifest);
+  if (annotations)
+    flatpak_oci_parse_commit_annotations (annotations, &timestamp,
+                                          &subject, &body,
+                                          NULL, NULL, NULL,
+                                          metadata_builder);
+
+  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+    return NULL;
+
+  /* There is no way to write a subset of the archive to a mtree, so instead
+     we write all of it and then build a new mtree with the subset */
+  archive_mtree = ostree_mutable_tree_new ();
+
+  for (i = 0; manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
+      OstreeRepoImportArchiveOptions opts = { 0, };
+      free_read_archive struct archive *a = NULL;
+      glnx_fd_close int layer_fd = -1;
+
+      opts.autocreate_parents = TRUE;
+      opts.ignore_unsupported_content = TRUE;
+
+      layer_fd = flatpak_oci_registry_download_blob (registry, layer->digest,
+                                                     NULL, NULL,
+                                                     cancellable, error);
+      if (layer_fd == -1)
+        goto error;
+
+      a = archive_read_new ();
+#ifdef HAVE_ARCHIVE_READ_SUPPORT_FILTER_ALL
+      archive_read_support_filter_all (a);
+#else
+      archive_read_support_compression_all (a);
+#endif
+      archive_read_support_format_all (a);
+      if (archive_read_open_fd (a, layer_fd, 8192) != ARCHIVE_OK)
+        {
+          propagate_libarchive_error (error, a);
+          goto error;
+        }
+
+      if (!ostree_repo_import_archive_to_mtree (repo, &opts, a, archive_mtree, NULL, cancellable, error))
+        goto error;
+
+      if (archive_read_close (a) != ARCHIVE_OK)
+        {
+          propagate_libarchive_error (error, a);
+          goto error;
+        }
+    }
+
+  if (!ostree_repo_write_mtree (repo, archive_mtree, &archive_root, cancellable, error))
+    goto error;
+
+  if (!ostree_repo_file_ensure_resolved ((OstreeRepoFile *) archive_root, error))
+    goto error;
+
+  if (!ostree_repo_write_commit_with_time (repo,
+                                           parent,
+                                           subject,
+                                           body,
+                                           metadatav,
+                                           OSTREE_REPO_FILE (archive_root),
+                                           timestamp,
+                                           &commit_checksum,
+                                           cancellable, error))
+    goto error;
+
+  ostree_repo_transaction_set_ref (repo, NULL, ref, commit_checksum);
+
+  if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
+    return NULL;
+
+  return g_steal_pointer (&commit_checksum);
+
+ error:
+
+  ostree_repo_abort_transaction (repo, cancellable, NULL);
+  return NULL;
 }
 
 /* This allocates and locks a subdir of the tmp dir, using an existing

@@ -37,6 +37,7 @@
 
 #include "flatpak-dir.h"
 #include "flatpak-utils.h"
+#include "flatpak-oci-registry.h"
 #include "flatpak-run.h"
 
 #include "errno.h"
