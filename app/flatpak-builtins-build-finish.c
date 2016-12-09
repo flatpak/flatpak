@@ -189,6 +189,7 @@ collect_exports (GFile *base, const char *app_id, gboolean is_runtime, GCancella
   g_autoptr(GFile) export = NULL;
   const char *app_paths[] = {
     "share/applications",                 /* Copy desktop files */
+    "share/mime/packages",                /* Copy MIME Type files */
     "share/icons",                        /* Icons */
     "share/dbus-1/services",              /* D-Bus service files */
     "share/gnome-shell/search-providers", /* Search providers */
