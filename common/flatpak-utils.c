@@ -1369,6 +1369,14 @@ flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
 }
 
 void
+flatpak_table_printer_add_column_len (FlatpakTablePrinter *printer,
+                                      const char          *text,
+                                      gsize len)
+{
+  g_ptr_array_add (printer->current, text ? g_strndup (text, len) : g_strdup (""));
+}
+
+void
 flatpak_table_printer_append_with_comma (FlatpakTablePrinter *printer,
                                          const char          *text)
 {
