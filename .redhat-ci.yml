@@ -4,7 +4,42 @@ branches:
     - try
 
 container:
-    image: projectatomic/ostree-tester
+    image: fedora:25
+
+packages:
+    - gcc
+    - sudo
+    - which
+    - attr
+    - fuse
+    - gjs
+    - parallel
+    - clang
+    - libubsan
+    - gnome-desktop-testing
+    - pkgconfig(fuse)
+    - pkgconfig(gio-unix-2.0)
+    - pkgconfig(gobject-introspection-1.0) >= 1.40.0
+    - pkgconfig(json-glib-1.0)
+    - pkgconfig(libarchive) >= 2.8.0
+    - pkgconfig(libelf) >= 0.8.12
+    - pkgconfig(libsoup-2.4)
+    - pkgconfig(ostree-1) >= %{ostree_version}
+    - pkgconfig(polkit-gobject-1)
+    - pkgconfig(libseccomp)
+    - pkgconfig(xau)
+    - bubblewrap >= %{bubblewrap_version}
+    - docbook-dtds
+    - docbook-style-xsl
+    - intltool
+    - libattr-devel
+    - libcap-devel
+    - libdwarf-devel
+    - elfutils
+    - systemd
+    - /usr/bin/xmlto
+    - /usr/bin/xsltproc
+    - redhat-rpm-config
 
 env:
     CFLAGS: '-fsanitize=undefined'
