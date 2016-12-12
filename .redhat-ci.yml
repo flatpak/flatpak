@@ -1,0 +1,38 @@
+branches:
+    - master
+    - auto
+    - try
+
+container:
+    image: projectatomic/ostree-tester
+
+env:
+    CFLAGS: '-fsanitize=undefined'
+
+build:
+    config-opts: >
+      --prefix=/usr
+      --libdir=/usr/lib64
+      --enable-installed-tests
+      --enable-gtk-doc
+
+tests:
+    - make check
+
+timeout: 30m
+
+artifacts:
+    - test-suite.log
+
+---
+
+inherit: true
+
+context: Clang
+
+env:
+    CC: 'clang'
+    CFLAGS: '-Werror=unused-variable'
+
+tests:
+artifacts:
