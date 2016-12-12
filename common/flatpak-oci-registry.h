@@ -88,6 +88,7 @@ FlatpakOciLayerWriter *flatpak_oci_registry_write_layer          (FlatpakOciRegi
                                                                   GError              **error);
 FlatpakOciManifest    *flatpak_oci_registry_chose_image          (FlatpakOciRegistry   *self,
                                                                   const char           *tag,
+                                                                  char                **out_digest,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
 

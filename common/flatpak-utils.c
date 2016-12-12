@@ -4013,6 +4013,7 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
 char *
 flatpak_pull_from_oci (OstreeRepo   *repo,
                        FlatpakOciRegistry *registry,
+                       const char *digest,
                        FlatpakOciManifest *manifest,
                        const char *ref,
                        GCancellable *cancellable,
@@ -4026,12 +4027,12 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   g_autofree char *subject = NULL;
   g_autofree char *body = NULL;
   guint64 timestamp = 0;
-  g_autoptr(GVariant) metadatav = NULL;
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   GHashTable *annotations;
   int i;
 
   g_assert (ref != NULL);
+  g_assert (g_str_has_prefix (digest, "sha256:"));
 
   annotations = flatpak_oci_manifest_get_annotations (manifest);
   if (annotations)
@@ -4039,6 +4040,9 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
                                           &subject, &body,
                                           NULL, NULL, NULL,
                                           metadata_builder);
+
+  g_variant_builder_add (metadata_builder, "{s@v}", "xa.alt-id",
+                         g_variant_new_variant (g_variant_new_string (digest + strlen("sha256:"))));
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return NULL;
@@ -4096,7 +4100,7 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
                                            parent,
                                            subject,
                                            body,
-                                           metadatav,
+                                           g_variant_builder_end (metadata_builder),
                                            OSTREE_REPO_FILE (archive_root),
                                            timestamp,
                                            &commit_checksum,

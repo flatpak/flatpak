@@ -44,6 +44,16 @@
                 </group>
                 <arg choice="plain">FILENAME</arg>
             </cmdsynopsis>
+            <cmdsynopsis>
+                <command>flatpak install --oci</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <group choice="opt">
+                    <arg choice="plain">--bundle</arg>
+                    <arg choice="plain">--from</arg>
+                </group>
+                <arg choice="plain">REGISTRYURI</arg>
+                <arg choice="opt">TAG</arg>
+            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -117,6 +127,14 @@
                 <listitem><para>
                     Install from a flatpakref file instead
                     of a configured remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--oci</option></term>
+
+                <listitem><para>
+                    Install from a oci registry with a given uri and optionally a tag (defaults to latest).
                 </para></listitem>
             </varlistentry>
 

@@ -117,6 +117,7 @@ dist_test_scripts = \
 	tests/test-bundle-system.sh \
 	tests/test-builder.sh \
 	tests/test-builder-python.sh \
+	tests/test-oci.sh \
 	$(NULL)
 
 test_programs = testdb test-doc-portal testlibrary

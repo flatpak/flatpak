@@ -162,23 +162,20 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
 
       if (opt_show_details)
         {
-          g_autofree char *active = flatpak_dir_read_active (dir, ref, NULL);
+          const char *active = flatpak_deploy_data_get_commit (deploy_data);
+          const char *alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
           g_autofree char *latest = NULL;
           g_autofree char *size_s = NULL;
           guint64 size = 0;
           g_autofree const char **subpaths = NULL;
 
-          latest = flatpak_dir_read_latest (dir, repo, ref, NULL, NULL);
+          latest = flatpak_dir_read_latest (dir, repo, ref, NULL, NULL, NULL);
           if (latest)
             {
               if (strcmp (active, latest) == 0)
                 {
                   g_free (latest);
                   latest = g_strdup ("-");
-                }
-              else
-                {
-                  latest[MIN (strlen (latest), 12)] = 0;
                 }
             }
           else
@@ -189,9 +186,8 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
           flatpak_table_printer_add_column (printer, partial_ref);
           flatpak_table_printer_add_column (printer, repo);
 
-          active[MIN (strlen (active), 12)] = 0;
-          flatpak_table_printer_add_column (printer, active);
-          flatpak_table_printer_add_column (printer, latest);
+          flatpak_table_printer_add_column_len (printer, active, 12);
+          flatpak_table_printer_add_column_len (printer, latest, 12);
 
           size = flatpak_deploy_data_get_installed_size (deploy_data);
           size_s = g_format_size (size);
@@ -201,6 +197,12 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
 
           if (print_user && print_system)
             flatpak_table_printer_append_with_comma (printer, is_user ? "user" : "system");
+
+          if (alt_id)
+            {
+              g_autofree char *alt_id_str = g_strdup_printf ("alt-id=%.12s", alt_id);
+              flatpak_table_printer_append_with_comma (printer, alt_id_str);
+            }
 
           if (strcmp (parts[0], "app") == 0)
             {

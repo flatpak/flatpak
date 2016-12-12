@@ -307,6 +307,7 @@ gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,
 
 char * flatpak_pull_from_oci (OstreeRepo   *repo,
                               FlatpakOciRegistry *registry,
+                              const char *digest,
                               FlatpakOciManifest *manifest,
                               const char *ref,
                               GCancellable *cancellable,

@@ -130,6 +130,7 @@ const char *        flatpak_deploy_data_get_origin (GVariant *deploy_data);
 const char *        flatpak_deploy_data_get_commit (GVariant *deploy_data);
 const char **       flatpak_deploy_data_get_subpaths (GVariant *deploy_data);
 guint64             flatpak_deploy_data_get_installed_size (GVariant *deploy_data);
+const char *        flatpak_deploy_data_get_alt_id (GVariant *deploy_data);
 
 GFile *        flatpak_deploy_get_dir (FlatpakDeploy *deploy);
 GFile *        flatpak_deploy_get_files (FlatpakDeploy *deploy);
@@ -289,6 +290,7 @@ gboolean    flatpak_dir_list_refs (FlatpakDir   *self,
 char *      flatpak_dir_read_latest (FlatpakDir   *self,
                                      const char   *remote,
                                      const char   *ref,
+                                     char        **out_alt_id,
                                      GCancellable *cancellable,
                                      GError      **error);
 char *      flatpak_dir_read_active (FlatpakDir   *self,
@@ -426,6 +428,8 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *id,
                                              const char   *title,
                                              const char   *main_ref,
+                                             const char   *oci_uri,
+                                             const char   *oci_tag,
                                              GBytes       *gpg_data,
                                              GCancellable *cancellable,
                                              GError      **error);
@@ -462,6 +466,12 @@ gboolean   flatpak_dir_remove_remote (FlatpakDir   *self,
                                       GError      **error);
 char      *flatpak_dir_get_remote_title (FlatpakDir *self,
                                          const char *remote_name);
+char      *flatpak_dir_get_remote_main_ref (FlatpakDir *self,
+                                            const char *remote_name);
+char      *flatpak_dir_get_remote_oci_uri (FlatpakDir *self,
+                                           const char *remote_name);
+char      *flatpak_dir_get_remote_oci_tag (FlatpakDir *self,
+                                           const char *remote_name);
 char      *flatpak_dir_get_remote_default_branch (FlatpakDir *self,
                                                   const char *remote_name);
 int        flatpak_dir_get_remote_prio (FlatpakDir *self,

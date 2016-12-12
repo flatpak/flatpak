@@ -372,6 +372,8 @@ get_ref (FlatpakDir          *dir,
   g_auto(GStrv) parts = NULL;
   const char *origin = NULL;
   const char *commit = NULL;
+  const char *alt_id = NULL;
+  g_autofree char *latest_alt_id = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   g_autoptr(GFile) deploy_subdir = NULL;
   g_autofree char *deploy_path = NULL;
@@ -388,6 +390,7 @@ get_ref (FlatpakDir          *dir,
     return NULL;
   origin = flatpak_deploy_data_get_origin (deploy_data);
   commit = flatpak_deploy_data_get_commit (deploy_data);
+  alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
   subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
   installed_size = flatpak_deploy_data_get_installed_size (deploy_data);
 
@@ -403,11 +406,11 @@ get_ref (FlatpakDir          *dir,
         is_current = TRUE;
     }
 
-  latest_commit = flatpak_dir_read_latest (dir, origin, full_ref, NULL, NULL);
+  latest_commit = flatpak_dir_read_latest (dir, origin, full_ref, &latest_alt_id, NULL, NULL);
 
   return flatpak_installed_ref_new (full_ref,
-                                    commit,
-                                    latest_commit,
+                                    alt_id ? alt_id : commit,
+                                    latest_alt_id ? latest_alt_id : latest_commit,
                                     origin, subpaths,
                                     deploy_path,
                                     installed_size,

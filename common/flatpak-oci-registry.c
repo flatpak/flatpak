@@ -774,6 +774,7 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
 FlatpakOciManifest *
 flatpak_oci_registry_chose_image (FlatpakOciRegistry   *self,
                                   const char           *tag,
+                                  char                **out_digest,
                                   GCancellable         *cancellable,
                                   GError              **error)
 {
@@ -798,6 +799,9 @@ flatpak_oci_registry_chose_image (FlatpakOciRegistry   *self,
                    "OCI manifest lists are not supported");
       return NULL;
     }
+
+  if (out_digest != NULL)
+    *out_digest = g_strdup (flatpak_oci_ref_get_digest (ref));
 
   return g_steal_pointer (&versioned);
 }
@@ -851,8 +855,6 @@ flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)
       self->tmp_fd = -1;
     }
 
-  g_clear_object (&self->compressor);
-
   g_checksum_reset (self->uncompressed_checksum);
   g_checksum_reset (self->compressed_checksum);
 
@@ -861,6 +863,8 @@ flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)
       archive_write_free (self->archive);
       self->archive = NULL;
     }
+
+  g_clear_object (&self->compressor);
 }
 
 

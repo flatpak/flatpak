@@ -306,7 +306,11 @@ build_oci (OstreeRepo *repo, GFile *dir,
   g_autoptr(FlatpakOciRef) image_ref = NULL;
   g_autoptr(FlatpakOciRef) manifest_ref = NULL;
   g_autoptr(FlatpakOciManifest) manifest = NULL;
+  g_autoptr(GFile) metadata_file = NULL;
+  guint64 installed_size = 0;
   GHashTable *annotations;
+  gsize metadata_size;
+  g_autofree char *metadata_contents = NULL;
 
   if (!ostree_repo_resolve_rev (repo, ref, FALSE, &commit_checksum, error))
     return FALSE;
@@ -360,6 +364,22 @@ build_oci (OstreeRepo *repo, GFile *dir,
   annotations = flatpak_oci_manifest_get_annotations (manifest);
   flatpak_oci_add_annotations_for_commit (annotations, ref, commit_checksum, commit_data);
 
+  metadata_file = g_file_get_child (root, "metadata");
+  if (g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, NULL) &&
+      g_utf8_validate (metadata_contents, -1, NULL))
+    {
+      g_hash_table_replace (annotations,
+                            g_strdup ("org.flatpak.Metadata"),
+                            g_steal_pointer (&metadata_contents));
+    }
+
+  if (!flatpak_repo_collect_sizes (repo, root, &installed_size, NULL, NULL, error))
+    return FALSE;
+
+  g_hash_table_replace (annotations,
+                        g_strdup ("org.flatpak.InstalledSize"),
+                        g_strdup_printf ("%" G_GUINT64_FORMAT, installed_size));
+
   manifest_ref = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (manifest), cancellable, error);
   if (manifest_ref == NULL)
     return FALSE;
@@ -367,9 +387,6 @@ build_oci (OstreeRepo *repo, GFile *dir,
   if (!flatpak_oci_registry_set_ref (registry, "latest", manifest_ref,
                                      cancellable, error))
     return FALSE;
-
-  g_print ("WARNING: the oci format produced by flatpak is experimental and unstable.\n"
-           "Don't use this for anything but experiments for now\n");
 
   return TRUE;
 }

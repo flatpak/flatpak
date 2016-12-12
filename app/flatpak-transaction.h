@@ -43,6 +43,10 @@ gboolean            flatpak_transaction_add_install (FlatpakTransaction  *self,
                                                      const char          *ref,
                                                      const char         **subpaths,
                                                      GError             **error);
+gboolean            flatpak_transaction_add_install_oci (FlatpakTransaction  *self,
+                                                         const char         *uri,
+                                                         const char         *tag,
+                                                         GError             **error);
 gboolean            flatpak_transaction_add_update  (FlatpakTransaction  *self,
                                                      const char          *ref,
                                                      const char         **subpaths,

@@ -57,6 +57,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   g_autofree char *commit_checksum = NULL;
   g_autofree char *dir_uri = NULL;
   g_autofree char *target_ref = NULL;
+  g_autofree char *oci_digest = NULL;
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciManifest) manifest = NULL;
   GHashTable *annotations;
@@ -66,7 +67,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (registry == NULL)
     return NULL;
 
-  manifest = flatpak_oci_registry_chose_image (registry, "latest",
+  manifest = flatpak_oci_registry_chose_image (registry, "latest", &oci_digest,
                                                cancellable, error);
   if (manifest == NULL)
     return NULL;
@@ -86,7 +87,7 @@ import_oci (OstreeRepo *repo, GFile *file,
       return NULL;
     }
 
-  commit_checksum = flatpak_pull_from_oci (repo, registry, manifest,
+  commit_checksum = flatpak_pull_from_oci (repo, registry, oci_digest, manifest,
                                            target_ref, cancellable, error);
   if (commit_checksum == NULL)
     return NULL;
