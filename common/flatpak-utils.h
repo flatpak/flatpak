@@ -37,6 +37,13 @@ typedef enum {
 } FlatpakHostCommandFlags;
 
 
+/* https://bugzilla.gnome.org/show_bug.cgi?id=766370 */
+#if !GLIB_CHECK_VERSION(2, 49, 3)
+#define FLATPAK_VARIANT_BUILDER_INITIALIZER {{0,}}
+#else
+#define FLATPAK_VARIANT_BUILDER_INITIALIZER {{{0,}}}
+#endif
+
 gboolean flatpak_fail (GError    **error,
                        const char *format,
                        ...);
@@ -69,6 +76,7 @@ gboolean flatpak_variant_save (GFile        *dest,
                                GVariant     *variant,
                                GCancellable *cancellable,
                                GError      **error);
+GVariant * flatpak_gvariant_new_empty_string_dict (void);
 void    flatpak_variant_builder_init_from_variant (GVariantBuilder *builder,
                                                    const char      *type,
                                                    GVariant        *variant);

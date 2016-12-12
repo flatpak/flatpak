@@ -2180,6 +2180,14 @@ flatpak_open_in_tmpdir_at (int                tmpdir_fd,
   return TRUE;
 }
 
+GVariant *
+flatpak_gvariant_new_empty_string_dict (void)
+{
+  g_auto(GVariantBuilder) builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  return g_variant_builder_end (&builder);
+}
+
 gboolean
 flatpak_variant_save (GFile        *dest,
                       GVariant     *variant,
