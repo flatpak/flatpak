@@ -24,6 +24,7 @@
 #include "lib/flatpak-error.h"
 #include "flatpak-dir.h"
 #include "flatpak-portal-error.h"
+#include "flatpak-oci-registry.h"
 #include "flatpak-run.h"
 
 #include <glib/gi18n.h>
@@ -48,6 +49,18 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_ALREADY_INSTALLED,     "org.freedesktop.Flatpak.Error.AlreadyInstalled"},
   {FLATPAK_ERROR_NOT_INSTALLED,         "org.freedesktop.Flatpak.Error.NotInstalled"},
 };
+
+
+GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_read_archive, archive_read_free)
+#define free_read_archive __attribute__((cleanup (flatpak_local_free_read_archive)))
+
+static void
+propagate_libarchive_error (GError      **error,
+                            struct archive *a)
+{
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "%s", archive_error_string (a));
+}
 
 GQuark
 flatpak_error_quark (void)
@@ -1356,6 +1369,14 @@ flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
 }
 
 void
+flatpak_table_printer_add_column_len (FlatpakTablePrinter *printer,
+                                      const char          *text,
+                                      gsize len)
+{
+  g_ptr_array_add (printer->current, text ? g_strndup (text, len) : g_strdup (""));
+}
+
+void
 flatpak_table_printer_append_with_comma (FlatpakTablePrinter *printer,
                                          const char          *text)
 {
@@ -2157,6 +2178,14 @@ flatpak_open_in_tmpdir_at (int                tmpdir_fd,
     (void) close (fd);
 
   return TRUE;
+}
+
+GVariant *
+flatpak_gvariant_new_empty_string_dict (void)
+{
+  g_auto(GVariantBuilder) builder = FLATPAK_VARIANT_BUILDER_INITIALIZER;
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  return g_variant_builder_end (&builder);
 }
 
 gboolean
@@ -3981,6 +4010,116 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   return TRUE;
 }
 
+char *
+flatpak_pull_from_oci (OstreeRepo   *repo,
+                       FlatpakOciRegistry *registry,
+                       const char *digest,
+                       FlatpakOciManifest *manifest,
+                       const char *ref,
+                       GCancellable *cancellable,
+                       GError      **error)
+{
+  g_autoptr(OstreeMutableTree) archive_mtree = NULL;
+  g_autoptr(GFile) archive_root = NULL;
+  g_autofree char *commit_checksum = NULL;
+  g_autofree char *dir_uri = NULL;
+  const char *parent = NULL;
+  g_autofree char *subject = NULL;
+  g_autofree char *body = NULL;
+  guint64 timestamp = 0;
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  GHashTable *annotations;
+  int i;
+
+  g_assert (ref != NULL);
+  g_assert (g_str_has_prefix (digest, "sha256:"));
+
+  annotations = flatpak_oci_manifest_get_annotations (manifest);
+  if (annotations)
+    flatpak_oci_parse_commit_annotations (annotations, &timestamp,
+                                          &subject, &body,
+                                          NULL, NULL, NULL,
+                                          metadata_builder);
+
+  g_variant_builder_add (metadata_builder, "{s@v}", "xa.alt-id",
+                         g_variant_new_variant (g_variant_new_string (digest + strlen("sha256:"))));
+
+  if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+    return NULL;
+
+  /* There is no way to write a subset of the archive to a mtree, so instead
+     we write all of it and then build a new mtree with the subset */
+  archive_mtree = ostree_mutable_tree_new ();
+
+  for (i = 0; manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
+      OstreeRepoImportArchiveOptions opts = { 0, };
+      free_read_archive struct archive *a = NULL;
+      glnx_fd_close int layer_fd = -1;
+
+      opts.autocreate_parents = TRUE;
+      opts.ignore_unsupported_content = TRUE;
+
+      layer_fd = flatpak_oci_registry_download_blob (registry, layer->digest,
+                                                     NULL, NULL,
+                                                     cancellable, error);
+      if (layer_fd == -1)
+        goto error;
+
+      a = archive_read_new ();
+#ifdef HAVE_ARCHIVE_READ_SUPPORT_FILTER_ALL
+      archive_read_support_filter_all (a);
+#else
+      archive_read_support_compression_all (a);
+#endif
+      archive_read_support_format_all (a);
+      if (archive_read_open_fd (a, layer_fd, 8192) != ARCHIVE_OK)
+        {
+          propagate_libarchive_error (error, a);
+          goto error;
+        }
+
+      if (!ostree_repo_import_archive_to_mtree (repo, &opts, a, archive_mtree, NULL, cancellable, error))
+        goto error;
+
+      if (archive_read_close (a) != ARCHIVE_OK)
+        {
+          propagate_libarchive_error (error, a);
+          goto error;
+        }
+    }
+
+  if (!ostree_repo_write_mtree (repo, archive_mtree, &archive_root, cancellable, error))
+    goto error;
+
+  if (!ostree_repo_file_ensure_resolved ((OstreeRepoFile *) archive_root, error))
+    goto error;
+
+  if (!ostree_repo_write_commit_with_time (repo,
+                                           parent,
+                                           subject,
+                                           body,
+                                           g_variant_builder_end (metadata_builder),
+                                           OSTREE_REPO_FILE (archive_root),
+                                           timestamp,
+                                           &commit_checksum,
+                                           cancellable, error))
+    goto error;
+
+  ostree_repo_transaction_set_ref (repo, NULL, ref, commit_checksum);
+
+  if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
+    return NULL;
+
+  return g_steal_pointer (&commit_checksum);
+
+ error:
+
+  ostree_repo_abort_transaction (repo, cancellable, NULL);
+  return NULL;
+}
+
 /* This allocates and locks a subdir of the tmp dir, using an existing
  * one with the same prefix if it is not in use already. */
 gboolean
@@ -4192,6 +4331,8 @@ flatpak_number_prompt (int min, int max, const char *prompt, ...)
 typedef struct {
   GMainLoop *loop;
   GError *error;
+  GOutputStream *out;
+  guint64 downloaded_bytes;
   GString *content;
   char buffer[16*1024];
   FlatpakLoadUriProgress progress;
@@ -4222,18 +4363,40 @@ load_uri_read_cb (GObject *source, GAsyncResult *res, gpointer user_data)
   nread = g_input_stream_read_finish (stream, res, &data->error);
   if (nread == -1 || nread == 0)
     {
-      data->progress (data->content->len, data->user_data);
+      if (data->progress)
+        data->progress (data->downloaded_bytes, data->user_data);
       g_input_stream_close_async (stream,
                                   G_PRIORITY_DEFAULT, NULL,
                                   stream_closed, data);
       return;
     }
 
-  g_string_append_len (data->content, data->buffer, nread);
+  if (data->out != NULL)
+    {
+      gsize n_written;
+
+      if (!g_output_stream_write_all (data->out, data->buffer, nread, &n_written,
+                                      NULL, &data->error))
+        {
+          data->downloaded_bytes += n_written;
+          g_input_stream_close_async (stream,
+                                      G_PRIORITY_DEFAULT, NULL,
+                                      stream_closed, data);
+          return;
+        }
+
+      data->downloaded_bytes += n_written;
+    }
+  else
+    {
+      data->downloaded_bytes += nread;
+      g_string_append_len (data->content, data->buffer, nread);
+    }
 
   if (g_get_monotonic_time () - data->last_progress_time > 1 * G_USEC_PER_SEC)
     {
-      data->progress (data->content->len, data->user_data);
+      if (data->progress)
+        data->progress (data->downloaded_bytes, data->user_data);
       data->last_progress_time = g_get_monotonic_time ();
     }
 
@@ -4248,7 +4411,6 @@ load_uri_callback (GObject *source_object,
                    gpointer user_data)
 {
   SoupRequestHTTP *request = SOUP_REQUEST_HTTP(source_object);
-  g_autoptr(GError) error = NULL;
   g_autoptr(GInputStream) in = NULL;
   LoadUriData *data = user_data;
 
@@ -4287,6 +4449,32 @@ load_uri_callback (GObject *source_object,
                              load_uri_read_cb, data);
 }
 
+SoupSession *
+flatpak_create_soup_session (const char *user_agent)
+{
+  SoupSession *soup_session;
+  const char *http_proxy;
+
+  soup_session = soup_session_new_with_options (SOUP_SESSION_USER_AGENT, user_agent,
+                                                SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE,
+                                                SOUP_SESSION_USE_THREAD_CONTEXT, TRUE,
+                                                SOUP_SESSION_TIMEOUT, 60,
+                                                SOUP_SESSION_IDLE_TIMEOUT, 60,
+                                                NULL);
+  soup_session_remove_feature_by_type (soup_session, SOUP_TYPE_CONTENT_DECODER);
+  http_proxy = g_getenv ("http_proxy");
+  if (http_proxy)
+    {
+      g_autoptr(SoupURI) proxy_uri = soup_uri_new (http_proxy);
+      if (!proxy_uri)
+        g_warning ("Invalid proxy URI '%s'", http_proxy);
+      else
+        g_object_set (soup_session, SOUP_SESSION_PROXY_URI, proxy_uri, NULL);
+    }
+
+  return soup_session;
+}
+
 GBytes *
 flatpak_load_http_uri (SoupSession *soup_session,
                        const char   *uri,
@@ -4296,7 +4484,6 @@ flatpak_load_http_uri (SoupSession *soup_session,
                        GError      **error)
 {
   GBytes *bytes = NULL;
-  g_autoptr(SoupMessage) msg = NULL;
   g_autoptr(SoupRequestHTTP) request = NULL;
   g_autoptr(GMainLoop) loop = NULL;
   g_autoptr(GString) content = g_string_new ("");
@@ -4329,13 +4516,54 @@ flatpak_load_http_uri (SoupSession *soup_session,
     }
 
   bytes = g_string_free_to_bytes (g_steal_pointer (&content));
-  g_debug ("Received %" G_GSIZE_FORMAT " bytes", g_bytes_get_size (bytes));
+  g_debug ("Received %" G_GSIZE_FORMAT " bytes", data.downloaded_bytes);
 
   return bytes;
 }
 
+gboolean
+flatpak_download_http_uri (SoupSession *soup_session,
+                           const char   *uri,
+                           GOutputStream *out,
+                           FlatpakLoadUriProgress progress,
+                           gpointer      user_data,
+                           GCancellable *cancellable,
+                           GError      **error)
+{
+  g_autoptr(SoupRequestHTTP) request = NULL;
+  g_autoptr(GMainLoop) loop = NULL;
+  LoadUriData data = { NULL };
 
+  g_debug ("Loading %s using libsoup", uri);
 
+  loop = g_main_loop_new (NULL, TRUE);
+  data.loop = loop;
+  data.out = out;
+  data.progress = progress;
+  data.user_data = user_data;
+  data.last_progress_time = g_get_monotonic_time ();
+
+  request = soup_session_request_http (soup_session, "GET",
+                                       uri, error);
+  if (request == NULL)
+    return FALSE;
+
+  soup_request_send_async (SOUP_REQUEST(request),
+                           cancellable,
+                           load_uri_callback, &data);
+
+  g_main_loop_run (loop);
+
+  if (data.error)
+    {
+      g_propagate_error (error, data.error);
+      return FALSE;
+    }
+
+  g_debug ("Received %" G_GSIZE_FORMAT " bytes", data.downloaded_bytes);
+
+  return TRUE;
+}
 
 /* Uncomment to get debug traces in /tmp/flatpak-completion-debug.txt (nice
  * to not have it interfere with stdout/stderr)

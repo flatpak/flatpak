@@ -49,6 +49,7 @@ static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_bundle;
 static gboolean opt_from;
+static gboolean opt_oci;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -60,6 +61,7 @@ static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Install from local bundle file"), NULL },
   { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Load options from file or uri"), NULL },
+  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Install from oci image"), NULL },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { NULL }
@@ -310,6 +312,48 @@ install_from (FlatpakDir *dir,
   return TRUE;
 }
 
+static gboolean
+install_oci (FlatpakDir *dir,
+             GOptionContext *context,
+             int argc, char **argv,
+             GCancellable *cancellable,
+             GError **error)
+{
+  const char *registry_arg;
+  g_autoptr(GFile) registry_file = NULL;
+  g_autofree char *registry_uri = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+  char *default_tags[] = { "latest", NULL };
+  char **tags;
+  int i;
+
+  if (argc < 2)
+    return usage_error (context, _("OCI repo Filename or uri must be specified"), error);
+
+  registry_arg = argv[1];
+  if (argc > 2)
+    tags = &argv[2];
+  else
+    tags = default_tags;
+
+  registry_file = g_file_new_for_commandline_arg (registry_arg);
+  registry_uri = g_file_get_uri (registry_file);
+
+  transaction = flatpak_transaction_new (dir, opt_no_pull, opt_no_deploy,
+                                         !opt_no_deps, !opt_no_related);
+
+  for (i = 0; tags[i] != NULL; i++)
+    {
+      if (!flatpak_transaction_add_install_oci (transaction, registry_uri, tags[i], error))
+        return FALSE;
+    }
+
+  if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 gboolean
 flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -336,6 +380,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   if (opt_from)
     return install_from (dir, context, argc, argv, cancellable, error);
+
+  if (opt_oci)
+    return install_oci (dir, context, argc, argv, cancellable, error);
 
   if (argc < 3)
     return usage_error (context, _("REMOTE and REF must be specified"), error);

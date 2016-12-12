@@ -35,7 +35,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
-#include "flatpak-oci.h"
+#include "flatpak-oci-registry.h"
 #include "flatpak-chain-input-stream.h"
 #include "flatpak-builtins-utils.h"
 
@@ -268,102 +268,6 @@ timestamp_to_iso8601 (guint64 timestamp)
   return g_time_val_to_iso8601 (&stamp);
 }
 
-static GBytes *
-generate_config_json (guint64 timestamp,
-                      const char *layer_sha256,
-                      const char *arch)
-{
-  g_autoptr(FlatpakJsonWriter) writer = flatpak_json_writer_new ();
-  g_autofree char *created = timestamp_to_iso8601 (timestamp);
-  g_autofree char *layer_digest = g_strdup_printf ("sha256:%s", layer_sha256);
-
-  flatpak_json_writer_add_string_property (writer, "created", created);
-  flatpak_json_writer_add_string_property (writer, "architecture", flatpak_arch_to_oci_arch (arch));
-  flatpak_json_writer_add_string_property (writer, "os", "linux");
-
-  flatpak_json_writer_add_struct_property (writer, "rootfs");
-  {
-    flatpak_json_writer_add_array_property (writer, "diff_ids");
-    {
-      flatpak_json_writer_add_array_string (writer, layer_digest);
-      flatpak_json_writer_close (writer);
-    }
-    flatpak_json_writer_add_string_property (writer, "type", "layers");
-    flatpak_json_writer_close (writer);
-  }
-
-  return flatpak_json_writer_get_result (writer);
-}
-
-static GBytes *
-generate_manifest_json (guint64 config_size,
-                        const char *config_sha256,
-                        guint64 layer_size,
-                        const char *layer_sha256,
-                        const char *ref,
-                        const char *checksum,
-                        GVariant *commit)
-{
-  g_autoptr(FlatpakJsonWriter) writer = flatpak_json_writer_new ();
-  g_autofree char *config_digest = g_strdup_printf ("sha256:%s", config_sha256);
-  g_autofree char *layer_digest = g_strdup_printf ("sha256:%s", layer_sha256);
-
-  flatpak_json_writer_add_uint64_property (writer, "schemaVersion", 2);
-  flatpak_json_writer_add_string_property (writer, "mediaType", "application/vnd.oci.image.manifest.v1+json");
-  flatpak_json_writer_add_struct_property (writer, "config");
-  {
-    flatpak_json_writer_add_string_property (writer, "mediaType", "application/vnd.oci.image.config.v1+json");
-    flatpak_json_writer_add_uint64_property (writer, "size", config_size);
-    flatpak_json_writer_add_string_property (writer, "digest", config_digest);
-    flatpak_json_writer_close (writer);
-  }
-
-  flatpak_json_writer_add_array_property (writer, "layers");
-  {
-    flatpak_json_writer_add_array_struct (writer);
-    {
-      flatpak_json_writer_add_string_property (writer, "mediaType", "application/vnd.oci.image.layer.v1.tar+gzip");
-      flatpak_json_writer_add_uint64_property (writer, "size", layer_size);
-      flatpak_json_writer_add_string_property (writer, "digest", layer_digest);
-      flatpak_json_writer_close (writer);
-    }
-    flatpak_json_writer_close (writer);
-  }
-
-  flatpak_json_writer_add_struct_property (writer, "annotations");
-  {
-    g_autofree char *parent = NULL;
-    g_autofree char *subject = NULL;
-    g_autofree char *body = NULL;
-    g_autoptr(GVariant) metadata = NULL;
-    g_autofree char *metadata_base64 = NULL;
-
-    flatpak_json_writer_add_string_property (writer, "org.flatpak.Ref", ref);
-
-    parent = ostree_commit_get_parent (commit);
-    flatpak_json_writer_add_string_property (writer, "org.flatpak.ParentCommit", parent);
-
-    flatpak_json_writer_add_string_property (writer, "org.flatpak.Commit", checksum);
-
-    metadata = g_variant_get_child_value (commit, 0);
-    if (g_variant_get_size (metadata) > 0)
-      {
-        metadata_base64 = g_base64_encode (g_variant_get_data (metadata), g_variant_get_size (metadata));
-        flatpak_json_writer_add_string_property (writer, "org.flatpak.Metadata", metadata_base64);
-      }
-
-    g_variant_get_child (commit, 3, "s", &subject);
-    flatpak_json_writer_add_string_property (writer, "org.flatpak.Subject", subject);
-
-    g_variant_get_child (commit, 4, "s", &body);
-    flatpak_json_writer_add_string_property (writer, "org.flatpak.Body", body);
-
-    flatpak_json_writer_close (writer);
-  }
-
-  return flatpak_json_writer_get_result (writer);
-}
-
 static gboolean
 export_commit_to_archive (OstreeRepo *repo,
                           GFile *root,
@@ -388,24 +292,25 @@ build_oci (OstreeRepo *repo, GFile *dir,
            GCancellable *cancellable, GError **error)
 {
   g_autoptr(GFile) root = NULL;
-  g_autoptr(GFile) refs_tag = NULL;
-  g_autoptr(GFile) refs = NULL;
   g_autoptr(GVariant) commit_data = NULL;
   g_autoptr(GVariant) commit_metadata = NULL;
   g_autofree char *commit_checksum = NULL;
-  g_auto(GStrv) ref_parts = g_strsplit (ref, "/", -1);
-  glnx_fd_close int dfd = -1;
-  g_autofree char *layer_compressed_sha256 = NULL;
-  g_autofree char *layer_uncompressed_sha256 = NULL;
-  guint64 layer_compressed_size;
-  guint64 layer_uncompressed_size;
-  g_autoptr(GBytes) config = NULL;
-  g_autofree char *config_sha256 = NULL;
-  g_autoptr(GBytes) manifest = NULL;
-  g_autoptr(FlatpakOciDir) oci_dir = NULL;
+  g_autofree char *dir_uri = NULL;
+  g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciLayerWriter) layer_writer = NULL;
-  g_autofree char *manifest_sha256 = NULL;
   struct archive *archive;
+  g_autofree char *uncompressed_digest = NULL;
+  g_autofree char *timestamp = NULL;
+  g_autoptr(FlatpakOciImage) image = NULL;
+  g_autoptr(FlatpakOciRef) layer_ref = NULL;
+  g_autoptr(FlatpakOciRef) image_ref = NULL;
+  g_autoptr(FlatpakOciRef) manifest_ref = NULL;
+  g_autoptr(FlatpakOciManifest) manifest = NULL;
+  g_autoptr(GFile) metadata_file = NULL;
+  guint64 installed_size = 0;
+  GHashTable *annotations;
+  gsize metadata_size;
+  g_autofree char *metadata_contents = NULL;
 
   if (!ostree_repo_resolve_rev (repo, ref, FALSE, &commit_checksum, error))
     return FALSE;
@@ -419,50 +324,69 @@ build_oci (OstreeRepo *repo, GFile *dir,
   if (!ostree_repo_read_commit_detached_metadata (repo, commit_checksum, &commit_metadata, cancellable, error))
     return FALSE;
 
-  oci_dir = flatpak_oci_dir_new ();
-
-  if (!flatpak_oci_dir_ensure (oci_dir, dir, cancellable, error))
+  dir_uri = g_file_get_uri (dir);
+  registry = flatpak_oci_registry_new (dir_uri, TRUE, -1, cancellable, error);
+  if (registry == NULL)
     return FALSE;
 
-  layer_writer = flatpak_oci_layer_writer_new (oci_dir);
-
-  archive = flatpak_oci_layer_writer_open (layer_writer, cancellable, error);
-  if (archive == NULL)
+  layer_writer = flatpak_oci_registry_write_layer (registry, cancellable, error);
+  if (layer_writer == NULL)
     return FALSE;
+
+  archive = flatpak_oci_layer_writer_get_archive (layer_writer);
 
   if (!export_commit_to_archive (repo, root, ostree_commit_get_timestamp (commit_data),
                                  archive, cancellable, error))
     return FALSE;
 
   if (!flatpak_oci_layer_writer_close (layer_writer,
-                                       &layer_uncompressed_sha256,
-                                       &layer_uncompressed_size,
-                                       &layer_compressed_sha256,
-                                       &layer_compressed_size,
-                                       cancellable, error))
+                                       &uncompressed_digest,
+                                       &layer_ref,
+                                       cancellable,
+                                       error))
     return FALSE;
 
-  config = generate_config_json (ostree_commit_get_timestamp (commit_data),
-                                 layer_uncompressed_sha256,
-                                 ref_parts[2]);
-  config_sha256 = flatpak_oci_dir_write_blob (oci_dir, config, cancellable, error);
-  if (config_sha256 == NULL)
+
+  image = flatpak_oci_image_new ();
+  flatpak_oci_image_set_layer (image, uncompressed_digest);
+
+  timestamp = timestamp_to_iso8601 (ostree_commit_get_timestamp (commit_data));
+  flatpak_oci_image_set_created (image, timestamp);
+
+  image_ref = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (image), cancellable, error);
+  if (image_ref == NULL)
     return FALSE;
 
-  manifest = generate_manifest_json (g_bytes_get_size (config), config_sha256,
-                                     layer_compressed_size, layer_compressed_sha256,
-                                     ref, commit_checksum, commit_data);
-  manifest_sha256 = flatpak_oci_dir_write_blob (oci_dir, manifest, cancellable, error);
-  if (manifest_sha256 == NULL)
+  manifest = flatpak_oci_manifest_new ();
+  flatpak_oci_manifest_set_config (manifest, image_ref);
+  flatpak_oci_manifest_set_layer (manifest, layer_ref);
+
+  annotations = flatpak_oci_manifest_get_annotations (manifest);
+  flatpak_oci_add_annotations_for_commit (annotations, ref, commit_checksum, commit_data);
+
+  metadata_file = g_file_get_child (root, "metadata");
+  if (g_file_load_contents (metadata_file, cancellable, &metadata_contents, &metadata_size, NULL, NULL) &&
+      g_utf8_validate (metadata_contents, -1, NULL))
+    {
+      g_hash_table_replace (annotations,
+                            g_strdup ("org.flatpak.Metadata"),
+                            g_steal_pointer (&metadata_contents));
+    }
+
+  if (!flatpak_repo_collect_sizes (repo, root, &installed_size, NULL, NULL, error))
     return FALSE;
 
-  if (!flatpak_oci_dir_set_ref (oci_dir, "latest",
-                                g_bytes_get_size (manifest), manifest_sha256,
-                                cancellable, error))
+  g_hash_table_replace (annotations,
+                        g_strdup ("org.flatpak.InstalledSize"),
+                        g_strdup_printf ("%" G_GUINT64_FORMAT, installed_size));
+
+  manifest_ref = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (manifest), cancellable, error);
+  if (manifest_ref == NULL)
     return FALSE;
 
-  g_print ("WARNING: the oci format produced by flatpak is experimental and unstable.\n"
-           "Don't use this for anything but experiments for now\n");
+  if (!flatpak_oci_registry_set_ref (registry, "latest", manifest_ref,
+                                     cancellable, error))
+    return FALSE;
 
   return TRUE;
 }

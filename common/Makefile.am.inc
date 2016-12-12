@@ -48,6 +48,12 @@ libflatpak_common_la_SOURCES = \
 	common/gvdb/gvdb-builder.c	\
 	common/flatpak-db.c \
 	common/flatpak-db.h \
+	common/flatpak-json.c \
+	common/flatpak-json.h \
+	common/flatpak-json-oci.c \
+	common/flatpak-json-oci.h \
+	common/flatpak-oci-registry.c \
+	common/flatpak-oci-registry.h \
 	$(NULL)
 
 libflatpak_common_la_CFLAGS = \
@@ -61,4 +67,4 @@ libflatpak_common_la_CFLAGS = \
 	$(LIBSECCOMP_CFLAGS) \
 	-I$(srcdir)/dbus-proxy \
 	$(NULL)
-libflatpak_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS)
+libflatpak_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS)
