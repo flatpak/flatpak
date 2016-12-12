@@ -245,6 +245,7 @@ builder_source_patch_extract (BuilderSource  *source,
   if (patchfile == NULL)
     return FALSE;
 
+  g_print ("Applying patch %s\n", self->path);
   strip_components = g_strdup_printf ("-p%u", self->strip_components);
   patch_path = g_file_get_path (patchfile);
   if (!patch (dest, self->use_git, patch_path, self->options, error, strip_components, NULL))
