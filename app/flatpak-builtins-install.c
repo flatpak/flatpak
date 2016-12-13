@@ -65,7 +65,7 @@ static GOptionEntry options[] = {
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Assume LOCATION is an oci registry"), NULL },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
-  { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("OAutomatically answer yes for all questions"), NULL },
+  { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { NULL }
 };
 
