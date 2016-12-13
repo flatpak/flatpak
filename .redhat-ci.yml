@@ -3,8 +3,8 @@ branches:
     - auto
     - try
 
-container:
-    image: fedora:25
+host:
+    distro: fedora/25/cloud
 
 packages:
     - gcc
@@ -40,6 +40,9 @@ packages:
     - /usr/bin/xmlto
     - /usr/bin/xsltproc
     - redhat-rpm-config
+    - /usr/bin/update-mime-database
+    - /usr/bin/update-desktop-database
+    - /usr/bin/gtk-update-icon-cache
 
 env:
     CFLAGS: '-fsanitize=undefined'
