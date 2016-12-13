@@ -130,6 +130,8 @@ install_bundle (FlatpakDir *dir,
 
   file = g_file_new_for_commandline_arg (filename);
 
+  if (!g_file_is_native (file))
+    return flatpak_fail (error, _("Remote bundles are not supported"));
 
   if (opt_gpg_file != NULL)
     {
@@ -369,6 +371,14 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
     return FALSE;
+
+  if (!opt_bundle && !opt_from && !opt_oci && argc >= 2)
+    {
+      if (g_str_has_suffix (argv[1], ".flatpakref"))
+        opt_from = TRUE;
+      if (g_str_has_suffix (argv[1], ".flatpak"))
+        opt_bundle = TRUE;
+    }
 
   if (opt_bundle)
     return install_bundle (dir, context, argc, argv, cancellable, error);
