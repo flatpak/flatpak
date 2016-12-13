@@ -150,7 +150,6 @@ static gboolean
 handle_runtime_repo_deps (FlatpakDir *dir, GBytes *data, GError **error)
 {
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
-  g_autoptr(GKeyFile) dep_keyfile = g_key_file_new ();
   g_autofree char *dep_url = NULL;
   g_autoptr(GBytes) dep_data = NULL;
   g_autofree char *runtime_url = NULL;
@@ -251,11 +250,9 @@ install_from (FlatpakDir *dir,
   const char *filename;
   g_autofree char *remote = NULL;
   g_autofree char *ref = NULL;
-  g_auto(GStrv) parts = NULL;
   const char *slash;
   FlatpakDir *clone;
   g_autoptr(FlatpakTransaction) transaction = NULL;
-  g_autoptr(GBytes) bytes = NULL;
 
   if (argc < 2)
     return usage_error (context, _("Filename or uri must be specified"), error);
@@ -366,8 +363,6 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   g_autofree char *default_branch = NULL;
   FlatpakKinds kinds;
   g_autoptr(FlatpakTransaction) transaction = NULL;
-  g_autoptr(GPtrArray) refs = NULL;
-  g_autoptr(GHashTable) refs_hash = NULL;
 
   context = g_option_context_new (_("REMOTE REF... - Install applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -413,7 +408,6 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       g_autofree char *branch = NULL;
       FlatpakKinds kind;
       g_autofree char *ref = NULL;
-      g_autofree char *runtime_ref = NULL;
 
       if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, target_branch,
                                           &matched_kinds, &id, &arch, &branch, error))

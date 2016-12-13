@@ -134,7 +134,6 @@ flatpak_builtin_uninstall (int argc, char **argv, GCancellable *cancellable, GEr
       for (i = 0; i < related->len; i++)
         {
           FlatpakRelated *rel = g_ptr_array_index (related, i);
-          g_autoptr(GError) local_error = NULL;
           g_autoptr(GVariant) deploy_data = NULL;
 
           if (!rel->delete)
@@ -171,8 +170,6 @@ flatpak_complete_uninstall (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GError) error = NULL;
-  g_auto(GStrv) refs = NULL;
   FlatpakKinds kinds;
 
   context = g_option_context_new ("");

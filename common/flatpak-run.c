@@ -2216,7 +2216,7 @@ path_is_visible (const char **keys,
   for (i = 0; i < n_keys; i++)
     {
       const char *mounted_path = keys[i];
-      FlatpakFilesystemMode mode;
+      guint mode;
       mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, mounted_path));
 
       if (flatpak_has_path_prefix (path, mounted_path))
@@ -2244,7 +2244,7 @@ add_file_args (GPtrArray *argv_array,
   for (i = 0; i < n_keys; i++)
     {
       const char *path = keys[i];
-      FlatpakFilesystemMode mode;
+      guint mode;
 
       mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, path));
 
@@ -2278,7 +2278,7 @@ static void
 add_hide_path (GHashTable *hash_table,
                const char           *path)
 {
-  FlatpakFilesystemMode old_mode;
+  guint old_mode;
 
   old_mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, path));
   g_hash_table_insert (hash_table, g_strdup (path),
@@ -2300,7 +2300,7 @@ add_expose_path (GHashTable *hash_table,
       S_ISLNK (st.st_mode) ||
       S_ISSOCK (st.st_mode))
     {
-      FlatpakFilesystemMode old_mode;
+      guint old_mode;
 
       old_mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, path));
 

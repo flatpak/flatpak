@@ -35,9 +35,6 @@
 GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_write_archive, archive_write_free)
 #define free_write_archive __attribute__((cleanup (flatpak_local_free_write_archive)))
 
-GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_read_archive, archive_read_free)
-#define free_read_archive __attribute__((cleanup (flatpak_local_free_read_archive)))
-
 static void flatpak_oci_registry_initable_iface_init (GInitableIface *iface);
 
 struct FlatpakOciRegistry
@@ -612,13 +609,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
                                     GCancellable          *cancellable,
                                     GError               **error)
 {
-  g_autoptr(GTask) task = NULL;
   g_autofree char *subpath = NULL;
-  g_autoptr(SoupURI) uri = NULL;
-  g_autoptr(GPtrArray) mirrorlist = g_ptr_array_new ();
-  g_autoptr(SoupRequest) req = NULL;
-  g_autoptr(GInputStream) input = NULL;
-  g_autoptr(GOutputStream) out = NULL;
   glnx_fd_close int fd = -1;
 
   g_assert (self->valid);
@@ -641,7 +632,6 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
     }
   else
     {
-      g_autofree char *tmpfile_path = NULL;
       g_autoptr(SoupURI) uri = NULL;
       g_autofree char *uri_s = NULL;
       g_autofree char *checksum = NULL;

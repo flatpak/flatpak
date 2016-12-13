@@ -545,7 +545,6 @@ flatpak_transaction_run (FlatpakTransaction *self,
       FlatpakTransactionOp *op = l->data;
       g_autoptr(GError) local_error = NULL;
       gboolean res;
-      g_autofree char *subpaths_str = subpaths_to_string ((const char **)op->subpaths);
       const char *pref;
       const char *opname;
 

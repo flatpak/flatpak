@@ -4022,7 +4022,6 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   g_autoptr(OstreeMutableTree) archive_mtree = NULL;
   g_autoptr(GFile) archive_root = NULL;
   g_autofree char *commit_checksum = NULL;
-  g_autofree char *dir_uri = NULL;
   const char *parent = NULL;
   g_autofree char *subject = NULL;
   g_autofree char *body = NULL;

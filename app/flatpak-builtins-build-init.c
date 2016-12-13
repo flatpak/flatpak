@@ -211,7 +211,6 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (opt_writable_sdk)
     {
       g_autofree char *full_sdk_ref = g_strconcat ("runtime/", sdk_ref, NULL);
-      g_autoptr(GError) my_error = NULL;
       g_autoptr(GFile) sdk_deploy_files = NULL;
       g_autoptr(FlatpakDeploy) sdk_deploy = NULL;
 
@@ -258,7 +257,6 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     {
       const char *base_branch;
       g_autofree char *base_ref = NULL;
-      g_autoptr(GError) my_error = NULL;
       g_autoptr(GFile) base_deploy_files = NULL;
       g_autoptr(FlatpakDeploy) base_deploy = NULL;
 

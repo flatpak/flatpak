@@ -915,8 +915,11 @@ flatpak_dir_recreate_repo (FlatpakDir   *self,
                             GCancellable *cancellable,
                             GError      **error)
 {
-  g_autoptr(OstreeRepo) old_repo = g_steal_pointer (&self->repo);
-  return flatpak_dir_ensure_repo (self, cancellable, error);
+  gboolean res;
+  OstreeRepo *old_repo = g_steal_pointer (&self->repo);
+  res = flatpak_dir_ensure_repo (self, cancellable, error);
+  g_clear_object (&old_repo);
+  return res;
 }
 
 gboolean
@@ -1395,7 +1398,6 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
                              GCancellable        *cancellable,
                              GError             **error)
 {
-  g_autoptr(GFile) root = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
   g_autoptr(GVariant) detached_metadata = NULL;
   g_auto(GVariantDict) new_metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
@@ -2292,7 +2294,6 @@ flatpak_dir_read_latest (FlatpakDir   *self,
     {
       g_autoptr(GVariant) commit_data = NULL;
       g_autoptr(GVariant) commit_metadata = NULL;
-      g_autofree char *tmp_dir_path = NULL;
 
       if (!ostree_repo_load_commit (self->repo, res, &commit_data, NULL, error))
         return FALSE;
@@ -3054,7 +3055,6 @@ extract_extra_data (FlatpakDir          *self,
       const guchar *extra_data_sha256_bytes;
       const char *extra_data_source_name = NULL;
       guint64 download_size;
-      g_autoptr(GBytes) bytes = NULL;
       gboolean found;
       int j;
 
@@ -5925,7 +5925,6 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
                             GError      **error)
 {
   g_autoptr(GKeyFile) keyfile = g_key_file_new ();
-  g_autofree char *remote = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   g_autofree char *uri = NULL;

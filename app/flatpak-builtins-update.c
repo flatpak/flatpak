@@ -242,8 +242,6 @@ flatpak_complete_update (FlatpakCompletion *completion)
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GError) error = NULL;
-  g_auto(GStrv) refs = NULL;
   FlatpakKinds kinds;
 
   context = g_option_context_new ("");
