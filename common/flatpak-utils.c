@@ -4270,6 +4270,13 @@ flatpak_yes_no_prompt (const char *prompt, ...)
   while (TRUE)
     {
       g_print ("%s %s: ", s, "[y/n]");
+
+      if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
+        {
+          g_print ("n\n");
+          return FALSE;
+        }
+
       if (fgets (buf, sizeof (buf), stdin) == NULL)
         return FALSE;
 
@@ -4311,8 +4318,15 @@ flatpak_number_prompt (int min, int max, const char *prompt, ...)
   while (TRUE)
     {
       g_print ("%s [%d-%d]: ", s, min, max);
+
+      if (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))
+        {
+          g_print ("0\n");
+          return 0;
+        }
+
       if (fgets (buf, sizeof (buf), stdin) == NULL)
-        return FALSE;
+        return 0;
 
       g_strstrip (buf);
 
