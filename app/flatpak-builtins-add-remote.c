@@ -421,6 +421,10 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (!flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error))
     return FALSE;
 
+  /* Reload previously changed configuration */
+  if (!flatpak_dir_recreate_repo (dir, cancellable, error))
+    return FALSE;
+
   /* We can't retrieve the extra metadata until the remote has been added locally, since
      ostree_repo_remote_fetch_summary() works with the repository's name, not its URL. */
   return update_remote_with_extra_metadata (dir, remote_name, gpg_data, cancellable, error);
@@ -487,6 +491,10 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
           g_printerr (_("Error updating extra metadata for '%s': %s\n"), remote_name, local_error->message);
           return flatpak_fail (error, _("Could not update extra metadata for %s"), remote_name);
         }
+
+      /* Reload changed configuration */
+      if (!flatpak_dir_recreate_repo (dir, cancellable, error))
+        return FALSE;
     }
 
   config = get_config_from_opts (dir, remote_name);
