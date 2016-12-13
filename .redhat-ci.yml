@@ -68,6 +68,9 @@ inherit: true
 
 context: Clang
 
+container:
+    image: fedora:25
+
 env:
     CC: 'clang'
     CFLAGS: '-Werror=unused-variable'
