@@ -38,6 +38,7 @@ GType flatpak_dir_get_type (void);
 GType flatpak_deploy_get_type (void);
 
 #define FLATPAK_REF_GROUP "Flatpak Ref"
+#define FLATPAK_REF_VERSION_KEY "Version"
 #define FLATPAK_REF_URL_KEY "Url"
 #define FLATPAK_REF_RUNTIME_REPO_KEY "RuntimeRepo"
 #define FLATPAK_REF_TITLE_KEY "Title"
@@ -47,6 +48,7 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REF_BRANCH_KEY "Branch"
 
 #define FLATPAK_REPO_GROUP "Flatpak Repo"
+#define FLATPAK_REPO_VERSION_KEY "Version"
 #define FLATPAK_REPO_URL_KEY "Url"
 #define FLATPAK_REPO_TITLE_KEY "Title"
 #define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"

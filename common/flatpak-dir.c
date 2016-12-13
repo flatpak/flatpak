@@ -6015,6 +6015,7 @@ parse_ref_file (GBytes *data,
   g_autofree char *title = NULL;
   g_autofree char *name = NULL;
   g_autofree char *branch = NULL;
+  g_autofree char *version = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   gboolean is_runtime = FALSE;
   char *str;
@@ -6032,6 +6033,11 @@ parse_ref_file (GBytes *data,
 
   if (!g_key_file_has_group (keyfile, FLATPAK_REF_GROUP))
     return flatpak_fail (error, "Invalid file format, no %s group", FLATPAK_REF_GROUP);
+
+  version = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                                   FLATPAK_REF_VERSION_KEY, NULL);
+  if (version != NULL && strcmp (version, "1") != 0)
+    return flatpak_fail (error, "Invalid version %s, only 1 supported", version);
 
   url = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
                                FLATPAK_REF_URL_KEY, NULL);

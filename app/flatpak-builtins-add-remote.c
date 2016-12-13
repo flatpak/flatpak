@@ -220,6 +220,7 @@ load_options (const char *filename,
   char *str;
   gboolean nodeps;
   g_autoptr(GBytes) bytes = NULL;
+  g_autofree char *version = NULL;
 
   if (g_str_has_prefix (filename, "http:") ||
       g_str_has_prefix (filename, "https:"))
@@ -255,6 +256,14 @@ load_options (const char *filename,
   if (!g_key_file_has_group (keyfile, FLATPAK_REPO_GROUP))
     {
       g_printerr ("Invalid file format");
+      exit (1);
+    }
+
+  version = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+                                   FLATPAK_REPO_VERSION_KEY, NULL);
+  if (version != NULL && strcmp (version, "1") != 0)
+    {
+      g_printerr ("Invalid version %s, only 1 supported", version);
       exit (1);
     }
 
