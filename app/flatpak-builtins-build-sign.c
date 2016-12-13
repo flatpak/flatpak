@@ -55,32 +55,34 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GError) my_error = NULL;
   const char *location;
   const char *branch;
-  const char *id;
+  const char *id = NULL;
   g_autofree char *commit_checksum = NULL;
-  g_autofree char *ref = NULL;
+  int i;
   char **iter;
+  g_autoptr(GPtrArray) refs = g_ptr_array_new_with_free_func (g_free);
 
-  context = g_option_context_new (_("LOCATION ID [BRANCH] - Sign an application or runtime"));
+  context = g_option_context_new (_("LOCATION [ID [BRANCH]] - Sign an application or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, cancellable, error))
     return FALSE;
 
-  if (argc < 3)
-    return usage_error (context, _("LOCATION and DIRECTORY must be specified"), error);
+  if (argc < 2)
+    return usage_error (context, _("LOCATION must be specified"), error);
 
   if (argc > 4)
     return usage_error (context, _("Too many arguments"), error);
 
   location = argv[1];
-  id = argv[2];
+  if (argc >= 3)
+    id = argv[2];
 
   if (argc >= 4)
     branch = argv[3];
   else
     branch = "master";
 
-  if (!flatpak_is_valid_name (id, &my_error))
+  if (id != NULL && !flatpak_is_valid_name (id, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid name: %s"), id, my_error->message);
 
   if (!flatpak_is_valid_branch (branch, &my_error))
@@ -89,31 +91,70 @@ flatpak_builtin_build_sign (int argc, char **argv, GCancellable *cancellable, GE
   if (opt_gpg_key_ids == NULL)
     return flatpak_fail (error, _("No gpg key ids specified"));
 
-  if (opt_runtime)
-    ref = flatpak_build_runtime_ref (id, branch, opt_arch);
-  else
-    ref = flatpak_build_app_ref (id, branch, opt_arch);
-
   repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);
 
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
-  if (!ostree_repo_resolve_rev (repo, ref, FALSE, &commit_checksum, error))
-    return FALSE;
-
-  for (iter = opt_gpg_key_ids; iter && *iter; iter++)
+  if (id)
     {
-      const char *keyid = *iter;
+      g_autofree char *ref = NULL;
+      if (opt_runtime)
+        ref = flatpak_build_runtime_ref (id, branch, opt_arch);
+      else
+        ref = flatpak_build_app_ref (id, branch, opt_arch);
 
-      if (!ostree_repo_sign_commit (repo,
-                                    commit_checksum,
-                                    keyid,
-                                    opt_gpg_homedir,
-                                    cancellable,
-                                    error))
+      g_ptr_array_add (refs, g_steal_pointer (&ref));
+    }
+  else
+    {
+      g_autoptr(GHashTable) all_refs = NULL;
+      GHashTableIter hashiter;
+      gpointer key, value;
+
+      if (!ostree_repo_list_refs_ext (repo, NULL, &all_refs,
+                                      OSTREE_REPO_LIST_REFS_EXT_NONE,
+                                      cancellable, error))
         return FALSE;
+
+      /* Merge the prefix refs to the full refs table */
+      g_hash_table_iter_init (&hashiter, all_refs);
+      while (g_hash_table_iter_next (&hashiter, &key, &value))
+        {
+          if (g_str_has_prefix (key, "app/") ||
+              g_str_has_prefix (key, "runtime/"))
+            g_ptr_array_add (refs, g_strdup (key));
+        }
+
+    }
+
+  for (i = 0; i < refs->len; i++)
+    {
+      const char *ref = g_ptr_array_index (refs, i);
+
+      if (!ostree_repo_resolve_rev (repo, ref, FALSE, &commit_checksum, error))
+        return FALSE;
+
+      for (iter = opt_gpg_key_ids; iter && *iter; iter++)
+        {
+          const char *keyid = *iter;
+          g_autoptr(GError) local_error = NULL;
+
+          if (!ostree_repo_sign_commit (repo,
+                                        commit_checksum,
+                                        keyid,
+                                        opt_gpg_homedir,
+                                        cancellable,
+                                        &local_error))
+            {
+              if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
+            }
+        }
     }
 
   return TRUE;
