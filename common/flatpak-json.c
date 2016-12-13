@@ -571,7 +571,7 @@ flatpak_json_to_node (FlatpakJson *self)
   gpointer class;
 
   if (self == NULL)
-    json_node_new (JSON_NODE_NULL);
+    return json_node_new (JSON_NODE_NULL);
 
   obj = json_object_new ();
 
