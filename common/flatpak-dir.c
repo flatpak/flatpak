@@ -1398,7 +1398,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
   g_autoptr(GFile) root = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
   g_autoptr(GVariant) detached_metadata = NULL;
-  g_auto(GVariantDict) new_metadata_dict = {0};
+  g_auto(GVariantDict) new_metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
   g_autoptr(GVariantBuilder) extra_data_builder = NULL;
   g_autoptr(GVariant) new_detached_metadata = NULL;
   g_autoptr(GVariant) extra_data = NULL;

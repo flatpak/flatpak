@@ -40,8 +40,10 @@ typedef enum {
 /* https://bugzilla.gnome.org/show_bug.cgi?id=766370 */
 #if !GLIB_CHECK_VERSION(2, 49, 3)
 #define FLATPAK_VARIANT_BUILDER_INITIALIZER {{0,}}
+#define FLATPAK_VARIANT_DICT_INITIALIZER {{0,}}
 #else
 #define FLATPAK_VARIANT_BUILDER_INITIALIZER {{{0,}}}
+#define FLATPAK_VARIANT_DICT_INITIALIZER {{{0,}}}
 #endif
 
 gboolean flatpak_fail (GError    **error,
