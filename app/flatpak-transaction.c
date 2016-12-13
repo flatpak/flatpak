@@ -45,6 +45,7 @@ struct FlatpakTransaction {
   GHashTable *refs;
   GList *ops;
 
+  gboolean no_interaction;
   gboolean no_pull;
   gboolean no_deploy;
   gboolean add_deps;
@@ -146,6 +147,7 @@ flatpak_transaction_operation_free (FlatpakTransactionOp *self)
 
 FlatpakTransaction *
 flatpak_transaction_new (FlatpakDir *dir,
+                         gboolean no_interaction,
                          gboolean no_pull,
                          gboolean no_deploy,
                          gboolean add_deps,
@@ -156,6 +158,7 @@ flatpak_transaction_new (FlatpakDir *dir,
   t->dir = g_object_ref (dir);
   t->refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
+  t->no_interaction = no_interaction;
   t->no_pull = no_pull;
   t->no_deploy = no_deploy;
   t->add_deps = add_deps;
@@ -259,13 +262,18 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
 }
 
 static char *
-ask_for_remote (const char **remotes)
+ask_for_remote (FlatpakTransaction *self, const char **remotes)
 {
   int n_remotes = g_strv_length ((char **)remotes);
   int chosen = 0;
   int i;
 
-  if (n_remotes == 1)
+  if (self->no_interaction)
+    {
+      chosen = 1;
+      g_print ("Found in remote %s\n", remotes[0]);
+    }
+  else if (n_remotes == 1)
     {
       if (flatpak_yes_no_prompt (_("Found in remote %s, do you want to install it?"), remotes[0]))
         chosen = 1;
@@ -364,7 +372,7 @@ add_deps (FlatpakTransaction *self,
             }
           else
             {
-              runtime_remote = ask_for_remote ((const char **)remotes);
+              runtime_remote = ask_for_remote (self, (const char **)remotes);
             }
 
           if (runtime_remote == NULL)

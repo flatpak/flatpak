@@ -29,6 +29,7 @@
 typedef struct FlatpakTransaction FlatpakTransaction;
 
 FlatpakTransaction *flatpak_transaction_new         (FlatpakDir          *dir,
+                                                     gboolean             no_interaction,
                                                      gboolean             no_pull,
                                                      gboolean             no_deploy,
                                                      gboolean             add_deps,

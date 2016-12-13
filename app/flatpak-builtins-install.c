@@ -50,6 +50,7 @@ static gboolean opt_app;
 static gboolean opt_bundle;
 static gboolean opt_from;
 static gboolean opt_oci;
+static gboolean opt_yes;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to install for"), N_("ARCH") },
@@ -64,6 +65,7 @@ static GOptionEntry options[] = {
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Assume LOCATION is an oci registry"), NULL },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
+  { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("OAutomatically answer yes for all questions"), NULL },
   { NULL }
 };
 
@@ -226,10 +228,14 @@ handle_runtime_repo_deps (FlatpakDir *dir, GBytes *data, GError **error)
   if (old_remote != NULL)
     return TRUE;
 
-  if (flatpak_yes_no_prompt (_("This application depends on runtimes from:\n  %s\nConfigure this as new remote '%s'"),
+  if (opt_yes ||
+      flatpak_yes_no_prompt (_("This application depends on runtimes from:\n  %s\nConfigure this as new remote '%s'"),
                              runtime_url, new_remote))
     {
-      if (!flatpak_dir_modify_remote (dir, new_remote, config, gpg_key, NULL, error))
+      if (opt_yes)
+        g_print (_("Configuring %s as new remote '%s'"), runtime_url, new_remote);
+
+    if (!flatpak_dir_modify_remote (dir, new_remote, config, gpg_key, NULL, error))
         return FALSE;
       if (!flatpak_dir_recreate_repo (dir, NULL, error))
         return FALSE;
@@ -299,7 +305,7 @@ install_from (FlatpakDir *dir,
   slash = strchr (ref, '/');
   g_print (_("Installing: %s\n"), slash + 1);
 
-  transaction = flatpak_transaction_new (clone, opt_no_pull, opt_no_deploy,
+  transaction = flatpak_transaction_new (clone, opt_yes, opt_no_pull, opt_no_deploy,
                                          !opt_no_deps, !opt_no_related);
 
   if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
@@ -338,7 +344,7 @@ install_oci (FlatpakDir *dir,
   registry_file = g_file_new_for_commandline_arg (registry_arg);
   registry_uri = g_file_get_uri (registry_file);
 
-  transaction = flatpak_transaction_new (dir, opt_no_pull, opt_no_deploy,
+  transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
                                          !opt_no_deps, !opt_no_related);
 
   for (i = 0; tags[i] != NULL; i++)
@@ -406,7 +412,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   default_branch = flatpak_dir_get_remote_default_branch (dir, remote);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  transaction = flatpak_transaction_new (dir, opt_no_pull, opt_no_deploy,
+  transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
                                          !opt_no_deps, !opt_no_related);
 
   for (i = 0; i < n_prefs; i++)

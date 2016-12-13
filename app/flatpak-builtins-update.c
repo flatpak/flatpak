@@ -46,6 +46,7 @@ static gboolean opt_no_deps;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_appstream;
+static gboolean opt_yes;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to update for"), N_("ARCH") },
@@ -59,6 +60,7 @@ static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, N_("Update appstream for remote"), NULL },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only update this subpath"), N_("PATH") },
+  { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("OAutomatically answer yes for all questions"), NULL },
   { NULL }
 };
 
@@ -135,7 +137,7 @@ flatpak_builtin_update (int           argc,
       n_prefs = 1;
     }
 
-  transaction = flatpak_transaction_new (dir, opt_no_pull, opt_no_deploy,
+  transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
                                          !opt_no_deps, !opt_no_related);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
