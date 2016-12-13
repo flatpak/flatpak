@@ -55,7 +55,7 @@ typedef struct
 static FlatpakCommand commands[] = {
    /* translators: please keep the leading space */
   { N_(" Manage installed apps and runtimes") },
-  { "install", N_("Install an application or runtime from a remote"), flatpak_builtin_install, flatpak_complete_install },
+  { "install", N_("Install an application or runtime"), flatpak_builtin_install, flatpak_complete_install },
   { "update", N_("Update an installed application or runtime"), flatpak_builtin_update, flatpak_complete_update },
   { "uninstall", N_("Uninstall an installed application or runtime"), flatpak_builtin_uninstall, flatpak_complete_uninstall },
   { "list", N_("List installed apps and/or runtimes"), flatpak_builtin_list, flatpak_complete_list },

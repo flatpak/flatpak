@@ -29,6 +29,15 @@
     </refnamediv>
 
     <refsynopsisdiv>
+            <para>Add from a .flatpakrepo file:</para>
+            <cmdsynopsis>
+                <command>flatpak remote-add</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="opt">--from</arg>
+                <arg choice="plain">NAME</arg>
+                <arg choice="plain">LOCATION</arg>
+            </cmdsynopsis>
+            <para>Manually specify repo uri and options:</para>
             <cmdsynopsis>
                 <command>flatpak remote-add</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
@@ -41,17 +50,17 @@
         <title>Description</title>
 
         <para>
-            Adds a remote repository to the flatpak repository configuration.
-            <arg choice="plain">NAME</arg> is the name for the new remote, and
-            <arg choice="plain">LOCATION</arg> is the url or pathname for the repository.
+            Adds a remote repository to the flatpak repository
+            configuration.  <arg>NAME</arg> is the name for the new
+            remote, and <arg>LOCATION</arg> is a url or pathname.  The
+            <arg>LOCATION</arg> is either a flatpak repository, or a
+            .flatpakrepo file which describes a repository. In the
+            former case you may also have to specify extra options,
+            such as the gpg key for the repo.
         </para>
         <para>
             Unless overridden with the --user option, this command changes
             the system-wide configuration.
-        </para>
-        <para>
-            The alternative form of the command adds a remote from a flatpakrepo
-            file.
         </para>
 
     </refsect1>
@@ -75,7 +84,8 @@
                 <term><option>--from</option></term>
 
                 <listitem><para>
-                    Add from a flatpakrepo file (local or http uri) instead of from commandline arguments. This means the LOCATION argument specifies the filename/uri of a flatpakref rather than a repo url.
+                  Assume the URI is a .flatpakrepo file rather than the repository itself. This is enabled
+                  by default if the extension is .flatpakrepo, so generally you don't need this option.
                 </para></listitem>
             </varlistentry>
 
@@ -203,6 +213,9 @@
     <refsect1>
         <title>Examples</title>
 
+        <para>
+            <command>$ flatpak remote-add gnome https://sdk.gnome.org/gnome.flatpakrepo</command>
+        </para>
         <para>
             <command>$ flatpak --user remote-add --no-gpg-verify test-repo https://people.gnome.org/~alexl/gnome-sdk/repo/</command>
         </para>

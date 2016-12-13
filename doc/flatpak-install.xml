@@ -29,29 +29,33 @@
     </refnamediv>
 
     <refsynopsisdiv>
+            <para>Install from a configured remote:</para>
             <cmdsynopsis>
                 <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">REMOTE</arg>
+                <arg choice="plain">REMOTE-NAME</arg>
                 <arg choice="plain" rep="repeat">REF</arg>
             </cmdsynopsis>
+            <para>Install from a .flatpakref file:</para>
             <cmdsynopsis>
                 <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <group choice="opt">
-                    <arg choice="plain">--bundle</arg>
-                    <arg choice="plain">--from</arg>
-                </group>
+                <arg choice="opt">--from</arg>
+                <arg choice="plain">LOCATION</arg>
+            </cmdsynopsis>
+            <para>Install from a .flatpak bundle:</para>
+            <cmdsynopsis>
+                <command>flatpak install</command>
+                <arg choice="opt" rep="repeat">OPTION</arg>
+                <arg choice="opt">--bundle</arg>
                 <arg choice="plain">FILENAME</arg>
             </cmdsynopsis>
+            <para>Install from an OCI registry:</para>
             <cmdsynopsis>
-                <command>flatpak install --oci</command>
+                <command>flatpak install</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <group choice="opt">
-                    <arg choice="plain">--bundle</arg>
-                    <arg choice="plain">--from</arg>
-                </group>
-                <arg choice="plain">REGISTRYURI</arg>
+                <arg choice="plain">--oci</arg>
+                <arg choice="plain">LOCATION</arg>
                 <arg choice="opt">TAG</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
@@ -60,12 +64,13 @@
         <title>Description</title>
 
         <para>
-            Installs an application or runtime. <arg choice="plain">REMOTE</arg> must name
-            an existing remote and <arg choice="plain">REF</arg> is a reference to the
-            application or runtime to install.
+          Installs an application or runtime. The primary way to
+          install is to specify a <arg>REMOTE</arg>
+          name as the source and one ore more <arg>REF</arg>s to specify the
+          application or runtime to install.
         </para>
         <para>
-            Each <arg choice="plain">REF</arg> arguments is a full or partial indentifier in the
+            Each <arg choice="plain">REF</arg> argument is a full or partial indentifier in the
             flatpak ref format, which looks like "(app|runtime)/ID/ARCH/BRANCH". All elements
             except ID are optional and can be left out, including the slashes,
             so most of the time you need only specify ID. Any part left out will be matched
@@ -78,6 +83,14 @@
             --runtime option, or by supplying the initial element in the REF.
         </para>
         <para>
+            The alternative form of the command (<arg>--from</arg>,
+            <arg>--bundle</arg> or <arg>--oci</arg>) allows you to
+            install directly from a source such as a .flatpak
+            single-file bundle, a .flatpakref app description or an
+            OCI registry. The options are optional if the first
+            argument have the right extension.
+        </para>
+        <para>
             Note that flatpak allows one to have multiple branches of an application and runtimes
             installed and used at the same time. However, only version of an application one can be current,
             meaning its exported files (for instance desktop files and icons) are
@@ -87,12 +100,6 @@
         <para>
             Unless overridden with the --user option, this command creates a
             system-wide installation.
-        </para>
-        <para>
-            The alternative form of the command installs an application from a
-            single-file bundle or a flatpakref file instead of a configured remote.
-            Bundles can be created with the flatpak build-bundle command, flatpakref
-            files are simple references to a remote repo for an application.
         </para>
 
     </refsect1>
@@ -116,8 +123,8 @@
                 <term><option>--bundle</option></term>
 
                 <listitem><para>
-                    Install from a bundle file instead
-                    of a configured remote.
+                  Assume LOCATION is a .flatpak single-bundle file.
+                  This is optional if the arguments ends with .flatpak.
                 </para></listitem>
             </varlistentry>
 
@@ -125,8 +132,8 @@
                 <term><option>--from</option></term>
 
                 <listitem><para>
-                    Install from a flatpakref file instead
-                    of a configured remote.
+                  Assume LOCATION is a .flatpakref file containing the details of the app to be installed.
+                  This is optional if the arguments ends with .flatpakref.
                 </para></listitem>
             </varlistentry>
 
@@ -249,7 +256,13 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak --user install test-repo org.gnome.GEdit</command>
+            <command>$ flatpak -install gnome org.gnome.gedit2</command>
+        </para>
+        <para>
+            <command>$ flatpak --user install gnome org.gnome.gedit//3.22</command>
+        </para>
+        <para>
+            <command>$ flatpak --user install https://sdk.gnome.org/gedit.flatpakref</command>
         </para>
 
     </refsect1>

@@ -59,9 +59,9 @@ static GOptionEntry options[] = {
   { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify/install runtime dependencies"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
-  { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Install from local bundle file"), NULL },
-  { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Load options from file or uri"), NULL },
-  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Install from oci image"), NULL },
+  { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Assume LOCATION is a .flatpak single-file bundle"), NULL },
+  { "from", 0, 0, G_OPTION_ARG_NONE, &opt_from, N_("Assume LOCATION is a .flatpakref application description"), NULL },
+  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Assume LOCATION is an oci registry"), NULL },
   { "gpg-file", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Check bundle signatures with GPG key from FILE (- for stdin)"), N_("FILE") },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only install this subpath"), N_("PATH") },
   { NULL }
@@ -366,7 +366,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   FlatpakKinds kinds;
   g_autoptr(FlatpakTransaction) transaction = NULL;
 
-  context = g_option_context_new (_("REMOTE REF... - Install applications or runtimes"));
+  context = g_option_context_new (_("LOCATION/REMOTE [REF...] - Install applications or runtimes"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
 
   if (!flatpak_option_context_parse (context, options, &argc, &argv, 0, &dir, cancellable, error))
