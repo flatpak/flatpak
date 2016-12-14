@@ -92,29 +92,6 @@ dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out)
   return TRUE;
 }
 
-static char *
-transaction_fetch_runtime_ref (FlatpakDir *dir, const char *remote, const char *ref)
-{
-  g_autofree char *metadata = NULL;
-  g_autoptr(GKeyFile) metakey = NULL;
-  g_autofree char *runtime_ref = NULL;
-
-  if (!g_str_has_prefix (ref, "app/"))
-    return NULL;
-
-  if (!flatpak_dir_fetch_ref_cache (dir, remote, ref, NULL, NULL, &metadata, NULL, NULL))
-    return NULL;
-
-  metakey = g_key_file_new ();
-  if (!g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
-    return NULL;
-
-  runtime_ref = g_key_file_get_string (metakey, "Application", "runtime", NULL);
-
-  return g_steal_pointer (&runtime_ref);
-}
-
-
 static FlatpakTransactionOp *
 flatpak_transaction_operation_new (const char *remote,
                                    const char *ref,
@@ -338,6 +315,7 @@ add_related (FlatpakTransaction *self,
 
 static gboolean
 add_deps (FlatpakTransaction *self,
+          GKeyFile *metakey,
           const char *remote,
           const char *ref,
           GError **error)
@@ -347,7 +325,11 @@ add_deps (FlatpakTransaction *self,
   g_autofree char *runtime_remote = NULL;
   const char *pref;
 
-  runtime_ref = transaction_fetch_runtime_ref (self->dir, remote, ref);
+  if (!g_str_has_prefix (ref, "app/"))
+    return TRUE;
+
+  if (metakey)
+    runtime_ref = g_key_file_get_string (metakey, "Application", "runtime", NULL);
   if (runtime_ref == NULL)
     return TRUE;
 
@@ -410,6 +392,8 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
 {
   g_autofree char *origin = NULL;
   const char *pref;
+  g_autofree char *metadata = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
 
   pref = strchr (ref, '/') + 1;
 
@@ -440,8 +424,33 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         }
     }
 
+  if (flatpak_dir_fetch_ref_cache (self->dir, remote, ref, NULL, NULL, &metadata, NULL, NULL))
+    {
+      metakey = g_key_file_new ();
+      if (!g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
+        g_clear_object (&metakey);
+    }
+
+  if (metakey)
+    {
+      g_autofree char *required_version = g_key_file_get_string (metakey, "Application", "required-flatpak", NULL);
+      int required_major, required_minor, required_micro;
+      if (required_version)
+        {
+          if (sscanf (required_version, "%d.%d.%d", &required_major, &required_minor, &required_micro) != 3)
+            g_print ("Invalid require-flatpak argument %s\n", required_version);
+          else
+            {
+              if (required_major > PACKAGE_MAJOR_VERSION ||
+                  (required_major == PACKAGE_MAJOR_VERSION && required_minor > PACKAGE_MINOR_VERSION) ||
+                  (required_major == PACKAGE_MAJOR_VERSION && required_minor == PACKAGE_MINOR_VERSION && required_micro > PACKAGE_MICRO_VERSION))
+                return flatpak_fail (error, _("%s needs a later flatpak version (%s)"), ref, required_version);
+            }
+        }
+    }
+
   if (self->add_deps)
-    add_deps (self, remote, ref, error);
+    add_deps (self, metakey, remote, ref, error);
 
   flatpak_transaction_add_op (self, remote, ref, subpaths, commit, !is_update, is_update);
 

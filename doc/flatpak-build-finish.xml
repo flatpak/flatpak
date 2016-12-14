@@ -87,6 +87,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--require-version=MAJOR.MINOR.MICRO</option></term>
+
+                <listitem><para>
+                    Require this version of later of flatpak to install/update to this build.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--share=SUBSYSTEM</option></term>
 
                 <listitem><para>

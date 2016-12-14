@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_without_user_xattrs
 
-echo "1..8"
+echo "1..9"
 
 setup_repo
 install_repo
@@ -287,5 +287,41 @@ assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/e/data
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/f
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
 
-
 echo "ok subpaths"
+
+VERSION=`cat "$test_builddir/package_version.txt"`
+
+DIR=`mktemp -d`
+${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform
+${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+DIR=`mktemp -d`
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
+${FLATPAK} build-finish --require-version=0.6.10 --command=hello.sh ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+DIR=`mktemp -d`
+${FLATPAK} build-init ${DIR} org.test.NewVersion org.test.Platform org.test.Platform
+${FLATPAK} build-finish --require-version=${VERSION}9 --command=hello.sh ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+
+update_repo
+
+${FLATPAK} ${U} install test-repo org.test.OldVersion master
+${FLATPAK} ${U} install test-repo org.test.CurrentVersion master
+(! ${FLATPAK} ${U} install test-repo org.test.NewVersion master)
+
+DIR=`mktemp -d`
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
+${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+
+(! ${FLATPAK} ${U} update org.test.OldVersion)
+
+DIR=`mktemp -d`
+${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
+${FLATPAK} build-finish --require-version=0.1.1 --command=hello.sh ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+
+${FLATPAK} ${U} update org.test.OldVersion
+
+echo "ok version checks"
