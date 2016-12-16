@@ -196,7 +196,7 @@ flatpak_deploy_new (GFile *dir, GKeyFile *metadata)
 }
 
 GFile *
-flatpak_get_system_base_dir_location (void)
+flatpak_get_system_default_base_dir_location (void)
 {
   static gsize path = 0;
 
@@ -540,7 +540,7 @@ flatpak_save_override_keyfile (GKeyFile   *metakey,
   if (user)
     base_dir = flatpak_get_user_base_dir_location ();
   else
-    base_dir = flatpak_get_system_base_dir_location ();
+    base_dir = flatpak_get_system_default_base_dir_location ();
 
   override_dir = g_file_get_child (base_dir, "overrides");
   file = g_file_get_child (override_dir, app_id);
@@ -5673,7 +5673,7 @@ flatpak_dir_clone (FlatpakDir *self)
 FlatpakDir *
 flatpak_dir_get_system_default (void)
 {
-  g_autoptr(GFile) path = flatpak_get_system_base_dir_location ();
+  g_autoptr(GFile) path = flatpak_get_system_default_base_dir_location ();
   return flatpak_dir_new (path, FALSE);
 }
 

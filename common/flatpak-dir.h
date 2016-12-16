@@ -114,7 +114,7 @@ GQuark       flatpak_dir_error_quark (void);
 #define FLATPAK_DEPLOY_DATA_GVARIANT_STRING "(ssasta{sv})"
 #define FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT G_VARIANT_TYPE (FLATPAK_DEPLOY_DATA_GVARIANT_STRING)
 
-GFile *  flatpak_get_system_base_dir_location (void);
+GFile *  flatpak_get_system_default_base_dir_location (void);
 GFile *  flatpak_get_user_base_dir_location (void);
 
 GKeyFile *     flatpak_load_override_keyfile (const char *app_id,
