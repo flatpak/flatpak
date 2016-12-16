@@ -142,7 +142,6 @@ GKeyFile *     flatpak_deploy_get_metadata (FlatpakDeploy *deploy);
 FlatpakDir *  flatpak_dir_new (GFile   *basedir,
                                gboolean user);
 FlatpakDir *  flatpak_dir_clone (FlatpakDir *self);
-FlatpakDir  *flatpak_dir_get (gboolean user);
 FlatpakDir  *flatpak_dir_get_system_default (void);
 FlatpakDir  *flatpak_dir_get_user (void);
 gboolean    flatpak_dir_is_user (FlatpakDir *self);

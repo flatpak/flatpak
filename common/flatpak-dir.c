@@ -484,7 +484,7 @@ flatpak_load_override_keyfile (const char *app_id, gboolean user, GError **error
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
   g_autoptr(FlatpakDir) dir = NULL;
 
-  dir = flatpak_dir_get (user);
+  dir = user ? flatpak_dir_get_user () : flatpak_dir_get_system_default ();
 
   metadata_contents = flatpak_dir_load_override (dir, app_id, &metadata_size, error);
   if (metadata_contents == NULL)
@@ -5682,15 +5682,6 @@ flatpak_dir_get_user (void)
 {
   g_autoptr(GFile) path = flatpak_get_user_base_dir_location ();
   return flatpak_dir_new (path, TRUE);
-}
-
-FlatpakDir *
-flatpak_dir_get (gboolean user)
-{
-  if (user)
-    return flatpak_dir_get_user ();
-  else
-    return flatpak_dir_get_system_default ();
 }
 
 static char *
