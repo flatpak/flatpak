@@ -615,6 +615,12 @@ flatpak_dir_get_path (FlatpakDir *self)
   return self->basedir;
 }
 
+const char *
+flatpak_dir_get_id (FlatpakDir *self)
+{
+  return self->id;
+}
+
 GFile *
 flatpak_dir_get_changed_path (FlatpakDir *self)
 {
