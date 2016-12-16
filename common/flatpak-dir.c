@@ -72,6 +72,7 @@ struct FlatpakDir
 
   gboolean             user;
   GFile               *basedir;
+  char                *id;
   OstreeRepo          *repo;
   gboolean             no_system_helper;
 
@@ -265,8 +266,14 @@ append_locations_from_config_file (GPtrArray    *locations,
           g_propagate_error (error, g_steal_pointer (&my_error));
           goto out;
         }
+      else
+        {
+          GFile *location = NULL;
 
-      g_ptr_array_add (locations, g_file_new_for_path (path));
+          location = g_file_new_for_path (path);
+          g_object_set_data_full (G_OBJECT (location), "installation-id", g_strdup (id), (GDestroyNotify)g_free);
+          g_ptr_array_add (locations, location);
+        }
     }
 
   ret = TRUE;
@@ -494,6 +501,7 @@ flatpak_dir_finalize (GObject *object)
 
   g_clear_object (&self->repo);
   g_clear_object (&self->basedir);
+  g_clear_pointer (&self->id, g_free);
 
   if (self->system_helper != NO_SYSTEM_HELPER)
     g_clear_object (&self->system_helper);
@@ -583,6 +591,9 @@ flatpak_dir_init (FlatpakDir *self)
 {
   /* Work around possible deadlock due to: https://bugzilla.gnome.org/show_bug.cgi?id=674885 */
   g_type_ensure (G_TYPE_UNIX_SOCKET_ADDRESS);
+
+  /* Optional data that needs initialization */
+  self->id = NULL;
 }
 
 gboolean
@@ -5817,23 +5828,34 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   return NULL;
 }
 
+static FlatpakDir *
+flatpak_dir_new_with_id (GFile *path, gboolean user, const char *id)
+{
+  FlatpakDir *dir = g_object_new (FLATPAK_TYPE_DIR, "path", path, "user", user, NULL);
+  dir->id = g_strdup (id);
+
+  return dir;
+}
+
 FlatpakDir *
 flatpak_dir_new (GFile *path, gboolean user)
 {
-  return g_object_new (FLATPAK_TYPE_DIR, "path", path, "user", user, NULL);
+  /* We are only interested on names for system-wide installations, in which case
+     we use _new_with_id() directly, so here we just call it passing NULL */
+  return flatpak_dir_new_with_id (path, user, NULL);
 }
 
 FlatpakDir *
 flatpak_dir_clone (FlatpakDir *self)
 {
-  return flatpak_dir_new (self->basedir, self->user);
+  return flatpak_dir_new_with_id (self->basedir, self->user, self->id);
 }
 
 FlatpakDir *
 flatpak_dir_get_system_default (void)
 {
   g_autoptr(GFile) path = flatpak_get_system_default_base_dir_location ();
-  return flatpak_dir_new (path, FALSE);
+  return flatpak_dir_new_with_id (path, FALSE, NULL);
 }
 
 GPtrArray *
@@ -5859,7 +5881,8 @@ flatpak_dir_get_system_list (GCancellable *cancellable,
   for (i = 0; i < locations->len; i++)
     {
       GFile *path = g_ptr_array_index (locations, i);
-      g_ptr_array_add (result, flatpak_dir_new (path, FALSE));
+      char *id = g_object_get_data (G_OBJECT (path), "installation-id");
+      g_ptr_array_add (result, flatpak_dir_new_with_id (path, FALSE, id));
     }
 
   return g_steal_pointer (&result);
