@@ -5671,7 +5671,7 @@ flatpak_dir_clone (FlatpakDir *self)
 }
 
 FlatpakDir *
-flatpak_dir_get_system (void)
+flatpak_dir_get_system_default (void)
 {
   g_autoptr(GFile) path = flatpak_get_system_base_dir_location ();
   return flatpak_dir_new (path, FALSE);
@@ -5690,7 +5690,7 @@ flatpak_dir_get (gboolean user)
   if (user)
     return flatpak_dir_get_user ();
   else
-    return flatpak_dir_get_system ();
+    return flatpak_dir_get_system_default ();
 }
 
 static char *

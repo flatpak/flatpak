@@ -940,7 +940,7 @@ flatpak_list_deployed_refs (const char   *type,
   hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   user_dir = flatpak_dir_get_user ();
-  system_dir = flatpak_dir_get_system ();
+  system_dir = flatpak_dir_get_system_default ();
 
   if (!flatpak_dir_collect_deployed_refs (user_dir, type, name_prefix,
                                           branch, arch, hash, cancellable,
@@ -1023,7 +1023,7 @@ flatpak_find_deploy_dir_for_ref (const char   *ref,
   g_autoptr(GFile) deploy = NULL;
 
   user_dir = flatpak_dir_get_user ();
-  system_dir = flatpak_dir_get_system ();
+  system_dir = flatpak_dir_get_system_default ();
 
   dir = user_dir;
   deploy = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
@@ -1091,7 +1091,7 @@ flatpak_find_deploy_for_ref (const char   *ref,
   g_autoptr(GError) my_error = NULL;
 
   user_dir = flatpak_dir_get_user ();
-  system_dir = flatpak_dir_get_system ();
+  system_dir = flatpak_dir_get_system_default ();
 
   deploy = flatpak_dir_load_deployed (user_dir, ref, NULL, cancellable, &my_error);
   if (deploy == NULL && g_error_matches (my_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))

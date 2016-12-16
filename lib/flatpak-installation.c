@@ -188,7 +188,7 @@ FlatpakInstallation *
 flatpak_installation_new_system (GCancellable *cancellable,
                                  GError      **error)
 {
-  return flatpak_installation_new_for_dir (flatpak_dir_get_system (), cancellable, error);
+  return flatpak_installation_new_for_dir (flatpak_dir_get_system_default (), cancellable, error);
 }
 
 /**

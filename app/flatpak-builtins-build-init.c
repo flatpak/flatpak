@@ -367,7 +367,7 @@ flatpak_complete_build_init (FlatpakCompletion *completion)
           }
       }
 
-      system_dir = flatpak_dir_get_system ();
+      system_dir = flatpak_dir_get_system_default ();
       {
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, opt_arch,
                                                               FLATPAK_KINDS_RUNTIME, &error);
@@ -398,7 +398,7 @@ flatpak_complete_build_init (FlatpakCompletion *completion)
           }
       }
 
-      system_dir = flatpak_dir_get_system ();
+      system_dir = flatpak_dir_get_system_default ();
       {
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, completion->argv[3], NULL, opt_arch,
                                                               FLATPAK_KINDS_RUNTIME, &error);

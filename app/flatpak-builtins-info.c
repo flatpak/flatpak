@@ -125,7 +125,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (ref == NULL && opt_system)
     {
-      system_dir = flatpak_dir_get_system ();
+      system_dir = flatpak_dir_get_system_default ();
 
       ref = flatpak_dir_find_installed_ref (system_dir,
                                             id,
@@ -202,7 +202,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
     user_dir = flatpak_dir_get_user ();
 
   if (opt_system)
-    system_dir = flatpak_dir_get_system ();
+    system_dir = flatpak_dir_get_system_default ();
 
   switch (completion->argc)
     {

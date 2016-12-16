@@ -119,7 +119,7 @@ schedule_idle_callback (void)
 static FlatpakDir *
 dir_get_system (void)
 {
-  FlatpakDir *system = flatpak_dir_get_system ();
+  FlatpakDir *system = flatpak_dir_get_system_default ();
   flatpak_dir_set_no_system_helper (system, TRUE);
   return system;
 }

@@ -143,7 +143,7 @@ FlatpakDir *  flatpak_dir_new (GFile   *basedir,
                                gboolean user);
 FlatpakDir *  flatpak_dir_clone (FlatpakDir *self);
 FlatpakDir  *flatpak_dir_get (gboolean user);
-FlatpakDir  *flatpak_dir_get_system (void);
+FlatpakDir  *flatpak_dir_get_system_default (void);
 FlatpakDir  *flatpak_dir_get_user (void);
 gboolean    flatpak_dir_is_user (FlatpakDir *self);
 void        flatpak_dir_set_no_system_helper (FlatpakDir *self,

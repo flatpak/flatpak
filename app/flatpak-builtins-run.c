@@ -111,7 +111,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
     {
       g_autofree char *current_ref = NULL;
       g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
-      g_autoptr(FlatpakDir) system_dir = flatpak_dir_get_system ();
+      g_autoptr(FlatpakDir) system_dir = flatpak_dir_get_system_default ();
 
       current_ref = flatpak_dir_current_ref (user_dir, id, cancellable);
       if (current_ref == NULL)
@@ -228,7 +228,7 @@ flatpak_complete_run (FlatpakCompletion *completion)
           }
       }
 
-      system_dir = flatpak_dir_get_system ();
+      system_dir = flatpak_dir_get_system_default ();
       {
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, opt_arch,
                                                               FLATPAK_KINDS_APP, &error);

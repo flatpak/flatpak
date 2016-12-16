@@ -75,7 +75,7 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
   if (opt_system)
     {
-      system_dir = flatpak_dir_get_system ();
+      system_dir = flatpak_dir_get_system_default ();
       dirs[n_dirs++] = system_dir;
     }
 

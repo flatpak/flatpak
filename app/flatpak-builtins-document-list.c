@@ -129,7 +129,7 @@ flatpak_complete_document_list (FlatpakCompletion *completion)
           }
       }
 
-      system_dir = flatpak_dir_get_system ();
+      system_dir = flatpak_dir_get_system_default ();
       {
         g_auto(GStrv) refs = flatpak_dir_find_installed_refs (system_dir, NULL, NULL, NULL,
                                                               FLATPAK_KINDS_APP, &error);
