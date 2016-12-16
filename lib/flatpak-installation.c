@@ -174,6 +174,63 @@ flatpak_get_supported_arches (void)
   return (const char * const *)flatpak_get_arches ();
 }
 
+/**
+ * flatpak_get_system_installations:
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Lists the system installations according to the current configuration and current
+ * availability (e.g. doesn't return a configured installation if not reachable).
+ *
+ * Returns: (transfer full) (element-type FlatpakInstallation): an GPtrArray of
+ *   #FlatpakInstallation instances
+ *
+ * Since: 0.6.15
+ */
+GPtrArray *
+flatpak_get_system_installations (GCancellable *cancellable,
+                                  GError      **error)
+{
+  g_autoptr(GPtrArray) system_dirs = NULL;
+  g_autoptr(GPtrArray) installs = NULL;
+  GPtrArray *ret = NULL;
+  int i;
+
+  system_dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (system_dirs == NULL)
+    goto out;
+
+  installs = g_ptr_array_new ();
+  for (i = 0; i < system_dirs->len; i++)
+    {
+      g_autoptr(GError) local_error = NULL;
+      FlatpakDir *install_dir = g_ptr_array_index (system_dirs, i);
+      FlatpakInstallation *installation = NULL;
+
+      installation = flatpak_installation_new_for_dir (g_object_ref (install_dir),
+                                                       cancellable,
+                                                       &local_error);
+      if (installation != NULL)
+        g_ptr_array_add (installs, installation);
+      else
+        {
+          g_warning ("Unable to create FlatpakInstallation for: %s", local_error->message);
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          goto out;
+        }
+    }
+
+  if (installs->len == 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   "No system installations found");
+    }
+
+  ret = g_steal_pointer (&installs);
+
+ out:
+  return ret;
+}
 
 /**
  * flatpak_installation_new_system:
