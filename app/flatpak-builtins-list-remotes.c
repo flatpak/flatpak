@@ -36,12 +36,12 @@ static gboolean opt_show_details;
 static gboolean opt_user;
 static gboolean opt_system;
 static gboolean opt_show_disabled;
-static char *opt_installation;
+static char **opt_installations;
 
 static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
-  { "installation", 0, 0, G_OPTION_ARG_STRING, &opt_installation, N_("Show a specific system-wide installation"), NULL },
+  { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Show specific system-wide installations"), NULL },
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show remote details"), NULL },
   { "show-disabled", 0, 0, G_OPTION_ARG_NONE, &opt_show_disabled, N_("Show disabled remotes"), NULL },
   { NULL }
@@ -51,12 +51,10 @@ gboolean
 flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
-  g_autoptr(FlatpakDir) custom_dir = NULL;
-  FlatpakDir *dirs[2] = { 0 };
+  g_autoptr(GPtrArray) dirs = NULL;
   guint i = 0, n_dirs = 0, j;
   FlatpakTablePrinter *printer;
+  gboolean print_all_system = FALSE;
 
   context = g_option_context_new (_(" - List remote repositories"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -67,35 +65,49 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   if (argc > 1)
     return usage_error (context, _("Too many arguments"), error);
 
-  if (!opt_user && !opt_system && opt_installation == NULL)
-    opt_system = TRUE;
+  if (!opt_user && !opt_system && opt_installations == NULL)
+    print_all_system = TRUE;
+
+  dirs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
   if (opt_user)
-    {
-      user_dir = flatpak_dir_get_user ();
-      dirs[n_dirs++] = user_dir;
-    }
+    g_ptr_array_add (dirs, flatpak_dir_get_user ());
 
   if (opt_system)
+    g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
+
+  if (opt_installations != NULL)
     {
-      system_dir = flatpak_dir_get_system_default ();
-      dirs[n_dirs++] = system_dir;
+      int i = 0;
+
+      for (i = 0; opt_installations[i] != NULL; i++)
+        {
+          FlatpakDir *installation_dir = NULL;
+
+          /* Already included the default system installation. */
+          if (opt_system && g_strcmp0 (opt_installations[i], "default") == 0)
+            continue;
+
+          installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
+          if (installation_dir == NULL)
+            return FALSE;
+
+          g_ptr_array_add (dirs, installation_dir);
+        }
     }
 
-  if (opt_installation != NULL)
+  if (print_all_system)
     {
-      custom_dir = flatpak_dir_get_system_by_id (opt_installation, cancellable, error);
-      if (custom_dir == NULL)
+      dirs = flatpak_dir_get_system_list (cancellable, error);
+      if (dirs == NULL)
         return FALSE;
-
-      dirs[n_dirs++] = custom_dir;
     }
 
   printer = flatpak_table_printer_new ();
 
-  for (j = 0; j < n_dirs; j++)
+  for (j = 0; j < dirs->len; j++)
     {
-      FlatpakDir *dir = dirs[j];
+      FlatpakDir *dir = g_ptr_array_index (dirs, j);
       g_auto(GStrv) remotes = NULL;
 
       remotes = flatpak_dir_list_remotes (dir, cancellable, error);
@@ -147,8 +159,9 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
               if (flatpak_dir_get_remote_noenumerate (dir, remote_name))
                 flatpak_table_printer_append_with_comma (printer, "no-enumerate");
 
-              if ((opt_user && opt_system) || (opt_user && opt_installation != NULL)
-                  || (opt_system && opt_installation != NULL))
+              if ((opt_user && opt_system) || (opt_user && opt_installations != NULL)
+                  || (opt_system && opt_installations != NULL)
+                  || (opt_installations != NULL && g_strv_length (opt_installations) > 1))
                 {
                   g_autofree char *dir_id = flatpak_dir_get_name (dir);
                   flatpak_table_printer_append_with_comma (printer, dir_id);

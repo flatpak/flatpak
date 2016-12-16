@@ -37,13 +37,13 @@ static gboolean opt_user;
 static gboolean opt_system;
 static gboolean opt_runtime;
 static gboolean opt_app;
-static char *opt_installation;
+static char **opt_installations;
 static char *opt_arch;
 
 static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
-  { "installation", 0, 0, G_OPTION_ARG_STRING, &opt_installation, N_("Show a specific system-wide installation"), NULL },
+  { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Show specific system-wide installations"), NULL },
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show arches and branches"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
@@ -255,10 +255,10 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
 }
 
 static gboolean
-print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gboolean print_user, const char *installation, const char *arch, GCancellable *cancellable, GError **error)
+print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gboolean print_user, char **installations, const char *arch, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GPtrArray) refs_array = NULL;
-  gboolean print_all = !print_user && !print_system && (installation == NULL);
+  gboolean print_all = !print_user && !print_system && (installations == NULL);
 
   refs_array = g_ptr_array_new_with_free_func ((GDestroyNotify) refs_data_free);
   if (print_user || print_all)
@@ -307,28 +307,36 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
           g_ptr_array_add (refs_array, refs_data_new (system_dir, system_app, system_runtime));
         }
 
-      if (installation != NULL)
+      if (installations != NULL)
         {
-          g_autoptr(FlatpakDir) system_dir = NULL;
           g_auto(GStrv) installation_apps = NULL;
           g_auto(GStrv) installation_runtimes = NULL;
+          int i = 0;
 
-          system_dir = flatpak_dir_get_system_by_id (installation, cancellable, error);
-          if (system_dir == NULL)
-            return FALSE;
-
-
-          if (system_dir == NULL)
+          for (i = 0; installations[i] != NULL; i++)
             {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                           "Can't find installation %s", opt_installation);
-              return FALSE;
+              g_autoptr(FlatpakDir) system_dir = NULL;
+
+              /* Already included the default system installation. */
+              if (print_system && g_strcmp0 (installations[i], "default") == 0)
+                continue;
+
+              system_dir = flatpak_dir_get_system_by_id (installations[i], cancellable, error);
+              if (system_dir == NULL)
+                return FALSE;
+
+              if (system_dir == NULL)
+                {
+                  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                               "Can't find installation %s", opt_installations);
+                  return FALSE;
+                }
+
+              if (!find_refs_for_dir (system_dir, app ? &installation_apps : NULL, runtime ? &installation_runtimes : NULL, cancellable, error))
+                return FALSE;
+
+              g_ptr_array_add (refs_array, refs_data_new (system_dir, installation_apps, installation_runtimes));
             }
-
-          if (!find_refs_for_dir (system_dir, app ? &installation_apps : NULL, runtime ? &installation_runtimes : NULL, cancellable, error))
-            return FALSE;
-
-          g_ptr_array_add (refs_array, refs_data_new (system_dir, installation_apps, installation_runtimes));
         }
     }
 
@@ -358,7 +366,7 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
   if (!print_installed_refs (opt_app, opt_runtime,
                              opt_system,
                              opt_user,
-                             opt_installation,
+                             opt_installations,
                              opt_arch,
                              cancellable, error))
     return FALSE;

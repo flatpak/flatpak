@@ -40,13 +40,13 @@ static gboolean opt_show_ref;
 static gboolean opt_show_commit;
 static gboolean opt_show_origin;
 static char *opt_arch;
-static char *opt_installation;
+static char **opt_installations;
 
 static GOptionEntry options[] = {
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to use"), N_("ARCH") },
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
-  { "installation", 0, 0, G_OPTION_ARG_STRING, &opt_installation, N_("Show custom installations"), NULL },
+  { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Show specific system-wide installations"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
   { "show-ref", 'r', 0, G_OPTION_ARG_NONE, &opt_show_ref, N_("Show ref"), NULL },
@@ -111,7 +111,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
                                       &kinds, &id, &arch, &branch, error))
     return FALSE;
 
-  if (!opt_user && !opt_system && opt_installation == NULL)
+  if (!opt_user && !opt_system && opt_installations == NULL)
     search_all = TRUE;
 
   if (opt_user || search_all)
@@ -152,22 +152,32 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
         }
     }
 
-  if (ref == NULL && opt_installation != NULL)
+  if (ref == NULL && opt_installations != NULL)
     {
-      installation_dir = flatpak_dir_get_system_by_id (opt_installation, cancellable, error);
-      if (installation_dir == NULL)
-        return FALSE;
+      int i = 0;
 
-      if (installation_dir)
+      for (i = 0; opt_installations[i] != NULL; i++)
         {
-          ref = flatpak_dir_find_installed_ref (installation_dir,
-                                                id,
-                                                branch,
-                                                arch,
-                                                kinds, &kind,
-                                                lookup_error == NULL ? &lookup_error : NULL);
-          if (ref)
-            dir = installation_dir;
+          g_autoptr(FlatpakDir) installation_dir = NULL;
+
+          installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
+          if (installation_dir == NULL)
+            return FALSE;
+
+          if (installation_dir)
+            {
+              ref = flatpak_dir_find_installed_ref (installation_dir,
+                                                    id,
+                                                    branch,
+                                                    arch,
+                                                    kinds, &kind,
+                                                    lookup_error == NULL ? &lookup_error : NULL);
+              if (ref)
+                {
+                  dir = installation_dir;
+                  break;
+                }
+            }
         }
     }
 
@@ -244,7 +254,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  if (!opt_user && !opt_system && opt_installation == NULL)
+  if (!opt_user && !opt_system && opt_installations == NULL)
     search_all = TRUE;
 
   if (opt_user || search_all)
