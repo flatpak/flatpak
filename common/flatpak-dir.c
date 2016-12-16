@@ -5864,6 +5864,49 @@ flatpak_dir_get_system_default (void)
   return flatpak_dir_new_with_id (path, FALSE, NULL);
 }
 
+FlatpakDir *
+flatpak_dir_get_system_by_id (const char   *id,
+                              GCancellable *cancellable,
+                              GError      **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  GPtrArray *locations = NULL;
+  FlatpakDir *ret = NULL;
+  int i;
+
+  if (id == NULL)
+    return flatpak_dir_get_system_default ();
+
+  /* An error in flatpak_get_system_base_dir_locations() will still return
+   * return an empty array with the GError set, but we want to return NULL.
+   */
+  locations = flatpak_get_system_base_dir_locations (cancellable, &local_error);
+  if (local_error != NULL)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return NULL;
+    }
+
+  for (i = 0; i < locations->len; i++)
+    {
+      GFile *path = g_ptr_array_index (locations, i);
+      char *install_id = g_object_get_data (G_OBJECT (path), "installation-id");
+      if (g_strcmp0 (install_id, id) == 0)
+        {
+          ret = flatpak_dir_new_with_id (path, FALSE, id);
+          break;
+        }
+    }
+
+  if (ret == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                   _("Could not find installation %s"), id);
+    }
+
+  return ret;
+}
+
 GPtrArray *
 flatpak_dir_get_system_list (GCancellable *cancellable,
                              GError      **error)

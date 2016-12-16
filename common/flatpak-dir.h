@@ -148,6 +148,9 @@ FlatpakDir  *flatpak_dir_get_user (void);
 FlatpakDir  *flatpak_dir_get_system_default (void);
 GPtrArray   *flatpak_dir_get_system_list (GCancellable *cancellable,
                                           GError      **error);
+FlatpakDir  *flatpak_dir_get_system_by_id (const char   *id,
+                                           GCancellable *cancellable,
+                                           GError      **error);
 gboolean    flatpak_dir_is_user (FlatpakDir *self);
 void        flatpak_dir_set_no_system_helper (FlatpakDir *self,
                                               gboolean    no_system_helper);
