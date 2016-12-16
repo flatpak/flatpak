@@ -718,6 +718,12 @@ flatpak_dir_get_path (FlatpakDir *self)
   return self->basedir;
 }
 
+GFile *
+flatpak_dir_get_changed_path (FlatpakDir *self)
+{
+  return g_file_get_child (self->basedir, ".changed");
+}
+
 const char *
 flatpak_dir_get_id (FlatpakDir *self)
 {
@@ -727,10 +733,31 @@ flatpak_dir_get_id (FlatpakDir *self)
   return NULL;
 }
 
-GFile *
-flatpak_dir_get_changed_path (FlatpakDir *self)
+const char *
+flatpak_dir_get_display_name (FlatpakDir *self)
 {
-  return g_file_get_child (self->basedir, ".changed");
+  if (self->extra_data != NULL)
+    return self->extra_data->display_name;
+
+  return NULL;
+}
+
+gint
+flatpak_dir_get_priority (FlatpakDir *self)
+{
+  if (self->extra_data != NULL)
+    return self->extra_data->priority;
+
+  return 0;
+}
+
+FlatpakDirStorageType
+flatpak_dir_get_storage_type (FlatpakDir *self)
+{
+  if (self->extra_data != NULL)
+    return self->extra_data->storage_type;
+
+  return FLATPAK_DIR_STORAGE_TYPE_DEFAULT;
 }
 
 char *

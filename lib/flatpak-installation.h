@@ -71,6 +71,24 @@ typedef enum {
   FLATPAK_INSTALL_FLAGS_NONE      = 0,
 } FlatpakInstallFlags;
 
+/**
+ * FlatpakStorageType:
+ * @FLATPAK_STORAGE_TYPE_DEFAULT: default
+ * @FLATPAK_STORAGE_TYPE_HARD_DISK: installation is on a hard disk
+ * @FLATPAK_STORAGE_TYPE_SDCARD: installation is on a SD card
+ * @FLATPAK_STORAGE_TYPE_MMC: installation is on an MMC
+ *
+ * Flags to alter the behavior of flatpak_installation_install_full().
+ *
+ * Since: 0.6.15
+ */
+typedef enum {
+  FLATPAK_STORAGE_TYPE_DEFAULT = 0,
+  FLATPAK_STORAGE_TYPE_HARD_DISK = 1 << 0,
+  FLATPAK_STORAGE_TYPE_SDCARD = 1 << 1,
+  FLATPAK_STORAGE_TYPE_MMC = 1 << 2,
+} FlatpakStorageType;
+
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakInstallation, g_object_unref)
@@ -117,6 +135,10 @@ FLATPAK_EXTERN gboolean             flatpak_installation_drop_caches (FlatpakIns
                                                                       GError             **error);
 FLATPAK_EXTERN gboolean             flatpak_installation_get_is_user (FlatpakInstallation *self);
 FLATPAK_EXTERN GFile               *flatpak_installation_get_path (FlatpakInstallation *self);
+FLATPAK_EXTERN const char          *flatpak_installation_get_id (FlatpakInstallation *self);
+FLATPAK_EXTERN const char          *flatpak_installation_get_display_name (FlatpakInstallation *self);
+FLATPAK_EXTERN gint                 flatpak_installation_get_priority (FlatpakInstallation *self);
+FLATPAK_EXTERN FlatpakStorageType   flatpak_installation_get_storage_type (FlatpakInstallation *self);
 FLATPAK_EXTERN gboolean             flatpak_installation_launch (FlatpakInstallation *self,
                                                                  const char          *name,
                                                                  const char          *arch,

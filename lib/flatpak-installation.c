@@ -406,6 +406,92 @@ flatpak_installation_get_path (FlatpakInstallation *self)
 }
 
 /**
+ * flatpak_installation_get_id:
+ * @self: a #FlatpakInstallation
+ *
+ * Returns the ID of the system installation for @self.
+ *
+ * Returns: (transfer none): a string with the installation's ID
+ *
+ * Since: 0.6.15
+ */
+const char *
+flatpak_installation_get_id (FlatpakInstallation *self)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+
+  return flatpak_dir_get_id (dir);
+}
+
+/**
+ * flatpak_installation_get_display_name:
+ * @self: a #FlatpakInstallation
+ *
+ * Returns the display name of the system installation for @self.
+ *
+ * Returns: (transfer none): a string with the installation's display name
+ *
+ * Since: 0.6.15
+ */
+const char *
+flatpak_installation_get_display_name (FlatpakInstallation *self)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+
+  return flatpak_dir_get_display_name (dir);
+}
+
+/**
+ * flatpak_installation_get_priority:
+ * @self: a #FlatpakInstallation
+ *
+ * Returns the numeric priority of the system installation for @self.
+ *
+ * Returns: an integer with the configured priority value
+ *
+ * Since: 0.6.15
+ */
+gint
+flatpak_installation_get_priority (FlatpakInstallation *self)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+
+  return flatpak_dir_get_priority (dir);
+}
+
+/**
+ * flatpak_installation_get_storage_type:
+ * @self: a #FlatpakInstallation
+ *
+ * Returns the type of storage of the system installation for @self.
+ *
+ * Returns: a #FlatpakStorageType
+ *
+ * Since: 0.6.15
+ */FlatpakStorageType
+flatpak_installation_get_storage_type (FlatpakInstallation *self)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+
+  switch (flatpak_dir_get_storage_type (dir))
+    {
+    case FLATPAK_DIR_STORAGE_TYPE_HARD_DISK:
+      return FLATPAK_STORAGE_TYPE_HARD_DISK;
+
+    case FLATPAK_DIR_STORAGE_TYPE_SDCARD:
+      return FLATPAK_STORAGE_TYPE_SDCARD;
+
+    case FLATPAK_DIR_STORAGE_TYPE_MMC:
+      return FLATPAK_STORAGE_TYPE_MMC;
+
+    default:
+      return FLATPAK_STORAGE_TYPE_DEFAULT;
+    }
+
+  return FLATPAK_STORAGE_TYPE_DEFAULT;
+}
+
+/**
  * flatpak_installation_launch:
  * @self: a #FlatpakInstallation
  * @name: name of the app to launch
