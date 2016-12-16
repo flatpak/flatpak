@@ -84,6 +84,9 @@ FLATPAK_EXTERN GPtrArray *flatpak_get_system_installations (GCancellable *cancel
                                                             GError      **error);
 FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_system (GCancellable *cancellable,
                                                                      GError      **error);
+FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_system_with_id (const char   *id,
+                                                                             GCancellable *cancellable,
+                                                                             GError      **error);
 FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_user (GCancellable *cancellable,
                                                                    GError      **error);
 FLATPAK_EXTERN FlatpakInstallation *flatpak_installation_new_for_path (GFile        *path,

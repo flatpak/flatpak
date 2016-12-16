@@ -249,6 +249,44 @@ flatpak_installation_new_system (GCancellable *cancellable,
 }
 
 /**
+ * flatpak_installation_new_system_with_id:
+ * @id: (nullable): the ID of the system-wide installation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Creates a new #FlatpakInstallation for the system-wide installation @id.
+ *
+ * Returns: (transfer full): a new #FlatpakInstallation
+ *
+ * Since: 0.6.15
+ */
+FlatpakInstallation *
+flatpak_installation_new_system_with_id (const char   *id,
+                                         GCancellable *cancellable,
+                                         GError      **error)
+{
+  g_autoptr(FlatpakDir) install_dir = NULL;
+  g_autoptr(FlatpakInstallation) installation = NULL;
+  g_autoptr(GError) local_error = NULL;
+
+  install_dir = flatpak_dir_get_system_by_id (id, cancellable, error);
+  if (install_dir == NULL)
+    return NULL;
+
+  installation = flatpak_installation_new_for_dir (g_object_ref (install_dir),
+                                                   cancellable,
+                                                   &local_error);
+  if (installation == NULL)
+    {
+      g_debug ("Error creating Flatpak installation: %s", local_error->message);
+      g_propagate_error (error, g_steal_pointer (&local_error));
+    }
+
+  g_debug ("Found Flatpak installation for '%s'", id);
+  return g_steal_pointer (&installation);
+}
+
+/**
  * flatpak_installation_new_user:
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
