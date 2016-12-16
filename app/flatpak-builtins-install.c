@@ -221,8 +221,20 @@ handle_runtime_repo_deps (FlatpakDir *dir, GBytes *data, GError **error)
   old_remote = flatpak_dir_find_remote_by_uri (dir, runtime_url);
   if (old_remote == NULL && flatpak_dir_is_user (dir))
     {
-      g_autoptr(FlatpakDir) system_dir = flatpak_dir_get_system ();
-      old_remote = flatpak_dir_find_remote_by_uri (system_dir, runtime_url);
+      g_autoptr(GPtrArray) system_dirs = NULL;
+      int i;
+
+      system_dirs = flatpak_dir_get_system_list (NULL, error);
+      if (system_dirs == NULL)
+        return FALSE;
+
+      for (i = 0; i < system_dirs->len; i++)
+        {
+          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+          old_remote = flatpak_dir_find_remote_by_uri (system_dir, runtime_url);
+          if (old_remote != NULL)
+            break;
+        }
     }
 
   if (old_remote != NULL)
