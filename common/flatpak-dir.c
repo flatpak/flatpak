@@ -281,6 +281,23 @@ parse_storage_type (const char *type_string)
 }
 
 static gboolean
+has_system_location (GPtrArray  *locations,
+                     const char *id)
+{
+  int i;
+
+  for (i = 0; i < locations->len; i++)
+    {
+      GFile *path = g_ptr_array_index (locations, i);
+      DirExtraData *extra_data = g_object_get_data (G_OBJECT (path), "extra-data");
+      if (extra_data != NULL && g_strcmp0 (extra_data->id, id) == 0)
+        return TRUE;
+    }
+
+  return FALSE;
+}
+
+static gboolean
 append_locations_from_config_file (GPtrArray    *locations,
                                    const char   *file_path,
                                    GCancellable *cancellable,
@@ -321,6 +338,12 @@ append_locations_from_config_file (GPtrArray    *locations,
       len = strlen (id);
       if (len > 0)
         id[len - 1] = '\0';
+
+      if (has_system_location (locations, id))
+        {
+          g_warning ("Found duplicate flatpak installation (Id: %s). Ignoring", id);
+          continue;
+        }
 
       path = g_key_file_get_string (keyfile, groups[i], "Path", &my_error);
       if (path == NULL)
