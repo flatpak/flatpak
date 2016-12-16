@@ -933,24 +933,31 @@ flatpak_list_deployed_refs (const char   *type,
   g_autoptr(GPtrArray) names = NULL;
   g_autoptr(GHashTable) hash = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(GPtrArray) system_dirs = NULL;
   const char *key;
   GHashTableIter iter;
+  int i;
 
   hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   user_dir = flatpak_dir_get_user ();
-  system_dir = flatpak_dir_get_system_default ();
+  system_dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (system_dirs == NULL)
+    goto out;
 
   if (!flatpak_dir_collect_deployed_refs (user_dir, type, name_prefix,
                                           branch, arch, hash, cancellable,
                                           error))
     goto out;
 
-  if (!flatpak_dir_collect_deployed_refs (system_dir, type, name_prefix,
-                                          branch, arch, hash, cancellable,
-                                          error))
-    goto out;
+  for (i = 0; i < system_dirs->len; i++)
+    {
+      FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+      if (!flatpak_dir_collect_deployed_refs (system_dir, type, name_prefix,
+                                              branch, arch, hash, cancellable,
+                                              error))
+        goto out;
+    }
 
   names = g_ptr_array_new ();
   g_hash_table_iter_init (&iter, hash);
@@ -979,22 +986,41 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
   g_autoptr(GPtrArray) names = NULL;
   g_autoptr(GHashTable) hash = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(GError) my_error = NULL;
   const char *key;
   GHashTableIter iter;
 
   hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   user_dir = flatpak_dir_get_user ();
-  system_dir = flatpak_dir_get_system ();
 
-  if ((!flatpak_dir_collect_unmaintained_refs (user_dir, name_prefix,
+  if (!flatpak_dir_collect_unmaintained_refs (user_dir, name_prefix,
                                               branch, arch, hash, cancellable,
-                                              error)) &&
-      (!flatpak_dir_collect_unmaintained_refs (system_dir, name_prefix,
-                                              branch, arch, hash, cancellable,
-                                              error)))
-    goto out;
+                                              &my_error))
+    {
+      g_autoptr(GPtrArray) system_dirs = NULL;
+      int i;
+
+      system_dirs = flatpak_dir_get_system_list (cancellable, error);
+      if (system_dirs == NULL)
+        goto out;
+
+      for (i = 0; i < system_dirs->len; i++)
+        {
+          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+
+          g_clear_error (&my_error);
+          if (flatpak_dir_collect_unmaintained_refs (system_dir, name_prefix,
+                                                     branch, arch, hash, cancellable,
+                                                     &my_error))
+            {
+              /* Reference found in at least one of the system installations */
+              break;
+            }
+
+          goto out;
+        }
+    }
 
   names = g_ptr_array_new ();
   g_hash_table_iter_init (&iter, hash);
@@ -1007,6 +1033,9 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
   ret = (char **) g_ptr_array_free (names, FALSE);
   names = NULL;
 
+  if (ret == NULL)
+    g_propagate_error (error, g_steal_pointer (&my_error));
+
 out:
   return ret;
 }
@@ -1018,19 +1047,27 @@ flatpak_find_deploy_dir_for_ref (const char   *ref,
                                  GError      **error)
 {
   g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(GPtrArray) system_dirs = NULL;
   FlatpakDir *dir = NULL;
   g_autoptr(GFile) deploy = NULL;
 
   user_dir = flatpak_dir_get_user ();
-  system_dir = flatpak_dir_get_system_default ();
+  system_dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (system_dirs == NULL)
+    return NULL;
 
   dir = user_dir;
   deploy = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
   if (deploy == NULL)
     {
-      dir = system_dir;
-      deploy = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
+      int i;
+      for (i = 0; deploy == NULL && i < system_dirs->len; i++)
+        {
+          dir = g_ptr_array_index (system_dirs, i);
+          deploy = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
+          if (deploy != NULL)
+            break;
+        }
     }
 
   if (deploy == NULL)
@@ -1065,15 +1102,33 @@ flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
                                                    GCancellable *cancellable)
 {
   g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
   g_autoptr(GFile) extension_dir = NULL;
+  g_autoptr(GError) local_error = NULL;
 
   user_dir = flatpak_dir_get_user ();
-  system_dir = flatpak_dir_get_system ();
 
   extension_dir = flatpak_dir_get_unmaintained_extension_dir_if_exists (user_dir, name, arch, branch, cancellable);
   if (extension_dir == NULL)
-    extension_dir = flatpak_dir_get_unmaintained_extension_dir_if_exists (system_dir, name, arch, branch, cancellable);
+    {
+      g_autoptr(GPtrArray) system_dirs = NULL;
+      int i;
+
+      system_dirs = flatpak_dir_get_system_list (cancellable, &local_error);
+      if (system_dirs == NULL)
+        {
+          g_warning ("Could not get the system installations: %s", local_error->message);
+          return NULL;
+        }
+
+      for (i = 0; i < system_dirs->len; i++)
+        {
+          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+          extension_dir = flatpak_dir_get_unmaintained_extension_dir_if_exists (system_dir, name, arch, branch, cancellable);
+          if (extension_dir != NULL)
+            break;
+        }
+    }
+
   if (extension_dir == NULL)
     return NULL;
 
@@ -1086,18 +1141,29 @@ flatpak_find_deploy_for_ref (const char   *ref,
                              GError      **error)
 {
   g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(GPtrArray) system_dirs = NULL;
   g_autoptr(FlatpakDeploy) deploy = NULL;
   g_autoptr(GError) my_error = NULL;
 
   user_dir = flatpak_dir_get_user ();
-  system_dir = flatpak_dir_get_system_default ();
+  system_dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (system_dirs == NULL)
+    return NULL;
 
   deploy = flatpak_dir_load_deployed (user_dir, ref, NULL, cancellable, &my_error);
-  if (deploy == NULL && g_error_matches (my_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
+  if (deploy == NULL &&
+      system_dirs->len > 0 &&
+      g_error_matches (my_error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED))
     {
-      g_clear_error (&my_error);
-      deploy = flatpak_dir_load_deployed (system_dir, ref, NULL, cancellable, &my_error);
+      int i;
+
+      for (i = 0; deploy == NULL && i < system_dirs->len; i++)
+        {
+          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+
+          g_clear_error (&my_error);
+          deploy = flatpak_dir_load_deployed (system_dir, ref, NULL, cancellable, &my_error);
+        }
     }
   if (deploy == NULL)
     g_propagate_error (error, g_steal_pointer (&my_error));

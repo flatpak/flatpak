@@ -43,6 +43,7 @@ struct FlatpakTransactionOp {
 struct FlatpakTransaction {
   FlatpakDir *dir;
   GHashTable *refs;
+  GPtrArray *system_dirs;
   GList *ops;
 
   gboolean no_interaction;
@@ -54,21 +55,40 @@ struct FlatpakTransaction {
 
 
 /* Check if the ref is in the dir, or in the system dir, in case its a
- * user-dir. We want to avoid depending on user-installed things when
- * installing to the system dir.
+ * user-dir or another system-wide installation. We want to avoid depending
+ * on user-installed things when installing to the system dir.
  */
 static gboolean
-ref_is_installed (FlatpakDir *dir, const char *ref)
+ref_is_installed (FlatpakTransaction *self,
+                  const char *ref,
+                  GError **error)
 {
   g_autoptr(GFile) deploy_dir = NULL;
+  FlatpakDir *dir = self->dir;
+  int i;
 
   deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, NULL);
   if (deploy_dir != NULL)
     return TRUE;
 
-  if (flatpak_dir_is_user (dir))
+  /* Don't try to fallback for the system's default directory. */
+  if (!flatpak_dir_is_user (dir) && flatpak_dir_get_id (dir) == NULL)
+    return FALSE;
+
+  /* Lazy initialization of this, once per transaction */
+  if (self->system_dirs == NULL)
     {
-      g_autoptr(FlatpakDir) system_dir = flatpak_dir_get_system ();
+      self->system_dirs = flatpak_dir_get_system_list (NULL, error);
+      if (self->system_dirs == NULL)
+        return FALSE;
+    }
+
+  for (i = 0; i < self->system_dirs->len; i++)
+    {
+      FlatpakDir *system_dir = g_ptr_array_index (self->system_dirs, i);
+
+      if (g_strcmp0 (flatpak_dir_get_id (dir), flatpak_dir_get_id (system_dir)) == 0)
+        continue;
 
       deploy_dir = flatpak_dir_get_if_deployed (system_dir, ref, NULL, NULL);
       if (deploy_dir != NULL)
@@ -149,6 +169,10 @@ flatpak_transaction_free (FlatpakTransaction *self)
   g_hash_table_unref (self->refs);
   g_list_free_full (self->ops, (GDestroyNotify)flatpak_transaction_operation_free);
   g_object_unref (self->dir);
+
+  if (self->system_dirs != NULL)
+    g_ptr_array_free (self->system_dirs, TRUE);
+
   g_free (self);
 }
 
@@ -339,9 +363,17 @@ add_deps (FlatpakTransaction *self,
 
   if (!flatpak_transaction_contains_ref (self, full_runtime_ref))
     {
-      if (!ref_is_installed (self->dir, full_runtime_ref))
+      g_autoptr(GError) local_error = NULL;
+
+      if (!ref_is_installed (self, full_runtime_ref, &local_error))
         {
           g_auto(GStrv) remotes = NULL;
+
+          if (local_error != NULL)
+            {
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
 
           g_print (_("Required runtime for %s (%s) is not installed, searching...\n"),
                    pref, runtime_ref);
