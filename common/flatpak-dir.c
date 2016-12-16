@@ -46,6 +46,8 @@
 
 #define SUMMARY_CACHE_TIMEOUT_SEC 5*60
 
+#define SYSCONF_INSTALLATIONS_DIR FLATPAK_CONFIGDIR "/installations.d"
+
 static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                                           GLnxLockFile *file_lock,
                                                           GError      **error);
@@ -212,6 +214,163 @@ flatpak_get_system_default_base_dir_location (void)
      }
 
   return g_file_new_for_path ((char *)path);
+}
+
+static gboolean
+append_locations_from_config_file (GPtrArray    *locations,
+                                   const char   *file_path,
+                                   GCancellable *cancellable,
+                                   GError      **error)
+{
+  g_autoptr(GKeyFile) keyfile = NULL;
+  g_auto(GStrv) groups = NULL;
+  g_autoptr(GError) my_error = NULL;
+  gboolean ret = FALSE;
+  gsize n_groups;
+  int i;
+
+  keyfile = g_key_file_new ();
+
+  g_key_file_load_from_file (keyfile, file_path, G_KEY_FILE_NONE, &my_error);
+  if (my_error != NULL)
+    {
+      g_debug ("Could not get list of system installations: %s\n", my_error->message);
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      goto out;
+    }
+
+  /* One configuration file might define more than one installation */
+  groups = g_key_file_get_groups (keyfile, &n_groups);
+  for (i = 0; i < n_groups; i++)
+    {
+      g_autofree char *id = NULL;
+      g_autofree char *path = NULL;
+      size_t len;
+
+      if (!g_str_has_prefix (groups[i], "Installation \""))
+        continue;
+
+      id = g_strdup (&groups[i][14]);
+      if (!g_str_has_suffix (id, "\""))
+        continue;
+
+      len = strlen (id);
+      if (len > 0)
+        id[len - 1] = '\0';
+
+      path = g_key_file_get_string (keyfile, groups[i], "Path", &my_error);
+      if (path == NULL)
+        {
+          g_debug ("Unable to get path for installation '%s': %s\n", id, my_error->message);
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          goto out;
+        }
+
+      g_ptr_array_add (locations, g_file_new_for_path (path));
+    }
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
+static GPtrArray *
+system_locations_from_configuration (GCancellable *cancellable,
+                                     GError      **error)
+{
+  g_autoptr(GPtrArray) locations = NULL;
+  g_autoptr(GFile) conf_dir = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GError) my_error = NULL;
+
+  locations = g_ptr_array_new_with_free_func (g_object_unref);
+
+  if (!g_file_test (SYSCONF_INSTALLATIONS_DIR, G_FILE_TEST_IS_DIR))
+    {
+      g_debug ("No installations directory in %s. Skipping", SYSCONF_INSTALLATIONS_DIR);
+      goto out;
+    }
+
+  conf_dir = g_file_new_for_path (SYSCONF_INSTALLATIONS_DIR);
+  dir_enum = g_file_enumerate_children (conf_dir,
+                                        G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
+                                        G_FILE_QUERY_INFO_NONE,
+                                        cancellable, &my_error);
+  if (my_error != NULL)
+    {
+      g_debug ("Unexpected error retrieving extra installations in %s: %s",
+               SYSCONF_INSTALLATIONS_DIR, my_error->message);
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      goto out;
+    }
+
+  while (TRUE)
+    {
+      GFileInfo *file_info;
+      GFile *path;
+      const char *name;
+      guint32 type;
+
+      if (!g_file_enumerator_iterate (dir_enum, &file_info, &path,
+                                      cancellable, &my_error))
+        {
+          g_debug ("Unexpected error reading file in %s: %s",
+                   SYSCONF_INSTALLATIONS_DIR, my_error->message);
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          goto out;
+        }
+
+      if (file_info == NULL)
+        break;
+
+      name = g_file_info_get_attribute_byte_string (file_info, "standard::name");
+      type = g_file_info_get_attribute_uint32 (file_info, "standard::type");
+
+      if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, ".install"))
+        {
+          g_autofree char *path_str = g_file_get_path (path);
+          if (!append_locations_from_config_file (locations, path_str, cancellable, error))
+            goto out;
+        }
+    }
+
+ out:
+  return g_steal_pointer (&locations);
+}
+
+static GPtrArray *
+get_system_locations (GCancellable *cancellable,
+                      GError      **error)
+{
+  g_autoptr(GPtrArray) locations = NULL;
+  g_autoptr(GFile) default_location = NULL;
+
+  /* This will always return a GPtrArray, being an empty one
+   * if no additional system installations have been configured.
+   */
+  locations = system_locations_from_configuration (cancellable, error);
+
+  /* Don't forget to add the default system location at the end and */
+  g_ptr_array_add (locations, flatpak_get_system_default_base_dir_location ());
+
+  return g_steal_pointer (&locations);
+}
+
+GPtrArray *
+flatpak_get_system_base_dir_locations (GCancellable *cancellable,
+                                       GError      **error)
+{
+  static gsize array = 0;
+
+  if (g_once_init_enter (&array))
+    {
+      gsize setup_value = 0;
+      setup_value = (gsize) get_system_locations (cancellable, error);
+      g_once_init_leave (&array, setup_value);
+     }
+
+  return (GPtrArray *) array;
 }
 
 GFile *
@@ -5675,6 +5834,35 @@ flatpak_dir_get_system_default (void)
 {
   g_autoptr(GFile) path = flatpak_get_system_default_base_dir_location ();
   return flatpak_dir_new (path, FALSE);
+}
+
+GPtrArray *
+flatpak_dir_get_system_list (GCancellable *cancellable,
+                             GError      **error)
+{
+  g_autoptr(GPtrArray) result = NULL;
+  g_autoptr(GError) local_error = NULL;
+  GPtrArray *locations = NULL;
+  int i;
+
+  /* An error in flatpak_get_system_base_dir_locations() will still return
+   * return an empty array with the GError set, but we want to return NULL.
+   */
+  locations = flatpak_get_system_base_dir_locations (cancellable, &local_error);
+  if (local_error != NULL)
+    {
+      g_propagate_error (error, g_steal_pointer (&local_error));
+      return NULL;
+    }
+
+  result = g_ptr_array_new_with_free_func (g_object_unref);
+  for (i = 0; i < locations->len; i++)
+    {
+      GFile *path = g_ptr_array_index (locations, i);
+      g_ptr_array_add (result, flatpak_dir_new (path, FALSE));
+    }
+
+  return g_steal_pointer (&result);
 }
 
 FlatpakDir *

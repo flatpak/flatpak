@@ -114,8 +114,10 @@ GQuark       flatpak_dir_error_quark (void);
 #define FLATPAK_DEPLOY_DATA_GVARIANT_STRING "(ssasta{sv})"
 #define FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT G_VARIANT_TYPE (FLATPAK_DEPLOY_DATA_GVARIANT_STRING)
 
-GFile *  flatpak_get_system_default_base_dir_location (void);
-GFile *  flatpak_get_user_base_dir_location (void);
+GPtrArray * flatpak_get_system_base_dir_locations (GCancellable *cancellable,
+                                                   GError      **error);
+GFile *     flatpak_get_system_default_base_dir_location (void);
+GFile *     flatpak_get_user_base_dir_location (void);
 
 GKeyFile *     flatpak_load_override_keyfile (const char *app_id,
                                               gboolean    user,
@@ -142,8 +144,10 @@ GKeyFile *     flatpak_deploy_get_metadata (FlatpakDeploy *deploy);
 FlatpakDir *  flatpak_dir_new (GFile   *basedir,
                                gboolean user);
 FlatpakDir *  flatpak_dir_clone (FlatpakDir *self);
-FlatpakDir  *flatpak_dir_get_system_default (void);
 FlatpakDir  *flatpak_dir_get_user (void);
+FlatpakDir  *flatpak_dir_get_system_default (void);
+GPtrArray   *flatpak_dir_get_system_list (GCancellable *cancellable,
+                                          GError      **error);
 gboolean    flatpak_dir_is_user (FlatpakDir *self);
 void        flatpak_dir_set_no_system_helper (FlatpakDir *self,
                                               gboolean    no_system_helper);
