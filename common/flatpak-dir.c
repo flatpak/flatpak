@@ -48,6 +48,11 @@
 
 #define SYSCONF_INSTALLATIONS_DIR FLATPAK_CONFIGDIR "/installations.d"
 
+#define SYSTEM_DIR_DEFAULT_ID "default"
+#define SYSTEM_DIR_DEFAULT_DISPLAY_NAME "Default system directory"
+#define SYSTEM_DIR_DEFAULT_STORAGE_TYPE FLATPAK_DIR_STORAGE_TYPE_DEFAULT
+#define SYSTEM_DIR_DEFAULT_PRIORITY 0
+
 static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                                           GLnxLockFile *file_lock,
                                                           GError      **error);
@@ -297,6 +302,23 @@ has_system_location (GPtrArray  *locations,
   return FALSE;
 }
 
+static void
+append_new_system_location (GPtrArray            *locations,
+                            GFile                *location,
+                            const char           *id,
+                            const char           *display_name,
+                            FlatpakDirStorageType storage_type,
+                            gint                  priority)
+{
+  DirExtraData *extra_data = NULL;
+
+  extra_data = dir_extra_data_new (id, display_name, priority, storage_type);
+  g_object_set_data_full (G_OBJECT (location), "extra-data", extra_data,
+                          (GDestroyNotify)dir_extra_data_free);
+
+  g_ptr_array_add (locations, location);
+}
+
 static gboolean
 append_locations_from_config_file (GPtrArray    *locations,
                                    const char   *file_path,
@@ -368,15 +390,9 @@ append_locations_from_config_file (GPtrArray    *locations,
             priority_val = g_ascii_strtoll (priority, NULL, 10);
 
           location = g_file_new_for_path (path);
-          g_object_set_data_full (G_OBJECT (location),
-                                  "extra-data",
-                                  dir_extra_data_new (id,
-                                                      display_name,
-                                                      priority_val,
-                                                      parse_storage_type (storage_type)),
-                                  (GDestroyNotify)dir_extra_data_free);
-
-          g_ptr_array_add (locations, location);
+          append_new_system_location (locations, location, id, display_name,
+                                      parse_storage_type (storage_type),
+                                      priority_val);
         }
     }
 
@@ -481,8 +497,16 @@ get_system_locations (GCancellable *cancellable,
    */
   locations = system_locations_from_configuration (cancellable, error);
 
-  /* Don't forget to add the default system location at the end and */
-  g_ptr_array_add (locations, flatpak_get_system_default_base_dir_location ());
+  /* Only fill the details of the default directory if not overriden. */
+  if (!has_system_location (locations, SYSTEM_DIR_DEFAULT_ID))
+    {
+      append_new_system_location (locations,
+                                  flatpak_get_system_default_base_dir_location (),
+                                  SYSTEM_DIR_DEFAULT_ID,
+                                  SYSTEM_DIR_DEFAULT_DISPLAY_NAME,
+                                  SYSTEM_DIR_DEFAULT_STORAGE_TYPE,
+                                  SYSTEM_DIR_DEFAULT_PRIORITY);
+    }
 
   /* Store the list of system locations sorted according to priorities */
   g_ptr_array_sort (locations, system_locations_compare_func);
