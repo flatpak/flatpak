@@ -36,10 +36,12 @@ static gboolean opt_show_details;
 static gboolean opt_user;
 static gboolean opt_system;
 static gboolean opt_show_disabled;
+static char *opt_installation;
 
 static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
+  { "installation", 0, 0, G_OPTION_ARG_STRING, &opt_installation, N_("Show a specific system-wide installation"), NULL },
   { "show-details", 'd', 0, G_OPTION_ARG_NONE, &opt_show_details, N_("Show remote details"), NULL },
   { "show-disabled", 0, 0, G_OPTION_ARG_NONE, &opt_show_disabled, N_("Show disabled remotes"), NULL },
   { NULL }
@@ -51,6 +53,7 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
   g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(FlatpakDir) custom_dir = NULL;
   FlatpakDir *dirs[2] = { 0 };
   guint i = 0, n_dirs = 0, j;
   FlatpakTablePrinter *printer;
@@ -64,7 +67,7 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   if (argc > 1)
     return usage_error (context, _("Too many arguments"), error);
 
-  if (!opt_user && !opt_system)
+  if (!opt_user && !opt_system && opt_installation == NULL)
     opt_system = TRUE;
 
   if (opt_user)
@@ -77,6 +80,15 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
     {
       system_dir = flatpak_dir_get_system_default ();
       dirs[n_dirs++] = system_dir;
+    }
+
+  if (opt_installation != NULL)
+    {
+      custom_dir = flatpak_dir_get_system_by_id (opt_installation, cancellable, error);
+      if (custom_dir == NULL)
+        return FALSE;
+
+      dirs[n_dirs++] = custom_dir;
     }
 
   printer = flatpak_table_printer_new ();
@@ -135,8 +147,21 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
               if (flatpak_dir_get_remote_noenumerate (dir, remote_name))
                 flatpak_table_printer_append_with_comma (printer, "no-enumerate");
 
-              if (opt_user && opt_system)
-                flatpak_table_printer_append_with_comma (printer, dir == user_dir ? "user" : "system");
+              if ((opt_user && opt_system) || (opt_user && opt_installation != NULL)
+                  || (opt_system && opt_installation != NULL))
+                {
+                  g_autofree char *dir_id = NULL;
+                  if (flatpak_dir_is_user (dir))
+                    {
+                      dir_id = g_strdup ("user");
+                    }
+                  else
+                    {
+                      const char *system_dir_id = flatpak_dir_get_id (dir);
+                      dir_id = g_strdup_printf ("system (%s)", system_dir_id ? system_dir_id : "default");
+                    }
+                  flatpak_table_printer_append_with_comma (printer, dir_id);
+                }
             }
           else
             {
