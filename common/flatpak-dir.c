@@ -66,13 +66,21 @@ typedef struct
   guint64 time;
 } CachedSummary;
 
+typedef struct
+{
+  char                 *id;
+  char                 *display_name;
+  gint                  priority;
+  FlatpakDirStorageType storage_type;
+} DirExtraData;
+
 struct FlatpakDir
 {
   GObject              parent;
 
   gboolean             user;
   GFile               *basedir;
-  char                *id;
+  DirExtraData        *extra_data;
   OstreeRepo          *repo;
   gboolean             no_system_helper;
 
@@ -115,6 +123,40 @@ enum {
 
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
+
+static DirExtraData *
+dir_extra_data_new (const char           *id,
+                    const char           *display_name,
+                    gint                  priority,
+                    FlatpakDirStorageType type)
+{
+  DirExtraData *dir_extra_data = g_new0 (DirExtraData, 1);
+  dir_extra_data->id = g_strdup (id);
+  dir_extra_data->display_name = g_strdup (display_name);
+  dir_extra_data->priority = priority;
+  dir_extra_data->storage_type = type;
+
+  return dir_extra_data;
+}
+
+static DirExtraData *
+dir_extra_data_clone (DirExtraData *extra_data)
+{
+  if (extra_data != NULL)
+    return dir_extra_data_new (extra_data->id,
+                               extra_data->display_name,
+                               extra_data->priority,
+                               extra_data->storage_type);
+  return NULL;
+}
+
+static void
+dir_extra_data_free (DirExtraData *dir_extra_data)
+{
+  g_free (dir_extra_data->id);
+  g_free (dir_extra_data->display_name);
+  g_free (dir_extra_data);
+}
 
 static GVariant *
 variant_new_ay_bytes (GBytes *bytes)
@@ -217,6 +259,27 @@ flatpak_get_system_default_base_dir_location (void)
   return g_file_new_for_path ((char *)path);
 }
 
+static FlatpakDirStorageType
+parse_storage_type (const char *type_string)
+{
+  if (type_string != NULL)
+    {
+      g_autofree char *type_low = NULL;
+
+      type_low = g_ascii_strdown (type_string, -1);
+      if (g_strcmp0 (type_low, "mmc") == 0)
+        return FLATPAK_DIR_STORAGE_TYPE_MMC;
+
+      if (g_strcmp0 (type_low, "sdcard") == 0)
+        return FLATPAK_DIR_STORAGE_TYPE_SDCARD;
+
+      if (g_strcmp0 (type_low, "hardisk") == 0)
+        return FLATPAK_DIR_STORAGE_TYPE_HARD_DISK;
+    }
+
+  return FLATPAK_DIR_STORAGE_TYPE_DEFAULT;
+}
+
 static gboolean
 append_locations_from_config_file (GPtrArray    *locations,
                                    const char   *file_path,
@@ -269,9 +332,27 @@ append_locations_from_config_file (GPtrArray    *locations,
       else
         {
           GFile *location = NULL;
+          g_autofree char *display_name = NULL;
+          g_autofree char *priority = NULL;
+          g_autofree char *storage_type = NULL;
+          gint priority_val = 0;
+
+          display_name = g_key_file_get_string (keyfile, groups[i], "DisplayName", NULL);
+          priority = g_key_file_get_string (keyfile, groups[i], "Priority", NULL);
+          storage_type = g_key_file_get_string (keyfile, groups[i], "StorageType", NULL);
+
+          if (priority != NULL)
+            priority_val = g_ascii_strtoll (priority, NULL, 10);
 
           location = g_file_new_for_path (path);
-          g_object_set_data_full (G_OBJECT (location), "installation-id", g_strdup (id), (GDestroyNotify)g_free);
+          g_object_set_data_full (G_OBJECT (location),
+                                  "extra-data",
+                                  dir_extra_data_new (id,
+                                                      display_name,
+                                                      priority_val,
+                                                      parse_storage_type (storage_type)),
+                                  (GDestroyNotify)dir_extra_data_free);
+
           g_ptr_array_add (locations, location);
         }
     }
@@ -280,6 +361,25 @@ append_locations_from_config_file (GPtrArray    *locations,
 
  out:
   return ret;
+}
+
+static gint
+system_locations_compare_func (gconstpointer location_a, gconstpointer location_b)
+{
+  const GFile *location_object_a = *(const GFile **)location_a;
+  const GFile *location_object_b = *(const GFile **)location_b;
+  DirExtraData *extra_data_a = NULL;
+  DirExtraData *extra_data_b = NULL;
+  gint prio_a = 0;
+  gint prio_b = 0;
+
+  extra_data_a = g_object_get_data (G_OBJECT (location_object_a), "extra-data");
+  prio_a = (extra_data_a != NULL) ? extra_data_a->priority : 0;
+
+  extra_data_b = g_object_get_data (G_OBJECT (location_object_b), "extra-data");
+  prio_b = (extra_data_b != NULL) ? extra_data_b->priority : 0;
+
+  return prio_b - prio_a;
 }
 
 static GPtrArray *
@@ -360,6 +460,9 @@ get_system_locations (GCancellable *cancellable,
 
   /* Don't forget to add the default system location at the end and */
   g_ptr_array_add (locations, flatpak_get_system_default_base_dir_location ());
+
+  /* Store the list of system locations sorted according to priorities */
+  g_ptr_array_sort (locations, system_locations_compare_func);
 
   return g_steal_pointer (&locations);
 }
@@ -501,7 +604,7 @@ flatpak_dir_finalize (GObject *object)
 
   g_clear_object (&self->repo);
   g_clear_object (&self->basedir);
-  g_clear_pointer (&self->id, g_free);
+  g_clear_pointer (&self->extra_data, dir_extra_data_free);
 
   if (self->system_helper != NO_SYSTEM_HELPER)
     g_clear_object (&self->system_helper);
@@ -593,7 +696,7 @@ flatpak_dir_init (FlatpakDir *self)
   g_type_ensure (G_TYPE_UNIX_SOCKET_ADDRESS);
 
   /* Optional data that needs initialization */
-  self->id = NULL;
+  self->extra_data = NULL;
 }
 
 gboolean
@@ -618,7 +721,10 @@ flatpak_dir_get_path (FlatpakDir *self)
 const char *
 flatpak_dir_get_id (FlatpakDir *self)
 {
-  return self->id;
+  if (self->extra_data != NULL)
+    return self->extra_data->id;
+
+  return NULL;
 }
 
 GFile *
@@ -5847,10 +5953,12 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
 }
 
 static FlatpakDir *
-flatpak_dir_new_with_id (GFile *path, gboolean user, const char *id)
+flatpak_dir_new_full (GFile *path, gboolean user, DirExtraData *extra_data)
 {
   FlatpakDir *dir = g_object_new (FLATPAK_TYPE_DIR, "path", path, "user", user, NULL);
-  dir->id = g_strdup (id);
+
+  if (extra_data != NULL)
+    dir->extra_data = dir_extra_data_clone (extra_data);
 
   return dir;
 }
@@ -5858,22 +5966,22 @@ flatpak_dir_new_with_id (GFile *path, gboolean user, const char *id)
 FlatpakDir *
 flatpak_dir_new (GFile *path, gboolean user)
 {
-  /* We are only interested on names for system-wide installations, in which case
-     we use _new_with_id() directly, so here we just call it passing NULL */
-  return flatpak_dir_new_with_id (path, user, NULL);
+  /* We are only interested on extra data for system-wide installations, in which
+     case we use _new_full() directly, so here we just call it passing NULL */
+  return flatpak_dir_new_full (path, user, NULL);
 }
 
 FlatpakDir *
 flatpak_dir_clone (FlatpakDir *self)
 {
-  return flatpak_dir_new_with_id (self->basedir, self->user, self->id);
+  return flatpak_dir_new_full (self->basedir, self->user, self->extra_data);
 }
 
 FlatpakDir *
 flatpak_dir_get_system_default (void)
 {
   g_autoptr(GFile) path = flatpak_get_system_default_base_dir_location ();
-  return flatpak_dir_new_with_id (path, FALSE, NULL);
+  return flatpak_dir_new_full (path, FALSE, NULL);
 }
 
 FlatpakDir *
@@ -5902,10 +6010,10 @@ flatpak_dir_get_system_by_id (const char   *id,
   for (i = 0; i < locations->len; i++)
     {
       GFile *path = g_ptr_array_index (locations, i);
-      char *install_id = g_object_get_data (G_OBJECT (path), "installation-id");
-      if (g_strcmp0 (install_id, id) == 0)
+      DirExtraData *extra_data = g_object_get_data (G_OBJECT (path), "extra-data");
+      if (extra_data != NULL && g_strcmp0 (extra_data->id, id) == 0)
         {
-          ret = flatpak_dir_new_with_id (path, FALSE, id);
+          ret = flatpak_dir_new_full (path, FALSE, extra_data);
           break;
         }
     }
@@ -5942,8 +6050,8 @@ flatpak_dir_get_system_list (GCancellable *cancellable,
   for (i = 0; i < locations->len; i++)
     {
       GFile *path = g_ptr_array_index (locations, i);
-      char *id = g_object_get_data (G_OBJECT (path), "installation-id");
-      g_ptr_array_add (result, flatpak_dir_new_with_id (path, FALSE, id));
+      DirExtraData *extra_data = g_object_get_data (G_OBJECT (path), "extra-data");
+      g_ptr_array_add (result, flatpak_dir_new_full (path, FALSE, extra_data));
     }
 
   return g_steal_pointer (&result);

@@ -100,6 +100,13 @@ typedef enum {
   FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA = 1 << 1,
 } FlatpakPullFlags;
 
+typedef enum {
+  FLATPAK_DIR_STORAGE_TYPE_DEFAULT = 0,
+  FLATPAK_DIR_STORAGE_TYPE_HARD_DISK = 1 << 0,
+  FLATPAK_DIR_STORAGE_TYPE_SDCARD = 1 << 1,
+  FLATPAK_DIR_STORAGE_TYPE_MMC = 1 << 2,
+} FlatpakDirStorageType;
+
 GQuark       flatpak_dir_error_quark (void);
 
 /**
