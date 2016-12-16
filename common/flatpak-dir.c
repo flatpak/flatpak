@@ -1412,11 +1412,14 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
         }
       else
         {
+          const char *installation = flatpak_dir_get_id (self);
+
           g_debug ("Calling system helper: DeployAppstream");
           if (!flatpak_system_helper_call_deploy_appstream_sync (system_helper,
                                                                  flatpak_file_get_path_cached (ostree_repo_get_path (child_repo)),
                                                                  remote,
                                                                  arch,
+                                                                 installation ? installation : "",
                                                                  cancellable,
                                                                  error))
             return FALSE;
@@ -3973,6 +3976,7 @@ flatpak_dir_install (FlatpakDir          *self,
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      const char *installation = flatpak_dir_get_id (self);
       const char *empty_subpaths[] = {NULL};
       const char **subpaths;
       g_autofree char *child_repo_path = NULL;
@@ -4052,6 +4056,7 @@ flatpak_dir_install (FlatpakDir          *self,
                                                    child_repo_path ? child_repo_path : "",
                                                    helper_flags, ref, remote_name,
                                                    (const char * const *) subpaths,
+                                                   installation ? installation : "",
                                                    cancellable,
                                                    error))
         return FALSE;
@@ -4105,6 +4110,7 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
     {
       FlatpakSystemHelper *system_helper;
       g_autoptr(GVariant) gpg_data_v = NULL;
+      const char *installation = flatpak_dir_get_id (self);
 
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
@@ -4118,6 +4124,7 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
       if (!flatpak_system_helper_call_install_bundle_sync (system_helper,
                                                            flatpak_file_get_path_cached (file),
                                                            0, gpg_data_v,
+                                                           installation ? installation : "",
                                                            &ref,
                                                            cancellable,
                                                            error))
@@ -4448,11 +4455,14 @@ flatpak_dir_update (FlatpakDir          *self,
       active_checksum = flatpak_dir_read_active (self, ref, NULL);
       if (g_strcmp0 (active_checksum, latest_checksum) != 0)
         {
+          const char *installation = flatpak_dir_get_id (self);
+
           g_debug ("Calling system helper: Deploy");
           if (!flatpak_system_helper_call_deploy_sync (system_helper,
                                                        child_repo_path ? child_repo_path : "",
                                                        helper_flags, ref, remote_name,
                                                        subpaths,
+                                                       installation ? installation : "",
                                                        cancellable,
                                                        error))
             return FALSE;
@@ -4545,6 +4555,7 @@ flatpak_dir_uninstall (FlatpakDir          *self,
   if (flatpak_dir_use_system_helper (self))
     {
       FlatpakSystemHelper *system_helper;
+      const char *installation = flatpak_dir_get_id (self);
 
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
@@ -4552,6 +4563,7 @@ flatpak_dir_uninstall (FlatpakDir          *self,
       g_debug ("Calling system helper: Uninstall");
       if (!flatpak_system_helper_call_uninstall_sync (system_helper,
                                                       flags, ref,
+                                                      installation ? installation : "",
                                                       cancellable, error))
         return FALSE;
 
@@ -6516,6 +6528,7 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
       FlatpakSystemHelper *system_helper;
       g_autoptr(GVariant) gpg_data_v = NULL;
       FlatpakHelperConfigureRemoteFlags flags = 0;
+      const char *installation = flatpak_dir_get_id (self);
 
       gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
 
@@ -6530,6 +6543,7 @@ flatpak_dir_remove_remote (FlatpakDir   *self,
                                                              flags, remote_name,
                                                              "",
                                                              gpg_data_v,
+                                                             installation ? installation : "",
                                                              cancellable, error))
         return FALSE;
 
@@ -6625,6 +6639,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
       FlatpakSystemHelper *system_helper;
       g_autofree char *config_data = g_key_file_to_data (config, NULL, NULL);
       g_autoptr(GVariant) gpg_data_v = NULL;
+      const char *installation = flatpak_dir_get_id (self);
 
       if (gpg_data != NULL)
         gpg_data_v = variant_new_ay_bytes (gpg_data);
@@ -6639,6 +6654,7 @@ flatpak_dir_modify_remote (FlatpakDir   *self,
                                                              0, remote_name,
                                                              config_data,
                                                              gpg_data_v,
+                                                             installation ? installation : "",
                                                              cancellable, error))
         return FALSE;
 
@@ -6934,6 +6950,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
         FlatpakSystemHelper *system_helper;
         g_autofree char *config_data = g_key_file_to_data (config, NULL, NULL);
         g_autoptr(GVariant) gpg_data_v = NULL;
+        const char *installation = flatpak_dir_get_id (self);
 
         gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
 
@@ -6945,6 +6962,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                                                0, remote,
                                                                config_data,
                                                                gpg_data_v,
+                                                               installation ? installation : "",
                                                                cancellable, error))
           return FALSE;
 

@@ -117,9 +117,19 @@ schedule_idle_callback (void)
 }
 
 static FlatpakDir *
-dir_get_system (void)
+dir_get_system (const char *installation, GError **error)
 {
-  FlatpakDir *system = flatpak_dir_get_system_default ();
+  FlatpakDir *system = NULL;
+
+  if (installation != NULL && *installation != '\0')
+    system = flatpak_dir_get_system_by_id (installation, NULL, error);
+  else
+    system = flatpak_dir_get_system_default ();
+
+  /* This can happen in case of error with flatpak_dir_get_system_by_id(). */
+  if (system == NULL)
+    return NULL;
+
   flatpak_dir_set_no_system_helper (system, TRUE);
   return system;
 }
@@ -131,9 +141,10 @@ handle_deploy (FlatpakSystemHelper   *object,
                guint32                arg_flags,
                const gchar           *arg_ref,
                const gchar           *arg_origin,
-               const gchar *const    *arg_subpaths)
+               const gchar *const    *arg_subpaths,
+               const gchar           *arg_installation)
 {
-  g_autoptr(FlatpakDir) system = dir_get_system ();
+  g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
@@ -143,7 +154,14 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GMainContext) main_context = NULL;
   g_autofree char *url = NULL;
 
-  g_debug ("Deploy %s %u %s %s", arg_repo_path, arg_flags, arg_ref, arg_origin);
+  g_debug ("Deploy %s %u %s %s %s", arg_repo_path, arg_flags, arg_ref, arg_origin, arg_installation);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
 
   if ((arg_flags & ~FLATPAK_HELPER_DEPLOY_FLAGS_ALL) != 0)
     {
@@ -293,15 +311,23 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
                          GDBusMethodInvocation *invocation,
                          const gchar           *arg_repo_path,
                          const gchar           *arg_origin,
-                         const gchar           *arg_arch)
+                         const gchar           *arg_arch,
+                         const gchar           *arg_installation)
 {
-  g_autoptr(FlatpakDir) system = dir_get_system ();
+  g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GFile) path = g_file_new_for_path (arg_repo_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   g_autofree char *branch = NULL;
 
-  g_debug ("DeployAppstream %s %s %s", arg_repo_path, arg_origin, arg_arch);
+  g_debug ("DeployAppstream %s %s %s %s", arg_repo_path, arg_origin, arg_arch, arg_installation);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
 
   if (!g_file_query_exists (path, NULL))
     {
@@ -358,12 +384,20 @@ static gboolean
 handle_uninstall (FlatpakSystemHelper *object,
                   GDBusMethodInvocation *invocation,
                   guint arg_flags,
-                  const gchar *arg_ref)
+                  const gchar *arg_ref,
+                  const gchar *arg_installation)
 {
-  g_autoptr(FlatpakDir) system = dir_get_system ();
+  g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
 
-  g_debug ("Uninstall %u %s", arg_flags, arg_ref);
+  g_debug ("Uninstall %u %s %s", arg_flags, arg_ref, arg_installation);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
 
   if ((arg_flags & ~FLATPAK_HELPER_UNINSTALL_FLAGS_ALL) != 0)
     {
@@ -394,15 +428,23 @@ handle_install_bundle (FlatpakSystemHelper   *object,
                        GDBusMethodInvocation *invocation,
                        const gchar           *arg_bundle_path,
                        guint32                arg_flags,
-                       GVariant              *arg_gpg_key)
+                       GVariant              *arg_gpg_key,
+                       const gchar           *arg_installation)
 {
-  g_autoptr(FlatpakDir) system = dir_get_system ();
+  g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GFile) path = g_file_new_for_path (arg_bundle_path);
   g_autoptr(GError) error = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   g_autofree char *ref = NULL;
 
-  g_debug ("InstallBundle %s %u %p", arg_bundle_path, arg_flags, arg_gpg_key);
+  g_debug ("InstallBundle %s %u %p %s", arg_bundle_path, arg_flags, arg_gpg_key, arg_installation);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
 
   if (arg_flags != 0)
     {
@@ -439,16 +481,24 @@ handle_configure_remote (FlatpakSystemHelper *object,
                          guint arg_flags,
                          const gchar *arg_remote,
                          const gchar *arg_config,
-                         GVariant *arg_gpg_key)
+                         GVariant *arg_gpg_key,
+                         const gchar *arg_installation)
 {
-  g_autoptr(FlatpakDir) system = dir_get_system ();
+  g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(GKeyFile) config = g_key_file_new ();
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", arg_remote);
   g_autoptr(GBytes) gpg_data = NULL;
   gboolean force_remove;
 
-  g_debug ("ConfigureRemote %u %s", arg_flags, arg_remote);
+  g_debug ("ConfigureRemote %u %s %s", arg_flags, arg_remote, arg_installation);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
 
   if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
     {

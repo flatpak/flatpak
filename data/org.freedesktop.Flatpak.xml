@@ -65,17 +65,20 @@
       <arg type='s' name='ref' direction='in'/>
       <arg type='s' name='origin' direction='in'/>
       <arg type='as' name='subpaths' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
     </method>
 
     <method name="DeployAppstream">
       <arg type='ay' name='repo_path' direction='in'/>
       <arg type='s' name='origin' direction='in'/>
       <arg type='s' name='arch' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
     </method>
 
     <method name="Uninstall">
       <arg type='u' name='flags' direction='in'/>
       <arg type='s' name='ref' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
     </method>
 
     <method name="InstallBundle">
@@ -84,6 +87,7 @@
       <arg type='ay' name='gpg_key' direction='in'>
         <annotation name="org.gtk.GDBus.C.ForceGVariant" value="true"/>
       </arg>
+      <arg type='s' name='installation' direction='in'/>
       <arg type='s' name='ref' direction='out'/>
     </method>
 
@@ -94,6 +98,7 @@
       <arg type='ay' name='gpg_key' direction='in'>
         <annotation name="org.gtk.GDBus.C.ForceGVariant" value="true"/>
       </arg>
+      <arg type='s' name='installation' direction='in'/>
     </method>
 
   </interface>
