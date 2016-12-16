@@ -1,5 +1,5 @@
 lib_LTLIBRARIES += libflatpak.la
-noinst_PROGRAMS += test-libflatpak
+noinst_PROGRAMS += test-libflatpak test-libflatpak-installations
 
 flatpakincludedir = $(includedir)/flatpak
 
@@ -103,6 +103,21 @@ test_libflatpak_CFLAGS = \
 	$(NULL)
 
 test_libflatpak_LDADD = \
+	$(BASE_LIBS)	\
+        libflatpak.la \
+	$(NULL)
+
+test_libflatpak_installations_SOURCES = \
+        lib/test-lib-installations.c      \
+	$(NULL)
+
+test_libflatpak_installations_CFLAGS = \
+	$(BASE_CFLAGS) \
+	-I$(top_srcdir)/lib \
+	-I$(top_builddir)/lib \
+	$(NULL)
+
+test_libflatpak_installations_LDADD = \
 	$(BASE_LIBS)	\
         libflatpak.la \
 	$(NULL)
