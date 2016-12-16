@@ -165,6 +165,7 @@ GFile *     flatpak_dir_get_path (FlatpakDir *self);
 GFile *     flatpak_dir_get_changed_path (FlatpakDir *self);
 const char *flatpak_dir_get_id (FlatpakDir *self);
 const char *flatpak_dir_get_display_name (FlatpakDir *self);
+char *      flatpak_dir_get_name (FlatpakDir *self);
 gint        flatpak_dir_get_priority (FlatpakDir *self);
 FlatpakDirStorageType flatpak_dir_get_storage_type (FlatpakDir *self);
 GFile *     flatpak_dir_get_deploy_dir (FlatpakDir *self,

@@ -150,16 +150,7 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
               if ((opt_user && opt_system) || (opt_user && opt_installation != NULL)
                   || (opt_system && opt_installation != NULL))
                 {
-                  g_autofree char *dir_id = NULL;
-                  if (flatpak_dir_is_user (dir))
-                    {
-                      dir_id = g_strdup ("user");
-                    }
-                  else
-                    {
-                      const char *system_dir_id = flatpak_dir_get_id (dir);
-                      dir_id = g_strdup_printf ("system (%s)", system_dir_id ? system_dir_id : "default");
-                    }
+                  g_autofree char *dir_id = flatpak_dir_get_name (dir);
                   flatpak_table_printer_append_with_comma (printer, dir_id);
                 }
             }

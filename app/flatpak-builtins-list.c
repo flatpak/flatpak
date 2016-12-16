@@ -198,17 +198,7 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
 
               if (refs_array->len > 1)
                 {
-                  g_autofree char *source = NULL;
-                  if (flatpak_dir_is_user (dir))
-                    {
-                      source = g_strdup ("user");
-                    }
-                  else
-                    {
-                      const char *system_source = flatpak_dir_get_id (dir);
-                      source = g_strdup_printf ("system (%s)", system_source ? system_source : "default");
-                    }
-
+                  g_autofree char *source = flatpak_dir_get_name (dir);
                   flatpak_table_printer_append_with_comma (printer, source);
                 }
 

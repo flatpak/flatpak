@@ -780,6 +780,21 @@ flatpak_dir_get_id (FlatpakDir *self)
   return NULL;
 }
 
+char *
+flatpak_dir_get_name (FlatpakDir *self)
+{
+  const char *id = NULL;
+
+  if (self->user)
+    return g_strdup ("user");
+
+  id = flatpak_dir_get_id (self);
+  if (id != NULL && g_strcmp0 (id, "default") != 0)
+    return g_strdup_printf ("system (%s)", id);
+
+  return g_strdup ("system");
+}
+
 const char *
 flatpak_dir_get_display_name (FlatpakDir *self)
 {
