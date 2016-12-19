@@ -185,7 +185,7 @@ flatpak_get_supported_arches (void)
  * Returns: (transfer full) (element-type FlatpakInstallation): an GPtrArray of
  *   #FlatpakInstallation instances
  *
- * Since: 0.6.15
+ * Since: 0.8
  */
 GPtrArray *
 flatpak_get_system_installations (GCancellable *cancellable,
@@ -258,7 +258,7 @@ flatpak_installation_new_system (GCancellable *cancellable,
  *
  * Returns: (transfer full): a new #FlatpakInstallation
  *
- * Since: 0.6.15
+ * Since: 0.8
  */
 FlatpakInstallation *
 flatpak_installation_new_system_with_id (const char   *id,
@@ -413,7 +413,7 @@ flatpak_installation_get_path (FlatpakInstallation *self)
  *
  * Returns: (transfer none): a string with the installation's ID
  *
- * Since: 0.6.15
+ * Since: 0.8
  */
 const char *
 flatpak_installation_get_id (FlatpakInstallation *self)
@@ -431,7 +431,7 @@ flatpak_installation_get_id (FlatpakInstallation *self)
  *
  * Returns: (transfer none): a string with the installation's display name
  *
- * Since: 0.6.15
+ * Since: 0.8
  */
 const char *
 flatpak_installation_get_display_name (FlatpakInstallation *self)
@@ -449,7 +449,7 @@ flatpak_installation_get_display_name (FlatpakInstallation *self)
  *
  * Returns: an integer with the configured priority value
  *
- * Since: 0.6.15
+ * Since: 0.8
  */
 gint
 flatpak_installation_get_priority (FlatpakInstallation *self)
@@ -467,7 +467,7 @@ flatpak_installation_get_priority (FlatpakInstallation *self)
  *
  * Returns: a #FlatpakStorageType
  *
- * Since: 0.6.15
+ * Since: 0.8
  */FlatpakStorageType
 flatpak_installation_get_storage_type (FlatpakInstallation *self)
 {
