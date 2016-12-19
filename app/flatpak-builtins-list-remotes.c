@@ -54,7 +54,6 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GPtrArray) dirs = NULL;
   guint i = 0, j;
   FlatpakTablePrinter *printer;
-  gboolean print_all_system = FALSE;
 
   context = g_option_context_new (_(" - List remote repositories"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -66,41 +65,41 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
     return usage_error (context, _("Too many arguments"), error);
 
   if (!opt_user && !opt_system && opt_installations == NULL)
-    print_all_system = TRUE;
-
-  dirs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-
-  if (opt_user)
-    g_ptr_array_add (dirs, flatpak_dir_get_user ());
-
-  if (opt_system)
-    g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
-
-  if (opt_installations != NULL)
     {
-      int i = 0;
-
-      for (i = 0; opt_installations[i] != NULL; i++)
-        {
-          FlatpakDir *installation_dir = NULL;
-
-          /* Already included the default system installation. */
-          if (opt_system && g_strcmp0 (opt_installations[i], "default") == 0)
-            continue;
-
-          installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
-          if (installation_dir == NULL)
-            return FALSE;
-
-          g_ptr_array_add (dirs, installation_dir);
-        }
-    }
-
-  if (print_all_system)
-    {
+      /* Default: All system remotes */
       dirs = flatpak_dir_get_system_list (cancellable, error);
       if (dirs == NULL)
         return FALSE;
+    }
+  else
+    {
+      dirs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+
+      if (opt_user)
+        g_ptr_array_add (dirs, flatpak_dir_get_user ());
+
+      if (opt_system)
+        g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
+
+      if (opt_installations != NULL)
+        {
+          int i = 0;
+
+          for (i = 0; opt_installations[i] != NULL; i++)
+            {
+              FlatpakDir *installation_dir = NULL;
+
+              /* Already included the default system installation. */
+              if (opt_system && g_strcmp0 (opt_installations[i], "default") == 0)
+                continue;
+
+              installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
+              if (installation_dir == NULL)
+                return FALSE;
+
+              g_ptr_array_add (dirs, installation_dir);
+            }
+        }
     }
 
   printer = flatpak_table_printer_new ();
