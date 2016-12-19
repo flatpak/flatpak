@@ -522,7 +522,7 @@ flatpak_transaction_add_install_oci (FlatpakTransaction  *self,
   const char *all_paths[] = { NULL };
   g_autofree char *remote = NULL;
   g_autofree char *title = NULL;
-  g_autofree char **parts = NULL;
+  g_auto(GStrv) parts = NULL;
   g_autofree char *id = NULL;
 
   registry = flatpak_oci_registry_new (uri, FALSE, -1, NULL, error);
