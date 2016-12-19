@@ -46,7 +46,7 @@
 
 #define SUMMARY_CACHE_TIMEOUT_SEC 5*60
 
-#define SYSCONF_INSTALLATIONS_DIR FLATPAK_CONFIGDIR "/installations.d"
+#define SYSCONF_INSTALLATIONS_DIR "installations.d"
 #define SYSCONF_INSTALLATIONS_FILE_EXT ".conf"
 
 #define SYSTEM_DIR_DEFAULT_ID "default"
@@ -129,6 +129,25 @@ enum {
 
 #define OSTREE_GIO_FAST_QUERYINFO ("standard::name,standard::type,standard::size,standard::is-symlink,standard::symlink-target," \
                                    "unix::device,unix::inode,unix::mode,unix::uid,unix::gid,unix::rdev")
+
+static const char *
+get_config_dir_location (void)
+{
+  static gsize path = 0;
+
+  if (g_once_init_enter (&path))
+    {
+      gsize setup_value = 0;
+      const char *config_dir = g_getenv ("FLATPAK_CONFIG_DIR");
+      if (config_dir != NULL)
+        setup_value = (gsize)config_dir;
+      else
+        setup_value = (gsize)FLATPAK_CONFIGDIR;
+      g_once_init_leave (&path, setup_value);
+     }
+
+  return (const char *)path;
+}
 
 static DirExtraData *
 dir_extra_data_new (const char           *id,
@@ -430,16 +449,20 @@ system_locations_from_configuration (GCancellable *cancellable,
   g_autoptr(GFile) conf_dir = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GError) my_error = NULL;
+  g_autofree char *config_dir = NULL;
 
   locations = g_ptr_array_new_with_free_func (g_object_unref);
+  config_dir = g_strdup_printf ("%s/%s",
+                                get_config_dir_location (),
+                                SYSCONF_INSTALLATIONS_DIR);
 
-  if (!g_file_test (SYSCONF_INSTALLATIONS_DIR, G_FILE_TEST_IS_DIR))
+  if (!g_file_test (config_dir, G_FILE_TEST_IS_DIR))
     {
-      g_debug ("No installations directory in %s. Skipping", SYSCONF_INSTALLATIONS_DIR);
+      g_debug ("No installations directory in %s. Skipping", config_dir);
       goto out;
     }
 
-  conf_dir = g_file_new_for_path (SYSCONF_INSTALLATIONS_DIR);
+  conf_dir = g_file_new_for_path (config_dir);
   dir_enum = g_file_enumerate_children (conf_dir,
                                         G_FILE_ATTRIBUTE_STANDARD_NAME "," G_FILE_ATTRIBUTE_STANDARD_TYPE,
                                         G_FILE_QUERY_INFO_NONE,
@@ -447,7 +470,7 @@ system_locations_from_configuration (GCancellable *cancellable,
   if (my_error != NULL)
     {
       g_debug ("Unexpected error retrieving extra installations in %s: %s",
-               SYSCONF_INSTALLATIONS_DIR, my_error->message);
+               config_dir, my_error->message);
       g_propagate_error (error, g_steal_pointer (&my_error));
       goto out;
     }
@@ -463,7 +486,7 @@ system_locations_from_configuration (GCancellable *cancellable,
                                       cancellable, &my_error))
         {
           g_debug ("Unexpected error reading file in %s: %s",
-                   SYSCONF_INSTALLATIONS_DIR, my_error->message);
+                   config_dir, my_error->message);
           g_propagate_error (error, g_steal_pointer (&my_error));
           goto out;
         }
@@ -639,8 +662,15 @@ flatpak_dir_use_system_helper (FlatpakDir *self)
 static OstreeRepo *
 system_ostree_repo_new (GFile *repodir)
 {
+  g_autofree char *config_dir = NULL;
+
+  config_dir = g_strdup_printf ("%s/%s",
+                                get_config_dir_location (),
+                                "/remotes.d");
+
   return g_object_new (OSTREE_TYPE_REPO, "path", repodir,
-                       "remotes-config-dir", FLATPAK_CONFIGDIR "/remotes.d",
+                       "remotes-config-dir",
+                       config_dir,
                        NULL);
 }
 
