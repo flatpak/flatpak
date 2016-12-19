@@ -98,8 +98,8 @@
             default, but you can manually change with make-current.
         </para>
         <para>
-            Unless overridden with the --user option, this command creates a
-            system-wide installation.
+            Unless overridden with the --user or the --installation option, this command installs
+            the application or runtime in the default system-wide installation.
         </para>
 
     </refsect1>
@@ -149,7 +149,7 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Create a per-user installation.
+                    Install the application or runtime in a per-user installation.
                 </para></listitem>
             </varlistentry>
 
@@ -157,7 +157,19 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Create a system-wide installation.
+                    Install the application or runtime in the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Install the application or runtime in a system-wide installation
+                    specified by <arg choice="plain">NAME</arg> among those defined in
+                    <filename>/etc/flatpak/installations.d</filename>. Using
+                    <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
                 </para></listitem>
             </varlistentry>
 
@@ -256,7 +268,10 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak -install gnome org.gnome.gedit2</command>
+            <command>$ flatpak install gnome org.gnome.gedit2</command>
+        </para>
+        <para>
+            <command>$ flatpak --installation=default install gnome org.gnome.gedit2</command>
         </para>
         <para>
             <command>$ flatpak --user install gnome org.gnome.gedit//3.22</command>

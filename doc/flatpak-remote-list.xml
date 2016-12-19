@@ -43,8 +43,8 @@
         </para>
         <para>
             By default, both per-user and system-wide installations
-            are shown. Use the --user or --system options to change
-            this.
+            are shown. Use the --user, --system or --installation
+            options to change this.
         </para>
 
     </refsect1>
@@ -76,7 +76,18 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Show the system-wide configuration.
+                    Show the default system-wide configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Show a system-wide installation by <arg choice="plain">NAME</arg> among
+                    those defined in <filename>/etc/flatpak/installations.d</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
                 </para></listitem>
             </varlistentry>
 

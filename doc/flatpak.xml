@@ -64,6 +64,17 @@
         </para>
 
         <para>
+            In addition to the system-wide installation in <filename>$prefix/var/lib/flatpak/</filename>,
+            which is always considered the default one unless overridden, more
+            system-wide installations can be defined via configuration files
+            <filename>/etc/flatpak/installations.d</filename>, which must define
+            at least the id of the installation and the absolute path to it.
+            Other optional parameters like <arg choice="plain">DisplayName</arg>,
+            <arg choice="plain">Priority</arg> or <arg choice="plain">StorageType</arg>
+            are also supported.
+        </para>
+
+        <para>
             flatpak uses OSTree to distribute and deploy data. The repositories
             it uses are OSTree repositories and can be manipulated with the
             <command>ostree</command> utility. Installed runtimes and

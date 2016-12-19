@@ -70,8 +70,8 @@
             version, with the --commit option.
         </para>
         <para>
-            Unless overridden with the --user option, this command updates
-            a system-wide installation.
+            Unless overridden with the --user or the --installation option, this command updates
+            the default system-wide installation.
         </para>
 
     </refsect1>
@@ -103,7 +103,18 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Update a system-wide installation.
+                    Update the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Updates a system-wide installation specified by <arg choice="plain">NAME</arg>
+                    among those defined in <filename>/etc/flatpak/installations.d</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
                 </para></listitem>
             </varlistentry>
 

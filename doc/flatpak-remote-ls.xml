@@ -45,8 +45,8 @@
             You can find all configured remote repositories with flatpak remote-list.
         </para>
         <para>
-            Unless overridden with the --user option, this command uses
-            the system-wide configuration.
+            Unless overridden with the --user or --installation options, this command
+            uses the default system-wide configuration.
         </para>
 
     </refsect1>
@@ -78,7 +78,18 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Use the system-wide configuration.
+                    Use the default system-wide configuration.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Use a system-wide installation specified by <arg choice="plain">NAME</arg>
+                    among those defined in <filename>/etc/flatpak/installations.d</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
                 </para></listitem>
             </varlistentry>
 
