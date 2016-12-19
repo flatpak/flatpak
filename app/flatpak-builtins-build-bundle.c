@@ -118,6 +118,8 @@ build_bundle (OstreeRepo *repo, GFile *file,
   g_autoptr(GFile) root = NULL;
   g_autofree char *commit_checksum = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
+  g_autoptr(GVariant) params = NULL;
+  g_autoptr(GVariant) metadata = NULL;
 
   if (!ostree_repo_resolve_rev (repo, full_branch, FALSE, &commit_checksum, error))
     return FALSE;
@@ -244,12 +246,15 @@ build_bundle (OstreeRepo *repo, GFile *file,
   g_variant_builder_add (&param_builder, "{sv}", "include-detached", g_variant_new_boolean (TRUE));
   g_variant_builder_add (&param_builder, "{sv}", "filename", g_variant_new_bytestring (flatpak_file_get_path_cached (file)));
 
+  params = g_variant_ref_sink (g_variant_builder_end (&param_builder));
+  metadata = g_variant_ref_sink (g_variant_builder_end (&metadata_builder));
+
   if (!ostree_repo_static_delta_generate (repo,
                                           OSTREE_STATIC_DELTA_GENERATE_OPT_LOWLATENCY,
                                           /* from */ NULL,
                                           commit_checksum,
-                                          g_variant_builder_end (&metadata_builder),
-                                          g_variant_builder_end (&param_builder),
+                                          metadata,
+                                          params,
                                           cancellable,
                                           error))
     return FALSE;
