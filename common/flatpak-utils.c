@@ -3885,6 +3885,7 @@ flatpak_bundle_load (GFile   *file,
   g_autoptr(GVariant) delta = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GBytes) copy = NULL;
   g_autoptr(GVariant) to_csum_v = NULL;
   guint8 endianness_char;
   gboolean byte_swap = FALSE;
@@ -3963,10 +3964,11 @@ flatpak_bundle_load (GFile   *file,
     }
 
   /* Make a copy of the data so we can return it after freeing the file */
-  return g_variant_new_from_bytes (g_variant_get_type (metadata),
-                                   g_bytes_new (g_variant_get_data (metadata),
-                                                g_variant_get_size (metadata)),
-                                   FALSE);
+  copy = g_bytes_new (g_variant_get_data (metadata),
+                      g_variant_get_size (metadata));
+  return g_variant_ref_sink (g_variant_new_from_bytes (g_variant_get_type (metadata),
+                                                       copy,
+                                                       FALSE));
 }
 
 gboolean
