@@ -482,7 +482,10 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
     }
 
   if (self->add_deps)
-    add_deps (self, metakey, remote, ref, error);
+    {
+      if (!add_deps (self, metakey, remote, ref, error))
+        return FALSE;
+    }
 
   flatpak_transaction_add_op (self, remote, ref, subpaths, commit, !is_update, is_update);
 
