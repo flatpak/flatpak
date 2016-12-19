@@ -734,7 +734,7 @@ flatpak_oci_registry_store_json (FlatpakOciRegistry    *self,
                                 GCancellable         *cancellable,
                                 GError              **error)
 {
-  GBytes *bytes = flatpak_json_to_bytes (json);
+  g_autoptr(GBytes) bytes = flatpak_json_to_bytes (json);
   g_autofree char *digest = NULL;
 
   digest = flatpak_oci_registry_store_blob (self, bytes, cancellable, error);
