@@ -45,8 +45,8 @@
         </para>
         <para>
             By default, both per-user and system-wide installations
-            are queried. Use the --user or --system options to change
-            this.
+            are queried. Use the --user, --system or --installation
+            options to change this.
         </para>
         <para>
             By default this queries the installed apps and runtimes, but you can
@@ -82,7 +82,18 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Query system-wide installations.
+                    Query the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Query a system-wide installation by <arg choice="plain">NAME</arg> among
+                    those defined in <filename>/etc/flatpak/installations.d</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
                 </para></listitem>
             </varlistentry>
 

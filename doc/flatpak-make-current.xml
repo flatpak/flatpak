@@ -50,8 +50,8 @@
             command is often not needed.
         </para>
         <para>
-            Unless overridden with the --user option, this command creates a
-            system-wide installation.
+            Unless overridden with the --user or --installation options, this command
+            changes the default system-wide installation.
         </para>
 
     </refsect1>
@@ -75,7 +75,7 @@
                 <term><option>--user</option></term>
 
                 <listitem><para>
-                    Create a per-user installation.
+                    Update a per-user installation.
                 </para></listitem>
             </varlistentry>
 
@@ -83,7 +83,18 @@
                 <term><option>--system</option></term>
 
                 <listitem><para>
-                    Create a system-wide installation.
+                    Update the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Updates a system-wide installation specified by <arg choice="plain">NAME</arg>
+                    among those defined in <filename>/etc/flatpak/installations.d</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
                 </para></listitem>
             </varlistentry>
 

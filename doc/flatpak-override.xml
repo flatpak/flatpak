@@ -44,10 +44,14 @@
             to grant a sandboxed application more or less resources than it requested.
         </para>
         <para>
-          By default the application gets access to the resources it
-          requested when it is started. But the user can override it
-          on a particular instance by specifying extra arguments to
-          flatpak run, or every time by using flatpak override.
+            By default the application gets access to the resources it
+            requested when it is started. But the user can override it
+            on a particular instance by specifying extra arguments to
+            flatpak run, or every time by using flatpak override.
+        </para>
+        <para>
+            Unless overridden with the --user or --installation options, this command
+            changes the default system-wide installation.
         </para>
 
     </refsect1>
@@ -64,6 +68,33 @@
 
                 <listitem><para>
                     Show help options and exit.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Update a per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Update the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Updates a system-wide installation specified by <arg choice="plain">NAME</arg>
+                    among those defined in <filename>/etc/flatpak/installations.d</filename>.
+                    Using <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
                 </para></listitem>
             </varlistentry>
 
