@@ -4095,6 +4095,7 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   g_autofree char *body = NULL;
   guint64 timestamp = 0;
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  g_autoptr(GVariant) metadata = NULL;
   GHashTable *annotations;
   int i;
 
@@ -4163,11 +4164,12 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   if (!ostree_repo_file_ensure_resolved ((OstreeRepoFile *) archive_root, error))
     goto error;
 
+  metadata = g_variant_ref_sink (g_variant_builder_end (metadata_builder));
   if (!ostree_repo_write_commit_with_time (repo,
                                            parent,
                                            subject,
                                            body,
-                                           g_variant_builder_end (metadata_builder),
+                                           metadata,
                                            OSTREE_REPO_FILE (archive_root),
                                            timestamp,
                                            &commit_checksum,
