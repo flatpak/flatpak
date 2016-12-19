@@ -47,6 +47,7 @@
 #define SUMMARY_CACHE_TIMEOUT_SEC 5*60
 
 #define SYSCONF_INSTALLATIONS_DIR FLATPAK_CONFIGDIR "/installations.d"
+#define SYSCONF_INSTALLATIONS_FILE_EXT ".conf"
 
 #define SYSTEM_DIR_DEFAULT_ID "default"
 #define SYSTEM_DIR_DEFAULT_DISPLAY_NAME "Default system directory"
@@ -473,7 +474,7 @@ system_locations_from_configuration (GCancellable *cancellable,
       name = g_file_info_get_attribute_byte_string (file_info, "standard::name");
       type = g_file_info_get_attribute_uint32 (file_info, "standard::type");
 
-      if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, ".install"))
+      if (type == G_FILE_TYPE_REGULAR && g_str_has_suffix (name, SYSCONF_INSTALLATIONS_FILE_EXT))
         {
           g_autofree char *path_str = g_file_get_path (path);
           if (!append_locations_from_config_file (locations, path_str, cancellable, error))
