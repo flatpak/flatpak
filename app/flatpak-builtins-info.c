@@ -71,7 +71,6 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(GOptionContext) context = NULL;
   g_autofree char *ref = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) installation_dir = NULL;
   g_autoptr(FlatpakDir) system_dir = NULL;
   g_autoptr(GPtrArray) system_dirs = NULL;
   FlatpakDir *dir = NULL;

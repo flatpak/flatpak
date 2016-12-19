@@ -52,7 +52,7 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(GPtrArray) dirs = NULL;
-  guint i = 0, n_dirs = 0, j;
+  guint i = 0, j;
   FlatpakTablePrinter *printer;
   gboolean print_all_system = FALSE;
 

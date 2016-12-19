@@ -490,7 +490,6 @@ get_system_locations (GCancellable *cancellable,
                       GError      **error)
 {
   g_autoptr(GPtrArray) locations = NULL;
-  g_autoptr(GFile) default_location = NULL;
 
   /* This will always return a GPtrArray, being an empty one
    * if no additional system installations have been configured.

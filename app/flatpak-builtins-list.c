@@ -328,7 +328,7 @@ print_installed_refs (gboolean app, gboolean runtime, gboolean print_system, gbo
               if (system_dir == NULL)
                 {
                   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                               "Can't find installation %s", opt_installations);
+                               "Can't find installation %s", installations[i]);
                   return FALSE;
                 }
 
