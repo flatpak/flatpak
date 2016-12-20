@@ -7,12 +7,22 @@
 static char *testdir;
 static char *flatpak_runtimedir;
 static char *flatpak_systemdir;
+static char *flatpak_configdir;
+static char *flatpak_installationsdir;
 static char *gpg_homedir;
 static char *gpg_args;
 static char *repo_url;
 
 static const char *gpg_id = "7B0961FD";
 const char *repo_name = "test-repo";
+
+typedef struct
+{
+  const char *id;
+  const char *display_name;
+  gint        priority;
+  FlatpakStorageType storage_type;
+} InstallationExtraData;
 
 static void
 test_library_version (void)
@@ -64,6 +74,75 @@ test_system_installation (void)
   dir = flatpak_installation_get_path (inst);
   path = g_file_get_path (dir);
   g_assert_cmpstr (path, ==, flatpak_systemdir);
+}
+
+static void
+test_multiple_system_installations (void)
+{
+  /* This is sorted according to the specific priority of each installation */
+  static InstallationExtraData expected_installations[] = {
+    { "extra-installation-2", "Extra system installation 2", 25, FLATPAK_STORAGE_TYPE_SDCARD},
+    { "extra-installation-1", "Extra system installation 1", 10, FLATPAK_STORAGE_TYPE_MMC},
+    { "extra-installation-3", NULL, 0, FLATPAK_STORAGE_TYPE_DEFAULT},
+    { "default", "Default system directory", 0, FLATPAK_STORAGE_TYPE_DEFAULT},
+  };
+
+  g_autoptr(GPtrArray) system_dirs = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autofree char *path = NULL;
+
+  FlatpakInstallation *installation = NULL;
+  const char *current_id = NULL;
+  const char *current_display_name = NULL;
+  gint current_priority = 0;
+  FlatpakStorageType current_storage_type = FLATPAK_STORAGE_TYPE_DEFAULT;
+  int i;
+
+  system_dirs = flatpak_get_system_installations (NULL, &error);
+  g_assert_nonnull (system_dirs);
+  g_assert_no_error (error);
+  g_assert_cmpint (system_dirs->len, ==, 4);
+
+  for (i = 0; i < system_dirs->len; i++)
+    {
+      g_autoptr (FlatpakInstallation) new_install = NULL;
+      g_autoptr(GFile) installation_path = NULL;
+      g_autofree char *path_str = NULL;
+
+      installation = (FlatpakInstallation*) g_ptr_array_index (system_dirs, i);
+      g_assert_false (flatpak_installation_get_is_user (installation));
+
+      installation_path = flatpak_installation_get_path (installation);
+      g_assert_nonnull (installation_path);
+
+      current_id = flatpak_installation_get_id (installation);
+      g_assert_cmpstr (current_id, ==, expected_installations[i].id);
+
+      path_str = g_file_get_path (installation_path);
+      if (g_strcmp0 (current_id, "default") == 0)
+        g_assert_cmpstr (path_str, ==, flatpak_systemdir);
+      else
+        g_assert_cmpstr (path_str, !=, flatpak_systemdir);
+
+      current_display_name = flatpak_installation_get_display_name (installation);
+      g_assert_cmpstr (current_display_name, ==, expected_installations[i].display_name);
+
+      current_priority = flatpak_installation_get_priority (installation);
+      g_assert_cmpint (current_priority, ==, expected_installations[i].priority);
+
+      current_storage_type = flatpak_installation_get_storage_type (installation);
+      g_assert_cmpint (current_storage_type, ==, expected_installations[i].storage_type);
+
+      /* Now test that flatpak_installation_new_system_with_id() works too */
+
+      new_install = flatpak_installation_new_system_with_id (current_id, NULL, &error);
+      g_assert_nonnull (new_install);
+
+      g_assert_cmpstr(current_id, ==, flatpak_installation_get_id (new_install));
+      g_assert_cmpstr(current_display_name, ==, flatpak_installation_get_display_name (new_install));
+      g_assert_cmpint(current_priority, ==, flatpak_installation_get_priority (new_install));
+      g_assert_cmpint(current_storage_type, ==, flatpak_installation_get_storage_type (new_install));
+    }
 }
 
 static void
@@ -582,6 +661,56 @@ add_remote (void)
 }
 
 static void
+add_extra_installation (const char *id,
+                        const char *display_name,
+                        const char *storage_type,
+                        const char *priority)
+{
+  static const char *base_fmt_string =
+    "[Installation \"%s\"]\n"
+    "Path=%s";
+
+  g_autofree char *conffile_path = NULL;
+  g_autofree char *contents_string = NULL;
+  g_autofree char *path = NULL;
+  g_autoptr(GPtrArray) contents_array = NULL;
+  g_autoptr(GError) error = NULL;
+
+  path = g_strconcat (testdir, "/system-", id, NULL);
+  g_mkdir_with_parents (path, S_IRWXU|S_IRWXG|S_IRWXO);
+
+  contents_array = g_ptr_array_new_with_free_func ((GDestroyNotify)g_free);
+
+  g_ptr_array_add (contents_array, g_strdup_printf (base_fmt_string, id, path));
+
+  if (display_name != NULL)
+    g_ptr_array_add (contents_array, g_strdup_printf ("DisplayName=%s", display_name));
+
+  if (storage_type != NULL)
+    g_ptr_array_add (contents_array, g_strdup_printf ("StorageType=%s", storage_type));
+
+  if (priority != NULL)
+    g_ptr_array_add (contents_array, g_strdup_printf ("Priority=%s", priority));
+
+  contents_string = g_strjoinv ("\n", (char**)contents_array->pdata);
+
+  conffile_path = g_strconcat (flatpak_installationsdir, "/", id, ".conf", NULL);
+  g_file_set_contents (conffile_path, contents_string, -1, &error);
+  g_assert_no_error (error);
+}
+
+static void
+setup_multiple_installations (void)
+{
+  flatpak_installationsdir = g_strconcat (flatpak_configdir, "/installations.d", NULL);
+  g_mkdir_with_parents (flatpak_installationsdir, S_IRWXU|S_IRWXG|S_IRWXO);
+
+  add_extra_installation ("extra-installation-1", "Extra system installation 1", "mmc", "10");
+  add_extra_installation ("extra-installation-2", "Extra system installation 2", "sdcard", "25");
+  add_extra_installation ("extra-installation-3", NULL, NULL, NULL);
+}
+
+static void
 setup_repo (void)
 {
   make_test_runtime ();
@@ -653,6 +782,12 @@ global_setup (void)
   if (g_test_verbose ())
     g_print ("setting FLATPAK_SYSTEM_DIR=%s\n", flatpak_systemdir);
 
+  flatpak_configdir = g_strconcat (testdir, "/config", NULL);
+  g_mkdir_with_parents (flatpak_configdir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_setenv ("FLATPAK_CONFIG_DIR", flatpak_configdir, TRUE);
+  if (g_test_verbose ())
+    g_print ("setting FLATPAK_CONFIG_DIR=%s\n", flatpak_configdir);
+
   gpg_homedir = g_strconcat (testdir, "/gpghome", NULL);
   g_mkdir_with_parents (gpg_homedir, S_IRWXU|S_IRWXG|S_IRWXO);
 
@@ -662,6 +797,7 @@ global_setup (void)
     g_print ("setting GPGARGS=%s\n", gpg_args);
 
   copy_gpg ();
+  setup_multiple_installations();
   setup_repo ();
 }
 
@@ -709,6 +845,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/library/version", test_library_version);
   g_test_add_func ("/library/user-installation", test_user_installation);
   g_test_add_func ("/library/system-installation", test_system_installation);
+  g_test_add_func ("/library/multiple-system-installation", test_multiple_system_installations);
   g_test_add_func ("/library/arches", test_arches);
   g_test_add_func ("/library/ref", test_ref);
   g_test_add_func ("/library/list-remotes", test_list_remotes);
