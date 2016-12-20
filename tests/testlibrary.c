@@ -89,7 +89,6 @@ test_multiple_system_installations (void)
 
   g_autoptr(GPtrArray) system_dirs = NULL;
   g_autoptr(GError) error = NULL;
-  g_autofree char *path = NULL;
 
   FlatpakInstallation *installation = NULL;
   const char *current_id = NULL;
