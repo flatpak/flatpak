@@ -1,3 +1,45 @@
+Major changes in 0.8.0
+======================
+
+This is the first release in a new series of stable releases called
+0.8.x. New features will be added to 0.9.x, and only bugfixes will be
+backported to 0.8.x. The featureset of this release is a good base to
+target if you're creating flatpaks that should be widely usable.
+
+This release technically requires only OSTree 2016.14, and it build
+fine with this, but we recommend using OSTree 2016.15, because of the
+change in how it verifies the checksums of commits in delta files.
+
+ * Flatpakrepo files now support a RuntimeRepo= key which points to
+   a flatpakrepo file. This means the user don't have to manually
+   configure a remote for the runtime, just reply to the prompt
+   to automatically do this when installing the app.
+ * We now support dependencies when installing bundles. This includes
+   required runtimes, related refs, and the equivalent of RuntimeRepo.
+ * The support for OCI in flatpak has been updated to the latest
+   OCI spec version, and support has been added to directly install
+   flatpak applications from an OCI image.
+ * In flatpak install, the --from and --bundle options are now optional
+   if the argument has the correct suffix (.flatpakref and .flatpak)
+ * Flatpak install now supports -y to let you avoid interactive prompts.
+ * build-finish: We now export mime type files with the right name.
+ * build-finish: New --require-version option let you specify a particular
+   version of flatpak, and older version of flatpak will not install
+   or update to the new version.
+ * build-sign: Allow signing all apps by omitting the id.
+ * Fix regression in the document portal when adding named files.
+ * build-import-bundle now signs the commit if you specify a gpg key.
+ * Flatpak now reads configuration from /etc/flatpak/installations.d
+   which lets you support multiple system-level installation paths.
+   These can be accessed with new --installation=... arguments to
+   most of the commands.
+ * flatpak-builder: Support --jobs=N to limit parallel builds
+ * flatpak-builder: Patch source got new options property that lets
+   you pass arguments to patch.
+ * flatpak-builder: New generic "buildsystem: type" option that
+   replace the (now deprecated) "cmake: true" option. This
+   supports "autotools", "cmake" and "meson".
+
 Major changes in 0.6.14
 =======================
  * Update bundled bubblewrap to 0.1.4 which has some nice bugfixes.
