@@ -3878,6 +3878,8 @@ flatpak_bundle_load (GFile   *file,
                      char   **commit,
                      char   **ref,
                      char   **origin,
+                     char   **runtime_repo,
+                     char   **app_metadata,
                      guint64 *installed_size,
                      GBytes **gpg_keys,
                      GError **error)
@@ -3947,6 +3949,18 @@ flatpak_bundle_load (GFile   *file,
         *origin = NULL;
     }
 
+  if (runtime_repo != NULL)
+    {
+      if (!g_variant_lookup (metadata, "runtime-repo", "s", runtime_repo))
+        *runtime_repo = NULL;
+    }
+
+  if (app_metadata != NULL)
+    {
+      if (!g_variant_lookup (metadata, "metadata", "s", app_metadata))
+        *runtime_repo = NULL;
+    }
+
   if (gpg_keys != NULL)
     {
       g_autoptr(GVariant) gpg_value = g_variant_lookup_value (metadata, "gpg-keys",
@@ -3991,11 +4005,9 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   g_autoptr(GVariant) metadata = NULL;
   gboolean metadata_valid;
 
-  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, NULL, error);
+  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, error);
   if (metadata == NULL)
     return FALSE;
-
-  g_variant_lookup (metadata, "metadata", "s", &metadata_contents);
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return FALSE;

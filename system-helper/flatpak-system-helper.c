@@ -428,16 +428,15 @@ handle_install_bundle (FlatpakSystemHelper   *object,
                        GDBusMethodInvocation *invocation,
                        const gchar           *arg_bundle_path,
                        guint32                arg_flags,
-                       GVariant              *arg_gpg_key,
+                       const gchar           *arg_remote,
                        const gchar           *arg_installation)
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GFile) path = g_file_new_for_path (arg_bundle_path);
   g_autoptr(GError) error = NULL;
-  g_autoptr(GBytes) gpg_data = NULL;
   g_autofree char *ref = NULL;
 
-  g_debug ("InstallBundle %s %u %p %s", arg_bundle_path, arg_flags, arg_gpg_key, arg_installation);
+  g_debug ("InstallBundle %s %u %s %s", arg_bundle_path, arg_flags, arg_remote, arg_installation);
 
   system = dir_get_system (arg_installation, &error);
   if (system == NULL)
@@ -460,10 +459,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (g_variant_get_size (arg_gpg_key) > 0)
-    gpg_data = g_variant_get_data_as_bytes (arg_gpg_key);
-
-  if (!flatpak_dir_install_bundle (system, path, gpg_data, &ref, NULL, &error))
+  if (!flatpak_dir_install_bundle (system, path, arg_remote, &ref, NULL, &error))
     {
       g_dbus_method_invocation_return_gerror  (invocation, error);
       return TRUE;

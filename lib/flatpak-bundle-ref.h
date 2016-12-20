@@ -55,6 +55,7 @@ FLATPAK_EXTERN GBytes          *flatpak_bundle_ref_get_icon (FlatpakBundleRef *s
                                                              int               size);
 FLATPAK_EXTERN char            *flatpak_bundle_ref_get_origin (FlatpakBundleRef *self);
 FLATPAK_EXTERN guint64          flatpak_bundle_ref_get_installed_size (FlatpakBundleRef *self);
+FLATPAK_EXTERN char            *flatpak_bundle_ref_get_runtime_repo_url (FlatpakBundleRef *self);
 
 
 #ifdef G_DEFINE_AUTOPTR_CLEANUP_FUNC

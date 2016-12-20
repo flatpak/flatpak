@@ -112,49 +112,8 @@ read_gpg_data (GCancellable *cancellable,
 }
 
 static gboolean
-install_bundle (FlatpakDir *dir,
-                GOptionContext *context,
-                int argc, char **argv,
-                GCancellable *cancellable,
-                GError **error)
+handle_runtime_repo_deps (FlatpakDir *dir, const char *dep_url, GError **error)
 {
-  g_autoptr(GFile) file = NULL;
-  const char *filename;
-  g_autoptr(GBytes) gpg_data = NULL;
-
-  if (argc < 2)
-    return usage_error (context, _("Bundle filename must be specified"), error);
-
-  if (argc > 2)
-    return usage_error (context, _("Too many arguments"), error);
-
-  filename = argv[1];
-
-  file = g_file_new_for_commandline_arg (filename);
-
-  if (!g_file_is_native (file))
-    return flatpak_fail (error, _("Remote bundles are not supported"));
-
-  if (opt_gpg_file != NULL)
-    {
-      /* Override gpg_data from file */
-      gpg_data = read_gpg_data (cancellable, error);
-      if (gpg_data == NULL)
-        return FALSE;
-    }
-
-  if (!flatpak_dir_install_bundle (dir, file, gpg_data, NULL,
-                                   cancellable, error))
-    return FALSE;
-
-  return TRUE;
-}
-
-static gboolean
-handle_runtime_repo_deps (FlatpakDir *dir, GBytes *data, GError **error)
-{
-  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
-  g_autofree char *dep_url = NULL;
   g_autoptr(GBytes) dep_data = NULL;
   g_autofree char *runtime_url = NULL;
   g_autofree char *old_remote = NULL;
@@ -168,13 +127,7 @@ handle_runtime_repo_deps (FlatpakDir *dir, GBytes *data, GError **error)
   char *t;
   int i;
 
-  if (!g_key_file_load_from_data (keyfile, g_bytes_get_data (data, NULL), g_bytes_get_size (data),
-                                  0, error))
-    return FALSE;
-
-  dep_url = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
-                                   FLATPAK_REF_RUNTIME_REPO_KEY, NULL);
-  if (dep_url == NULL)
+  if (opt_no_deps)
     return TRUE;
 
   dep_data = download_uri (dep_url, error);
@@ -257,6 +210,101 @@ handle_runtime_repo_deps (FlatpakDir *dir, GBytes *data, GError **error)
 }
 
 static gboolean
+handle_runtime_repo_deps_from_bundle (FlatpakDir *dir, GFile *file, GError **error)
+{
+  g_autofree char *dep_url = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+
+  if (opt_no_deps)
+    return TRUE;
+
+  metadata = flatpak_bundle_load (file, NULL,
+                                  NULL,
+                                  NULL,
+                                  &dep_url,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  NULL);
+  if (metadata == NULL || dep_url == NULL)
+    return TRUE;
+
+  return handle_runtime_repo_deps (dir, dep_url, error);
+}
+
+static gboolean
+install_bundle (FlatpakDir *dir,
+                GOptionContext *context,
+                int argc, char **argv,
+                GCancellable *cancellable,
+                GError **error)
+{
+  g_autoptr(GFile) file = NULL;
+  const char *filename;
+  g_autoptr(GBytes) gpg_data = NULL;
+  g_autoptr(FlatpakTransaction) transaction = NULL;
+
+  if (argc < 2)
+    return usage_error (context, _("Bundle filename must be specified"), error);
+
+  if (argc > 2)
+    return usage_error (context, _("Too many arguments"), error);
+
+  filename = argv[1];
+
+  file = g_file_new_for_commandline_arg (filename);
+
+  if (!g_file_is_native (file))
+    return flatpak_fail (error, _("Remote bundles are not supported"));
+
+  if (opt_gpg_file != NULL)
+    {
+      /* Override gpg_data from file */
+      gpg_data = read_gpg_data (cancellable, error);
+      if (gpg_data == NULL)
+        return FALSE;
+    }
+
+  if (!handle_runtime_repo_deps_from_bundle (dir, file, error))
+    return FALSE;
+
+  if (!flatpak_dir_ensure_repo (dir, cancellable, error))
+    return FALSE;
+
+  transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
+                                         !opt_no_deps, !opt_no_related);
+
+  if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
+    return FALSE;
+
+  if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+handle_runtime_repo_deps_from_keyfile (FlatpakDir *dir, GBytes *data, GError **error)
+{
+  g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+  g_autofree char *dep_url = NULL;
+
+  if (opt_no_deps)
+    return TRUE;
+
+  if (!g_key_file_load_from_data (keyfile, g_bytes_get_data (data, NULL), g_bytes_get_size (data),
+                                  0, error))
+    return FALSE;
+
+  dep_url = g_key_file_get_string (keyfile, FLATPAK_REF_GROUP,
+                                   FLATPAK_REF_RUNTIME_REPO_KEY, NULL);
+  if (dep_url == NULL)
+    return TRUE;
+
+  return handle_runtime_repo_deps (dir, dep_url, error);
+}
+
+static gboolean
 install_from (FlatpakDir *dir,
               GOptionContext *context,
               int argc, char **argv,
@@ -303,7 +351,7 @@ install_from (FlatpakDir *dir,
       file_data = g_bytes_new_take (g_steal_pointer (&data), data_len);
     }
 
-  if (!handle_runtime_repo_deps (dir, file_data, error))
+  if (!handle_runtime_repo_deps_from_keyfile (dir, file_data, error))
     return FALSE;
 
   if (!flatpak_dir_create_remote_for_ref_file (dir, file_data, &remote, &ref, error))

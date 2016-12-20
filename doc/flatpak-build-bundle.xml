@@ -99,6 +99,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--runtime-repo=URL</option></term>
+
+                <listitem><para>
+                  The URL for a .flatpakrepo file that contains
+                  the information about the repository that supplies
+                  the runtimes required by the app.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--gpg-keys=FILE</option></term>
 
                 <listitem><para>

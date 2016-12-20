@@ -108,10 +108,8 @@ import_bundle (OstreeRepo *repo, GFile *file,
 
   metadata = flatpak_bundle_load (file, &to_checksum,
                                   &bundle_ref,
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  error);
+                                  NULL, NULL, NULL,
+                                  NULL, NULL, error);
   if (metadata == NULL)
     return NULL;
 

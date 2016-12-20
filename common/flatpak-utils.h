@@ -295,6 +295,8 @@ GVariant * flatpak_bundle_load (GFile   *file,
                                 char   **commit,
                                 char   **ref,
                                 char   **origin,
+                                char   **runtime_repo,
+                                char   **app_metadata,
                                 guint64 *installed_size,
                                 GBytes **gpg_keys,
                                 GError **error);

@@ -4310,45 +4310,125 @@ flatpak_dir_install (FlatpakDir          *self,
   return TRUE;
 }
 
-gboolean
-flatpak_dir_install_bundle (FlatpakDir          *self,
-                            GFile               *file,
-                            GBytes              *extra_gpg_data,
-                            char               **out_ref,
-                            GCancellable        *cancellable,
-                            GError             **error)
+char *
+flatpak_dir_ensure_bundle_remote (FlatpakDir          *self,
+                                  GFile               *file,
+                                  GBytes              *extra_gpg_data,
+                                  char               **out_ref,
+                                  char               **out_metadata,
+                                  gboolean            *out_created_remote,
+                                  GCancellable        *cancellable,
+                                  GError             **error)
 {
   g_autofree char *ref = NULL;
-  gboolean added_remote = FALSE;
+  gboolean created_remote = FALSE;
   g_autoptr(GVariant) deploy_data = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *origin = NULL;
+  g_autofree char *fp_metadata = NULL;
   g_auto(GStrv) parts = NULL;
   g_autofree char *basename = NULL;
   g_autoptr(GBytes) included_gpg_data = NULL;
   GBytes *gpg_data = NULL;
   g_autofree char *to_checksum = NULL;
   g_autofree char *remote = NULL;
-  gboolean ret = FALSE;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return NULL;
+
+  metadata = flatpak_bundle_load (file, &to_checksum,
+                                  &ref,
+                                  &origin,
+                                  NULL, &fp_metadata, NULL,
+                                  &included_gpg_data,
+                                  error);
+  if (metadata == NULL)
+    return NULL;
+
+  gpg_data = extra_gpg_data ? extra_gpg_data : included_gpg_data;
+
+  parts = flatpak_decompose_ref (ref, error);
+  if (parts == NULL)
+    return NULL;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, ref, cancellable, NULL);
+  if (deploy_data != NULL)
+    {
+      remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
+
+      /* We need to import any gpg keys because otherwise the pull will fail */
+      if (gpg_data != NULL)
+        {
+          g_autoptr(GKeyFile) new_config = NULL;
+
+          new_config = ostree_repo_copy_config (flatpak_dir_get_repo (self));
+
+          if (!flatpak_dir_modify_remote (self, remote, new_config,
+                                          gpg_data, cancellable, error))
+            return NULL;
+        }
+    }
+  else
+    {
+      /* Add a remote for later updates */
+      basename = g_file_get_basename (file);
+      remote = flatpak_dir_create_origin_remote (self,
+                                                 origin,
+                                                 parts[1],
+                                                 basename,
+                                                 ref,
+                                                 NULL, NULL,
+                                                 gpg_data,
+                                                 cancellable,
+                                                 error);
+      if (remote == NULL)
+        return NULL;
+
+      /* From here we need to goto out on error, to clean up */
+      created_remote = TRUE;
+    }
+
+  if (out_created_remote)
+    *out_created_remote = created_remote;
+
+  if (out_ref)
+    *out_ref = g_steal_pointer (&ref);
+
+  if (out_metadata)
+    *out_metadata = g_steal_pointer (&fp_metadata);
+
+
+  return g_steal_pointer (&remote);
+}
+
+gboolean
+flatpak_dir_install_bundle (FlatpakDir          *self,
+                            GFile               *file,
+                            const char          *remote,
+                            char               **out_ref,
+                            GCancellable        *cancellable,
+                            GError             **error)
+{
+  g_autofree char *ref = NULL;
+  g_autoptr(GVariant) deploy_data = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autofree char *origin = NULL;
+  g_auto(GStrv) parts = NULL;
+  g_autofree char *to_checksum = NULL;
+  gboolean gpg_verify;
 
   if (flatpak_dir_use_system_helper (self))
     {
       FlatpakSystemHelper *system_helper;
-      g_autoptr(GVariant) gpg_data_v = NULL;
       const char *installation = flatpak_dir_get_id (self);
 
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
 
-      if (gpg_data != NULL)
-        gpg_data_v = variant_new_ay_bytes (gpg_data);
-      else
-        gpg_data_v = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE ("ay"), "", 0, TRUE, NULL, NULL));
-
       g_debug ("Calling system helper: InstallBundle");
       if (!flatpak_system_helper_call_install_bundle_sync (system_helper,
                                                            flatpak_file_get_path_cached (file),
-                                                           0, gpg_data_v,
+                                                           0, remote,
                                                            installation ? installation : "",
                                                            &ref,
                                                            cancellable,
@@ -4367,13 +4447,11 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
   metadata = flatpak_bundle_load (file, &to_checksum,
                                   &ref,
                                   &origin,
-                                  NULL,
-                                  &included_gpg_data,
+                                  NULL, NULL,
+                                  NULL, NULL,
                                   error);
   if (metadata == NULL)
     return FALSE;
-
-  gpg_data = extra_gpg_data ? extra_gpg_data : included_gpg_data;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
@@ -4388,51 +4466,27 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
                        _("This version of %s is already installed"), parts[1]);
           return FALSE;
         }
-      remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
 
-      /* We need to import any gpg keys because otherwise the pull will fail */
-      if (gpg_data != NULL)
+      if (strcmp (remote, flatpak_deploy_data_get_origin (deploy_data)) != 0)
         {
-          g_autoptr(GInputStream) input_stream = g_memory_input_stream_new_from_bytes (gpg_data);
-          guint imported = 0;
-
-          if (!ostree_repo_remote_gpg_import (self->repo, remote, input_stream,
-                                              NULL, &imported, cancellable, error))
-            return FALSE;
-
-          /* XXX If we ever add internationalization, use ngettext() here. */
-          g_debug ("Imported %u GPG key%s to remote \"%s\"",
-                   imported, (imported == 1) ? "" : "s", remote);
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       _("Can't change remote during bundle install"));
+          return FALSE;
         }
     }
-  else
-    {
-      /* Add a remote for later updates */
-      basename = g_file_get_basename (file);
-      remote = flatpak_dir_create_origin_remote (self,
-                                                 origin,
-                                                 parts[1],
-                                                 basename,
-                                                 ref,
-                                                 NULL, NULL,
-                                                 gpg_data,
-                                                 cancellable,
-                                                 error);
-      if (remote == NULL)
-        return FALSE;
 
-      /* From here we need to goto out on error, to clean up */
-      added_remote = TRUE;
-    }
+  if (!ostree_repo_remote_get_gpg_verify (self->repo, remote,
+                                          &gpg_verify, error))
+    return FALSE;
 
   if (!flatpak_pull_from_bundle (self->repo,
                                  file,
                                  remote,
                                  ref,
-                                 gpg_data != NULL,
+                                 gpg_verify,
                                  cancellable,
                                  error))
-    goto out;
+    return FALSE;
 
   if (deploy_data != NULL)
     {
@@ -4466,24 +4520,18 @@ flatpak_dir_install_bundle (FlatpakDir          *self,
   if (deploy_data)
     {
       if (!flatpak_dir_deploy_update (self, ref, NULL, NULL, cancellable, error))
-        goto out;
+        return FALSE;
     }
   else
     {
       if (!flatpak_dir_deploy_install (self, ref, remote, NULL, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
   if (out_ref)
     *out_ref = g_steal_pointer (&ref);
 
-  ret = TRUE;
-
-out:
-  if (added_remote && !ret)
-    ostree_repo_remote_delete (self->repo, remote, NULL, NULL);
-
-  return ret;
+  return TRUE;
 }
 
 static gboolean
@@ -6340,6 +6388,7 @@ create_origin_remote_config (OstreeRepo   *repo,
                              const char   *main_ref,
                              const char   *oci_uri,
                              const char   *oci_tag,
+                             gboolean      gpg_verify,
                              GKeyFile     *new_config)
 {
   g_autofree char *remote = NULL;
@@ -6370,8 +6419,16 @@ create_origin_remote_config (OstreeRepo   *repo,
   g_key_file_set_string (new_config, group, "xa.title", title);
   g_key_file_set_string (new_config, group, "xa.noenumerate", "true");
   g_key_file_set_string (new_config, group, "xa.prio", "0");
-  g_key_file_set_string (new_config, group, "gpg-verify", "true");
-  g_key_file_set_string (new_config, group, "gpg-verify-summary", "true");
+  if (gpg_verify)
+    {
+      g_key_file_set_string (new_config, group, "gpg-verify", "true");
+      g_key_file_set_string (new_config, group, "gpg-verify-summary", "true");
+    }
+  else
+    {
+      g_key_file_set_string (new_config, group, "gpg-verify", "false");
+      g_key_file_set_string (new_config, group, "gpg-verify-summary", "false");
+    }
   if (main_ref)
     g_key_file_set_string (new_config, group, "xa.main-ref", main_ref);
   if (oci_uri)
@@ -6397,7 +6454,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
   g_autoptr(GKeyFile) new_config = g_key_file_new ();
   g_autofree char *remote = NULL;
 
-  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, oci_uri, oci_tag, new_config);
+  remote = create_origin_remote_config (self->repo, url, id, title, main_ref, oci_uri, oci_tag, gpg_data != NULL, new_config);
 
   if (!flatpak_dir_modify_remote (self, remote, new_config,
                                   gpg_data, cancellable, error))

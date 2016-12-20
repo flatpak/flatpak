@@ -32,6 +32,7 @@ struct _FlatpakBundleRefPrivate
 {
   GFile  *file;
   char   *origin;
+  char   *runtime_repo;
   GBytes *metadata;
   GBytes *appstream;
   GBytes *icon_64;
@@ -60,6 +61,7 @@ flatpak_bundle_ref_finalize (GObject *object)
   g_bytes_unref (priv->icon_64);
   g_bytes_unref (priv->icon_128);
   g_free (priv->origin);
+  g_free (priv->runtime_repo);
 
   G_OBJECT_CLASS (flatpak_bundle_ref_parent_class)->finalize (object);
 }
@@ -221,6 +223,25 @@ flatpak_bundle_ref_get_origin (FlatpakBundleRef *self)
   return g_strdup (priv->origin);
 }
 
+
+/**
+ * flatpak_bundle_ref_get_runtime_repo:
+ * @self: a #FlatpakBundleRef
+ *
+ * Get the runtime flatpakrepo url stored in the bundle (if any)
+ *
+ * Returns: (transfer full) : an url string, or %NULL
+ *
+ * Since: 0.8.0
+ */
+char *
+flatpak_bundle_ref_get_runtime_repo_url (FlatpakBundleRef *self)
+{
+  FlatpakBundleRefPrivate *priv = flatpak_bundle_ref_get_instance_private (self);
+
+  return g_strdup (priv->runtime_repo);
+}
+
 /**
  * flatpak_bundle_ref_get_installed_size:
  * @self: a FlatpakBundleRef
@@ -259,13 +280,14 @@ flatpak_bundle_ref_new (GFile   *file,
   g_autofree char *commit = NULL;
   g_autofree char *full_ref = NULL;
   g_autofree char *origin = NULL;
+  g_autofree char *runtime_repo = NULL;
   g_autofree char *metadata_contents = NULL;
   g_autoptr(GVariant) appstream = NULL;
   g_autoptr(GVariant) icon_64 = NULL;
   g_autoptr(GVariant) icon_128 = NULL;
   guint64 installed_size;
 
-  metadata = flatpak_bundle_load (file, &commit, &full_ref, &origin, &installed_size,
+  metadata = flatpak_bundle_load (file, &commit, &full_ref, &origin, &runtime_repo, &metadata_contents, &installed_size,
                                   NULL, error);
   if (metadata == NULL)
     return NULL;
@@ -273,9 +295,6 @@ flatpak_bundle_ref_new (GFile   *file,
   parts = flatpak_decompose_ref (full_ref, error);
   if (parts == NULL)
     return NULL;
-
-  if (!g_variant_lookup (metadata, "metadata", "s", &metadata_contents))
-    metadata_contents = NULL;
 
   if (strcmp (parts[0], "app") != 0)
     kind = FLATPAK_REF_KIND_RUNTIME;
@@ -310,6 +329,7 @@ flatpak_bundle_ref_new (GFile   *file,
   priv->installed_size = installed_size;
 
   priv->origin = g_steal_pointer (&origin);
+  priv->runtime_repo = g_steal_pointer (&runtime_repo);
 
   return ref;
 }

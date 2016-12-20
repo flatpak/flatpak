@@ -30,13 +30,20 @@
 
 typedef struct FlatpakTransactionOp FlatpakTransactionOp;
 
+typedef enum {
+  FLATPAK_TRANSACTION_OP_KIND_INSTALL,
+  FLATPAK_TRANSACTION_OP_KIND_UPDATE,
+  FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE,
+  FLATPAK_TRANSACTION_OP_KIND_BUNDLE
+} FlatpakTransactionOpKind;
+
 struct FlatpakTransactionOp {
   char *remote;
   char *ref;
   char **subpaths;
   char *commit;
-  gboolean update;
-  gboolean install;
+  GFile *bundle;
+  FlatpakTransactionOpKind kind;
   gboolean non_fatal;
 };
 
@@ -117,8 +124,8 @@ flatpak_transaction_operation_new (const char *remote,
                                    const char *ref,
                                    const char **subpaths,
                                    const char *commit,
-                                   gboolean install,
-                                   gboolean update)
+                                   GFile *bundle,
+                                   FlatpakTransactionOpKind kind)
 {
   FlatpakTransactionOp *self = g_new0 (FlatpakTransactionOp, 1);
 
@@ -126,8 +133,9 @@ flatpak_transaction_operation_new (const char *remote,
   self->ref = g_strdup (ref);
   self->subpaths = g_strdupv ((char **)subpaths);
   self->commit = g_strdup (commit);
-  self->update = update;
-  self->install = install;
+  if (bundle)
+    self->bundle = g_object_ref (bundle);
+  self->kind = kind;
 
   return self;
 }
@@ -139,6 +147,7 @@ flatpak_transaction_operation_free (FlatpakTransactionOp *self)
   g_free (self->ref);
   g_free (self->commit);
   g_strfreev (self->subpaths);
+  g_clear_object (&self->bundle);
   g_free (self);
 }
 
@@ -212,31 +221,38 @@ subpaths_to_string (const char **subpaths)
   return g_string_free (s, FALSE);
 }
 
+static const char *
+kind_to_str (FlatpakTransactionOpKind kind)
+{
+  switch (kind)
+    {
+    case FLATPAK_TRANSACTION_OP_KIND_INSTALL:
+      return "install";
+    case FLATPAK_TRANSACTION_OP_KIND_UPDATE:
+      return "update";
+    case FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE:
+      return "install/update";
+    case FLATPAK_TRANSACTION_OP_KIND_BUNDLE:
+      return "install bundle";
+    }
+  return "unknown";
+}
+
 FlatpakTransactionOp *
 flatpak_transaction_add_op (FlatpakTransaction *self,
                             const char *remote,
                             const char *ref,
                             const char **subpaths,
                             const char *commit,
-                            gboolean install,
-                            gboolean update)
+                            GFile *bundle,
+                            FlatpakTransactionOpKind kind)
 {
   FlatpakTransactionOp *op;
   g_autofree char *subpaths_str = NULL;
-  const char *opname;
 
-  if (install)
-    {
-      if (update)
-        opname = "install/update";
-      else
-        opname = "install";
-    }
-  else
-    opname = "update";
   subpaths_str = subpaths_to_string (subpaths);
   g_debug ("Transaction: %s %s:%s%s%s%s",
-           opname, remote, ref,
+           kind_to_str (kind), remote, ref,
            commit != NULL ? "@" : "",
            commit != NULL ? commit : "",
            subpaths_str);
@@ -255,7 +271,7 @@ flatpak_transaction_add_op (FlatpakTransaction *self,
       return op;
     }
 
-  op = flatpak_transaction_operation_new (remote, ref, subpaths, commit, install, update);
+  op = flatpak_transaction_operation_new (remote, ref, subpaths, commit, bundle, kind);
   g_hash_table_insert (self->refs, g_strdup (ref), op);
   self->ops = g_list_prepend (self->ops, op);
 
@@ -329,7 +345,8 @@ add_related (FlatpakTransaction *self,
 
           op = flatpak_transaction_add_op (self, remote, rel->ref,
                                            (const char **)rel->subpaths,
-                                           NULL, TRUE, TRUE);
+                                           NULL, NULL,
+                                           FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE);
           op->non_fatal = TRUE;
         }
     }
@@ -394,14 +411,16 @@ add_deps (FlatpakTransaction *self,
                                  "The Application %s requires the runtime %s which is not installed",
                                  pref, runtime_ref);
 
-          flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, TRUE, TRUE);
+          flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
+                                      FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE);
         }
       else
         {
           /* Update if in same dir */
           if (dir_ref_is_installed (self->dir, full_runtime_ref, &runtime_remote))
             {
-              flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, FALSE, TRUE);
+              flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
+                                          FLATPAK_TRANSACTION_OP_KIND_UPDATE);
             }
         }
     }
@@ -419,17 +438,19 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
                              const char *ref,
                              const char **subpaths,
                              const char *commit,
-                             gboolean is_update,
+                             FlatpakTransactionOpKind kind,
+                             GFile *bundle,
+                             const char *metadata,
                              GError **error)
 {
   g_autofree char *origin = NULL;
   const char *pref;
-  g_autofree char *metadata = NULL;
+  g_autofree char *remote_metadata = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
 
   pref = strchr (ref, '/') + 1;
 
-  if (is_update)
+  if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
     {
       if (!dir_ref_is_installed (self->dir, ref, &origin))
         {
@@ -456,7 +477,11 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         }
     }
 
-  if (flatpak_dir_fetch_ref_cache (self->dir, remote, ref, NULL, NULL, &metadata, NULL, NULL))
+  if (metadata == NULL && remote != NULL &&
+      flatpak_dir_fetch_ref_cache (self->dir, remote, ref, NULL, NULL, &remote_metadata, NULL, NULL))
+    metadata = remote_metadata;
+
+  if (metadata)
     {
       metakey = g_key_file_new ();
       if (!g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
@@ -487,7 +512,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         return FALSE;
     }
 
-  flatpak_transaction_add_op (self, remote, ref, subpaths, commit, !is_update, is_update);
+  flatpak_transaction_add_op (self, remote, ref, subpaths, commit, bundle, kind);
 
   if (!add_related (self, remote, ref, error))
     return FALSE;
@@ -508,7 +533,30 @@ flatpak_transaction_add_install (FlatpakTransaction *self,
   if (subpaths == NULL)
     subpaths = all_paths;
 
-  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, FALSE, error);
+  return flatpak_transaction_add_ref (self, remote, ref, subpaths, NULL, FLATPAK_TRANSACTION_OP_KIND_INSTALL, NULL, NULL, error);
+}
+
+gboolean
+flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
+                                        GFile               *file,
+                                        GBytes              *gpg_data,
+                                        GError **error)
+{
+  g_autofree char *remote = NULL;
+  g_autofree char *ref = NULL;
+  g_autofree char *metadata = NULL;
+  gboolean created_remote;
+
+  remote = flatpak_dir_ensure_bundle_remote (self->dir, file, gpg_data,
+                                             &ref, &metadata, &created_remote,
+                                             NULL, error);
+  if (remote == NULL)
+    return FALSE;
+
+  if (!flatpak_dir_recreate_repo (self->dir, NULL, error))
+    return FALSE;
+
+  return flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, FLATPAK_TRANSACTION_OP_KIND_BUNDLE, file, metadata, error);
 }
 
 gboolean
@@ -557,7 +605,7 @@ flatpak_transaction_add_install_oci (FlatpakTransaction  *self,
   id = g_strdup_printf ("oci-%s", parts[1]);
 
   remote = flatpak_dir_create_origin_remote (self->dir, NULL,
-                                            id, title,
+                                             id, title,
                                              ref, uri, tag, NULL,
                                              NULL, error);
   if (remote == NULL)
@@ -568,7 +616,7 @@ flatpak_transaction_add_install_oci (FlatpakTransaction  *self,
 
   g_debug ("Added OCI origin remote %s", remote);
 
-  return flatpak_transaction_add_ref (self, remote, ref, all_paths, checksum, FALSE, error);
+  return flatpak_transaction_add_ref (self, remote, ref, all_paths, checksum, FLATPAK_TRANSACTION_OP_KIND_INSTALL, NULL, NULL, error);
 }
 
 gboolean
@@ -578,7 +626,7 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
                                 const char *commit,
                                 GError **error)
 {
-  return flatpak_transaction_add_ref (self, NULL, ref, subpaths, commit, TRUE, error);
+  return flatpak_transaction_add_ref (self, NULL, ref, subpaths, commit, FLATPAK_TRANSACTION_OP_KIND_UPDATE, NULL, NULL, error);
 }
 
 gboolean
@@ -599,18 +647,20 @@ flatpak_transaction_run (FlatpakTransaction *self,
       gboolean res;
       const char *pref;
       const char *opname;
+      FlatpakTransactionOpKind kind;
 
-      if (op->install && op->update)
+      kind = op->kind;
+      if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE)
         {
           if (dir_ref_is_installed (self->dir, op->ref, NULL))
-            op->install = FALSE;
+            kind = FLATPAK_TRANSACTION_OP_KIND_UPDATE;
           else
-            op->update = FALSE;
+            kind = FLATPAK_TRANSACTION_OP_KIND_INSTALL;
         }
 
       pref = strchr (op->ref, '/') + 1;
 
-      if (op->install)
+      if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
         {
           opname = _("install");
           g_print (_("Installing: %s from %s\n"), pref, op->remote);
@@ -622,7 +672,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                      NULL,
                                      cancellable, &local_error);
         }
-      else /* update */
+      else if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
         {
           opname = _("update");
           g_print (_("Updating: %s from %s\n"), pref, op->remote);
@@ -651,6 +701,17 @@ flatpak_transaction_run (FlatpakTransaction *self,
               g_clear_error (&local_error);
             }
         }
+      else if (kind == FLATPAK_TRANSACTION_OP_KIND_BUNDLE)
+        {
+          g_autofree char *bundle_basename = g_file_get_basename (op->bundle);
+          opname = _("install bundle");
+          g_print (_("Installing: %s from bundle %s\n"), pref, bundle_basename);
+          res = flatpak_dir_install_bundle (self->dir, op->bundle,
+                                            op->remote, NULL,
+                                            cancellable, &local_error);
+        }
+      else
+        g_assert_not_reached ();
 
       if (!res)
         {

@@ -26,17 +26,22 @@ skip_without_user_xattrs
 
 echo "1..6"
 
+mkdir bundles
+
 setup_repo
 
-${FLATPAK} build-bundle repo --repo-url=file://`pwd`/repo --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg hello.flatpak org.test.Hello
-assert_has_file hello.flatpak
+${FLATPAK} build-bundle repo --repo-url=file://`pwd`/repo --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello
+assert_has_file bundles/hello.flatpak
 
-${FLATPAK} build-bundle repo --runtime --repo-url=file://`pwd`/repo --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg platform.flatpak org.test.Platform
-assert_has_file platform.flatpak
+${FLATPAK} build-bundle repo --runtime --repo-url=file://`pwd`/repo --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform
+assert_has_file bundles/platform.flatpak
 
 echo "ok create bundles"
 
-${FLATPAK} install ${U} --bundle hello.flatpak
+${FLATPAK} install ${U} -y --bundle bundles/hello.flatpak
+
+# This should have installed the runtime dependency too
+assert_has_file $FL_DIR/repo/refs/remotes/test-repo/runtime/org.test.Platform/$ARCH/master
 
 assert_has_file $FL_DIR/repo/refs/remotes/org.test.Hello-origin/app/org.test.Hello/$ARCH/master
 APP_COMMIT=`cat $FL_DIR/repo/refs/remotes/org.test.Hello-origin/app/org.test.Hello/$ARCH/master`
@@ -80,7 +85,11 @@ assert_has_file $FL_DIR/repo/org.test.Hello-origin.trustedkeys.gpg
 
 echo "ok install app bundle"
 
-${FLATPAK} install ${U} --bundle platform.flatpak
+${FLATPAK} uninstall ${U} org.test.Platform
+
+assert_not_has_file $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master
+
+${FLATPAK} install ${U} --bundle bundles/platform.flatpak
 
 assert_has_file $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master
 RUNTIME_COMMIT=`cat $FL_DIR/repo/refs/remotes/org.test.Platform-origin/runtime/org.test.Platform/$ARCH/master`
