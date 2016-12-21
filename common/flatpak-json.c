@@ -588,10 +588,15 @@ GBytes *
 flatpak_json_to_bytes (FlatpakJson  *self)
 {
   g_autoptr(JsonNode) node = NULL;
+  g_autoptr(JsonGenerator) generator = NULL;
   char *str;
 
   node = flatpak_json_to_node (FLATPAK_JSON (self));
 
-  str = json_to_string (node, TRUE);
+  generator = json_generator_new ();
+  json_generator_set_pretty (generator, TRUE);
+  json_generator_set_root (generator, node);
+
+  str = json_generator_to_data (generator, NULL);
   return g_bytes_new_take (str, strlen (str));
 }

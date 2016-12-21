@@ -297,7 +297,7 @@ parse_json (GBytes *bytes, GCancellable *cancellable, GError **error)
       return NULL;
     }
 
-  return json_node_ref (root);
+  return json_node_copy (root);
 }
 
 static gboolean
