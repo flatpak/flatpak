@@ -782,7 +782,7 @@
 
                 <listitem><para>
                      Limit the number of parallel jobs during the build.
-                     The default is the nubmer of CPUs on the machine.
+                     The default is the number of CPUs on the machine.
                 </para></listitem>
             </varlistentry>
 
