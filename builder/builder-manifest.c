@@ -906,13 +906,18 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
                 {
                   const char *module_path = json_node_get_string (element_node);
                   g_autofree char *json = NULL;
+                  g_autoptr(GError) error = NULL;
 
-                  if (g_file_get_contents (module_path, &json, NULL, NULL))
+                  if (g_file_get_contents (module_path, &json, NULL, &error))
                     {
                       module = json_gobject_from_data (BUILDER_TYPE_MODULE,
-                                                       json, -1, NULL);
+                                                       json, -1, &error);
                       if (module)
                         builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                    }
+                  if (error != NULL)
+                    {
+                      g_error ("Failed to load included manifest (%s): %s", module_path, error->message);
                     }
                 }
               else if (JSON_NODE_HOLDS_OBJECT (element_node))
