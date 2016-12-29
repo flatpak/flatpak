@@ -1180,7 +1180,7 @@ builder_module_build (BuilderModule  *self,
   g_autofree char *make_l = NULL;
   const char *make_cmd = NULL;
 
-  gboolean autotools = FALSE, cmake = FALSE, meson = FALSE;
+  gboolean autotools = FALSE, cmake = FALSE, cmake_ninja = FALSE, meson = FALSE;
   g_autoptr(GFile) configure_file = NULL;
   GFile *build_parent_dir = NULL;
   g_autoptr(GFile) build_dir = NULL;
@@ -1294,6 +1294,8 @@ builder_module_build (BuilderModule  *self,
     meson = TRUE;
   else if (!strcmp (self->buildsystem, "autotools"))
     autotools = TRUE;
+  else if (!strcmp (self->buildsystem, "cmake-ninja"))
+    cmake_ninja = TRUE;
   else
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Invalid buildsystem: \"%s\"",
@@ -1301,7 +1303,7 @@ builder_module_build (BuilderModule  *self,
       return FALSE;
     }
 
-  if (cmake)
+  if (cmake || cmake_ninja)
     {
       g_autoptr(GFile) cmake_file = NULL;
 
@@ -1383,9 +1385,11 @@ builder_module_build (BuilderModule  *self,
   if (has_configure)
     {
       const char *configure_cmd;
-      const char *configure_final_arg = skip_arg;
-      g_autofree char *configure_prefix_arg = NULL;
+      const char *cmake_generator = NULL;
+      gchar *configure_final_arg = NULL;
       g_autofree char *configure_content = NULL;
+      g_auto(GStrv) configure_args = NULL;
+      g_autoptr(GPtrArray) configure_args_arr = g_ptr_array_new ();
 
       if (!g_file_load_contents (configure_file, NULL, &configure_content, NULL, NULL, error))
         {
@@ -1410,15 +1414,15 @@ builder_module_build (BuilderModule  *self,
               return FALSE;
             }
 
-          if (cmake)
+          if (cmake || cmake_ninja)
             {
               configure_cmd = "cmake";
-              configure_final_arg = "..";
+              configure_final_arg = g_strdup("..");
             }
           else if (meson)
             {
               configure_cmd = "meson";
-              configure_final_arg = "..";
+              configure_final_arg = g_strdup ("..");
             }
           else
             {
@@ -1429,10 +1433,10 @@ builder_module_build (BuilderModule  *self,
         {
           build_dir_relative = g_strdup (source_subdir_relative);
           build_dir = g_object_ref (source_subdir);
-          if (cmake)
+          if (cmake || cmake_ninja)
             {
               configure_cmd = "cmake";
-              configure_final_arg = ".";
+              configure_final_arg = g_strdup (".");
             }
           else if (meson)
             {
@@ -1445,15 +1449,32 @@ builder_module_build (BuilderModule  *self,
             }
         }
 
-      if (self->cmake)
-        configure_prefix_arg = g_strdup_printf ("-DCMAKE_INSTALL_PREFIX:PATH='%s'",
-                                                builder_options_get_prefix (self->build_options, context));
+
+      if (cmake)
+        cmake_generator = "Unix Makefiles";
+      else if (cmake_ninja)
+        cmake_generator = "Ninja";
+
+      if (cmake || cmake_ninja)
+        {
+          g_ptr_array_add (configure_args_arr, g_strdup_printf ("-DCMAKE_INSTALL_PREFIX:PATH='%s'",
+                                                                builder_options_get_prefix (self->build_options, context)));
+          g_ptr_array_add (configure_args_arr, g_strdup ("-G"));
+          g_ptr_array_add (configure_args_arr, g_strdup_printf ("%s", cmake_generator));
+        }
       else /* autotools and meson */
-        configure_prefix_arg = g_strdup_printf ("--prefix=%s",
-                                                builder_options_get_prefix (self->build_options, context));
+        {
+          g_ptr_array_add (configure_args_arr, g_strdup_printf ("--prefix=%s",
+                                                                builder_options_get_prefix (self->build_options, context)));
+        }
+
+      g_ptr_array_add (configure_args_arr, configure_final_arg);
+      g_ptr_array_add (configure_args_arr, NULL);
+
+      configure_args = (char **) g_ptr_array_free (g_steal_pointer (&configure_args_arr), FALSE);
 
       if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
-                  configure_cmd, configure_prefix_arg, strv_arg, config_opts, configure_final_arg, NULL))
+                  configure_cmd, strv_arg, configure_args, strv_arg, config_opts, NULL))
         return FALSE;
     }
   else
@@ -1462,7 +1483,7 @@ builder_module_build (BuilderModule  *self,
       build_dir = g_object_ref (source_subdir);
     }
 
-  if (meson)
+  if (meson || cmake_ninja)
     {
       g_autoptr(GFile) ninja_file = g_file_get_child (build_dir, "build.ninja");
       if (!g_file_query_exists (ninja_file, NULL))
@@ -1497,7 +1518,7 @@ builder_module_build (BuilderModule  *self,
 
   /* Build and install */
 
-  if (meson)
+  if (meson || cmake_ninja)
     make_cmd = "ninja";
   else
     make_cmd = "make";

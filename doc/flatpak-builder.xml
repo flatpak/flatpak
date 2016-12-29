@@ -359,7 +359,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>buildsystem</option> (string)</term>
-                    <listitem><para>Build system to use: autotools, cmake, meson</para></listitem>
+                    <listitem><para>Build system to use: autotools, cmake, cmake-ninja, meson</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>builddir</option> (boolean)</term>
