@@ -67,6 +67,8 @@ Flatpak-1.0.*
 /doc/flatpak-docs.html
 /doc/flatpak-docs.xml
 /doc/flatpak-metadata.5
+/doc/flatpak-flatpakrepo.5
+/doc/flatpak-flatpakref.5
 /test-doc-portal
 /test-doc-portal.log
 /test-doc-portal.trs
