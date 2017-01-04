@@ -247,7 +247,7 @@ provided, or it will be searched for in includedir])])],
             [with_dwarf_header=yes])
 
 AS_IF([test "x$with_dwarf_header" = "xyes"],
-      [CPPFLAGS="$CPPFLAGS -I$(eval echo \"$includedir\")/libdwarf"
+      [CPPFLAGS="$CPPFLAGS -I$(eval echo \"$includedir\")/libdwarf -I/usr/include/libdwarf"
        AC_CHECK_HEADER([dwarf.h])
        AS_IF([test "x$ac_cv_header_dwarf_h" != "xyes"],
              [AC_MSG_ERROR([dwarf.h is required but was not found; locate it using --with-dwarf-header=/path/containing/header])])],
