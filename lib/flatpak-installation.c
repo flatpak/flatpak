@@ -1281,7 +1281,7 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
   g_autofree char *remote = NULL;
   g_autofree char *ref = NULL;
 
-  if (!flatpak_dir_create_remote_for_ref_file (dir, ref_file_data, &remote, &ref, error))
+  if (!flatpak_dir_create_remote_for_ref_file (dir, ref_file_data, NULL, &remote, &ref, error))
     return NULL;
 
   if (!flatpak_installation_drop_caches (self, cancellable, error))
