@@ -354,7 +354,7 @@ install_from (FlatpakDir *dir,
   if (!handle_runtime_repo_deps_from_keyfile (dir, file_data, error))
     return FALSE;
 
-  if (!flatpak_dir_create_remote_for_ref_file (dir, file_data, &remote, &ref, error))
+  if (!flatpak_dir_create_remote_for_ref_file (dir, file_data, opt_arch, &remote, &ref, error))
     return FALSE;
 
   /* Need to pick up the new config, in case it was applied in the system helper. */

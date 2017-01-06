@@ -6635,6 +6635,7 @@ parse_ref_file (GBytes *data,
 gboolean
 flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
                                         GBytes     *data,
+                                        const char *default_arch,
                                         char      **remote_name_out,
                                         char      **ref_out,
                                         GError    **error)
@@ -6652,7 +6653,7 @@ flatpak_dir_create_remote_for_ref_file (FlatpakDir *self,
   if (!parse_ref_file (data, &name, &branch, &url, &title, &gpg_data, &is_runtime, error))
     return FALSE;
 
-  ref = flatpak_compose_ref (!is_runtime, name, branch, NULL, error);
+  ref = flatpak_compose_ref (!is_runtime, name, branch, default_arch, error);
   if (ref == NULL)
     return FALSE;
 
