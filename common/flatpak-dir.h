@@ -463,6 +463,7 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              GError      **error);
 gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir   *self,
                                                    GBytes  *data,
+                                                   const char *default_arch,
                                                    char   **remote_name_out,
                                                    char   **ref_out,
                                                    GError **error);
