@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-01-09 15:41-0300\n"
-"PO-Revision-Date: 2017-01-09 16:00-0300\n"
+"PO-Revision-Date: 2017-01-09 17:41-0300\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -51,7 +51,7 @@ msgstr "URL"
 
 #: app/flatpak-builtins-add-remote.c:68
 msgid "Enable the remote"
-msgstr ""
+msgstr "Habilitar o remoto"
 
 #: app/flatpak-builtins-add-remote.c:69
 msgid "Update extra metadata from the summary file"
@@ -146,7 +146,7 @@ msgstr ""
 #: app/flatpak-builtins-add-remote.c:397
 #, c-format
 msgid "Remote %s already exists"
-msgstr ""
+msgstr "O remoto %s já existe"
 
 #: app/flatpak-builtins-add-remote.c:405
 msgid "No url specified in flatpakrepo file"
@@ -1184,27 +1184,27 @@ msgstr ""
 #. translators: please keep the leading space
 #: app/flatpak-main.c:58
 msgid " Manage installed apps and runtimes"
-msgstr ""
+msgstr "Gerenciar aplicativos e runtimes instalados"
 
 #: app/flatpak-main.c:59
 msgid "Install an application or runtime"
-msgstr ""
+msgstr "Instala um aplicativo ou runtime"
 
 #: app/flatpak-main.c:60
 msgid "Update an installed application or runtime"
-msgstr ""
+msgstr "Atualiza um aplicativo ou runtime instalado"
 
 #: app/flatpak-main.c:61
 msgid "Uninstall an installed application or runtime"
-msgstr ""
+msgstr "Desinstala um aplicativo ou runtime instalado"
 
 #: app/flatpak-main.c:62
 msgid "List installed apps and/or runtimes"
-msgstr ""
+msgstr "Lista os aplicativos e/ou runtimes instalados"
 
 #: app/flatpak-main.c:63
 msgid "Show info for installed app or runtime"
-msgstr ""
+msgstr "Exibe informações do aplicativo ou runtime instalado"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:66
@@ -1217,19 +1217,19 @@ msgstr ""
 
 #: app/flatpak-main.c:67
 msgid "Run an application"
-msgstr "Executar um aplicativo"
+msgstr "Executa um aplicativo"
 
 #: app/flatpak-main.c:68
 msgid "Override permissions for an application"
-msgstr ""
+msgstr "Substitui as permissões para um aplicativo"
 
 #: app/flatpak-main.c:69
 msgid "Specify default version to run"
-msgstr ""
+msgstr "Especifica a versão padrão para executar"
 
 #: app/flatpak-main.c:70
 msgid "Enter the namespace of a running application"
-msgstr ""
+msgstr "Inseri o namespace de um aplicativo em execução"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:73
@@ -1237,22 +1237,24 @@ msgid ""
 "\n"
 " Manage file access"
 msgstr ""
+"\n"
+" Gerenciar o acesso a arquivos"
 
 #: app/flatpak-main.c:74
 msgid "Grant an application access to a specific file"
-msgstr ""
+msgstr "Concede um acesso de aplicativo a um arquivo específico"
 
 #: app/flatpak-main.c:75
 msgid "Revoke access to a specific file"
-msgstr ""
+msgstr "Revoga o acesso a um arquivo específico"
 
 #: app/flatpak-main.c:76
 msgid "Show information about a specific file"
-msgstr ""
+msgstr "Exibe informações sobre um arquivo específico"
 
 #: app/flatpak-main.c:77
 msgid "List exported files"
-msgstr ""
+msgstr "Lista arquivos exportados"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:80
@@ -1260,26 +1262,28 @@ msgid ""
 "\n"
 " Manage remote repositories"
 msgstr ""
+"\n"
+" Gerenciar repositórios remotos"
 
 #: app/flatpak-main.c:81
 msgid "Add a new remote repository (by URL)"
-msgstr ""
+msgstr "Adiciona um novo repositório remoto (via URL)"
 
 #: app/flatpak-main.c:82
 msgid "Modify properties of a configured remote"
-msgstr ""
+msgstr "Modifica as propriedades de um remoto configurado"
 
 #: app/flatpak-main.c:83
 msgid "Delete a configured remote"
-msgstr ""
+msgstr "Apaga um remoto configurado"
 
 #: app/flatpak-main.c:84
 msgid "List all configured remotes"
-msgstr ""
+msgstr "Lista todos os remotos configurados"
 
 #: app/flatpak-main.c:85
 msgid "List contents of a configured remote"
-msgstr ""
+msgstr "Lista o conteúdo de um remoto configurado"
 
 #. translators: please keep the leading newline and space
 #: app/flatpak-main.c:88
@@ -1287,22 +1291,24 @@ msgid ""
 "\n"
 " Build applications"
 msgstr ""
+"\n"
+" Compilar aplicativos"
 
 #: app/flatpak-main.c:89
 msgid "Initialize a directory for building"
-msgstr ""
+msgstr "Inicializa um diretório para compilação"
 
 #: app/flatpak-main.c:90
 msgid "Run a build command inside the build dir"
-msgstr ""
+msgstr "Executa um comando de compilar dentro do diretório de compilação"
 
 #: app/flatpak-main.c:91
 msgid "Finish a build dir for export"
-msgstr ""
+msgstr "Finaliza um diretório de compilação para exportar"
 
 #: app/flatpak-main.c:92
 msgid "Export a build dir to a repository"
-msgstr ""
+msgstr "Exporta um diretório de compilação para um repositório"
 
 #: app/flatpak-main.c:93
 msgid "Create a bundle file from a build directory"
@@ -1362,7 +1368,7 @@ msgstr ""
 
 #: app/flatpak-main.c:145
 msgid "Builtin Commands:"
-msgstr ""
+msgstr "Comandos embutidos:"
 
 #: app/flatpak-main.c:354
 #, c-format
@@ -1371,7 +1377,7 @@ msgstr "Comando desconhecido '%s'"
 
 #: app/flatpak-main.c:362
 msgid "No command specified"
-msgstr ""
+msgstr "Nenhum comando especificado"
 
 #: app/flatpak-main.c:479
 msgid "error:"
