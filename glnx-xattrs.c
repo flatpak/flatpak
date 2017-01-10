@@ -135,7 +135,7 @@ get_xattrs_impl (const char      *path,
                  GError        **error)
 {
   gboolean ret = FALSE;
-  ssize_t bytes_read;
+  ssize_t bytes_read, real_size;
   glnx_free char *xattr_names = NULL;
   glnx_free char *xattr_names_canonical = NULL;
   GVariantBuilder builder;
@@ -158,15 +158,19 @@ get_xattrs_impl (const char      *path,
   else if (bytes_read > 0)
     {
       xattr_names = g_malloc (bytes_read);
-      if (llistxattr (path, xattr_names, bytes_read) < 0)
+      real_size = llistxattr (path, xattr_names, bytes_read);
+      if (real_size < 0)
         {
           glnx_set_prefix_error_from_errno (error, "%s", "llistxattr");
           goto out;
         }
-      xattr_names_canonical = canonicalize_xattrs (xattr_names, bytes_read);
-      
-      if (!read_xattr_name_array (path, -1, xattr_names_canonical, bytes_read, &builder, error))
-        goto out;
+      else if (real_size > 0)
+        {
+          xattr_names_canonical = canonicalize_xattrs (xattr_names, real_size);
+
+          if (!read_xattr_name_array (path, -1, xattr_names_canonical, real_size, &builder, error))
+            goto out;
+        }
     }
 
   ret_xattrs = g_variant_builder_end (&builder);
@@ -202,7 +206,7 @@ glnx_fd_get_all_xattrs (int            fd,
                         GError       **error)
 {
   gboolean ret = FALSE;
-  ssize_t bytes_read;
+  ssize_t bytes_read, real_size;
   glnx_free char *xattr_names = NULL;
   glnx_free char *xattr_names_canonical = NULL;
   GVariantBuilder builder;
@@ -225,15 +229,19 @@ glnx_fd_get_all_xattrs (int            fd,
   else if (bytes_read > 0)
     {
       xattr_names = g_malloc (bytes_read);
-      if (flistxattr (fd, xattr_names, bytes_read) < 0)
+      real_size = flistxattr (fd, xattr_names, bytes_read);
+      if (real_size < 0)
         {
           glnx_set_prefix_error_from_errno (error, "%s", "flistxattr");
           goto out;
         }
-      xattr_names_canonical = canonicalize_xattrs (xattr_names, bytes_read);
-      
-      if (!read_xattr_name_array (NULL, fd, xattr_names_canonical, bytes_read, &builder, error))
-        goto out;
+      else if (real_size > 0)
+        {
+          xattr_names_canonical = canonicalize_xattrs (xattr_names, real_size);
+
+          if (!read_xattr_name_array (NULL, fd, xattr_names_canonical, real_size, &builder, error))
+            goto out;
+        }
     }
 
   ret_xattrs = g_variant_builder_end (&builder);
