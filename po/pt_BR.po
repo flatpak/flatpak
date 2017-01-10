@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-01-09 15:41-0300\n"
-"PO-Revision-Date: 2017-01-09 17:41-0300\n"
+"PO-Revision-Date: 2017-01-10 14:11-0300\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -196,7 +196,7 @@ msgstr ""
 #: app/flatpak-builtins-run.c:50 app/flatpak-builtins-uninstall.c:44
 #: app/flatpak-builtins-update.c:52
 msgid "ARCH"
-msgstr "ARCH"
+msgstr "ARQUITETURA"
 
 #: app/flatpak-builtins-build-bundle.c:55
 msgid "Url for repo"
@@ -932,7 +932,7 @@ msgstr ""
 
 #: app/flatpak-builtins-list.c:50
 msgid "Arch to show"
-msgstr ""
+msgstr "Arquitetura a exibir"
 
 #: app/flatpak-builtins-list.c:354
 msgid " - List installed apps and/or runtimes"
@@ -964,7 +964,7 @@ msgstr ""
 
 #: app/flatpak-builtins-ls-remote.c:46
 msgid "Limit to this arch (* for all)"
-msgstr ""
+msgstr "Limite para esta arquitetura (* para tudo)"
 
 #: app/flatpak-builtins-ls-remote.c:67
 msgid " REMOTE - Show available runtimes and applications"
@@ -1108,7 +1108,7 @@ msgstr ""
 
 #: app/flatpak-builtins-uninstall.c:44
 msgid "Arch to uninstall"
-msgstr ""
+msgstr "Arquitetura para desinstalar"
 
 #: app/flatpak-builtins-uninstall.c:45
 msgid "Keep ref in local repository"
@@ -1312,31 +1312,33 @@ msgstr "Exporta um diretório de compilação para um repositório"
 
 #: app/flatpak-main.c:93
 msgid "Create a bundle file from a build directory"
-msgstr ""
+msgstr "Cria um arquivo de pacote a partir de um diretório de compilação"
 
 #: app/flatpak-main.c:94
 msgid "Import a bundle file"
-msgstr ""
+msgstr "Importa um arquivo de pacote"
 
 #: app/flatpak-main.c:95
 msgid "Sign an application or runtime"
-msgstr ""
+msgstr "Assina um aplicativo ou runtime"
 
 #: app/flatpak-main.c:96
 msgid "Update the summary file in a repository"
-msgstr ""
+msgstr "Atualiza o arquivo de sumário num repositório"
 
 #: app/flatpak-main.c:97
 msgid "Create new commit based on existing ref"
-msgstr ""
+msgstr "Cria um novo commit baseado numa referência existente"
 
 #: app/flatpak-main.c:103
 msgid "Print debug information during command processing"
-msgstr ""
+msgstr "Exibe informações de depuração durante o processamento de comandos"
 
 #: app/flatpak-main.c:104
 msgid "Print OSTree debug information during command processing"
 msgstr ""
+"Exibe a informações de depuração da árvore do sistema durante o "
+"processamento de comandos"
 
 #: app/flatpak-main.c:105
 msgid "Show help options"
@@ -1344,15 +1346,15 @@ msgstr "Mostrar opções de ajuda"
 
 #: app/flatpak-main.c:110
 msgid "Print version information and exit"
-msgstr ""
+msgstr "Exibe informações sobre a versão e sai"
 
 #: app/flatpak-main.c:111
 msgid "Print default arch and exit"
-msgstr ""
+msgstr "Exibe a arquitetura padrão e sai"
 
 #: app/flatpak-main.c:112
 msgid "Print supported arches and exit"
-msgstr ""
+msgstr "Exibe arquiteturas suportadas e sai"
 
 #: app/flatpak-main.c:117
 msgid "Work on user installations"
