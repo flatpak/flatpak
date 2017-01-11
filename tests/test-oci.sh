@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_without_user_xattrs
 
-echo "1..4"
+echo "1..6"
 
 setup_repo
 
@@ -71,3 +71,27 @@ run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
 echo "ok update oci"
+
+flatpak uninstall  ${U} org.test.Hello
+
+make_updated_app HTTP
+${FLATPAK} build-bundle --oci repos/test oci-dir org.test.Hello
+
+ostree trivial-httpd --autoexit --daemonize -p oci-port `pwd`/oci-dir
+ociport=$(cat oci-port)
+
+${FLATPAK} install -v ${U} --oci http://127.0.0.1:${ociport} latest
+
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandboxHTTP$'
+
+echo "ok install oci http"
+
+make_updated_app UPDATEDHTTP
+${FLATPAK} build-bundle --oci repos/test oci-dir org.test.Hello
+
+${FLATPAK} update ${U} org.test.Hello
+run org.test.Hello > hello_out
+assert_file_has_content hello_out '^Hello world, from a sandboxUPDATEDHTTP$'
+
+echo "ok update oci http"
