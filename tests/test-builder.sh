@@ -32,7 +32,7 @@ setup_sdk_repo
 install_sdk_repo
 
 # Need /var/tmp cwd for xattrs
-REPO=`pwd`/repo
+REPO=`pwd`/repos/test
 cd $TEST_DATA_DIR/
 
 cp -a $(dirname $0)/test-configure .

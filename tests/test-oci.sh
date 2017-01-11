@@ -30,7 +30,7 @@ setup_repo
 
 ${FLATPAK} ${U} install test-repo org.test.Platform master
 
-${FLATPAK} build-bundle --oci repo oci-dir org.test.Hello
+${FLATPAK} build-bundle --oci repos/test oci-dir org.test.Hello
 
 assert_has_file oci-dir/oci-layout
 assert_has_dir oci-dir/blobs/sha256
@@ -64,7 +64,7 @@ assert_file_has_content hello_out '^Hello world, from a sandbox$'
 echo "ok install oci"
 
 make_updated_app
-${FLATPAK} build-bundle --oci repo oci-dir org.test.Hello
+${FLATPAK} build-bundle --oci repos/test oci-dir org.test.Hello
 
 ${FLATPAK} update ${U} org.test.Hello
 run org.test.Hello > hello_out

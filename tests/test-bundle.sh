@@ -30,10 +30,10 @@ mkdir bundles
 
 setup_repo
 
-${FLATPAK} build-bundle repo --repo-url=file://`pwd`/repo --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello
+${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello.flatpak org.test.Hello
 assert_has_file bundles/hello.flatpak
 
-${FLATPAK} build-bundle repo --runtime --repo-url=file://`pwd`/repo --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform
+${FLATPAK} build-bundle repos/test --runtime --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/platform.flatpak org.test.Platform
 assert_has_file bundles/platform.flatpak
 
 echo "ok create bundles"

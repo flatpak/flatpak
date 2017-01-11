@@ -220,7 +220,7 @@ echo "d" > ${DIR}/files/d/data
 echo "nope" > ${DIR}/files/nope
 
 ${FLATPAK} build-finish --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 update_repo
 
 ${FLATPAK} ${U} install test-repo org.test.Split --subpath=/a --subpath=/b --subpath=/nosuchdir master
@@ -246,7 +246,7 @@ mkdir -p ${DIR}/files/f
 echo "f" > ${DIR}/files/f/data
 rm -rf  ${DIR}/files/b
 
-${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 update_repo
 
 ${FLATPAK} ${U} update --subpath=/a --subpath=/b --subpath=/e --subpath=/nosuchdir org.test.Split
@@ -266,7 +266,7 @@ assert_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/e/data
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/f
 assert_not_has_file $FL_DIR/app/org.test.Split/$ARCH/master/active/files/nope
 
-${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 update_repo
 
 # Test reusing the old subpath list
@@ -294,15 +294,15 @@ VERSION=`cat "$test_builddir/package_version.txt"`
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.CurrentVersion org.test.Platform org.test.Platform
 ${FLATPAK} build-finish --require-version=${VERSION} --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
 ${FLATPAK} build-finish --require-version=0.6.10 --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.NewVersion org.test.Platform org.test.Platform
 ${FLATPAK} build-finish --require-version=${VERSION}9 --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 
 update_repo
 
@@ -313,14 +313,14 @@ ${FLATPAK} ${U} install test-repo org.test.CurrentVersion master
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
 ${FLATPAK} build-finish --require-version=99.0.0 --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 
 (! ${FLATPAK} ${U} update org.test.OldVersion)
 
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.OldVersion org.test.Platform org.test.Platform
 ${FLATPAK} build-finish --require-version=0.1.1 --command=hello.sh ${DIR}
-${FLATPAK} build-export ${FL_GPGARGS} repo ${DIR}
+${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 
 ${FLATPAK} ${U} update org.test.OldVersion
 

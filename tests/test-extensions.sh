@@ -38,7 +38,7 @@ make_extension () {
     touch ${DIR}/usr/exists
     touch ${DIR}/usr/extension-$ID:$VERSION
 
-    ${FLATPAK} build-export --runtime ${GPGARGS-} repo ${DIR} ${VERSION}
+    ${FLATPAK} build-export --runtime ${GPGARGS-} repos/test ${DIR} ${VERSION}
     rm -rf ${DIR}
 
     ${FLATPAK} --user install test-repo $ID $VERSION
@@ -85,17 +85,18 @@ subdirectories=true
 EOF
 }
 
-ostree init --repo=repo --mode=archive-z2
+mkdir -p repos
+ostree init --repo=repos/test --mode=archive-z2
 . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
 . $(dirname $0)/make-test-app.sh > /dev/null
 
 # Modify platform metadata
-ostree checkout -U --repo=repo runtime/org.test.Platform/${ARCH}/master platform
+ostree checkout -U --repo=repos/test runtime/org.test.Platform/${ARCH}/master platform
 add_extensions platform
-ostree commit --repo=repo --owner-uid=0 --owner-gid=0 --no-xattrs --branch=runtime/org.test.Platform/${ARCH}/master -s "modified metadata" platform
-ostree summary -u --repo=repo
+ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --branch=runtime/org.test.Platform/${ARCH}/master -s "modified metadata" platform
+ostree summary -u --repo=repos/test
 
-${FLATPAK} remote-add --user --no-gpg-verify test-repo repo
+${FLATPAK} remote-add --user --no-gpg-verify test-repo repos/test
 ${FLATPAK} --user install test-repo org.test.Platform master
 ${FLATPAK} --user install test-repo org.test.Hello master
 
@@ -139,10 +140,10 @@ assert_not_has_extension_file /usr dir2/foo/exists
 echo "ok runtime extensions"
 
 # Modify app metadata
-ostree checkout -U --repo=repo app/org.test.Hello/${ARCH}/master hello
+ostree checkout -U --repo=repos/test app/org.test.Hello/${ARCH}/master hello
 add_extensions hello
-ostree commit --repo=repo --owner-uid=0 --owner-gid=0 --no-xattrs --branch=app/org.test.Hello/${ARCH}/master -s "modified metadata" hello
-ostree summary -u --repo=repo
+ostree commit --repo=repos/test --owner-uid=0 --owner-gid=0 --no-xattrs --branch=app/org.test.Hello/${ARCH}/master -s "modified metadata" hello
+ostree summary -u --repo=repos/test
 
 ${FLATPAK} --user update org.test.Hello master
 

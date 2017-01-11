@@ -57,5 +57,6 @@ done
 mkdir -p ${DIR}/usr/lib/locale/
 cp -r /usr/lib/locale/C.* ${DIR}/usr/lib/locale/en_US
 
-flatpak build-export --runtime ${GPGARGS-} repo ${DIR}
+mkdir -p repos
+flatpak build-export --runtime ${GPGARGS-} repos/test ${DIR}
 rm -rf ${DIR}

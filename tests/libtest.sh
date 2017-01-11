@@ -180,17 +180,17 @@ setup_repo () {
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh > /dev/null
     update_repo
-    ostree trivial-httpd --autoexit --daemonize -p httpd-port .
+    ostree trivial-httpd --autoexit --daemonize -p httpd-port repos
     port=$(cat httpd-port)
-    flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/repo"
+    flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test"
 }
 
 update_repo () {
-    ${FLATPAK} build-update-repo $FL_GPGARGS ${UPDATE_REPO_ARGS-} repo
+    ${FLATPAK} build-update-repo $FL_GPGARGS ${UPDATE_REPO_ARGS-} repos/test
 }
 
 make_updated_app () {
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh UPDATED > /dev/null
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh ${1:-UPDATED} > /dev/null
     update_repo
 }
 

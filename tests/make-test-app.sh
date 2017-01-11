@@ -54,5 +54,6 @@ EOF
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/
 
 flatpak build-finish --command=hello.sh ${DIR}
-flatpak build-export ${GPGARGS-} repo ${DIR}
+mkdir -p repos
+flatpak build-export ${GPGARGS-} repos/test ${DIR}
 rm -rf ${DIR}
