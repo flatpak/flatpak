@@ -137,9 +137,10 @@ read_xattr_name_array (const char *path,
 
 static gboolean
 get_xattrs_impl (const char      *path,
+                 int              fd,
                  GVariant       **out_xattrs,
-                 GCancellable   *cancellable,
-                 GError        **error)
+                 GCancellable    *cancellable,
+                 GError         **error)
 {
   gboolean ret = FALSE;
   ssize_t bytes_read, real_size;
@@ -149,10 +150,15 @@ get_xattrs_impl (const char      *path,
   gboolean builder_initialized = FALSE;
   g_autoptr(GVariant) ret_xattrs = NULL;
 
+  g_assert (path != NULL || fd != -1);
+
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(ayay)"));
   builder_initialized = TRUE;
 
-  bytes_read = llistxattr (path, NULL, 0);
+  if (path)
+    bytes_read = llistxattr (path, NULL, 0);
+  else
+    bytes_read = flistxattr (fd, NULL, 0);
 
   if (bytes_read < 0)
     {
@@ -165,7 +171,10 @@ get_xattrs_impl (const char      *path,
   else if (bytes_read > 0)
     {
       xattr_names = g_malloc (bytes_read);
-      real_size = llistxattr (path, xattr_names, bytes_read);
+      if (path)
+        real_size = llistxattr (path, xattr_names, bytes_read);
+      else
+        real_size = flistxattr (fd, xattr_names, bytes_read);
       if (real_size < 0)
         {
           glnx_set_prefix_error_from_errno (error, "%s", "llistxattr");
@@ -175,7 +184,7 @@ get_xattrs_impl (const char      *path,
         {
           xattr_names_canonical = canonicalize_xattrs (xattr_names, real_size);
 
-          if (!read_xattr_name_array (path, -1, xattr_names_canonical, real_size, &builder, error))
+          if (!read_xattr_name_array (path, fd, xattr_names_canonical, real_size, &builder, error))
             goto out;
         }
     }
@@ -212,56 +221,8 @@ glnx_fd_get_all_xattrs (int            fd,
                         GCancellable  *cancellable,
                         GError       **error)
 {
-  gboolean ret = FALSE;
-  ssize_t bytes_read, real_size;
-  glnx_free char *xattr_names = NULL;
-  glnx_free char *xattr_names_canonical = NULL;
-  GVariantBuilder builder;
-  gboolean builder_initialized = FALSE;
-  g_autoptr(GVariant) ret_xattrs = NULL;
-
-  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(ayay)"));
-  builder_initialized = TRUE;
-
-  bytes_read = flistxattr (fd, NULL, 0);
-
-  if (bytes_read < 0)
-    {
-      if (errno != ENOTSUP)
-        {
-          glnx_set_prefix_error_from_errno (error, "%s", "flistxattr");
-          goto out;
-        }
-    }
-  else if (bytes_read > 0)
-    {
-      xattr_names = g_malloc (bytes_read);
-      real_size = flistxattr (fd, xattr_names, bytes_read);
-      if (real_size < 0)
-        {
-          glnx_set_prefix_error_from_errno (error, "%s", "flistxattr");
-          goto out;
-        }
-      else if (real_size > 0)
-        {
-          xattr_names_canonical = canonicalize_xattrs (xattr_names, real_size);
-
-          if (!read_xattr_name_array (NULL, fd, xattr_names_canonical, real_size, &builder, error))
-            goto out;
-        }
-    }
-
-  ret_xattrs = g_variant_builder_end (&builder);
-  builder_initialized = FALSE;
-  g_variant_ref_sink (ret_xattrs);
-  
-  ret = TRUE;
-  if (out_xattrs)
-    *out_xattrs = g_steal_pointer (&ret_xattrs);
- out:
-  if (!builder_initialized)
-    g_variant_builder_clear (&builder);
-  return ret;
+  return get_xattrs_impl (NULL, fd, out_xattrs,
+                          cancellable, error);
 }
 
 /**
@@ -284,7 +245,7 @@ glnx_dfd_name_get_all_xattrs (int            dfd,
 {
   if (dfd == AT_FDCWD || dfd == -1)
     {
-      return get_xattrs_impl (name, out_xattrs, cancellable, error);
+      return get_xattrs_impl (name, -1, out_xattrs, cancellable, error);
     }
   else
     {
@@ -293,7 +254,7 @@ glnx_dfd_name_get_all_xattrs (int            dfd,
        * https://mail.gnome.org/archives/ostree-list/2014-February/msg00017.html
        */
       snprintf (buf, sizeof (buf), "/proc/self/fd/%d/%s", dfd, name);
-      return get_xattrs_impl (buf, out_xattrs, cancellable, error);
+      return get_xattrs_impl (buf, -1, out_xattrs, cancellable, error);
     }
 }
 
