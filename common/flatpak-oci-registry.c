@@ -1014,6 +1014,12 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
                                       error))
     return NULL;
 
+  if (fchmod (tmp_fd, 0644) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return NULL;
+    }
+
   a = archive_write_new ();
   if (archive_write_set_format_gnutar (a) != ARCHIVE_OK ||
       archive_write_add_filter_none (a) != ARCHIVE_OK)
