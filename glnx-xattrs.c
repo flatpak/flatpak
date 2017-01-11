@@ -83,19 +83,22 @@ read_xattr_name_array (const char *path,
 
   funcstr = fd != -1 ? "fgetxattr" : "lgetxattr";
 
-  p = xattrs;
-  while (p < xattrs+len)
+  for (p = xattrs; p < xattrs+len; p = p + strlen (p) + 1)
     {
       ssize_t bytes_read;
-      char *buf;
-      GBytes *bytes = NULL;
+      g_autofree char *buf = NULL;
+      g_autoptr(GBytes) bytes = NULL;
 
+    again:
       if (fd != -1)
         bytes_read = fgetxattr (fd, p, NULL, 0);
       else
         bytes_read = lgetxattr (path, p, NULL, 0);
       if (bytes_read < 0)
         {
+          if (errno == ENODATA)
+            continue;
+
           glnx_set_prefix_error_from_errno (error, "%s", funcstr);
           goto out;
         }
@@ -103,26 +106,30 @@ read_xattr_name_array (const char *path,
         continue;
 
       buf = g_malloc (bytes_read);
-      bytes = g_bytes_new_take (buf, bytes_read);
       if (fd != -1)
         r = fgetxattr (fd, p, buf, bytes_read);
       else
         r = lgetxattr (path, p, buf, bytes_read);
       if (r < 0)
         {
-          g_bytes_unref (bytes);
+          if (errno == ERANGE)
+            {
+              g_free (g_steal_pointer (&buf));
+              goto again;
+            }
+          else if (errno == ENODATA)
+            continue;
+
           glnx_set_prefix_error_from_errno (error, "%s", funcstr);
           goto out;
         }
-      
+
+      bytes = g_bytes_new_take (g_steal_pointer (&buf), bytes_read);
       g_variant_builder_add (builder, "(@ay@ay)",
                              g_variant_new_bytestring (p),
                              variant_new_ay_bytes (bytes));
-
-      p = p + strlen (p) + 1;
-      g_bytes_unref (bytes);
     }
-  
+
   ret = TRUE;
  out:
   return ret;
