@@ -155,6 +155,7 @@ get_xattrs_impl (const char      *path,
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(ayay)"));
   builder_initialized = TRUE;
 
+ again:
   if (path)
     bytes_read = llistxattr (path, NULL, 0);
   else
@@ -177,6 +178,11 @@ get_xattrs_impl (const char      *path,
         real_size = flistxattr (fd, xattr_names, bytes_read);
       if (real_size < 0)
         {
+          if (errno == ERANGE)
+            {
+              g_free (xattr_names);
+              goto again;
+            }
           glnx_set_prefix_error_from_errno (error, "%s", "llistxattr");
           goto out;
         }
