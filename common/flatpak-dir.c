@@ -7282,7 +7282,7 @@ flatpak_dir_parse_summary_for_ref (FlatpakDir   *self,
   if (cache_v == NULL)
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                           _("Data not found"));
+                           _("No flatpak cache in remote summary"));
       return FALSE;
     }
 
@@ -7291,7 +7291,7 @@ flatpak_dir_parse_summary_for_ref (FlatpakDir   *self,
   if (res == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                   _("Data not found for ref %s"), ref);
+                   _("No entry for %s in remote summary flatpak cache "), ref);
       return FALSE;
     }
 
