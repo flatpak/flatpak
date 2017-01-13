@@ -74,6 +74,10 @@
                     <term><option>GPGKey</option> (string)</term>
                     <listitem><para>The base64-encoded gpg key for the remote.</para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>DefaultBranch</option> (string)</term>
+                    <listitem><para>The default branch to use for this remote.</para></listitem>
+                </varlistentry>
             </variablelist>
         </refsect2>
     </refsect1>
