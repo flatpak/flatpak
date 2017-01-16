@@ -467,7 +467,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
         }
       remote = origin;
     }
-  else
+  else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
     {
       g_assert (remote != NULL);
       if (dir_ref_is_installed (self->dir, ref, NULL))
