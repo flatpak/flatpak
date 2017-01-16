@@ -31,4 +31,5 @@ app/flatpak-transaction.c
 common/flatpak-dir.c
 common/flatpak-run.c
 common/flatpak-utils.c
+system-helper/flatpak-system-helper.service.in
 system-helper/org.freedesktop.Flatpak.policy.in
