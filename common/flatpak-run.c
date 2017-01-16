@@ -2829,12 +2829,16 @@ flatpak_ensure_data_dir (const char   *app_id,
   g_autoptr(GFile) dir = flatpak_get_data_dir (app_id);
   g_autoptr(GFile) data_dir = g_file_get_child (dir, "data");
   g_autoptr(GFile) cache_dir = g_file_get_child (dir, "cache");
+  g_autoptr(GFile) tmp_dir = g_file_get_child (cache_dir, "tmp");
   g_autoptr(GFile) config_dir = g_file_get_child (dir, "config");
 
   if (!flatpak_mkdir_p (data_dir, cancellable, error))
     return NULL;
 
   if (!flatpak_mkdir_p (cache_dir, cancellable, error))
+    return NULL;
+
+  if (!flatpak_mkdir_p (tmp_dir, cancellable, error))
     return NULL;
 
   if (!flatpak_mkdir_p (config_dir, cancellable, error))
@@ -3797,6 +3801,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   if (app_id_dir != NULL)
     {
       g_autoptr(GFile) app_cache_dir = g_file_get_child (app_id_dir, "cache");
+      g_autoptr(GFile) app_tmp_dir = g_file_get_child (app_cache_dir, "tmp");
       g_autoptr(GFile) app_data_dir = g_file_get_child (app_id_dir, "data");
       g_autoptr(GFile) app_config_dir = g_file_get_child (app_id_dir, "config");
 
@@ -3805,6 +3810,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                 "--bind", flatpak_file_get_path_cached (app_cache_dir), "/var/cache",
                 "--bind", flatpak_file_get_path_cached (app_data_dir), "/var/data",
                 "--bind", flatpak_file_get_path_cached (app_config_dir), "/var/config",
+                "--bind", flatpak_file_get_path_cached (app_tmp_dir), "/var/tmp",
                 NULL);
     }
 
