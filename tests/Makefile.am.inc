@@ -79,6 +79,7 @@ dist_installed_test_extra_scripts += \
 	tests/make-test-app.sh \
 	tests/make-test-runtime.sh \
 	tests/make-test-bundles.sh \
+	tests/testpython.py \
 	$(NULL)
 
 dist_installed_test_data = \
@@ -89,7 +90,6 @@ dist_installed_test_data = \
 	tests/session.conf.in \
 	tests/0001-Add-test-logo.patch \
 	tests/org.test.Python.json \
-	tests/testpython.py \
 	tests/importme.py \
 	tests/importme2.py \
 	$(NULL)
