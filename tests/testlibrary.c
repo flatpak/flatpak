@@ -691,6 +691,7 @@ add_extra_installation (const char *id,
   if (priority != NULL)
     g_ptr_array_add (contents_array, g_strdup_printf ("Priority=%s", priority));
 
+  g_ptr_array_add (contents_array, NULL);
   contents_string = g_strjoinv ("\n", (char**)contents_array->pdata);
 
   conffile_path = g_strconcat (flatpak_installationsdir, "/", id, ".conf", NULL);
