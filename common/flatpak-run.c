@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <grp.h>
 
 #ifdef ENABLE_SECCOMP
@@ -3523,6 +3524,9 @@ setup_seccomp (GPtrArray  *argv_array,
     {SCMP_SYS (mount)},
     {SCMP_SYS (pivot_root)},
     {SCMP_SYS (clone), &SCMP_A0 (SCMP_CMP_MASKED_EQ, CLONE_NEWUSER, CLONE_NEWUSER)},
+
+    /* Don't allow faking input to the controlling tty (CVE-2017-5226) */
+    {SCMP_SYS (ioctl), &SCMP_A1(SCMP_CMP_EQ, (int)TIOCSTI)},
   };
 
   struct
