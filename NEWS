@@ -1,3 +1,31 @@
+Major changes in 0.8.1
+======================
+
+This is a bugfix and security update (CVE-2017-5226).
+
+Flatpak now uses seccomp to disallow the TIOCSTI ioctl in the sandbox,
+which works around the possibility to inject text on the controlling
+tty (CVE-2017-5226).
+
+This was previously fixed in bubblewrap in 0.1.6, but that change has
+now been reverted as it introduced other problems for flatpak.
+
+ * Update bundled bubblewrap to 0.1.7
+ * Fix writing new file with O_EXCL in the document portal.
+ * Allow appstream data that doesn't have .desktop in the component id,
+   such as data for runtimes.
+ * Drop json-glib dependency from 1.2 to 1.0
+ * Builder: Fail if unable to read included file
+ * OCI: Ensure exported layers are readable by everyone
+ * Fix extra-data download in gnome-software
+ * Fix update-mime-database trigger when installing via
+   the system helper.
+ * Updating an app by installing a newer bundle now works
+   again.
+ * Make /var/tmp not be on a tmpfs (it is now in
+   ~/.var/app/$appid/cache/tmp).
+ * Documentation / translation updates
+
 Major changes in 0.8.0
 ======================
 
