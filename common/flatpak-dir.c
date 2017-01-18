@@ -2603,7 +2603,7 @@ flatpak_dir_list_refs (FlatpakDir   *self,
 {
   gboolean ret = FALSE;
 
-  g_autoptr(GFile) base;
+  g_autoptr(GFile) base = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileInfo) child_info = NULL;
   GError *temp_error = NULL;

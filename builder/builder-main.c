@@ -200,7 +200,7 @@ main (int    argc,
   g_autoptr(GFileEnumerator) dir_enum2 = NULL;
   GFileInfo *next = NULL;
   const char *platform_id = NULL;
-  g_autofree char **orig_argv;
+  g_autofree char **orig_argv = NULL;
   gboolean is_run = FALSE;
   gboolean is_show_deps = FALSE;
   gboolean app_dir_is_empty = FALSE;

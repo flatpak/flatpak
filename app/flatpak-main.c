@@ -174,7 +174,7 @@ flatpak_usage (FlatpakCommand *commands,
                gboolean        is_error)
 {
   GOptionContext *context;
-  g_autofree char *help;
+  g_autofree char *help = NULL;
 
   context = flatpak_option_context_new_with_commands (commands);
 
@@ -344,7 +344,7 @@ flatpak_run (int      argc,
   if (!command->fn)
     {
       GOptionContext *context;
-      g_autofree char *help;
+      g_autofree char *help = NULL;
 
       context = flatpak_option_context_new_with_commands (commands);
 
