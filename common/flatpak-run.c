@@ -2411,6 +2411,20 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                 continue;
 
               path = g_build_filename ("/", dirent->d_name, NULL);
+
+              /* Ensure symlinks don't point to a conflicting directory */
+              if (dirent->d_type == DT_LNK)
+                {
+                  g_autofree char *linkdest = g_file_read_link (path, NULL);
+                  if (linkdest != NULL)
+                    {
+                      g_auto(GStrv) directories = g_strsplit (linkdest, G_DIR_SEPARATOR_S, 3);
+                      if (g_strv_length (directories) > 1 &&
+                          g_strv_contains (dont_mount_in_root, directories[1]))
+                        continue;
+                    }
+                }
+
               add_expose_path (fs_paths, fs_mode, path);
             }
           closedir (dir);
