@@ -8,7 +8,7 @@ dbussystemservicedir = $(datadir)/dbus-1/system-services
 service_in_files += system-helper/org.freedesktop.Flatpak.SystemHelper.service.in
 dbussystemservice_DATA = system-helper/org.freedesktop.Flatpak.SystemHelper.service
 
-dbusconfdir = ${sysconfdir}/dbus-1/system.d
+dbusconfdir = $(DBUS_CONFIG_DIR)
 dbusconf_DATA = system-helper/org.freedesktop.Flatpak.SystemHelper.conf
 
 service_in_files += system-helper/flatpak-system-helper.service.in
