@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-12-20 16:44+0100\n"
+"POT-Creation-Date: 2017-01-18 16:48+0100\n"
 "PO-Revision-Date: 2016-10-26 19:02+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
@@ -286,7 +286,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Пропущено «=» у параметрі монтування прив’язки «%s»"
 
-#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:4126
+#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:4136
 msgid "Unable to start app"
 msgstr "Не вдалося запустити програму"
 
@@ -1434,7 +1434,7 @@ msgstr ""
 msgid "The required runtime %s was not found in a configured remote.\n"
 msgstr "Змінити властивості налаштованого віддаленого сховища"
 
-#: app/flatpak-transaction.c:458 common/flatpak-dir.c:979
+#: app/flatpak-transaction.c:459 common/flatpak-dir.c:979
 #: common/flatpak-dir.c:1236 common/flatpak-dir.c:1272
 #: common/flatpak-dir.c:1294 common/flatpak-dir.c:7612
 #: common/flatpak-utils.c:1075
@@ -1442,74 +1442,74 @@ msgstr "Змінити властивості налаштованого від�
 msgid "%s not installed"
 msgstr "%s не встановлено"
 
-#: app/flatpak-transaction.c:464
+#: app/flatpak-transaction.c:465
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr ""
 
-#: app/flatpak-transaction.c:475
+#: app/flatpak-transaction.c:476
 #, fuzzy, c-format
 msgid "%s already installed"
 msgstr "Гілку %s %s вже встановлено"
 
-#: app/flatpak-transaction.c:504
+#: app/flatpak-transaction.c:512
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr ""
 
-#: app/flatpak-transaction.c:597 common/flatpak-dir.c:1998
+#: app/flatpak-transaction.c:605 common/flatpak-dir.c:1998
 msgid "OCI image is not a flatpak (missing ref)"
 msgstr ""
 
-#: app/flatpak-transaction.c:665
+#: app/flatpak-transaction.c:673
 #, fuzzy
 msgid "install"
 msgstr "Вилучення програми"
 
-#: app/flatpak-transaction.c:666
+#: app/flatpak-transaction.c:674
 #, fuzzy, c-format
 msgid "Installing: %s from %s\n"
 msgstr "Встановлюємо: %s\n"
 
-#: app/flatpak-transaction.c:677
+#: app/flatpak-transaction.c:685
 msgid "update"
 msgstr ""
 
-#: app/flatpak-transaction.c:678
+#: app/flatpak-transaction.c:686
 #, fuzzy, c-format
 msgid "Updating: %s from %s\n"
 msgstr "Оновлюємо appstream для віддаленого сховища %s\n"
 
-#: app/flatpak-transaction.c:693
+#: app/flatpak-transaction.c:701
 #, c-format
 msgid "Now at %s.\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:699
+#: app/flatpak-transaction.c:707
 msgid "No updates.\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:707
+#: app/flatpak-transaction.c:715
 #, fuzzy
 msgid "install bundle"
 msgstr "Встановлення пакунка"
 
-#: app/flatpak-transaction.c:708
+#: app/flatpak-transaction.c:716
 #, fuzzy, c-format
 msgid "Installing: %s from bundle %s\n"
 msgstr "Встановлюємо: %s\n"
 
-#: app/flatpak-transaction.c:720
+#: app/flatpak-transaction.c:728
 #, c-format
 msgid "Warning: Failed to %s %s: %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:725
+#: app/flatpak-transaction.c:733
 #, c-format
 msgid "Error: Failed to %s %s: %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:730
+#: app/flatpak-transaction.c:738
 msgid "One or more operations failed"
 msgstr ""
 
@@ -1704,45 +1704,45 @@ msgid "Remote default-branch not set"
 msgstr "Не встановлено типову гілку віддаленого сховища"
 
 #: common/flatpak-dir.c:7285
-msgid "Data not found"
-msgstr "Дані не знайдено"
+msgid "No flatpak cache in remote summary"
+msgstr ""
 
 #: common/flatpak-dir.c:7294
 #, c-format
-msgid "Data not found for ref %s"
-msgstr "Дані для посилання %s не знайдено"
+msgid "No entry for %s in remote summary flatpak cache "
+msgstr ""
 
-#: common/flatpak-run.c:234
+#: common/flatpak-run.c:235
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Невідомий тип спільного ресурсу %s, коректними типами є такі: %s"
 
-#: common/flatpak-run.c:269
+#: common/flatpak-run.c:270
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Невідомий тип правил %s, коректними типами є такі: %s"
 
-#: common/flatpak-run.c:307
+#: common/flatpak-run.c:308
 #, c-format
 msgid "Invalid dbus name %s\n"
 msgstr "Некоректна назва D-Bus, %s\n"
 
-#: common/flatpak-run.c:320
+#: common/flatpak-run.c:321
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Невідомий тип сокета, %s, коректними типами є такі: %s"
 
-#: common/flatpak-run.c:349
+#: common/flatpak-run.c:350
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Невідомий тип пристрою, %s. Коректними типами є %s"
 
-#: common/flatpak-run.c:377
+#: common/flatpak-run.c:378
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Невідомий тип можливості %s, коректними типами є такі: %s"
 
-#: common/flatpak-run.c:750
+#: common/flatpak-run.c:751
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid types are: host, home, xdg-*[/...], ~/"
@@ -1751,167 +1751,173 @@ msgstr ""
 "Невідоме розташування файлової системи, %s, коректними типами є такі: host, "
 "home, xdg-*[/...], ~/dir, /dir"
 
-#: common/flatpak-run.c:1016
+#: common/flatpak-run.c:1017
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Некоректне форматування середовища, %s"
 
-#: common/flatpak-run.c:1156
+#: common/flatpak-run.c:1157
 msgid "Share with host"
 msgstr "Надати спільний доступ вузлу"
 
-#: common/flatpak-run.c:1156 common/flatpak-run.c:1157
+#: common/flatpak-run.c:1157 common/flatpak-run.c:1158
 msgid "SHARE"
 msgstr "СПІЛЬНИЙ РЕСУРС"
 
-#: common/flatpak-run.c:1157
+#: common/flatpak-run.c:1158
 msgid "Unshare with host"
 msgstr "Скасувати надання спільного ресурсу вузлу"
 
-#: common/flatpak-run.c:1158
+#: common/flatpak-run.c:1159
 msgid "Expose socket to app"
 msgstr "Відкрити сокет програмі"
 
-#: common/flatpak-run.c:1158 common/flatpak-run.c:1159
+#: common/flatpak-run.c:1159 common/flatpak-run.c:1160
 msgid "SOCKET"
 msgstr "СОКЕТ"
 
-#: common/flatpak-run.c:1159
+#: common/flatpak-run.c:1160
 msgid "Don't expose socket to app"
 msgstr "Не відкривати сокет програми"
 
-#: common/flatpak-run.c:1160
+#: common/flatpak-run.c:1161
 msgid "Expose device to app"
 msgstr "Відкрити пристрій програмі"
 
-#: common/flatpak-run.c:1160 common/flatpak-run.c:1161
+#: common/flatpak-run.c:1161 common/flatpak-run.c:1162
 msgid "DEVICE"
 msgstr "ПРИСТРІЙ"
 
-#: common/flatpak-run.c:1161
+#: common/flatpak-run.c:1162
 msgid "Don't expose device to app"
 msgstr "Не відкривати пристрій програмі"
 
-#: common/flatpak-run.c:1162
+#: common/flatpak-run.c:1163
 msgid "Allow feature"
 msgstr "Увімкнути можливість"
 
-#: common/flatpak-run.c:1162 common/flatpak-run.c:1163
+#: common/flatpak-run.c:1163 common/flatpak-run.c:1164
 msgid "FEATURE"
 msgstr "МОЖЛИВІСТЬ"
 
-#: common/flatpak-run.c:1163
+#: common/flatpak-run.c:1164
 msgid "Don't allow feature"
 msgstr "Вимкнути можливість"
 
-#: common/flatpak-run.c:1164
+#: common/flatpak-run.c:1165
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Відкрити файлову систему програмі (:ro — лише для читання)"
 
-#: common/flatpak-run.c:1164
+#: common/flatpak-run.c:1165
 msgid "FILESYSTEM[:ro]"
 msgstr "ФАЙЛОВА_СИСТЕМА[:ro]"
 
-#: common/flatpak-run.c:1165
+#: common/flatpak-run.c:1166
 msgid "Don't expose filesystem to app"
 msgstr "Не відкривати файлову систему програмі"
 
-#: common/flatpak-run.c:1165
+#: common/flatpak-run.c:1166
 msgid "FILESYSTEM"
 msgstr "ФАЙЛОВА СИСТЕМА"
 
-#: common/flatpak-run.c:1166
+#: common/flatpak-run.c:1167
 msgid "Set environment variable"
 msgstr "Встановити змінну середовища"
 
-#: common/flatpak-run.c:1166
+#: common/flatpak-run.c:1167
 msgid "VAR=VALUE"
 msgstr "ЗМІННА=ЗНАЧЕННЯ"
 
-#: common/flatpak-run.c:1167
+#: common/flatpak-run.c:1168
 msgid "Allow app to own name on the session bus"
 msgstr "Дозволити програмі бути власником назви на каналі сеансу"
 
-#: common/flatpak-run.c:1167 common/flatpak-run.c:1168
-#: common/flatpak-run.c:1169 common/flatpak-run.c:1170
+#: common/flatpak-run.c:1168 common/flatpak-run.c:1169
+#: common/flatpak-run.c:1170 common/flatpak-run.c:1171
 msgid "DBUS_NAME"
 msgstr "НАЗВА_DBUS"
 
-#: common/flatpak-run.c:1168
+#: common/flatpak-run.c:1169
 msgid "Allow app to talk to name on the session bus"
 msgstr "Дозволити програмі обмінюватися даними з назвою на каналі сеансу"
 
-#: common/flatpak-run.c:1169
+#: common/flatpak-run.c:1170
 msgid "Allow app to own name on the system bus"
 msgstr "Дозволити програмі бути власником назви на каналі системи"
 
-#: common/flatpak-run.c:1170
+#: common/flatpak-run.c:1171
 msgid "Allow app to talk to name on the system bus"
 msgstr "Дозволити програмі обмінюватися даними з назвою на каналі системи"
 
-#: common/flatpak-run.c:1171
+#: common/flatpak-run.c:1172
 msgid "Add generic policy option"
 msgstr "Додати параметр загальних правил"
 
-#: common/flatpak-run.c:1171 common/flatpak-run.c:1172
+#: common/flatpak-run.c:1172 common/flatpak-run.c:1173
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "ПІДСИСТЕМА.КЛЮЧ=ЗНАЧЕННЯ"
 
-#: common/flatpak-run.c:1172
+#: common/flatpak-run.c:1173
 msgid "Remove generic policy option"
 msgstr "Вилучити параметр загальних правил"
 
-#: common/flatpak-run.c:1173
+#: common/flatpak-run.c:1174
 msgid "Persist home directory"
 msgstr "Примусово встановити домашній каталог"
 
-#: common/flatpak-run.c:1173
+#: common/flatpak-run.c:1174
 msgid "FILENAME"
 msgstr "НАЗВА ФАЙЛА"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-run.c:1175
+#: common/flatpak-run.c:1176
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Не вимагати запущеного сеансу (без створення cgroup)"
 
-#: common/flatpak-run.c:1814
+#: common/flatpak-run.c:1815
 msgid "Failed to create temporary file"
 msgstr "Не вдалося створити тимчасовий файл"
 
-#: common/flatpak-run.c:1821
+#: common/flatpak-run.c:1822
 msgid "Failed to unlink temporary file"
 msgstr "Не вдалося відв’язати тимчасовий файл"
 
-#: common/flatpak-run.c:1839
+#: common/flatpak-run.c:1840
 msgid "Failed to write to temporary file"
 msgstr "Не вдалося виконати запис до тимчасового файла"
 
-#: common/flatpak-run.c:3043
+#: common/flatpak-run.c:3048
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Не вдалося відкрити тимчасовий файл flatpak-info: %s"
 
-#: common/flatpak-run.c:3087
+#: common/flatpak-run.c:3092
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Не вдалося відкрити тимчасовий файл: %s"
 
-#: common/flatpak-run.c:3366
+#: common/flatpak-run.c:3371
 msgid "Unable to create sync pipe"
 msgstr "Не вдалося створити канал синхронізації"
 
-#: common/flatpak-run.c:3391
+#: common/flatpak-run.c:3396
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Не вдалося відкрити файл інформації щодо програми: %s"
 
-#: common/flatpak-run.c:3421
+#: common/flatpak-run.c:3426
 msgid "Failed to sync with dbus proxy"
 msgstr "Не вдалося виконати синхронізацію із проміжним D-Bus"
 
 #: common/flatpak-utils.c:2476
 msgid "No extra data sources"
 msgstr "Немає джерел додаткових даних"
+
+#~ msgid "Data not found"
+#~ msgstr "Дані не знайдено"
+
+#~ msgid "Data not found for ref %s"
+#~ msgstr "Дані для посилання %s не знайдено"
 
 #~ msgid "Install from local bundle file"
 #~ msgstr "Встановити із локального файла пакунка"
