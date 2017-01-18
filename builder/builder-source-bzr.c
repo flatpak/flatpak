@@ -245,7 +245,7 @@ builder_source_bzr_checksum (BuilderSource  *source,
                              BuilderContext *context)
 {
   BuilderSourceBzr *self = BUILDER_SOURCE_BZR (source);
-  g_autofree char *current_commit;
+  g_autofree char *current_commit = NULL;
 
   g_autoptr(GError) error = NULL;
 

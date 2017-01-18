@@ -264,7 +264,7 @@ builder_source_extract (BuilderSource  *self,
 {
   BuilderSourceClass *class;
 
-  g_autoptr(GFile) real_dest;
+  g_autoptr(GFile) real_dest = NULL;
 
   class = BUILDER_SOURCE_GET_CLASS (self);
 

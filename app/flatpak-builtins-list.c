@@ -210,7 +210,7 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
 
               if (strcmp (parts[0], "app") == 0)
                 {
-                  g_autofree char *current;
+                  g_autofree char *current = NULL;
 
                   current = flatpak_dir_current_ref (dir, parts[1], cancellable);
                   if (current && strcmp (ref, current) == 0)

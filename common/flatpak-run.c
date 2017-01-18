@@ -563,7 +563,7 @@ get_xdg_dir_from_string (const char *filesystem,
 {
   char *slash;
   const char *rest;
-  g_autofree char *prefix;
+  g_autofree char *prefix = NULL;
   const char *dir = NULL;
   gsize len;
 
@@ -597,7 +597,7 @@ get_xdg_user_dir_from_string (const char  *filesystem,
 {
   char *slash;
   const char *rest;
-  g_autofree char *prefix;
+  g_autofree char *prefix = NULL;
   gsize len;
 
   slash = strchr (filesystem, '/');
