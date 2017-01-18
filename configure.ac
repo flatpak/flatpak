@@ -108,6 +108,12 @@ AC_ARG_WITH(system_fonts_dir,
 SYSTEM_FONTS_DIR=$with_system_fonts_dir
 AC_SUBST(SYSTEM_FONTS_DIR)
 
+AC_ARG_WITH(profile_dir,
+		AS_HELP_STRING([--with-profile-dir=PATH],[choose directory for profile.d files, [default=SYSCONFDIR/profile.d]]),
+            with_profile_dir="$withval", with_profile_dir=${sysconfdir}/profile.d)
+PROFILE_DIR=$with_profile_dir
+AC_SUBST(PROFILE_DIR)
+
 AC_ARG_VAR([BWRAP], [Bubblewrap executable])
 AC_ARG_WITH([system-bubblewrap],
             [AS_HELP_STRING([--with-system-bubblewrap], [Use system bwrap executable [default=check $BWRAP]])],
