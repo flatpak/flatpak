@@ -663,7 +663,7 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
   if (action)
     {
-      g_autoptr(AutoPolkitAuthorizationResult) result;
+      g_autoptr(AutoPolkitAuthorizationResult) result = NULL;
       g_autoptr(GError) error = NULL;
 
       result = polkit_authority_check_authorization_sync (authority, subject,

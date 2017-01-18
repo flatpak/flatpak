@@ -329,7 +329,7 @@ handle_set (XdgPermissionStore     *object,
   g_variant_iter_init (&iter, app_permissions);
   while ((child = g_variant_iter_next_value (&iter)))
     {
-      g_autoptr(FlatpakDbEntry) old_entry;
+      g_autoptr(FlatpakDbEntry) old_entry = NULL;
       const char *child_app_id;
       g_autofree const char **permissions;
 
