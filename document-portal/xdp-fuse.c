@@ -1941,6 +1941,7 @@ xdp_fuse_write_buf (fuse_req_t             req,
   fd = xdp_inode_locked_get_write_fd (inode);
   if (fd == -1)
     {
+      g_debug ("xdp_fuse_write_buf <- error %s", strerror (errno));
       fuse_reply_err (req, errno);
     }
   else
