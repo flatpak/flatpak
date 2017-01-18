@@ -1876,7 +1876,7 @@ xdp_fuse_setattr (fuse_req_t             req,
 
   if (res != 0)
     {
-      fuse_reply_err (req, ENOSYS);
+      fuse_reply_err (req, res);
     }
   else
     {
