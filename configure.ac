@@ -78,6 +78,12 @@ AC_ARG_WITH(dbus_service_dir,
 DBUS_SERVICE_DIR=$with_dbus_service_dir
 AC_SUBST(DBUS_SERVICE_DIR)
 
+AC_ARG_WITH(dbus_config_dir,
+		AS_HELP_STRING([--with-dbus-config-dir=PATH],[choose directory for dbus config files, [default=SYSCONFDIR/dbus-1/system.d]]),
+            with_dbus_config_dir="$withval", with_dbus_config_dir=${sysconfdir}/dbus-1/system.d)
+DBUS_CONFIG_DIR=$with_dbus_config_dir
+AC_SUBST(DBUS_CONFIG_DIR)
+
 AC_ARG_WITH([systemduserunitdir],
             [AS_HELP_STRING([--with-systemduserunitdir=DIR],
                             [Directory for systemd user service files (default=PREFIX/lib/systemd/user)])],
