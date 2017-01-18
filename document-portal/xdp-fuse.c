@@ -2135,36 +2135,58 @@ xdp_fuse_access (fuse_req_t req, fuse_ino_t ino, int mask)
 
   if (inode->type != XDP_INODE_DOC_FILE)
     {
-      g_debug ("xdp_fuse_access <- not file ENOSYS");
-      fuse_reply_err (req, ENOSYS);
-      return;
-    }
+      int dir_mask = 0;
 
-  entry = xdp_lookup_doc (inode->doc_id);
-  if (entry == NULL ||
-      !app_can_see_doc (entry, inode->app_id))
-    {
-      g_debug ("xdp_fuse_access <- no entry error ENOENT");
-      fuse_reply_err (req, ENOENT);
-      return;
-    }
+      switch (inode->type)
+        {
+        case XDP_INODE_ROOT:
+        case XDP_INODE_BY_APP:
+        case XDP_INODE_APP_DIR:
+          dir_mask = R_OK | X_OK;
+          break;
+        case XDP_INODE_APP_DOC_DIR:
+        case XDP_INODE_DOC_DIR:
+          dir_mask = R_OK | X_OK | W_OK;
+          break;
 
-  if (mask == F_OK)
-    {
-      if (!app_can_see_doc (entry, inode->app_id))
+        default:
+          g_assert_not_reached ();
+        }
+
+      if (mask != F_OK && ((mask & dir_mask) != mask))
         {
           fuse_reply_err (req, EACCES);
           return;
         }
     }
-  else
+  else /* A file */
     {
-      if (((mask & R_OK) && !app_can_see_doc (entry, inode->app_id)) ||
-          ((mask & W_OK) && !app_can_write_doc (entry, inode->app_id)) ||
-           (mask & X_OK))
+      entry = xdp_lookup_doc (inode->doc_id);
+      if (entry == NULL ||
+          !app_can_see_doc (entry, inode->app_id))
         {
-          fuse_reply_err (req, EACCES);
+          g_debug ("xdp_fuse_access <- no entry error ENOENT");
+          fuse_reply_err (req, ENOENT);
           return;
+        }
+
+      if (mask == F_OK)
+        {
+          if (!app_can_see_doc (entry, inode->app_id))
+            {
+              fuse_reply_err (req, EACCES);
+              return;
+            }
+        }
+      else
+        {
+          if (((mask & R_OK) && !app_can_see_doc (entry, inode->app_id)) ||
+              ((mask & W_OK) && !app_can_write_doc (entry, inode->app_id)) ||
+              (mask & X_OK))
+            {
+              fuse_reply_err (req, EACCES);
+              return;
+            }
         }
     }
 
