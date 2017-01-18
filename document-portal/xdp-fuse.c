@@ -701,7 +701,7 @@ xdp_inode_create_file (XdpInode   *dir,
   inode->dir_fd = glnx_steal_fd (&dir_fd);
   inode->fd = glnx_steal_fd (&fd);
   inode->trunc_fd = glnx_steal_fd (&trunc_fd);
-  if (inode->trunc_fd != -1 && truncate)
+  if (inode->trunc_fd != -1 && (truncate || exclusive))
     {
       inode->truncated = TRUE;
       g_free (inode->backing_filename);
