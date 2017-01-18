@@ -2925,8 +2925,11 @@ validate_component (FlatpakXml *component,
     return FALSE;
 
   id_text = g_strstrip (g_strdup (id_text_node->text));
-  if (!g_str_has_prefix (id_text, id) ||
-      !g_str_has_suffix (id_text, ".desktop"))
+
+  if (g_str_has_suffix (id_text, ".desktop"))
+    id_text[strlen(id_text)-strlen(".desktop")] = 0;
+
+  if (!g_str_has_prefix (id_text, id))
     {
       g_warning ("Invalid id %s", id_text);
       return FALSE;
