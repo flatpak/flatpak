@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-12-20 16:36+0000\n"
+"POT-Creation-Date: 2017-01-18 16:48+0100\n"
 "PO-Revision-Date: 2016-12-20 17:45+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -283,7 +283,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Brak „=” w opcji montowania dowiązania „%s”"
 
-#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:4126
+#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:4136
 msgid "Unable to start app"
 msgstr "Nie można uruchomić programu"
 
@@ -1437,7 +1437,7 @@ msgstr ""
 "Nie odnaleziono wymaganego środowiska wykonawczego %s w skonfigurowanym "
 "repozytorium.\n"
 
-#: app/flatpak-transaction.c:458 common/flatpak-dir.c:979
+#: app/flatpak-transaction.c:459 common/flatpak-dir.c:979
 #: common/flatpak-dir.c:1236 common/flatpak-dir.c:1272
 #: common/flatpak-dir.c:1294 common/flatpak-dir.c:7612
 #: common/flatpak-utils.c:1075
@@ -1445,72 +1445,72 @@ msgstr ""
 msgid "%s not installed"
 msgstr "Nie zainstalowano %s"
 
-#: app/flatpak-transaction.c:464
+#: app/flatpak-transaction.c:465
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "Repozytorium %s jest wyłączone, ignorowanie aktualizacji %s"
 
-#: app/flatpak-transaction.c:475
+#: app/flatpak-transaction.c:476
 #, c-format
 msgid "%s already installed"
 msgstr "Już zainstalowano %s"
 
-#: app/flatpak-transaction.c:504
+#: app/flatpak-transaction.c:512
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s wymaga późniejszej wersji Flatpak (%s)"
 
-#: app/flatpak-transaction.c:597 common/flatpak-dir.c:1998
+#: app/flatpak-transaction.c:605 common/flatpak-dir.c:1998
 msgid "OCI image is not a flatpak (missing ref)"
 msgstr "Obraz OCI nie jest pakietem Flatpak (brak odniesienia)"
 
-#: app/flatpak-transaction.c:665
+#: app/flatpak-transaction.c:673
 msgid "install"
 msgstr "instalacja"
 
-#: app/flatpak-transaction.c:666
+#: app/flatpak-transaction.c:674
 #, c-format
 msgid "Installing: %s from %s\n"
 msgstr "Instalowanie: %s z %s\n"
 
-#: app/flatpak-transaction.c:677
+#: app/flatpak-transaction.c:685
 msgid "update"
 msgstr "aktualizacja"
 
-#: app/flatpak-transaction.c:678
+#: app/flatpak-transaction.c:686
 #, c-format
 msgid "Updating: %s from %s\n"
 msgstr "Aktualizowanie: %s z %s\n"
 
-#: app/flatpak-transaction.c:693
+#: app/flatpak-transaction.c:701
 #, c-format
 msgid "Now at %s.\n"
 msgstr "Teraz: %s.\n"
 
-#: app/flatpak-transaction.c:699
+#: app/flatpak-transaction.c:707
 msgid "No updates.\n"
 msgstr "Brak aktualizacji.\n"
 
-#: app/flatpak-transaction.c:707
+#: app/flatpak-transaction.c:715
 msgid "install bundle"
 msgstr "instalacja pakietu"
 
-#: app/flatpak-transaction.c:708
+#: app/flatpak-transaction.c:716
 #, c-format
 msgid "Installing: %s from bundle %s\n"
 msgstr "Instalowanie: %s z pakietu %s\n"
 
-#: app/flatpak-transaction.c:720
+#: app/flatpak-transaction.c:728
 #, c-format
 msgid "Warning: Failed to %s %s: %s\n"
 msgstr "Ostrzeżenie: %s %s się nie powiodła: %s\n"
 
-#: app/flatpak-transaction.c:725
+#: app/flatpak-transaction.c:733
 #, c-format
 msgid "Error: Failed to %s %s: %s\n"
 msgstr "Błąd: %s %s się nie powiodła: %s\n"
 
-#: app/flatpak-transaction.c:730
+#: app/flatpak-transaction.c:738
 msgid "One or more operations failed"
 msgstr "Jedno lub więcej działań się nie powiodło"
 
@@ -1705,45 +1705,45 @@ msgid "Remote default-branch not set"
 msgstr "Nie ustawiono domyślnej gałęzi repozytorium"
 
 #: common/flatpak-dir.c:7285
-msgid "Data not found"
-msgstr "Nie odnaleziono danych"
+msgid "No flatpak cache in remote summary"
+msgstr ""
 
 #: common/flatpak-dir.c:7294
 #, c-format
-msgid "Data not found for ref %s"
-msgstr "Nie odnaleziono danych dla odniesienia %s"
+msgid "No entry for %s in remote summary flatpak cache "
+msgstr ""
 
-#: common/flatpak-run.c:234
+#: common/flatpak-run.c:235
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Nieznany typ udziału %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:269
+#: common/flatpak-run.c:270
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Nieznany typ polityki %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:307
+#: common/flatpak-run.c:308
 #, c-format
 msgid "Invalid dbus name %s\n"
 msgstr "Nieprawidłowa nazwa D-Bus %s\n"
 
-#: common/flatpak-run.c:320
+#: common/flatpak-run.c:321
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Nieznany typ gniazda %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:349
+#: common/flatpak-run.c:350
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Nieznany typ urządzenia %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:377
+#: common/flatpak-run.c:378
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Nieznany typ funkcji %s, prawidłowe typy: %s"
 
-#: common/flatpak-run.c:750
+#: common/flatpak-run.c:751
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid types are: host, home, xdg-*[/...], ~/"
@@ -1752,161 +1752,161 @@ msgstr ""
 "Nieznane położenie systemu plików %s, prawidłowe typy: host, home, xdg-"
 "*[/...], ~/dir, /dir"
 
-#: common/flatpak-run.c:1016
+#: common/flatpak-run.c:1017
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Nieznany format środowiska %s"
 
-#: common/flatpak-run.c:1156
+#: common/flatpak-run.c:1157
 msgid "Share with host"
 msgstr "Udostępnia temu komputerowi"
 
-#: common/flatpak-run.c:1156 common/flatpak-run.c:1157
+#: common/flatpak-run.c:1157 common/flatpak-run.c:1158
 msgid "SHARE"
 msgstr "UDZIAŁ"
 
-#: common/flatpak-run.c:1157
+#: common/flatpak-run.c:1158
 msgid "Unshare with host"
 msgstr "Przestaje udostępniać temu komputerowi"
 
-#: common/flatpak-run.c:1158
+#: common/flatpak-run.c:1159
 msgid "Expose socket to app"
 msgstr "Udostępnia gniazdo programowi"
 
-#: common/flatpak-run.c:1158 common/flatpak-run.c:1159
+#: common/flatpak-run.c:1159 common/flatpak-run.c:1160
 msgid "SOCKET"
 msgstr "GNIAZDO"
 
-#: common/flatpak-run.c:1159
+#: common/flatpak-run.c:1160
 msgid "Don't expose socket to app"
 msgstr "Nie udostępnia gniazda programowi"
 
-#: common/flatpak-run.c:1160
+#: common/flatpak-run.c:1161
 msgid "Expose device to app"
 msgstr "Udostępnia urządzenie programowi"
 
-#: common/flatpak-run.c:1160 common/flatpak-run.c:1161
+#: common/flatpak-run.c:1161 common/flatpak-run.c:1162
 msgid "DEVICE"
 msgstr "URZĄDZENIE"
 
-#: common/flatpak-run.c:1161
+#: common/flatpak-run.c:1162
 msgid "Don't expose device to app"
 msgstr "Nie udostępnia urządzenia programowi"
 
-#: common/flatpak-run.c:1162
+#: common/flatpak-run.c:1163
 msgid "Allow feature"
 msgstr "Zezwala na funkcję"
 
-#: common/flatpak-run.c:1162 common/flatpak-run.c:1163
+#: common/flatpak-run.c:1163 common/flatpak-run.c:1164
 msgid "FEATURE"
 msgstr "FUNKCJA"
 
-#: common/flatpak-run.c:1163
+#: common/flatpak-run.c:1164
 msgid "Don't allow feature"
 msgstr "Bez zezwolenia na funkcję"
 
-#: common/flatpak-run.c:1164
+#: common/flatpak-run.c:1165
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Udostępnia system plików programowi (:ro dla tylko do odczytu)"
 
-#: common/flatpak-run.c:1164
+#: common/flatpak-run.c:1165
 msgid "FILESYSTEM[:ro]"
 msgstr "SYSTEM-PLIKÓW[:ro]"
 
-#: common/flatpak-run.c:1165
+#: common/flatpak-run.c:1166
 msgid "Don't expose filesystem to app"
 msgstr "Nie udostępnia systemu plików programowi"
 
-#: common/flatpak-run.c:1165
+#: common/flatpak-run.c:1166
 msgid "FILESYSTEM"
 msgstr "SYSTEM-PLIKÓW"
 
-#: common/flatpak-run.c:1166
+#: common/flatpak-run.c:1167
 msgid "Set environment variable"
 msgstr "Ustawia zmienną środowiskową"
 
-#: common/flatpak-run.c:1166
+#: common/flatpak-run.c:1167
 msgid "VAR=VALUE"
 msgstr "ZMIENNA=WARTOŚĆ"
 
-#: common/flatpak-run.c:1167
+#: common/flatpak-run.c:1168
 msgid "Allow app to own name on the session bus"
 msgstr "Zezwala programowi na posiadanie nazwy na magistrali sesji"
 
-#: common/flatpak-run.c:1167 common/flatpak-run.c:1168
-#: common/flatpak-run.c:1169 common/flatpak-run.c:1170
+#: common/flatpak-run.c:1168 common/flatpak-run.c:1169
+#: common/flatpak-run.c:1170 common/flatpak-run.c:1171
 msgid "DBUS_NAME"
 msgstr "NAZWA_D-BUS"
 
-#: common/flatpak-run.c:1168
+#: common/flatpak-run.c:1169
 msgid "Allow app to talk to name on the session bus"
 msgstr "Umożliwia programowi rozmawianie z nazwą na magistrali sesji"
 
-#: common/flatpak-run.c:1169
+#: common/flatpak-run.c:1170
 msgid "Allow app to own name on the system bus"
 msgstr "Zezwala programowi na posiadanie nazwy na magistrali systemu"
 
-#: common/flatpak-run.c:1170
+#: common/flatpak-run.c:1171
 msgid "Allow app to talk to name on the system bus"
 msgstr "Umożliwia programowi rozmawianie z nazwą na magistrali systemu"
 
-#: common/flatpak-run.c:1171
+#: common/flatpak-run.c:1172
 msgid "Add generic policy option"
 msgstr "Dodaje ogólną opcję polityki"
 
-#: common/flatpak-run.c:1171 common/flatpak-run.c:1172
+#: common/flatpak-run.c:1172 common/flatpak-run.c:1173
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr "PODSYSTEM.KLUCZ=WARTOŚĆ"
 
-#: common/flatpak-run.c:1172
+#: common/flatpak-run.c:1173
 msgid "Remove generic policy option"
 msgstr "Usuwa ogólną opcję polityki"
 
-#: common/flatpak-run.c:1173
+#: common/flatpak-run.c:1174
 msgid "Persist home directory"
 msgstr "Trwały katalog domowy"
 
-#: common/flatpak-run.c:1173
+#: common/flatpak-run.c:1174
 msgid "FILENAME"
 msgstr "NAZWA-PLIKU"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-run.c:1175
+#: common/flatpak-run.c:1176
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Bez wymagania działającej sesji (bez tworzenia cgroups)"
 
-#: common/flatpak-run.c:1814
+#: common/flatpak-run.c:1815
 msgid "Failed to create temporary file"
 msgstr "Utworzenie pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:1821
+#: common/flatpak-run.c:1822
 msgid "Failed to unlink temporary file"
 msgstr "Odwiązanie pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:1839
+#: common/flatpak-run.c:1840
 msgid "Failed to write to temporary file"
 msgstr "Zapisanie do pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:3043
+#: common/flatpak-run.c:3048
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Otwarcie pliku tymczasowego „flatpak-info” się nie powiodło: %s"
 
-#: common/flatpak-run.c:3087
+#: common/flatpak-run.c:3092
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Otwarcie pliku tymczasowego się nie powiodło: %s"
 
-#: common/flatpak-run.c:3366
+#: common/flatpak-run.c:3371
 msgid "Unable to create sync pipe"
 msgstr "Utworzenie potoku synchronizacji się nie powiodło"
 
-#: common/flatpak-run.c:3391
+#: common/flatpak-run.c:3396
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Otwarcie pliku informacji o programie się nie powiodło: %s"
 
-#: common/flatpak-run.c:3421
+#: common/flatpak-run.c:3426
 msgid "Failed to sync with dbus proxy"
 msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 
@@ -1914,88 +1914,49 @@ msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 msgid "No extra data sources"
 msgstr "Brak źródeł dodatkowych danych"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:23
-msgid "Install signed application"
-msgstr "Instalacja podpisanego programu"
+#~ msgid "Data not found"
+#~ msgstr "Nie odnaleziono danych"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:24
-#: system-helper/org.freedesktop.Flatpak.policy.in:41
-#: system-helper/org.freedesktop.Flatpak.policy.in:88
-msgid "Authentication is required to install software"
-msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
+#~ msgid "Data not found for ref %s"
+#~ msgstr "Nie odnaleziono danych dla odniesienia %s"
 
-#. SECURITY:
-#. - Normal users do not need authentication to install signed applications
-#. from signed repositories, as this cannot exploit a system.
-#. - Paranoid users (or parents!) can change this to 'auth_admin' or
-#. 'auth_admin_keep'.
-#: system-helper/org.freedesktop.Flatpak.policy.in:40
-msgid "Install signed runtime"
-msgstr "Instalacja podpisanego środowiska wykonawczego"
+#~ msgid "Install signed application"
+#~ msgstr "Instalacja podpisanego programu"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update an
-#. app as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:58
-msgid "Update signed application"
-msgstr "Aktualizacja podpisanego programu"
+#~ msgid "Authentication is required to install software"
+#~ msgstr "Wymagane jest uwierzytelnienie, aby zainstalować oprogramowanie"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:59
-#: system-helper/org.freedesktop.Flatpak.policy.in:77
-#: system-helper/org.freedesktop.Flatpak.policy.in:139
-msgid "Authentication is required to update software"
-msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować oprogramowanie"
+#~ msgid "Install signed runtime"
+#~ msgstr "Instalacja podpisanego środowiska wykonawczego"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update a
-#. runtime as the commit will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:76
-msgid "Update signed runtime"
-msgstr "Aktualizacja podpisanego środowiska wykonawczego"
+#~ msgid "Update signed application"
+#~ msgstr "Aktualizacja podpisanego programu"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:87
-msgid "Install bundle"
-msgstr "Instalacja pakietu"
+#~ msgid "Authentication is required to update software"
+#~ msgstr "Wymagane jest uwierzytelnienie, aby zaktualizować oprogramowanie"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:98
-msgid "Uninstall runtime"
-msgstr "Deinstalacja środowiska wykonawczego"
+#~ msgid "Update signed runtime"
+#~ msgstr "Aktualizacja podpisanego środowiska wykonawczego"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:99
-#: system-helper/org.freedesktop.Flatpak.policy.in:110
-msgid "Authentication is required to uninstall software"
-msgstr "Wymagane jest uwierzytelnienie, aby odinstalować oprogramowanie"
+#~ msgid "Install bundle"
+#~ msgstr "Instalacja pakietu"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:109
-msgid "Uninstall app"
-msgstr "Deinstalacja programu"
+#~ msgid "Uninstall runtime"
+#~ msgstr "Deinstalacja środowiska wykonawczego"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:120
-msgid "Configure Remote"
-msgstr "Konfiguracja repozytorium"
+#~ msgid "Authentication is required to uninstall software"
+#~ msgstr "Wymagane jest uwierzytelnienie, aby odinstalować oprogramowanie"
 
-#: system-helper/org.freedesktop.Flatpak.policy.in:121
-msgid "Authentication is required to configure software repositories"
-msgstr ""
-"Wymagane jest uwierzytelnienie, aby skonfigurować repozytoria oprogramowania"
+#~ msgid "Uninstall app"
+#~ msgstr "Deinstalacja programu"
 
-#. SECURITY:
-#. - Normal users do not require admin authentication to update
-#. appstream data as it will be signed, and the action is required
-#. to update the system when unattended.
-#. - Changing this to anything other than 'yes' will break unattended
-#. updates.
-#: system-helper/org.freedesktop.Flatpak.policy.in:138
-msgid "Update appstream"
-msgstr "Aktualizacja danych AppStream"
+#~ msgid "Configure Remote"
+#~ msgstr "Konfiguracja repozytorium"
+
+#~ msgid "Authentication is required to configure software repositories"
+#~ msgstr ""
+#~ "Wymagane jest uwierzytelnienie, aby skonfigurować repozytoria "
+#~ "oprogramowania"
+
+#~ msgid "Update appstream"
+#~ msgstr "Aktualizacja danych AppStream"

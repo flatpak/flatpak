@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-12-20 16:44+0100\n"
+"POT-Creation-Date: 2017-01-18 16:48+0100\n"
 "PO-Revision-Date: 2016-09-11 21:29+0200\n"
 "Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
@@ -279,7 +279,7 @@ msgstr ""
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:4126
+#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:4136
 msgid "Unable to start app"
 msgstr "Nie je možné spustiť aplikáciu"
 
@@ -1414,7 +1414,7 @@ msgstr ""
 msgid "The required runtime %s was not found in a configured remote.\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:458 common/flatpak-dir.c:979
+#: app/flatpak-transaction.c:459 common/flatpak-dir.c:979
 #: common/flatpak-dir.c:1236 common/flatpak-dir.c:1272
 #: common/flatpak-dir.c:1294 common/flatpak-dir.c:7612
 #: common/flatpak-utils.c:1075
@@ -1422,73 +1422,73 @@ msgstr ""
 msgid "%s not installed"
 msgstr ""
 
-#: app/flatpak-transaction.c:464
+#: app/flatpak-transaction.c:465
 #, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr ""
 
-#: app/flatpak-transaction.c:475
+#: app/flatpak-transaction.c:476
 #, fuzzy, c-format
 msgid "%s already installed"
 msgstr "Aplikácia %s vetva %s je už nainštalovaná"
 
-#: app/flatpak-transaction.c:504
+#: app/flatpak-transaction.c:512
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr ""
 
-#: app/flatpak-transaction.c:597 common/flatpak-dir.c:1998
+#: app/flatpak-transaction.c:605 common/flatpak-dir.c:1998
 msgid "OCI image is not a flatpak (missing ref)"
 msgstr ""
 
-#: app/flatpak-transaction.c:665
+#: app/flatpak-transaction.c:673
 msgid "install"
 msgstr ""
 
-#: app/flatpak-transaction.c:666
+#: app/flatpak-transaction.c:674
 #, c-format
 msgid "Installing: %s from %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:677
+#: app/flatpak-transaction.c:685
 #, fuzzy
 msgid "update"
 msgstr "Žiadne aktualizácie.\n"
 
-#: app/flatpak-transaction.c:678
+#: app/flatpak-transaction.c:686
 #, c-format
 msgid "Updating: %s from %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:693
+#: app/flatpak-transaction.c:701
 #, c-format
 msgid "Now at %s.\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:699
+#: app/flatpak-transaction.c:707
 msgid "No updates.\n"
 msgstr "Žiadne aktualizácie.\n"
 
-#: app/flatpak-transaction.c:707
+#: app/flatpak-transaction.c:715
 msgid "install bundle"
 msgstr ""
 
-#: app/flatpak-transaction.c:708
+#: app/flatpak-transaction.c:716
 #, c-format
 msgid "Installing: %s from bundle %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:720
+#: app/flatpak-transaction.c:728
 #, c-format
 msgid "Warning: Failed to %s %s: %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:725
+#: app/flatpak-transaction.c:733
 #, c-format
 msgid "Error: Failed to %s %s: %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:730
+#: app/flatpak-transaction.c:738
 #, fuzzy
 msgid "One or more operations failed"
 msgstr "Jedna alebo viacero aktualizácií zlyhali"
@@ -1685,212 +1685,215 @@ msgid "Remote default-branch not set"
 msgstr "Vypíše predvolenú architektúru a skončí"
 
 #: common/flatpak-dir.c:7285
-msgid "Data not found"
-msgstr "Údaje sa nenašli"
+msgid "No flatpak cache in remote summary"
+msgstr ""
 
 #: common/flatpak-dir.c:7294
 #, c-format
-msgid "Data not found for ref %s"
+msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""
 
-#: common/flatpak-run.c:234
+#: common/flatpak-run.c:235
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:269
+#: common/flatpak-run.c:270
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:307
+#: common/flatpak-run.c:308
 #, c-format
 msgid "Invalid dbus name %s\n"
 msgstr ""
 
-#: common/flatpak-run.c:320
+#: common/flatpak-run.c:321
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:349
+#: common/flatpak-run.c:350
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:377
+#: common/flatpak-run.c:378
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr ""
 
-#: common/flatpak-run.c:750
+#: common/flatpak-run.c:751
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid types are: host, home, xdg-*[/...], ~/"
 "dir, /dir"
 msgstr ""
 
-#: common/flatpak-run.c:1016
+#: common/flatpak-run.c:1017
 #, c-format
 msgid "Invalid env format %s"
 msgstr ""
 
-#: common/flatpak-run.c:1156
+#: common/flatpak-run.c:1157
 msgid "Share with host"
 msgstr "Zdieľa s hostiteľom"
 
-#: common/flatpak-run.c:1156 common/flatpak-run.c:1157
+#: common/flatpak-run.c:1157 common/flatpak-run.c:1158
 msgid "SHARE"
 msgstr ""
 
-#: common/flatpak-run.c:1157
+#: common/flatpak-run.c:1158
 msgid "Unshare with host"
 msgstr ""
 
-#: common/flatpak-run.c:1158
+#: common/flatpak-run.c:1159
 msgid "Expose socket to app"
 msgstr ""
 
-#: common/flatpak-run.c:1158 common/flatpak-run.c:1159
+#: common/flatpak-run.c:1159 common/flatpak-run.c:1160
 msgid "SOCKET"
 msgstr "SOKET"
 
-#: common/flatpak-run.c:1159
+#: common/flatpak-run.c:1160
 msgid "Don't expose socket to app"
 msgstr ""
 
-#: common/flatpak-run.c:1160
+#: common/flatpak-run.c:1161
 msgid "Expose device to app"
 msgstr ""
 
-#: common/flatpak-run.c:1160 common/flatpak-run.c:1161
+#: common/flatpak-run.c:1161 common/flatpak-run.c:1162
 msgid "DEVICE"
 msgstr "ZARIADENIE"
 
-#: common/flatpak-run.c:1161
+#: common/flatpak-run.c:1162
 msgid "Don't expose device to app"
 msgstr ""
 
-#: common/flatpak-run.c:1162
+#: common/flatpak-run.c:1163
 msgid "Allow feature"
 msgstr "Umožní funkciu"
 
-#: common/flatpak-run.c:1162 common/flatpak-run.c:1163
+#: common/flatpak-run.c:1163 common/flatpak-run.c:1164
 msgid "FEATURE"
 msgstr "FUNKCIA"
 
-#: common/flatpak-run.c:1163
+#: common/flatpak-run.c:1164
 msgid "Don't allow feature"
 msgstr "Neumožní funkciu"
 
-#: common/flatpak-run.c:1164
+#: common/flatpak-run.c:1165
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr ""
 
-#: common/flatpak-run.c:1164
+#: common/flatpak-run.c:1165
 msgid "FILESYSTEM[:ro]"
 msgstr ""
 
-#: common/flatpak-run.c:1165
+#: common/flatpak-run.c:1166
 msgid "Don't expose filesystem to app"
 msgstr ""
 
-#: common/flatpak-run.c:1165
+#: common/flatpak-run.c:1166
 msgid "FILESYSTEM"
 msgstr "SYSTÉM_SÚBOROV"
 
-#: common/flatpak-run.c:1166
+#: common/flatpak-run.c:1167
 msgid "Set environment variable"
 msgstr ""
 
-#: common/flatpak-run.c:1166
+#: common/flatpak-run.c:1167
 msgid "VAR=VALUE"
 msgstr ""
 
-#: common/flatpak-run.c:1167
+#: common/flatpak-run.c:1168
 msgid "Allow app to own name on the session bus"
 msgstr ""
 
-#: common/flatpak-run.c:1167 common/flatpak-run.c:1168
-#: common/flatpak-run.c:1169 common/flatpak-run.c:1170
+#: common/flatpak-run.c:1168 common/flatpak-run.c:1169
+#: common/flatpak-run.c:1170 common/flatpak-run.c:1171
 msgid "DBUS_NAME"
 msgstr "NÁZOV_DBUS"
 
-#: common/flatpak-run.c:1168
+#: common/flatpak-run.c:1169
 msgid "Allow app to talk to name on the session bus"
 msgstr ""
 
-#: common/flatpak-run.c:1169
+#: common/flatpak-run.c:1170
 msgid "Allow app to own name on the system bus"
 msgstr ""
 
-#: common/flatpak-run.c:1170
+#: common/flatpak-run.c:1171
 msgid "Allow app to talk to name on the system bus"
 msgstr ""
 
-#: common/flatpak-run.c:1171
+#: common/flatpak-run.c:1172
 msgid "Add generic policy option"
 msgstr ""
 
-#: common/flatpak-run.c:1171 common/flatpak-run.c:1172
+#: common/flatpak-run.c:1172 common/flatpak-run.c:1173
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-run.c:1172
+#: common/flatpak-run.c:1173
 msgid "Remove generic policy option"
 msgstr ""
 
-#: common/flatpak-run.c:1173
+#: common/flatpak-run.c:1174
 msgid "Persist home directory"
 msgstr ""
 
-#: common/flatpak-run.c:1173
+#: common/flatpak-run.c:1174
 msgid "FILENAME"
 msgstr "NÁZOV_SÚBORU"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-run.c:1175
+#: common/flatpak-run.c:1176
 msgid "Don't require a running session (no cgroups creation)"
 msgstr ""
 
-#: common/flatpak-run.c:1814
+#: common/flatpak-run.c:1815
 msgid "Failed to create temporary file"
 msgstr "Zlyhalo vytvorenie dočasného súboru"
 
-#: common/flatpak-run.c:1821
+#: common/flatpak-run.c:1822
 msgid "Failed to unlink temporary file"
 msgstr ""
 
-#: common/flatpak-run.c:1839
+#: common/flatpak-run.c:1840
 msgid "Failed to write to temporary file"
 msgstr "Zlyhal zápis dočasného súboru"
 
-#: common/flatpak-run.c:3043
+#: common/flatpak-run.c:3048
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Zlyhalo otvorenie dočasného súboru flatpak-info"
 
-#: common/flatpak-run.c:3087
+#: common/flatpak-run.c:3092
 #, fuzzy, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Zlyhalo otvorenie súboru temp"
 
-#: common/flatpak-run.c:3366
+#: common/flatpak-run.c:3371
 msgid "Unable to create sync pipe"
 msgstr ""
 
-#: common/flatpak-run.c:3391
+#: common/flatpak-run.c:3396
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Zlyhalo otvorenie súboru s informáciami o aplikácii: %s"
 
-#: common/flatpak-run.c:3421
+#: common/flatpak-run.c:3426
 msgid "Failed to sync with dbus proxy"
 msgstr ""
 
 #: common/flatpak-utils.c:2476
 msgid "No extra data sources"
 msgstr ""
+
+#~ msgid "Data not found"
+#~ msgstr "Údaje sa nenašli"
 
 #, fuzzy
 #~ msgid "Load options from file or uri"

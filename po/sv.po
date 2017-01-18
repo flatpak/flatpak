@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2016-12-20 16:44+0100\n"
+"POT-Creation-Date: 2017-01-18 16:48+0100\n"
 "PO-Revision-Date: 2016-09-15 00:32+0800\n"
 "Last-Translator: Sebastian Rasmussen <sebras@gmail.com>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -285,7 +285,7 @@ msgstr "Byggkatalog %s är inte initierad"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:4126
+#: app/flatpak-builtins-build.c:253 common/flatpak-run.c:4136
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
 
@@ -1445,7 +1445,7 @@ msgstr ""
 msgid "The required runtime %s was not found in a configured remote.\n"
 msgstr "Modifiera egenskaper för en konfigurerad fjärr"
 
-#: app/flatpak-transaction.c:458 common/flatpak-dir.c:979
+#: app/flatpak-transaction.c:459 common/flatpak-dir.c:979
 #: common/flatpak-dir.c:1236 common/flatpak-dir.c:1272
 #: common/flatpak-dir.c:1294 common/flatpak-dir.c:7612
 #: common/flatpak-utils.c:1075
@@ -1453,75 +1453,75 @@ msgstr "Modifiera egenskaper för en konfigurerad fjärr"
 msgid "%s not installed"
 msgstr "%s inte installerad"
 
-#: app/flatpak-transaction.c:464
+#: app/flatpak-transaction.c:465
 #, fuzzy, c-format
 msgid "Remote %s disabled, ignoring %s update"
 msgstr "Fjärr %s inaktiverad\n"
 
-#: app/flatpak-transaction.c:475
+#: app/flatpak-transaction.c:476
 #, fuzzy, c-format
 msgid "%s already installed"
 msgstr "%s gren %s redan installerat"
 
-#: app/flatpak-transaction.c:504
+#: app/flatpak-transaction.c:512
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr ""
 
-#: app/flatpak-transaction.c:597 common/flatpak-dir.c:1998
+#: app/flatpak-transaction.c:605 common/flatpak-dir.c:1998
 msgid "OCI image is not a flatpak (missing ref)"
 msgstr ""
 
-#: app/flatpak-transaction.c:665
+#: app/flatpak-transaction.c:673
 #, fuzzy
 msgid "install"
 msgstr "Avinstallera program"
 
-#: app/flatpak-transaction.c:666
+#: app/flatpak-transaction.c:674
 #, fuzzy, c-format
 msgid "Installing: %s from %s\n"
 msgstr "Installerar: %s\n"
 
-#: app/flatpak-transaction.c:677
+#: app/flatpak-transaction.c:685
 #, fuzzy
 msgid "update"
 msgstr "Inga uppdateringar.\n"
 
-#: app/flatpak-transaction.c:678
+#: app/flatpak-transaction.c:686
 #, fuzzy, c-format
 msgid "Updating: %s from %s\n"
 msgstr "Uppdaterar relaterade: %s\n"
 
-#: app/flatpak-transaction.c:693
+#: app/flatpak-transaction.c:701
 #, c-format
 msgid "Now at %s.\n"
 msgstr "Nu på %s.\n"
 
-#: app/flatpak-transaction.c:699
+#: app/flatpak-transaction.c:707
 msgid "No updates.\n"
 msgstr "Inga uppdateringar.\n"
 
-#: app/flatpak-transaction.c:707
+#: app/flatpak-transaction.c:715
 #, fuzzy
 msgid "install bundle"
 msgstr "Installera paket"
 
-#: app/flatpak-transaction.c:708
+#: app/flatpak-transaction.c:716
 #, fuzzy, c-format
 msgid "Installing: %s from bundle %s\n"
 msgstr "Installerar: %s\n"
 
-#: app/flatpak-transaction.c:720
+#: app/flatpak-transaction.c:728
 #, fuzzy, c-format
 msgid "Warning: Failed to %s %s: %s\n"
 msgstr "Varning: Misslyckades med att installera relaterad ref: %s\n"
 
-#: app/flatpak-transaction.c:725
+#: app/flatpak-transaction.c:733
 #, c-format
 msgid "Error: Failed to %s %s: %s\n"
 msgstr ""
 
-#: app/flatpak-transaction.c:730
+#: app/flatpak-transaction.c:738
 #, fuzzy
 msgid "One or more operations failed"
 msgstr "En eller flera uppdateringar misslyckades"
@@ -1723,46 +1723,46 @@ msgid "Remote default-branch not set"
 msgstr "Fjärrtitel inte inställd"
 
 #: common/flatpak-dir.c:7285
-msgid "Data not found"
-msgstr "Data inte funnen"
+msgid "No flatpak cache in remote summary"
+msgstr ""
 
 #: common/flatpak-dir.c:7294
 #, c-format
-msgid "Data not found for ref %s"
-msgstr "Data inte funnen för ref %s"
+msgid "No entry for %s in remote summary flatpak cache "
+msgstr ""
 
-#: common/flatpak-run.c:234
+#: common/flatpak-run.c:235
 #, c-format
 msgid "Unknown share type %s, valid types are: %s"
 msgstr "Okänd delningstyp %s, giltiga typer är: %s"
 
-#: common/flatpak-run.c:269
+#: common/flatpak-run.c:270
 #, c-format
 msgid "Unknown policy type %s, valid types are: %s"
 msgstr "Okänd policytyp %s, giltiga typer är: %s"
 
-#: common/flatpak-run.c:307
+#: common/flatpak-run.c:308
 #, c-format
 msgid "Invalid dbus name %s\n"
 msgstr "Ogiltigt dbusnamn %s\n"
 
-#: common/flatpak-run.c:320
+#: common/flatpak-run.c:321
 #, c-format
 msgid "Unknown socket type %s, valid types are: %s"
 msgstr "Okänd uttagstyp %s, giltiga typer är %s"
 
-#: common/flatpak-run.c:349
+#: common/flatpak-run.c:350
 #, c-format
 msgid "Unknown device type %s, valid types are: %s"
 msgstr "Okänd enhetstyp %s, giltiga typer är: %s"
 
-#: common/flatpak-run.c:377
+#: common/flatpak-run.c:378
 #, c-format
 msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Okänd funktionstyp %s, giltiga typer är: %s"
 
 # sebras: can host and home be translated?
-#: common/flatpak-run.c:750
+#: common/flatpak-run.c:751
 #, c-format
 msgid ""
 "Unknown filesystem location %s, valid types are: host, home, xdg-*[/...], ~/"
@@ -1771,171 +1771,177 @@ msgstr ""
 "Okänd filsystemsplats %s, giltiga typer är: host, home, xdg-*[/…], ~/kat, /"
 "kat"
 
-#: common/flatpak-run.c:1016
+#: common/flatpak-run.c:1017
 #, c-format
 msgid "Invalid env format %s"
 msgstr "Ogiltigt miljöformat %s"
 
-#: common/flatpak-run.c:1156
+#: common/flatpak-run.c:1157
 msgid "Share with host"
 msgstr "Dela med värd"
 
-#: common/flatpak-run.c:1156 common/flatpak-run.c:1157
+#: common/flatpak-run.c:1157 common/flatpak-run.c:1158
 msgid "SHARE"
 msgstr "DELA"
 
-#: common/flatpak-run.c:1157
+#: common/flatpak-run.c:1158
 msgid "Unshare with host"
 msgstr "Avsluta delning med värd"
 
-#: common/flatpak-run.c:1158
+#: common/flatpak-run.c:1159
 msgid "Expose socket to app"
 msgstr "Exponera uttag för program"
 
-#: common/flatpak-run.c:1158 common/flatpak-run.c:1159
+#: common/flatpak-run.c:1159 common/flatpak-run.c:1160
 msgid "SOCKET"
 msgstr "UTTAG"
 
-#: common/flatpak-run.c:1159
+#: common/flatpak-run.c:1160
 msgid "Don't expose socket to app"
 msgstr "Exponera inte detta uttag för program"
 
-#: common/flatpak-run.c:1160
+#: common/flatpak-run.c:1161
 msgid "Expose device to app"
 msgstr "Exponera enhet för program"
 
-#: common/flatpak-run.c:1160 common/flatpak-run.c:1161
+#: common/flatpak-run.c:1161 common/flatpak-run.c:1162
 msgid "DEVICE"
 msgstr "ENHET"
 
-#: common/flatpak-run.c:1161
+#: common/flatpak-run.c:1162
 msgid "Don't expose device to app"
 msgstr "Exponera inte enhet till program"
 
-#: common/flatpak-run.c:1162
+#: common/flatpak-run.c:1163
 msgid "Allow feature"
 msgstr "Tillåt funktion"
 
-#: common/flatpak-run.c:1162 common/flatpak-run.c:1163
+#: common/flatpak-run.c:1163 common/flatpak-run.c:1164
 msgid "FEATURE"
 msgstr "FUNKTION"
 
-#: common/flatpak-run.c:1163
+#: common/flatpak-run.c:1164
 msgid "Don't allow feature"
 msgstr "Tillåt inte funktion"
 
 # sebras: can ro be translated?
-#: common/flatpak-run.c:1164
+#: common/flatpak-run.c:1165
 msgid "Expose filesystem to app (:ro for read-only)"
 msgstr "Exponera filsystem för program (:ro för skrivskyddat)"
 
 # sebras: can ro be translated?
-#: common/flatpak-run.c:1164
+#: common/flatpak-run.c:1165
 msgid "FILESYSTEM[:ro]"
 msgstr "FILSYSTEM[:ro]"
 
-#: common/flatpak-run.c:1165
+#: common/flatpak-run.c:1166
 msgid "Don't expose filesystem to app"
 msgstr "Exponera inte filsystem för program"
 
-#: common/flatpak-run.c:1165
+#: common/flatpak-run.c:1166
 msgid "FILESYSTEM"
 msgstr "FILSYSTEM"
 
-#: common/flatpak-run.c:1166
+#: common/flatpak-run.c:1167
 msgid "Set environment variable"
 msgstr "Ställ in miljövariabel"
 
-#: common/flatpak-run.c:1166
+#: common/flatpak-run.c:1167
 msgid "VAR=VALUE"
 msgstr "VAR=VÄRDE"
 
-#: common/flatpak-run.c:1167
+#: common/flatpak-run.c:1168
 msgid "Allow app to own name on the session bus"
 msgstr "Tillåt program att äga namn på sessionsbussen"
 
-#: common/flatpak-run.c:1167 common/flatpak-run.c:1168
-#: common/flatpak-run.c:1169 common/flatpak-run.c:1170
+#: common/flatpak-run.c:1168 common/flatpak-run.c:1169
+#: common/flatpak-run.c:1170 common/flatpak-run.c:1171
 msgid "DBUS_NAME"
 msgstr "DBUSNAMN"
 
-#: common/flatpak-run.c:1168
+#: common/flatpak-run.c:1169
 msgid "Allow app to talk to name on the session bus"
 msgstr "Tillåt program att prata med namn på sessionsbussen"
 
-#: common/flatpak-run.c:1169
+#: common/flatpak-run.c:1170
 msgid "Allow app to own name on the system bus"
 msgstr "Tillåt program att äga namn på systembussen"
 
-#: common/flatpak-run.c:1170
+#: common/flatpak-run.c:1171
 msgid "Allow app to talk to name on the system bus"
 msgstr "Tillåt program att prata med namn på systembussen"
 
-#: common/flatpak-run.c:1171
+#: common/flatpak-run.c:1172
 msgid "Add generic policy option"
 msgstr ""
 
-#: common/flatpak-run.c:1171 common/flatpak-run.c:1172
+#: common/flatpak-run.c:1172 common/flatpak-run.c:1173
 msgid "SUBSYSTEM.KEY=VALUE"
 msgstr ""
 
-#: common/flatpak-run.c:1172
+#: common/flatpak-run.c:1173
 msgid "Remove generic policy option"
 msgstr ""
 
 # sebras: persist or persistant?
-#: common/flatpak-run.c:1173
+#: common/flatpak-run.c:1174
 msgid "Persist home directory"
 msgstr "Beständig hemkatalog"
 
-#: common/flatpak-run.c:1173
+#: common/flatpak-run.c:1174
 msgid "FILENAME"
 msgstr "FILNAMN"
 
 #. This is not needed/used anymore, so hidden, but we accept it for backwards compat
-#: common/flatpak-run.c:1175
+#: common/flatpak-run.c:1176
 msgid "Don't require a running session (no cgroups creation)"
 msgstr "Kräv inte en körande session (inget cgroups-skapande)"
 
-#: common/flatpak-run.c:1814
+#: common/flatpak-run.c:1815
 msgid "Failed to create temporary file"
 msgstr "Misslyckades med att skapa temporärfil"
 
-#: common/flatpak-run.c:1821
+#: common/flatpak-run.c:1822
 msgid "Failed to unlink temporary file"
 msgstr "Misslyckades med att avlänka temporärfil"
 
-#: common/flatpak-run.c:1839
+#: common/flatpak-run.c:1840
 msgid "Failed to write to temporary file"
 msgstr "Misslyckades med att skriva till temporärfil"
 
-#: common/flatpak-run.c:3043
+#: common/flatpak-run.c:3048
 #, fuzzy, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Misslyckades med att öppna temporär flatpak-info-fil: %s"
 
-#: common/flatpak-run.c:3087
+#: common/flatpak-run.c:3092
 #, fuzzy, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Misslyckades med att öppna temporärfil: %s"
 
 # sebras: sync?
-#: common/flatpak-run.c:3366
+#: common/flatpak-run.c:3371
 msgid "Unable to create sync pipe"
 msgstr "Kan inte skapa sync-rör"
 
-#: common/flatpak-run.c:3391
+#: common/flatpak-run.c:3396
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Misslyckades med att öppna prog-info-fil: %s"
 
-#: common/flatpak-run.c:3421
+#: common/flatpak-run.c:3426
 msgid "Failed to sync with dbus proxy"
 msgstr "Misslyckades med att synkronisera med dbus-proxy"
 
 #: common/flatpak-utils.c:2476
 msgid "No extra data sources"
 msgstr ""
+
+#~ msgid "Data not found"
+#~ msgstr "Data inte funnen"
+
+#~ msgid "Data not found for ref %s"
+#~ msgstr "Data inte funnen för ref %s"
 
 #~ msgid "Install from local bundle file"
 #~ msgstr "Installera från lokal paketfil"
