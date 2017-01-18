@@ -14,7 +14,7 @@ AC_PREREQ([2.63])
 # on the unstable (ie master), interface age = 0
 
 m4_define([flatpak_major_version], [0])
-m4_define([flatpak_minor_version], [8])
+m4_define([flatpak_minor_version], [9])
 m4_define([flatpak_micro_version], [1])
 m4_define([flatpak_interface_age], [1])
 m4_define([flatpak_binary_age],
