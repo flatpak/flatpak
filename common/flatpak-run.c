@@ -2476,6 +2476,13 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
           g_debug ("Allowing dri access");
           if (g_file_test ("/dev/dri", G_FILE_TEST_IS_DIR))
             add_args (argv_array, "--dev-bind", "/dev/dri", "/dev/dri", NULL);
+          if (g_file_test ("/dev/mali", G_FILE_TEST_EXISTS))
+            {
+              add_args (argv_array,
+                        "--dev-bind", "/dev/mali", "/dev/mali",
+                        "--dev-bind", "/dev/umplock", "/dev/umplock",
+                        NULL);
+            }
           if (g_file_test ("/dev/nvidiactl", G_FILE_TEST_EXISTS))
             {
               add_args (argv_array,
