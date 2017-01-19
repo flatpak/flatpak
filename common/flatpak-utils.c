@@ -2182,7 +2182,7 @@ flatpak_resolve_link (const char *path,
     return g_steal_pointer (&link);
 
   dirname = g_path_get_dirname (path);
-  return g_build_path (dirname, link, NULL);
+  return g_build_filename (dirname, link, NULL);
 }
 
 char *
