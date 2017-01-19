@@ -2235,6 +2235,12 @@ make_relative (const char *base, const char *path)
 #define FAKE_MODE_HIDDEN 0
 #define FAKE_MODE_SYMLINK G_MAXINT
 
+typedef struct {
+  char *path;
+  int level;
+  guint mode;
+} ExportedPath;
+
 static gboolean
 path_is_visible (const char **keys,
                  guint n_keys,
@@ -2248,19 +2254,28 @@ path_is_visible (const char **keys,
   for (i = 0; i < n_keys; i++)
     {
       const char *mounted_path = keys[i];
-      guint mode;
-      mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, mounted_path));
+      ExportedPath *ep = g_hash_table_lookup (hash_table, mounted_path);
 
       if (flatpak_has_path_prefix (path, mounted_path))
         {
-          if (mode == FAKE_MODE_HIDDEN)
+          if (ep->mode == FAKE_MODE_HIDDEN)
             is_visible = FALSE;
-          else if (mode != FAKE_MODE_SYMLINK)
+          else if (ep->mode != FAKE_MODE_SYMLINK)
             is_visible = TRUE;
         }
     }
 
   return is_visible;
+}
+
+static gint
+compare_eps (const ExportedPath *a,
+             const ExportedPath *b)
+{
+  if (a->level == b->level)
+    return g_strcmp0 (a->path, b->path);
+  else
+    return b->level - a->level;
 }
 
 static void
@@ -2269,18 +2284,20 @@ add_file_args (GPtrArray *argv_array,
 {
   guint n_keys;
   g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (hash_table, &n_keys);
-  guint i;
+  g_autoptr(GList) eps = NULL;
+  GList *l;
+
+  eps = g_hash_table_get_values (hash_table);
+  eps = g_list_sort (eps, (GCompareFunc)compare_eps);
 
   g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
 
-  for (i = 0; i < n_keys; i++)
+  for (l = eps; l != NULL; l = l->next)
     {
-      const char *path = keys[i];
-      guint mode;
+      ExportedPath *ep = l->data;
+      const char *path = ep->path;
 
-      mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, path));
-
-      if (mode == FAKE_MODE_SYMLINK)
+      if (ep->mode == FAKE_MODE_SYMLINK)
         {
           if (!path_is_visible (keys, n_keys, hash_table, path))
             {
@@ -2291,7 +2308,7 @@ add_file_args (GPtrArray *argv_array,
                 add_args (argv_array, "--symlink", relative, path,  NULL);
             }
         }
-      else if (mode == FAKE_MODE_HIDDEN)
+      else if (ep->mode == FAKE_MODE_HIDDEN)
         {
           /* Mount a tmpfs to hide the subdirectory, but only if
              either its not visible (then we can always create the
@@ -2302,9 +2319,11 @@ add_file_args (GPtrArray *argv_array,
             add_args (argv_array, "--tmpfs", path, NULL);
         }
       else
-        add_args (argv_array,
-                  (mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
-                  path, path, NULL);
+        {
+          add_args (argv_array,
+                    (ep->mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY) ? "--ro-bind" : "--bind",
+                    path, path, NULL);
+        }
     }
 }
 
@@ -2313,16 +2332,33 @@ add_hide_path (GHashTable *hash_table,
                const char           *path)
 {
   guint old_mode;
+  ExportedPath *ep = g_new0 (ExportedPath, 1);
+  ExportedPath *old_ep;
 
-  old_mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, path));
-  g_hash_table_insert (hash_table, g_strdup (path),
-                       GINT_TO_POINTER ( MAX (old_mode, FAKE_MODE_HIDDEN)));
+  old_ep = g_hash_table_lookup (hash_table, path);
+  if (old_ep)
+    old_mode = old_ep->mode;
+  else
+    old_mode = 0;
+
+  ep->path = g_strdup (path);
+  ep->level = 0;
+  ep->mode = MAX (old_mode, FAKE_MODE_HIDDEN);
+  g_hash_table_insert (hash_table, ep->path, ep);
 }
 
+/* We use the level to make sure we get the ordering somewhat right.
+ * For instance if /symlink -> /z_dir is exported, then we want to create
+ * /z_dir before /symlink, because otherwise an export like /symlink/foo
+ * will fail. The approach we use is to just bump the sort prio based on the
+ * symlink resolve depth. This it not perfect, but gets the common situation
+ * such as --filesystem=/link --filesystem=/link/dir right.
+ */
 static gboolean
-add_expose_path (GHashTable *hash_table,
-                 FlatpakFilesystemMode mode,
-                 const char           *path)
+_add_expose_path (GHashTable *hash_table,
+                  FlatpakFilesystemMode mode,
+                  const char *path,
+                  int level)
 {
   g_autofree char *canonical = flatpak_canonicalize_filename (path);
   struct stat st;
@@ -2330,7 +2366,7 @@ add_expose_path (GHashTable *hash_table,
 
   if (!g_path_is_absolute (path))
     {
-      g_warning ("Exposing relative path %s", path);
+      g_debug ("Not exposing relative path %s", path);
       return FALSE;
     }
 
@@ -2354,15 +2390,17 @@ add_expose_path (GHashTable *hash_table,
       S_ISLNK (st.st_mode) ||
       S_ISSOCK (st.st_mode))
     {
-      guint old_mode;
+      ExportedPath *old_ep = g_hash_table_lookup (hash_table, path);
+      guint old_mode = 0;
 
-      old_mode = GPOINTER_TO_INT (g_hash_table_lookup (hash_table, path));
+      if (old_ep != NULL)
+        old_mode = old_ep->mode;
 
       if (S_ISLNK (st.st_mode))
         {
           g_autofree char *resolved = flatpak_resolve_link (path, NULL);
 
-          if (resolved && add_expose_path (hash_table, mode, resolved))
+          if (resolved && _add_expose_path (hash_table, mode, resolved, level + 1))
             mode = FAKE_MODE_SYMLINK;
           else
             mode = 0;
@@ -2370,12 +2408,24 @@ add_expose_path (GHashTable *hash_table,
 
       if (mode > 0)
         {
-          g_hash_table_insert (hash_table, g_strdup (path), GINT_TO_POINTER ( MAX (old_mode, mode)));
+          ExportedPath *ep = g_new0 (ExportedPath, 1);
+          ep->path = g_strdup (path);
+          ep->mode = MAX (old_mode, mode);
+          ep->level = level;
+          g_hash_table_insert (hash_table, ep->path, ep);
           return TRUE;
         }
     }
 
   return FALSE;
+}
+
+static gboolean
+add_expose_path (GHashTable *hash_table,
+                 FlatpakFilesystemMode mode,
+                 const char *path)
+{
+  return _add_expose_path (hash_table, mode, path, 0);
 }
 
 void
@@ -2396,7 +2446,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   GString *xdg_dirs_conf = NULL;
   FlatpakFilesystemMode fs_mode, home_mode;
   g_autoptr(GFile) user_flatpak_dir = NULL;
-  g_autoptr(GHashTable) fs_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  g_autoptr(GHashTable) fs_paths = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
 
   if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
