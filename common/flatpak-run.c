@@ -2207,6 +2207,31 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   return TRUE;
 }
 
+static char *
+make_relative (const char *base, const char *path)
+{
+  GString *s = g_string_new ("");
+
+  while (*base != 0)
+    {
+      while (*base == '/')
+        base++;
+
+      if (*base != 0)
+        g_string_append (s, "../");
+
+      while (*base != '/' && *base != 0)
+        base++;
+    }
+
+  while (*path == '/')
+    path++;
+
+  g_string_append (s, path);
+
+  return g_string_free (s, FALSE);
+}
+
 #define FAKE_MODE_HIDDEN 0
 #define FAKE_MODE_SYMLINK G_MAXINT
 
@@ -2260,8 +2285,10 @@ add_file_args (GPtrArray *argv_array,
           if (!path_is_visible (keys, n_keys, hash_table, path))
             {
               g_autofree char *resolved = flatpak_resolve_link (path, NULL);
+              g_autofree char *parent = g_path_get_dirname (path);
+              g_autofree char *relative = make_relative (parent, resolved);
               if (resolved)
-                add_args (argv_array, "--symlink", resolved, path,  NULL);
+                add_args (argv_array, "--symlink", relative, path,  NULL);
             }
         }
       else if (mode == FAKE_MODE_HIDDEN)
