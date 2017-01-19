@@ -93,6 +93,12 @@ const char *dont_mount_in_root[] = {
   "tmp", "etc", "app", "run", "proc", "sys", "dev", "var", NULL
 };
 
+/* We don't want to export paths pointing into these, because they are readonly
+   (so we can't create mountpoints there) and don't match whats on the host anyway */
+const char *dont_export_in[] = {
+  "/lib/", "/lib32/", "/lib64/", "/bin/", "/sbin/", "/usr/", "/etc/", "/app/", NULL
+};
+
 typedef enum {
   FLATPAK_CONTEXT_DEVICE_DRI         = 1 << 0,
   FLATPAK_CONTEXT_DEVICE_ALL         = 1 << 1,
@@ -2286,15 +2292,35 @@ add_hide_path (GHashTable *hash_table,
                        GINT_TO_POINTER ( MAX (old_mode, FAKE_MODE_HIDDEN)));
 }
 
-static void
+static gboolean
 add_expose_path (GHashTable *hash_table,
                  FlatpakFilesystemMode mode,
                  const char           *path)
 {
+  g_autofree char *canonical = flatpak_canonicalize_filename (path);
   struct stat st;
+  int i;
+
+  if (!g_path_is_absolute (path))
+    {
+      g_warning ("Exposing relative path %s", path);
+      return FALSE;
+    }
+
+  for (i = 0; dont_export_in[i] != NULL; i++)
+    {
+      /* Don't expose files in non-mounted dirs like /app or /usr, as
+         they are not the same as on the host, and we generally can't
+         create the parents for them anyway */
+      if (g_str_has_prefix (canonical, dont_export_in[i]))
+        {
+          g_debug ("skipping export for path %s", canonical);
+          return FALSE;
+        }
+    }
 
   if (lstat (path, &st) != 0)
-    return;
+    return FALSE;
 
   if (S_ISDIR (st.st_mode) ||
       S_ISREG (st.st_mode) ||
@@ -2308,22 +2334,21 @@ add_expose_path (GHashTable *hash_table,
       if (S_ISLNK (st.st_mode))
         {
           g_autofree char *resolved = flatpak_resolve_link (path, NULL);
-          /* Don't keep symlinks into /app or /usr, as they are not the
-             same as on the host, and we generally can't create the parents
-             for them anyway */
-          if (resolved &&
-              !g_str_has_prefix (resolved, "/app/")  &&
-              !g_str_has_prefix (resolved, "/usr/"))
-            {
-              add_expose_path (hash_table, mode, resolved);
-              mode = FAKE_MODE_SYMLINK;
-            }
+
+          if (resolved && add_expose_path (hash_table, mode, resolved))
+            mode = FAKE_MODE_SYMLINK;
           else
             mode = 0;
         }
+
       if (mode > 0)
-        g_hash_table_insert (hash_table, g_strdup (path), GINT_TO_POINTER ( MAX (old_mode, mode)));
+        {
+          g_hash_table_insert (hash_table, g_strdup (path), GINT_TO_POINTER ( MAX (old_mode, mode)));
+          return TRUE;
+        }
     }
+
+  return FALSE;
 }
 
 void
