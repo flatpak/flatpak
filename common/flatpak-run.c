@@ -2657,6 +2657,11 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   /* This actually outputs the args for the hide/expose operations above */
   add_file_args (argv_array, fs_paths);
 
+  /* Ensure we always have a homedir */
+  add_args (argv_array,
+            "--dir", g_get_home_dir (),
+            NULL);
+
   /* Special case subdirectories of the cache, config and data xdg dirs.
    * If these are accessible explicilty, in a read-write fashion, then
    * we bind-mount these in the app-id dir. This allows applications to
@@ -3850,8 +3855,6 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
             "--ro-bind", "/sys/devices", "/sys/devices",
             "--bind-data", passwd_fd_str, "/etc/passwd",
             "--bind-data", group_fd_str, "/etc/group",
-            /* Always create a homedir to start from, although it may be covered later */
-            "--dir", g_get_home_dir (),
             NULL);
 
   if (g_file_test ("/etc/machine-id", G_FILE_TEST_EXISTS))
