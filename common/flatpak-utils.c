@@ -2185,6 +2185,13 @@ flatpak_resolve_link (const char *path,
   return g_build_path (dirname, link, NULL);
 }
 
+char *
+flatpak_canonicalize_filename (const char *path)
+{
+  g_autoptr(GFile) file = g_file_new_for_path (path);
+  return g_file_get_path (file);
+}
+
 gboolean flatpak_file_rename (GFile *from,
                               GFile *to,
                               GCancellable  *cancellable,
