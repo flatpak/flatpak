@@ -2,3 +2,4 @@
 Name=org.freedesktop.Flatpak.SystemHelper
 Exec=@libexecdir@/flatpak-system-helper@extraargs@
 SystemdService=flatpak-system-helper.service
+User=root
