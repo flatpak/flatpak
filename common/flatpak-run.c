@@ -2021,8 +2021,12 @@ flatpak_run_add_journal_args (GPtrArray *argv_array)
 static char *
 create_proxy_socket (char *template)
 {
-  g_autofree char *proxy_socket = g_build_filename (g_get_user_runtime_dir (), template, NULL);
+  g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy", NULL);
+  g_autofree char *proxy_socket = g_build_filename (proxy_socket_dir, template, NULL);
   int fd;
+
+  if (!glnx_shutil_mkdir_p_at (AT_FDCWD, proxy_socket_dir, 0755, NULL, NULL))
+    return NULL;
 
   fd = g_mkstemp (proxy_socket);
   if (fd == -1)
@@ -2061,7 +2065,7 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
   else if (dbus_proxy_argv &&
            g_hash_table_size (context->system_bus_policy) > 0)
     {
-      g_autofree char *proxy_socket = create_proxy_socket (".system-bus-proxy-XXXXXX");
+      g_autofree char *proxy_socket = create_proxy_socket ("system-bus-proxy-XXXXXX");
 
       if (proxy_socket == NULL)
         return FALSE;
@@ -2112,7 +2116,7 @@ flatpak_run_add_session_dbus_args (GPtrArray *argv_array,
     }
   else if (dbus_proxy_argv && dbus_address != NULL)
     {
-      g_autofree char *proxy_socket = create_proxy_socket (".session-bus-proxy-XXXXXX");
+      g_autofree char *proxy_socket = create_proxy_socket ("session-bus-proxy-XXXXXX");
 
       if (proxy_socket == NULL)
         return FALSE;
@@ -3393,6 +3397,7 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
   gsize bwrap_args_len;
   glnx_fd_close int bwrap_args_fd = -1;
   g_autofree char *bwrap_args_data = NULL;
+  g_autofree char *proxy_socket_dir = g_build_filename (g_get_user_runtime_dir (), ".dbus-proxy/", NULL);
 
   if (!glnx_dirfd_iterator_init_at (AT_FDCWD, "/", FALSE, &dir_iter, error))
     return FALSE;
@@ -3437,6 +3442,10 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
           g_ptr_array_add (bwrap_args, g_strconcat ("/", dent->d_name, NULL));
         }
     }
+
+  g_ptr_array_add (bwrap_args, g_strdup ("--bind"));
+  g_ptr_array_add (bwrap_args, g_strdup (proxy_socket_dir));
+  g_ptr_array_add (bwrap_args, g_strdup (proxy_socket_dir));
 
   g_ptr_array_add (bwrap_args, g_strdup ("--ro-bind-data"));
   g_ptr_array_add (bwrap_args, g_strdup_printf ("%d", app_info_fd));
