@@ -419,8 +419,11 @@ add_deps (FlatpakTransaction *self,
           /* Update if in same dir */
           if (dir_ref_is_installed (self->dir, full_runtime_ref, &runtime_remote))
             {
-              flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
-                                          FLATPAK_TRANSACTION_OP_KIND_UPDATE);
+              FlatpakTransactionOp *op;
+              g_debug ("Updating dependent runtime %s", full_runtime_ref);
+              op = flatpak_transaction_add_op (self, runtime_remote, full_runtime_ref, NULL, NULL, NULL,
+                                               FLATPAK_TRANSACTION_OP_KIND_UPDATE);
+              op->non_fatal = TRUE;
             }
         }
     }
