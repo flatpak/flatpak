@@ -85,6 +85,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autoptr(FlatpakContext) app_context = NULL;
   gboolean custom_usr;
   g_auto(GStrv) runtime_ref_parts = NULL;
+  FlatpakRunFlags run_flags;
 
   context = g_option_context_new (_("DIRECTORY [COMMAND [args...]] - Build in directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -180,9 +181,12 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
               "--lock-file", "/usr/.ref",
               NULL);
 
+  run_flags = FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER;
+  if (custom_usr)
+    run_flags |= FLATPAK_RUN_FLAG_WRITABLE_ETC;
+
   if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, NULL, runtime_ref_parts[2],
-                                    FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER,
-                                    error))
+                                    run_flags, error))
     return FALSE;
 
   /* After setup_base to avoid conflicts with /var symlinks */
