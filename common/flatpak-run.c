@@ -3869,6 +3869,15 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
             "--ro-bind", "/sys/class", "/sys/class",
             "--ro-bind", "/sys/dev", "/sys/dev",
             "--ro-bind", "/sys/devices", "/sys/devices",
+            NULL);
+
+  if (flags & FLATPAK_RUN_FLAG_WRITABLE_ETC)
+    add_args (argv_array,
+              "--dir", "/usr/etc",
+              "--symlink", "usr/etc", "/etc",
+              NULL);
+
+  add_args (argv_array,
             "--bind-data", passwd_fd_str, "/etc/passwd",
             "--bind-data", group_fd_str, "/etc/group",
             NULL);
@@ -3879,7 +3888,8 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
     add_args (argv_array, "--bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
 
   etc = g_file_get_child (runtime_files, "etc");
-  if (g_file_query_exists (etc, NULL))
+  if ((flags & FLATPAK_RUN_FLAG_WRITABLE_ETC) == 0 &&
+      g_file_query_exists (etc, NULL))
     {
       g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
       struct dirent *dent;
@@ -3964,7 +3974,8 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
     return FALSE;
 #endif
 
-  add_monitor_path_args ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0, argv_array);
+  if ((flags & FLATPAK_RUN_FLAG_WRITABLE_ETC) == 0)
+    add_monitor_path_args ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0, argv_array);
 
   return TRUE;
 }
