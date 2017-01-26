@@ -152,8 +152,8 @@ child_setup_func (gpointer user_data)
           if (fd_map[i].from == data->tty)
             {
               if (ioctl (fd_map[i].final, TIOCSCTTY, 0) == -1)
-                g_warning ("ioctl(%d, TIOCSCTTY, 0) failed: %s",
-                           fd_map[i].final, strerror (errno));
+                g_debug ("ioctl(%d, TIOCSCTTY, 0) failed: %s",
+                         fd_map[i].final, strerror (errno));
               break;
             }
         }
