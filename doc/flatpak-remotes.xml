@@ -2,10 +2,10 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<refentry id="flatpak-remote-list">
+<refentry id="flatpak-remotes">
 
     <refentryinfo>
-        <title>flatpak remote-list</title>
+        <title>flatpak remotes</title>
         <productname>flatpak</productname>
 
         <authorgroup>
@@ -19,18 +19,18 @@
     </refentryinfo>
 
     <refmeta>
-        <refentrytitle>flatpak remote-list</refentrytitle>
+        <refentrytitle>flatpak remotes</refentrytitle>
         <manvolnum>1</manvolnum>
     </refmeta>
 
     <refnamediv>
-        <refname>flatpak-remote-list</refname>
+        <refname>flatpak-remotes</refname>
         <refpurpose>List remote repositories</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
-                <command>flatpak remote-list</command>
+                <command>flatpak remotes</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
@@ -138,7 +138,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak remote-list --user --show-details</command>
+            <command>$ flatpak remotes --user --show-details</command>
         </para>
 <programlisting>
 testrepo	Test Repository	 http://209.132.179.91/repo/ no-gpg-verify
