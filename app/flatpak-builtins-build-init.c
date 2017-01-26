@@ -35,6 +35,7 @@
 
 static char *opt_arch;
 static char *opt_var;
+static char *opt_type;
 static char *opt_sdk_dir;
 static char **opt_sdk_extensions;
 static char **opt_tags;
@@ -51,6 +52,7 @@ static GOptionEntry options[] = {
   { "base-version", 0, 0, G_OPTION_ARG_STRING, &opt_base_version, N_("Specify version for --base"), N_("VERSION") },
   { "base-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_base_extensions, N_("Include this base extension"), N_("EXTENSION") },
   { "writable-sdk", 'w', 0, G_OPTION_ARG_NONE, &opt_writable_sdk, N_("Initialize /usr with a writable copy of the sdk"), NULL },
+  { "type", 0, 0, G_OPTION_ARG_STRING, &opt_type, N_("Specify the build type (app, runtime, extension)"), N_("TYPE") },
   { "tag", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_tags, N_("Add a tag"), N_("TAG") },
   { "sdk-extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sdk_extensions, N_("Include this sdk extension in /usr"), N_("EXTENSION") },
   { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, N_("Where to store sdk (defaults to 'usr')"), N_("DIR") },
@@ -158,6 +160,9 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   int i;
   g_autoptr(FlatpakDir) sdk_dir = NULL;
   g_autoptr(FlatpakDir) runtime_dir = NULL;
+  gboolean is_app = FALSE;
+  gboolean is_extension = FALSE;
+  gboolean is_runtime = FALSE;
 
   context = g_option_context_new (_("DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -178,15 +183,32 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   if (argc >= 6)
     default_branch = argv[5];
 
+  if (opt_type != NULL)
+    {
+      if (strcmp (opt_type, "app") == 0)
+        is_app = TRUE;
+      else if (strcmp (opt_type, "extension") == 0)
+        is_extension = TRUE;
+      else if (strcmp (opt_type, "runtime") == 0)
+        is_runtime = TRUE;
+      else
+        return flatpak_fail (error, _("'%s' is not a valid build type name, use app, runtime or extension"), opt_type);
+    }
+  else
+    is_app = TRUE;
+
   if (!flatpak_is_valid_name (app_id, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app_id, my_error->message);
 
   kinds = FLATPAK_KINDS_RUNTIME;
-
   sdk_dir = flatpak_find_installed_pref (sdk_pref, kinds, opt_arch, default_branch, TRUE, FALSE, FALSE, NULL,
                                          &sdk_ref, cancellable, error);
   if (sdk_dir == NULL)
     return FALSE;
+
+  kinds = FLATPAK_KINDS_RUNTIME;
+  if (is_extension)
+    kinds |= FLATPAK_KINDS_APP;
 
   runtime_dir = flatpak_find_installed_pref (runtime_pref, kinds, opt_arch, default_branch, TRUE, FALSE, FALSE, NULL,
                                              &runtime_ref, cancellable, error);
@@ -212,13 +234,12 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
       g_file_query_exists (files_dir, cancellable))
     return flatpak_fail (error, _("Build directory %s already initialized"), directory);
 
-  if (opt_writable_sdk)
+  if (opt_writable_sdk || is_runtime)
     {
-      g_autofree char *full_sdk_ref = g_strconcat ("runtime/", sdk_ref, NULL);
       g_autoptr(GFile) sdk_deploy_files = NULL;
       g_autoptr(FlatpakDeploy) sdk_deploy = NULL;
 
-      sdk_deploy = flatpak_find_deploy_for_ref (full_sdk_ref, cancellable, error);
+      sdk_deploy = flatpak_dir_load_deployed (sdk_dir, sdk_ref, NULL, cancellable, error);
       if (sdk_deploy == NULL)
         return FALSE;
 
@@ -301,12 +322,27 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     return FALSE;
 
 
-  metadata_contents = g_string_new ("[Application]\n");
+  metadata_contents = g_string_new ("");
+  if (is_app)
+    g_string_append (metadata_contents, "[Application]\n");
+  else
+    g_string_append (metadata_contents, "[Runtime]\n");
+
   g_string_append_printf (metadata_contents,
-                          "name=%s\n"
-                          "runtime=%s\n"
-                          "sdk=%s\n",
-                          app_id, runtime_ref, sdk_ref);
+                          "name=%s\n",
+                          app_id);
+
+  /* The "runtime" can be an app in case we're building an extension */
+  if (g_str_has_prefix (runtime_ref, "runtime/"))
+    g_string_append_printf (metadata_contents,
+                            "runtime=%s\n",
+                            runtime_ref + strlen ("runtime/"));
+
+  if (g_str_has_prefix (sdk_ref, "runtime/"))
+    g_string_append_printf (metadata_contents,
+                            "sdk=%s\n",
+                            sdk_ref + strlen ("runtime/"));
+
   if (opt_tags != NULL)
     {
       g_string_append (metadata_contents, "tags=");
@@ -317,6 +353,13 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
         }
       g_string_append_c (metadata_contents, '\n');
     }
+
+  if (is_extension)
+    g_string_append_printf (metadata_contents,
+                            "\n"
+                            "[ExtensionOf]\n"
+                            "ref=%s\n",
+                            runtime_ref);
 
   if (!g_file_replace_contents (metadata_file,
                                 metadata_contents->str, metadata_contents->len, NULL, FALSE,

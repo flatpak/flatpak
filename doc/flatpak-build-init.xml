@@ -168,6 +168,17 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--type=TYPE</option></term>
+
+                <listitem><para>
+                    This can be used to build different types of things. The default
+                    is "app" which is a regular app, but "runtime" creates a runtime
+                    based on an existing runtime, and "extension" creates an extension
+                    for an app or runtime.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--verbose</option></term>
 
                 <listitem><para>

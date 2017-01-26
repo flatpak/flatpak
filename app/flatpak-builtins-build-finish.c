@@ -186,11 +186,11 @@ copy_exports (GFile        *source,
 }
 
 static gboolean
-collect_exports (GFile *base, const char *app_id, gboolean is_runtime, GCancellable *cancellable, GError **error)
+collect_exports (GFile *base, const char *app_id, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GFile) files = NULL;
   g_autoptr(GFile) export = NULL;
-  const char *app_paths[] = {
+  const char *paths[] = {
     "share/applications",                 /* Copy desktop files */
     "share/mime/packages",                /* Copy MIME Type files */
     "share/icons",                        /* Icons */
@@ -198,22 +198,9 @@ collect_exports (GFile *base, const char *app_id, gboolean is_runtime, GCancella
     "share/gnome-shell/search-providers", /* Search providers */
     NULL,
   };
-  const char *runtime_paths[] = {
-    NULL,
-  };
-  const char **paths;
   int i;
 
-  if (is_runtime)
-    {
-      files = g_file_get_child (base, "usr");
-      paths = runtime_paths;
-    }
-  else
-    {
-      files = g_file_get_child (base, "files");
-      paths = app_paths;
-    }
+  files = g_file_get_child (base, "files");
 
   export = g_file_get_child (base, "export");
 
@@ -248,7 +235,7 @@ collect_exports (GFile *base, const char *app_id, gboolean is_runtime, GCancella
 }
 
 static gboolean
-update_metadata (GFile *base, FlatpakContext *arg_context, GCancellable *cancellable, GError **error)
+update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, GCancellable *cancellable, GError **error)
 {
   gboolean ret = FALSE;
 
@@ -268,63 +255,66 @@ update_metadata (GFile *base, FlatpakContext *arg_context, GCancellable *cancell
   if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
     goto out;
 
-  if (g_key_file_has_key (keyfile, "Application", "command", NULL))
+  if (!is_runtime)
     {
-      g_debug ("Command key is present");
-
-      if (opt_command)
-        g_key_file_set_string (keyfile, "Application", "command", opt_command);
-    }
-  else if (opt_command)
-    {
-      g_debug ("Using explicitly provided command %s", opt_command);
-
-      g_key_file_set_string (keyfile, "Application", "command", opt_command);
-    }
-  else
-    {
-      g_autofree char *command = NULL;
-      g_autoptr(GFile) bin_dir = NULL;
-      g_autoptr(GFileEnumerator) bin_enum = NULL;
-      g_autoptr(GFileInfo) child_info = NULL;
-
-      g_debug ("Looking for executables");
-
-      bin_dir = g_file_resolve_relative_path (base, "files/bin");
-      if (g_file_query_exists (bin_dir, cancellable))
+      if (g_key_file_has_key (keyfile, "Application", "command", NULL))
         {
-          bin_enum = g_file_enumerate_children (bin_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
-                                                G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                                cancellable, error);
-          if (!bin_enum)
-            goto out;
+          g_debug ("Command key is present");
 
-          while ((child_info = g_file_enumerator_next_file (bin_enum, cancellable, &temp_error)))
-            {
-              if (command != NULL)
-                {
-                  g_print ("More than one executable found\n");
-                  break;
-                }
-              command = g_strdup (g_file_info_get_name (child_info));
-            }
-          if (temp_error != NULL)
-            goto out;
+          if (opt_command)
+            g_key_file_set_string (keyfile, "Application", "command", opt_command);
         }
-
-      if (command)
+      else if (opt_command)
         {
-          g_print ("Using %s as command\n", command);
-          g_key_file_set_string (keyfile, "Application", "command", command);
+          g_debug ("Using explicitly provided command %s", opt_command);
+
+          g_key_file_set_string (keyfile, "Application", "command", opt_command);
         }
       else
         {
-          g_print ("No executable found\n");
+          g_autofree char *command = NULL;
+          g_autoptr(GFile) bin_dir = NULL;
+          g_autoptr(GFileEnumerator) bin_enum = NULL;
+          g_autoptr(GFileInfo) child_info = NULL;
+
+          g_debug ("Looking for executables");
+
+          bin_dir = g_file_resolve_relative_path (base, "files/bin");
+          if (g_file_query_exists (bin_dir, cancellable))
+            {
+              bin_enum = g_file_enumerate_children (bin_dir, G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                                    G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                                    cancellable, error);
+              if (!bin_enum)
+                goto out;
+
+              while ((child_info = g_file_enumerator_next_file (bin_enum, cancellable, &temp_error)))
+                {
+                  if (command != NULL)
+                    {
+                      g_print ("More than one executable found\n");
+                      break;
+                    }
+                  command = g_strdup (g_file_info_get_name (child_info));
+                }
+              if (temp_error != NULL)
+                goto out;
+            }
+
+          if (command)
+            {
+              g_print ("Using %s as command\n", command);
+              g_key_file_set_string (keyfile, "Application", "command", command);
+            }
+          else
+            {
+              g_print ("No executable found\n");
+            }
         }
     }
 
   if (opt_require_version)
-    g_key_file_set_string (keyfile, "Application", "required-flatpak", opt_require_version);
+    g_key_file_set_string (keyfile, is_runtime ? "Runtime" : "Application", "required-flatpak", opt_require_version);
 
   app_context = flatpak_context_new ();
   if (!flatpak_context_load_metadata (app_context, keyfile, error))
@@ -458,12 +448,15 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   if (g_file_query_exists (export_dir, cancellable))
     return flatpak_fail (error, _("Build directory %s already finalized"), directory);
 
-  g_debug ("Collecting exports");
-  if (!collect_exports (base, id, is_runtime, cancellable, error))
-    return FALSE;
+  if (!is_runtime)
+    {
+      g_debug ("Collecting exports");
+      if (!collect_exports (base, id, cancellable, error))
+        return FALSE;
+    }
 
   g_debug ("Updating metadata");
-  if (!update_metadata (base, arg_context, cancellable, error))
+  if (!update_metadata (base, arg_context, is_runtime, cancellable, error))
     return FALSE;
 
   g_print (_("Please review the exported files and the metadata\n"));
