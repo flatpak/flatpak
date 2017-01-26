@@ -129,7 +129,6 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
       RefsData *refs_data = NULL;
       FlatpakDir *dir = NULL;
       g_auto(GStrv) dir_refs = NULL;
-      g_autofree char *last = NULL;
       int j;
 
       refs_data = (RefsData *) g_ptr_array_index (refs_array, i);
