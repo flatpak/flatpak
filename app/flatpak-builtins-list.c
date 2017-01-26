@@ -361,7 +361,10 @@ flatpak_builtin_list (int argc, char **argv, GCancellable *cancellable, GError *
     return usage_error (context, _("Too many arguments"), error);
 
   if (!opt_app && !opt_runtime)
-    opt_app = TRUE;
+    {
+      opt_app = TRUE;
+      opt_runtime = TRUE;
+    }
 
   if (!print_installed_refs (opt_app, opt_runtime,
                              opt_system,
