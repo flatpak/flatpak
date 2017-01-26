@@ -37,14 +37,15 @@
 static char *opt_command;
 static char *opt_require_version;
 static char **opt_extra_data;
+static char **opt_extensions;
 static gboolean opt_no_exports;
 
 static GOptionEntry options[] = {
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, N_("Command to set"), N_("COMMAND") },
   { "require-version", 0, 0, G_OPTION_ARG_STRING, &opt_require_version, N_("Flatpak version to require"), N_("MAJOR.MINOR.MICRO") },
   { "no-exports", 0, 0, G_OPTION_ARG_NONE, &opt_no_exports, N_("Don't process exports"), NULL },
-  { "extra-data", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_data, N_("Extra data info"),
-    N_("NAME:SHA256:DOWNLOAD-SIZE:INSTALL-SIZE:URL") },
+  { "extra-data", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_data, N_("Extra data info") },
+  { "extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extensions, N_("Add extension point info"),  N_("NAME=VARIABLE[=VALUE]") },
   { NULL }
 };
 
@@ -350,7 +351,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, GCancellable *cancell
       elements = g_strsplit (extra_data, ":", 5);
       if (g_strv_length (elements) != 5)
         {
-          flatpak_fail (error, _("To few elements in --extra-data argument %s"), extra_data);
+          flatpak_fail (error, _("Too few elements in --extra-data argument %s"), extra_data);
           goto out;
         }
 
@@ -367,6 +368,23 @@ update_metadata (GFile *base, FlatpakContext *arg_context, GCancellable *cancell
       if (strlen (elements[3]) > 0)
         g_key_file_set_string (keyfile, "Extra Data", installed_size_key, elements[3]);
       g_key_file_set_string (keyfile, "Extra Data", uri_key, elements[4]);
+    }
+
+  for (i = 0; opt_extensions != NULL && opt_extensions[i] != NULL; i++)
+    {
+      g_auto(GStrv) elements = NULL;
+      g_autofree char *groupname = NULL;
+
+      elements = g_strsplit (opt_extensions[i], "=", 3);
+      if (g_strv_length (elements) < 2)
+        {
+          flatpak_fail (error, _("Too few elements in --extension argument %s, format should be NAME=VAR[=VALUE]"), opt_extensions[i]);
+          goto out;
+        }
+
+      groupname = g_strdup_printf ("Extension %s", elements[0]);
+
+      g_key_file_set_string (keyfile, groupname, elements[1], elements[2] ? elements[2] : "true");
     }
 
   if (!g_key_file_save_to_file (keyfile, path, error))
