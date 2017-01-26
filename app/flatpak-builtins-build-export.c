@@ -83,8 +83,20 @@ metadata_get_arch (GFile *file, char **out_arch, GError **error)
     return FALSE;
 
   runtime = g_key_file_get_string (keyfile,
-                                   opt_runtime ? "Runtime" : "Application",
+                                   "Application",
                                    "runtime", NULL);
+  if (runtime == NULL)
+    runtime = g_key_file_get_string (keyfile,
+                                     "Application",
+                                     "sdk", NULL);
+  if (runtime == NULL)
+    runtime = g_key_file_get_string (keyfile,
+                                     "Runtime",
+                                     "runtime", NULL);
+  if (runtime == NULL)
+    runtime = g_key_file_get_string (keyfile,
+                                     "Runtime",
+                                     "sdk", NULL);
   if (runtime == NULL)
     {
       *out_arch = g_strdup (flatpak_get_arch ());
@@ -601,7 +613,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   const char *branch;
   g_autofree char *arch = NULL;
   g_autofree char *full_branch = NULL;
-  g_autofree char *app_id = NULL;
+  g_autofree char *id = NULL;
   g_autofree char *parent = NULL;
   g_autofree char *commit_checksum = NULL;
   g_autofree char *metadata_contents = NULL;
@@ -619,6 +631,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   CommitData commit_data = {0};
   g_auto(GVariantDict) metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
   g_autoptr(GVariant) metadata_dict_v = NULL;
+  gboolean is_runtime = FALSE;
+  gboolean is_extension = FALSE;
 
   context = g_option_context_new (_("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -681,11 +695,22 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     goto out;
 
-  app_id = g_key_file_get_string (metakey, opt_runtime ? "Runtime" : "Application", "name", error);
-  if (app_id == NULL)
-    goto out;
+  id = g_key_file_get_string (metakey, "Application", "name", NULL);
+  if (id == NULL)
+    {
+      id = g_key_file_get_string (metakey, "Runtime", "name", NULL);
+      if (id == NULL)
+        {
+          flatpak_fail (error, _("No name specified in the metadata"));
+          goto out;
+        }
+      is_runtime = TRUE;
 
-  if (!opt_runtime && !g_file_query_exists (export, cancellable))
+      if (g_key_file_has_group (metakey, "ExtensionOf"))
+        is_extension = TRUE;
+    }
+
+  if (!(opt_runtime || is_runtime) && !g_file_query_exists (export, cancellable))
     {
       flatpak_fail (error, "Build directory %s not finalized, use flatpak build-finish", directory);
       goto out;
@@ -696,7 +721,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!collect_extra_data (metakey, &metadata_dict, error))
     goto out;
 
-  if (!validate_exports (export, files, app_id, error))
+  if (!(opt_runtime || is_runtime) &&
+      !validate_exports (export, files, id, error))
     goto out;
 
   if (!metadata_get_arch (metadata, &arch, error))
@@ -705,13 +731,13 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (opt_subject)
     subject = g_strdup (opt_subject);
   else
-    subject = g_strconcat ("Export ", app_id, NULL);
+    subject = g_strconcat ("Export ", id, NULL);
   if (opt_body)
     body = g_strdup (opt_body);
   else
-    body = g_strconcat ("Name: ", app_id, "\nArch: ", arch, "\nBranch: ", branch, NULL);
+    body = g_strconcat ("Name: ", id, "\nArch: ", arch, "\nBranch: ", branch, NULL);
 
-  full_branch = g_strconcat (opt_runtime ? "runtime/" : "app/", app_id, "/", arch, "/", branch, NULL);
+  full_branch = g_strconcat ((opt_runtime || is_runtime) ? "runtime/" : "app/", id, "/", arch, "/", branch, NULL);
 
   repofile = g_file_new_for_commandline_arg (location);
   repo = ostree_repo_new (repofile);
@@ -745,7 +771,16 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS,
                                               (OstreeRepoCommitFilter) commit_filter, &commit_data, NULL);
 
-  if (opt_runtime)
+  if (is_extension)
+    {
+      commit_data.exclude = (const char **) opt_exclude;
+      commit_data.include = (const char **) opt_include;
+      if (!ostree_repo_write_directory_to_mtree (repo, files, files_mtree, modifier, cancellable, error))
+        goto out;
+      commit_data.exclude = NULL;
+      commit_data.include = NULL;
+    }
+  else if (opt_runtime || is_runtime)
     {
       commit_data.exclude = (const char **) opt_exclude;
       commit_data.include = (const char **) opt_include;
