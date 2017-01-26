@@ -107,7 +107,7 @@
                 <term><option>--show-details</option></term>
 
                 <listitem><para>
-                    Show arches and branches, in addition to the application names.
+                    Show origin, sizes and other extra information.
                 </para></listitem>
             </varlistentry>
 
