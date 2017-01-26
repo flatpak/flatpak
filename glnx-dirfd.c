@@ -293,13 +293,10 @@ glnx_gen_temp_name (gchar *tmpl)
 {
   size_t len;
   char *XXXXXX;
-  int count;
+  int i;
   static const char letters[] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   static const int NLETTERS = sizeof (letters) - 1;
-  glong value;
-  GTimeVal tv;
-  static int counter = 0;
 
   g_return_if_fail (tmpl != NULL);
   len = strlen (tmpl);
@@ -307,27 +304,8 @@ glnx_gen_temp_name (gchar *tmpl)
 
   XXXXXX = tmpl + (len - 6);
 
-  /* Get some more or less random data.  */
-  g_get_current_time (&tv);
-  value = (tv.tv_usec ^ tv.tv_sec) + counter++;
-
-  for (count = 0; count < 100; value += 7777, ++count)
-    {
-      glong v = value;
-
-      /* Fill in the random bits.  */
-      XXXXXX[0] = letters[v % NLETTERS];
-      v /= NLETTERS;
-      XXXXXX[1] = letters[v % NLETTERS];
-      v /= NLETTERS;
-      XXXXXX[2] = letters[v % NLETTERS];
-      v /= NLETTERS;
-      XXXXXX[3] = letters[v % NLETTERS];
-      v /= NLETTERS;
-      XXXXXX[4] = letters[v % NLETTERS];
-      v /= NLETTERS;
-      XXXXXX[5] = letters[v % NLETTERS];
-    }
+  for (i = 0; i < 6; i++)
+    XXXXXX[i] = letters[g_random_int_range(0, NLETTERS)];
 }
 
 /**
