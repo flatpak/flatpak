@@ -23,9 +23,23 @@
 
 #include <glib.h>
 #include "libglnx/libglnx.h"
+#include "flatpak-utils.h"
+#include "flatpak-dir.h"
 
 gboolean    looks_like_branch (const char  *branch);
 GBytes *    download_uri      (const char  *url,
                                GError     **error);
+
+FlatpakDir * flatpak_find_installed_pref (const char *pref,
+                                          FlatpakKinds kinds,
+                                          const char *default_arch,
+                                          const char *default_branch,
+                                          gboolean search_all,
+                                          gboolean search_user,
+                                          gboolean search_system,
+                                          char **search_installations,
+                                          char **out_ref,
+                                          GCancellable *cancellable,
+                                          GError **error);
 
 #endif /* __FLATPAK_BUILTINS_UTILS_H__ */

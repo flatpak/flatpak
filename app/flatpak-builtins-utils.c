@@ -108,3 +108,115 @@ download_uri (const char     *url,
 
   return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
 }
+
+FlatpakDir *
+flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *default_arch, const char *default_branch,
+                             gboolean search_all, gboolean search_user, gboolean search_system, char **search_installations,
+                             char **out_ref, GCancellable *cancellable, GError **error)
+{
+  g_autofree char *id = NULL;
+  g_autofree char *arch = NULL;
+  g_autofree char *branch = NULL;
+  g_autoptr(GError) lookup_error = NULL;
+  FlatpakDir *dir = NULL;
+  g_autofree char *ref = NULL;
+  FlatpakKinds kind = 0;
+  g_autoptr(FlatpakDir) user_dir = NULL;
+  g_autoptr(FlatpakDir) system_dir = NULL;
+  g_autoptr(GPtrArray) system_dirs = NULL;
+
+  if (!flatpak_split_partial_ref_arg (pref, kinds, default_arch, default_branch,
+                                      &kinds, &id, &arch, &branch, error))
+    return NULL;
+
+  if (search_user || search_all)
+    {
+      user_dir = flatpak_dir_get_user ();
+      ref = flatpak_dir_find_installed_ref (user_dir,
+                                            id,
+                                            branch,
+                                            arch,
+                                            kinds, &kind,
+                                            &lookup_error);
+      if (ref)
+        dir = user_dir;
+    }
+
+  if (ref == NULL && search_all)
+    {
+      int i;
+
+      system_dirs = flatpak_dir_get_system_list (cancellable, error);
+      if (system_dirs == NULL)
+        return FALSE;
+
+      for (i = 0; i < system_dirs->len; i++)
+        {
+          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+          ref = flatpak_dir_find_installed_ref (system_dir,
+                                                id,
+                                                branch,
+                                                arch,
+                                                kinds, &kind,
+                                                lookup_error == NULL ? &lookup_error : NULL);
+          if (ref)
+            {
+              dir = system_dir;
+              break;
+            }
+        }
+    }
+  else
+    {
+      if (ref == NULL && search_installations != NULL)
+        {
+          int i = 0;
+
+          for (i = 0; search_installations[i] != NULL; i++)
+            {
+              g_autoptr(FlatpakDir) installation_dir = NULL;
+
+              installation_dir = flatpak_dir_get_system_by_id (search_installations[i], cancellable, error);
+              if (installation_dir == NULL)
+                return FALSE;
+
+              if (installation_dir)
+                {
+                  ref = flatpak_dir_find_installed_ref (installation_dir,
+                                                        id,
+                                                        branch,
+                                                        arch,
+                                                        kinds, &kind,
+                                                        lookup_error == NULL ? &lookup_error : NULL);
+                  if (ref)
+                    {
+                      dir = installation_dir;
+                      break;
+                    }
+                }
+            }
+        }
+
+      if (ref == NULL && search_system)
+        {
+          system_dir = flatpak_dir_get_system_default ();
+          ref = flatpak_dir_find_installed_ref (system_dir,
+                                                id,
+                                                branch,
+                                                arch,
+                                                kinds, &kind,
+                                                lookup_error == NULL ? &lookup_error : NULL);
+          if (ref)
+            dir = system_dir;
+        }
+    }
+
+  if (ref == NULL)
+    {
+      g_propagate_error (error, g_steal_pointer (&lookup_error));
+      return NULL;
+    }
+
+  *out_ref = g_steal_pointer (&ref);
+  return g_object_ref (dir);
+}

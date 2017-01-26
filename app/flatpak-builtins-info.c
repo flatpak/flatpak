@@ -31,6 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "flatpak-builtins-utils.h"
 
 static gboolean opt_user;
 static gboolean opt_system;
@@ -70,11 +71,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autofree char *ref = NULL;
-  g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(FlatpakDir) system_dir = NULL;
-  g_autoptr(GPtrArray) system_dirs = NULL;
   FlatpakDir *dir = NULL;
-  g_autoptr(GError) lookup_error = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
   const char *commit = NULL;
   const char *pref = NULL;
@@ -83,10 +80,6 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   gboolean search_all = FALSE;
   gboolean first = TRUE;
   FlatpakKinds kinds;
-  FlatpakKinds kind = 0;
-  g_autofree char *id = NULL;
-  g_autofree char *arch = NULL;
-  g_autofree char *branch = NULL;
 
   context = g_option_context_new (_("NAME [BRANCH] - Get info about installed app and/or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -106,98 +99,14 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
-  if (!flatpak_split_partial_ref_arg (pref, kinds, opt_arch, default_branch,
-                                      &kinds, &id, &arch, &branch, error))
-    return FALSE;
-
   if (!opt_user && !opt_system && opt_installations == NULL)
     search_all = TRUE;
 
-  if (opt_user || search_all)
-    {
-      user_dir = flatpak_dir_get_user ();
-      ref = flatpak_dir_find_installed_ref (user_dir,
-                                            id,
-                                            branch,
-                                            arch,
-                                            kinds, &kind,
-                                            &lookup_error);
-      if (ref)
-        dir = user_dir;
-    }
-
-  if (ref == NULL && search_all)
-    {
-      int i;
-
-      system_dirs = flatpak_dir_get_system_list (cancellable, error);
-      if (system_dirs == NULL)
-        return FALSE;
-
-      for (i = 0; i < system_dirs->len; i++)
-        {
-          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
-          ref = flatpak_dir_find_installed_ref (system_dir,
-                                                id,
-                                                branch,
-                                                arch,
-                                                kinds, &kind,
-                                                lookup_error == NULL ? &lookup_error : NULL);
-          if (ref)
-            {
-              dir = system_dir;
-              break;
-            }
-        }
-    }
-
-  if (ref == NULL && opt_installations != NULL)
-    {
-      int i = 0;
-
-      for (i = 0; opt_installations[i] != NULL; i++)
-        {
-          g_autoptr(FlatpakDir) installation_dir = NULL;
-
-          installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
-          if (installation_dir == NULL)
-            return FALSE;
-
-          if (installation_dir)
-            {
-              ref = flatpak_dir_find_installed_ref (installation_dir,
-                                                    id,
-                                                    branch,
-                                                    arch,
-                                                    kinds, &kind,
-                                                    lookup_error == NULL ? &lookup_error : NULL);
-              if (ref)
-                {
-                  dir = installation_dir;
-                  break;
-                }
-            }
-        }
-    }
-
-  if (ref == NULL && opt_system)
-    {
-      system_dir = flatpak_dir_get_system_default ();
-      ref = flatpak_dir_find_installed_ref (system_dir,
-                                            id,
-                                            branch,
-                                            arch,
-                                            kinds, &kind,
-                                            lookup_error == NULL ? &lookup_error : NULL);
-      if (ref)
-        dir = system_dir;
-    }
-
-  if (ref == NULL)
-    {
-      g_propagate_error (error, g_steal_pointer (&lookup_error));
-      return FALSE;
-    }
+  dir = flatpak_find_installed_pref (pref, kinds, opt_arch, default_branch,
+                                     search_all, opt_user, opt_system, opt_installations,
+                                     &ref, cancellable, error);
+  if (dir == NULL)
+    return FALSE;
 
   deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, error);
   if (deploy_data == NULL)
