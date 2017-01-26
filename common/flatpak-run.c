@@ -2197,7 +2197,7 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
         }
 
       add_args (argv_array,
-                "--bind", ext->files_path, full_directory,
+                "--ro-bind", ext->files_path, full_directory,
                 NULL);
 
       if (g_file_test (real_ref, G_FILE_TEST_EXISTS))
@@ -3087,7 +3087,7 @@ add_font_path_args (GPtrArray *argv_array)
   if (g_file_test (SYSTEM_FONTS_DIR, G_FILE_TEST_EXISTS))
     {
       add_args (argv_array,
-                "--bind", SYSTEM_FONTS_DIR, "/run/host/fonts",
+                "--ro-bind", SYSTEM_FONTS_DIR, "/run/host/fonts",
                 NULL);
     }
 
@@ -3098,13 +3098,13 @@ add_font_path_args (GPtrArray *argv_array)
   if (g_file_query_exists (user_font1, NULL))
     {
       add_args (argv_array,
-                "--bind", flatpak_file_get_path_cached (user_font1), "/run/host/user-fonts",
+                "--ro-bind", flatpak_file_get_path_cached (user_font1), "/run/host/user-fonts",
                 NULL);
     }
   else if (g_file_query_exists (user_font2, NULL))
     {
       add_args (argv_array,
-                "--bind", flatpak_file_get_path_cached (user_font2), "/run/host/user-fonts",
+                "--ro-bind", flatpak_file_get_path_cached (user_font2), "/run/host/user-fonts",
                 NULL);
     }
 }
@@ -3251,7 +3251,7 @@ add_monitor_path_args (gboolean use_session_helper,
                                                         NULL, NULL))
     {
       add_args (argv_array,
-                "--bind", monitor_path, "/run/host/monitor",
+                "--ro-bind", monitor_path, "/run/host/monitor",
                 NULL);
       add_args (argv_array,
                 "--symlink", "/run/host/monitor/localtime", "/etc/localtime",
@@ -3282,7 +3282,7 @@ add_monitor_path_args (gboolean use_session_helper,
           else
             {
               add_args (argv_array,
-                        "--bind", "/etc/localtime", "/etc/localtime",
+                        "--ro-bind", "/etc/localtime", "/etc/localtime",
                         NULL);
             }
         }
@@ -3290,7 +3290,7 @@ add_monitor_path_args (gboolean use_session_helper,
       if (g_file_test ("/etc/resolv.conf", G_FILE_TEST_EXISTS))
         {
           add_args (argv_array,
-                    "--bind", "/etc/resolv.conf", "/etc/resolv.conf",
+                    "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
                     NULL);
         }
     }
@@ -3883,9 +3883,9 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
             NULL);
 
   if (g_file_test ("/etc/machine-id", G_FILE_TEST_EXISTS))
-    add_args (argv_array, "--bind", "/etc/machine-id", "/etc/machine-id", NULL);
+    add_args (argv_array, "--ro-bind", "/etc/machine-id", "/etc/machine-id", NULL);
   else if (g_file_test ("/var/lib/dbus/machine-id", G_FILE_TEST_EXISTS))
-    add_args (argv_array, "--bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
+    add_args (argv_array, "--ro-bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
 
   etc = g_file_get_child (runtime_files, "etc");
   if ((flags & FLATPAK_RUN_FLAG_WRITABLE_ETC) == 0 &&
