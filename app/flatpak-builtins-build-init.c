@@ -30,6 +30,7 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
+#include "flatpak-builtins-utils.h"
 #include "flatpak-utils.h"
 
 static char *opt_arch;
@@ -147,13 +148,16 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GError) my_error = NULL;
   const char *app_id;
   const char *directory;
-  const char *sdk;
-  const char *runtime;
-  const char *branch = "master";
+  const char *sdk_pref;
+  const char *runtime_pref;
+  const char *default_branch = NULL;
   g_autofree char *runtime_ref = NULL;
   g_autofree char *var_ref = NULL;
   g_autofree char *sdk_ref = NULL;
+  FlatpakKinds kinds;
   int i;
+  g_autoptr(FlatpakDir) sdk_dir = NULL;
+  g_autoptr(FlatpakDir) runtime_dir = NULL;
 
   context = g_option_context_new (_("DIRECTORY APPNAME SDK RUNTIME [BRANCH] - Initialize a directory for building"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -169,25 +173,25 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
   directory = argv[1];
   app_id = argv[2];
-  sdk = argv[3];
-  runtime = argv[4];
+  sdk_pref = argv[3];
+  runtime_pref = argv[4];
   if (argc >= 6)
-    branch = argv[5];
+    default_branch = argv[5];
 
   if (!flatpak_is_valid_name (app_id, &my_error))
     return flatpak_fail (error, _("'%s' is not a valid application name: %s"), app_id, my_error->message);
 
-  if (!flatpak_is_valid_name (runtime, &my_error))
-    return flatpak_fail (error, _("'%s' is not a valid runtime name: %s"), runtime, my_error->message);
+  kinds = FLATPAK_KINDS_RUNTIME;
 
-  if (!flatpak_is_valid_name (sdk, &my_error))
-    return flatpak_fail (error, _("'%s' is not a valid sdk name: %s"), sdk, my_error->message);
+  sdk_dir = flatpak_find_installed_pref (sdk_pref, kinds, opt_arch, default_branch, TRUE, FALSE, FALSE, NULL,
+                                         &sdk_ref, cancellable, error);
+  if (sdk_dir == NULL)
+    return FALSE;
 
-  if (!flatpak_is_valid_branch (branch, &my_error))
-    return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
-
-  runtime_ref = flatpak_build_untyped_ref (runtime, branch, opt_arch);
-  sdk_ref = flatpak_build_untyped_ref (sdk, branch, opt_arch);
+  runtime_dir = flatpak_find_installed_pref (runtime_pref, kinds, opt_arch, default_branch, TRUE, FALSE, FALSE, NULL,
+                                             &runtime_ref, cancellable, error);
+  if (runtime_dir == NULL)
+    return FALSE;
 
   base = g_file_new_for_commandline_arg (directory);
 
@@ -234,13 +238,13 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
         return FALSE;
 
       if (opt_sdk_extensions &&
-          !copy_extensions (sdk_deploy, branch, opt_sdk_extensions, usr_dir, cancellable, error))
+          !copy_extensions (sdk_deploy, default_branch, opt_sdk_extensions, usr_dir, cancellable, error))
         return FALSE;
     }
 
   if (opt_var)
     {
-      var_ref = flatpak_build_runtime_ref (opt_var, branch, opt_arch);
+      var_ref = flatpak_build_runtime_ref (opt_var, default_branch, opt_arch);
 
       var_deploy_files = flatpak_find_files_dir_for_ref (var_ref, cancellable, error);
       if (var_deploy_files == NULL)
