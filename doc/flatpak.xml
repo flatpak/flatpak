@@ -249,6 +249,13 @@
 
         <variablelist>
             <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-remotes</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    List all configured remote repositories.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>flatpak-remote-add</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
@@ -267,13 +274,6 @@
 
                 <listitem><para>
                     Delete a configured remote repository.
-                </para></listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><citerefentry><refentrytitle>flatpak-remote-list</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
-
-                <listitem><para>
-                    List all configured remote repositories.
                 </para></listitem>
             </varlistentry>
             <varlistentry>

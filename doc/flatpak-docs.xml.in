@@ -25,10 +25,10 @@
     <xi:include href="@srcdir@/flatpak-document-unexport.xml"/>
     <xi:include href="@srcdir@/flatpak-document-info.xml"/>
     <xi:include href="@srcdir@/flatpak-document-list.xml"/>
+    <xi:include href="@srcdir@/flatpak-remotes.xml"/>
     <xi:include href="@srcdir@/flatpak-remote-add.xml"/>
     <xi:include href="@srcdir@/flatpak-remote-modify.xml"/>
     <xi:include href="@srcdir@/flatpak-remote-delete.xml"/>
-    <xi:include href="@srcdir@/flatpak-remote-list.xml"/>
     <xi:include href="@srcdir@/flatpak-remote-ls.xml"/>
     <xi:include href="@srcdir@/flatpak-build-init.xml"/>
     <xi:include href="@srcdir@/flatpak-build.xml"/>

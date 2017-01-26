@@ -19,9 +19,9 @@ XSLTPROC_FLAGS = \
 
 man1 = \
 	flatpak.1			\
+	flatpak-remotes.1		\
 	flatpak-remote-add.1		\
 	flatpak-remote-delete.1		\
-	flatpak-remote-list.1		\
 	flatpak-remote-modify.1		\
 	flatpak-remote-ls.1		\
 	flatpak-install.1		\
