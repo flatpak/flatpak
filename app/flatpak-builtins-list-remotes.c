@@ -66,39 +66,35 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
   if (!opt_user && !opt_system && opt_installations == NULL)
     {
-      /* Default: All system remotes */
-      dirs = flatpak_dir_get_system_list (cancellable, error);
-      if (dirs == NULL)
-        return FALSE;
+      /* Default: All system and user remotes */
+      opt_user = opt_system = TRUE;
     }
-  else
+
+  dirs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+
+  if (opt_user)
+    g_ptr_array_add (dirs, flatpak_dir_get_user ());
+
+  if (opt_system)
+    g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
+
+  if (opt_installations != NULL)
     {
-      dirs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+      int i = 0;
 
-      if (opt_user)
-        g_ptr_array_add (dirs, flatpak_dir_get_user ());
-
-      if (opt_system)
-        g_ptr_array_add (dirs, flatpak_dir_get_system_default ());
-
-      if (opt_installations != NULL)
+      for (i = 0; opt_installations[i] != NULL; i++)
         {
-          int i = 0;
+          FlatpakDir *installation_dir = NULL;
 
-          for (i = 0; opt_installations[i] != NULL; i++)
-            {
-              FlatpakDir *installation_dir = NULL;
+          /* Already included the default system installation. */
+          if (opt_system && g_strcmp0 (opt_installations[i], "default") == 0)
+            continue;
 
-              /* Already included the default system installation. */
-              if (opt_system && g_strcmp0 (opt_installations[i], "default") == 0)
-                continue;
+          installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
+          if (installation_dir == NULL)
+            return FALSE;
 
-              installation_dir = flatpak_dir_get_system_by_id (opt_installations[i], cancellable, error);
-              if (installation_dir == NULL)
-                return FALSE;
-
-              g_ptr_array_add (dirs, installation_dir);
-            }
+          g_ptr_array_add (dirs, installation_dir);
         }
     }
 
@@ -117,21 +113,20 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
         {
           char *remote_name = remotes[i];
           gboolean disabled;
+          g_autofree char *remote_url = NULL;
+          g_autofree char *title = NULL;
+          int prio;
+          g_autofree char *prio_as_string = NULL;
+          gboolean gpg_verify = TRUE;
 
           disabled = flatpak_dir_get_remote_disabled (dir, remote_name);
           if (disabled && !opt_show_disabled)
             continue;
 
+          flatpak_table_printer_add_column (printer, remote_name);
+
           if (opt_show_details)
             {
-              g_autofree char *remote_url = NULL;
-              g_autofree char *title = NULL;
-              int prio;
-              g_autofree char *prio_as_string = NULL;
-              gboolean gpg_verify = TRUE;
-
-              flatpak_table_printer_add_column (printer, remote_name);
-
               title = flatpak_dir_get_remote_title (dir, remote_name);
               if (title)
                 flatpak_table_printer_add_column (printer, title);
@@ -145,31 +140,28 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
               prio = flatpak_dir_get_remote_prio (dir, remote_name);
               prio_as_string = g_strdup_printf ("%d", prio);
               flatpak_table_printer_add_column (printer, prio_as_string);
-
-              flatpak_table_printer_add_column (printer, ""); /* Options */
-
-              ostree_repo_remote_get_gpg_verify (flatpak_dir_get_repo (dir), remote_name,
-                                                 &gpg_verify, NULL);
-              if (!gpg_verify)
-                flatpak_table_printer_append_with_comma (printer, "no-gpg-verify");
-              if (disabled)
-                flatpak_table_printer_append_with_comma (printer, "disabled");
-
-              if (flatpak_dir_get_remote_noenumerate (dir, remote_name))
-                flatpak_table_printer_append_with_comma (printer, "no-enumerate");
-
-              if ((opt_user && opt_system) || (opt_user && opt_installations != NULL)
-                  || (opt_system && opt_installations != NULL)
-                  || (opt_installations != NULL && g_strv_length (opt_installations) > 1))
-                {
-                  g_autofree char *dir_id = flatpak_dir_get_name (dir);
-                  flatpak_table_printer_append_with_comma (printer, dir_id);
-                }
             }
-          else
+
+          flatpak_table_printer_add_column (printer, ""); /* Options */
+
+          if ((opt_user && opt_system) || (opt_user && opt_installations != NULL)
+              || (opt_system && opt_installations != NULL)
+              || (opt_installations != NULL && g_strv_length (opt_installations) > 1))
             {
-              flatpak_table_printer_add_column (printer, remote_name);
+              g_autofree char *dir_id = flatpak_dir_get_name (dir);
+              flatpak_table_printer_append_with_comma (printer, dir_id);
             }
+
+          if (disabled)
+            flatpak_table_printer_append_with_comma (printer, "disabled");
+
+          if (flatpak_dir_get_remote_noenumerate (dir, remote_name))
+            flatpak_table_printer_append_with_comma (printer, "no-enumerate");
+
+          ostree_repo_remote_get_gpg_verify (flatpak_dir_get_repo (dir), remote_name,
+                                             &gpg_verify, NULL);
+          if (!gpg_verify)
+            flatpak_table_printer_append_with_comma (printer, "no-gpg-verify");
 
           flatpak_table_printer_finish_row (printer);
         }
