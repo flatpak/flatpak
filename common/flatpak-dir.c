@@ -3414,13 +3414,24 @@ extract_extra_data (FlatpakDir          *self,
   g_autoptr(GVariant) detached_metadata = NULL;
   g_autoptr(GVariant) extra_data = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
+  g_autoptr(GError) local_error = NULL;
   gsize i, n_extra_data = 0;
   gsize n_extra_data_sources;
 
   extra_data_sources = flatpak_repo_get_extra_data_sources (self->repo, checksum,
-                                                            cancellable, NULL);
+                                                            cancellable, &local_error);
   if (extra_data_sources == NULL)
-    return TRUE;
+    {
+      /* This should protect us against potential errors at the OSTree level
+         (e.g. ostree_repo_load_variant), so that we don't report success. */
+      if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+
+      return TRUE;
+    }
 
   n_extra_data_sources = g_variant_n_children (extra_data_sources);
   if (n_extra_data_sources == 0)
