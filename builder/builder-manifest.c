@@ -42,6 +42,7 @@ struct BuilderManifest
   char           *id;
   char           *id_platform;
   char           *branch;
+  char           *type;
   char           *runtime;
   char           *runtime_commit;
   char           *runtime_version;
@@ -67,6 +68,7 @@ struct BuilderManifest
   char           *desktop_file_name_prefix;
   char           *desktop_file_name_suffix;
   gboolean        build_runtime;
+  gboolean        build_extension;
   gboolean        writable_sdk;
   gboolean        appstream_compose;
   char          **sdk_extensions;
@@ -112,6 +114,7 @@ enum {
   PROP_CLEANUP_COMMANDS,
   PROP_CLEANUP_PLATFORM,
   PROP_BUILD_RUNTIME,
+  PROP_BUILD_EXTENSION,
   PROP_SEPARATE_LOCALES,
   PROP_WRITABLE_SDK,
   PROP_APPSTREAM_COMPOSE,
@@ -318,6 +321,10 @@ builder_manifest_get_property (GObject    *object,
       g_value_set_boolean (value, self->build_runtime);
       break;
 
+    case PROP_BUILD_EXTENSION:
+      g_value_set_boolean (value, self->build_extension);
+      break;
+
     case PROP_SEPARATE_LOCALES:
       g_value_set_boolean (value, self->separate_locales);
       break;
@@ -506,6 +513,10 @@ builder_manifest_set_property (GObject      *object,
 
     case PROP_BUILD_RUNTIME:
       self->build_runtime = g_value_get_boolean (value);
+      break;
+
+    case PROP_BUILD_EXTENSION:
+      self->build_extension = g_value_get_boolean (value);
       break;
 
     case PROP_SEPARATE_LOCALES:
@@ -738,6 +749,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_BUILD_RUNTIME,
                                    g_param_spec_boolean ("build-runtime",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_BUILD_EXTENSION,
+                                   g_param_spec_boolean ("build-extension",
                                                          "",
                                                          "",
                                                          FALSE,
@@ -1156,13 +1174,20 @@ builder_manifest_init_app_dir (BuilderManifest *self,
   g_ptr_array_add (args, g_strdup ("build-init"));
   if (self->writable_sdk || self->build_runtime)
     {
-      g_ptr_array_add (args, g_strdup ("--type=runtime"));
+      if (self->build_runtime)
+        g_ptr_array_add (args, g_strdup ("--type=runtime"));
+      else
+        g_ptr_array_add (args, g_strdup ("--writable-sdk"));
 
       for (i = 0; self->sdk_extensions != NULL && self->sdk_extensions[i] != NULL; i++)
         {
           const char *ext = self->sdk_extensions[i];
           g_ptr_array_add (args, g_strdup_printf ("--sdk-extension=%s", ext));
         }
+    }
+  if (self->build_extension)
+    {
+      g_ptr_array_add (args, g_strdup ("--type=extension"));
     }
   if (self->tags)
     {
@@ -1236,6 +1261,7 @@ builder_manifest_checksum (BuilderManifest *self,
   builder_cache_checksum_boolean (cache, self->writable_sdk);
   builder_cache_checksum_strv (cache, self->sdk_extensions);
   builder_cache_checksum_boolean (cache, self->build_runtime);
+  builder_cache_checksum_boolean (cache, self->build_extension);
   builder_cache_checksum_boolean (cache, self->separate_locales);
   builder_cache_checksum_str (cache, self->base);
   builder_cache_checksum_str (cache, self->base_version);
@@ -1363,7 +1389,14 @@ builder_manifest_build (BuilderManifest *self,
   builder_context_set_options (context, self->build_options);
   builder_context_set_global_cleanup (context, (const char **) self->cleanup);
   builder_context_set_global_cleanup_platform (context, (const char **) self->cleanup_platform);
+  if (self->build_runtime && self->build_extension)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Can't build boh a runtime and an extension");
+      return FALSE;
+    }
   builder_context_set_build_runtime (context, self->build_runtime);
+  builder_context_set_build_extension (context, self->build_extension);
   builder_context_set_separate_locales (context, self->separate_locales);
 
   g_print ("Starting build of %s\n", self->id ? self->id : "app");
