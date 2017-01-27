@@ -1,3 +1,31 @@
+Major changes in 0.8.2
+======================
+
+This is a bugfix and security update.
+
+Some of the bind-mounts that flatpak sets up were not read-only as
+they should have. This includes: extensions, system fonts,
+resolv.conf, localtime and machine-id. Many of thse are typically only
+writable by root, but some, like the user-specific fonts and
+user-installed extensions could be modified from the sandbox.
+
+Everyone using 0.8.x is recommended to update to this version.
+
+Other fixes:
+
+ * There are new configure options for where to install dbus configuration
+ * Broken symlinks in the root directory no longer break flatpak run
+ * flatpak run with HOME in /var now works
+ * dri access now also handles mali devices
+ * install handles --arch when installing flatpakrefs
+ * system-helper activation fixed on systemd-less setups
+ * dbus-proxy now works without /run
+ * During installation, failing to update a dependency is now not
+   fatal.
+ * /etc is now fully writable when building runtimes
+ * --filesystem=xdg-config/foo now sets up the bind-mount from the host dir
+   even when not using :create.
+
 Major changes in 0.8.1
 ======================
 
