@@ -6,8 +6,15 @@ DIR=`mktemp -d`
 
 EXTRA="${1-}"
 
+ARCH=`flatpak --default-arch`
+
 # Init dir
-flatpak build-init ${DIR} org.test.Hello org.test.Platform org.test.Platform
+cat > ${DIR}/metadata <<EOF
+[Application]
+name=org.test.Hello
+runtime=org.test.Platform/$ARCH/master
+sdk=org.test.Platform/$ARCH/master
+EOF
 
 mkdir -p ${DIR}/files/bin
 cat > ${DIR}/files/bin/hello.sh <<EOF
@@ -53,7 +60,11 @@ gzip -c > ${DIR}/files/share/app-info/xmls/org.test.Hello.xml.gz <<EOF
 EOF
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/
 
+echo AAAAAAAAAA
+ls -l ${DIR}
 flatpak build-finish --command=hello.sh ${DIR}
+echo BBBBBBBBB
+ls -l ${DIR}
 mkdir -p repos
-flatpak build-export ${GPGARGS-} repos/test ${DIR}
+strace flatpak build-export ${GPGARGS-} repos/test ${DIR}
 rm -rf ${DIR}
