@@ -32,9 +32,12 @@ make_extension () {
 
     local DIR=`mktemp -d`
 
-    ${FLATPAK} build-init ${DIR} ${ID} ${ID} ${ID}
-    sed -i s/Application/Runtime/ ${DIR}/metadata
+    cat > ${DIR}/metadata <<EOF
+[Runtime]
+name=${ID}
+EOF
     mkdir -p ${DIR}/usr
+    mkdir -p ${DIR}/files
     touch ${DIR}/usr/exists
     touch ${DIR}/usr/extension-$ID:$VERSION
 

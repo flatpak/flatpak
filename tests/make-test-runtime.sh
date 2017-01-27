@@ -7,8 +7,14 @@ DIR=`mktemp -d`
 ID=$1
 shift
 
-flatpak build-init ${DIR} ${ID} ${ID} ${ID}
-sed -i s/Application/Runtime/ ${DIR}/metadata
+mkdir ${DIR}/files
+mkdir ${DIR}/usr
+cat > ${DIR}/metadata <<EOF
+[Runtime]
+name=${ID}
+EOF
+
+cat ${DIR}/metadata
 
 # Add bash and dependencies
 mkdir -p ${DIR}/usr/bin
