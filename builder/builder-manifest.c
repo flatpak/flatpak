@@ -1156,7 +1156,7 @@ builder_manifest_init_app_dir (BuilderManifest *self,
   g_ptr_array_add (args, g_strdup ("build-init"));
   if (self->writable_sdk || self->build_runtime)
     {
-      g_ptr_array_add (args, g_strdup ("-w"));
+      g_ptr_array_add (args, g_strdup ("--type=runtime"));
 
       for (i = 0; self->sdk_extensions != NULL && self->sdk_extensions[i] != NULL; i++)
         {
@@ -2151,6 +2151,30 @@ builder_manifest_create_platform (BuilderManifest *self,
           if (!g_file_copy (src_metadata, dest_metadata, G_FILE_COPY_OVERWRITE, NULL,
                             NULL, NULL, error))
             return FALSE;
+        }
+      else
+        {
+          g_autoptr(GFile) metadata = g_file_get_child (app_dir, "metadata");
+          g_autoptr(GFile) dest_metadata = g_file_get_child (app_dir, "metadata.platform");
+          g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+
+          if (!g_key_file_load_from_file (keyfile,
+                                          flatpak_file_get_path_cached (metadata),
+                                          G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS,
+                                          error))
+            {
+              g_prefix_error (error, "Can't load metadata file: ");
+              return FALSE;
+            }
+
+          g_key_file_set_string (keyfile, "Runtime", "name", self->id_platform);
+          if (!g_key_file_save_to_file (keyfile,
+                                        flatpak_file_get_path_cached (dest_metadata),
+                                        error))
+            {
+              g_prefix_error (error, "Can't save metadata.platform: ");
+              return FALSE;
+            }
         }
 
       for (l = self->expanded_modules; l != NULL; l = l->next)
