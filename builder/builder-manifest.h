@@ -26,6 +26,7 @@
 #include "flatpak-run.h"
 #include "builder-options.h"
 #include "builder-module.h"
+#include "builder-finish-options.h"
 #include "builder-cache.h"
 
 G_BEGIN_DECLS

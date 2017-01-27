@@ -37,44 +37,45 @@
 
 struct BuilderManifest
 {
-  GObject         parent;
+  GObject               parent;
 
-  char           *id;
-  char           *id_platform;
-  char           *branch;
-  char           *runtime;
-  char           *runtime_commit;
-  char           *runtime_version;
-  char           *sdk;
-  char           *sdk_commit;
-  char           *var;
-  char           *base;
-  char           *base_commit;
-  char           *base_version;
-  char          **base_extensions;
-  char           *metadata;
-  char           *metadata_platform;
-  gboolean        separate_locales;
-  char          **cleanup;
-  char          **cleanup_commands;
-  char          **cleanup_platform;
-  char          **finish_args;
-  char          **tags;
-  char           *rename_desktop_file;
-  char           *rename_appdata_file;
-  char           *rename_icon;
-  gboolean        copy_icon;
-  char           *desktop_file_name_prefix;
-  char           *desktop_file_name_suffix;
-  gboolean        build_runtime;
-  gboolean        writable_sdk;
-  gboolean        appstream_compose;
-  char          **sdk_extensions;
-  char          **platform_extensions;
-  char           *command;
-  BuilderOptions *build_options;
-  GList          *modules;
-  GList          *expanded_modules;
+  char                 *id;
+  char                 *id_platform;
+  char                 *branch;
+  char                 *runtime;
+  char                 *runtime_commit;
+  char                 *runtime_version;
+  char                 *sdk;
+  char                 *sdk_commit;
+  char                 *var;
+  char                 *base;
+  char                 *base_commit;
+  char                 *base_version;
+  char                **base_extensions;
+  char                 *metadata;
+  char                 *metadata_platform;
+  gboolean              separate_locales;
+  char                **cleanup;
+  char                **cleanup_commands;
+  char                **cleanup_platform;
+  char                **finish_args;
+  BuilderFinishOptions *finish_options;
+  char                **tags;
+  char                 *rename_desktop_file;
+  char                 *rename_appdata_file;
+  char                 *rename_icon;
+  gboolean              copy_icon;
+  char                 *desktop_file_name_prefix;
+  char                 *desktop_file_name_suffix;
+  gboolean              build_runtime;
+  gboolean              writable_sdk;
+  gboolean              appstream_compose;
+  char                **sdk_extensions;
+  char                **platform_extensions;
+  char                 *command;
+  BuilderOptions       *build_options;
+  GList                *modules;
+  GList                *expanded_modules;
 };
 
 typedef struct
@@ -118,6 +119,7 @@ enum {
   PROP_SDK_EXTENSIONS,
   PROP_PLATFORM_EXTENSIONS,
   PROP_FINISH_ARGS,
+  PROP_FINISH_OPTIONS,
   PROP_TAGS,
   PROP_RENAME_DESKTOP_FILE,
   PROP_RENAME_APPDATA_FILE,
@@ -310,6 +312,10 @@ builder_manifest_get_property (GObject    *object,
       g_value_set_boxed (value, self->finish_args);
       break;
 
+    case PROP_FINISH_OPTIONS:
+      g_value_set_object (value, self->finish_options);
+      break;
+
     case PROP_TAGS:
       g_value_set_boxed (value, self->tags);
       break;
@@ -496,6 +502,10 @@ builder_manifest_set_property (GObject      *object,
       tmp = self->finish_args;
       self->finish_args = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
+      break;
+
+    case PROP_FINISH_OPTIONS:
+      g_set_object (&self->finish_options, g_value_get_object (value));
       break;
 
     case PROP_TAGS:
@@ -735,6 +745,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                        "",
                                                        G_TYPE_STRV,
                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_FINISH_OPTIONS,
+                                   g_param_spec_object ("finish-options",
+					                "",
+							"",
+							BUILDER_TYPE_FINISH_OPTIONS,
+							G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_BUILD_RUNTIME,
                                    g_param_spec_boolean ("build-runtime",
@@ -2354,6 +2371,7 @@ builder_manifest_run (BuilderManifest *self,
   g_autofree char *ccache_dir_path = NULL;
   g_auto(GStrv) env = NULL;
   g_auto(GStrv) build_args = NULL;
+  char **arch_finish_args = NULL;
   int i;
 
   if (!flatpak_mkdir_p (builder_context_get_build_dir (context),
@@ -2402,6 +2420,17 @@ builder_manifest_run (BuilderManifest *self,
             g_ptr_array_add (args, g_strdup (arg));
         }
     }
+
+  arch_finish_args = builder_finish_options_get_finish_args (self->finish_options, context);
+  if (arch_finish_args != NULL)
+    {
+      for (i = 0; arch_finish_args[i] != NULL; i++)
+        {
+          const char *arg = arch_finish_args[i];
+	  g_ptr_array_add (args, g_strdup (arg));
+	}
+    }
+
 
   flatpak_context_to_args (arg_context, args);
 
