@@ -899,7 +899,9 @@ builder_module_handle_debuginfo (BuilderModule  *self,
                     }
                 }
             }
-          else if (!builder_options_get_no_debuginfo (self->build_options, context))
+          else if (!builder_options_get_no_debuginfo (self->build_options, context) &&
+                   /* No support for debuginfo for extensions atm */
+                   !builder_context_get_build_extension (context))
             {
               g_autofree char *rel_path_dir = g_path_get_dirname (rel_path);
               g_autofree char *filename = g_path_get_basename (rel_path);

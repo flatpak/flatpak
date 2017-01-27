@@ -482,7 +482,7 @@ main (int    argc,
       g_print ("Exporting %s to repo\n", builder_manifest_get_id (manifest));
 
       if (!do_export (build_context, &error,
-                      builder_context_get_build_runtime (build_context),
+                      FALSE,
                       "--exclude=/lib/debug/*",
                       "--include=/lib/debug/app",
                       builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
