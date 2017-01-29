@@ -51,6 +51,9 @@ assert_not_has_file appdir/files/bin/file.cleanup
 assert_has_file appdir/files/cleaned_up > out
 assert_has_file appdir/files/share/icons/org.test.Hello.png
 
+assert_file_has_content appdir/files/out '^foo$'
+assert_file_has_content appdir/files/out2 '^foo2$'
+
 ${FLATPAK} build appdir /app/bin/hello2.sh > hello_out2
 assert_file_has_content hello_out2 '^Hello world2, from a sandbox$'
 
