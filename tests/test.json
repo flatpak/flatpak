@@ -27,6 +27,7 @@
                     "post-install": [ "touch /app/bin/file.cleanup", "mkdir -p /app/share/icons/", "cp org.test.Hello.png /app/share/icons/" ],
                     "make-args": ["BAR=2" ],
                     "make-install-args": ["BAR=3" ],
+                    "build-commands": [ "echo foo > /app/out" ],
                     "sources": [
                         {
                             "type": "file",
@@ -54,6 +55,17 @@
                             "type": "patch",
                             "path": "0001-Add-test-logo.patch",
                             "use-git": true
+                        }
+                    ]
+                },
+                {
+                    "name": "test2",
+                    "build-commands": [ "echo foo2 > /app/out2" ],
+                    "buildsystem": "simple",
+                    "sources": [
+                        {
+                            "type": "file",
+                            "path": "app-data"
                         }
                     ]
                 },

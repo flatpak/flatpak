@@ -60,6 +60,7 @@ struct BuilderModule
   char          **cleanup_platform;
   GList          *sources;
   GList          *modules;
+  char          **build_commands;
 };
 
 typedef struct
@@ -93,6 +94,7 @@ enum {
   PROP_CLEANUP_PLATFORM,
   PROP_POST_INSTALL,
   PROP_MODULES,
+  PROP_BUILD_COMMANDS,
   LAST_PROP
 };
 
@@ -115,6 +117,7 @@ builder_module_finalize (GObject *object)
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_platform);
   g_list_free_full (self->modules, g_object_unref);
+  g_strfreev (self->build_commands);
 
   if (self->changes)
     g_ptr_array_unref (self->changes);
@@ -206,6 +209,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_MODULES:
       g_value_set_pointer (value, self->modules);
+      break;
+
+    case PROP_BUILD_COMMANDS:
+      g_value_set_boxed (value, self->build_commands);
       break;
 
     default:
@@ -321,6 +328,12 @@ builder_module_set_property (GObject      *object,
       g_list_free_full (self->modules, g_object_unref);
       /* NOTE: This takes ownership of the list! */
       self->modules = g_value_get_pointer (value);
+      break;
+
+    case PROP_BUILD_COMMANDS:
+      tmp = self->build_commands;
+      self->build_commands = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
       break;
 
     default:
@@ -468,6 +481,13 @@ builder_module_class_init (BuilderModuleClass *klass)
                                                          "",
                                                          "",
                                                          G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_BUILD_COMMANDS,
+                                   g_param_spec_boxed ("build-commands",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
 }
 
 static void
@@ -903,7 +923,7 @@ builder_module_build (BuilderModule  *self,
   g_autofree char *make_l = NULL;
   const char *make_cmd = NULL;
 
-  gboolean autotools = FALSE, cmake = FALSE, cmake_ninja = FALSE, meson = FALSE;
+  gboolean autotools = FALSE, cmake = FALSE, cmake_ninja = FALSE, meson = FALSE, simple = FALSE;
   g_autoptr(GFile) configure_file = NULL;
   GFile *build_parent_dir = NULL;
   g_autoptr(GFile) build_dir = NULL;
@@ -1020,6 +1040,8 @@ builder_module_build (BuilderModule  *self,
     autotools = TRUE;
   else if (!strcmp (self->buildsystem, "cmake-ninja"))
     cmake_ninja = TRUE;
+  else if (!strcmp (self->buildsystem, "simple"))
+    simple = TRUE;
   else
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Invalid buildsystem: \"%s\"",
@@ -1027,7 +1049,16 @@ builder_module_build (BuilderModule  *self,
       return FALSE;
     }
 
-  if (cmake || cmake_ninja)
+  if (simple)
+    {
+      if (!self->build_commands)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Buildsystem simple requires specifying \"build-commands\"",
+                       self->name);
+          return FALSE;
+        }
+    }
+  else if (cmake || cmake_ninja)
     {
       g_autoptr(GFile) cmake_file = NULL;
 
@@ -1065,9 +1096,10 @@ builder_module_build (BuilderModule  *self,
         }
     }
 
-  has_configure = g_file_query_exists (configure_file, NULL);
+  if (configure_file)
+    has_configure = g_file_query_exists (configure_file, NULL);
 
-  if (!has_configure && !self->no_autogen)
+  if (configure_file && !has_configure && !self->no_autogen)
     {
       const char *autogen_names[] =  {"autogen", "autogen.sh", "bootstrap", NULL};
       g_autofree char *autogen_cmd = NULL;
@@ -1106,7 +1138,7 @@ builder_module_build (BuilderModule  *self,
       has_configure = TRUE;
     }
 
-  if (has_configure)
+  if (configure_file && has_configure)
     {
       const char *configure_cmd;
       const char *cmake_generator = NULL;
@@ -1172,7 +1204,6 @@ builder_module_build (BuilderModule  *self,
               configure_cmd = "./configure";
             }
         }
-
 
       if (cmake)
         cmake_generator = "Unix Makefiles";
@@ -1240,19 +1271,8 @@ builder_module_build (BuilderModule  *self,
       make_l = g_strdup_printf ("-l%d", 2 * builder_context_get_jobs (context));
     }
 
-  if (meson || cmake_ninja)
-    make_cmd = "ninja";
-  else
-    make_cmd = "make";
-
   if (run_shell)
     {
-      int i;
-
-      g_print ("To build, run: %s\n", make_cmd);
-      for (i = 0; self->make_args != NULL && self->make_args[i] != NULL; i++)
-        g_print (" %s", self->make_args[i]);
-
       if (!shell (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error))
         return FALSE;
       return TRUE;
@@ -1260,13 +1280,34 @@ builder_module_build (BuilderModule  *self,
 
   /* Build and install */
 
-  if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
-              make_cmd, make_j ? make_j : skip_arg, make_l ? make_l : skip_arg, strv_arg, self->make_args, NULL))
-    return FALSE;
+  if (meson || cmake_ninja)
+    make_cmd = "ninja";
+  else if (simple)
+    make_cmd = NULL;
+  else
+    make_cmd = "make";
 
-  if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
-              make_cmd, "install", strv_arg, self->make_install_args, NULL))
-    return FALSE;
+  if (make_cmd)
+    {
+      if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
+                  make_cmd, make_j ? make_j : skip_arg, make_l ? make_l : skip_arg, strv_arg, self->make_args, NULL))
+        return FALSE;
+    }
+
+  for (i = 0; self->build_commands != NULL && self->build_commands[i] != NULL; i++)
+    {
+      g_print ("Running: %s\n", self->build_commands[i]);
+      if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
+                  "/bin/sh", "-c", self->build_commands[i], NULL))
+        return FALSE;
+    }
+
+  if (make_cmd)
+    {
+      if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
+                  make_cmd, "install", strv_arg, self->make_install_args, NULL))
+        return FALSE;
+    }
 
   /* Post installation scripts */
 
