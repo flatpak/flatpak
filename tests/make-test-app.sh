@@ -60,11 +60,7 @@ gzip -c > ${DIR}/files/share/app-info/xmls/org.test.Hello.xml.gz <<EOF
 EOF
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/
 
-echo AAAAAAAAAA
-ls -l ${DIR}
 flatpak build-finish --command=hello.sh ${DIR}
-echo BBBBBBBBB
-ls -l ${DIR}
 mkdir -p repos
-strace flatpak build-export ${GPGARGS-} repos/test ${DIR}
+flatpak build-export ${GPGARGS-} repos/test ${DIR}
 rm -rf ${DIR}
