@@ -1182,7 +1182,7 @@ builder_module_build (BuilderModule  *self,
   g_autofree char *make_l = NULL;
   const char *make_cmd = NULL;
 
-  gboolean autotools = FALSE, cmake = FALSE, cmake_ninja = FALSE, meson = FALSE;
+  gboolean autotools = FALSE, cmake = FALSE, cmake_ninja = FALSE, meson = FALSE, perl = FALSE;
   g_autoptr(GFile) configure_file = NULL;
   GFile *build_parent_dir = NULL;
   g_autoptr(GFile) build_dir = NULL;
@@ -1298,6 +1298,8 @@ builder_module_build (BuilderModule  *self,
     autotools = TRUE;
   else if (!strcmp (self->buildsystem, "cmake-ninja"))
     cmake_ninja = TRUE;
+  else if (!strcmp (self->buildsystem, "perl"))
+    perl = TRUE;
   else
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Invalid buildsystem: \"%s\"",
@@ -1328,6 +1330,18 @@ builder_module_build (BuilderModule  *self,
           return FALSE;
         }
       configure_file = g_object_ref (meson_file);
+    }
+  else if (perl)
+    {
+      g_autoptr(GFile) perl_file = NULL;
+
+      perl_file = g_file_get_child (source_subdir, "Makefile.PL");
+      if (!g_file_query_exists (perl_file, NULL))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module: %s: Can't find Makefile.PL", self->name);
+	  return FALSE;
+	}
+      configure_file = g_object_ref (perl_file);
     }
   else if (autotools)
     {
@@ -1426,6 +1440,11 @@ builder_module_build (BuilderModule  *self,
               configure_cmd = "meson";
               configure_final_arg = g_strdup ("..");
             }
+	  else if (perl)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Perl does not support building in builddir, set \"builddir\" to false.", self->name);
+	      return FALSE;
+	    }
           else
             {
               configure_cmd = "../configure";
@@ -1445,7 +1464,12 @@ builder_module_build (BuilderModule  *self,
               g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Meson does not support building in sourcedir, set \"builddir\" to true.", self->name);
               return FALSE;
             }
-            else
+	  else if (perl)
+            {
+              configure_cmd = "perl";
+	      configure_final_arg = g_strdup (".");
+            }
+          else
             {
               configure_cmd = "./configure";
             }
@@ -1463,6 +1487,14 @@ builder_module_build (BuilderModule  *self,
                                                                 builder_options_get_prefix (self->build_options, context)));
           g_ptr_array_add (configure_args_arr, g_strdup ("-G"));
           g_ptr_array_add (configure_args_arr, g_strdup_printf ("%s", cmake_generator));
+        }
+      else if (perl)
+        {
+          g_ptr_array_add (configure_args_arr, g_strdup ("Makefile.PL"));
+          g_ptr_array_add (configure_args_arr, g_strdup_printf ("PREFIX=%s",
+                                                                builder_options_get_prefix (self->build_options, context)));
+	  g_ptr_array_add (configure_args_arr, g_strdup_printf ("LIB=%s/lib",
+                                                                builder_options_get_prefix (self->build_options, context)));
         }
       else /* autotools and meson */
         {
