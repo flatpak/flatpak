@@ -2123,8 +2123,7 @@ flatpak_dir_pull (FlatpakDir          *self,
       goto out;
     }
 
-  if (g_str_has_prefix (ref, "app/") &&
-      !flatpak_dir_pull_extra_data (self, repo,
+  if (!flatpak_dir_pull_extra_data (self, repo,
                                     repository,
                                     ref, rev,
                                     flatpak_flags,
@@ -3583,7 +3582,7 @@ apply_extra_data (FlatpakDir          *self,
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
   g_autoptr(GKeyFile) metakey = NULL;
-  g_autofree char *app_id = NULL;
+  g_autofree char *id = NULL;
   g_autofree char *runtime = NULL;
   g_autofree char *runtime_ref = NULL;
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
@@ -3599,6 +3598,8 @@ apply_extra_data (FlatpakDir          *self,
   g_autoptr(GArray) fd_array = NULL;
   g_auto(GStrv) envp = NULL;
   int exit_status;
+  const char *group = "Application";
+  g_autoptr(GError) local_error = NULL;
 
   apply_extra_file = g_file_resolve_relative_path (checkoutdir, "files/bin/apply_extra");
   if (!g_file_query_exists (apply_extra_file, cancellable))
@@ -3613,11 +3614,20 @@ apply_extra_data (FlatpakDir          *self,
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     return FALSE;
 
-  app_id = g_key_file_get_string (metakey, "Application", "name", error);
-  if (app_id == NULL)
-    return FALSE;
+  id = g_key_file_get_string (metakey, group, "name", &local_error);
+  if (id == NULL)
+    {
+      group = "Runtime";
+      id = g_key_file_get_string (metakey, group, "name", NULL);
+      if (id == NULL)
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+      g_clear_error (&local_error);
+    }
 
-  runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
+  runtime = g_key_file_get_string (metakey, group, "runtime", error);
   if (runtime == NULL)
     return FALSE;
 
@@ -3658,7 +3668,7 @@ apply_extra_data (FlatpakDir          *self,
   app_context = flatpak_context_new ();
 
   envp = flatpak_run_get_minimal_env (FALSE);
-  flatpak_run_add_environment_args (argv_array, fd_array, &envp, NULL, NULL, app_id,
+  flatpak_run_add_environment_args (argv_array, fd_array, &envp, NULL, NULL, id,
                                     app_context, NULL);
 
   g_ptr_array_add (argv_array, g_strdup ("/app/bin/apply_extra"));
