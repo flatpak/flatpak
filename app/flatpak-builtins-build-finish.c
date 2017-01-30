@@ -39,6 +39,8 @@ static char *opt_require_version;
 static char **opt_extra_data;
 static char **opt_extensions;
 static gboolean opt_no_exports;
+static char *opt_sdk;
+static char *opt_runtime;
 
 static GOptionEntry options[] = {
   { "command", 0, 0, G_OPTION_ARG_STRING, &opt_command, N_("Command to set"), N_("COMMAND") },
@@ -46,6 +48,8 @@ static GOptionEntry options[] = {
   { "no-exports", 0, 0, G_OPTION_ARG_NONE, &opt_no_exports, N_("Don't process exports"), NULL },
   { "extra-data", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extra_data, N_("Extra data info") },
   { "extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extensions, N_("Add extension point info"),  N_("NAME=VARIABLE[=VALUE]") },
+  { "sdk", 0, 0, G_OPTION_ARG_STRING, &opt_sdk, N_("Change the sdk used for the app"),  N_("SDK") },
+  { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Change the runtime used for the app"),  N_("RUNTIME") },
   { NULL }
 };
 
@@ -244,31 +248,107 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   GError *temp_error = NULL;
+  const char *group;
   int i;
 
   metadata = g_file_get_child (base, "metadata");
   if (!g_file_query_exists (metadata, cancellable))
     goto out;
 
+  if (is_runtime)
+    group = "Runtime";
+  else
+    group = "Application";
+
   path = g_file_get_path (metadata);
   keyfile = g_key_file_new ();
   if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, error))
     goto out;
 
+  if (opt_sdk != NULL || opt_runtime != NULL)
+    {
+      g_autofree char *old_runtime = g_key_file_get_string (keyfile, group, "runtime", NULL);
+      g_autofree char *old_sdk = g_key_file_get_string (keyfile, group, "sdk", NULL);
+      const char *old_sdk_arch = NULL;
+      const char *old_runtime_arch = NULL;
+      const char *old_sdk_branch = NULL;
+      const char *old_runtime_branch = NULL;
+      g_auto(GStrv) old_sdk_parts = NULL;
+      g_auto(GStrv) old_runtime_parts = NULL;
+
+      if (old_sdk)
+        old_sdk_parts = g_strsplit (old_sdk, "/", 3);
+
+      if (old_runtime)
+        old_runtime_parts = g_strsplit (old_runtime, "/", 3);
+
+      if (old_sdk_parts != NULL)
+        {
+          old_sdk_arch = old_sdk_parts[1];
+          old_sdk_branch = old_sdk_parts[2];
+        }
+      if (old_runtime_parts != NULL)
+        {
+          old_runtime_arch = old_runtime_parts[1];
+          old_runtime_branch = old_runtime_parts[2];
+
+          /* Use the runtime as fallback if sdk is not specified */
+          if (old_sdk_parts == NULL)
+            {
+              old_sdk_arch = old_runtime_parts[1];
+              old_sdk_branch = old_runtime_parts[2];
+            }
+        }
+
+      if (opt_sdk)
+        {
+          g_autofree char *id = NULL;
+          g_autofree char *arch = NULL;
+          g_autofree char *branch = NULL;
+          g_autofree char *ref = NULL;
+          FlatpakKinds kinds;
+
+          if (!flatpak_split_partial_ref_arg (opt_sdk, FLATPAK_KINDS_RUNTIME,
+                                              old_sdk_arch, old_sdk_branch ? old_sdk_branch : "master",
+                                              &kinds, &id, &arch, &branch, error))
+            return FALSE;
+
+          ref = flatpak_build_untyped_ref (id, branch, arch);
+          g_key_file_set_string (keyfile, group, "sdk", ref);
+        }
+
+      if (opt_runtime)
+        {
+          g_autofree char *id = NULL;
+          g_autofree char *arch = NULL;
+          g_autofree char *branch = NULL;
+          g_autofree char *ref = NULL;
+          FlatpakKinds kinds;
+
+          if (!flatpak_split_partial_ref_arg (opt_runtime, FLATPAK_KINDS_RUNTIME,
+                                              old_runtime_arch, old_runtime_branch ? old_runtime_branch : "master",
+                                              &kinds, &id, &arch, &branch, error))
+            return FALSE;
+
+          ref = flatpak_build_untyped_ref (id, branch, arch);
+          g_key_file_set_string (keyfile, group, "runtime", ref);
+        }
+    }
+
   if (!is_runtime)
     {
-      if (g_key_file_has_key (keyfile, "Application", "command", NULL))
+      if (g_key_file_has_key (keyfile, group, "command", NULL))
         {
           g_debug ("Command key is present");
 
           if (opt_command)
-            g_key_file_set_string (keyfile, "Application", "command", opt_command);
+            g_key_file_set_string (keyfile, group, "command", opt_command);
         }
       else if (opt_command)
         {
           g_debug ("Using explicitly provided command %s", opt_command);
 
-          g_key_file_set_string (keyfile, "Application", "command", opt_command);
+          g_key_file_set_string (keyfile, group, "command", opt_command);
         }
       else
         {
@@ -304,7 +384,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
           if (command)
             {
               g_print ("Using %s as command\n", command);
-              g_key_file_set_string (keyfile, "Application", "command", command);
+              g_key_file_set_string (keyfile, group, "command", command);
             }
           else
             {
@@ -314,7 +394,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
     }
 
   if (opt_require_version)
-    g_key_file_set_string (keyfile, is_runtime ? "Runtime" : "Application", "required-flatpak", opt_require_version);
+    g_key_file_set_string (keyfile, group, "required-flatpak", opt_require_version);
 
   app_context = flatpak_context_new ();
   if (!flatpak_context_load_metadata (app_context, keyfile, error))
