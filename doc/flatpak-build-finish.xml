@@ -277,6 +277,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--runtime=RUNTIME</option></term>
+                <term><option>--sdk=SDK</option></term>
+
+                <listitem><para>
+                  Change the runtime or sdk used by the app to the specified partial ref. Unspecified parts
+                  of the ref are taken from the old values or defaults.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--extra-data=NAME:SHA256:DOWNLOAD-SIZE:INSTALL-SIZE:URL</option></term>
 
                 <listitem><para>
