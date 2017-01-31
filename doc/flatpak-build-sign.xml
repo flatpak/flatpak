@@ -135,16 +135,8 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak build-export ~/repos/gnome-calculator/ ~/build/gnome-calculator/ org.gnome.Calculator</command>
+            <command>$ flatpak build-sign --gpg-sign=D8BA6573DDD2418027736F1BC33B315E53C1E9D6 /some/repo org.my.App</command>
         </para>
-<programlisting>
-Commit: 9d0044ea480297114d03aec85c3d7ae3779438f9d2cb69d717fb54237acacb8c
-Metadata Total: 605
-Metadata Written: 5
-Content Total: 1174
-Content Written: 1
-Content Bytes Written: 305
-</programlisting>
 
     </refsect1>
 
