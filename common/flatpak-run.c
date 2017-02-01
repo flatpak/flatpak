@@ -2163,6 +2163,7 @@ flatpak_add_bus_filters (GPtrArray      *dbus_proxy_argv,
 
 gboolean
 flatpak_run_add_extension_args (GPtrArray    *argv_array,
+                                char       ***envp_p,
                                 GKeyFile     *metakey,
                                 const char   *full_ref,
                                 GCancellable *cancellable,
@@ -2210,6 +2211,20 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
         add_args (argv_array,
                   "--lock-file", ref,
                   NULL);
+
+      if (ext->add_ld_path)
+        {
+          g_autofree char *ld_path = g_build_filename (full_directory, ext->add_ld_path, NULL);
+          const gchar *old_ld_path = g_environ_getenv (*envp_p, "LD_LIBRARY_PATH");
+          g_autofree char *new_ld_path = NULL;
+
+          if (old_ld_path != NULL)
+            new_ld_path = g_strconcat (old_ld_path, ":", ld_path, NULL);
+          else
+            new_ld_path = g_strdup (new_ld_path);
+
+          *envp_p = g_environ_setenv (*envp_p, "LD_LIBRARY_PATH", new_ld_path , TRUE);
+        }
     }
 
   g_list_free_full (extensions, (GDestroyNotify) flatpak_extension_free);
@@ -4187,10 +4202,10 @@ flatpak_run_app (const char     *app_ref,
     return FALSE;
 
   if (metakey != NULL &&
-      !flatpak_run_add_extension_args (argv_array, metakey, app_ref, cancellable, error))
+      !flatpak_run_add_extension_args (argv_array, &envp, metakey, app_ref, cancellable, error))
     return FALSE;
 
-  if (!flatpak_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
+  if (!flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
   add_document_portal_args (argv_array, app_ref_parts[1]);
