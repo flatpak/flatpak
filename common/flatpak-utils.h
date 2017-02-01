@@ -324,6 +324,8 @@ typedef struct
   char *ref;
   char *directory;
   char *files_path;
+  char *add_ld_path;
+  int priority;
   gboolean needs_tmpfs;
   gboolean is_unmaintained;
 } FlatpakExtension;
