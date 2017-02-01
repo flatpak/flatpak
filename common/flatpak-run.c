@@ -2187,13 +2187,14 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   for (l = extensions; l != NULL; l = l->next)
     {
       FlatpakExtension *ext = l->data;
-      g_autofree char *full_directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
+      g_autofree char *directory = g_build_filename (is_app ? "/app" : "/usr", ext->directory, NULL);
+      g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
       g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
 
       if (ext->needs_tmpfs)
         {
-          g_autofree char *parent = g_path_get_dirname (full_directory);
+          g_autofree char *parent = g_path_get_dirname (directory);
           if (g_hash_table_lookup (mounted_tmpfs, parent) == NULL)
             {
               add_args (argv_array,
