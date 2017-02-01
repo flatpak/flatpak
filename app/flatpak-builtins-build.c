@@ -194,7 +194,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       g_autoptr(GKeyFile) x_metakey = NULL;
       g_autofree char *x_group = NULL;
       g_autofree char *x_dir = NULL;
+      g_autofree char *x_subdir_suffix = NULL;
       char *x_subdir = NULL;
+      g_autofree char *bare_extension_point = NULL;
 
       extensionof_deploy = flatpak_find_deploy_for_ref (extensionof_ref, cancellable, error);
       if (extensionof_deploy == NULL)
@@ -225,20 +227,25 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       if (x_dir == NULL)
         return FALSE;
 
+      x_subdir_suffix = g_key_file_get_string (x_metakey, x_group,
+                                               "subdirectory-suffix", NULL);
+
       if (is_app_extension)
         {
           app_files = flatpak_deploy_get_files (extensionof_deploy);
           app_files_ro = TRUE;
           if (x_subdir != NULL)
             extension_tmpfs_point = g_build_filename ("/app", x_dir, NULL);
-          extension_point = g_build_filename ("/app", x_dir, x_subdir, NULL);
+          bare_extension_point = g_build_filename ("/app", x_dir, x_subdir, NULL);
         }
       else
         {
           if (x_subdir != NULL)
             extension_tmpfs_point = g_build_filename ("/usr", x_dir, NULL);
-          extension_point = g_build_filename ("/usr", x_dir, x_subdir, NULL);
+          bare_extension_point = g_build_filename ("/usr", x_dir, x_subdir, NULL);
         }
+
+      extension_point = g_build_filename (bare_extension_point, x_subdir_suffix, NULL);
     }
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
