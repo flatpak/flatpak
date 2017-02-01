@@ -72,6 +72,7 @@ void           flatpak_context_to_args (FlatpakContext *context,
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
 
 gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
+                                          char       ***envp_p,
                                           GKeyFile     *metakey,
                                           const char   *full_ref,
                                           GCancellable *cancellable,

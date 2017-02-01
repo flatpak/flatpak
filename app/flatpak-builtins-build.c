@@ -215,12 +215,13 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   envp = flatpak_run_get_minimal_env (TRUE);
   envp = flatpak_run_apply_env_vars (envp, app_context);
-  flatpak_run_add_environment_args (argv_array, NULL, &envp, NULL, NULL, app_id,
-                                    app_context, NULL);
 
   if (!custom_usr &&
-      !flatpak_run_add_extension_args (argv_array, runtime_metakey, runtime_ref, cancellable, error))
+      !flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
+
+  flatpak_run_add_environment_args (argv_array, NULL, &envp, NULL, NULL, app_id,
+                                    app_context, NULL);
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
     {
