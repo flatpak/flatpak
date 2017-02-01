@@ -3451,6 +3451,7 @@ flatpak_extension_free (FlatpakExtension *extension)
   g_free (extension->directory);
   g_free (extension->files_path);
   g_free (extension->add_ld_path);
+  g_free (extension->subdir_suffix);
   g_free (extension);
 }
 
@@ -3470,6 +3471,7 @@ flatpak_extension_new (const char *id,
                        const char *ref,
                        const char *directory,
                        const char *add_ld_path,
+                       const char *subdir_suffix,
                        GFile *files,
                        gboolean is_unmaintained)
 {
@@ -3481,6 +3483,7 @@ flatpak_extension_new (const char *id,
   ext->directory = g_strdup (directory);
   ext->files_path = g_file_get_path (files);
   ext->add_ld_path = g_strdup (add_ld_path);
+  ext->subdir_suffix = g_strdup (subdir_suffix);
   ext->is_unmaintained = is_unmaintained;
 
   if (is_unmaintained)
@@ -3523,6 +3526,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
           g_autofree char *directory = g_key_file_get_string (metakey, groups[i], "directory", NULL);
           g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
           g_autofree char *add_ld_path = g_key_file_get_string (metakey, groups[i], "add-ld-path", NULL);
+          g_autofree char *subdir_suffix = g_key_file_get_string (metakey, groups[i], "subdirectory-suffix", NULL);
           g_autofree char *ref = NULL;
           const char *branch;
           gboolean is_unmaintained = FALSE;
@@ -3548,7 +3552,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
           /* Prefer a full extension (org.freedesktop.Locale) over subdirectory ones (org.freedesktop.Locale.sv) */
           if (files != NULL)
             {
-              ext = flatpak_extension_new (extension, extension, ref, directory, add_ld_path, files, is_unmaintained);
+              ext = flatpak_extension_new (extension, extension, ref, directory, add_ld_path, subdir_suffix, files, is_unmaintained);
               res = g_list_prepend (res, ext);
             }
           else if (g_key_file_get_boolean (metakey, groups[i],
@@ -3569,7 +3573,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
 
                   if (subdir_files)
                     {
-                      ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, add_ld_path, subdir_files, FALSE);
+                      ext = flatpak_extension_new (extension, refs[j], dir_ref, extended_dir, add_ld_path, subdir_suffix, subdir_files, FALSE);
                       ext->needs_tmpfs = TRUE;
                       res = g_list_prepend (res, ext);
                     }
@@ -3585,7 +3589,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
 
                   if (subdir_files)
                     {
-                      ext = flatpak_extension_new (extension, unmaintained_refs[j], dir_ref, extended_dir, add_ld_path, subdir_files, TRUE);
+                      ext = flatpak_extension_new (extension, unmaintained_refs[j], dir_ref, extended_dir, add_ld_path, subdir_suffix, subdir_files, TRUE);
                       ext->needs_tmpfs = TRUE;
                       res = g_list_prepend (res, ext);
                     }

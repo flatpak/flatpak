@@ -324,6 +324,7 @@ typedef struct
   char *ref;
   char *directory;
   char *files_path;
+  char *subdir_suffix;
   char *add_ld_path;
   int priority;
   gboolean needs_tmpfs;
