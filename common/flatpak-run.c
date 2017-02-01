@@ -2171,6 +2171,8 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   g_auto(GStrv) parts = NULL;
   gboolean is_app;
   GList *extensions, *l;
+  g_autoptr(GHashTable) mounted_tmpfs =
+    g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   parts = g_strsplit (full_ref, "/", 0);
   if (g_strv_length (parts) != 4)
@@ -2191,9 +2193,13 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
       if (ext->needs_tmpfs)
         {
           g_autofree char *parent = g_path_get_dirname (full_directory);
-          add_args (argv_array,
-                    "--tmpfs", parent,
-                    NULL);
+          if (g_hash_table_lookup (mounted_tmpfs, parent) == NULL)
+            {
+              add_args (argv_array,
+                        "--tmpfs", parent,
+                        NULL);
+              g_hash_table_insert (mounted_tmpfs, g_steal_pointer (&parent), "mounted");
+            }
         }
 
       add_args (argv_array,
