@@ -501,8 +501,16 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
 
   if (metakey)
     {
-      g_autofree char *required_version = g_key_file_get_string (metakey, "Application", "required-flatpak", NULL);
+      g_autofree char *required_version = NULL;
+      const char *group;
       int required_major, required_minor, required_micro;
+
+      if (g_str_has_prefix (ref, "app/"))
+        group = "Application";
+      else
+        group = "Runtime";
+
+      required_version = g_key_file_get_string (metakey, group, "required-flatpak", NULL);
       if (required_version)
         {
           if (sscanf (required_version, "%d.%d.%d", &required_major, &required_minor, &required_micro) != 3)
