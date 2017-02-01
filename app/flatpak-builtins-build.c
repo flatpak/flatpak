@@ -76,6 +76,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_autofree char *runtime_ref = NULL;
   g_autofree char *extensionof_ref = NULL;
   g_autofree char *extension_point = NULL;
+  g_autofree char *extension_tmpfs_point = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
@@ -228,10 +229,14 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
         {
           app_files = flatpak_deploy_get_files (extensionof_deploy);
           app_files_ro = TRUE;
+          if (x_subdir != NULL)
+            extension_tmpfs_point = g_build_filename ("/app", x_dir, NULL);
           extension_point = g_build_filename ("/app", x_dir, x_subdir, NULL);
         }
       else
         {
+          if (x_subdir != NULL)
+            extension_tmpfs_point = g_build_filename ("/usr", x_dir, NULL);
           extension_point = g_build_filename ("/usr", x_dir, x_subdir, NULL);
         }
     }
@@ -273,6 +278,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   else
     add_args (argv_array,
               "--dir", "/app",
+              NULL);
+
+  if (extension_tmpfs_point)
+    add_args (argv_array,
+              "--tmpfs", extension_tmpfs_point,
               NULL);
 
   if (extension_point)
