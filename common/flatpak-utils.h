@@ -326,6 +326,7 @@ typedef struct
   char *files_path;
   char *subdir_suffix;
   char *add_ld_path;
+  char **merge_dirs;
   int priority;
   gboolean needs_tmpfs;
   gboolean is_unmaintained;
