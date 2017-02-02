@@ -2191,10 +2191,12 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
       g_autofree char *full_directory = g_build_filename (directory, ext->subdir_suffix, NULL);
       g_autofree char *ref = g_build_filename (full_directory, ".ref", NULL);
       g_autofree char *real_ref = g_build_filename (ext->files_path, ext->directory, ".ref", NULL);
+      int i;
 
       if (ext->needs_tmpfs)
         {
           g_autofree char *parent = g_path_get_dirname (directory);
+
           if (g_hash_table_lookup (mounted_tmpfs, parent) == NULL)
             {
               add_args (argv_array,
@@ -2225,6 +2227,27 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
             new_ld_path = g_strdup (new_ld_path);
 
           *envp_p = g_environ_setenv (*envp_p, "LD_LIBRARY_PATH", new_ld_path , TRUE);
+        }
+
+      for (i = 0; ext->merge_dirs != NULL && ext->merge_dirs[i] != NULL; i++)
+        {
+          g_autofree char *parent = g_path_get_dirname (directory);
+          g_autofree char *merge_dir = g_build_filename (parent, ext->merge_dirs[i], NULL);
+          g_autofree char *source_dir = g_build_filename (ext->files_path, ext->merge_dirs[i], NULL);
+          g_auto(GLnxDirFdIterator) source_iter = { 0 };
+          struct dirent *dent;
+
+          if (glnx_dirfd_iterator_init_at (AT_FDCWD, source_dir, TRUE, &source_iter, NULL))
+            {
+              while (glnx_dirfd_iterator_next_dent (&source_iter, &dent, NULL, NULL) && dent != NULL)
+                {
+                  g_autofree char *symlink_path = g_build_filename (merge_dir, dent->d_name, NULL);
+                  g_autofree char *symlink = g_build_filename (directory, ext->merge_dirs[i], dent->d_name, NULL);
+                  add_args (argv_array,
+                            "--symlink", symlink, symlink_path,
+                            NULL);
+                }
+            }
         }
     }
 
