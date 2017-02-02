@@ -64,6 +64,8 @@ gboolean flatpak_is_in_sandbox (void);
 const char * flatpak_get_arch (void);
 const char ** flatpak_get_arches (void);
 
+const char ** flatpak_get_gl_drivers (void);
+
 const char * flatpak_get_bwrap (void);
 
 char ** flatpak_get_current_locale_subpaths (void);

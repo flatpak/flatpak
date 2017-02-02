@@ -359,6 +359,47 @@ flatpak_get_arches (void)
   return (const char **)arches;
 }
 
+const char **
+flatpak_get_gl_drivers (void)
+{
+  static gsize drivers = 0;
+  if (g_once_init_enter (&drivers))
+    {
+      gsize new_drivers;
+      char **new_drivers_c = 0;
+      const char *env = g_getenv ("FLATPAK_GL_DRIVERS");
+      if (env != NULL && *env != 0)
+        new_drivers_c = g_strsplit (env, ":", -1);
+      else
+        {
+          g_autofree char *nvidia_version = NULL;
+          char *dot;
+          GPtrArray *array = g_ptr_array_new ();
+
+          if (g_file_get_contents ("/sys/module/nvidia/version",
+                                   &nvidia_version, NULL, NULL))
+            {
+              g_strstrip (nvidia_version);
+              /* Convert dots to dashes */
+              while ((dot = strchr (nvidia_version, '.')) != NULL)
+                *dot = '-';
+              g_ptr_array_add (array, g_strconcat ("nvidia-", nvidia_version, NULL));
+            }
+
+          g_ptr_array_add (array, (char *)"default");
+          g_ptr_array_add (array, (char *)"host");
+
+          g_ptr_array_add (array, NULL);
+          new_drivers_c = (char **)g_ptr_array_free (array, FALSE);
+        }
+
+      new_drivers = (gsize)new_drivers_c;
+      g_once_init_leave (&drivers, new_drivers);
+    }
+
+  return (const char **)drivers;
+}
+
 gboolean
 flatpak_is_in_sandbox (void)
 {
