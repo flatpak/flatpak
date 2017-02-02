@@ -65,6 +65,9 @@ const char * flatpak_get_arch (void);
 const char ** flatpak_get_arches (void);
 
 const char ** flatpak_get_gl_drivers (void);
+gboolean flatpak_extension_matches_reason (const char *extension_id,
+                                           const char *reason,
+                                           gboolean default_value);
 
 const char * flatpak_get_bwrap (void);
 

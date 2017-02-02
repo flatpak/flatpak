@@ -7398,6 +7398,7 @@ add_related (FlatpakDir *self,
              const char *extension_ref,
              const char *checksum,
              gboolean no_autodownload,
+             const char *download_if,
              gboolean autodelete)
 {
   g_autoptr(GVariant) deploy_data = NULL;
@@ -7405,19 +7406,20 @@ add_related (FlatpakDir *self,
   g_autoptr(GPtrArray) subpaths = g_ptr_array_new_with_free_func (g_free);
   int i;
   FlatpakRelated *rel;
-  gboolean download = TRUE;
+  gboolean download;
   gboolean delete = autodelete;
+  g_auto(GStrv) ref_parts = g_strsplit (extension_ref, "/", -1);
 
   deploy_data = flatpak_dir_get_deploy_data (self, extension_ref, NULL, NULL);
 
   if (deploy_data)
     old_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
 
-  /* Only apply no-autodownload for uninstalled refs, we want to update
-     if you manually installed them */
-
-  if (no_autodownload && deploy_data == NULL)
-    download = FALSE;
+  /* Only respect no-autodownload/download-if for uninstalled refs, we
+     always want to update if you manually installed something */
+  download =
+    flatpak_extension_matches_reason (ref_parts[1], download_if, !no_autodownload) ||
+    deploy_data != NULL;
 
   if (g_str_has_suffix (extension, ".Debug"))
     {
@@ -7523,6 +7525,8 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                                                                 "subdirectories", NULL);
               gboolean no_autodownload = g_key_file_get_boolean (metakey, groups[i],
                                                                  "no-autodownload", NULL);
+              g_autofree char *download_if = g_key_file_get_string (metakey, groups[i],
+                                                                    "download-if", NULL);
               gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
                                                             "autodelete", NULL);
               const char *branch;
@@ -7540,7 +7544,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                                               extension_ref,
                                               &checksum))
                 {
-                  add_related (self, related, extension, extension_ref, checksum, no_autodownload, autodelete);
+                  add_related (self, related, extension, extension_ref, checksum, no_autodownload, download_if, autodelete);
                 }
               else if (subdirectories)
                 {
@@ -7551,7 +7555,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                       if (flatpak_summary_lookup_ref (summary,
                                                       refs[j],
                                                       &checksum))
-                        add_related (self, related, extension, refs[j], checksum, no_autodownload, autodelete);
+                        add_related (self, related, extension, refs[j], checksum, no_autodownload, download_if, autodelete);
                     }
                 }
             }
@@ -7657,6 +7661,8 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                                                                 "subdirectories", NULL);
               gboolean no_autodownload = g_key_file_get_boolean (metakey, groups[i],
                                                                  "no-autodownload", NULL);
+              g_autofree char *download_if = g_key_file_get_string (metakey, groups[i],
+                                                                    "download-if", NULL);
               gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
                                                             "autodelete", NULL);
               const char *branch;
@@ -7678,7 +7684,7 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                                            NULL))
                 {
                   add_related (self, related, extension, extension_ref,
-                               checksum, no_autodownload, autodelete);
+                               checksum, no_autodownload, download_if, autodelete);
                 }
               else if (subdirectories)
                 {
@@ -7700,7 +7706,7 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                         {
                           add_related (self, related, extension,
                                        match, match_checksum,
-                                       no_autodownload, autodelete);
+                                       no_autodownload, download_if, autodelete);
                         }
                     }
                 }
