@@ -2190,6 +2190,10 @@ builder_manifest_create_platform (BuilderManifest *self,
           g_autoptr(GFile) metadata = g_file_get_child (app_dir, "metadata");
           g_autoptr(GFile) dest_metadata = g_file_get_child (app_dir, "metadata.platform");
           g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+          g_autofree char *sdk_locale_id = builder_manifest_get_locale_id (self);
+          g_autofree char *sdk_debug_id = builder_manifest_get_debug_id (self);
+          g_autofree char *sdk_locale_group = g_strdup_printf ("Extension %s", sdk_locale_id);
+          g_autofree char *sdk_debug_group = g_strdup_printf ("Extension %s", sdk_debug_id);
 
           if (!g_key_file_load_from_file (keyfile,
                                           flatpak_file_get_path_cached (metadata),
@@ -2201,6 +2205,10 @@ builder_manifest_create_platform (BuilderManifest *self,
             }
 
           g_key_file_set_string (keyfile, "Runtime", "name", self->id_platform);
+
+          g_key_file_remove_group (keyfile, sdk_locale_group, NULL);
+          g_key_file_remove_group (keyfile, sdk_debug_group, NULL);
+
           if (!g_key_file_save_to_file (keyfile,
                                         flatpak_file_get_path_cached (dest_metadata),
                                         error))
