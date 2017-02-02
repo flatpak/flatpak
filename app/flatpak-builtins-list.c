@@ -151,9 +151,9 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
           if (arch != NULL && strcmp (arch, parts[1]) != 0)
             continue;
 
-          deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, error);
+          deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, NULL);
           if (deploy_data == NULL)
-            return FALSE;
+            continue;
 
           repo = flatpak_deploy_data_get_origin (deploy_data);
 
