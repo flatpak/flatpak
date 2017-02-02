@@ -93,6 +93,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_auto(GStrv) runtime_ref_parts = NULL;
   FlatpakRunFlags run_flags;
   const char *group = NULL;
+  const char *dest = NULL;
   gboolean is_app = FALSE;
   gboolean is_extension = FALSE;
   gboolean is_app_extension = FALSE;
@@ -296,6 +297,17 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     add_args (argv_array,
               "--bind", flatpak_file_get_path_cached (res_files), extension_point,
               NULL);
+
+  if (extension_point)
+    dest = extension_point;
+  else if (is_app)
+    dest = g_strdup ("/app");
+  else
+    dest = g_strdup ("/usr");
+
+  add_args (argv_array,
+            "--setenv", "FLATPAK_DEST", dest,
+            NULL);
 
   /* After setup_base to avoid conflicts with /var symlinks */
   add_args (argv_array,
