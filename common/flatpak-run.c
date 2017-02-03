@@ -2174,6 +2174,8 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
   GList *extensions, *l;
   g_autoptr(GHashTable) mounted_tmpfs =
     g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  g_autoptr(GHashTable) created_symlink =
+    g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   parts = g_strsplit (full_ref, "/", 0);
   if (g_strv_length (parts) != 4)
@@ -2242,10 +2244,15 @@ flatpak_run_add_extension_args (GPtrArray    *argv_array,
               while (glnx_dirfd_iterator_next_dent (&source_iter, &dent, NULL, NULL) && dent != NULL)
                 {
                   g_autofree char *symlink_path = g_build_filename (merge_dir, dent->d_name, NULL);
-                  g_autofree char *symlink = g_build_filename (directory, ext->merge_dirs[i], dent->d_name, NULL);
-                  add_args (argv_array,
-                            "--symlink", symlink, symlink_path,
-                            NULL);
+                  /* Only create the first, because extensions are listed in prio order */
+                  if (g_hash_table_lookup (created_symlink, symlink_path) == NULL)
+                    {
+                      g_autofree char *symlink = g_build_filename (directory, ext->merge_dirs[i], dent->d_name, NULL);
+                      add_args (argv_array,
+                                "--symlink", symlink, symlink_path,
+                                NULL);
+                      g_hash_table_insert (created_symlink, g_steal_pointer (&symlink_path), "created");
+                    }
                 }
             }
         }
