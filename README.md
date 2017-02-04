@@ -23,7 +23,7 @@ Most configure arguments are documented in ./configure --help. However, there
 are some options that are a bit more complicated.
 
 Flatpak relies on a project called
-[bubblewrap](https://github.com/projectatomic/bubblewrap)] for the
+[bubblewrap](https://github.com/projectatomic/bubblewrap) for the
 lowlevel sandboxing.  By default, an in-tree copy of this is built
 (distributed in the tarball or using git submodules in the git
 tree). This will build a helper called flatpak-bwrap. If your system
