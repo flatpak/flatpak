@@ -37,11 +37,15 @@
 static gboolean opt_runtime;
 static char *opt_build_dir;
 static char **opt_bind_mounts;
+static char *opt_sdk_dir;
+static char *opt_metadata;
 
 static GOptionEntry options[] = {
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Use Platform runtime rather than Sdk"), NULL },
   { "bind-mount", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_bind_mounts, N_("Add bind mount"), N_("DEST=SRC") },
   { "build-dir", 0, 0, G_OPTION_ARG_STRING, &opt_build_dir, N_("Start build in this directory"), N_("DIR") },
+  { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, N_("Where to look for custom sdk dir (defaults to 'usr')"), N_("DIR") },
+  { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, N_("Use alternative file for the metadata"), N_("FILE") },
   { NULL }
 };
 
@@ -128,7 +132,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     command = argv[rest_argv_start + 1];
 
   res_deploy = g_file_new_for_commandline_arg (directory);
-  metadata = g_file_get_child (res_deploy, "metadata");
+  metadata = g_file_get_child (res_deploy, opt_metadata ? opt_metadata : "metadata");
 
   if (!g_file_query_exists (res_deploy, NULL) ||
       !g_file_query_exists (metadata, NULL))
@@ -176,11 +180,23 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (runtime_ref_parts == NULL)
     return FALSE;
 
-  runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
-  if (runtime_deploy == NULL)
-    return FALSE;
+  custom_usr = FALSE;
+  usr = g_file_get_child (res_deploy,  opt_sdk_dir ? opt_sdk_dir : "usr");
+  if (g_file_query_exists (usr, cancellable))
+    {
+      custom_usr = TRUE;
+      runtime_files = g_object_ref (usr);
+    }
+  else
+    {
+      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
+      if (runtime_deploy == NULL)
+        return FALSE;
 
-  runtime_metakey = flatpak_deploy_get_metadata (runtime_deploy);
+      runtime_metakey = flatpak_deploy_get_metadata (runtime_deploy);
+
+      runtime_files = flatpak_deploy_get_files (runtime_deploy);
+    }
 
   var = g_file_get_child (res_deploy, "var");
   if (!flatpak_mkdir_p (var, cancellable, error))
@@ -253,7 +269,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
 
   custom_usr = FALSE;
-  usr = g_file_get_child (res_deploy, "usr");
+  usr = g_file_get_child (res_deploy,  opt_sdk_dir ? opt_sdk_dir : "usr");
   if (g_file_query_exists (usr, cancellable))
     {
       custom_usr = TRUE;
@@ -315,8 +331,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             NULL);
 
   app_context = flatpak_context_new ();
-  if (!flatpak_context_load_metadata (app_context, runtime_metakey, error))
-    return FALSE;
+  if (runtime_metakey)
+    {
+      if (!flatpak_context_load_metadata (app_context, runtime_metakey, error))
+        return FALSE;
+    }
   if (!flatpak_context_load_metadata (app_context, metakey, error))
     return FALSE;
   flatpak_context_allow_host_fs (app_context);

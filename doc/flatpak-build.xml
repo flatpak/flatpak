@@ -269,6 +269,28 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--sdk-dir=DIR</option></term>
+
+                <listitem><para>
+                  Normally if there is a <filename>usr</filename> directory in the build dir, this is used
+                  for the runtime files (this can be created by --writable-sdk or --type=runtime arguments
+                  to build-init). If you specify --sdk-dir this directoryname will be used instead.
+                  Use this if you passed --sdk-dir to build-init.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--metadata=FILE</option></term>
+
+                <listitem><para>
+                  Use the specified filename as metadata in the exported app instead of
+                  the default file (called <filename>metadata</filename>). This is useful
+                  if you build multiple things from a single build tree (such as both a
+                  platform and a sdk).
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
     </refsect1>
 
