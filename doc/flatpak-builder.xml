@@ -224,6 +224,10 @@
                     <listitem><para>Extra files to clean up in the platform.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>cleanup-platform-commands</option> (array of strings)</term>
+                    <listitem><para>An array of commandlines that are run during the cleanup phase of the platform.</para></listitem>
+                </varlistentry>
+               <varlistentry>
                     <term><option>finish-args</option> (array of strings)</term>
                     <listitem><para>An array of arguments passed to the <command>flatpak build-finish</command> command.</para></listitem>
                 </varlistentry>

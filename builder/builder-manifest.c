@@ -59,6 +59,7 @@ struct BuilderManifest
   char          **cleanup;
   char          **cleanup_commands;
   char          **cleanup_platform;
+  char          **cleanup_platform_commands;
   char          **finish_args;
   char          **tags;
   char           *rename_desktop_file;
@@ -112,6 +113,7 @@ enum {
   PROP_MODULES,
   PROP_CLEANUP,
   PROP_CLEANUP_COMMANDS,
+  PROP_CLEANUP_PLATFORM_COMMANDS,
   PROP_CLEANUP_PLATFORM,
   PROP_BUILD_RUNTIME,
   PROP_BUILD_EXTENSION,
@@ -156,6 +158,7 @@ builder_manifest_finalize (GObject *object)
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_commands);
   g_strfreev (self->cleanup_platform);
+  g_strfreev (self->cleanup_platform_commands);
   g_strfreev (self->finish_args);
   g_strfreev (self->tags);
   g_free (self->rename_desktop_file);
@@ -307,6 +310,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_CLEANUP_PLATFORM:
       g_value_set_boxed (value, self->cleanup_platform);
+      break;
+
+    case PROP_CLEANUP_PLATFORM_COMMANDS:
+      g_value_set_boxed (value, self->cleanup_platform_commands);
       break;
 
     case PROP_FINISH_ARGS:
@@ -496,6 +503,12 @@ builder_manifest_set_property (GObject      *object,
     case PROP_CLEANUP_PLATFORM:
       tmp = self->cleanup_platform;
       self->cleanup_platform = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_CLEANUP_PLATFORM_COMMANDS:
+      tmp = self->cleanup_platform_commands;
+      self->cleanup_platform_commands = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -735,6 +748,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_CLEANUP_PLATFORM,
                                    g_param_spec_boxed ("cleanup-platform",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_CLEANUP_PLATFORM_COMMANDS,
+                                   g_param_spec_boxed ("cleanup-platform-commands",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -1332,6 +1352,7 @@ builder_manifest_checksum_for_platform (BuilderManifest *self,
   builder_cache_checksum_str (cache, self->runtime_commit);
   builder_cache_checksum_str (cache, self->metadata_platform);
   builder_cache_checksum_strv (cache, self->cleanup_platform);
+  builder_cache_checksum_strv (cache, self->cleanup_platform_commands);
   builder_cache_checksum_strv (cache, self->platform_extensions);
 
   if (self->metadata_platform)
@@ -1451,6 +1472,7 @@ builder_manifest_build (BuilderManifest *self,
 static gboolean
 command (GFile      *app_dir,
          char      **env_vars,
+         char      **extra_args,
          const char *commandline,
          GError    **error)
 {
@@ -1462,6 +1484,11 @@ command (GFile      *app_dir,
   g_ptr_array_add (args, g_strdup ("build"));
 
   g_ptr_array_add (args, g_strdup ("--nofilesystem=host"));
+  if (extra_args)
+    {
+      for (i = 0; extra_args[i] != NULL; i++)
+        g_ptr_array_add (args, g_strdup (extra_args[i]));
+    }
 
   if (env_vars)
     {
@@ -1672,7 +1699,7 @@ builder_manifest_cleanup (BuilderManifest *self,
           env = builder_options_get_env (self->build_options, context);
           for (i = 0; self->cleanup_commands[i] != NULL; i++)
             {
-              if (!command (app_dir, env, self->cleanup_commands[i], error))
+              if (!command (app_dir, env, NULL, self->cleanup_commands[i], error))
                 return FALSE;
             }
         }
@@ -2306,6 +2333,18 @@ builder_manifest_create_platform (BuilderManifest *self,
                       return FALSE;
                     }
                 }
+            }
+        }
+
+      if (self->cleanup_platform_commands)
+        {
+          g_auto(GStrv) env = builder_options_get_env (self->build_options, context);
+          char *extra_args[] = { "--sdk-dir=platform", "--metadata=metadata.platform", NULL};
+
+          for (i = 0; self->cleanup_platform_commands[i] != NULL; i++)
+            {
+              if (!command (app_dir, env, extra_args, self->cleanup_platform_commands[i], error))
+                return FALSE;
             }
         }
 
