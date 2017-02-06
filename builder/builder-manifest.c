@@ -1735,7 +1735,7 @@ builder_manifest_cleanup (BuilderManifest *self,
       appdata_dir = g_file_resolve_relative_path (app_root, "share/appdata");
       appdata_basename = g_strdup_printf ("%s.appdata.xml", self->id);
       appdata_file = g_file_get_child (appdata_dir, appdata_basename);
-      if (!g_file_test (appdata_file, G_FILE_TEST_EXISTS))
+      if (!g_file_query_exists (appdata_file, NULL))
         {
           g_object_unref (appdata_dir);
           g_object_unref (appdata_file);
