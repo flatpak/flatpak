@@ -1683,6 +1683,7 @@ builder_manifest_cleanup (BuilderManifest *self,
   g_autoptr(GFile) appdata_dir = NULL;
   g_autofree char *appdata_basename = NULL;
   g_autoptr(GFile) appdata_file = NULL;
+  g_autoptr(GFile) appdata_source = NULL;
   int i;
 
   builder_manifest_checksum_for_cleanup (self, cache, context);
@@ -1732,16 +1733,16 @@ builder_manifest_cleanup (BuilderManifest *self,
         }
 
       app_root = g_file_get_child (app_dir, "files");
-      appdata_dir = g_file_resolve_relative_path (app_root, "share/appdata");
+
       appdata_basename = g_strdup_printf ("%s.appdata.xml", self->id);
-      appdata_file = g_file_get_child (appdata_dir, appdata_basename);
-      if (!g_file_query_exists (appdata_file, NULL))
+      appdata_dir = g_file_resolve_relative_path (app_root, "share/appdata");
+      appdata_source = g_file_get_child (appdata_dir, self->rename_appdata_file ? self->rename_appdata_file : appdata_basename);
+      if (!g_file_query_exists (appdata_source, NULL))
         {
           g_object_unref (appdata_dir);
-          g_object_unref (appdata_file);
           appdata_dir = g_file_resolve_relative_path (app_root, "share/metainfo");
-          appdata_file = g_file_get_child (appdata_dir, appdata_basename);
         }
+      appdata_file = g_file_get_child (appdata_dir, appdata_basename);
 
       if (self->rename_appdata_file != NULL)
         {
