@@ -138,6 +138,14 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--gl-drivers</option></term>
+
+                <listitem><para>
+                    Print the list of active gl drivers and exit.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
     </refsect1>
 
