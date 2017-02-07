@@ -36,6 +36,7 @@ G_BEGIN_DECLS
 GType builder_context_get_type (void);
 
 GFile *         builder_context_get_app_dir (BuilderContext *self);
+GFile *         builder_context_get_app_dir_raw (BuilderContext *self);
 GFile *         builder_context_get_base_dir (BuilderContext *self);
 GFile *         builder_context_get_state_dir (BuilderContext *self);
 GFile *         builder_context_get_cache_dir (BuilderContext *self);
@@ -84,6 +85,12 @@ BuilderContext *builder_context_new (GFile *base_dir,
                                      GFile *app_dir);
 gboolean        builder_context_enable_ccache (BuilderContext *self,
                                                GError        **error);
+gboolean        builder_context_enable_rofiles (BuilderContext *self,
+                                                GError        **error);
+gboolean        builder_context_get_rofiles_active (BuilderContext *self);
+gboolean        builder_context_get_use_rofiles (BuilderContext *self);
+void            builder_context_set_use_rofiles (BuilderContext *self,
+                                                 gboolean use_rofiles);
 char **         builder_context_extend_env (BuilderContext *self,
                                             char          **envp);
 

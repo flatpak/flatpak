@@ -35,6 +35,7 @@ static gboolean opt_verbose;
 static gboolean opt_version;
 static gboolean opt_run;
 static gboolean opt_disable_cache;
+static gboolean opt_disable_rofiles;
 static gboolean opt_download_only;
 static gboolean opt_build_only;
 static gboolean opt_finish_only;
@@ -64,6 +65,7 @@ static GOptionEntry entries[] = {
   { "run", 0, 0, G_OPTION_ARG_NONE, &opt_run, "Run a command in the build directory (see --run --help)", NULL },
   { "ccache", 0, 0, G_OPTION_ARG_NONE, &opt_ccache, "Use ccache", NULL },
   { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache lookups", NULL },
+  { "disable-rofiles-fuse", 0, 0, G_OPTION_ARG_NONE, &opt_disable_rofiles, "Disable rofiles-fuse use", NULL },
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
   { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
@@ -323,6 +325,7 @@ main (int    argc,
 
   build_context = builder_context_new (base_dir, app_dir);
 
+  builder_context_set_use_rofiles (build_context, !opt_disable_rofiles);
   builder_context_set_keep_build_dirs (build_context, opt_keep_build_dirs);
   builder_context_set_sandboxed (build_context, opt_sandboxed);
   builder_context_set_jobs (build_context, opt_jobs);
