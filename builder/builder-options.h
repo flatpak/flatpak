@@ -26,7 +26,6 @@
 
 G_BEGIN_DECLS
 
-typedef struct BuilderContext BuilderContext;
 typedef struct BuilderOptions BuilderOptions;
 
 #define BUILDER_TYPE_OPTIONS (builder_options_get_type ())

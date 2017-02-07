@@ -27,7 +27,7 @@
 
 G_BEGIN_DECLS
 
-/* BuilderContext defined in builder-options.h to fix include loop */
+/* BuilderContext defined in builder-cache.h to fix include loop */
 
 #define BUILDER_TYPE_CONTEXT (builder_context_get_type ())
 #define BUILDER_CONTEXT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_CONTEXT, BuilderContext))

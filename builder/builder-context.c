@@ -30,6 +30,7 @@
 
 #include "flatpak-utils.h"
 #include "builder-context.h"
+#include "builder-cache.h"
 
 struct BuilderContext
 {

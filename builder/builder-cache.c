@@ -34,12 +34,13 @@
 #include "flatpak-utils.h"
 #include "builder-utils.h"
 #include "builder-cache.h"
+#include "builder-context.h"
 
 struct BuilderCache
 {
   GObject     parent;
+  BuilderContext *context;
   GChecksum  *checksum;
-  GFile      *cache_dir;
   GFile      *app_dir;
   char       *branch;
   char       *stage;
@@ -58,7 +59,7 @@ G_DEFINE_TYPE (BuilderCache, builder_cache, G_TYPE_OBJECT);
 
 enum {
   PROP_0,
-  PROP_CACHE_DIR,
+  PROP_CONTEXT,
   PROP_APP_DIR,
   PROP_BRANCH,
   LAST_PROP
@@ -72,7 +73,7 @@ builder_cache_finalize (GObject *object)
 {
   BuilderCache *self = (BuilderCache *) object;
 
-  g_clear_object (&self->cache_dir);
+  g_clear_object (&self->context);
   g_clear_object (&self->app_dir);
   g_clear_object (&self->repo);
   g_checksum_free (self->checksum);
@@ -95,8 +96,8 @@ builder_cache_get_property (GObject    *object,
 
   switch (prop_id)
     {
-    case PROP_CACHE_DIR:
-      g_value_set_object (value, self->cache_dir);
+    case PROP_CONTEXT:
+      g_value_set_object (value, self->context);
       break;
 
     case PROP_APP_DIR:
@@ -127,8 +128,8 @@ builder_cache_set_property (GObject      *object,
       self->branch = g_value_dup_string (value);
       break;
 
-    case PROP_CACHE_DIR:
-      g_set_object (&self->cache_dir, g_value_get_object (value));
+    case PROP_CONTEXT:
+      g_set_object (&self->context, g_value_get_object (value));
       break;
 
     case PROP_APP_DIR:
@@ -150,11 +151,11 @@ builder_cache_class_init (BuilderCacheClass *klass)
   object_class->set_property = builder_cache_set_property;
 
   g_object_class_install_property (object_class,
-                                   PROP_CACHE_DIR,
-                                   g_param_spec_object ("cache-dir",
+                                   PROP_CONTEXT,
+                                   g_param_spec_object ("context",
                                                         "",
                                                         "",
-                                                        G_TYPE_FILE,
+                                                        BUILDER_TYPE_CONTEXT,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
   g_object_class_install_property (object_class,
                                    PROP_APP_DIR,
@@ -179,12 +180,12 @@ builder_cache_init (BuilderCache *self)
 }
 
 BuilderCache *
-builder_cache_new (GFile      *cache_dir,
+builder_cache_new (BuilderContext *context,
                    GFile      *app_dir,
                    const char *branch)
 {
   return g_object_new (BUILDER_TYPE_CACHE,
-                       "cache-dir", cache_dir,
+                       "context", context,
                        "app-dir", app_dir,
                        "branch", branch,
                        NULL);
@@ -222,15 +223,15 @@ gboolean
 builder_cache_open (BuilderCache *self,
                     GError      **error)
 {
-  self->repo = ostree_repo_new (self->cache_dir);
+  self->repo = ostree_repo_new (builder_context_get_cache_dir (self->context));
 
   /* We don't need fsync on checkouts as they are transient, and we
      rely on the syncfs() in the transaction commit for commits. */
   ostree_repo_set_disable_fsync (self->repo, TRUE);
 
-  if (!g_file_query_exists (self->cache_dir, NULL))
+  if (!g_file_query_exists (builder_context_get_cache_dir (self->context), NULL))
     {
-      g_autoptr(GFile) parent = g_file_get_parent (self->cache_dir);
+      g_autoptr(GFile) parent = g_file_get_parent (builder_context_get_cache_dir (self->context));
 
       if (!flatpak_mkdir_p (parent, NULL, error))
         return FALSE;

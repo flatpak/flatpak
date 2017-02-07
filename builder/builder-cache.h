@@ -27,6 +27,7 @@
 G_BEGIN_DECLS
 
 typedef struct BuilderCache BuilderCache;
+typedef struct BuilderContext BuilderContext;
 
 #define BUILDER_TYPE_CACHE (builder_cache_get_type ())
 #define BUILDER_CACHE(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), BUILDER_TYPE_CACHE, BuilderCache))
@@ -34,7 +35,7 @@ typedef struct BuilderCache BuilderCache;
 
 GType builder_cache_get_type (void);
 
-BuilderCache *builder_cache_new (GFile      *cache_dir,
+BuilderCache *builder_cache_new (BuilderContext *context,
                                  GFile      *app_dir,
                                  const char *branch);
 void          builder_cache_disable_lookups (BuilderCache *self);
