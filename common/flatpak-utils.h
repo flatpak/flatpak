@@ -362,6 +362,10 @@ gboolean flatpak_openat_noatime (int            dfd,
                                  GCancellable  *cancellable,
                                  GError       **error);
 
+gboolean flatpak_copy_bytes (int fdf,
+                             int fdt,
+                             GError **error);
+
 typedef enum {
   FLATPAK_CP_FLAGS_NONE = 0,
   FLATPAK_CP_FLAGS_MERGE = 1<<0,
