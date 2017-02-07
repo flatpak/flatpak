@@ -2486,6 +2486,9 @@ builder_manifest_run (BuilderManifest *self,
         {
           const char *arg = self->finish_args[i];
           if (!g_str_has_prefix (arg, "--filesystem") &&
+              !g_str_has_prefix (arg, "--extension") &&
+              !g_str_has_prefix (arg, "--sdk") &&
+              !g_str_has_prefix (arg, "--runtime") &&
               !g_str_has_prefix (arg, "--command"))
             g_ptr_array_add (args, g_strdup (arg));
         }
