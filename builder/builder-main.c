@@ -412,7 +412,7 @@ main (int    argc,
 
   cache_branch = g_path_get_basename (manifest_path);
 
-  cache = builder_cache_new (builder_context_get_cache_dir (build_context), app_dir, cache_branch);
+  cache = builder_cache_new (build_context, app_dir, cache_branch);
   if (!builder_cache_open (cache, &error))
     {
       g_printerr ("Error opening cache: %s\n", error->message);
