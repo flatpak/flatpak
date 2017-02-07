@@ -875,7 +875,8 @@ msgstr ""
 
 #: app/flatpak-builtins-install.c:66
 msgid "Check bundle signatures with GPG key from FILE (- for stdin)"
-msgstr "Zkontrolovat podpisy balíku klíčem GPG ze souboru (- pro stdin)"
+msgstr ""
+"Zkontrolovat podpisy balíku klíčem GPG ze souboru (- pro standardní vstup)"
 
 #: app/flatpak-builtins-install.c:67
 msgid "Only install this subpath"
