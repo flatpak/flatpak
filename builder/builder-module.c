@@ -1050,6 +1050,8 @@ fixup_python_timestamp (int dfd,
                 g_str_has_suffix (dent->d_name, ".pyo")))
         {
           glnx_fd_close int fd = -1;
+          glnx_fd_close int write_fd = -1;
+          g_autofree char *write_name = NULL;
           guint8 buffer[8];
           ssize_t res;
           guint32 pyc_mtime;
@@ -1057,14 +1059,14 @@ fixup_python_timestamp (int dfd,
           struct stat stbuf;
           gboolean remove_pyc = FALSE;
 
-          fd = openat (dfd_iter.fd, dent->d_name, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
+          fd = openat (dfd_iter.fd, dent->d_name, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
           if (fd == -1)
             {
               g_warning ("Can't open %s", dent->d_name);
               continue;
             }
 
-          res = read (fd, buffer, 8);
+          res = pread (fd, buffer, 8, 0);
           if (res != 8)
             {
               g_warning ("Short read for %s", dent->d_name);
@@ -1147,16 +1149,34 @@ fixup_python_timestamp (int dfd,
               continue;
             }
 
+          if (!glnx_open_tmpfile_linkable_at (dfd_iter.fd, ".",
+                                              O_RDWR | O_CLOEXEC | O_NOFOLLOW,
+                                              &write_fd, &write_name,
+                                              error))
+            return FALSE;
+
+
+          if (!flatpak_copy_bytes (fd, write_fd, error))
+            return FALSE;
+
           /* Change to mtime 0 which is what ostree uses for checkouts */
           buffer[4] = OSTREE_TIMESTAMP;
           buffer[5] = buffer[6] = buffer[7] = 0;
 
-          res = pwrite (fd, buffer, 8, 0);
+          res = pwrite (write_fd, buffer, 8, 0);
           if (res != 8)
             {
               glnx_set_error_from_errno (error);
               return FALSE;
             }
+
+          if (!glnx_link_tmpfile_at (dfd_iter.fd,
+                                     GLNX_LINK_TMPFILE_REPLACE,
+                                     write_fd, write_name,
+                                     dfd_iter.fd,
+                                     dent->d_name,
+                                     error))
+            return FALSE;
 
           {
             g_autofree char *child_full_path = g_build_filename (full_path, dent->d_name, NULL);
