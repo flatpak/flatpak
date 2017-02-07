@@ -636,6 +636,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--disable-rofiles-fuse</option></term>
+
+                <listitem><para>
+                    Disable the use of rofiles-fuse to optimize the cache use via hardlink checkouts.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--disable-download</option></term>
 
                 <listitem><para>

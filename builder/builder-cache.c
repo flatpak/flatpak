@@ -48,6 +48,7 @@ struct BuilderCache
   char       *last_parent;
   OstreeRepo *repo;
   gboolean    disabled;
+  OstreeRepoDevInoCache *devino_to_csum_cache;
 };
 
 typedef struct
@@ -82,6 +83,9 @@ builder_cache_finalize (GObject *object)
   g_free (self->stage);
   if (self->unused_stages)
     g_hash_table_unref (self->unused_stages);
+
+  if (self->devino_to_csum_cache)
+    ostree_repo_devino_cache_unref (self->devino_to_csum_cache);
 
   G_OBJECT_CLASS (builder_cache_parent_class)->finalize (object);
 }
@@ -177,6 +181,7 @@ static void
 builder_cache_init (BuilderCache *self)
 {
   self->checksum = g_checksum_new (G_CHECKSUM_SHA256);
+  self->devino_to_csum_cache = ostree_repo_devino_cache_new ();
 }
 
 BuilderCache *
@@ -270,45 +275,51 @@ builder_cache_get_current (BuilderCache *self)
 }
 
 static gboolean
-builder_cache_checkout (BuilderCache *self, const char *commit, GError **error)
+builder_cache_checkout (BuilderCache *self, const char *commit, gboolean delete_dir, GError **error)
 {
-  g_autoptr(GFile) root = NULL;
-  g_autoptr(GFileInfo) file_info = NULL;
   g_autoptr(GError) my_error = NULL;
+  OstreeRepoCheckoutMode mode = OSTREE_REPO_CHECKOUT_MODE_NONE;
+  OstreeRepoCheckoutAtOptions options = { 0, };
 
-  if (!ostree_repo_read_commit (self->repo, commit, &root, NULL, NULL, error))
-    return FALSE;
-
-  file_info = g_file_query_info (root, OSTREE_GIO_FAST_QUERYINFO,
-                                 G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
-                                 NULL, error);
-  if (file_info == NULL)
-    return FALSE;
-
-  if (!g_file_delete (self->app_dir, NULL, &my_error) &&
-      !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+  if (delete_dir)
     {
-      g_propagate_error (error, g_steal_pointer (&my_error));
-      return FALSE;
+      if (!g_file_delete (self->app_dir, NULL, &my_error) &&
+          !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return FALSE;
+        }
+
+      if (!flatpak_mkdir_p (self->app_dir, NULL, error))
+        return FALSE;
     }
 
-  /* We check out without user mode, not necessarily because we care
-     about uids not owned by the user (they are all from the build,
-     so should be creatable by the user, but because we want to
-     force the checkout to not use hardlinks. Hard links into the
-     cache are not safe, as the build could mutate these. */
-  if (!ostree_repo_checkout_tree (self->repo,
-                                  OSTREE_REPO_CHECKOUT_MODE_NONE,
-                                  OSTREE_REPO_CHECKOUT_OVERWRITE_NONE,
-                                  self->app_dir,
-                                  OSTREE_REPO_FILE (root), file_info,
-                                  NULL, error))
+  if (!builder_context_enable_rofiles (self->context, error))
+    return FALSE;
+
+  /* If rofiles-fuse is disabled, we check out without user mode, not
+     necessarily because we care about uids not owned by the user
+     (they are all from the build, so should be creatable by the user,
+     but because we want to force the checkout to not use
+     hardlinks. Hard links into the cache without rofiles-fuse are not
+     safe, as the build could mutate the cache. */
+  if (builder_context_get_rofiles_active (self->context))
+    mode = OSTREE_REPO_CHECKOUT_MODE_USER;
+
+  options.mode = mode;
+  options.overwrite_mode = OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES;
+  options.devino_to_csum_cache = self->devino_to_csum_cache;
+
+  if (!ostree_repo_checkout_at (self->repo, &options,
+                                AT_FDCWD, flatpak_file_get_path_cached (self->app_dir),
+                                commit, NULL, error))
     return FALSE;
 
   /* There is a bug in ostree (https://github.com/ostreedev/ostree/issues/326) that
-     causes it to not reset mtime to 0 in this case (mismatching modes). So
-     we do that manually */
-  if (!flatpak_zero_mtime (AT_FDCWD, flatpak_file_get_path_cached (self->app_dir),
+     causes it to not reset mtime to 0 in themismatching modes case. So we do that
+     manually */
+  if (mode == OSTREE_REPO_CHECKOUT_MODE_NONE &&
+      !flatpak_zero_mtime (AT_FDCWD, flatpak_file_get_path_cached (self->app_dir),
                            NULL, error))
     return FALSE;
 
@@ -332,7 +343,7 @@ builder_cache_ensure_checkout (BuilderCache *self)
       g_autoptr(GError) error = NULL;
       g_print ("Everything cached, checking out from cache\n");
 
-      if (!builder_cache_checkout (self, self->last_parent, &error))
+      if (!builder_cache_checkout (self, self->last_parent, TRUE, &error))
         g_error ("Failed to check out cache: %s", error->message);
     }
 
@@ -394,13 +405,103 @@ checkout:
       g_autoptr(GError) error = NULL;
       g_print ("Cache miss, checking out last cache hit\n");
 
-      if (!builder_cache_checkout (self, self->last_parent, &error))
+      if (!builder_cache_checkout (self, self->last_parent, TRUE, &error))
         g_error ("Failed to check out cache: %s", error->message);
     }
 
   self->disabled = TRUE; /* Don't use cache any more after first miss */
 
   return FALSE;
+}
+
+static gboolean
+mtree_empty (OstreeMutableTree *mtree)
+{
+  GHashTable *files = ostree_mutable_tree_get_files (mtree);
+  GHashTable *subdirs = ostree_mutable_tree_get_subdirs (mtree);
+
+  return
+    g_hash_table_size (files) == 0 &&
+    g_hash_table_size (subdirs) == 0;
+}
+
+/* This takes a mutable tree and an existing OstreeRepoFile, and recursively
+ * removes all mtree files that already exists in the OstreeRepoFile.
+ * This is very useful to create a commit with just the new files, which
+ * we can then check out in order to get a the new hardlinks to the
+ * cache repo.
+ */
+static gboolean
+mtree_prune_old_files (OstreeMutableTree *mtree,
+                       OstreeRepoFile *old,
+                       GError **error)
+{
+  GHashTable *files = ostree_mutable_tree_get_files (mtree);
+  GHashTable *subdirs = ostree_mutable_tree_get_subdirs (mtree);
+  GHashTableIter iter;
+  gpointer key, value;
+
+  ostree_mutable_tree_set_contents_checksum (mtree, NULL);
+
+  if (old != NULL && !ostree_repo_file_ensure_resolved (old, error))
+    return FALSE;
+
+  g_hash_table_iter_init (&iter, files);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *name = key;
+      const char *csum = value;
+      int n = -1;
+      gboolean is_dir;
+      g_autoptr(GVariant) container = NULL;
+      gboolean same = FALSE;
+
+      if (old)
+        n = ostree_repo_file_tree_find_child  (old, name, &is_dir, &container);
+
+      if (n >= 0)
+        {
+          if (!is_dir)
+            {
+              g_autoptr(GVariant) old_csum_bytes = NULL;
+              g_autofree char *old_csum = NULL;
+
+              g_variant_get_child (container, n,
+                                   "(@s@ay)", NULL, &old_csum_bytes);
+              old_csum = ostree_checksum_from_bytes_v (old_csum_bytes);
+
+              if (strcmp (old_csum, csum) == 0)
+                same = TRUE; /* Modified file */
+            }
+        }
+
+      if (same)
+        g_hash_table_iter_remove (&iter);
+    }
+
+  g_hash_table_iter_init (&iter, subdirs);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *name = key;
+      OstreeMutableTree *subdir = value;
+      g_autoptr(GFile) old_subdir = NULL;
+      int n = -1;
+      gboolean is_dir;
+
+      if (old)
+        n = ostree_repo_file_tree_find_child  (old, name, &is_dir, NULL);
+
+      if (n >= 0 && is_dir)
+        old_subdir = g_file_get_child (G_FILE (old), name);
+
+      if (!mtree_prune_old_files (subdir, OSTREE_REPO_FILE (old_subdir), error))
+        return FALSE;
+
+      if (mtree_empty (subdir))
+        g_hash_table_iter_remove (&iter);
+    }
+
+  return TRUE;
 }
 
 gboolean
@@ -414,8 +515,11 @@ builder_cache_commit (BuilderCache *self,
   g_autoptr(OstreeMutableTree) mtree = NULL;
   g_autoptr(GFile) root = NULL;
   g_autofree char *commit_checksum = NULL;
+  g_autofree char *new_commit_checksum = NULL;
   gboolean res = FALSE;
   g_autofree char *ref = NULL;
+  g_autoptr(GFile) last_root = NULL;
+  g_autoptr(GFile) new_root = NULL;
 
   g_print ("Committing stage %s to cache\n", self->stage);
 
@@ -432,6 +536,9 @@ builder_cache_commit (BuilderCache *self,
 
   modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS,
                                               NULL, NULL, NULL);
+  if (self->devino_to_csum_cache)
+    ostree_repo_commit_modifier_set_devino_cache (modifier, self->devino_to_csum_cache);
+
   if (!ostree_repo_write_directory_to_mtree (self->repo, self->app_dir,
                                              mtree, modifier, NULL, error))
     goto out;
@@ -449,7 +556,27 @@ builder_cache_commit (BuilderCache *self,
   ref = builder_cache_get_current_ref (self);
   ostree_repo_transaction_set_ref (self->repo, NULL, ref, commit_checksum);
 
+  if (self->last_parent &&
+      !ostree_repo_read_commit (self->repo, self->last_parent, &last_root, NULL, NULL, error))
+    goto out;
+
+  if (!mtree_prune_old_files (mtree, OSTREE_REPO_FILE (last_root), error))
+    goto out;
+
+  if (!ostree_repo_write_mtree (self->repo, mtree, &new_root, NULL, error))
+    goto out;
+
+  if (!ostree_repo_write_commit (self->repo, NULL, current, body, NULL,
+                                 OSTREE_REPO_FILE (new_root),
+                                 &new_commit_checksum, NULL, error))
+    goto out;
+
   if (!ostree_repo_commit_transaction (self->repo, NULL, NULL, error))
+    goto out;
+
+  /* Check out the just commited cache so we hardlinks to the cache */
+  if (builder_context_get_use_rofiles (self->context) &&
+      !builder_cache_checkout (self, new_commit_checksum, FALSE, error))
     goto out;
 
   g_free (self->last_parent);

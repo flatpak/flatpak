@@ -2447,6 +2447,9 @@ builder_manifest_run (BuilderManifest *self,
   g_auto(GStrv) build_args = NULL;
   int i;
 
+  if (!builder_context_enable_rofiles (context, error))
+    return FALSE;
+
   if (!flatpak_mkdir_p (builder_context_get_build_dir (context),
                         NULL, error))
     return FALSE;

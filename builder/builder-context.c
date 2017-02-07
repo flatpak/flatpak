@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/statfs.h>
+#include <sys/prctl.h>
 #include <unistd.h>
 
 #include "flatpak-utils.h"
@@ -47,6 +48,8 @@ struct BuilderContext
   GFile          *build_dir;
   GFile          *cache_dir;
   GFile          *ccache_dir;
+  GFile          *rofiles_dir;
+  GLnxLockFile   rofiles_file_lock;
 
   BuilderOptions *options;
   gboolean        keep_build_dirs;
@@ -59,6 +62,7 @@ struct BuilderContext
   gboolean        separate_locales;
   gboolean        sandboxed;
   gboolean        rebuild_on_sdk_change;
+  gboolean        use_rofiles;
 };
 
 typedef struct
@@ -85,6 +89,7 @@ builder_context_finalize (GObject *object)
   g_clear_object (&self->download_dir);
   g_clear_object (&self->build_dir);
   g_clear_object (&self->cache_dir);
+  g_clear_object (&self->rofiles_dir);
   g_clear_object (&self->ccache_dir);
   g_clear_object (&self->app_dir);
   g_clear_object (&self->base_dir);
@@ -94,6 +99,7 @@ builder_context_finalize (GObject *object)
   g_free (self->stop_at);
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_platform);
+  glnx_release_lock_file(&self->rofiles_file_lock);
 
   G_OBJECT_CLASS (builder_context_parent_class)->finalize (object);
 }
@@ -185,6 +191,8 @@ builder_context_class_init (BuilderContextClass *klass)
 static void
 builder_context_init (BuilderContext *self)
 {
+  GLnxLockFile init = GLNX_LOCK_FILE_INIT;
+  self->rofiles_file_lock = init;
 }
 
 GFile *
@@ -200,8 +208,16 @@ builder_context_get_state_dir (BuilderContext *self)
 }
 
 GFile *
+builder_context_get_app_dir_raw (BuilderContext *self)
+{
+  return self->app_dir;
+}
+
+GFile *
 builder_context_get_app_dir (BuilderContext *self)
 {
+  if (self->rofiles_dir)
+    return self->rofiles_dir;
   return self->app_dir;
 }
 
@@ -388,6 +404,126 @@ builder_context_set_separate_locales (BuilderContext *self,
                                       gboolean        separate_locales)
 {
   self->separate_locales = !!separate_locales;
+}
+
+static char *rofiles_unmount_path = NULL;
+
+void
+rofiles_umount_handler (int signum)
+{
+  char *argv[] = { "fusermount", "-u", NULL,
+                     NULL };
+
+  argv[2] = rofiles_unmount_path;
+  g_debug ("unmounting rofiles-fuse %s", rofiles_unmount_path);
+  g_spawn_sync (NULL, (char **)argv, NULL,
+                G_SPAWN_SEARCH_PATH | G_SPAWN_CLOEXEC_PIPES,
+                NULL, NULL, NULL, NULL, NULL, NULL);
+  exit (0);
+}
+
+
+gboolean
+builder_context_enable_rofiles (BuilderContext *self,
+                                GError        **error)
+{
+  g_autoptr(GFile) rofiles_base = NULL;
+  g_autoptr(GFile) rofiles_dir = NULL;
+  g_autofree char *tmpdir_name = NULL;
+  char *argv[] = { "rofiles-fuse",
+                   "-o",
+                   "kernel_cache,entry_timeout=60,attr_timeout=60",
+                   (char *)flatpak_file_get_path_cached (self->app_dir),
+                   NULL,
+                   NULL };
+  gint exit_status;
+  pid_t child;
+
+  if (!self->use_rofiles || self->rofiles_dir != NULL)
+    return TRUE;
+
+  rofiles_base = g_file_get_child (self->state_dir, "rofiles");
+  if (g_mkdir_with_parents (flatpak_file_get_path_cached (rofiles_base), 0755) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  if (!flatpak_allocate_tmpdir (AT_FDCWD,
+                                flatpak_file_get_path_cached (rofiles_base),
+                                "rofiles-",
+                                &tmpdir_name, NULL,
+                                &self->rofiles_file_lock,
+                                NULL, NULL, error))
+    return FALSE;
+
+  rofiles_dir = g_file_get_child (rofiles_base, tmpdir_name);
+
+  argv[4] = (char *)flatpak_file_get_path_cached (rofiles_dir);
+
+  g_debug ("starting: rofiles-fuse %s %s", argv[1], argv[4]);
+  if (!g_spawn_sync (NULL, (char **)argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_CLOEXEC_PIPES, NULL, NULL, NULL, NULL, &exit_status, error))
+    {
+      g_prefix_error (error, "Can't spawn rofiles-fuse");
+      return FALSE;
+    }
+  else if (exit_status != 0)
+    {
+      return flatpak_fail (error, "Failure spawning rofiles-fuse, exit_status: %d", exit_status);
+    }
+
+  child = fork ();
+  if (child == -1)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  if (child == 0)
+    {
+      /* In child */
+      struct sigaction new_action;
+
+      prctl (PR_SET_PDEATHSIG, SIGHUP);
+
+      rofiles_unmount_path = (char *)flatpak_file_get_path_cached (rofiles_dir);
+      new_action.sa_handler = rofiles_umount_handler;
+      sigemptyset (&new_action.sa_mask);
+      new_action.sa_flags = 0;
+      sigaction (SIGHUP, &new_action, NULL);
+
+      sigset (SIGINT, SIG_IGN);
+      sigset (SIGPIPE, SIG_IGN);
+      sigset (SIGSTOP, SIG_IGN);
+
+      while (TRUE)
+        pause ();
+
+      exit (0);
+    }
+
+  self->rofiles_dir = g_steal_pointer (&rofiles_dir);
+
+  return TRUE;
+}
+
+gboolean
+builder_context_get_rofiles_active (BuilderContext *self)
+{
+  return self->rofiles_dir != NULL;
+}
+
+gboolean
+builder_context_get_use_rofiles (BuilderContext *self)
+{
+  return self->use_rofiles;
+}
+
+void
+builder_context_set_use_rofiles (BuilderContext *self,
+                                 gboolean use_rofiles)
+{
+  self->use_rofiles = use_rofiles;
 }
 
 gboolean
