@@ -74,6 +74,24 @@ flatpak_error_quark (void)
   return (GQuark) quark_volatile;
 }
 
+GFile *
+flatpak_file_new_tmp_in (GFile *dir,
+                         const char *template,
+                         GError        **error)
+{
+  glnx_fd_close int tmp_fd = -1;
+  g_autofree char *tmpl = g_build_filename (flatpak_file_get_path_cached (dir), template, NULL);
+
+  tmp_fd = g_mkstemp_full (tmpl, O_RDWR, 0644);
+  if (tmp_fd == -1)
+    {
+      glnx_set_error_from_errno (error);
+      return NULL;
+    }
+
+  return g_file_new_for_path (tmpl);
+}
+
 gboolean
 flatpak_write_update_checksum (GOutputStream  *out,
                                gconstpointer   data,

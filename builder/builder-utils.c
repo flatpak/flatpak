@@ -26,6 +26,7 @@
 #include <gelf.h>
 #include <dwarf.h>
 #include <sys/mman.h>
+#include <stdio.h>
 
 #include <string.h>
 
@@ -1597,4 +1598,71 @@ builder_maybe_host_spawnv (GFile                *dir,
     return builder_host_spawnv (dir, output, error, argv);
 
   return flatpak_spawnv (dir, output, error, argv);
+}
+
+gboolean
+builder_download_uri (const char     *url,
+                      GFile          *dest,
+                      char           *sha256,
+                      SoupSession    *session,
+                      GError        **error)
+{
+  g_autoptr(SoupRequest) req = NULL;
+  g_autoptr(GInputStream) input = NULL;
+  g_autoptr(GFileOutputStream) out = NULL;
+  g_autoptr(GFile) tmp = NULL;
+  g_autoptr(GFile) dir = NULL;
+  g_autoptr(GChecksum) checksum = g_checksum_new (G_CHECKSUM_SHA256);
+
+  g_autofree char *basename = g_file_get_basename (dest);
+  g_autofree char *template = g_strconcat (".", basename, "XXXXXX", NULL);
+
+  dir = g_file_get_parent (dest);
+  g_mkdir_with_parents (flatpak_file_get_path_cached (dir), 0755);
+
+  tmp = flatpak_file_new_tmp_in (dir, template, error);
+  if (tmp == NULL)
+    return FALSE;
+
+  out = g_file_replace (tmp, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
+                        NULL, error);
+  if (out == NULL)
+    return FALSE;
+
+  req = soup_session_request (session, url, error);
+  if (req == NULL)
+    return FALSE;
+
+  input = soup_request_send (req, NULL, error);
+  if (input == NULL)
+    return FALSE;
+
+  if (!flatpak_splice_update_checksum (G_OUTPUT_STREAM (out), input, checksum, NULL, error))
+    {
+      unlink (flatpak_file_get_path_cached (tmp));
+      return FALSE;
+    }
+
+  /* Manually close to flush and detect write errors */
+  if (!g_output_stream_close (G_OUTPUT_STREAM (out), NULL, error))
+    {
+      unlink (flatpak_file_get_path_cached (tmp));
+      return FALSE;
+    }
+
+  if (sha256 != NULL && strcmp (g_checksum_get_string (checksum), sha256) != 0)
+    {
+      unlink (flatpak_file_get_path_cached (tmp));
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Wrong sha256 for %s, expected %s, was %s", basename, sha256, g_checksum_get_string (checksum));
+      return FALSE;
+    }
+
+  if (rename (flatpak_file_get_path_cached (tmp), flatpak_file_get_path_cached (dest)) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  return TRUE;
 }

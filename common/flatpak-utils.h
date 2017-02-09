@@ -75,6 +75,10 @@ char ** flatpak_get_current_locale_subpaths (void);
 
 void flatpak_migrate_from_xdg_app (void);
 
+GFile *flatpak_file_new_tmp_in (GFile *dir,
+                                const char *templatename,
+                                GError        **error);
+
 gboolean flatpak_write_update_checksum (GOutputStream  *out,
                                         gconstpointer   data,
                                         gsize           len,

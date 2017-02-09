@@ -265,39 +265,6 @@ get_source_file (BuilderSourceArchive *self,
   return NULL;
 }
 
-static GBytes *
-download_uri (const char     *url,
-              GChecksum      *checksum,
-              BuilderContext *context,
-              GError        **error)
-{
-  SoupSession *session;
-
-  g_autoptr(SoupRequest) req = NULL;
-  g_autoptr(GInputStream) input = NULL;
-  g_autoptr(GOutputStream) out = NULL;
-
-  session = builder_context_get_soup_session (context);
-
-  req = soup_session_request (session, url, error);
-  if (req == NULL)
-    return NULL;
-
-  input = soup_request_send (req, NULL, error);
-  if (input == NULL)
-    return NULL;
-
-  out = g_memory_output_stream_new_resizable ();
-  if (!flatpak_splice_update_checksum (out, input, checksum, NULL, error))
-    return NULL;
-
-  /* Manually close to flush and detect write errors */
-  if (!g_output_stream_close (out, NULL, error))
-    return NULL;
-
-  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
-}
-
 static gboolean
 builder_source_archive_show_deps (BuilderSource  *source,
                                   GError        **error)
@@ -309,7 +276,6 @@ builder_source_archive_show_deps (BuilderSource  *source,
 
   return TRUE;
 }
-
 
 static gboolean
 builder_source_archive_download (BuilderSource  *source,
@@ -325,7 +291,6 @@ builder_source_archive_download (BuilderSource  *source,
   const char *sha256 = NULL;
   g_autofree char *base_name = NULL;
   g_autoptr(GBytes) content = NULL;
-  g_autoptr(GChecksum) checksum = NULL;
   gboolean is_local;
 
   file = get_source_file (self, context, &is_local, error);
@@ -361,35 +326,12 @@ builder_source_archive_download (BuilderSource  *source,
       return FALSE;
     }
 
-  checksum = g_checksum_new (G_CHECKSUM_SHA256);
-
   g_print ("Downloading %s\n", self->url);
-  content = download_uri (self->url,
-                          checksum,
-                          context,
-                          error);
-  if (content == NULL)
-    return FALSE;
-
-  base_name = g_file_get_basename (file);
-
-  sha256 = g_checksum_get_string (checksum);
-  if (strcmp (sha256, self->sha256) != 0)
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Wrong sha256 for %s, expected %s, was %s", base_name, self->sha256, sha256);
-      return FALSE;
-    }
-
-  dir = g_file_get_parent (file);
-  dir_path = g_file_get_path (dir);
-  g_mkdir_with_parents (dir_path, 0755);
-
-  if (!g_file_replace_contents (file,
-                                g_bytes_get_data (content, NULL),
-                                g_bytes_get_size (content),
-                                NULL, FALSE, G_FILE_CREATE_NONE, NULL,
-                                NULL, error))
+  if (!builder_download_uri (self->url,
+                             file,
+                             self->sha256,
+                             builder_context_get_soup_session (context),
+                             error))
     return FALSE;
 
   return TRUE;
