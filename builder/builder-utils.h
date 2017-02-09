@@ -62,6 +62,11 @@ gboolean builder_maybe_host_spawnv (GFile                *dir,
                                     GError              **error,
                                     const gchar * const  *argv);
 
+gboolean builder_download_uri (const char     *url,
+                               GFile          *dest,
+                               char           *sha256,
+                               SoupSession    *soup_session,
+                               GError        **error);
 
 G_END_DECLS
 

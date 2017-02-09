@@ -318,34 +318,17 @@ builder_source_file_download (BuilderSource  *source,
       return FALSE;
     }
 
-  content = download_uri (self->url,
-                          context,
-                          error);
-  if (content == NULL)
-    return FALSE;
-
-  sha256 = g_compute_checksum_for_string (G_CHECKSUM_SHA256,
-                                          g_bytes_get_data (content, NULL),
-                                          g_bytes_get_size (content));
-
-  /* sha256 is optional for inline data */
-  if (((self->sha256 != NULL && *self->sha256 != 0) || !is_inline) &&
-      strcmp (sha256, self->sha256) != 0)
+  if ((self->sha256 == NULL || *self->sha256 == 0) && !is_inline)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Wrong sha256 for %s, expected %s, was %s", base_name, self->sha256, sha256);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Sha256 not specified");
       return FALSE;
     }
 
-  dir = g_file_get_parent (file);
-  dir_path = g_file_get_path (dir);
-  g_mkdir_with_parents (dir_path, 0755);
-
-  if (!g_file_replace_contents (file,
-                                g_bytes_get_data (content, NULL),
-                                g_bytes_get_size (content),
-                                NULL, FALSE, G_FILE_CREATE_NONE, NULL,
-                                NULL, error))
+  if (!builder_download_uri (self->url,
+                             file,
+                             self->sha256,
+                             builder_context_get_soup_session (context),
+                             error))
     return FALSE;
 
   return TRUE;
