@@ -74,6 +74,56 @@ flatpak_error_quark (void)
   return (GQuark) quark_volatile;
 }
 
+gboolean
+flatpak_write_update_checksum (GOutputStream  *out,
+                               gconstpointer   data,
+                               gsize           len,
+                               gsize          *out_bytes_written,
+                               GChecksum      *checksum,
+                               GCancellable   *cancellable,
+                               GError        **error)
+{
+  if (out)
+    {
+      if (!g_output_stream_write_all (out, data, len, out_bytes_written,
+                                      cancellable, error))
+        return FALSE;
+    }
+  else if (out_bytes_written)
+    {
+      *out_bytes_written = len;
+    }
+
+  if (checksum)
+    g_checksum_update (checksum, data, len);
+
+  return TRUE;
+}
+
+gboolean
+flatpak_splice_update_checksum (GOutputStream  *out,
+                                GInputStream   *in,
+                                GChecksum      *checksum,
+                                GCancellable   *cancellable,
+                                GError        **error)
+{
+  gsize bytes_read, bytes_written;
+  char buf[32*1024];
+
+  do
+    {
+      if (!g_input_stream_read_all (in, buf, sizeof buf, &bytes_read, cancellable, error))
+        return FALSE;
+
+      if (!flatpak_write_update_checksum (out, buf, bytes_read, &bytes_written, checksum,
+                                          cancellable, error))
+        return FALSE;
+    }
+  while (bytes_read > 0);
+
+  return TRUE;
+}
+
 GBytes *
 flatpak_read_stream (GInputStream *in,
                      gboolean      null_terminate,
