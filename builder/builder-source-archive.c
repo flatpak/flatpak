@@ -267,6 +267,7 @@ get_source_file (BuilderSourceArchive *self,
 
 static GBytes *
 download_uri (const char     *url,
+              GChecksum      *checksum,
               BuilderContext *context,
               GError        **error)
 {
@@ -287,11 +288,11 @@ download_uri (const char     *url,
     return NULL;
 
   out = g_memory_output_stream_new_resizable ();
-  if (!g_output_stream_splice (out,
-                               input,
-                               G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET | G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE,
-                               NULL,
-                               error))
+  if (!flatpak_splice_update_checksum (out, input, checksum, NULL, error))
+    return NULL;
+
+  /* Manually close to flush and detect write errors */
+  if (!g_output_stream_close (out, NULL, error))
     return NULL;
 
   return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (out));
@@ -321,9 +322,10 @@ builder_source_archive_download (BuilderSource  *source,
   g_autoptr(GFile) file = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autofree char *dir_path = NULL;
-  g_autofree char *sha256 = NULL;
+  const char *sha256 = NULL;
   g_autofree char *base_name = NULL;
   g_autoptr(GBytes) content = NULL;
+  g_autoptr(GChecksum) checksum = NULL;
   gboolean is_local;
 
   file = get_source_file (self, context, &is_local, error);
@@ -359,8 +361,11 @@ builder_source_archive_download (BuilderSource  *source,
       return FALSE;
     }
 
+  checksum = g_checksum_new (G_CHECKSUM_SHA256);
+
   g_print ("Downloading %s\n", self->url);
   content = download_uri (self->url,
+                          checksum,
                           context,
                           error);
   if (content == NULL)
@@ -368,10 +373,7 @@ builder_source_archive_download (BuilderSource  *source,
 
   base_name = g_file_get_basename (file);
 
-  sha256 = g_compute_checksum_for_string (G_CHECKSUM_SHA256,
-                                          g_bytes_get_data (content, NULL),
-                                          g_bytes_get_size (content));
-
+  sha256 = g_checksum_get_string (checksum);
   if (strcmp (sha256, self->sha256) != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,

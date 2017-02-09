@@ -75,6 +75,20 @@ char ** flatpak_get_current_locale_subpaths (void);
 
 void flatpak_migrate_from_xdg_app (void);
 
+gboolean flatpak_write_update_checksum (GOutputStream  *out,
+                                        gconstpointer   data,
+                                        gsize           len,
+                                        gsize          *out_bytes_written,
+                                        GChecksum      *checksum,
+                                        GCancellable   *cancellable,
+                                        GError        **error);
+
+gboolean flatpak_splice_update_checksum (GOutputStream  *out,
+                                         GInputStream   *in,
+                                         GChecksum      *checksum,
+                                         GCancellable   *cancellable,
+                                         GError        **error);
+
 GBytes * flatpak_read_stream (GInputStream *in,
                               gboolean      null_terminate,
                               GError      **error);
