@@ -1112,10 +1112,13 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint total_delta_parts;
   guint64 bytes_transferred;
   guint64 total_delta_part_size;
+  guint outstanding_extra_data;
+  guint64 total_extra_data_bytes;
+  guint64 transferred_extra_data_bytes;
   guint fetched;
   guint metadata_fetched;
   guint requested;
-  guint64 elapsed_time;
+  guint64 current_time;
   guint new_progress = 0;
   gboolean estimating = FALSE;
 
@@ -1130,10 +1133,13 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   total_delta_parts = ostree_async_progress_get_uint (progress, "total-delta-parts");
   total_delta_part_size = ostree_async_progress_get_uint64 (progress, "total-delta-part-size");
   bytes_transferred = ostree_async_progress_get_uint64 (progress, "bytes-transferred");
+  outstanding_extra_data = ostree_async_progress_get_uint (progress, "outstanding-extra-data");
+  total_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "total-extra-data-bytes");
+  transferred_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "transferred-extra-data-bytes");
   fetched = ostree_async_progress_get_uint (progress, "fetched");
   metadata_fetched = ostree_async_progress_get_uint (progress, "metadata-fetched");
   requested = ostree_async_progress_get_uint (progress, "requested");
-  elapsed_time = (g_get_monotonic_time () - ostree_async_progress_get_uint64 (progress, "start-time")) / G_USEC_PER_SEC;
+  current_time = g_get_monotonic_time ();
 
   if (status)
     {
@@ -1141,7 +1147,9 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
     }
   else if (outstanding_fetches)
     {
-      guint64 bytes_sec = bytes_transferred / elapsed_time;
+      guint64 elapsed_time =
+        (current_time - ostree_async_progress_get_uint64 (progress, "start-time")) / G_USEC_PER_SEC;
+      guint64 bytes_sec = (elapsed_time > 0) ? bytes_transferred / elapsed_time : 0;
       g_autofree char *formatted_bytes_transferred =
         g_format_size_full (bytes_transferred, 0);
       g_autofree char *formatted_bytes_sec = NULL;
@@ -1181,6 +1189,25 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
                                   (guint) ((((double) fetched) / requested) * 100),
                                   fetched, requested, formatted_bytes_sec, formatted_bytes_transferred);
         }
+    }
+  else if (outstanding_extra_data)
+    {
+      guint64 elapsed_time =
+        (current_time - ostree_async_progress_get_uint64 (progress, "start-time-extra-data")) / G_USEC_PER_SEC;
+      guint64 bytes_sec = (elapsed_time > 0) ? transferred_extra_data_bytes / elapsed_time : 0;
+      g_autofree char *formatted_bytes_transferred =
+        g_format_size_full (transferred_extra_data_bytes, 0);
+      g_autofree char *formatted_bytes_sec = NULL;
+
+      if (!bytes_sec) // Ignore first second
+        formatted_bytes_sec = g_strdup ("-");
+      else
+        formatted_bytes_sec = g_format_size (bytes_sec);
+
+      new_progress = (100 * transferred_extra_data_bytes) / total_extra_data_bytes;
+      g_string_append_printf (buf, "Downloading extra data: %u%% (%lu/%lu) %s/s %s",
+                              (guint) ((((double) transferred_extra_data_bytes) / total_extra_data_bytes) * 100),
+                              transferred_extra_data_bytes, total_extra_data_bytes, formatted_bytes_sec, formatted_bytes_transferred);
     }
   else if (outstanding_writes)
     {
