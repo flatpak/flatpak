@@ -1843,6 +1843,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
   if (progress)
     {
+      ostree_async_progress_set_uint64 (progress, "start-time-extra-data", g_get_monotonic_time ());
       ostree_async_progress_set_uint (progress, "outstanding-extra-data", n_extra_data);
       ostree_async_progress_set_uint (progress, "total-extra-data", n_extra_data);
       ostree_async_progress_set_uint64 (progress, "total-extra-data-bytes", total_download_size);
