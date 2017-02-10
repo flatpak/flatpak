@@ -47,6 +47,7 @@ static gboolean opt_keep_build_dirs;
 static gboolean opt_force_clean;
 static gboolean opt_allow_missing_runtimes;
 static gboolean opt_sandboxed;
+static gboolean opt_rebuild_on_sdk_change;
 static char *opt_stop_at;
 static char *opt_arch;
 static char *opt_repo;
@@ -81,6 +82,7 @@ static GOptionEntry entries[] = {
   { "sandbox", 0, 0, G_OPTION_ARG_NONE, &opt_sandboxed, "Enforce sandboxing, disabling build-args", NULL },
   { "stop-at", 0, 0, G_OPTION_ARG_STRING, &opt_stop_at, "Stop building at this module (implies --build-only)", "MODULENAME"},
   { "jobs", 0, 0, G_OPTION_ARG_INT, &opt_jobs, "Number of parallel jobs to build (default=NCPU)", "JOBS"},
+  { "rebuild-on-sdk-change", 0, 0, G_OPTION_ARG_NONE, &opt_rebuild_on_sdk_change, "Rebuild if sdk changes", NULL },
   { NULL }
 };
 
@@ -324,6 +326,7 @@ main (int    argc,
   builder_context_set_keep_build_dirs (build_context, opt_keep_build_dirs);
   builder_context_set_sandboxed (build_context, opt_sandboxed);
   builder_context_set_jobs (build_context, opt_jobs);
+  builder_context_set_rebuild_on_sdk_change (build_context, opt_rebuild_on_sdk_change);
 
   if (opt_arch)
     builder_context_set_arch (build_context, opt_arch);
