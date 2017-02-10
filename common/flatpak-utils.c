@@ -4811,8 +4811,7 @@ flatpak_load_http_uri (SoupSession *soup_session,
 
   g_debug ("Loading %s using libsoup", uri);
 
-  context = g_main_context_new ();
-  g_main_context_push_thread_default (context);
+  context = g_main_context_ref_thread_default ();
 
   loop = g_main_loop_new (context, TRUE);
   data.loop = loop;
@@ -4831,7 +4830,6 @@ flatpak_load_http_uri (SoupSession *soup_session,
                            load_uri_callback, &data);
 
   g_main_loop_run (loop);
-  g_main_context_pop_thread_default (context);
 
   if (data.error)
     {
@@ -4861,8 +4859,7 @@ flatpak_download_http_uri (SoupSession *soup_session,
 
   g_debug ("Loading %s using libsoup", uri);
 
-  context = g_main_context_new ();
-  g_main_context_push_thread_default (context);
+  context = g_main_context_ref_thread_default ();
 
   loop = g_main_loop_new (context, TRUE);
   data.loop = loop;
@@ -4881,7 +4878,6 @@ flatpak_download_http_uri (SoupSession *soup_session,
                            load_uri_callback, &data);
 
   g_main_loop_run (loop);
-  g_main_context_pop_thread_default (context);
 
   if (data.error)
     {
