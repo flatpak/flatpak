@@ -822,6 +822,16 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--rebuild-on-sdk-change</option></term>
+
+                <listitem><para>
+                  Record the exact version of the sdk in the cache, and rebuild everything
+                  if it changes. This is useful if you're building against an API-unstable
+                  runtime, like a nightly build.
+                </para></listitem>
+            </varlistentry>
+
           </variablelist>
     </refsect1>
 

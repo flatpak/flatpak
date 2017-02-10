@@ -58,6 +58,7 @@ struct BuilderContext
   gboolean        build_extension;
   gboolean        separate_locales;
   gboolean        sandboxed;
+  gboolean        rebuild_on_sdk_change;
 };
 
 typedef struct
@@ -387,6 +388,19 @@ builder_context_set_separate_locales (BuilderContext *self,
                                       gboolean        separate_locales)
 {
   self->separate_locales = !!separate_locales;
+}
+
+gboolean
+builder_context_get_rebuild_on_sdk_change (BuilderContext *self)
+{
+  return self->rebuild_on_sdk_change;
+}
+
+void
+builder_context_set_rebuild_on_sdk_change (BuilderContext *self,
+                                           gboolean        rebuild_on_sdk_change)
+{
+  self->rebuild_on_sdk_change = !!rebuild_on_sdk_change;
 }
 
 gboolean

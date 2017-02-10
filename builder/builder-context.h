@@ -76,6 +76,9 @@ void            builder_context_set_build_extension (BuilderContext *self,
 gboolean        builder_context_get_separate_locales (BuilderContext *self);
 void            builder_context_set_separate_locales (BuilderContext *self,
                                                       gboolean        separate_locales);
+gboolean        builder_context_get_rebuild_on_sdk_change (BuilderContext *self);
+void            builder_context_set_rebuild_on_sdk_change (BuilderContext *self,
+                                                           gboolean        rebuild_on_sdk_change);
 
 BuilderContext *builder_context_new (GFile *base_dir,
                                      GFile *app_dir);

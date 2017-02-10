@@ -1274,7 +1274,10 @@ builder_manifest_checksum (BuilderManifest *self,
   builder_cache_checksum_str (cache, self->runtime);
   builder_cache_checksum_str (cache, builder_manifest_get_runtime_version (self));
   builder_cache_checksum_str (cache, self->sdk);
-  builder_cache_checksum_str (cache, self->sdk_commit);
+  /* Always rebuild on sdk change if we're actually including the sdk in the cache */
+  if (self->writable_sdk || self->build_runtime ||
+      builder_context_get_rebuild_on_sdk_change (context))
+    builder_cache_checksum_str (cache, self->sdk_commit);
   builder_cache_checksum_str (cache, self->var);
   builder_cache_checksum_str (cache, self->metadata);
   builder_cache_checksum_strv (cache, self->tags);
