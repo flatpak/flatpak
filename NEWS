@@ -1,3 +1,25 @@
+Major changes in 0.8.3
+======================
+
+In addition to the regular list of bugfixes this stable release
+include backports of a the updated OpenGL support from master.  This,
+in combination with the work in the runtime allows flatpak to work out
+of the box with out-of-tree OpenGL drivers, including the nvidia
+driver.
+
+Additionally, due to some complicated issues wrt ptrace and user
+namespaces this version disables the use of user namespaces if
+bubblewrap is setuid, as it cause problems for the way flatpak
+portals identifies applications. (See issue #557 for details)
+
+ * Better handling of errors for extra-data
+ * Handle extra-data properly for runtimes (as well as apps)
+ * Respect required version for runtimes (as well as apps)
+ * flatpak list: Don't break if some local ref is not deployed
+ * builder: Look for appstream data in /app/share/metadata also
+ * builder: Fix buildsystem=cmake builds
+ * Add progress reporting to extra-data download
+
 Major changes in 0.8.2
 ======================
 
