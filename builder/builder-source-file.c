@@ -279,11 +279,8 @@ builder_source_file_download (BuilderSource  *source,
 
   g_autoptr(GFile) file = NULL;
   gboolean is_local, is_inline;
-  g_autoptr(GFile) dir = NULL;
-  g_autofree char *dir_path = NULL;
   g_autofree char *sha256 = NULL;
   g_autofree char *base_name = NULL;
-  g_autoptr(GBytes) content = NULL;
 
   file = get_source_file (self, context, &is_local, &is_inline, error);
   if (file == NULL)

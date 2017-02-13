@@ -286,11 +286,8 @@ builder_source_archive_download (BuilderSource  *source,
   BuilderSourceArchive *self = BUILDER_SOURCE_ARCHIVE (source);
 
   g_autoptr(GFile) file = NULL;
-  g_autoptr(GFile) dir = NULL;
-  g_autofree char *dir_path = NULL;
   const char *sha256 = NULL;
   g_autofree char *base_name = NULL;
-  g_autoptr(GBytes) content = NULL;
   gboolean is_local;
 
   file = get_source_file (self, context, &is_local, error);
