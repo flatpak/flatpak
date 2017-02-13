@@ -1445,7 +1445,7 @@ builder_module_build (BuilderModule  *self,
             }
         }
 
-      if (self->cmake)
+      if (cmake)
         configure_prefix_arg = g_strdup_printf ("-DCMAKE_INSTALL_PREFIX:PATH='%s'",
                                                 builder_options_get_prefix (self->build_options, context));
       else /* autotools and meson */
