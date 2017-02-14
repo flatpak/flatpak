@@ -286,6 +286,10 @@
                     <listitem><para>This is an array containing extra options to pass to flatpak build.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>config-opts</option> (array of strings)</term>
+                    <listitem><para>This is an array containing extra options to pass to configure.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>strip</option> (boolean)</term>
                     <listitem><para>If this is true (the default is false) then all ELF files will be stripped after install.</para></listitem>
                 </varlistentry>
