@@ -848,6 +848,8 @@ xdp_inode_stat (XdpInode    *inode,
                 struct stat *stbuf)
 {
   stbuf->st_ino = inode->ino;
+  stbuf->st_uid = getuid ();
+  stbuf->st_gid = getgid ();
 
   switch (inode->type)
     {
