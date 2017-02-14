@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak 0.8.0\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-01-27 11:34+0100\n"
+"POT-Creation-Date: 2017-02-14 11:16+0100\n"
 "PO-Revision-Date: 2017-01-18 11:30+MSK\n"
 "Last-Translator: romiq <romiq.kh@gmail.com>, 2017\n"
 "Language-Team: Russian (Russia) (https://www.transifex.com/flatpak/"
@@ -280,12 +280,12 @@ msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr ""
 "Каталог сборки %s не инициализирован, воспользуйтесь flatpak build-init"
 
-#: app/flatpak-builtins-build.c:231
+#: app/flatpak-builtins-build.c:232
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr ""
 
-#: app/flatpak-builtins-build.c:257 common/flatpak-run.c:4268
+#: app/flatpak-builtins-build.c:258 common/flatpak-run.c:4321
 msgid "Unable to start app"
 msgstr "Невозможно запустить приложение"
 
@@ -465,7 +465,7 @@ msgid "Command to set"
 msgstr "Указать команду"
 
 #: app/flatpak-builtins-build-finish.c:43 app/flatpak-builtins-run.c:51
-#: app/flatpak-main.c:142
+#: app/flatpak-main.c:144
 msgid "COMMAND"
 msgstr "КОМАНДА"
 
@@ -1200,32 +1200,32 @@ msgid "[REF...] - Update applications or runtimes"
 msgstr "[ССЫЛКА...] - Обновить приложения или среды исполнения"
 
 #. translators: please keep the leading space
-#: app/flatpak-main.c:58
+#: app/flatpak-main.c:59
 msgid " Manage installed apps and runtimes"
 msgstr " Управление установленными приложениями и средами исполнения"
 
-#: app/flatpak-main.c:59
+#: app/flatpak-main.c:60
 msgid "Install an application or runtime"
 msgstr "Установить приложение или среду исполнения"
 
-#: app/flatpak-main.c:60
+#: app/flatpak-main.c:61
 msgid "Update an installed application or runtime"
 msgstr "Обновить установленное приложение или среду исполнения"
 
-#: app/flatpak-main.c:61
+#: app/flatpak-main.c:62
 msgid "Uninstall an installed application or runtime"
 msgstr "Удалить установленное приложение или среду исполнения"
 
-#: app/flatpak-main.c:62
+#: app/flatpak-main.c:63
 msgid "List installed apps and/or runtimes"
 msgstr "Показать список установленных приложений и/или сред исполнения"
 
-#: app/flatpak-main.c:63
+#: app/flatpak-main.c:64
 msgid "Show info for installed app or runtime"
 msgstr "Показать информацию об установленных приложениях или средах исполнения"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:66
+#: app/flatpak-main.c:67
 msgid ""
 "\n"
 " Running applications"
@@ -1233,24 +1233,24 @@ msgstr ""
 "\n"
 " Запуск приложений"
 
-#: app/flatpak-main.c:67
+#: app/flatpak-main.c:68
 msgid "Run an application"
 msgstr "Запустить приложение"
 
-#: app/flatpak-main.c:68
+#: app/flatpak-main.c:69
 msgid "Override permissions for an application"
 msgstr "Переписать разрешения для приложения"
 
-#: app/flatpak-main.c:69
+#: app/flatpak-main.c:70
 msgid "Specify default version to run"
 msgstr "Указать версию по умолчанию для запуска"
 
-#: app/flatpak-main.c:70
+#: app/flatpak-main.c:71
 msgid "Enter the namespace of a running application"
 msgstr "Войти в пространство имён запущенного приложения"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:73
+#: app/flatpak-main.c:74
 msgid ""
 "\n"
 " Manage file access"
@@ -1258,24 +1258,24 @@ msgstr ""
 "\n"
 " Управление доступом к файлам"
 
-#: app/flatpak-main.c:74
+#: app/flatpak-main.c:75
 msgid "Grant an application access to a specific file"
 msgstr "Разрешить доступ приложения к указанному файлу"
 
-#: app/flatpak-main.c:75
+#: app/flatpak-main.c:76
 msgid "Revoke access to a specific file"
 msgstr "Отозвать разрешение на доступ к указанному файлу"
 
-#: app/flatpak-main.c:76
+#: app/flatpak-main.c:77
 msgid "Show information about a specific file"
 msgstr "Показать информацию об указанном файле"
 
-#: app/flatpak-main.c:77
+#: app/flatpak-main.c:78
 msgid "List exported files"
 msgstr "Список экспортированных файлов"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:80
+#: app/flatpak-main.c:81
 msgid ""
 "\n"
 " Manage remote repositories"
@@ -1283,28 +1283,28 @@ msgstr ""
 "\n"
 " Управление удалёнными репозиториями"
 
-#: app/flatpak-main.c:81
+#: app/flatpak-main.c:82
 msgid "Add a new remote repository (by URL)"
 msgstr "Добавить новый удалённый репозиторий (по АДРЕСУ)"
 
-#: app/flatpak-main.c:82
+#: app/flatpak-main.c:83
 msgid "Modify properties of a configured remote"
 msgstr "Изменить свойства настроенного удалённого репозитория"
 
-#: app/flatpak-main.c:83
+#: app/flatpak-main.c:84
 msgid "Delete a configured remote"
 msgstr "Удалить настроенный удалённый репозиторий"
 
-#: app/flatpak-main.c:84
+#: app/flatpak-main.c:85
 msgid "List all configured remotes"
 msgstr "Список всех настроенных удалённых репозиториев"
 
-#: app/flatpak-main.c:85
+#: app/flatpak-main.c:86
 msgid "List contents of a configured remote"
 msgstr "Список содержимого удалённого репозитория"
 
 #. translators: please keep the leading newline and space
-#: app/flatpak-main.c:88
+#: app/flatpak-main.c:89
 msgid ""
 "\n"
 " Build applications"
@@ -1312,92 +1312,97 @@ msgstr ""
 "\n"
 " Сборка приложений"
 
-#: app/flatpak-main.c:89
+#: app/flatpak-main.c:90
 msgid "Initialize a directory for building"
 msgstr "Инициализировать каталог для сборки"
 
-#: app/flatpak-main.c:90
+#: app/flatpak-main.c:91
 msgid "Run a build command inside the build dir"
 msgstr "Запустить команду сборки в каталоге сборки"
 
-#: app/flatpak-main.c:91
+#: app/flatpak-main.c:92
 msgid "Finish a build dir for export"
 msgstr "Финализировать каталог сборки для экспорта"
 
-#: app/flatpak-main.c:92
+#: app/flatpak-main.c:93
 msgid "Export a build dir to a repository"
 msgstr "Экспортировать из каталога сборки в репозиторий"
 
-#: app/flatpak-main.c:93
+#: app/flatpak-main.c:94
 msgid "Create a bundle file from a build directory"
 msgstr "Создать файл с пакетом из каталога сборки"
 
-#: app/flatpak-main.c:94
+#: app/flatpak-main.c:95
 msgid "Import a bundle file"
 msgstr "Импортировать файл с пакетом"
 
-#: app/flatpak-main.c:95
+#: app/flatpak-main.c:96
 msgid "Sign an application or runtime"
 msgstr "Подписать приложение или среду исполнения"
 
-#: app/flatpak-main.c:96
+#: app/flatpak-main.c:97
 msgid "Update the summary file in a repository"
 msgstr "Обновить файл с суммарной информацией в репозитории"
 
-#: app/flatpak-main.c:97
+#: app/flatpak-main.c:98
 msgid "Create new commit based on existing ref"
 msgstr "Создать новое изменение на базе существующей ссылки"
 
-#: app/flatpak-main.c:103
+#: app/flatpak-main.c:104
 msgid "Print debug information during command processing"
 msgstr "Печатать отладочную информацию во время обработки команд"
 
-#: app/flatpak-main.c:104
+#: app/flatpak-main.c:105
 msgid "Print OSTree debug information during command processing"
 msgstr "Печатать отладочную информацию OSTree во время обработки команд"
 
-#: app/flatpak-main.c:105
+#: app/flatpak-main.c:106
 msgid "Show help options"
 msgstr "Показать параметры справки"
 
-#: app/flatpak-main.c:110
+#: app/flatpak-main.c:111
 msgid "Print version information and exit"
 msgstr "Напечатать информацию о версии и выйти"
 
-#: app/flatpak-main.c:111
+#: app/flatpak-main.c:112
 msgid "Print default arch and exit"
 msgstr "Напечатать архитектуру по умолчанию и выйти"
 
-#: app/flatpak-main.c:112
+#: app/flatpak-main.c:113
 msgid "Print supported arches and exit"
 msgstr "Напечатать поддерживаемые архитектуры и выйти"
 
-#: app/flatpak-main.c:117
+#: app/flatpak-main.c:114
+#, fuzzy
+msgid "Print active gl drivers and exit"
+msgstr "Напечатать поддерживаемые архитектуры и выйти"
+
+#: app/flatpak-main.c:119
 msgid "Work on user installations"
 msgstr "Работать с  установленным только для пользователя"
 
-#: app/flatpak-main.c:118
+#: app/flatpak-main.c:120
 msgid "Work on system-wide installations (default)"
 msgstr "Работать с установленным для всех пользователей (по умолчанию)"
 
-#: app/flatpak-main.c:119
+#: app/flatpak-main.c:121
 msgid "Work on a specific system-wide installation"
 msgstr "Работать с установленным в указанном каталоге"
 
-#: app/flatpak-main.c:145
+#: app/flatpak-main.c:147
 msgid "Builtin Commands:"
 msgstr "Встроенные команды:"
 
-#: app/flatpak-main.c:354
+#: app/flatpak-main.c:365
 #, c-format
 msgid "Unknown command '%s'"
 msgstr "Неизвестная команда '%s'"
 
-#: app/flatpak-main.c:362
+#: app/flatpak-main.c:373
 msgid "No command specified"
 msgstr "Команда не указана"
 
-#: app/flatpak-main.c:479
+#: app/flatpak-main.c:490
 msgid "error:"
 msgstr "ошибка:"
 
@@ -1428,8 +1433,8 @@ msgstr ""
 
 #: app/flatpak-transaction.c:462 common/flatpak-dir.c:979
 #: common/flatpak-dir.c:1236 common/flatpak-dir.c:1272
-#: common/flatpak-dir.c:1294 common/flatpak-dir.c:7613
-#: common/flatpak-utils.c:1075
+#: common/flatpak-dir.c:1294 common/flatpak-dir.c:7639
+#: common/flatpak-utils.c:1116
 #, c-format
 msgid "%s not installed"
 msgstr "%s не установлено"
@@ -1444,62 +1449,62 @@ msgstr "Удалённый репозиторий %s отключен, обно�
 msgid "%s already installed"
 msgstr "%s уже установлено"
 
-#: app/flatpak-transaction.c:515
+#: app/flatpak-transaction.c:523
 #, c-format
 msgid "%s needs a later flatpak version (%s)"
 msgstr "%s требует более новую версию flatpak (%s)"
 
-#: app/flatpak-transaction.c:608 common/flatpak-dir.c:1998
+#: app/flatpak-transaction.c:616 common/flatpak-dir.c:1999
 msgid "OCI image is not a flatpak (missing ref)"
 msgstr "образ OCI не предназначен для flatpak (отсутствует ссылка)"
 
-#: app/flatpak-transaction.c:676
+#: app/flatpak-transaction.c:684
 msgid "install"
 msgstr "установить"
 
-#: app/flatpak-transaction.c:677
+#: app/flatpak-transaction.c:685
 #, c-format
 msgid "Installing: %s from %s\n"
 msgstr "Установка: %s из %s\n"
 
-#: app/flatpak-transaction.c:688
+#: app/flatpak-transaction.c:696
 msgid "update"
 msgstr "обновить"
 
-#: app/flatpak-transaction.c:689
+#: app/flatpak-transaction.c:697
 #, c-format
 msgid "Updating: %s from %s\n"
 msgstr "Обновление: %s из %s\n"
 
-#: app/flatpak-transaction.c:704
+#: app/flatpak-transaction.c:712
 #, c-format
 msgid "Now at %s.\n"
 msgstr "В настоящее время на %s.\n"
 
-#: app/flatpak-transaction.c:710
+#: app/flatpak-transaction.c:718
 msgid "No updates.\n"
 msgstr "Нет обновлений\n"
 
-#: app/flatpak-transaction.c:718
+#: app/flatpak-transaction.c:726
 msgid "install bundle"
 msgstr "установить пакет"
 
-#: app/flatpak-transaction.c:719
+#: app/flatpak-transaction.c:727
 #, c-format
 msgid "Installing: %s from bundle %s\n"
 msgstr "Установка: %s из пакета %s\n"
 
-#: app/flatpak-transaction.c:731
+#: app/flatpak-transaction.c:739
 #, c-format
 msgid "Warning: Failed to %s %s: %s\n"
 msgstr "Предупреждение: Не удалось %s %s: %s\n"
 
-#: app/flatpak-transaction.c:736
+#: app/flatpak-transaction.c:744
 #, c-format
 msgid "Error: Failed to %s %s: %s\n"
 msgstr "Ошибка: Не удалось %s %s: %s\n"
 
-#: app/flatpak-transaction.c:741
+#: app/flatpak-transaction.c:749
 msgid "One or more operations failed"
 msgstr "Одна или более операций закончилась с ошибкой"
 
@@ -1513,45 +1518,45 @@ msgstr ""
 msgid "While opening repository %s: "
 msgstr "Во время открытия репозитория %s:"
 
-#: common/flatpak-dir.c:1517 common/flatpak-dir.c:3778
+#: common/flatpak-dir.c:1517 common/flatpak-dir.c:3800
 msgid "Can't create deploy directory"
 msgstr "Невозможно создать каталог для развёртывания"
 
-#: common/flatpak-dir.c:1873
+#: common/flatpak-dir.c:1874
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "Некорректная сумма sha256 для расширенных данных по адресу %s"
 
-#: common/flatpak-dir.c:1878
+#: common/flatpak-dir.c:1879
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Пустое имя для расширенных данных по адресу %s"
 
-#: common/flatpak-dir.c:1883
+#: common/flatpak-dir.c:1884
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Неподдерживаемые расширенные данные по адресу %s"
 
-#: common/flatpak-dir.c:1893
+#: common/flatpak-dir.c:1894
 #, c-format
 msgid "While downloading %s: "
 msgstr "Во время загрузки %s: "
 
-#: common/flatpak-dir.c:1898
+#: common/flatpak-dir.c:1899
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Неправильный размер расширенных данных по адресу %s"
 
-#: common/flatpak-dir.c:1906
+#: common/flatpak-dir.c:1907
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Некорректная контрольная сумма расширенных данных по адресу %s"
 
-#: common/flatpak-dir.c:2001
+#: common/flatpak-dir.c:2002
 msgid "OCI image specifies the wrong app id"
 msgstr "В образ OCI указан некорректное id приложения"
 
-#: common/flatpak-dir.c:2122 common/flatpak-dir.c:2342
+#: common/flatpak-dir.c:2123 common/flatpak-dir.c:2342
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Во время получения %s из удалённого репозитория %s: "
@@ -1569,135 +1574,135 @@ msgstr "Не достаточно памяти"
 msgid "Failed to read from exported file"
 msgstr "Ошибка чтения из экспортированного файла"
 
-#: common/flatpak-dir.c:3434
+#: common/flatpak-dir.c:3445
 msgid "While getting detached metadata: "
 msgstr "Во время получения отсоединённых метаданных:"
 
-#: common/flatpak-dir.c:3452
+#: common/flatpak-dir.c:3463
 msgid "While creating extradir: "
 msgstr "Во время создания каталога с расширенными данными:"
 
-#: common/flatpak-dir.c:3473
+#: common/flatpak-dir.c:3484
 msgid "Invalid sha256 for extra data"
 msgstr "Некорректная контрольная сумма sha256 для расширенных данных"
 
-#: common/flatpak-dir.c:3502
+#: common/flatpak-dir.c:3513
 msgid "Wrong size for extra data"
 msgstr "Некорректный размер расширенных данных"
 
-#: common/flatpak-dir.c:3506
+#: common/flatpak-dir.c:3517
 msgid "Invalid checksum for extra data"
 msgstr "Некорректная контрольная сумма для расширенных данных"
 
-#: common/flatpak-dir.c:3515
+#: common/flatpak-dir.c:3526
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "Во время записи в файл расширенных данных '%s': "
 
-#: common/flatpak-dir.c:3672
+#: common/flatpak-dir.c:3694
 msgid "apply_extra script failed"
 msgstr "скрипт apply_extra закончился с ошибкой"
 
-#: common/flatpak-dir.c:3739
+#: common/flatpak-dir.c:3761
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Во время поиска назначения ссылки %s: "
 
-#: common/flatpak-dir.c:3754
+#: common/flatpak-dir.c:3776
 #, c-format
 msgid "%s is not available"
 msgstr "%s не доступно"
 
-#: common/flatpak-dir.c:3767 common/flatpak-dir.c:4015
-#: common/flatpak-dir.c:4618 common/flatpak-dir.c:4638
+#: common/flatpak-dir.c:3789 common/flatpak-dir.c:4037
+#: common/flatpak-dir.c:4640 common/flatpak-dir.c:4660
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s ветка %s уже установлено"
 
-#: common/flatpak-dir.c:3786
+#: common/flatpak-dir.c:3808
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Ошибка чтения зафиксированного изменения %s: "
 
-#: common/flatpak-dir.c:3805
+#: common/flatpak-dir.c:3827
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Во время получения %s в %s: "
 
-#: common/flatpak-dir.c:3830 common/flatpak-dir.c:3861
+#: common/flatpak-dir.c:3852 common/flatpak-dir.c:3883
 msgid "While trying to checkout metadata subpath: "
 msgstr "Во время получения метаданных подкаталога "
 
-#: common/flatpak-dir.c:3871
+#: common/flatpak-dir.c:3893
 msgid "While trying to remove existing extra dir: "
 msgstr "Во время удаления существующего каталога с расширенными данными: "
 
-#: common/flatpak-dir.c:3882
+#: common/flatpak-dir.c:3904
 msgid "While trying to apply extra data: "
 msgstr "Во время применения расширенных данных: "
 
-#: common/flatpak-dir.c:4466
+#: common/flatpak-dir.c:4488
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Указанная версия %s уже установлена"
 
-#: common/flatpak-dir.c:4473
+#: common/flatpak-dir.c:4495
 msgid "Can't change remote during bundle install"
 msgstr "Невозможно изменить удалённый репозиторий во время установки пакета"
 
-#: common/flatpak-dir.c:4904
+#: common/flatpak-dir.c:4926
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s ветка %s не установлено"
 
-#: common/flatpak-dir.c:5148
+#: common/flatpak-dir.c:5170
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "%s ветка %s не установлено"
 
-#: common/flatpak-dir.c:5919
+#: common/flatpak-dir.c:5941
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Совпадений не обнаружено %s"
 
-#: common/flatpak-dir.c:6001
+#: common/flatpak-dir.c:6023
 #, c-format
 msgid "Can't find %s%s%s%s%s in remote %s"
 msgstr "Невозможно найти %s%s%s%s%s в удалённом репозитории %s"
 
-#: common/flatpak-dir.c:6118
+#: common/flatpak-dir.c:6140
 #, c-format
 msgid "%s %s not installed"
 msgstr "%s %s не установлено"
 
-#: common/flatpak-dir.c:6191
+#: common/flatpak-dir.c:6213
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Не возможно найти %s в установленных"
 
-#: common/flatpak-dir.c:6664
+#: common/flatpak-dir.c:6686
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Среда исполнения %s, ветка %s уже установлено"
 
-#: common/flatpak-dir.c:6665
+#: common/flatpak-dir.c:6687
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Приложение %s, ветка %s уже установлено"
 
-#: common/flatpak-dir.c:7116
+#: common/flatpak-dir.c:7138
 msgid "Remote title not set"
 msgstr "Заголовок удаленного репозитория не установлен"
 
-#: common/flatpak-dir.c:7143
+#: common/flatpak-dir.c:7165
 msgid "Remote default-branch not set"
 msgstr "Ветка по умолчанию в удалённом репозитории не устаноавлена"
 
-#: common/flatpak-dir.c:7286
+#: common/flatpak-dir.c:7308
 msgid "No flatpak cache in remote summary"
 msgstr "No flatpak cache in remote summary"
 
-#: common/flatpak-dir.c:7295
+#: common/flatpak-dir.c:7317
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""
@@ -1874,29 +1879,29 @@ msgstr ""
 msgid "Failed to write to temporary file"
 msgstr ""
 
-#: common/flatpak-run.c:3166
+#: common/flatpak-run.c:3220
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3210
+#: common/flatpak-run.c:3264
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3494
+#: common/flatpak-run.c:3548
 msgid "Unable to create sync pipe"
 msgstr ""
 
-#: common/flatpak-run.c:3519
+#: common/flatpak-run.c:3573
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr ""
 
-#: common/flatpak-run.c:3549
+#: common/flatpak-run.c:3603
 msgid "Failed to sync with dbus proxy"
 msgstr ""
 
-#: common/flatpak-utils.c:2483
+#: common/flatpak-utils.c:2524
 msgid "No extra data sources"
 msgstr ""
