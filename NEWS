@@ -19,6 +19,7 @@ portals identifies applications. (See issue #557 for details)
  * builder: Look for appstream data in /app/share/metadata also
  * builder: Fix buildsystem=cmake builds
  * Add progress reporting to extra-data download
+ * Fix uid/gid for directories in document portal
 
 Major changes in 0.8.2
 ======================
