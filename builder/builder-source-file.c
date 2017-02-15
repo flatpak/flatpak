@@ -382,11 +382,9 @@ builder_source_file_extract (BuilderSource  *source,
       if (content == NULL)
         return FALSE;
 
-      if (!g_file_replace_contents (dest_file,
-                                    g_bytes_get_data (content, NULL),
-                                    g_bytes_get_size (content),
-                                    NULL, FALSE, G_FILE_CREATE_NONE, NULL,
-                                    NULL, error))
+      if (!g_file_set_contents (flatpak_file_get_path_cached (dest_file),
+                                g_bytes_get_data (content, NULL),
+                                g_bytes_get_size (content), error))
         return FALSE;
     }
   else
@@ -409,6 +407,10 @@ builder_source_file_extract (BuilderSource  *source,
               self->dest_filename = g_file_get_basename (src);
             }
         }
+
+      /* Make sure the target is gone, because g_file_copy does
+         truncation on hardlinked destinations */
+      g_file_delete (dest_file, NULL, NULL);
 
       if (!g_file_copy (src, dest_file,
                         G_FILE_COPY_OVERWRITE,
