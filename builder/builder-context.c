@@ -28,6 +28,8 @@
 #include <sys/statfs.h>
 #include <sys/prctl.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "flatpak-utils.h"
 #include "builder-context.h"
@@ -422,6 +424,21 @@ rofiles_umount_handler (int signum)
   exit (0);
 }
 
+static void
+rofiles_child_setup (gpointer user_data)
+{
+  struct rlimit limit;
+
+  /* I had issues with rofiles-fuse running into EMFILE, so
+     lets push it as far up as we can */
+
+  if (getrlimit (RLIMIT_NOFILE, &limit) == 0 &&
+      limit.rlim_max != limit.rlim_cur)
+    {
+      limit.rlim_cur  = limit.rlim_max;
+      setrlimit (RLIMIT_NOFILE, &limit);
+    }
+}
 
 gboolean
 builder_context_enable_rofiles (BuilderContext *self,
@@ -462,7 +479,7 @@ builder_context_enable_rofiles (BuilderContext *self,
   argv[4] = (char *)flatpak_file_get_path_cached (rofiles_dir);
 
   g_debug ("starting: rofiles-fuse %s %s", argv[1], argv[4]);
-  if (!g_spawn_sync (NULL, (char **)argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_CLOEXEC_PIPES, NULL, NULL, NULL, NULL, &exit_status, error))
+  if (!g_spawn_sync (NULL, (char **)argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_CLOEXEC_PIPES, rofiles_child_setup, NULL, NULL, NULL, &exit_status, error))
     {
       g_prefix_error (error, "Can't spawn rofiles-fuse");
       return FALSE;
