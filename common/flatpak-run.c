@@ -1745,6 +1745,26 @@ auth_streq (char *str,
   return au_len == strlen (str) && memcmp (str, au_str, au_len) == 0;
 }
 
+static gboolean
+xauth_entry_should_propagate (Xauth *xa,
+                              char  *hostname,
+                              char  *number)
+{
+  /* ensure entry isn't for remote access */
+  if (xa->family != FamilyLocal && xa->family != FamilyWild)
+    return FALSE;
+
+  /* ensure entry is for this machine */
+  if (xa->family == FamilyLocal && !auth_streq (hostname, xa->address, xa->address_length))
+    return FALSE;
+
+  /* ensure entry is for this session */
+  if (xa->number != NULL && !auth_streq (number, xa->number, xa->number_length))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 write_xauth (char *number, FILE *output)
 {
@@ -1769,9 +1789,7 @@ write_xauth (char *number, FILE *output)
       xa = XauReadAuth (f);
       if (xa == NULL)
         break;
-      if (xa->family == FamilyLocal &&
-          auth_streq (unames.nodename, xa->address, xa->address_length) &&
-          (xa->number == NULL || auth_streq (number, xa->number, xa->number_length)))
+      if (xauth_entry_should_propagate (xa, unames.nodename, number))
         {
           local_xa = *xa;
           if (local_xa.number)
