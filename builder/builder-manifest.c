@@ -1790,14 +1790,10 @@ builder_manifest_cleanup (BuilderManifest *self,
 
               g_string_append (new_contents, to_replace);
 
-              if (!g_file_replace_contents (appdata_file,
-                                            new_contents->str,
-                                            new_contents->len,
-                                            NULL,
-                                            FALSE,
-                                            G_FILE_CREATE_NONE,
-                                            NULL,
-                                            NULL, error))
+              if (!g_file_set_contents (flatpak_file_get_path_cached (appdata_file),
+                                        new_contents->str,
+                                        new_contents->len,
+                                        error))
                 return FALSE;
             }
         }
@@ -1888,8 +1884,8 @@ builder_manifest_cleanup (BuilderManifest *self,
           if (desktop_contents == NULL)
             return FALSE;
 
-          if (!g_file_replace_contents (desktop, desktop_contents, desktop_size, NULL, FALSE,
-                                        0, NULL, NULL, error))
+          if (!g_file_set_contents (flatpak_file_get_path_cached (desktop),
+                                    desktop_contents, desktop_size, error))
             return FALSE;
         }
 
@@ -1949,9 +1945,15 @@ builder_manifest_finish (BuilderManifest *self,
           GFile *base_dir = builder_context_get_base_dir (context);
           g_autoptr(GFile) dest_metadata = g_file_get_child (app_dir, "metadata");
           g_autoptr(GFile) src_metadata = g_file_resolve_relative_path (base_dir, self->metadata);
+          g_autofree char *contents = NULL;
+          gsize length;
 
-          if (!g_file_copy (src_metadata, dest_metadata, G_FILE_COPY_OVERWRITE, NULL,
-                            NULL, NULL, error))
+          if (!g_file_get_contents (flatpak_file_get_path_cached (src_metadata),
+                                    &contents, &length, error))
+            return FALSE;
+
+          if (!g_file_set_contents (flatpak_file_get_path_cached (dest_metadata),
+                                    contents, length, error))
             return FALSE;
         }
 
@@ -2034,8 +2036,8 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
         }
 
-      if (!g_file_replace_contents (manifest_file, json, strlen (json), NULL, FALSE,
-                                    0, NULL, NULL, error))
+      if (!g_file_set_contents (flatpak_file_get_path_cached (manifest_file),
+                                json, strlen (json), error))
         return FALSE;
 
       if (self->build_runtime)
@@ -2080,11 +2082,9 @@ builder_manifest_finish (BuilderManifest *self,
           metadata_locale_file = g_file_get_child (app_dir, "metadata.locale");
           metadata_contents = g_strdup_printf ("[Runtime]\n"
                                                "name=%s\n", locale_id);
-          if (!g_file_replace_contents (metadata_locale_file,
-                                        metadata_contents, strlen (metadata_contents),
-                                        NULL, FALSE,
-                                        G_FILE_CREATE_REPLACE_DESTINATION,
-                                        NULL, NULL, error))
+          if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_locale_file),
+                                    metadata_contents, strlen (metadata_contents),
+                                    error))
             return FALSE;
         }
 
@@ -2118,10 +2118,8 @@ builder_manifest_finish (BuilderManifest *self,
 
           metadata_contents = g_strdup_printf ("[Runtime]\n"
                                                "name=%s\n", debug_id);
-          if (!g_file_replace_contents (metadata_debuginfo_file,
-                                        metadata_contents, strlen (metadata_contents), NULL, FALSE,
-                                        G_FILE_CREATE_REPLACE_DESTINATION,
-                                        NULL, NULL, error))
+          if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_debuginfo_file),
+                                    metadata_contents, strlen (metadata_contents), error))
             return FALSE;
         }
 
@@ -2218,9 +2216,15 @@ builder_manifest_create_platform (BuilderManifest *self,
           GFile *base_dir = builder_context_get_base_dir (context);
           g_autoptr(GFile) dest_metadata = g_file_get_child (app_dir, "metadata.platform");
           g_autoptr(GFile) src_metadata = g_file_resolve_relative_path (base_dir, self->metadata_platform);
+          g_autofree char *contents = NULL;
+          gsize length;
 
-          if (!g_file_copy (src_metadata, dest_metadata, G_FILE_COPY_OVERWRITE, NULL,
-                            NULL, NULL, error))
+          if (!g_file_get_contents (flatpak_file_get_path_cached (src_metadata),
+                                    &contents, &length, error))
+            return FALSE;
+
+          if (!g_file_set_contents (flatpak_file_get_path_cached (dest_metadata),
+                                    contents, length, error))
             return FALSE;
         }
       else
@@ -2390,11 +2394,9 @@ builder_manifest_create_platform (BuilderManifest *self,
           metadata_locale_file = g_file_get_child (app_dir, "metadata.platform.locale");
           metadata_contents = g_strdup_printf ("[Runtime]\n"
                                                "name=%s\n", locale_id);
-          if (!g_file_replace_contents (metadata_locale_file,
-                                        metadata_contents, strlen (metadata_contents),
-                                        NULL, FALSE,
-                                        G_FILE_CREATE_REPLACE_DESTINATION,
-                                        NULL, NULL, error))
+          if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_locale_file),
+                                    metadata_contents, strlen (metadata_contents),
+                                    error))
             return FALSE;
         }
 

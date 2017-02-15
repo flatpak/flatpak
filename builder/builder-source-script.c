@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <sys/statfs.h>
 
+#include "flatpak-utils.h"
 #include "builder-utils.h"
 #include "builder-source-script.h"
 
@@ -155,13 +156,10 @@ builder_source_script_extract (BuilderSource  *source,
 
   dest_script = g_file_get_child (dest, dest_filename);
 
-  if (!g_file_replace_contents (dest_script,
-                                script->str,
-                                script->len,
-                                NULL,
-                                FALSE,
-                                G_FILE_CREATE_REPLACE_DESTINATION,
-                                NULL, NULL, error))
+  if (!g_file_set_contents (flatpak_file_get_path_cached (dest_script),
+                            script->str,
+                            script->len,
+                            error))
     return FALSE;
 
   perms = 0755;
