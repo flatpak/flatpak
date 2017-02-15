@@ -596,19 +596,313 @@ out:
   return res;
 }
 
+typedef struct {
+  dev_t dev;
+  ino_t ino;
+  char checksum[OSTREE_SHA256_STRING_LEN+1];
+} OstreeDevIno;
+
+static const char *
+devino_cache_lookup (OstreeRepoDevInoCache *devino_to_csum_cache,
+                     guint32               device,
+                     guint32               inode)
+{
+  OstreeDevIno dev_ino_key;
+  OstreeDevIno *dev_ino_val;
+  GHashTable *cache = (GHashTable *)devino_to_csum_cache;
+
+  if (devino_to_csum_cache == NULL)
+    return NULL;
+
+  dev_ino_key.dev = device;
+  dev_ino_key.ino = inode;
+  dev_ino_val = g_hash_table_lookup (cache, &dev_ino_key);
+
+  if (!dev_ino_val)
+    return NULL;
+
+  return dev_ino_val->checksum;
+}
+
+static gboolean
+get_file_checksum (OstreeRepoDevInoCache *devino_to_csum_cache,
+                   GFile *f,
+                   GFileInfo *f_info,
+                   char  **out_checksum,
+                   GCancellable *cancellable,
+                   GError   **error)
+{
+  g_autofree char *ret_checksum = NULL;
+  g_autofree guchar *csum = NULL;
+
+  if (OSTREE_IS_REPO_FILE (f))
+    {
+      ret_checksum = g_strdup (ostree_repo_file_get_checksum ((OstreeRepoFile*)f));
+    }
+  else
+    {
+      const char *cached = devino_cache_lookup (devino_to_csum_cache,
+                                                g_file_info_get_attribute_uint32 (f_info, "unix::device"),
+                                                g_file_info_get_attribute_uint64 (f_info, "unix::inode"));
+      if (cached)
+        ret_checksum = g_strdup (cached);
+      else
+        {
+          g_autoptr(GInputStream) in = NULL;
+
+          if (g_file_info_get_file_type (f_info) == G_FILE_TYPE_REGULAR)
+            {
+              in = (GInputStream*)g_file_read (f, cancellable, error);
+              if (!in)
+                return FALSE;
+            }
+
+          if (!ostree_checksum_file_from_input (f_info, NULL, in,
+                                                OSTREE_OBJECT_TYPE_FILE,
+                                                &csum, cancellable, error))
+            return FALSE;
+
+          ret_checksum = ostree_checksum_from_bytes (csum);
+        }
+    }
+
+  *out_checksum = g_steal_pointer (&ret_checksum);
+  return TRUE;
+}
+
+static gboolean
+diff_files (OstreeRepoDevInoCache *devino_to_csum_cache,
+            GFile           *a,
+            GFileInfo       *a_info,
+            GFile           *b,
+            GFileInfo       *b_info,
+            gboolean        *was_changed,
+            GCancellable    *cancellable,
+            GError         **error)
+{
+  g_autofree char *checksum_a = NULL;
+  g_autofree char *checksum_b = NULL;
+
+  if (!get_file_checksum (devino_to_csum_cache, a, a_info, &checksum_a, cancellable, error))
+    return FALSE;
+
+  if (!get_file_checksum (devino_to_csum_cache, b, b_info, &checksum_b, cancellable, error))
+    return FALSE;
+
+  *was_changed = strcmp (checksum_a, checksum_b) != 0;
+
+  return TRUE;
+}
+
+static gboolean
+diff_add_dir_recurse (GFile          *d,
+                      GPtrArray      *added,
+                      GCancellable   *cancellable,
+                      GError        **error)
+{
+  GError *temp_error = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFile) child = NULL;
+  g_autoptr(GFileInfo) child_info = NULL;
+
+  dir_enum = g_file_enumerate_children (d, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable,
+                                        error);
+  if (!dir_enum)
+    return FALSE;
+
+  while ((child_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)) != NULL)
+    {
+      const char *name;
+
+      name = g_file_info_get_name (child_info);
+
+      g_clear_object (&child);
+      child = g_file_get_child (d, name);
+
+      g_ptr_array_add (added, g_object_ref (child));
+
+      if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY)
+        {
+          if (!diff_add_dir_recurse (child, added, cancellable, error))
+            return FALSE;
+        }
+
+      g_clear_object (&child_info);
+    }
+
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+
+static gboolean
+diff_dirs (OstreeRepoDevInoCache *devino_to_csum_cache,
+           GFile          *a,
+           GFile          *b,
+           GPtrArray      *changed,
+           GCancellable   *cancellable,
+           GError        **error)
+{
+  GError *temp_error = NULL;
+  g_autoptr(GFileEnumerator) dir_enum = NULL;
+  g_autoptr(GFile) child_a = NULL;
+  g_autoptr(GFile) child_b = NULL;
+  g_autoptr(GFileInfo) child_a_info = NULL;
+  g_autoptr(GFileInfo) child_b_info = NULL;
+
+  if (a == NULL)
+    {
+      if (!diff_add_dir_recurse (b, changed, cancellable, error))
+        return FALSE;
+
+      return TRUE;
+    }
+
+  dir_enum = g_file_enumerate_children (a, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable, error);
+  if (!dir_enum)
+    return FALSE;
+
+  while ((child_a_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)) != NULL)
+    {
+      const char *name;
+      GFileType child_a_type;
+      GFileType child_b_type;
+
+      name = g_file_info_get_name (child_a_info);
+
+      g_clear_object (&child_a);
+      child_a = g_file_get_child (a, name);
+      child_a_type = g_file_info_get_file_type (child_a_info);
+
+      g_clear_object (&child_b);
+      child_b = g_file_get_child (b, name);
+
+      g_clear_object (&child_b_info);
+      child_b_info = g_file_query_info (child_b, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable,
+                                        &temp_error);
+      if (!child_b_info)
+        {
+          if (g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+            {
+              g_clear_error (&temp_error);
+              /* Removed, ignore */
+            }
+          else
+            {
+              g_propagate_error (error, temp_error);
+              return FALSE;
+            }
+        }
+      else
+        {
+          child_b_type = g_file_info_get_file_type (child_b_info);
+          if (child_a_type != child_b_type)
+            {
+              g_ptr_array_add (changed, g_object_ref (child_b));
+            }
+          else
+            {
+              gboolean was_changed = FALSE;
+
+              if (!diff_files (devino_to_csum_cache,
+                               child_a, child_a_info,
+                               child_b, child_b_info,
+                               &was_changed,
+                               cancellable, error))
+                return FALSE;
+
+              if (was_changed)
+                g_ptr_array_add (changed, g_object_ref (child_b));
+
+              if (child_a_type == G_FILE_TYPE_DIRECTORY)
+                {
+                  if (!diff_dirs (devino_to_csum_cache, child_a, child_b, changed,
+                                  cancellable, error))
+                    return FALSE;
+                }
+            }
+        }
+
+      g_clear_object (&child_a_info);
+    }
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      return FALSE;
+    }
+
+  g_clear_object (&dir_enum);
+  dir_enum = g_file_enumerate_children (b, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable, error);
+  if (!dir_enum)
+    return FALSE;
+
+  g_clear_object (&child_b_info);
+  while ((child_b_info = g_file_enumerator_next_file (dir_enum, cancellable, &temp_error)) != NULL)
+    {
+      const char *name;
+
+      name = g_file_info_get_name (child_b_info);
+
+      g_clear_object (&child_a);
+      child_a = g_file_get_child (a, name);
+
+      g_clear_object (&child_b);
+      child_b = g_file_get_child (b, name);
+
+      g_clear_object (&child_a_info);
+      child_a_info = g_file_query_info (child_a, OSTREE_GIO_FAST_QUERYINFO,
+                                        G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
+                                        cancellable,
+                                        &temp_error);
+      if (!child_a_info)
+        {
+          if (g_error_matches (temp_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+            {
+              g_clear_error (&temp_error);
+              g_ptr_array_add (changed, g_object_ref (child_b));
+              if (g_file_info_get_file_type (child_b_info) == G_FILE_TYPE_DIRECTORY)
+                {
+                  if (!diff_add_dir_recurse (child_b, changed, cancellable, error))
+                    return FALSE;
+                }
+            }
+          else
+            {
+              g_propagate_error (error, temp_error);
+              return FALSE;
+            }
+        }
+      g_clear_object (&child_b_info);
+    }
+  if (temp_error != NULL)
+    {
+      g_propagate_error (error, temp_error);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 gboolean
 builder_cache_get_outstanding_changes (BuilderCache *self,
-                                       GPtrArray   **added_out,
-                                       GPtrArray   **modified_out,
-                                       GPtrArray   **removed_out,
+                                       GPtrArray   **changed_out,
                                        GError      **error)
 {
-  g_autoptr(GPtrArray) added = g_ptr_array_new_with_free_func (g_object_unref);
-  g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify) ostree_diff_item_unref);
-  g_autoptr(GPtrArray) removed = g_ptr_array_new_with_free_func (g_object_unref);
-  g_autoptr(GPtrArray) added_paths = g_ptr_array_new_with_free_func (g_free);
-  g_autoptr(GPtrArray) modified_paths = g_ptr_array_new_with_free_func (g_free);
-  g_autoptr(GPtrArray) removed_paths = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) changed = g_ptr_array_new_with_free_func (g_object_unref);
+  g_autoptr(GPtrArray) changed_paths = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GFile) last_root = NULL;
   g_autoptr(GVariant) variant = NULL;
   int i;
@@ -620,44 +914,22 @@ builder_cache_get_outstanding_changes (BuilderCache *self,
                                  &variant, NULL))
     return FALSE;
 
-  if (!ostree_diff_dirs (OSTREE_DIFF_FLAGS_IGNORE_XATTRS,
-                         last_root,
-                         self->app_dir,
-                         modified,
-                         removed,
-                         added,
-                         NULL, error))
+  if (!diff_dirs (self->devino_to_csum_cache,
+                  last_root,
+                  self->app_dir,
+                  changed,
+                  NULL, error))
     return FALSE;
 
-  for (i = 0; i < added->len; i++)
+  for (i = 0; i < changed->len; i++)
     {
-      GFile *added_file = g_ptr_array_index (added, i);
-      char *path = g_file_get_relative_path (self->app_dir, added_file);
-      g_ptr_array_add (added_paths, path);
+      GFile *changed_file = g_ptr_array_index (changed, i);
+      char *path = g_file_get_relative_path (self->app_dir, changed_file);
+      g_ptr_array_add (changed_paths, path);
     }
 
-  for (i = 0; i < modified->len; i++)
-    {
-      OstreeDiffItem *modified_item = g_ptr_array_index (modified, i);
-      char *path = g_file_get_relative_path (self->app_dir, modified_item->target);
-      g_ptr_array_add (modified_paths, path);
-    }
-
-  for (i = 0; i < removed->len; i++)
-    {
-      GFile *removed_file = g_ptr_array_index (removed, i);
-      char *path = g_file_get_relative_path (self->app_dir, removed_file);
-      g_ptr_array_add (removed_paths, path);
-    }
-
-  if (added_out)
-    *added_out = g_steal_pointer (&added_paths);
-
-  if (modified_out)
-    *modified_out = g_steal_pointer (&modified_paths);
-
-  if (removed_out)
-    *removed_out = g_steal_pointer (&removed_paths);
+  if (changed_out)
+    *changed_out = g_steal_pointer (&changed_paths);
 
   return TRUE;
 }
