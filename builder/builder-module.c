@@ -997,6 +997,12 @@ builder_module_handle_debuginfo (BuilderModule  *self,
                     }
 
                   g_print ("stripping %s to %s\n", path, debug_path);
+
+                  /* Some files are hardlinked and eu-strip modifies in-place,
+                     which breaks rofiles-fuse. Unlink them */
+                  if (!flatpak_unbreak_hardlink (file, error))
+                    return FALSE;
+
                   if (!eu_strip (error, "--remove-comment", "--reloc-debug-sections",
                                  "-f", debug_path,
                                  "-F", real_debug_path,
