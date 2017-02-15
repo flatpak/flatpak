@@ -853,24 +853,14 @@ builder_module_handle_debuginfo (BuilderModule  *self,
   g_autofree char *app_dir_path = g_file_get_path (app_dir);
   int i;
 
-  g_autoptr(GPtrArray) added = NULL;
-  g_autoptr(GPtrArray) modified = NULL;
-  g_autoptr(GPtrArray) added_or_modified = g_ptr_array_new ();
+  g_autoptr(GPtrArray) changed = NULL;
 
-  if (!builder_cache_get_outstanding_changes (cache, &added, &modified, NULL, error))
+  if (!builder_cache_get_outstanding_changes (cache, &changed, error))
     return FALSE;
 
-  for (i = 0; i < added->len; i++)
-    g_ptr_array_add (added_or_modified, g_ptr_array_index (added, i));
-
-  for (i = 0; i < modified->len; i++)
-    g_ptr_array_add (added_or_modified, g_ptr_array_index (modified, i));
-
-  g_ptr_array_sort (added_or_modified, flatpak_strcmp0_ptr);
-
-  for (i = 0; i < added_or_modified->len; i++)
+  for (i = 0; i < changed->len; i++)
     {
-      const char *rel_path = (char *) g_ptr_array_index (added_or_modified, i);
+      const char *rel_path = (char *) g_ptr_array_index (changed, i);
       g_autoptr(GFile) file = g_file_resolve_relative_path (app_dir, rel_path);
       g_autofree char *path = g_file_get_path (file);
       g_autofree char *debug_path = NULL;
