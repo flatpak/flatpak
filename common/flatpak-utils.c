@@ -498,6 +498,36 @@ flatpak_get_bwrap (void)
   return HELPER;
 }
 
+gboolean
+flatpak_unbreak_hardlink (GFile *file, GError **error)
+{
+  g_autofree char *path = g_file_get_path (file);
+  struct stat st_buf;
+
+  if (stat (path, &st_buf) == 0 && st_buf.st_nlink > 1)
+    {
+      g_autoptr(GFile) dir = g_file_get_parent (file);
+      g_autoptr(GFile) tmp = NULL;
+
+      tmp = flatpak_file_new_tmp_in (dir, ".eustripXXXXXX", error);
+      if (tmp == NULL)
+        return FALSE;
+
+      if (!g_file_copy (file, tmp,
+                        G_FILE_COPY_OVERWRITE,
+                        NULL, NULL, NULL, error))
+        return FALSE;
+
+      if (rename (flatpak_file_get_path_cached (tmp), path) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
 /* We only migrate the user dir, because thats what most people used with xdg-app,
  * and its where all per-user state/config are stored.
  */
