@@ -32,7 +32,7 @@
         {
             "name": "modify-python",
             "post-install": [
-	        "cp importme2.py /app/bin/importme.py"
+	        "cp --remove-destination importme2.py /app/bin/importme.py"
             ],
             "sources": [
                 {
