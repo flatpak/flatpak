@@ -10,6 +10,8 @@ flatpak_builder_SOURCES = \
 	builder/builder-options.h \
 	builder/builder-module.c \
 	builder/builder-module.h \
+	builder/builder-post-process.c \
+	builder/builder-post-process.h \
 	builder/builder-source.c \
 	builder/builder-source.h \
 	builder/builder-source-archive.c \
