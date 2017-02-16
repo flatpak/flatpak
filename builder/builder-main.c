@@ -437,7 +437,7 @@ main (int    argc,
           g_autofree char *body =
             g_strdup_printf ("Initialized %s\n",
                              builder_manifest_get_id (manifest));
-          if (!builder_manifest_init_app_dir (manifest, build_context, &error))
+          if (!builder_manifest_init_app_dir (manifest, cache, build_context, &error))
             {
               g_printerr ("Error: %s\n", error->message);
               return 1;

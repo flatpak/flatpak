@@ -30,6 +30,7 @@
 #include "builder-manifest.h"
 #include "builder-utils.h"
 #include "flatpak-utils.h"
+#include "builder-post-process.h"
 
 #include "libglnx/libglnx.h"
 
@@ -1155,6 +1156,7 @@ builder_manifest_start (BuilderManifest *self,
 
 gboolean
 builder_manifest_init_app_dir (BuilderManifest *self,
+                               BuilderCache    *cache,
                                BuilderContext  *context,
                                GError         **error)
 {
@@ -1258,6 +1260,11 @@ builder_manifest_init_app_dir (BuilderManifest *self,
       if (!builder_migrate_locale_dirs (root_dir, error))
         return FALSE;
     }
+
+  /* Fix up any python timestamps from base */
+  if (!builder_post_process (BUILDER_POST_PROCESS_FLAGS_PYTHON_TIMESTAMPS, app_dir,
+                             cache, context, error))
+    return FALSE;
 
   return TRUE;
 }

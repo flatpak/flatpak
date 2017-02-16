@@ -35,6 +35,186 @@
 #include "builder-post-process.h"
 
 static gboolean
+fixup_python_time_stamp (const char *path,
+                         const char *rel_path,
+                         GError **error)
+{
+  glnx_fd_close int fd = -1;
+  glnx_fd_close int write_fd = -1;
+  g_autofree char *write_name = NULL;
+  guint8 buffer[8];
+  ssize_t res;
+  guint32 pyc_mtime;
+  g_autofree char *py_path = NULL;
+  struct stat stbuf;
+  gboolean remove_pyc = FALSE;
+  g_autofree char *path_basename = g_path_get_basename (path);
+  g_autofree char *dir = g_path_get_dirname (path);
+  g_autofree char *dir_basename = g_path_get_basename (dir);
+
+  fd = open (path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+  if (fd == -1)
+    {
+      g_warning ("Can't open %s", rel_path);
+      return TRUE;
+    }
+
+  res = pread (fd, buffer, 8, 0);
+  if (res != 8)
+    {
+      g_warning ("Short read for %s", rel_path);
+      return TRUE;
+    }
+
+  if (buffer[2] != 0x0d || buffer[3] != 0x0a)
+    {
+      g_debug ("Not matching python magic: %s", rel_path);
+      return TRUE;
+    }
+
+  pyc_mtime =
+    (buffer[4] << 8*0) |
+    (buffer[5] << 8*1) |
+    (buffer[6] << 8*2) |
+    (buffer[7] << 8*3);
+
+  if (strcmp (dir_basename, "__pycache__") == 0)
+    {
+      /* Python3 */
+      g_autofree char *base = g_strdup (path_basename);
+      g_autofree char *real_dir = g_path_get_dirname (dir);
+      g_autofree char *py_basename = NULL;
+      char *dot;
+
+      dot = strrchr (base, '.');
+      if (dot == NULL)
+        return TRUE;
+      *dot = 0;
+
+      dot = strrchr (base, '.');
+      if (dot == NULL)
+        return TRUE;
+      *dot = 0;
+
+      py_basename = g_strconcat (base, ".py", NULL);
+      py_path = g_build_filename (real_dir, py_basename, NULL);
+    }
+  else
+    {
+      /* Python2 */
+      py_path = g_strndup (path, strlen (path) - 1);
+    }
+
+  /* Here we found a .pyc (or .pyo) file and a possible .py file that apply for it.
+   * There are several possible cases wrt their mtimes:
+   *
+   * py not existing: pyc is stale, remove it
+   * pyc mtime == 0: (.pyc is from an old commited module)
+   *     py mtime == 0: Do nothing, already correct
+   *     py mtime != 0: The py changed in this module, remove pyc
+   * pyc mtime != 0: (.pyc changed this module, or was never rewritten in base layer)
+   *     py mtime == 0: Shouldn't happen in flatpak-builder, but could be an un-rewritten ctime lower layer, assume it matches and update timestamp
+   *     py mtime != pyc mtime: new pyc doesn't match last py written in this module, remove it
+   *     py mtime == pyc mtime: These match, but the py will be set to mtime 0 by ostree, so update timestamp in pyc.
+   */
+
+  if (lstat (py_path, &stbuf) != 0)
+    {
+      remove_pyc = TRUE;
+    }
+  else if (pyc_mtime == OSTREE_TIMESTAMP)
+    {
+      if (stbuf.st_mtime == OSTREE_TIMESTAMP)
+        return TRUE; /* Previously handled pyc */
+
+      remove_pyc = TRUE;
+    }
+  else /* pyc_mtime != 0 */
+    {
+      if (pyc_mtime != stbuf.st_mtime && stbuf.st_mtime != OSTREE_TIMESTAMP)
+        remove_pyc = TRUE;
+      /* else change mtime */
+    }
+
+  if (remove_pyc)
+    {
+      g_print ("Removing stale python bytecode file %s\n", rel_path);
+      if (unlink (path) != 0)
+        g_warning ("Unable to delete %s", rel_path);
+      return TRUE;
+    }
+
+  if (!glnx_open_tmpfile_linkable_at (AT_FDCWD, dir,
+                                      O_RDWR | O_CLOEXEC | O_NOFOLLOW,
+                                      &write_fd, &write_name,
+                                      error))
+    return FALSE;
+
+  if (!flatpak_copy_bytes (fd, write_fd, error))
+    return FALSE;
+
+  /* Change to mtime 0 which is what ostree uses for checkouts */
+  buffer[4] = OSTREE_TIMESTAMP;
+  buffer[5] = buffer[6] = buffer[7] = 0;
+
+  res = pwrite (write_fd, buffer, 8, 0);
+  if (res != 8)
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
+  if (!glnx_link_tmpfile_at (AT_FDCWD,
+                             GLNX_LINK_TMPFILE_REPLACE,
+                             write_fd, write_name,
+                             AT_FDCWD,
+                             path,
+                             error))
+    return FALSE;
+
+  g_print ("Fixed up header mtime for %s\n", rel_path);
+
+  /* The mtime will be zeroed on cache commit. We don't want to do that now, because multiple
+     files could reference one .py file and we need the mtimes to match for them all */
+
+  return TRUE;
+}
+
+static gboolean
+builder_post_process_python_time_stamp (GFile *app_dir,
+                                        GPtrArray *changed,
+                                        GError **error)
+{
+  int i;
+
+  for (i = 0; i < changed->len; i++)
+    {
+      const char *rel_path = (char *) g_ptr_array_index (changed, i);
+      g_autoptr(GFile) file = NULL;
+      g_autofree char *path = NULL;
+      struct stat stbuf;
+
+      if (!(g_str_has_suffix (rel_path, ".pyc") || g_str_has_suffix (rel_path, ".pyo")))
+        continue;
+
+      file = g_file_resolve_relative_path (app_dir, rel_path);
+      path = g_file_get_path (file);
+
+      if (lstat (path, &stbuf) == -1)
+        continue;
+
+      if (!S_ISREG (stbuf.st_mode))
+        continue;
+
+      if (!fixup_python_time_stamp (path, rel_path, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
+
+static gboolean
 builder_post_process_strip (GFile *app_dir,
                             GPtrArray *changed,
                             GError        **error)
@@ -209,6 +389,12 @@ builder_post_process (BuilderPostProcessFlags flags,
 
   if (!builder_cache_get_outstanding_changes (cache, &changed, error))
     return FALSE;
+
+  if (flags & BUILDER_POST_PROCESS_FLAGS_PYTHON_TIMESTAMPS)
+    {
+      if (!builder_post_process_python_time_stamp (app_dir, changed,error))
+        return FALSE;
+    }
 
   if (flags & BUILDER_POST_PROCESS_FLAGS_STRIP)
     {
