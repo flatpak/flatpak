@@ -904,14 +904,10 @@ builder_cache_get_outstanding_changes (BuilderCache *self,
   g_autoptr(GPtrArray) changed = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GPtrArray) changed_paths = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GFile) last_root = NULL;
-  g_autoptr(GVariant) variant = NULL;
   int i;
 
-  if (!ostree_repo_read_commit (self->repo, self->last_parent, &last_root, NULL, NULL, error))
-    return FALSE;
-
-  if (!ostree_repo_load_variant (self->repo, OSTREE_OBJECT_TYPE_COMMIT, self->last_parent,
-                                 &variant, NULL))
+  if (self->last_parent &&
+      !ostree_repo_read_commit (self->repo, self->last_parent, &last_root, NULL, NULL, error))
     return FALSE;
 
   if (!diff_dirs (self->devino_to_csum_cache,
