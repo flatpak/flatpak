@@ -384,7 +384,6 @@ builder_post_process (BuilderPostProcessFlags flags,
                       BuilderContext *context,
                       GError        **error)
 {
-  g_autofree char *app_dir_path = g_file_get_path (app_dir);
   g_autoptr(GPtrArray) changed = NULL;
 
   if (!builder_cache_get_outstanding_changes (cache, &changed, error))
