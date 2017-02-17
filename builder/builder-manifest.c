@@ -1423,7 +1423,7 @@ builder_manifest_build (BuilderManifest *self,
   if (self->build_runtime && self->build_extension)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Can't build boh a runtime and an extension");
+                   "Can't build both a runtime and an extension");
       return FALSE;
     }
   builder_context_set_build_runtime (context, self->build_runtime);
