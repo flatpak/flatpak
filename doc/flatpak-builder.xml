@@ -367,7 +367,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>buildsystem</option> (string)</term>
-                    <listitem><para>Build system to use: autotools, cmake, cmake-ninja, meson</para></listitem>
+                    <listitem><para>Build system to use: autotools, cmake, cmake-ninja, meson, simple</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>builddir</option> (boolean)</term>
@@ -380,6 +380,12 @@
                 <varlistentry>
                     <term><option>build-options</option> (object)</term>
                     <listitem><para>A build options object that can override global options</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>build-commands</option> (array of strings)</term>
+                    <listitem><para>An array of commands to run in order to build and install the module, when using
+                    the "simple" buildsystem.
+                    </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>post-install</option> (array of strings)</term>
