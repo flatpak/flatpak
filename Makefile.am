@@ -147,6 +147,9 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = flatpak.pc
 EXTRA_DIST += flatpak.pc.in
 
+scriptsdir = $(bindir)
+scripts_SCRIPTS = scripts/flatpak-bisect
+
 EXTRA_DIST += README.md
 
 AM_DISTCHECK_CONFIGURE_FLAGS =		\
