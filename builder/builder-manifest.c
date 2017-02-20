@@ -1383,6 +1383,7 @@ builder_manifest_checksum_for_platform (BuilderManifest *self,
 gboolean
 builder_manifest_download (BuilderManifest *self,
                            gboolean         update_vcs,
+                           const char      *only_module,
                            BuilderContext  *context,
                            GError         **error)
 {
@@ -1394,6 +1395,9 @@ builder_manifest_download (BuilderManifest *self,
     {
       BuilderModule *m = l->data;
       const char *name = builder_module_get_name (m);
+
+      if (only_module && strcmp (name, only_module) != 0)
+        continue;
 
       if (stop_at != NULL && strcmp (name, stop_at) == 0)
         {
@@ -1408,15 +1412,11 @@ builder_manifest_download (BuilderManifest *self,
   return TRUE;
 }
 
-gboolean
-builder_manifest_build (BuilderManifest *self,
-                        BuilderCache    *cache,
-                        BuilderContext  *context,
-                        GError         **error)
+static gboolean
+setup_context (BuilderManifest *self,
+               BuilderContext  *context,
+               GError         **error)
 {
-  const char *stop_at = builder_context_get_stop_at (context);
-  GList *l;
-
   builder_context_set_options (context, self->build_options);
   builder_context_set_global_cleanup (context, (const char **) self->cleanup);
   builder_context_set_global_cleanup_platform (context, (const char **) self->cleanup_platform);
@@ -1429,6 +1429,59 @@ builder_manifest_build (BuilderManifest *self,
   builder_context_set_build_runtime (context, self->build_runtime);
   builder_context_set_build_extension (context, self->build_extension);
   builder_context_set_separate_locales (context, self->separate_locales);
+  return TRUE;
+}
+
+gboolean
+builder_manifest_build_shell (BuilderManifest *self,
+                              BuilderContext  *context,
+                              const char      *modulename,
+                              GError         **error)
+{
+  GList *l;
+  BuilderModule *found = NULL;
+
+  if (!builder_context_enable_rofiles (context, error))
+    return FALSE;
+
+  if (!setup_context (self, context, error))
+    return FALSE;
+
+  for (l = self->expanded_modules; l != NULL; l = l->next)
+    {
+      BuilderModule *m = l->data;
+      const char *name = builder_module_get_name (m);
+
+      if (strcmp (name, modulename) == 0)
+        {
+          found = m;
+          break;
+        }
+    }
+
+  if (found == NULL)
+    return flatpak_fail (error, "Can't find module %s", modulename);
+
+  if (!builder_module_get_sources (found))
+    return flatpak_fail (error, "No sources for module %s", modulename);
+
+  if (!builder_module_build (found, NULL, context, TRUE, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
+builder_manifest_build (BuilderManifest *self,
+                        BuilderCache    *cache,
+                        BuilderContext  *context,
+                        GError         **error)
+{
+  const char *stop_at = builder_context_get_stop_at (context);
+  GList *l;
+
+  if (!setup_context (self, context, error))
+    return FALSE;
 
   g_print ("Starting build of %s\n", self->id ? self->id : "app");
   for (l = self->expanded_modules; l != NULL; l = l->next)
@@ -1457,7 +1510,7 @@ builder_manifest_build (BuilderManifest *self,
         {
           g_autofree char *body =
             g_strdup_printf ("Built %s\n", name);
-          if (!builder_module_build (m, cache, context, error))
+          if (!builder_module_build (m, cache, context, FALSE, error))
             return FALSE;
           if (!builder_cache_commit (cache, body, error))
             return FALSE;

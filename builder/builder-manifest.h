@@ -63,8 +63,13 @@ gboolean        builder_manifest_init_app_dir (BuilderManifest *self,
                                                GError         **error);
 gboolean        builder_manifest_download (BuilderManifest *self,
                                            gboolean         update_vcs,
+                                           const char      *only_module,
                                            BuilderContext  *context,
                                            GError         **error);
+gboolean        builder_manifest_build_shell (BuilderManifest *self,
+                                              BuilderContext  *context,
+                                              const char      *modulename,
+                                              GError         **error);
 gboolean        builder_manifest_build (BuilderManifest *self,
                                         BuilderCache    *cache,
                                         BuilderContext  *context,

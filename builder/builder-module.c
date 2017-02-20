@@ -742,30 +742,21 @@ builder_module_extract_sources (BuilderModule  *self,
   return TRUE;
 }
 
-static const char skip_arg[] = "skip";
-static const char strv_arg[] = "strv";
-
-static gboolean
-build (GFile          *app_dir,
-       const char     *module_name,
-       BuilderContext *context,
-       GFile          *source_dir,
-       const char     *cwd_subdir,
-       char          **flatpak_opts,
-       char          **env_vars,
-       GError        **error,
-       const gchar    *argv1,
-       ...)
+static GPtrArray *
+setup_build_args (GFile          *app_dir,
+                  const char     *module_name,
+                  BuilderContext *context,
+                  GFile          *source_dir,
+                  const char     *cwd_subdir,
+                  char          **flatpak_opts,
+                  char          **env_vars,
+                  GFile         **cwd_file)
 {
   g_autoptr(GPtrArray) args = NULL;
-  const gchar *arg;
-  const gchar **argv;
   g_autofree char *source_dir_path = g_file_get_path (source_dir);
   g_autofree char *source_dir_path_canonical = NULL;
   g_autofree char *ccache_dir_path = NULL;
-  g_autoptr(GFile) source_dir_path_canonical_file = NULL;
   const char *builddir;
-  va_list ap;
   int i;
 
   args = g_ptr_array_new_with_free_func (g_free);
@@ -811,7 +802,64 @@ build (GFile          *app_dir,
       for (i = 0; env_vars[i] != NULL; i++)
         g_ptr_array_add (args, g_strdup_printf ("--env=%s", env_vars[i]));
     }
+
   g_ptr_array_add (args, g_file_get_path (app_dir));
+
+  *cwd_file = g_file_new_for_path (source_dir_path_canonical);
+
+  return g_steal_pointer (&args);
+}
+
+static gboolean
+shell (GFile          *app_dir,
+       const char     *module_name,
+       BuilderContext *context,
+       GFile          *source_dir,
+       const char     *cwd_subdir,
+       char          **flatpak_opts,
+       char          **env_vars,
+       GError        **error)
+{
+  g_autoptr(GFile) cwd_file = NULL;
+  g_autoptr(GPtrArray) args =
+    setup_build_args (app_dir, module_name, context, source_dir, cwd_subdir, flatpak_opts, env_vars, &cwd_file);
+
+  g_ptr_array_add (args, "sh");
+  g_ptr_array_add (args, NULL);
+
+  chdir (flatpak_file_get_path_cached (cwd_file));
+  if (execvp ((char *) args->pdata[0], (char **) args->pdata) == -1)
+    {
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start flatpak build");
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static const char skip_arg[] = "skip";
+static const char strv_arg[] = "strv";
+
+static gboolean
+build (GFile          *app_dir,
+       const char     *module_name,
+       BuilderContext *context,
+       GFile          *source_dir,
+       const char     *cwd_subdir,
+       char          **flatpak_opts,
+       char          **env_vars,
+       GError        **error,
+       const gchar    *argv1,
+       ...)
+{
+  g_autoptr(GFile) cwd_file = NULL;
+  g_autoptr(GPtrArray) args =
+    setup_build_args (app_dir, module_name, context, source_dir, cwd_subdir, flatpak_opts, env_vars, &cwd_file);
+  const gchar *arg;
+  const gchar **argv;
+  va_list ap;
+  int i;
+
   va_start (ap, argv1);
   g_ptr_array_add (args, g_strdup (argv1));
   while ((arg = va_arg (ap, const gchar *)))
@@ -830,12 +878,11 @@ build (GFile          *app_dir,
           g_ptr_array_add (args, g_strdup (arg));
         }
     }
-  g_ptr_array_add (args, NULL);
   va_end (ap);
 
-  source_dir_path_canonical_file = g_file_new_for_path (source_dir_path_canonical);
+  g_ptr_array_add (args, NULL);
 
-  if (!builder_maybe_host_spawnv (source_dir_path_canonical_file, NULL, error, (const char * const *)args->pdata))
+  if (!builder_maybe_host_spawnv (cwd_file, NULL, error, (const char * const *)args->pdata))
     {
       g_prefix_error (error, "module %s: ", module_name);
       return FALSE;
@@ -848,6 +895,7 @@ gboolean
 builder_module_build (BuilderModule  *self,
                       BuilderCache   *cache,
                       BuilderContext *context,
+                      gboolean        run_shell,
                       GError        **error)
 {
   GFile *app_dir = builder_context_get_app_dir (context);
@@ -1192,12 +1240,25 @@ builder_module_build (BuilderModule  *self,
       make_l = g_strdup_printf ("-l%d", 2 * builder_context_get_jobs (context));
     }
 
-  /* Build and install */
-
   if (meson || cmake_ninja)
     make_cmd = "ninja";
   else
     make_cmd = "make";
+
+  if (run_shell)
+    {
+      int i;
+
+      g_print ("To build, run: %s\n", make_cmd);
+      for (i = 0; self->make_args != NULL && self->make_args[i] != NULL; i++)
+        g_print (" %s", self->make_args[i]);
+
+      if (!shell (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error))
+        return FALSE;
+      return TRUE;
+    }
+
+  /* Build and install */
 
   if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
               make_cmd, make_j ? make_j : skip_arg, make_l ? make_l : skip_arg, strv_arg, self->make_args, NULL))
