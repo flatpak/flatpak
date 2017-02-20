@@ -50,6 +50,7 @@ static gboolean opt_allow_missing_runtimes;
 static gboolean opt_sandboxed;
 static gboolean opt_rebuild_on_sdk_change;
 static char *opt_stop_at;
+static char *opt_build_shell;
 static char *opt_arch;
 static char *opt_repo;
 static char *opt_subject;
@@ -85,6 +86,7 @@ static GOptionEntry entries[] = {
   { "stop-at", 0, 0, G_OPTION_ARG_STRING, &opt_stop_at, "Stop building at this module (implies --build-only)", "MODULENAME"},
   { "jobs", 0, 0, G_OPTION_ARG_INT, &opt_jobs, "Number of parallel jobs to build (default=NCPU)", "JOBS"},
   { "rebuild-on-sdk-change", 0, 0, G_OPTION_ARG_NONE, &opt_rebuild_on_sdk_change, "Rebuild if sdk changes", NULL },
+  { "build-shell", 0, 0, G_OPTION_ARG_STRING, &opt_build_shell, "Extract and prepare sources for module, then start build shell", "MODULENAME"},
   { NULL }
 };
 
@@ -374,29 +376,35 @@ main (int    argc,
   g_assert (!opt_run);
   g_assert (!opt_show_deps);
 
-  if (!opt_finish_only && !app_dir_is_empty)
+  if (opt_finish_only || opt_build_shell)
     {
-      if (opt_force_clean)
+      if (app_dir_is_empty)
         {
-          g_print ("Emptying app dir '%s'\n", app_dir_path);
-          if (!flatpak_rm_rf (app_dir, NULL, &error))
-            {
-              g_printerr ("Couldn't empty app dir '%s': %s",
-                          app_dir_path, error->message);
-              return 1;
-            }
-        }
-      else
-        {
-          g_printerr ("App dir '%s' is not empty. Please delete "
-                      "the existing contents.\n", app_dir_path);
+          g_printerr ("App dir '%s' is empty or doesn't exist.\n", app_dir_path);
           return 1;
         }
     }
-  if (opt_finish_only && app_dir_is_empty)
+  else
     {
-      g_printerr ("App dir '%s' is empty or doesn't exist.\n", app_dir_path);
-      return 1;
+      if (!app_dir_is_empty)
+        {
+          if (opt_force_clean)
+            {
+              g_print ("Emptying app dir '%s'\n", app_dir_path);
+              if (!flatpak_rm_rf (app_dir, NULL, &error))
+                {
+                  g_printerr ("Couldn't empty app dir '%s': %s",
+                              app_dir_path, error->message);
+                  return 1;
+                }
+            }
+          else
+            {
+              g_printerr ("App dir '%s' is not empty. Please delete "
+                          "the existing contents.\n", app_dir_path);
+              return 1;
+            }
+        }
     }
 
   if (!builder_manifest_start (manifest, opt_allow_missing_runtimes, build_context, &error))
@@ -407,7 +415,7 @@ main (int    argc,
 
   if (!opt_finish_only &&
       !opt_disable_download &&
-      !builder_manifest_download (manifest, !opt_disable_updates, build_context, &error))
+      !builder_manifest_download (manifest, !opt_disable_updates, opt_build_shell, build_context, &error))
     {
       g_printerr ("Failed to download sources: %s\n", error->message);
       return 1;
@@ -415,6 +423,17 @@ main (int    argc,
 
   if (opt_download_only)
     return 0;
+
+  if (opt_build_shell)
+    {
+      if (!builder_manifest_build_shell (manifest, build_context, opt_build_shell, &error))
+        {
+          g_printerr ("Failed to setup module: %s\n", error->message);
+          return 1;
+        }
+
+      return 0;
+    }
 
   cache_branch = g_path_get_basename (manifest_path);
 

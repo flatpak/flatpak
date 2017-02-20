@@ -674,6 +674,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--build-shell=MODULENAME</option></term>
+
+                <listitem><para>
+                  Extract and prepare the sources for the named module, and then start
+                  a shell in a sandbox identical to the one flatpak-builder would use for buildng the module.
+                  This is useful to debug a module.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--show-deps</option></term>
 
                 <listitem><para>
