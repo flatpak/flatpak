@@ -34,6 +34,8 @@ flatpak_builder_SOURCES = \
 	builder/builder-cache.h \
 	builder/builder-utils.c \
 	builder/builder-utils.h \
+	builder/builder-git.c \
+	builder/builder-git.h \
 	$(NULL)
 
 flatpak_builder_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(JSON_LIBS) $(SOUP_LIBS) $(LIBELF_LIBS) \
