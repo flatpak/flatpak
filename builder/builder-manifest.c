@@ -1357,6 +1357,8 @@ builder_manifest_checksum_for_platform (BuilderManifest *self,
                                         BuilderCache    *cache,
                                         BuilderContext  *context)
 {
+  GList *l;
+
   builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_PLATFORM_VERSION);
   builder_cache_checksum_str (cache, self->id_platform);
   builder_cache_checksum_str (cache, self->runtime_commit);
@@ -1377,6 +1379,12 @@ builder_manifest_checksum_for_platform (BuilderManifest *self,
         builder_cache_checksum_data (cache, (guchar *) data, len);
       else
         g_warning ("Can't load metadata-platform file %s: %s", self->metadata_platform, my_error->message);
+    }
+
+  for (l = self->expanded_modules; l != NULL; l = l->next)
+    {
+      BuilderModule *m = l->data;
+      builder_module_checksum_for_platform (m, cache, context);
     }
 }
 
