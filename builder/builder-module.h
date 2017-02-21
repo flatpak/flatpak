@@ -73,6 +73,9 @@ void     builder_module_checksum (BuilderModule  *self,
 void     builder_module_checksum_for_cleanup (BuilderModule  *self,
                                               BuilderCache   *cache,
                                               BuilderContext *context);
+void     builder_module_checksum_for_platform (BuilderModule  *self,
+                                               BuilderCache   *cache,
+                                               BuilderContext *context);
 void     builder_module_cleanup_collect (BuilderModule  *self,
                                          gboolean        platform,
                                          BuilderContext *context,
