@@ -242,6 +242,44 @@ builder_context_get_build_dir (BuilderContext *self)
 }
 
 GFile *
+builder_context_allocate_build_subdir (BuilderContext *self,
+                                       const char *name,
+                                       GError **error)
+{
+  g_autoptr(GError) my_error = NULL;
+  int count;
+
+  if (!flatpak_mkdir_p (self->build_dir,
+                        NULL, error))
+    return NULL;
+
+  for (count = 1; count < 1000; count++)
+    {
+      g_autofree char *buildname = NULL;
+      g_autoptr(GFile) subdir = NULL;
+
+      buildname = g_strdup_printf ("%s-%d", name, count);
+      subdir = g_file_get_child (self->build_dir, buildname);
+
+      if (g_file_make_directory (subdir, NULL, &my_error))
+        return g_steal_pointer (&subdir);
+      else
+        {
+          if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
+            {
+              g_propagate_error (error, g_steal_pointer (&my_error));
+              return NULL;
+            }
+          g_clear_error (&my_error);
+          /* Already exists, try again */
+        }
+    }
+
+  flatpak_fail (error, "Unable to allocate build dir for %s\n", name);
+  return NULL;
+}
+
+GFile *
 builder_context_get_ccache_dir (BuilderContext *self)
 {
   return self->ccache_dir;
