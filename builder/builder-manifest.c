@@ -1239,7 +1239,7 @@ builder_manifest_init_app_dir (BuilderManifest *self,
   g_ptr_array_add (args, g_strdup (builder_manifest_get_runtime_version (self)));
   g_ptr_array_add (args, NULL);
 
-  commandline = g_strjoinv (" ", (char **) args->pdata);
+  commandline = flatpak_quote_argv ((const char **) args->pdata);
   g_debug ("Running '%s'", commandline);
 
   subp =
@@ -2059,7 +2059,7 @@ builder_manifest_finish (BuilderManifest *self,
       g_ptr_array_add (args, g_strdup (app_dir_path));
       g_ptr_array_add (args, NULL);
 
-      commandline = g_strjoinv (" ", (char **) args->pdata);
+      commandline = flatpak_quote_argv ((const char **) args->pdata);
       g_debug ("Running '%s'", commandline);
 
       subp =
@@ -2255,7 +2255,7 @@ builder_manifest_create_platform (BuilderManifest *self,
 
       g_ptr_array_add (args, NULL);
 
-      commandline = g_strjoinv (" ", (char **) args->pdata);
+      commandline = flatpak_quote_argv ((const char **) args->pdata);
       g_debug ("Running '%s'", commandline);
 
       subp =
@@ -2578,7 +2578,7 @@ builder_manifest_run (BuilderManifest *self,
     g_ptr_array_add (args, g_strdup (argv[i]));
   g_ptr_array_add (args, NULL);
 
-  commandline = g_strjoinv (" ", (char **) args->pdata);
+  commandline = flatpak_quote_argv ((const char **) args->pdata);
   g_debug ("Running '%s'", commandline);
 
   if (execvp ((char *) args->pdata[0], (char **) args->pdata) == -1)

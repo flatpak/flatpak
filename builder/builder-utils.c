@@ -1461,7 +1461,7 @@ builder_host_spawnv (GFile                *dir,
   int pipefd[2];
   int i;
 
-  commandline = g_strjoinv (" ", (gchar **) argv);
+  commandline = flatpak_quote_argv ((const char **) argv);
   g_debug ("Running '%s' on host", commandline);
 
   connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, error);
