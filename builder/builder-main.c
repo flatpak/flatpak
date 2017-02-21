@@ -204,6 +204,8 @@ main (int    argc,
   g_autofree char *cache_branch = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFileEnumerator) dir_enum2 = NULL;
+  g_autofree char *cwd = NULL;
+  g_autoptr(GFile) cwd_dir = NULL;
   GFileInfo *next = NULL;
   const char *platform_id = NULL;
   g_autofree char **orig_argv = NULL;
@@ -293,6 +295,40 @@ main (int    argc,
     return usage (context, "MANIFEST must be specified");
   manifest_path = argv[argnr++];
 
+  if (app_dir_path)
+    app_dir = g_file_new_for_path (app_dir_path);
+  cwd = g_get_current_dir ();
+  cwd_dir = g_file_new_for_path (cwd);
+
+  build_context = builder_context_new (cwd_dir, app_dir);
+
+  builder_context_set_use_rofiles (build_context, !opt_disable_rofiles);
+  builder_context_set_keep_build_dirs (build_context, opt_keep_build_dirs);
+  builder_context_set_sandboxed (build_context, opt_sandboxed);
+  builder_context_set_jobs (build_context, opt_jobs);
+  builder_context_set_rebuild_on_sdk_change (build_context, opt_rebuild_on_sdk_change);
+
+  if (opt_arch)
+    builder_context_set_arch (build_context, opt_arch);
+
+  if (opt_stop_at)
+    {
+      opt_build_only = TRUE;
+      builder_context_set_stop_at (build_context, opt_stop_at);
+    }
+
+  if (opt_ccache &&
+      !builder_context_enable_ccache (build_context, &error))
+    {
+      g_printerr ("Can't initialize ccache use: %s\n", error->message);
+      return 1;
+  }
+
+  manifest_file = g_file_new_for_path (manifest_path);
+  base_dir = g_file_get_parent (manifest_file);
+
+  builder_context_set_base_dir (build_context, base_dir);
+
   if (!g_file_get_contents (manifest_path, &json, NULL, &error))
     {
       g_printerr ("Can't load '%s': %s\n", manifest_path, error->message);
@@ -320,34 +356,6 @@ main (int    argc,
 
       return 0;
     }
-
-  manifest_file = g_file_new_for_path (manifest_path);
-  base_dir = g_file_get_parent (manifest_file);
-  app_dir = g_file_new_for_path (app_dir_path);
-
-  build_context = builder_context_new (base_dir, app_dir);
-
-  builder_context_set_use_rofiles (build_context, !opt_disable_rofiles);
-  builder_context_set_keep_build_dirs (build_context, opt_keep_build_dirs);
-  builder_context_set_sandboxed (build_context, opt_sandboxed);
-  builder_context_set_jobs (build_context, opt_jobs);
-  builder_context_set_rebuild_on_sdk_change (build_context, opt_rebuild_on_sdk_change);
-
-  if (opt_arch)
-    builder_context_set_arch (build_context, opt_arch);
-
-  if (opt_stop_at)
-    {
-      opt_build_only = TRUE;
-      builder_context_set_stop_at (build_context, opt_stop_at);
-    }
-
-  if (opt_ccache &&
-      !builder_context_enable_ccache (build_context, &error))
-    {
-      g_printerr ("Can't initialize ccache use: %s\n", error->message);
-      return 1;
-  }
 
   app_dir_is_empty = !g_file_query_exists (app_dir, NULL) ||
                      directory_is_empty (app_dir_path);

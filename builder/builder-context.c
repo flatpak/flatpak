@@ -40,7 +40,8 @@ struct BuilderContext
   GObject         parent;
 
   GFile          *app_dir;
-  GFile          *base_dir;
+  GFile          *run_dir; /* directory flatpak-builder was started from */
+  GFile          *base_dir; /* directory with json manifest, origin for source files */
   SoupSession    *soup_session;
   char           *arch;
   char           *stop_at;
@@ -77,7 +78,7 @@ G_DEFINE_TYPE (BuilderContext, builder_context, G_TYPE_OBJECT);
 enum {
   PROP_0,
   PROP_APP_DIR,
-  PROP_BASE_DIR,
+  PROP_RUN_DIR,
   LAST_PROP
 };
 
@@ -94,6 +95,7 @@ builder_context_finalize (GObject *object)
   g_clear_object (&self->rofiles_dir);
   g_clear_object (&self->ccache_dir);
   g_clear_object (&self->app_dir);
+  g_clear_object (&self->run_dir);
   g_clear_object (&self->base_dir);
   g_clear_object (&self->soup_session);
   g_clear_object (&self->options);
@@ -116,8 +118,8 @@ builder_context_get_property (GObject    *object,
 
   switch (prop_id)
     {
-    case PROP_BASE_DIR:
-      g_value_set_object (value, self->base_dir);
+    case PROP_RUN_DIR:
+      g_value_set_object (value, self->run_dir);
       break;
 
     case PROP_APP_DIR:
@@ -139,8 +141,8 @@ builder_context_set_property (GObject      *object,
 
   switch (prop_id)
     {
-    case PROP_BASE_DIR:
-      g_set_object (&self->base_dir, g_value_get_object (value));
+    case PROP_RUN_DIR:
+      g_set_object (&self->run_dir, g_value_get_object (value));
       break;
 
     case PROP_APP_DIR:
@@ -157,7 +159,7 @@ builder_context_constructed (GObject *object)
 {
   BuilderContext *self = BUILDER_CONTEXT (object);
 
-  self->state_dir = g_file_get_child (self->base_dir, ".flatpak-builder");
+  self->state_dir = g_file_get_child (self->run_dir, ".flatpak-builder");
   self->download_dir = g_file_get_child (self->state_dir, "downloads");
   self->build_dir = g_file_get_child (self->state_dir, "build");
   self->cache_dir = g_file_get_child (self->state_dir, "cache");
@@ -182,8 +184,8 @@ builder_context_class_init (BuilderContextClass *klass)
                                                         G_TYPE_FILE,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
   g_object_class_install_property (object_class,
-                                   PROP_BASE_DIR,
-                                   g_param_spec_object ("base-dir",
+                                   PROP_RUN_DIR,
+                                   g_param_spec_object ("run-dir",
                                                         "",
                                                         "",
                                                         G_TYPE_FILE,
@@ -198,9 +200,22 @@ builder_context_init (BuilderContext *self)
 }
 
 GFile *
+builder_context_get_run_dir (BuilderContext *self)
+{
+  return self->run_dir;
+}
+
+GFile *
 builder_context_get_base_dir (BuilderContext *self)
 {
   return self->base_dir;
+}
+
+void
+builder_context_set_base_dir (BuilderContext *self,
+                              GFile          *base_dir)
+{
+  g_set_object (&self->base_dir, base_dir);
 }
 
 GFile *
@@ -649,11 +664,11 @@ builder_context_extend_env (BuilderContext *self,
 }
 
 BuilderContext *
-builder_context_new (GFile *base_dir,
+builder_context_new (GFile *run_dir,
                      GFile *app_dir)
 {
   return g_object_new (BUILDER_TYPE_CONTEXT,
-                       "base-dir", base_dir,
+                       "run-dir", run_dir,
                        "app-dir", app_dir,
                        NULL);
 }

@@ -37,7 +37,10 @@ GType builder_context_get_type (void);
 
 GFile *         builder_context_get_app_dir (BuilderContext *self);
 GFile *         builder_context_get_app_dir_raw (BuilderContext *self);
+GFile *         builder_context_get_run_dir (BuilderContext *self);
 GFile *         builder_context_get_base_dir (BuilderContext *self);
+void            builder_context_set_base_dir (BuilderContext *self,
+                                              GFile          *base_dir);
 GFile *         builder_context_get_state_dir (BuilderContext *self);
 GFile *         builder_context_get_cache_dir (BuilderContext *self);
 GFile *         builder_context_get_build_dir (BuilderContext *self);
@@ -84,7 +87,7 @@ gboolean        builder_context_get_rebuild_on_sdk_change (BuilderContext *self)
 void            builder_context_set_rebuild_on_sdk_change (BuilderContext *self,
                                                            gboolean        rebuild_on_sdk_change);
 
-BuilderContext *builder_context_new (GFile *base_dir,
+BuilderContext *builder_context_new (GFile *run_dir,
                                      GFile *app_dir);
 gboolean        builder_context_enable_ccache (BuilderContext *self,
                                                GError        **error);
