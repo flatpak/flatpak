@@ -943,44 +943,17 @@ builder_module_build (BuilderModule  *self,
   g_autofree char *buildname = NULL;
   g_autoptr(GError) my_error = NULL;
   BuilderPostProcessFlags post_process_flags = 0;
-  int count;
 
-  build_parent_dir = builder_context_get_build_dir (context);
-
-  if (!flatpak_mkdir_p (build_parent_dir,
-                        NULL, error))
+  source_dir = builder_context_allocate_build_subdir (context, self->name, error);
+  if (source_dir == NULL)
     {
       g_prefix_error (error, "module %s: ", self->name);
       return FALSE;
     }
 
-  for (count = 1; source_dir_path == NULL; count++)
-    {
-      g_autoptr(GFile) source_dir_count = NULL;
-
-      g_free (buildname);
-      buildname = g_strdup_printf ("%s-%d", self->name, count);
-
-      source_dir_count = g_file_get_child (build_parent_dir, buildname);
-
-      if (g_file_make_directory (source_dir_count, NULL, &my_error))
-        {
-          source_dir_path = g_file_get_path (source_dir_count);
-        }
-      else
-        {
-          if (!g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_EXISTS))
-            {
-              g_propagate_error (error, g_steal_pointer (&my_error));
-              g_prefix_error (error, "module %s: ", self->name);
-              return FALSE;
-            }
-          g_clear_error (&my_error);
-          /* Already exists, try again */
-        }
-    }
-
-  source_dir = g_file_new_for_path (source_dir_path);
+  build_parent_dir = g_file_get_parent (source_dir);
+  buildname = g_file_get_basename (source_dir);
+  source_dir_path = g_file_get_path (source_dir);
 
   /* Make an unversioned symlink */
   build_link = g_file_get_child (build_parent_dir, self->name);
