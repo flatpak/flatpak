@@ -429,8 +429,6 @@ gboolean flatpak_open_in_tmpdir_at (int                tmpdir_fd,
                                     GCancellable      *cancellable,
                                     GError           **error);
 
-#define flatpak_autorm_rf _GLIB_CLEANUP (g_autoptr_cleanup_generic_gfree)
-
 static inline void
 flatpak_temp_dir_destroy (void *p)
 {
