@@ -1914,6 +1914,45 @@ spawn_exit_cb (GObject      *obj,
   spawn_data_exit (data);
 }
 
+static gboolean
+needs_quoting (const char *arg)
+{
+  while (*arg != 0)
+    {
+      char c = *arg;
+      if (!g_ascii_isalnum (c) &&
+          !(c == '-' || c == '/' || c == '~' ||
+            c == ':' || c == '.' || c == '_' ||
+            c == '='))
+        return TRUE;
+      arg++;
+    }
+  return FALSE;
+}
+
+char *
+flatpak_quote_argv (const char *argv[])
+{
+  GString *res = g_string_new ("");
+  int i;
+
+  for (i = 0; argv[i] != NULL; i++)
+    {
+      if (i != 0)
+        g_string_append_c (res, ' ');
+
+      if (needs_quoting (argv[i]))
+        {
+          g_autofree char *quoted = g_shell_quote (argv[i]);
+          g_string_append (res, quoted);
+        }
+      else
+        g_string_append (res, argv[i]);
+    }
+
+  return g_string_free (res, FALSE);
+}
+
 gboolean
 flatpak_spawn (GFile       *dir,
                char       **output,
@@ -1963,8 +2002,8 @@ flatpak_spawnv (GFile                *dir,
       g_subprocess_launcher_set_cwd (launcher, path);
     }
 
-  commandline = g_strjoinv (" ", (gchar **) argv);
-  g_debug ("Running '%s'", commandline);
+  commandline = flatpak_quote_argv ((const char **)argv);
+  g_debug ("Running: %s", commandline);
 
   subp = g_subprocess_launcher_spawnv (launcher, argv, error);
 

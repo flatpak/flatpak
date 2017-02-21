@@ -362,6 +362,8 @@ GList *flatpak_list_extensions (GKeyFile   *metakey,
                                 const char *arch,
                                 const char *branch);
 
+char * flatpak_quote_argv (const char *argv[]);
+
 gboolean            flatpak_spawn (GFile       *dir,
                                    char       **output,
                                    GError     **error,

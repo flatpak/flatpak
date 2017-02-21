@@ -3593,7 +3593,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   if (!prepend_bwrap_argv_wrapper (dbus_proxy_argv, app_info_fd, &bwrap_args_fd, error))
     return FALSE;
 
-  commandline = g_strjoinv (" ", (char **) dbus_proxy_argv->pdata);
+  commandline = flatpak_quote_argv ((const char **) dbus_proxy_argv->pdata);
   g_debug ("Running '%s'", commandline);
 
   spawn_data.sync_fd = sync_fds[1];
