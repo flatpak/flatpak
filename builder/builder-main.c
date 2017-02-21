@@ -30,6 +30,7 @@
 
 #include "builder-manifest.h"
 #include "builder-utils.h"
+#include "builder-git.h"
 
 static gboolean opt_verbose;
 static gboolean opt_version;
@@ -49,6 +50,8 @@ static gboolean opt_force_clean;
 static gboolean opt_allow_missing_runtimes;
 static gboolean opt_sandboxed;
 static gboolean opt_rebuild_on_sdk_change;
+static char *opt_from_git;
+static char *opt_from_git_branch;
 static char *opt_stop_at;
 static char *opt_build_shell;
 static char *opt_arch;
@@ -87,6 +90,8 @@ static GOptionEntry entries[] = {
   { "jobs", 0, 0, G_OPTION_ARG_INT, &opt_jobs, "Number of parallel jobs to build (default=NCPU)", "JOBS"},
   { "rebuild-on-sdk-change", 0, 0, G_OPTION_ARG_NONE, &opt_rebuild_on_sdk_change, "Rebuild if sdk changes", NULL },
   { "build-shell", 0, 0, G_OPTION_ARG_STRING, &opt_build_shell, "Extract and prepare sources for module, then start build shell", "MODULENAME"},
+  { "from-git", 0, 0, G_OPTION_ARG_STRING, &opt_from_git, "Get input files from git repo", "URL"},
+  { "from-git-branch", 0, 0, G_OPTION_ARG_STRING, &opt_from_git_branch, "Branch to use in --from-git", "BRANCH"},
   { NULL }
 };
 
@@ -194,7 +199,7 @@ main (int    argc,
   g_autoptr(GError) error = NULL;
   g_autoptr(BuilderManifest) manifest = NULL;
   g_autoptr(GOptionContext) context = NULL;
-  const char *app_dir_path = NULL, *manifest_path;
+  const char *app_dir_path = NULL, *manifest_rel_path;
   g_autofree gchar *json = NULL;
   g_autoptr(BuilderContext) build_context = NULL;
   g_autoptr(GFile) base_dir = NULL;
@@ -213,6 +218,7 @@ main (int    argc,
   gboolean is_show_deps = FALSE;
   gboolean app_dir_is_empty = FALSE;
   g_autoptr(FlatpakContext) arg_context = NULL;
+  g_autoptr(FlatpakTempDir) cleanup_manifest_dir = NULL;
   int i, first_non_arg, orig_argc;
   int argnr;
 
@@ -293,7 +299,7 @@ main (int    argc,
 
   if (argc == argnr)
     return usage (context, "MANIFEST must be specified");
-  manifest_path = argv[argnr++];
+  manifest_rel_path = argv[argnr++];
 
   if (app_dir_path)
     app_dir = g_file_new_for_path (app_dir_path);
@@ -324,14 +330,53 @@ main (int    argc,
       return 1;
   }
 
-  manifest_file = g_file_new_for_path (manifest_path);
-  base_dir = g_file_get_parent (manifest_file);
+  if (opt_from_git)
+    {
+      g_autofree char *manifest_dirname = g_path_get_dirname (manifest_rel_path);
+      g_autofree char *manifest_basename = g_path_get_basename (manifest_rel_path);
+
+      if (!builder_git_mirror_repo (opt_from_git,
+                                    !opt_disable_updates, FALSE,
+                                    opt_from_git_branch ? opt_from_git_branch : "master",
+                                    build_context, &error))
+        {
+          g_printerr ("Can't clone manifest repo: %s\n", error->message);
+          return 1;
+        }
+
+      base_dir = builder_context_allocate_build_subdir (build_context, manifest_basename, &error);
+      if (base_dir == NULL)
+        {
+          g_printerr ("Can't check out manifest repo: %s\n", error->message);
+          return 1;
+        }
+
+      cleanup_manifest_dir = g_object_ref (base_dir);
+
+      if (!builder_git_checkout_dir (opt_from_git,
+                                     opt_from_git_branch ? opt_from_git_branch : "master",
+                                     manifest_dirname,
+                                     base_dir,
+                                     build_context,
+                                     &error))
+        {
+          g_printerr ("Can't check out manifest repo: %s\n", error->message);
+          return 1;
+        }
+
+      manifest_file = g_file_get_child (base_dir, manifest_rel_path);
+    }
+  else
+    {
+      manifest_file = g_file_new_for_path (manifest_rel_path);
+      base_dir = g_file_get_parent (manifest_file);
+    }
 
   builder_context_set_base_dir (build_context, base_dir);
 
-  if (!g_file_get_contents (manifest_path, &json, NULL, &error))
+  if (!g_file_get_contents (flatpak_file_get_path_cached (manifest_file), &json, NULL, &error))
     {
-      g_printerr ("Can't load '%s': %s\n", manifest_path, error->message);
+      g_printerr ("Can't load '%s': %s\n", manifest_rel_path, error->message);
       return 1;
     }
 
@@ -339,7 +384,7 @@ main (int    argc,
                                                          json, -1, &error);
   if (manifest == NULL)
     {
-      g_printerr ("Can't parse '%s': %s\n", manifest_path, error->message);
+      g_printerr ("Can't parse '%s': %s\n", manifest_rel_path, error->message);
       return 1;
     }
 
@@ -443,7 +488,7 @@ main (int    argc,
       return 0;
     }
 
-  cache_branch = g_path_get_basename (manifest_path);
+  cache_branch = g_path_get_basename (manifest_rel_path);
 
   cache = builder_cache_new (build_context, app_dir, cache_branch);
   if (!builder_cache_open (cache, &error))
