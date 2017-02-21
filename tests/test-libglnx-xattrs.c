@@ -42,7 +42,7 @@ static gboolean
 set_random_xattr_value (int fd, const char *name, GError **error)
 {
   const guint8 randxattrbyte = g_random_int_range (0, 256);
-  const guint32 randxattrvalue_len = g_random_int () % 256; /* Picked to be not too small or large */
+  const guint32 randxattrvalue_len = (g_random_int () % 256) + 1; /* Picked to be not too small or large */
   g_autofree char *randxattrvalue = g_malloc (randxattrvalue_len);
 
   memset (randxattrvalue, randxattrbyte, randxattrvalue_len);
