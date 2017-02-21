@@ -3060,7 +3060,7 @@ flatpak_run_in_transient_unit (const char *appid, GError **error)
 
   if (!g_file_test (path, G_FILE_TEST_EXISTS))
     return flatpak_fail (error,
-                         "No systemd user session available, sandboxing not available");
+                         "No systemd user session available, cgroups not available");
 
   main_context = g_main_context_new ();
   main_loop = g_main_loop_new (main_context, FALSE);
