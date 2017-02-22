@@ -50,6 +50,7 @@ struct BuilderContext
   GFile          *state_dir;
   GFile          *build_dir;
   GFile          *cache_dir;
+  GFile          *checksums_dir;
   GFile          *ccache_dir;
   GFile          *rofiles_dir;
   GLnxLockFile   rofiles_file_lock;
@@ -92,6 +93,7 @@ builder_context_finalize (GObject *object)
   g_clear_object (&self->download_dir);
   g_clear_object (&self->build_dir);
   g_clear_object (&self->cache_dir);
+  g_clear_object (&self->checksums_dir);
   g_clear_object (&self->rofiles_dir);
   g_clear_object (&self->ccache_dir);
   g_clear_object (&self->app_dir);
@@ -163,6 +165,7 @@ builder_context_constructed (GObject *object)
   self->download_dir = g_file_get_child (self->state_dir, "downloads");
   self->build_dir = g_file_get_child (self->state_dir, "build");
   self->cache_dir = g_file_get_child (self->state_dir, "cache");
+  self->checksums_dir = g_file_get_child (self->state_dir, "checksums");
   self->ccache_dir = g_file_get_child (self->state_dir, "ccache");
 }
 
@@ -254,6 +257,33 @@ GFile *
 builder_context_get_build_dir (BuilderContext *self)
 {
   return self->build_dir;
+}
+
+char *
+builder_context_get_checksum_for (BuilderContext *self,
+                                  const char *name)
+{
+  g_autoptr(GFile) checksum_file = g_file_get_child (self->checksums_dir, name);
+  g_autofree gchar *checksum = NULL;
+
+  if (!g_file_get_contents (flatpak_file_get_path_cached (checksum_file), &checksum, NULL, NULL))
+    return NULL;
+
+  return g_steal_pointer (&checksum);
+}
+
+void
+builder_context_set_checksum_for (BuilderContext *self,
+                                  const char *name,
+                                  const char *checksum)
+{
+  g_autoptr(GFile) checksum_file = g_file_get_child (self->checksums_dir, name);
+
+  if (!flatpak_mkdir_p (self->checksums_dir,
+                        NULL, NULL))
+    return;
+
+  g_file_set_contents (flatpak_file_get_path_cached (checksum_file), checksum, -1, NULL);
 }
 
 GFile *

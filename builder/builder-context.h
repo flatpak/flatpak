@@ -86,6 +86,12 @@ void            builder_context_set_separate_locales (BuilderContext *self,
 gboolean        builder_context_get_rebuild_on_sdk_change (BuilderContext *self);
 void            builder_context_set_rebuild_on_sdk_change (BuilderContext *self,
                                                            gboolean        rebuild_on_sdk_change);
+char *          builder_context_get_checksum_for (BuilderContext *self,
+                                                  const char *name);
+void            builder_context_set_checksum_for (BuilderContext *self,
+                                                  const char *name,
+                                                  const char *checksum);
+
 
 BuilderContext *builder_context_new (GFile *run_dir,
                                      GFile *app_dir);

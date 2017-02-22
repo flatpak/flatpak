@@ -868,6 +868,15 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--skip-if-unchanged</option></term>
+
+                <listitem><para>
+                  If the json is unchanged since the last build of this filename, then
+                  do nothing, and return exit code 42.
+                </para></listitem>
+            </varlistentry>
+
           </variablelist>
     </refsect1>
 

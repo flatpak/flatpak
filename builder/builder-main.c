@@ -50,6 +50,7 @@ static gboolean opt_force_clean;
 static gboolean opt_allow_missing_runtimes;
 static gboolean opt_sandboxed;
 static gboolean opt_rebuild_on_sdk_change;
+static gboolean opt_skip_if_unchanged;
 static char *opt_from_git;
 static char *opt_from_git_branch;
 static char *opt_stop_at;
@@ -89,6 +90,7 @@ static GOptionEntry entries[] = {
   { "stop-at", 0, 0, G_OPTION_ARG_STRING, &opt_stop_at, "Stop building at this module (implies --build-only)", "MODULENAME"},
   { "jobs", 0, 0, G_OPTION_ARG_INT, &opt_jobs, "Number of parallel jobs to build (default=NCPU)", "JOBS"},
   { "rebuild-on-sdk-change", 0, 0, G_OPTION_ARG_NONE, &opt_rebuild_on_sdk_change, "Rebuild if sdk changes", NULL },
+  { "skip-if-unchanged", 0, 0, G_OPTION_ARG_NONE, &opt_skip_if_unchanged, "Don't do anything if the json didn't change", NULL },
   { "build-shell", 0, 0, G_OPTION_ARG_STRING, &opt_build_shell, "Extract and prepare sources for module, then start build shell", "MODULENAME"},
   { "from-git", 0, 0, G_OPTION_ARG_STRING, &opt_from_git, "Get input files from git repo", "URL"},
   { "from-git-branch", 0, 0, G_OPTION_ARG_STRING, &opt_from_git_branch, "Branch to use in --from-git", "BRANCH"},
@@ -201,6 +203,8 @@ main (int    argc,
   g_autoptr(GOptionContext) context = NULL;
   const char *app_dir_path = NULL, *manifest_rel_path;
   g_autofree gchar *json = NULL;
+  g_autofree gchar *json_sha256 = NULL;
+  g_autofree gchar *old_json_sha256 = NULL;
   g_autoptr(BuilderContext) build_context = NULL;
   g_autoptr(GFile) base_dir = NULL;
   g_autoptr(GFile) manifest_file = NULL;
@@ -219,6 +223,7 @@ main (int    argc,
   gboolean app_dir_is_empty = FALSE;
   g_autoptr(FlatpakContext) arg_context = NULL;
   g_autoptr(FlatpakTempDir) cleanup_manifest_dir = NULL;
+  g_autofree char *manifest_basename = NULL;
   int i, first_non_arg, orig_argc;
   int argnr;
 
@@ -300,6 +305,7 @@ main (int    argc,
   if (argc == argnr)
     return usage (context, "MANIFEST must be specified");
   manifest_rel_path = argv[argnr++];
+  manifest_basename = g_path_get_basename (manifest_rel_path);
 
   if (app_dir_path)
     app_dir = g_file_new_for_path (app_dir_path);
@@ -333,7 +339,6 @@ main (int    argc,
   if (opt_from_git)
     {
       g_autofree char *manifest_dirname = g_path_get_dirname (manifest_rel_path);
-      g_autofree char *manifest_basename = g_path_get_basename (manifest_rel_path);
 
       if (!builder_git_mirror_repo (opt_from_git,
                                     !opt_disable_updates, FALSE,
@@ -378,6 +383,18 @@ main (int    argc,
     {
       g_printerr ("Can't load '%s': %s\n", manifest_rel_path, error->message);
       return 1;
+    }
+
+  json_sha256 = g_compute_checksum_for_string (G_CHECKSUM_SHA256, json, -1);
+
+  if (opt_skip_if_unchanged)
+    {
+      old_json_sha256 = builder_context_get_checksum_for (build_context, manifest_basename);
+      if (old_json_sha256 != NULL && strcmp (json_sha256, old_json_sha256) == 0)
+        {
+          g_print ("No changes to manifest, skipping\n");
+          return 42;
+        }
     }
 
   manifest = (BuilderManifest *) json_gobject_from_data (BUILDER_TYPE_MANIFEST,
@@ -459,6 +476,8 @@ main (int    argc,
             }
         }
     }
+
+  builder_context_set_checksum_for (build_context, manifest_basename, json_sha256);
 
   if (!builder_manifest_start (manifest, opt_allow_missing_runtimes, build_context, &error))
     {
