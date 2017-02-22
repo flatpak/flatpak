@@ -248,12 +248,15 @@ builder_git_mirror_repo (const char     *repo_location,
         return FALSE;
     }
 
-  current_commit = git_get_current_commit (mirror_dir, ref, context, error);
-  if (current_commit == NULL)
-    return FALSE;
+  if (mirror_submodules)
+    {
+      current_commit = git_get_current_commit (mirror_dir, ref, context, error);
+      if (current_commit == NULL)
+        return FALSE;
 
-  if (!git_mirror_submodules (repo_location, update, mirror_dir, current_commit, context, error))
-    return FALSE;
+      if (!git_mirror_submodules (repo_location, update, mirror_dir, current_commit, context, error))
+        return FALSE;
+    }
 
   return TRUE;
 }
