@@ -868,6 +868,22 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>--from-git=GIT</option></term>
+
+                <listitem><para>
+                  Look for the manifest in the given git repository. If this option is
+                  given, MANIFEST is interpreted as a relative path inside the repository.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--from-git-branch=BRANCH</option></term>
+
+                <listitem><para>
+                  The branch to use with --from-git.
+                </para></listitem>
+            </varlistentry>
           </variablelist>
     </refsect1>
 
