@@ -47,6 +47,7 @@ struct BuilderModule
   char          **make_args;
   char          **make_install_args;
   char           *buildsystem;
+  char          **ensure_writable;
   gboolean        disabled;
   gboolean        rm_configure;
   gboolean        no_autogen;
@@ -88,6 +89,7 @@ enum {
   PROP_CONFIG_OPTS,
   PROP_MAKE_ARGS,
   PROP_MAKE_INSTALL_ARGS,
+  PROP_ENSURE_WRITABLE,
   PROP_SOURCES,
   PROP_BUILD_OPTIONS,
   PROP_CLEANUP,
@@ -98,6 +100,20 @@ enum {
   LAST_PROP
 };
 
+static void
+collect_cleanup_for_path (const char **patterns,
+                          const char  *path,
+                          const char  *add_prefix,
+                          GHashTable  *to_remove_ht)
+{
+  int i;
+
+  if (patterns == NULL)
+    return;
+
+  for (i = 0; patterns[i] != NULL; i++)
+    flatpak_collect_matches_for_path_pattern (path, patterns[i], add_prefix, to_remove_ht);
+}
 
 static void
 builder_module_finalize (GObject *object)
@@ -112,6 +128,7 @@ builder_module_finalize (GObject *object)
   g_strfreev (self->config_opts);
   g_strfreev (self->make_args);
   g_strfreev (self->make_install_args);
+  g_strfreev (self->ensure_writable);
   g_clear_object (&self->build_options);
   g_list_free_full (self->sources, g_object_unref);
   g_strfreev (self->cleanup);
@@ -185,6 +202,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_MAKE_INSTALL_ARGS:
       g_value_set_boxed (value, self->make_install_args);
+      break;
+
+    case PROP_ENSURE_WRITABLE:
+      g_value_set_boxed (value, self->ensure_writable);
       break;
 
     case PROP_POST_INSTALL:
@@ -293,6 +314,12 @@ builder_module_set_property (GObject      *object,
     case PROP_MAKE_INSTALL_ARGS:
       tmp = self->make_install_args;
       self->make_install_args = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_ENSURE_WRITABLE:
+      tmp = self->ensure_writable;
+      self->ensure_writable = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -443,6 +470,13 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_MAKE_INSTALL_ARGS,
                                    g_param_spec_boxed ("make-install-args",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_ENSURE_WRITABLE,
+                                   g_param_spec_boxed ("ensure-writable",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -912,6 +946,63 @@ build (GFile          *app_dir,
 }
 
 gboolean
+ensure_writable (BuilderModule  *self,
+                 BuilderCache   *cache,
+                 BuilderContext *context,
+                 GError        **error)
+{
+  g_autoptr(GPtrArray) changes = NULL;
+  g_autoptr(GHashTable) matches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  GFile *app_dir = builder_context_get_app_dir (context);
+  GHashTableIter iter;
+  gpointer key, value;
+  int i;
+
+  if (cache == NULL)
+    return TRUE;
+
+  if (self->ensure_writable == NULL ||
+      self->ensure_writable[0] == NULL)
+    return TRUE;
+
+  changes = builder_cache_get_files (cache, error);
+  if (changes == NULL)
+    return FALSE;
+
+  for (i = 0; i < changes->len; i++)
+    {
+      const char *path = g_ptr_array_index (changes, i);
+      const char *unprefixed_path;
+      const char *prefix;
+
+      if (g_str_has_prefix (path, "files/"))
+        prefix = "files/";
+      else if (g_str_has_prefix (path, "usr/"))
+        prefix = "usr/";
+      else
+        continue;
+
+      unprefixed_path = path + strlen (prefix);
+
+      collect_cleanup_for_path ((const char **)self->ensure_writable, unprefixed_path, prefix, matches);
+    }
+
+  g_hash_table_iter_init (&iter, matches);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *path = key;
+      g_autoptr(GFile) dest = g_file_resolve_relative_path (app_dir, path);
+
+      g_debug ("Breaking hardlink %s\n", path);
+      if (!flatpak_break_hardlink (dest, error))
+        return FALSE;
+    }
+
+
+  return TRUE;
+}
+
+gboolean
 builder_module_build (BuilderModule  *self,
                       BuilderCache   *cache,
                       BuilderContext *context,
@@ -943,6 +1034,12 @@ builder_module_build (BuilderModule  *self,
   g_autofree char *buildname = NULL;
   g_autoptr(GError) my_error = NULL;
   BuilderPostProcessFlags post_process_flags = 0;
+
+  if (!ensure_writable (self, cache, context, error))
+    {
+      g_prefix_error (error, "module %s: ", self->name);
+      return FALSE;
+    }
 
   source_dir = builder_context_allocate_build_subdir (context, self->name, error);
   if (source_dir == NULL)
@@ -1382,6 +1479,7 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_strv (cache, self->config_opts);
   builder_cache_checksum_strv (cache, self->make_args);
   builder_cache_checksum_strv (cache, self->make_install_args);
+  builder_cache_checksum_compat_strv (cache, self->ensure_writable);
   builder_cache_checksum_boolean (cache, self->rm_configure);
   builder_cache_checksum_boolean (cache, self->no_autogen);
   builder_cache_checksum_boolean (cache, self->disabled);
@@ -1442,21 +1540,6 @@ builder_module_set_changes (BuilderModule *self,
         g_ptr_array_unref (self->changes);
       self->changes = g_ptr_array_ref (changes);
     }
-}
-
-static void
-collect_cleanup_for_path (const char **patterns,
-                          const char  *path,
-                          const char  *add_prefix,
-                          GHashTable  *to_remove_ht)
-{
-  int i;
-
-  if (patterns == NULL)
-    return;
-
-  for (i = 0; patterns[i] != NULL; i++)
-    flatpak_collect_matches_for_path_pattern (path, patterns[i], add_prefix, to_remove_ht);
 }
 
 static gboolean
