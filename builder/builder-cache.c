@@ -930,19 +930,52 @@ builder_cache_get_outstanding_changes (BuilderCache *self,
   return TRUE;
 }
 
-GPtrArray *
-builder_cache_get_all_changes (BuilderCache *self,
-                               GError      **error)
+static GPtrArray *
+get_changes (BuilderCache *self,
+             GFile       *from,
+             GFile       *to,
+             GError      **error)
 {
   g_autoptr(GPtrArray) added = g_ptr_array_new_with_free_func (g_object_unref);
   g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify) ostree_diff_item_unref);
   g_autoptr(GPtrArray) removed = g_ptr_array_new_with_free_func (g_object_unref);
-  g_autoptr(GPtrArray) all_paths = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) changed_paths = g_ptr_array_new_with_free_func (g_free);
+  int i;
+
+  if (!ostree_diff_dirs (OSTREE_DIFF_FLAGS_NONE,
+                         from,
+                         to,
+                         modified,
+                         removed,
+                         added,
+                         NULL, error))
+    return NULL;
+
+  for (i = 0; i < added->len; i++)
+    {
+      char *path = g_file_get_relative_path (to, g_ptr_array_index (added, i));
+      g_ptr_array_add (changed_paths, path);
+    }
+
+  for (i = 0; i < modified->len; i++)
+    {
+      OstreeDiffItem *modified_item = g_ptr_array_index (modified, i);
+      char *path = g_file_get_relative_path (to, modified_item->target);
+      g_ptr_array_add (changed_paths, path);
+    }
+
+  return g_steal_pointer (&changed_paths);
+}
+
+
+GPtrArray *
+builder_cache_get_all_changes (BuilderCache *self,
+                               GError      **error)
+{
   g_autoptr(GFile) init_root = NULL;
   g_autoptr(GFile) finish_root = NULL;
   g_autofree char *init_commit = NULL;
   g_autofree char *finish_commit = NULL;
-  int i;
   g_autofree char *init_ref = get_ref (self, "init");
   g_autofree char *finish_ref = get_ref (self, "finish");
 
@@ -958,44 +991,17 @@ builder_cache_get_all_changes (BuilderCache *self,
   if (!ostree_repo_read_commit (self->repo, finish_commit, &finish_root, NULL, NULL, error))
     return NULL;
 
-  if (!ostree_diff_dirs (OSTREE_DIFF_FLAGS_NONE,
-                         init_root,
-                         finish_root,
-                         modified,
-                         removed,
-                         added,
-                         NULL, error))
-    return NULL;
-
-  for (i = 0; i < added->len; i++)
-    {
-      char *path = g_file_get_relative_path (finish_root, g_ptr_array_index (added, i));
-      g_ptr_array_add (all_paths, path);
-    }
-
-  for (i = 0; i < modified->len; i++)
-    {
-      OstreeDiffItem *modified_item = g_ptr_array_index (modified, i);
-      char *path = g_file_get_relative_path (finish_root, modified_item->target);
-      g_ptr_array_add (all_paths, path);
-    }
-
-  return g_steal_pointer (&all_paths);
+  return get_changes (self, init_root, finish_root, error);
 }
 
 GPtrArray   *
 builder_cache_get_changes (BuilderCache *self,
                            GError      **error)
 {
-  g_autoptr(GPtrArray) added = g_ptr_array_new_with_free_func (g_object_unref);
-  g_autoptr(GPtrArray) modified = g_ptr_array_new_with_free_func ((GDestroyNotify) ostree_diff_item_unref);
-  g_autoptr(GPtrArray) removed = g_ptr_array_new_with_free_func (g_object_unref);
-  g_autoptr(GPtrArray) changed_paths = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GFile) current_root = NULL;
   g_autoptr(GFile) parent_root = NULL;
   g_autoptr(GVariant) variant = NULL;
   g_autofree char *parent_commit = NULL;
-  int i;
 
   if (!ostree_repo_read_commit (self->repo, self->last_parent, &current_root, NULL, NULL, error))
     return NULL;
@@ -1011,29 +1017,19 @@ builder_cache_get_changes (BuilderCache *self,
         return FALSE;
     }
 
-  if (!ostree_diff_dirs (OSTREE_DIFF_FLAGS_NONE,
-                         parent_root,
-                         current_root,
-                         modified,
-                         removed,
-                         added,
-                         NULL, error))
+  return get_changes (self, parent_root, current_root, error);
+}
+
+GPtrArray   *
+builder_cache_get_files (BuilderCache *self,
+                         GError      **error)
+{
+  g_autoptr(GFile) current_root = NULL;
+
+  if (!ostree_repo_read_commit (self->repo, self->last_parent, &current_root, NULL, NULL, error))
     return NULL;
 
-  for (i = 0; i < added->len; i++)
-    {
-      char *path = g_file_get_relative_path (current_root, g_ptr_array_index (added, i));
-      g_ptr_array_add (changed_paths, path);
-    }
-
-  for (i = 0; i < modified->len; i++)
-    {
-      OstreeDiffItem *modified_item = g_ptr_array_index (modified, i);
-      char *path = g_file_get_relative_path (current_root, modified_item->target);
-      g_ptr_array_add (changed_paths, path);
-    }
-
-  return g_steal_pointer (&changed_paths);
+  return get_changes (self, NULL, current_root, error);
 }
 
 void
