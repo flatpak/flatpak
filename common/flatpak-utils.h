@@ -78,7 +78,7 @@ void flatpak_migrate_from_xdg_app (void);
 GFile *flatpak_file_new_tmp_in (GFile *dir,
                                 const char *templatename,
                                 GError        **error);
-gboolean flatpak_unbreak_hardlink (GFile *file, GError **error);
+gboolean flatpak_break_hardlink (GFile *file, GError **error);
 
 gboolean flatpak_write_update_checksum (GOutputStream  *out,
                                         gconstpointer   data,

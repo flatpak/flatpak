@@ -363,7 +363,7 @@ builder_post_process_debuginfo (GFile          *app_dir,
 
           /* Some files are hardlinked and eu-strip modifies in-place,
              which breaks rofiles-fuse. Unlink them */
-          if (!flatpak_unbreak_hardlink (file, error))
+          if (!flatpak_break_hardlink (file, error))
             return FALSE;
 
           if (!eu_strip (error, "--remove-comment", "--reloc-debug-sections",

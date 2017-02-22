@@ -499,7 +499,7 @@ flatpak_get_bwrap (void)
 }
 
 gboolean
-flatpak_unbreak_hardlink (GFile *file, GError **error)
+flatpak_break_hardlink (GFile *file, GError **error)
 {
   g_autofree char *path = g_file_get_path (file);
   struct stat st_buf;
@@ -509,7 +509,7 @@ flatpak_unbreak_hardlink (GFile *file, GError **error)
       g_autoptr(GFile) dir = g_file_get_parent (file);
       g_autoptr(GFile) tmp = NULL;
 
-      tmp = flatpak_file_new_tmp_in (dir, ".eustripXXXXXX", error);
+      tmp = flatpak_file_new_tmp_in (dir, ".breaklinkXXXXXX", error);
       if (tmp == NULL)
         return FALSE;
 
