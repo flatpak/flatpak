@@ -1088,6 +1088,19 @@ builder_cache_checksum_str (BuilderCache *self,
     g_checksum_update (self->checksum, (const guchar *) "\1", 1);
 }
 
+/* Only add to cache if non-empty. This means we can add
+   these things compatibly without invalidating the cache.
+   This is useful if empty means no change from what was
+   before */
+void
+builder_cache_checksum_compat_strv (BuilderCache *self,
+                                    char        **strv)
+{
+  if (strv != NULL && strv[0] != NULL)
+    builder_cache_checksum_strv (self, strv);
+}
+
+
 void
 builder_cache_checksum_strv (BuilderCache *self,
                              char        **strv)
