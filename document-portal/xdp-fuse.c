@@ -2307,7 +2307,7 @@ xdp_fuse_mainloop (gpointer data)
 gboolean
 xdp_fuse_init (GError **error)
 {
-  char *argv[] = { "xdp-fuse", "-osplice_write,splice_move,splice_read" };
+  char *argv[] = { "xdp-fuse", "-osplice_write,splice_move", "-d" };
   struct fuse_args args = FUSE_ARGS_INIT (G_N_ELEMENTS (argv), argv);
   struct stat st;
   const char *path;
