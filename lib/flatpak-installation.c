@@ -182,7 +182,7 @@ flatpak_get_supported_arches (void)
  * Lists the system installations according to the current configuration and current
  * availability (e.g. doesn't return a configured installation if not reachable).
  *
- * Returns: (transfer full) (element-type FlatpakInstallation): an GPtrArray of
+ * Returns: (transfer container) (element-type FlatpakInstallation): an GPtrArray of
  *   #FlatpakInstallation instances
  *
  * Since: 0.8
@@ -200,7 +200,7 @@ flatpak_get_system_installations (GCancellable *cancellable,
   if (system_dirs == NULL)
     goto out;
 
-  installs = g_ptr_array_new ();
+  installs = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
   for (i = 0; i < system_dirs->len; i++)
     {
       g_autoptr(GError) local_error = NULL;
