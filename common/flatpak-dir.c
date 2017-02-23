@@ -4909,7 +4909,8 @@ flatpak_dir_uninstall (FlatpakDir          *self,
 
   if (repository != NULL &&
       g_str_has_suffix (repository, "-origin") &&
-      flatpak_dir_get_remote_noenumerate (self, repository))
+      flatpak_dir_get_remote_noenumerate (self, repository) &&
+      !flatpak_dir_remote_has_deploys (self, repository))
     ostree_repo_remote_delete (self->repo, repository, NULL, NULL);
 
   if (!keep_ref)
@@ -6381,6 +6382,31 @@ flatpak_dir_get_remote_disabled (FlatpakDir *self,
       oci_uri = flatpak_dir_get_remote_oci_uri (self, remote_name);
       if (oci_uri == NULL)
         return TRUE; /* Empty URL => disabled */
+    }
+
+  return FALSE;
+}
+
+gboolean
+flatpak_dir_remote_has_deploys (FlatpakDir   *self,
+                                const char   *remote)
+{
+  g_autoptr(GHashTable) refs = NULL;
+  GHashTableIter hash_iter;
+  gpointer key;
+
+  refs = flatpak_dir_get_all_installed_refs (self, FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME, NULL);
+  if (refs == NULL)
+    return FALSE;
+
+  g_hash_table_iter_init (&hash_iter, refs);
+  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+    {
+      const char *ref = (const char *)key;
+      g_autofree char *origin = flatpak_dir_get_origin (self, ref, NULL, NULL);
+
+      if (strcmp (remote, origin) == 0)
+        return TRUE;
     }
 
   return FALSE;
