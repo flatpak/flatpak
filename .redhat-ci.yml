@@ -37,6 +37,7 @@ packages:
     - libdwarf-devel
     - elfutils
     - systemd
+    - ostree
     - /usr/bin/xmlto
     - /usr/bin/xsltproc
     - redhat-rpm-config
