@@ -106,7 +106,7 @@ ref_is_installed (FlatpakTransaction *self,
 }
 
 static gboolean
-dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out)
+dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out, GVariant **deploy_data_out)
 {
   g_autoptr(GVariant) deploy_data = NULL;
 
@@ -116,6 +116,10 @@ dir_ref_is_installed (FlatpakDir *dir, const char *ref, char **remote_out)
 
   if (remote_out)
     *remote_out = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
+
+  if (deploy_data_out)
+    *deploy_data_out = g_variant_ref (deploy_data);
+
   return TRUE;
 }
 
@@ -417,7 +421,7 @@ add_deps (FlatpakTransaction *self,
       else
         {
           /* Update if in same dir */
-          if (dir_ref_is_installed (self->dir, full_runtime_ref, &runtime_remote))
+          if (dir_ref_is_installed (self->dir, full_runtime_ref, &runtime_remote, NULL))
             {
               FlatpakTransactionOp *op;
               g_debug ("Updating dependent runtime %s", full_runtime_ref);
@@ -456,7 +460,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
 
   if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
     {
-      if (!dir_ref_is_installed (self->dir, ref, &origin))
+      if (!dir_ref_is_installed (self->dir, ref, &origin, NULL))
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                        _("%s not installed"), pref);
@@ -473,7 +477,7 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
   else if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
     {
       g_assert (remote != NULL);
-      if (dir_ref_is_installed (self->dir, ref, NULL))
+      if (dir_ref_is_installed (self->dir, ref, NULL, NULL))
         {
           g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
                        _("%s already installed"), pref);
@@ -671,8 +675,20 @@ flatpak_transaction_run (FlatpakTransaction *self,
       kind = op->kind;
       if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE)
         {
-          if (dir_ref_is_installed (self->dir, op->ref, NULL))
-            kind = FLATPAK_TRANSACTION_OP_KIND_UPDATE;
+          g_autoptr(GVariant) deploy_data = NULL;
+
+          if (dir_ref_is_installed (self->dir, op->ref, NULL, &deploy_data))
+            {
+              g_autofree const char **current_subpaths = NULL;
+
+              /* When we update a dependency, we always inherit the subpaths
+                 rather than use the default. */
+              g_strfreev (op->subpaths);
+              current_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+              op->subpaths = g_strdupv ((char **)current_subpaths);
+
+              kind = FLATPAK_TRANSACTION_OP_KIND_UPDATE;
+            }
           else
             kind = FLATPAK_TRANSACTION_OP_KIND_INSTALL;
         }
