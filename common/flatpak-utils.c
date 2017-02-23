@@ -2910,7 +2910,7 @@ flatpak_mtree_create_root (OstreeRepo        *repo,
 {
   g_autoptr(GVariant) dirmeta = NULL;
   g_autoptr(GFileInfo) file_info = g_file_info_new ();
-  g_autofree guchar *csum;
+  g_autofree guchar *csum = NULL;
   g_autofree char *checksum = NULL;
 
   g_file_info_set_name (file_info, "/");
