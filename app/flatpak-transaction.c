@@ -687,6 +687,11 @@ flatpak_transaction_run (FlatpakTransaction *self,
               current_subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
               op->subpaths = g_strdupv ((char **)current_subpaths);
 
+              /* Don't use the remote from related ref on update, always use
+                 the current remote. */
+              g_free (op->remote);
+              op->remote = g_strdup (flatpak_deploy_data_get_origin (deploy_data));
+
               kind = FLATPAK_TRANSACTION_OP_KIND_UPDATE;
             }
           else
