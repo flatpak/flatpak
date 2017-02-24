@@ -35,6 +35,84 @@
 #include "builder-post-process.h"
 
 static gboolean
+invalidate_old_python_compiled (const char *path,
+                                const char *rel_path,
+                                GError **error)
+{
+  struct stat stbuf;
+  g_autofree char *pyc = NULL;
+  g_autofree char *pyo = NULL;
+  g_autofree char *dir = NULL;
+  g_autofree char *py3dir = NULL;
+  g_autofree char *pyfilename = NULL;
+  g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
+
+
+  /* This is a python file, not a .py[oc]. If it changed (mtime != 0) then
+   * this needs to invalidate any old (mtime == 0) .py[oc] files that could refer to it.
+   */
+
+  if (lstat (path, &stbuf) != 0)
+    {
+      g_warning ("Can't stat %s", rel_path);
+      return TRUE;
+    }
+
+  if (stbuf.st_mtime == OSTREE_TIMESTAMP)
+    return TRUE; /* Previously handled .py */
+
+  pyc = g_strconcat (path, "c", NULL);
+  if (lstat (pyc, &stbuf) == 0 &&
+      stbuf.st_mtime == OSTREE_TIMESTAMP)
+    {
+      g_print ("Removing stale file %sc", rel_path);
+      if (unlink (pyc) != 0)
+        g_warning ("Unable to delete %s", pyc);
+    }
+
+  pyo = g_strconcat (path, "o", NULL);
+  if (lstat (pyo, &stbuf) == 0 &&
+      stbuf.st_mtime == OSTREE_TIMESTAMP)
+    {
+      g_print ("Removing stale file %so", rel_path);
+      if (unlink (pyo) != 0)
+        g_warning ("Unable to delete %s", pyo);
+    }
+
+  /* Handle python3 which is in a __pycache__ subdir */
+
+  pyfilename = g_path_get_basename (path);
+  pyfilename[strlen (pyfilename) - 2] = 0; /* skip "py" */
+  dir = g_path_get_dirname (path);
+  py3dir = g_build_filename (dir, "__pycache__", NULL);
+
+  if (glnx_dirfd_iterator_init_at (AT_FDCWD, py3dir, FALSE, &dfd_iter, NULL))
+    {
+      struct dirent *dent;
+      while (glnx_dirfd_iterator_next_dent (&dfd_iter, &dent, NULL, NULL) &&
+             dent != NULL)
+        {
+          if (!(g_str_has_suffix (dent->d_name, ".pyc") ||
+                g_str_has_suffix (dent->d_name, ".pyo")))
+            continue;
+
+          if (!g_str_has_prefix (dent->d_name, pyfilename))
+            continue;
+
+          if (fstatat (dfd_iter.fd, dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW) == 0 &&
+              stbuf.st_mtime == OSTREE_TIMESTAMP)
+            {
+              g_print ("Removing stale file %s/__pycache__/%s", rel_path, dent->d_name);
+              if (unlinkat (dfd_iter.fd, dent->d_name, 0))
+                g_warning ("Unable to delete %s", dent->d_name);
+            }
+        }
+    }
+
+  return TRUE;
+}
+
+static gboolean
 fixup_python_time_stamp (const char *path,
                          const char *rel_path,
                          GError **error)
@@ -194,7 +272,9 @@ builder_post_process_python_time_stamp (GFile *app_dir,
       g_autofree char *path = NULL;
       struct stat stbuf;
 
-      if (!(g_str_has_suffix (rel_path, ".pyc") || g_str_has_suffix (rel_path, ".pyo")))
+      if (!(g_str_has_suffix (rel_path, ".py") ||
+            g_str_has_suffix (rel_path, ".pyc") ||
+            g_str_has_suffix (rel_path, ".pyo")))
         continue;
 
       file = g_file_resolve_relative_path (app_dir, rel_path);
@@ -206,8 +286,16 @@ builder_post_process_python_time_stamp (GFile *app_dir,
       if (!S_ISREG (stbuf.st_mode))
         continue;
 
-      if (!fixup_python_time_stamp (path, rel_path, error))
-        return FALSE;
+      if (g_str_has_suffix (rel_path, ".py"))
+        {
+          if (!invalidate_old_python_compiled (path, rel_path, error))
+            return FALSE;
+        }
+      else
+        {
+          if (!fixup_python_time_stamp (path, rel_path, error))
+            return FALSE;
+        }
     }
 
   return TRUE;
