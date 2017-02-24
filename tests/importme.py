@@ -1,2 +1,2 @@
 import sys
-foo = "first"
+foo = "first   "
