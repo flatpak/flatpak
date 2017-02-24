@@ -502,7 +502,7 @@ rofiles_umount_handler (int signum)
   argv[2] = rofiles_unmount_path;
   g_debug ("unmounting rofiles-fuse %s", rofiles_unmount_path);
   g_spawn_sync (NULL, (char **)argv, NULL,
-                G_SPAWN_SEARCH_PATH | G_SPAWN_CLOEXEC_PIPES,
+                G_SPAWN_SEARCH_PATH | G_SPAWN_CLOEXEC_PIPES | G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL,
                 NULL, NULL, NULL, NULL, NULL, NULL);
   exit (0);
 }
