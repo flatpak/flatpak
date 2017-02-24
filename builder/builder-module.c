@@ -946,10 +946,10 @@ build (GFile          *app_dir,
 }
 
 gboolean
-ensure_writable (BuilderModule  *self,
-                 BuilderCache   *cache,
-                 BuilderContext *context,
-                 GError        **error)
+builder_module_ensure_writable (BuilderModule  *self,
+                                BuilderCache   *cache,
+                                BuilderContext *context,
+                                GError        **error)
 {
   g_autoptr(GPtrArray) changes = NULL;
   g_autoptr(GHashTable) matches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -1034,12 +1034,6 @@ builder_module_build (BuilderModule  *self,
   g_autofree char *buildname = NULL;
   g_autoptr(GError) my_error = NULL;
   BuilderPostProcessFlags post_process_flags = 0;
-
-  if (!ensure_writable (self, cache, context, error))
-    {
-      g_prefix_error (error, "module %s: ", self->name);
-      return FALSE;
-    }
 
   source_dir = builder_context_allocate_build_subdir (context, self->name, error);
   if (source_dir == NULL)

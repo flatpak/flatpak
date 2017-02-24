@@ -53,6 +53,7 @@ struct BuilderContext
   GFile          *checksums_dir;
   GFile          *ccache_dir;
   GFile          *rofiles_dir;
+  GFile          *rofiles_allocated_dir;
   GLnxLockFile   rofiles_file_lock;
 
   BuilderOptions *options;
@@ -539,26 +540,63 @@ builder_context_enable_rofiles (BuilderContext *self,
   gint exit_status;
   pid_t child;
 
-  if (!self->use_rofiles || self->rofiles_dir != NULL)
+  if (!self->use_rofiles)
     return TRUE;
 
-  rofiles_base = g_file_get_child (self->state_dir, "rofiles");
-  if (g_mkdir_with_parents (flatpak_file_get_path_cached (rofiles_base), 0755) != 0)
+  g_assert (self->rofiles_dir == NULL);
+
+  if (self->rofiles_allocated_dir == NULL)
     {
-      glnx_set_error_from_errno (error);
-      return FALSE;
+      rofiles_base = g_file_get_child (self->state_dir, "rofiles");
+      if (g_mkdir_with_parents (flatpak_file_get_path_cached (rofiles_base), 0755) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+
+      if (!flatpak_allocate_tmpdir (AT_FDCWD,
+                                    flatpak_file_get_path_cached (rofiles_base),
+                                    "rofiles-",
+                                    &tmpdir_name, NULL,
+                                    &self->rofiles_file_lock,
+                                    NULL, NULL, error))
+        return FALSE;
+
+      self->rofiles_allocated_dir = g_file_get_child (rofiles_base, tmpdir_name);
+
+      /* Make sure we unmount the fuse fs if flatpak-builder dies unexpectedly */
+      rofiles_unmount_path = (char *)flatpak_file_get_path_cached (self->rofiles_allocated_dir);
+      child = fork ();
+      if (child == -1)
+        {
+          glnx_set_error_from_errno (error);
+          return FALSE;
+        }
+
+      if (child == 0)
+        {
+          /* In child */
+          struct sigaction new_action;
+
+          prctl (PR_SET_PDEATHSIG, SIGHUP);
+
+          new_action.sa_handler = rofiles_umount_handler;
+          sigemptyset (&new_action.sa_mask);
+          new_action.sa_flags = 0;
+          sigaction (SIGHUP, &new_action, NULL);
+
+          sigset (SIGINT, SIG_IGN);
+          sigset (SIGPIPE, SIG_IGN);
+          sigset (SIGSTOP, SIG_IGN);
+
+          while (TRUE)
+            pause ();
+
+          exit (0);
+        }
     }
 
-  if (!flatpak_allocate_tmpdir (AT_FDCWD,
-                                flatpak_file_get_path_cached (rofiles_base),
-                                "rofiles-",
-                                &tmpdir_name, NULL,
-                                &self->rofiles_file_lock,
-                                NULL, NULL, error))
-    return FALSE;
-
-  rofiles_dir = g_file_get_child (rofiles_base, tmpdir_name);
-
+  rofiles_dir = g_object_ref (self->rofiles_allocated_dir);
   argv[4] = (char *)flatpak_file_get_path_cached (rofiles_dir);
 
   g_debug ("starting: rofiles-fuse %s %s", argv[1], argv[4]);
@@ -572,37 +610,32 @@ builder_context_enable_rofiles (BuilderContext *self,
       return flatpak_fail (error, "Failure spawning rofiles-fuse, exit_status: %d", exit_status);
     }
 
-  child = fork ();
-  if (child == -1)
-    {
-      glnx_set_error_from_errno (error);
-      return FALSE;
-    }
-
-  if (child == 0)
-    {
-      /* In child */
-      struct sigaction new_action;
-
-      prctl (PR_SET_PDEATHSIG, SIGHUP);
-
-      rofiles_unmount_path = (char *)flatpak_file_get_path_cached (rofiles_dir);
-      new_action.sa_handler = rofiles_umount_handler;
-      sigemptyset (&new_action.sa_mask);
-      new_action.sa_flags = 0;
-      sigaction (SIGHUP, &new_action, NULL);
-
-      sigset (SIGINT, SIG_IGN);
-      sigset (SIGPIPE, SIG_IGN);
-      sigset (SIGSTOP, SIG_IGN);
-
-      while (TRUE)
-        pause ();
-
-      exit (0);
-    }
 
   self->rofiles_dir = g_steal_pointer (&rofiles_dir);
+
+  return TRUE;
+}
+
+gboolean
+builder_context_disable_rofiles (BuilderContext *self,
+                                 GError        **error)
+{
+  char *argv[] = { "fusermount", "-u", NULL,
+                     NULL };
+
+  if (!self->use_rofiles)
+    return TRUE;
+
+  g_assert (self->rofiles_dir != NULL);
+
+  argv[2] = (char *)flatpak_file_get_path_cached (self->rofiles_dir);
+
+  g_debug ("unmounting rofiles-fuse %s", rofiles_unmount_path);
+  g_spawn_sync (NULL, (char **)argv, NULL,
+                G_SPAWN_SEARCH_PATH | G_SPAWN_CLOEXEC_PIPES,
+                NULL, NULL, NULL, NULL, NULL, NULL);
+
+  g_clear_object (&self->rofiles_dir);
 
   return TRUE;
 }

@@ -59,6 +59,10 @@ gboolean builder_module_extract_sources (BuilderModule  *self,
                                          GFile          *dest,
                                          BuilderContext *context,
                                          GError        **error);
+gboolean builder_module_ensure_writable (BuilderModule  *self,
+                                         BuilderCache   *cache,
+                                         BuilderContext *context,
+                                         GError        **error);
 gboolean builder_module_build (BuilderModule  *self,
                                BuilderCache   *cache,
                                BuilderContext *context,

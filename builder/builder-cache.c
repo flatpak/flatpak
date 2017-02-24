@@ -294,16 +294,13 @@ builder_cache_checkout (BuilderCache *self, const char *commit, gboolean delete_
         return FALSE;
     }
 
-  if (!builder_context_enable_rofiles (self->context, error))
-    return FALSE;
-
   /* If rofiles-fuse is disabled, we check out without user mode, not
      necessarily because we care about uids not owned by the user
      (they are all from the build, so should be creatable by the user,
      but because we want to force the checkout to not use
      hardlinks. Hard links into the cache without rofiles-fuse are not
      safe, as the build could mutate the cache. */
-  if (builder_context_get_rofiles_active (self->context))
+  if (builder_context_get_use_rofiles (self->context))
     mode = OSTREE_REPO_CHECKOUT_MODE_USER;
 
   options.mode = mode;

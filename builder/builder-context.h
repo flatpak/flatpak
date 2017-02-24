@@ -99,6 +99,8 @@ gboolean        builder_context_enable_ccache (BuilderContext *self,
                                                GError        **error);
 gboolean        builder_context_enable_rofiles (BuilderContext *self,
                                                 GError        **error);
+gboolean        builder_context_disable_rofiles (BuilderContext *self,
+                                                 GError        **error);
 gboolean        builder_context_get_rofiles_active (BuilderContext *self);
 gboolean        builder_context_get_use_rofiles (BuilderContext *self);
 void            builder_context_set_use_rofiles (BuilderContext *self,

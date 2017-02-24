@@ -1518,7 +1518,13 @@ builder_manifest_build (BuilderManifest *self,
         {
           g_autofree char *body =
             g_strdup_printf ("Built %s\n", name);
+          if (!builder_module_ensure_writable (m, cache, context, error))
+            return FALSE;
+          if (!builder_context_enable_rofiles (context, error))
+            return FALSE;
           if (!builder_module_build (m, cache, context, FALSE, error))
+            return FALSE;
+          if (!builder_context_disable_rofiles (context, error))
             return FALSE;
           if (!builder_cache_commit (cache, body, error))
             return FALSE;
@@ -1746,8 +1752,6 @@ builder_manifest_cleanup (BuilderManifest *self,
                           BuilderContext  *context,
                           GError         **error)
 {
-  GFile *app_dir = builder_context_get_app_dir (context);
-
   g_autoptr(GFile) app_root = NULL;
   GList *l;
   g_auto(GStrv) env = NULL;
@@ -1762,9 +1766,16 @@ builder_manifest_cleanup (BuilderManifest *self,
     {
       g_autoptr(GHashTable) to_remove_ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
       g_autofree char **keys = NULL;
+      GFile *app_dir = NULL;
       guint n_keys;
 
       g_print ("Cleaning up\n");
+
+      if (!builder_context_enable_rofiles (context, error))
+        return FALSE;
+
+      /* Call after enabling rofiles */
+      app_dir = builder_context_get_app_dir (context);
 
       if (self->cleanup_commands)
         {
@@ -1971,6 +1982,9 @@ builder_manifest_cleanup (BuilderManifest *self,
             return FALSE;
         }
 
+      if (!builder_context_disable_rofiles (context, error))
+        return FALSE;
+
       if (!builder_cache_commit (cache, "Cleanup", error))
         return FALSE;
     }
@@ -1989,12 +2003,9 @@ builder_manifest_finish (BuilderManifest *self,
                          BuilderContext  *context,
                          GError         **error)
 {
-  GFile *app_dir = builder_context_get_app_dir (context);
-
   g_autoptr(GFile) manifest_file = NULL;
   g_autoptr(GFile) debuginfo_dir = NULL;
   g_autoptr(GFile) locale_parent_dir = NULL;
-  g_autofree char *app_dir_path = g_file_get_path (app_dir);
   g_autofree char *json = NULL;
   g_autofree char *commandline = NULL;
   g_autoptr(GPtrArray) args = NULL;
@@ -2006,7 +2017,14 @@ builder_manifest_finish (BuilderManifest *self,
   builder_manifest_checksum_for_finish (self, cache, context);
   if (!builder_cache_lookup (cache, "finish"))
     {
+      GFile *app_dir = NULL;
       g_print ("Finishing app\n");
+
+      if (!builder_context_enable_rofiles (context, error))
+        return FALSE;
+
+      /* Call after enabling rofiles */
+      app_dir = builder_context_get_app_dir (context);
 
       if (self->metadata)
         {
@@ -2056,7 +2074,7 @@ builder_manifest_finish (BuilderManifest *self,
             g_ptr_array_add (args, g_strdup (self->finish_args[i]));
         }
 
-      g_ptr_array_add (args, g_strdup (app_dir_path));
+      g_ptr_array_add (args, g_file_get_path (app_dir));
       g_ptr_array_add (args, NULL);
 
       commandline = flatpak_quote_argv ((const char **) args->pdata);
@@ -2191,6 +2209,9 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
         }
 
+      if (!builder_context_disable_rofiles (context, error))
+        return FALSE;
+
       if (!builder_cache_commit (cache, "Finish", error))
         return FALSE;
     }
@@ -2208,7 +2229,6 @@ builder_manifest_create_platform (BuilderManifest *self,
                                   BuilderContext  *context,
                                   GError         **error)
 {
-  GFile *app_dir = builder_context_get_app_dir (context);
   g_autofree char *commandline = NULL;
 
   g_autoptr(GFile) locale_dir = NULL;
@@ -2227,8 +2247,15 @@ builder_manifest_create_platform (BuilderManifest *self,
       g_autoptr(GFile) platform_dir = NULL;
       g_autoptr(GSubprocess) subp = NULL;
       g_autoptr(GPtrArray) args = NULL;
+      GFile *app_dir = NULL;
 
       g_print ("Creating platform based on %s\n", self->runtime);
+
+      if (!builder_context_enable_rofiles (context, error))
+        return FALSE;
+
+      /* Call after enabling rofiles */
+      app_dir = builder_context_get_app_dir (context);
 
       platform_dir = g_file_get_child (app_dir, "platform");
 
@@ -2467,6 +2494,9 @@ builder_manifest_create_platform (BuilderManifest *self,
                                     error))
             return FALSE;
         }
+
+      if (!builder_context_disable_rofiles (context, error))
+        return FALSE;
 
       if (!builder_cache_commit (cache, "Created platform", error))
         return FALSE;
