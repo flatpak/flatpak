@@ -532,7 +532,7 @@ builder_context_enable_rofiles (BuilderContext *self,
   g_autofree char *tmpdir_name = NULL;
   char *argv[] = { "rofiles-fuse",
                    "-o",
-                   "kernel_cache,entry_timeout=60,attr_timeout=60",
+                   "kernel_cache,entry_timeout=60,attr_timeout=60,splice_write,splice_move",
                    (char *)flatpak_file_get_path_cached (self->app_dir),
                    NULL,
                    NULL };
