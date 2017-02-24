@@ -844,7 +844,7 @@ flatpak_installation_list_installed_refs_for_update (FlatpakInstallation *self,
         }
       else
         {
-          g_debug ("Update: Failed to read remote %s: %s\n",
+          g_debug ("Update: Failed to read remote %s: %s",
                    flatpak_remote_get_name (remote),
                    local_error->message);
         }
@@ -1790,7 +1790,7 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
     return flatpak_remote_ref_new (ref, checksum, remote_name);
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-               "Reference %s doesn't exist in remote\n", ref);
+               "Reference %s doesn't exist in remote", ref);
   return NULL;
 }
 
