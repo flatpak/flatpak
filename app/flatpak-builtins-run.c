@@ -165,16 +165,20 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
   if (app_deploy == NULL)
     {
       g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
+      g_autoptr(GError) local_error2 = NULL;
 
       runtime_ref = flatpak_compose_ref (FALSE, id, branch, arch, error);
       if (runtime_ref == NULL)
         return FALSE;
 
-      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, NULL);
+      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, &local_error2);
       if (runtime_deploy == NULL)
         {
           /* Report old app-kind error, as its more likely right */
-          g_propagate_error (error, g_steal_pointer (&local_error));
+          if (local_error != NULL)
+            g_propagate_error (error, g_steal_pointer (&local_error));
+          else
+            g_propagate_error (error, g_steal_pointer (&local_error2));
           return FALSE;
         }
       /* Clear app-kind error */
