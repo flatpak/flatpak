@@ -236,7 +236,7 @@ builder_git_mirror_repo (const char     *repo_location,
       g_print ("Cloning git repo %s\n", repo_location);
 
       if (!git (parent, NULL, error,
-                "clone", "--mirror", repo_location,  filename_tmp, NULL) ||
+                "clone", "-c", "transfer.fsckObjects=1", "--mirror", repo_location,  filename_tmp, NULL) ||
           !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
         return FALSE;
     }
