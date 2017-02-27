@@ -25,14 +25,14 @@
 
     <refnamediv>
         <refname>flatpak-run</refname>
-        <refpurpose>Run an application</refpurpose>
+        <refpurpose>Run an application or open a shell in a runtime</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
             <cmdsynopsis>
                 <command>flatpak run</command>
                 <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">APP</arg>
+                <arg choice="plain">REF</arg>
                 <arg choice="opt" rep="repeat">ARG</arg>
             </cmdsynopsis>
     </refsynopsisdiv>
@@ -41,9 +41,13 @@
         <title>Description</title>
 
         <para>
-            Runs an application in a sandboxed environment.
-            <arg choice="plain">APP</arg> must name an installed application.
-            Extra arguments are passed on to the application.
+            If <arg choice="plain">REF</arg> names an installed application,
+            flatpak runs the application in a sandboxed environment. Extra
+            arguments are passed on to the application.
+        </para>
+        <para>
+            If <arg choice="plain">REF</arg> names a runtime, a shell is opened in the
+            runtime. This is useful for development and testing.
         </para>
         <para>
             flatpak creates a sandboxed environment for the application to run in
@@ -344,6 +348,9 @@
         </para>
         <para>
             <command>$ flatpak run --devel --command=bash org.gnome.Builder</command>
+        </para>
+        <para>
+            <command>$ flatpak run --command=bash org.gnome.Sdk</command>
         </para>
 
     </refsect1>
