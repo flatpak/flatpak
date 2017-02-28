@@ -2376,10 +2376,12 @@ add_file_args (GPtrArray *argv_array,
           if (!path_is_visible (keys, n_keys, hash_table, path))
             {
               g_autofree char *resolved = flatpak_resolve_link (path, NULL);
-              g_autofree char *parent = g_path_get_dirname (path);
-              g_autofree char *relative = make_relative (parent, resolved);
               if (resolved)
-                add_args (argv_array, "--symlink", relative, path,  NULL);
+                {
+                  g_autofree char *parent = g_path_get_dirname (path);
+                  g_autofree char *relative = make_relative (parent, resolved);
+                  add_args (argv_array, "--symlink", relative, path,  NULL);
+                }
             }
         }
       else if (ep->mode == FAKE_MODE_HIDDEN)
