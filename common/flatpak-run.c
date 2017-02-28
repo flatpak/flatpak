@@ -3984,10 +3984,11 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
       struct dirent *dent;
       char path_buffer[PATH_MAX + 1];
       ssize_t symlink_size;
+      gboolean inited;
 
-      glnx_dirfd_iterator_init_at (AT_FDCWD, flatpak_file_get_path_cached (etc), FALSE, &dfd_iter, NULL);
+      inited = glnx_dirfd_iterator_init_at (AT_FDCWD, flatpak_file_get_path_cached (etc), FALSE, &dfd_iter, NULL);
 
-      while (TRUE)
+      while (inited)
         {
           g_autofree char *src = NULL;
           g_autofree char *dest = NULL;
