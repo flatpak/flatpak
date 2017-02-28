@@ -38,6 +38,7 @@ static char *opt_command;
 static char *opt_require_version;
 static char **opt_extra_data;
 static char **opt_extensions;
+static char **opt_metadata;
 static gboolean opt_no_exports;
 static char *opt_sdk;
 static char *opt_runtime;
@@ -50,6 +51,7 @@ static GOptionEntry options[] = {
   { "extension", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_extensions, N_("Add extension point info"),  N_("NAME=VARIABLE[=VALUE]") },
   { "sdk", 0, 0, G_OPTION_ARG_STRING, &opt_sdk, N_("Change the sdk used for the app"),  N_("SDK") },
   { "runtime", 0, 0, G_OPTION_ARG_STRING, &opt_runtime, N_("Change the runtime used for the app"),  N_("RUNTIME") },
+  { "metadata", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_metadata, N_("Set generic metadata option"),  N_("GROUP=KEY[=VALUE]") },
   { NULL }
 };
 
@@ -438,6 +440,19 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
       if (strlen (elements[3]) > 0)
         g_key_file_set_string (keyfile, "Extra Data", installed_size_key, elements[3]);
       g_key_file_set_string (keyfile, "Extra Data", uri_key, elements[4]);
+    }
+
+  for (i = 0; opt_metadata != NULL && opt_metadata[i] != NULL; i++)
+    {
+      g_auto(GStrv) elements = NULL;
+      elements = g_strsplit (opt_metadata[i], "=", 3);
+      if (g_strv_length (elements) < 2)
+        {
+          flatpak_fail (error, _("Too few elements in --metadata argument %s, format should be GROUP=KEY[=VALUE]]"), opt_metadata[i]);
+          goto out;
+        }
+
+      g_key_file_set_string (keyfile, elements[0], elements[1], elements[2] ? elements[2] : "true");
     }
 
   for (i = 0; opt_extensions != NULL && opt_extensions[i] != NULL; i++)

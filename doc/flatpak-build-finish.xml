@@ -287,6 +287,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--metadata=GROUP=KEY[=VALUE]</option></term>
+
+                <listitem><para>
+                  Set a generic key in the metadata file. If value is left out it will
+                  be set to "true".
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--extra-data=NAME:SHA256:DOWNLOAD-SIZE:INSTALL-SIZE:URL</option></term>
 
                 <listitem><para>
