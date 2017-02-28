@@ -354,8 +354,7 @@ append_locations_from_config_file (GPtrArray    *locations,
 
   keyfile = g_key_file_new ();
 
-  g_key_file_load_from_file (keyfile, file_path, G_KEY_FILE_NONE, &my_error);
-  if (my_error != NULL)
+  if (!g_key_file_load_from_file (keyfile, file_path, G_KEY_FILE_NONE, &my_error))
     {
       g_debug ("Could not get list of system installations: %s\n", my_error->message);
       g_propagate_error (error, g_steal_pointer (&my_error));
