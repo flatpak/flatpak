@@ -138,9 +138,10 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
               else
                 flatpak_table_printer_add_column (printer, "-");
 
-              ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, &remote_url, NULL);
-
-              flatpak_table_printer_add_column (printer, remote_url);
+              if (ostree_repo_remote_get_url (flatpak_dir_get_repo (dir), remote_name, &remote_url, NULL))
+                flatpak_table_printer_add_column (printer, remote_url);
+              else
+                flatpak_table_printer_add_column (printer, "-");
 
               prio = flatpak_dir_get_remote_prio (dir, remote_name);
               prio_as_string = g_strdup_printf ("%d", prio);
