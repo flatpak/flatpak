@@ -3637,24 +3637,31 @@ apply_extra_data (FlatpakDir          *self,
   if (runtime_ref_parts == NULL)
     return FALSE;
 
-  runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
-  if (runtime_deploy == NULL)
-    return FALSE;
+  if (!g_key_file_get_boolean (metakey, "Extra Data", "NoRuntime", NULL))
+    {
+      runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
+      if (runtime_deploy == NULL)
+        return FALSE;
+      runtime_files = flatpak_deploy_get_files (runtime_deploy);
+    }
 
   app_files = g_file_get_child (checkoutdir, "files");
   app_export_file = g_file_get_child (checkoutdir, "export");
   extra_files = g_file_get_child (app_files, "extra");
   extra_export_file = g_file_get_child (extra_files, "export");
-  runtime_files = flatpak_deploy_get_files (runtime_deploy);
 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   fd_array = g_array_new (FALSE, TRUE, sizeof (int));
   g_array_set_clear_func (fd_array, clear_fd);
   g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
 
-  add_args (argv_array,
-            "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
+  if (runtime_files)
+    add_args (argv_array,
+              "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
             "--lock-file", "/usr/.ref",
+              NULL);
+
+  add_args (argv_array,
             "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
             "--bind", flatpak_file_get_path_cached (extra_files), "/app/extra",
             "--chdir", "/app/extra",

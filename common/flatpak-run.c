@@ -3976,8 +3976,10 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   else if (g_file_test ("/var/lib/dbus/machine-id", G_FILE_TEST_EXISTS))
     add_args (argv_array, "--ro-bind", "/var/lib/dbus/machine-id", "/etc/machine-id", NULL);
 
-  etc = g_file_get_child (runtime_files, "etc");
-  if ((flags & FLATPAK_RUN_FLAG_WRITABLE_ETC) == 0 &&
+  if (runtime_files)
+    etc = g_file_get_child (runtime_files, "etc");
+  if (etc != NULL &&
+      (flags & FLATPAK_RUN_FLAG_WRITABLE_ETC) == 0 &&
       g_file_query_exists (etc, NULL))
     {
       g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
@@ -4039,7 +4041,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                 NULL);
     }
 
-  for (i = 0; i < G_N_ELEMENTS (usr_links); i++)
+  for (i = 0; runtime_files != NULL && i < G_N_ELEMENTS (usr_links); i++)
     {
       const char *subdir = usr_links[i];
       g_autoptr(GFile) runtime_subdir = g_file_get_child (runtime_files, subdir);
