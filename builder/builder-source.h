@@ -42,6 +42,8 @@ struct BuilderSource
   GObject parent;
 
   char   *dest;
+  char  **only_arches;
+  char  **skip_arches;
 };
 
 typedef struct
@@ -90,6 +92,9 @@ gboolean builder_source_update (BuilderSource  *self,
 void     builder_source_checksum (BuilderSource  *self,
                                   BuilderCache   *cache,
                                   BuilderContext *context);
+
+gboolean builder_source_is_enabled (BuilderSource *self,
+                                    BuilderContext *context);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (BuilderSource, g_object_unref)
 

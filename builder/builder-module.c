@@ -807,6 +807,7 @@ builder_module_get_modules (BuilderModule *self)
 
 gboolean
 builder_module_show_deps (BuilderModule *self,
+                          BuilderContext *context,
                           GError         **error)
 {
   GList *l;
@@ -816,6 +817,9 @@ builder_module_show_deps (BuilderModule *self,
   for (l = self->sources; l != NULL; l = l->next)
     {
       BuilderSource *source = l->data;
+
+      if (!builder_source_is_enabled (source, context))
+        continue;
 
       if (!builder_source_show_deps (source, error))
         return FALSE;
@@ -835,6 +839,9 @@ builder_module_download_sources (BuilderModule  *self,
   for (l = self->sources; l != NULL; l = l->next)
     {
       BuilderSource *source = l->data;
+
+      if (!builder_source_is_enabled (source, context))
+        continue;
 
       if (!builder_source_download (source, update_vcs, context, error))
         {
@@ -861,6 +868,9 @@ builder_module_extract_sources (BuilderModule  *self,
   for (l = self->sources; l != NULL; l = l->next)
     {
       BuilderSource *source = l->data;
+
+      if (!builder_source_is_enabled (source, context))
+        continue;
 
       if (!builder_source_extract (source, dest, self->build_options, context, error))
         {
@@ -1530,6 +1540,9 @@ builder_module_update (BuilderModule  *self,
     {
       BuilderSource *source = l->data;
 
+      if (!builder_source_is_enabled (source, context))
+        continue;
+
       if (!builder_source_update (source, context, error))
         {
           g_prefix_error (error, "module %s: ", self->name);
@@ -1572,6 +1585,9 @@ builder_module_checksum (BuilderModule  *self,
   for (l = self->sources; l != NULL; l = l->next)
     {
       BuilderSource *source = l->data;
+
+      if (!builder_source_is_enabled (source, context))
+        continue;
 
       builder_source_checksum (source, cache, context);
     }

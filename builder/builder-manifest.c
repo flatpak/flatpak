@@ -2526,7 +2526,7 @@ builder_manifest_show_deps (BuilderManifest *self,
     {
       BuilderModule *module = l->data;
 
-      if (!builder_module_show_deps (module, error))
+      if (!builder_module_show_deps (module, context, error))
         return FALSE;
     }
 

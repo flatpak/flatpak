@@ -438,6 +438,23 @@
                 the build starts. They can be of several types, distinguished by the type property.
             </para>
             <refsect3>
+                <title>All sources</title>
+                <variablelist>
+                  <varlistentry>
+                    <term><option>only-arches</option> (array of strings)</term>
+                    <listitem><para>If non-empty, only build the module on the arches listed.</para></listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term><option>skip-arches</option> (array of strings)</term>
+                    <listitem><para>Don't build on any of the arches listed.</para></listitem>
+                  </varlistentry>
+                    <varlistentry>
+                        <term><option>dest</option> (string)</term>
+                        <listitem><para>Directory inside the source dir where this source will be extracted.</para></listitem>
+                    </varlistentry>
+                </variablelist>
+            </refsect3>
+            <refsect3>
                 <title>Archive sources (tar, zip)</title>
                 <variablelist>
                     <varlistentry>
@@ -460,10 +477,6 @@
                         <term><option>strip-components</option> (integer)</term>
                         <listitem><para>The number of initial pathname components to strip during extraction. Defaults to 1.</para></listitem>
                     </varlistentry>
-                    <varlistentry>
-                        <term><option>dest</option> (string)</term>
-                        <listitem><para>Directory inside the source dir where the archive will be extracted.</para></listitem>
-                    </varlistentry>
                 </variablelist>
             </refsect3>
             <refsect3>
@@ -485,10 +498,6 @@
                         <term><option>branch</option> (string)</term>
                         <listitem><para>The branch/tag/commit to use from the git repository</para></listitem>
                     </varlistentry>
-                    <varlistentry>
-                        <term><option>dest</option> (string)</term>
-                        <listitem><para>Directory inside the source dir where the repository will be checked out.</para></listitem>
-                    </varlistentry>
                 </variablelist>
             </refsect3>
             <refsect3>
@@ -505,10 +514,6 @@
                     <varlistentry>
                         <term><option>revision</option> (string)</term>
                         <listitem><para>A specific revision to use in the branch</para></listitem>
-                    </varlistentry>
-                    <varlistentry>
-                        <term><option>dest</option> (string)</term>
-                        <listitem><para>Directory inside the source dir where the repository will be checked out.</para></listitem>
                     </varlistentry>
                 </variablelist>
             </refsect3>
@@ -535,10 +540,6 @@
                         <term><option>dest-filename</option> (string)</term>
                         <listitem><para>Filename to use inside the source dir, default to the basename of path.</para></listitem>
                     </varlistentry>
-                    <varlistentry>
-                        <term><option>dest</option> (string)</term>
-                        <listitem><para>Directory inside the source dir where the file will be copied.</para></listitem>
-                    </varlistentry>
                 </variablelist>
             </refsect3>
             <refsect3>
@@ -558,10 +559,6 @@
                     <varlistentry>
                         <term><option>dest-filename</option> (string)</term>
                         <listitem><para>Filename to use inside the source dir, default to the basename of path.</para></listitem>
-                    </varlistentry>
-                    <varlistentry>
-                        <term><option>dest</option> (string)</term>
-                        <listitem><para>Directory inside the source dir where the file will be copied.</para></listitem>
                     </varlistentry>
                 </variablelist>
             </refsect3>
@@ -595,10 +592,6 @@
                     <varlistentry>
                         <term><option>strip-components</option> (integer)</term>
                         <listitem><para>The value of the -p argument to patch, defaults to 1.</para></listitem>
-                    </varlistentry>
-                    <varlistentry>
-                        <term><option>dest</option> (string)</term>
-                        <listitem><para>Directory inside the source dir where the patch will be applied.</para></listitem>
                     </varlistentry>
                     <varlistentry>
                         <term><option>use-git</option> (boolean)</term>

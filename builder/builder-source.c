@@ -45,6 +45,8 @@ G_DEFINE_TYPE_WITH_CODE (BuilderSource, builder_source, G_TYPE_OBJECT,
 enum {
   PROP_0,
   PROP_DEST,
+  PROP_ONLY_ARCHES,
+  PROP_SKIP_ARCHES,
   LAST_PROP
 };
 
@@ -73,6 +75,14 @@ builder_source_get_property (GObject    *object,
       g_value_set_string (value, self->dest);
       break;
 
+    case PROP_ONLY_ARCHES:
+      g_value_set_boxed (value, self->only_arches);
+      break;
+
+    case PROP_SKIP_ARCHES:
+      g_value_set_boxed (value, self->skip_arches);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -85,12 +95,25 @@ builder_source_set_property (GObject      *object,
                              GParamSpec   *pspec)
 {
   BuilderSource *self = BUILDER_SOURCE (object);
+  gchar **tmp;
 
   switch (prop_id)
     {
     case PROP_DEST:
       g_free (self->dest);
       self->dest = g_value_dup_string (value);
+      break;
+
+    case PROP_ONLY_ARCHES:
+      tmp = self->only_arches;
+      self->only_arches = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_SKIP_ARCHES:
+      tmp = self->skip_arches;
+      self->skip_arches = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
       break;
 
     default:
@@ -156,6 +179,20 @@ builder_source_class_init (BuilderSourceClass *klass)
                                                         "",
                                                         NULL,
                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_ONLY_ARCHES,
+                                   g_param_spec_boxed ("only-arches",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_SKIP_ARCHES,
+                                   g_param_spec_boxed ("skip-arches",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
 }
 
 static void
@@ -305,6 +342,24 @@ builder_source_checksum (BuilderSource  *self,
   class = BUILDER_SOURCE_GET_CLASS (self);
 
   builder_cache_checksum_str (cache, self->dest);
+  builder_cache_checksum_compat_strv (cache, self->only_arches);
+  builder_cache_checksum_compat_strv (cache, self->skip_arches);
 
   class->checksum (self, cache, context);
+}
+
+gboolean
+builder_source_is_enabled (BuilderSource *self,
+                           BuilderContext *context)
+{
+  if (self->only_arches != NULL &&
+      self->only_arches[0] != NULL &&
+      !g_strv_contains ((const char * const *) self->only_arches, builder_context_get_arch (context)))
+    return FALSE;
+
+  if (self->skip_arches != NULL &&
+      g_strv_contains ((const char * const *)self->skip_arches, builder_context_get_arch (context)))
+    return FALSE;
+
+  return TRUE;
 }
