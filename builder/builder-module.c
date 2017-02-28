@@ -48,6 +48,8 @@ struct BuilderModule
   char          **make_install_args;
   char           *buildsystem;
   char          **ensure_writable;
+  char          **only_arches;
+  char          **skip_arches;
   gboolean        disabled;
   gboolean        rm_configure;
   gboolean        no_autogen;
@@ -92,6 +94,8 @@ enum {
   PROP_MAKE_ARGS,
   PROP_MAKE_INSTALL_ARGS,
   PROP_ENSURE_WRITABLE,
+  PROP_ONLY_ARCHES,
+  PROP_SKIP_ARCHES,
   PROP_SOURCES,
   PROP_BUILD_OPTIONS,
   PROP_CLEANUP,
@@ -131,6 +135,8 @@ builder_module_finalize (GObject *object)
   g_strfreev (self->make_args);
   g_strfreev (self->make_install_args);
   g_strfreev (self->ensure_writable);
+  g_strfreev (self->only_arches);
+  g_strfreev (self->skip_arches);
   g_clear_object (&self->build_options);
   g_list_free_full (self->sources, g_object_unref);
   g_strfreev (self->cleanup);
@@ -212,6 +218,14 @@ builder_module_get_property (GObject    *object,
 
     case PROP_ENSURE_WRITABLE:
       g_value_set_boxed (value, self->ensure_writable);
+      break;
+
+    case PROP_ONLY_ARCHES:
+      g_value_set_boxed (value, self->only_arches);
+      break;
+
+    case PROP_SKIP_ARCHES:
+      g_value_set_boxed (value, self->skip_arches);
       break;
 
     case PROP_POST_INSTALL:
@@ -330,6 +344,18 @@ builder_module_set_property (GObject      *object,
     case PROP_ENSURE_WRITABLE:
       tmp = self->ensure_writable;
       self->ensure_writable = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_ONLY_ARCHES:
+      tmp = self->only_arches;
+      self->only_arches = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_SKIP_ARCHES:
+      tmp = self->skip_arches;
+      self->skip_arches = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -494,6 +520,20 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_ENSURE_WRITABLE,
                                    g_param_spec_boxed ("ensure-writable",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_ONLY_ARCHES,
+                                   g_param_spec_boxed ("only-arches",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_SKIP_ARCHES,
+                                   g_param_spec_boxed ("skip-arches",
                                                        "",
                                                        "",
                                                        G_TYPE_STRV,
@@ -726,6 +766,25 @@ const char *
 builder_module_get_name (BuilderModule *self)
 {
   return self->name;
+}
+
+gboolean
+builder_module_is_enabled (BuilderModule *self,
+                           BuilderContext *context)
+{
+  if (self->disabled)
+    return FALSE;
+
+  if (self->only_arches != NULL &&
+      self->only_arches[0] != NULL &&
+      !g_strv_contains ((const char * const *) self->only_arches, builder_context_get_arch (context)))
+    return FALSE;
+
+  if (self->skip_arches != NULL &&
+      g_strv_contains ((const char * const *)self->skip_arches, builder_context_get_arch (context)))
+    return FALSE;
+
+  return TRUE;
 }
 
 gboolean
@@ -1496,6 +1555,8 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_strv (cache, self->make_args);
   builder_cache_checksum_strv (cache, self->make_install_args);
   builder_cache_checksum_compat_strv (cache, self->ensure_writable);
+  builder_cache_checksum_compat_strv (cache, self->only_arches);
+  builder_cache_checksum_compat_strv (cache, self->skip_arches);
   builder_cache_checksum_boolean (cache, self->rm_configure);
   builder_cache_checksum_boolean (cache, self->no_autogen);
   builder_cache_checksum_boolean (cache, self->disabled);

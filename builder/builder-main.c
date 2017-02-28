@@ -410,7 +410,7 @@ main (int    argc,
 
   if (is_show_deps)
     {
-      if (!builder_manifest_show_deps (manifest, &error))
+      if (!builder_manifest_show_deps (manifest, build_context, &error))
         {
           g_printerr ("Error running %s: %s\n", argv[3], error->message);
           return 1;

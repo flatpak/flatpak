@@ -172,7 +172,8 @@ builder_manifest_finalize (GObject *object)
 }
 
 static gboolean
-expand_modules (GList *modules, GList **expanded, GHashTable *names, GError **error)
+expand_modules (BuilderContext *context, GList *modules,
+                GList **expanded, GHashTable *names, GError **error)
 {
   GList *l;
 
@@ -182,10 +183,10 @@ expand_modules (GList *modules, GList **expanded, GHashTable *names, GError **er
       GList *submodules = NULL;
       const char *name;
 
-      if (builder_module_get_disabled (m))
+      if (!builder_module_is_enabled (m, context))
         continue;
 
-      if (!expand_modules (builder_module_get_modules (m), &submodules, names, error))
+      if (!expand_modules (context, builder_module_get_modules (m), &submodules, names, error))
         return FALSE;
 
       *expanded = g_list_concat (*expanded, submodules);
@@ -1144,7 +1145,7 @@ builder_manifest_start (BuilderManifest *self,
                              self->base, builder_manifest_get_base_version (self));
     }
 
-  if (!expand_modules (self->modules, &self->expanded_modules, names, error))
+  if (!expand_modules (context, self->modules, &self->expanded_modules, names, error))
     return FALSE;
 
   stop_at = builder_context_get_stop_at (context);
@@ -2512,12 +2513,13 @@ builder_manifest_create_platform (BuilderManifest *self,
 
 gboolean
 builder_manifest_show_deps (BuilderManifest *self,
+                            BuilderContext  *context,
                             GError         **error)
 {
   g_autoptr(GHashTable) names = g_hash_table_new (g_str_hash, g_str_equal);
   GList *l;
 
-  if (!expand_modules (self->modules, &self->expanded_modules, names, error))
+  if (!expand_modules (context, self->modules, &self->expanded_modules, names, error))
     return FALSE;
 
   for (l = self->expanded_modules; l != NULL; l = l->next)
