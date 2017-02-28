@@ -1156,8 +1156,6 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
               /* Reference found in at least one of the system installations */
               break;
             }
-
-          goto out;
         }
     }
 
