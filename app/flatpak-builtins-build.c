@@ -268,16 +268,6 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
 
-  custom_usr = FALSE;
-  usr = g_file_get_child (res_deploy,  opt_sdk_dir ? opt_sdk_dir : "usr");
-  if (g_file_query_exists (usr, cancellable))
-    {
-      custom_usr = TRUE;
-      runtime_files = g_object_ref (usr);
-    }
-  else
-    runtime_files = flatpak_deploy_get_files (runtime_deploy);
-
   run_flags = FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER;
   if (custom_usr)
     run_flags |= FLATPAK_RUN_FLAG_WRITABLE_ETC;
