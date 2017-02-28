@@ -52,6 +52,7 @@ struct BuilderModule
   gboolean        rm_configure;
   gboolean        no_autogen;
   gboolean        no_parallel_make;
+  gboolean        no_make_install;
   gboolean        no_python_timestamp_fix;
   gboolean        cmake;
   gboolean        builddir;
@@ -82,6 +83,7 @@ enum {
   PROP_DISABLED,
   PROP_NO_AUTOGEN,
   PROP_NO_PARALLEL_MAKE,
+  PROP_NO_MAKE_INSTALL,
   PROP_NO_PYTHON_TIMESTAMP_FIX,
   PROP_CMAKE,
   PROP_BUILDSYSTEM,
@@ -174,6 +176,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_NO_PARALLEL_MAKE:
       g_value_set_boolean (value, self->no_parallel_make);
+      break;
+
+    case PROP_NO_MAKE_INSTALL:
+      g_value_set_boolean (value, self->no_make_install);
       break;
 
     case PROP_NO_PYTHON_TIMESTAMP_FIX:
@@ -280,6 +286,10 @@ builder_module_set_property (GObject      *object,
 
     case PROP_NO_PARALLEL_MAKE:
       self->no_parallel_make = g_value_get_boolean (value);
+      break;
+
+    case PROP_NO_MAKE_INSTALL:
+      self->no_make_install = g_value_get_boolean (value);
       break;
 
     case PROP_NO_PYTHON_TIMESTAMP_FIX:
@@ -415,6 +425,13 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_NO_PARALLEL_MAKE,
                                    g_param_spec_boolean ("no-parallel-make",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_NO_MAKE_INSTALL,
+                                   g_param_spec_boolean ("no-make-install",
                                                          "",
                                                          "",
                                                          FALSE,
@@ -1371,7 +1388,7 @@ builder_module_build (BuilderModule  *self,
         return FALSE;
     }
 
-  if (make_cmd)
+  if (!self->no_make_install && make_cmd)
     {
       if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
                   make_cmd, "install", strv_arg, self->make_install_args, NULL))
@@ -1483,6 +1500,7 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_boolean (cache, self->no_autogen);
   builder_cache_checksum_boolean (cache, self->disabled);
   builder_cache_checksum_boolean (cache, self->no_parallel_make);
+  builder_cache_checksum_compat_boolean (cache, self->no_make_install);
   builder_cache_checksum_boolean (cache, self->no_python_timestamp_fix);
   builder_cache_checksum_boolean (cache, self->cmake);
   builder_cache_checksum_boolean (cache, self->builddir);

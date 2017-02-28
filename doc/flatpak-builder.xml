@@ -358,6 +358,10 @@
                     <listitem><para>Don't call make with arguments to build in parallel</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>no-make-install</option> (boolean)</term>
+                    <listitem><para>Don't run the make install (or equivalent) stage</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>no-python-timestamp-fix</option> (boolean)</term>
                     <listitem><para>Don't fix up the *.py[oc] header timestamps for ostree use.</para></listitem>
                 </varlistentry>
