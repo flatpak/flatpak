@@ -436,7 +436,7 @@ builder_post_process_debuginfo (GFile          *app_dir,
                         {
                           /* Make sure the target is gone, because g_file_copy does
                              truncation on hardlinked destinations */
-                          g_file_delete (dst, NULL, NULL);
+                          (void)g_file_delete (dst, NULL, NULL);
 
                           if (!g_file_copy (src, dst,
                                             G_FILE_COPY_OVERWRITE,

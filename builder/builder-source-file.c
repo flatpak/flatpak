@@ -410,7 +410,7 @@ builder_source_file_extract (BuilderSource  *source,
 
       /* Make sure the target is gone, because g_file_copy does
          truncation on hardlinked destinations */
-      g_file_delete (dest_file, NULL, NULL);
+      (void)g_file_delete (dest_file, NULL, NULL);
 
       if (!g_file_copy (src, dest_file,
                         G_FILE_COPY_OVERWRITE,
