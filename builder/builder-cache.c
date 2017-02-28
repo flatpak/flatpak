@@ -1126,6 +1126,18 @@ builder_cache_checksum_boolean (BuilderCache *self,
     g_checksum_update (self->checksum, (const guchar *) "\0", 1);
 }
 
+/* Only add to cache if true. This means we can add
+   these things compatibly without invalidating the cache.
+   This is useful if false means no change from what was
+   before */
+void
+builder_cache_checksum_compat_boolean (BuilderCache *self,
+                                       gboolean      val)
+{
+  if (val)
+    builder_cache_checksum_boolean (self, val);
+}
+
 void
 builder_cache_checksum_uint32 (BuilderCache *self,
                                guint32       val)
