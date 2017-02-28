@@ -4249,7 +4249,7 @@ flatpak_bundle_load (GFile   *file,
   if (app_metadata != NULL)
     {
       if (!g_variant_lookup (metadata, "metadata", "s", app_metadata))
-        *runtime_repo = NULL;
+        *app_metadata = NULL;
     }
 
   if (gpg_keys != NULL)
