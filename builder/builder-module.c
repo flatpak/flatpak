@@ -881,7 +881,12 @@ shell (GFile          *app_dir,
   g_ptr_array_add (args, "sh");
   g_ptr_array_add (args, NULL);
 
-  chdir (flatpak_file_get_path_cached (cwd_file));
+  if (chdir (flatpak_file_get_path_cached (cwd_file)))
+    {
+      glnx_set_error_from_errno (error);
+      return FALSE;
+    }
+
   if (execvp ((char *) args->pdata[0], (char **) args->pdata) == -1)
     {
       g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Unable to start flatpak build");
