@@ -2127,10 +2127,11 @@ flatpak_zero_mtime (int parent_dfd,
   if (S_ISDIR (stbuf.st_mode))
     {
       g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
+      gboolean inited;
 
-      glnx_dirfd_iterator_init_at (parent_dfd, rel_path, FALSE, &dfd_iter, NULL);
+      inited = glnx_dirfd_iterator_init_at (parent_dfd, rel_path, FALSE, &dfd_iter, NULL);
 
-      while (TRUE)
+      while (inited)
         {
           struct dirent *dent;
 
