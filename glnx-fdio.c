@@ -54,11 +54,13 @@
             sizeof(type) <= 4 ? 10 :                                    \
             sizeof(type) <= 8 ? 20 : sizeof(int[-2*(sizeof(type) > 8)])))
 
-static gboolean
-rename_file_noreplace_at (int olddirfd, const char *oldpath,
-                          int newdirfd, const char *newpath,
-                          gboolean ignore_eexist,
-                          GError **error)
+
+/* An implementation of renameat2(..., RENAME_NOREPLACE)
+ * with fallback to a non-atomic version.
+ */
+int
+glnx_renameat2_noreplace (int olddirfd, const char *oldpath,
+                          int newdirfd, const char *newpath)
 {
 #ifndef ENABLE_WRPSEUDO_COMPAT
   if (renameat2 (olddirfd, oldpath, newdirfd, newpath, RENAME_NOREPLACE) < 0)
@@ -66,9 +68,35 @@ rename_file_noreplace_at (int olddirfd, const char *oldpath,
       if (errno == EINVAL || errno == ENOSYS)
         {
           /* Fall through */
-          ;
         }
-      else if (errno == EEXIST && ignore_eexist)
+      else
+        {
+          return -1;
+        }
+    }
+  else
+    return TRUE;
+#endif
+
+  if (linkat (olddirfd, oldpath, newdirfd, newpath, 0) < 0)
+    return -1;
+
+  if (unlinkat (olddirfd, oldpath, 0) < 0)
+    return -1;
+
+  return 0;
+}
+
+static gboolean
+rename_file_noreplace_at (int olddirfd, const char *oldpath,
+                          int newdirfd, const char *newpath,
+                          gboolean ignore_eexist,
+                          GError **error)
+{
+  if (glnx_renameat2_noreplace (olddirfd, oldpath,
+                                newdirfd, newpath) < 0)
+    {
+      if (errno == EEXIST && ignore_eexist)
         {
           (void) unlinkat (olddirfd, oldpath, 0);
           return TRUE;
@@ -79,29 +107,46 @@ rename_file_noreplace_at (int olddirfd, const char *oldpath,
           return FALSE;
         }
     }
-  else
-    return TRUE;
-#endif
+  return TRUE;
+}
 
-  if (linkat (olddirfd, oldpath, newdirfd, newpath, 0) < 0)
+/* An implementation of renameat2(..., RENAME_EXCHANGE)
+ * with fallback to a non-atomic version.
+ */
+int
+glnx_renameat2_exchange (int olddirfd, const char *oldpath,
+                         int newdirfd, const char *newpath)
+{
+#ifndef ENABLE_WRPSEUDO_COMPAT
+  if (renameat2 (olddirfd, oldpath, newdirfd, newpath, RENAME_EXCHANGE) == 0)
+    return 0;
+  else
     {
-      if (errno == EEXIST && ignore_eexist)
-        /* Fall through */
-        ;
+      if (errno == ENOSYS || errno == EINVAL)
+        {
+          /* Fall through */
+        }
       else
         {
-          glnx_set_error_from_errno (error);
-          return FALSE;
+          return -1;
         }
     }
-  
-  if (unlinkat (olddirfd, oldpath, 0) < 0)
-    {
-      glnx_set_error_from_errno (error);
-      return FALSE;
-    }
+#endif
 
-  return TRUE;
+  /* Fallback */
+  { const char *old_tmp_name = glnx_strjoina (oldpath, ".XXXXXX");
+
+    /* Move old out of the way */
+    if (renameat (olddirfd, oldpath, olddirfd, old_tmp_name) < 0)
+      return -1;
+    /* Now move new into its place */
+    if (renameat (newdirfd, newpath, olddirfd, oldpath) < 0)
+      return -1;
+    /* And finally old(tmp) into new */
+    if (renameat (olddirfd, old_tmp_name, newdirfd, newpath) < 0)
+      return -1;
+  }
+  return 0;
 }
 
 gboolean
