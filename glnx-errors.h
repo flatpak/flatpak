@@ -49,6 +49,9 @@ glnx_throw (GError **error, const char *fmt, ...)
   return FALSE;
 }
 
+/* Like glnx_throw(), but yields a NULL pointer. */
+#define glnx_null_throw(error, args...) \
+  ({glnx_throw (error, args); NULL;})
 
 /* Set @error using the value of `g_strerror (errno)`.
  *
@@ -79,6 +82,10 @@ glnx_throw_errno (GError **error)
   return FALSE;
 }
 
+/* Like glnx_throw_errno(), but yields a NULL pointer. */
+#define glnx_null_throw_errno(error) \
+  ({glnx_throw_errno (error); NULL;})
+
 /* Implementation detail of glnx_throw_errno_prefix() */
 void glnx_real_set_prefix_error_from_errno_va (GError     **error,
                                                gint         errsv,
@@ -107,6 +114,10 @@ glnx_throw_errno_prefix (GError **error, const char *fmt, ...)
   errno = errsv;
   return FALSE;
 }
+
+/* Like glnx_throw_errno_prefix(), but yields a NULL pointer. */
+#define glnx_null_throw_errno_prefix(error, args...) \
+  ({glnx_throw_errno_prefix (error, args); NULL;})
 
 /* BEGIN LEGACY APIS */
 

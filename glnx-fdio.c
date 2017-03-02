@@ -555,25 +555,20 @@ glnx_readlinkat_malloc (int            dfd,
 
   for (;;)
     {
-      char *c;
+      g_autofree char *c = NULL;
       ssize_t n;
 
       c = g_malloc (l);
       n = TEMP_FAILURE_RETRY (readlinkat (dfd, subpath, c, l-1));
       if (n < 0)
-        {
-          glnx_set_error_from_errno (error);
-          g_free (c);
-          return FALSE;
-        }
+        return glnx_null_throw_errno (error);
 
       if ((size_t) n < l-1)
         {
           c[n] = 0;
-          return c;
+          return g_steal_pointer (&c);
         }
 
-      g_free (c);
       l *= 2;
     }
 
