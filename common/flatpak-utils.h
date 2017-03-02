@@ -556,6 +556,7 @@ GBytes *flatpak_appstream_xml_root_to_data (FlatpakXml *appstream_root,
 gboolean   flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                             const char  **gpg_key_ids,
                                             const char   *gpg_homedir,
+                                            guint64       timestamp,
                                             GCancellable *cancellable,
                                             GError      **error);
 

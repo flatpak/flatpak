@@ -384,7 +384,7 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
     return FALSE;
 
   g_print (_("Updating appstream branch\n"));
-  if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+  if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
     return FALSE;
 
   if (opt_generate_deltas &&
