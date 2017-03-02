@@ -149,6 +149,7 @@ EXTRA_DIST += flatpak.pc.in
 
 scriptsdir = $(bindir)
 scripts_SCRIPTS = scripts/flatpak-bisect
+EXTRA_DIST += scripts/flatpak-bisect
 
 EXTRA_DIST += README.md
 
