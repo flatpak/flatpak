@@ -44,6 +44,7 @@ static char **opt_include;
 static char *opt_gpg_homedir;
 static char *opt_files;
 static char *opt_metadata;
+static char *opt_timestamp = NULL;
 
 static GOptionEntry options[] = {
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, N_("One line subject"), N_("SUBJECT") },
@@ -58,6 +59,7 @@ static GOptionEntry options[] = {
   { "exclude", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_exclude, N_("Files to exclude"), N_("PATTERN") },
   { "include", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_include, N_("Excluded files to include"), N_("PATTERN") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
+  { "timestamp", 0, 0, G_OPTION_ARG_STRING, &opt_timestamp, "Override the timestamp of the commit", "ISO-8601-TIMESTAMP" },
 
   { NULL }
 };
@@ -633,6 +635,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GVariant) metadata_dict_v = NULL;
   gboolean is_runtime = FALSE;
   gboolean is_extension = FALSE;
+  GTimeVal ts;
 
   context = g_option_context_new (_("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -812,10 +815,34 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     goto out;
 
   metadata_dict_v = g_variant_ref_sink (g_variant_dict_end (&metadata_dict));
-  if (!ostree_repo_write_commit (repo, parent, subject, body, metadata_dict_v,
-                                 OSTREE_REPO_FILE (root),
-                                 &commit_checksum, cancellable, error))
-    goto out;
+
+  /* required for the metadata and the AppStream commits */
+  if (opt_timestamp != NULL)
+    {
+      if (!g_time_val_from_iso8601 (opt_timestamp, &ts))
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                       "Could not parse '%s'", opt_timestamp);
+          goto out;
+        }
+    }
+
+  if (opt_timestamp == NULL)
+    {
+      if (!ostree_repo_write_commit (repo, parent, subject, body, metadata_dict_v,
+                                     OSTREE_REPO_FILE (root),
+                                     &commit_checksum, cancellable, error))
+        goto out;
+    }
+  else
+    {
+      if (!ostree_repo_write_commit_with_time (repo, parent, subject, body,
+                                               metadata_dict_v,
+                                               OSTREE_REPO_FILE (root),
+                                               ts.tv_sec, &commit_checksum,
+                                               cancellable, error))
+        goto out;
+    }
 
   if (opt_gpg_key_ids)
     {
@@ -841,7 +868,8 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
     goto out;
 
   if (opt_update_appstream &&
-      !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+      !flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir,
+                                        ts.tv_sec, cancellable, error))
     return FALSE;
 
   if (!opt_no_update_summary &&

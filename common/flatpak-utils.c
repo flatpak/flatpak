@@ -3481,6 +3481,7 @@ gboolean
 flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  const char  **gpg_key_ids,
                                  const char   *gpg_homedir,
+                                 guint64       timestamp,
                                  GCancellable *cancellable,
                                  GError      **error)
 {
@@ -3616,10 +3617,22 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       if (!skip_commit)
         {
-          if (!ostree_repo_write_commit (repo, parent, "Update", NULL, NULL,
-                                         OSTREE_REPO_FILE (root),
-                                         &commit_checksum, cancellable, error))
-            goto out;
+          if (timestamp > 0)
+            {
+              if (!ostree_repo_write_commit_with_time (repo, parent, "Update", NULL, NULL,
+                                                       OSTREE_REPO_FILE (root),
+                                                       timestamp,
+                                                       &commit_checksum,
+                                                       cancellable, error))
+                goto out;
+            }
+          else
+            {
+              if (!ostree_repo_write_commit (repo, parent, "Update", NULL, NULL,
+                                             OSTREE_REPO_FILE (root),
+                                             &commit_checksum, cancellable, error))
+                goto out;
+            }
 
           if (gpg_key_ids)
             {

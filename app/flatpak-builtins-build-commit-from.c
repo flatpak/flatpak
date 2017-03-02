@@ -320,7 +320,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
     return FALSE;
 
   if (opt_update_appstream &&
-      !flatpak_repo_generate_appstream (dst_repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+      !flatpak_repo_generate_appstream (dst_repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
     return FALSE;
 
   if (!opt_no_update_summary &&
