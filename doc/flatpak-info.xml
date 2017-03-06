@@ -163,14 +163,8 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak --user list</command>
+            <command>$ flatpak info org.gnome.Builder//master</command>
         </para>
-<programlisting>
-org.gnome.Builder
-org.freedesktop.glxgears
-org.gnome.MyApp
-org.gnome.GEdit
-</programlisting>
 
     </refsect1>
 
