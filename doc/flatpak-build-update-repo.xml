@@ -107,7 +107,7 @@
                 <term><option>--prune</option></term>
 
                 <listitem><para>
-                    Remove unreferences objects in repo.
+                    Remove unreferenced objects in repo.
                 </para></listitem>
             </varlistentry>
 
