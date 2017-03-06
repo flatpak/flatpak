@@ -3854,7 +3854,7 @@ flatpak_list_extensions (GKeyFile   *metakey,
                          const char *default_branch)
 {
   g_auto(GStrv) groups = NULL;
-  int i;
+  int i, j;
   GList *res;
 
   res = NULL;
@@ -3871,14 +3871,21 @@ flatpak_list_extensions (GKeyFile   *metakey,
           *(extension = (groups[i] + strlen ("Extension "))) != 0)
         {
           g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
-          const char *branch;
+          g_auto(GStrv) versions = g_key_file_get_string_list (metakey, groups[i], "versions", NULL, NULL);
+          const char *default_branches[] = { default_branch, NULL};
+          const char **branches;
 
-          if (version)
-            branch = version;
+          if (versions)
+            branches = (const char **)versions;
           else
-            branch = default_branch;
+            {
+              if (version)
+                default_branches[0] = version;
+              branches = default_branches;
+            }
 
-          res = add_extension (metakey, groups[i], extension, arch, branch, res);
+          for (j = 0; branches[j] != NULL; j++)
+            res = add_extension (metakey, groups[i], extension, arch, branches[j], res);
         }
     }
 
