@@ -92,6 +92,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-d</option></term>
                 <term><option>--show-details</option></term>
 
                 <listitem><para>

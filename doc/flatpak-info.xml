@@ -114,6 +114,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--arch=ARCH</option></term>
+
+                <listitem><para>
+                    Query for this architecture.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-r</option></term>
                 <term><option>--show-ref</option></term>
 

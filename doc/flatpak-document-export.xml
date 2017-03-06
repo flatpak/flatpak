@@ -70,6 +70,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-u</option></term>
                 <term><option>--unique</option></term>
 
                 <listitem><para> Don't reuse an existing document id
@@ -79,6 +80,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-t</option></term>
                 <term><option>--transient</option></term>
 
                 <listitem><para>
@@ -88,6 +90,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-a</option></term>
                 <term><option>--app=APPID</option></term>
 
                 <listitem><para>
@@ -99,6 +102,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-r</option></term>
                 <term><option>--allow-read</option></term>
 
                 <listitem><para>
@@ -116,6 +120,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-w</option></term>
                 <term><option>--allow-write</option></term>
 
                 <listitem><para>
@@ -132,6 +137,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-d</option></term>
                 <term><option>--allow-delete</option></term>
 
                 <listitem><para>
@@ -148,6 +154,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-g</option></term>
                 <term><option>--allow-grant-permission</option></term>
 
                 <listitem><para>
