@@ -165,6 +165,38 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--allow=FEATURE</option></term>
+
+                <listitem><para>
+                    Allow access to a specific feature. This updates
+                    the [Context] group in the metadata.
+                    FEATURE must be one of: devel, multiarch.
+                    This option can be used multiple times.
+                 </para><para>
+                    The <code>devel</code> feature allows the application to
+                    access certain syscalls such as <code>ptrace()</code>, and
+                <code>perf_event_open()</code>.
+                </para><para>
+                    The <code>multiarch</code> feature allows the application to
+                    execute programs compiled for an ABI other than the one supported
+                    natively by the system. For example, for the <code>x86_64</code>
+                    architecture, 32-bit <code>x86</code> binaries will be allowed as
+                    well.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--disallow=FEATURE</option></term>
+
+                <listitem><para>
+                    Disallow access to a specific feature. This updates
+                    the [Context] group in the metadata.
+                    FEATURE must be one of: devel, multiarch.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--filesystem=FS</option></term>
 
                 <listitem><para>
@@ -177,6 +209,20 @@
                     relative to the xdg dirs, like xdg-download/subdir.
                     The optional :ro suffix indicates that the location will be read-only.
                     The optional :create suffix indicates that the location will be read-write and created if it doesn't exist.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--nofilesystem=FILESYSTEM</option></term>
+
+                <listitem><para>
+                    Remove access to the specified subset of the filesystem from
+                    the application. This overrides to the Context section from the
+                    application metadata.
+                    FILESYSTEM can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos,
+                    an absolute path, or a homedir-relative path like ~/dir.
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>

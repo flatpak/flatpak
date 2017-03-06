@@ -178,6 +178,38 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--allow=FEATURE</option></term>
+
+                <listitem><para>
+                    Allow access to a specific feature. This updates
+                    the [Context] group in the metadata.
+                    FEATURE must be one of: devel, multiarch.
+                    This option can be used multiple times.
+                 </para><para>
+                    The <code>devel</code> feature allows the application to
+                    access certain syscalls such as <code>ptrace()</code>, and
+                <code>perf_event_open()</code>.
+                </para><para>
+                    The <code>multiarch</code> feature allows the application to
+                    execute programs compiled for an ABI other than the one supported
+                    natively by the system. For example, for the <code>x86_64</code>
+                    architecture, 32-bit <code>x86</code> binaries will be allowed as
+                    well.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--disallow=FEATURE</option></term>
+
+                <listitem><para>
+                    Disallow access to a specific feature. This updates
+                    the [Context] group in the metadata.
+                    FEATURE must be one of: devel, multiarch.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--filesystem=FILESYSTEM[:ro|:create]</option></term>
 
                 <listitem><para>
