@@ -90,6 +90,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-n</option></term>
+                <term><option>--noexist</option></term>
+
+                <listitem><para>
+                  Don't require the file to exist already.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-a</option></term>
                 <term><option>--app=APPID</option></term>
 

@@ -228,6 +228,29 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--add-policy=SUBSYSTEM.KEY=VALUE</option></term>
+
+                <listitem><para>
+                    Add generic policy option. For example, "--add-policy=subsystem.key=v1 --add-policy=subsystem.key=v2" would map to this metadata:
+<programlisting>
+[Policy subsystem]
+key=v1;v2;
+</programlisting>
+                </para></listitem>
+                <listitem><para>
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--remove-policy=SUBSYSTEM.KEY=VALUE</option></term>
+
+                <listitem><para>
+                    Remove generic policy option. This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--env=VAR=VALUE</option></term>
 
                 <listitem><para>
