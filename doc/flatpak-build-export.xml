@@ -185,6 +185,7 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-r</option></term>
                 <term><option>--runtime</option></term>
 
                 <listitem><para>

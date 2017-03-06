@@ -209,6 +209,20 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--nofilesystem=FILESYSTEM</option></term>
+
+                <listitem><para>
+                    Remove access to the specified subset of the filesystem from
+                    the application. This overrides to the Context section from the
+                    application metadata.
+                    FILESYSTEM can be one of: home, host, xdg-desktop, xdg-documents, xdg-download
+                    xdg-music, xdg-pictures, xdg-public-share, xdg-templates, xdg-videos,
+                    an absolute path, or a homedir-relative path like ~/dir.
+                    This option can be used multiple times.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--env=VAR=VALUE</option></term>
 
                 <listitem><para>
