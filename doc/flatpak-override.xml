@@ -232,7 +232,7 @@
                     This option can be used multiple times.
                 </para></listitem>
             </varlistentry>
-`
+
             <varlistentry>
                 <term><option>--persist=FILENAME</option></term>
 
