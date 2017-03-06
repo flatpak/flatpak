@@ -339,6 +339,7 @@ main (int    argc,
   if (opt_from_git)
     {
       g_autofree char *manifest_dirname = g_path_get_dirname (manifest_rel_path);
+      g_autoptr(GFile) build_subdir = NULL;
 
       if (!builder_git_mirror_repo (opt_from_git,
                                     !opt_disable_updates, FALSE,
@@ -349,19 +350,19 @@ main (int    argc,
           return 1;
         }
 
-      base_dir = builder_context_allocate_build_subdir (build_context, manifest_basename, &error);
-      if (base_dir == NULL)
+      build_subdir = builder_context_allocate_build_subdir (build_context, manifest_basename, &error);
+      if (build_subdir == NULL)
         {
           g_printerr ("Can't check out manifest repo: %s\n", error->message);
           return 1;
         }
 
-      cleanup_manifest_dir = g_object_ref (base_dir);
+      cleanup_manifest_dir = g_object_ref (build_subdir);
 
       if (!builder_git_checkout_dir (opt_from_git,
                                      opt_from_git_branch ? opt_from_git_branch : "master",
                                      manifest_dirname,
-                                     base_dir,
+                                     build_subdir,
                                      build_context,
                                      &error))
         {
@@ -369,7 +370,8 @@ main (int    argc,
           return 1;
         }
 
-      manifest_file = g_file_get_child (base_dir, manifest_rel_path);
+      manifest_file = g_file_get_child (build_subdir, manifest_rel_path);
+      base_dir = g_file_resolve_relative_path (build_subdir, manifest_dirname);
     }
   else
     {
@@ -397,8 +399,14 @@ main (int    argc,
         }
     }
 
+  /* Can't push this as user data to the demarshalling :/ */
+  builder_manifest_set_demarshal_buid_context (build_context);
+
   manifest = (BuilderManifest *) json_gobject_from_data (BUILDER_TYPE_MANIFEST,
                                                          json, -1, &error);
+
+  builder_manifest_set_demarshal_buid_context (NULL);
+
   if (manifest == NULL)
     {
       g_printerr ("Can't parse '%s': %s\n", manifest_rel_path, error->message);

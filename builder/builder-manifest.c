@@ -36,6 +36,14 @@
 
 #define LOCALES_SEPARATE_DIR "share/runtime/locale"
 
+static BuilderContext *demarshal_build_context = NULL;
+
+void
+builder_manifest_set_demarshal_buid_context (BuilderContext *build_context)
+{
+  g_set_object (&demarshal_build_context, build_context);
+}
+
 struct BuilderManifest
 {
   GObject         parent;
@@ -944,7 +952,10 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
               if (JSON_NODE_HOLDS_VALUE (element_node) &&
                   json_node_get_value_type (element_node) == G_TYPE_STRING)
                 {
-                  const char *module_path = json_node_get_string (element_node);
+                  const char *module_relpath = json_node_get_string (element_node);
+                  g_autoptr(GFile) module_file =
+                    g_file_resolve_relative_path (builder_context_get_base_dir (demarshal_build_context), module_relpath);
+                  const char *module_path = flatpak_file_get_path_cached (module_file);
                   g_autofree char *json = NULL;
                   g_autoptr(GError) error = NULL;
 

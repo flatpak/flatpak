@@ -44,6 +44,8 @@ typedef struct BuilderManifest BuilderManifest;
 
 GType builder_manifest_get_type (void);
 
+void builder_manifest_set_demarshal_buid_context (BuilderContext *build_context);
+
 const char *    builder_manifest_get_id (BuilderManifest *self);
 char *          builder_manifest_get_locale_id (BuilderManifest *self);
 char *          builder_manifest_get_debug_id (BuilderManifest *self);
