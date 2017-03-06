@@ -201,6 +201,21 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-y</option></term>
+                <term><option>--assumeyes</option></term>
+                <listitem><para>
+                    Automatically answer yes to all questions (or pick the most prioritized answer). This is useful for automation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--force-remove</option></term>
+                <listitem><para>
+                    Remove old files even if they're in use by a running application.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 

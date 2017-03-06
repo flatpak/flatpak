@@ -188,6 +188,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--url=URL</option></term>
+
+                <listitem><para>
+                    Set a new URL.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--update-metadata</option></term>
 
                 <listitem><para>

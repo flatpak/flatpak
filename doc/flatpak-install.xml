@@ -191,6 +191,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--gpg-file=FILE</option></term>
+
+                <listitem><para>
+                  Check bundle signatures with GPG key from FILE (- for stdin).
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--no-deploy</option></term>
 
                 <listitem><para>
@@ -234,6 +242,14 @@
                 <term><option>--runtime</option></term>
                 <listitem><para>
                     Assume that all <arg choice="plain">REF</arg>s are runtimes if not explicitly specified.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-y</option></term>
+                <term><option>--assumeyes</option></term>
+                <listitem><para>
+                    Automatically answer yes to all questions (or pick the most prioritized answer). This is useful for automation.
                 </para></listitem>
             </varlistentry>
 
