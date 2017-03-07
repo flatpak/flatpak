@@ -1097,6 +1097,30 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
   return metadata_contents;
 }
 
+static inline guint
+get_metadata_progress (guint metadata_fetched,
+                       guint outstanding_metadata_fetches)
+{
+  guint total_metadata = metadata_fetched + outstanding_metadata_fetches;
+
+  /* Defensive check */
+  if (total_metadata == 0)
+    return 1;
+
+  /* Below 5, there's still a high chance to overestimate the
+   * progress */
+  if (total_metadata < 5)
+    return 1;
+
+  return (guint) 10 * (metadata_fetched / (gdouble) total_metadata);
+}
+
+static inline guint
+get_write_progress (guint outstanding_writes)
+{
+  return (guint) (3 / (gdouble) outstanding_writes);
+}
+
 static void
 progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 {
@@ -1122,6 +1146,17 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint new_progress = 0;
   gboolean estimating = FALSE;
 
+  /* The heuristic here goes as follows:
+   *  - If we have delta files, grow up to 45%
+   *  - Else:
+   *     - While fetching metadata, grow up to 10%
+   *     - Then, while fetch the file objects, grow up to:
+   *        - 45% if we have extra data to download
+   *        - 90% otherwise
+   * - Writing the objects goes from 52% to 55%, or 97% to 100%
+   * - Extra data, if present, will go from 55% to 100%
+   */
+
   buf = g_string_new ("");
 
   status = ostree_async_progress_get_status (progress);
@@ -1144,6 +1179,9 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   if (status)
     {
       g_string_append (buf, status);
+
+      /* The status is sent on error or when the pull is finished */
+      new_progress = outstanding_extra_data ? 55 : 100;
     }
   else if (outstanding_fetches)
     {
@@ -1168,7 +1206,12 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
                                   formatted_bytes_sec, formatted_bytes_transferred,
                                   formatted_total);
 
-          new_progress = (100 * bytes_transferred) / total_delta_part_size;
+
+          /* When we have delta files, no metadata is fetched */
+          if (outstanding_extra_data > 0)
+            new_progress = (52 * bytes_transferred) / total_delta_part_size;
+          else
+            new_progress = (97 * bytes_transferred) / total_delta_part_size;
         }
       else if (outstanding_metadata_fetches)
         {
@@ -1176,18 +1219,25 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
            * Since its really hard to figure out early how much data there is we report 1% until
            * all objects are scanned. */
 
-          new_progress = 1;
           estimating = TRUE;
 
           g_string_append_printf (buf, "Receiving metadata objects: %u/(estimating) %s/s %s",
                                   metadata_fetched, formatted_bytes_sec, formatted_bytes_transferred);
+
+          /* Go up to 10% until the metadata is all fetched */
+          new_progress = get_metadata_progress (metadata_fetched, outstanding_metadata_fetches);
         }
       else
         {
-          new_progress = (100 * fetched) / requested;
           g_string_append_printf (buf, "Receiving objects: %u%% (%u/%u) %s/s %s",
                                   (guint) ((((double) fetched) / requested) * 100),
                                   fetched, requested, formatted_bytes_sec, formatted_bytes_transferred);
+
+
+          if (outstanding_extra_data)
+            new_progress = 10 + (42 * (double) fetched) / requested;
+          else
+            new_progress = 10 + (87 * (double) fetched) / requested;
         }
     }
   else if (outstanding_extra_data)
@@ -1204,14 +1254,20 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
       else
         formatted_bytes_sec = g_format_size (bytes_sec);
 
-      new_progress = (100 * transferred_extra_data_bytes) / total_extra_data_bytes;
       g_string_append_printf (buf, "Downloading extra data: %u%% (%lu/%lu) %s/s %s",
                               (guint) ((((double) transferred_extra_data_bytes) / total_extra_data_bytes) * 100),
                               transferred_extra_data_bytes, total_extra_data_bytes, formatted_bytes_sec, formatted_bytes_transferred);
+
+      /* Once we reach here, at least 55% of the data was fetched */
+      new_progress = 55 + (guint) (45 * ((double) transferred_extra_data_bytes) / total_extra_data_bytes);
     }
   else if (outstanding_writes)
     {
       g_string_append_printf (buf, "Writing objects: %u", outstanding_writes);
+
+      /* Writing the objects advances 10% of progress */
+      new_progress = outstanding_extra_data ? 52 : 97;
+      new_progress += get_write_progress (outstanding_writes);
     }
   else
     {
