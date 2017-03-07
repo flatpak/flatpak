@@ -1791,26 +1791,18 @@ extra_data_progress_report (guint64 downloaded_bytes,
 }
 
 static gboolean
-flatpak_dir_pull_extra_data (FlatpakDir          *self,
-                             OstreeRepo          *repo,
-                             const char          *repository,
-                             const char          *ref,
-                             const char          *rev,
-                             FlatpakPullFlags     flatpak_flags,
-                             OstreeAsyncProgress *progress,
-                             GCancellable        *cancellable,
-                             GError             **error)
+flatpak_dir_setup_extra_data (FlatpakDir           *self,
+                              OstreeRepo           *repo,
+                              const char           *rev,
+                              FlatpakPullFlags      flatpak_flags,
+                              OstreeAsyncProgress  *progress,
+                              GCancellable         *cancellable,
+                              GError              **error)
 {
   g_autoptr(GVariant) extra_data_sources = NULL;
-  g_autoptr(GVariant) detached_metadata = NULL;
-  g_auto(GVariantDict) new_metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
-  g_autoptr(GVariantBuilder) extra_data_builder = NULL;
-  g_autoptr(GVariant) new_detached_metadata = NULL;
-  g_autoptr(GVariant) extra_data = NULL;
   int i;
   gsize n_extra_data;
   guint64 total_download_size;
-  ExtraDataProgress extra_data_progress = { NULL };
 
   extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
   if (extra_data_sources == NULL)
@@ -1822,8 +1814,6 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
   if ((flatpak_flags & FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA) == 0)
     return flatpak_fail (error, "extra data not supported for non-gpg-verified local system installs");
-
-  extra_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(ayay)"));
 
   total_download_size = 0;
   for (i = 0; i < n_extra_data; i++)
@@ -1842,12 +1832,52 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
   if (progress)
     {
-      ostree_async_progress_set_uint64 (progress, "start-time-extra-data", g_get_monotonic_time ());
       ostree_async_progress_set_uint (progress, "outstanding-extra-data", n_extra_data);
       ostree_async_progress_set_uint (progress, "total-extra-data", n_extra_data);
       ostree_async_progress_set_uint64 (progress, "total-extra-data-bytes", total_download_size);
       ostree_async_progress_set_uint64 (progress, "transferred-extra-data-bytes", 0);
     }
+
+  return TRUE;
+}
+
+static gboolean
+flatpak_dir_pull_extra_data (FlatpakDir          *self,
+                             OstreeRepo          *repo,
+                             const char          *repository,
+                             const char          *ref,
+                             const char          *rev,
+                             FlatpakPullFlags     flatpak_flags,
+                             OstreeAsyncProgress *progress,
+                             GCancellable        *cancellable,
+                             GError             **error)
+{
+  g_autoptr(GVariant) extra_data_sources = NULL;
+  g_autoptr(GVariant) detached_metadata = NULL;
+  g_auto(GVariantDict) new_metadata_dict = FLATPAK_VARIANT_DICT_INITIALIZER;
+  g_autoptr(GVariantBuilder) extra_data_builder = NULL;
+  g_autoptr(GVariant) new_detached_metadata = NULL;
+  g_autoptr(GVariant) extra_data = NULL;
+  int i;
+  gsize n_extra_data;
+  ExtraDataProgress extra_data_progress = { NULL };
+
+  extra_data_sources = flatpak_repo_get_extra_data_sources (repo, rev, cancellable, NULL);
+  if (extra_data_sources == NULL)
+    return TRUE;
+
+  n_extra_data = g_variant_n_children (extra_data_sources);
+  if (n_extra_data == 0)
+    return TRUE;
+
+  if ((flatpak_flags & FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA) == 0)
+    return flatpak_fail (error, "extra data not supported for non-gpg-verified local system installs");
+
+  extra_data_builder = g_variant_builder_new (G_VARIANT_TYPE ("a(ayay)"));
+
+  /* Other fields were already set in flatpak_dir_setup_extra_data() */
+  if (progress)
+    ostree_async_progress_set_uint64 (progress, "start-time-extra-data", g_get_monotonic_time ());
 
   extra_data_progress.progress = progress;
 
@@ -2098,6 +2128,15 @@ flatpak_dir_pull (FlatpakDir          *self,
 
   /* Past this we must use goto out, so we clean up console and
      abort the transaction on error */
+
+  /* Setup extra data information before starting to pull, so we can have precise
+   * progress reports */
+  if (!flatpak_dir_setup_extra_data (self, repo, rev,
+                                     flatpak_flags,
+                                     progress,
+                                     cancellable,
+                                     error))
+    goto out;
 
   if (subpaths != NULL && subpaths[0] != NULL)
     {
