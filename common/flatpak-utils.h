@@ -333,11 +333,17 @@ gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,
                                    GCancellable *cancellable,
                                    GError      **error);
 
+typedef void (*FlatpakOciPullProgress) (guint64 total_size, guint64 pulled_size,
+                                        guint32 n_layers, guint32 pulled_layers,
+                                        gpointer data);
+
 char * flatpak_pull_from_oci (OstreeRepo   *repo,
                               FlatpakOciRegistry *registry,
                               const char *digest,
                               FlatpakOciManifest *manifest,
                               const char *ref,
+                              FlatpakOciPullProgress progress_cb,
+                              gpointer progress_data,
                               GCancellable *cancellable,
                               GError      **error);
 
@@ -580,6 +586,8 @@ typedef void (*FlatpakLoadUriProgress) (guint64 downloaded_bytes,
 SoupSession * flatpak_create_soup_session (const char *user_agent);
 GBytes * flatpak_load_http_uri (SoupSession *soup_session,
                                 const char   *uri,
+                                const char   *etag,
+                                char        **out_etag,
                                 FlatpakLoadUriProgress progress,
                                 gpointer      user_data,
                                 GCancellable *cancellable,

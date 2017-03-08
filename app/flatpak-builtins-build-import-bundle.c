@@ -57,9 +57,12 @@ import_oci (OstreeRepo *repo, GFile *file,
   g_autofree char *commit_checksum = NULL;
   g_autofree char *dir_uri = NULL;
   g_autofree char *target_ref = NULL;
-  g_autofree char *oci_digest = NULL;
+  const char *oci_digest;
   g_autoptr(FlatpakOciRegistry) registry = NULL;
-  g_autoptr(FlatpakOciManifest) manifest = NULL;
+  g_autoptr(FlatpakOciVersioned) versioned = NULL;
+  FlatpakOciManifest *manifest = NULL;
+  g_autoptr(FlatpakOciIndex) index = NULL;
+  const FlatpakOciManifestDescriptor *desc;
   GHashTable *annotations;
 
   dir_uri = g_file_get_uri (file);
@@ -67,13 +70,38 @@ import_oci (OstreeRepo *repo, GFile *file,
   if (registry == NULL)
     return NULL;
 
-  manifest = flatpak_oci_registry_chose_image (registry, "latest", &oci_digest,
-                                               cancellable, error);
-  if (manifest == NULL)
+  index = flatpak_oci_registry_load_index (registry, NULL, NULL, cancellable, error);
+  if (index == NULL)
     return NULL;
 
   if (opt_ref)
-    target_ref = g_strdup (opt_ref);
+    {
+      desc = flatpak_oci_index_get_manifest (index, opt_ref);
+      if (desc == NULL)
+        {
+          flatpak_fail (error, _("Ref '%s' not found in registry"), opt_ref);
+          return NULL;
+        }
+    }
+  else
+    {
+      desc = flatpak_oci_index_get_only_manifest (index);
+      if (desc == NULL)
+        {
+          flatpak_fail (error, _("Multiple images in registry, specify a ref with --ref"));
+          return NULL;
+        }
+    }
+
+  oci_digest = desc->parent.digest;
+
+  versioned = flatpak_oci_registry_load_versioned (registry,
+                                                   oci_digest,
+                                                   cancellable, error);
+  if (versioned == NULL)
+    return NULL;
+
+  manifest = FLATPAK_OCI_MANIFEST (versioned);
 
   annotations = flatpak_oci_manifest_get_annotations (manifest);
   if (annotations)
@@ -88,7 +116,7 @@ import_oci (OstreeRepo *repo, GFile *file,
     }
 
   commit_checksum = flatpak_pull_from_oci (repo, registry, oci_digest, manifest,
-                                           target_ref, cancellable, error);
+                                           target_ref, NULL, NULL, cancellable, error);
   if (commit_checksum == NULL)
     return NULL;
 

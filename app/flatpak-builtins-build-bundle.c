@@ -312,10 +312,11 @@ build_oci (OstreeRepo *repo, GFile *dir,
   g_autofree char *uncompressed_digest = NULL;
   g_autofree char *timestamp = NULL;
   g_autoptr(FlatpakOciImage) image = NULL;
-  g_autoptr(FlatpakOciRef) layer_ref = NULL;
-  g_autoptr(FlatpakOciRef) image_ref = NULL;
-  g_autoptr(FlatpakOciRef) manifest_ref = NULL;
+  g_autoptr(FlatpakOciDescriptor) layer_desc = NULL;
+  g_autoptr(FlatpakOciDescriptor) image_desc = NULL;
+  g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
   g_autoptr(FlatpakOciManifest) manifest = NULL;
+  g_autoptr(FlatpakOciIndex) index = NULL;
   g_autoptr(GFile) metadata_file = NULL;
   guint64 installed_size = 0;
   GHashTable *annotations;
@@ -351,7 +352,7 @@ build_oci (OstreeRepo *repo, GFile *dir,
 
   if (!flatpak_oci_layer_writer_close (layer_writer,
                                        &uncompressed_digest,
-                                       &layer_ref,
+                                       &layer_desc,
                                        cancellable,
                                        error))
     return FALSE;
@@ -363,13 +364,13 @@ build_oci (OstreeRepo *repo, GFile *dir,
   timestamp = timestamp_to_iso8601 (ostree_commit_get_timestamp (commit_data));
   flatpak_oci_image_set_created (image, timestamp);
 
-  image_ref = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (image), cancellable, error);
-  if (image_ref == NULL)
+  image_desc = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (image), cancellable, error);
+  if (image_desc == NULL)
     return FALSE;
 
   manifest = flatpak_oci_manifest_new ();
-  flatpak_oci_manifest_set_config (manifest, image_ref);
-  flatpak_oci_manifest_set_layer (manifest, layer_ref);
+  flatpak_oci_manifest_set_config (manifest, image_desc);
+  flatpak_oci_manifest_set_layer (manifest, layer_desc);
 
   annotations = flatpak_oci_manifest_get_annotations (manifest);
   flatpak_oci_add_annotations_for_commit (annotations, ref, commit_checksum, commit_data);
@@ -379,7 +380,7 @@ build_oci (OstreeRepo *repo, GFile *dir,
       g_utf8_validate (metadata_contents, -1, NULL))
     {
       g_hash_table_replace (annotations,
-                            g_strdup ("org.flatpak.Metadata"),
+                            g_strdup ("org.flatpak.metadata"),
                             g_steal_pointer (&metadata_contents));
     }
 
@@ -387,15 +388,26 @@ build_oci (OstreeRepo *repo, GFile *dir,
     return FALSE;
 
   g_hash_table_replace (annotations,
-                        g_strdup ("org.flatpak.InstalledSize"),
+                        g_strdup ("org.flatpak.installed-size"),
                         g_strdup_printf ("%" G_GUINT64_FORMAT, installed_size));
 
-  manifest_ref = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (manifest), cancellable, error);
-  if (manifest_ref == NULL)
+  g_hash_table_replace (annotations,
+                        g_strdup ("org.flatpak.download-size"),
+                        g_strdup_printf ("%" G_GUINT64_FORMAT, layer_desc->size));
+
+  manifest_desc = flatpak_oci_registry_store_json (registry, FLATPAK_JSON (manifest), cancellable, error);
+  if (manifest_desc == NULL)
     return FALSE;
 
-  if (!flatpak_oci_registry_set_ref (registry, "latest", manifest_ref,
-                                     cancellable, error))
+  flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
+
+  index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, NULL);
+  if (index == NULL)
+    index = flatpak_oci_index_new ();
+
+  flatpak_oci_index_add_manifest (index, manifest_desc);
+
+  if (!flatpak_oci_registry_save_index (registry, index, cancellable, error))
     return FALSE;
 
   return TRUE;

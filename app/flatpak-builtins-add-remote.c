@@ -44,6 +44,7 @@ static gboolean opt_do_deps;
 static gboolean opt_no_deps;
 static gboolean opt_if_not_exists;
 static gboolean opt_enable;
+static gboolean opt_oci;
 static gboolean opt_update_metadata;
 static gboolean opt_disable;
 static int opt_prio = -1;
@@ -79,6 +80,7 @@ static GOptionEntry common_options[] = {
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this remote"), N_("BRANCH") },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import GPG key from FILE (- for stdin)"), N_("FILE") },
   { "disable", 0, 0, G_OPTION_ARG_NONE, &opt_disable, N_("Disable the remote"), NULL },
+  { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Add OCI registry"), NULL },
   { NULL }
 };
 
@@ -201,6 +203,9 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name)
     g_key_file_set_boolean (config, group, "xa.disable", TRUE);
   else if (opt_enable)
     g_key_file_set_boolean (config, group, "xa.disable", FALSE);
+
+  if (opt_oci)
+    g_key_file_set_boolean (config, group, "xa.oci", TRUE);
 
   if (opt_prio != -1)
     {

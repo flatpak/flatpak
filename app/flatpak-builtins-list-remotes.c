@@ -156,6 +156,9 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
           if (disabled)
             flatpak_table_printer_append_with_comma (printer, "disabled");
 
+          if (flatpak_dir_get_remote_oci (dir, remote_name))
+            flatpak_table_printer_append_with_comma (printer, "oci");
+
           if (flatpak_dir_get_remote_noenumerate (dir, remote_name))
             flatpak_table_printer_append_with_comma (printer, "no-enumerate");
 

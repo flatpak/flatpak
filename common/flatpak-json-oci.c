@@ -37,12 +37,44 @@ flatpak_arch_to_oci_arch (const char *flatpak_arch)
   return flatpak_arch;
 }
 
+FlatpakOciDescriptor *
+flatpak_oci_descriptor_new (const char *mediatype,
+                            const char *digest,
+                            gint64 size)
+{
+  FlatpakOciDescriptor *desc = g_new0 (FlatpakOciDescriptor, 1);
+
+  desc->mediatype = g_strdup (mediatype);
+  desc->digest = g_strdup (digest);
+  desc->size = size;
+  desc->annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+  return desc;
+}
+
+void
+flatpak_oci_descriptor_copy (FlatpakOciDescriptor *source,
+                             FlatpakOciDescriptor *dest)
+{
+  flatpak_oci_descriptor_destroy (dest);
+
+  dest->mediatype = g_strdup (source->mediatype);
+  dest->digest = g_strdup (source->digest);
+  dest->size = source->size;
+  dest->urls = g_strdupv ((char **)source->urls);
+  dest->annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  if (source->annotations)
+    flatpak_oci_copy_annotations (source->annotations, dest->annotations);
+}
+
 void
 flatpak_oci_descriptor_destroy (FlatpakOciDescriptor *self)
 {
   g_free (self->mediatype);
   g_free (self->digest);
   g_strfreev (self->urls);
+  if (self->annotations)
+    g_hash_table_destroy (self->annotations);
 }
 
 void
@@ -57,6 +89,7 @@ static FlatpakJsonProp flatpak_oci_descriptor_props[] = {
   FLATPAK_JSON_STRING_PROP (FlatpakOciDescriptor, digest, "digest"),
   FLATPAK_JSON_INT64_PROP (FlatpakOciDescriptor, size, "size"),
   FLATPAK_JSON_STRV_PROP (FlatpakOciDescriptor, urls, "urls"),
+  FLATPAK_JSON_STRMAP_PROP(FlatpakOciDescriptor, annotations, "annotations"),
   FLATPAK_JSON_LAST_PROP
 };
 
@@ -69,6 +102,12 @@ flatpak_oci_manifest_platform_destroy (FlatpakOciManifestPlatform *self)
   g_strfreev (self->os_features);
   g_free (self->variant);
   g_strfreev (self->features);
+}
+
+FlatpakOciManifestDescriptor *
+flatpak_oci_manifest_descriptor_new (void)
+{
+  return g_new0 (FlatpakOciManifestDescriptor, 1);
 }
 
 void
@@ -96,88 +135,10 @@ static FlatpakJsonProp flatpak_oci_manifest_platform_props[] = {
 };
 static FlatpakJsonProp flatpak_oci_manifest_descriptor_props[] = {
   FLATPAK_JSON_PARENT_PROP (FlatpakOciManifestDescriptor, parent, flatpak_oci_descriptor_props),
-  FLATPAK_JSON_STRUCT_PROP (FlatpakOciManifestDescriptor, platform, "platform", flatpak_oci_manifest_platform_props),
+  FLATPAK_JSON_OPT_STRUCT_PROP (FlatpakOciManifestDescriptor, platform, "platform", flatpak_oci_manifest_platform_props),
   FLATPAK_JSON_LAST_PROP
 };
 
-G_DEFINE_TYPE (FlatpakOciRef, flatpak_oci_ref, FLATPAK_TYPE_JSON);
-
-static void
-flatpak_oci_ref_finalize (GObject *object)
-{
-  FlatpakOciRef *self = FLATPAK_OCI_REF (object);
-
-  flatpak_oci_descriptor_destroy (&self->descriptor);
-
-  G_OBJECT_CLASS (flatpak_oci_ref_parent_class)->finalize (object);
-}
-
-static void
-flatpak_oci_ref_class_init (FlatpakOciRefClass *klass)
-{
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
-  static FlatpakJsonProp props[] = {
-    FLATPAK_JSON_PARENT_PROP (FlatpakOciRef, descriptor, flatpak_oci_descriptor_props),
-    FLATPAK_JSON_LAST_PROP
-  };
-
-  object_class->finalize = flatpak_oci_ref_finalize;
-  json_class->props = props;
-  json_class->mediatype = FLATPAK_OCI_MEDIA_TYPE_DESCRIPTOR;
-}
-
-static void
-flatpak_oci_ref_init (FlatpakOciRef *self)
-{
-}
-
-FlatpakOciRef *
-flatpak_oci_ref_new (const char *mediatype,
-                    const char *digest,
-                    gint64 size)
-{
-  FlatpakOciRef *ref;
-
-  ref = g_object_new (FLATPAK_TYPE_OCI_REF, NULL);
-  ref->descriptor.mediatype = g_strdup (mediatype);
-  ref->descriptor.digest = g_strdup (digest);
-  ref->descriptor.size = size;
-
-  return ref;
-}
-
-const char *
-flatpak_oci_ref_get_mediatype (FlatpakOciRef *self)
-{
-  return self->descriptor.mediatype;
-}
-
-const char *
-flatpak_oci_ref_get_digest (FlatpakOciRef *self)
-{
-  return self->descriptor.digest;
-}
-
-gint64
-flatpak_oci_ref_get_size (FlatpakOciRef *self)
-{
-  return self->descriptor.size;
-}
-
-const char **
-flatpak_oci_ref_get_urls (FlatpakOciRef *self)
-{
-  return (const char **)self->descriptor.urls;
-}
-
-void
-flatpak_oci_ref_set_urls (FlatpakOciRef *self,
-                         const char **urls)
-{
-  g_strfreev (self->descriptor.urls);
-  self->descriptor.urls = g_strdupv ((char **)urls);
-}
 
 G_DEFINE_TYPE (FlatpakOciVersioned, flatpak_oci_versioned, FLATPAK_TYPE_JSON);
 
@@ -240,8 +201,8 @@ flatpak_oci_versioned_from_json (GBytes *bytes, GError **error)
   if (strcmp (mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST) == 0)
     return (FlatpakOciVersioned *) flatpak_json_from_node (root, FLATPAK_TYPE_OCI_MANIFEST, error);
 
-  if (strcmp (mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFESTLIST) == 0)
-    return (FlatpakOciVersioned *) flatpak_json_from_node (root, FLATPAK_TYPE_OCI_MANIFEST_LIST, error);
+  if (strcmp (mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX) == 0)
+    return (FlatpakOciVersioned *) flatpak_json_from_node (root, FLATPAK_TYPE_OCI_INDEX, error);
 
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
                "Unsupported media type %s", mediatype);
@@ -316,13 +277,13 @@ flatpak_oci_manifest_new (void)
 
 void
 flatpak_oci_manifest_set_config (FlatpakOciManifest *self,
-                                FlatpakOciRef *ref)
+                                 FlatpakOciDescriptor *desc)
 {
   g_free (self->config.mediatype);
-  self->config.mediatype = g_strdup (ref->descriptor.mediatype);
+  self->config.mediatype = g_strdup (desc->mediatype);
   g_free (self->config.digest);
-  self->config.digest = g_strdup (ref->descriptor.digest);
-  self->config.size = ref->descriptor.size;
+  self->config.digest = g_strdup (desc->digest);
+  self->config.size = desc->size;
 }
 
 static int
@@ -338,15 +299,15 @@ ptrv_count (gpointer *ptrs)
 
 void
 flatpak_oci_manifest_set_layer (FlatpakOciManifest  *self,
-                                FlatpakOciRef       *ref)
+                                FlatpakOciDescriptor *desc)
 {
-  FlatpakOciRef *refs[2] = { ref, NULL };
-  flatpak_oci_manifest_set_layers (self, refs);
+  FlatpakOciDescriptor *descs[2] = { desc, NULL };
+  flatpak_oci_manifest_set_layers (self, descs);
 }
 
 void
 flatpak_oci_manifest_set_layers (FlatpakOciManifest *self,
-                                FlatpakOciRef **refs)
+                                 FlatpakOciDescriptor **descs)
 {
   int i, count;
 
@@ -354,15 +315,15 @@ flatpak_oci_manifest_set_layers (FlatpakOciManifest *self,
     flatpak_oci_descriptor_free (self->layers[i]);
   g_free (self->layers);
 
-  count = ptrv_count ((gpointer *)refs);
+  count = ptrv_count ((gpointer *)descs);
 
   self->layers = g_new0 (FlatpakOciDescriptor *, count + 1);
   for (i = 0; i < count; i++)
     {
       self->layers[i] = g_new0 (FlatpakOciDescriptor, 1);
-      self->layers[i]->mediatype = g_strdup (refs[i]->descriptor.mediatype);
-      self->layers[i]->digest = g_strdup (refs[i]->descriptor.digest);
-      self->layers[i]->size = refs[i]->descriptor.size;
+      self->layers[i]->mediatype = g_strdup (descs[i]->mediatype);
+      self->layers[i]->digest = g_strdup (descs[i]->digest);
+      self->layers[i]->size = descs[i]->size;
     }
 }
 
@@ -385,12 +346,12 @@ flatpak_oci_manifest_get_annotations (FlatpakOciManifest *self)
   return self->annotations;
 }
 
-G_DEFINE_TYPE (FlatpakOciManifestList, flatpak_oci_manifest_list, FLATPAK_TYPE_OCI_VERSIONED);
+G_DEFINE_TYPE (FlatpakOciIndex, flatpak_oci_index, FLATPAK_TYPE_OCI_VERSIONED);
 
 static void
-flatpak_oci_manifest_list_finalize (GObject *object)
+flatpak_oci_index_finalize (GObject *object)
 {
-  FlatpakOciManifestList *self = (FlatpakOciManifestList *) object;
+  FlatpakOciIndex *self = (FlatpakOciIndex *) object;
   int i;
 
   for (i = 0; self->manifests != NULL && self->manifests[i] != NULL; i++)
@@ -400,29 +361,172 @@ flatpak_oci_manifest_list_finalize (GObject *object)
   if (self->annotations)
     g_hash_table_destroy (self->annotations);
 
-  G_OBJECT_CLASS (flatpak_oci_manifest_list_parent_class)->finalize (object);
+  G_OBJECT_CLASS (flatpak_oci_index_parent_class)->finalize (object);
 }
 
 
 static void
-flatpak_oci_manifest_list_class_init (FlatpakOciManifestListClass *klass)
+flatpak_oci_index_class_init (FlatpakOciIndexClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
   static FlatpakJsonProp props[] = {
-    FLATPAK_JSON_STRUCTV_PROP(FlatpakOciManifestList, manifests, "manifests", flatpak_oci_manifest_descriptor_props),
-    FLATPAK_JSON_STRMAP_PROP(FlatpakOciManifestList, annotations, "annotations"),
+    FLATPAK_JSON_STRUCTV_PROP(FlatpakOciIndex, manifests, "manifests", flatpak_oci_manifest_descriptor_props),
+    FLATPAK_JSON_STRMAP_PROP(FlatpakOciIndex, annotations, "annotations"),
     FLATPAK_JSON_LAST_PROP
   };
 
-  object_class->finalize = flatpak_oci_manifest_list_finalize;
+  object_class->finalize = flatpak_oci_index_finalize;
   json_class->props = props;
-  json_class->mediatype = FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFESTLIST;
+  json_class->mediatype = FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX;
 }
 
 static void
-flatpak_oci_manifest_list_init (FlatpakOciManifestList *self)
+flatpak_oci_index_init (FlatpakOciIndex *self)
 {
+}
+
+FlatpakOciIndex *
+flatpak_oci_index_new (void)
+{
+  FlatpakOciIndex *index;
+
+  index = g_object_new (FLATPAK_TYPE_OCI_INDEX, NULL);
+
+  index->parent.version = 2;
+  index->parent.mediatype = g_strdup (FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX);
+  index->annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+  return index;
+}
+
+static FlatpakOciManifestDescriptor *
+manifest_desc_for_desc (FlatpakOciDescriptor *src_descriptor)
+{
+  FlatpakOciManifestDescriptor *desc;
+
+  desc = flatpak_oci_manifest_descriptor_new ();
+  flatpak_oci_descriptor_copy (src_descriptor, &desc->parent);
+
+  return desc;
+}
+
+int
+flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self)
+{
+  return ptrv_count ((gpointer *)self->manifests);
+}
+
+void
+flatpak_oci_index_add_manifest (FlatpakOciIndex *self,
+                                FlatpakOciDescriptor *desc)
+{
+  FlatpakOciManifestDescriptor *m;
+  const char *m_ref = NULL;
+  int count;
+
+  if (desc->annotations != NULL)
+    m_ref = g_hash_table_lookup (desc->annotations, "org.opencontainers.ref.name");
+
+  if (m_ref != NULL)
+    flatpak_oci_index_remove_manifest (self, m_ref);
+
+  count = flatpak_oci_index_get_n_manifests (self);
+
+  m = manifest_desc_for_desc (desc);
+  self->manifests = g_renew (FlatpakOciManifestDescriptor *, self->manifests, count + 2);
+  self->manifests[count] = m;
+  self->manifests[count+1] = NULL;
+}
+
+const char *
+flatpak_oci_manifest_descriptor_get_ref (FlatpakOciManifestDescriptor *m)
+{
+  if (m->parent.mediatype == NULL ||
+      strcmp (m->parent.mediatype, FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST) != 0)
+    return NULL;
+
+  if (m->parent.annotations == NULL)
+    return NULL;
+
+  return g_hash_table_lookup (m->parent.annotations, "org.opencontainers.ref.name");
+}
+
+static int
+index_find_ref (FlatpakOciIndex *self,
+                const char *ref)
+{
+  int i;
+
+  if (self->manifests == NULL)
+    return -1;
+
+  for (i = 0; self->manifests[i] != NULL; i++)
+    {
+      const char *m_ref = flatpak_oci_manifest_descriptor_get_ref (self->manifests[i]);
+
+      if (m_ref == NULL)
+        continue;
+
+      if (strcmp (ref, m_ref) == 0)
+        return i;
+    }
+
+  return -1;
+}
+
+FlatpakOciManifestDescriptor *
+flatpak_oci_index_get_manifest (FlatpakOciIndex *self,
+                                const char *ref)
+{
+  int i = index_find_ref (self, ref);
+
+  if (i >= 0)
+    return self->manifests[i];
+
+  return NULL;
+}
+
+FlatpakOciManifestDescriptor *
+flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self)
+{
+  int i, found = -1;
+
+  if (self->manifests == NULL)
+    return NULL;
+
+  for (i = 0; self->manifests[i] != NULL; i++)
+    {
+      const char *m_ref = flatpak_oci_manifest_descriptor_get_ref (self->manifests[i]);
+
+      if (m_ref == NULL)
+        continue;
+
+      if (found == -1)
+        found = i;
+      else
+        return NULL;
+    }
+
+  if (found >= 0)
+    return self->manifests[found];
+
+  return NULL;
+}
+
+gboolean
+flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
+                                   const char      *ref)
+{
+  int i = index_find_ref (self, ref);
+
+  if (i < 0)
+    return FALSE;
+
+  for (; self->manifests[i] != NULL; i++)
+    self->manifests[i] = self->manifests[i+1];
+
+  return TRUE;
 }
 
 G_DEFINE_TYPE (FlatpakOciImage, flatpak_oci_image, FLATPAK_TYPE_JSON);
@@ -594,6 +698,43 @@ flatpak_oci_image_set_layer (FlatpakOciImage *image,
   flatpak_oci_image_set_layers (image, layers);
 }
 
+void
+flatpak_oci_export_annotations (GHashTable *source,
+                                GHashTable *dest)
+{
+  const char *keys[] = {
+    "org.opencontainers.ref.name",
+    "org.flatpak.installed-size",
+    "org.flatpak.download-size",
+    "org.flatpak.metadata",
+  };
+  int i;
+
+  for (i = 0; i < G_N_ELEMENTS (keys); i++)
+    {
+      const char *key = keys[i];
+      const char *value = g_hash_table_lookup (source, key);
+      if (value)
+        g_hash_table_replace (dest,
+                              g_strdup (key),
+                              g_strdup (value));
+    }
+}
+
+void
+flatpak_oci_copy_annotations (GHashTable *source,
+                              GHashTable *dest)
+{
+ GHashTableIter iter;
+ gpointer key, value;
+
+ g_hash_table_iter_init (&iter, source);
+ while (g_hash_table_iter_next (&iter, &key, &value))
+   g_hash_table_replace (dest,
+                         g_strdup ((char *)key),
+                         g_strdup ((char *)value));
+}
+
 static void
 add_annotation (GHashTable *annotations, const char *key, const char *value)
 {
@@ -609,10 +750,10 @@ flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
                                        GVariant *commit_data)
 {
   if (ref)
-    add_annotation (annotations,"org.flatpak.Ostree.Ref", ref);
+    add_annotation (annotations,"org.opencontainers.ref.name", ref);
 
   if (commit)
-    add_annotation (annotations,"org.flatpak.Ostree.Commit", commit);
+    add_annotation (annotations,"org.flatpak.commit", commit);
 
   if (commit_data)
     {
@@ -625,7 +766,7 @@ flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
 
       parent = ostree_commit_get_parent (commit_data);
       if (parent)
-        add_annotation (annotations, "org.flatpak.Ostree.ParentCommit", parent);
+        add_annotation (annotations, "org.flatpak.parent-commit", parent);
 
       metadata = g_variant_get_child_value (commit_data, 0);
       for (i = 0; i < g_variant_n_children (metadata); i++)
@@ -637,20 +778,20 @@ flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
           g_autofree char *value_base64 = NULL;
 
           g_variant_get_child (elm, 0, "s", &key);
-          full_key = g_strdup_printf ("org.flatpak.Ostree.Metadata.%s", key);
+          full_key = g_strdup_printf ("org.flatpak.commit-metadata.%s", key);
 
           value_base64 = g_base64_encode (g_variant_get_data (value), g_variant_get_size (value));
           add_annotation (annotations, full_key, value_base64);
         }
 
       timestamp = g_strdup_printf ("%"G_GUINT64_FORMAT, ostree_commit_get_timestamp (commit_data));
-      add_annotation (annotations, "org.flatpak.Ostree.Timestamp", timestamp);
+      add_annotation (annotations, "org.flatpak.timestamp", timestamp);
 
       g_variant_get_child (commit_data, 3, "s", &subject);
-      add_annotation (annotations, "org.flatpak.Ostree.Subject", subject);
+      add_annotation (annotations, "org.flatpak.subject", subject);
 
       g_variant_get_child (commit_data, 4, "s", &body);
-      add_annotation (annotations, "org.flatpak.Ostree.Body", body);
+      add_annotation (annotations, "org.flatpak.body", body);
    }
 }
 
@@ -668,27 +809,27 @@ flatpak_oci_parse_commit_annotations (GHashTable *annotations,
   GHashTableIter iter;
   gpointer _key, _value;
 
-  oci_ref = g_hash_table_lookup (annotations, "org.flatpak.Ostree.Ref");
+  oci_ref = g_hash_table_lookup (annotations, "org.opencontainers.ref.name");
   if (oci_ref != NULL && out_ref != NULL && *out_ref == NULL)
     *out_ref = g_strdup (oci_ref);
 
-  oci_commit = g_hash_table_lookup (annotations, "org.flatpak.Ostree.Commit");
+  oci_commit = g_hash_table_lookup (annotations, "org.flatpak.commit");
   if (oci_commit != NULL && out_commit != NULL && *out_commit == NULL)
     *out_commit = g_strdup (oci_commit);
 
-  oci_parent_commit = g_hash_table_lookup (annotations, "org.flatpak.Ostree.ParentCommit");
+  oci_parent_commit = g_hash_table_lookup (annotations, "org.flatpak.parent-commit");
   if (oci_parent_commit != NULL && out_parent_commit != NULL && *out_parent_commit == NULL)
     *out_parent_commit = g_strdup (oci_parent_commit);
 
-  oci_timestamp = g_hash_table_lookup (annotations, "org.flatpak.Ostree.Timestamp");
+  oci_timestamp = g_hash_table_lookup (annotations, "org.flatpak.timestamp");
   if (oci_timestamp != NULL && out_timestamp != NULL && *out_timestamp == 0)
     *out_timestamp = g_ascii_strtoull (oci_timestamp, NULL, 10);
 
-  oci_subject = g_hash_table_lookup (annotations, "org.flatpak.Ostree.Subject");
+  oci_subject = g_hash_table_lookup (annotations, "org.flatpak.subject");
   if (oci_subject != NULL && out_subject != NULL && *out_subject == NULL)
     *out_subject = g_strdup (oci_subject);
 
-  oci_body = g_hash_table_lookup (annotations, "org.flatpak.Ostree.Body");
+  oci_body = g_hash_table_lookup (annotations, "org.flatpak.body");
   if (oci_body != NULL && out_body != NULL && *out_body == NULL)
     *out_body = g_strdup (oci_body);
 
@@ -703,9 +844,9 @@ flatpak_oci_parse_commit_annotations (GHashTable *annotations,
           gsize bin_len;
           g_autoptr(GVariant) data = NULL;
 
-          if (!g_str_has_prefix (key, "org.flatpak.Ostree.Metadata."))
+          if (!g_str_has_prefix (key, "org.flatpak.commit-metadata."))
             continue;
-          key += strlen ("org.flatpak.Ostree.Metadata.");
+          key += strlen ("org.flatpak.commit-metadata.");
 
           bin = g_base64_decode (value, &bin_len);
           data = g_variant_ref_sink (g_variant_new_from_data (G_VARIANT_TYPE("v"), bin, bin_len, FALSE,

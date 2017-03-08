@@ -50,14 +50,6 @@
                 <arg choice="opt">--bundle</arg>
                 <arg choice="plain">FILENAME</arg>
             </cmdsynopsis>
-            <para>Install from an OCI registry:</para>
-            <cmdsynopsis>
-                <command>flatpak install</command>
-                <arg choice="opt" rep="repeat">OPTION</arg>
-                <arg choice="plain">--oci</arg>
-                <arg choice="plain">LOCATION</arg>
-                <arg choice="opt">TAG</arg>
-            </cmdsynopsis>
     </refsynopsisdiv>
 
     <refsect1>
@@ -83,11 +75,10 @@
             --runtime option, or by supplying the initial element in the REF.
         </para>
         <para>
-            The alternative form of the command (<arg>--from</arg>,
-            <arg>--bundle</arg> or <arg>--oci</arg>) allows you to
+            The alternative form of the command (<arg>--from</arg> or
+            <arg>--bundle</arg> allows you to
             install directly from a source such as a .flatpak
-            single-file bundle, a .flatpakref app description or an
-            OCI registry. The options are optional if the first
+            single-file bundle, a .flatpakref app description. The options are optional if the first
             argument have the right extension.
         </para>
         <para>
@@ -134,14 +125,6 @@
                 <listitem><para>
                   Assume LOCATION is a .flatpakref file containing the details of the app to be installed.
                   This is optional if the arguments ends with .flatpakref.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--oci</option></term>
-
-                <listitem><para>
-                    Install from a oci registry with a given uri and optionally a tag (defaults to latest).
                 </para></listitem>
             </varlistentry>
 

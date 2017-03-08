@@ -30,6 +30,8 @@
 #include "flatpak-oci-registry.h"
 #include "flatpak-utils.h"
 
+G_DEFINE_QUARK (flatpak_oci_error, flatpak_oci_error)
+
 #define MAX_JSON_SIZE (1024 * 1024)
 
 GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_write_archive, archive_write_free)
@@ -223,22 +225,51 @@ local_open_file (int dfd,
 static GBytes *
 local_load_file (int dfd,
                  const char *subpath,
+                 const char *etag,
+                 char **etag_out,
                  GCancellable *cancellable,
                  GError **error)
 {
   glnx_fd_close int fd = -1;
+  struct stat st_buf;
+  GBytes *bytes;
+  g_autofree char *current_etag = NULL;
 
   fd = local_open_file (dfd, subpath, cancellable, error);
   if (fd == -1)
     return NULL;
 
-  return glnx_fd_readall_bytes (fd, cancellable, error);
+  if (fstat (fd, &st_buf) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return NULL;
+    }
+
+  current_etag = g_strdup_printf ("%lu", st_buf.st_mtime);
+
+  if (etag != NULL && strcmp (current_etag, etag) == 0)
+    {
+      g_set_error (error, FLATPAK_OCI_ERROR, FLATPAK_OCI_ERROR_NOT_CHANGED,
+                   "File %s was not changed", subpath);
+      return NULL;
+    }
+
+  bytes = glnx_fd_readall_bytes (fd, cancellable, error);
+  if (bytes == NULL)
+    return NULL;
+
+  if (etag_out)
+    *etag_out = g_steal_pointer (&current_etag);
+
+  return bytes;
 }
 
 static GBytes *
 remote_load_file (SoupSession *soup_session,
                   SoupURI *base,
                   const char *subpath,
+                  const char *etag,
+                  char **etag_out,
                   GCancellable *cancellable,
                   GError **error)
 {
@@ -256,7 +287,7 @@ remote_load_file (SoupSession *soup_session,
 
   uri_s = soup_uri_to_string (uri, FALSE);
   bytes = flatpak_load_http_uri (soup_session,
-                                 uri_s,
+                                 uri_s, etag, etag_out,
                                  NULL, NULL,
                                  cancellable, error);
   if (bytes == NULL)
@@ -267,14 +298,16 @@ remote_load_file (SoupSession *soup_session,
 
 static GBytes *
 flatpak_oci_registry_load_file (FlatpakOciRegistry  *self,
-                               const char *subpath,
-                               GCancellable *cancellable,
-                               GError **error)
+                                const char *subpath,
+                                const char *etag,
+                                char **etag_out,
+                                GCancellable *cancellable,
+                                GError **error)
 {
   if (self->dfd != -1)
-    return local_load_file (self->dfd, subpath, cancellable, error);
+    return local_load_file (self->dfd, subpath, etag, etag_out, cancellable, error);
   else
-    return remote_load_file (self->soup_session, self->base_uri, subpath, cancellable, error);
+    return remote_load_file (self->soup_session, self->base_uri, subpath, etag, etag_out, cancellable, error);
 }
 
 static JsonNode *
@@ -374,12 +407,9 @@ flatpak_oci_registry_ensure_local (FlatpakOciRegistry *self,
     {
       if (!glnx_shutil_mkdir_p_at (dfd, "blobs/sha256", 0755, cancellable, error))
         return FALSE;
-
-      if (!glnx_shutil_mkdir_p_at (dfd, "refs", 0755, cancellable, error))
-        return FALSE;
     }
 
-  oci_layout_bytes = local_load_file (dfd, "oci-layout", cancellable, &local_error);
+  oci_layout_bytes = local_load_file (dfd, "oci-layout", NULL, NULL, cancellable, &local_error);
   if (oci_layout_bytes == NULL)
     {
       if (for_write && g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -435,7 +465,7 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
       return FALSE;
     }
 
-  oci_layout_bytes = remote_load_file (self->soup_session, baseuri, "oci-layout", cancellable, error);
+  oci_layout_bytes = remote_load_file (self->soup_session, baseuri, "oci-layout", NULL, NULL, cancellable, error);
   if (oci_layout_bytes == NULL)
     return FALSE;
 
@@ -478,48 +508,44 @@ flatpak_oci_registry_initable_iface_init (GInitableIface *iface)
   iface->init = flatpak_oci_registry_initable_init;
 }
 
-
-FlatpakOciRef *
-flatpak_oci_registry_load_ref (FlatpakOciRegistry  *self,
-                              const char         *ref,
-                              GCancellable       *cancellable,
-                              GError            **error)
+FlatpakOciIndex *
+flatpak_oci_registry_load_index (FlatpakOciRegistry  *self,
+                                 const char           *etag,
+                                 char               **etag_out,
+                                 GCancellable       *cancellable,
+                                 GError            **error)
 {
   g_autoptr(GBytes) bytes = NULL;
-  g_autofree char *subpath = g_strdup_printf ("refs/%s", ref);
   g_autoptr(GError) local_error = NULL;
+
+  if (etag_out)
+    *etag_out = NULL;
 
   g_assert (self->valid);
 
-  bytes = flatpak_oci_registry_load_file (self, subpath, cancellable, &local_error);
+  bytes = flatpak_oci_registry_load_file (self, "index.json", etag, etag_out, cancellable, &local_error);
   if (bytes == NULL)
     {
-      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                     "No tag '%s' found", ref);
-      else
-        g_propagate_error (error, g_steal_pointer (&local_error));
+      g_propagate_error (error, g_steal_pointer (&local_error));
       return NULL;
     }
 
-  return (FlatpakOciRef *)flatpak_json_from_bytes (bytes, FLATPAK_TYPE_OCI_REF, error);
+  return (FlatpakOciIndex *)flatpak_json_from_bytes (bytes, FLATPAK_TYPE_OCI_INDEX, error);
 }
 
 gboolean
-flatpak_oci_registry_set_ref (FlatpakOciRegistry  *self,
-                             const char         *ref,
-                             FlatpakOciRef       *data,
-                             GCancellable       *cancellable,
-                             GError            **error)
+flatpak_oci_registry_save_index (FlatpakOciRegistry  *self,
+                                 FlatpakOciIndex     *index,
+                                 GCancellable        *cancellable,
+                                 GError             **error)
 {
   g_autoptr(GBytes) bytes = NULL;
-  g_autofree char *subpath = g_strdup_printf ("refs/%s", ref);
 
   g_assert (self->valid);
 
-  bytes = flatpak_json_to_bytes (FLATPAK_JSON (data));
+  bytes = flatpak_json_to_bytes (FLATPAK_JSON (index));
 
-  if (!glnx_file_replace_contents_at (self->dfd, subpath,
+  if (!glnx_file_replace_contents_at (self->dfd, "index.json",
                                       g_bytes_get_data (bytes, NULL),
                                       g_bytes_get_size (bytes),
                                       0, cancellable, error))
@@ -704,7 +730,7 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
 
   subpath = g_strdup_printf ("blobs/sha256/%s", digest + strlen ("sha256:"));
 
-  return flatpak_oci_registry_load_file (self, subpath, cancellable, error);
+  return flatpak_oci_registry_load_file (self, subpath, NULL, NULL, cancellable, error);
 }
 
 char *
@@ -728,7 +754,7 @@ flatpak_oci_registry_store_blob (FlatpakOciRegistry  *self,
   return g_strdup_printf ("sha256:%s", sha256);
 }
 
-FlatpakOciRef *
+FlatpakOciDescriptor *
 flatpak_oci_registry_store_json (FlatpakOciRegistry    *self,
                                 FlatpakJson           *json,
                                 GCancellable         *cancellable,
@@ -741,7 +767,7 @@ flatpak_oci_registry_store_json (FlatpakOciRegistry    *self,
   if (digest == NULL)
     return NULL;
 
-  return flatpak_oci_ref_new (FLATPAK_JSON_CLASS (FLATPAK_JSON_GET_CLASS (json))->mediatype, digest, g_bytes_get_size (bytes));
+  return flatpak_oci_descriptor_new (FLATPAK_JSON_CLASS (FLATPAK_JSON_GET_CLASS (json))->mediatype, digest, g_bytes_get_size (bytes));
 }
 
 FlatpakOciVersioned *
@@ -760,42 +786,6 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
 
   return flatpak_oci_versioned_from_json (bytes, error);
 }
-
-FlatpakOciManifest *
-flatpak_oci_registry_chose_image (FlatpakOciRegistry   *self,
-                                  const char           *tag,
-                                  char                **out_digest,
-                                  GCancellable         *cancellable,
-                                  GError              **error)
-{
-  g_autoptr(FlatpakOciVersioned) versioned = NULL;
-  g_autoptr(FlatpakOciRef) ref = NULL;
-
-  ref = flatpak_oci_registry_load_ref (self, tag,
-                                       cancellable, error);
-  if (ref == NULL)
-    return NULL;
-
-  versioned = flatpak_oci_registry_load_versioned (self,
-                                                   flatpak_oci_ref_get_digest (ref),
-                                                   cancellable, error);
-  if (versioned == NULL)
-    return NULL;
-
-  if (FLATPAK_IS_OCI_MANIFEST_LIST (versioned))
-    {
-      /* TODO: Handle and set manifest */
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "OCI manifest lists are not supported");
-      return NULL;
-    }
-
-  if (out_digest != NULL)
-    *out_digest = g_strdup (flatpak_oci_ref_get_digest (ref));
-
-  return g_steal_pointer (&versioned);
-}
-
 
 struct FlatpakOciLayerWriter
 {
@@ -1050,7 +1040,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
 gboolean
 flatpak_oci_layer_writer_close (FlatpakOciLayerWriter  *self,
                                char                  **uncompressed_digest_out,
-                               FlatpakOciRef         **ref_out,
+                               FlatpakOciDescriptor  **res_out,
                                GCancellable           *cancellable,
                                GError                **error)
 {
@@ -1078,11 +1068,11 @@ flatpak_oci_layer_writer_close (FlatpakOciLayerWriter  *self,
 
   if (uncompressed_digest_out != NULL)
     *uncompressed_digest_out = g_strdup_printf ("sha256:%s", g_checksum_get_string (self->uncompressed_checksum));
-  if (ref_out != NULL)
+  if (res_out != NULL)
     {
       g_autofree char *digest = g_strdup_printf ("sha256:%s", g_checksum_get_string (self->compressed_checksum));
 
-      *ref_out = flatpak_oci_ref_new (FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER, digest, self->compressed_size);
+      *res_out = flatpak_oci_descriptor_new (FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER, digest, self->compressed_size);
     }
 
   return TRUE;

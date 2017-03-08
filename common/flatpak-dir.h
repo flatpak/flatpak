@@ -458,8 +458,6 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *id,
                                              const char   *title,
                                              const char   *main_ref,
-                                             const char   *oci_uri,
-                                             const char   *oci_tag,
                                              GBytes       *gpg_data,
                                              GCancellable *cancellable,
                                              GError      **error);
@@ -499,10 +497,8 @@ char      *flatpak_dir_get_remote_title (FlatpakDir *self,
                                          const char *remote_name);
 char      *flatpak_dir_get_remote_main_ref (FlatpakDir *self,
                                             const char *remote_name);
-char      *flatpak_dir_get_remote_oci_uri (FlatpakDir *self,
-                                           const char *remote_name);
-char      *flatpak_dir_get_remote_oci_tag (FlatpakDir *self,
-                                           const char *remote_name);
+gboolean   flatpak_dir_get_remote_oci (FlatpakDir *self,
+                                       const char *remote_name);
 char      *flatpak_dir_get_remote_default_branch (FlatpakDir *self,
                                                   const char *remote_name);
 int        flatpak_dir_get_remote_prio (FlatpakDir *self,

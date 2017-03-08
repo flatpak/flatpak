@@ -20,12 +20,12 @@
 
 #include "config.h"
 
+#include <stdio.h>
 #include <glib/gi18n.h>
 
 #include "flatpak-transaction.h"
 #include "flatpak-utils.h"
 #include "flatpak-builtins-utils.h"
-#include "flatpak-oci-registry.h"
 #include "flatpak-error.h"
 
 typedef struct FlatpakTransactionOp FlatpakTransactionOp;
@@ -580,66 +580,6 @@ flatpak_transaction_add_install_bundle (FlatpakTransaction *self,
     return FALSE;
 
   return flatpak_transaction_add_ref (self, remote, ref, NULL, NULL, FLATPAK_TRANSACTION_OP_KIND_BUNDLE, file, metadata, error);
-}
-
-gboolean
-flatpak_transaction_add_install_oci (FlatpakTransaction  *self,
-                                     const char         *uri,
-                                     const char         *tag,
-                                     GError             **error)
-{
-  GHashTable *annotations;
-  g_autofree char *ref = NULL;
-  g_autofree char *checksum = NULL;
-  g_autoptr(FlatpakOciManifest) manifest = NULL;
-  g_autoptr(FlatpakOciRegistry) registry = NULL;
-  const char *all_paths[] = { NULL };
-  g_autofree char *remote = NULL;
-  g_autofree char *title = NULL;
-  g_auto(GStrv) parts = NULL;
-  g_autofree char *id = NULL;
-
-  registry = flatpak_oci_registry_new (uri, FALSE, -1, NULL, error);
-  if (registry == NULL)
-    return FALSE;
-
-  manifest = flatpak_oci_registry_chose_image (registry, tag, NULL,
-                                               NULL, error);
-  if (manifest == NULL)
-    return FALSE;
-
-  /* TODO: Extract runtime dependencies and related refs */
-  annotations = flatpak_oci_manifest_get_annotations (manifest);
-  if (annotations)
-    flatpak_oci_parse_commit_annotations (annotations, NULL,
-                                          NULL, NULL,
-                                          &ref, &checksum, NULL,
-                                          NULL);
-
-  if (ref == NULL)
-    return flatpak_fail (error, _("OCI image is not a flatpak (missing ref)"));
-
-  parts = flatpak_decompose_ref (ref, error);
-  if (parts == NULL)
-    return FALSE;
-
-  title = g_strdup_printf ("OCI remote for %s", parts[1]);
-
-  id = g_strdup_printf ("oci-%s", parts[1]);
-
-  remote = flatpak_dir_create_origin_remote (self->dir, NULL,
-                                             id, title,
-                                             ref, uri, tag, NULL,
-                                             NULL, error);
-  if (remote == NULL)
-    return FALSE;
-
-  if (!flatpak_dir_recreate_repo (self->dir, NULL, error))
-    return FALSE;
-
-  g_debug ("Added OCI origin remote %s", remote);
-
-  return flatpak_transaction_add_ref (self, remote, ref, all_paths, checksum, FLATPAK_TRANSACTION_OP_KIND_INSTALL, NULL, NULL, error);
 }
 
 gboolean

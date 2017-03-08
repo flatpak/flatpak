@@ -43,6 +43,14 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciRegistry, g_object_unref)
 
 GType flatpak_oci_layer_writer_get_type (void);
 
+typedef enum {
+  FLATPAK_OCI_ERROR_NOT_CHANGED = 0,
+} FlatpakOciErrorEnum;
+
+#define FLATPAK_OCI_ERROR flatpak_oci_error_quark ()
+
+FLATPAK_EXTERN GQuark  flatpak_oci_error_quark (void);
+
 typedef struct FlatpakOciLayerWriter FlatpakOciLayerWriter;
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciLayerWriter, g_object_unref)
@@ -52,13 +60,13 @@ FlatpakOciRegistry  *  flatpak_oci_registry_new                  (const char    
                                                                   int                   tmp_dfd,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
-FlatpakOciRef       *  flatpak_oci_registry_load_ref             (FlatpakOciRegistry   *self,
-                                                                  const char           *ref,
+FlatpakOciIndex     *  flatpak_oci_registry_load_index           (FlatpakOciRegistry   *self,
+                                                                  const char           *etag,
+                                                                  char               **etag_out,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
-gboolean               flatpak_oci_registry_set_ref              (FlatpakOciRegistry   *self,
-                                                                  const char           *ref,
-                                                                  FlatpakOciRef        *data,
+gboolean               flatpak_oci_registry_save_index           (FlatpakOciRegistry   *self,
+                                                                  FlatpakOciIndex      *index,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
 int                    flatpak_oci_registry_download_blob        (FlatpakOciRegistry   *self,
@@ -75,7 +83,7 @@ char *                 flatpak_oci_registry_store_blob           (FlatpakOciRegi
                                                                   GBytes               *data,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
-FlatpakOciRef *        flatpak_oci_registry_store_json           (FlatpakOciRegistry   *self,
+FlatpakOciDescriptor * flatpak_oci_registry_store_json           (FlatpakOciRegistry   *self,
                                                                   FlatpakJson          *json,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
@@ -86,16 +94,11 @@ FlatpakOciVersioned *  flatpak_oci_registry_load_versioned       (FlatpakOciRegi
 FlatpakOciLayerWriter *flatpak_oci_registry_write_layer          (FlatpakOciRegistry   *self,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
-FlatpakOciManifest    *flatpak_oci_registry_chose_image          (FlatpakOciRegistry   *self,
-                                                                  const char           *tag,
-                                                                  char                **out_digest,
-                                                                  GCancellable         *cancellable,
-                                                                  GError              **error);
 
 struct archive *flatpak_oci_layer_writer_get_archive (FlatpakOciLayerWriter  *self);
 gboolean        flatpak_oci_layer_writer_close       (FlatpakOciLayerWriter  *self,
                                                       char                 **uncompressed_digest_out,
-                                                      FlatpakOciRef         **ref_out,
+                                                      FlatpakOciDescriptor **res_out,
                                                       GCancellable          *cancellable,
                                                       GError               **error);
 

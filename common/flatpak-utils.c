@@ -4417,12 +4417,35 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   return TRUE;
 }
 
+typedef struct {
+  FlatpakOciPullProgress progress_cb;
+  gpointer progress_user_data;
+  guint64 total_size;
+  guint64 previous_layers_size;
+  guint32 n_layers;
+  guint32 pulled_layers;
+} FlatpakOciPullProgressData;
+
+static void
+oci_layer_progress (guint64 downloaded_bytes,
+                    gpointer user_data)
+{
+  FlatpakOciPullProgressData *progress_data = user_data;
+
+  if (progress_data->progress_cb)
+    progress_data->progress_cb (progress_data->total_size, progress_data->previous_layers_size + downloaded_bytes,
+                                progress_data->n_layers, progress_data->pulled_layers,
+                                progress_data->progress_user_data);
+}
+
 char *
 flatpak_pull_from_oci (OstreeRepo   *repo,
                        FlatpakOciRegistry *registry,
                        const char *digest,
                        FlatpakOciManifest *manifest,
                        const char *ref,
+                       FlatpakOciPullProgress progress_cb,
+                       gpointer progress_user_data,
                        GCancellable *cancellable,
                        GError      **error)
 {
@@ -4433,6 +4456,7 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   g_autofree char *subject = NULL;
   g_autofree char *body = NULL;
   guint64 timestamp = 0;
+  FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
   g_autoptr(GVariant) metadata = NULL;
   GHashTable *annotations;
@@ -4461,6 +4485,18 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   for (i = 0; manifest->layers[i] != NULL; i++)
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
+      progress_data.total_size += layer->size;
+      progress_data.n_layers++;
+    }
+
+  if (progress_cb)
+    progress_cb (progress_data.total_size, 0,
+                 progress_data.n_layers, progress_data.pulled_layers,
+                 progress_user_data);
+
+  for (i = 0; manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
       OstreeRepoImportArchiveOptions opts = { 0, };
       free_read_archive struct archive *a = NULL;
       glnx_fd_close int layer_fd = -1;
@@ -4469,7 +4505,7 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       opts.ignore_unsupported_content = TRUE;
 
       layer_fd = flatpak_oci_registry_download_blob (registry, layer->digest,
-                                                     NULL, NULL,
+                                                     oci_layer_progress, &progress_data,
                                                      cancellable, error);
       if (layer_fd == -1)
         goto error;
@@ -4495,6 +4531,9 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
           propagate_libarchive_error (error, a);
           goto error;
         }
+
+      progress_data.pulled_layers++;
+      progress_data.previous_layers_size += layer->size;
     }
 
   if (!ostree_repo_write_mtree (repo, archive_mtree, &archive_root, cancellable, error))
@@ -4761,6 +4800,7 @@ typedef struct {
   GCancellable *cancellable;
   gpointer user_data;
   guint64 last_progress_time;
+  char *etag;
 } LoadUriData;
 
 static void
@@ -4848,9 +4888,14 @@ load_uri_callback (GObject *source_object,
   if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
     {
       GIOErrorEnum code;
+      GQuark domain = G_IO_ERROR;
 
       switch (msg->status_code)
         {
+        case 304:
+          domain = FLATPAK_OCI_ERROR;
+          code = FLATPAK_OCI_ERROR_NOT_CHANGED;
+          break;
         case 404:
         case 410:
           code = G_IO_ERROR_NOT_FOUND;
@@ -4859,13 +4904,15 @@ load_uri_callback (GObject *source_object,
           code = G_IO_ERROR_FAILED;
         }
 
-      data->error = g_error_new (G_IO_ERROR, code,
+      data->error = g_error_new (domain, code,
                                  "Server returned status %u: %s",
                                  msg->status_code,
                                  soup_status_get_phrase (msg->status_code));
       g_main_loop_quit (data->loop);
       return;
     }
+
+  data->etag = g_strdup (soup_message_headers_get_one (msg->response_headers, "ETag"));
 
   g_input_stream_read_async (in, data->buffer, sizeof (data->buffer),
                              G_PRIORITY_DEFAULT, data->cancellable,
@@ -4900,7 +4947,9 @@ flatpak_create_soup_session (const char *user_agent)
 
 GBytes *
 flatpak_load_http_uri (SoupSession *soup_session,
-                       const char   *uri,
+                       const char *uri,
+                       const char *etag,
+                       char      **out_etag,
                        FlatpakLoadUriProgress progress,
                        gpointer      user_data,
                        GCancellable *cancellable,
@@ -4930,6 +4979,12 @@ flatpak_load_http_uri (SoupSession *soup_session,
   if (request == NULL)
     return NULL;
 
+  if (etag)
+    {
+      SoupMessage *m = soup_request_http_get_message (request);
+      soup_message_headers_replace (m->request_headers, "If-None-Match", etag);
+    }
+
   soup_request_send_async (SOUP_REQUEST(request),
                            cancellable,
                            load_uri_callback, &data);
@@ -4939,11 +4994,17 @@ flatpak_load_http_uri (SoupSession *soup_session,
   if (data.error)
     {
       g_propagate_error (error, data.error);
+      g_free (data.etag);
       return NULL;
     }
 
   bytes = g_string_free_to_bytes (g_steal_pointer (&content));
   g_debug ("Received %" G_GSIZE_FORMAT " bytes", data.downloaded_bytes);
+
+  if (out_etag)
+    *out_etag = g_steal_pointer (&data.etag);
+
+  g_free (data.etag);
 
   return bytes;
 }

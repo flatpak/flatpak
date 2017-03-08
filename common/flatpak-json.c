@@ -348,7 +348,8 @@ marshal (JsonObject *parent,
          const char *name,
          gpointer src,
          FlatpakJsonPropType type,
-         gpointer type_data)
+         gpointer type_data,
+         FlatpakJsonPropFlags flags)
 {
   JsonNode *retval = NULL;
 
@@ -405,6 +406,7 @@ marshal (JsonObject *parent,
         FlatpakJsonProp *struct_props = type_data;
         JsonObject *obj;
         int i;
+        gboolean empty = TRUE;
 
         if (type == FLATPAK_JSON_PROP_TYPE_PARENT)
           obj = parent;
@@ -415,15 +417,17 @@ marshal (JsonObject *parent,
           {
             JsonNode *val = marshal (obj, struct_props[i].name,
                                      G_STRUCT_MEMBER_P (src, struct_props[i].offset),
-                                     struct_props[i].type, struct_props[i].type_data);
+                                     struct_props[i].type, struct_props[i].type_data, struct_props[i].flags);
 
             if (val == NULL)
               continue;
 
+            empty = FALSE;
             json_object_set_member (obj, struct_props[i].name, val);
           }
 
-        if (type != FLATPAK_JSON_PROP_TYPE_PARENT)
+        if (type != FLATPAK_JSON_PROP_TYPE_PARENT &&
+            (!empty || (flags & FLATPAK_JSON_PROP_FLAGS_OPTIONAL) == 0))
           {
             retval = json_node_new (JSON_NODE_OBJECT);
             json_node_take_object (retval, obj);
@@ -450,7 +454,7 @@ marshal (JsonObject *parent,
                   {
                     JsonNode *val = marshal (obj, struct_props[i].name,
                                              G_STRUCT_MEMBER_P (structv[j], struct_props[i].offset),
-                                             struct_props[i].type, struct_props[i].type_data);
+                                             struct_props[i].type, struct_props[i].type_data, struct_props[i].flags);
 
                     if (val == NULL)
                       continue;
@@ -554,7 +558,7 @@ marshal_props_for_class (FlatpakJson *self,
     {
       JsonNode *val = marshal (obj, props[i].name,
                                G_STRUCT_MEMBER_P (self, props[i].offset),
-                               props[i].type, props[i].type_data);
+                               props[i].type, props[i].type_data, props[i].flags);
 
       if (val == NULL)
         continue;

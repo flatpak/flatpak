@@ -27,22 +27,34 @@ G_BEGIN_DECLS
 
 #define FLATPAK_OCI_MEDIA_TYPE_DESCRIPTOR "application/vnd.oci.descriptor.v1+json"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFEST "application/vnd.oci.image.manifest.v1+json"
-#define FLATPAK_OCI_MEDIA_TYPE_IMAGE_MANIFESTLIST "application/vnd.oci.image.manifest.list.v1+json"
+#define FLATPAK_OCI_MEDIA_TYPE_IMAGE_INDEX "application/vnd.oci.image.index.v1+json"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER "application/vnd.oci.image.layer.v1.tar+gzip"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER_NONDISTRIBUTABLE "application/vnd.oci.image.layer.nondistributable.v1.tar+gzip"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_CONFIG "application/vnd.oci.image.config.v1+json"
 
 const char * flatpak_arch_to_oci_arch (const char *flatpak_arch);
+void flatpak_oci_export_annotations (GHashTable *source,
+                                     GHashTable *dest);
+void flatpak_oci_copy_annotations (GHashTable *source,
+                                   GHashTable *dest);
 
 typedef struct {
   char *mediatype;
   char *digest;
   gint64 size;
   char **urls;
+  GHashTable *annotations;
 } FlatpakOciDescriptor;
 
+FlatpakOciDescriptor *flatpak_oci_descriptor_new (const char *mediatype,
+                                                  const char *digest,
+                                                  gint64 size);
+void flatpak_oci_descriptor_copy (FlatpakOciDescriptor *source,
+                                  FlatpakOciDescriptor *dest);
 void flatpak_oci_descriptor_destroy (FlatpakOciDescriptor *self);
 void flatpak_oci_descriptor_free (FlatpakOciDescriptor *self);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakOciDescriptor, flatpak_oci_descriptor_free)
 
 typedef struct
 {
@@ -60,31 +72,10 @@ typedef struct
   FlatpakOciManifestPlatform platform;
 } FlatpakOciManifestDescriptor;
 
+FlatpakOciManifestDescriptor * flatpak_oci_manifest_descriptor_new (void);
+const char * flatpak_oci_manifest_descriptor_get_ref (FlatpakOciManifestDescriptor *m);
 void flatpak_oci_manifest_descriptor_destroy (FlatpakOciManifestDescriptor *self);
 void flatpak_oci_manifest_descriptor_free (FlatpakOciManifestDescriptor *self);
-
-#define FLATPAK_TYPE_OCI_REF flatpak_oci_ref_get_type ()
-G_DECLARE_FINAL_TYPE (FlatpakOciRef, flatpak_oci_ref, FLATPAK_OCI, REF, FlatpakJson)
-
-struct _FlatpakOciRef {
-  FlatpakJson parent;
-
-  FlatpakOciDescriptor descriptor;
-};
-
-struct _FlatpakOciRefClass {
-  FlatpakJsonClass parent_class;
-};
-
-FlatpakOciRef *flatpak_oci_ref_new           (const char     *mediatype,
-                                              const char     *digest,
-                                              gint64          size);
-const char *   flatpak_oci_ref_get_mediatype (FlatpakOciRef  *self);
-const char *   flatpak_oci_ref_get_digest    (FlatpakOciRef  *self);
-gint64         flatpak_oci_ref_get_size      (FlatpakOciRef  *self);
-const char **  flatpak_oci_ref_get_urls      (FlatpakOciRef  *self);
-void           flatpak_oci_ref_set_urls      (FlatpakOciRef  *self,
-                                              const char    **urls);
 
 
 #define FLATPAK_TYPE_OCI_VERSIONED flatpak_oci_versioned_get_type ()
@@ -126,20 +117,20 @@ struct _FlatpakOciManifestClass
 
 FlatpakOciManifest *flatpak_oci_manifest_new              (void);
 void                flatpak_oci_manifest_set_config       (FlatpakOciManifest  *self,
-                                                           FlatpakOciRef       *ref);
+                                                           FlatpakOciDescriptor *desc);
 void                flatpak_oci_manifest_set_layers       (FlatpakOciManifest  *self,
-                                                           FlatpakOciRef      **refs);
+                                                           FlatpakOciDescriptor **descs);
 void                flatpak_oci_manifest_set_layer        (FlatpakOciManifest  *self,
-                                                           FlatpakOciRef       *ref);
+                                                           FlatpakOciDescriptor *desc);
 int                 flatpak_oci_manifest_get_n_layers     (FlatpakOciManifest  *self);
 const char *        flatpak_oci_manifest_get_layer_digest (FlatpakOciManifest  *self,
                                                            int                  i);
 GHashTable *        flatpak_oci_manifest_get_annotations  (FlatpakOciManifest  *self);
 
-#define FLATPAK_TYPE_OCI_MANIFEST_LIST flatpak_oci_manifest_list_get_type ()
-G_DECLARE_FINAL_TYPE (FlatpakOciManifestList, flatpak_oci_manifest_list, FLATPAK, OCI_MANIFEST_LIST, FlatpakOciVersioned)
+#define FLATPAK_TYPE_OCI_INDEX flatpak_oci_index_get_type ()
+G_DECLARE_FINAL_TYPE (FlatpakOciIndex, flatpak_oci_index, FLATPAK, OCI_INDEX, FlatpakOciVersioned)
 
-struct _FlatpakOciManifestList
+struct _FlatpakOciIndex
 {
   FlatpakOciVersioned parent;
 
@@ -147,10 +138,20 @@ struct _FlatpakOciManifestList
   GHashTable     *annotations;
 };
 
-struct _FlatpakOciManifestListClass
+struct _FlatpakOciIndexClass
 {
   FlatpakOciVersionedClass parent_class;
 };
+
+FlatpakOciIndex *             flatpak_oci_index_new             (void);
+void                          flatpak_oci_index_add_manifest    (FlatpakOciIndex *self,
+                                                                 FlatpakOciDescriptor *desc);
+gboolean                      flatpak_oci_index_remove_manifest (FlatpakOciIndex *self,
+                                                                 const char      *ref);
+FlatpakOciManifestDescriptor *flatpak_oci_index_get_manifest    (FlatpakOciIndex *self,
+                                                                 const char      *ref);
+FlatpakOciManifestDescriptor *flatpak_oci_index_get_only_manifest (FlatpakOciIndex *self);
+int                           flatpak_oci_index_get_n_manifests (FlatpakOciIndex *self);
 
 #define FLATPAK_TYPE_OCI_IMAGE flatpak_oci_image_get_type ()
 G_DECLARE_FINAL_TYPE (FlatpakOciImage, flatpak_oci_image, FLATPAK, OCI_IMAGE, FlatpakJson)
