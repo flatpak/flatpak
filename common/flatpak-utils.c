@@ -2992,7 +2992,7 @@ validate_component (FlatpakXml *component,
   bundle->attribute_values[0] = g_strdup ("flatpak");
 
   i = 1;
-  if (runtime)
+  if (runtime && !g_str_has_prefix (runtime, "runtime/"))
     {
       bundle->attribute_names[i] = g_strdup ("runtime");
       bundle->attribute_values[i] = g_strdup (runtime);
