@@ -1265,7 +1265,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
     {
       g_string_append_printf (buf, "Writing objects: %u", outstanding_writes);
 
-      /* Writing the objects advances 10% of progress */
+      /* Writing the objects advances 3% of progress */
       new_progress = outstanding_extra_data ? 52 : 97;
       new_progress += get_write_progress (outstanding_writes);
     }
