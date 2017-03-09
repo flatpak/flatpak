@@ -319,6 +319,9 @@ builder_post_process_strip (GFile *app_dir,
       if (!is_elf_file (path, &is_shared, &is_stripped))
         continue;
 
+      if (is_stripped)
+        continue;
+
       g_print ("stripping: %s\n", rel_path);
       if (is_shared)
         {
@@ -361,6 +364,9 @@ builder_post_process_debuginfo (GFile          *app_dir,
       gboolean is_shared, is_stripped;
 
       if (!is_elf_file (path, &is_shared, &is_stripped))
+        continue;
+
+      if (is_stripped)
         continue;
 
       if (g_str_has_prefix (rel_path_dir, "files/"))
