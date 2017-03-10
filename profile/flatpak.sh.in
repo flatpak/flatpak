@@ -1,11 +1,7 @@
 # @sysconfdir@/profile.d/flatpak.sh - set XDG_DATA_DIRS
 
-flatpak_dirs=$HOME/.local/share/flatpak/exports/share/:@localstatedir@/lib/flatpak/exports/share/
-
-if [ -z "${XDG_DATA_DIRS}" ]; then
-    XDG_DATA_DIRS="$flatpak_dirs:/usr/local/share/:/usr/share/"
-elif [ "${XDG_DATA_DIRS#*flatpak}" == ${XDG_DATA_DIRS} ]; then
-    XDG_DATA_DIRS="$XDG_DATA_DIRS:$flatpak_dirs"
+if [ "${XDG_DATA_DIRS#*flatpak}" = "${XDG_DATA_DIRS}" ]; then
+    XDG_DATA_DIRS="${XDG_DATA_HOME:-"$HOME/.local/share"}/flatpak/exports/share:@localstatedir@/lib/flatpak/exports/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 fi
 
 export XDG_DATA_DIRS
