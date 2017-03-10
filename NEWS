@@ -1,3 +1,30 @@
+Major changes in 0.8.4
+======================
+
+In addition to the regular list of bugfixes this stable release
+include backports of one more feature required for making OpenGL work
+well. Now extra-data using extensions (such as the nvidia driver) can
+specify that it doesn't need a runtime to run its apply script. We use
+this in the nvidia driver by making the script a static binary, which
+lets us use the nvidia driver for multiple runtimes without requering
+that a particular one is installed. We also support an extension point
+supporting multiple versions, which will be use for sharing the
+nvidia driver between different runtime versions.
+
+Additional fixes:
+ * Documentation fixes
+ * Crash fixes
+ * Fix xauth propagation in some cases
+ * Don't remove origin remotes on uninstall if some other app
+   is installed from it.
+ * Don't reset what locales are installed when updating a locale
+   extension
+ * Disable splice for the documentation portal as it seems
+   to be broken in fuse
+ * Append, don't override XDG_DATA_DIRS in profile script
+ * Fix progress reporting in libflatpak to go from 0 to
+   100% once, merging the various phases.
+
 Major changes in 0.8.3
 ======================
 
