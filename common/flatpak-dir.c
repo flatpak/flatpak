@@ -2968,7 +2968,7 @@ flatpak_dir_run_triggers (FlatpakDir   *self,
              somewhere the bind mount will be on the target of that, not
              at that exact path. */
           g_autofree char *basedir_orig = g_file_get_path (self->basedir);
-          g_autofree char *basedir = canonicalize_file_name (basedir_orig);
+          g_autofree char *basedir = realpath (basedir_orig, NULL);
 
           g_debug ("running trigger %s", name);
 

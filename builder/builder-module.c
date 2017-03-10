@@ -903,7 +903,7 @@ setup_build_args (GFile          *app_dir,
   g_ptr_array_add (args, g_strdup ("flatpak"));
   g_ptr_array_add (args, g_strdup ("build"));
 
-  source_dir_path_canonical = canonicalize_file_name (source_dir_path);
+  source_dir_path_canonical = realpath (source_dir_path, NULL);
 
   if (builder_context_get_build_runtime (context))
     builddir = "/run/build-runtime/";

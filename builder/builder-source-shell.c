@@ -130,7 +130,7 @@ run_script (BuilderContext *context,
   g_ptr_array_add (args, g_strdup ("flatpak"));
   g_ptr_array_add (args, g_strdup ("build"));
 
-  source_dir_path_canonical = canonicalize_file_name (source_dir_path);
+  source_dir_path_canonical = realpath (source_dir_path, NULL);
 
   g_ptr_array_add (args, g_strdup ("--nofilesystem=host"));
   g_ptr_array_add (args, g_strdup_printf ("--filesystem=%s", source_dir_path_canonical));
