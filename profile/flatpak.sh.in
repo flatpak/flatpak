@@ -4,7 +4,7 @@ flatpak_dirs=$HOME/.local/share/flatpak/exports/share/:@localstatedir@/lib/flatp
 
 if [ -z "${XDG_DATA_DIRS}" ]; then
     XDG_DATA_DIRS="$flatpak_dirs:/usr/local/share/:/usr/share/"
-elif [ "${XDG_DATA_DIRS#*flatpak}" == ${XDG_DATA_DIRS} ]; then
+elif [ "${XDG_DATA_DIRS#*flatpak}" = ${XDG_DATA_DIRS} ]; then
     XDG_DATA_DIRS="$XDG_DATA_DIRS:$flatpak_dirs"
 fi
 
