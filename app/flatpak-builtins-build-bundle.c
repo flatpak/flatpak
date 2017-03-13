@@ -442,21 +442,26 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
   if (!g_file_query_exists (repofile, cancellable))
     return flatpak_fail (error, _("'%s' is not a valid repository"), location);
 
-  file = g_file_new_for_commandline_arg (filename);
-
-  if (!flatpak_is_valid_name (name, &my_error))
-    return flatpak_fail (error, _("'%s' is not a valid name: %s"), name, my_error->message);
-
-  if (!flatpak_is_valid_branch (branch, &my_error))
-    return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, &my_error);
-
-  if (opt_runtime)
-    full_branch = flatpak_build_runtime_ref (name, branch, opt_arch);
-  else
-    full_branch = flatpak_build_app_ref (name, branch, opt_arch);
-
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
+
+  file = g_file_new_for_commandline_arg (filename);
+
+  if (ostree_repo_resolve_rev (repo, name, FALSE, NULL, NULL))
+    full_branch = g_strdup (name);
+  else
+    {
+      if (!flatpak_is_valid_name (name, &my_error))
+        return flatpak_fail (error, _("'%s' is not a valid name: %s"), name, my_error->message);
+
+      if (!flatpak_is_valid_branch (branch, &my_error))
+        return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, &my_error);
+
+      if (opt_runtime)
+        full_branch = flatpak_build_runtime_ref (name, branch, opt_arch);
+      else
+        full_branch = flatpak_build_app_ref (name, branch, opt_arch);
+    }
 
   if (opt_oci)
     {
