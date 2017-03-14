@@ -2596,6 +2596,9 @@ builder_manifest_run (BuilderManifest *self,
         g_ptr_array_add (args, g_strdup_printf ("--env=%s", env[i]));
     }
 
+  /* Just add something so that we get the default rules (own our own id) */
+  g_ptr_array_add (args, g_strdup ("--talk-name=org.freedesktop.DBus"));
+
   /* Inherit all finish args except the filesystem and command
    * ones so the command gets the same access as the final app
    */
