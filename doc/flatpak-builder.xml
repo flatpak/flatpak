@@ -270,15 +270,15 @@
             <variablelist>
                 <varlistentry>
                     <term><option>cflags</option> (string)</term>
-                    <listitem><para>This is set in the environment variable CFLAGS during the build.</para></listitem>
+                    <listitem><para>This is set in the environment variable CFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatinated with spaces inbetween.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>cxxflags</option> (string)</term>
-                    <listitem><para>This is set in the environment variable CXXFLAGS during the build.</para></listitem>
+                    <listitem><para>This is set in the environment variable CXXFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatinated with spaces inbetween.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>ldflags</option> (string)</term>
-                    <listitem><para>This is set in the environment variable LDFLAGS during the build.</para></listitem>
+                    <listitem><para>This is set in the environment variable LDFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatinated with spaces inbetween.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>prefix</option> (string)</term>

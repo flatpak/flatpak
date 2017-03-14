@@ -506,52 +506,55 @@ get_all_options (BuilderOptions *self, BuilderContext *context)
   return options;
 }
 
-const char *
-builder_options_get_cflags (BuilderOptions *self, BuilderContext *context)
+static const char *
+builder_options_get_flags (BuilderOptions *self, BuilderContext *context, size_t field_offset)
 {
   g_autoptr(GList) options = get_all_options (self, context);
   GList *l;
+  GString *flags = NULL;
+
+  /* Last command flag wins, so reverse order */
+  options = g_list_reverse (options);
 
   for (l = options; l != NULL; l = l->next)
     {
       BuilderOptions *o = l->data;
-      if (o->cflags)
-        return o->cflags;
+      const char *flag = G_STRUCT_MEMBER (const char *, o, field_offset);
+
+      if (flag)
+        {
+          if (flags == NULL)
+            flags = g_string_new ("");
+
+          if (flags->len > 0)
+            g_string_append_c (flags, ' ');
+
+          g_string_append (flags, flag);
+        }
     }
 
+  if (flags)
+    return g_string_free (flags, FALSE);
+
   return NULL;
+}
+
+const char *
+builder_options_get_cflags (BuilderOptions *self, BuilderContext *context)
+{
+  return builder_options_get_flags (self, context, G_STRUCT_OFFSET (BuilderOptions, cflags));
 }
 
 const char *
 builder_options_get_cxxflags (BuilderOptions *self, BuilderContext *context)
 {
-  g_autoptr(GList) options = get_all_options (self, context);
-  GList *l;
-
-  for (l = options; l != NULL; l = l->next)
-    {
-      BuilderOptions *o = l->data;
-      if (o->cxxflags)
-        return o->cxxflags;
-    }
-
-  return NULL;
+  return builder_options_get_flags (self, context, G_STRUCT_OFFSET (BuilderOptions, cxxflags));
 }
 
 const char *
 builder_options_get_ldflags (BuilderOptions *self, BuilderContext *context)
 {
-  g_autoptr(GList) options = get_all_options (self, context);
-  GList *l;
-
-  for (l = options; l != NULL; l = l->next)
-    {
-      BuilderOptions *o = l->data;
-      if (o->ldflags)
-        return o->ldflags;
-    }
-
-  return NULL;
+  return builder_options_get_flags (self, context, G_STRUCT_OFFSET (BuilderOptions, ldflags));
 }
 
 const char *
