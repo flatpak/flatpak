@@ -30,14 +30,14 @@ setup_repo
 
 ${FLATPAK} ${U} install test-repo org.test.Platform master
 
-${FLATPAK} build-bundle --oci repos/test oci-dir org.test.Hello
+mkdir -p oci
+${FLATPAK} build-bundle --oci repos/test oci/registry org.test.Hello
 
-assert_has_file oci-dir/oci-layout
-assert_has_dir oci-dir/blobs/sha256
-assert_has_dir oci-dir/refs
-assert_file_has_content oci-dir/refs/latest "application/vnd.oci.image.manifest.v1+json"
+assert_has_file oci/registry/oci-layout
+assert_has_dir oci/registry/blobs/sha256
+assert_has_file oci/registry/index.json
 
-for i in oci-dir/blobs/sha256/*; do
+for i in oci/registry/blobs/sha256/*; do
      echo $(basename $i) $i >> sums
 done
 sha256sum -c sums
@@ -46,7 +46,7 @@ echo "ok export oci"
 
 ostree --repo=repo2 init --mode=archive-z2
 
-$FLATPAK build-import-bundle --oci repo2 oci-dir
+$FLATPAK build-import-bundle --oci repo2 oci/registry
 
 ostree checkout -U --repo=repo2 app/org.test.Hello/$ARCH/master checked-out
 
@@ -56,17 +56,19 @@ assert_has_file checked-out/metadata
 
 echo "ok commit oci"
 
-${FLATPAK} install ${U} --oci oci-dir latest
+${FLATPAK} remote-add ${U} --oci oci-remote oci/registry
+${FLATPAK} install ${U} -v oci-remote org.test.Hello
 
 run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandbox$'
 
 echo "ok install oci"
 
+sleep 1 # Make sure the index.json mtime is changed
 make_updated_app
-${FLATPAK} build-bundle --oci repos/test oci-dir org.test.Hello
+${FLATPAK} build-bundle -v --oci repos/test oci/registry org.test.Hello
 
-${FLATPAK} update ${U} org.test.Hello
+${FLATPAK} update ${U} -v org.test.Hello
 run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
@@ -75,12 +77,13 @@ echo "ok update oci"
 flatpak uninstall  ${U} org.test.Hello
 
 make_updated_app HTTP
-${FLATPAK} build-bundle --oci repos/test oci-dir org.test.Hello
+${FLATPAK} build-bundle --oci repos/test oci/registry org.test.Hello
 
-ostree trivial-httpd --autoexit --daemonize -p oci-port `pwd`/oci-dir
+ostree trivial-httpd --autoexit --daemonize -p oci-port `pwd`/oci
 ociport=$(cat oci-port)
 
-${FLATPAK} install -v ${U} --oci http://127.0.0.1:${ociport} latest
+${FLATPAK} remote-add ${U} --oci oci-remote-http http://127.0.0.1:${ociport}/registry
+${FLATPAK} install -v ${U} oci-remote-http org.test.Hello
 
 run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxHTTP$'
@@ -88,7 +91,7 @@ assert_file_has_content hello_out '^Hello world, from a sandboxHTTP$'
 echo "ok install oci http"
 
 make_updated_app UPDATEDHTTP
-${FLATPAK} build-bundle --oci repos/test oci-dir org.test.Hello
+${FLATPAK} build-bundle --oci repos/test oci/registry org.test.Hello
 
 ${FLATPAK} update ${U} org.test.Hello
 run org.test.Hello > hello_out
