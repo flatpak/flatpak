@@ -2924,7 +2924,6 @@ out:
   return ret;
 }
 
-
 gboolean
 flatpak_dir_run_triggers (FlatpakDir   *self,
                           GCancellable *cancellable,
@@ -3821,8 +3820,12 @@ apply_extra_data (FlatpakDir          *self,
   app_context = flatpak_context_new ();
 
   envp = flatpak_run_get_minimal_env (FALSE);
-  flatpak_run_add_environment_args (argv_array, fd_array, &envp, NULL, NULL, id,
-                                    app_context, NULL);
+  if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp, NULL,
+                                         FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
+                                         FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY,
+                                         id,
+                                         app_context, NULL, cancellable, error))
+    return FALSE;
 
   g_ptr_array_add (argv_array, g_strdup ("/app/bin/apply_extra"));
 

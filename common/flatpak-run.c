@@ -123,6 +123,14 @@ const char *flatpak_context_features[] = {
   NULL
 };
 
+static gboolean
+add_dbus_proxy_args (GPtrArray *argv_array,
+                     GPtrArray *dbus_proxy_argv,
+                     gboolean   enable_logging,
+                     int        sync_fds[2],
+                     const char *app_info_path,
+                     GError   **error);
+
 struct FlatpakContext
 {
   FlatpakContextShares  shares;
@@ -1660,6 +1668,18 @@ flatpak_context_allow_host_fs (FlatpakContext *context)
   flatpak_context_add_filesystem (context, "host");
 }
 
+gboolean
+flatpak_context_get_needs_session_bus_proxy (FlatpakContext *context)
+{
+  return g_hash_table_size (context->session_bus_policy) > 0;
+}
+
+gboolean
+flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context)
+{
+  return g_hash_table_size (context->system_bus_policy) > 0;
+}
+
 void
 flatpak_context_to_args (FlatpakContext *context,
                          GPtrArray *args)
@@ -2504,15 +2524,17 @@ add_expose_path (GHashTable *hash_table,
   return _add_expose_path (hash_table, mode, path, 0);
 }
 
-void
+gboolean
 flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                   GArray         *fd_array,
                                   char         ***envp_p,
-                                  GPtrArray      *session_bus_proxy_argv,
-                                  GPtrArray      *system_bus_proxy_argv,
+                                  const char     *app_info_path,
+                                  FlatpakRunFlags flags,
                                   const char     *app_id,
                                   FlatpakContext *context,
-                                  GFile          *app_id_dir)
+                                  GFile          *app_id_dir,
+                                  GCancellable   *cancellable,
+                                  GError        **error)
 {
   GHashTableIter iter;
   gpointer key, value;
@@ -2520,11 +2542,20 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   gboolean unrestricted_system_bus;
   gboolean home_access = FALSE;
   GString *xdg_dirs_conf = NULL;
+  g_autoptr(GError) my_error = NULL;
   FlatpakFilesystemMode fs_mode, home_mode;
   g_autoptr(GFile) user_flatpak_dir = NULL;
   g_autoptr(GHashTable) fs_paths = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
+  g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
+  g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
+  int sync_fds[2] = {-1, -1};
 
-  if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
+  if ((flags & FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY) == 0)
+    session_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
+  if ((flags & FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY) == 0)
+    system_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
+
+ if ((context->shares & FLATPAK_CONTEXT_SHARED_IPC) == 0)
     {
       g_debug ("Disallowing ipc access");
       add_args (argv_array, "--unshare-ipc", NULL);
@@ -2862,6 +2893,29 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                 NULL);
       *envp_p = g_environ_unsetenv (*envp_p, "LD_LIBRARY_PATH");
     }
+
+  /* Must run this before spawning the dbus proxy, to ensure it
+     ends up in the app cgroup */
+  if (!flatpak_run_in_transient_unit (app_id, &my_error))
+    {
+      /* We still run along even if we don't get a cgroup, as nothing
+         really depends on it. Its just nice to have */
+      g_debug ("Failed to run in transient scope: %s\n", my_error->message);
+      g_clear_error (&my_error);
+    }
+
+  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
+                            sync_fds, app_info_path, error))
+    return FALSE;
+
+  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
+                            sync_fds, app_info_path, error))
+    return FALSE;
+
+  if (sync_fds[1] != -1)
+    close (sync_fds[1]);
+
+  return TRUE;
 }
 
 static const struct {const char *env;
@@ -3571,7 +3625,8 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   glnx_fd_close int app_info_fd = -1;
   glnx_fd_close int bwrap_args_fd = -1;
 
-  if (dbus_proxy_argv->len == 0)
+  if (dbus_proxy_argv == NULL ||
+      dbus_proxy_argv->len == 0)
     return TRUE;
 
   if (sync_fds[0] == -1)
@@ -4116,15 +4171,12 @@ flatpak_run_app (const char     *app_ref,
   g_autofree char *default_runtime = NULL;
   g_autofree char *default_command = NULL;
   g_autofree char *runtime_ref = NULL;
-  int sync_fds[2] = {-1, -1};
   g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GKeyFile) runtime_metakey = NULL;
   g_autoptr(GPtrArray) argv_array = NULL;
   g_autoptr(GArray) fd_array = NULL;
   g_autoptr(GPtrArray) real_argv_array = NULL;
   g_auto(GStrv) envp = NULL;
-  g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
-  g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
   const char *command = "/bin/sh";
   g_autoptr(GError) my_error = NULL;
   g_auto(GStrv) runtime_parts = NULL;
@@ -4141,9 +4193,6 @@ flatpak_run_app (const char     *app_ref,
   argv_array = g_ptr_array_new_with_free_func (g_free);
   fd_array = g_array_new (FALSE, TRUE, sizeof (int));
   g_array_set_clear_func (fd_array, clear_fd);
-
-  session_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
-  system_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
 
   if (app_deploy == NULL)
     {
@@ -4265,33 +4314,13 @@ flatpak_run_app (const char     *app_ref,
 
   add_document_portal_args (argv_array, app_ref_parts[1]);
 
-  flatpak_run_add_environment_args (argv_array, fd_array, &envp,
-                                    session_bus_proxy_argv,
-                                    system_bus_proxy_argv,
-                                    app_ref_parts[1], app_context, app_id_dir);
+  if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp,
+                                         app_info_path, flags,
+                                         app_ref_parts[1], app_context, app_id_dir, cancellable, error))
+    return FALSE;
+
   flatpak_run_add_journal_args (argv_array);
   add_font_path_args (argv_array);
-
-  /* Must run this before spawning the dbus proxy, to ensure it
-     ends up in the app cgroup */
-  if (!flatpak_run_in_transient_unit (app_ref_parts[1], &my_error))
-    {
-      /* We still run along even if we don't get a cgroup, as nothing
-         really depends on it. Its just nice to have */
-      g_debug ("Failed to run in transient scope: %s\n", my_error->message);
-      g_clear_error (&my_error);
-    }
-
-  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
-                            sync_fds, app_info_path, error))
-    return FALSE;
-
-  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
-                            sync_fds, app_info_path, error))
-    return FALSE;
-
-  if (sync_fds[1] != -1)
-    close (sync_fds[1]);
 
   add_args (argv_array,
             /* Not in base, because we don't want this for flatpak build */

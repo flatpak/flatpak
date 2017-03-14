@@ -68,8 +68,23 @@ void           flatpak_context_set_system_bus_policy (FlatpakContext *context,
                                                       FlatpakPolicy   policy);
 void           flatpak_context_to_args (FlatpakContext *context,
                                         GPtrArray *args);
+gboolean       flatpak_context_get_needs_session_bus_proxy (FlatpakContext *context);
+gboolean       flatpak_context_get_needs_system_bus_proxy (FlatpakContext *context);
+
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakContext, flatpak_context_free)
+
+typedef enum {
+  FLATPAK_RUN_FLAG_DEVEL              = (1 << 0),
+  FLATPAK_RUN_FLAG_BACKGROUND         = (1 << 1),
+  FLATPAK_RUN_FLAG_LOG_SESSION_BUS    = (1 << 2),
+  FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS     = (1 << 3),
+  FLATPAK_RUN_FLAG_NO_SESSION_HELPER  = (1 << 4),
+  FLATPAK_RUN_FLAG_MULTIARCH          = (1 << 5),
+  FLATPAK_RUN_FLAG_WRITABLE_ETC       = (1 << 6),
+  FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY = (1 << 7),
+  FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY = (1 << 8),
+} FlatpakRunFlags;
 
 gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                           char       ***envp_p,
@@ -77,14 +92,16 @@ gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                           const char   *full_ref,
                                           GCancellable *cancellable,
                                           GError      **error);
-void     flatpak_run_add_environment_args (GPtrArray      *argv_array,
+gboolean flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                            GArray         *fd_array,
                                            char         ***envp_p,
-                                           GPtrArray      *session_bus_proxy_argv,
-                                           GPtrArray      *system_bus_proxy_argv,
+                                           const char     *app_info_path,
+                                           FlatpakRunFlags flags,
                                            const char     *app_id,
                                            FlatpakContext *context,
-                                           GFile          *app_id_dir);
+                                           GFile          *app_id_dir,
+                                           GCancellable *cancellable,
+                                           GError      **error);
 char **  flatpak_run_get_minimal_env (gboolean devel);
 char **  flatpak_run_apply_env_default (char **envp);
 char **  flatpak_run_apply_env_appid (char **envp,
@@ -96,16 +113,6 @@ GFile *flatpak_get_data_dir (const char *app_id);
 GFile *flatpak_ensure_data_dir (const char   *app_id,
                                 GCancellable *cancellable,
                                 GError      **error);
-
-typedef enum {
-  FLATPAK_RUN_FLAG_DEVEL              = (1 << 0),
-  FLATPAK_RUN_FLAG_BACKGROUND         = (1 << 1),
-  FLATPAK_RUN_FLAG_LOG_SESSION_BUS    = (1 << 2),
-  FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS     = (1 << 3),
-  FLATPAK_RUN_FLAG_NO_SESSION_HELPER  = (1 << 4),
-  FLATPAK_RUN_FLAG_MULTIARCH          = (1 << 5),
-  FLATPAK_RUN_FLAG_WRITABLE_ETC       = (1 << 6),
-} FlatpakRunFlags;
 
 gboolean flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                                       GArray         *fd_array,

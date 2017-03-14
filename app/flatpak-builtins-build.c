@@ -101,6 +101,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   gboolean is_app = FALSE;
   gboolean is_extension = FALSE;
   gboolean is_app_extension = FALSE;
+  g_autofree char *app_info_path = NULL;
 
   context = g_option_context_new (_("DIRECTORY [COMMAND [args...]] - Build in directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -272,6 +273,13 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (custom_usr)
     run_flags |= FLATPAK_RUN_FLAG_WRITABLE_ETC;
 
+  /* Unless manually specified, we disable dbus proxy */
+  if (!flatpak_context_get_needs_session_bus_proxy (arg_context))
+    run_flags |= FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY;
+
+  if (!flatpak_context_get_needs_system_bus_proxy (arg_context))
+    run_flags |= FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY;
+
   if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, NULL, runtime_ref_parts[2],
                                     run_flags, error))
     return FALSE;
@@ -338,7 +346,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
                                       id, NULL,
                                       runtime_ref,
                                       app_context,
-                                      NULL,
+                                      &app_info_path,
                                       error))
     return FALSE;
 
@@ -349,8 +357,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
       !flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
-  flatpak_run_add_environment_args (argv_array, NULL, &envp, NULL, NULL, id,
-                                    app_context, NULL);
+  if (!flatpak_run_add_environment_args (argv_array, NULL, &envp, app_info_path, run_flags, id,
+                                         app_context, NULL, cancellable, error))
+    return FALSE;
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
     {
