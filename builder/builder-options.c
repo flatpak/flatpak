@@ -40,6 +40,7 @@ struct BuilderOptions
   gboolean    no_debuginfo;
   char       *cflags;
   char       *cxxflags;
+  char       *ldflags;
   char       *prefix;
   char      **env;
   char      **build_args;
@@ -61,6 +62,7 @@ enum {
   PROP_0,
   PROP_CFLAGS,
   PROP_CXXFLAGS,
+  PROP_LDFLAGS,
   PROP_PREFIX,
   PROP_ENV,
   PROP_STRIP,
@@ -79,6 +81,7 @@ builder_options_finalize (GObject *object)
 
   g_free (self->cflags);
   g_free (self->cxxflags);
+  g_free (self->ldflags);
   g_free (self->prefix);
   g_strfreev (self->env);
   g_strfreev (self->build_args);
@@ -104,6 +107,10 @@ builder_options_get_property (GObject    *object,
 
     case PROP_CXXFLAGS:
       g_value_set_string (value, self->cxxflags);
+      break;
+
+    case PROP_LDFLAGS:
+      g_value_set_string (value, self->ldflags);
       break;
 
     case PROP_PREFIX:
@@ -158,6 +165,11 @@ builder_options_set_property (GObject      *object,
     case PROP_CXXFLAGS:
       g_clear_pointer (&self->cxxflags, g_free);
       self->cxxflags = g_value_dup_string (value);
+      break;
+
+    case PROP_LDFLAGS:
+      g_clear_pointer (&self->ldflags, g_free);
+      self->ldflags = g_value_dup_string (value);
       break;
 
     case PROP_PREFIX:
@@ -221,6 +233,13 @@ builder_options_class_init (BuilderOptionsClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_CXXFLAGS,
                                    g_param_spec_string ("cxxflags",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_LDFLAGS,
+                                   g_param_spec_string ("ldflags",
                                                         "",
                                                         "",
                                                         NULL,
@@ -520,6 +539,22 @@ builder_options_get_cxxflags (BuilderOptions *self, BuilderContext *context)
 }
 
 const char *
+builder_options_get_ldflags (BuilderOptions *self, BuilderContext *context)
+{
+  g_autoptr(GList) options = get_all_options (self, context);
+  GList *l;
+
+  for (l = options; l != NULL; l = l->next)
+    {
+      BuilderOptions *o = l->data;
+      if (o->ldflags)
+        return o->ldflags;
+    }
+
+  return NULL;
+}
+
+const char *
 builder_options_get_prefix (BuilderOptions *self, BuilderContext *context)
 {
   g_autoptr(GList) options = get_all_options (self, context);
@@ -577,7 +612,7 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
   GList *l;
   int i;
   char **envp = NULL;
-  const char *cflags, *cxxflags;
+  const char *cflags, *cxxflags, *ldflags;
 
   for (l = options; l != NULL; l = l->next)
     {
@@ -616,6 +651,10 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
   cxxflags = builder_options_get_cxxflags (self, context);
   if (cxxflags)
     envp = g_environ_setenv (envp, "CXXFLAGS", cxxflags, TRUE);
+
+  ldflags = builder_options_get_ldflags (self, context);
+  if (ldflags)
+    envp = g_environ_setenv (envp, "LDFLAGS", cxxflags, TRUE);
 
   return envp;
 }
@@ -701,6 +740,7 @@ builder_options_checksum (BuilderOptions *self,
   builder_cache_checksum_str (cache, BUILDER_OPTION_CHECKSUM_VERSION);
   builder_cache_checksum_str (cache, self->cflags);
   builder_cache_checksum_str (cache, self->cxxflags);
+  builder_cache_checksum_str (cache, self->ldflags);
   builder_cache_checksum_str (cache, self->prefix);
   builder_cache_checksum_strv (cache, self->env);
   builder_cache_checksum_strv (cache, self->build_args);
