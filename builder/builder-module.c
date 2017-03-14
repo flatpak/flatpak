@@ -1567,14 +1567,14 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_strv (cache, self->config_opts);
   builder_cache_checksum_strv (cache, self->make_args);
   builder_cache_checksum_strv (cache, self->make_install_args);
-  builder_cache_checksum_compat_strv (cache, self->ensure_writable);
-  builder_cache_checksum_compat_strv (cache, self->only_arches);
-  builder_cache_checksum_compat_strv (cache, self->skip_arches);
+  builder_cache_checksum_strv (cache, self->ensure_writable);
+  builder_cache_checksum_strv (cache, self->only_arches);
+  builder_cache_checksum_strv (cache, self->skip_arches);
   builder_cache_checksum_boolean (cache, self->rm_configure);
   builder_cache_checksum_boolean (cache, self->no_autogen);
   builder_cache_checksum_boolean (cache, self->disabled);
   builder_cache_checksum_boolean (cache, self->no_parallel_make);
-  builder_cache_checksum_compat_boolean (cache, self->no_make_install);
+  builder_cache_checksum_boolean (cache, self->no_make_install);
   builder_cache_checksum_boolean (cache, self->no_python_timestamp_fix);
   builder_cache_checksum_boolean (cache, self->cmake);
   builder_cache_checksum_boolean (cache, self->builddir);

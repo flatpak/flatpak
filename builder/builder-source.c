@@ -342,8 +342,8 @@ builder_source_checksum (BuilderSource  *self,
   class = BUILDER_SOURCE_GET_CLASS (self);
 
   builder_cache_checksum_str (cache, self->dest);
-  builder_cache_checksum_compat_strv (cache, self->only_arches);
-  builder_cache_checksum_compat_strv (cache, self->skip_arches);
+  builder_cache_checksum_strv (cache, self->only_arches);
+  builder_cache_checksum_strv (cache, self->skip_arches);
 
   class->checksum (self, cache, context);
 }
