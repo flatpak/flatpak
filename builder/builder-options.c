@@ -482,11 +482,11 @@ get_arched_options (BuilderOptions *self, BuilderContext *context)
   const char *arch = builder_context_get_arch (context);
   BuilderOptions *arch_options;
 
+  options = g_list_prepend (options, self);
+
   arch_options = g_hash_table_lookup (self->arch, arch);
   if (arch_options)
     options = g_list_prepend (options, arch_options);
-
-  options = g_list_prepend (options, self);
 
   return options;
 }
