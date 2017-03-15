@@ -4888,7 +4888,7 @@ load_uri_callback (GObject *source_object,
   g_autoptr(SoupMessage) msg = soup_request_http_get_message ((SoupRequestHTTP*) request);
   if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
     {
-      GIOErrorEnum code;
+      int code;
       GQuark domain = G_IO_ERROR;
 
       switch (msg->status_code)

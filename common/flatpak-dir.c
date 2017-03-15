@@ -2061,9 +2061,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 {
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
-  g_autofree char *oci_ref = NULL;
   g_autofree char *oci_uri = NULL;
-  g_autofree char *oci_tag = NULL;
   g_autofree char *oci_digest = NULL;
   g_autofree char *full_ref = NULL;
   g_autofree char *checksum = NULL;
@@ -2082,7 +2080,6 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     }
   else
     {
-      g_autoptr(FlatpakOciIndex) index = NULL;
       g_autoptr(GBytes) summary_bytes = NULL;
       g_autoptr(GVariant) summary = NULL;
       g_autofree char *latest_rev = NULL;
@@ -5741,7 +5738,6 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
   g_autofree char *cache_etag = NULL;
   g_autofree char *new_etag = NULL;
   g_autofree char *self_name = NULL;
-  glnx_fd_close int fd = -1;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GMappedFile) mfile = NULL;
   g_autoptr(GBytes) cache_bytes = NULL;
@@ -6574,7 +6570,6 @@ flatpak_dir_get_remote_disabled (FlatpakDir *self,
   GKeyFile *config = ostree_repo_get_config (self->repo);
   g_autofree char *group = get_group (remote_name);
   g_autofree char *url = NULL;
-  g_autofree char *oci_uri = NULL;
 
   if (config &&
       g_key_file_get_boolean (config, group, "xa.disable", NULL))
