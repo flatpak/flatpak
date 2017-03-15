@@ -1,3 +1,82 @@
+Major changes in 0.9.1
+======================
+
+This release mostly has changes to flatpak-builder and the build
+machinery. All flatpaks built with this version can run
+on flatpak 0.8.x, but there has been additions and minor
+changes in flatpak-builder that may require minor changes
+to existing builder manifests, see below.
+
+The flatpak-builder build cache now uses an ostree feature called
+rofiles-fuse. This allows the build to work directly against
+hardlinked checkouts of the cache, because rofiles-fuse disallows
+writes to the hardlinked files (but allows replacing them). This makes
+cache commits and checkouts much faster. However, it also means that
+installation cannot do in-place modification of files in the
+installation directory. There is a new per-module property called
+"ensure-writable" that takes a list of patterns and ensures all files
+matching them are writable (by manually breaking the hardlinks). This
+may need to be added to some manifests to keep them building in the new
+version.
+
+The cflags and cxxflags module properties now work by appending,
+rather that replacing, when there are multiple values specified. For
+instance, the per-arch or per-module cflags will be appended to the
+base cflags. This may cause old json files do duplicate cflags in
+some cases. Normally compiler flags are repeatable without problems
+though, so it is unlikely to cause problems.
+
+Here are a short summary of the rest of the flatpak-builder changes:
+
+ * The build cache was changed so that it is not invalidated if
+   the installed version of the SDK changed. This means that the app
+   will not rebuilt if you updated the SDK. This is generally the right
+   thing to do, as SDKs are meant to be compatible.  If you want
+   to avoid this (for instance when building against an unstable sdk)
+   you can use the --rebuild-on-sdk-change argument.
+ * The build cache is now per-arch, so building on one arch doesn't
+   invalidate the cache for another arch.
+ * New buildsystem "cmake-ninja" which works like "cmake", but builds
+   using ninja, rather than make.
+ * New buildsystem "simple" which doesn't use configure or make, it
+   just runs a set of shell commands specified in the "build-commands"
+   property. Note: build-commands is also available to other buildsystems
+   and are run between make and make install.
+ * flatpak-builder now has build-runtime and build-extension properties that
+   makes it easier to build runtimes and extensions.
+ * FLATPAK_DEST is set in the build environment to the installation
+   destination (i.e. typically /app). It is particularly useful when
+   building an extension where the destination is more complex.
+ * flatpak-builder now supports --from-git=URL which pulls the
+   json manifest and related files directly from a git repo.
+ * modules have a new no-make-install property which skips
+   the make install step.
+ * Modules and sources have only-arches and skip-arches properties,
+   which lets you enable/disable them based on the build architecture.
+ * build-options has a new property ldflags, which is similar
+   to cflags and cxxflags.
+ * flatpak build (and thus flatpak-builder --run) now supports
+    dbus proxies when needed.
+ * All git repos are cloned with fsckObjects=true, which means
+   we verify that the repos are valid.
+ * New flatpak-builder argument --build-shell=MODULE extracts and
+   prepares the sources for a specified module and then starts
+   a build sandbox inside it.
+
+There are also some other changes:
+
+ * build-export: Now supports --timestamp=ISO-8601-TIMESTAMP, which
+   allows you to create reproducible commits.
+ * The OCI support has been updated to the latest version of the
+   OCI image specification format.
+ * There is a new flatpak-bisect script that can be used to bisect
+   flatpak applications, looking for regressions.
+ * flatpak list got a revamp. It now shows more information, and
+   shows both apps and runtimes by default.
+ * flatpak remote-list was renamed flatpak remotes in order
+   to minimize confusion with flatpak remote-ls. The old name
+   is deprecated but still works.
+
 Major changes in 0.8.4
 ======================
 
