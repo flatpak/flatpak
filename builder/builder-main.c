@@ -516,7 +516,7 @@ main (int    argc,
       return 0;
     }
 
-  cache_branch = g_path_get_basename (manifest_rel_path);
+  cache_branch = g_strconcat (builder_context_get_arch (build_context), "-", manifest_basename, NULL);
 
   cache = builder_cache_new (build_context, app_dir, cache_branch);
   if (!builder_cache_open (cache, &error))
