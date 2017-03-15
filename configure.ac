@@ -28,7 +28,7 @@ AC_INIT([Flatpak],
         [flatpak],
         [http://flatpak.org/])
 
-GLIB_REQS=2.40
+GLIB_REQS=2.44
 SYSTEM_BWRAP_REQS=0.1.5
 OSTREE_REQS=2016.14
 
