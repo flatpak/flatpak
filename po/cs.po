@@ -1246,8 +1246,8 @@ msgid "Only update this subpath"
 msgstr ""
 
 #: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
-msgstr "OAutomaticky odpovědět ano na všechny otázky"
+msgid "Automatically answer yes for all questions"
+msgstr "Automaticky odpovědět ano na všechny otázky"
 
 #: app/flatpak-builtins-update.c:91
 #, c-format

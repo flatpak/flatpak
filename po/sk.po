@@ -1245,7 +1245,7 @@ msgid "Only update this subpath"
 msgstr ""
 
 #: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
+msgid "Automatically answer yes for all questions"
 msgstr ""
 
 #: app/flatpak-builtins-update.c:91
