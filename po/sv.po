@@ -974,7 +974,7 @@ msgstr "Installera endast denna underkatalog"
 msgid "PATH"
 msgstr "SÖKVÄG"
 
-#: app/flatpak-builtins-install.c:66
+#: app/flatpak-builtins-install.c:66 app/flatpak-builtins-update.c:63
 msgid "Automatically answer yes for all questions"
 msgstr ""
 
@@ -1271,10 +1271,6 @@ msgstr "Uppdatera appstream för fjärr"
 #: app/flatpak-builtins-update.c:62
 msgid "Only update this subpath"
 msgstr "Uppdatera endast denna undersökväg"
-
-#: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
-msgstr ""
 
 #: app/flatpak-builtins-update.c:91
 #, fuzzy, c-format

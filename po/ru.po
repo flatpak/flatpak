@@ -968,7 +968,7 @@ msgstr "Устанавливать только указанный подкат�
 msgid "PATH"
 msgstr "ПУТЬ"
 
-#: app/flatpak-builtins-install.c:66
+#: app/flatpak-builtins-install.c:66 app/flatpak-builtins-update.c:63
 msgid "Automatically answer yes for all questions"
 msgstr "Автоматически отвечать да на все вопросы"
 
@@ -1260,10 +1260,6 @@ msgstr "Обновить ветку appstream для удалённого реп
 #: app/flatpak-builtins-update.c:62
 msgid "Only update this subpath"
 msgstr "Обновлять только указанный подкаталог"
-
-#: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
-msgstr "Автоматически отвечать да на все вопросы"
 
 #: app/flatpak-builtins-update.c:91
 #, c-format

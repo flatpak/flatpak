@@ -973,7 +973,7 @@ msgstr "Csak ezen alútvonal telepítése"
 msgid "PATH"
 msgstr "ÚTVONAL"
 
-#: app/flatpak-builtins-install.c:66
+#: app/flatpak-builtins-install.c:66 app/flatpak-builtins-update.c:63
 msgid "Automatically answer yes for all questions"
 msgstr ""
 
@@ -1268,10 +1268,6 @@ msgstr "Az AppStream frissítése a távolihoz"
 #: app/flatpak-builtins-update.c:62
 msgid "Only update this subpath"
 msgstr "Csak ezen alútvonal frissítése"
-
-#: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
-msgstr ""
 
 #: app/flatpak-builtins-update.c:91
 #, fuzzy, c-format

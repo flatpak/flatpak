@@ -971,7 +971,7 @@ msgstr "Встановити лише цей підшлях"
 msgid "PATH"
 msgstr "ШЛЯХ"
 
-#: app/flatpak-builtins-install.c:66
+#: app/flatpak-builtins-install.c:66 app/flatpak-builtins-update.c:63
 msgid "Automatically answer yes for all questions"
 msgstr ""
 
@@ -1262,10 +1262,6 @@ msgstr "Оновити дані appstream для віддаленого схов
 #: app/flatpak-builtins-update.c:62
 msgid "Only update this subpath"
 msgstr "Оновити лише вказаний підшлях"
-
-#: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
-msgstr ""
 
 #: app/flatpak-builtins-update.c:91
 #, c-format
