@@ -1273,7 +1273,7 @@ msgid "Only update this subpath"
 msgstr "Uppdatera endast denna undersökväg"
 
 #: app/flatpak-builtins-update.c:63
-msgid "Automatically answer yes for all questions"
+msgid "OAutomatically answer yes for all questions"
 msgstr ""
 
 #: app/flatpak-builtins-update.c:91
