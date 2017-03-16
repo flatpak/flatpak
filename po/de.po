@@ -973,7 +973,7 @@ msgstr "Nur diesen Unterpfad installieren"
 msgid "PATH"
 msgstr "PFAD"
 
-#: app/flatpak-builtins-install.c:66
+#: app/flatpak-builtins-install.c:66 app/flatpak-builtins-update.c:63
 msgid "Automatically answer yes for all questions"
 msgstr "Automatisch alle Fragen mit ja beantworten"
 
@@ -1268,10 +1268,6 @@ msgstr "Appstream für entfernte Quelle aktualisieren"
 #: app/flatpak-builtins-update.c:62
 msgid "Only update this subpath"
 msgstr "Nur diesen Unterpfad aktualisieren"
-
-#: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
-msgstr "O Automatisch alle Fragen mit »ja« beantworten"
 
 #: app/flatpak-builtins-update.c:91
 #, c-format

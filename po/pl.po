@@ -975,7 +975,7 @@ msgstr "Instaluje tylko tę podścieżkę"
 msgid "PATH"
 msgstr "ŚCIEŻKA"
 
-#: app/flatpak-builtins-install.c:66
+#: app/flatpak-builtins-install.c:66 app/flatpak-builtins-update.c:63
 msgid "Automatically answer yes for all questions"
 msgstr "Automatycznie odpowiada tak na wszystkie pytania"
 
@@ -1270,10 +1270,6 @@ msgstr "Aktualizuje AppStream dla repozytorium"
 #: app/flatpak-builtins-update.c:62
 msgid "Only update this subpath"
 msgstr "Aktualizuje tylko tę podścieżkę"
-
-#: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
-msgstr "Automatycznie odpowiada tak na wszystkie pytania"
 
 #: app/flatpak-builtins-update.c:91
 #, c-format

@@ -954,7 +954,7 @@ msgstr ""
 msgid "PATH"
 msgstr "CESTA"
 
-#: app/flatpak-builtins-install.c:66
+#: app/flatpak-builtins-install.c:66 app/flatpak-builtins-update.c:63
 msgid "Automatically answer yes for all questions"
 msgstr "Automaticky odpovědět ano na všechny otázky"
 
@@ -1244,10 +1244,6 @@ msgstr "Aktualizovat appstream pro vzdálený repozitář"
 #: app/flatpak-builtins-update.c:62
 msgid "Only update this subpath"
 msgstr ""
-
-#: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
-msgstr "OAutomaticky odpovědět ano na všechny otázky"
 
 #: app/flatpak-builtins-update.c:91
 #, c-format
