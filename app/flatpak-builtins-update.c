@@ -60,7 +60,7 @@ static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, N_("Update appstream for remote"), NULL },
   { "subpath", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_subpaths, N_("Only update this subpath"), N_("PATH") },
-  { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("OAutomatically answer yes for all questions"), NULL },
+  { "assumeyes", 'y', 0, G_OPTION_ARG_NONE, &opt_yes, N_("Automatically answer yes for all questions"), NULL },
   { NULL }
 };
 

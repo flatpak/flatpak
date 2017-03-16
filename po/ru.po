@@ -1262,7 +1262,7 @@ msgid "Only update this subpath"
 msgstr "Обновлять только указанный подкаталог"
 
 #: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
+msgid "Automatically answer yes for all questions"
 msgstr "Автоматически отвечать да на все вопросы"
 
 #: app/flatpak-builtins-update.c:91
