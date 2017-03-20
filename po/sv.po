@@ -2050,9 +2050,6 @@ msgstr "Autentisering krävs för att konfigurera programförråd"
 msgid "Update appstream"
 msgstr "Uppdatera appstream"
 
-#~ msgid "OAutomatically answer yes for all questions"
-#~ msgstr "Svara automatiskt ja på alla frågor"
-
 #~ msgid "Assume LOCATION is an oci registry"
 #~ msgstr "Anta att PLATS är ett oci-register"
 
