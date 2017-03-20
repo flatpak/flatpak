@@ -2057,10 +2057,19 @@ builder_manifest_finish (BuilderManifest *self,
 
       if (self->command)
         {
-          g_autoptr(GFile) bin_dir = g_file_resolve_relative_path (app_dir, "files/bin");
-          g_autoptr(GFile) bin_command = g_file_get_child (bin_dir, self->command);
+          g_autoptr(GFile) files_dir = g_file_resolve_relative_path (app_dir, "files");
+          g_autoptr(GFile) command_file = NULL;
 
-          if (!g_file_query_exists (bin_command, NULL))
+          if (!g_path_is_absolute (self->command))
+            {
+              g_autoptr(GFile) bin_dir = g_file_resolve_relative_path (files_dir, "bin");
+              command_file = g_file_get_child (bin_dir, self->command);
+            }
+          else if (g_str_has_prefix (self->command, "/app/"))
+            command_file = g_file_resolve_relative_path (files_dir, self->command + strlen ("/app/"));
+
+          if (command_file != NULL &&
+              !g_file_query_exists (command_file, NULL))
             {
               const char *help = "";
 
