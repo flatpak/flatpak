@@ -68,8 +68,7 @@ glnx_opendirat (int             dfd,
   int ret = glnx_opendirat_with_errno (dfd, path, follow);
   if (ret == -1)
     {
-      glnx_set_prefix_error_from_errno (error, "%s", "openat");
-      return FALSE;
+      return glnx_throw_errno_prefix (error, "openat");
     }
   *out_fd = ret;
   return TRUE;
@@ -339,8 +338,7 @@ glnx_mkdtempat (int dfd,
           /* Any other error will apply also to other names we might
            *  try, and there are 2^32 or so of them, so give up now.
            */
-          glnx_set_prefix_error_from_errno (error, "%s", "mkdirat");
-          return FALSE;
+          return glnx_throw_errno_prefix (error, "mkdirat");
         }
 
       return TRUE;

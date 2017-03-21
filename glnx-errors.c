@@ -24,30 +24,21 @@
 #include <glnx-errors.h>
 
 void
-glnx_real_set_prefix_error_from_errno (GError     **error,
-                                       gint         errsv,
-                                       const char  *format,
-                                       ...)
+glnx_real_set_prefix_error_from_errno_va (GError     **error,
+                                          gint         errsv,
+                                          const char  *format,
+                                          va_list      args)
 {
   if (!error)
     return;
-  else
-    {
-      GString *buf = g_string_new ("");
-      va_list args;
-    
-      va_start (args, format);
-      g_string_append_vprintf (buf, format, args);
-      va_end (args);
 
-      g_string_append (buf, ": ");
-      g_string_append (buf, g_strerror (errsv));
-    
-      g_set_error_literal (error,
-                           G_IO_ERROR,
-                           g_io_error_from_errno (errsv),
-                           buf->str);
-      g_string_free (buf, TRUE);
-      errno = errsv;
-    }
+  /* TODO - enhance GError to have a "set and take ownership" API */
+  g_autoptr(GString) buf = g_string_new ("");
+  g_string_append_vprintf (buf, format, args);
+  g_string_append (buf, ": ");
+  g_string_append (buf, g_strerror (errsv));
+  g_set_error_literal (error,
+                       G_IO_ERROR,
+                       g_io_error_from_errno (errsv),
+                       buf->str);
 }
