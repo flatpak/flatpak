@@ -1083,15 +1083,21 @@ builder_manifest_get_runtime_version (BuilderManifest *self)
 }
 
 const char *
-builder_manifest_get_branch (BuilderManifest *self)
+builder_manifest_get_branch (BuilderManifest *self, const char *default_branch)
 {
-  return self->branch ? self->branch : "master";
+  if (self->branch)
+    return self->branch;
+
+  if (default_branch)
+    return default_branch;
+
+  return "master";
 }
 
 static const char *
 builder_manifest_get_base_version (BuilderManifest *self)
 {
-  return self->base_version ? self->base_version : builder_manifest_get_branch (self);
+  return self->base_version ? self->base_version : builder_manifest_get_branch (self, NULL);
 }
 
 static char *
