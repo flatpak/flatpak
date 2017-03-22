@@ -497,7 +497,7 @@ flatpak_context_set_system_bus_policy (FlatpakContext *context,
   g_hash_table_insert (context->system_bus_policy, g_strdup (name), GINT_TO_POINTER (policy));
 }
 
-void
+static void
 flatpak_context_apply_generic_policy (FlatpakContext *context,
                                       const char     *key,
                                       const char     *value)
@@ -2075,7 +2075,7 @@ create_proxy_socket (char *template)
   return g_steal_pointer (&proxy_socket);
 }
 
-gboolean
+static gboolean
 flatpak_run_add_system_dbus_args (FlatpakContext *context,
                                   char         ***envp_p,
                                   GPtrArray      *argv_array,
@@ -2127,7 +2127,7 @@ flatpak_run_add_system_dbus_args (FlatpakContext *context,
   return FALSE;
 }
 
-gboolean
+static gboolean
 flatpak_run_add_session_dbus_args (GPtrArray *argv_array,
                                    char    ***envp_p,
                                    GPtrArray *dbus_proxy_argv,
@@ -3487,7 +3487,7 @@ add_document_portal_args (GPtrArray  *argv_array,
     }
 }
 
-gchar *
+static gchar *
 join_args (GPtrArray *argv_array, gsize *len_out)
 {
   gchar *string;

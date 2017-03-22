@@ -53,6 +53,8 @@ AM_CPPFLAGS =							\
 	-I$(builddir)/lib					\
 	$(NULL)
 
+AM_CFLAGS = $(WARN_CFLAGS)
+
 if WITH_SYSTEM_BWRAP
 AM_CPPFLAGS += -DHELPER=\"$(BWRAP)\"
 else

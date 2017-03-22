@@ -579,8 +579,8 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
                                   GError      **error);
 
 
-gboolean flatpak_yes_no_prompt (const char *prompt, ...);
-long flatpak_number_prompt (int min, int max, const char *prompt, ...);
+gboolean flatpak_yes_no_prompt (const char *prompt, ...) G_GNUC_PRINTF(1, 2);
+long flatpak_number_prompt (int min, int max, const char *prompt, ...) G_GNUC_PRINTF(3, 4);
 
 typedef void (*FlatpakLoadUriProgress) (guint64 downloaded_bytes,
                                         gpointer user_data);
@@ -621,7 +621,7 @@ FlatpakCompletion *flatpak_completion_new   (const char        *arg_line,
                                              const char        *arg_cur);
 void               flatpak_complete_word    (FlatpakCompletion *completion,
                                              char              *format,
-                                             ...);
+                                             ...) G_GNUC_PRINTF(2,3);
 void               flatpak_complete_ref     (FlatpakCompletion *completion,
                                              OstreeRepo        *repo);
 void               flatpak_complete_partial_ref (FlatpakCompletion *completion,
