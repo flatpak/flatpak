@@ -46,9 +46,11 @@ typedef enum {
 #define FLATPAK_VARIANT_DICT_INITIALIZER {{{0,}}}
 #endif
 
-gboolean flatpak_fail (GError    **error,
-                       const char *format,
-                       ...);
+/* https://github.com/GNOME/libglnx/pull/38
+ * Note by using #define rather than wrapping via a static inline, we
+ * don't have to re-define attributes like G_GNUC_PRINTF.
+ */
+#define flatpak_fail glnx_throw
 
 gint flatpak_strcmp0_ptr (gconstpointer a,
                           gconstpointer b);
