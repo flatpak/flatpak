@@ -55,12 +55,26 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$PACKAGE", [gettext domain])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([enable])
 
-if test "x$GCC" = "xyes"; then
-  case " $CFLAGS " in
-  *[[\ \	]]-Wall[[\ \	]]*) ;;
-  *) CFLAGS="$CFLAGS -Wall" ;;
-  esac
-fi
+dnl This list is shared with https://github.com/ostreedev/ostree
+CC_CHECK_FLAGS_APPEND([WARN_CFLAGS], [CFLAGS], [\
+-pipe \
+-Wall \
+-Werror=empty-body \
+-Werror=strict-prototypes \
+-Werror=missing-prototypes \
+-Werror=implicit-function-declaration \
+"-Werror=format=2 -Werror=format-security -Werror=format-nonliteral" \
+-Werror=pointer-arith -Werror=init-self \
+-Werror=missing-declarations \
+-Werror=return-type \
+-Werror=overflow \
+-Werror=int-conversion \
+-Werror=parenthesis \
+-Werror=incompatible-pointer-types \
+-Werror=misleading-indentation \
+-Werror=missing-include-dirs -Werror=aggregate-return \
+])
+AC_SUBST(WARN_CFLAGS)
 
 AX_VALGRIND_CHECK
 

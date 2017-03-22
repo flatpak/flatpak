@@ -285,7 +285,7 @@ flatpak_path_match_prefix (const char *pattern,
   return NULL; /* Should not be reached */
 }
 
-const char *
+static const char *
 flatpak_get_kernel_arch (void)
 {
   static struct utsname buf;
@@ -858,7 +858,7 @@ flatpak_kinds_from_bools (gboolean app, gboolean runtime)
   return kinds;
 }
 
-gboolean
+static gboolean
 _flatpak_split_partial_ref_arg (const char   *partial_ref,
                                 gboolean      validate,
                                 FlatpakKinds  default_kinds,
@@ -4695,9 +4695,13 @@ flatpak_yes_no_prompt (const char *prompt, ...)
   va_list var_args;
   gchar *s;
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
   va_start (var_args, prompt);
   s = g_strdup_vprintf (prompt, var_args);
   va_end (var_args);
+#pragma GCC diagnostic pop
 
   while (TRUE)
     {
@@ -5098,9 +5102,12 @@ flatpak_complete_word (FlatpakCompletion *completion,
 
   g_return_if_fail (format != NULL);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
   va_start (args, format);
   string = g_strdup_vprintf (format, args);
   va_end (args);
+#pragma GCC diagnostic pop
 
   if (!g_str_has_prefix (string, completion->cur))
     return;
@@ -5144,7 +5151,7 @@ flatpak_complete_ref (FlatpakCompletion *completion,
     }
 }
 
-int
+static int
 find_current_element (const char *str)
 {
   int count = 0;

@@ -576,7 +576,7 @@ flatpak_get_user_base_dir_location (void)
   return g_object_ref ((GFile *)file);
 }
 
-GFile *
+static GFile *
 flatpak_get_user_cache_dir_location (void)
 {
   g_autoptr(GFile) base_dir = NULL;
@@ -585,7 +585,7 @@ flatpak_get_user_cache_dir_location (void)
   return g_file_get_child (base_dir, "system-cache");
 }
 
-GFile *
+static GFile *
 flatpak_ensure_user_cache_dir_location (GError **error)
 {
   g_autoptr(GFile) cache_dir = NULL;
@@ -603,7 +603,7 @@ flatpak_ensure_user_cache_dir_location (GError **error)
   return g_steal_pointer (&cache_dir);
 }
 
-GFile *
+static GFile *
 flatpak_ensure_oci_summary_cache_dir_location (GError **error)
 {
   g_autoptr(GFile) cache_dir = NULL;
@@ -658,7 +658,7 @@ flatpak_dir_get_system_helper (FlatpakDir *self)
   return NULL;
 }
 
-gboolean
+static gboolean
 flatpak_dir_use_system_helper (FlatpakDir *self,
                                const char *installing_from_remote)
 {
@@ -2921,7 +2921,7 @@ out:
   return ret;
 }
 
-gboolean
+static gboolean
 flatpak_dir_run_triggers (FlatpakDir   *self,
                           GCancellable *cancellable,
                           GError      **error)
@@ -3349,7 +3349,7 @@ out:
   return ret;
 }
 
-gboolean
+static gboolean
 flatpak_rewrite_export_dir (const char   *app,
                             const char   *branch,
                             const char   *arch,
@@ -3467,7 +3467,7 @@ out:
   return ret;
 }
 
-gboolean
+static gboolean
 flatpak_export_dir (GFile        *source,
                     GFile        *destination,
                     const char   *symlink_prefix,
@@ -6146,7 +6146,7 @@ find_matching_ref (GHashTable *refs,
                                             parts[3]));
         }
 
-      flatpak_fail (error, err->str);
+      flatpak_fail (error, "%s", err->str);
       return NULL;
     }
 
@@ -6606,7 +6606,7 @@ flatpak_dir_remote_has_deploys (FlatpakDir   *self,
   return FALSE;
 }
 
-gint
+static gint
 cmp_remote (gconstpointer a,
             gconstpointer b,
             gpointer      user_data)
