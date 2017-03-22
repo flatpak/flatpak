@@ -285,23 +285,6 @@ flatpak_path_match_prefix (const char *pattern,
   return NULL; /* Should not be reached */
 }
 
-gboolean
-flatpak_fail (GError **error, const char *format, ...)
-{
-  g_autofree char *message = NULL;
-  va_list args;
-
-  va_start (args, format);
-  message = g_strdup_vprintf (format, args);
-  va_end (args);
-
-  g_set_error_literal (error,
-                       G_IO_ERROR, G_IO_ERROR_FAILED,
-                       message);
-
-  return FALSE;
-}
-
 const char *
 flatpak_get_kernel_arch (void)
 {

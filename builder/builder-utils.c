@@ -989,7 +989,7 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
     }
   else
     {
-      return flatpak_fail (0, 0, "%s: Wrong ELF data encoding", data->filename);
+      return flatpak_fail (error, "%s: Wrong ELF data encoding", data->filename);
     }
 
   debug_sections = data->debug_sections;
