@@ -128,9 +128,7 @@ glnx_throw_errno_prefix (GError **error, const char *fmt, ...)
 
 #define glnx_set_prefix_error_from_errno(error, format, args...)  \
   do {                                                            \
-    glnx_set_error_from_errno (error);                            \
-    g_prefix_error (error, format, args);                         \
+    glnx_throw_errno_prefix (error, format, args);                \
   } while (0);
-
 
 G_END_DECLS

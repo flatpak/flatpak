@@ -79,9 +79,15 @@ test_error_errno (void)
   fd = open (noent_path, O_RDONLY);
   if (fd < 0)
     {
+      g_autofree char *expected_prefix = g_strdup_printf ("Failed to open %s", noent_path);
       g_assert (!glnx_throw_errno_prefix (&error, "Failed to open %s", noent_path));
       g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
-      g_assert (g_str_has_prefix (error->message, glnx_strjoina ("Failed to open ", noent_path)));
+      g_assert (g_str_has_prefix (error->message, expected_prefix));
+      g_clear_error (&error);
+      /* And test the legacy wrapper */
+      glnx_set_prefix_error_from_errno (&error, "Failed to open %s", noent_path);
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_assert (g_str_has_prefix (error->message, expected_prefix));
       g_clear_error (&error);
     }
   else
