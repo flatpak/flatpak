@@ -171,8 +171,8 @@ commit_filter (OstreeRepo *repo,
   mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
   /* No setuid */
   mode = mode & ~07000;
-  /* All files readable */
-  mode = mode | 0444;
+  /* Canonical permission mode == same as what bare-user mode uses for checkouts */
+  mode = mode | 0744;
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", mode);
 
   if (matches_patterns (commit_data->exclude, path) &&
@@ -210,7 +210,7 @@ add_file_to_mtree (GFile             *file,
   g_file_info_set_file_type (file_info, G_FILE_TYPE_REGULAR);
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
-  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100644);
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100744);
 
   raw_input = (GInputStream *) g_file_read (file, cancellable, error);
   if (raw_input == NULL)
