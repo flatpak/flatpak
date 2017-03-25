@@ -273,6 +273,53 @@
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>versions</option> (string)</term>
+                    <listitem><para>
+                        The branches to use when looking for the extension. If this is
+                        not specified, it defaults to the branch of the application or
+                        runtime that the extension is for.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>add-ld-path</option> (string)</term>
+                    <listitem><para>
+                        A path relative to the extension directory that will be appended
+                        to LD_LIBRARY_PATH.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>merge-dirs</option> (string)</term>
+                    <listitem><para>
+                        A list of relative paths of directories below the extension directory
+                        that will be merged.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>download-if</option> (string)</term>
+                    <listitem><para>
+                        A condition that must be true for the extension to be auto-downloaded.
+                        The only currently recognized value is active-gl-driver, which is true
+                        if the name of the active GL driver matches the extension basename.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>enable-if</option> (string)</term>
+                    <listitem><para>
+                        A condition that must be true for the extension to be enabled.
+                        The only currently recognized value is active-gl-driver, which is true
+                        if the name of the active GL driver matches the extension basename.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>subdirectory-suffix</option> (string)</term>
+                    <listitem><para>
+                        A suffix that gets appended to the directory name. This is very
+                        useful when the extension point naming scheme is "reversed". For example,
+                        an extension point for GTK+ themes would be /usr/share/themes/$NAME/gtk-3.0,
+                        which could be achieved using subdirectory-suffix=gtk-3.0.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>subdirectories</option> (boolean)</term>
                     <listitem><para>
                         If this key is set to true, then flatpak will look for
