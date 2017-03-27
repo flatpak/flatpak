@@ -14,7 +14,6 @@ for x in $(seq 50); do
     fi
     sleep 0.1
 done
-echo port is in ${test_tmpdir}/httpd-port
 port=$(cat ${test_tmpdir}/httpd-port)
 echo "http://127.0.0.1:${port}" > ${test_tmpdir}/httpd-address
 echo "$child_pid" > ${test_tmpdir}/httpd-pid
