@@ -718,6 +718,8 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
                                GError            **error)
 {
   g_autofree char *subpath = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autofree char *json_checksum = NULL;
 
   g_assert (self->valid);
 
@@ -730,7 +732,18 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
 
   subpath = g_strdup_printf ("blobs/sha256/%s", digest + strlen ("sha256:"));
 
-  return flatpak_oci_registry_load_file (self, subpath, NULL, NULL, cancellable, error);
+  bytes = flatpak_oci_registry_load_file (self, subpath, NULL, NULL, cancellable, error);
+
+  json_checksum = g_compute_checksum_for_bytes  (G_CHECKSUM_SHA256, bytes);
+
+  if (strcmp (json_checksum, digest + strlen ("sha256:")) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                   "Checksum for digest %s is wrong (was %s)", digest, json_checksum);
+      return NULL;
+    }
+
+  return g_steal_pointer (&bytes);
 }
 
 char *
