@@ -10,6 +10,7 @@ env PYTHONUNBUFFERED=1 setsid python -m SimpleHTTPServer 0 >${test_tmpdir}/httpd
 child_pid=$!
 
 for x in $(seq 50); do
+    cat ${test_tmpdir}/httpd-output
     sed -e 's,Serving HTTP on 0.0.0.0 port \([0-9]*\) \.\.\.,\1,' < ${test_tmpdir}/httpd-output > ${test_tmpdir}/httpd-port
     if ! cmp ${test_tmpdir}/httpd-output ${test_tmpdir}/httpd-port 1>/dev/null; then
         break
