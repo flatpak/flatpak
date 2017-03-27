@@ -2003,6 +2003,33 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
   return TRUE;
 }
 
+static char *
+flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
+                                     const char          *remote,
+                                     const          char *ref,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
+{
+  g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autofree char *latest_rev = NULL;
+
+  if (!flatpak_dir_remote_fetch_summary (self, remote,
+                                         &summary_bytes,
+                                         cancellable, error))
+    return NULL;
+
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                          summary_bytes, FALSE));
+  if (!flatpak_summary_lookup_ref (summary, ref, &latest_rev))
+    {
+      flatpak_fail (error, "No such ref '%s' in remote %s", ref, remote);
+      return NULL;
+    }
+
+  return g_steal_pointer (&latest_rev);
+}
+
 static void
 oci_pull_init_progress (OstreeAsyncProgress *progress)
 {
@@ -2080,25 +2107,14 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     }
   else
     {
-      g_autoptr(GBytes) summary_bytes = NULL;
-      g_autoptr(GVariant) summary = NULL;
-      g_autofree char *latest_rev = NULL;
-
       /* We use the summary so that we can reuse any cached json */
-      if (!flatpak_dir_remote_fetch_summary (self, remote,
-                                             &summary_bytes,
-                                             cancellable, error))
+      g_autofree char *latest_rev =
+        flatpak_dir_lookup_ref_from_summary (self, remote, ref,
+                                             cancellable, error);
+      if (latest_rev == NULL)
         return FALSE;
 
-      summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                              summary_bytes, FALSE));
-
-      if (flatpak_summary_lookup_ref (summary,
-                                      ref,
-                                      &latest_rev))
-        oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
-      else
-        return flatpak_fail (error, _("Ref '%s' not found in registry"), ref);
+      oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
   }
 
   registry = flatpak_oci_registry_new (oci_uri, FALSE, -1, NULL, error);
@@ -2195,26 +2211,9 @@ flatpak_dir_pull (FlatpakDir          *self,
     rev = opt_rev;
   else
     {
-      g_autoptr(GVariant) summary = NULL;
-
-      if (!flatpak_dir_remote_fetch_summary (self, repository,
-                                             &summary_bytes,
-                                             cancellable, error))
+      rev = flatpak_dir_lookup_ref_from_summary (self, repository, ref, cancellable, error);
+      if (rev == NULL)
         return FALSE;
-
-      summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                              summary_bytes, FALSE));
-      if (!flatpak_summary_lookup_ref (summary,
-                                       ref,
-                                       &latest_rev))
-        {
-          g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                       "No such branch '%s' in repository summary",
-                       ref);
-          return FALSE;
-        }
-
-      rev = latest_rev;
     }
 
   if (repo == NULL)
