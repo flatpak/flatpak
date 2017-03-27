@@ -183,6 +183,12 @@ flatpak_oci_registry_init (FlatpakOciRegistry *self)
   self->tmp_dfd = -1;
 }
 
+const char *
+flatpak_oci_registry_get_uri (FlatpakOciRegistry   *self)
+{
+  return self->uri;
+}
+
 FlatpakOciRegistry *
 flatpak_oci_registry_new (const char *uri,
                          gboolean for_write,

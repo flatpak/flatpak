@@ -60,6 +60,7 @@ FlatpakOciRegistry  *  flatpak_oci_registry_new                  (const char    
                                                                   int                   tmp_dfd,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
+const char          *  flatpak_oci_registry_get_uri              (FlatpakOciRegistry   *self);
 FlatpakOciIndex     *  flatpak_oci_registry_load_index           (FlatpakOciRegistry   *self,
                                                                   const char           *etag,
                                                                   char               **etag_out,
