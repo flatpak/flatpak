@@ -2617,8 +2617,9 @@ builder_manifest_run (BuilderManifest *self,
   /* Just add something so that we get the default rules (own our own id) */
   g_ptr_array_add (args, g_strdup ("--talk-name=org.freedesktop.DBus"));
 
-  /* Inherit all finish args except the filesystem and command
-   * ones so the command gets the same access as the final app
+  /* Inherit all finish args except --filesystem and some that
+   * build doesn't understand so the command gets the same access
+   * as the final app
    */
   if (self->finish_args)
     {
@@ -2629,7 +2630,8 @@ builder_manifest_run (BuilderManifest *self,
               !g_str_has_prefix (arg, "--extension") &&
               !g_str_has_prefix (arg, "--sdk") &&
               !g_str_has_prefix (arg, "--runtime") &&
-              !g_str_has_prefix (arg, "--command"))
+              !g_str_has_prefix (arg, "--command") &&
+              !g_str_has_prefix (arg, "--require-version"))
             g_ptr_array_add (args, g_strdup (arg));
         }
     }
