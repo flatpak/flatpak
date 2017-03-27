@@ -1105,13 +1105,13 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
                                 GError      **error)
 {
   gchar **ret = NULL;
-
   g_autoptr(GPtrArray) names = NULL;
   g_autoptr(GHashTable) hash = NULL;
   g_autoptr(FlatpakDir) user_dir = NULL;
-  g_autoptr(GError) my_error = NULL;
   const char *key;
   GHashTableIter iter;
+  g_autoptr(GPtrArray) system_dirs = NULL;
+  int i;
 
   hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
@@ -1119,28 +1119,21 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
 
   if (!flatpak_dir_collect_unmaintained_refs (user_dir, name_prefix,
                                               branch, arch, hash, cancellable,
-                                              &my_error))
+                                              error))
+    return NULL;
+
+  system_dirs = flatpak_dir_get_system_list (cancellable, error);
+  if (system_dirs == NULL)
+    return NULL;
+
+  for (i = 0; i < system_dirs->len; i++)
     {
-      g_autoptr(GPtrArray) system_dirs = NULL;
-      int i;
+      FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
 
-      system_dirs = flatpak_dir_get_system_list (cancellable, error);
-      if (system_dirs == NULL)
-        goto out;
-
-      for (i = 0; i < system_dirs->len; i++)
-        {
-          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
-
-          g_clear_error (&my_error);
-          if (flatpak_dir_collect_unmaintained_refs (system_dir, name_prefix,
-                                                     branch, arch, hash, cancellable,
-                                                     &my_error))
-            {
-              /* Reference found in at least one of the system installations */
-              break;
-            }
-        }
+      if (!flatpak_dir_collect_unmaintained_refs (system_dir, name_prefix,
+                                                  branch, arch, hash, cancellable,
+                                                  error))
+        return NULL;
     }
 
   names = g_ptr_array_new ();
@@ -1154,10 +1147,6 @@ flatpak_list_unmaintained_refs (const char   *name_prefix,
   ret = (char **) g_ptr_array_free (names, FALSE);
   names = NULL;
 
-  if (ret == NULL)
-    g_propagate_error (error, g_steal_pointer (&my_error));
-
-out:
   return ret;
 }
 
