@@ -79,8 +79,9 @@ flatpak uninstall  ${U} org.test.Hello
 make_updated_app HTTP
 ${FLATPAK} build-bundle --oci repos/test oci/registry org.test.Hello
 
-ostree trivial-httpd --autoexit --daemonize -p oci-port `pwd`/oci
-ociport=$(cat oci-port)
+$(dirname $0)/test-webserver.sh `pwd`/oci
+ociport=$(cat httpd-port)
+FLATPAK_HTTP_PID="${FLATPAK_HTTP_PID} $(cat httpd-pid)"
 
 ${FLATPAK} remote-add ${U} --oci oci-remote-http http://127.0.0.1:${ociport}/registry
 ${FLATPAK} install -v ${U} oci-remote-http org.test.Hello
