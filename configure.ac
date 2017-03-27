@@ -271,8 +271,17 @@ AC_ARG_WITH([dwarf-header],
 provided, or it will be searched for in includedir])])],
             [with_dwarf_header=yes])
 
+# We need to check these exist, because otherwise -Werror=missing-include-dirs errors out
+LIBDWARF_INCLUDES=
+if test -d $(eval echo \"$includedir\")/libdwarf; then
+   LIBDWARF_INCLUDES="$LIBDWARF_INCLUDES -I$(eval echo \"$includedir\")/libdwarf"
+fi
+if test -d /usr/include/libdwarf; then
+   LIBDWARF_INCLUDES="$LIBDWARF_INCLUDES -I/usr/include/libdwarf"
+fi
+
 AS_IF([test "x$with_dwarf_header" = "xyes"],
-      [CPPFLAGS="$CPPFLAGS -I$(eval echo \"$includedir\")/libdwarf -I/usr/include/libdwarf"
+      [CPPFLAGS="$CPPFLAGS $LIBDWARF_INCLUDES"
        AC_CHECK_HEADER([dwarf.h])
        AS_IF([test "x$ac_cv_header_dwarf_h" != "xyes"],
              [AC_MSG_ERROR([dwarf.h is required but was not found; locate it using --with-dwarf-header=/path/containing/header])])],
