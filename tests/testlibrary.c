@@ -12,6 +12,7 @@ static char *flatpak_installationsdir;
 static char *gpg_homedir;
 static char *gpg_args;
 static char *repo_url;
+int httpd_pid = -1;
 
 static const char *gpg_id = "7B0961FD";
 const char *repo_name = "test-repo";
@@ -605,7 +606,8 @@ launch_httpd (void)
 {
   int status;
   g_autoptr(GError) error = NULL;
-  char *argv[] = { "ostree", "trivial-httpd", "--autoexit", "--daemonize", "-p", "http-port", "repos", NULL };
+  g_autofree char *path = g_test_build_filename (G_TEST_DIST, "test-webserver.sh", NULL);
+  char *argv[] = {path , "repos", NULL };
   GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 
   if (g_test_verbose ())
@@ -629,11 +631,18 @@ add_remote (void)
   char *argv[] = { "flatpak", "remote-add", "--user", "--gpg-import=", "name", "url", NULL };
   g_autofree char *gpgimport = NULL;
   g_autofree char *port = NULL;
+  g_autofree char *pid = NULL;
   GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 
   launch_httpd ();
 
-  g_file_get_contents ("http-port", &port, NULL, &error);
+  g_file_get_contents ("httpd-pid", &pid, NULL, &error);
+  g_assert_no_error (error);
+
+  httpd_pid = atoi (pid);
+  g_assert_cmpint (httpd_pid, !=, 0);
+
+  g_file_get_contents ("httpd-port", &port, NULL, &error);
   g_assert_no_error (error);
 
   if (port[strlen (port) - 1] == '\n')
@@ -823,6 +832,9 @@ global_teardown (void)
     {
       flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
     }
+
+  if (httpd_pid != -1)
+    kill (httpd_pid, SIGKILL);
 
   /* mostly ignore failure here */
   if (!g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error) ||

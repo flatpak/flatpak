@@ -180,8 +180,9 @@ setup_repo () {
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh > /dev/null
     update_repo
-    ostree trivial-httpd --autoexit --daemonize -p httpd-port repos
+    $(dirname $0)/test-webserver.sh repos
     port=$(cat httpd-port)
+    FLATPAK_HTTP_PID=$(cat httpd-pid)
     flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test"
 }
 
@@ -266,7 +267,7 @@ if ! /bin/kill -0 "$DBUS_SESSION_BUS_PID"; then
 fi
 
 cleanup () {
-    /bin/kill $DBUS_SESSION_BUS_PID
+    /bin/kill $DBUS_SESSION_BUS_PID ${FLATPAK_HTTP_PID:-}
     gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
     fusermount -u $XDG_RUNTIME_DIR/doc || :
     rm -rf $TEST_DATA_DIR

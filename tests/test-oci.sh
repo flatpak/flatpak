@@ -77,8 +77,9 @@ flatpak uninstall  ${U} org.test.Hello
 make_updated_app HTTP
 ${FLATPAK} build-bundle --oci repos/test oci-dir org.test.Hello
 
-ostree trivial-httpd --autoexit --daemonize -p oci-port `pwd`/oci-dir
-ociport=$(cat oci-port)
+$(dirname $0)/test-webserver.sh `pwd`/oci-dir
+ociport=$(cat httpd-port)
+FLATPAK_HTTP_PID="${FLATPAK_HTTP_PID} $(cat httpd-pid)"
 
 ${FLATPAK} install -v ${U} --oci http://127.0.0.1:${ociport} latest
 
