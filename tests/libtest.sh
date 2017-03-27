@@ -176,11 +176,28 @@ cp $(dirname $0)/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
 export FL_GPG_ID=7B0961FD
 export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
 
+# Cargo culted from https://github.com/projectatomic/rpm-ostree/blob/1969b96f917640ae362c615a0c2d8d1239794ecc/tests/common/libtest.sh#L192
+# Though tweaked a bit for the different test setup here.
+run_temp_webserver() {
+    dir=$1
+    test_tmpdir=$(pwd)
+    (cd ${dir} && env PYTHONUNBUFFERED=1 setsid python -m SimpleHTTPServer 0 >${test_tmpdir}/httpd-output) &
+    for x in $(seq 50); do
+        sed -e 's,Serving HTTP on 0.0.0.0 port \([0-9]*\) \.\.\.,\1,' < ${test_tmpdir}/httpd-output > ${test_tmpdir}/httpd-port
+        if ! cmp ${test_tmpdir}/httpd-output ${test_tmpdir}/httpd-port 1>/dev/null; then
+            break
+        fi
+        sleep 0.1
+    done
+    port=$(cat ${test_tmpdir}/httpd-port)
+    echo "http://127.0.0.1:${port}" > ${test_tmpdir}/httpd-address
+}
+
 setup_repo () {
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
     GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh > /dev/null
     update_repo
-    ostree trivial-httpd --autoexit --daemonize -p httpd-port repos
+    run_temp_webserver repos
     port=$(cat httpd-port)
     flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test"
 }
