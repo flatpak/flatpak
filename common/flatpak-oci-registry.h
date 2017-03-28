@@ -84,6 +84,13 @@ char *                 flatpak_oci_registry_store_blob           (FlatpakOciRegi
                                                                   GBytes               *data,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
+gboolean               flatpak_oci_registry_mirror_blob          (FlatpakOciRegistry   *self,
+                                                                  FlatpakOciRegistry   *source_registry,
+                                                                  const char           *digest,
+                                                                  FlatpakLoadUriProgress progress_cb,
+                                                                  gpointer               user_data,
+                                                                  GCancellable         *cancellable,
+                                                                  GError              **error);
 FlatpakOciDescriptor * flatpak_oci_registry_store_json           (FlatpakOciRegistry   *self,
                                                                   FlatpakJson          *json,
                                                                   GCancellable         *cancellable,

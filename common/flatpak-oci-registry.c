@@ -739,6 +739,104 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
   return glnx_steal_fd (&fd);
 }
 
+gboolean
+flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
+                                  FlatpakOciRegistry    *source_registry,
+                                  const char            *digest,
+                                  FlatpakLoadUriProgress progress_cb,
+                                  gpointer               user_data,
+                                  GCancellable         *cancellable,
+                                  GError              **error)
+{
+  g_autofree char *subpath = NULL;
+  glnx_fd_close int fd = -1;
+  g_autoptr(SoupURI) baseuri = NULL;
+  g_autofree char *tmp_path = NULL;
+  g_autoptr(GOutputStream) out_stream = NULL;
+  struct stat stbuf;
+  g_autofree char *checksum = NULL;
+
+  g_assert (self->valid);
+
+  if (!self->for_write)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Write not supported to registry");
+      return FALSE;
+    }
+
+  subpath = get_digest_subpath (digest, error);
+  if (subpath == NULL)
+    return FALSE;
+
+  /* Check if its already available */
+  if (fstatat (self->dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
+    return TRUE;
+
+  if (!glnx_open_tmpfile_linkable_at (self->dfd, "blobs/sha256",
+                                      O_RDWR | O_CLOEXEC | O_NOCTTY,
+                                      &fd, &tmp_path, error))
+    return FALSE;
+
+  if (source_registry->dfd != -1)
+    {
+      glnx_fd_close int src_fd = -1;
+
+      src_fd = local_open_file (source_registry->dfd, subpath, NULL, cancellable, error);
+      if (src_fd == -1)
+        return FALSE;
+
+      if (!flatpak_copy_bytes (src_fd, fd, error))
+        return FALSE;
+    }
+  else
+    {
+      g_autoptr(SoupURI) uri = NULL;
+      g_autofree char *uri_s = NULL;
+
+      uri = soup_uri_new_with_base (source_registry->base_uri, subpath);
+      if (uri == NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                       "Invalid relative url %s", subpath);
+          return FALSE;
+        }
+
+      out_stream = g_unix_output_stream_new (fd, FALSE);
+
+      uri_s = soup_uri_to_string (uri, FALSE);
+      if (!flatpak_download_http_uri (source_registry->soup_session, uri_s, out_stream,
+                                      progress_cb, user_data,
+                                      cancellable, error))
+        return FALSE;
+
+      if (!g_output_stream_close (out_stream, cancellable, error))
+        return FALSE;
+    }
+
+  lseek (fd, 0, SEEK_SET);
+
+  checksum = checksum_fd (fd, cancellable, error);
+  if (checksum == NULL)
+    return FALSE;
+
+  if (strcmp (checksum, digest + strlen ("sha256:")) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Checksum digest did not match (%s != %s)", digest, checksum);
+      return FALSE;
+    }
+
+  if (!glnx_link_tmpfile_at (self->dfd,
+                             GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST,
+                             fd, tmp_path,
+                             self->dfd, subpath,
+                             error))
+    return FALSE;
+
+  return TRUE;
+}
+
 GBytes *
 flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
                                const char         *digest,
