@@ -4958,7 +4958,7 @@ flatpak_dir_update (FlatpakDir          *self,
 
   /* Quick check to terminate early if nothing changed in cached summary
      (and subpaths didn't change) */
-  if (!is_local && deploy_data != NULL &&
+  if (!no_pull && !is_local && deploy_data != NULL &&
       _g_strv_equal0 ((char **)subpaths, (char **)old_subpaths))
     {
       if (checksum_or_latest != NULL)
