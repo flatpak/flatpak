@@ -495,12 +495,17 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakRepoTransaction, flatpak_repo_transaction_
 
 #define AUTOLOCK(name) G_GNUC_UNUSED __attribute__((cleanup (flatpak_auto_unlock_helper))) GMutex * G_PASTE (auto_unlock, __LINE__) = flatpak_auto_lock_helper (&G_LOCK_NAME (name))
 
+#ifndef OSTREE_CHECK_VERSION
+#define OSTREE_CHECK_VERSION(year, minor) (0)
+#endif
+#if !OSTREE_CHECK_VERSION(2017, 4)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepo, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeMutableTree, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeAsyncProgress, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeGpgVerifyResult, g_object_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepoCommitModifier, ostree_repo_commit_modifier_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepoDevInoCache, ostree_repo_devino_cache_unref)
+#endif
 
 #ifndef SOUP_AUTOCLEANUPS_H
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (SoupSession, g_object_unref)
