@@ -4490,6 +4490,8 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       OstreeRepoImportArchiveOptions opts = { 0, };
       free_read_archive struct archive *a = NULL;
       glnx_fd_close int layer_fd = -1;
+      g_autoptr(GChecksum) checksum = g_checksum_new (G_CHECKSUM_SHA256);
+      const char *layer_checksum;
 
       opts.autocreate_parents = TRUE;
       opts.ignore_unsupported_content = TRUE;
@@ -4507,11 +4509,9 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       archive_read_support_compression_all (a);
 #endif
       archive_read_support_format_all (a);
-      if (archive_read_open_fd (a, layer_fd, 8192) != ARCHIVE_OK)
-        {
-          propagate_libarchive_error (error, a);
-          goto error;
-        }
+
+      if (!flatpak_archive_read_open_fd_with_checksum (a, layer_fd, checksum, error))
+        goto error;
 
       if (!ostree_repo_import_archive_to_mtree (repo, &opts, a, archive_mtree, NULL, cancellable, error))
         goto error;
@@ -4519,6 +4519,14 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
       if (archive_read_close (a) != ARCHIVE_OK)
         {
           propagate_libarchive_error (error, a);
+          goto error;
+        }
+
+      layer_checksum = g_checksum_get_string (checksum);
+      if (!g_str_has_prefix (layer->digest, "sha256:") ||
+          strcmp (layer->digest + strlen ("sha256:"), layer_checksum) != 0)
+        {
+          flatpak_fail (error, "Wrong layer checksum, expected %s, was %s\n", layer->digest, layer_checksum);
           goto error;
         }
 
