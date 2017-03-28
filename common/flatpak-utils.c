@@ -4428,6 +4428,9 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   const char *parent = NULL;
   g_autofree char *subject = NULL;
   g_autofree char *body = NULL;
+  g_autofree char *manifest_ref = NULL;
+  g_autofree char *parsed_remote = NULL;
+  g_autofree char *parsed_ref = NULL;
   guint64 timestamp = 0;
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
   g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
@@ -4438,12 +4441,26 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   g_assert (ref != NULL);
   g_assert (g_str_has_prefix (digest, "sha256:"));
 
+  if (!ostree_parse_refspec (ref, &parsed_remote, &parsed_ref, error))
+    return NULL;
+
   annotations = flatpak_oci_manifest_get_annotations (manifest);
   if (annotations)
     flatpak_oci_parse_commit_annotations (annotations, &timestamp,
                                           &subject, &body,
-                                          NULL, NULL, NULL,
+                                          &manifest_ref, NULL, NULL,
                                           metadata_builder);
+  if (manifest_ref == NULL)
+    {
+      flatpak_fail (error, "No ref specified for OCI image %s\n", digest);
+      return NULL;
+    }
+
+  if (strcmp (manifest_ref, parsed_ref) != 0)
+    {
+      flatpak_fail (error, "Wrong ref (%s) specified for OCI image %s, expected %s\n", manifest_ref, digest, ref);
+      return NULL;
+    }
 
   g_variant_builder_add (metadata_builder, "{s@v}", "xa.alt-id",
                          g_variant_new_variant (g_variant_new_string (digest + strlen("sha256:"))));
