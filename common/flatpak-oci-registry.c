@@ -211,10 +211,12 @@ flatpak_oci_registry_new (const char *uri,
 static int
 local_open_file (int dfd,
                  const char *subpath,
+                 struct stat *st_buf,
                  GCancellable *cancellable,
                  GError **error)
 {
   glnx_fd_close int fd = -1;
+  struct stat tmp_st_buf;
 
   do
     fd = openat (dfd, subpath, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
@@ -222,6 +224,22 @@ local_open_file (int dfd,
   if (fd == -1)
     {
       glnx_set_error_from_errno (error);
+      return -1;
+    }
+
+  if (st_buf == NULL)
+    st_buf = &tmp_st_buf;
+
+  if (fstat (fd, st_buf) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return -1;
+    }
+
+  if (!S_ISREG (st_buf->st_mode))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Non-regular file in OCI registry at %s", subpath);
       return -1;
     }
 
@@ -241,15 +259,9 @@ local_load_file (int dfd,
   GBytes *bytes;
   g_autofree char *current_etag = NULL;
 
-  fd = local_open_file (dfd, subpath, cancellable, error);
+  fd = local_open_file (dfd, subpath, &st_buf, cancellable, error);
   if (fd == -1)
     return NULL;
-
-  if (fstat (fd, &st_buf) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      return NULL;
-    }
 
   current_etag = g_strdup_printf ("%lu", st_buf.st_mtime);
 
@@ -668,7 +680,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
   if (self->dfd != -1)
     {
       /* Local case, trust checksum */
-      fd = local_open_file (self->dfd, subpath, cancellable, error);
+      fd = local_open_file (self->dfd, subpath, NULL, cancellable, error);
       if (fd == -1)
         return -1;
     }
@@ -696,7 +708,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
                                       &out_stream, cancellable, error))
         return -1;
 
-      fd = local_open_file (self->tmp_dfd, tmpfile_name, cancellable, error);
+      fd = local_open_file (self->tmp_dfd, tmpfile_name, NULL, cancellable, error);
       (void)unlinkat (self->tmp_dfd, tmpfile_name, 0);
 
       if (fd == -1)
