@@ -96,7 +96,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   oci_digest = desc->parent.digest;
 
   versioned = flatpak_oci_registry_load_versioned (registry,
-                                                   oci_digest,
+                                                   oci_digest, NULL,
                                                    cancellable, error);
   if (versioned == NULL)
     return NULL;

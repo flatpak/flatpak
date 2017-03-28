@@ -906,9 +906,10 @@ flatpak_oci_registry_store_json (FlatpakOciRegistry    *self,
 
 FlatpakOciVersioned *
 flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
-                                    const char         *digest,
-                                    GCancellable       *cancellable,
-                                    GError            **error)
+                                     const char          *digest,
+                                     gsize               *out_size,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
 {
   g_autoptr(GBytes) bytes = NULL;
 
@@ -918,6 +919,8 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
   if (bytes == NULL)
     return NULL;
 
+  if (out_size)
+    *out_size = g_bytes_get_size (bytes);
   return flatpak_oci_versioned_from_json (bytes, error);
 }
 

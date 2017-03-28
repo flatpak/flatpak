@@ -349,6 +349,14 @@ char * flatpak_pull_from_oci (OstreeRepo   *repo,
                               GCancellable *cancellable,
                               GError      **error);
 
+gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
+                                        FlatpakOciRegistry *registry,
+                                        const char *digest,
+                                        FlatpakOciPullProgress progress_cb,
+                                        gpointer progress_data,
+                                        GCancellable *cancellable,
+                                        GError      **error);
+
 typedef struct
 {
   char *id;

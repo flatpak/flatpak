@@ -54,9 +54,22 @@
 #define SYSTEM_DIR_DEFAULT_STORAGE_TYPE FLATPAK_DIR_STORAGE_TYPE_DEFAULT
 #define SYSTEM_DIR_DEFAULT_PRIORITY 0
 
+static FlatpakOciRegistry *flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
+                                                                         GLnxLockFile *file_lock,
+                                                                         GError      **error);
+
 static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                                           GLnxLockFile *file_lock,
                                                           GError      **error);
+
+static gboolean flatpak_dir_mirror_oci (FlatpakDir          *self,
+                                        FlatpakOciRegistry  *dst_registry,
+                                        const char          *remote,
+                                        const char          *ref,
+                                        const char          *skip_if_current_is,
+                                        OstreeAsyncProgress *progress,
+                                        GCancellable        *cancellable,
+                                        GError             **error);
 
 static gboolean flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                                   const char   *name,
@@ -1619,6 +1632,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   g_autofree char *branch = NULL;
   g_autofree char *remote_and_branch = NULL;
   g_autofree char *new_checksum = NULL;
+  const char *installation;
 
   if (out_changed)
     *out_changed = FALSE;
@@ -1631,49 +1645,80 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
-  if (flatpak_dir_use_system_helper (self, remote))
+  if (flatpak_dir_use_system_helper (self, NULL))
     {
-      g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
       FlatpakSystemHelper *system_helper;
-
-      child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
-      if (child_repo == NULL)
-        return FALSE;
+      gboolean is_oci;
+      g_autoptr(GFile) child_repo_file = NULL;
+      g_autofree char *child_repo_path = NULL;
 
       system_helper = flatpak_dir_get_system_helper (self);
 
       g_assert (system_helper != NULL);
 
-      if (!flatpak_dir_pull (self, remote, branch, NULL, NULL,
-                             child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
-                             progress, cancellable, error))
-        return FALSE;
+      is_oci = flatpak_dir_get_remote_oci (self, remote);
 
-      if (!ostree_repo_resolve_rev (child_repo, branch, TRUE, &new_checksum, error))
-        return FALSE;
-
-      if (new_checksum == NULL)
+      if (is_oci)
         {
-          g_warning ("No appstream branch in remote %s\n", remote);
+          g_autoptr(FlatpakOciRegistry) registry = NULL;
+          g_autoptr(GFile) registry_file = NULL;
+          g_autoptr(GError) local_error = NULL;
+          g_autofree char *latest_alt_commit = NULL;
+          g_autofree char *latest_commit = flatpak_dir_read_latest (self, remote, branch,
+                                                                    &latest_alt_commit,
+                                                                    cancellable, NULL);
+
+          registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, error);
+          if (registry == NULL)
+            return FALSE;
+
+          child_repo_file = g_file_new_for_uri (flatpak_oci_registry_get_uri (registry));
+
+          if (!flatpak_dir_mirror_oci (self, registry, remote, branch, latest_alt_commit, progress, cancellable, &local_error))
+            {
+              if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+                return TRUE;
+              else
+                {
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
+            }
         }
       else
         {
-          const char *installation = flatpak_dir_get_id (self);
-
-          g_debug ("Calling system helper: DeployAppstream");
-          if (!flatpak_system_helper_call_deploy_appstream_sync (system_helper,
-                                                                 flatpak_file_get_path_cached (ostree_repo_get_path (child_repo)),
-                                                                 remote,
-                                                                 arch,
-                                                                 installation ? installation : "",
-                                                                 cancellable,
-                                                                 error))
+          g_autoptr(OstreeRepo) child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
+          if (child_repo == NULL)
             return FALSE;
+
+
+          if (!flatpak_dir_pull (self, remote, branch, NULL, NULL,
+                                 child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
+                                 progress, cancellable, error))
+            return FALSE;
+
+          if (!ostree_repo_resolve_rev (child_repo, branch, TRUE, &new_checksum, error))
+            return FALSE;
+
+          child_repo_file = g_object_ref (ostree_repo_get_path (child_repo));
         }
 
-      (void) flatpak_rm_rf (ostree_repo_get_path (child_repo),
-                            NULL, NULL);
+      child_repo_path = g_file_get_path (child_repo_file);
+
+      installation = flatpak_dir_get_id (self);
+
+      g_debug ("Calling system helper: DeployAppstream");
+      if (!flatpak_system_helper_call_deploy_appstream_sync (system_helper,
+                                                             child_repo_path,
+                                                             remote,
+                                                             arch,
+                                                             installation ? installation : "",
+                                                             cancellable,
+                                                             error))
+        return FALSE;
+
+      (void) flatpak_rm_rf (child_repo_file, NULL, NULL);
 
       return TRUE;
     }
@@ -1686,12 +1731,6 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
   if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &new_checksum, error))
     return FALSE;
-
-  if (new_checksum == NULL)
-    {
-      g_warning ("No appstream branch in remote %s\n", remote);
-      return TRUE;
-    }
 
   return flatpak_dir_deploy_appstream (self,
                                        remote,
@@ -2075,6 +2114,76 @@ oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
 }
 
 static gboolean
+flatpak_dir_mirror_oci (FlatpakDir          *self,
+                        FlatpakOciRegistry  *dst_registry,
+                        const char          *remote,
+                        const char          *ref,
+                        const char          *skip_if_current_is,
+                        OstreeAsyncProgress *progress,
+                        GCancellable        *cancellable,
+                        GError             **error)
+{
+  g_autoptr(FlatpakOciRegistry) registry = NULL;
+  g_autofree char *oci_uri = NULL;
+  g_autofree char *oci_digest = NULL;
+  g_autofree char *full_ref = NULL;
+  g_autofree char *latest_rev = NULL;
+  g_auto(GLnxConsoleRef) console = { 0, };
+  g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  gboolean res;
+
+  if (!ostree_repo_remote_get_url (self->repo,
+                                   remote,
+                                   &oci_uri,
+                                   error))
+    return FALSE;
+
+  /* We use the summary so that we can reuse any cached json */
+  latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote, ref,
+                                                    cancellable, error);
+  if (latest_rev == NULL)
+    return FALSE;
+
+  if (skip_if_current_is != NULL && strcmp (latest_rev, skip_if_current_is) == 0)
+    {
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                   _("%s commit %s already installed"), ref, latest_rev);
+      return FALSE;
+    }
+
+  oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
+
+  registry = flatpak_oci_registry_new (oci_uri, FALSE, -1, NULL, error);
+  if (registry == NULL)
+    return FALSE;
+
+  if (progress == NULL)
+    {
+      glnx_console_lock (&console);
+      if (console.is_tty)
+        {
+          console_progress = ostree_async_progress_new_and_connect (default_progress_changed, &console);
+          progress = console_progress;
+        }
+    }
+
+  oci_pull_init_progress (progress);
+
+  g_debug ("Mirroring OCI image %s\n", oci_digest);
+
+  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_digest, oci_pull_progress_cb,
+                                       progress, cancellable, error);
+
+  if (progress)
+    ostree_async_progress_finish (progress);
+
+  if (!res)
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
 flatpak_dir_pull_oci (FlatpakDir          *self,
                       const char          *remote,
                       const char          *ref,
@@ -2094,6 +2203,10 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autofree char *checksum = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  g_autofree char *latest_alt_commit = NULL;
+  g_autofree char *latest_commit = flatpak_dir_read_latest (self, remote, ref,
+                                                            &latest_alt_commit,
+                                                            cancellable, NULL);
 
   if (!ostree_repo_remote_get_url (self->repo,
                                    remote,
@@ -2117,11 +2230,15 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
       oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
   }
 
+  /* Short circuit if we've already got this commit */
+  if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
+    return TRUE;
+
   registry = flatpak_oci_registry_new (oci_uri, FALSE, -1, NULL, error);
   if (registry == NULL)
     return FALSE;
 
-  versioned = flatpak_oci_registry_load_versioned (registry, oci_digest,
+  versioned = flatpak_oci_registry_load_versioned (registry, oci_digest, NULL,
                                                    cancellable, error);
   if (versioned == NULL)
     return FALSE;
@@ -4294,6 +4411,50 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   return TRUE;
 }
 
+static FlatpakOciRegistry *
+flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
+                                              GLnxLockFile *file_lock,
+                                              GError      **error)
+{
+  g_autoptr(GFile) cache_dir = NULL;
+  g_autoptr(GFile) repo_dir = NULL;
+  g_autofree char *repo_url = NULL;
+  g_autoptr(GFile) repo_dir_config = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
+  g_autofree char *tmpdir_name = NULL;
+  g_autoptr(FlatpakOciRegistry) new_registry = NULL;
+  g_autoptr(GKeyFile) config = NULL;
+
+  g_assert (!self->user);
+
+  if (!flatpak_dir_ensure_repo (self, NULL, error))
+    return NULL;
+
+  cache_dir = flatpak_ensure_user_cache_dir_location (error);
+  if (cache_dir == NULL)
+    return NULL;
+
+  if (!flatpak_allocate_tmpdir (AT_FDCWD,
+                                flatpak_file_get_path_cached (cache_dir),
+                                "child-oci-", &tmpdir_name,
+                                NULL,
+                                file_lock,
+                                NULL,
+                                NULL, error))
+    return NULL;
+
+  repo_dir = g_file_get_child (cache_dir, tmpdir_name);
+  repo_url = g_file_get_uri (repo_dir);
+
+  new_registry = flatpak_oci_registry_new (repo_url, TRUE , -1,
+                                           NULL, error);
+  if (new_registry == NULL)
+    return NULL;
+
+  return g_steal_pointer (&new_registry);
+}
+
+
 static OstreeRepo *
 flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                       GLnxLockFile *file_lock,
@@ -4370,7 +4531,7 @@ flatpak_dir_install (FlatpakDir          *self,
                      GCancellable        *cancellable,
                      GError             **error)
 {
-  if (flatpak_dir_use_system_helper (self, remote_name))
+  if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
@@ -4383,6 +4544,7 @@ flatpak_dir_install (FlatpakDir          *self,
       g_autofree char *url = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+      gboolean is_oci;
 
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
@@ -4409,6 +4571,8 @@ flatpak_dir_install (FlatpakDir          *self,
                                               &gpg_verify, error))
         return FALSE;
 
+      is_oci = flatpak_dir_get_remote_oci (self, remote_name);
+
       if (no_pull)
         {
           /* Do nothing */
@@ -4425,6 +4589,22 @@ flatpak_dir_install (FlatpakDir          *self,
             helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
           else
             return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
+        }
+      else if (is_oci)
+        {
+          g_autoptr(FlatpakOciRegistry) registry = NULL;
+          g_autoptr(GFile) registry_file = NULL;
+
+          registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, error);
+          if (registry == NULL)
+            return FALSE;
+
+          registry_file = g_file_new_for_uri (flatpak_oci_registry_get_uri (registry));
+
+          child_repo_path = g_file_get_path (registry_file);
+
+          if (!flatpak_dir_mirror_oci (self, registry, remote_name, ref, NULL, progress, cancellable, error))
+            return FALSE;
         }
       else
         {
@@ -4748,6 +4928,8 @@ flatpak_dir_update (FlatpakDir          *self,
   gboolean is_local;
   g_autofree char *latest_rev = NULL;
   const char *rev = NULL;
+  const char *installed_commit;
+  const char *installed_alt_id;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
@@ -4760,6 +4942,9 @@ flatpak_dir_update (FlatpakDir          *self,
     subpaths = opt_subpaths;
   else
     subpaths = old_subpaths;
+
+  installed_commit = flatpak_deploy_data_get_commit (deploy_data);
+  installed_alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
 
   if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, error))
     return FALSE;
@@ -4776,9 +4961,6 @@ flatpak_dir_update (FlatpakDir          *self,
   if (!is_local && deploy_data != NULL &&
       _g_strv_equal0 ((char **)subpaths, (char **)old_subpaths))
     {
-      const char *installed_commit = flatpak_deploy_data_get_commit (deploy_data);
-      const char *installed_alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
-
       if (checksum_or_latest != NULL)
         {
           if (strcmp (checksum_or_latest, installed_commit) == 0)
@@ -4812,18 +4994,18 @@ flatpak_dir_update (FlatpakDir          *self,
         }
     }
 
-  if (flatpak_dir_use_system_helper (self, remote_name))
+  if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
       g_autofree char *latest_checksum = NULL;
-      g_autofree char *active_checksum = NULL;
       FlatpakSystemHelper *system_helper;
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
       g_autofree char *url = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
+      gboolean is_oci;
 
       if (checksum_or_latest != NULL)
         return flatpak_fail (error, "Can't update to a specific commit without root permissions");
@@ -4850,6 +5032,8 @@ flatpak_dir_update (FlatpakDir          *self,
                                               &gpg_verify, error))
         return FALSE;
 
+      is_oci = flatpak_dir_get_remote_oci (self, remote_name);
+
       if (no_pull)
         {
           if (!ostree_repo_resolve_rev (self->repo, ref, FALSE, &latest_checksum, error))
@@ -4867,6 +5051,22 @@ flatpak_dir_update (FlatpakDir          *self,
             helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_LOCAL_PULL;
           else
             return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
+        }
+      else if (is_oci)
+        {
+          g_autoptr(FlatpakOciRegistry) registry = NULL;
+          g_autoptr(GFile) registry_file = NULL;
+
+          registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, error);
+          if (registry == NULL)
+            return FALSE;
+
+          registry_file = g_file_new_for_uri (flatpak_oci_registry_get_uri (registry));
+
+          child_repo_path = g_file_get_path (registry_file);
+
+          if (!flatpak_dir_mirror_oci (self, registry, remote_name, ref, NULL, progress, cancellable, error))
+            return FALSE;
         }
       else
         {
@@ -4894,8 +5094,7 @@ flatpak_dir_update (FlatpakDir          *self,
       if (no_deploy)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY;
 
-      active_checksum = flatpak_dir_read_active (self, ref, NULL);
-      if (g_strcmp0 (active_checksum, latest_checksum) != 0)
+      if (g_strcmp0 (installed_commit, latest_checksum) != 0)
         {
           const char *installation = flatpak_dir_get_id (self);
 

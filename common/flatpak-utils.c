@@ -4411,6 +4411,93 @@ oci_layer_progress (guint64 downloaded_bytes,
                                 progress_data->progress_user_data);
 }
 
+gboolean
+flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
+                               FlatpakOciRegistry *registry,
+                               const char *digest,
+                               FlatpakOciPullProgress progress_cb,
+                               gpointer progress_user_data,
+                               GCancellable *cancellable,
+                               GError      **error)
+{
+  g_autoptr(OstreeMutableTree) archive_mtree = NULL;
+  g_autoptr(GFile) archive_root = NULL;
+  FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
+  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(FlatpakOciVersioned) versioned = NULL;
+  FlatpakOciManifest *manifest = NULL;
+  g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
+  g_autofree char *new_manifest_digest = NULL;
+  gsize versioned_size;
+  g_autoptr(FlatpakOciIndex) index = NULL;
+  int i;
+
+  if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, digest, NULL, NULL, cancellable, error))
+    return FALSE;
+
+  versioned = flatpak_oci_registry_load_versioned (dst_registry, digest, &versioned_size, cancellable, error);
+  if (versioned == NULL)
+    return FALSE;
+
+  if (!FLATPAK_IS_OCI_MANIFEST (versioned))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Image is not a manifest");
+      return FALSE;
+    }
+
+  manifest = FLATPAK_OCI_MANIFEST (versioned);
+
+  if (manifest->config.digest != NULL)
+    {
+      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, manifest->config.digest, NULL, NULL, cancellable, error))
+        return FALSE;
+    }
+
+  for (i = 0; manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
+      progress_data.total_size += layer->size;
+      progress_data.n_layers++;
+    }
+
+  if (progress_cb)
+    progress_cb (progress_data.total_size, 0,
+                 progress_data.n_layers, progress_data.pulled_layers,
+                 progress_user_data);
+
+  for (i = 0; manifest->layers[i] != NULL; i++)
+    {
+      FlatpakOciDescriptor *layer = manifest->layers[i];
+
+      if (!flatpak_oci_registry_mirror_blob (dst_registry, registry, layer->digest,
+                                             oci_layer_progress, &progress_data,
+                                             cancellable, error))
+        return FALSE;
+
+      progress_data.pulled_layers++;
+      progress_data.previous_layers_size += layer->size;
+    }
+
+
+  index = flatpak_oci_registry_load_index (dst_registry, NULL, NULL, NULL, NULL);
+  if (index == NULL)
+    index = flatpak_oci_index_new ();
+
+  manifest_desc = flatpak_oci_descriptor_new (versioned->mediatype, digest, versioned_size);
+
+  flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
+
+  flatpak_oci_index_add_manifest (index, manifest_desc);
+
+  if (!flatpak_oci_registry_save_index (dst_registry, index, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+
 char *
 flatpak_pull_from_oci (OstreeRepo   *repo,
                        FlatpakOciRegistry *registry,

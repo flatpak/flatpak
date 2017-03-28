@@ -97,6 +97,7 @@ FlatpakOciDescriptor * flatpak_oci_registry_store_json           (FlatpakOciRegi
                                                                   GError              **error);
 FlatpakOciVersioned *  flatpak_oci_registry_load_versioned       (FlatpakOciRegistry   *self,
                                                                   const char           *digest,
+                                                                  gsize                *out_size,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
 FlatpakOciLayerWriter *flatpak_oci_registry_write_layer          (FlatpakOciRegistry   *self,
