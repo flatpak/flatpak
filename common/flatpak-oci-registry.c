@@ -1217,3 +1217,83 @@ flatpak_oci_layer_writer_get_archive (FlatpakOciLayerWriter  *self)
 {
   return self->archive;
 }
+
+typedef struct {
+  int fd;
+  GChecksum *checksum;
+  char buffer[16*1024];
+} FlatpakArchiveReadWithChecksum;
+
+static int
+checksum_open_cb (struct archive *a, void *user_data)
+{
+  return ARCHIVE_OK;
+}
+
+
+static ssize_t
+checksum_read_cb (struct archive *a, void *user_data, const void **buff)
+{
+  FlatpakArchiveReadWithChecksum *data = user_data;
+  ssize_t bytes_read;
+
+  *buff = &data->buffer;
+  do
+    bytes_read = read (data->fd, &data->buffer, sizeof (data->buffer));
+  while (G_UNLIKELY (bytes_read == -1 && errno == EINTR));
+
+  if (bytes_read < 0)
+    {
+      archive_set_error (a, errno, "Read error on fd %d", data->fd);
+      return -1;
+    }
+
+  g_checksum_update (data->checksum, (guchar *)data->buffer, bytes_read);
+
+  return bytes_read;
+}
+
+static int64_t
+checksum_skip_cb (struct archive *a, void *user_data, int64_t request)
+{
+  FlatpakArchiveReadWithChecksum *data = user_data;
+  int64_t old_offset, new_offset;
+
+  if (((old_offset = lseek (data->fd, 0, SEEK_CUR)) >= 0) &&
+      ((new_offset = lseek (data->fd, request, SEEK_CUR)) >= 0))
+    return new_offset - old_offset;
+
+  archive_set_error (a, errno, "Error seeking");
+  return -1;
+}
+
+static int
+checksum_close_cb (struct archive *a, void *user_data)
+{
+  FlatpakArchiveReadWithChecksum *data = user_data;
+
+  g_free (data);
+
+  return ARCHIVE_OK;
+}
+
+gboolean
+flatpak_archive_read_open_fd_with_checksum (struct archive *a,
+                                            int fd,
+                                            GChecksum *checksum,
+                                            GError **error)
+{
+  FlatpakArchiveReadWithChecksum *data = g_new0 (FlatpakArchiveReadWithChecksum, 1);
+
+  data->fd = fd;
+  data->checksum = checksum;
+
+  if (archive_read_open2 (a, data,
+                          checksum_open_cb,
+                          checksum_read_cb,
+                          checksum_skip_cb,
+                          checksum_close_cb) != ARCHIVE_OK)
+    return propagate_libarchive_error (error, a);
+
+  return TRUE;
+}

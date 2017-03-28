@@ -110,4 +110,9 @@ gboolean        flatpak_oci_layer_writer_close       (FlatpakOciLayerWriter  *se
                                                       GCancellable          *cancellable,
                                                       GError               **error);
 
+gboolean flatpak_archive_read_open_fd_with_checksum (struct archive *a,
+                                                     int fd,
+                                                     GChecksum *checksum,
+                                                     GError **error);
+
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */
