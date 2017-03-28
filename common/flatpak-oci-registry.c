@@ -618,6 +618,21 @@ splice_update_checksum (GOutputStream  *out,
   return TRUE;
 }
 
+static char *
+get_digest_subpath (const char *digest,
+                    GError **error)
+{
+  g_autofree char *subpath = NULL;
+
+  if (!g_str_has_prefix (digest, "sha256:"))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Unsupported digest type %s", digest);
+      return NULL;
+    }
+
+  return g_strdup_printf ("blobs/sha256/%s", digest + strlen ("sha256:"));
+}
 
 static char *
 checksum_fd (int fd, GCancellable *cancellable, GError **error)
@@ -646,14 +661,9 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
 
   g_assert (self->valid);
 
-  if (!g_str_has_prefix (digest, "sha256:"))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Unsupported digest type %s", digest);
-      return -1;
-    }
-
-  subpath = g_strdup_printf ("blobs/sha256/%s", digest + strlen ("sha256:"));
+  subpath = get_digest_subpath (digest, error);
+  if (subpath == NULL)
+    return -1;
 
   if (self->dfd != -1)
     {
@@ -729,14 +739,9 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
 
   g_assert (self->valid);
 
-  if (!g_str_has_prefix (digest, "sha256:"))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Unsupported digest type %s", digest);
-      return NULL;
-    }
-
-  subpath = g_strdup_printf ("blobs/sha256/%s", digest + strlen ("sha256:"));
+  subpath = get_digest_subpath (digest, error);
+  if (subpath == NULL)
+    return NULL;
 
   bytes = flatpak_oci_registry_load_file (self, subpath, NULL, NULL, cancellable, error);
 
