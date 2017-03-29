@@ -2194,7 +2194,6 @@ static gboolean
 flatpak_dir_pull_oci (FlatpakDir          *self,
                       const char          *remote,
                       const char          *ref,
-                      const char          *opt_rev,
                       OstreeRepo          *repo,
                       FlatpakPullFlags     flatpak_flags,
                       OstreeRepoPullFlags  flags,
@@ -2213,36 +2212,31 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autoptr(GVariant) summary_element = NULL;
   g_autofree char *signature_digest = NULL;
   g_autofree char *latest_alt_commit = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autofree char *latest_rev = NULL;
   g_autofree char *latest_commit = flatpak_dir_read_latest (self, remote, ref,
                                                             &latest_alt_commit,
                                                             cancellable, NULL);
 
+  /* This doesn't support specifying a specific digest, because that can't work
+     with OCI signatures. We need to get that from the index */
   if (!ostree_repo_remote_get_url (self->repo,
                                    remote,
                                    &oci_uri,
                                    error))
     return FALSE;
 
-  if (opt_rev != NULL)
-    {
-      oci_digest = g_strconcat ("sha256:", opt_rev, NULL);
-    }
-  else
-    {
-      g_autoptr(GVariant) metadata = NULL;
-      /* We use the summary so that we can reuse any cached json */
-      g_autofree char *latest_rev =
-        flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element,
-                                             cancellable, error);
-      if (latest_rev == NULL)
-        return FALSE;
+  /* We use the summary so that we can reuse any cached json */
+  latest_rev =
+    flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element,
+                                         cancellable, error);
+  if (latest_rev == NULL)
+    return FALSE;
 
-      metadata = g_variant_get_child_value (summary_element, 2);
+  metadata = g_variant_get_child_value (summary_element, 2);
+  g_variant_lookup (metadata, "xa.oci-signature", "s", &signature_digest);
 
-      g_variant_lookup (metadata, "xa.oci-signature", "s", &signature_digest);
-
-      oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
-  }
+  oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
 
   /* Short circuit if we've already got this commit */
   if (latest_alt_commit != NULL && strcmp (oci_digest + strlen ("sha256:"), latest_alt_commit) == 0)
@@ -2323,7 +2317,7 @@ flatpak_dir_pull (FlatpakDir          *self,
     return FALSE;
 
   if (flatpak_dir_get_remote_oci (self, repository))
-    return flatpak_dir_pull_oci (self, repository, ref, opt_rev, repo, flatpak_flags,
+    return flatpak_dir_pull_oci (self, repository, ref, repo, flatpak_flags,
                                  flags, progress, cancellable, error);
 
   if (!ostree_repo_remote_get_url (self->repo,
