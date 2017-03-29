@@ -117,7 +117,8 @@ char **  flatpak_summary_match_subrefs (GVariant *summary,
                                         const char *ref);
 gboolean flatpak_summary_lookup_ref (GVariant   *summary,
                                      const char *ref,
-                                     char      **out_checksum);
+                                     char      **out_checksum,
+                                     GVariant **out_variant);
 
 gboolean flatpak_has_name_prefix (const char *string,
                                   const char *name);
@@ -343,7 +344,9 @@ char * flatpak_pull_from_oci (OstreeRepo   *repo,
                               FlatpakOciRegistry *registry,
                               const char *digest,
                               FlatpakOciManifest *manifest,
+                              const char *remote,
                               const char *ref,
+                              const char *signature_digest,
                               FlatpakOciPullProgress progress_cb,
                               gpointer progress_data,
                               GCancellable *cancellable,
@@ -352,6 +355,7 @@ char * flatpak_pull_from_oci (OstreeRepo   *repo,
 gboolean flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
                                         FlatpakOciRegistry *registry,
                                         const char *digest,
+                                        const char *signature_digest,
                                         FlatpakOciPullProgress progress_cb,
                                         gpointer progress_data,
                                         GCancellable *cancellable,

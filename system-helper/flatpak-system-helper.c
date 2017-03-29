@@ -229,8 +229,8 @@ handle_deploy (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakOciIndex) index = NULL;
       const FlatpakOciManifestDescriptor *desc;
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
-      g_autofree char *full_ref = NULL;
       g_autofree char *checksum = NULL;
+      const char *signature_digest;
 
       registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
       if (registry == NULL)
@@ -256,6 +256,8 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
+      signature_digest = g_hash_table_lookup (desc->parent.annotations, "org.flatpak.signature-digest");
+
       versioned = flatpak_oci_registry_load_versioned (registry, desc->parent.digest, NULL,
                                                        NULL, &error);
       if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
@@ -265,14 +267,12 @@ handle_deploy (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      full_ref = g_strdup_printf ("%s:%s", arg_origin, arg_ref);
-
       checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
-                                        full_ref, NULL, NULL, NULL, &error);
+                                        arg_origin, arg_ref, signature_digest, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't pull ref %s from child OCI registry index: %s", arg_ref);
+                                                 "Can't pull ref %s from child OCI registry index: %s", arg_ref, error->message);
           return TRUE;
         }
     }
@@ -414,8 +414,8 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       g_autoptr(FlatpakOciIndex) index = NULL;
       const FlatpakOciManifestDescriptor *desc;
       g_autoptr(FlatpakOciVersioned) versioned = NULL;
-      g_autofree char *full_ref = NULL;
       g_autofree char *checksum = NULL;
+      const char *signature_digest;
 
       registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
       if (registry == NULL)
@@ -441,6 +441,8 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
+      signature_digest = g_hash_table_lookup (desc->parent.annotations, "org.flatpak.signature-digest");
+
       versioned = flatpak_oci_registry_load_versioned (registry, desc->parent.digest, NULL,
                                                        NULL, &error);
       if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
@@ -450,14 +452,12 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
           return TRUE;
         }
 
-      full_ref = g_strdup_printf ("%s:%s", arg_origin, branch);
-
       checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
-                                        full_ref, NULL, NULL, NULL, &error);
+                                        arg_origin, branch, signature_digest, NULL, NULL, NULL, &error);
       if (checksum == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't pull ref %s from child OCI registry index: %s", branch);
+                                                 "Can't pull ref %s from child OCI registry index: %s", branch, error->message);
           return TRUE;
         }
     }

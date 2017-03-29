@@ -117,8 +117,13 @@ gboolean flatpak_archive_read_open_fd_with_checksum (struct archive *a,
                                                      GError **error);
 
 GBytes *flatpak_oci_sign_data (GBytes *data,
-                               const gchar **key_ids,
+                               const gchar **okey_ids,
                                const char *homedir,
                                GError **error);
+
+FlatpakOciSignature *flatpak_oci_verify_signature (OstreeRepo *repo,
+                                                   const char *remote_name,
+                                                   GBytes *signature,
+                                                   GError **error);
 
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */

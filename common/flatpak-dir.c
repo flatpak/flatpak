@@ -2046,6 +2046,7 @@ static char *
 flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
                                      const char          *remote,
                                      const          char *ref,
+                                     GVariant           **out_variant,
                                      GCancellable        *cancellable,
                                      GError             **error)
 {
@@ -2060,7 +2061,7 @@ flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
 
   summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                           summary_bytes, FALSE));
-  if (!flatpak_summary_lookup_ref (summary, ref, &latest_rev))
+  if (!flatpak_summary_lookup_ref (summary, ref, &latest_rev, out_variant))
     {
       flatpak_fail (error, "No such ref '%s' in remote %s", ref, remote);
       return NULL;
@@ -2130,6 +2131,9 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   g_autofree char *latest_rev = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  g_autoptr(GVariant) summary_element = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autofree char *signature_digest = NULL;
   gboolean res;
 
   if (!ostree_repo_remote_get_url (self->repo,
@@ -2139,10 +2143,13 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
     return FALSE;
 
   /* We use the summary so that we can reuse any cached json */
-  latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote, ref,
+  latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element,
                                                     cancellable, error);
   if (latest_rev == NULL)
     return FALSE;
+
+  metadata = g_variant_get_child_value (summary_element, 2);
+  g_variant_lookup (metadata, "xa.oci-signature", "s", &signature_digest);
 
   if (skip_if_current_is != NULL && strcmp (latest_rev, skip_if_current_is) == 0)
     {
@@ -2171,7 +2178,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   g_debug ("Mirroring OCI image %s\n", oci_digest);
 
-  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_digest, oci_pull_progress_cb,
+  res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_digest, signature_digest, oci_pull_progress_cb,
                                        progress, cancellable, error);
 
   if (progress)
@@ -2203,6 +2210,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autofree char *checksum = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
+  g_autoptr(GVariant) summary_element = NULL;
+  g_autofree char *signature_digest = NULL;
   g_autofree char *latest_alt_commit = NULL;
   g_autofree char *latest_commit = flatpak_dir_read_latest (self, remote, ref,
                                                             &latest_alt_commit,
@@ -2220,12 +2229,17 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
     }
   else
     {
+      g_autoptr(GVariant) metadata = NULL;
       /* We use the summary so that we can reuse any cached json */
       g_autofree char *latest_rev =
-        flatpak_dir_lookup_ref_from_summary (self, remote, ref,
+        flatpak_dir_lookup_ref_from_summary (self, remote, ref, &summary_element,
                                              cancellable, error);
       if (latest_rev == NULL)
         return FALSE;
+
+      metadata = g_variant_get_child_value (summary_element, 2);
+
+      g_variant_lookup (metadata, "xa.oci-signature", "s", &signature_digest);
 
       oci_digest = g_strconcat ("sha256:", latest_rev, NULL);
   }
@@ -2270,7 +2284,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_debug ("Pulling OCI image %s\n", oci_digest);
 
   checksum = flatpak_pull_from_oci (repo, registry, oci_digest, FLATPAK_OCI_MANIFEST (versioned),
-                                    full_ref, oci_pull_progress_cb, progress, cancellable, error);
+                                    remote, ref, signature_digest, oci_pull_progress_cb, progress, cancellable, error);
 
   if (progress)
     ostree_async_progress_finish (progress);
@@ -2328,7 +2342,7 @@ flatpak_dir_pull (FlatpakDir          *self,
     rev = opt_rev;
   else
     {
-      rev = flatpak_dir_lookup_ref_from_summary (self, repository, ref, cancellable, error);
+      rev = flatpak_dir_lookup_ref_from_summary (self, repository, ref, NULL, cancellable, error);
       if (rev == NULL)
         return FALSE;
     }
@@ -2548,7 +2562,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
   if (!flatpak_summary_lookup_ref (summary,
                                    ref,
-                                   &checksum))
+                                   &checksum, NULL))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                    _("Can't find %s in remote %s"), ref, remote_name);
@@ -4980,7 +4994,7 @@ flatpak_dir_update (FlatpakDir          *self,
 
           if (flatpak_summary_lookup_ref (summary,
                                           ref,
-                                          &latest_rev))
+                                          &latest_rev, NULL))
             {
               if (g_strcmp0 (latest_rev, installed_commit) == 0 ||
                   g_strcmp0 (latest_rev, installed_alt_id) == 0)
@@ -5999,7 +6013,9 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
       guint64 download_size = 0;
       const char *installed_size_str;
       const char *download_size_str;
+      const char *signature_digest;
       const char *metadata_contents = NULL;
+      g_autoptr(GVariantBuilder) ref_metadata_builder = NULL;
 
       ref = flatpak_oci_manifest_descriptor_get_ref (m);
       if (ref == NULL)
@@ -6025,13 +6041,18 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
       if (download_size_str)
         download_size = g_ascii_strtoull (download_size_str, NULL, 10);
 
+      ref_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+
+      signature_digest = g_hash_table_lookup (d->annotations, "org.flatpak.signature-digest");
+      if (signature_digest)
+        g_variant_builder_add (ref_metadata_builder, "{sv}", "xa.oci-signature",
+                               g_variant_new_string (signature_digest));
 
       g_variant_builder_add_value (refs_builder,
                                    g_variant_new ("(s(t@ay@a{sv}))", ref,
                                                   0,
                                                   ostree_checksum_to_bytes_v (fake_commit),
-                                                  flatpak_gvariant_new_empty_string_dict ()));
-
+                                                  g_variant_builder_end (ref_metadata_builder)));
       g_variant_builder_add (ref_data_builder, "{s(tts)}",
                              ref,
                              GUINT64_TO_BE (installed_size),
@@ -6145,7 +6166,7 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
   summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                           summary_bytes, FALSE));
 
-  return flatpak_summary_lookup_ref (summary, ref, NULL);
+  return flatpak_summary_lookup_ref (summary, ref, NULL, NULL);
 }
 
 /* This duplicates ostree_repo_list_refs so it can use flatpak_dir_remote_fetch_summary
@@ -7951,9 +7972,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
 
               extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
 
-              if (flatpak_summary_lookup_ref (summary,
-                                              extension_ref,
-                                              &checksum))
+              if (flatpak_summary_lookup_ref (summary, extension_ref, &checksum, NULL))
                 {
                   add_related (self, related, extension, extension_ref, checksum, no_autodownload, download_if, autodelete);
                 }
@@ -7963,9 +7982,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                   int j;
                   for (j = 0; refs[j] != NULL; j++)
                     {
-                      if (flatpak_summary_lookup_ref (summary,
-                                                      refs[j],
-                                                      &checksum))
+                      if (flatpak_summary_lookup_ref (summary, refs[j], &checksum, NULL))
                         add_related (self, related, extension, refs[j], checksum, no_autodownload, download_if, autodelete);
                     }
                 }
