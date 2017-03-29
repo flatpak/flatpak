@@ -44,6 +44,8 @@ typedef enum {
 typedef enum {
   FLATPAK_JSON_PROP_FLAGS_NONE = 0,
   FLATPAK_JSON_PROP_FLAGS_OPTIONAL = 1<<0,
+  FLATPAK_JSON_PROP_FLAGS_STRICT = 1<<1,
+  FLATPAK_JSON_PROP_FLAGS_MANDATORY = 1<<2,
 } FlatpakJsonPropFlags;
 
 
@@ -58,6 +60,8 @@ struct _FlatpakJsonProp {
 
 #define FLATPAK_JSON_STRING_PROP(_struct, _field, _name) \
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRING }
+#define FLATPAK_JSON_MANDATORY_STRING_PROP(_struct, _field, _name) \
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRING, 0, 0, FLATPAK_JSON_PROP_FLAGS_MANDATORY }
 #define FLATPAK_JSON_INT64_PROP(_struct, _field, _name) \
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_INT64 }
 #define FLATPAK_JSON_BOOL_PROP(_struct, _field, _name) \
@@ -72,6 +76,10 @@ struct _FlatpakJsonProp {
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer)_props}
 #define FLATPAK_JSON_OPT_STRUCT_PROP(_struct, _field, _name, _props) \
   { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer)_props, 0, FLATPAK_JSON_PROP_FLAGS_OPTIONAL}
+#define FLATPAK_JSON_STRICT_STRUCT_PROP(_struct, _field, _name, _props) \
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer)_props, 0, FLATPAK_JSON_PROP_FLAGS_STRICT}
+#define FLATPAK_JSON_MANDATORY_STRICT_STRUCT_PROP(_struct, _field, _name, _props) \
+  { _name, G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_STRUCT, (gpointer)_props, 0, FLATPAK_JSON_PROP_FLAGS_STRICT | FLATPAK_JSON_PROP_FLAGS_MANDATORY}
 #define FLATPAK_JSON_PARENT_PROP(_struct, _field, _props) \
   { "parent", G_STRUCT_OFFSET (_struct, _field), FLATPAK_JSON_PROP_TYPE_PARENT, (gpointer)_props}
 #define FLATPAK_JSON_STRUCTV_PROP(_struct, _field, _name, _props) \
