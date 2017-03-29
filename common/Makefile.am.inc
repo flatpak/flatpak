@@ -65,6 +65,7 @@ libflatpak_common_la_CFLAGS = \
 	$(JSON_CFLAGS) \
 	$(XAUTH_CFLAGS) \
 	$(LIBSECCOMP_CFLAGS) \
+	$(INTERNAL_GPGME_CFLAGS) \
 	-I$(srcdir)/dbus-proxy \
 	$(NULL)
-libflatpak_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS)
+libflatpak_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS) $(INTERNAL_GPGME_LIBS)

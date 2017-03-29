@@ -116,4 +116,9 @@ gboolean flatpak_archive_read_open_fd_with_checksum (struct archive *a,
                                                      GChecksum *checksum,
                                                      GError **error);
 
+GBytes *flatpak_oci_sign_data (GBytes *data,
+                               const gchar **key_ids,
+                               const char *homedir,
+                               GError **error);
+
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */

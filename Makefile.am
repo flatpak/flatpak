@@ -68,6 +68,10 @@ dist_triggers_SCRIPTS = \
 	triggers/desktop-database.trigger \
 	$(NULL)
 
+# This canonicalizes the PKG_CHECK_MODULES or AM_PATH_GPGME results
+INTERNAL_GPGME_CFLAGS = $(DEP_GPGME_CFLAGS) $(GPGME_PTHREAD_CFLAGS)
+INTERNAL_GPGME_LIBS = $(DEP_GPGME_LIBS) $(GPGME_PTHREAD_LIBS)
+
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES += libglnx.la
 libglnx_srcpath := $(srcdir)/libglnx
