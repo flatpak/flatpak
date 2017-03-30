@@ -50,6 +50,7 @@ man1 = \
 	$(NULL)
 
 man5 = \
+	flatpak-manifest.5		\
 	flatpak-metadata.5		\
 	flatpak-flatpakrepo.5		\
 	flatpak-flatpakref.5		\
