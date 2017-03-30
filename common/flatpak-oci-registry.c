@@ -635,8 +635,6 @@ static char *
 get_digest_subpath (const char *digest,
                     GError **error)
 {
-  g_autofree char *subpath = NULL;
-
   if (!g_str_has_prefix (digest, "sha256:"))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
@@ -751,7 +749,6 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 {
   g_autofree char *subpath = NULL;
   glnx_fd_close int fd = -1;
-  g_autoptr(SoupURI) baseuri = NULL;
   g_autofree char *tmp_path = NULL;
   g_autoptr(GOutputStream) out_stream = NULL;
   struct stat stbuf;
@@ -1605,7 +1602,6 @@ flatpak_oci_sign_data (GBytes *data,
   g_autofree char *tmp_path = NULL;
   g_autoptr(GOutputStream) tmp_signature_output = NULL;
   flatpak_auto_gpgme_ctx gpgme_ctx_t context = NULL;
-  g_autoptr(GBytes) ret_signature = NULL;
   gpgme_error_t err;
   flatpak_auto_gpgme_data gpgme_data_t commit_buffer = NULL;
   flatpak_auto_gpgme_data gpgme_data_t signature_buffer = NULL;
