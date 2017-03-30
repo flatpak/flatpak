@@ -252,7 +252,7 @@ handle_deploy (FlatpakSystemHelper   *object,
       if (desc == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't find ref %s in child OCI registry index: %s", arg_ref);
+                                                 "Can't find ref %s in child OCI registry index", arg_ref);
           return TRUE;
         }
 
@@ -437,7 +437,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       if (desc == NULL)
         {
           g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                                 "Can't find ref %s in child OCI registry index: %s", branch);
+                                                 "Can't find ref %s in child OCI registry index", branch);
           return TRUE;
         }
 

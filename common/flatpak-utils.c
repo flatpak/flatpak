@@ -4424,15 +4424,10 @@ flatpak_mirror_image_from_oci (FlatpakOciRegistry *dst_registry,
                                GCancellable *cancellable,
                                GError      **error)
 {
-  g_autoptr(OstreeMutableTree) archive_mtree = NULL;
-  g_autoptr(GFile) archive_root = NULL;
   FlatpakOciPullProgressData progress_data = { progress_cb, progress_user_data };
-  g_autoptr(GVariantBuilder) metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
-  g_autoptr(GVariant) metadata = NULL;
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
   FlatpakOciManifest *manifest = NULL;
   g_autoptr(FlatpakOciDescriptor) manifest_desc = NULL;
-  g_autofree char *new_manifest_digest = NULL;
   gsize versioned_size;
   g_autoptr(FlatpakOciIndex) index = NULL;
   int i;

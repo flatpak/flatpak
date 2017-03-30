@@ -1662,12 +1662,10 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       if (is_oci)
         {
           g_autoptr(FlatpakOciRegistry) registry = NULL;
-          g_autoptr(GFile) registry_file = NULL;
           g_autoptr(GError) local_error = NULL;
           g_autofree char *latest_alt_commit = NULL;
-          g_autofree char *latest_commit = flatpak_dir_read_latest (self, remote, branch,
-                                                                    &latest_alt_commit,
-                                                                    cancellable, NULL);
+          G_GNUC_UNUSED g_autofree char *latest_commit =
+            flatpak_dir_read_latest (self, remote, branch, &latest_alt_commit, cancellable, NULL);
 
           registry = flatpak_dir_create_system_child_oci_registry (self, &child_repo_lock, error);
           if (registry == NULL)
@@ -2127,7 +2125,6 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autofree char *oci_uri = NULL;
   g_autofree char *oci_digest = NULL;
-  g_autofree char *full_ref = NULL;
   g_autofree char *latest_rev = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
@@ -2203,9 +2200,9 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 {
   g_autoptr(FlatpakOciRegistry) registry = NULL;
   g_autoptr(FlatpakOciVersioned) versioned = NULL;
+  g_autofree char *full_ref = NULL;
   g_autofree char *oci_uri = NULL;
   g_autofree char *oci_digest = NULL;
-  g_autofree char *full_ref = NULL;
   g_autofree char *checksum = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
@@ -2214,9 +2211,8 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   g_autofree char *latest_alt_commit = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autofree char *latest_rev = NULL;
-  g_autofree char *latest_commit = flatpak_dir_read_latest (self, remote, ref,
-                                                            &latest_alt_commit,
-                                                            cancellable, NULL);
+  G_GNUC_UNUSED g_autofree char *latest_commit =
+    flatpak_dir_read_latest (self, remote, ref, &latest_alt_commit, cancellable, NULL);
 
   /* This doesn't support specifying a specific digest, because that can't work
      with OCI signatures. We need to get that from the index */
@@ -2307,8 +2303,6 @@ flatpak_dir_pull (FlatpakDir          *self,
   gboolean ret = FALSE;
   const char *rev;
   g_autofree char *url = NULL;
-  g_autoptr(GBytes) summary_bytes = NULL;
-  g_autofree char *latest_rev = NULL;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
@@ -4427,11 +4421,8 @@ flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
   g_autoptr(GFile) cache_dir = NULL;
   g_autoptr(GFile) repo_dir = NULL;
   g_autofree char *repo_url = NULL;
-  g_autoptr(GFile) repo_dir_config = NULL;
-  g_autoptr(OstreeRepo) repo = NULL;
   g_autofree char *tmpdir_name = NULL;
   g_autoptr(FlatpakOciRegistry) new_registry = NULL;
-  g_autoptr(GKeyFile) config = NULL;
 
   g_assert (!self->user);
 
