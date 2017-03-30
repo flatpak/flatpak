@@ -1758,7 +1758,10 @@ appstream_compose (GFile   *app_dir,
   va_end (ap);
 
   if (!builder_maybe_host_spawnv (NULL, NULL, &local_error, (const char * const *)args->pdata))
-    g_print ("WARNING: appstream-compose failed: %s\n", local_error->message);
+    {
+      g_print ("ERROR: appstream-compose failed: %s\n", local_error->message);
+      return FALSE;
+    }
 
   return TRUE;
 }
