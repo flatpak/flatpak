@@ -1398,9 +1398,13 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
 
       if (!g_file_query_exists (repodir, cancellable))
         {
-          if (!ostree_repo_create (repo,
-                                   OSTREE_REPO_MODE_BARE_USER,
-                                   cancellable, error))
+#if OSTREE_CHECK_VERSION(2017, 3)
+          OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
+#else
+          OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER;
+#endif
+
+          if (!ostree_repo_create (repo, mode, cancellable, error))
             {
               flatpak_rm_rf (repodir, cancellable, NULL);
               goto out;
@@ -4492,9 +4496,13 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   repo_dir_config = g_file_get_child (repo_dir, "config");
   if (!g_file_query_exists (repo_dir_config, NULL))
     {
-      if (!ostree_repo_create (new_repo,
-                               OSTREE_REPO_MODE_BARE_USER,
-                               NULL, error))
+#if OSTREE_CHECK_VERSION(2017, 3)
+      OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
+#else
+      OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER;
+#endif
+
+      if (!ostree_repo_create (new_repo, mode, NULL, error))
         return NULL;
     }
   else
