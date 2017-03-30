@@ -38,6 +38,7 @@ packages:
     - elfutils
     - systemd
     - ostree
+    - gpgme-devel
     - /usr/bin/xmlto
     - /usr/bin/xsltproc
     - redhat-rpm-config
