@@ -193,6 +193,7 @@ typedef struct
 {
   gsize    size;
   gsize    pos;
+  int      refcount;
   gboolean send_credentials;
   GList   *control_messages;
 
@@ -313,11 +314,27 @@ static void start_reading (ProxySide *side);
 static void stop_reading (ProxySide *side);
 
 static void
-buffer_free (Buffer *buffer)
+buffer_unref (Buffer *buffer)
 {
-  g_list_free_full (buffer->control_messages, g_object_unref);
-  g_free (buffer);
+  g_assert (buffer->refcount > 0);
+  buffer->refcount--;
+
+  if (buffer->refcount == 0)
+    {
+      g_list_free_full (buffer->control_messages, g_object_unref);
+      g_free (buffer);
+    }
 }
+
+static Buffer *
+buffer_ref (Buffer *buffer)
+{
+  g_assert (buffer->refcount > 0);
+  buffer->refcount++;
+  return buffer;
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (Buffer, buffer_unref)
 
 static void
 free_side (ProxySide *side)
@@ -325,7 +342,7 @@ free_side (ProxySide *side)
   g_clear_object (&side->connection);
   g_clear_pointer (&side->extra_input_data, g_bytes_unref);
 
-  g_list_free_full (side->buffers, (GDestroyNotify) buffer_free);
+  g_list_free_full (side->buffers, (GDestroyNotify) buffer_unref);
   g_list_free_full (side->control_messages, (GDestroyNotify) g_object_unref);
 
   if (side->in_source)
@@ -538,6 +555,7 @@ buffer_new (gsize size, Buffer *old)
 
   buffer->control_messages = NULL;
   buffer->size = size;
+  buffer->refcount = 1;
 
   if (old)
     {
@@ -763,7 +781,7 @@ side_out_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
           if (buffer->pos == buffer->size)
             {
               side->buffers = g_list_delete_link (side->buffers, side->buffers);
-              buffer_free (buffer);
+              buffer_unref (buffer);
             }
         }
       else
@@ -1644,7 +1662,7 @@ update_socket_messages (ProxySide *side, Buffer *buffer, Header *header)
         {
           g_warning ("Not enough fds for message");
           side_closed (side);
-          buffer_free (buffer);
+          buffer_unref (buffer);
           return FALSE;
         }
     }
@@ -1803,7 +1821,7 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
         {
           g_warning ("Invalid message header format");
           side_closed (side);
-          buffer_free (buffer);
+          buffer_unref (buffer);
           return;
         }
 
@@ -1816,7 +1834,7 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
         {
           g_warning ("Invalid client serial");
           side_closed (side);
-          buffer_free (buffer);
+          buffer_unref (buffer);
           return;
         }
       client->last_serial = header.serial;
@@ -1841,7 +1859,7 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
         case HANDLE_FILTER_GET_OWNER_REPLY:
           if (!validate_arg0_name (client, buffer, FLATPAK_POLICY_SEE, NULL))
             {
-              g_clear_pointer (&buffer, buffer_free);
+              g_clear_pointer (&buffer, buffer_unref);
               if (handler == HANDLE_FILTER_GET_OWNER_REPLY)
                 buffer = get_error_for_roundtrip (client, &header,
                                                   "org.freedesktop.DBus.Error.NameHasNoOwner");
@@ -1884,7 +1902,7 @@ handle_pass:
 
         case HANDLE_HIDE:
 handle_hide:
-          g_clear_pointer (&buffer, buffer_free);
+          g_clear_pointer (&buffer, buffer_unref);
 
           if (client_message_generates_reply (&header))
             {
@@ -1912,7 +1930,7 @@ handle_hide:
         default:
         case HANDLE_DENY:
 handle_deny:
-          g_clear_pointer (&buffer, buffer_free);
+          g_clear_pointer (&buffer, buffer_unref);
 
           if (client_message_generates_reply (&header))
             {
@@ -1957,7 +1975,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
       if (!parse_header (buffer, &header, 0, client->serial_offset, client->hello_serial))
         {
           g_warning ("Invalid message header format");
-          buffer_free (buffer);
+          buffer_unref (buffer);
           side_closed (side);
           return;
         }
@@ -1977,7 +1995,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
             {
               if (client->proxy->log_messages)
                 g_print ("*Unexpected reply*\n");
-              buffer_free (buffer);
+              buffer_unref (buffer);
               return;
             }
 
@@ -2003,7 +2021,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
                 g_print ("*REWRITTEN*\n");
 
               g_dbus_message_set_serial (rewritten, header.serial);
-              g_clear_pointer (&buffer, buffer_free);
+              g_clear_pointer (&buffer, buffer_unref);
               buffer = message_to_buffer (rewritten);
 
               g_hash_table_remove (client->rewrite_reply,
@@ -2020,7 +2038,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
               /* Don't forward fake replies to the app */
               if (client->proxy->log_messages)
                 g_print ("*SKIPPED*\n");
-              g_clear_pointer (&buffer, buffer_free);
+              g_clear_pointer (&buffer, buffer_unref);
 
               /* Start reading the clients requests now that we are done with the names */
               start_reading (&client->client_side);
@@ -2045,14 +2063,14 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
                 /* Don't forward fake replies to the app */
                 if (client->proxy->log_messages)
                   g_print ("*SKIPPED*\n");
-                g_clear_pointer (&buffer, buffer_free);
+                g_clear_pointer (&buffer, buffer_unref);
                 break;
               }
 
             case EXPECTED_REPLY_FILTER:
               if (client->proxy->log_messages)
                 g_print ("*SKIPPED*\n");
-              g_clear_pointer (&buffer, buffer_free);
+              g_clear_pointer (&buffer, buffer_unref);
               break;
 
             case EXPECTED_REPLY_LIST_NAMES:
@@ -2063,7 +2081,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
                   Buffer *filtered_buffer;
 
                   filtered_buffer = filter_names_list (client, buffer);
-                  g_clear_pointer (&buffer, buffer_free);
+                  g_clear_pointer (&buffer, buffer_unref);
                   buffer = filtered_buffer;
                 }
 
@@ -2085,14 +2103,14 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
             {
               if (client->proxy->log_messages)
                 g_print ("*Invalid reply*\n");
-              g_clear_pointer (&buffer, buffer_free);
+              g_clear_pointer (&buffer, buffer_unref);
             }
 
           /* We filter all NameOwnerChanged signal according to the policy */
 	  if (message_is_name_owner_changed (client, &header))
 	    {
 	      if (should_filter_name_owner_changed (client, buffer))
-		g_clear_pointer (&buffer, buffer_free);
+		g_clear_pointer (&buffer, buffer_unref);
 	    }
 	}
 
@@ -2104,7 +2122,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
             {
               if (client->proxy->log_messages)
                 g_print ("*FILTERED IN*\n");
-              g_clear_pointer (&buffer, buffer_free);
+              g_clear_pointer (&buffer, buffer_unref);
             }
         }
 
@@ -2240,7 +2258,7 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
             }
           else
             {
-              buffer_free (buffer);
+              buffer_unref (buffer);
             }
         }
       else if (buffer->pos == buffer->size)
