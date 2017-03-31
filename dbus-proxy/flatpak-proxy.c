@@ -1487,7 +1487,8 @@ static char *
 get_arg0_string (Buffer *buffer)
 {
   GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
-  GVariant *body, *arg0;
+  GVariant *body;
+  g_autoptr(GVariant) arg0 = NULL;
   char *name = NULL;
 
   if (message != NULL &&
