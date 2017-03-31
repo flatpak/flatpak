@@ -2022,7 +2022,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
                  further communications to our own unique id. */
               if (header->type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                 {
-                  char *my_id = get_arg0_string (buffer);
+                  g_autofree char *my_id = get_arg0_string (buffer);
                   flatpak_proxy_client_update_unique_id_policy (client, my_id, FLATPAK_POLICY_TALK);
                   break;
                 }
@@ -2069,9 +2069,8 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
 
                 if (header->type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                   {
-                    char *owner = get_arg0_string (buffer);
+                    g_autofree char *owner = get_arg0_string (buffer);
                     flatpak_proxy_client_update_unique_id_policy_from_name (client, owner, requested_name);
-                    g_free (owner);
                   }
 
                 g_hash_table_remove (client->get_owner_reply, GINT_TO_POINTER (header->reply_serial));
