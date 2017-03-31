@@ -203,6 +203,7 @@ typedef struct
 
 typedef struct
 {
+  Buffer     *buffer;
   gboolean    big_endian;
   guchar      type;
   guchar      flags;
@@ -219,6 +220,9 @@ typedef struct
   guint32     reply_serial;
   guint32     unix_fds;
 } Header;
+
+static void header_free (Header *header);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (Header, header_free)
 
 typedef struct
 {
@@ -925,29 +929,38 @@ get_string (Buffer *buffer, Header *header, guint32 *offset, guint32 end_offset)
   return str;
 }
 
-static gboolean
-parse_header (Buffer *buffer, Header *header, guint32 serial_offset, guint32 reply_serial_offset, guint32 hello_serial)
+static void
+header_free (Header *header)
+{
+  if (header->buffer)
+    buffer_unref (header->buffer);
+  g_free (header);
+}
+
+static Header *
+parse_header (Buffer *buffer, guint32 serial_offset, guint32 reply_serial_offset, guint32 hello_serial)
 {
   guint32 array_len, header_len;
   guint32 offset, end_offset;
   guint8 header_type;
   guint32 reply_serial_pos = 0;
   const char *signature;
+  g_autoptr(Header) header = g_new0 (Header, 1);
 
-  memset (header, 0, sizeof (Header));
+  header->buffer = buffer_ref (buffer);
 
   if (buffer->size < 16)
-    return FALSE;
+    return NULL;
 
   if (buffer->data[3] != 1) /* Protocol version */
-    return FALSE;
+    return NULL;
 
   if (buffer->data[0] == 'B')
     header->big_endian = TRUE;
   else if (buffer->data[0] == 'l')
     header->big_endian = FALSE;
   else
-    return FALSE;
+    return NULL;
 
   header->type = buffer->data[1];
   header->flags = buffer->data[2];
@@ -956,14 +969,14 @@ parse_header (Buffer *buffer, Header *header, guint32 serial_offset, guint32 rep
   header->serial = read_uint32 (header, &buffer->data[8]);
 
   if (header->serial == 0)
-    return FALSE;
+    return NULL;
 
   array_len = read_uint32 (header, &buffer->data[12]);
 
   header_len = align_by_8 (12 + 4 + array_len);
   g_assert (buffer->size >= header_len); /* We should have verified this when reading in the message */
   if (header_len > buffer->size)
-    return FALSE;
+    return NULL;
 
   offset = 12 + 4;
   end_offset = offset + array_len;
@@ -972,56 +985,56 @@ parse_header (Buffer *buffer, Header *header, guint32 serial_offset, guint32 rep
     {
       offset = align_by_8 (offset); /* Structs must be 8 byte aligned */
       if (offset >= end_offset)
-        return FALSE;
+        return NULL;
 
       header_type = buffer->data[offset++];
       if (offset >= end_offset)
-        return FALSE;
+        return NULL;
 
       signature = get_signature (buffer, &offset, end_offset);
       if (signature == NULL)
-        return FALSE;
+        return NULL;
 
       switch (header_type)
         {
         case G_DBUS_MESSAGE_HEADER_FIELD_INVALID:
-          return FALSE;
+          return NULL;
 
         case G_DBUS_MESSAGE_HEADER_FIELD_PATH:
           if (strcmp (signature, "o") != 0)
-            return FALSE;
+            return NULL;
           header->path = get_string (buffer, header, &offset, end_offset);
           if (header->path == NULL)
-            return FALSE;
+            return NULL;
           break;
 
         case G_DBUS_MESSAGE_HEADER_FIELD_INTERFACE:
           if (strcmp (signature, "s") != 0)
-            return FALSE;
+            return NULL;
           header->interface = get_string (buffer, header, &offset, end_offset);
           if (header->interface == NULL)
-            return FALSE;
+            return NULL;
           break;
 
         case G_DBUS_MESSAGE_HEADER_FIELD_MEMBER:
           if (strcmp (signature, "s") != 0)
-            return FALSE;
+            return NULL;
           header->member = get_string (buffer, header, &offset, end_offset);
           if (header->member == NULL)
-            return FALSE;
+            return NULL;
           break;
 
         case G_DBUS_MESSAGE_HEADER_FIELD_ERROR_NAME:
           if (strcmp (signature, "s") != 0)
-            return FALSE;
+            return NULL;
           header->error_name = get_string (buffer, header, &offset, end_offset);
           if (header->error_name == NULL)
-            return FALSE;
+            return NULL;
           break;
 
         case G_DBUS_MESSAGE_HEADER_FIELD_REPLY_SERIAL:
           if (offset + 4 > end_offset)
-            return FALSE;
+            return NULL;
 
           header->has_reply_serial = TRUE;
           reply_serial_pos = offset;
@@ -1031,31 +1044,31 @@ parse_header (Buffer *buffer, Header *header, guint32 serial_offset, guint32 rep
 
         case G_DBUS_MESSAGE_HEADER_FIELD_DESTINATION:
           if (strcmp (signature, "s") != 0)
-            return FALSE;
+            return NULL;
           header->destination = get_string (buffer, header, &offset, end_offset);
           if (header->destination == NULL)
-            return FALSE;
+            return NULL;
           break;
 
         case G_DBUS_MESSAGE_HEADER_FIELD_SENDER:
           if (strcmp (signature, "s") != 0)
-            return FALSE;
+            return NULL;
           header->sender = get_string (buffer, header, &offset, end_offset);
           if (header->sender == NULL)
-            return FALSE;
+            return NULL;
           break;
 
         case G_DBUS_MESSAGE_HEADER_FIELD_SIGNATURE:
           if (strcmp (signature, "g") != 0)
-            return FALSE;
+            return NULL;
           header->signature = get_signature (buffer, &offset, end_offset);
           if (header->signature == NULL)
-            return FALSE;
+            return NULL;
           break;
 
         case G_DBUS_MESSAGE_HEADER_FIELD_NUM_UNIX_FDS:
           if (offset + 4 > end_offset)
-            return FALSE;
+            return NULL;
 
           header->unix_fds = read_uint32 (header, &buffer->data[offset]);
           offset += 4;
@@ -1063,7 +1076,7 @@ parse_header (Buffer *buffer, Header *header, guint32 serial_offset, guint32 rep
 
         default:
           /* Unknown header field, for safety, fail parse */
-          return FALSE;
+          return NULL;
         }
     }
 
@@ -1071,32 +1084,32 @@ parse_header (Buffer *buffer, Header *header, guint32 serial_offset, guint32 rep
     {
     case G_DBUS_MESSAGE_TYPE_METHOD_CALL:
       if (header->path == NULL || header->member == NULL)
-        return FALSE;
+        return NULL;
       break;
 
     case G_DBUS_MESSAGE_TYPE_METHOD_RETURN:
       if (!header->has_reply_serial)
-        return FALSE;
+        return NULL;
       break;
 
     case G_DBUS_MESSAGE_TYPE_ERROR:
       if (header->error_name  == NULL || !header->has_reply_serial)
-        return FALSE;
+        return NULL;
       break;
 
     case G_DBUS_MESSAGE_TYPE_SIGNAL:
       if (header->path == NULL ||
           header->interface == NULL ||
           header->member == NULL)
-        return FALSE;
+        return NULL;
       if (strcmp (header->path, "/org/freedesktop/DBus/Local") == 0 ||
           strcmp (header->interface, "org.freedesktop.DBus.Local") == 0)
-        return FALSE;
+        return NULL;
       break;
 
     default:
       /* Unknown message type, for safety, fail parse */
-      return FALSE;
+      return NULL;
     }
 
   if (serial_offset > 0)
@@ -1110,7 +1123,7 @@ parse_header (Buffer *buffer, Header *header, guint32 serial_offset, guint32 rep
       header->reply_serial > hello_serial + reply_serial_offset)
     write_uint32 (header, &buffer->data[reply_serial_pos], header->reply_serial - reply_serial_offset);
 
-  return TRUE;
+  return g_steal_pointer (&header);
 }
 
 static void
@@ -1812,12 +1825,13 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
 
   if (client->authenticated && client->proxy->filter)
     {
-      Header header;
+      g_autoptr(Header) header = NULL;;
       BusHandler handler;
 
       /* Filter and rewrite outgoing messages as needed */
 
-      if (!parse_header (buffer, &header, client->serial_offset, 0, 0))
+      header = parse_header (buffer, client->serial_offset, 0, 0);
+      if (header == NULL)
         {
           g_warning ("Invalid message header format");
           side_closed (side);
@@ -1825,33 +1839,33 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
           return;
         }
 
-      if (!update_socket_messages (side, buffer, &header))
+      if (!update_socket_messages (side, buffer, header))
         return;
 
       /* Make sure the client is not playing games with the serials, as that
          could confuse us. */
-      if (header.serial <= client->last_serial)
+      if (header->serial <= client->last_serial)
         {
           g_warning ("Invalid client serial");
           side_closed (side);
           buffer_unref (buffer);
           return;
         }
-      client->last_serial = header.serial;
+      client->last_serial = header->serial;
 
       if (client->proxy->log_messages)
-        print_outgoing_header (&header);
+        print_outgoing_header (header);
 
       /* Keep track of the initial Hello request so that we can read
          the reply which has our assigned unique id */
-      if (is_dbus_method_call (&header) &&
-          g_strcmp0 (header.member, "Hello") == 0)
+      if (is_dbus_method_call (header) &&
+          g_strcmp0 (header->member, "Hello") == 0)
         {
           expecting_reply = EXPECTED_REPLY_HELLO;
-          client->hello_serial = header.serial;
+          client->hello_serial = header->serial;
         }
 
-      handler = get_dbus_method_handler (client, &header);
+      handler = get_dbus_method_handler (client, header);
 
       switch (handler)
         {
@@ -1861,10 +1875,10 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
             {
               g_clear_pointer (&buffer, buffer_unref);
               if (handler == HANDLE_FILTER_GET_OWNER_REPLY)
-                buffer = get_error_for_roundtrip (client, &header,
+                buffer = get_error_for_roundtrip (client, header,
                                                   "org.freedesktop.DBus.Error.NameHasNoOwner");
               else
-                buffer = get_bool_reply_for_roundtrip (client, &header, FALSE);
+                buffer = get_bool_reply_for_roundtrip (client, header, FALSE);
 
               expecting_reply = EXPECTED_REPLY_REWRITE;
               break;
@@ -1892,7 +1906,7 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
 
         case HANDLE_PASS:
 handle_pass:
-          if (client_message_generates_reply (&header))
+          if (client_message_generates_reply (header))
 	    {
 	      if (expecting_reply == EXPECTED_REPLY_NONE)
 		expecting_reply = EXPECTED_REPLY_NORMAL;
@@ -1904,20 +1918,20 @@ handle_pass:
 handle_hide:
           g_clear_pointer (&buffer, buffer_unref);
 
-          if (client_message_generates_reply (&header))
+          if (client_message_generates_reply (header))
             {
               const char *error;
 
               if (client->proxy->log_messages)
                 g_print ("*HIDDEN* (ping)\n");
 
-              if ((header.destination != NULL && header.destination[0] == ':') ||
-                  (header.flags & G_DBUS_MESSAGE_FLAGS_NO_AUTO_START) != 0)
+              if ((header->destination != NULL && header->destination[0] == ':') ||
+                  (header->flags & G_DBUS_MESSAGE_FLAGS_NO_AUTO_START) != 0)
                 error = "org.freedesktop.DBus.Error.NameHasNoOwner";
               else
                 error = "org.freedesktop.DBus.Error.ServiceUnknown";
 
-              buffer = get_error_for_roundtrip (client, &header, error);
+              buffer = get_error_for_roundtrip (client, header, error);
 	      expecting_reply = EXPECTED_REPLY_REWRITE;
             }
           else
@@ -1932,12 +1946,12 @@ handle_hide:
 handle_deny:
           g_clear_pointer (&buffer, buffer_unref);
 
-          if (client_message_generates_reply (&header))
+          if (client_message_generates_reply (header))
             {
               if (client->proxy->log_messages)
                 g_print ("*DENIED* (ping)\n");
 
-              buffer = get_error_for_roundtrip (client, &header,
+              buffer = get_error_for_roundtrip (client, header,
 						"org.freedesktop.DBus.Error.AccessDenied");
 	      expecting_reply = EXPECTED_REPLY_REWRITE;
             }
@@ -1950,7 +1964,7 @@ handle_deny:
         }
 
       if (buffer != NULL && expecting_reply != EXPECTED_REPLY_NONE)
-        queue_expected_reply (side, header.serial, expecting_reply);
+        queue_expected_reply (side, header->serial, expecting_reply);
     }
 
   if (buffer)
@@ -1965,14 +1979,15 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
 {
   if (client->authenticated && client->proxy->filter)
     {
-      Header header;
+      g_autoptr(Header) header = NULL;;
       GDBusMessage *rewritten;
       FlatpakPolicy policy;
       ExpectedReplyType expected_reply;
 
       /* Filter and rewrite incoming messages as needed */
 
-      if (!parse_header (buffer, &header, 0, client->serial_offset, client->hello_serial))
+      header = parse_header (buffer, 0, client->serial_offset, client->hello_serial);
+      if (header == NULL)
         {
           g_warning ("Invalid message header format");
           buffer_unref (buffer);
@@ -1980,15 +1995,15 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
           return;
         }
 
-      if (!update_socket_messages (side, buffer, &header))
+      if (!update_socket_messages (side, buffer, header))
         return;
 
       if (client->proxy->log_messages)
-        print_incoming_header (&header);
+        print_incoming_header (header);
 
-      if (header.has_reply_serial)
+      if (header->has_reply_serial)
         {
-          expected_reply = steal_expected_reply (get_other_side (side), header.reply_serial);
+          expected_reply = steal_expected_reply (get_other_side (side), header->reply_serial);
 
           /* We only allow replies we expect */
           if (expected_reply == EXPECTED_REPLY_NONE)
@@ -2004,7 +2019,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
             case EXPECTED_REPLY_HELLO:
               /* When we get the initial reply to Hello, allow all
                  further communications to our own unique id. */
-              if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
+              if (header->type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                 {
                   char *my_id = get_arg0_string (buffer);
                   flatpak_proxy_client_update_unique_id_policy (client, my_id, FLATPAK_POLICY_TALK);
@@ -2015,17 +2030,17 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
               /* Replace a roundtrip ping with the rewritten message */
 
               rewritten = g_hash_table_lookup (client->rewrite_reply,
-                                               GINT_TO_POINTER (header.reply_serial));
+                                               GINT_TO_POINTER (header->reply_serial));
 
               if (client->proxy->log_messages)
                 g_print ("*REWRITTEN*\n");
 
-              g_dbus_message_set_serial (rewritten, header.serial);
+              g_dbus_message_set_serial (rewritten, header->serial);
               g_clear_pointer (&buffer, buffer_unref);
               buffer = message_to_buffer (rewritten);
 
               g_hash_table_remove (client->rewrite_reply,
-                                   GINT_TO_POINTER (header.reply_serial));
+                                   GINT_TO_POINTER (header->reply_serial));
               break;
 
             case EXPECTED_REPLY_FAKE_LIST_NAMES:
@@ -2033,7 +2048,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
                  request, request ownership of any name matching a
                  wildcard policy */
 
-              queue_wildcard_initial_name_ops (client, &header, buffer);
+              queue_wildcard_initial_name_ops (client, header, buffer);
 
               /* Don't forward fake replies to the app */
               if (client->proxy->log_messages)
@@ -2049,16 +2064,16 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
                  request, update the policy for this unique name based on
                  the policy */
               {
-                char *requested_name = g_hash_table_lookup (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial));
+                char *requested_name = g_hash_table_lookup (client->get_owner_reply, GINT_TO_POINTER (header->reply_serial));
 
-                if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
+                if (header->type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                   {
                     char *owner = get_arg0_string (buffer);
                     flatpak_proxy_client_update_unique_id_policy_from_name (client, owner, requested_name);
                     g_free (owner);
                   }
 
-                g_hash_table_remove (client->get_owner_reply, GINT_TO_POINTER (header.reply_serial));
+                g_hash_table_remove (client->get_owner_reply, GINT_TO_POINTER (header->reply_serial));
 
                 /* Don't forward fake replies to the app */
                 if (client->proxy->log_messages)
@@ -2076,7 +2091,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
             case EXPECTED_REPLY_LIST_NAMES:
               /* This is a reply from the bus to a ListNames request, filter
                  it according to the policy */
-              if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
+              if (header->type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN)
                 {
                   Buffer *filtered_buffer;
 
@@ -2098,8 +2113,8 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
         {
 
           /* Don't allow reply types with no reply_serial */
-          if (header.type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN ||
-              header.type == G_DBUS_MESSAGE_TYPE_ERROR)
+          if (header->type == G_DBUS_MESSAGE_TYPE_METHOD_RETURN ||
+              header->type == G_DBUS_MESSAGE_TYPE_ERROR)
             {
               if (client->proxy->log_messages)
                 g_print ("*Invalid reply*\n");
@@ -2107,7 +2122,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
             }
 
           /* We filter all NameOwnerChanged signal according to the policy */
-	  if (message_is_name_owner_changed (client, &header))
+	  if (message_is_name_owner_changed (client, header))
 	    {
 	      if (should_filter_name_owner_changed (client, buffer))
 		g_clear_pointer (&buffer, buffer_unref);
@@ -2115,9 +2130,9 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
 	}
 
       /* All incoming broadcast signals are filtered according to policy */
-      if (header.type == G_DBUS_MESSAGE_TYPE_SIGNAL && header.destination == NULL)
+      if (header->type == G_DBUS_MESSAGE_TYPE_SIGNAL && header->destination == NULL)
         {
-          policy = flatpak_proxy_client_get_policy (client, header.sender);
+          policy = flatpak_proxy_client_get_policy (client, header->sender);
           if (policy < FLATPAK_POLICY_TALK)
             {
               if (client->proxy->log_messages)
@@ -2128,11 +2143,11 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
 
       /* We received and forwarded a message from a trusted peer. Make the policy for
          this unique id SEE so that the client can track its lifetime. */
-      if (buffer && header.sender && header.sender[0] == ':')
-        flatpak_proxy_client_update_unique_id_policy (client, header.sender, FLATPAK_POLICY_SEE);
+      if (buffer && header->sender && header->sender[0] == ':')
+        flatpak_proxy_client_update_unique_id_policy (client, header->sender, FLATPAK_POLICY_SEE);
 
-      if (buffer && client_message_generates_reply (&header))
-        queue_expected_reply (side, header.serial, EXPECTED_REPLY_NORMAL);
+      if (buffer && client_message_generates_reply (header))
+        queue_expected_reply (side, header->serial, EXPECTED_REPLY_NORMAL);
     }
 
   if (buffer)
