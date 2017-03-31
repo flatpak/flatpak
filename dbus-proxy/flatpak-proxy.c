@@ -2233,7 +2233,11 @@ side_in_cb (GSocket *socket, GIOCondition condition, gpointer user_data)
         buffer = side->current_read_buffer;
 
       if (!buffer_read (side, buffer, socket))
-        break;
+        {
+          if (buffer != side->current_read_buffer)
+              buffer_unref (buffer);
+          break;
+        }
 
       if (!client->authenticated)
         {
