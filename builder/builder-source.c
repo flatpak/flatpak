@@ -151,6 +151,16 @@ builder_source_real_extract (BuilderSource  *self,
 }
 
 static gboolean
+builder_source_real_bundle (BuilderSource  *self,
+                            BuilderContext *context,
+                            GError        **error)
+{
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "Bundle not implemented for type %s", g_type_name_from_instance ((GTypeInstance *) self));
+  return FALSE;
+}
+
+static gboolean
 builder_source_real_update (BuilderSource  *self,
                             BuilderContext *context,
                             GError        **error)
@@ -170,6 +180,7 @@ builder_source_class_init (BuilderSourceClass *klass)
   klass->show_deps = builder_source_real_show_deps;
   klass->download = builder_source_real_download;
   klass->extract = builder_source_real_extract;
+  klass->bundle = builder_source_real_bundle;
   klass->update = builder_source_real_update;
 
   g_object_class_install_property (object_class,
@@ -320,6 +331,17 @@ builder_source_extract (BuilderSource  *self,
 
 
   return class->extract (self, real_dest, build_options, context, error);
+}
+
+gboolean
+builder_source_bundle (BuilderSource  *self,
+                       BuilderContext *context,
+                       GError        **error)
+{
+  BuilderSourceClass *class;
+  class = BUILDER_SOURCE_GET_CLASS (self);
+
+  return class->bundle (self, context, error);
 }
 
 gboolean

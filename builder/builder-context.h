@@ -49,6 +49,9 @@ GFile *         builder_context_allocate_build_subdir (BuilderContext *self,
                                                        GError **error);
 GFile *         builder_context_get_ccache_dir (BuilderContext *self);
 GFile *         builder_context_get_download_dir (BuilderContext *self);
+GPtrArray *     builder_context_get_sources_dirs (BuilderContext *self);
+void            builder_context_set_sources_dirs (BuilderContext *self,
+                                                  GPtrArray      *sources_dirs);
 SoupSession *   builder_context_get_soup_session (BuilderContext *self);
 const char *    builder_context_get_arch (BuilderContext *self);
 void            builder_context_set_arch (BuilderContext *self,

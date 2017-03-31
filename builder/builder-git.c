@@ -56,6 +56,19 @@ git_get_mirror_dir (const char     *url_or_path,
   g_autoptr(GFile) git_dir = NULL;
   g_autofree char *filename = NULL;
   g_autofree char *git_dir_path = NULL;
+  GPtrArray *sources_dirs = NULL;
+  int i;
+
+  sources_dirs = builder_context_get_sources_dirs (context);
+  for (i = 0; sources_dirs != NULL && i < sources_dirs->len; i++)
+    {
+      GFile* sources_root = g_ptr_array_index (sources_dirs, i);
+      g_autoptr(GFile) local_git_dir = g_file_get_child (sources_root, "git");
+      g_autofree char *local_filename = builder_uri_to_filename (url_or_path);
+      g_autoptr(GFile) file = g_file_get_child (local_git_dir, local_filename);
+      if (g_file_query_exists (file, NULL))
+        return g_steal_pointer (&file);
+    }
 
   git_dir = g_file_get_child (builder_context_get_state_dir (context),
                               "git");
@@ -216,6 +229,7 @@ git_mirror_submodules (const char     *repo_location,
 
 gboolean
 builder_git_mirror_repo (const char     *repo_location,
+                         const char     *destination_path,
                          gboolean        update,
                          gboolean        mirror_submodules,
                          gboolean        disable_fsck,
@@ -227,6 +241,16 @@ builder_git_mirror_repo (const char     *repo_location,
   g_autofree char *current_commit = NULL;
 
   mirror_dir = git_get_mirror_dir (repo_location, context);
+
+  if (destination_path != NULL)
+    {
+      g_autofree char *file_name = g_file_get_basename (mirror_dir);
+      g_autofree char *destination_file_path = g_build_filename (destination_path,
+                                                                 file_name,
+                                                                 NULL);
+      g_object_unref (mirror_dir);
+      mirror_dir = g_file_new_for_path (destination_file_path);
+    }
 
   if (!g_file_query_exists (mirror_dir, NULL))
     {

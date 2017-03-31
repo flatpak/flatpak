@@ -49,6 +49,7 @@ void builder_manifest_set_demarshal_buid_context (BuilderContext *build_context)
 const char *    builder_manifest_get_id (BuilderManifest *self);
 char *          builder_manifest_get_locale_id (BuilderManifest *self);
 char *          builder_manifest_get_debug_id (BuilderManifest *self);
+char *          builder_manifest_get_sources_id (BuilderManifest *self);
 const char *    builder_manifest_get_id_platform (BuilderManifest *self);
 char *          builder_manifest_get_locale_id_platform (BuilderManifest *self);
 BuilderOptions *builder_manifest_get_build_options (BuilderManifest *self);

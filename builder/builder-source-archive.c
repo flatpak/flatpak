@@ -219,6 +219,8 @@ get_download_location (BuilderSourceArchive *self,
   GFile *download_dir = NULL;
   g_autoptr(GFile) sha256_dir = NULL;
   g_autoptr(GFile) file = NULL;
+  GPtrArray *sources_dirs = NULL;
+  int i;
 
   uri = get_uri (self, error);
   if (uri == NULL)
@@ -232,6 +234,17 @@ get_download_location (BuilderSourceArchive *self,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Sha256 not specified");
       return FALSE;
+    }
+
+  sources_dirs = builder_context_get_sources_dirs (context);
+  for (i = 0; sources_dirs != NULL && i < sources_dirs->len; i++)
+    {
+      GFile* sources_root = g_ptr_array_index (sources_dirs, i);
+      g_autoptr(GFile) local_download_dir = g_file_get_child (sources_root, "downloads");
+      g_autoptr(GFile) local_sha256_dir = g_file_get_child (local_download_dir, self->sha256);
+      g_autoptr(GFile) local_file = g_file_get_child (local_sha256_dir, base_name);
+      if (g_file_query_exists (local_file, NULL))
+        return g_steal_pointer (&local_file);
     }
 
   download_dir = builder_context_get_download_dir (context);
@@ -580,6 +593,52 @@ builder_source_archive_extract (BuilderSource  *source,
   return TRUE;
 }
 
+static gboolean
+builder_source_archive_bundle (BuilderSource  *source,
+                               BuilderContext *context,
+                               GError        **error)
+{
+  BuilderSourceArchive *self = BUILDER_SOURCE_ARCHIVE (source);
+
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GFile) download_dir = NULL;
+  g_autoptr(GFile) destination_file = NULL;
+  g_autofree char *download_dir_path = NULL;
+  g_autofree char *file_name = NULL;
+  g_autofree char *destination_file_path = NULL;
+  g_autofree char *app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
+  gboolean is_local;
+
+  file = get_source_file (self, context, &is_local, error);
+  if (file == NULL)
+    return FALSE;
+
+  download_dir_path = g_build_filename (app_dir_path,
+                                        "sources",
+                                        "downloads",
+                                        self->sha256,
+                                        NULL);
+  download_dir = g_file_new_for_path (download_dir_path);
+  if (!g_file_query_exists (download_dir, NULL) &&
+      !g_file_make_directory_with_parents (download_dir, NULL, error))
+    return FALSE;
+
+  file_name = g_file_get_basename (file);
+  destination_file_path = g_build_filename (download_dir_path,
+                                            file_name,
+                                            NULL);
+  destination_file = g_file_new_for_path (destination_file_path);
+
+  if (!g_file_copy (file, destination_file,
+                    G_FILE_COPY_OVERWRITE,
+                    NULL,
+                    NULL, NULL,
+                    error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 builder_source_archive_checksum (BuilderSource  *source,
                                  BuilderCache   *cache,
@@ -606,6 +665,7 @@ builder_source_archive_class_init (BuilderSourceArchiveClass *klass)
   source_class->show_deps = builder_source_archive_show_deps;
   source_class->download = builder_source_archive_download;
   source_class->extract = builder_source_archive_extract;
+  source_class->bundle = builder_source_archive_bundle;
   source_class->checksum = builder_source_archive_checksum;
 
   g_object_class_install_property (object_class,

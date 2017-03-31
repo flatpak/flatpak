@@ -61,6 +61,9 @@ typedef struct
                        BuilderOptions *build_options,
                        BuilderContext *context,
                        GError        **error);
+  gboolean (* bundle)(BuilderSource  *self,
+                      BuilderContext *context,
+                      GError        **error);
   gboolean (* update)(BuilderSource  *self,
                       BuilderContext *context,
                       GError        **error);
@@ -85,6 +88,9 @@ gboolean builder_source_extract (BuilderSource  *self,
                                  BuilderOptions *build_options,
                                  BuilderContext *context,
                                  GError        **error);
+gboolean builder_source_bundle (BuilderSource  *self,
+                                BuilderContext *context,
+                                GError        **error);
 gboolean builder_source_update (BuilderSource  *self,
                                 BuilderContext *context,
                                 GError        **error);

@@ -62,6 +62,7 @@ static char *opt_subject;
 static char *opt_body;
 static char *opt_gpg_homedir;
 static char **opt_key_ids;
+static char **opt_sources_dirs;
 static int opt_jobs;
 
 static GOptionEntry entries[] = {
@@ -76,6 +77,7 @@ static GOptionEntry entries[] = {
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
   { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
+  { "use-sources", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sources_dirs, "Build the sources specified by SOURCE-DIR, multiple uses of this option possible", "SOURCE-DIR"},
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "finish-only", 0, 0, G_OPTION_ARG_NONE, &opt_finish_only, "Only run clean and finish and export phases", NULL },
   { "allow-missing-runtimes", 0, 0, G_OPTION_ARG_NONE, &opt_allow_missing_runtimes, "Don't fail if runtime and sdk missing", NULL },
@@ -322,6 +324,18 @@ main (int    argc,
   builder_context_set_jobs (build_context, opt_jobs);
   builder_context_set_rebuild_on_sdk_change (build_context, opt_rebuild_on_sdk_change);
 
+  if (opt_sources_dirs)
+    {
+      g_autoptr(GPtrArray) sources_dirs = NULL;
+      sources_dirs = g_ptr_array_new_with_free_func (g_object_unref);
+      for (i = 0; opt_sources_dirs != NULL && opt_sources_dirs[i] != NULL; i++)
+        {
+          GFile *file = g_file_new_for_commandline_arg (opt_sources_dirs[i]);
+          g_ptr_array_add (sources_dirs, file);
+        }
+      builder_context_set_sources_dirs (build_context, sources_dirs);
+    }
+
   if (opt_arch)
     builder_context_set_arch (build_context, opt_arch);
 
@@ -498,6 +512,7 @@ main (int    argc,
 
   if (!opt_finish_only &&
       !opt_disable_download &&
+      !opt_sources_dirs &&
       !builder_manifest_download (manifest, !opt_disable_updates, opt_build_shell, build_context, &error))
     {
       g_printerr ("Failed to download sources: %s\n", error->message);
@@ -586,6 +601,7 @@ main (int    argc,
   if (!opt_build_only && opt_repo && builder_cache_has_checkout (cache))
     {
       g_autoptr(GFile) debuginfo_metadata = NULL;
+      g_autoptr(GFile) sourcesinfo_metadata = NULL;
 
       g_print ("Exporting %s to repo\n", builder_manifest_get_id (manifest));
 
@@ -641,6 +657,23 @@ main (int    argc,
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.debuginfo",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
+            {
+              g_printerr ("Export failed: %s\n", error->message);
+              return 1;
+            }
+        }
+
+      /* Export sources extensions */
+      sourcesinfo_metadata = g_file_get_child (app_dir, "metadata.sourcesinfo");
+      if (g_file_query_exists (sourcesinfo_metadata, NULL))
+        {
+          g_autofree char *sources_id = builder_manifest_get_sources_id (manifest);
+          g_print ("Exporting %s to repo\n", sources_id);
+
+          if (!do_export (build_context, &error, TRUE,
+                          "--metadata=metadata.sourcesinfo",
+                          builder_context_get_build_runtime (build_context) ? "--files=usr/sources" : "--files=sources",
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
