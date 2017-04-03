@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_without_user_xattrs
 
-echo "1..9"
+echo "1..10"
 
 setup_repo
 install_repo
@@ -205,6 +205,19 @@ run org.test.Hello > hello_out
 assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
 echo "ok update"
+
+ostree --repo=repos/test reset app/org.test.Hello/$ARCH/master "$OLD_COMMIT"
+update_repo
+
+if ${FLATPAK} ${U} update org.test.Hello; then
+    assert_not_reached "Should not be able to update to older commit"
+fi
+
+NEW_NEW_COMMIT=`${FLATPAK} ${U} info --show-commit org.test.Hello`
+
+assert_streq "$NEW_COMMIT" "$NEW_NEW_COMMIT"
+
+echo "ok backwards update"
 
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.Split org.test.Platform org.test.Platform
