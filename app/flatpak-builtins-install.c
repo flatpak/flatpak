@@ -440,9 +440,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   if (!opt_bundle && !opt_from && !opt_oci && argc >= 2)
     {
-      if (g_str_has_suffix (argv[1], ".flatpakref"))
+      if (flatpak_file_arg_has_suffix (argv[1], ".flatpakref"))
         opt_from = TRUE;
-      if (g_str_has_suffix (argv[1], ".flatpak"))
+      if (flatpak_file_arg_has_suffix (argv[1], ".flatpak"))
         opt_bundle = TRUE;
     }
 

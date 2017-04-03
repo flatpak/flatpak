@@ -343,6 +343,8 @@ GList *flatpak_list_extensions (GKeyFile   *metakey,
                                 const char *arch,
                                 const char *branch);
 
+gboolean flatpak_file_arg_has_suffix (const char *arg, const char *suffix);
+
 gboolean            flatpak_spawn (GFile       *dir,
                                    char       **output,
                                    GError     **error,
