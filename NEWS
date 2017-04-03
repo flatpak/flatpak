@@ -1,3 +1,33 @@
+Major changes in 0.8.5
+======================
+
+This is a security update for the stable branch, and all users are
+recommended to update.
+
+ * Fixed a use-after-free and some leaks in the dbus-proxy. This
+   is not currently believed to be exploitable, but the proxy is a
+   security boundary, so we still  recommend to update.
+ * Regular updates now never allow updates to an older version
+   than what is currently installed (unless you explicitly specify
+   an old commit id). This closes a hole where a MITM attacker can
+   force clients to downgrade to an earlier (gpg-signed) version of
+   the application.
+ * The automatic detection of --from in flatpak install now detects
+   flatpakref extensions even in URIs that end in a query string such as
+   https://git.gnome.org/browse/gnome-apps-nightly/plain/gedit.flatpakref?h=stable
+ * The detection of "unmaintained" system extensions was broken, and
+   in some cases these extensions were not found. This now always
+   works.
+ * Flatpak now builds with latest OSTree. This required some fixing for
+   multiple definitions of the g_auto* macros as OSTree now exports
+   those.
+ * We no longer rely on ostree trivial-httpd for the tests, because
+   this is optional in later versions of ostree. Instead we use
+   they python SimpleHTTPServer.
+ * The minimum glib version has been corrected to 2.44.
+ * The minumum automake version has been increased to 1.13.4
+   because some older version didn't work.
+
 Major changes in 0.8.4
 ======================
 
