@@ -1254,7 +1254,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
       else
         formatted_bytes_sec = g_format_size (bytes_sec);
 
-      g_string_append_printf (buf, "Downloading extra data: %u%% (%lu/%lu) %s/s %s",
+      g_string_append_printf (buf, "Downloading extra data: %u%% (%" G_GUINT64_FORMAT "/%" G_GUINT64_FORMAT ") %s/s %s",
                               (guint) ((((double) transferred_extra_data_bytes) / total_extra_data_bytes) * 100),
                               transferred_extra_data_bytes, total_extra_data_bytes, formatted_bytes_sec, formatted_bytes_transferred);
 
