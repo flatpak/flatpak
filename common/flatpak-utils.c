@@ -5156,7 +5156,7 @@ flatpak_load_http_uri (SoupSession *soup_session,
     }
 
   bytes = g_string_free_to_bytes (g_steal_pointer (&content));
-  g_debug ("Received %" G_GSIZE_FORMAT " bytes", data.downloaded_bytes);
+  g_debug ("Received %" G_GUINT64_FORMAT " bytes", data.downloaded_bytes);
 
   if (out_etag)
     *out_etag = g_steal_pointer (&data.etag);
@@ -5209,7 +5209,7 @@ flatpak_download_http_uri (SoupSession *soup_session,
       return FALSE;
     }
 
-  g_debug ("Received %" G_GSIZE_FORMAT " bytes", data.downloaded_bytes);
+  g_debug ("Received %" G_GUINT64_FORMAT " bytes", data.downloaded_bytes);
 
   return TRUE;
 }
