@@ -4496,13 +4496,9 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   repo_dir_config = g_file_get_child (repo_dir, "config");
   if (!g_file_query_exists (repo_dir_config, NULL))
     {
-#if OSTREE_CHECK_VERSION(2017, 3)
-      OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
-#else
-      OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER;
-#endif
+      OstreeRepoMode parent_mode = ostree_repo_get_mode (self->repo);
 
-      if (!ostree_repo_create (new_repo, mode, NULL, error))
+      if (!ostree_repo_create (new_repo, parent_mode, NULL, error))
         return NULL;
     }
   else
