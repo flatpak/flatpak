@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-03-10 10:43+0100\n"
+"POT-Creation-Date: 2017-04-03 14:09+0200\n"
 "PO-Revision-Date: 2016-08-24 19:27+0200\n"
 "Last-Translator: Gabor Kelemen <kelemeng at ubuntu dot com>\n"
 "Language-Team: Hungarian <openscope at googlegroups dot com>\n"
@@ -904,7 +904,7 @@ msgstr "Csak ezen alútvonal telepítése"
 msgid "PATH"
 msgstr "ÚTVONAL"
 
-#: app/flatpak-builtins-install.c:68
+#: app/flatpak-builtins-install.c:68 app/flatpak-builtins-update.c:63
 msgid "Automatically answer yes for all questions"
 msgstr ""
 
@@ -1200,10 +1200,6 @@ msgstr "Az AppStream frissítése a távolihoz"
 msgid "Only update this subpath"
 msgstr "Csak ezen alútvonal frissítése"
 
-#: app/flatpak-builtins-update.c:63
-msgid "OAutomatically answer yes for all questions"
-msgstr ""
-
 #: app/flatpak-builtins-update.c:91
 #, fuzzy, c-format
 msgid "Updating appstream for remote %s\n"
@@ -1450,8 +1446,8 @@ msgstr "Beállított távoli tulajdonságainak módosítása"
 
 #: app/flatpak-transaction.c:466 common/flatpak-dir.c:978
 #: common/flatpak-dir.c:1235 common/flatpak-dir.c:1271
-#: common/flatpak-dir.c:1293 common/flatpak-dir.c:7710
-#: common/flatpak-utils.c:1114
+#: common/flatpak-dir.c:1293 common/flatpak-dir.c:7751
+#: common/flatpak-utils.c:1103
 #, c-format
 msgid "%s not installed"
 msgstr "A(z) %s nincs telepítve"
@@ -1471,7 +1467,7 @@ msgstr "A(z) %s %s ág már telepítve van"
 msgid "%s needs a later flatpak version (%s)"
 msgstr ""
 
-#: app/flatpak-transaction.c:620 common/flatpak-dir.c:2028
+#: app/flatpak-transaction.c:620 common/flatpak-dir.c:2057
 msgid "OCI image is not a flatpak (missing ref)"
 msgstr ""
 
@@ -1539,195 +1535,195 @@ msgstr "Nem találhatók felülbírálások ehhez: %s"
 msgid "While opening repository %s: "
 msgstr "A(z) %s tároló megnyitása közben: "
 
-#: common/flatpak-dir.c:1516 common/flatpak-dir.c:3845
+#: common/flatpak-dir.c:1516 common/flatpak-dir.c:3882
 msgid "Can't create deploy directory"
 msgstr "Nem lehet létrehozni a telepítési könyvtárat"
 
-#: common/flatpak-dir.c:1903
+#: common/flatpak-dir.c:1932
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:1908
+#: common/flatpak-dir.c:1937
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:1913
+#: common/flatpak-dir.c:1942
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr ""
 
-#: common/flatpak-dir.c:1923
+#: common/flatpak-dir.c:1952
 #, fuzzy, c-format
 msgid "While downloading %s: "
 msgstr "A(z) %s tároló megnyitása közben: "
 
-#: common/flatpak-dir.c:1928
+#: common/flatpak-dir.c:1957
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr ""
 
-#: common/flatpak-dir.c:1936
+#: common/flatpak-dir.c:1965
 #, fuzzy, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Érvénytelen %s env formátum"
 
-#: common/flatpak-dir.c:2031
+#: common/flatpak-dir.c:2060
 msgid "OCI image specifies the wrong app id"
 msgstr ""
 
-#: common/flatpak-dir.c:2161 common/flatpak-dir.c:2380
+#: common/flatpak-dir.c:2190 common/flatpak-dir.c:2417
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "A(z) %s lekérése közben a(z) %s távoliról: "
 
-#: common/flatpak-dir.c:2334
+#: common/flatpak-dir.c:2365
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "A(z) %s nem található a(z) %s távolin"
 
-#: common/flatpak-dir.c:2940
+#: common/flatpak-dir.c:2977
 msgid "Not enough memory"
 msgstr "Nincs elég memória"
 
-#: common/flatpak-dir.c:2959
+#: common/flatpak-dir.c:2996
 msgid "Failed to read from exported file"
 msgstr "Nem sikerült olvasni az exportált fájlból"
 
-#: common/flatpak-dir.c:3483
+#: common/flatpak-dir.c:3520
 #, fuzzy
 msgid "While getting detached metadata: "
 msgstr "A metaadatok alútvonalának átváltására tett kísérlet közben: "
 
-#: common/flatpak-dir.c:3501
+#: common/flatpak-dir.c:3538
 msgid "While creating extradir: "
 msgstr ""
 
-#: common/flatpak-dir.c:3522
+#: common/flatpak-dir.c:3559
 msgid "Invalid sha256 for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:3551
+#: common/flatpak-dir.c:3588
 msgid "Wrong size for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:3555
+#: common/flatpak-dir.c:3592
 msgid "Invalid checksum for extra data"
 msgstr ""
 
-#: common/flatpak-dir.c:3564
+#: common/flatpak-dir.c:3601
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr ""
 
-#: common/flatpak-dir.c:3739
+#: common/flatpak-dir.c:3776
 msgid "apply_extra script failed"
 msgstr ""
 
-#: common/flatpak-dir.c:3806
+#: common/flatpak-dir.c:3843
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "A(z) %s hivatkozás feloldására tett kísérlet közben: "
 
-#: common/flatpak-dir.c:3821
+#: common/flatpak-dir.c:3858
 #, c-format
 msgid "%s is not available"
 msgstr "A(z) %s nem érhető el"
 
-#: common/flatpak-dir.c:3834 common/flatpak-dir.c:4082
-#: common/flatpak-dir.c:4685 common/flatpak-dir.c:4705
+#: common/flatpak-dir.c:3871 common/flatpak-dir.c:4119
+#: common/flatpak-dir.c:4722 common/flatpak-dir.c:4742
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "A(z) %s %s ág már telepítve van"
 
-#: common/flatpak-dir.c:3853
+#: common/flatpak-dir.c:3890
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Nem sikerült olvasni a(z) %s kommitot: "
 
-#: common/flatpak-dir.c:3872
+#: common/flatpak-dir.c:3909
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "A(z) %s -> %s átváltására tett kísérlet közben: "
 
-#: common/flatpak-dir.c:3897 common/flatpak-dir.c:3928
+#: common/flatpak-dir.c:3934 common/flatpak-dir.c:3965
 msgid "While trying to checkout metadata subpath: "
 msgstr "A metaadatok alútvonalának átváltására tett kísérlet közben: "
 
-#: common/flatpak-dir.c:3938
+#: common/flatpak-dir.c:3975
 #, fuzzy
 msgid "While trying to remove existing extra dir: "
 msgstr "A(z) %s hivatkozás feloldására tett kísérlet közben: "
 
-#: common/flatpak-dir.c:3949
+#: common/flatpak-dir.c:3986
 #, fuzzy
 msgid "While trying to apply extra data: "
 msgstr "A metaadatok alútvonalának átváltására tett kísérlet közben: "
 
-#: common/flatpak-dir.c:4533
+#: common/flatpak-dir.c:4570
 #, fuzzy, c-format
 msgid "This version of %s is already installed"
 msgstr "A(z) %s alkalmazás, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:4540
+#: common/flatpak-dir.c:4577
 msgid "Can't change remote during bundle install"
 msgstr ""
 
-#: common/flatpak-dir.c:4972
+#: common/flatpak-dir.c:5013
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "A(z) %s %s ág nincs telepítve"
 
-#: common/flatpak-dir.c:5216
+#: common/flatpak-dir.c:5257
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "A(z) %s %s ág nincs telepítve"
 
-#: common/flatpak-dir.c:5987
+#: common/flatpak-dir.c:6028
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Semmi sem egyezik: %s"
 
-#: common/flatpak-dir.c:6069
+#: common/flatpak-dir.c:6110
 #, fuzzy, c-format
 msgid "Can't find %s%s%s%s%s in remote %s"
 msgstr "A(z) %s nem található a(z) %s távolin"
 
-#: common/flatpak-dir.c:6186
+#: common/flatpak-dir.c:6227
 #, c-format
 msgid "%s %s not installed"
 msgstr "A(z) %s %s nincs telepítve"
 
-#: common/flatpak-dir.c:6259
+#: common/flatpak-dir.c:6300
 #, fuzzy, c-format
 msgid "Could not find installation %s"
 msgstr "Munkavégzés a felhasználói telepítéseken"
 
-#: common/flatpak-dir.c:6757
+#: common/flatpak-dir.c:6798
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "A(z) %s futtatókörnyezet, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:6758
+#: common/flatpak-dir.c:6799
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "A(z) %s alkalmazás, %s ág már telepítve van"
 
-#: common/flatpak-dir.c:7209
+#: common/flatpak-dir.c:7250
 msgid "Remote title not set"
 msgstr "A távoli cím nincs beállítva"
 
-#: common/flatpak-dir.c:7236
+#: common/flatpak-dir.c:7277
 #, fuzzy
 msgid "Remote default-branch not set"
 msgstr "A távoli cím nincs beállítva"
 
-#: common/flatpak-dir.c:7379
+#: common/flatpak-dir.c:7420
 msgid "No flatpak cache in remote summary"
 msgstr ""
 
-#: common/flatpak-dir.c:7388
+#: common/flatpak-dir.c:7429
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""
@@ -1932,7 +1928,7 @@ msgstr "Nem sikerült megnyitni az átmeneti fájlt"
 msgid "Failed to sync with dbus proxy"
 msgstr "Nem sikerült szinkronizálni a dbus proxyval"
 
-#: common/flatpak-utils.c:2523
+#: common/flatpak-utils.c:2522
 msgid "No extra data sources"
 msgstr ""
 
