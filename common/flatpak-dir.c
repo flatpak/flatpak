@@ -2489,10 +2489,12 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autoptr(GFile) summary_sig_file = g_file_get_child (path_file, "summary.sig");
   g_autofree char *url = g_file_get_uri (path_file);
   g_autofree char *checksum = NULL;
+  g_autofree char *current_checksum = NULL;
   gboolean gpg_verify_summary;
   gboolean gpg_verify;
   char *summary_data = NULL;
   char *summary_sig_data = NULL;
+  g_autofree char *remote_and_branch = NULL;
   gsize summary_data_size, summary_sig_data_size;
   g_autoptr(GBytes) summary_bytes = NULL;
   g_autoptr(GBytes) summary_sig_bytes = NULL;
@@ -2557,7 +2559,13 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
       return FALSE;
     }
 
-  (void) ostree_repo_load_commit (self->repo, checksum, &old_commit, NULL, NULL);
+  remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref);
+  if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, TRUE, &current_checksum, error))
+    return FALSE;
+
+  if (current_checksum != NULL &&
+      !ostree_repo_load_commit (self->repo, current_checksum, &old_commit, NULL, NULL))
+    return FALSE;
 
   src_repo = ostree_repo_new (path_file);
   if (!ostree_repo_open (src_repo, cancellable, error))
