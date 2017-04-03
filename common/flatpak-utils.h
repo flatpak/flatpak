@@ -383,6 +383,7 @@ GList *flatpak_list_extensions (GKeyFile   *metakey,
                                 const char *branch);
 
 char * flatpak_quote_argv (const char *argv[]);
+gboolean flatpak_file_arg_has_suffix (const char *arg, const char *suffix);
 
 gboolean            flatpak_spawn (GFile       *dir,
                                    char       **output,

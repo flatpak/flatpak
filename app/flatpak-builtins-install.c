@@ -375,6 +375,7 @@ install_from (FlatpakDir *dir,
   return TRUE;
 }
 
+
 gboolean
 flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -396,9 +397,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
 
   if (!opt_bundle && !opt_from && argc >= 2)
     {
-      if (g_str_has_suffix (argv[1], ".flatpakref"))
+      if (flatpak_file_arg_has_suffix (argv[1], ".flatpakref"))
         opt_from = TRUE;
-      if (g_str_has_suffix (argv[1], ".flatpak"))
+      if (flatpak_file_arg_has_suffix (argv[1], ".flatpak"))
         opt_bundle = TRUE;
     }
 

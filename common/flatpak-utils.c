@@ -1924,6 +1924,16 @@ flatpak_quote_argv (const char *argv[])
   return g_string_free (res, FALSE);
 }
 
+/* This is useful, because it handles escaped characters in uris, and ? arguments at the end of the uri */
+gboolean
+flatpak_file_arg_has_suffix (const char *arg, const char *suffix)
+{
+  g_autoptr(GFile) file = g_file_new_for_commandline_arg (arg);
+  g_autofree char *basename = g_file_get_basename (file);
+
+  return g_str_has_suffix (basename, suffix);
+}
+
 gboolean
 flatpak_spawn (GFile       *dir,
                char       **output,
