@@ -1218,13 +1218,14 @@ builder_manifest_init_app_dir (BuilderManifest *self,
         g_ptr_array_add (args, g_strdup ("--type=runtime"));
       else
         g_ptr_array_add (args, g_strdup ("--writable-sdk"));
-
-      for (i = 0; self->sdk_extensions != NULL && self->sdk_extensions[i] != NULL; i++)
-        {
-          const char *ext = self->sdk_extensions[i];
-          g_ptr_array_add (args, g_strdup_printf ("--sdk-extension=%s", ext));
-        }
     }
+
+  for (i = 0; self->sdk_extensions != NULL && self->sdk_extensions[i] != NULL; i++)
+    {
+      const char *ext = self->sdk_extensions[i];
+      g_ptr_array_add (args, g_strdup_printf ("--sdk-extension=%s", ext));
+    }
+
   if (self->build_extension)
     {
       g_ptr_array_add (args, g_strdup ("--type=extension"));
