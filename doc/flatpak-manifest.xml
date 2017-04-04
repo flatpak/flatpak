@@ -441,6 +441,10 @@
                         <term><option>branch</option> (string)</term>
                         <listitem><para>The branch/tag/commit to use from the git repository</para></listitem>
                     </varlistentry>
+                    <varlistentry>
+                        <term><option>disable-fsckobjects</option> (boolean)</term>
+                        <listitem><para>Don't use transfer.fsckObjects=1 to mirror git repository. This may be needed for some (broken) repositories.</para></listitem>
+                    </varlistentry>
                 </variablelist>
             </refsect3>
             <refsect3>

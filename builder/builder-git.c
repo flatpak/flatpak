@@ -143,6 +143,7 @@ static gboolean
 git_mirror_submodules (const char     *repo_location,
                        gboolean        update,
                        GFile          *mirror_dir,
+                       gboolean        disable_fsck,
                        const char     *revision,
                        BuilderContext *context,
                        GError        **error)
@@ -205,7 +206,7 @@ git_mirror_submodules (const char     *repo_location,
           if (g_strcmp0 (words[0], "160000") != 0)
             continue;
 
-          if (!builder_git_mirror_repo (absolute_url, update, TRUE, words[2], context, error))
+          if (!builder_git_mirror_repo (absolute_url, update, TRUE, disable_fsck, words[2], context, error))
             return FALSE;
         }
     }
@@ -217,6 +218,7 @@ gboolean
 builder_git_mirror_repo (const char     *repo_location,
                          gboolean        update,
                          gboolean        mirror_submodules,
+                         gboolean        disable_fsck,
                          const char     *ref,
                          BuilderContext *context,
                          GError        **error)
@@ -232,12 +234,18 @@ builder_git_mirror_repo (const char     *repo_location,
       g_autoptr(GFile) parent = g_file_get_parent (mirror_dir);
       g_autofree char *filename_tmp = g_strconcat (filename, ".clone_tmp", NULL);
       g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
+      gboolean res;
 
       g_print ("Cloning git repo %s\n", repo_location);
 
-      if (!git (parent, NULL, error,
-                "clone", "-c", "transfer.fsckObjects=1", "--mirror", repo_location,  filename_tmp, NULL) ||
-          !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
+      if (disable_fsck)
+        res = git (parent, NULL, error,
+                   "clone", "--mirror", repo_location,  filename_tmp, NULL);
+      else
+        res = git (parent, NULL, error,
+                   "clone", "-c", "transfer.fsckObjects=1", "--mirror", repo_location,  filename_tmp, NULL);
+
+      if (!res || !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
         return FALSE;
     }
   else if (update)
@@ -254,7 +262,7 @@ builder_git_mirror_repo (const char     *repo_location,
       if (current_commit == NULL)
         return FALSE;
 
-      if (!git_mirror_submodules (repo_location, update, mirror_dir, current_commit, context, error))
+      if (!git_mirror_submodules (repo_location, update, mirror_dir, disable_fsck, current_commit, context, error))
         return FALSE;
     }
 

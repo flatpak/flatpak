@@ -346,7 +346,7 @@ main (int    argc,
       g_autoptr(GFile) build_subdir = NULL;
 
       if (!builder_git_mirror_repo (opt_from_git,
-                                    !opt_disable_updates, FALSE,
+                                    !opt_disable_updates, FALSE, FALSE,
                                     git_branch, build_context, &error))
         {
           g_printerr ("Can't clone manifest repo: %s\n", error->message);
