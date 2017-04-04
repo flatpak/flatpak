@@ -439,7 +439,12 @@
                     </varlistentry>
                     <varlistentry>
                         <term><option>branch</option> (string)</term>
-                        <listitem><para>The branch/tag/commit to use from the git repository</para></listitem>
+                        <listitem><para>The branch/tag to use from the git repository</para></listitem>
+                    </varlistentry>
+                    <varlistentry>
+                        <term><option>commit</option> (string)</term>
+                        <listitem><para>The commit to use from the git repository. If branch is also specified, then it is verified that the branch/tag is at this specific commit. This is
+                        a readable way to document that you're using a particular tag, but verify that it does not change.</para></listitem>
                     </varlistentry>
                     <varlistentry>
                         <term><option>disable-fsckobjects</option> (boolean)</term>
