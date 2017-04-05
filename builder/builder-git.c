@@ -51,6 +51,7 @@ git (GFile   *dir,
 
 static GFile *
 git_get_mirror_dir (const char     *url_or_path,
+                    gboolean       *is_local,
                     BuilderContext *context)
 {
   g_autoptr(GFile) git_dir = NULL;
@@ -66,8 +67,10 @@ git_get_mirror_dir (const char     *url_or_path,
       g_autoptr(GFile) local_git_dir = g_file_get_child (sources_root, "git");
       g_autofree char *local_filename = builder_uri_to_filename (url_or_path);
       g_autoptr(GFile) file = g_file_get_child (local_git_dir, local_filename);
-      if (g_file_query_exists (file, NULL))
+      if (g_file_query_exists (file, NULL)) {
+        *is_local = TRUE;
         return g_steal_pointer (&file);
+      }
     }
 
   git_dir = g_file_get_child (builder_context_get_state_dir (context),
@@ -76,6 +79,7 @@ git_get_mirror_dir (const char     *url_or_path,
   git_dir_path = g_file_get_path (git_dir);
   g_mkdir_with_parents (git_dir_path, 0755);
 
+  *is_local = FALSE;
   /* Technically a path isn't a uri but if it's absolute it should still be unique. */
   filename = builder_uri_to_filename (url_or_path);
   return g_file_get_child (git_dir, filename);
@@ -106,8 +110,9 @@ builder_git_get_current_commit (const char     *repo_location,
                                 GError        **error)
 {
   g_autoptr(GFile) mirror_dir = NULL;
+  gboolean is_local;
 
-  mirror_dir = git_get_mirror_dir (repo_location, context);
+  mirror_dir = git_get_mirror_dir (repo_location, &is_local, context);
   return git_get_current_commit (mirror_dir, branch, context, error);
 }
 
@@ -239,8 +244,9 @@ builder_git_mirror_repo (const char     *repo_location,
 {
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *current_commit = NULL;
+  gboolean is_local;
 
-  mirror_dir = git_get_mirror_dir (repo_location, context);
+  mirror_dir = git_get_mirror_dir (repo_location, &is_local, context);
 
   if (destination_path != NULL)
     {
@@ -335,6 +341,7 @@ git_extract_submodule (const char     *repo_location,
           g_autofree gchar *mirror_dir_as_url = NULL;
           g_autofree gchar *option = NULL;
           gsize len;
+          gboolean is_local;
 
           submodule = submodules[i];
           len = strlen (submodule);
@@ -374,7 +381,7 @@ git_extract_submodule (const char     *repo_location,
           if (g_strcmp0 (words[0], "160000") != 0)
             continue;
 
-          mirror_dir = git_get_mirror_dir (absolute_url, context);
+          mirror_dir = git_get_mirror_dir (absolute_url, &is_local, context);
           mirror_dir_as_url = g_file_get_uri (mirror_dir);
           option = g_strdup_printf ("submodule.%s.url", name);
 
@@ -407,8 +414,9 @@ builder_git_checkout_dir (const char     *repo_location,
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *mirror_dir_path = NULL;
   g_autofree char *dest_path = NULL;
+  gboolean is_local;
 
-  mirror_dir = git_get_mirror_dir (repo_location, context);
+  mirror_dir = git_get_mirror_dir (repo_location, &is_local, context);
 
   mirror_dir_path = g_file_get_path (mirror_dir);
   dest_path = g_file_get_path (dest);
@@ -434,15 +442,25 @@ builder_git_checkout (const char     *repo_location,
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *mirror_dir_path = NULL;
   g_autofree char *dest_path = NULL;
+  gboolean is_local;
 
-  mirror_dir = git_get_mirror_dir (repo_location, context);
+  mirror_dir = git_get_mirror_dir (repo_location, &is_local, context);
 
   mirror_dir_path = g_file_get_path (mirror_dir);
   dest_path = g_file_get_path (dest);
 
-  if (!git (NULL, NULL, error,
+  if (is_local)
+    {
+      if (!git (NULL, NULL, error,
+            "clone", "--shared", mirror_dir_path, dest_path, NULL))
+        return FALSE;
+    }
+  else
+    {
+      if (!git (NULL, NULL, error,
             "clone", mirror_dir_path, dest_path, NULL))
-    return FALSE;
+        return FALSE;
+    }
 
   if (!git (dest, NULL, error,
             "checkout", branch, NULL))
