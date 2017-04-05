@@ -515,7 +515,6 @@ main (int    argc,
 
   if (!opt_finish_only &&
       !opt_disable_download &&
-      !opt_sources_dirs &&
       !builder_manifest_download (manifest, !opt_disable_updates, opt_build_shell, build_context, &error))
     {
       g_printerr ("Failed to download sources: %s\n", error->message);

@@ -211,6 +211,7 @@ get_uri (BuilderSourceArchive *self,
 static GFile *
 get_download_location (BuilderSourceArchive *self,
                        BuilderContext       *context,
+                       gboolean             *is_local,
                        GError              **error)
 {
   g_autoptr(SoupURI) uri = NULL;
@@ -243,8 +244,10 @@ get_download_location (BuilderSourceArchive *self,
       g_autoptr(GFile) local_download_dir = g_file_get_child (sources_root, "downloads");
       g_autoptr(GFile) local_sha256_dir = g_file_get_child (local_download_dir, self->sha256);
       g_autoptr(GFile) local_file = g_file_get_child (local_sha256_dir, base_name);
-      if (g_file_query_exists (local_file, NULL))
+      if (g_file_query_exists (local_file, NULL)) {
+        *is_local = TRUE;
         return g_steal_pointer (&local_file);
+      }
     }
 
   download_dir = builder_context_get_download_dir (context);
@@ -265,7 +268,7 @@ get_source_file (BuilderSourceArchive *self,
   if (self->url != NULL && self->url[0] != 0)
     {
       *is_local = FALSE;
-      return get_download_location (self, context, error);
+      return get_download_location (self, context, is_local, error);
     }
 
   if (self->path != NULL && self->path[0] != 0)
