@@ -66,6 +66,7 @@ struct BuilderContext
   gboolean        build_runtime;
   gboolean        build_extension;
   gboolean        separate_locales;
+  gboolean        bundle_sources;
   gboolean        sandboxed;
   gboolean        rebuild_on_sdk_change;
   gboolean        use_rofiles;
@@ -507,6 +508,19 @@ builder_context_set_separate_locales (BuilderContext *self,
                                       gboolean        separate_locales)
 {
   self->separate_locales = !!separate_locales;
+}
+
+gboolean
+builder_context_get_bundle_sources (BuilderContext *self)
+{
+  return self->bundle_sources;
+}
+
+void
+builder_context_set_bundle_sources (BuilderContext *self,
+                                    gboolean        bundle_sources)
+{
+  self->bundle_sources = !!bundle_sources;
 }
 
 static char *rofiles_unmount_path = NULL;

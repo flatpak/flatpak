@@ -2274,12 +2274,11 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
         }
 
-      if (g_file_query_exists (sources_dir, NULL))
+      if (builder_context_get_bundle_sources (context) && g_file_query_exists (sources_dir, NULL))
         {
           g_autoptr(GFile) metadata_sources_file = NULL;
           g_autofree char *metadata_contents = NULL;
           g_autofree char *sources_id = builder_manifest_get_sources_id (self);
-
           metadata_sources_file = g_file_get_child (app_dir, "metadata.sources");
 
           metadata_contents = g_strdup_printf ("[Runtime]\n"

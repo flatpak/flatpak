@@ -38,6 +38,7 @@ static gboolean opt_run;
 static gboolean opt_disable_cache;
 static gboolean opt_disable_rofiles;
 static gboolean opt_download_only;
+static gboolean opt_bundle_sources;
 static gboolean opt_build_only;
 static gboolean opt_finish_only;
 static gboolean opt_show_deps;
@@ -77,6 +78,7 @@ static GOptionEntry entries[] = {
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
   { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
+  { "bundle-sources", 0, 0, G_OPTION_ARG_NONE, &opt_bundle_sources, "Bundle module sources as runtime", NULL },
   { "use-sources", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sources_dirs, "Build the sources specified by SOURCE-DIR, multiple uses of this option possible", "SOURCE-DIR"},
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "finish-only", 0, 0, G_OPTION_ARG_NONE, &opt_finish_only, "Only run clean and finish and export phases", NULL },
@@ -323,6 +325,7 @@ main (int    argc,
   builder_context_set_sandboxed (build_context, opt_sandboxed);
   builder_context_set_jobs (build_context, opt_jobs);
   builder_context_set_rebuild_on_sdk_change (build_context, opt_rebuild_on_sdk_change);
+  builder_context_set_bundle_sources (build_context, opt_bundle_sources);
 
   if (opt_sources_dirs)
     {
@@ -665,14 +668,14 @@ main (int    argc,
         }
 
       /* Export sources extensions */
-      sourcesinfo_metadata = g_file_get_child (app_dir, "metadata.sourcesinfo");
-      if (g_file_query_exists (sourcesinfo_metadata, NULL))
+      sourcesinfo_metadata = g_file_get_child (app_dir, "metadata.sources");
+      if (builder_context_get_bundle_sources (build_context) && g_file_query_exists (sourcesinfo_metadata, NULL))
         {
           g_autofree char *sources_id = builder_manifest_get_sources_id (manifest);
           g_print ("Exporting %s to repo\n", sources_id);
 
           if (!do_export (build_context, &error, TRUE,
-                          "--metadata=metadata.sourcesinfo",
+                          "--metadata=metadata.sources",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/sources" : "--files=sources",
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
             {

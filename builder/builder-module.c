@@ -1187,7 +1187,7 @@ builder_module_build (BuilderModule  *self,
   if (!builder_module_extract_sources (self, source_dir, context, error))
     return FALSE;
 
-  if (!builder_module_bundle_sources (self, context, error))
+  if (builder_context_get_bundle_sources (context) && !builder_module_bundle_sources (self, context, error))
     return FALSE;
 
   if (self->subdir != NULL && self->subdir[0] != 0)
