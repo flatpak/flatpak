@@ -676,7 +676,7 @@ main (int    argc,
 
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.sources",
-                          builder_context_get_build_runtime (build_context) ? "--files=usr/sources" : "--files=sources",
+                          "--files=sources",
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);

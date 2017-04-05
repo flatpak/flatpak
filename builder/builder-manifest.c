@@ -2193,14 +2193,13 @@ builder_manifest_finish (BuilderManifest *self,
         {
           debuginfo_dir = g_file_resolve_relative_path (app_dir, "usr/lib/debug");
           locale_parent_dir = g_file_resolve_relative_path (app_dir, "usr/" LOCALES_SEPARATE_DIR);
-          sources_dir = g_file_resolve_relative_path (app_dir, "usr/sources");
         }
       else
         {
           debuginfo_dir = g_file_resolve_relative_path (app_dir, "files/lib/debug");
           locale_parent_dir = g_file_resolve_relative_path (app_dir, "files/" LOCALES_SEPARATE_DIR);
-          sources_dir = g_file_resolve_relative_path (app_dir, "sources");
         }
+      sources_dir = g_file_resolve_relative_path (app_dir, "sources");
 
       if (self->separate_locales && g_file_query_exists (locale_parent_dir, NULL))
         {
