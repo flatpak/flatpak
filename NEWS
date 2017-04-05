@@ -1,3 +1,53 @@
+Major changes in 0.9.2
+======================
+
+ * Fixed a use-after-free and some leaks in the dbus-proxy. This
+   is not currently believed to be exploitable, but the proxy is a
+   security boundary, so we still  recommend to update.
+ * Regular updates now never allow updates to an older version
+   than what is currently installed (unless you explicitly specify
+   an old commit id). This closes a hole where a MITM attacker can
+   force clients to downgrade to an earlier (gpg-signed) version of
+   the application.
+ * The automatic detection of --from in flatpak install now detects
+   flatpakref extensions even in URIs that end in a query string such as
+   https://git.gnome.org/browse/gnome-apps-nightly/plain/gedit.flatpakref?h=stable
+ * OCI support now supports GPG signatures
+ * OCI support now works with the system-helper for unprivileged systemwide
+   installation.
+ * Experimental support for the new ostree bare-user-only repo mode that
+   allows flatpak to run on filesytems without xattrs. Set
+   FLATPAK_OSTREE_REPO_MODE=user-only in the environment to use this.
+ * builder: New property disable-fsckobjects for git sources
+ * builder: New property commit for git sources. This lets you specify
+   both a tag (for readability) and a commit id (to ensure the tag doesn't
+   change).
+ * builder: The manifest file format docs have been split out into its
+   own manpage.
+ * builder: App manifests now support specifying sdk-extensions that has
+   to be installed for the app to build.
+ * builder: When creating the platform, remove all sdk-specific extensions,
+   allowing creation of sdk-specific extensions.
+ * builder: Correctly handle absolute pathnames in the specified
+   command.
+ * builder: Support --default-branch which defined the branch to build in
+   case the manifest doesn't specify one.
+ * When exporting builds to ostree we now use the canonical permissions
+   for bare-user files, which means the resulting builds can safely
+   be used with the new ostree bare-user-only repository type.
+ * The detection of "unmaintained" system extensions was broken, and
+   in some cases these extensions were not found. This now always
+   works.
+ * Flatpak now builds with latest OSTree. This required some fixing for
+   multiple definitions of the g_auto* macros as OSTree now exports
+   those.
+ * We no longer rely on ostree trivial-httpd for the tests, because
+   this is optional in later versions of ostree. Instead we use
+   they python SimpleHTTPServer.
+ * The minimum glib version has been corrected to 2.44.
+ * The minumum automake version has been increased to 1.13.4
+   because some older version didn't work.
+
 Major changes in 0.9.1
 ======================
 
