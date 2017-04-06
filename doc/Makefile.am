@@ -46,6 +46,7 @@ man1 = \
 	flatpak-build-update-repo.1	\
 	flatpak-build-sign.1		\
 	flatpak-build-commit-from.1	\
+	flatpak-repo.1			\
 	flatpak-builder.1		\
 	$(NULL)
 
