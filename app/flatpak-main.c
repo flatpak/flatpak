@@ -97,6 +97,7 @@ static FlatpakCommand commands[] = {
   { "build-sign", N_("Sign an application or runtime"), flatpak_builtin_build_sign, flatpak_complete_build_sign },
   { "build-update-repo", N_("Update the summary file in a repository"), flatpak_builtin_build_update_repo, flatpak_complete_build_update_repo },
   { "build-commit-from", N_("Create new commit based on existing ref"), flatpak_builtin_build_commit_from, flatpak_complete_build_commit_from },
+  { "repo", N_("Print information about a repo"), flatpak_builtin_repo, flatpak_complete_repo },
 
   { NULL }
 };
