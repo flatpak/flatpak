@@ -31,6 +31,7 @@ flatpak_SOURCES = \
 	app/flatpak-builtins-build-commit-from.c \
 	app/flatpak-builtins-build-sign.c \
 	app/flatpak-builtins-repo-update.c \
+	app/flatpak-builtins-repo.c \
 	app/flatpak-builtins-document-export.c \
 	app/flatpak-builtins-document-unexport.c \
 	app/flatpak-builtins-document-info.c \
