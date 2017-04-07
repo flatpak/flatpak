@@ -1256,7 +1256,7 @@ builder_module_build (BuilderModule  *self,
 
   if (configure_file && !has_configure && !self->no_autogen)
     {
-      const char *autogen_names[] =  {"autogen", "autogen.sh", "bootstrap", NULL};
+      const char *autogen_names[] =  {"autogen", "autogen.sh", "bootstrap", "bootstrap.sh", NULL};
       g_autofree char *autogen_cmd = NULL;
       g_auto(GStrv) env_with_noconfigure = NULL;
 
