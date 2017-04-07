@@ -114,8 +114,6 @@ flatpak_builtin_repo (int argc, char **argv,
                       GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(GFile) repofile = NULL;
-  g_autoptr(OstreeRepo) repo = NULL;
   g_autofree char *location = NULL;
   g_autofree char *data = NULL;
   gsize size;
