@@ -1944,20 +1944,44 @@ builder_manifest_cleanup (BuilderManifest *self,
                                           error))
             return FALSE;
 
+          desktop_keys = g_key_file_get_keys (keyfile,
+                                              G_KEY_FILE_DESKTOP_GROUP,
+                                              NULL, NULL);
+
           if (self->rename_icon)
             {
+              g_autofree char *original_icon_name = g_key_file_get_string (keyfile,
+                                                                           G_KEY_FILE_DESKTOP_GROUP,
+                                                                           G_KEY_FILE_DESKTOP_KEY_ICON,
+                                                                           NULL);
+
               g_key_file_set_string (keyfile,
                                      G_KEY_FILE_DESKTOP_GROUP,
                                      G_KEY_FILE_DESKTOP_KEY_ICON,
                                      self->id);
+
+              /* Also rename localized version of the Icon= field */
+              for (i = 0; desktop_keys[i]; i++)
+                {
+                  /* Only rename untranslated icon names */
+                  if (g_str_has_prefix (desktop_keys[i], "Icon["))
+                    {
+                      g_autofree char *icon_name = g_key_file_get_string (keyfile,
+                                                                          G_KEY_FILE_DESKTOP_GROUP,
+                                                                          desktop_keys[i], NULL);
+
+                      if (strcmp (icon_name, original_icon_name) == 0)
+                        g_key_file_set_string (keyfile,
+                                               G_KEY_FILE_DESKTOP_GROUP,
+                                               desktop_keys[i],
+                                               self->id);
+                    }
+                }
             }
 
           if (self->desktop_file_name_suffix ||
               self->desktop_file_name_prefix)
             {
-              desktop_keys = g_key_file_get_keys (keyfile,
-                                                  G_KEY_FILE_DESKTOP_GROUP,
-                                                  NULL, NULL);
               for (i = 0; desktop_keys[i]; i++)
                 {
                   if (strcmp (desktop_keys[i], "Name") == 0 ||
