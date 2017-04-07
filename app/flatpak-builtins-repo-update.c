@@ -284,7 +284,7 @@ generate_all_deltas (OstreeRepo *repo,
       if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
                                      &variant, NULL))
         {
-          g_warning ("Couldn't load commit %s\n", commit);
+          g_warning ("Couldn't load commit %s", commit);
           continue;
         }
 
@@ -306,7 +306,7 @@ generate_all_deltas (OstreeRepo *repo,
           !ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, parent_commit,
                                      &parent_variant, NULL))
         {
-          g_warning ("Couldn't load parent commit %s\n", parent_commit);
+          g_warning ("Couldn't load parent commit %s", parent_commit);
           continue;
         }
 
