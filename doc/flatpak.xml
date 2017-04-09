@@ -346,6 +346,13 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Sign an application or runtime after its been exported.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>flatpak-build-update-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
@@ -353,10 +360,10 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>flatpak-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>flatpak-build-commit-from</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Sign an application or runtime after its been exported.
+                    Create a new commit based on an existing ref.
                 </para></listitem>
             </varlistentry>
         </variablelist>
