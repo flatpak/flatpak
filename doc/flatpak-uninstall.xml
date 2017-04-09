@@ -120,7 +120,7 @@
 
                 <listitem><para>
                     Updates a system-wide installation specified by <arg choice="plain">NAME</arg>
-                    among those defined in <filename>/etc/flatpak/installations.d</filename>.
+                    among those defined in <filename>/etc/flatpak/installations.d/</filename>.
                     Using <arg choice="plain">--installation=default</arg> is equivalent to using
                     <arg choice="plain">--system</arg>.
                 </para></listitem>
