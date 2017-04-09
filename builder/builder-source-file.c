@@ -452,13 +452,14 @@ builder_source_file_bundle (BuilderSource  *source,
   g_autofree char *download_dir_path = NULL;
   g_autofree char *file_name = NULL;
   g_autofree char *destination_file_path = NULL;
-  g_autofree char *app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
+  g_autofree char *app_dir_path = NULL;
   gboolean is_local, is_inline;
 
   file = get_source_file (self, context, &is_local, &is_inline, error);
   if (file == NULL)
     return FALSE;
 
+  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
   download_dir_path = g_build_filename (app_dir_path,
                                         "sources",
                                         "downloads",

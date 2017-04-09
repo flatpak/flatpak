@@ -286,13 +286,14 @@ builder_source_patch_bundle (BuilderSource  *source,
   g_autofree char *patches_dir_path = NULL;
   g_autofree char *file_name = NULL;
   g_autofree char *destination_file_path = NULL;
-  g_autofree char *app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
+  g_autofree char *app_dir_path = NULL;
 
   src = get_source_file (self, context, error);
 
   if (src == NULL)
     return FALSE;
 
+  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
   patches_dir_path = g_build_filename (app_dir_path,
                                        "sources",
                                        "patches",

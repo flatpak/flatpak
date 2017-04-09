@@ -271,7 +271,7 @@ builder_source_bzr_bundle (BuilderSource  *source,
 
   g_autofree char *base_name = NULL;
   g_autofree char *base_name_tmp = NULL;
-  g_autofree char *app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
+  g_autofree char *app_dir_path = NULL;
 
   sources_dir = get_mirror_dir (self, context);
   sources_dir_path = g_file_get_path (sources_dir);
@@ -281,6 +281,7 @@ builder_source_bzr_bundle (BuilderSource  *source,
 
   base_name = g_file_get_basename (sources_dir);
 
+  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
   bzr_sources_dir_path = g_build_filename (app_dir_path,
                                            "sources",
                                            "bzr",
