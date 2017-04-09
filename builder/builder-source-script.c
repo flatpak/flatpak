@@ -179,8 +179,8 @@ builder_source_script_bundle (BuilderSource  *source,
                               BuilderContext *context,
                               GError        **error)
 {
-  // no need to bundle anything here as this part
-  // can be reconstructed from the manifest
+  /* no need to bundle anything here as this part
+     can be reconstructed from the manifest */
   return TRUE;
 }
 
