@@ -54,6 +54,7 @@ man5 = \
 	flatpak-metadata.5		\
 	flatpak-flatpakrepo.5		\
 	flatpak-flatpakref.5		\
+	flatpak-remote.5		\
 	$(NULL)
 
 man_MANS = \
