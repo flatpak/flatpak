@@ -550,7 +550,7 @@ builder_context_enable_rofiles (BuilderContext *self,
 
   if (!self->have_rofiles)
     {
-      g_debug ("rofiles-fuse not available, doing without");
+      g_warning ("rofiles-fuse not available, doing without");
       return TRUE;
     }
 
