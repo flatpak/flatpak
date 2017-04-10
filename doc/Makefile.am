@@ -55,6 +55,7 @@ man5 = \
 	flatpak-flatpakrepo.5		\
 	flatpak-flatpakref.5		\
 	flatpak-remote.5		\
+	flatpak-installation.5		\
 	$(NULL)
 
 man_MANS = \
