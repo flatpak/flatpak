@@ -1,0 +1,150 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-remote">
+
+    <refentryinfo>
+        <title>flatpak remote</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak remote</refentrytitle>
+        <manvolnum>5</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-remote</refname>
+        <refpurpose>Configuration for a remote</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            Flatpak stores information about configured remotes for an installation location in
+            <filename>$installation/repo/config</filename>. For example, the remotes for the
+            default system-wide installation are in
+            <filename>$prefix/var/lib/flatpak/repo/config</filename>, and the remotes for the
+            per-user installation are in <filename>$HOME/.local/share/flatpak/repo/config</filename>.
+       </para>
+
+       <para>
+            Normally, it is not necessary to edit remote config files directly, the
+            flatpak remote-modify command should be used to change properties of remotes.
+       </para>
+
+       <para>
+            System-wide remotes can be statically preconfigured by dropping
+            config fragments into <filename>/etc/flatpak/remotes.d/</filename>.
+       </para>
+    </refsect1>
+
+    <refsect1>
+        <title>File format</title>
+
+        <para>
+            The remote config file format is using the same .ini file format that is used for systemd
+            unit files or application .desktop files.
+        </para>
+
+        <refsect2>
+            <title>[remote …]</title>
+            <para>
+                All the configuration for the the remote with name NAME is contained in the
+                [remote "NAME"] group.
+            </para>
+            <para>
+                The following keys are recognized by OSTree, among others:
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>url</option> (string)</term>
+                    <listitem><para>The url for the remote.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>gpg-verify</option> (boolean)</term>
+                    <listitem><para>Whether to use GPG verification for content from this remote.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>gpg-verify-summary</option> (boolean)</term>
+                    <listitem><para>Whether to use GPG verification for the summary of this remote.</para></listitem>
+                </varlistentry>
+            </variablelist>
+            <para>
+                All flatpak-specific keys have a xa. prefix:
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>xa.disable</option> (boolean)</term>
+                    <listitem><para>Whether the remote is disabled. Defaults to false.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.prio</option> (integer)</term>
+                    <listitem><para>The priority for the remote. This is used when listing remotes. Defaults to 1.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.noenumerate</option> (boolean)</term>
+                    <listitem><para>Whether this remote should be used when presenting available contents. Defaults to true.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.nodeps</option> (boolean)</term>
+                    <listitem><para>Whether this remote should be used when searching for dependencies. Defaults to true.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.title</option> (string)</term>
+                    <listitem><para>An optional title to use when presenting this remote in a UI.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.default-branch</option> (string)</term>
+                    <listitem><para>The default branch to use when installing from this remote.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.default-branch</option> (string)</term>
+                    <listitem><para>The default branch to use when installing from this remote.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.main-ref</option> (string)</term>
+                    <listitem><para>The main reference served by this remote. This is used for origin remotes of applications installed via a flatpakref file.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.oci</option> (boolean)</term>
+                    <listitem><para>Whether this is an OCI remote. Defaults to false.</para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+<programlisting>
+[remote "gnome-nightly-apps"]
+gpg-verify=true
+gpg-verify-summary=true
+url=https://sdk.gnome.org/nightly/repo-apps/
+xa.title=GNOME Applications
+</programlisting>
+
+    </refsect1>
+
+    <refsect1>
+        <title>See also</title>
+
+        <para>
+            <citerefentry><refentrytitle>flatpak-remote-modify</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        </para>
+
+    </refsect1>
+
+</refentry>

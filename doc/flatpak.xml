@@ -375,6 +375,7 @@
             <para>
                 <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>ostree.repo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-remote</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
             </para>
 
     </refsect1>
