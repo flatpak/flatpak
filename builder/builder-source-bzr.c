@@ -274,10 +274,11 @@ builder_source_bzr_bundle (BuilderSource  *source,
   g_autofree char *app_dir_path = NULL;
 
   sources_dir = get_mirror_dir (self, context);
-  sources_dir_path = g_file_get_path (sources_dir);
 
-  if (!g_file_query_exists (sources_dir, NULL))
+  if (sources_dir == NULL) {
+    g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't locate repo with URL '%s'", self->url);
     return FALSE;
+  }
 
   base_name = g_file_get_basename (sources_dir);
 
@@ -301,6 +302,7 @@ builder_source_bzr_bundle (BuilderSource  *source,
                                     NULL);
   dest_dir = g_file_new_for_path (dest_dir_path);
 
+  sources_dir_path = g_file_get_path (sources_dir);
   if (!bzr (bzr_sources_dir, NULL, error,
             "branch", sources_dir_path, base_name_tmp, NULL) ||
       !g_file_move (dest_dir_tmp, dest_dir, 0, NULL, NULL, NULL, error))
