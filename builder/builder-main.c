@@ -399,6 +399,7 @@ main (int    argc,
       g_autoptr(GFile) build_subdir = NULL;
 
       if (!builder_git_mirror_repo (opt_from_git,
+                                    NULL,
                                     !opt_disable_updates, FALSE, FALSE,
                                     git_branch, build_context, &error))
         {

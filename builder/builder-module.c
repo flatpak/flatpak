@@ -1184,10 +1184,10 @@ builder_module_build (BuilderModule  *self,
   g_print ("Building module %s in %s\n", self->name, source_dir_path);
   g_print ("========================================================================\n");
 
-  if (!builder_module_extract_sources (self, source_dir, context, error))
+  if (builder_context_get_bundle_sources (context) && !builder_module_bundle_sources (self, context, error))
     return FALSE;
 
-  if (builder_context_get_bundle_sources (context) && !builder_module_bundle_sources (self, context, error))
+  if (!builder_module_extract_sources (self, source_dir, context, error))
     return FALSE;
 
   if (self->subdir != NULL && self->subdir[0] != 0)

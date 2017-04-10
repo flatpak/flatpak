@@ -225,7 +225,7 @@ git_mirror_submodules (const char     *repo_location,
           if (g_strcmp0 (words[0], "160000") != 0)
             continue;
 
-          if (!builder_git_mirror_repo (absolute_url, update, TRUE, disable_fsck, words[2], context, error))
+          if (!builder_git_mirror_repo (absolute_url, NULL, update, TRUE, disable_fsck, words[2], context, error))
             return FALSE;
         }
     }

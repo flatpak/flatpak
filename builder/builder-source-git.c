@@ -206,6 +206,7 @@ builder_source_git_download (BuilderSource  *source,
     return FALSE;
 
   if (!builder_git_mirror_repo (location,
+                                NULL,
                                 update_vcs, TRUE, self->disable_fsckobjects,
                                 get_branch (self),
                                 context,
@@ -274,7 +275,7 @@ builder_source_git_bundle (BuilderSource  *source,
 
   if (!builder_git_mirror_repo (location,
                                 mirror_dir_path,
-                                FALSE, TRUE,
+                                FALSE, TRUE, FALSE,
                                 get_branch (self),
                                 context,
                                 error))
