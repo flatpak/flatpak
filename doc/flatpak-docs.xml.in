@@ -20,6 +20,7 @@
     <xi:include href="@srcdir@/flatpak-info.xml"/>
     <xi:include href="@srcdir@/flatpak-run.xml"/>
     <xi:include href="@srcdir@/flatpak-override.xml"/>
+    <xi:include href="@srcdir@/flatpak-make-current.xml"/>
     <xi:include href="@srcdir@/flatpak-enter.xml"/>
     <xi:include href="@srcdir@/flatpak-document-export.xml"/>
     <xi:include href="@srcdir@/flatpak-document-unexport.xml"/>
@@ -36,11 +37,14 @@
     <xi:include href="@srcdir@/flatpak-build-export.xml"/>
     <xi:include href="@srcdir@/flatpak-build-bundle.xml"/>
     <xi:include href="@srcdir@/flatpak-build-import-bundle.xml"/>
-    <xi:include href="@srcdir@/flatpak-build-update-repo.xml"/>
     <xi:include href="@srcdir@/flatpak-build-sign.xml"/>
+    <xi:include href="@srcdir@/flatpak-build-update-repo.xml"/>
+    <xi:include href="@srcdir@/flatpak-build-commit-from.xml"/>
     <xi:include href="@srcdir@/flatpak-builder.xml"/>
     <xi:include href="@srcdir@/flatpak-metadata.xml"/>
     <xi:include href="@srcdir@/flatpak-flatpakrepo.xml"/>
     <xi:include href="@srcdir@/flatpak-flatpakref.xml"/>
-    <xi:include href="@srcdir@/flatpak-make-current.xml"/>
+    <xi:include href="@srcdir@/flatpak-manifest.xml"/>
+    <xi:include href="@srcdir@/flatpak-remote.xml"/>
+    <xi:include href="@srcdir@/flatpak-installation.xml"/>
 </reference>
