@@ -119,7 +119,7 @@ static GOptionEntry empty_entries[] = {
 GOptionEntry user_entries[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Work on user installations"), NULL },
   { "system", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_user, N_("Work on system-wide installations (default)"), NULL },
-  { "installation", 0, 0, G_OPTION_ARG_STRING, &opt_installation, N_("Work on a specific system-wide installation"), NULL },
+  { "installation", 0, 0, G_OPTION_ARG_STRING, &opt_installation, N_("Work on a specific system-wide installation"), N_("NAME") },
   { NULL }
 };
 
