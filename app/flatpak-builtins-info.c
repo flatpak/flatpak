@@ -38,6 +38,8 @@ static gboolean opt_system;
 static gboolean opt_show_ref;
 static gboolean opt_show_commit;
 static gboolean opt_show_origin;
+static gboolean opt_show_size;
+static gboolean opt_show_metadata;
 static char *opt_arch;
 static char **opt_installations;
 
@@ -49,6 +51,8 @@ static GOptionEntry options[] = {
   { "show-ref", 'r', 0, G_OPTION_ARG_NONE, &opt_show_ref, N_("Show ref"), NULL },
   { "show-commit", 'c', 0, G_OPTION_ARG_NONE, &opt_show_commit, N_("Show commit"), NULL },
   { "show-origin", 'o', 0, G_OPTION_ARG_NONE, &opt_show_origin, N_("Show origin"), NULL },
+  { "show-size", 's', 0, G_OPTION_ARG_NONE, &opt_show_size, N_("Show size"), NULL },
+  { "show-metadata", 'm', 0, G_OPTION_ARG_NONE, &opt_show_metadata, N_("Show metadata"), NULL },
   { NULL }
 };
 
@@ -73,6 +77,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   const char *pref = NULL;
   const char *default_branch = NULL;
   const char *origin = NULL;
+  guint64 size;
   gboolean search_all = FALSE;
   gboolean first = TRUE;
   FlatpakKinds kinds;
@@ -110,9 +115,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   commit = flatpak_deploy_data_get_commit (deploy_data);
   origin = flatpak_deploy_data_get_origin (deploy_data);
+  size = flatpak_deploy_data_get_installed_size (deploy_data);
 
-  if (!opt_show_ref && !opt_show_origin && !opt_show_commit)
-    opt_show_ref = opt_show_origin = opt_show_commit = TRUE;
+  if (!opt_show_metadata && !opt_show_ref && !opt_show_origin && !opt_show_commit && !opt_show_size)
+    opt_show_ref = opt_show_origin = opt_show_commit = opt_show_size = TRUE;
 
   if (opt_show_ref)
     {
@@ -135,7 +141,32 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       g_print ("%s", commit);
     }
 
+  if (opt_show_size)
+    {
+      g_autofree char *formatted = g_format_size (size);
+
+      maybe_print_space (&first);
+
+      g_print ("%s", formatted);
+    }
+
   g_print ("\n");
+
+  if (opt_show_metadata)
+    {
+      g_autoptr(GFile) deploy_dir = NULL;
+      g_autoptr(GFile) file = NULL;
+      g_autofree char *data = NULL;
+      gsize data_size;
+
+      deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
+      file = g_file_get_child (deploy_dir, "metadata");
+
+      if (!g_file_load_contents (file, cancellable, &data, &data_size, NULL, error))
+        return FALSE;
+
+      g_print ("%s\n", data);
+    }
 
   return TRUE;
 }

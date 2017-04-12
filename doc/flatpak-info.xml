@@ -129,6 +129,24 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-s</option></term>
+                <term><option>--show-size</option></term>
+
+                <listitem><para>
+                    Show the installed size.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-m</option></term>
+                <term><option>--show-metadata</option></term>
+
+                <listitem><para>
+                    Show the metadata.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
