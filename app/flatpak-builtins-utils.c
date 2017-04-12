@@ -132,6 +132,7 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
   if (search_user || search_all)
     {
       user_dir = flatpak_dir_get_user ();
+
       ref = flatpak_dir_find_installed_ref (user_dir,
                                             id,
                                             branch,
@@ -140,6 +141,12 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
                                             &lookup_error);
       if (ref)
         dir = user_dir;
+
+      if (g_error_matches (lookup_error, G_IO_ERROR, G_IO_ERROR_FAILED))
+        {
+          g_propagate_error (error, g_steal_pointer (&lookup_error));
+          return NULL;
+        }
     }
 
   if (ref == NULL && search_all)
@@ -153,16 +160,25 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
       for (i = 0; i < system_dirs->len; i++)
         {
           FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+
+          g_clear_error (&lookup_error);
+
           ref = flatpak_dir_find_installed_ref (system_dir,
                                                 id,
                                                 branch,
                                                 arch,
                                                 kinds, &kind,
-                                                lookup_error == NULL ? &lookup_error : NULL);
+                                                &lookup_error);
           if (ref)
             {
               dir = system_dir;
               break;
+            }
+
+          if (g_error_matches (lookup_error, G_IO_ERROR, G_IO_ERROR_FAILED))
+            {
+              g_propagate_error (error, g_steal_pointer (&lookup_error));
+              return NULL;
             }
         }
     }
@@ -182,16 +198,24 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
 
               if (installation_dir)
                 {
+                  g_clear_error (&lookup_error);
+
                   ref = flatpak_dir_find_installed_ref (installation_dir,
                                                         id,
                                                         branch,
                                                         arch,
                                                         kinds, &kind,
-                                                        lookup_error == NULL ? &lookup_error : NULL);
+                                                        &lookup_error);
                   if (ref)
                     {
                       dir = installation_dir;
                       break;
+                    }
+
+                  if (g_error_matches (lookup_error, G_IO_ERROR, G_IO_ERROR_FAILED))
+                    {
+                      g_propagate_error (error, g_steal_pointer (&lookup_error));
+                      return NULL;
                     }
                 }
             }
@@ -200,12 +224,16 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
       if (ref == NULL && search_system)
         {
           system_dir = flatpak_dir_get_system_default ();
+
+          g_clear_error (&lookup_error);
+
           ref = flatpak_dir_find_installed_ref (system_dir,
                                                 id,
                                                 branch,
                                                 arch,
                                                 kinds, &kind,
-                                                lookup_error == NULL ? &lookup_error : NULL);
+                                                &lookup_error);
+
           if (ref)
             dir = system_dir;
         }
