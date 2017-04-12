@@ -35,8 +35,6 @@
 
 static gboolean opt_user;
 static gboolean opt_system;
-static gboolean opt_runtime;
-static gboolean opt_app;
 static gboolean opt_show_ref;
 static gboolean opt_show_commit;
 static gboolean opt_show_origin;
@@ -48,8 +46,6 @@ static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
   { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Show specific system-wide installations"), NULL },
-  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
-  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
   { "show-ref", 'r', 0, G_OPTION_ARG_NONE, &opt_show_ref, N_("Show ref"), NULL },
   { "show-commit", 'c', 0, G_OPTION_ARG_NONE, &opt_show_commit, N_("Show commit"), NULL },
   { "show-origin", 'o', 0, G_OPTION_ARG_NONE, &opt_show_origin, N_("Show origin"), NULL },
@@ -97,7 +93,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (argc > 3)
     return usage_error (context, _("Too many arguments"), error);
 
-  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
+  kinds = FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME;
 
   if (!opt_user && !opt_system && opt_installations == NULL)
     search_all = TRUE;
@@ -160,7 +156,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
     return FALSE;
 
-  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
+  kinds = FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME;
 
   if (!opt_user && !opt_system && opt_installations == NULL)
     search_all = TRUE;

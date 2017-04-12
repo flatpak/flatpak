@@ -48,10 +48,6 @@
             are queried. Use the --user, --system or --installation
             options to change this.
         </para>
-        <para>
-            By default this queries the installed apps and runtimes, but you can
-            limit this by using the --app or --runtime option.
-        </para>
 
     </refsect1>
 
@@ -94,22 +90,6 @@
                     those defined in <filename>/etc/flatpak/installations.d/</filename>.
                     Using <arg choice="plain">--installation=default</arg> is equivalent to using
                     <arg choice="plain">--system</arg>.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--app</option></term>
-
-                <listitem><para>
-                    Query for applications.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--runtime</option></term>
-
-                <listitem><para>
-                    Query for runtimes.
                 </para></listitem>
             </varlistentry>
 
