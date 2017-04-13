@@ -108,9 +108,9 @@ $FLATPAK list ${U} --runtime | grep org.test.Platform > /dev/null
 $FLATPAK list ${U} -d --runtime | grep org.test.Platform | grep org.test.Platform-origin > /dev/null
 $FLATPAK list ${U} -d --runtime | grep org.test.Platform | grep ${ID:0:12} > /dev/null
 
-$FLATPAK info ${U} --runtime org.test.Platform > /dev/null
-$FLATPAK info ${U} --runtime org.test.Platform | grep org.test.Platform-origin > /dev/null
-$FLATPAK info ${U} --runtime org.test.Platform | grep $ID > /dev/null
+$FLATPAK info ${U} org.test.Platform > /dev/null
+$FLATPAK info ${U} org.test.Platform | grep org.test.Platform-origin > /dev/null
+$FLATPAK info ${U} org.test.Platform | grep $ID > /dev/null
 
 $FLATPAK remote-list ${U} -d | grep org.test.Platform-origin > /dev/null
 $FLATPAK remote-list ${U} -d | grep org.test.Platform-origin | grep no-enumerate > /dev/null
