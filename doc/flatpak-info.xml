@@ -147,6 +147,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-e</option></term>
+                <term><option>--show-extensions</option></term>
+
+                <listitem><para>
+                    Show the matching extensions.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
