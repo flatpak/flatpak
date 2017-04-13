@@ -40,6 +40,7 @@ static gboolean opt_show_commit;
 static gboolean opt_show_origin;
 static gboolean opt_show_size;
 static gboolean opt_show_metadata;
+static gboolean opt_show_extensions;
 static char *opt_arch;
 static char **opt_installations;
 
@@ -53,6 +54,7 @@ static GOptionEntry options[] = {
   { "show-origin", 'o', 0, G_OPTION_ARG_NONE, &opt_show_origin, N_("Show origin"), NULL },
   { "show-size", 's', 0, G_OPTION_ARG_NONE, &opt_show_size, N_("Show size"), NULL },
   { "show-metadata", 'm', 0, G_OPTION_ARG_NONE, &opt_show_metadata, N_("Show metadata"), NULL },
+  { "show-extensions", 'e', 0, G_OPTION_ARG_NONE, &opt_show_extensions, N_("Show extensions"), NULL },
   { NULL }
 };
 
@@ -117,7 +119,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   origin = flatpak_deploy_data_get_origin (deploy_data);
   size = flatpak_deploy_data_get_installed_size (deploy_data);
 
-  if (!opt_show_metadata && !opt_show_ref && !opt_show_origin && !opt_show_commit && !opt_show_size)
+  if (!opt_show_extensions && !opt_show_metadata &&
+      !opt_show_ref && !opt_show_origin && !opt_show_commit && !opt_show_size)
     opt_show_ref = opt_show_origin = opt_show_commit = opt_show_size = TRUE;
 
   if (opt_show_ref)
@@ -151,6 +154,25 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
     }
 
   g_print ("\n");
+
+  if (opt_show_extensions)
+    {
+       g_autoptr(FlatpakDeploy) deploy = NULL;
+       g_autoptr(GKeyFile) metakey = NULL;
+       g_auto(GStrv) parts = NULL;
+       GList *extensions, *l;
+
+       deploy = flatpak_find_deploy_for_ref (ref, NULL, NULL);
+       metakey = flatpak_deploy_get_metadata (deploy);
+       parts = g_strsplit (ref, "/", 0);
+       extensions = flatpak_list_extensions (metakey, parts[2], parts[3]);
+       for (l = extensions; l; l = l->next)
+         {
+           FlatpakExtension *ext = l->data;
+
+           g_print ("%s\n", ext->ref);
+         }
+    }
 
   if (opt_show_metadata)
     {
