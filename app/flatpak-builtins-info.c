@@ -126,21 +126,18 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (opt_show_ref)
     {
       maybe_print_space (&first);
-
       g_print ("%s", ref);
     }
 
   if (opt_show_origin)
     {
       maybe_print_space (&first);
-
       g_print ("%s", origin ? origin : "-");
     }
 
   if (opt_show_commit)
     {
       maybe_print_space (&first);
-
       g_print ("%s", commit);
     }
 
@@ -149,11 +146,11 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       g_autofree char *formatted = g_format_size (size);
 
       maybe_print_space (&first);
-
       g_print ("%s", formatted);
     }
 
-  g_print ("\n");
+  if (!first)
+    g_print ("\n");
 
   if (opt_show_extensions)
     {
@@ -169,8 +166,47 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
        for (l = extensions; l; l = l->next)
          {
            FlatpakExtension *ext = l->data;
+           g_autofree char *merge_dirs = NULL;
+           g_autofree const char **subpaths = NULL;
+           g_autoptr(GVariant) ext_deploy_data = NULL;
 
-           g_print ("%s\n", ext->ref);
+           ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, error);
+           if (ext_deploy_data == NULL)
+             return FALSE;
+
+           commit = flatpak_deploy_data_get_commit (ext_deploy_data);
+           origin = flatpak_deploy_data_get_origin (ext_deploy_data);
+           size = flatpak_deploy_data_get_installed_size (ext_deploy_data);
+           subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
+
+           g_print ("extension: %s", ext->ref);
+
+           if (opt_show_ref)
+             g_print (" %s", origin ? origin : "-");
+
+           if (opt_show_origin)
+             g_print (" %s", origin ? origin : "-");
+
+           if (opt_show_commit)
+             g_print (" %s", commit);
+
+           if (opt_show_size)
+             {
+               g_autofree char *formatted = NULL;
+
+               formatted = g_format_size (size);
+               g_print (" %s", formatted);
+             }
+
+           if (subpaths)
+             {
+               g_autofree char *subpath_str = NULL;
+
+               subpath_str = g_strjoinv (",", (char **)subpaths);
+               g_print (" %s", subpath_str);
+             }
+
+           g_print ("\n");
          }
     }
 
