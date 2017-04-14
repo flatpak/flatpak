@@ -7915,7 +7915,7 @@ add_related (FlatpakDir *self,
             g_ptr_array_add (subpaths, g_steal_pointer (&subpath));
         }
 
-      /* Always remove debug */
+      /* Always remove locale */
       delete = TRUE;
     }
 
