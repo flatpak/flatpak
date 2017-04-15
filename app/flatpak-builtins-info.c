@@ -170,19 +170,29 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
            g_autofree const char **subpaths = NULL;
            g_autoptr(GVariant) ext_deploy_data = NULL;
 
-           ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, error);
-           if (ext_deploy_data == NULL)
-             return FALSE;
+           if (ext->is_unmaintained)
+             {
+               commit = "unmaintained";
+               origin = NULL;
+               size = 0;
+               subpaths = NULL;
+             }
+           else
+             {
+               ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, error);
+               if (ext_deploy_data == NULL)
+                 return FALSE;
 
-           commit = flatpak_deploy_data_get_commit (ext_deploy_data);
-           origin = flatpak_deploy_data_get_origin (ext_deploy_data);
-           size = flatpak_deploy_data_get_installed_size (ext_deploy_data);
-           subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
+               commit = flatpak_deploy_data_get_commit (ext_deploy_data);
+               origin = flatpak_deploy_data_get_origin (ext_deploy_data);
+               size = flatpak_deploy_data_get_installed_size (ext_deploy_data);
+               subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
+             }
 
-           g_print ("extension: %s", ext->ref);
+           g_print ("extension: %s", ext->id);
 
            if (opt_show_ref)
-             g_print (" %s", origin ? origin : "-");
+             g_print (" %s", ext->ref);
 
            if (opt_show_origin)
              g_print (" %s", origin ? origin : "-");
@@ -190,7 +200,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
            if (opt_show_commit)
              g_print (" %s", commit);
 
-           if (opt_show_size)
+           if (opt_show_size && size > 0)
              {
                g_autofree char *formatted = NULL;
 
