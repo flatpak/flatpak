@@ -166,7 +166,6 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
        for (l = extensions; l; l = l->next)
          {
            FlatpakExtension *ext = l->data;
-           g_autofree char *merge_dirs = NULL;
            g_autofree const char **subpaths = NULL;
            g_autoptr(GVariant) ext_deploy_data = NULL;
 
