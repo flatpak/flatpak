@@ -344,6 +344,70 @@
                 </varlistentry>
             </variablelist>
         </refsect2>
+        <refsect2>
+            <title>[ExtensionOf]</title>
+            <para>
+                This optional group may be present if the runtime is an extension.
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>ref</option> (string)</term>
+                    <listitem><para>
+                        The ref of the runtime or application that this extension
+                        belongs to.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>priority</option> (integer)</term>
+                    <listitem><para>
+                        The priority to give this extension when looking for the
+                        best match. Default is 0.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+        <refsect2>
+            <title>[Extra Data]</title>
+            <para>
+                This optional group may be present if the runtime or application uses
+                extra data that gets downloaded separately. The data in this group
+                gets merged into the repository summary, with the xa.extra-data-sources
+                key.
+            </para>
+            <para>
+                If multiple extra data sources are present, their uri, size and checksum
+                keys are grouped together by using the same suffix. If only one extra
+                data source is present, the suffix can be omitted.
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>NoRuntime</option> (boolean)</term>
+                    <listitem><para>
+                        Whether to mount the runtime while running the /app/bin/apply_extra
+                        script. Defaults to true, i.e. not mounting the runtime.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>uriX</option> (string)</term>
+                    <listitem><para>
+                        The uri for extra data source X. The only supported uri schemes are
+                        http and https.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>sizeX</option> (integer)</term>
+                    <listitem><para>
+                        The size for extra data source X.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>checksumX</option> (string)</term>
+                    <listitem><para>
+                        The sha256 sum for extra data source X.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
     </refsect1>
 
     <refsect1>
