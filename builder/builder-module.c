@@ -34,6 +34,7 @@
 #include "builder-utils.h"
 #include "builder-module.h"
 #include "builder-post-process.h"
+#include "builder-manifest.h"
 
 struct BuilderModule
 {
@@ -679,12 +680,23 @@ builder_module_deserialize_property (JsonSerializable *serializable,
               if (JSON_NODE_HOLDS_VALUE (element_node) &&
                   json_node_get_value_type (element_node) == G_TYPE_STRING)
                 {
-                  const char *module_path = json_node_get_string (element_node);
+                  g_autoptr(GFile) saved_demarshal_base_dir = builder_manifest_get_demarshal_base_dir ();
+                  const char *module_relpath = json_node_get_string (element_node);
+                  g_autoptr(GFile) module_file =
+                    g_file_resolve_relative_path (saved_demarshal_base_dir, module_relpath);
+                  const char *module_path = flatpak_file_get_path_cached (module_file);
                   g_autofree char *json = NULL;
 
                   if (g_file_get_contents (module_path, &json, NULL, NULL))
-                    module = json_gobject_from_data (BUILDER_TYPE_MODULE,
-                                                     json, -1, NULL);
+                    {
+                      g_autoptr(GFile) module_file_dir = g_file_get_parent (module_file);
+                      builder_manifest_set_demarshal_base_dir (module_file_dir);
+                      module = json_gobject_from_data (BUILDER_TYPE_MODULE,
+                                                       json, -1, NULL);
+                      builder_manifest_set_demarshal_base_dir (saved_demarshal_base_dir);
+                      if (module)
+                        builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                    }
                 }
               else if (JSON_NODE_HOLDS_OBJECT (element_node))
                 module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
