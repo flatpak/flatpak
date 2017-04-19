@@ -84,6 +84,7 @@ typedef enum {
   FLATPAK_RUN_FLAG_WRITABLE_ETC       = (1 << 6),
   FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY = (1 << 7),
   FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY = (1 << 8),
+  FLATPAK_RUN_FLAG_SET_PERSONALITY    = (1 << 9),
 } FlatpakRunFlags;
 
 gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,

@@ -27,6 +27,7 @@
 #include <sys/utsname.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/personality.h>
 #include <grp.h>
 
 #ifdef ENABLE_SECCOMP
@@ -4132,6 +4133,13 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
 
   if ((flags & FLATPAK_RUN_FLAG_WRITABLE_ETC) == 0)
     add_monitor_path_args ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0, argv_array);
+
+  if ((flags & FLATPAK_RUN_FLAG_SET_PERSONALITY) &&
+      flatpak_is_linux32_arch (arch))
+    {
+      g_debug ("Setting personality linux32");
+      personality (PER_LINUX32);
+    }
 
   return TRUE;
 }

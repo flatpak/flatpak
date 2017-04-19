@@ -368,6 +368,22 @@ flatpak_get_arch (void)
 #endif
 }
 
+gboolean
+flatpak_is_linux32_arch (const char *arch)
+{
+  const char *kernel_arch = flatpak_get_kernel_arch ();
+
+  if (strcmp (kernel_arch, "x86_64") == 0 &&
+      strcmp (arch, "i386") == 0)
+    return TRUE;
+
+  if (strcmp (kernel_arch, "aarch64") == 0 &&
+      strcmp (arch, "arm") == 0)
+    return TRUE;
+
+  return FALSE;
+}
+
 /* Get all compatible arches for this host in order of priority */
 const char **
 flatpak_get_arches (void)
