@@ -1666,3 +1666,13 @@ builder_download_uri (const char     *url,
 
   return TRUE;
 }
+
+GParamSpec *
+builder_serializable_find_property_with_error (JsonSerializable *serializable,
+                                               const char       *name)
+{
+  GParamSpec *pspec = g_object_class_find_property (G_OBJECT_GET_CLASS (serializable), name);
+  if (pspec == NULL)
+    g_warning ("Unknown property %s for type %s\n", name, g_type_name_from_instance ((GTypeInstance *)serializable));
+  return pspec;
+}

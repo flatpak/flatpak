@@ -1021,6 +1021,7 @@ serializable_iface_init (JsonSerializableIface *serializable_iface)
 {
   serializable_iface->serialize_property = builder_manifest_serialize_property;
   serializable_iface->deserialize_property = builder_manifest_deserialize_property;
+  serializable_iface->find_property = builder_serializable_find_property_with_error;
 }
 
 const char *
