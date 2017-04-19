@@ -340,7 +340,7 @@ SoupSession *
 builder_context_get_soup_session (BuilderContext *self)
 {
   if (self->soup_session == NULL)
-    self->soup_session = flatpak_create_soup_session ("flatpak-builder");
+    self->soup_session = flatpak_create_soup_session ("flatpak-builder " PACKAGE_VERSION);
 
   return self->soup_session;
 }
