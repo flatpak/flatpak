@@ -2677,6 +2677,7 @@ builder_manifest_run (BuilderManifest *self,
               !g_str_has_prefix (arg, "--sdk") &&
               !g_str_has_prefix (arg, "--runtime") &&
               !g_str_has_prefix (arg, "--command") &&
+              !g_str_has_prefix (arg, "--extra-data") &&
               !g_str_has_prefix (arg, "--require-version"))
             g_ptr_array_add (args, g_strdup (arg));
         }
