@@ -34,6 +34,9 @@
 
 static char *opt_title;
 static char *opt_default_branch;
+static char *opt_generate_delta_from;
+static char *opt_generate_delta_to;
+static char *opt_generate_delta_ref;
 static char *opt_gpg_homedir;
 static char **opt_gpg_key_ids;
 static gboolean opt_prune;
@@ -48,6 +51,9 @@ static GOptionEntry options[] = {
   { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, N_("Generate delta files"), NULL },
   { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, N_("Prune unused objects"), NULL },
   { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, N_("Only traverse DEPTH parents for each commit (default: -1=infinite)"), N_("DEPTH") },
+  { "generate-static-delta-from", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_from, NULL, NULL },
+  { "generate-static-delta-to", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_to, NULL, NULL },
+  { "generate-static-delta-ref", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_ref, NULL, NULL },
   { NULL }
 };
 
@@ -224,6 +230,48 @@ _ostree_repo_static_delta_delete (OstreeRepo                    *self,
   return ret;
 }
 
+static gboolean
+generate_one_delta (OstreeRepo *repo,
+                    const char *from,
+                    const char *to,
+                    const char *ref,
+                    GCancellable *cancellable,
+                    GError **error)
+{
+  g_autoptr(GVariantBuilder) parambuilder = NULL;
+  g_autoptr(GVariant) params = NULL;
+
+  parambuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  /* Fall back for 1 meg files */
+  g_variant_builder_add (parambuilder, "{sv}",
+                         "min-fallback-size", g_variant_new_uint32 (1));
+  params = g_variant_ref_sink (g_variant_builder_end (parambuilder));
+
+  if (ref == NULL)
+    ref = "";
+
+  if (from == NULL)
+    g_print (_("Generating delta: %s (%.10s)\n"), ref, to);
+  else
+    g_print (_("Generating delta: %s (%.10s-%.10s)\n"), ref, from, to);
+
+  if (!ostree_repo_static_delta_generate (repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
+                                          from, to, NULL,
+                                          params,
+                                          cancellable, error))
+    {
+      if (from == NULL)
+        g_prefix_error (error, _("Failed to generate delta %s (%.10s): "),
+                        ref, to);
+      else
+        g_prefix_error (error, _("Failed to generate delta %s (%.10s-%.10s): "),
+                        ref, from, to);
+      return FALSE;
+
+    }
+
+  return TRUE;
+}
 
 static gboolean
 generate_all_deltas (OstreeRepo *repo,
@@ -374,6 +422,13 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
+
+  if (opt_generate_delta_to)
+    {
+      if (!generate_one_delta (repo, opt_generate_delta_from, opt_generate_delta_to, opt_generate_delta_ref, cancellable, error))
+        return FALSE;
+      return TRUE;
+    }
 
   if (opt_title &&
       !flatpak_repo_set_title (repo, opt_title, error))
