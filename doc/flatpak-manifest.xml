@@ -184,7 +184,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>rename-icon</option> (string)</term>
-                    <listitem><para>Any icon with this name will be renamed to a name based on id during the cleanup phase.</para></listitem>
+                    <listitem><para>Any icon with this name will be renamed to a name based on id during the cleanup phase. Note that this is the icon name, not the full filenames, so it should not include a filename extension. </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>copy-icon</option> (boolean)</term>
