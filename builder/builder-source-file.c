@@ -206,7 +206,7 @@ get_source_file (BuilderSourceFile *self,
                  gboolean          *is_inline,
                  GError           **error)
 {
-  GFile *base_dir = builder_context_get_base_dir (context);
+  GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
 
   if (self->url != NULL && self->url[0] != 0)
     {

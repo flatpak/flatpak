@@ -140,13 +140,15 @@ get_source_file (BuilderSourcePatch *self,
                  BuilderContext     *context,
                  GError            **error)
 {
+  GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
+
   if (self->path == NULL || self->path[0] == 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "path not specified");
       return NULL;
     }
 
-  return g_file_resolve_relative_path (builder_context_get_base_dir (context), self->path);
+  return g_file_resolve_relative_path (base_dir, self->path);
 }
 
 static gboolean

@@ -47,6 +47,8 @@ GList *      builder_module_get_sources (BuilderModule *self);
 GList *      builder_module_get_modules (BuilderModule *self);
 void         builder_module_set_json_path (BuilderModule *self,
                                            const char *json_path);
+void         builder_module_set_base_dir (BuilderModule *self,
+                                          GFile* base_dir);
 GPtrArray *  builder_module_get_changes (BuilderModule *self);
 void         builder_module_set_changes (BuilderModule *self,
                                          GPtrArray     *changes);

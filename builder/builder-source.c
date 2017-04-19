@@ -56,9 +56,17 @@ builder_source_finalize (GObject *object)
 {
   BuilderSource *self = BUILDER_SOURCE (object);
 
+  g_clear_object (&self->base_dir);
   g_free (self->dest);
 
   G_OBJECT_CLASS (builder_source_parent_class)->finalize (object);
+}
+
+void
+builder_source_set_base_dir (BuilderSource  *self,
+                             GFile          *base_dir)
+{
+  g_set_object (&self->base_dir, base_dir);
 }
 
 static void

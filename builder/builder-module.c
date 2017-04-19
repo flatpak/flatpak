@@ -668,6 +668,7 @@ builder_module_deserialize_property (JsonSerializable *serializable,
         {
           JsonArray *array = json_node_get_array (property_node);
           guint i, array_len = json_array_get_length (array);
+          g_autoptr(GFile) saved_demarshal_base_dir = builder_manifest_get_demarshal_base_dir ();
           GList *modules = NULL;
           GObject *module;
 
@@ -680,7 +681,6 @@ builder_module_deserialize_property (JsonSerializable *serializable,
               if (JSON_NODE_HOLDS_VALUE (element_node) &&
                   json_node_get_value_type (element_node) == G_TYPE_STRING)
                 {
-                  g_autoptr(GFile) saved_demarshal_base_dir = builder_manifest_get_demarshal_base_dir ();
                   const char *module_relpath = json_node_get_string (element_node);
                   g_autoptr(GFile) module_file =
                     g_file_resolve_relative_path (saved_demarshal_base_dir, module_relpath);
@@ -695,11 +695,18 @@ builder_module_deserialize_property (JsonSerializable *serializable,
                                                        json, -1, NULL);
                       builder_manifest_set_demarshal_base_dir (saved_demarshal_base_dir);
                       if (module)
-                        builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                        {
+                          builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                          builder_module_set_base_dir (BUILDER_MODULE (module), module_file_dir);
+                        }
                     }
                 }
               else if (JSON_NODE_HOLDS_OBJECT (element_node))
-                module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+                {
+                  module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+                  if (module != NULL)
+                    builder_module_set_base_dir (BUILDER_MODULE (module), saved_demarshal_base_dir);
+                }
 
               if (module == NULL)
                 {
@@ -1628,6 +1635,16 @@ builder_module_set_json_path (BuilderModule *self,
                               const char *json_path)
 {
   self->json_path = g_strdup (json_path);
+}
+
+void
+builder_module_set_base_dir (BuilderModule *self,
+                             GFile* base_dir)
+{
+  GList *l;
+
+  for (l = self->sources; l != NULL; l = l->next)
+    builder_source_set_base_dir (l->data, base_dir);
 }
 
 GPtrArray *

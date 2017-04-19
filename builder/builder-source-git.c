@@ -166,6 +166,7 @@ get_url_or_path (BuilderSourceGit *self,
                  GError          **error)
 {
   g_autoptr(GFile) repo = NULL;
+  GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
 
   if (self->url == NULL && self->path == NULL)
     {
@@ -179,15 +180,14 @@ get_url_or_path (BuilderSourceGit *self,
       scheme = g_uri_parse_scheme (self->url);
       if (scheme == NULL)
         {
-          repo = g_file_resolve_relative_path (builder_context_get_base_dir (context),
-                                               self->url);
+          repo = g_file_resolve_relative_path (base_dir, self->url);
           return g_file_get_uri (repo);
         }
 
       return g_strdup (self->url);
     }
 
-  repo = g_file_resolve_relative_path (builder_context_get_base_dir (context),
+  repo = g_file_resolve_relative_path (base_dir,
                                        self->path);
   return g_file_get_path (repo);
 }
