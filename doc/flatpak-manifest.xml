@@ -103,7 +103,7 @@
                 <varlistentry>
                     <term><option>writable-sdk</option> (boolean)</term>
                     <listitem><para>If true, use a writable copy of the sdk for /usr.
-                    Defaults to true if --build-runtime is specified.</para></listitem>
+                    Defaults to true if build-runtime is specified.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>appstream-compose</option> (boolean)</term>
