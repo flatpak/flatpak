@@ -89,6 +89,10 @@
                     <listitem><para>Build a new runtime instead of an application.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>build-extension</option> (boolean)</term>
+                    <listitem><para>Build an extension.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>separate-locales</option> (boolean)</term>
                     <listitem><para>Separate out locale files and translations to an extension runtime. Defaults to true.</para></listitem>
                 </varlistentry>
