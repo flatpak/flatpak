@@ -22,6 +22,7 @@ app/flatpak-builtins-list-remotes.c
 app/flatpak-builtins-ls-remote.c
 app/flatpak-builtins-make-current.c
 app/flatpak-builtins-override.c
+app/flatpak-builtins-repo.c
 app/flatpak-builtins-repo-update.c
 app/flatpak-builtins-run.c
 app/flatpak-builtins-uninstall.c
