@@ -108,6 +108,9 @@ char **  flatpak_run_apply_env_appid (char **envp,
                                       GFile *app_dir);
 char **  flatpak_run_apply_env_vars (char          **envp,
                                      FlatpakContext *context);
+FlatpakContext *flatpak_app_compute_permissions (GKeyFile *app_metadata,
+                                                 GKeyFile *runtime_metadata,
+                                                 GError  **error);
 
 GFile *flatpak_get_data_dir (const char *app_id);
 GFile *flatpak_ensure_data_dir (const char   *app_id,

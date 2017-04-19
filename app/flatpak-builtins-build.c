@@ -328,14 +328,12 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             "--bind", flatpak_file_get_path_cached (var), "/var",
             NULL);
 
-  app_context = flatpak_context_new ();
-  if (runtime_metakey)
-    {
-      if (!flatpak_context_load_metadata (app_context, runtime_metakey, error))
-        return FALSE;
-    }
-  if (!flatpak_context_load_metadata (app_context, metakey, error))
+  app_context = flatpak_app_compute_permissions (metakey,
+                                                 runtime_metakey,
+                                                 error);
+  if (app_context == NULL)
     return FALSE;
+
   flatpak_context_allow_host_fs (app_context);
   flatpak_context_merge (app_context, arg_context);
 

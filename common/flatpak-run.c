@@ -3253,10 +3253,10 @@ add_default_permissions (FlatpakContext *app_context)
                                           FLATPAK_POLICY_TALK);
 }
 
-static FlatpakContext *
-compute_permissions (GKeyFile *app_metadata,
-                     GKeyFile *runtime_metadata,
-                     GError  **error)
+FlatpakContext *
+flatpak_app_compute_permissions (GKeyFile *app_metadata,
+                                 GKeyFile *runtime_metadata,
+                                 GError  **error)
 {
   g_autoptr(FlatpakContext) app_context = NULL;
 
@@ -3264,7 +3264,8 @@ compute_permissions (GKeyFile *app_metadata,
 
   add_default_permissions (app_context);
 
-  if (!flatpak_context_load_metadata (app_context, runtime_metadata, error))
+  if (runtime_metadata != NULL &&
+      !flatpak_context_load_metadata (app_context, runtime_metadata, error))
     return NULL;
 
   if (app_metadata != NULL &&
@@ -4258,7 +4259,7 @@ flatpak_run_app (const char     *app_ref,
 
   runtime_metakey = flatpak_deploy_get_metadata (runtime_deploy);
 
-  app_context = compute_permissions (metakey, runtime_metakey, error);
+  app_context = flatpak_app_compute_permissions (metakey, runtime_metakey, error);
   if (app_context == NULL)
     return FALSE;
 
