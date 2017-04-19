@@ -244,6 +244,21 @@ test_xattr_races (void)
   if (!glnx_opendirat (AT_FDCWD, tmpdir, TRUE, &dfd, error))
     goto out;
 
+  /* Support people building/testing on tmpfs https://github.com/flatpak/flatpak/issues/686 */
+  if (fsetxattr (dfd, "user.test", "novalue", strlen ("novalue"), 0) < 0)
+    {
+      if (errno == EOPNOTSUPP)
+        {
+          g_test_skip ("no xattr support");
+          return;
+        }
+      else
+        {
+          glnx_set_error_from_errno (error);
+          goto out;
+        }
+    }
+
   for (guint i = 0; i < nprocs; i++)
     {
       struct XattrWorker *worker = &wdata[i];
