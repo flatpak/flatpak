@@ -88,4 +88,15 @@ gboolean glnx_mkdtempat (int dfd,
                          int mode,
                          GError **error);
 
+gboolean glnx_mkdtempat_open (int      dfd,
+                              gchar   *tmpl,
+                              int      mode,
+                              int     *out_dfd,
+                              GError **error);
+
+gboolean glnx_mkdtempat_open_in_system (gchar   *tmpl,
+                                        int      mode,
+                                        int     *out_dfd,
+                                        GError **error);
+
 G_END_DECLS

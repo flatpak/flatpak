@@ -348,3 +348,70 @@ glnx_mkdtempat (int dfd,
                "mkstempat ran out of combinations to try.");
   return FALSE;
 }
+
+/**
+ * glnx_mkdtempat_open:
+ * @dfd: Directory FD
+ * @tmpl: (type filename): template directory name, last 6 characters will be replaced
+ * @mode: permissions to create the temporary directory with
+ * @out_dfd: (out caller-allocates): Return location for an FD for the new
+ *   temporary directory, or `-1` on error
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Similar to glnx_mkdtempat(), except it will open the resulting temporary
+ * directory and return a directory FD to it.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ * Since: UNRELEASED
+ */
+gboolean
+glnx_mkdtempat_open (int      dfd,
+                     gchar   *tmpl,
+                     int      mode,
+                     int     *out_dfd,
+                     GError **error)
+{
+  /* FIXME: Ideally we could use openat(O_DIRECTORY | O_CREAT | O_EXCL) here
+   * to create and open the directory atomically, but that’s not supported by
+   * current kernel versions: http://www.openwall.com/lists/oss-security/2014/11/26/14
+   * (Tested on kernel 4.10.10-200.fc25.x86_64). For the moment, accept a
+   * TOCTTOU race here. */
+  *out_dfd = -1;
+
+  if (!glnx_mkdtempat (dfd, tmpl, mode, error))
+    return FALSE;
+
+  return glnx_opendirat (dfd, tmpl, FALSE, out_dfd, error);
+}
+
+/**
+ * glnx_mkdtempat_open_in_system:
+ * @tmpl: (type filename): template directory name, last 6 characters will be replaced
+ * @mode: permissions to create the temporary directory with
+ * @out_dfd: (out caller-allocates): Return location for an FD for the new
+ *   temporary directory, or `-1` on error
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Similar to glnx_mkdtempat_open(), except it will use the system temporary
+ * directory (from g_get_tmp_dir()) as the parent directory to @tmpl.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ * Since: UNRELEASED
+ */
+gboolean
+glnx_mkdtempat_open_in_system (gchar   *tmpl,
+                               int      mode,
+                               int     *out_dfd,
+                               GError **error)
+{
+  glnx_fd_close int tmp_dfd = -1;
+
+  *out_dfd = -1;
+
+  if (!glnx_opendirat (-1, g_get_tmp_dir (), TRUE, &tmp_dfd, error))
+    return FALSE;
+
+  return glnx_mkdtempat_open (tmp_dfd, tmpl, mode, out_dfd, error);
+}
+
+
