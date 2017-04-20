@@ -37,4 +37,12 @@ glnx_shutil_mkdir_p_at (int                   dfd,
                         GCancellable         *cancellable,
                         GError              **error);
 
+gboolean
+glnx_shutil_mkdir_p_at_open (int            dfd,
+                             const char    *path,
+                             int            mode,
+                             int           *out_dfd,
+                             GCancellable  *cancellable,
+                             GError       **error);
+
 G_END_DECLS

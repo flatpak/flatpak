@@ -246,3 +246,40 @@ glnx_shutil_mkdir_p_at (int                   dfd,
  out:
   return ret;
 }
+
+/**
+ * glnx_shutil_mkdir_p_at_open:
+ * @dfd: Directory fd
+ * @path: Directory path to be created
+ * @mode: Mode for newly created directories
+ * @out_dfd: (out caller-allocates): Return location for an FD to @dfd/@path,
+ *    or `-1` on error
+ * @cancellable: (nullable): Cancellable, or %NULL
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Similar to glnx_shutil_mkdir_p_at(), except it opens the resulting directory
+ * and returns a directory FD to it. Currently, this is not guaranteed to be
+ * race-free.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ * Since: UNRELEASED
+ */
+gboolean
+glnx_shutil_mkdir_p_at_open (int            dfd,
+                             const char    *path,
+                             int            mode,
+                             int           *out_dfd,
+                             GCancellable  *cancellable,
+                             GError       **error)
+{
+  /* FIXME: It’s not possible to eliminate the race here until
+   * openat(O_DIRECTORY | O_CREAT) works (and returns a directory rather than a
+   * file). It appears to be not supported in current kernels. (Tested with
+   * 4.10.10-200.fc25.x86_64.) */
+  *out_dfd = -1;
+
+  if (!glnx_shutil_mkdir_p_at (dfd, path, mode, cancellable, error))
+    return FALSE;
+
+  return glnx_opendirat (dfd, path, TRUE, out_dfd, error);
+}
