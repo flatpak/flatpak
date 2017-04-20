@@ -199,9 +199,9 @@ glnx_cleanup_close_fdp (int *fdp)
   int fd, errsv;
 
   g_assert (fdp);
-  
+
   fd = *fdp;
-  if (fd != -1)
+  if (fd >= 0)
     {
       errsv = errno;
       (void) close (fd);
