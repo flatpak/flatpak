@@ -56,9 +56,17 @@ builder_source_finalize (GObject *object)
 {
   BuilderSource *self = BUILDER_SOURCE (object);
 
+  g_clear_object (&self->base_dir);
   g_free (self->dest);
 
   G_OBJECT_CLASS (builder_source_parent_class)->finalize (object);
+}
+
+void
+builder_source_set_base_dir (BuilderSource  *self,
+                             GFile          *base_dir)
+{
+  g_set_object (&self->base_dir, base_dir);
 }
 
 static void
@@ -211,9 +219,19 @@ builder_source_init (BuilderSource *self)
 {
 }
 
+static GParamSpec *
+builder_source_find_property (JsonSerializable *serializable,
+                              const char       *name)
+{
+  if (strcmp (name, "type") == 0)
+    return NULL;
+  return builder_serializable_find_property_with_error (serializable, name);
+}
+
 static void
 serializable_iface_init (JsonSerializableIface *serializable_iface)
 {
+  serializable_iface->find_property = builder_source_find_property;
 }
 
 JsonNode *

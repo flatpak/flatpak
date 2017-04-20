@@ -35,11 +35,12 @@
 
 static gboolean opt_user;
 static gboolean opt_system;
-static gboolean opt_runtime;
-static gboolean opt_app;
 static gboolean opt_show_ref;
 static gboolean opt_show_commit;
 static gboolean opt_show_origin;
+static gboolean opt_show_size;
+static gboolean opt_show_metadata;
+static gboolean opt_show_extensions;
 static char *opt_arch;
 static char **opt_installations;
 
@@ -48,11 +49,12 @@ static GOptionEntry options[] = {
   { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, N_("Show user installations"), NULL },
   { "system", 0, 0, G_OPTION_ARG_NONE, &opt_system, N_("Show system-wide installations"), NULL },
   { "installation", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_installations, N_("Show specific system-wide installations"), NULL },
-  { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
-  { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
   { "show-ref", 'r', 0, G_OPTION_ARG_NONE, &opt_show_ref, N_("Show ref"), NULL },
   { "show-commit", 'c', 0, G_OPTION_ARG_NONE, &opt_show_commit, N_("Show commit"), NULL },
   { "show-origin", 'o', 0, G_OPTION_ARG_NONE, &opt_show_origin, N_("Show origin"), NULL },
+  { "show-size", 's', 0, G_OPTION_ARG_NONE, &opt_show_size, N_("Show size"), NULL },
+  { "show-metadata", 'm', 0, G_OPTION_ARG_NONE, &opt_show_metadata, N_("Show metadata"), NULL },
+  { "show-extensions", 'e', 0, G_OPTION_ARG_NONE, &opt_show_extensions, N_("Show extensions"), NULL },
   { NULL }
 };
 
@@ -77,6 +79,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   const char *pref = NULL;
   const char *default_branch = NULL;
   const char *origin = NULL;
+  guint64 size;
   gboolean search_all = FALSE;
   gboolean first = TRUE;
   FlatpakKinds kinds;
@@ -97,7 +100,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (argc > 3)
     return usage_error (context, _("Too many arguments"), error);
 
-  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
+  kinds = FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME;
 
   if (!opt_user && !opt_system && opt_installations == NULL)
     search_all = TRUE;
@@ -114,32 +117,123 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   commit = flatpak_deploy_data_get_commit (deploy_data);
   origin = flatpak_deploy_data_get_origin (deploy_data);
+  size = flatpak_deploy_data_get_installed_size (deploy_data);
 
-  if (!opt_show_ref && !opt_show_origin && !opt_show_commit)
-    opt_show_ref = opt_show_origin = opt_show_commit = TRUE;
+  if (!opt_show_extensions && !opt_show_metadata &&
+      !opt_show_ref && !opt_show_origin && !opt_show_commit && !opt_show_size)
+    opt_show_ref = opt_show_origin = opt_show_commit = opt_show_size = TRUE;
 
   if (opt_show_ref)
     {
       maybe_print_space (&first);
-
       g_print ("%s", ref);
     }
 
   if (opt_show_origin)
     {
       maybe_print_space (&first);
-
       g_print ("%s", origin ? origin : "-");
     }
 
   if (opt_show_commit)
     {
       maybe_print_space (&first);
-
       g_print ("%s", commit);
     }
 
-  g_print ("\n");
+  if (opt_show_size)
+    {
+      g_autofree char *formatted = g_format_size (size);
+
+      maybe_print_space (&first);
+      g_print ("%s", formatted);
+    }
+
+  if (!first)
+    g_print ("\n");
+
+  if (opt_show_extensions)
+    {
+       g_autoptr(FlatpakDeploy) deploy = NULL;
+       g_autoptr(GKeyFile) metakey = NULL;
+       g_auto(GStrv) parts = NULL;
+       GList *extensions, *l;
+
+       deploy = flatpak_find_deploy_for_ref (ref, NULL, NULL);
+       metakey = flatpak_deploy_get_metadata (deploy);
+       parts = g_strsplit (ref, "/", 0);
+       extensions = flatpak_list_extensions (metakey, parts[2], parts[3]);
+       for (l = extensions; l; l = l->next)
+         {
+           FlatpakExtension *ext = l->data;
+           g_autofree const char **subpaths = NULL;
+           g_autoptr(GVariant) ext_deploy_data = NULL;
+
+           if (ext->is_unmaintained)
+             {
+               commit = "unmaintained";
+               origin = NULL;
+               size = 0;
+               subpaths = NULL;
+             }
+           else
+             {
+               ext_deploy_data = flatpak_dir_get_deploy_data (dir, ext->ref, cancellable, error);
+               if (ext_deploy_data == NULL)
+                 return FALSE;
+
+               commit = flatpak_deploy_data_get_commit (ext_deploy_data);
+               origin = flatpak_deploy_data_get_origin (ext_deploy_data);
+               size = flatpak_deploy_data_get_installed_size (ext_deploy_data);
+               subpaths = flatpak_deploy_data_get_subpaths (ext_deploy_data);
+             }
+
+           g_print ("extension: %s", ext->id);
+
+           if (opt_show_ref)
+             g_print (" %s", ext->ref);
+
+           if (opt_show_origin)
+             g_print (" %s", origin ? origin : "-");
+
+           if (opt_show_commit)
+             g_print (" %s", commit);
+
+           if (opt_show_size && size > 0)
+             {
+               g_autofree char *formatted = NULL;
+
+               formatted = g_format_size (size);
+               g_print (" %s", formatted);
+             }
+
+           if (subpaths)
+             {
+               g_autofree char *subpath_str = NULL;
+
+               subpath_str = g_strjoinv (",", (char **)subpaths);
+               g_print (" %s", subpath_str);
+             }
+
+           g_print ("\n");
+         }
+    }
+
+  if (opt_show_metadata)
+    {
+      g_autoptr(GFile) deploy_dir = NULL;
+      g_autoptr(GFile) file = NULL;
+      g_autofree char *data = NULL;
+      gsize data_size;
+
+      deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
+      file = g_file_get_child (deploy_dir, "metadata");
+
+      if (!g_file_load_contents (file, cancellable, &data, &data_size, NULL, error))
+        return FALSE;
+
+      g_print ("%s\n", data);
+    }
 
   return TRUE;
 }
@@ -160,7 +254,7 @@ flatpak_complete_info (FlatpakCompletion *completion)
   if (!flatpak_option_context_parse (context, options, &completion->argc, &completion->argv, FLATPAK_BUILTIN_FLAG_NO_DIR, NULL, NULL, NULL))
     return FALSE;
 
-  kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
+  kinds = FLATPAK_KINDS_APP | FLATPAK_KINDS_RUNTIME;
 
   if (!opt_user && !opt_system && opt_installations == NULL)
     search_all = TRUE;

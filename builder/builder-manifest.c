@@ -36,12 +36,18 @@
 
 #define LOCALES_SEPARATE_DIR "share/runtime/locale"
 
-static BuilderContext *demarshal_build_context = NULL;
+static GFile *demarshal_base_dir = NULL;
 
 void
-builder_manifest_set_demarshal_buid_context (BuilderContext *build_context)
+builder_manifest_set_demarshal_base_dir (GFile *dir)
 {
-  g_set_object (&demarshal_build_context, build_context);
+  g_set_object (&demarshal_base_dir, dir);
+}
+
+GFile *
+builder_manifest_get_demarshal_base_dir (void)
+{
+  return g_object_ref (demarshal_base_dir);
 }
 
 struct BuilderManifest
@@ -940,6 +946,7 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
         {
           JsonArray *array = json_node_get_array (property_node);
           guint i, array_len = json_array_get_length (array);
+          g_autoptr(GFile) saved_demarshal_base_dir = builder_manifest_get_demarshal_base_dir ();
           GList *modules = NULL;
           GObject *module;
 
@@ -954,17 +961,23 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
                 {
                   const char *module_relpath = json_node_get_string (element_node);
                   g_autoptr(GFile) module_file =
-                    g_file_resolve_relative_path (builder_context_get_base_dir (demarshal_build_context), module_relpath);
+                    g_file_resolve_relative_path (demarshal_base_dir, module_relpath);
                   const char *module_path = flatpak_file_get_path_cached (module_file);
                   g_autofree char *json = NULL;
                   g_autoptr(GError) error = NULL;
 
                   if (g_file_get_contents (module_path, &json, NULL, &error))
                     {
+                      g_autoptr(GFile) module_file_dir = g_file_get_parent (module_file);
+                      builder_manifest_set_demarshal_base_dir (module_file_dir);
                       module = json_gobject_from_data (BUILDER_TYPE_MODULE,
                                                        json, -1, &error);
+                      builder_manifest_set_demarshal_base_dir (saved_demarshal_base_dir);
                       if (module)
-                        builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                        {
+                          builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                          builder_module_set_base_dir (BUILDER_MODULE (module), module_file_dir);
+                        }
                     }
                   if (error != NULL)
                     {
@@ -972,7 +985,11 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
                     }
                 }
               else if (JSON_NODE_HOLDS_OBJECT (element_node))
-                module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+                {
+                  module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+                  if (module != NULL)
+                    builder_module_set_base_dir (BUILDER_MODULE (module), saved_demarshal_base_dir);
+                }
 
               if (module == NULL)
                 {
@@ -1004,6 +1021,7 @@ serializable_iface_init (JsonSerializableIface *serializable_iface)
 {
   serializable_iface->serialize_property = builder_manifest_serialize_property;
   serializable_iface->deserialize_property = builder_manifest_deserialize_property;
+  serializable_iface->find_property = builder_serializable_find_property_with_error;
 }
 
 const char *
@@ -2682,6 +2700,7 @@ builder_manifest_run (BuilderManifest *self,
               !g_str_has_prefix (arg, "--sdk") &&
               !g_str_has_prefix (arg, "--runtime") &&
               !g_str_has_prefix (arg, "--command") &&
+              !g_str_has_prefix (arg, "--extra-data") &&
               !g_str_has_prefix (arg, "--require-version"))
             g_ptr_array_add (args, g_strdup (arg));
         }

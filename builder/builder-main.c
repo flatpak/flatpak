@@ -457,12 +457,12 @@ main (int    argc,
     }
 
   /* Can't push this as user data to the demarshalling :/ */
-  builder_manifest_set_demarshal_buid_context (build_context);
+  builder_manifest_set_demarshal_base_dir (builder_context_get_base_dir (build_context));
 
   manifest = (BuilderManifest *) json_gobject_from_data (BUILDER_TYPE_MANIFEST,
                                                          json, -1, &error);
 
-  builder_manifest_set_demarshal_buid_context (NULL);
+  builder_manifest_set_demarshal_base_dir (NULL);
 
   if (manifest == NULL)
     {

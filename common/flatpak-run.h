@@ -84,6 +84,7 @@ typedef enum {
   FLATPAK_RUN_FLAG_WRITABLE_ETC       = (1 << 6),
   FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY = (1 << 7),
   FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY = (1 << 8),
+  FLATPAK_RUN_FLAG_SET_PERSONALITY    = (1 << 9),
 } FlatpakRunFlags;
 
 gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
@@ -108,6 +109,9 @@ char **  flatpak_run_apply_env_appid (char **envp,
                                       GFile *app_dir);
 char **  flatpak_run_apply_env_vars (char          **envp,
                                      FlatpakContext *context);
+FlatpakContext *flatpak_app_compute_permissions (GKeyFile *app_metadata,
+                                                 GKeyFile *runtime_metadata,
+                                                 GError  **error);
 
 GFile *flatpak_get_data_dir (const char *app_id);
 GFile *flatpak_ensure_data_dir (const char   *app_id,

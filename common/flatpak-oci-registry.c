@@ -475,7 +475,7 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
       return FALSE;
     }
 
-  self->soup_session = flatpak_create_soup_session ("flatpak");
+  self->soup_session = flatpak_create_soup_session (PACKAGE_STRING);
   baseuri = soup_uri_new (self->uri);
   if (baseuri == NULL)
     {

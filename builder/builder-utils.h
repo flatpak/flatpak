@@ -23,6 +23,7 @@
 
 #include <gio/gio.h>
 #include <libsoup/soup.h>
+#include <json-glib/json-glib.h>
 
 G_BEGIN_DECLS
 
@@ -67,6 +68,9 @@ gboolean builder_download_uri (const char     *url,
                                char           *sha256,
                                SoupSession    *soup_session,
                                GError        **error);
+
+GParamSpec * builder_serializable_find_property_with_error (JsonSerializable *serializable,
+                                                            const char       *name);
 
 G_END_DECLS
 

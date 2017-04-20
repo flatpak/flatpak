@@ -89,7 +89,7 @@
 
             After this you will end up with a build of the application in <arg choice="plain">DIRECTORY</arg>, which you can
             export to a repository with the <command>flatpak build-export</command> command. If you use the <option>--repo</option>
-            option, flatpack-builder will do the export for you at the end of the build process. When flatpak-builder does the
+            option, flatpak-builder will do the export for you at the end of the build process. When flatpak-builder does the
             export, it also stores the manifest that was used for the build in /app/manifest.json. The manifest is 'resolved',
             i.e. git branch names are replaced by the actual commit IDs that were used in the build.
         </para>

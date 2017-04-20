@@ -41,6 +41,7 @@ struct BuilderSource
 {
   GObject parent;
 
+  GFile  *base_dir;
   char   *dest;
   char  **only_arches;
   char  **skip_arches;
@@ -76,6 +77,10 @@ GType builder_source_get_type (void);
 
 BuilderSource * builder_source_from_json (JsonNode *node);
 JsonNode *      builder_source_to_json (BuilderSource *self);
+
+
+void builder_source_set_base_dir (BuilderSource  *self,
+                                  GFile          *base_dir);
 
 gboolean builder_source_show_deps (BuilderSource  *self,
                                    GError        **error);

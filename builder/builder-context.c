@@ -70,6 +70,7 @@ struct BuilderContext
   gboolean        sandboxed;
   gboolean        rebuild_on_sdk_change;
   gboolean        use_rofiles;
+  gboolean        have_rofiles;
 };
 
 typedef struct
@@ -204,7 +205,11 @@ static void
 builder_context_init (BuilderContext *self)
 {
   GLnxLockFile init = GLNX_LOCK_FILE_INIT;
+  g_autofree char *path = NULL;
+
   self->rofiles_file_lock = init;
+  path = g_find_program_in_path ("rofiles-fuse");
+  self->have_rofiles = path != NULL;
 }
 
 GFile *
@@ -353,7 +358,7 @@ SoupSession *
 builder_context_get_soup_session (BuilderContext *self)
 {
   if (self->soup_session == NULL)
-    self->soup_session = flatpak_create_soup_session ("flatpak-builder");
+    self->soup_session = flatpak_create_soup_session ("flatpak-builder " PACKAGE_VERSION);
 
   return self->soup_session;
 }
@@ -574,6 +579,12 @@ builder_context_enable_rofiles (BuilderContext *self,
   if (!self->use_rofiles)
     return TRUE;
 
+  if (!self->have_rofiles)
+    {
+      g_warning ("rofiles-fuse not available, doing without");
+      return TRUE;
+    }
+
   g_assert (self->rofiles_dir == NULL);
 
   if (self->rofiles_allocated_dir == NULL)
@@ -655,6 +666,9 @@ builder_context_disable_rofiles (BuilderContext *self,
                      NULL };
 
   if (!self->use_rofiles)
+    return TRUE;
+
+  if (!self->have_rofiles)
     return TRUE;
 
   g_assert (self->rofiles_dir != NULL);

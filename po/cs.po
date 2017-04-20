@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-04-05 09:52+0200\n"
-"PO-Revision-Date: 2017-03-24 21:08+0100\n"
+"PO-Revision-Date: 2017-04-05 13:24+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -218,9 +218,8 @@ msgid "Export oci image instead of flatpak bundle"
 msgstr "Exportovat oci obraz namísto flatpak balíku"
 
 #: app/flatpak-builtins-build-bundle.c:61
-#, fuzzy
 msgid "GPG Key ID to sign the OCI image with"
-msgstr "ID GPG klíče pro podepsání shrnutí"
+msgstr "ID GPG klíče pro podepsání OCI obrazu"
 
 #: app/flatpak-builtins-build-bundle.c:61
 #: app/flatpak-builtins-build-commit-from.c:55
@@ -266,13 +265,15 @@ msgstr "UMÍSTĚNÍ, NÁZEV_SOUBORU A NÁZEV musí být určeny"
 msgid "'%s' is not a valid repository"
 msgstr "„%s“ není platným repozitářem"
 
-#: app/flatpak-builtins-build-bundle.c:491 app/flatpak-builtins-build-sign.c:86
+#: app/flatpak-builtins-build-bundle.c:491
+#: app/flatpak-builtins-build-sign.c:86
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "„%s“ není platným názvem: %s"
 
 #: app/flatpak-builtins-build-bundle.c:494
-#: app/flatpak-builtins-build-export.c:668 app/flatpak-builtins-build-sign.c:89
+#: app/flatpak-builtins-build-export.c:668
+#: app/flatpak-builtins-build-sign.c:89
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "„%s“ není platným názvem větve: %s"
@@ -1608,9 +1609,9 @@ msgid "Invalid checksum for extra data %s"
 msgstr "Neplatný kontrolní součet pro dodatečná data %s"
 
 #: common/flatpak-dir.c:2192
-#, fuzzy, c-format
+#, c-format
 msgid "%s commit %s already installed"
-msgstr "%s větev %s je již nainstalováno"
+msgstr "%s commit %s je již nainstalováno"
 
 #: common/flatpak-dir.c:2421 common/flatpak-dir.c:2648
 #, c-format

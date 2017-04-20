@@ -89,6 +89,10 @@
                     <listitem><para>Build a new runtime instead of an application.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>build-extension</option> (boolean)</term>
+                    <listitem><para>Build an extension.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>separate-locales</option> (boolean)</term>
                     <listitem><para>Separate out locale files and translations to an extension runtime. Defaults to true.</para></listitem>
                 </varlistentry>
@@ -103,7 +107,7 @@
                 <varlistentry>
                     <term><option>writable-sdk</option> (boolean)</term>
                     <listitem><para>If true, use a writable copy of the sdk for /usr.
-                    Defaults to true if --build-runtime is specified.</para></listitem>
+                    Defaults to true if build-runtime is specified.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>appstream-compose</option> (boolean)</term>
@@ -180,7 +184,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>rename-icon</option> (string)</term>
-                    <listitem><para>Any icon with this name will be renamed to a name based on id during the cleanup phase.</para></listitem>
+                    <listitem><para>Any icon with this name will be renamed to a name based on id during the cleanup phase. Note that this is the icon name, not the full filenames, so it should not include a filename extension. </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>copy-icon</option> (boolean)</term>

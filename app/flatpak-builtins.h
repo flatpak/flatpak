@@ -83,6 +83,7 @@ BUILTINPROTO (document_unexport)
 BUILTINPROTO (document_info)
 BUILTINPROTO (document_list)
 BUILTINPROTO (override)
+BUILTINPROTO (repo)
 
 #undef BUILTINPROTO
 

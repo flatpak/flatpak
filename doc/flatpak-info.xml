@@ -48,10 +48,6 @@
             are queried. Use the --user, --system or --installation
             options to change this.
         </para>
-        <para>
-            By default this queries the installed apps and runtimes, but you can
-            limit this by using the --app or --runtime option.
-        </para>
 
     </refsect1>
 
@@ -98,22 +94,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--app</option></term>
-
-                <listitem><para>
-                    Query for applications.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--runtime</option></term>
-
-                <listitem><para>
-                    Query for runtimes.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>--arch=ARCH</option></term>
 
                 <listitem><para>
@@ -145,6 +125,33 @@
 
                 <listitem><para>
                     Show the installed commit id.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-s</option></term>
+                <term><option>--show-size</option></term>
+
+                <listitem><para>
+                    Show the installed size.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-m</option></term>
+                <term><option>--show-metadata</option></term>
+
+                <listitem><para>
+                    Show the metadata.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-e</option></term>
+                <term><option>--show-extensions</option></term>
+
+                <listitem><para>
+                    Show the matching extensions.
                 </para></listitem>
             </varlistentry>
 
