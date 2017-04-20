@@ -193,6 +193,8 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
                                                                         resolved_src_refs->len)));
       g_variant_builder_add (&builder, "{s@v}", "depth",
                              g_variant_new_variant (g_variant_new_int32 (0)));
+      g_variant_builder_add (&builder, "{s@v}", "update-frequency",
+                             g_variant_new_variant (g_variant_new_uint32 (250))); /* ms */
 
       res = ostree_repo_pull_with_options (dst_repo, src_repo_uri,
                                            g_variant_builder_end (&builder),
