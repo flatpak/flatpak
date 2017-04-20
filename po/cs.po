@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-04-05 09:52+0200\n"
-"PO-Revision-Date: 2017-04-05 13:24+0100\n"
+"PO-Revision-Date: 2017-04-20 21:12+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
 #: app/flatpak-builtins-add-remote.c:59
 msgid "Do nothing if the provided remote exists"
@@ -235,7 +235,7 @@ msgstr "KLÍČ-ID"
 #: app/flatpak-builtins-build-import-bundle.c:47
 #: app/flatpak-builtins-build-sign.c:44 app/flatpak-builtins-repo-update.c:47
 msgid "GPG Homedir to use when looking for keyrings"
-msgstr ""
+msgstr "Domovský adresář pro použití při hledání klíčenek"
 
 #: app/flatpak-builtins-build-bundle.c:62
 #: app/flatpak-builtins-build-commit-from.c:56
@@ -265,15 +265,13 @@ msgstr "UMÍSTĚNÍ, NÁZEV_SOUBORU A NÁZEV musí být určeny"
 msgid "'%s' is not a valid repository"
 msgstr "„%s“ není platným repozitářem"
 
-#: app/flatpak-builtins-build-bundle.c:491
-#: app/flatpak-builtins-build-sign.c:86
+#: app/flatpak-builtins-build-bundle.c:491 app/flatpak-builtins-build-sign.c:86
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "„%s“ není platným názvem: %s"
 
 #: app/flatpak-builtins-build-bundle.c:494
-#: app/flatpak-builtins-build-export.c:668
-#: app/flatpak-builtins-build-sign.c:89
+#: app/flatpak-builtins-build-export.c:668 app/flatpak-builtins-build-sign.c:89
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "„%s“ není platným názvem větve: %s"
@@ -471,7 +469,7 @@ msgstr "Neplatný formát pro kontrolní součet sha256: „%s“"
 
 #: app/flatpak-builtins-build-export.c:580
 msgid "Extra data sizes of zero not supported"
-msgstr ""
+msgstr "Dodatečná data s nulovou velikostí nejsou podporována"
 
 #: app/flatpak-builtins-build-export.c:640
 msgid ""
@@ -1907,7 +1905,7 @@ msgstr "Přidat generickou volbu bezpečnostní politiky"
 
 #: common/flatpak-run.c:1186 common/flatpak-run.c:1187
 msgid "SUBSYSTEM.KEY=VALUE"
-msgstr ""
+msgstr "SUBSYSTEM.KLÍČ=HODNOTA"
 
 #: common/flatpak-run.c:1187
 msgid "Remove generic policy option"
@@ -1981,7 +1979,7 @@ msgstr "Žádné zdroje dodatečných dat"
 #~ msgstr "Instalovat podepsanou aplikaci"
 
 #~ msgid "Authentication is required to install software"
-#~ msgstr "Autentizace je vyžadována k instalaci softwaru"
+#~ msgstr "K instalaci softwaru je vyžadováno ověření"
 
 #~ msgid "Install signed runtime"
 #~ msgstr "Instalovat podepsané prostředí"
@@ -1990,7 +1988,7 @@ msgstr "Žádné zdroje dodatečných dat"
 #~ msgstr "Aktualizovat podepsanou aplikaci"
 
 #~ msgid "Authentication is required to update software"
-#~ msgstr "Autentizace je vyžadována k aktualizaci softwaru"
+#~ msgstr "K aktualizaci softwaru je vyžadováno ověření"
 
 #~ msgid "Update signed runtime"
 #~ msgstr "Aktualizovat podepsané prostředí"
@@ -2002,7 +2000,7 @@ msgstr "Žádné zdroje dodatečných dat"
 #~ msgstr "Odinstalovat prostředí"
 
 #~ msgid "Authentication is required to uninstall software"
-#~ msgstr "Autentizace je vyžadována k odinstalování softwaru"
+#~ msgstr "K odinstalování softwaru je vyžadováno ověření"
 
 #~ msgid "Uninstall app"
 #~ msgstr "Odinstalovat aplikaci"
@@ -2011,4 +2009,4 @@ msgstr "Žádné zdroje dodatečných dat"
 #~ msgstr "Nastavit vzdálený repozitář"
 
 #~ msgid "Authentication is required to configure software repositories"
-#~ msgstr "Autentizace je vyžadována k nastavení repozitářů softwaru"
+#~ msgstr "K nastavení repozitářů softwaru je vyžadováno ověření"
