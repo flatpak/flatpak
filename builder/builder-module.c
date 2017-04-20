@@ -1598,6 +1598,7 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_boolean (cache, self->no_python_timestamp_fix);
   builder_cache_checksum_boolean (cache, self->cmake);
   builder_cache_checksum_boolean (cache, self->builddir);
+  builder_cache_checksum_compat_strv (cache, self->build_commands);
 
   if (self->build_options)
     builder_options_checksum (self->build_options, cache, context);
