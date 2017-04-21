@@ -35,6 +35,8 @@
 #include <libgen.h>
 #undef basename
 
+#include <glnx-errors.h>
+
 G_BEGIN_DECLS
 
 /* Irritatingly, g_basename() which is what we want
@@ -155,5 +157,54 @@ int glnx_renameat2_noreplace (int olddirfd, const char *oldpath,
 int glnx_renameat2_exchange (int olddirfd, const char *oldpath,
                              int newdirfd, const char *newpath);
 
+/**
+ * glnx_fstat:
+ * @fd: FD to stat
+ * @buf: (out caller-allocates): Return location for stat details
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Wrapper around fstat() which adds #GError support and ensures that it retries
+ * on %EINTR.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ * Since: UNRELEASED
+ */
+static inline gboolean
+glnx_fstat (int           fd,
+            struct stat  *buf,
+            GError      **error)
+{
+  if (TEMP_FAILURE_RETRY (fstat (fd, buf)) != 0)
+    return glnx_throw_errno (error);
+
+  return TRUE;
+}
+
+/**
+ * glnx_fstatat:
+ * @dfd: Directory FD to stat beneath
+ * @path: Path to stat beneath @dfd
+ * @buf: (out caller-allocates): Return location for stat details
+ * @flags: Flags to pass to fstatat()
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Wrapper around fstatat() which adds #GError support and ensures that it
+ * retries on %EINTR.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ * Since: UNRELEASED
+ */
+static inline gboolean
+glnx_fstatat (int           dfd,
+              const gchar  *path,
+              struct stat  *buf,
+              int           flags,
+              GError      **error)
+{
+  if (TEMP_FAILURE_RETRY (fstatat (dfd, path, buf, flags)) != 0)
+    return glnx_throw_errno (error);
+
+  return TRUE;
+}
 
 G_END_DECLS
