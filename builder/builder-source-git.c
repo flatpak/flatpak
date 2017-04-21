@@ -269,8 +269,7 @@ builder_source_git_bundle (BuilderSource  *source,
                                       "git",
                                       NULL);
   mirror_dir = g_file_new_for_path (mirror_dir_path);
-  if (!g_file_query_exists (mirror_dir, NULL) &&
-      !g_file_make_directory_with_parents (mirror_dir, NULL, error))
+  if (!flatpak_mkdir_p (mirror_dir, NULL, error))
     return FALSE;
 
   if (!builder_git_mirror_repo (location,

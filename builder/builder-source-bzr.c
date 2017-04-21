@@ -288,8 +288,7 @@ builder_source_bzr_bundle (BuilderSource  *source,
                                            "bzr",
                                            NULL);
   bzr_sources_dir = g_file_new_for_path (bzr_sources_dir_path);
-  if (!g_file_query_exists (bzr_sources_dir, NULL) &&
-      !g_file_make_directory_with_parents (bzr_sources_dir, NULL, error))
+  if (!flatpak_mkdir_p (bzr_sources_dir, NULL, error))
     return FALSE;
 
   base_name_tmp = g_strconcat (base_name, ".clone_tmp", NULL);

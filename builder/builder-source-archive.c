@@ -623,8 +623,7 @@ builder_source_archive_bundle (BuilderSource  *source,
                                         self->sha256,
                                         NULL);
   download_dir = g_file_new_for_path (download_dir_path);
-  if (!g_file_query_exists (download_dir, NULL) &&
-      !g_file_make_directory_with_parents (download_dir, NULL, error))
+  if (!flatpak_mkdir_p (download_dir, NULL, error))
     return FALSE;
 
   file_name = g_file_get_basename (file);

@@ -301,8 +301,7 @@ builder_source_patch_bundle (BuilderSource  *source,
                                        "patches",
                                        NULL);
   patches_dir = g_file_new_for_path (patches_dir_path);
-  if (!g_file_query_exists (patches_dir, NULL) &&
-      !g_file_make_directory_with_parents (patches_dir, NULL, error))
+  if (!flatpak_mkdir_p (patches_dir, NULL, error))
     return FALSE;
 
   file_name = g_file_get_basename (src);

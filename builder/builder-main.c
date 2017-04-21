@@ -159,8 +159,7 @@ bundle_manifest (BuilderContext *build_context,
                                        "sources",
                                        NULL);
   sources_dir = g_file_new_for_path (sources_dir_path);
-  if (!g_file_query_exists (sources_dir, NULL) &&
-      !g_file_make_directory_with_parents (sources_dir, NULL, error))
+  if (!flatpak_mkdir_p (sources_dir, NULL, error))
     return FALSE;
 
   file_name = g_file_get_basename (manifest_file);
