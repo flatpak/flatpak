@@ -206,6 +206,7 @@ builder_source_git_download (BuilderSource  *source,
     return FALSE;
 
   if (!builder_git_mirror_repo (location,
+                                NULL,
                                 update_vcs, TRUE, self->disable_fsckobjects,
                                 get_branch (self),
                                 context,
@@ -240,6 +241,44 @@ builder_source_git_extract (BuilderSource  *source,
 
   if (!builder_git_checkout (location, get_branch (self),
                              dest, context, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+builder_source_git_bundle (BuilderSource  *source,
+                           BuilderContext *context,
+                           GError        **error)
+{
+  BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
+
+  g_autofree char *location = NULL;
+  g_autoptr(GFile) mirror_dir = NULL;
+  g_autofree char *mirror_dir_path = NULL;
+  g_autofree char *app_dir_path = NULL;
+
+  location = get_url_or_path (self, context, error);
+
+  if (location == NULL)
+    return FALSE;
+
+  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
+  mirror_dir_path = g_build_filename (app_dir_path,
+                                      "sources",
+                                      "git",
+                                      NULL);
+  mirror_dir = g_file_new_for_path (mirror_dir_path);
+  if (!g_file_query_exists (mirror_dir, NULL) &&
+      !g_file_make_directory_with_parents (mirror_dir, NULL, error))
+    return FALSE;
+
+  if (!builder_git_mirror_repo (location,
+                                mirror_dir_path,
+                                FALSE, TRUE, FALSE,
+                                get_branch (self),
+                                context,
+                                error))
     return FALSE;
 
   return TRUE;
@@ -311,6 +350,7 @@ builder_source_git_class_init (BuilderSourceGitClass *klass)
 
   source_class->download = builder_source_git_download;
   source_class->extract = builder_source_git_extract;
+  source_class->bundle = builder_source_git_bundle;
   source_class->update = builder_source_git_update;
   source_class->checksum = builder_source_git_checksum;
 

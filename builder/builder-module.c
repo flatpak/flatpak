@@ -902,6 +902,30 @@ builder_module_extract_sources (BuilderModule  *self,
   return TRUE;
 }
 
+gboolean
+builder_module_bundle_sources (BuilderModule  *self,
+                               BuilderContext *context,
+                               GError        **error)
+{
+  GList *l;
+
+  for (l = self->sources; l != NULL; l = l->next)
+    {
+      BuilderSource *source = l->data;
+
+      if (!builder_source_is_enabled (source, context))
+        continue;
+
+      if (!builder_source_bundle (source, context, error))
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
 static GPtrArray *
 setup_build_args (GFile          *app_dir,
                   const char     *module_name,
@@ -1179,6 +1203,9 @@ builder_module_build (BuilderModule  *self,
   g_print ("========================================================================\n");
   g_print ("Building module %s in %s\n", self->name, source_dir_path);
   g_print ("========================================================================\n");
+
+  if (builder_context_get_bundle_sources (context) && !builder_module_bundle_sources (self, context, error))
+    return FALSE;
 
   if (!builder_module_extract_sources (self, source_dir, context, error))
     return FALSE;

@@ -161,6 +161,7 @@ get_uri (BuilderSourceFile *self,
 static GFile *
 get_download_location (BuilderSourceFile *self,
                        gboolean          *is_inline,
+                       gboolean          *is_local,
                        BuilderContext    *context,
                        GError           **error)
 {
@@ -170,6 +171,8 @@ get_download_location (BuilderSourceFile *self,
   GFile *download_dir = NULL;
   g_autoptr(GFile) sha256_dir = NULL;
   g_autoptr(GFile) file = NULL;
+  GPtrArray *sources_dirs = NULL;
+  int i;
 
   uri = get_uri (self, error);
   if (uri == NULL)
@@ -189,6 +192,19 @@ get_download_location (BuilderSourceFile *self,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Sha256 not specified");
       return FALSE;
+    }
+
+  sources_dirs = builder_context_get_sources_dirs (context);
+  for (i = 0; sources_dirs != NULL && i < sources_dirs->len; i++)
+    {
+      GFile* sources_root = g_ptr_array_index (sources_dirs, i);
+      g_autoptr(GFile) local_download_dir = g_file_get_child (sources_root, "downloads");
+      g_autoptr(GFile) local_sha256_dir = g_file_get_child (local_download_dir, self->sha256);
+      g_autoptr(GFile) local_file = g_file_get_child (local_sha256_dir, base_name);
+      if (g_file_query_exists (local_file, NULL)) {
+        *is_local = TRUE;
+        return g_steal_pointer (&local_file);
+      }
     }
 
   download_dir = builder_context_get_download_dir (context);
@@ -211,7 +227,7 @@ get_source_file (BuilderSourceFile *self,
   if (self->url != NULL && self->url[0] != 0)
     {
       *is_local = FALSE;
-      return get_download_location (self, is_inline, context, error);
+      return get_download_location (self, is_inline, is_local, context, error);
     }
 
   if (self->path != NULL && self->path[0] != 0)
@@ -424,6 +440,53 @@ builder_source_file_extract (BuilderSource  *source,
 }
 
 static gboolean
+builder_source_file_bundle (BuilderSource  *source,
+                            BuilderContext *context,
+                            GError        **error)
+{
+  BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
+
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GFile) download_dir = NULL;
+  g_autoptr(GFile) destination_file = NULL;
+  g_autofree char *download_dir_path = NULL;
+  g_autofree char *file_name = NULL;
+  g_autofree char *destination_file_path = NULL;
+  g_autofree char *app_dir_path = NULL;
+  gboolean is_local, is_inline;
+
+  file = get_source_file (self, context, &is_local, &is_inline, error);
+  if (file == NULL)
+    return FALSE;
+
+  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
+  download_dir_path = g_build_filename (app_dir_path,
+                                        "sources",
+                                        "downloads",
+                                        self->sha256,
+                                        NULL);
+  download_dir = g_file_new_for_path (download_dir_path);
+  if (!g_file_query_exists (download_dir, NULL) &&
+      !g_file_make_directory_with_parents (download_dir, NULL, error))
+    return FALSE;
+
+  file_name = g_file_get_basename (file);
+  destination_file_path = g_build_filename (download_dir_path,
+                                            file_name,
+                                            NULL);
+  destination_file = g_file_new_for_path (destination_file_path);
+
+  if (!g_file_copy (file, destination_file,
+                    G_FILE_COPY_OVERWRITE,
+                    NULL,
+                    NULL, NULL,
+                    error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
 builder_source_file_update (BuilderSource  *source,
                             BuilderContext *context,
                             GError        **error)
@@ -498,6 +561,7 @@ builder_source_file_class_init (BuilderSourceFileClass *klass)
   source_class->show_deps = builder_source_file_show_deps;
   source_class->download = builder_source_file_download;
   source_class->extract = builder_source_file_extract;
+  source_class->bundle = builder_source_file_bundle;
   source_class->update = builder_source_file_update;
   source_class->checksum = builder_source_file_checksum;
 

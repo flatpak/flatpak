@@ -1062,6 +1062,13 @@ builder_manifest_get_debug_id (BuilderManifest *self)
   return g_strdup_printf ("%s.Debug", id);
 }
 
+char *
+builder_manifest_get_sources_id (BuilderManifest *self)
+{
+  g_autofree char *id = make_valid_id_prefix (self->id);
+  return g_strdup_printf ("%s.Sources", id);
+}
+
 const char *
 builder_manifest_get_id_platform (BuilderManifest *self)
 {
@@ -2069,6 +2076,7 @@ builder_manifest_finish (BuilderManifest *self,
 {
   g_autoptr(GFile) manifest_file = NULL;
   g_autoptr(GFile) debuginfo_dir = NULL;
+  g_autoptr(GFile) sources_dir = NULL;
   g_autoptr(GFile) locale_parent_dir = NULL;
   g_autofree char *json = NULL;
   g_autofree char *commandline = NULL;
@@ -2209,6 +2217,7 @@ builder_manifest_finish (BuilderManifest *self,
           debuginfo_dir = g_file_resolve_relative_path (app_dir, "files/lib/debug");
           locale_parent_dir = g_file_resolve_relative_path (app_dir, "files/" LOCALES_SEPARATE_DIR);
         }
+      sources_dir = g_file_resolve_relative_path (app_dir, "sources");
 
       if (self->separate_locales && g_file_query_exists (locale_parent_dir, NULL))
         {
@@ -2278,6 +2287,20 @@ builder_manifest_finish (BuilderManifest *self,
           metadata_contents = g_strdup_printf ("[Runtime]\n"
                                                "name=%s\n", debug_id);
           if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_debuginfo_file),
+                                    metadata_contents, strlen (metadata_contents), error))
+            return FALSE;
+        }
+
+      if (builder_context_get_bundle_sources (context) && g_file_query_exists (sources_dir, NULL))
+        {
+          g_autoptr(GFile) metadata_sources_file = NULL;
+          g_autofree char *metadata_contents = NULL;
+          g_autofree char *sources_id = builder_manifest_get_sources_id (self);
+          metadata_sources_file = g_file_get_child (app_dir, "metadata.sources");
+
+          metadata_contents = g_strdup_printf ("[Runtime]\n"
+                                               "name=%s\n", sources_id);
+          if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_sources_file),
                                     metadata_contents, strlen (metadata_contents), error))
             return FALSE;
         }

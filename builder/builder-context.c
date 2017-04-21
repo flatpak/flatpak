@@ -47,6 +47,7 @@ struct BuilderContext
   char           *stop_at;
 
   GFile          *download_dir;
+  GPtrArray      *sources_dirs;
   GFile          *state_dir;
   GFile          *build_dir;
   GFile          *cache_dir;
@@ -65,6 +66,7 @@ struct BuilderContext
   gboolean        build_runtime;
   gboolean        build_extension;
   gboolean        separate_locales;
+  gboolean        bundle_sources;
   gboolean        sandboxed;
   gboolean        rebuild_on_sdk_change;
   gboolean        use_rofiles;
@@ -108,6 +110,8 @@ builder_context_finalize (GObject *object)
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_platform);
   glnx_release_lock_file(&self->rofiles_file_lock);
+
+  g_clear_pointer (&self->sources_dirs, g_ptr_array_unref);
 
   G_OBJECT_CLASS (builder_context_parent_class)->finalize (object);
 }
@@ -251,6 +255,20 @@ GFile *
 builder_context_get_download_dir (BuilderContext *self)
 {
   return self->download_dir;
+}
+
+GPtrArray *
+builder_context_get_sources_dirs (BuilderContext *self)
+{
+  return self->sources_dirs;
+}
+
+void
+builder_context_set_sources_dirs (BuilderContext *self,
+                                  GPtrArray      *sources_dirs)
+{
+  g_clear_pointer (&self->sources_dirs, g_ptr_array_unref);
+  self->sources_dirs = g_ptr_array_ref (sources_dirs);
 }
 
 GFile *
@@ -495,6 +513,19 @@ builder_context_set_separate_locales (BuilderContext *self,
                                       gboolean        separate_locales)
 {
   self->separate_locales = !!separate_locales;
+}
+
+gboolean
+builder_context_get_bundle_sources (BuilderContext *self)
+{
+  return self->bundle_sources;
+}
+
+void
+builder_context_set_bundle_sources (BuilderContext *self,
+                                    gboolean        bundle_sources)
+{
+  self->bundle_sources = !!bundle_sources;
 }
 
 static char *rofiles_unmount_path = NULL;

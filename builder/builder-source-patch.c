@@ -140,12 +140,31 @@ get_source_file (BuilderSourcePatch *self,
                  BuilderContext     *context,
                  GError            **error)
 {
+  g_autoptr(GFile) patch = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autofree char *base_name = NULL;
+  GPtrArray *sources_dirs = NULL;
+  int i;
+
   GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
 
   if (self->path == NULL || self->path[0] == 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "path not specified");
       return NULL;
+    }
+
+  patch = g_file_new_for_path (self->path);
+  base_name = g_file_get_basename (patch);
+
+  sources_dirs = builder_context_get_sources_dirs (context);
+  for (i = 0; sources_dirs != NULL && i < sources_dirs->len; i++)
+    {
+      GFile* sources_root = g_ptr_array_index (sources_dirs, i);
+      g_autoptr(GFile) patches_dir = g_file_get_child (sources_root, "patches");
+      g_autoptr(GFile) file = g_file_get_child (patches_dir, base_name);
+      if (g_file_query_exists (file, NULL))
+        return g_steal_pointer (&file);
     }
 
   return g_file_resolve_relative_path (base_dir, self->path);
@@ -256,6 +275,52 @@ builder_source_patch_extract (BuilderSource  *source,
   return TRUE;
 }
 
+static gboolean
+builder_source_patch_bundle (BuilderSource  *source,
+                             BuilderContext *context,
+                             GError        **error)
+{
+  BuilderSourcePatch *self = BUILDER_SOURCE_PATCH (source);
+
+  g_autoptr(GFile) src = NULL;
+  g_autoptr(GFile) patches_dir = NULL;
+  g_autoptr(GFile) destination_file = NULL;
+  g_autofree char *patches_dir_path = NULL;
+  g_autofree char *file_name = NULL;
+  g_autofree char *destination_file_path = NULL;
+  g_autofree char *app_dir_path = NULL;
+
+  src = get_source_file (self, context, error);
+
+  if (src == NULL)
+    return FALSE;
+
+  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
+  patches_dir_path = g_build_filename (app_dir_path,
+                                       "sources",
+                                       "patches",
+                                       NULL);
+  patches_dir = g_file_new_for_path (patches_dir_path);
+  if (!g_file_query_exists (patches_dir, NULL) &&
+      !g_file_make_directory_with_parents (patches_dir, NULL, error))
+    return FALSE;
+
+  file_name = g_file_get_basename (src);
+  destination_file_path = g_build_filename (patches_dir_path,
+                                            file_name,
+                                            NULL);
+  destination_file = g_file_new_for_path (destination_file_path);
+
+  if (!g_file_copy (src, destination_file,
+                    G_FILE_COPY_OVERWRITE,
+                    NULL,
+                    NULL, NULL,
+                    error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 builder_source_patch_checksum (BuilderSource  *source,
                                BuilderCache   *cache,
@@ -292,6 +357,7 @@ builder_source_patch_class_init (BuilderSourcePatchClass *klass)
   source_class->show_deps = builder_source_patch_show_deps;
   source_class->download = builder_source_patch_download;
   source_class->extract = builder_source_patch_extract;
+  source_class->bundle = builder_source_patch_bundle;
   source_class->checksum = builder_source_patch_checksum;
 
   g_object_class_install_property (object_class,

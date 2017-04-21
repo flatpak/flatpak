@@ -38,6 +38,7 @@ static gboolean opt_run;
 static gboolean opt_disable_cache;
 static gboolean opt_disable_rofiles;
 static gboolean opt_download_only;
+static gboolean opt_bundle_sources;
 static gboolean opt_build_only;
 static gboolean opt_finish_only;
 static gboolean opt_show_deps;
@@ -62,6 +63,7 @@ static char *opt_subject;
 static char *opt_body;
 static char *opt_gpg_homedir;
 static char **opt_key_ids;
+static char **opt_sources_dirs;
 static int opt_jobs;
 
 static GOptionEntry entries[] = {
@@ -76,6 +78,8 @@ static GOptionEntry entries[] = {
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
   { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
+  { "bundle-sources", 0, 0, G_OPTION_ARG_NONE, &opt_bundle_sources, "Bundle module sources as runtime", NULL },
+  { "extra-sources", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sources_dirs, "Add a directory of sources specified by SOURCE-DIR, multiple uses of this option possible", "SOURCE-DIR"},
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "finish-only", 0, 0, G_OPTION_ARG_NONE, &opt_finish_only, "Only run clean and finish and export phases", NULL },
   { "allow-missing-runtimes", 0, 0, G_OPTION_ARG_NONE, &opt_allow_missing_runtimes, "Don't fail if runtime and sdk missing", NULL },
@@ -138,6 +142,42 @@ usage (GOptionContext *context, const char *message)
 }
 
 static const char skip_arg[] = "skip";
+
+static gboolean
+bundle_manifest (BuilderContext *build_context,
+                 GFile          *manifest_file,
+                 GError        **error)
+{
+  g_autoptr(GFile) sources_dir = NULL;
+  g_autoptr(GFile) destination_file = NULL;
+  g_autofree char *sources_dir_path = NULL;
+  g_autofree char *file_name = NULL;
+  g_autofree char *destination_file_path = NULL;
+  g_autofree char *app_dir_path = g_file_get_path (builder_context_get_app_dir (build_context));
+
+  sources_dir_path = g_build_filename (app_dir_path,
+                                       "sources",
+                                       NULL);
+  sources_dir = g_file_new_for_path (sources_dir_path);
+  if (!g_file_query_exists (sources_dir, NULL) &&
+      !g_file_make_directory_with_parents (sources_dir, NULL, error))
+    return FALSE;
+
+  file_name = g_file_get_basename (manifest_file);
+  destination_file_path = g_build_filename (sources_dir_path,
+                                            file_name,
+                                            NULL);
+  destination_file = g_file_new_for_path (destination_file_path);
+
+  if (!g_file_copy (manifest_file, destination_file,
+                    G_FILE_COPY_OVERWRITE,
+                    NULL,
+                    NULL, NULL,
+                    error))
+    return FALSE;
+
+  return TRUE;
+}
 
 static gboolean
 do_export (BuilderContext *build_context,
@@ -321,6 +361,19 @@ main (int    argc,
   builder_context_set_sandboxed (build_context, opt_sandboxed);
   builder_context_set_jobs (build_context, opt_jobs);
   builder_context_set_rebuild_on_sdk_change (build_context, opt_rebuild_on_sdk_change);
+  builder_context_set_bundle_sources (build_context, opt_bundle_sources);
+
+  if (opt_sources_dirs)
+    {
+      g_autoptr(GPtrArray) sources_dirs = NULL;
+      sources_dirs = g_ptr_array_new_with_free_func (g_object_unref);
+      for (i = 0; opt_sources_dirs != NULL && opt_sources_dirs[i] != NULL; i++)
+        {
+          GFile *file = g_file_new_for_commandline_arg (opt_sources_dirs[i]);
+          g_ptr_array_add (sources_dirs, file);
+        }
+      builder_context_set_sources_dirs (build_context, sources_dirs);
+    }
 
   if (opt_arch)
     builder_context_set_arch (build_context, opt_arch);
@@ -346,6 +399,7 @@ main (int    argc,
       g_autoptr(GFile) build_subdir = NULL;
 
       if (!builder_git_mirror_repo (opt_from_git,
+                                    NULL,
                                     !opt_disable_updates, FALSE, FALSE,
                                     git_branch, build_context, &error))
         {
@@ -586,6 +640,7 @@ main (int    argc,
   if (!opt_build_only && opt_repo && builder_cache_has_checkout (cache))
     {
       g_autoptr(GFile) debuginfo_metadata = NULL;
+      g_autoptr(GFile) sourcesinfo_metadata = NULL;
 
       g_print ("Exporting %s to repo\n", builder_manifest_get_id (manifest));
 
@@ -641,6 +696,29 @@ main (int    argc,
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.debuginfo",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
+            {
+              g_printerr ("Export failed: %s\n", error->message);
+              return 1;
+            }
+        }
+
+      /* Export sources extensions */
+      sourcesinfo_metadata = g_file_get_child (app_dir, "metadata.sources");
+      if (builder_context_get_bundle_sources (build_context) && g_file_query_exists (sourcesinfo_metadata, NULL))
+        {
+          g_autofree char *sources_id = builder_manifest_get_sources_id (manifest);
+          g_print ("Exporting %s to repo\n", sources_id);
+
+          if (!bundle_manifest (build_context, manifest_file, &error))
+            {
+              g_printerr ("Can't bundle manifest file '%s' : %s\n", manifest_rel_path, error->message);
+              return 1;
+            }
+
+          if (!do_export (build_context, &error, TRUE,
+                          "--metadata=metadata.sources",
+                          "--files=sources",
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);

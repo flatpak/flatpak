@@ -26,6 +26,7 @@
 G_BEGIN_DECLS
 
 gboolean builder_git_mirror_repo        (const char      *repo_location,
+                                         const char      *destination_path,
                                          gboolean         update,
                                          gboolean         mirror_submodules,
                                          gboolean         disable_fsck,

@@ -136,6 +136,19 @@ get_mirror_dir (BuilderSourceBzr *self, BuilderContext *context)
   g_autoptr(GFile) bzr_dir = NULL;
   g_autofree char *filename = NULL;
   g_autofree char *bzr_dir_path = NULL;
+  GPtrArray *sources_dirs = NULL;
+  int i;
+
+  sources_dirs = builder_context_get_sources_dirs (context);
+  for (i = 0; sources_dirs != NULL && i < sources_dirs->len; i++)
+    {
+      GFile* sources_root = g_ptr_array_index (sources_dirs, i);
+      g_autoptr(GFile) local_bzr_dir = g_file_get_child (sources_root, "bzr");
+      g_autofree char *local_filename = builder_uri_to_filename (self->url);
+      g_autoptr(GFile) file = g_file_get_child (local_bzr_dir, local_filename);
+      if (g_file_query_exists (file, NULL))
+        return g_steal_pointer (&file);
+    }
 
   bzr_dir = g_file_get_child (builder_context_get_state_dir (context),
                               "bzr");
@@ -239,6 +252,65 @@ builder_source_bzr_extract (BuilderSource  *source,
   return TRUE;
 }
 
+static gboolean
+builder_source_bzr_bundle (BuilderSource  *source,
+                           BuilderContext *context,
+                           GError        **error)
+{
+  BuilderSourceBzr *self = BUILDER_SOURCE_BZR (source);
+
+  g_autoptr(GFile) sources_dir = NULL;
+  g_autoptr(GFile) dest_dir = NULL;
+  g_autoptr(GFile) dest_dir_tmp = NULL;
+  g_autoptr(GFile) bzr_sources_dir = NULL;
+
+  g_autofree char *sources_dir_path = NULL;
+  g_autofree char *dest_dir_path = NULL;
+  g_autofree char *dest_dir_path_tmp = NULL;
+  g_autofree char *bzr_sources_dir_path = NULL;
+
+  g_autofree char *base_name = NULL;
+  g_autofree char *base_name_tmp = NULL;
+  g_autofree char *app_dir_path = NULL;
+
+  sources_dir = get_mirror_dir (self, context);
+
+  if (sources_dir == NULL) {
+    g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't locate repo with URL '%s'", self->url);
+    return FALSE;
+  }
+
+  base_name = g_file_get_basename (sources_dir);
+
+  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
+  bzr_sources_dir_path = g_build_filename (app_dir_path,
+                                           "sources",
+                                           "bzr",
+                                           NULL);
+  bzr_sources_dir = g_file_new_for_path (bzr_sources_dir_path);
+  if (!g_file_query_exists (bzr_sources_dir, NULL) &&
+      !g_file_make_directory_with_parents (bzr_sources_dir, NULL, error))
+    return FALSE;
+
+  base_name_tmp = g_strconcat (base_name, ".clone_tmp", NULL);
+  dest_dir_path_tmp = g_build_filename (bzr_sources_dir_path,
+                                        base_name_tmp,
+                                        NULL);
+  dest_dir_tmp = g_file_new_for_path (dest_dir_path_tmp);
+  dest_dir_path = g_build_filename (bzr_sources_dir_path,
+                                    base_name,
+                                    NULL);
+  dest_dir = g_file_new_for_path (dest_dir_path);
+
+  sources_dir_path = g_file_get_path (sources_dir);
+  if (!bzr (bzr_sources_dir, NULL, error,
+            "branch", sources_dir_path, base_name_tmp, NULL) ||
+      !g_file_move (dest_dir_tmp, dest_dir, 0, NULL, NULL, NULL, error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 builder_source_bzr_checksum (BuilderSource  *source,
                              BuilderCache   *cache,
@@ -289,6 +361,7 @@ builder_source_bzr_class_init (BuilderSourceBzrClass *klass)
 
   source_class->download = builder_source_bzr_download;
   source_class->extract = builder_source_bzr_extract;
+  source_class->bundle = builder_source_bzr_bundle;
   source_class->update = builder_source_bzr_update;
   source_class->checksum = builder_source_bzr_checksum;
 
