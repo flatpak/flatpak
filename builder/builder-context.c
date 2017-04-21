@@ -272,6 +272,45 @@ builder_context_set_sources_dirs (BuilderContext *self,
 }
 
 GFile *
+builder_context_find_in_sources_dirs_va (BuilderContext *self,
+                                         va_list args)
+{
+  int i;
+
+  if (self->sources_dirs == NULL)
+    return NULL;
+
+  for (i = 0; i < self->sources_dirs->len; i++)
+    {
+      GFile *dir = g_ptr_array_index (self->sources_dirs, i);
+      g_autoptr(GFile) local_file = NULL;
+      va_list args2;
+
+      va_copy(args2, args);
+      local_file = flatpak_build_file_va (dir, args2);
+
+      if (g_file_query_exists (local_file, NULL))
+        return g_steal_pointer (&local_file);
+    }
+
+  return NULL;
+}
+
+GFile *
+builder_context_find_in_sources_dirs (BuilderContext *self,
+                                      ...)
+{
+  GFile *res;
+  va_list args;
+
+  va_start (args, self);
+  res = builder_context_find_in_sources_dirs_va (self, args);
+  va_end (args);
+
+  return res;
+}
+
+GFile *
 builder_context_get_cache_dir (BuilderContext *self)
 {
   return self->cache_dir;
