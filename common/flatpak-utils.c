@@ -2054,6 +2054,35 @@ flatpak_spawnv (GFile                *dir,
   return TRUE;
 }
 
+GFile *
+flatpak_build_file_va (GFile *base,
+                       va_list args)
+{
+  g_autoptr(GFile) res = g_object_ref (base);
+  const gchar *arg;
+
+  while ((arg = va_arg (args, const gchar *)))
+    {
+      GFile *child = g_file_get_child (res, arg);
+      g_set_object (&res, child);
+    }
+
+  return g_steal_pointer (&res);
+}
+
+GFile *
+flatpak_build_file (GFile *base, ...)
+{
+  GFile *res;
+  va_list args;
+
+  va_start (args, base);
+  res = flatpak_build_file_va (base, args);
+  va_end (args);
+
+  return res;
+}
+
 const char *
 flatpak_file_get_path_cached (GFile *file)
 {
