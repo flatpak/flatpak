@@ -255,8 +255,6 @@ builder_source_git_bundle (BuilderSource  *source,
 
   g_autofree char *location = NULL;
   g_autoptr(GFile) mirror_dir = NULL;
-  g_autofree char *mirror_dir_path = NULL;
-  g_autofree char *app_dir_path = NULL;
 
   location = get_url_or_path (self, context, error);
 

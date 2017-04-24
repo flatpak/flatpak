@@ -140,8 +140,6 @@ get_source_file (BuilderSourcePatch *self,
                  BuilderContext     *context,
                  GError            **error)
 {
-  g_autoptr(GFile) patch = NULL;
-
   GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
 
   if (self->path == NULL || self->path[0] == 0)
@@ -267,12 +265,7 @@ builder_source_patch_bundle (BuilderSource  *source,
   BuilderSourcePatch *self = BUILDER_SOURCE_PATCH (source);
   GFile *manifest_base_dir = builder_context_get_base_dir (context);
   g_autoptr(GFile) src = NULL;
-  g_autoptr(GFile) patches_dir = NULL;
   g_autoptr(GFile) destination_file = NULL;
-  g_autofree char *patches_dir_path = NULL;
-  g_autofree char *file_name = NULL;
-  g_autofree char *destination_file_path = NULL;
-  g_autofree char *app_dir_path = NULL;
   g_autofree char *rel_path = NULL;
   g_autoptr(GFile) destination_dir = NULL;
 

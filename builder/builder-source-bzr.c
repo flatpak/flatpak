@@ -134,7 +134,6 @@ static GFile *
 get_mirror_dir (BuilderSourceBzr *self, BuilderContext *context)
 {
   g_autoptr(GFile) bzr_dir = NULL;
-  g_autoptr(GFile) dir = NULL;
   g_autofree char *filename = NULL;
   g_autofree char *bzr_dir_path = NULL;
 
@@ -277,9 +276,6 @@ builder_source_bzr_bundle (BuilderSource  *source,
   g_autoptr(GFile) bzr_sources_dir = NULL;
 
   g_autofree char *sources_dir_path = NULL;
-  g_autofree char *dest_dir_path = NULL;
-  g_autofree char *dest_dir_path_tmp = NULL;
-  g_autofree char *bzr_sources_dir_path = NULL;
 
   g_autofree char *base_name = NULL;
   g_autofree char *base_name_tmp = NULL;
