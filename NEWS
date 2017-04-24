@@ -1,3 +1,42 @@
+Major changes in 0.9.3
+======================
+ Changes in flatpak-builder:
+
+ * "rename-icon" renames in translated icons too
+ * Moved manifest format docs to own manpage, "flatpak-manifest".
+ * "bootstrap.sh" is now recognized as an autogen.sh alternative
+ * Fall back to not using rofiles-fuse if it is not available.
+ * Make sure flatpak-builder --run grants the app access to dbus.
+ * Make paths paths for module includes and module dependencies
+   relative to the included module rather than the "base" json file.
+ * When cross-compiling 32bit apps on 64bit arches (like i386 on x86-64)
+   then we automatically set a linux32 personallity.
+ * Print warnings for unhandled json properties.
+ * Make sure flatpak-builder --run works if --extra-data is in the
+   finish args.
+ * Take build-commands into consideration when considering if the
+   build cache is stale.
+ * Support for --extra-sources= to pre-seed downloaded sources.
+ * Support for --bundle-sources which creates a runtime with the sources
+   that were used to build the app.
+ * Handle trailing whitespace in git submodule uris
+ * Progress reporting while downloading files.
+
+ Other changes:
+ * build-export now always exports directories as readable and executable.
+ * build-update-repo --generate-static-deltas now fork the work process
+   rather than using threads, which avoids problems with this using
+   a lot of memory in a single process in some cases.
+ * Report flatpak version in HTTP request user agent.
+ * New "flatpak repo" command added that has some options for maintaining
+   a repository.
+ * flatpak info can now report more information and handles multiple
+   installed branches better.
+ * Support non-default WAYLAND_DISPLAY environment var.
+ * Handle application ids that end with .desktop when generating
+   appstream data.
+ * Documentation updates
+
 Major changes in 0.9.2
 ======================
 
