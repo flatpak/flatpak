@@ -161,7 +161,6 @@ get_uri (BuilderSourceFile *self,
 static GFile *
 get_download_location (BuilderSourceFile *self,
                        gboolean          *is_inline,
-                       gboolean          *is_local,
                        BuilderContext    *context,
                        GError           **error)
 {
@@ -181,6 +180,7 @@ get_download_location (BuilderSourceFile *self,
       *is_inline = TRUE;
       return g_file_new_for_path ("inline data");
     }
+  *is_inline = FALSE;
 
   base_name = g_path_get_basename (path);
 
@@ -196,16 +196,12 @@ get_download_location (BuilderSourceFile *self,
                                                base_name,
                                                NULL);
   if (file != NULL)
-    {
-      *is_local = TRUE;
-      return g_steal_pointer (&file);
-    }
+    return g_steal_pointer (&file);
 
   file = flatpak_build_file (builder_context_get_download_dir (context),
                              self->sha256,
                              base_name,
                              NULL);
-  *is_inline = FALSE;
   return g_steal_pointer (&file);
 }
 
@@ -221,7 +217,7 @@ get_source_file (BuilderSourceFile *self,
   if (self->url != NULL && self->url[0] != 0)
     {
       *is_local = FALSE;
-      return get_download_location (self, is_inline, is_local, context, error);
+      return get_download_location (self, is_inline, context, error);
     }
 
   if (self->path != NULL && self->path[0] != 0)
@@ -422,12 +418,9 @@ builder_source_file_bundle (BuilderSource  *source,
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
 
   g_autoptr(GFile) file = NULL;
-  g_autoptr(GFile) download_dir = NULL;
   g_autoptr(GFile) destination_file = NULL;
-  g_autofree char *download_dir_path = NULL;
+  g_autoptr(GFile) destination_dir = NULL;
   g_autofree char *file_name = NULL;
-  g_autofree char *destination_file_path = NULL;
-  g_autofree char *app_dir_path = NULL;
   gboolean is_local, is_inline;
 
   file = get_source_file (self, context, &is_local, &is_inline, error);
@@ -438,21 +431,33 @@ builder_source_file_bundle (BuilderSource  *source,
   if (is_inline)
     return TRUE;
 
-  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
-  download_dir_path = g_build_filename (app_dir_path,
-                                        "sources",
-                                        "downloads",
-                                        self->sha256,
-                                        NULL);
-  download_dir = g_file_new_for_path (download_dir_path);
-  if (!flatpak_mkdir_p (download_dir, NULL, error))
-    return FALSE;
+  if (is_local)
+    {
+      GFile *manifest_base_dir = builder_context_get_base_dir (context);
+      g_autofree char *rel_path = g_file_get_relative_path (manifest_base_dir, file);
 
-  file_name = g_file_get_basename (file);
-  destination_file_path = g_build_filename (download_dir_path,
-                                            file_name,
-                                            NULL);
-  destination_file = g_file_new_for_path (destination_file_path);
+      if (rel_path == NULL)
+        {
+          g_warning ("Local file %s is outside manifest tree, not bundling", flatpak_file_get_path_cached (file));
+          return TRUE;
+        }
+
+      destination_file = flatpak_build_file (builder_context_get_app_dir (context),
+                                             "sources/manifest", rel_path, NULL);
+    }
+  else
+    {
+      file_name = g_file_get_basename (file);
+      destination_file = flatpak_build_file (builder_context_get_app_dir (context),
+                                             "sources/downloads",
+                                             self->sha256,
+                                             file_name,
+                                             NULL);
+    }
+
+  destination_dir = g_file_get_parent (destination_file);
+  if (!flatpak_mkdir_p (destination_dir, NULL, error))
+    return FALSE;
 
   if (!g_file_copy (file, destination_file,
                     G_FILE_COPY_OVERWRITE,

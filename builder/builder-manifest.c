@@ -1395,6 +1395,14 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
     }
 }
 
+void
+builder_manifest_checksum_for_bundle_sources (BuilderManifest *self,
+                                              BuilderCache    *cache,
+                                              BuilderContext  *context)
+{
+  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_BUNDLE_SOURCES_VERSION);
+  builder_cache_checksum_boolean (cache, builder_context_get_bundle_sources (context));
+}
 
 void
 builder_manifest_checksum_for_platform (BuilderManifest *self,
@@ -2291,20 +2299,6 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
         }
 
-      if (builder_context_get_bundle_sources (context) && g_file_query_exists (sources_dir, NULL))
-        {
-          g_autoptr(GFile) metadata_sources_file = NULL;
-          g_autofree char *metadata_contents = NULL;
-          g_autofree char *sources_id = builder_manifest_get_sources_id (self);
-          metadata_sources_file = g_file_get_child (app_dir, "metadata.sources");
-
-          metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s\n", sources_id);
-          if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_sources_file),
-                                    metadata_contents, strlen (metadata_contents), error))
-            return FALSE;
-        }
-
       if (!builder_context_disable_rofiles (context, error))
         return FALSE;
 
@@ -2608,6 +2602,71 @@ builder_manifest_create_platform (BuilderManifest *self,
   return TRUE;
 }
 
+gboolean
+builder_manifest_bundle_sources (BuilderManifest *self,
+                                 const char      *json,
+                                 BuilderCache    *cache,
+                                 BuilderContext  *context,
+                                 GError         **error)
+{
+
+  builder_manifest_checksum_for_bundle_sources (self, cache, context);
+  if (!builder_cache_lookup (cache, "bundle-sources"))
+    {
+      g_autofree char *sources_id = builder_manifest_get_sources_id (self);
+      GFile *app_dir;
+      g_autoptr(GFile) metadata_sources_file = NULL;
+      g_autoptr(GFile) json_dir = NULL;
+      g_autofree char *manifest_filename = NULL;
+      g_autoptr(GFile) manifest_file = NULL;
+      g_autofree char *metadata_contents = NULL;
+      GList *l;
+
+      g_print ("Bundling sources\n");
+
+      if (!builder_context_enable_rofiles (context, error))
+        return FALSE;
+
+      app_dir = builder_context_get_app_dir (context);
+      metadata_sources_file = g_file_get_child (app_dir, "metadata.sources");
+      metadata_contents = g_strdup_printf ("[Runtime]\n"
+                                           "name=%s\n", sources_id);
+      if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_sources_file),
+                                metadata_contents, strlen (metadata_contents), error))
+        return FALSE;
+
+      json_dir = g_file_resolve_relative_path (app_dir, "sources/manifest");
+      if (!flatpak_mkdir_p (json_dir, NULL, error))
+        return FALSE;
+
+      manifest_filename = g_strconcat (self->id, ".json", NULL);
+      manifest_file = g_file_get_child (json_dir, manifest_filename);
+      if (!g_file_set_contents (flatpak_file_get_path_cached (manifest_file),
+                                json, strlen (json), error))
+        return FALSE;
+
+
+      for (l = self->expanded_modules; l != NULL; l = l->next)
+        {
+          BuilderModule *m = l->data;
+
+          if (!builder_module_bundle_sources (m, context, error))
+            return FALSE;
+        }
+
+      if (!builder_context_disable_rofiles (context, error))
+        return FALSE;
+
+      if (!builder_cache_commit (cache, "Bundled sources", error))
+        return FALSE;
+    }
+  else
+    {
+      g_print ("Cache hit for bundle-sources, skipping\n");
+    }
+
+  return TRUE;
+}
 
 gboolean
 builder_manifest_show_deps (BuilderManifest *self,

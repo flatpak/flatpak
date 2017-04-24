@@ -141,8 +141,6 @@ get_source_file (BuilderSourcePatch *self,
                  GError            **error)
 {
   g_autoptr(GFile) patch = NULL;
-  g_autoptr(GFile) file = NULL;
-  g_autofree char *base_name = NULL;
 
   GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
 
@@ -151,16 +149,6 @@ get_source_file (BuilderSourcePatch *self,
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "path not specified");
       return NULL;
     }
-
-  patch = g_file_new_for_path (self->path);
-  base_name = g_file_get_basename (patch);
-
-  file = builder_context_find_in_sources_dirs (context,
-                                               "patches",
-                                               base_name,
-                                               NULL);
-  if (file)
-    return g_steal_pointer (&file);
 
   return g_file_resolve_relative_path (base_dir, self->path);
 }
@@ -277,7 +265,7 @@ builder_source_patch_bundle (BuilderSource  *source,
                              GError        **error)
 {
   BuilderSourcePatch *self = BUILDER_SOURCE_PATCH (source);
-
+  GFile *manifest_base_dir = builder_context_get_base_dir (context);
   g_autoptr(GFile) src = NULL;
   g_autoptr(GFile) patches_dir = NULL;
   g_autoptr(GFile) destination_file = NULL;
@@ -285,26 +273,27 @@ builder_source_patch_bundle (BuilderSource  *source,
   g_autofree char *file_name = NULL;
   g_autofree char *destination_file_path = NULL;
   g_autofree char *app_dir_path = NULL;
+  g_autofree char *rel_path = NULL;
+  g_autoptr(GFile) destination_dir = NULL;
 
   src = get_source_file (self, context, error);
 
   if (src == NULL)
     return FALSE;
 
-  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
-  patches_dir_path = g_build_filename (app_dir_path,
-                                       "sources",
-                                       "patches",
-                                       NULL);
-  patches_dir = g_file_new_for_path (patches_dir_path);
-  if (!flatpak_mkdir_p (patches_dir, NULL, error))
-    return FALSE;
+  rel_path = g_file_get_relative_path (manifest_base_dir, src);
+  if (rel_path == NULL)
+    {
+      g_warning ("Patch %s is outside manifest tree, not bundling", flatpak_file_get_path_cached (src));
+      return TRUE;
+    }
 
-  file_name = g_file_get_basename (src);
-  destination_file_path = g_build_filename (patches_dir_path,
-                                            file_name,
-                                            NULL);
-  destination_file = g_file_new_for_path (destination_file_path);
+  destination_file = flatpak_build_file (builder_context_get_app_dir (context),
+                                         "sources/manifest", rel_path, NULL);
+
+  destination_dir = g_file_get_parent (destination_file);
+  if (!flatpak_mkdir_p (destination_dir, NULL, error))
+    return FALSE;
 
   if (!g_file_copy (src, destination_file,
                     G_FILE_COPY_OVERWRITE,

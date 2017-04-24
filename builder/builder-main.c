@@ -144,41 +144,6 @@ usage (GOptionContext *context, const char *message)
 static const char skip_arg[] = "skip";
 
 static gboolean
-bundle_manifest (BuilderContext *build_context,
-                 GFile          *manifest_file,
-                 GError        **error)
-{
-  g_autoptr(GFile) sources_dir = NULL;
-  g_autoptr(GFile) destination_file = NULL;
-  g_autofree char *sources_dir_path = NULL;
-  g_autofree char *file_name = NULL;
-  g_autofree char *destination_file_path = NULL;
-  g_autofree char *app_dir_path = g_file_get_path (builder_context_get_app_dir (build_context));
-
-  sources_dir_path = g_build_filename (app_dir_path,
-                                       "sources",
-                                       NULL);
-  sources_dir = g_file_new_for_path (sources_dir_path);
-  if (!flatpak_mkdir_p (sources_dir, NULL, error))
-    return FALSE;
-
-  file_name = g_file_get_basename (manifest_file);
-  destination_file_path = g_build_filename (sources_dir_path,
-                                            file_name,
-                                            NULL);
-  destination_file = g_file_new_for_path (destination_file_path);
-
-  if (!g_file_copy (manifest_file, destination_file,
-                    G_FILE_COPY_OVERWRITE,
-                    NULL,
-                    NULL, NULL,
-                    error))
-    return FALSE;
-
-  return TRUE;
-}
-
-static gboolean
 do_export (BuilderContext *build_context,
            GError        **error,
            gboolean        runtime,
@@ -631,6 +596,13 @@ main (int    argc,
           g_printerr ("Error: %s\n", error->message);
           return 1;
         }
+
+      if (builder_context_get_bundle_sources (build_context) &&
+          !builder_manifest_bundle_sources (manifest, json, cache, build_context, &error))
+        {
+          g_printerr ("Error: %s\n", error->message);
+          return 1;
+        }
     }
 
   if (!opt_require_changes)
@@ -704,16 +676,10 @@ main (int    argc,
 
       /* Export sources extensions */
       sourcesinfo_metadata = g_file_get_child (app_dir, "metadata.sources");
-      if (builder_context_get_bundle_sources (build_context) && g_file_query_exists (sourcesinfo_metadata, NULL))
+      if (g_file_query_exists (sourcesinfo_metadata, NULL))
         {
           g_autofree char *sources_id = builder_manifest_get_sources_id (manifest);
           g_print ("Exporting %s to repo\n", sources_id);
-
-          if (!bundle_manifest (build_context, manifest_file, &error))
-            {
-              g_printerr ("Can't bundle manifest file '%s' : %s\n", manifest_rel_path, error->message);
-              return 1;
-            }
 
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.sources",

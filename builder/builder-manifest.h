@@ -40,6 +40,7 @@ typedef struct BuilderManifest BuilderManifest;
 #define BUILDER_MANIFEST_CHECKSUM_VERSION "4"
 #define BUILDER_MANIFEST_CHECKSUM_CLEANUP_VERSION "1"
 #define BUILDER_MANIFEST_CHECKSUM_FINISH_VERSION "2"
+#define BUILDER_MANIFEST_CHECKSUM_BUNDLE_SOURCES_VERSION "1"
 #define BUILDER_MANIFEST_CHECKSUM_PLATFORM_VERSION "1"
 
 GType builder_manifest_get_type (void);
@@ -99,6 +100,11 @@ gboolean        builder_manifest_finish (BuilderManifest *self,
                                          BuilderCache    *cache,
                                          BuilderContext  *context,
                                          GError         **error);
+gboolean        builder_manifest_bundle_sources (BuilderManifest *self,
+                                                 const char      *json,
+                                                 BuilderCache    *cache,
+                                                 BuilderContext  *context,
+                                                 GError         **error);
 gboolean        builder_manifest_create_platform (BuilderManifest *self,
                                                   BuilderCache    *cache,
                                                   BuilderContext  *context,

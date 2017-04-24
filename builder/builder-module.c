@@ -909,6 +909,35 @@ builder_module_bundle_sources (BuilderModule  *self,
 {
   GList *l;
 
+  if (self->json_path)
+    {
+      g_autoptr(GFile) json_file = g_file_new_for_path (self->json_path);
+      g_autoptr(GFile) destination_file = NULL;
+      g_autoptr(GFile) destination_dir = NULL;
+      GFile *manifest_base_dir = builder_context_get_base_dir (context);
+      g_autofree char *rel_path = g_file_get_relative_path (manifest_base_dir, json_file);
+
+      if (rel_path == NULL)
+        {
+          g_warning ("Included manifest %s is outside manifest tree, not bundling", self->json_path);
+          return TRUE;
+        }
+
+      destination_file = flatpak_build_file (builder_context_get_app_dir (context),
+                                             "sources/manifest", rel_path, NULL);
+
+      destination_dir = g_file_get_parent (destination_file);
+      if (!flatpak_mkdir_p (destination_dir, NULL, error))
+        return FALSE;
+
+      if (!g_file_copy (json_file, destination_file,
+                        G_FILE_COPY_OVERWRITE,
+                        NULL,
+                        NULL, NULL,
+                        error))
+        return FALSE;
+    }
+
   for (l = self->sources; l != NULL; l = l->next)
     {
       BuilderSource *source = l->data;
@@ -1203,9 +1232,6 @@ builder_module_build (BuilderModule  *self,
   g_print ("========================================================================\n");
   g_print ("Building module %s in %s\n", self->name, source_dir_path);
   g_print ("========================================================================\n");
-
-  if (builder_context_get_bundle_sources (context) && !builder_module_bundle_sources (self, context, error))
-    return FALSE;
 
   if (!builder_module_extract_sources (self, source_dir, context, error))
     return FALSE;
