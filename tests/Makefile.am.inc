@@ -88,6 +88,12 @@ dist_installed_test_data = \
 	tests/org.test.Hello.png \
 	tests/package_version.txt \
 	tests/test.json \
+	tests/module1.json \
+	tests/data1 \
+	tests/data1.patch \
+	tests/module2.json \
+	tests/data2 \
+	tests/data2.patch \
 	tests/session.conf.in \
 	tests/0001-Add-test-logo.patch \
 	tests/org.test.Python.json \
