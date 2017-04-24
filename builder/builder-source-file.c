@@ -399,25 +399,6 @@ builder_source_file_extract (BuilderSource  *source,
     }
   else
     {
-      if (is_local)
-        {
-          g_autofree char *data = NULL;
-          g_autofree char *base64 = NULL;
-          gsize len;
-
-          if (!g_file_load_contents (src, NULL, &data, &len, NULL, error))
-            return FALSE;
-
-          base64 = g_base64_encode ((const guchar *) data, len);
-          g_free (self->url);
-          self->url = g_strdup_printf ("data:text/plain;charset=utf8;base64,%s", base64);
-          if (self->dest_filename == NULL || *self->dest_filename == 0)
-            {
-              g_free (self->dest_filename);
-              self->dest_filename = g_file_get_basename (src);
-            }
-        }
-
       /* Make sure the target is gone, because g_file_copy does
          truncation on hardlinked destinations */
       (void)g_file_delete (dest_file, NULL, NULL);
@@ -488,34 +469,6 @@ builder_source_file_update (BuilderSource  *source,
                             BuilderContext *context,
                             GError        **error)
 {
-  BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
-
-  g_autoptr(GFile) src = NULL;
-  gboolean is_local, is_inline;
-
-  src = get_source_file (self, context, &is_local, &is_inline, error);
-  if (src == NULL)
-    return FALSE;
-
-  if (is_local)
-    {
-      g_autofree char *data = NULL;
-      g_autofree char *base64 = NULL;
-      gsize len;
-
-      if (!g_file_load_contents (src, NULL, &data, &len, NULL, error))
-        return FALSE;
-
-      base64 = g_base64_encode ((const guchar *) data, len);
-      g_free (self->url);
-      self->url = g_strdup_printf ("data:text/plain;charset=utf8;base64,%s", base64);
-      if (self->dest_filename == NULL || *self->dest_filename == 0)
-        {
-          g_free (self->dest_filename);
-          self->dest_filename = g_file_get_basename (src);
-        }
-    }
-
   return TRUE;
 }
 
