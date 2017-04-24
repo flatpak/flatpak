@@ -220,6 +220,7 @@ patch (GFile      *dir,
   if (use_git) {
     g_ptr_array_add (args, "git");
     g_ptr_array_add (args, "apply");
+    g_ptr_array_add (args, "-v");
   } else {
     g_ptr_array_add (args, "patch");
   }
