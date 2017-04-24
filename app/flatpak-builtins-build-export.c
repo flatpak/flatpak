@@ -172,7 +172,11 @@ commit_filter (OstreeRepo *repo,
   /* No setuid */
   mode = mode & ~07000;
   /* Canonical permission mode == same as what bare-user mode uses for checkouts */
-  mode = mode | 0744;
+  if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_REGULAR)
+    mode = mode | 0744;
+  /* Always make directories readable and executable */
+  if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
+    mode = mode | 0555;
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", mode);
 
   if (matches_patterns (commit_data->exclude, path) &&
