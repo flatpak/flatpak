@@ -36,6 +36,8 @@ typedef enum {
   FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
 } FlatpakHostCommandFlags;
 
+typedef void (*FlatpakLoadUriProgress) (guint64 downloaded_bytes,
+                                        gpointer user_data);
 
 /* https://bugzilla.gnome.org/show_bug.cgi?id=766370 */
 #if !GLIB_CHECK_VERSION(2, 49, 3)
@@ -91,9 +93,12 @@ gboolean flatpak_write_update_checksum (GOutputStream  *out,
                                         GCancellable   *cancellable,
                                         GError        **error);
 
+
 gboolean flatpak_splice_update_checksum (GOutputStream  *out,
                                          GInputStream   *in,
                                          GChecksum      *checksum,
+                                         FlatpakLoadUriProgress progress,
+                                         gpointer        progress_data,
                                          GCancellable   *cancellable,
                                          GError        **error);
 
@@ -609,9 +614,6 @@ gboolean flatpak_allocate_tmpdir (int           tmpdir_dfd,
 
 gboolean flatpak_yes_no_prompt (const char *prompt, ...) G_GNUC_PRINTF(1, 2);
 long flatpak_number_prompt (int min, int max, const char *prompt, ...) G_GNUC_PRINTF(3, 4);
-
-typedef void (*FlatpakLoadUriProgress) (guint64 downloaded_bytes,
-                                        gpointer user_data);
 
 SoupSession * flatpak_create_soup_session (const char *user_agent);
 GBytes * flatpak_load_http_uri (SoupSession *soup_session,

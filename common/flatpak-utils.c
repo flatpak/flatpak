@@ -123,12 +123,17 @@ gboolean
 flatpak_splice_update_checksum (GOutputStream  *out,
                                 GInputStream   *in,
                                 GChecksum      *checksum,
+                                FlatpakLoadUriProgress progress,
+                                gpointer        progress_data,
                                 GCancellable   *cancellable,
                                 GError        **error)
 {
   gsize bytes_read, bytes_written;
   char buf[32*1024];
+  guint64 downloaded_bytes = 0;
+  gint64 progress_start;
 
+  progress_start = g_get_monotonic_time ();
   do
     {
       if (!g_input_stream_read_all (in, buf, sizeof buf, &bytes_read, cancellable, error))
@@ -137,8 +142,20 @@ flatpak_splice_update_checksum (GOutputStream  *out,
       if (!flatpak_write_update_checksum (out, buf, bytes_read, &bytes_written, checksum,
                                           cancellable, error))
         return FALSE;
+
+      downloaded_bytes += bytes_read;
+
+      if (progress &&
+          g_get_monotonic_time () - progress_start >  5 * 1000000)
+        {
+          progress (downloaded_bytes, progress_data);
+          progress_start = g_get_monotonic_time ();
+        }
     }
   while (bytes_read > 0);
+
+  if (progress)
+    progress (downloaded_bytes, progress_data);
 
   return TRUE;
 }
