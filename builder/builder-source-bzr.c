@@ -138,21 +138,13 @@ get_mirror_dir (BuilderSourceBzr *self, BuilderContext *context)
   g_autofree char *filename = NULL;
   g_autofree char *bzr_dir_path = NULL;
 
-  filename = builder_uri_to_filename (self->url);
-
-  dir = builder_context_find_in_sources_dirs (context,
-                                              "bzr",
-                                              filename,
-                                              NULL);
-  if (dir)
-    return g_steal_pointer (&dir);
-
   bzr_dir = g_file_get_child (builder_context_get_state_dir (context),
                               "bzr");
 
   bzr_dir_path = g_file_get_path (bzr_dir);
   g_mkdir_with_parents (bzr_dir_path, 0755);
 
+  filename = builder_uri_to_filename (self->url);
   return g_file_get_child (bzr_dir, filename);
 }
 
@@ -195,12 +187,36 @@ builder_source_bzr_download (BuilderSource  *source,
       g_autoptr(GFile) parent = g_file_get_parent (mirror_dir);
       g_autofree char *filename_tmp = g_strconcat ("./", filename, ".clone_tmp", NULL);
       g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
+      g_autoptr(GFile) cached_bzr_dir = NULL;
+      const char *branch_source;
 
       g_print ("Getting bzr repo %s\n", self->url);
 
+      branch_source = self->url;
+
+      cached_bzr_dir = builder_context_find_in_sources_dirs (context, "bzr", filename, NULL);
+      if (cached_bzr_dir != NULL)
+        branch_source = flatpak_file_get_path_cached (cached_bzr_dir);
+
       if (!bzr (parent, NULL, error,
-                "branch", self->url,  filename_tmp, NULL) ||
-          !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
+                "branch", branch_source,  filename_tmp, NULL))
+        return FALSE;
+
+      /* Rewrite to real url if we used the cache */
+      if (cached_bzr_dir != NULL)
+        {
+          g_autofree char *setting = g_strdup_printf ("parent_location=%s", self->url);
+          if (!bzr (mirror_dir_tmp, NULL, error,
+                    "config", setting, NULL))
+            return FALSE;
+
+          if (update_vcs &&
+              !bzr (mirror_dir_tmp, NULL, error,
+                    "pull", NULL))
+            return FALSE;
+        }
+
+      if (!g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
         return FALSE;
     }
   else if (update_vcs)
@@ -267,7 +283,6 @@ builder_source_bzr_bundle (BuilderSource  *source,
 
   g_autofree char *base_name = NULL;
   g_autofree char *base_name_tmp = NULL;
-  g_autofree char *app_dir_path = NULL;
 
   sources_dir = get_mirror_dir (self, context);
 
@@ -278,24 +293,19 @@ builder_source_bzr_bundle (BuilderSource  *source,
 
   base_name = g_file_get_basename (sources_dir);
 
-  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
-  bzr_sources_dir_path = g_build_filename (app_dir_path,
-                                           "sources",
-                                           "bzr",
-                                           NULL);
-  bzr_sources_dir = g_file_new_for_path (bzr_sources_dir_path);
+  bzr_sources_dir = flatpak_build_file (builder_context_get_app_dir (context),
+                                        "sources/bzr",
+                                        NULL);
   if (!flatpak_mkdir_p (bzr_sources_dir, NULL, error))
     return FALSE;
 
   base_name_tmp = g_strconcat (base_name, ".clone_tmp", NULL);
-  dest_dir_path_tmp = g_build_filename (bzr_sources_dir_path,
-                                        base_name_tmp,
-                                        NULL);
-  dest_dir_tmp = g_file_new_for_path (dest_dir_path_tmp);
-  dest_dir_path = g_build_filename (bzr_sources_dir_path,
-                                    base_name,
-                                    NULL);
-  dest_dir = g_file_new_for_path (dest_dir_path);
+  dest_dir_tmp = flatpak_build_file (bzr_sources_dir,
+                                          base_name_tmp,
+                                          NULL);
+  dest_dir = flatpak_build_file (bzr_sources_dir,
+                                 base_name,
+                                 NULL);
 
   sources_dir_path = g_file_get_path (sources_dir);
   if (!bzr (bzr_sources_dir, NULL, error,
