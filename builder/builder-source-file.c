@@ -168,11 +168,7 @@ get_download_location (BuilderSourceFile *self,
   g_autoptr(SoupURI) uri = NULL;
   const char *path;
   g_autofree char *base_name = NULL;
-  GFile *download_dir = NULL;
-  g_autoptr(GFile) sha256_dir = NULL;
   g_autoptr(GFile) file = NULL;
-  GPtrArray *sources_dirs = NULL;
-  int i;
 
   uri = get_uri (self, error);
   if (uri == NULL)
@@ -194,23 +190,21 @@ get_download_location (BuilderSourceFile *self,
       return FALSE;
     }
 
-  sources_dirs = builder_context_get_sources_dirs (context);
-  for (i = 0; sources_dirs != NULL && i < sources_dirs->len; i++)
+  file = builder_context_find_in_sources_dirs (context,
+                                               "downloads",
+                                               self->sha256,
+                                               base_name,
+                                               NULL);
+  if (file != NULL)
     {
-      GFile* sources_root = g_ptr_array_index (sources_dirs, i);
-      g_autoptr(GFile) local_download_dir = g_file_get_child (sources_root, "downloads");
-      g_autoptr(GFile) local_sha256_dir = g_file_get_child (local_download_dir, self->sha256);
-      g_autoptr(GFile) local_file = g_file_get_child (local_sha256_dir, base_name);
-      if (g_file_query_exists (local_file, NULL)) {
-        *is_local = TRUE;
-        return g_steal_pointer (&local_file);
-      }
+      *is_local = TRUE;
+      return g_steal_pointer (&file);
     }
 
-  download_dir = builder_context_get_download_dir (context);
-  sha256_dir = g_file_get_child (download_dir, self->sha256);
-  file = g_file_get_child (sha256_dir, base_name);
-
+  file = flatpak_build_file (builder_context_get_download_dir (context),
+                             self->sha256,
+                             base_name,
+                             NULL);
   *is_inline = FALSE;
   return g_steal_pointer (&file);
 }

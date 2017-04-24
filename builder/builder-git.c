@@ -55,23 +55,22 @@ git_get_mirror_dir (const char     *url_or_path,
                     BuilderContext *context)
 {
   g_autoptr(GFile) git_dir = NULL;
+  g_autoptr(GFile) dir = NULL;
   g_autofree char *filename = NULL;
   g_autofree char *git_dir_path = NULL;
-  GPtrArray *sources_dirs = NULL;
-  int i;
 
-  sources_dirs = builder_context_get_sources_dirs (context);
-  for (i = 0; sources_dirs != NULL && i < sources_dirs->len; i++)
+  /* Technically a path isn't a uri but if it's absolute it should still be unique. */
+  filename = builder_uri_to_filename (url_or_path);
+
+  dir = builder_context_find_in_sources_dirs (context,
+                                              "git",
+                                              filename,
+                                              NULL);
+  if (dir)
     {
-      GFile* sources_root = g_ptr_array_index (sources_dirs, i);
-      g_autoptr(GFile) local_git_dir = g_file_get_child (sources_root, "git");
-      g_autofree char *local_filename = builder_uri_to_filename (url_or_path);
-      g_autoptr(GFile) file = g_file_get_child (local_git_dir, local_filename);
-      if (g_file_query_exists (file, NULL)) {
-        if (is_local != NULL)
-          *is_local = TRUE;
-        return g_steal_pointer (&file);
-      }
+      if (is_local != NULL)
+        *is_local = TRUE;
+      return g_steal_pointer (&dir);
     }
 
   git_dir = g_file_get_child (builder_context_get_state_dir (context),
@@ -82,8 +81,6 @@ git_get_mirror_dir (const char     *url_or_path,
 
   if (is_local != NULL)
     *is_local = FALSE;
-  /* Technically a path isn't a uri but if it's absolute it should still be unique. */
-  filename = builder_uri_to_filename (url_or_path);
   return g_file_get_child (git_dir, filename);
 }
 

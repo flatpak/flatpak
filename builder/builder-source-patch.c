@@ -143,8 +143,6 @@ get_source_file (BuilderSourcePatch *self,
   g_autoptr(GFile) patch = NULL;
   g_autoptr(GFile) file = NULL;
   g_autofree char *base_name = NULL;
-  GPtrArray *sources_dirs = NULL;
-  int i;
 
   GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
 
@@ -157,15 +155,12 @@ get_source_file (BuilderSourcePatch *self,
   patch = g_file_new_for_path (self->path);
   base_name = g_file_get_basename (patch);
 
-  sources_dirs = builder_context_get_sources_dirs (context);
-  for (i = 0; sources_dirs != NULL && i < sources_dirs->len; i++)
-    {
-      GFile* sources_root = g_ptr_array_index (sources_dirs, i);
-      g_autoptr(GFile) patches_dir = g_file_get_child (sources_root, "patches");
-      g_autoptr(GFile) file = g_file_get_child (patches_dir, base_name);
-      if (g_file_query_exists (file, NULL))
-        return g_steal_pointer (&file);
-    }
+  file = builder_context_find_in_sources_dirs (context,
+                                               "patches",
+                                               base_name,
+                                               NULL);
+  if (file)
+    return g_steal_pointer (&file);
 
   return g_file_resolve_relative_path (base_dir, self->path);
 }

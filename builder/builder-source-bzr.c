@@ -134,21 +134,18 @@ static GFile *
 get_mirror_dir (BuilderSourceBzr *self, BuilderContext *context)
 {
   g_autoptr(GFile) bzr_dir = NULL;
+  g_autoptr(GFile) dir = NULL;
   g_autofree char *filename = NULL;
   g_autofree char *bzr_dir_path = NULL;
-  GPtrArray *sources_dirs = NULL;
-  int i;
 
-  sources_dirs = builder_context_get_sources_dirs (context);
-  for (i = 0; sources_dirs != NULL && i < sources_dirs->len; i++)
-    {
-      GFile* sources_root = g_ptr_array_index (sources_dirs, i);
-      g_autoptr(GFile) local_bzr_dir = g_file_get_child (sources_root, "bzr");
-      g_autofree char *local_filename = builder_uri_to_filename (self->url);
-      g_autoptr(GFile) file = g_file_get_child (local_bzr_dir, local_filename);
-      if (g_file_query_exists (file, NULL))
-        return g_steal_pointer (&file);
-    }
+  filename = builder_uri_to_filename (self->url);
+
+  dir = builder_context_find_in_sources_dirs (context,
+                                              "bzr",
+                                              filename,
+                                              NULL);
+  if (dir)
+    return g_steal_pointer (&dir);
 
   bzr_dir = g_file_get_child (builder_context_get_state_dir (context),
                               "bzr");
@@ -156,7 +153,6 @@ get_mirror_dir (BuilderSourceBzr *self, BuilderContext *context)
   bzr_dir_path = g_file_get_path (bzr_dir);
   g_mkdir_with_parents (bzr_dir_path, 0755);
 
-  filename = builder_uri_to_filename (self->url);
   return g_file_get_child (bzr_dir, filename);
 }
 
