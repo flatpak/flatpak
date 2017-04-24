@@ -188,6 +188,8 @@ git_mirror_submodules (const char     *repo_location,
             return FALSE;
 
           relative_url = g_key_file_get_string (key_file, submodule, "url", error);
+          /* Remove any trailing whitespace */
+          g_strchomp (relative_url);
           absolute_url = make_absolute (repo_location, relative_url, error);
           if (absolute_url == NULL)
             return FALSE;
