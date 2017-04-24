@@ -260,20 +260,19 @@ builder_source_git_bundle (BuilderSource  *source,
 
   location = get_url_or_path (self, context, error);
 
+  g_print ("builder_source_git_bundle %s\n", location);
+
   if (location == NULL)
     return FALSE;
 
-  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
-  mirror_dir_path = g_build_filename (app_dir_path,
-                                      "sources",
-                                      "git",
-                                      NULL);
-  mirror_dir = g_file_new_for_path (mirror_dir_path);
+  mirror_dir = flatpak_build_file (builder_context_get_app_dir (context),
+                                   "sources/git",
+                                   NULL);
   if (!flatpak_mkdir_p (mirror_dir, NULL, error))
     return FALSE;
 
   if (!builder_git_mirror_repo (location,
-                                mirror_dir_path,
+                                flatpak_file_get_path_cached (mirror_dir),
                                 FALSE, TRUE, FALSE,
                                 get_branch (self),
                                 context,
