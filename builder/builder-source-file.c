@@ -453,6 +453,10 @@ builder_source_file_bundle (BuilderSource  *source,
   if (file == NULL)
     return FALSE;
 
+  /* Inline URIs (data://) need not be bundled */
+  if (is_inline)
+    return TRUE;
+
   app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
   download_dir_path = g_build_filename (app_dir_path,
                                         "sources",
