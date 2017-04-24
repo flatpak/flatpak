@@ -2063,7 +2063,7 @@ flatpak_build_file_va (GFile *base,
 
   while ((arg = va_arg (args, const gchar *)))
     {
-      GFile *child = g_file_get_child (res, arg);
+      GFile *child = g_file_resolve_relative_path (res, arg);
       g_set_object (&res, child);
     }
 
