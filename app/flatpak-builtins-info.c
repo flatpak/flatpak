@@ -204,7 +204,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
                g_autofree char *formatted = NULL;
 
                formatted = g_format_size (size);
-               g_print (" %s", formatted);
+               g_print (" %s%s", subpaths && subpaths[0] ? "<" : "", formatted);
              }
 
            if (subpaths)
