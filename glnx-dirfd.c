@@ -209,13 +209,12 @@ glnx_dirfd_iterator_next_dent_ensure_dtype (GLnxDirFdIterator  *dfd_iter,
                                             GCancellable       *cancellable,
                                             GError            **error)
 {
-  gboolean ret = FALSE;
   struct dirent *ret_dent;
 
   g_return_val_if_fail (out_dent, FALSE);
 
   if (!glnx_dirfd_iterator_next_dent (dfd_iter, out_dent, cancellable, error))
-    goto out;
+    return FALSE;
 
   ret_dent = *out_dent;
 
@@ -226,17 +225,12 @@ glnx_dirfd_iterator_next_dent_ensure_dtype (GLnxDirFdIterator  *dfd_iter,
         {
           struct stat stbuf;
           if (TEMP_FAILURE_RETRY (fstatat (dfd_iter->fd, ret_dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW)) != 0)
-            {
-              glnx_set_error_from_errno (error);
-              goto out;
-            }
+            return glnx_throw_errno (error);
           ret_dent->d_type = IFTODT (stbuf.st_mode);
         }
     }
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }
 
 /**

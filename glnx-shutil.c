@@ -31,14 +31,12 @@ glnx_shutil_rm_rf_children (GLnxDirFdIterator    *dfd_iter,
                             GCancellable       *cancellable,
                             GError            **error)
 {
-  gboolean ret = FALSE;
   struct dirent *dent;
 
   while (TRUE)
     {
       if (!glnx_dirfd_iterator_next_dent_ensure_dtype (dfd_iter, &dent, cancellable, error))
-        goto out;
-
+        return FALSE;
       if (dent == NULL)
         break;
 
@@ -48,33 +46,25 @@ glnx_shutil_rm_rf_children (GLnxDirFdIterator    *dfd_iter,
 
           if (!glnx_dirfd_iterator_init_at (dfd_iter->fd, dent->d_name, FALSE,
                                             &child_dfd_iter, error))
-            goto out;
+            return FALSE;
 
           if (!glnx_shutil_rm_rf_children (&child_dfd_iter, cancellable, error))
-            goto out;
+            return FALSE;
 
           if (unlinkat (dfd_iter->fd, dent->d_name, AT_REMOVEDIR) == -1)
-            {
-              glnx_set_error_from_errno (error);
-              goto out;
-            }
+            return glnx_throw_errno_prefix (error, "unlinkat");
         }
       else
         {
           if (unlinkat (dfd_iter->fd, dent->d_name, 0) == -1)
             {
               if (errno != ENOENT)
-                {
-                  glnx_set_error_from_errno (error);
-                  goto out;
-                }
+                return glnx_throw_errno_prefix (error, "unlinkat");
             }
         }
     }
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }
 
 /**
@@ -94,7 +84,6 @@ glnx_shutil_rm_rf_at (int                   dfd,
                       GCancellable         *cancellable,
                       GError              **error)
 {
-  gboolean ret = FALSE;
   glnx_fd_close int target_dfd = -1;
   g_auto(GLnxDirFdIterator) dfd_iter = { 0, };
 
@@ -114,40 +103,28 @@ glnx_shutil_rm_rf_at (int                   dfd,
       else if (errsv == ENOTDIR || errsv == ELOOP)
         {
           if (unlinkat (dfd, path, 0) != 0)
-            {
-              glnx_set_error_from_errno (error);
-              goto out;
-            }
+            return glnx_throw_errno_prefix (error, "unlinkat");
         }
       else
-        {
-          glnx_set_error_from_errno (error);
-          goto out;
-        }
+        return glnx_throw_errno_prefix (error, "open(%s)", path);
     }
   else
     {
       if (!glnx_dirfd_iterator_init_take_fd (target_dfd, &dfd_iter, error))
-        goto out;
+        return FALSE;
       target_dfd = -1;
 
       if (!glnx_shutil_rm_rf_children (&dfd_iter, cancellable, error))
-        goto out;
+        return FALSE;
 
       if (unlinkat (dfd, path, AT_REMOVEDIR) == -1)
         {
-          int errsv = errno;
-          if (errsv != ENOENT)
-            {
-              glnx_set_error_from_errno (error);
-              goto out;
-            }
+          if (errno != ENOENT)
+            return glnx_throw_errno_prefix (error, "unlinkat");
         }
     }
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }
 
 static gboolean
@@ -157,11 +134,10 @@ mkdir_p_at_internal (int              dfd,
                      GCancellable    *cancellable,
                      GError         **error)
 {
-  gboolean ret = FALSE;
   gboolean did_recurse = FALSE;
 
   if (g_cancellable_set_error_if_cancelled (cancellable, error))
-    goto out;
+    return FALSE;
 
  again:
   if (mkdirat (dfd, path, mode) == -1)
@@ -179,7 +155,7 @@ mkdir_p_at_internal (int              dfd,
 
           if (!glnx_shutil_mkdir_p_at (dfd, path, mode,
                                        cancellable, error))
-            goto out;
+            return FALSE;
 
           /* Now restore it for another mkdir attempt */
           *lastslash = '/';
@@ -194,15 +170,10 @@ mkdir_p_at_internal (int              dfd,
            */
         }
       else
-        {
-          glnx_set_error_from_errno (error);
-          goto out;
-        }
+        return glnx_throw_errno_prefix (error, "mkdir(%s)", path);
     }
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }
 
 /**
@@ -223,28 +194,23 @@ glnx_shutil_mkdir_p_at (int                   dfd,
                         GCancellable         *cancellable,
                         GError              **error)
 {
-  gboolean ret = FALSE;
   struct stat stbuf;
   char *buf;
 
   /* Fast path stat to see whether it already exists */
   if (fstatat (dfd, path, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
     {
+      /* Note early return */
       if (S_ISDIR (stbuf.st_mode))
-        {
-          ret = TRUE;
-          goto out;
-        }
+        return TRUE;
     }
 
   buf = strdupa (path);
 
   if (!mkdir_p_at_internal (dfd, buf, mode, cancellable, error))
-    goto out;
+    return FALSE;
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }
 
 /**

@@ -61,7 +61,6 @@
  */
 gboolean
 glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile *out_lock, GError **error) {
-        gboolean ret = FALSE;
         glnx_fd_close int fd = -1;
         g_autofree char *t = NULL;
         int r;
@@ -89,10 +88,8 @@ glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile *out_loc
                 struct stat st;
 
                 fd = openat(dfd, p, O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC|O_NOCTTY, 0600);
-                if (fd < 0) {
-                        glnx_set_error_from_errno(error);
-                        goto out;
-                }
+                if (fd < 0)
+                        return glnx_throw_errno(error);
 
                 /* Unfortunately, new locks are not in RHEL 7.1 glibc */
 #ifdef F_OFD_SETLK
@@ -107,10 +104,8 @@ glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile *out_loc
                         if (errno == EINVAL)
                                 r = flock(fd, operation);
 
-                        if (r < 0) {
-                                glnx_set_error_from_errno(error);
-                                goto out;
-                        }
+                        if (r < 0)
+                                return glnx_throw_errno(error);
                 }
 
                 /* If we acquired the lock, let's check if the file
@@ -120,10 +115,8 @@ glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile *out_loc
                  * hence try again. */
 
                 r = fstat(fd, &st);
-                if (r < 0) {
-                        glnx_set_error_from_errno(error);
-                        goto out;
-                }
+                if (r < 0)
+                        return glnx_throw_errno(error);
                 if (st.st_nlink > 0)
                         break;
 
@@ -142,9 +135,7 @@ glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile *out_loc
         fd = -1;
         t = NULL;
 
-        ret = TRUE;
- out:
-        return ret;
+        return TRUE;
 }
 
 void glnx_release_lock_file(GLnxLockFile *f) {
