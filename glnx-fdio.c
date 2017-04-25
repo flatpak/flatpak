@@ -102,10 +102,7 @@ rename_file_noreplace_at (int olddirfd, const char *oldpath,
           return TRUE;
         }
       else
-        {
-          glnx_set_error_from_errno (error);
-          return FALSE;
-        }
+        return glnx_throw_errno (error);
     }
   return TRUE;
 }
@@ -172,10 +169,7 @@ glnx_open_tmpfile_linkable_at (int dfd,
 #if defined(O_TMPFILE) && !defined(DISABLE_OTMPFILE) && !defined(ENABLE_WRPSEUDO_COMPAT)
   fd = openat (dfd, subpath, O_TMPFILE|flags, 0600);
   if (fd == -1 && !(errno == ENOSYS || errno == EISDIR || errno == EOPNOTSUPP))
-    {
-      glnx_set_prefix_error_from_errno (error, "%s", "open(O_TMPFILE)");
-      return FALSE;
-    }
+    return glnx_throw_errno_prefix (error, "open(O_TMPFILE)");
   if (fd != -1)
     {
       *out_fd = fd;
@@ -199,10 +193,7 @@ glnx_open_tmpfile_linkable_at (int dfd,
             if (errno == EEXIST)
               continue;
             else
-              {
-                glnx_set_prefix_error_from_errno (error, "%s", "Creating temp file");
-                return FALSE;
-              }
+              return glnx_throw_errno_prefix (error, "Creating temp file");
           }
         else
           {
@@ -246,9 +237,10 @@ glnx_link_tmpfile_at (int dfd,
            */
           if (renameat (dfd, tmpfile_path, target_dfd, target) < 0)
             {
+              int errsv = errno;
               (void) unlinkat (dfd, tmpfile_path, 0);
-              glnx_set_error_from_errno (error);
-              return FALSE;
+              errno = errsv;
+              return glnx_throw_errno_prefix (error, "renameat");
             }
         }
       else
@@ -293,10 +285,7 @@ glnx_link_tmpfile_at (int dfd,
                   if (errno == EEXIST)
                     continue;
                   else
-                    {
-                      glnx_set_error_from_errno (error);
-                      return FALSE;
-                    }
+                    return glnx_throw_errno_prefix (error, "linkat");
                 }
               else
                 break;
@@ -311,9 +300,10 @@ glnx_link_tmpfile_at (int dfd,
               /* This is currently the only case where we need to have
                * a cleanup unlinkat() still with O_TMPFILE.
                */
+              int errsv = errno;
               (void) unlinkat (target_dfd, tmpname_buf, 0);
-              glnx_set_error_from_errno (error);
-              return FALSE;
+              errno = errsv;
+              return glnx_throw_errno_prefix (error, "renameat");
             }
         }
       else
@@ -323,10 +313,7 @@ glnx_link_tmpfile_at (int dfd,
               if (errno == EEXIST && mode == GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST)
                 ;
               else
-                {
-                  glnx_set_error_from_errno (error);
-                  return FALSE;
-                }
+                return glnx_throw_errno_prefix (error, "linkat");
             }
         }
 
@@ -341,49 +328,37 @@ glnx_fd_readall_malloc (int               fd,
                         GCancellable     *cancellable,
                         GError          **error)
 {
-  gboolean success = FALSE;
   const guint maxreadlen = 4096;
-  int res;
+
   struct stat stbuf;
-  guint8* buf = NULL;
+  if (TEMP_FAILURE_RETRY (fstat (fd, &stbuf)) < 0)
+    return glnx_null_throw_errno (error);
+
   gsize buf_allocated;
-  gsize buf_size = 0;
-  gssize bytes_read;
-
-  do
-    res = fstat (fd, &stbuf);
-  while (G_UNLIKELY (res == -1 && errno == EINTR));
-  if (res == -1)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-
   if (S_ISREG (stbuf.st_mode) && stbuf.st_size > 0)
     buf_allocated = stbuf.st_size;
   else
     buf_allocated = 16;
-        
-  buf = g_malloc (buf_allocated);
 
+  g_autofree guint8* buf = g_malloc (buf_allocated);
+
+  gsize buf_size = 0;
   while (TRUE)
     {
       gsize readlen = MIN (buf_allocated - buf_size, maxreadlen);
-      
-      if (g_cancellable_set_error_if_cancelled (cancellable, error))
-        goto out;
 
+      if (g_cancellable_set_error_if_cancelled (cancellable, error))
+        return FALSE;
+
+      gssize bytes_read;
       do
         bytes_read = read (fd, buf + buf_size, readlen);
       while (G_UNLIKELY (bytes_read == -1 && errno == EINTR));
       if (G_UNLIKELY (bytes_read == -1))
-        {
-          glnx_set_error_from_errno (error);
-          goto out;
-        }
+        return glnx_null_throw_errno (error);
       if (bytes_read == 0)
         break;
-      
+
       buf_size += bytes_read;
       if (buf_allocated - buf_size < maxreadlen)
         buf = g_realloc (buf, buf_allocated *= 2);
@@ -396,15 +371,8 @@ glnx_fd_readall_malloc (int               fd,
       buf[buf_size] = '\0';
     }
 
-  success = TRUE;
- out:
-  if (success)
-    {
-      *out_len = buf_size;
-      return buf;
-    }
-  g_free (buf);
-  return NULL;
+  *out_len = buf_size;
+  return g_steal_pointer (&buf);
 }
 
 /**
@@ -423,13 +391,10 @@ glnx_fd_readall_bytes (int               fd,
                        GCancellable     *cancellable,
                        GError          **error)
 {
-  guint8 *buf;
   gsize len;
-  
-  buf = glnx_fd_readall_malloc (fd, &len, FALSE, cancellable, error);
+  guint8 *buf = glnx_fd_readall_malloc (fd, &len, FALSE, cancellable, error);
   if (!buf)
     return NULL;
-  
   return g_bytes_new_take (buf, len);
 }
 
@@ -451,13 +416,10 @@ glnx_fd_readall_utf8 (int               fd,
                       GCancellable     *cancellable,
                       GError          **error)
 {
-  gboolean success = FALSE;
-  guint8 *buf;
   gsize len;
-  
-  buf = glnx_fd_readall_malloc (fd, &len, TRUE, cancellable, error);
+  g_autofree guint8 *buf = glnx_fd_readall_malloc (fd, &len, TRUE, cancellable, error);
   if (!buf)
-    goto out;
+    return FALSE;
 
   if (!g_utf8_validate ((char*)buf, len, NULL))
     {
@@ -465,19 +427,12 @@ glnx_fd_readall_utf8 (int               fd,
                    G_IO_ERROR,
                    G_IO_ERROR_INVALID_DATA,
                    "Invalid UTF-8");
-      goto out;
+      return FALSE;
     }
 
-  success = TRUE;
- out:
-  if (success)
-    {
-      if (out_len)
-        *out_len = len;
-      return (char*)buf;
-    }
-  g_free (buf);
-  return NULL;
+  if (out_len)
+    *out_len = len;
+  return (char*)g_steal_pointer (&buf);
 }
 
 /**
@@ -501,36 +456,20 @@ glnx_file_get_contents_utf8_at (int                   dfd,
                                 GCancellable         *cancellable,
                                 GError              **error)
 {
-  gboolean success = FALSE;
-  glnx_fd_close int fd = -1;
-  char *buf = NULL;
-  gsize len;
-
   dfd = glnx_dirfd_canonicalize (dfd);
 
-  do
-    fd = openat (dfd, subpath, O_RDONLY | O_NOCTTY | O_CLOEXEC);
-  while (G_UNLIKELY (fd == -1 && errno == EINTR));
+  glnx_fd_close int fd = TEMP_FAILURE_RETRY (openat (dfd, subpath, O_RDONLY | O_NOCTTY | O_CLOEXEC));
   if (G_UNLIKELY (fd == -1))
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+    return glnx_null_throw_errno_prefix (error, "open(%s)", subpath);
 
-  buf = glnx_fd_readall_utf8 (fd, &len, cancellable, error);
+  gsize len;
+  g_autofree char *buf = glnx_fd_readall_utf8 (fd, &len, cancellable, error);
   if (G_UNLIKELY(!buf))
-    goto out;
-  
-  success = TRUE;
- out:
-  if (success)
-    {
-      if (out_len)
-        *out_len = len;
-      return buf;
-    }
-  g_free (buf);
-  return NULL;
+    return FALSE;
+
+  if (out_len)
+    *out_len = len;
+  return g_steal_pointer (&buf);
 }
 
 /**
@@ -585,43 +524,32 @@ copy_symlink_at (int                   src_dfd,
                  GCancellable         *cancellable,
                  GError              **error)
 {
-  gboolean ret = FALSE;
-  g_autofree char *buf = NULL;
-
-  buf = glnx_readlinkat_malloc (src_dfd, src_subpath, cancellable, error);
+  g_autofree char *buf = glnx_readlinkat_malloc (src_dfd, src_subpath, cancellable, error);
   if (!buf)
-    goto out;
+    return FALSE;
 
   if (TEMP_FAILURE_RETRY (symlinkat (buf, dest_dfd, dest_subpath)) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-  
+    return glnx_throw_errno_prefix (error, "symlinkat");
+
   if (!(copyflags & GLNX_FILE_COPY_NOXATTRS))
     {
       g_autoptr(GVariant) xattrs = NULL;
 
       if (!glnx_dfd_name_get_all_xattrs (src_dfd, src_subpath, &xattrs,
                                          cancellable, error))
-        goto out;
+        return FALSE;
 
       if (!glnx_dfd_name_set_all_xattrs (dest_dfd, dest_subpath, xattrs,
                                          cancellable, error))
-        goto out;
+        return FALSE;
     }
-  
+
   if (TEMP_FAILURE_RETRY (fchownat (dest_dfd, dest_subpath,
                                     src_stbuf->st_uid, src_stbuf->st_gid,
                                     AT_SYMLINK_NOFOLLOW)) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+    return glnx_throw_errno (error);
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }
 
 #define COPY_BUFFER_SIZE (16*1024)
@@ -916,7 +844,6 @@ glnx_file_replace_contents_at (int                   dfd,
   return glnx_file_replace_contents_with_perms_at (dfd, subpath, buf, len,
                                                    (mode_t) -1, (uid_t) -1, (gid_t) -1,
                                                    flags, cancellable, error);
-                                                   
 }
 
 /**
@@ -948,8 +875,6 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   int r;
   char *dnbuf = strdupa (subpath);
   const char *dn = dirname (dnbuf);
-  g_autofree char *tmpfile_path = NULL;
-  glnx_fd_close int fd = -1;
 
   dfd = glnx_dirfd_canonicalize (dfd);
 
@@ -959,6 +884,8 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   if (mode == (mode_t) -1)
     mode = 0644;
 
+  glnx_fd_close int fd = -1;
+  g_autofree char *tmpfile_path = NULL;
   if (!glnx_open_tmpfile_linkable_at (dfd, dn, O_WRONLY | O_CLOEXEC,
                                       &fd, &tmpfile_path,
                                       error))
@@ -974,16 +901,14 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
       if (r != 0)
         {
           errno = r;
-          glnx_set_error_from_errno (error);
-          return FALSE;
+          return glnx_throw_errno_prefix (error, "fallocate");
         }
     }
 
   if ((r = glnx_loop_write (fd, buf, len)) != 0)
     {
       errno = -r;
-      glnx_set_error_from_errno (error);
-      return FALSE;
+      return glnx_throw_errno (error);
     }
     
   if (!(flags & GLNX_FILE_REPLACE_NODATASYNC))
@@ -994,10 +919,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
       if (fstatat (dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
         {
           if (errno != ENOENT)
-            {
-              glnx_set_error_from_errno (error);
-              return FALSE;
-            }
+            return glnx_throw_errno (error);
           do_sync = (flags & GLNX_FILE_REPLACE_DATASYNC_NEW) > 0;
         }
       else
@@ -1006,27 +928,18 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
       if (do_sync)
         {
           if (fdatasync (fd) != 0)
-            {
-              glnx_set_error_from_errno (error);
-              return FALSE;
-            }
+            return glnx_throw_errno_prefix (error, "fdatasync");
         }
     }
 
   if (uid != (uid_t) -1)
     {
       if (fchown (fd, uid, gid) != 0)
-        {
-          glnx_set_error_from_errno (error);
-          return FALSE;
-        }
+        return glnx_throw_errno (error);
     }
 
   if (fchmod (fd, mode) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      return FALSE;
-    }
+    return glnx_throw_errno (error);
 
   if (!glnx_link_tmpfile_at (dfd, GLNX_LINK_TMPFILE_REPLACE,
                              fd, tmpfile_path, dfd, subpath, error))
@@ -1055,10 +968,7 @@ glnx_stream_fstat (GFileDescriptorBased *stream,
   int fd = g_file_descriptor_based_get_fd (stream);
 
   if (fstat (fd, stbuf) == -1)
-    {
-      glnx_set_prefix_error_from_errno (error, "%s", "fstat");
-      return FALSE;
-    }
+    return glnx_throw_errno_prefix (error, "fstat");
 
   return TRUE;
 }
