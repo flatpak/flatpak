@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-04-24 22:14+0200\n"
-"PO-Revision-Date: 2017-04-20 21:12+0200\n"
+"PO-Revision-Date: 2017-04-26 23:50+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -907,19 +907,16 @@ msgid "Show origin"
 msgstr "Zobrazit původ"
 
 #: app/flatpak-builtins-info.c:55
-#, fuzzy
 msgid "Show size"
-msgstr "Zobrazit referenci"
+msgstr "Zobrazit velikost"
 
 #: app/flatpak-builtins-info.c:56
-#, fuzzy
 msgid "Show metadata"
-msgstr "Zobrazit detaily prostředí"
+msgstr "Zobrazit metadata"
 
 #: app/flatpak-builtins-info.c:57
-#, fuzzy
 msgid "Show extensions"
-msgstr "Zobrazit volby nápovědy"
+msgstr "Zobrazit rozšíření"
 
 #: app/flatpak-builtins-info.c:87
 msgid "NAME [BRANCH] - Get info about installed app and/or runtime"
@@ -1100,18 +1097,16 @@ msgid "APP - Override settings for application"
 msgstr "APLIKACE - Přepsat nastavení pro aplikaci"
 
 #: app/flatpak-builtins-repo.c:107 app/flatpak-main.c:100
-#, fuzzy
 msgid "Print information about a repo"
-msgstr "SOUBOR - Získat informace o exportovaném souboru"
+msgstr "Vypsat informace o repozitáři"
 
 #: app/flatpak-builtins-repo.c:108
 msgid "Print metadata for a branch"
 msgstr ""
 
 #: app/flatpak-builtins-repo.c:122
-#, fuzzy
 msgid "LOCATION - Repository maintenance"
-msgstr "UMÍSTĚNÍ - Aktualizovat metadata repozitáře"
+msgstr "UMÍSTĚNÍ - Údržba repozitáře"
 
 #: app/flatpak-builtins-repo-update.c:47
 msgid "A nice name to use for this repository"
@@ -1152,14 +1147,14 @@ msgid "Generating delta: %s (%.10s-%.10s)\n"
 msgstr "Generování delta souboru: %s (%.10s-%.10s)\n"
 
 #: app/flatpak-builtins-repo-update.c:192
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to generate delta %s (%.10s): "
-msgstr "Selhalo generování delta souboru %s (%.10s): %s\n"
+msgstr "Selhalo generování delta souboru %s (%.10s): "
 
 #: app/flatpak-builtins-repo-update.c:195
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to generate delta %s (%.10s-%.10s): "
-msgstr "Selhalo generování delta souboru %s (%.10s-%.10s): %s\n"
+msgstr "Selhalo generování delta souboru %s (%.10s-%.10s): "
 
 #: app/flatpak-builtins-repo-update.c:397
 msgid "LOCATION - Update repository metadata"
@@ -1479,9 +1474,8 @@ msgid "Work on a specific system-wide installation"
 msgstr "Pracovat na specifických systémových instalacích"
 
 #: app/flatpak-main.c:123
-#, fuzzy
 msgid "NAME"
-msgstr "NÁZEV_SOUBORU"
+msgstr "NÁZEV"
 
 #: app/flatpak-main.c:149
 msgid "Builtin Commands:"
