@@ -1145,6 +1145,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   guint64 current_time;
   guint new_progress = 0;
   gboolean estimating = FALSE;
+  gboolean downloading_extra_data;
 
   /* The heuristic here goes as follows:
    *  - If we have delta files, grow up to 45%
@@ -1171,19 +1172,20 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   outstanding_extra_data = ostree_async_progress_get_uint (progress, "outstanding-extra-data");
   total_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "total-extra-data-bytes");
   transferred_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "transferred-extra-data-bytes");
+  downloading_extra_data = ostree_async_progress_get_uint (progress, "downloading-extra-data");
   fetched = ostree_async_progress_get_uint (progress, "fetched");
   metadata_fetched = ostree_async_progress_get_uint (progress, "metadata-fetched");
   requested = ostree_async_progress_get_uint (progress, "requested");
   current_time = g_get_monotonic_time ();
 
-  if (status)
+  if (status && !downloading_extra_data)
     {
       g_string_append (buf, status);
 
       /* The status is sent on error or when the pull is finished */
       new_progress = outstanding_extra_data ? 55 : 100;
     }
-  else if (outstanding_fetches)
+  else if (outstanding_fetches && !downloading_extra_data)
     {
       guint64 elapsed_time =
         (current_time - ostree_async_progress_get_uint64 (progress, "start-time")) / G_USEC_PER_SEC;
@@ -1240,7 +1242,7 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
             new_progress = 10 + (87 * (double) fetched) / requested;
         }
     }
-  else if (outstanding_extra_data)
+  else if (outstanding_extra_data && downloading_extra_data)
     {
       guint64 elapsed_time =
         (current_time - ostree_async_progress_get_uint64 (progress, "start-time-extra-data")) / G_USEC_PER_SEC;
