@@ -554,117 +554,141 @@ copy_symlink_at (int                   src_dfd,
 
 #define COPY_BUFFER_SIZE (16*1024)
 
-/* From systemd */
+/* Most of the code below is from systemd, but has been reindented to GNU style,
+ * and changed to use POSIX error conventions (return -1, set errno) to more
+ * conveniently fit in with the rest of libglnx.
+ */
 
 static int btrfs_reflink(int infd, int outfd) {
-        int r;
-
         g_return_val_if_fail(infd >= 0, -1);
         g_return_val_if_fail(outfd >= 0, -1);
 
-        r = ioctl(outfd, BTRFS_IOC_CLONE, infd);
-        if (r < 0)
-                return -errno;
-
-        return 0;
+        return ioctl (outfd, BTRFS_IOC_CLONE, infd);
 }
 
-int glnx_loop_write(int fd, const void *buf, size_t nbytes) {
-        const uint8_t *p = buf;
+/* Like write(), but loop until @nbytes are written, or an error
+ * occurs.
+ *
+ * On error, -1 is returned an @errno is set.  NOTE: This is an
+ * API change from previous versions of this function.
+ */
+int
+glnx_loop_write(int fd, const void *buf, size_t nbytes)
+{
+  const uint8_t *p = buf;
 
-        g_return_val_if_fail(fd >= 0, -1);
-        g_return_val_if_fail(buf, -1);
+  g_return_val_if_fail(fd >= 0, -1);
+  g_return_val_if_fail(buf, -1);
 
-        errno = 0;
+  errno = 0;
 
-        while (nbytes > 0) {
-                ssize_t k;
+  while (nbytes > 0)
+    {
+      ssize_t k;
 
-                k = write(fd, p, nbytes);
-                if (k < 0) {
-                        if (errno == EINTR)
-                                continue;
+      k = write(fd, p, nbytes);
+      if (k < 0)
+        {
+          if (errno == EINTR)
+            continue;
 
-                        return -errno;
-                }
-
-                if (k == 0) /* Can't really happen */
-                        return -EIO;
-
-                p += k;
-                nbytes -= k;
+          return -1;
         }
 
-        return 0;
+      if (k == 0) /* Can't really happen */
+        {
+          errno = EIO;
+          return -1;
+        }
+
+      p += k;
+      nbytes -= k;
+    }
+
+  return 0;
 }
 
-static int copy_bytes(int fdf, int fdt, off_t max_bytes, bool try_reflink) {
-        bool try_sendfile = true;
-        int r;
+/* Read from @fdf until EOF, writing to @fdt.  If @try_reflink is %TRUE,
+ * attempt to use any "reflink" functionality; see e.g. https://lwn.net/Articles/331808/
+ *
+ * The file descriptor @fdf must refer to a regular file.
+ *
+ * If provided, @max_bytes specifies the maximum number of bytes to read from @fdf.
+ * On error, this function returns `-1` and @errno will be set.
+ */
+int
+glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes, gboolean try_reflink)
+{
+  bool try_sendfile = true;
+  int r;
 
-        g_return_val_if_fail (fdf >= 0, -1);
-        g_return_val_if_fail (fdt >= 0, -1);
+  g_return_val_if_fail (fdf >= 0, -1);
+  g_return_val_if_fail (fdt >= 0, -1);
+  g_return_val_if_fail (max_bytes >= -1, -1);
 
-        /* Try btrfs reflinks first. */
-        if (try_reflink && max_bytes == (off_t) -1) {
-                r = btrfs_reflink(fdf, fdt);
-                if (r >= 0)
-                        return r;
-        }
-
-        for (;;) {
-                size_t m = COPY_BUFFER_SIZE;
-                ssize_t n;
-
-                if (max_bytes != (off_t) -1) {
-
-                        if (max_bytes <= 0)
-                                return -EFBIG;
-
-                        if ((off_t) m > max_bytes)
-                                m = (size_t) max_bytes;
-                }
-
-                /* First try sendfile(), unless we already tried */
-                if (try_sendfile) {
-
-                        n = sendfile(fdt, fdf, NULL, m);
-                        if (n < 0) {
-                                if (errno != EINVAL && errno != ENOSYS)
-                                        return -errno;
-
-                                try_sendfile = false;
-                                /* use fallback below */
-                        } else if (n == 0) /* EOF */
-                                break;
-                        else if (n > 0)
-                                /* Succcess! */
-                                goto next;
-                }
-
-                /* As a fallback just copy bits by hand */
-                {
-                        char buf[m];
-
-                        n = read(fdf, buf, m);
-                        if (n < 0)
-                                return -errno;
-                        if (n == 0) /* EOF */
-                                break;
-
-                        r = glnx_loop_write(fdt, buf, (size_t) n);
-                        if (r < 0)
-                                return r;
-                }
-
-        next:
-                if (max_bytes != (off_t) -1) {
-                        g_assert(max_bytes >= n);
-                        max_bytes -= n;
-                }
-        }
-
+  /* Try btrfs reflinks first. */
+  if (try_reflink && max_bytes == (off_t) -1)
+    {
+      r = btrfs_reflink(fdf, fdt);
+      if (r >= 0)
         return 0;
+      /* Fall through */
+    }
+
+  while (TRUE)
+    {
+      size_t m = COPY_BUFFER_SIZE;
+      ssize_t n;
+
+      if (max_bytes != (off_t) -1)
+        {
+          if ((off_t) m > max_bytes)
+            m = (size_t) max_bytes;
+        }
+
+      /* First try sendfile(), unless we already tried */
+      if (try_sendfile)
+        {
+          n = sendfile (fdt, fdf, NULL, m);
+          if (n < 0)
+            {
+              if (errno != EINVAL && errno != ENOSYS)
+                return -1;
+
+              try_sendfile = false;
+              /* use fallback below */
+            }
+          else if (n == 0) /* EOF */
+            break;
+          else if (n > 0)
+            /* Succcess! */
+            goto next;
+        }
+
+      /* As a fallback just copy bits by hand */
+      { char buf[m];
+
+        n = read (fdf, buf, m);
+        if (n < 0)
+          return -1;
+        if (n == 0) /* EOF */
+          break;
+
+        if (glnx_loop_write (fdt, buf, (size_t) n) < 0)
+          return -1;
+      }
+
+    next:
+      if (max_bytes != (off_t) -1)
+        {
+          g_assert(max_bytes >= n);
+          max_bytes -= n;
+          if (max_bytes == 0)
+            break;
+        }
+    }
+
+  return 0;
 }
 
 /**
@@ -752,10 +776,9 @@ glnx_file_copy_at (int                   src_dfd,
       goto out;
     }
 
-  r = copy_bytes (src_fd, dest_fd, (off_t) -1, TRUE);
+  r = glnx_regfile_copy_bytes (src_fd, dest_fd, (off_t) -1, TRUE);
   if (r < 0)
     {
-      errno = -r;
       glnx_set_error_from_errno (error);
       goto out;
     }
@@ -905,17 +928,14 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
         }
     }
 
-  if ((r = glnx_loop_write (fd, buf, len)) != 0)
-    {
-      errno = -r;
-      return glnx_throw_errno (error);
-    }
-    
+  if (glnx_loop_write (fd, buf, len) < 0)
+    return glnx_throw_errno (error);
+
   if (!(flags & GLNX_FILE_REPLACE_NODATASYNC))
     {
       struct stat stbuf;
       gboolean do_sync;
-      
+
       if (fstatat (dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
         {
           if (errno != ENOENT)

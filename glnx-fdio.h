@@ -131,6 +131,9 @@ glnx_readlinkat_malloc (int            dfd,
 int
 glnx_loop_write (int fd, const void *buf, size_t nbytes);
 
+int
+glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes, gboolean try_reflink);
+
 typedef enum {
   GLNX_FILE_COPY_OVERWRITE = (1 << 0),
   GLNX_FILE_COPY_NOXATTRS = (1 << 1),
