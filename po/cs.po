@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-04-24 22:14+0200\n"
-"PO-Revision-Date: 2017-04-26 23:50+0200\n"
+"PO-Revision-Date: 2017-04-27 19:36+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -70,8 +70,7 @@ msgstr "Označit vzdálený repozitář jako nepoužit pro závislosti"
 #: app/flatpak-builtins-add-remote.c:78
 msgid "Set priority (default 1, higher is more prioritized)"
 msgstr ""
-"Nastavit prioritu (výchozí hodnota je 1, vyšší hodnota znamená větší "
-"prioritu)"
+"Nastavit prioritu (výchozí hodnota je 1, vyšší hodnota znamená větší prioritu)"
 
 #: app/flatpak-builtins-add-remote.c:78
 msgid "PRIORITY"
@@ -116,8 +115,8 @@ msgstr "Přidat OCI registr"
 msgid "NAME LOCATION - Add a remote repository"
 msgstr "NÁZEV UMÍSTĚNÍ - Přidat vzdálený repozitář"
 
-#: app/flatpak-builtins-add-remote.c:382
-#: app/flatpak-builtins-delete-remote.c:58 app/flatpak-builtins-info.c:94
+#: app/flatpak-builtins-add-remote.c:382 app/flatpak-builtins-delete-remote.c:58
+#: app/flatpak-builtins-info.c:94
 msgid "NAME must be specified"
 msgstr "NÁZEV musí být určen"
 
@@ -126,15 +125,13 @@ msgstr "NÁZEV musí být určen"
 msgid "LOCATION must be specified"
 msgstr "UMÍSTĚNÍ musí být určeno"
 
-#: app/flatpak-builtins-add-remote.c:388
-#: app/flatpak-builtins-build-bundle.c:464
+#: app/flatpak-builtins-add-remote.c:388 app/flatpak-builtins-build-bundle.c:464
 #: app/flatpak-builtins-build-export.c:658
 #: app/flatpak-builtins-build-import-bundle.c:180
 #: app/flatpak-builtins-build-init.c:181 app/flatpak-builtins-build-sign.c:74
 #: app/flatpak-builtins-delete-remote.c:63
 #: app/flatpak-builtins-document-export.c:102
-#: app/flatpak-builtins-document-info.c:75
-#: app/flatpak-builtins-document-list.c:70
+#: app/flatpak-builtins-document-info.c:75 app/flatpak-builtins-document-list.c:70
 #: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:101
 #: app/flatpak-builtins-install.c:249 app/flatpak-builtins-install.c:327
 #: app/flatpak-builtins-list.c:350 app/flatpak-builtins-list-remotes.c:65
@@ -191,13 +188,12 @@ msgstr "Exportovat prostředí namísto aplikace"
 msgid "Arch to bundle for"
 msgstr "Architektura, pro kterou se má vytvořit balík"
 
-#: app/flatpak-builtins-build-bundle.c:56
-#: app/flatpak-builtins-build-export.c:52 app/flatpak-builtins-build-init.c:49
-#: app/flatpak-builtins-build-sign.c:41 app/flatpak-builtins-info.c:48
-#: app/flatpak-builtins-install.c:55 app/flatpak-builtins-list.c:50
-#: app/flatpak-builtins-ls-remote.c:46 app/flatpak-builtins-make-current.c:38
-#: app/flatpak-builtins-run.c:50 app/flatpak-builtins-uninstall.c:44
-#: app/flatpak-builtins-update.c:52
+#: app/flatpak-builtins-build-bundle.c:56 app/flatpak-builtins-build-export.c:52
+#: app/flatpak-builtins-build-init.c:49 app/flatpak-builtins-build-sign.c:41
+#: app/flatpak-builtins-info.c:48 app/flatpak-builtins-install.c:55
+#: app/flatpak-builtins-list.c:50 app/flatpak-builtins-ls-remote.c:46
+#: app/flatpak-builtins-make-current.c:38 app/flatpak-builtins-run.c:50
+#: app/flatpak-builtins-uninstall.c:44 app/flatpak-builtins-update.c:52
 msgid "ARCH"
 msgstr "ARCHITEKTURA"
 
@@ -250,8 +246,8 @@ msgid ""
 "LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local "
 "repository"
 msgstr ""
-"UMÍSTĚNÍ NÁZEV_SOUBORU NÁZEV [VĚTEV] - Vytvořit jeden soubor balíku z "
-"místního repozitáře"
+"UMÍSTĚNÍ NÁZEV_SOUBORU NÁZEV [VĚTEV] - Vytvořit jeden soubor balíku z místního "
+"repozitáře"
 
 #: app/flatpak-builtins-build-bundle.c:461
 msgid "LOCATION, FILENAME and NAME must be specified"
@@ -270,8 +266,8 @@ msgstr "„%s“ není platným repozitářem"
 msgid "'%s' is not a valid name: %s"
 msgstr "„%s“ není platným názvem: %s"
 
-#: app/flatpak-builtins-build-bundle.c:494
-#: app/flatpak-builtins-build-export.c:672 app/flatpak-builtins-build-sign.c:89
+#: app/flatpak-builtins-build-bundle.c:494 app/flatpak-builtins-build-export.c:672
+#: app/flatpak-builtins-build-sign.c:89
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "„%s“ není platným názvem větve: %s"
@@ -407,8 +403,7 @@ msgid ""
 msgstr ""
 
 #: app/flatpak-builtins-build-commit-from.c:96
-msgid ""
-"If --src-ref is specified, exactly one destination ref must be specified"
+msgid "If --src-ref is specified, exactly one destination ref must be specified"
 msgstr ""
 
 #: app/flatpak-builtins-build-commit-from.c:99
@@ -439,8 +434,7 @@ msgstr "PODADRESÁŘ"
 msgid "Files to exclude"
 msgstr "Soubory k vyloučení"
 
-#: app/flatpak-builtins-build-export.c:59
-#: app/flatpak-builtins-build-export.c:60
+#: app/flatpak-builtins-build-export.c:59 app/flatpak-builtins-build-export.c:60
 msgid "PATTERN"
 msgstr "VZOR"
 
@@ -472,16 +466,14 @@ msgid "Extra data sizes of zero not supported"
 msgstr "Dodatečná data s nulovou velikostí nejsou podporována"
 
 #: app/flatpak-builtins-build-export.c:644
-msgid ""
-"LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"
+msgid "LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"
 msgstr "UMÍSTĚNÍ ADRESÁŘ [VĚTEV] - Vytvořit repozitář z adresáře sestavení"
 
 #: app/flatpak-builtins-build-export.c:652
 msgid "LOCATION and DIRECTORY must be specified"
 msgstr "UMÍSTĚNÍ a ADRESÁŘ musí být určeny"
 
-#: app/flatpak-builtins-build-export.c:711
-#: app/flatpak-builtins-build-finish.c:539
+#: app/flatpak-builtins-build-export.c:711 app/flatpak-builtins-build-finish.c:539
 msgid "No name specified in the metadata"
 msgstr "Není určen žádný název v metadatech"
 
@@ -551,15 +543,13 @@ msgstr ""
 #: app/flatpak-builtins-build-finish.c:451
 #, c-format
 msgid ""
-"Too few elements in --metadata argument %s, format should be "
-"GROUP=KEY[=VALUE]]"
+"Too few elements in --metadata argument %s, format should be GROUP=KEY[=VALUE]]"
 msgstr ""
 
 #: app/flatpak-builtins-build-finish.c:466
 #, c-format
 msgid ""
-"Too few elements in --extension argument %s, format should be "
-"NAME=VAR[=VALUE]"
+"Too few elements in --extension argument %s, format should be NAME=VAR[=VALUE]"
 msgstr ""
 
 #: app/flatpak-builtins-build-finish.c:503
@@ -603,8 +593,7 @@ msgstr ""
 
 #: app/flatpak-builtins-build-import-bundle.c:170
 msgid "LOCATION FILENAME - Import a file bundle into a local repository"
-msgstr ""
-"UMÍSTĚNÍ NÁZEV_SOUBORU - Importovat soubor balíku do místního repozitáře"
+msgstr "UMÍSTĚNÍ NÁZEV_SOUBORU - Importovat soubor balíku do místního repozitáře"
 
 #: app/flatpak-builtins-build-import-bundle.c:177
 msgid "LOCATION and FILENAME must be specified"
@@ -816,10 +805,8 @@ msgid "FILE - Unexport a file to apps"
 msgstr "SOUBOR - Zrušit export souboru pro aplikace"
 
 #: app/flatpak-builtins-enter.c:82
-msgid ""
-"SANDBOXEDPID [COMMAND [args...]] - Run a command inside a running sandbox"
-msgstr ""
-"SANDBOXEDPID [PŘÍKAZ [argumenty...]] - Spustit příkaz v běžícím sandboxu"
+msgid "SANDBOXEDPID [COMMAND [args...]] - Run a command inside a running sandbox"
+msgstr "SANDBOXEDPID [PŘÍKAZ [argumenty...]] - Spustit příkaz v běžícím sandboxu"
 
 #: app/flatpak-builtins-enter.c:103
 msgid "SANDBOXEDPID and COMMAND must be specified"
@@ -920,8 +907,7 @@ msgstr "Zobrazit rozšíření"
 
 #: app/flatpak-builtins-info.c:87
 msgid "NAME [BRANCH] - Get info about installed app and/or runtime"
-msgstr ""
-"NÁZEV [VĚTEV] - Získat informace o instalované aplikaci a/nebo prostředí"
+msgstr "NÁZEV [VĚTEV] - Získat informace o instalované aplikaci a/nebo prostředí"
 
 #: app/flatpak-builtins-install.c:56
 msgid "Don't pull, only install from local cache"
@@ -1518,9 +1504,8 @@ msgid "The required runtime %s was not found in a configured remote.\n"
 msgstr "Požadované prostředí %s nebylo nalezeno v nastaveném repozitáři.\n"
 
 #: app/flatpak-transaction.c:466 common/flatpak-dir.c:1014
-#: common/flatpak-dir.c:1271 common/flatpak-dir.c:1307
-#: common/flatpak-dir.c:1329 common/flatpak-dir.c:8101
-#: common/flatpak-utils.c:1218
+#: common/flatpak-dir.c:1271 common/flatpak-dir.c:1307 common/flatpak-dir.c:1329
+#: common/flatpak-dir.c:8101 common/flatpak-utils.c:1218
 #, c-format
 msgid "%s not installed"
 msgstr "%s není nainstalováno"
@@ -1696,8 +1681,8 @@ msgstr ""
 msgid "%s is not available"
 msgstr "%s není dostupné"
 
-#: common/flatpak-dir.c:4105 common/flatpak-dir.c:4353
-#: common/flatpak-dir.c:5014 common/flatpak-dir.c:5034
+#: common/flatpak-dir.c:4105 common/flatpak-dir.c:4353 common/flatpak-dir.c:5014
+#: common/flatpak-dir.c:5034
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s větev %s je již nainstalováno"
@@ -1823,10 +1808,10 @@ msgstr ""
 #: common/flatpak-run.c:766
 #, c-format
 msgid ""
-"Unknown filesystem location %s, valid types are: host, home, xdg-*[/...], ~/"
+"Unknown filesystem location %s, valid locations are: host, home, xdg-*[/...], ~/"
 "dir, /dir"
 msgstr ""
-"Neplatné umístění systému souborů %s, platné typy jsou: host, home, xdg-"
+"Neplatné umístění systému souborů %s, platná umístění jsou: host, home, xdg-"
 "*[/...], ~/dir, /dir"
 
 #: common/flatpak-run.c:1032
@@ -1910,8 +1895,8 @@ msgstr "PROMĚNNÁ=HODNOTA"
 msgid "Allow app to own name on the session bus"
 msgstr "Povolit aplikaci vlastnit název na sběrnici sezení"
 
-#: common/flatpak-run.c:1183 common/flatpak-run.c:1184
-#: common/flatpak-run.c:1185 common/flatpak-run.c:1186
+#: common/flatpak-run.c:1183 common/flatpak-run.c:1184 common/flatpak-run.c:1185
+#: common/flatpak-run.c:1186
 msgid "DBUS_NAME"
 msgstr "NÁZEV_DBUS"
 
