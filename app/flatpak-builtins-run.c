@@ -43,6 +43,7 @@ static char *opt_command;
 static gboolean opt_devel;
 static gboolean opt_log_session_bus;
 static gboolean opt_log_system_bus;
+static gboolean opt_file_forwarding;
 static char *opt_runtime;
 static char *opt_runtime_version;
 
@@ -55,6 +56,7 @@ static GOptionEntry options[] = {
   { "runtime-version", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_version, N_("Runtime version to use"), N_("VERSION") },
   { "log-session-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_session_bus, N_("Log session bus calls"), NULL },
   { "log-system-bus", 0, 0, G_OPTION_ARG_NONE, &opt_log_system_bus, N_("Log system bus calls"), NULL },
+  { "file-forwarding", 0, 0, G_OPTION_ARG_NONE, &opt_file_forwarding, N_("Enable file forwarding"), NULL },
   { NULL }
 };
 
@@ -192,7 +194,8 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
                         opt_runtime_version,
                         (opt_devel ? FLATPAK_RUN_FLAG_DEVEL : 0) |
                         (opt_log_session_bus ? FLATPAK_RUN_FLAG_LOG_SESSION_BUS : 0) |
-                        (opt_log_system_bus ? FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS : 0),
+                        (opt_log_system_bus ? FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS : 0) |
+                        (opt_file_forwarding ? FLATPAK_RUN_FLAG_FILE_FORWARDING : 0),
                         opt_command,
                         &argv[rest_argv_start + 1],
                         rest_argc - 1,
