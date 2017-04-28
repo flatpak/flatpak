@@ -54,6 +54,7 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-json-oci.h \
 	common/flatpak-oci-registry.c \
 	common/flatpak-oci-registry.h \
+        $(xdp_dbus_built_sources) \
 	$(NULL)
 
 libflatpak_common_la_CFLAGS = \
