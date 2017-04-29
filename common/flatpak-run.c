@@ -4258,13 +4258,32 @@ add_rest_args (const char  *app_id,
         {
           g_autofree char *doc_id = NULL;
           g_autofree char *basename = NULL;
+          gboolean file_uri;
+          const char *file;
           char *doc_path;
 
-          if (!forward_file (documents, app_id, args[i], &doc_id, error))
+          if (g_str_has_prefix (args[i], "file:"))
+            {
+              file_uri = TRUE;
+              file = args[i] + strlen ("file:");
+            }
+          else
+            {
+              file_uri = FALSE;
+              file = args[i];
+            }
+
+          if (!forward_file (documents, app_id, file, &doc_id, error))
             return FALSE;
 
           basename = g_path_get_basename (args[i]);
           doc_path = g_build_filename (mountpoint, doc_id, basename, NULL);
+
+          if (file_uri)
+            {
+              g_autofree char *path = doc_path;
+              doc_path = g_strconcat ("file:", path, NULL);
+            }
 
           g_debug ("Forwarding file '%s' as '%s' to %s", args[i], doc_path, app_id);
 
