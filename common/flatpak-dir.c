@@ -3411,7 +3411,8 @@ export_desktop_file (const char   *app,
 
           for (i = 1; i < old_argc; i++)
             {
-              if (strcasecmp (old_argv[i], "%f") == 0)
+              if (strcasecmp (old_argv[i], "%f") == 0 ||
+                  strcasecmp (old_argv[i], "%u") == 0)
                 {
                   g_string_append (new_exec, " --file-forwarding");
                   break;
@@ -3425,7 +3426,8 @@ export_desktop_file (const char   *app,
             {
               g_autofree char *arg = maybe_quote (old_argv[i]);
 
-              if (strcasecmp (arg, "%f") == 0)
+              if (strcasecmp (arg, "%f") == 0 ||
+                  strcasecmp (arg, "%u") == 0)
                 g_string_append_printf (new_exec, " @@ %s @@", arg);
               else
                 g_string_append_printf (new_exec, " %s", arg);
