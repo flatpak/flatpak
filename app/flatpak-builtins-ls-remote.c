@@ -63,6 +63,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   const char *repository;
   const char **arches = flatpak_get_arches ();
   const char *opt_arches[] = {NULL, NULL};
+  g_autoptr(GVariant) refdata = NULL;
 
   context = g_option_context_new (_(" REMOTE - Show available runtimes and applications"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -89,6 +90,20 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
     return FALSE;
 
   names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+  if (opt_show_details)
+    {
+      g_autoptr(GVariant) summary = NULL;
+      g_autoptr(GVariant) meta = NULL;
+      g_autoptr(GVariant) cache = NULL;
+
+      summary = flatpak_dir_fetch_remote_summary (dir, repository, cancellable, error);
+      if (summary == NULL)
+        return FALSE;
+      meta = g_variant_get_child_value (summary, 1);
+      cache = g_variant_lookup_value (meta, "xa.cache", NULL);
+      refdata = g_variant_get_variant (cache);
+    }
 
   if (opt_arch != NULL)
     {
@@ -157,10 +172,22 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       if (opt_show_details)
         {
           g_autofree char *value = NULL;
+          guint64 installed_size;
+          guint64 download_size;
+          const char *metadata;
 
           value = g_strdup ((char *) g_hash_table_lookup (names, keys[i]));
           value[MIN (strlen (value), 12)] = 0;
           flatpak_table_printer_add_column (printer, value);
+
+          if (g_variant_lookup (refdata, keys[i], "(tt&s)", &installed_size, &download_size, &metadata))
+            {
+              g_autofree char *installed = g_format_size (GUINT64_FROM_BE (installed_size));
+              g_autofree char *download = g_format_size (GUINT64_FROM_BE (download_size));
+
+              flatpak_table_printer_add_column (printer, installed);
+              flatpak_table_printer_add_column (printer, download);
+            }
         }
       flatpak_table_printer_finish_row (printer);
     }
