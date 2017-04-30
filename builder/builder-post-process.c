@@ -228,8 +228,8 @@ fixup_python_time_stamp (const char *path,
                                       error))
     return FALSE;
 
-  if (!flatpak_copy_bytes (fd, write_fd, error))
-    return FALSE;
+  if (glnx_regfile_copy_bytes (fd, write_fd, (off_t)-1, TRUE) < 0)
+    return glnx_throw_errno_prefix (error, "copyfile");
 
   /* Change to mtime 0 which is what ostree uses for checkouts */
   buffer[4] = OSTREE_TIMESTAMP;

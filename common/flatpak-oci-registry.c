@@ -784,8 +784,8 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       if (src_fd == -1)
         return FALSE;
 
-      if (!flatpak_copy_bytes (src_fd, fd, error))
-        return FALSE;
+      if (glnx_regfile_copy_bytes (src_fd, fd, (off_t)-1, TRUE) < 0)
+        return glnx_throw_errno_prefix (error, "copyfile");
     }
   else
     {

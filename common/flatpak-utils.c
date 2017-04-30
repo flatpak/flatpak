@@ -2164,44 +2164,6 @@ flatpak_openat_noatime (int            dfd,
     }
 }
 
-#define COPY_BUFFER_SIZE (16*1024)
-gboolean
-flatpak_copy_bytes (int fdf,
-                    int fdt,
-                    GError **error)
-{
-  char buf[COPY_BUFFER_SIZE];
-  int r;
-
-  g_return_val_if_fail (fdf >= 0, FALSE);
-  g_return_val_if_fail (fdt >= 0, FALSE);
-
-  for (;;)
-    {
-      size_t m = COPY_BUFFER_SIZE;
-      ssize_t n;
-
-      n = read (fdf, buf, m);
-      if (n < 0)
-        {
-          glnx_set_error_from_errno (error);
-          return FALSE;
-        }
-      if (n == 0) /* EOF */
-        break;
-
-      r = glnx_loop_write (fdt, buf, (size_t) n);
-      if (r < 0)
-        {
-          errno = r;
-          glnx_set_error_from_errno (error);
-          return FALSE;
-        }
-    }
-
-  return TRUE;
-}
-
 gboolean
 flatpak_cp_a (GFile         *src,
               GFile         *dest,
