@@ -74,6 +74,9 @@ print_branches (GVariant *summary)
       guint64 installed_size;
       guint64 download_size;
       const char *metadata;
+      FlatpakTablePrinter *printer;
+
+      printer = flatpak_table_printer_new ();
 
       refdata = g_variant_get_variant (cache);
       g_variant_iter_init (&iter, refdata);
@@ -82,8 +85,14 @@ print_branches (GVariant *summary)
           g_autofree char *installed = g_format_size (GUINT64_FROM_BE (installed_size));
           g_autofree char *download = g_format_size (GUINT64_FROM_BE (download_size));
 
-          g_print ("%s (installed: %s, download: %s)\n", ref, installed, download);
+          flatpak_table_printer_add_column (printer, ref);
+          flatpak_table_printer_add_column (printer, installed);
+          flatpak_table_printer_add_column (printer, download);
+          flatpak_table_printer_finish_row (printer);
         }
+
+      flatpak_table_printer_print (printer);
+      flatpak_table_printer_free (printer);
     }
 }
 
