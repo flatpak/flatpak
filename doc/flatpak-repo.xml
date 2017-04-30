@@ -64,7 +64,15 @@
                 <term><option>--info</option></term>
 
                 <listitem><para>
-                    Print information about a local repository
+                    Print general information about a local repository.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--branches</option></term>
+
+                <listitem><para>
+                    List the branches in a local repository.
                 </para></listitem>
             </varlistentry>
 
@@ -72,7 +80,7 @@
                 <term><option>--metadata=BRANCH</option></term>
 
                 <listitem><para>
-                  Print metadata for a branch.
+                  Print metadata for a branch in the repository.
                 </para></listitem>
             </varlistentry>
         </variablelist>

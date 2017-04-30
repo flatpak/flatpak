@@ -52,6 +52,23 @@ print_info (GVariant *summary)
   if (cache)
     {
       g_autoptr(GVariant) refdata = NULL;
+
+      refdata = g_variant_get_variant (cache);
+      g_print ("%zd branches\n", g_variant_n_children (refdata));
+    }
+}
+
+static void
+print_branches (GVariant *summary)
+{
+  g_autoptr(GVariant) meta = NULL;
+  g_autoptr(GVariant) cache = NULL;
+
+  meta = g_variant_get_child_value (summary, 1);
+  cache = g_variant_lookup_value (meta, "xa.cache", NULL);
+  if (cache)
+    {
+      g_autoptr(GVariant) refdata = NULL;
       GVariantIter iter;
       const char *ref;
       guint64 installed_size;
@@ -59,8 +76,6 @@ print_info (GVariant *summary)
       const char *metadata;
 
       refdata = g_variant_get_variant (cache);
-      g_print ("%zd branches\n", g_variant_n_children (refdata));
-
       g_variant_iter_init (&iter, refdata);
       while (g_variant_iter_next (&iter, "{&s(tt&s)}", &ref, &installed_size, &download_size, &metadata))
         {
@@ -101,11 +116,13 @@ print_metadata (GVariant   *summary,
 }
 
 static gboolean opt_info;
-static gchar *opt_branch;
+static gboolean opt_branches;
+static gchar *opt_metadata_branch;
 
 static GOptionEntry options[] = {
-  { "info", 0, 0, G_OPTION_ARG_NONE, &opt_info, N_("Print information about a repo"), NULL },
-  { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_branch, N_("Print metadata for a branch"), N_("BRANCH") },
+  { "info", 0, 0, G_OPTION_ARG_NONE, &opt_info, N_("Print general information about the repository"), NULL },
+  { "branches", 0, 0, G_OPTION_ARG_NONE, &opt_branches, N_("List the branches in the repository"), NULL },
+  { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata_branch, N_("Print metadata for a branch"), N_("BRANCH") },
   { NULL }
 };
 
@@ -142,8 +159,11 @@ flatpak_builtin_repo (int argc, char **argv,
   if (opt_info)
     print_info (summary);
 
-  if (opt_branch)
-    print_metadata (summary, opt_branch);
+  if (opt_branches)
+    print_branches (summary);
+
+  if (opt_metadata_branch)
+    print_metadata (summary, opt_metadata_branch);
 
   return TRUE;
 }
