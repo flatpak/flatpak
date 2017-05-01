@@ -31,6 +31,7 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "flatpak-table-printer.h"
 
 static void
 print_info (GVariant *summary)

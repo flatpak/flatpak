@@ -274,27 +274,6 @@ gint flatpak_mkstempat (int    dir_fd,
                         int    flags,
                         int    mode);
 
-
-typedef struct FlatpakTablePrinter FlatpakTablePrinter;
-
-FlatpakTablePrinter *flatpak_table_printer_new (void);
-void                flatpak_table_printer_free (FlatpakTablePrinter *printer);
-void                flatpak_table_printer_set_column_title (FlatpakTablePrinter *printer,
-                                                            int                  column,
-                                                            const char          *title);
-void                flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
-                                                      const char          *text);
-void                flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,
-                                                              const char          *text,
-                                                              int                  align);
-void                flatpak_table_printer_add_column_len (FlatpakTablePrinter *printer,
-                                                          const char          *text,
-                                                          gsize                len);
-void                flatpak_table_printer_append_with_comma (FlatpakTablePrinter *printer,
-                                                             const char          *text);
-void                flatpak_table_printer_finish_row (FlatpakTablePrinter *printer);
-void                flatpak_table_printer_print (FlatpakTablePrinter *printer);
-
 gboolean flatpak_repo_set_title (OstreeRepo *repo,
                                  const char *title,
                                  GError    **error);
