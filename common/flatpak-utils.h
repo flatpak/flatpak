@@ -281,6 +281,9 @@ FlatpakTablePrinter *flatpak_table_printer_new (void);
 void                flatpak_table_printer_free (FlatpakTablePrinter *printer);
 void                flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
                                                       const char          *text);
+void                flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,
+                                                              const char          *text,
+                                                              int                  align);
 void                flatpak_table_printer_add_column_len (FlatpakTablePrinter *printer,
                                                           const char          *text,
                                                           gsize                len);

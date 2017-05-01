@@ -1546,6 +1546,7 @@ flatpak_mkstempat (int    dir_fd,
 
 typedef struct {
   char *text;
+  int align;
 } Cell;
 
 static void
@@ -1584,12 +1585,21 @@ flatpak_table_printer_free (FlatpakTablePrinter *printer)
 }
 
 void
-flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
-                                  const char          *text)
+flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,
+                                          const char          *text,
+                                          int                  align)
 {
   Cell *cell = g_new (Cell, 1);
   cell->text = text ? g_strdup (text) : g_strdup ("");
+  cell->align = align;
   g_ptr_array_add (printer->current, cell);
+}
+
+void
+flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
+                                  const char          *text)
+{
+  flatpak_table_printer_add_aligned_column (printer, text, -1);
 }
 
 void
@@ -1599,6 +1609,7 @@ flatpak_table_printer_add_column_len (FlatpakTablePrinter *printer,
 {
   Cell *cell = g_new (Cell, 1);
   cell->text = text ? g_strndup (text, len) : g_strdup ("");
+  cell->align = -1;
   g_ptr_array_add (printer->current, cell);
 }
 
@@ -1638,12 +1649,16 @@ void
 flatpak_table_printer_print (FlatpakTablePrinter *printer)
 {
   g_autofree int *widths = NULL;
+  g_autofree int *lwidths = NULL;
+  g_autofree int *rwidths = NULL;
   int i, j;
 
   if (printer->current->len != 0)
     flatpak_table_printer_finish_row (printer);
 
   widths = g_new0 (int, printer->n_columns);
+  lwidths = g_new0 (int, printer->n_columns);
+  rwidths = g_new0 (int, printer->n_columns);
 
   for (i = 0; i < printer->rows->len; i++)
     {
@@ -1652,7 +1667,15 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
       for (j = 0; j < row->len; j++)
         {
           Cell *cell = g_ptr_array_index (row, j);
-          widths[j] = MAX (widths[j], strlen (cell->text));
+          int width;
+
+          width = strlen (cell->text);
+          widths[j] = MAX (widths[j], width);
+          if (cell->align >= 0)
+            {
+              lwidths[j] = MAX (lwidths[j], cell->align);
+              rwidths[j] = MAX (rwidths[j], width - cell->align);
+            }
         }
     }
 
@@ -1663,7 +1686,10 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
       for (j = 0; j < row->len; j++)
         {
           Cell *cell = g_ptr_array_index (row, j);
-          g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], cell->text);
+          if (cell->align < 0)
+            g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], cell->text);
+          else
+            g_print ("%s%*s%-*s", (j == 0) ? "" : " ", lwidths[j] - cell->align, "", rwidths[j] + cell->align, cell->text);
         }
       g_print ("\n");
     }
@@ -1713,7 +1739,7 @@ parse_app_id_from_fileinfo (int pid)
   if (root_fd == -1)
     {
       /* Not able to open the root dir shouldn't happen. Probably the app died and
-         we're failing due to /proc/$pid not existing. In that case fail instead
+         *we're failing due to /proc/$pid not existing. In that case fail instead
          of treating this as privileged. */
       g_debug ("Unable to open %s", root_path);
       return NULL;
