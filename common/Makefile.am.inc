@@ -39,6 +39,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-portal-error.h \
 	common/flatpak-utils.c \
 	common/flatpak-utils.h \
+	common/flatpak-table-printer.c \
+	common/flatpak-table-printer.h \
 	common/flatpak-chain-input-stream.c \
 	common/flatpak-chain-input-stream.h \
 	common/gvdb/gvdb-reader.h	\
