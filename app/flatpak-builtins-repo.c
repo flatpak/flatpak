@@ -84,6 +84,9 @@ print_branches (GVariant *summary)
       FlatpakTablePrinter *printer;
 
       printer = flatpak_table_printer_new ();
+      flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
+      flatpak_table_printer_set_column_title (printer, 1, _("Installed"));
+      flatpak_table_printer_set_column_title (printer, 2, _("Download"));
 
       refdata = g_variant_get_variant (cache);
       g_variant_iter_init (&iter, refdata);
