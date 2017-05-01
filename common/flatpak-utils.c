@@ -1544,6 +1544,19 @@ flatpak_mkstempat (int    dir_fd,
   return -1;
 }
 
+typedef struct {
+  char *text;
+} Cell;
+
+static void
+free_cell (gpointer data)
+{
+  Cell *cell = data;
+
+  g_free (cell->text);
+  g_free (cell);
+}
+
 struct FlatpakTablePrinter
 {
   GPtrArray *rows;
@@ -1556,8 +1569,8 @@ flatpak_table_printer_new (void)
 {
   FlatpakTablePrinter *printer = g_new0 (FlatpakTablePrinter, 1);
 
-  printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify) g_strfreev);
-  printer->current = g_ptr_array_new_with_free_func (g_free);
+  printer->rows = g_ptr_array_new_with_free_func ((GDestroyNotify) g_ptr_array_unref);
+  printer->current = g_ptr_array_new_with_free_func (free_cell);
 
   return printer;
 }
@@ -1574,34 +1587,39 @@ void
 flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
                                   const char          *text)
 {
-  g_ptr_array_add (printer->current, text ? g_strdup (text) : g_strdup (""));
+  Cell *cell = g_new (Cell, 1);
+  cell->text = text ? g_strdup (text) : g_strdup ("");
+  g_ptr_array_add (printer->current, cell);
 }
 
 void
 flatpak_table_printer_add_column_len (FlatpakTablePrinter *printer,
                                       const char          *text,
-                                      gsize len)
+                                      gsize                len)
 {
-  g_ptr_array_add (printer->current, text ? g_strndup (text, len) : g_strdup (""));
+  Cell *cell = g_new (Cell, 1);
+  cell->text = text ? g_strndup (text, len) : g_strdup ("");
+  g_ptr_array_add (printer->current, cell);
 }
 
 void
 flatpak_table_printer_append_with_comma (FlatpakTablePrinter *printer,
                                          const char          *text)
 {
-  char *old, *new;
+  Cell *cell;
+  char *new;
 
   g_assert (printer->current->len > 0);
 
-  old = g_ptr_array_index (printer->current, printer->current->len - 1);
+  cell = g_ptr_array_index (printer->current, printer->current->len - 1);
 
-  if (old[0] != 0)
-    new = g_strconcat (old, ",", text, NULL);
+  if (cell->text[0] != 0)
+    new = g_strconcat (cell->text, ",", text, NULL);
   else
     new = g_strdup (text);
 
-  g_ptr_array_index (printer->current, printer->current->len - 1) = new;
-  g_free (old);
+  g_free (cell->text);
+  cell->text = new;
 }
 
 
@@ -1612,10 +1630,8 @@ flatpak_table_printer_finish_row (FlatpakTablePrinter *printer)
     return; /* Ignore empty rows */
 
   printer->n_columns = MAX (printer->n_columns, printer->current->len);
-  g_ptr_array_add (printer->current, NULL);
-  g_ptr_array_add (printer->rows,
-                   g_ptr_array_free (printer->current, FALSE));
-  printer->current = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (printer->rows, printer->current);
+  printer->current = g_ptr_array_new_with_free_func (free_cell);
 }
 
 void
@@ -1631,18 +1647,24 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
 
   for (i = 0; i < printer->rows->len; i++)
     {
-      char **row = g_ptr_array_index (printer->rows, i);
+      GPtrArray *row = g_ptr_array_index (printer->rows, i);
 
-      for (j = 0; row[j] != NULL; j++)
-        widths[j] = MAX (widths[j], strlen (row[j]));
+      for (j = 0; j < row->len; j++)
+        {
+          Cell *cell = g_ptr_array_index (row, j);
+          widths[j] = MAX (widths[j], strlen (cell->text));
+        }
     }
 
   for (i = 0; i < printer->rows->len; i++)
     {
-      char **row = g_ptr_array_index (printer->rows, i);
+      GPtrArray *row = g_ptr_array_index (printer->rows, i);
 
-      for (j = 0; row[j] != NULL; j++)
-        g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], row[j]);
+      for (j = 0; j < row->len; j++)
+        {
+          Cell *cell = g_ptr_array_index (row, j);
+          g_print ("%s%-*s", (j == 0) ? "" : " ", widths[j], cell->text);
+        }
       g_print ("\n");
     }
 }
