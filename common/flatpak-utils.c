@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -1698,16 +1699,16 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
         }
     }
 
-  if (printer->titles->len > 0)
+  if (isatty (STDOUT_FILENO) && printer->titles->len > 0)
     {
-      g_print ("\x1b[1m");
+      g_print ("\x1b[1m"); /* bold on */
       for (i = 0; i < printer->titles->len; i++)
         {
           char *title = g_ptr_array_index (printer->titles, i);
 
           g_print ("%s%-*s", (i == 0) ? "" : " ", widths[i], title);
         }
-      g_print ("\x1b[0m");
+      g_print ("\x1b[0m"); /* bold off */
       g_print ("\n");
     }
 
