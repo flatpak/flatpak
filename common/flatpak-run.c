@@ -3454,8 +3454,9 @@ add_monitor_path_args (gboolean use_session_helper,
 }
 
 static void
-add_document_portal_args (GPtrArray  *argv_array,
-                          const char *app_id)
+add_document_portal_args (GPtrArray   *argv_array,
+                          const char  *app_id,
+                          char       **out_mount_path)
 {
   g_autoptr(GDBusConnection) session_bus = NULL;
   g_autofree char *doc_mount_path = NULL;
@@ -3498,6 +3499,8 @@ add_document_portal_args (GPtrArray  *argv_array,
             }
         }
     }
+
+  *out_mount_path = g_steal_pointer (&doc_mount_path);
 }
 
 static gchar *
@@ -4217,18 +4220,23 @@ forward_file (XdpDbusDocuments  *documents,
 static gboolean
 add_rest_args (const char  *app_id,
                gboolean     file_forwarding,
+               const char  *doc_mount_path,
                GPtrArray   *argv_array,
                char        *args[],
                int          n_args,
                GError     **error)
 {
   g_autoptr(XdpDbusDocuments) documents = NULL;
-  g_autofree char *mountpoint = NULL;
   gboolean forwarding = FALSE;
   gboolean can_forward = TRUE;
   int i;
 
-  if (file_forwarding)
+  if (file_forwarding && doc_mount_path == NULL)
+    {
+      g_message ("Can't get document portal mount path\n");
+      can_forward = FALSE;
+    }
+  else if (file_forwarding)
     {
       g_autoptr(GError) local_error = NULL;
 
@@ -4237,11 +4245,7 @@ add_rest_args (const char  *app_id,
                                                              "/org/freedesktop/portal/documents",
                                                              NULL,
                                                              &local_error);
-
-      if (documents)
-        xdp_dbus_documents_call_get_mount_point_sync (documents, &mountpoint, NULL, &local_error);
-
-      if (local_error)
+      if (documents == NULL)
         {
           g_message ("Can't get document portal: %s\n", local_error->message);
           can_forward = FALSE;
@@ -4279,7 +4283,7 @@ add_rest_args (const char  *app_id,
             return FALSE;
 
           basename = g_path_get_basename (args[i]);
-          doc_path = g_build_filename (mountpoint, doc_id, basename, NULL);
+          doc_path = g_build_filename (doc_mount_path, doc_id, basename, NULL);
 
           if (file_uri)
             {
@@ -4333,6 +4337,7 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(FlatpakContext) overrides = NULL;
   g_auto(GStrv) app_ref_parts = NULL;
   g_autofree char *commandline = NULL;
+  g_autofree char *doc_mount_path = NULL;
 
   app_ref_parts = flatpak_decompose_ref (app_ref, error);
   if (app_ref_parts == NULL)
@@ -4460,7 +4465,7 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
-  add_document_portal_args (argv_array, app_ref_parts[1]);
+  add_document_portal_args (argv_array, app_ref_parts[1], &doc_mount_path);
 
   if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp,
                                          app_info_path, flags,
@@ -4514,6 +4519,7 @@ flatpak_run_app (const char     *app_ref,
 
   g_ptr_array_add (real_argv_array, g_strdup (command));
   if (!add_rest_args (app_ref_parts[1], (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
+                      doc_mount_path,
                       real_argv_array, args, n_args, error))
     return FALSE;
 
