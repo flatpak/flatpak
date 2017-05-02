@@ -4186,7 +4186,7 @@ forward_file (XdpDbusDocuments  *documents,
               GError           **error)
 {
   int fd, fd_id;
-  g_autofree char *doc_id;
+  g_autofree char *doc_id = NULL;
   g_autoptr(GUnixFDList) fd_list = NULL;
   const char *perms[] = { "read", "write", NULL };
 
@@ -4233,18 +4233,28 @@ add_rest_args (const char  *app_id,
   g_autoptr(XdpDbusDocuments) documents = NULL;
   g_autofree char *mountpoint = NULL;
   gboolean forwarding = FALSE;
+  gboolean can_forward = TRUE;
   int i;
 
-  documents = xdp_dbus_documents_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION, 0,
-                                                         "org.freedesktop.portal.Documents",
-                                                         "/org/freedesktop/portal/documents",
-                                                         NULL,
-                                                         error);
-  if (documents == NULL)
-    return FALSE;
+  if (file_forwarding)
+    {
+      g_autoptr(GError) local_error = NULL;
 
-  if (!xdp_dbus_documents_call_get_mount_point_sync (documents, &mountpoint, NULL, error))
-    return FALSE;
+      documents = xdp_dbus_documents_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION, 0,
+                                                             "org.freedesktop.portal.Documents",
+                                                             "/org/freedesktop/portal/documents",
+                                                             NULL,
+                                                             &local_error);
+
+      if (documents)
+        xdp_dbus_documents_call_get_mount_point_sync (documents, &mountpoint, NULL, &local_error);
+
+      if (local_error)
+        {
+          g_message ("Can't get document portal: %s\n", local_error->message);
+          can_forward = FALSE;
+        }
+    }
 
   for (i = 0; i < n_args; i++)
     {
@@ -4254,7 +4264,7 @@ add_rest_args (const char  *app_id,
           continue;
         }
 
-      if (forwarding)
+      if (can_forward && forwarding)
         {
           g_autofree char *doc_id = NULL;
           g_autofree char *basename = NULL;
