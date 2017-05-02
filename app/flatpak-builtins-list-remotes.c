@@ -101,6 +101,16 @@ flatpak_builtin_list_remotes (int argc, char **argv, GCancellable *cancellable, 
 
   printer = flatpak_table_printer_new ();
 
+  j = 0;
+  flatpak_table_printer_set_column_title (printer, j++, _("Name"));
+  if (opt_show_details)
+    {
+      flatpak_table_printer_set_column_title (printer, j++, _("Title"));
+      flatpak_table_printer_set_column_title (printer, j++, _("URL"));
+      flatpak_table_printer_set_column_title (printer, j++, _("Priority"));
+    }
+  flatpak_table_printer_set_column_title (printer, j++, _("Options"));
+
   for (j = 0; j < dirs->len; j++)
     {
       FlatpakDir *dir = g_ptr_array_index (dirs, j);
