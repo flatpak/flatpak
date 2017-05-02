@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <locale.h>
 
 
 typedef struct {
@@ -93,8 +94,10 @@ flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,
 static const char *
 find_decimal_point (const char *text)
 {
-  // FIXME use localeconv
-  return strchr (text, '.');
+  struct lconv *locale_data;
+
+  locale_data = localeconv ();
+  return strstr (text, locale_data->decimal_point);
 }
 
 void
