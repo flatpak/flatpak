@@ -167,6 +167,11 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
   FlatpakTablePrinter *printer = flatpak_table_printer_new ();
 
+  flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
+  flatpak_table_printer_set_column_title (printer, 1, _("Commit"));
+  flatpak_table_printer_set_column_title (printer, 1, _("Installed size"));
+  flatpak_table_printer_set_column_title (printer, 1, _("Download size"));
+
   for (i = 0; i < n_keys; i++)
     {
       flatpak_table_printer_add_column (printer, keys[i]);
@@ -186,8 +191,8 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
               g_autofree char *installed = g_format_size (GUINT64_FROM_BE (installed_size));
               g_autofree char *download = g_format_size (GUINT64_FROM_BE (download_size));
 
-              flatpak_table_printer_add_column (printer, installed);
-              flatpak_table_printer_add_column (printer, download);
+              flatpak_table_printer_add_decimal_column (printer, installed);
+              flatpak_table_printer_add_decimal_column (printer, download);
             }
         }
       flatpak_table_printer_finish_row (printer);
