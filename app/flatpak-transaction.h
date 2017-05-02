@@ -32,6 +32,7 @@ FlatpakTransaction *flatpak_transaction_new         (FlatpakDir          *dir,
                                                      gboolean             no_interaction,
                                                      gboolean             no_pull,
                                                      gboolean             no_deploy,
+                                                     gboolean             no_static_deltas,
                                                      gboolean             add_deps,
                                                      gboolean             add_related);
 void                flatpak_transaction_free        (FlatpakTransaction  *self);

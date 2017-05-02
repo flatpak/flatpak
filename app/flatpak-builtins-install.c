@@ -45,6 +45,7 @@ static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
 static gboolean opt_no_related;
 static gboolean opt_no_deps;
+static gboolean opt_no_static_deltas;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_bundle;
@@ -57,6 +58,7 @@ static GOptionEntry options[] = {
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, N_("Don't deploy, only download to local cache"), NULL },
   { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, N_("Don't install related refs"), NULL },
   { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify/install runtime dependencies"), NULL },
+  { "no-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_no_static_deltas, N_("Don't use static deltas"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "bundle", 0, 0, G_OPTION_ARG_NONE, &opt_bundle, N_("Assume LOCATION is a .flatpak single-file bundle"), NULL },
@@ -270,7 +272,7 @@ install_bundle (FlatpakDir *dir,
     return FALSE;
 
   transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
-                                         !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
 
   if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
     return FALSE;
@@ -364,7 +366,7 @@ install_from (FlatpakDir *dir,
   g_print (_("Installing: %s\n"), slash + 1);
 
   transaction = flatpak_transaction_new (clone, opt_yes, opt_no_pull, opt_no_deploy,
-                                         !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
 
   if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
     return FALSE;
@@ -374,7 +376,6 @@ install_from (FlatpakDir *dir,
 
   return TRUE;
 }
-
 
 gboolean
 flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GError **error)
@@ -427,7 +428,7 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
-                                         !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
 
   for (i = 0; i < n_prefs; i++)
     {

@@ -43,6 +43,7 @@ static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
 static gboolean opt_no_related;
 static gboolean opt_no_deps;
+static gboolean opt_no_static_deltas;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_appstream;
@@ -56,6 +57,7 @@ static GOptionEntry options[] = {
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, N_("Don't deploy, only download to local cache"), NULL },
   { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, N_("Don't update related refs"), NULL},
   { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify/install runtime dependencies"), NULL },
+  { "no-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_no_static_deltas, N_("Don't use static deltas"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, N_("Update appstream for remote"), NULL },
@@ -138,7 +140,7 @@ flatpak_builtin_update (int           argc,
     }
 
   transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
-                                         !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   g_print ("Looking for updates...\n");

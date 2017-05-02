@@ -56,9 +56,10 @@ typedef struct
  * Flags to alter the behavior of flatpak_installation_update().
  */
 typedef enum {
-  FLATPAK_UPDATE_FLAGS_NONE      = 0,
-  FLATPAK_UPDATE_FLAGS_NO_DEPLOY = (1 << 0),
-  FLATPAK_UPDATE_FLAGS_NO_PULL   = (1 << 1),
+  FLATPAK_UPDATE_FLAGS_NONE             = 0,
+  FLATPAK_UPDATE_FLAGS_NO_DEPLOY        = (1 << 0),
+  FLATPAK_UPDATE_FLAGS_NO_PULL          = (1 << 1),
+  FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS = (1 << 2),
 } FlatpakUpdateFlags;
 
 /**
@@ -68,7 +69,8 @@ typedef enum {
  * Flags to alter the behavior of flatpak_installation_install_full().
  */
 typedef enum {
-  FLATPAK_INSTALL_FLAGS_NONE      = 0,
+  FLATPAK_INSTALL_FLAGS_NONE             = 0,
+  FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS = (1 << 0),
 } FlatpakInstallFlags;
 
 /**
