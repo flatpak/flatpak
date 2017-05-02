@@ -44,6 +44,12 @@
             Show info about and installed application and/or runtime.
         </para>
         <para>
+            By default, the output if formatted in a friendly format.
+            If you specify one of the options --show-ref, --show-commit,
+            --show-origin or --show-size, the output is instead formatted
+            in a machine-readable format.
+        </para>
+        <para>
             By default, both per-user and system-wide installations
             are queried. Use the --user, --system or --installation
             options to change this.
