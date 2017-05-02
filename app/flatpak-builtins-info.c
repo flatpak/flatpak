@@ -58,16 +58,6 @@ static GOptionEntry options[] = {
   { NULL }
 };
 
-/* Print space unless this is the first item */
-static void
-maybe_print_space (gboolean *first)
-{
-  if (*first)
-    *first = FALSE;
-  else
-    g_print (" ");
-}
-
 gboolean
 flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError **error)
 {
@@ -83,7 +73,6 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   const char *origin = NULL;
   guint64 size;
   gboolean search_all = FALSE;
-  gboolean first = TRUE;
   FlatpakKinds kinds;
   const char *on = "\x1b[1m";
   const char *off = "\x1b[22m";
