@@ -74,8 +74,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   guint64 size;
   gboolean search_all = FALSE;
   FlatpakKinds kinds;
-  const char *on = "\x1b[1m";
-  const char *off = "\x1b[22m";
+  const char *on = "";
+  const char *off = "";
   g_auto(GStrv) parts = NULL;
   g_autofree char *path = NULL;
 
@@ -113,6 +113,12 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   deploy = flatpak_find_deploy_for_ref (ref, NULL, error);
   if (deploy == NULL)
     return FALSE;
+
+  if (isatty (STDOUT_FILENO))
+    {
+      on = "\x1b[1m"; /* bold on */
+      off = "\x1b[22m"; /* bold off */
+    }
 
   parts = g_strsplit (ref, "/", 0);
 
