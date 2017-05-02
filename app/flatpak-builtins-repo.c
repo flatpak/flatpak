@@ -59,13 +59,6 @@ print_info (GVariant *summary)
     }
 }
 
-static char *
-find_decimal_point (const char *text)
-{
-  // FIXME use localeconv
-  return strchr (text, '.');
-}
-
 static void
 print_branches (GVariant *summary)
 {
@@ -97,12 +90,8 @@ print_branches (GVariant *summary)
           g_autofree char *download = g_format_size (GUINT64_FROM_BE (download_size));
 
           flatpak_table_printer_add_column (printer, ref);
-          flatpak_table_printer_add_aligned_column (printer,
-                                                    installed,
-                                                    find_decimal_point (installed) - installed);
-          flatpak_table_printer_add_aligned_column (printer,
-                                                    download,
-                                                    find_decimal_point (download) - download);
+          flatpak_table_printer_add_decimal_column (printer, installed);
+          flatpak_table_printer_add_decimal_column (printer, download);
           flatpak_table_printer_finish_row (printer);
         }
 
