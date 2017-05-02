@@ -402,15 +402,6 @@
                       time by --sysconfdir).
                     </para></listitem>
                 </varlistentry>
-                <varlistentry>
-                    <term><envar>FLATPAK_TRIGGERSDIR</envar></term>
-
-                    <listitem><para>
-                      The location of triggers to run when exporting. If this is not set,
-                      <filename>/usr/share/flatpak/triggers</filename> is used (unless overridden
-                      at build time by --datadir).
-                    </para></listitem>
-                </varlistentry>
             </variablelist>
     </refsect1>
 
