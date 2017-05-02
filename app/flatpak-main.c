@@ -481,10 +481,9 @@ main (int    argc,
 
   if (error != NULL)
     {
-      int is_tty = isatty (1);
       const char *prefix = "";
       const char *suffix = "";
-      if (is_tty)
+      if (flatpak_fancy_output ())
         {
           prefix = "\x1b[31m\x1b[1m"; /* red, bold */
           suffix = "\x1b[22m\x1b[0m"; /* bold off, color reset */

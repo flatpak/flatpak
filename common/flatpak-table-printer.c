@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "flatpak-table-printer.h"
+#include "flatpak-utils.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -181,7 +182,7 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
         }
     }
 
-  if (isatty (STDOUT_FILENO) && printer->titles->len > 0)
+  if (flatpak_fancy_output () && printer->titles->len > 0)
     {
       g_print ("\x1b[1m"); /* bold on */
       for (i = 0; i < printer->titles->len; i++)
