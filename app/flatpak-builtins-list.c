@@ -125,6 +125,20 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
   FlatpakTablePrinter *printer = flatpak_table_printer_new ();
   int i;
 
+  i = 0;
+  flatpak_table_printer_set_column_title (printer, i++, _("Ref"));
+  if (opt_show_details)
+    {
+      flatpak_table_printer_set_column_title (printer, i++, _("Origin"));
+      flatpak_table_printer_set_column_title (printer, i++, _("Active commit"));
+      flatpak_table_printer_set_column_title (printer, i++, _("Latest commit"));
+      flatpak_table_printer_set_column_title (printer, i++, _("Installed size"));
+    }
+  flatpak_table_printer_set_column_title (printer, i++, _("Options"));
+
+  if (opt_show_details)
+    flatpak_table_printer_set_column_title (printer, i++, _("Subpaths"));
+
   for (i = 0; i < refs_array->len; i++)
     {
       RefsData *refs_data = NULL;
@@ -195,7 +209,7 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
 
               size = flatpak_deploy_data_get_installed_size (deploy_data);
               size_s = g_format_size (size);
-              flatpak_table_printer_add_column (printer, size_s);
+              flatpak_table_printer_add_decimal_column (printer, size_s);
             }
 
           flatpak_table_printer_add_column (printer, ""); /* Options */
