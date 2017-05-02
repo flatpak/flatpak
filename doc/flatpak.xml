@@ -370,6 +370,42 @@
     </refsect1>
 
     <refsect1>
+        <title>Environment</title>
+            <para>
+              Besides standard environment variables such as <envar>XDG_DATA_DIRS</envar> and
+              <envar>XDG_DATA_HOME</envar>, flatpak is consulting some of its own.
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><envar>FLATPAK_USER_DIR</envar></term>
+
+                    <listitem><para>
+                      The location of the per-user installation. If this is not set,
+                      <filename>$XDG_DATA_HOME/flatpak</filename> is used.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><envar>FLATPAK_SYSTEM_DIR</envar></term>
+
+                    <listitem><para>
+                      The location of the default system-wide installation. If this is not set,
+                      <filename>/var/lib/flatpak</filename> is used (unless overridden at build
+                      time by --localstatedir or --with-system-install-dir).
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><envar>FLATPAK_CONFIG_DIR</envar></term>
+
+                    <listitem><para>
+                      The location of flatpak site configuration. If this is not set,
+                      <filename>/etc/flatpak</filename> is used (unless overridden at build
+                      time by --sysconfdir).
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+    </refsect1>
+
+    <refsect1>
         <title>See also</title>
 
             <para>
