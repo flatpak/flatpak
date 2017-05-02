@@ -1785,7 +1785,7 @@ repo_pull_one_dir (OstreeRepo          *self,
                    GError             **error)
 {
   GVariantBuilder builder;
-  gboolean force_disable_deltas = FALSE;
+  gboolean force_disable_deltas = (flatpak_flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
   g_autofree char *remote_and_branch = NULL;
   g_autofree char *current_checksum = NULL;
   g_autoptr(GVariant) options = NULL;
@@ -4613,6 +4613,7 @@ gboolean
 flatpak_dir_install (FlatpakDir          *self,
                      gboolean             no_pull,
                      gboolean             no_deploy,
+                     gboolean             no_static_deltas,
                      const char          *ref,
                      const char          *remote_name,
                      const char         **opt_subpaths,
@@ -4700,14 +4701,19 @@ flatpak_dir_install (FlatpakDir          *self,
           /* We're pulling from a remote source, we do the network mirroring pull as a
              user and hand back the resulting data to the system-helper, that trusts us
              due to the GPG signatures in the repo */
+          FlatpakPullFlags flatpak_flags;
 
           child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
           if (child_repo == NULL)
             return FALSE;
 
+          flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA | FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
+          if (no_static_deltas)
+            flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+
           if (!flatpak_dir_pull (self, remote_name, ref, NULL, subpaths,
                                  child_repo,
-                                 FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA | FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA,
+                                 flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
             return FALSE;
@@ -5001,6 +5007,7 @@ gboolean
 flatpak_dir_update (FlatpakDir          *self,
                     gboolean             no_pull,
                     gboolean             no_deploy,
+                    gboolean             no_static_deltas,
                     const char          *ref,
                     const char          *remote_name,
                     const char          *checksum_or_latest,
@@ -5171,6 +5178,8 @@ flatpak_dir_update (FlatpakDir          *self,
           flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA | FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
           if (checksum_or_latest != NULL)
             flatpak_flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
+          if (no_static_deltas)
+            flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
 
           if (!flatpak_dir_pull (self, remote_name, ref, rev, subpaths,
                                  child_repo,
@@ -5230,6 +5239,7 @@ gboolean
 flatpak_dir_install_or_update (FlatpakDir          *self,
                                gboolean             no_pull,
                                gboolean             no_deploy,
+                               gboolean             no_static_deltas,
                                const char          *ref,
                                const char          *remote_name,
                                const char         **opt_subpaths,
@@ -5244,6 +5254,7 @@ flatpak_dir_install_or_update (FlatpakDir          *self,
     return flatpak_dir_update (self,
                                no_pull,
                                no_deploy,
+                               no_static_deltas,
                                ref,
                                remote_name,
                                NULL,
@@ -5255,6 +5266,7 @@ flatpak_dir_install_or_update (FlatpakDir          *self,
     return flatpak_dir_install (self,
                                 no_pull,
                                 no_deploy,
+                                no_static_deltas,
                                 ref,
                                 remote_name,
                                 opt_subpaths,

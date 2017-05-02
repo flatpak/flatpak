@@ -56,6 +56,7 @@ struct FlatpakTransaction {
   gboolean no_interaction;
   gboolean no_pull;
   gboolean no_deploy;
+  gboolean no_static_deltas;
   gboolean add_deps;
   gboolean add_related;
 };
@@ -160,6 +161,7 @@ flatpak_transaction_new (FlatpakDir *dir,
                          gboolean no_interaction,
                          gboolean no_pull,
                          gboolean no_deploy,
+                         gboolean no_static_deltas,
                          gboolean add_deps,
                          gboolean add_related)
 {
@@ -171,6 +173,7 @@ flatpak_transaction_new (FlatpakDir *dir,
   t->no_interaction = no_interaction;
   t->no_pull = no_pull;
   t->no_deploy = no_deploy;
+  t->no_static_deltas = no_static_deltas;
   t->add_deps = add_deps;
   t->add_related = add_related;
   return t;
@@ -647,6 +650,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           res = flatpak_dir_install (self->dir,
                                      self->no_pull,
                                      self->no_deploy,
+                                     self->no_static_deltas,
                                      op->ref, op->remote,
                                      (const char **)op->subpaths,
                                      NULL,
@@ -659,6 +663,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           res = flatpak_dir_update (self->dir,
                                     self->no_pull,
                                     self->no_deploy,
+                                    self->no_static_deltas,
                                     op->ref, op->remote, op->commit,
                                     (const char **)op->subpaths,
                                     NULL,

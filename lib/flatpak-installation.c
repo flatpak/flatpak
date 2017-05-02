@@ -1445,7 +1445,9 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
       g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER (0));
     }
 
-  if (!flatpak_dir_install (dir_clone, FALSE, FALSE, ref, remote_name, (const char **)subpaths,
+  if (!flatpak_dir_install (dir_clone, FALSE, FALSE,
+                            (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
+                            ref, remote_name, (const char **)subpaths,
                             ostree_progress, cancellable, error))
     goto out;
 
@@ -1574,6 +1576,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   if (!flatpak_dir_update (dir_clone,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0,
+                           (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
                            ref, remote_name, NULL, NULL,
                            ostree_progress, cancellable, error))
     goto out;
