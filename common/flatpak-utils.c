@@ -506,6 +506,12 @@ flatpak_is_in_sandbox (void)
   return in_sandbox == 1;
 }
 
+gboolean
+flatpak_fancy_output (void)
+{
+        return isatty (STDOUT_FILENO);
+}
+
 const char *
 flatpak_get_bwrap (void)
 {
