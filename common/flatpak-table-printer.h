@@ -35,6 +35,8 @@ void                flatpak_table_printer_add_column         (FlatpakTablePrinte
 void                flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,
                                                               const char          *text,
                                                               int                  align);
+void                flatpak_table_printer_add_decimal_column (FlatpakTablePrinter *printer,
+                                                              const char          *text);
 void                flatpak_table_printer_add_column_len     (FlatpakTablePrinter *printer,
                                                               const char          *text,
                                                               gsize                len);

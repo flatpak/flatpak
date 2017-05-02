@@ -90,6 +90,27 @@ flatpak_table_printer_add_aligned_column (FlatpakTablePrinter *printer,
   g_ptr_array_add (printer->current, cell);
 }
 
+static const char *
+find_decimal_point (const char *text)
+{
+  // FIXME use localeconv
+  return strchr (text, '.');
+}
+
+void
+flatpak_table_printer_add_decimal_column (FlatpakTablePrinter *printer,
+                                          const char          *text)
+{
+  const char *decimal;
+  int align = -1;
+
+  decimal = find_decimal_point (text);
+  if (decimal)
+    align = decimal - text;
+
+  flatpak_table_printer_add_aligned_column (printer, text, align);
+}
+
 void
 flatpak_table_printer_add_column (FlatpakTablePrinter *printer,
                                   const char          *text)
