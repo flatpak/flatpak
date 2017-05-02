@@ -65,6 +65,8 @@ const char * flatpak_path_match_prefix (const char *pattern,
 
 gboolean flatpak_is_in_sandbox (void);
 
+gboolean flatpak_fancy_output (void);
+
 const char * flatpak_get_arch (void);
 const char ** flatpak_get_arches (void);
 gboolean flatpak_is_linux32_arch (const char *arch);
