@@ -100,7 +100,7 @@ const char *dont_mount_in_root[] = {
 /* We don't want to export paths pointing into these, because they are readonly
    (so we can't create mountpoints there) and don't match whats on the host anyway */
 const char *dont_export_in[] = {
-  "/lib/", "/lib32/", "/lib64/", "/bin/", "/sbin/", "/usr/", "/etc/", "/app/", NULL
+  "/lib", "/lib32", "/lib64", "/bin", "/sbin", "/usr", "/etc", "/app", NULL
 };
 
 typedef enum {
@@ -2483,7 +2483,7 @@ _add_expose_path (GHashTable *hash_table,
       /* Don't expose files in non-mounted dirs like /app or /usr, as
          they are not the same as on the host, and we generally can't
          create the parents for them anyway */
-      if (g_str_has_prefix (canonical, dont_export_in[i]))
+      if (flatpak_has_path_prefix (canonical, dont_export_in[i]))
         {
           g_debug ("skipping export for path %s", canonical);
           return FALSE;
