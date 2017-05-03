@@ -2872,6 +2872,7 @@ static const struct {const char *env;
   {"XDG_CONFIG_DIRS", "/app/etc/xdg:/etc/xdg"},
   {"XDG_DATA_DIRS", "/app/share:/usr/share"},
   {"SHELL", "/bin/sh"},
+  {"TMPDIR", NULL}, /* Unset TMPDIR as it may not exist in the sandbox */
 };
 
 static const struct {const char *env;
@@ -2926,12 +2927,18 @@ flatpak_run_get_minimal_env (gboolean devel)
   env_array = g_ptr_array_new_with_free_func (g_free);
 
   for (i = 0; i < G_N_ELEMENTS (default_exports); i++)
-    g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", default_exports[i].env, default_exports[i].val));
+    {
+      if (default_exports[i].val)
+        g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", default_exports[i].env, default_exports[i].val));
+    }
 
   if (devel)
     {
       for (i = 0; i < G_N_ELEMENTS(devel_exports); i++)
-        g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", devel_exports[i].env, devel_exports[i].val));
+        {
+          if (devel_exports[i].val)
+            g_ptr_array_add (env_array, g_strdup_printf ("%s=%s", devel_exports[i].env, devel_exports[i].val));
+        }
     }
 
   for (i = 0; i < G_N_ELEMENTS (copy); i++)
@@ -2961,7 +2968,14 @@ flatpak_run_apply_env_default (char **envp)
   int i;
 
   for (i = 0; i < G_N_ELEMENTS (default_exports); i++)
-    envp = g_environ_setenv (envp, default_exports[i].env, default_exports[i].val, TRUE);
+    {
+      const char *value = default_exports[i].val;
+
+      if (value)
+        envp = g_environ_setenv (envp, default_exports[i].env, value, TRUE);
+      else
+        envp = g_environ_unsetenv (envp, default_exports[i].env);
+    }
 
   return envp;
 }
