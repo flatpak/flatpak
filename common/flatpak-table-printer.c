@@ -179,7 +179,7 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
   lwidths = g_new0 (int, printer->n_columns);
   rwidths = g_new0 (int, printer->n_columns);
 
-  for (i = 0; i < printer->titles->len; i++)
+  for (i = 0; i < printer->titles->len && i < printer->n_columns; i++)
     {
       char *title = g_ptr_array_index (printer->titles, i);
 
@@ -209,7 +209,7 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
   if (flatpak_fancy_output () && printer->titles->len > 0)
     {
       g_print (FLATPAK_ANSI_BOLD_ON);
-      for (i = 0; i < printer->titles->len; i++)
+      for (i = 0; i < printer->titles->len && i < printer->n_columns; i++)
         {
           char *title = g_ptr_array_index (printer->titles, i);
 
