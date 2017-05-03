@@ -29,6 +29,8 @@
 #include <sys/ioctl.h>
 #include <sys/personality.h>
 #include <grp.h>
+#include <unistd.h>
+#include <gio/gunixfdlist.h>
 
 #ifdef ENABLE_SECCOMP
 #include <seccomp.h>
@@ -48,6 +50,7 @@
 #include "flatpak-utils.h"
 #include "flatpak-dir.h"
 #include "flatpak-systemd-dbus.h"
+#include "document-portal/xdp-dbus.h"
 
 #define DEFAULT_SHELL "/bin/sh"
 
@@ -3459,8 +3462,9 @@ add_monitor_path_args (gboolean use_session_helper,
 }
 
 static void
-add_document_portal_args (GPtrArray  *argv_array,
-                          const char *app_id)
+add_document_portal_args (GPtrArray   *argv_array,
+                          const char  *app_id,
+                          char       **out_mount_path)
 {
   g_autoptr(GDBusConnection) session_bus = NULL;
   g_autofree char *doc_mount_path = NULL;
@@ -3503,6 +3507,8 @@ add_document_portal_args (GPtrArray  *argv_array,
             }
         }
     }
+
+  *out_mount_path = g_steal_pointer (&doc_mount_path);
 }
 
 static gchar *
@@ -4175,6 +4181,134 @@ child_setup (gpointer user_data)
     fcntl (g_array_index (fd_array, int, i), F_SETFD, 0);
 }
 
+static gboolean
+forward_file (XdpDbusDocuments  *documents,
+              const char        *app_id,
+              const char        *file,
+              char             **out_doc_id,
+              GError           **error)
+{
+  int fd, fd_id;
+  g_autofree char *doc_id = NULL;
+  g_autoptr(GUnixFDList) fd_list = NULL;
+  const char *perms[] = { "read", "write", NULL };
+
+  fd = open (file, O_PATH | O_CLOEXEC);
+  if (fd == -1)
+    return flatpak_fail (error, "Failed to open '%s'", file);
+
+  fd_list = g_unix_fd_list_new ();
+  fd_id = g_unix_fd_list_append (fd_list, fd, error);
+  close (fd);
+
+  if (!xdp_dbus_documents_call_add_sync (documents,
+                                         g_variant_new ("h", fd_id),
+                                         TRUE, /* reuse */
+                                         FALSE, /* not persistent */
+                                         fd_list,
+                                         &doc_id,
+                                         NULL,
+                                         NULL,
+                                         error))
+    return FALSE;
+
+  if (!xdp_dbus_documents_call_grant_permissions_sync (documents,
+                                                       doc_id,
+                                                       app_id,
+                                                       perms,
+                                                       NULL,
+                                                       error))
+    return FALSE;
+
+  *out_doc_id = g_steal_pointer (&doc_id);
+
+  return TRUE;
+}
+
+static gboolean
+add_rest_args (const char  *app_id,
+               gboolean     file_forwarding,
+               const char  *doc_mount_path,
+               GPtrArray   *argv_array,
+               char        *args[],
+               int          n_args,
+               GError     **error)
+{
+  g_autoptr(XdpDbusDocuments) documents = NULL;
+  gboolean forwarding = FALSE;
+  gboolean can_forward = TRUE;
+  int i;
+
+  if (file_forwarding && doc_mount_path == NULL)
+    {
+      g_message ("Can't get document portal mount path\n");
+      can_forward = FALSE;
+    }
+  else if (file_forwarding)
+    {
+      g_autoptr(GError) local_error = NULL;
+
+      documents = xdp_dbus_documents_proxy_new_for_bus_sync (G_BUS_TYPE_SESSION, 0,
+                                                             "org.freedesktop.portal.Documents",
+                                                             "/org/freedesktop/portal/documents",
+                                                             NULL,
+                                                             &local_error);
+      if (documents == NULL)
+        {
+          g_message ("Can't get document portal: %s\n", local_error->message);
+          can_forward = FALSE;
+        }
+    }
+
+  for (i = 0; i < n_args; i++)
+    {
+      if (file_forwarding && strcmp (args[i], "@@") == 0)
+        {
+          forwarding = !forwarding;
+          continue;
+        }
+
+      if (can_forward && forwarding)
+        {
+          g_autofree char *doc_id = NULL;
+          g_autofree char *basename = NULL;
+          gboolean file_uri;
+          const char *file;
+          char *doc_path;
+
+          if (g_str_has_prefix (args[i], "file:"))
+            {
+              file_uri = TRUE;
+              file = args[i] + strlen ("file:");
+            }
+          else
+            {
+              file_uri = FALSE;
+              file = args[i];
+            }
+
+          if (!forward_file (documents, app_id, file, &doc_id, error))
+            return FALSE;
+
+          basename = g_path_get_basename (args[i]);
+          doc_path = g_build_filename (doc_mount_path, doc_id, basename, NULL);
+
+          if (file_uri)
+            {
+              g_autofree char *path = doc_path;
+              doc_path = g_strconcat ("file:", path, NULL);
+            }
+
+          g_debug ("Forwarding file '%s' as '%s' to %s", args[i], doc_path, app_id);
+
+          g_ptr_array_add (argv_array, doc_path);
+        }
+      else
+        g_ptr_array_add (argv_array, g_strdup (args[i]));
+    }
+
+  return TRUE;
+}
 
 gboolean
 flatpak_run_app (const char     *app_ref,
@@ -4210,6 +4344,8 @@ flatpak_run_app (const char     *app_ref,
   g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
   g_auto(GStrv) app_ref_parts = NULL;
+  g_autofree char *commandline = NULL;
+  g_autofree char *doc_mount_path = NULL;
 
   app_ref_parts = flatpak_decompose_ref (app_ref, error);
   if (app_ref_parts == NULL)
@@ -4337,7 +4473,7 @@ flatpak_run_app (const char     *app_ref,
   if (!flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
 
-  add_document_portal_args (argv_array, app_ref_parts[1]);
+  add_document_portal_args (argv_array, app_ref_parts[1], &doc_mount_path);
 
   if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp,
                                          app_info_path, flags,
@@ -4390,10 +4526,15 @@ flatpak_run_app (const char     *app_ref,
   }
 
   g_ptr_array_add (real_argv_array, g_strdup (command));
-  for (i = 0; i < n_args; i++)
-    g_ptr_array_add (real_argv_array, g_strdup (args[i]));
+  if (!add_rest_args (app_ref_parts[1], (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
+                      doc_mount_path,
+                      real_argv_array, args, n_args, error))
+    return FALSE;
 
   g_ptr_array_add (real_argv_array, NULL);
+
+  commandline = flatpak_quote_argv ((const char **) real_argv_array->pdata);
+  g_debug ("Running '%s'", commandline);
 
   if ((flags & FLATPAK_RUN_FLAG_BACKGROUND) != 0)
     {
