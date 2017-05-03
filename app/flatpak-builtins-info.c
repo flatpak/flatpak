@@ -129,8 +129,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (flatpak_fancy_output ())
     {
-      on = "\x1b[1m"; /* bold on */
-      off = "\x1b[22m"; /* bold off */
+      on = FLATPAK_ANSI_BOLD_ON;
+      off = FLATPAK_ANSI_BOLD_OFF; /* bold off */
     }
 
   parts = g_strsplit (ref, "/", 0);

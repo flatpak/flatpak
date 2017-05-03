@@ -208,14 +208,14 @@ flatpak_table_printer_print (FlatpakTablePrinter *printer)
 
   if (flatpak_fancy_output () && printer->titles->len > 0)
     {
-      g_print ("\x1b[1m"); /* bold on */
+      g_print (FLATPAK_ANSI_BOLD_ON);
       for (i = 0; i < printer->titles->len; i++)
         {
           char *title = g_ptr_array_index (printer->titles, i);
 
           g_print ("%s%-*s", (i == 0) ? "" : " ", widths[i], title);
         }
-      g_print ("\x1b[0m"); /* bold off */
+      g_print (FLATPAK_ANSI_BOLD_OFF);
       g_print ("\n");
     }
 

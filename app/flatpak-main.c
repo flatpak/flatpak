@@ -485,8 +485,8 @@ main (int    argc,
       const char *suffix = "";
       if (flatpak_fancy_output ())
         {
-          prefix = "\x1b[31m\x1b[1m"; /* red, bold */
-          suffix = "\x1b[22m\x1b[0m"; /* bold off, color reset */
+          prefix = FLATPAK_ANSI_RED FLATPAK_ANSI_BOLD_ON;
+          suffix = FLATPAK_ANSI_BOLD_OFF FLATPAK_ANSI_COLOR_RESET;
         }
       g_printerr ("%s%s %s%s\n", prefix, _("error:"), suffix, error->message);
       g_error_free (error);

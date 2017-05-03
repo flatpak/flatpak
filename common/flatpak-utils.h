@@ -39,6 +39,12 @@ typedef enum {
 typedef void (*FlatpakLoadUriProgress) (guint64 downloaded_bytes,
                                         gpointer user_data);
 
+
+#define FLATPAK_ANSI_BOLD_ON "\x1b[1m"
+#define FLATPAK_ANSI_BOLD_OFF "\x1b[22m"
+#define FLATPAK_ANSI_RED "\x1b[31m"
+#define FLATPAK_ANSI_COLOR_RESET "\x1b[0m"
+
 /* https://bugzilla.gnome.org/show_bug.cgi?id=766370 */
 #if !GLIB_CHECK_VERSION(2, 49, 3)
 #define FLATPAK_VARIANT_BUILDER_INITIALIZER {{0,}}
