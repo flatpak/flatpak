@@ -2442,6 +2442,9 @@ add_hide_path (GHashTable *hash_table,
   guint old_mode;
   ExportedPath *ep = g_new0 (ExportedPath, 1);
   ExportedPath *old_ep;
+  g_autofree char *canonical = NULL;
+
+  path = canonical = flatpak_canonicalize_filename (path);
 
   old_ep = g_hash_table_lookup (hash_table, path);
   if (old_ep)
@@ -2468,7 +2471,7 @@ _add_expose_path (GHashTable *hash_table,
                   const char *path,
                   int level)
 {
-  g_autofree char *canonical = flatpak_canonicalize_filename (path);
+  g_autofree char *canonical = NULL;
   struct stat st;
   int i;
 
@@ -2478,14 +2481,16 @@ _add_expose_path (GHashTable *hash_table,
       return FALSE;
     }
 
+  path = canonical = flatpak_canonicalize_filename (path);
+
   for (i = 0; dont_export_in[i] != NULL; i++)
     {
       /* Don't expose files in non-mounted dirs like /app or /usr, as
          they are not the same as on the host, and we generally can't
          create the parents for them anyway */
-      if (flatpak_has_path_prefix (canonical, dont_export_in[i]))
+      if (flatpak_has_path_prefix (path, dont_export_in[i]))
         {
-          g_debug ("skipping export for path %s", canonical);
+          g_debug ("skipping export for path %s", path);
           return FALSE;
         }
     }
