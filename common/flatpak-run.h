@@ -88,6 +88,8 @@ typedef enum {
   FLATPAK_RUN_FLAG_FILE_FORWARDING    = (1 << 10),
 } FlatpakRunFlags;
 
+typedef struct _FlatpakExports FlatpakExports;
+
 gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                           char       ***envp_p,
                                           GKeyFile     *metakey,

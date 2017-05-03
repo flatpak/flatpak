@@ -2347,14 +2347,44 @@ typedef struct {
   guint mode;
 } ExportedPath;
 
+struct _FlatpakExports {
+  GHashTable *hash;
+};
+
+static void
+exported_path_free (ExportedPath *exported_path)
+{
+  g_free (exported_path->path);
+  g_free (exported_path);
+}
+
+static FlatpakExports *
+exports_new (void)
+{
+  FlatpakExports *exports = g_new0 (FlatpakExports, 1);
+  exports->hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, (GFreeFunc)exported_path_free);
+  return exports;
+}
+
+static void
+flatpak_exports_free (FlatpakExports *exports)
+{
+  g_hash_table_destroy (exports->hash);
+  g_free (exports);
+}
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free)
+
+/* Returns TRUE if the location of this export
+   is not visible due to parents being exported */
 static gboolean
-path_is_visible (const char **keys,
-                 guint n_keys,
-                 GHashTable *hash_table,
-                 const char *path)
+path_needs_creation (const char **keys,
+                     guint n_keys,
+                     GHashTable *hash_table,
+                     const char *path)
 {
   guint i;
-  gboolean is_visible = FALSE;
+  gboolean needs_creation = TRUE;
 
   /* The keys are sorted so shorter (i.e. parents) are first */
   for (i = 0; i < n_keys; i++)
@@ -2365,13 +2395,13 @@ path_is_visible (const char **keys,
       if (flatpak_has_path_prefix (path, mounted_path))
         {
           if (ep->mode == FAKE_MODE_HIDDEN)
-            is_visible = FALSE;
+            needs_creation = TRUE;
           else if (ep->mode != FAKE_MODE_SYMLINK)
-            is_visible = TRUE;
+            needs_creation = FALSE;
         }
     }
 
-  return is_visible;
+  return needs_creation;
 }
 
 static gint
@@ -2385,15 +2415,15 @@ compare_eps (const ExportedPath *a,
 }
 
 static void
-add_file_args (GPtrArray *argv_array,
-               GHashTable *hash_table)
+exports_add_bwrap_args (FlatpakExports *exports,
+                        GPtrArray *argv_array)
 {
   guint n_keys;
-  g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (hash_table, &n_keys);
+  g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (exports->hash, &n_keys);
   g_autoptr(GList) eps = NULL;
   GList *l;
 
-  eps = g_hash_table_get_values (hash_table);
+  eps = g_hash_table_get_values (exports->hash);
   eps = g_list_sort (eps, (GCompareFunc)compare_eps);
 
   g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
@@ -2405,7 +2435,7 @@ add_file_args (GPtrArray *argv_array,
 
       if (ep->mode == FAKE_MODE_SYMLINK)
         {
-          if (!path_is_visible (keys, n_keys, hash_table, path))
+          if (path_needs_creation (keys, n_keys, exports->hash, path))
             {
               g_autofree char *resolved = flatpak_resolve_link (path, NULL);
               if (resolved)
@@ -2422,7 +2452,7 @@ add_file_args (GPtrArray *argv_array,
              either its not visible (then we can always create the
              dir on the tmpfs, or if there is a pre-existing dir
              we can mount the path on. */
-          if (!path_is_visible (keys, n_keys, hash_table, path) ||
+          if (path_needs_creation (keys, n_keys, exports->hash, path) ||
               g_file_test (path, G_FILE_TEST_IS_DIR))
             add_args (argv_array, "--tmpfs", path, NULL);
         }
@@ -2436,8 +2466,8 @@ add_file_args (GPtrArray *argv_array,
 }
 
 static void
-add_hide_path (GHashTable *hash_table,
-               const char           *path)
+exports_path_hide (FlatpakExports *exports,
+                   const char *path)
 {
   guint old_mode;
   ExportedPath *ep = g_new0 (ExportedPath, 1);
@@ -2446,7 +2476,7 @@ add_hide_path (GHashTable *hash_table,
 
   path = canonical = flatpak_canonicalize_filename (path);
 
-  old_ep = g_hash_table_lookup (hash_table, path);
+  old_ep = g_hash_table_lookup (exports->hash, path);
   if (old_ep)
     old_mode = old_ep->mode;
   else
@@ -2455,7 +2485,7 @@ add_hide_path (GHashTable *hash_table,
   ep->path = g_strdup (path);
   ep->level = 0;
   ep->mode = MAX (old_mode, FAKE_MODE_HIDDEN);
-  g_hash_table_insert (hash_table, ep->path, ep);
+  g_hash_table_insert (exports->hash, ep->path, ep);
 }
 
 /* We use the level to make sure we get the ordering somewhat right.
@@ -2466,10 +2496,10 @@ add_hide_path (GHashTable *hash_table,
  * such as --filesystem=/link --filesystem=/link/dir right.
  */
 static gboolean
-_add_expose_path (GHashTable *hash_table,
-                  FlatpakFilesystemMode mode,
-                  const char *path,
-                  int level)
+_exports_path_expose (FlatpakExports *exports,
+                      FlatpakFilesystemMode mode,
+                      const char *path,
+                      int level)
 {
   g_autofree char *canonical = NULL;
   struct stat st;
@@ -2503,7 +2533,7 @@ _add_expose_path (GHashTable *hash_table,
       S_ISLNK (st.st_mode) ||
       S_ISSOCK (st.st_mode))
     {
-      ExportedPath *old_ep = g_hash_table_lookup (hash_table, path);
+      ExportedPath *old_ep = g_hash_table_lookup (exports->hash, path);
       guint old_mode = 0;
 
       if (old_ep != NULL)
@@ -2513,7 +2543,7 @@ _add_expose_path (GHashTable *hash_table,
         {
           g_autofree char *resolved = flatpak_resolve_link (path, NULL);
 
-          if (resolved && _add_expose_path (hash_table, mode, resolved, level + 1))
+          if (resolved && _exports_path_expose (exports, mode, resolved, level + 1))
             mode = FAKE_MODE_SYMLINK;
           else
             mode = 0;
@@ -2525,7 +2555,7 @@ _add_expose_path (GHashTable *hash_table,
           ep->path = g_strdup (path);
           ep->mode = MAX (old_mode, mode);
           ep->level = level;
-          g_hash_table_insert (hash_table, ep->path, ep);
+          g_hash_table_insert (exports->hash, ep->path, ep);
           return TRUE;
         }
     }
@@ -2534,11 +2564,11 @@ _add_expose_path (GHashTable *hash_table,
 }
 
 static gboolean
-add_expose_path (GHashTable *hash_table,
-                 FlatpakFilesystemMode mode,
-                 const char *path)
+exports_path_expose (FlatpakExports *exports,
+                     FlatpakFilesystemMode mode,
+                     const char *path)
 {
-  return _add_expose_path (hash_table, mode, path, 0);
+  return _exports_path_expose (exports, mode, path, 0);
 }
 
 gboolean
@@ -2562,7 +2592,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   g_autoptr(GError) my_error = NULL;
   FlatpakFilesystemMode fs_mode, home_mode;
   g_autoptr(GFile) user_flatpak_dir = NULL;
-  g_autoptr(GHashTable) fs_paths = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
+  g_autoptr(FlatpakExports) exports = exports_new ();
   g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
   g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
   int sync_fds[2] = {-1, -1};
@@ -2646,11 +2676,11 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                 continue;
 
               path = g_build_filename ("/", dirent->d_name, NULL);
-              add_expose_path (fs_paths, fs_mode, path);
+              exports_path_expose (exports, fs_mode, path);
             }
           closedir (dir);
         }
-      add_expose_path (fs_paths, fs_mode, "/run/media");
+      exports_path_expose (exports, fs_mode, "/run/media");
     }
 
   home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
@@ -2659,7 +2689,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       g_debug ("Allowing homedir access");
       home_access = TRUE;
 
-      add_expose_path (fs_paths, MAX (home_mode, fs_mode), g_get_home_dir ());
+      exports_path_expose (exports, MAX (home_mode, fs_mode), g_get_home_dir ());
     }
 
   if (!home_access)
@@ -2744,7 +2774,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                 g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n",
                                         config_key, path);
 
-              add_expose_path (fs_paths, mode, subpath);
+              exports_path_expose (exports, mode, subpath);
             }
         }
       else if (g_str_has_prefix (filesystem, "~/"))
@@ -2757,7 +2787,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
             g_mkdir_with_parents (path, 0755);
 
           if (g_file_test (path, G_FILE_TEST_EXISTS))
-            add_expose_path (fs_paths, mode, path);
+            exports_path_expose (exports, mode, path);
         }
       else if (g_str_has_prefix (filesystem, "/"))
         {
@@ -2765,7 +2795,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
             g_mkdir_with_parents (filesystem, 0755);
 
           if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
-            add_expose_path (fs_paths, mode, filesystem);
+            exports_path_expose (exports, mode, filesystem);
         }
       else
         {
@@ -2777,18 +2807,18 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
     {
       g_autoptr(GFile) apps_dir = g_file_get_parent (app_id_dir);
       /* Hide the .var/app dir by default (unless explicitly made visible) */
-      add_hide_path (fs_paths, flatpak_file_get_path_cached (apps_dir));
+      exports_path_hide (exports, flatpak_file_get_path_cached (apps_dir));
       /* But let the app write to the per-app dir in it */
-      add_expose_path (fs_paths, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
-                       flatpak_file_get_path_cached (app_id_dir));
+      exports_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                           flatpak_file_get_path_cached (app_id_dir));
     }
 
   /* Hide the flatpak dir by default (unless explicitly made visible) */
   user_flatpak_dir = flatpak_get_user_base_dir_location ();
-  add_hide_path (fs_paths, flatpak_file_get_path_cached (user_flatpak_dir));
+  exports_path_hide (exports, flatpak_file_get_path_cached (user_flatpak_dir));
 
   /* This actually outputs the args for the hide/expose operations above */
-  add_file_args (argv_array, fs_paths);
+  exports_add_bwrap_args (exports, argv_array);
 
   /* Ensure we always have a homedir */
   add_args (argv_array,
