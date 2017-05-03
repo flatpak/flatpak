@@ -356,7 +356,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   if (!flatpak_run_add_environment_args (argv_array, NULL, &envp, app_info_path, run_flags, id,
-                                         app_context, NULL, cancellable, error))
+                                         app_context, NULL, NULL, cancellable, error))
     return FALSE;
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)

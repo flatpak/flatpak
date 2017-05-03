@@ -104,6 +104,7 @@ gboolean flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                            const char     *app_id,
                                            FlatpakContext *context,
                                            GFile          *app_id_dir,
+                                           FlatpakExports **exports_out,
                                            GCancellable *cancellable,
                                            GError      **error);
 char **  flatpak_run_get_minimal_env (gboolean devel);

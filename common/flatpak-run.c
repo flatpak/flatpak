@@ -2465,6 +2465,92 @@ exports_add_bwrap_args (FlatpakExports *exports,
     }
 }
 
+static ExportedPath *
+find_innermost_export (const char **keys,
+                      guint n_keys,
+                      GHashTable *hash_table,
+                      const char *path)
+{
+  guint i;
+  ExportedPath *export = NULL;
+
+  /* The keys are sorted so shorter (i.e. parents) are first */
+  for (i = 0; i < n_keys; i++)
+    {
+      const char *mounted_path = keys[i];
+
+      if (flatpak_has_path_prefix (path, mounted_path))
+        export = g_hash_table_lookup (hash_table, mounted_path);
+    }
+
+  return export;
+}
+
+static gboolean
+path_is_mapped (const char **keys,
+                guint n_keys,
+                GHashTable *hash_table,
+                const char *path)
+{
+  ExportedPath *ep;
+
+  ep = find_innermost_export (keys, n_keys, hash_table, path);
+
+  return
+    ep != NULL &&
+    ep->mode != FAKE_MODE_HIDDEN;
+}
+
+static gboolean
+exports_path_is_visible (FlatpakExports *exports,
+                         const char *path)
+{
+  guint n_keys;
+  g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (exports->hash, &n_keys);
+  g_autofree char *canonical = NULL;
+  g_auto(GStrv) parts = NULL;
+  int i;
+  g_autoptr(GString) path_builder = g_string_new ("");
+  struct stat st;
+
+  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
+
+  path = canonical = flatpak_canonicalize_filename (path);
+
+  parts = g_strsplit (path, "/", -1);
+
+  /* A path is visible in the sandbox if no parent
+   * path element that is mapped in the sandbox is
+   * a symlink, and the final element is mapped.
+   * If any parent is a symlink we resolve that and
+   * continue with that instead.
+   */
+  for (i = 0; parts[i] != NULL; i++)
+    {
+      g_string_append (path_builder, "/");
+      g_string_append (path_builder, parts[i]);
+
+      if (path_is_mapped (keys, n_keys, exports->hash, path_builder->str))
+        {
+          if (lstat (path_builder->str, &st) != 0)
+            return FALSE;
+
+          if (S_ISLNK (st.st_mode))
+            {
+              g_autofree char *resolved = flatpak_resolve_link (path_builder->str, NULL);
+              if (resolved == NULL)
+                return FALSE;
+
+              return exports_path_is_visible (exports, resolved);
+            }
+        }
+      else if (parts[i+1] == NULL)
+        return FALSE; /* Last part was not mapped */
+    }
+
+  return TRUE;
+}
+
 static void
 exports_path_hide (FlatpakExports *exports,
                    const char *path)
@@ -2580,6 +2666,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                   const char     *app_id,
                                   FlatpakContext *context,
                                   GFile          *app_id_dir,
+                                  FlatpakExports **exports_out,
                                   GCancellable   *cancellable,
                                   GError        **error)
 {
@@ -2961,6 +3048,9 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
 
   if (sync_fds[1] != -1)
     close (sync_fds[1]);
+
+  if (exports_out)
+    *exports_out = g_steal_pointer (&exports);
 
   return TRUE;
 }
@@ -4262,6 +4352,7 @@ forward_file (XdpDbusDocuments  *documents,
 
 static gboolean
 add_rest_args (const char  *app_id,
+               FlatpakExports *exports,
                gboolean     file_forwarding,
                const char  *doc_mount_path,
                GPtrArray   *argv_array,
@@ -4320,7 +4411,8 @@ add_rest_args (const char  *app_id,
             file = g_file_new_for_path (args[i]);
         }
 
-      if (file)
+      if (file && !exports_path_is_visible (exports,
+                                            flatpak_file_get_path_cached (file)))
         {
           g_autofree char *doc_id = NULL;
           g_autofree char *basename = NULL;
@@ -4383,6 +4475,7 @@ flatpak_run_app (const char     *app_ref,
   g_autofree char *app_info_path = NULL;
   g_autoptr(FlatpakContext) app_context = NULL;
   g_autoptr(FlatpakContext) overrides = NULL;
+  g_autoptr(FlatpakExports) exports = NULL;
   g_auto(GStrv) app_ref_parts = NULL;
   g_autofree char *commandline = NULL;
   g_autofree char *doc_mount_path = NULL;
@@ -4517,7 +4610,7 @@ flatpak_run_app (const char     *app_ref,
 
   if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp,
                                          app_info_path, flags,
-                                         app_ref_parts[1], app_context, app_id_dir, cancellable, error))
+                                         app_ref_parts[1], app_context, app_id_dir, &exports, cancellable, error))
     return FALSE;
 
   flatpak_run_add_journal_args (argv_array);
@@ -4566,7 +4659,7 @@ flatpak_run_app (const char     *app_ref,
   }
 
   g_ptr_array_add (real_argv_array, g_strdup (command));
-  if (!add_rest_args (app_ref_parts[1], (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
+  if (!add_rest_args (app_ref_parts[1], exports, (flags & FLATPAK_RUN_FLAG_FILE_FORWARDING) != 0,
                       doc_mount_path,
                       real_argv_array, args, n_args, error))
     return FALSE;
