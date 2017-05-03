@@ -91,6 +91,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autofree char *path = NULL;
   g_autofree char *formatted = NULL;
   gboolean friendly = TRUE;
+  g_autofree const char **subpaths = NULL;
 
   context = g_option_context_new (_("NAME [BRANCH] - Get info about installed app and/or runtime"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -140,6 +141,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   size = flatpak_deploy_data_get_installed_size (deploy_data);
   formatted = g_format_size (size);
   path = g_file_get_path (flatpak_deploy_get_dir (deploy));
+  subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
 
   metakey = flatpak_deploy_get_metadata (deploy);
 
@@ -161,6 +163,14 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
           g_autofree char *runtime = NULL;
           runtime = g_key_file_get_string (metakey, "Application", "runtime", error);
           g_print ("%s%s%s %s\n", on, _("Runtime:"), off, runtime ? runtime : "-");
+        }
+      if (subpaths[0] != NULL)
+        {
+          int i;
+          g_print ("%s%s%s ", on, _("Installed subdirectories:"), off);
+          for (i = 0; subpaths[i] != NULL; i++)
+            g_print (i == 0 ? "%s" : ",%s", subpaths[i]);
+          g_print ("\n");
         }
     }
   else
