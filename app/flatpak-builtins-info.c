@@ -127,7 +127,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   if (deploy == NULL)
     return FALSE;
 
-  if (isatty (STDOUT_FILENO))
+  if (flatpak_fancy_output ())
     {
       on = "\x1b[1m"; /* bold on */
       off = "\x1b[22m"; /* bold off */
