@@ -2935,6 +2935,7 @@ static const struct {const char *env;
   {"XDG_CONFIG_DIRS", "/app/etc/xdg:/etc/xdg"},
   {"XDG_DATA_DIRS", "/app/share:/usr/share"},
   {"SHELL", "/bin/sh"},
+  {"TMPDIR", NULL}, /* Unset TMPDIR as it may not exist in the sandbox */
 };
 
 static const struct {const char *env;
@@ -3024,7 +3025,14 @@ flatpak_run_apply_env_default (char **envp)
   int i;
 
   for (i = 0; i < G_N_ELEMENTS (default_exports); i++)
-    envp = g_environ_setenv (envp, default_exports[i].env, default_exports[i].val, TRUE);
+    {
+      const char *value = default_exports[i].val;
+
+      if (value)
+        envp = g_environ_setenv (envp, default_exports[i].env, value, TRUE);
+      else
+        envp = g_environ_unsetenv (envp, default_exports[i].env);
+    }
 
   return envp;
 }
