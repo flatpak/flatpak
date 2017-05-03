@@ -4236,6 +4236,7 @@ add_rest_args (const char  *app_id,
 {
   g_autoptr(XdpDbusDocuments) documents = NULL;
   gboolean forwarding = FALSE;
+  gboolean forwarding_uri = FALSE;
   gboolean can_forward = TRUE;
   int i;
 
@@ -4262,45 +4263,49 @@ add_rest_args (const char  *app_id,
 
   for (i = 0; i < n_args; i++)
     {
-      if (file_forwarding && strcmp (args[i], "@@") == 0)
+      g_autoptr(GFile) file = NULL;
+
+      if (file_forwarding &&
+          (strcmp (args[i], "@@") == 0 ||
+           strcmp (args[i], "@@u") == 0))
         {
+          forwarding_uri = strcmp (args[i], "@@u") == 0;
           forwarding = !forwarding;
           continue;
         }
 
       if (can_forward && forwarding)
         {
-          g_autofree char *doc_id = NULL;
-          g_autofree char *basename = NULL;
-          gboolean file_uri;
-          const char *file;
-          char *doc_path;
-
-          if (g_str_has_prefix (args[i], "file:"))
+          if (forwarding_uri)
             {
-              file_uri = TRUE;
-              file = args[i] + strlen ("file:");
+              if (g_str_has_prefix (args[i], "file:"))
+                file = g_file_new_for_uri (args[i]);
             }
           else
-            {
-              file_uri = FALSE;
-              file = args[i];
-            }
+            file = g_file_new_for_path (args[i]);
+        }
 
-          if (!forward_file (documents, app_id, file, &doc_id, error))
+      if (file)
+        {
+          g_autofree char *doc_id = NULL;
+          g_autofree char *basename = NULL;
+          char *doc_path;
+          if (!forward_file (documents, app_id, flatpak_file_get_path_cached (file),
+                             &doc_id, error))
             return FALSE;
 
-          basename = g_path_get_basename (args[i]);
+          basename = g_file_get_basename (file);
           doc_path = g_build_filename (doc_mount_path, doc_id, basename, NULL);
 
-          if (file_uri)
+          if (forwarding_uri)
             {
               g_autofree char *path = doc_path;
-              doc_path = g_strconcat ("file:", path, NULL);
+              doc_path = g_filename_to_uri (path, NULL, NULL);
+              /* This should never fail */
+              g_assert (doc_path != NULL);
             }
 
           g_debug ("Forwarding file '%s' as '%s' to %s", args[i], doc_path, app_id);
-
           g_ptr_array_add (argv_array, doc_path);
         }
       else

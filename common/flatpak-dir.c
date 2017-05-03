@@ -3426,9 +3426,10 @@ export_desktop_file (const char   *app,
             {
               g_autofree char *arg = maybe_quote (old_argv[i]);
 
-              if (strcasecmp (arg, "%f") == 0 ||
-                  strcasecmp (arg, "%u") == 0)
+              if (strcasecmp (arg, "%f") == 0)
                 g_string_append_printf (new_exec, " @@ %s @@", arg);
+              else if (strcasecmp (arg, "%u") == 0)
+                g_string_append_printf (new_exec, " @@u %s @@", arg);
               else
                 g_string_append_printf (new_exec, " %s", arg);
             }
