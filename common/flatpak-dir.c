@@ -592,10 +592,9 @@ flatpak_get_user_base_dir_location (void)
 static GFile *
 flatpak_get_user_cache_dir_location (void)
 {
-  g_autoptr(GFile) base_dir = NULL;
+  g_autoptr(GFile) base_dir = g_file_new_for_path (g_get_user_cache_dir ());
 
-  base_dir = flatpak_get_user_base_dir_location ();
-  return g_file_get_child (base_dir, "system-cache");
+  return g_file_resolve_relative_path (base_dir, "flatpak/system-cache");
 }
 
 static GFile *
