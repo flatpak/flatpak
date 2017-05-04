@@ -529,6 +529,8 @@ main (int    argc,
     }
 
   setup_file_monitor ("/etc/resolv.conf");
+  setup_file_monitor ("/etc/host.conf");
+  setup_file_monitor ("/etc/hosts");
   setup_file_monitor ("/etc/localtime");
 
   flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;
