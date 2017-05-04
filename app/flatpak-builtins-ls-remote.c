@@ -169,8 +169,8 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
   flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
   flatpak_table_printer_set_column_title (printer, 1, _("Commit"));
-  flatpak_table_printer_set_column_title (printer, 1, _("Installed size"));
-  flatpak_table_printer_set_column_title (printer, 1, _("Download size"));
+  flatpak_table_printer_set_column_title (printer, 2, _("Installed size"));
+  flatpak_table_printer_set_column_title (printer, 3, _("Download size"));
 
   for (i = 0; i < n_keys; i++)
     {
