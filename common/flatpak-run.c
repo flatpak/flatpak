@@ -2423,6 +2423,18 @@ add_hide_path (GHashTable *hash_table,
   g_hash_table_insert (hash_table, ep->path, ep);
 }
 
+static gboolean
+never_export_as_symlink (const char *path)
+{
+  /* Don't export /tmp as a symlink even if it is on the host, because
+     that will fail with the pre-existing directory we created for /tmp,
+     and anyway, it being a symlink is not useful in the sandbox */
+  if (strcmp (path, "/tmp") == 0)
+    return TRUE;
+
+  return FALSE;
+}
+
 /* We use the level to make sure we get the ordering somewhat right.
  * For instance if /symlink -> /z_dir is exported, then we want to create
  * /z_dir before /symlink, because otherwise an export like /symlink/foo
@@ -2472,7 +2484,7 @@ _add_expose_path (GHashTable *hash_table,
       if (old_ep != NULL)
         old_mode = old_ep->mode;
 
-      if (S_ISLNK (st.st_mode))
+      if (S_ISLNK (st.st_mode) && !never_export_as_symlink (path))
         {
           g_autofree char *resolved = flatpak_resolve_link (path, NULL);
 
