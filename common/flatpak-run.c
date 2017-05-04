@@ -3544,12 +3544,10 @@ add_monitor_path_args (gboolean use_session_helper,
     {
       add_args (argv_array,
                 "--ro-bind", monitor_path, "/run/host/monitor",
-                NULL);
-      add_args (argv_array,
                 "--symlink", "/run/host/monitor/localtime", "/etc/localtime",
-                NULL);
-      add_args (argv_array,
                 "--symlink", "/run/host/monitor/resolv.conf", "/etc/resolv.conf",
+                "--symlink", "/run/host/monitor/host.conf", "/etc/host.conf",
+                "--symlink", "/run/host/monitor/hosts", "/etc/hosts",
                 NULL);
     }
   else
@@ -3596,11 +3594,17 @@ add_monitor_path_args (gboolean use_session_helper,
         }
 
       if (g_file_test ("/etc/resolv.conf", G_FILE_TEST_EXISTS))
-        {
-          add_args (argv_array,
-                    "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
-                    NULL);
-        }
+        add_args (argv_array,
+                  "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
+                  NULL);
+      if (g_file_test ("/etc/host.conf", G_FILE_TEST_EXISTS))
+        add_args (argv_array,
+                  "--ro-bind", "/etc/host.conf", "/etc/host.conf",
+                  NULL);
+      if (g_file_test ("/etc/hosts", G_FILE_TEST_EXISTS))
+        add_args (argv_array,
+                  "--ro-bind", "/etc/hosts", "/etc/hosts",
+                  NULL);
     }
 }
 
@@ -4229,6 +4233,8 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
               strcmp (dent->d_name, "group") == 0 ||
               strcmp (dent->d_name, "machine-id") == 0 ||
               strcmp (dent->d_name, "resolv.conf") == 0 ||
+              strcmp (dent->d_name, "host.conf") == 0 ||
+              strcmp (dent->d_name, "hosts") == 0 ||
               strcmp (dent->d_name, "localtime") == 0)
             continue;
 
