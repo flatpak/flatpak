@@ -246,11 +246,11 @@
         <refsect2>
             <title>[Extension NAME]</title>
             <para>
-                Runtimes and applications can define extensions, which are optional,
-                additional runtimes to be mounted at a specified location inside
-                the sandbox when they are present on the system. Typical uses for
-                extensions include translations for applications, or debuginfo
-                for sdks. The name of the extension is specified as part of the
+                Runtimes and applications can define extension points, which allow
+                optional, additional runtimes to be mounted at a specified location
+                inside the sandbox when they are present on the system. Typical uses
+                for extension points include translations for applications, or debuginfo
+                for sdks. The name of the extension point is specified as part of the
                 group heading.
             </para>
             <variablelist>
@@ -258,7 +258,7 @@
                     <term><option>directory</option> (string)</term>
                     <listitem><para>
                         The relative path at which the extension will be mounted in
-                        the sandbox. If the extension is for an application, the
+                        the sandbox. If the extension point is for an application, the
                         path is relative to <filename>/app</filename>, otherwise
                         it is relative to <filename>/usr</filename>. This key
                         is mandatory.
@@ -269,7 +269,7 @@
                     <listitem><para>
                         The branch to use when looking for the extension. If this is
                         not specified, it defaults to the branch of the application or
-                        runtime that the extension is for.
+                        runtime that the extension point is for.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -277,20 +277,20 @@
                     <listitem><para>
                         The branches to use when looking for the extension. If this is
                         not specified, it defaults to the branch of the application or
-                        runtime that the extension is for.
+                        runtime that the extension point is for.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>add-ld-path</option> (string)</term>
                     <listitem><para>
-                        A path relative to the extension directory that will be appended
+                        A path relative to the extension point directory that will be appended
                         to LD_LIBRARY_PATH.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>merge-dirs</option> (string)</term>
                     <listitem><para>
-                        A list of relative paths of directories below the extension directory
+                        A list of relative paths of directories below the extension point directory
                         that will be merged.
                     </para></listitem>
                 </varlistentry>
@@ -299,7 +299,7 @@
                     <listitem><para>
                         A condition that must be true for the extension to be auto-downloaded.
                         The only currently recognized value is active-gl-driver, which is true
-                        if the name of the active GL driver matches the extension basename.
+                        if the name of the active GL driver matches the extension point basename.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -307,7 +307,7 @@
                     <listitem><para>
                         A condition that must be true for the extension to be enabled.
                         The only currently recognized value is active-gl-driver, which is true
-                        if the name of the active GL driver matches the extension basename.
+                        if the name of the active GL driver matches the extension point basename.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -323,23 +323,22 @@
                     <term><option>subdirectories</option> (boolean)</term>
                     <listitem><para>
                         If this key is set to true, then flatpak will look for
-                        extensions whose name is a prefix of the extension name, and
+                        extensions whose name is a prefix of the extension point name, and
                         mount them at the corresponding name below the subdirectory.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>no-autodownload</option> (boolean)</term>
                     <listitem><para>
-                        Whether to automatically download this extension
-                        when updating or installing a 'related' application
-                        or runtime.
+                        Whether to automatically download extensions matching this extension
+                        point when updating or installing a 'related' application or runtime.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>autodelete</option> (boolean)</term>
                     <listitem><para>
-                        Whether to automatically delete this extension
-                        when deleting a 'related' application or runtime.
+                        Whether to automatically delete extensions matching this extension
+                        point when deleting a 'related' application or runtime.
                     </para></listitem>
                 </varlistentry>
             </variablelist>
