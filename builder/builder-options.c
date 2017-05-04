@@ -658,7 +658,7 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
 
   ldflags = builder_options_get_ldflags (self, context);
   if (ldflags)
-    envp = g_environ_setenv (envp, "LDFLAGS", cxxflags, TRUE);
+    envp = g_environ_setenv (envp, "LDFLAGS", ldflags, TRUE);
 
   return envp;
 }
