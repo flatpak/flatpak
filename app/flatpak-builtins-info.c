@@ -78,6 +78,8 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(FlatpakDeploy) deploy = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   const char *commit = NULL;
+  const char *latest = NULL;
+  const char *alt_id = NULL;
   const char *pref = NULL;
   const char *default_branch = NULL;
   const char *origin = NULL;
@@ -137,7 +139,9 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   parts = g_strsplit (ref, "/", 0);
 
   commit = flatpak_deploy_data_get_commit (deploy_data);
+  alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
   origin = flatpak_deploy_data_get_origin (deploy_data);
+  latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
   size = flatpak_deploy_data_get_installed_size (deploy_data);
   formatted = g_format_size (size);
   path = g_file_get_path (flatpak_deploy_get_dir (deploy));
@@ -155,7 +159,15 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
       g_print ("%s%s%s %s\n", on, _("Arch:"), off, parts[2]);
       g_print ("%s%s%s %s\n", on, _("Branch:"), off, parts[3]);
       g_print ("%s%s%s %s\n", on, _("Origin:"), off, origin ? origin : "-");
-      g_print ("%s%s%s %s\n", on, _("Commit:"), off, commit);
+      if (strcmp (commit, latest) != 0)
+        {
+          g_print ("%s%s%s %s\n", on, _("Active commit:"), off, commit);
+          g_print ("%s%s%s %s\n", on, _("Latest commit:"), off, latest);
+        }
+      else
+        g_print ("%s%s%s %s\n", on, _("Commit:"), off, commit);
+      if (alt_id)
+        g_print ("%s%s%s %s\n", on, _("alt-id:"), off, alt_id);
       g_print ("%s%s%s %s\n", on, _("Location:"), off, path);
       g_print ("%s%s%s %s\n", on, _("Installed size:"), off, formatted);
       if (strcmp (parts[0], "app") == 0)
