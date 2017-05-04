@@ -4182,6 +4182,11 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
             "--ro-bind", "/sys/devices", "/sys/devices",
             NULL);
 
+  if (flags & FLATPAK_RUN_FLAG_DIE_WITH_PARENT)
+    add_args (argv_array,
+              "--die-with-parent",
+              NULL);
+
   if (flags & FLATPAK_RUN_FLAG_WRITABLE_ETC)
     add_args (argv_array,
               "--dir", "/usr/etc",
