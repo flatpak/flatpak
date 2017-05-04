@@ -482,9 +482,8 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
       g_assert (remote != NULL);
       if (dir_ref_is_installed (self->dir, ref, NULL, NULL))
         {
-          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                       _("%s already installed"), pref);
-          return FALSE;
+          g_printerr (_("%s already installed, skipping\n"), pref);
+          return TRUE;
         }
     }
 
