@@ -525,6 +525,11 @@ gboolean flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                                   const char   *remote,
                                                   GCancellable *cancellable,
                                                   GError      **error);
+gboolean flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
+                                                              const char   *remote,
+                                                              GVariant     *summary,
+                                                              GCancellable *cancellable,
+                                                              GError      **error);
 gboolean flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                                       const char   *remote_name,
                                       const char   *ref,

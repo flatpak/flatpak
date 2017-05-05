@@ -7678,10 +7678,11 @@ flatpak_dir_fetch_remote_summary (FlatpakDir    *self,
 }
 
 gboolean
-flatpak_dir_update_remote_configuration (FlatpakDir   *self,
-                                         const char   *remote,
-                                         GCancellable *cancellable,
-                                         GError      **error)
+flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
+                                                     const char   *remote,
+                                                     GVariant     *summary,
+                                                     GCancellable *cancellable,
+                                                     GError      **error)
 {
   /* We only support those configuration parameters that can
      be set in the server when building the repo (see the
@@ -7691,15 +7692,11 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
     "xa.default-branch", NULL
   };
 
-  g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) extensions = NULL;
   g_autoptr(GPtrArray) updated_params = NULL;
   GVariantIter iter;
 
   updated_params = g_ptr_array_new_with_free_func (g_free);
-  summary = fetch_remote_summary_file (self, remote, cancellable, error);
-  if (summary == NULL)
-    return FALSE;
 
   extensions = g_variant_get_child_value (summary, 1);
 
@@ -7796,6 +7793,21 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
   }
 
   return TRUE;
+}
+
+gboolean
+flatpak_dir_update_remote_configuration (FlatpakDir   *self,
+                                         const char   *remote,
+                                         GCancellable *cancellable,
+                                         GError      **error)
+{
+  g_autoptr(GVariant) summary = NULL;
+
+  summary = fetch_remote_summary_file (self, remote, cancellable, error);
+  if (summary == NULL)
+    return FALSE;
+
+  return flatpak_dir_update_remote_configuration_for_summary (self, remote, summary, cancellable, error);
 }
 
 static gboolean
