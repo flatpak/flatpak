@@ -7746,12 +7746,18 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
         const char *key = g_ptr_array_index (updated_params, i);
         const char *new_val = g_ptr_array_index (updated_params, i+1);
         g_autofree char *current_val = NULL;
+        g_autofree char *is_set_key = g_strconcat (key, "-is-set", NULL);
+        gboolean is_set = FALSE;
 
-        current_val = g_key_file_get_string (config, group, key, NULL);
-        if (g_strcmp0 (current_val, new_val) != 0)
+        is_set = g_key_file_get_boolean (config, group, is_set_key, NULL);
+        if (!is_set)
           {
-            has_changed = TRUE;
-            g_key_file_set_string (config, group, key, new_val);
+            current_val = g_key_file_get_string (config, group, key, NULL);
+            if (g_strcmp0 (current_val, new_val) != 0)
+              {
+                has_changed = TRUE;
+                g_key_file_set_string (config, group, key, new_val);
+              }
           }
 
         i += 2;
