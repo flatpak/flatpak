@@ -7609,11 +7609,13 @@ flatpak_dir_list_remote_refs (FlatpakDir   *self,
 static GVariant *
 fetch_remote_summary_file (FlatpakDir   *self,
                            const char   *remote,
+                           GBytes     **summary_sig_bytes_out,
                            GCancellable *cancellable,
                            GError      **error)
 {
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GBytes) summary_sig_bytes = NULL;
 
   if (error == NULL)
     error = &my_error;
@@ -7622,10 +7624,13 @@ fetch_remote_summary_file (FlatpakDir   *self,
     return NULL;
 
   if (!flatpak_dir_remote_fetch_summary (self, remote,
-                                         &summary_bytes, NULL,
+                                         &summary_bytes, &summary_sig_bytes,
                                          cancellable, error))
     return NULL;
 
+
+  if (summary_sig_bytes_out != NULL)
+    *summary_sig_bytes_out = g_steal_pointer (&summary_sig_bytes);
   return g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
                                                        summary_bytes, FALSE));
 }
@@ -7641,7 +7646,7 @@ flatpak_dir_fetch_remote_title (FlatpakDir   *self,
   g_autoptr(GVariant) extensions = NULL;
   g_autofree char *title = NULL;
 
-  summary = fetch_remote_summary_file (self, remote, cancellable, error);
+  summary = fetch_remote_summary_file (self, remote, NULL, cancellable, error);
   if (summary == NULL)
     return NULL;
 
@@ -7669,7 +7674,7 @@ flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
   g_autoptr(GVariant) extensions = NULL;
   g_autofree char *default_branch = NULL;
 
-  summary = fetch_remote_summary_file (self, remote, cancellable, error);
+  summary = fetch_remote_summary_file (self, remote, NULL, cancellable, error);
   if (summary == NULL)
     return NULL;
 
@@ -7692,13 +7697,15 @@ flatpak_dir_fetch_remote_summary (FlatpakDir    *self,
                                   GCancellable  *cancellable,
                                   GError       **error)
 {
-  return fetch_remote_summary_file (self, remote, cancellable, error);
+  return fetch_remote_summary_file (self, remote, NULL, cancellable, error);
 }
 
 gboolean
 flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
                                                      const char   *remote,
                                                      GVariant     *summary,
+                                                     gboolean      dry_run,
+                                                     gboolean     *has_changed_out,
                                                      GCancellable *cancellable,
                                                      GError      **error)
 {
@@ -7778,7 +7785,10 @@ flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
         i += 2;
       }
 
-    if (!has_changed)
+    if (has_changed_out)
+      *has_changed_out = has_changed;
+
+    if (dry_run || !has_changed)
       return TRUE;
 
     if (flatpak_dir_use_system_helper (self, NULL))
@@ -7820,12 +7830,64 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
                                          GError      **error)
 {
   g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GBytes) summary_sig_bytes = NULL;
 
-  summary = fetch_remote_summary_file (self, remote, cancellable, error);
+  summary = fetch_remote_summary_file (self, remote, &summary_sig_bytes, cancellable, error);
   if (summary == NULL)
     return FALSE;
 
-  return flatpak_dir_update_remote_configuration_for_summary (self, remote, summary, cancellable, error);
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      gboolean has_changed = FALSE;
+
+      if (!flatpak_dir_update_remote_configuration_for_summary (self, remote, summary, TRUE, &has_changed, cancellable, error))
+        return FALSE;
+
+      if (summary_sig_bytes == NULL)
+        return flatpak_fail (error, _("Can't update remote configuration as user, no GPG signature exist"));
+
+      if (has_changed)
+        {
+          g_autoptr(GBytes) bytes = g_variant_get_data_as_bytes (summary);
+          glnx_fd_close int summary_fd = -1;
+          g_autofree char *summary_path = NULL;
+          glnx_fd_close int summary_sig_fd = -1;
+          g_autofree char *summary_sig_path = NULL;
+          FlatpakSystemHelper *system_helper;
+          const char *installation;
+
+          system_helper = flatpak_dir_get_system_helper (self);
+          g_assert (system_helper != NULL);
+
+          summary_fd = g_file_open_tmp ("remote-summary.XXXXXX", &summary_path, error);
+          if (summary_fd == -1)
+            return FALSE;
+          if (glnx_loop_write (summary_fd, g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes)) < 0)
+            return glnx_throw_errno (error);
+
+          summary_sig_fd = g_file_open_tmp ("remote-summary-sig.XXXXXX", &summary_sig_path, error);
+          if (summary_sig_fd == -1)
+            return FALSE;
+          if (glnx_loop_write (summary_sig_fd, g_bytes_get_data (summary_sig_bytes, NULL), g_bytes_get_size (summary_sig_bytes)) < 0)
+            return glnx_throw_errno (error);
+
+          installation = flatpak_dir_get_id (self);
+
+          g_debug ("Calling system helper: UpdateRemote");
+          if (!flatpak_system_helper_call_update_remote_sync (system_helper, 0, remote,
+                                                              installation ? installation : "",
+                                                              summary_path, summary_sig_path,
+                                                              cancellable, error))
+            return FALSE;
+
+          unlink (summary_path);
+          unlink (summary_sig_path);
+        }
+
+      return TRUE;
+    }
+
+  return flatpak_dir_update_remote_configuration_for_summary (self, remote, summary, FALSE, NULL, cancellable, error);
 }
 
 static gboolean

@@ -99,6 +99,14 @@
       <arg type='s' name='installation' direction='in'/>
     </method>
 
+    <method name="UpdateRemote">
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='remote' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+      <arg type='ay' name='summary_path' direction='in'/>
+      <arg type='ay' name='summary_sig_path' direction='in'/>
+    </method>
+
   </interface>
 
 </node>

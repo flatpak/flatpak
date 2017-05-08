@@ -95,6 +95,12 @@ typedef enum {
 #define FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_ALL (FLATPAK_HELPER_CONFIGURE_REMOTE_FLAGS_FORCE_REMOVE)
 
 typedef enum {
+  FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_NONE = 0,
+} FlatpakHelperUpdateRemoteFlags;
+
+#define FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_ALL (0)
+
+typedef enum {
   FLATPAK_PULL_FLAGS_NONE = 0,
   FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA = 1 << 0,
   FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA = 1 << 1,
@@ -528,6 +534,8 @@ gboolean flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 gboolean flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
                                                               const char   *remote,
                                                               GVariant     *summary,
+                                                              gboolean      dry_run,
+                                                              gboolean     *has_changed_out,
                                                               GCancellable *cancellable,
                                                               GError      **error);
 gboolean flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
