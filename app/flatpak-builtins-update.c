@@ -235,6 +235,9 @@ flatpak_builtin_update (int           argc,
         }
     }
 
+  if (!flatpak_transaction_update_metadata (transaction, n_prefs == 0, cancellable, error))
+    return FALSE;
+
   if (!flatpak_transaction_run (transaction, FALSE, cancellable, error))
     return FALSE;
 

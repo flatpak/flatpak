@@ -277,6 +277,9 @@ install_bundle (FlatpakDir *dir,
   if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
     return FALSE;
 
+  if (!flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
+    return FALSE;
+
   if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
     return FALSE;
 

@@ -595,6 +595,51 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
 }
 
 gboolean
+flatpak_transaction_update_metadata (FlatpakTransaction  *self,
+                                     gboolean             all_remotes,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
+{
+  g_auto(GStrv) remotes = NULL;
+  int i;
+  GList *l;
+
+  /* Collect all dir+remotes used in this transaction */
+
+  if (all_remotes)
+    {
+      remotes = flatpak_dir_list_remotes (self->dir, NULL, error);
+      if (remotes == NULL)
+        return FALSE;
+    }
+  else
+    {
+      g_autoptr(GHashTable) ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+      for (l = self->ops; l != NULL; l = l->next)
+        {
+          FlatpakTransactionOp *op = l->data;
+          g_hash_table_add (ht, g_strdup (op->remote));
+        }
+      remotes = (char **)g_hash_table_get_keys_as_array (ht, NULL);
+      g_hash_table_steal_all (ht); /* Move ownership to remotes */
+    }
+
+  /* Update metadata for said remotes */
+  for (i = 0; remotes[i] != NULL; i++)
+    {
+      char *remote = remotes[i];
+
+      g_debug ("Updating remote metadata for %s", remote);
+      if (!flatpak_dir_update_remote_configuration (self->dir, remote, cancellable, error))
+        return FALSE;
+    }
+
+  /* Reload changed configuration */
+  if (!flatpak_dir_recreate_repo (self->dir, cancellable, error))
+    return FALSE;
+}
+
+gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
                          gboolean stop_on_first_error,
                          GCancellable *cancellable,

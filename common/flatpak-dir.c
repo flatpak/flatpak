@@ -7831,6 +7831,11 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 {
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GBytes) summary_sig_bytes = NULL;
+  gboolean is_oci;
+
+  is_oci = flatpak_dir_get_remote_oci (self, remote);
+  if (is_oci)
+    return TRUE;
 
   summary = fetch_remote_summary_file (self, remote, &summary_sig_bytes, cancellable, error);
   if (summary == NULL)
@@ -7844,7 +7849,10 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
         return FALSE;
 
       if (summary_sig_bytes == NULL)
-        return flatpak_fail (error, _("Can't update remote configuration as user, no GPG signature exist"));
+        {
+          g_debug ("Can't update remote configuration as user, no GPG signature)");
+          return TRUE;
+        }
 
       if (has_changed)
         {

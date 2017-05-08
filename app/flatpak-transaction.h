@@ -36,6 +36,10 @@ FlatpakTransaction *flatpak_transaction_new         (FlatpakDir          *dir,
                                                      gboolean             add_deps,
                                                      gboolean             add_related);
 void                flatpak_transaction_free        (FlatpakTransaction  *self);
+gboolean            flatpak_transaction_update_metadata (FlatpakTransaction  *self,
+                                                         gboolean             all_remotes,
+                                                         GCancellable        *cancellable,
+                                                         GError             **error);
 gboolean            flatpak_transaction_run         (FlatpakTransaction  *self,
                                                      gboolean             stop_on_first_errror,
                                                      GCancellable        *cancellable,
