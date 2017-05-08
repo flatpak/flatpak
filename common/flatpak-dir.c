@@ -3388,6 +3388,9 @@ export_desktop_file (const char   *app,
                                       "X-Flatpak-Tags",
                                       (const char * const *) tags, length);
         }
+
+      /* Add a marker so consumers can easily find out that this launches a sandbox */
+      g_key_file_set_boolean (keyfile, "Desktop Entry", "X-Flatpak", TRUE);
     }
 
   groups = g_key_file_get_groups (keyfile, NULL);
