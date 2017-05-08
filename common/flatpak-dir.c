@@ -61,12 +61,14 @@ static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
 static gboolean flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                                   const char   *name,
                                                   GBytes      **out_summary,
+                                                  GBytes      **out_summary_sig,
                                                   GCancellable *cancellable,
                                                   GError      **error);
 
 typedef struct
 {
   GBytes *bytes;
+  GBytes *bytes_sig;
   char *remote;
   char *url;
   guint64 time;
@@ -2250,7 +2252,7 @@ flatpak_dir_pull (FlatpakDir          *self,
       g_autoptr(GVariant) summary = NULL;
 
       if (!flatpak_dir_remote_fetch_summary (self, repository,
-                                             &summary_bytes,
+                                             &summary_bytes, NULL,
                                              cancellable, error))
         return FALSE;
 
@@ -4869,7 +4871,7 @@ flatpak_dir_update (FlatpakDir          *self,
             }
         }
       else if (flatpak_dir_remote_fetch_summary (self, remote_name,
-                                                 &summary_bytes,
+                                                 &summary_bytes, NULL,
                                                  cancellable, NULL))
         {
           g_autoptr(GVariant) summary =
@@ -5716,6 +5718,8 @@ static void
 cached_summary_free (CachedSummary *summary)
 {
   g_bytes_unref (summary->bytes);
+  if (summary->bytes_sig)
+    g_bytes_unref (summary->bytes_sig);
   g_free (summary->remote);
   g_free (summary->url);
   g_free (summary);
@@ -5723,24 +5727,29 @@ cached_summary_free (CachedSummary *summary)
 
 static CachedSummary *
 cached_summary_new (GBytes *bytes,
+                    GBytes *bytes_sig,
                     const char *remote,
                     const char *url)
 {
   CachedSummary *summary = g_new0 (CachedSummary, 1);
   summary->bytes = g_bytes_ref (bytes);
+  if (bytes_sig)
+    summary->bytes_sig = g_bytes_ref (bytes_sig);
   summary->url = g_strdup (url);
   summary->remote = g_strdup (remote);
   summary->time = g_get_monotonic_time ();
   return summary;
 }
 
-static GBytes *
+static gboolean
 flatpak_dir_lookup_cached_summary (FlatpakDir  *self,
+                                   GBytes **bytes_out,
+                                   GBytes **bytes_sig_out,
                                    const char  *name,
                                    const char  *url)
 {
   CachedSummary *summary;
-  GBytes *res = NULL;
+  gboolean res = FALSE;
 
   G_LOCK (cache);
 
@@ -5755,7 +5764,15 @@ flatpak_dir_lookup_cached_summary (FlatpakDir  *self,
           strcmp (url, summary->url) == 0)
         {
           g_debug ("Using cached summary for remote %s", name);
-          res = g_bytes_ref (summary->bytes);
+          *bytes_out = g_bytes_ref (summary->bytes);
+          if (bytes_sig_out)
+            {
+              if (summary->bytes_sig)
+                *bytes_sig_out = g_bytes_ref (summary->bytes_sig);
+              else
+                *bytes_sig_out = NULL;
+            }
+          res = TRUE;
         }
     }
 
@@ -5767,6 +5784,7 @@ flatpak_dir_lookup_cached_summary (FlatpakDir  *self,
 static void
 flatpak_dir_cache_summary (FlatpakDir  *self,
                            GBytes      *bytes,
+                           GBytes      *bytes_sig,
                            const char  *name,
                            const char  *url)
 {
@@ -5781,7 +5799,7 @@ flatpak_dir_cache_summary (FlatpakDir  *self,
   /* This was already initialized in the cache-miss lookup */
   g_assert (self->summary_cache != NULL);
 
-  summary = cached_summary_new (bytes, name, url);
+  summary = cached_summary_new (bytes, bytes_sig, name, url);
   g_hash_table_replace (self->summary_cache, summary->remote, summary);
 
   G_UNLOCK (cache);
@@ -5886,6 +5904,7 @@ static gboolean
 flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                   const char   *name,
                                   GBytes      **out_summary,
+                                  GBytes      **out_summary_sig,
                                   GCancellable *cancellable,
                                   GError      **error)
 {
@@ -5893,7 +5912,8 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   gboolean is_local;
   g_autoptr(GError) local_error = NULL;
   g_autofree char *oci_uri = NULL;
-  GBytes *summary;
+  g_autoptr(GBytes) summary = NULL;
+  g_autoptr(GBytes) summary_sig = NULL;
 
   if (!ostree_repo_remote_get_url (self->repo, name, &url, error))
     return FALSE;
@@ -5903,12 +5923,8 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   /* No caching for local files */
   if (!is_local)
     {
-      GBytes *cached_summary = flatpak_dir_lookup_cached_summary (self, name, url);
-      if (cached_summary)
-        {
-          *out_summary = cached_summary;
-          return TRUE;
-        }
+      if (flatpak_dir_lookup_cached_summary (self, out_summary, out_summary_sig, name, url))
+        return TRUE;
     }
 
   /* Seems ostree asserts if this is NULL */
@@ -5928,7 +5944,7 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
   else
     {
       if (!ostree_repo_remote_fetch_summary (self->repo, name,
-                                             &summary, NULL,
+                                             &summary, &summary_sig,
                                              cancellable,
                                              error))
         return FALSE;
@@ -5939,9 +5955,11 @@ flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                          "Check the URL passed to remote-add was valid\n", name);
 
   if (!is_local)
-    flatpak_dir_cache_summary (self, summary, name, url);
+    flatpak_dir_cache_summary (self, summary, summary_sig, name, url);
 
-  *out_summary = summary;
+  *out_summary = g_steal_pointer (&summary);
+  if (out_summary_sig)
+    *out_summary_sig = g_steal_pointer (&summary_sig);
 
   return TRUE;
 }
@@ -5956,7 +5974,7 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
   g_autoptr(GError) local_error = NULL;
 
   if (!flatpak_dir_remote_fetch_summary (self, remote,
-                                         &summary_bytes,
+                                         &summary_bytes, NULL,
                                          NULL, &local_error))
     {
       g_debug ("Can't get summary for remote %s: %s\n", remote, local_error->message);
@@ -5986,7 +6004,7 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
   GVariant *child;
 
   if (!flatpak_dir_remote_fetch_summary (self, remote_name,
-                                         &summary_bytes,
+                                         &summary_bytes, NULL,
                                          cancellable, error))
     return FALSE;
 
@@ -7362,7 +7380,7 @@ fetch_remote_summary_file (FlatpakDir   *self,
     return NULL;
 
   if (!flatpak_dir_remote_fetch_summary (self, remote,
-                                         &summary_bytes,
+                                         &summary_bytes, NULL,
                                          cancellable, error))
     return NULL;
 
@@ -7633,7 +7651,7 @@ flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
     return FALSE;
 
   if (!flatpak_dir_remote_fetch_summary (self, remote_name,
-                                         &summary_bytes,
+                                         &summary_bytes, NULL,
                                          cancellable, error))
     return FALSE;
 
@@ -7776,7 +7794,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
     return g_steal_pointer (&related);  /* Empty url, silently disables updates */
 
   if (!flatpak_dir_remote_fetch_summary (self, remote_name,
-                                         &summary_bytes,
+                                         &summary_bytes, NULL,
                                          cancellable, error))
     return NULL;
 
