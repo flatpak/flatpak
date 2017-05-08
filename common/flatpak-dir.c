@@ -5960,7 +5960,7 @@ flatpak_dir_lookup_cached_summary (FlatpakDir  *self,
       if ((now - summary->time) < (1000 * 1000 * (SUMMARY_CACHE_TIMEOUT_SEC)) &&
           strcmp (url, summary->url) == 0)
         {
-          g_debug ("Using cached summary for remote %s", name);
+          /* g_debug ("Using cached summary for remote %s", name); */
           *bytes_out = g_bytes_ref (summary->bytes);
           if (bytes_sig_out)
             {
