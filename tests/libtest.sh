@@ -80,6 +80,7 @@ mkdir -p ${TEST_DATA_DIR}/system
 export FLATPAK_SYSTEM_DIR=${TEST_DATA_DIR}/system
 export FLATPAK_SYSTEM_HELPER_ON_SESSION=1
 
+export XDG_CACHE_HOME=${TEST_DATA_DIR}/home/cache
 export XDG_DATA_HOME=${TEST_DATA_DIR}/home/share
 export XDG_RUNTIME_DIR=${TEST_DATA_DIR}/runtime
 
