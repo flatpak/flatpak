@@ -703,31 +703,47 @@ flatpak_transaction_run (FlatpakTransaction *self,
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
         {
           opname = _("update");
-          g_print (_("Updating: %s from %s\n"), pref, op->remote);
-          res = flatpak_dir_update (self->dir,
-                                    self->no_pull,
-                                    self->no_deploy,
-                                    self->no_static_deltas,
-                                    op->ref, op->remote, op->commit,
-                                    (const char **)op->subpaths,
-                                    NULL,
-                                    cancellable, &local_error);
-
-          if (res)
+          g_autofree char *target_commit = flatpak_dir_check_for_update (self->dir, op->ref, op->remote, op->commit,
+                                                                         (const char **)op->subpaths,
+                                                                         self->no_pull,
+                                                                         cancellable, &local_error);
+          if (target_commit != NULL)
             {
-              g_autoptr(GVariant) deploy_data = NULL;
-              g_autofree char *commit = NULL;
-              deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
-              commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
-              g_print (_("Now at %s.\n"), commit);
+              g_print (_("Updating: %s from %s\n"), pref, op->remote);
+              res = flatpak_dir_update (self->dir,
+                                        self->no_pull,
+                                        self->no_deploy,
+                                        self->no_static_deltas,
+                                        op->commit != NULL, /* Allow downgrade if we specify commit */
+                                        op->ref, op->remote, target_commit,
+                                        (const char **)op->subpaths,
+                                        NULL,
+                                        cancellable, &local_error);
+              if (res)
+                {
+                  g_autoptr(GVariant) deploy_data = NULL;
+                  g_autofree char *commit = NULL;
+                  deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
+                  commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
+                  g_print (_("Now at %s.\n"), commit);
+                }
+
+              /* Handle noop-updates */
+              if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+                {
+                  g_print (_("No updates.\n"));
+                  res = TRUE;
+                  g_clear_error (&local_error);
+                }
             }
-
-          /* Handle noop-updates */
-          if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+          else
             {
-              g_print (_("No updates.\n"));
-              res = TRUE;
-              g_clear_error (&local_error);
+              res = FALSE;
+              if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+                {
+                  res = TRUE;
+                  g_clear_error (&local_error);
+                }
             }
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_BUNDLE)

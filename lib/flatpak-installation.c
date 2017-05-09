@@ -1539,6 +1539,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   g_autoptr(OstreeAsyncProgress) ostree_progress = NULL;
   g_autofree char *remote_name = NULL;
   FlatpakInstalledRef *result = NULL;
+  g_autofree char *target_commit = NULL;
 
   ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
@@ -1555,6 +1556,13 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
 
   remote_name = flatpak_dir_get_origin (dir, ref, cancellable, error);
   if (remote_name == NULL)
+    return NULL;
+
+  target_commit = flatpak_dir_check_for_update (dir, ref, remote_name, NULL,
+                                                (const char **)subpaths,
+                                                (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
+                                                cancellable, error);
+  if (target_commit != NULL)
     return NULL;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
@@ -1577,7 +1585,8 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
-                           ref, remote_name, NULL, NULL,
+                           FALSE,
+                           ref, remote_name, target_commit, (const char **)subpaths,
                            ostree_progress, cancellable, error))
     goto out;
 

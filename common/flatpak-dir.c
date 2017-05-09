@@ -5022,29 +5022,27 @@ out:
   return ret;
 }
 
-gboolean
-flatpak_dir_update (FlatpakDir          *self,
-                    gboolean             no_pull,
-                    gboolean             no_deploy,
-                    gboolean             no_static_deltas,
-                    const char          *ref,
-                    const char          *remote_name,
-                    const char          *checksum_or_latest,
-                    const char         **opt_subpaths,
-                    OstreeAsyncProgress *progress,
-                    GCancellable        *cancellable,
-                    GError             **error)
+char *
+flatpak_dir_check_for_update (FlatpakDir          *self,
+                              const char          *ref,
+                              const char          *remote_name,
+                              const char          *checksum_or_latest,
+                              const char         **opt_subpaths,
+                              gboolean             no_pull,
+                              GCancellable        *cancellable,
+                              GError             **error)
 {
   g_autoptr(GVariant) deploy_data = NULL;
   g_autofree const char **old_subpaths = NULL;
+  g_autofree const char *remote_and_branch = NULL;
   const char **subpaths;
   g_autoptr(GBytes) summary_bytes = NULL;
   g_autofree char *url = NULL;
-  gboolean is_local;
   g_autofree char *latest_rev = NULL;
-  const char *rev = NULL;
+  const char *target_rev = NULL;
   const char *installed_commit;
   const char *installed_alt_id;
+  g_autoptr(GVariant) summary = NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
@@ -5062,68 +5060,117 @@ flatpak_dir_update (FlatpakDir          *self,
   installed_alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
 
   if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, error))
+    {
+      return NULL;
+    }
+
+  if (*url == 0)
+    {
+      /* Empty URL => disabled, but we preted to be already installed to avoid warnings */
+      g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                   _("%s branch %s already installed"), ref, installed_commit);
+      return NULL;
+    }
+
+  if (no_pull)
+    {
+      remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref);
+      if (!ostree_repo_resolve_rev (self->repo, remote_and_branch, FALSE, &latest_rev, NULL))
+        {
+          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+                       _("%s branch %s already installed"), ref, installed_commit);
+          return NULL; /* No update, because nothing to update to */
+        }
+    }
+  else
+    {
+      g_autoptr(GVariant) summary = NULL;
+
+      latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote_name, ref, NULL, NULL, error);
+      if (latest_rev == NULL)
+        return NULL;
+    }
+
+  if (checksum_or_latest != NULL)
+    target_rev = checksum_or_latest;
+  else
+    target_rev = latest_rev;
+
+  /* Not deployed => update */
+  if (deploy_data == NULL)
+    return g_strdup (target_rev);
+
+  /* Different target commit than deployed => update */
+  if (g_strcmp0 (target_rev, installed_commit) != 0 &&
+      g_strcmp0 (target_rev, installed_alt_id) != 0)
+    return g_strdup (target_rev);
+
+  /* target rev is the same as latest, but maybe something else that is different? */
+
+  /* Same commit, but different subpaths => update */
+  if (!_g_strv_equal0 ((char **)subpaths, (char **)old_subpaths))
+    return g_strdup (target_rev);
+
+  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
+               _("%s branch %s already installed"), ref, installed_commit);
+  return NULL;
+}
+
+gboolean
+flatpak_dir_update (FlatpakDir          *self,
+                    gboolean             no_pull,
+                    gboolean             no_deploy,
+                    gboolean             no_static_deltas,
+                    gboolean             allow_downgrade,
+                    const char          *ref,
+                    const char          *remote_name,
+                    const char          *commit,
+                    const char         **opt_subpaths,
+                    OstreeAsyncProgress *progress,
+                    GCancellable        *cancellable,
+                    GError             **error)
+{
+  g_autoptr(GVariant) deploy_data = NULL;
+  const char **subpaths = NULL;
+  g_autofree char *url = NULL;
+  FlatpakPullFlags flatpak_flags;
+  gboolean is_oci;
+
+  /* This is calculated in check_for_update */
+  g_assert (commit != NULL);
+
+  flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
+  if (allow_downgrade)
+    flatpak_flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
+  if (no_static_deltas)
+    flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+
+  deploy_data = flatpak_dir_get_deploy_data (self, ref,
+                                             cancellable, NULL);
+  if (opt_subpaths)
+    subpaths = opt_subpaths;
+  else if (deploy_data != NULL)
+    subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+
+  if (!ostree_repo_remote_get_url (self->repo, remote_name, &url, error))
     return FALSE;
 
   if (*url == 0)
     return TRUE; /* Empty URL => disabled */
 
-  rev = checksum_or_latest;
-
-  is_local = g_str_has_prefix (url, "file:");
-
-  /* Quick check to terminate early if nothing changed in cached summary
-     (and subpaths didn't change) */
-  if (!no_pull && !is_local && deploy_data != NULL &&
-      _g_strv_equal0 ((char **)subpaths, (char **)old_subpaths))
-    {
-      if (checksum_or_latest != NULL)
-        {
-          if (strcmp (checksum_or_latest, installed_commit) == 0)
-            {
-              g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                           _("%s branch %s already installed"), ref, installed_commit);
-              return FALSE;
-            }
-        }
-      else if (flatpak_dir_remote_fetch_summary (self, remote_name,
-                                                 &summary_bytes, NULL,
-                                                 cancellable, NULL))
-        {
-          g_autoptr(GVariant) summary =
-            g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                          summary_bytes, FALSE));
-
-          if (flatpak_summary_lookup_ref (summary,
-                                          ref,
-                                          &latest_rev, NULL))
-            {
-              if (g_strcmp0 (latest_rev, installed_commit) == 0 ||
-                  g_strcmp0 (latest_rev, installed_alt_id) == 0)
-                {
-                  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                               _("%s branch %s already installed"), ref, installed_commit);
-                  return FALSE;
-                }
-              rev = latest_rev;
-            }
-        }
-    }
+  is_oci = flatpak_dir_get_remote_oci (self, remote_name);
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
+      const char *installation = flatpak_dir_get_id (self);
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
-      g_autofree char *latest_checksum = NULL;
       FlatpakSystemHelper *system_helper;
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
       g_autofree char *url = NULL;
       gboolean gpg_verify_summary;
       gboolean gpg_verify;
-      gboolean is_oci;
-
-      if (checksum_or_latest != NULL)
-        return flatpak_fail (error, "Can't update to a specific commit without root permissions");
 
       system_helper = flatpak_dir_get_system_helper (self);
       g_assert (system_helper != NULL);
@@ -5147,12 +5194,8 @@ flatpak_dir_update (FlatpakDir          *self,
                                               &gpg_verify, error))
         return FALSE;
 
-      is_oci = flatpak_dir_get_remote_oci (self, remote_name);
-
       if (no_pull)
         {
-          if (!ostree_repo_resolve_rev (self->repo, ref, FALSE, &latest_checksum, error))
-            return FALSE;
         }
       else if (!gpg_verify_summary || !gpg_verify)
         {
@@ -5188,25 +5231,16 @@ flatpak_dir_update (FlatpakDir          *self,
           /* We're pulling from a remote source, we do the network mirroring pull as a
              user and hand back the resulting data to the system-helper, that trusts us
              due to the GPG signatures in the repo */
-          FlatpakPullFlags flatpak_flags;
 
           child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
           if (child_repo == NULL)
             return FALSE;
 
-          flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA | FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
-          if (checksum_or_latest != NULL)
-            flatpak_flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
-          if (no_static_deltas)
-            flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
-
-          if (!flatpak_dir_pull (self, remote_name, ref, rev, subpaths,
+          flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
+          if (!flatpak_dir_pull (self, remote_name, ref, commit, subpaths,
                                  child_repo,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
-            return FALSE;
-
-          if (!ostree_repo_resolve_rev (child_repo, ref, FALSE, &latest_checksum, error))
             return FALSE;
 
           child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
@@ -5215,20 +5249,15 @@ flatpak_dir_update (FlatpakDir          *self,
       if (no_deploy)
         helper_flags |= FLATPAK_HELPER_DEPLOY_FLAGS_NO_DEPLOY;
 
-      if (g_strcmp0 (installed_commit, latest_checksum) != 0)
-        {
-          const char *installation = flatpak_dir_get_id (self);
-
-          g_debug ("Calling system helper: Deploy");
-          if (!flatpak_system_helper_call_deploy_sync (system_helper,
-                                                       child_repo_path ? child_repo_path : "",
-                                                       helper_flags, ref, remote_name,
-                                                       subpaths,
-                                                       installation ? installation : "",
-                                                       cancellable,
-                                                       error))
-            return FALSE;
-        }
+      g_debug ("Calling system helper: Deploy");
+      if (!flatpak_system_helper_call_deploy_sync (system_helper,
+                                                   child_repo_path ? child_repo_path : "",
+                                                   helper_flags, ref, remote_name,
+                                                   subpaths,
+                                                   installation ? installation : "",
+                                                   cancellable,
+                                                   error))
+        return FALSE;
 
       if (child_repo_path)
         (void) glnx_shutil_rm_rf_at (AT_FDCWD, child_repo_path, NULL, NULL);
@@ -5238,15 +5267,20 @@ flatpak_dir_update (FlatpakDir          *self,
 
   if (!no_pull)
     {
-      if (!flatpak_dir_pull (self, remote_name, ref, rev, subpaths,
-                             NULL, FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA, OSTREE_REPO_PULL_FLAGS_NONE,
+
+      if (!flatpak_dir_pull (self, remote_name, ref, commit, subpaths,
+                             NULL, flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
     }
 
   if (!no_deploy)
     {
-      if (!flatpak_dir_deploy_update (self, ref, checksum_or_latest, subpaths,
+      if (!flatpak_dir_deploy_update (self, ref,
+                                      /* We don't know the local commit id in the OCI case, and
+                                         we only support one version anyway */
+                                      is_oci ? NULL : commit,
+                                      subpaths,
                                       cancellable, error))
         return FALSE;
     }
