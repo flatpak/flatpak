@@ -4635,6 +4635,12 @@ flatpak_dir_install (FlatpakDir          *self,
                      GCancellable        *cancellable,
                      GError             **error)
 {
+  FlatpakPullFlags flatpak_flags;
+
+  flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
+  if (no_static_deltas)
+    flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
@@ -4715,15 +4721,12 @@ flatpak_dir_install (FlatpakDir          *self,
           /* We're pulling from a remote source, we do the network mirroring pull as a
              user and hand back the resulting data to the system-helper, that trusts us
              due to the GPG signatures in the repo */
-          FlatpakPullFlags flatpak_flags;
 
           child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
           if (child_repo == NULL)
             return FALSE;
 
-          flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA | FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
-          if (no_static_deltas)
-            flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
+          flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
           if (!flatpak_dir_pull (self, remote_name, ref, NULL, subpaths,
                                  child_repo,
@@ -4757,7 +4760,7 @@ flatpak_dir_install (FlatpakDir          *self,
   if (!no_pull)
     {
       if (!flatpak_dir_pull (self, remote_name, ref, NULL, opt_subpaths, NULL,
-                             FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA, OSTREE_REPO_PULL_FLAGS_NONE,
+                             flatpak_flags, OSTREE_REPO_PULL_FLAGS_NONE,
                              progress, cancellable, error))
         return FALSE;
     }
