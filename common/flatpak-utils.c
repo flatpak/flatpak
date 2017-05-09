@@ -2452,13 +2452,15 @@ flatpak_variant_bsearch_str (GVariant   *array,
   while (imax >= imin)
     {
       g_autoptr(GVariant) child = NULL;
+      g_autoptr(GVariant) cur_v = NULL;
       const char *cur;
       int cmp;
 
       imid = (imin + imax) / 2;
 
       child = g_variant_get_child_value (array, imid);
-      g_variant_get_child (child, 0, "&s", &cur, NULL);
+      cur_v = g_variant_get_child_value (child, 0);
+      cur = g_variant_get_data (cur_v);
 
       cmp = strcmp (cur, str);
       if (cmp < 0)
