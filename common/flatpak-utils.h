@@ -285,6 +285,9 @@ gint flatpak_mkstempat (int    dir_fd,
 gboolean flatpak_repo_set_title (OstreeRepo *repo,
                                  const char *title,
                                  GError    **error);
+gboolean flatpak_repo_set_redirect_url (OstreeRepo *repo,
+                                        const char *redirect_url,
+                                        GError    **error);
 gboolean flatpak_repo_set_default_branch (OstreeRepo *repo,
                                           const char *branch,
                                           GError    **error);

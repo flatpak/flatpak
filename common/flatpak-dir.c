@@ -7750,6 +7750,7 @@ flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
     "xa.title",
     "xa.default-branch",
     "xa.gpg-keys",
+    "xa.redirect-url",
     NULL
   };
 
@@ -7793,7 +7794,10 @@ flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
                   const char *value = g_variant_get_string(value_var, NULL);
                   if (value != NULL && *value != 0)
                     {
-                      g_ptr_array_add (updated_params, g_strdup (key));
+                      if (strcmp (key, "xa.redirect-url") == 0)
+                        g_ptr_array_add (updated_params, g_strdup ("url"));
+                      else
+                        g_ptr_array_add (updated_params, g_strdup (key));
                       g_ptr_array_add (updated_params, g_strdup (value));
                     }
                 }

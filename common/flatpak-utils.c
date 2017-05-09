@@ -2588,6 +2588,26 @@ flatpak_repo_set_title (OstreeRepo *repo,
 }
 
 gboolean
+flatpak_repo_set_redirect_url (OstreeRepo *repo,
+                               const char *redirect_url,
+                               GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  if (redirect_url)
+    g_key_file_set_string (config, "flatpak", "redirect-url", redirect_url);
+  else
+    g_key_file_remove_key (config, "flatpak", "redirect-url", NULL);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+gboolean
 flatpak_repo_set_gpg_keys (OstreeRepo *repo,
                            GBytes *bytes,
                            GError    **error)
@@ -2849,6 +2869,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   GVariantBuilder ref_data_builder;
   GKeyFile *config;
   g_autofree char *title = NULL;
+  g_autofree char *redirect_url = NULL;
   g_autofree char *default_branch = NULL;
   g_autofree char *gpg_keys = NULL;
   g_autoptr(GVariant) old_summary = NULL;
@@ -2869,11 +2890,16 @@ flatpak_repo_update (OstreeRepo   *repo,
       title = g_key_file_get_string (config, "flatpak", "title", NULL);
       default_branch = g_key_file_get_string (config, "flatpak", "default-branch", NULL);
       gpg_keys = g_key_file_get_string (config, "flatpak", "gpg-keys", NULL);
+      redirect_url = g_key_file_get_string (config, "flatpak", "redirect-url", NULL);
     }
 
   if (title)
     g_variant_builder_add (&builder, "{sv}", "xa.title",
                            g_variant_new_string (title));
+
+  if (redirect_url)
+    g_variant_builder_add (&builder, "{sv}", "xa.redirect-url",
+                           g_variant_new_string (redirect_url));
 
   if (default_branch)
     g_variant_builder_add (&builder, "{sv}", "xa.default-branch",

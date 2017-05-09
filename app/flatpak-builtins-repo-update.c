@@ -34,6 +34,7 @@
 #include "flatpak-builtins-utils.h"
 
 static char *opt_title;
+static char *opt_redirect_url;
 static char *opt_default_branch;
 static char **opt_gpg_import;
 static char *opt_generate_delta_from;
@@ -46,6 +47,7 @@ static gboolean opt_generate_deltas;
 static gint opt_prune_depth = -1;
 
 static GOptionEntry options[] = {
+  { "redirect-url", 0, 0, G_OPTION_ARG_STRING, &opt_redirect_url, N_("Redirect this repo to a new URL"), N_("URL") },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this repository"), N_("TITLE") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this repository"), N_("BRANCH") },
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import new default GPG public key from FILE"), N_("FILE") },
@@ -423,6 +425,10 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
   if (opt_title &&
       !flatpak_repo_set_title (repo, opt_title, error))
+    return FALSE;
+
+  if (opt_redirect_url &&
+      !flatpak_repo_set_redirect_url (repo, opt_redirect_url, error))
     return FALSE;
 
   if (opt_default_branch &&
