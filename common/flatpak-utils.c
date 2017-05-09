@@ -5781,13 +5781,102 @@ get_metadata_progress (guint metadata_fetched,
   if (total_metadata < 5)
     return 1;
 
-  return (guint) 10 * (metadata_fetched / (gdouble) total_metadata);
+  return (guint) 5 * (metadata_fetched / (gdouble) total_metadata);
 }
 
 static inline guint
 get_write_progress (guint outstanding_writes)
 {
-  return (guint) (3 / (gdouble) outstanding_writes);
+  return outstanding_writes > 0 ? (guint) (3 / (gdouble) outstanding_writes) : 3;
+}
+
+static void
+get_average_bytes_per_content_object (OstreeAsyncProgress *progress,
+                                      guint64             *fetched_content_bytes,
+                                      guint64             *total_content_bytes)
+{
+  gint64 bytes_transferred, metadata_bytes, content_bytes;
+  gint fetched_metadata, outstanding_metadata, total_metadata;
+  gint total_deltas, fetched_deltas_size;
+  gint fetched_content = 0, total_content = 0;
+  gint fetched, total_fetches;
+
+  /* It would've been so much easier of OSTree just exposed all
+   * the progress report fields. All the following math is just
+   * the preparation for us to be able to do:
+   *
+   *   average_bytes_per_object = downloaded content bytes / downloaded content objects
+   */
+
+  /* All objects */
+  fetched = ostree_async_progress_get_uint (progress, "fetched");
+  total_fetches = fetched + ostree_async_progress_get_uint (progress, "outstanding-fetches");
+
+  /* Metadata objects */
+  fetched_metadata = ostree_async_progress_get_uint (progress, "metadata-fetched");
+  outstanding_metadata = ostree_async_progress_get_uint (progress, "outstanding-metadata-fetches");
+  total_metadata = fetched_metadata + outstanding_metadata;
+
+  /* Static deltas */
+  total_deltas = ostree_async_progress_get_uint (progress, "total-delta-parts")
+               + ostree_async_progress_get_uint (progress, "total-delta-fallbacks");
+  fetched_deltas_size = ostree_async_progress_get_uint64 (progress, "fetched-delta-part-size");
+
+  /* All the downloaded bytes, without the downloaded deltas */
+  metadata_bytes = ostree_async_progress_get_uint64 (progress, "last-metadata-bytes");
+  bytes_transferred = ostree_async_progress_get_uint64 (progress, "bytes-transferred");
+  bytes_transferred -= fetched_deltas_size;
+
+  /* While downloading metadata, store the currently downloaded size
+   * and don't report anything */
+  if (outstanding_metadata > 0 || metadata_bytes == 0)
+    {
+      /* Keep track of when OSTree started to download content objects */
+      ostree_async_progress_set_uint64 (progress, "last-metadata-bytes", bytes_transferred);
+      return;
+    }
+
+  /* Finally, the content-related stuff */
+  content_bytes = bytes_transferred - metadata_bytes;
+  total_content = total_fetches - total_metadata - total_deltas;
+  fetched_content = fetched - fetched_metadata;
+
+  /* Only report content progress when there was content */
+  if (total_content > 0 && fetched_content > 0)
+    {
+      gdouble average_bytes;
+
+      average_bytes = content_bytes / (gdouble) fetched_content;
+
+      if (fetched_content_bytes)
+        *fetched_content_bytes = (guint64) content_bytes;
+
+      if (total_content_bytes)
+        *total_content_bytes = (guint64) total_content * average_bytes;
+    }
+}
+
+static void
+format_downloaded_bytes (OstreeAsyncProgress  *progress,
+                         guint64               current_time,
+                         gchar               **out_transferred,
+                         gchar               **out_bytes_per_sec)
+{
+  guint64 bytes_transferred = ostree_async_progress_get_uint64 (progress, "bytes-transferred");
+  guint64 elapsed_time =
+    (current_time - ostree_async_progress_get_uint64 (progress, "start-time")) / G_USEC_PER_SEC;
+  guint64 bytes_sec = (elapsed_time > 0) ? bytes_transferred / elapsed_time : 0;
+  gchar *formatted_bytes_transferred =
+    g_format_size_full (bytes_transferred, 0);
+  gchar *formatted_bytes_sec = NULL;
+
+  if (!bytes_sec) // Ignore first second
+    formatted_bytes_sec = g_strdup ("-");
+  else
+    formatted_bytes_sec = g_format_size (bytes_sec);
+
+  *out_transferred = formatted_bytes_transferred;
+  *out_bytes_per_sec = formatted_bytes_sec;
 }
 
 static void
@@ -5795,156 +5884,151 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
 {
   FlatpakProgressCallback progress_cb = g_object_get_data (G_OBJECT (progress), "callback");
   guint last_progress = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "last_progress"));
+  g_autofree gchar *formatted_bytes_sec;
+  g_autofree gchar *formatted_bytes_transferred;
   GString *buf;
   g_autofree char *status = NULL;
   guint outstanding_fetches;
+  guint outstanding_delta_fetches;
   guint outstanding_metadata_fetches;
   guint outstanding_writes;
-  guint n_scanned_metadata;
-  guint fetched_delta_parts;
-  guint total_delta_parts;
   guint64 bytes_transferred;
+  guint64 fetched_delta_part_size;
   guint64 total_delta_part_size;
   guint outstanding_extra_data;
   guint64 total_extra_data_bytes;
   guint64 transferred_extra_data_bytes;
-  guint fetched;
+  guint64 total;
+  guint64 total_transferred;
   guint metadata_fetched;
-  guint requested;
   guint64 current_time;
+  guint64 fetched_content_bytes;
+  guint64 total_content_bytes;
   guint new_progress = 0;
   gboolean estimating = FALSE;
   gboolean downloading_extra_data;
 
-  /* The heuristic here goes as follows:
-   *  - If we have delta files, grow up to 45%
-   *  - Else:
-   *     - While fetching metadata, grow up to 10%
-   *     - Then, while fetch the file objects, grow up to:
-   *        - 45% if we have extra data to download
-   *        - 90% otherwise
-   * - Writing the objects goes from 52% to 55%, or 97% to 100%
-   * - Extra data, if present, will go from 55% to 100%
-   */
-
   buf = g_string_new ("");
+
+  /* The heuristic here goes as follows:
+   *  - While fetching metadata, grow up to 5%
+   *  - Download goes up to 97%
+   *  - Writing objects adds the last 3%
+   *
+   *
+   * Meaning of each variable:
+   *
+   *   Status:
+   *    - status: only sent by OSTree when the pull ends (with or without an error)
+   *
+   *   Fetches:
+   *    - fetched: sum of content + metadata fetches
+   *    - requested: sum of requested content and metadata fetches
+   *    - bytes_transferred: every and all tranferred data (in bytes)
+   *    - metadata_fetched: the number of fetched metadata objects
+   *    - outstanding_fetches: missing fetches (metadata + content + deltas)
+   *    - outstanding_delta_fetches: missing delta-only fetches
+   *    - outstanding_metadata_fetches: missing metadata-only fetches
+   *    - fetched_content_bytes: the estimated downloaded size of content (in bytes)
+   *    - total_content_bytes: the estimated total size of content, based on average bytes per object (in bytes)
+   *
+   *   Writes:
+   *    - outstanding_writes: all missing writes (sum of outstanding content, metadata and delta writes)
+   *
+   *   Static deltas:
+   *    - total_delta_part_size: the total size (in bytes) of static deltas
+   *    - fetched_delta_part_size: the size (in bytes) of already fetched static deltas
+   *
+   *   Extra data:
+   *    - total_extra_data_bytes: the sum of all extra data file sizes (in bytes)
+   *    - downloading_extra_data: whether extra-data files are being downloaded or not
+   */
 
   status = ostree_async_progress_get_status (progress);
   outstanding_fetches = ostree_async_progress_get_uint (progress, "outstanding-fetches");
+  outstanding_delta_fetches = ostree_async_progress_get_uint (progress, "total-delta-parts")
+                            + ostree_async_progress_get_uint (progress, "total-delta-fallbacks")
+                            - ostree_async_progress_get_uint (progress, "fetched-delta-parts")
+                            - ostree_async_progress_get_uint (progress, "fetched-delta-fallbacks");
   outstanding_metadata_fetches = ostree_async_progress_get_uint (progress, "outstanding-metadata-fetches");
   outstanding_writes = ostree_async_progress_get_uint (progress, "outstanding-writes");
-  n_scanned_metadata = ostree_async_progress_get_uint (progress, "scanned-metadata");
-  fetched_delta_parts = ostree_async_progress_get_uint (progress, "fetched-delta-parts");
-  total_delta_parts = ostree_async_progress_get_uint (progress, "total-delta-parts");
+  fetched_delta_part_size = ostree_async_progress_get_uint64 (progress, "fetched-delta-part-size");
   total_delta_part_size = ostree_async_progress_get_uint64 (progress, "total-delta-part-size");
   bytes_transferred = ostree_async_progress_get_uint64 (progress, "bytes-transferred");
   outstanding_extra_data = ostree_async_progress_get_uint (progress, "outstanding-extra-data");
   total_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "total-extra-data-bytes");
   transferred_extra_data_bytes = ostree_async_progress_get_uint64 (progress, "transferred-extra-data-bytes");
   downloading_extra_data = ostree_async_progress_get_uint (progress, "downloading-extra-data");
-  fetched = ostree_async_progress_get_uint (progress, "fetched");
   metadata_fetched = ostree_async_progress_get_uint (progress, "metadata-fetched");
-  requested = ostree_async_progress_get_uint (progress, "requested");
+  fetched_content_bytes = 0;
+  total_content_bytes = 0;
+
+  /* Estimate the downloaded content size through average */
+  get_average_bytes_per_content_object (progress, &fetched_content_bytes, &total_content_bytes);
+
+  total = total_extra_data_bytes + total_delta_part_size + total_content_bytes;
+  total_transferred = transferred_extra_data_bytes + fetched_delta_part_size + fetched_content_bytes;
+
   current_time = g_get_monotonic_time ();
 
+  /* User-readable strings */
+  format_downloaded_bytes (progress, current_time, &formatted_bytes_transferred, &formatted_bytes_sec);
+
+  /* When we receive the status, it means that the ostree pull operation is
+   * finished. We only have to be careful about the extra-data fields. */
   if (status && !downloading_extra_data)
     {
       g_string_append (buf, status);
 
-      /* The status is sent on error or when the pull is finished */
-      new_progress = outstanding_extra_data ? 55 : 100;
-    }
-  else if (outstanding_fetches && !downloading_extra_data)
-    {
-      guint64 elapsed_time =
-        (current_time - ostree_async_progress_get_uint64 (progress, "start-time")) / G_USEC_PER_SEC;
-      guint64 bytes_sec = (elapsed_time > 0) ? bytes_transferred / elapsed_time : 0;
-      g_autofree char *formatted_bytes_transferred =
-        g_format_size_full (bytes_transferred, 0);
-      g_autofree char *formatted_bytes_sec = NULL;
-
-      if (!bytes_sec) // Ignore first second
-        formatted_bytes_sec = g_strdup ("-");
+      if (outstanding_extra_data == 0)
+        new_progress = 100;
       else
-        formatted_bytes_sec = g_format_size (bytes_sec);
+        new_progress = 5 + ((total - total_extra_data_bytes) / (gdouble) total) * 95;
 
-      if (total_delta_parts > 0)
-        {
-          g_autofree char *formatted_total =
-            g_format_size (total_delta_part_size);
-          g_string_append_printf (buf, "Receiving delta parts: %u/%u %s/s %s/%s",
-                                  fetched_delta_parts, total_delta_parts,
-                                  formatted_bytes_sec, formatted_bytes_transferred,
-                                  formatted_total);
-
-
-          /* When we have delta files, no metadata is fetched */
-          if (outstanding_extra_data > 0)
-            new_progress = (52 * bytes_transferred) / total_delta_part_size;
-          else
-            new_progress = (97 * bytes_transferred) / total_delta_part_size;
-        }
-      else if (outstanding_metadata_fetches)
-        {
-          /* At this point we don't really know how much data there is, so we have to make a guess.
-           * Since its really hard to figure out early how much data there is we report 1% until
-           * all objects are scanned. */
-
-          estimating = TRUE;
-
-          g_string_append_printf (buf, "Receiving metadata objects: %u/(estimating) %s/s %s",
-                                  metadata_fetched, formatted_bytes_sec, formatted_bytes_transferred);
-
-          /* Go up to 10% until the metadata is all fetched */
-          new_progress = get_metadata_progress (metadata_fetched, outstanding_metadata_fetches);
-        }
-      else
-        {
-          g_string_append_printf (buf, "Receiving objects: %u%% (%u/%u) %s/s %s",
-                                  (guint) ((((double) fetched) / requested) * 100),
-                                  fetched, requested, formatted_bytes_sec, formatted_bytes_transferred);
-
-
-          if (outstanding_extra_data)
-            new_progress = 10 + (42 * (double) fetched) / requested;
-          else
-            new_progress = 10 + (87 * (double) fetched) / requested;
-        }
+      goto out;
     }
-  else if (outstanding_extra_data && downloading_extra_data)
+
+  if (outstanding_metadata_fetches > 0)
     {
-      guint64 elapsed_time =
-        (current_time - ostree_async_progress_get_uint64 (progress, "start-time-extra-data")) / G_USEC_PER_SEC;
-      guint64 bytes_sec = (elapsed_time > 0) ? transferred_extra_data_bytes / elapsed_time : 0;
-      g_autofree char *formatted_bytes_transferred =
-        g_format_size_full (transferred_extra_data_bytes, 0);
-      g_autofree char *formatted_bytes_sec = NULL;
+      /* At this point we don't really know how much data there is, so we have to make a guess.
+       * Since its really hard to figure out early how much data there is we report 1% until
+       * all objects are scanned. */
 
-      if (!bytes_sec) // Ignore first second
-        formatted_bytes_sec = g_strdup ("-");
-      else
-        formatted_bytes_sec = g_format_size (bytes_sec);
+      estimating = TRUE;
 
-      g_string_append_printf (buf, "Downloading extra data: %u%% (%" G_GUINT64_FORMAT "/%" G_GUINT64_FORMAT ") %s/s %s",
-                              (guint) ((((double) transferred_extra_data_bytes) / total_extra_data_bytes) * 100),
-                              transferred_extra_data_bytes, total_extra_data_bytes, formatted_bytes_sec, formatted_bytes_transferred);
+      g_string_append_printf (buf, "Receiving metadata objects: %u/(estimating) %s/s %s",
+                              metadata_fetched, formatted_bytes_sec, formatted_bytes_transferred);
 
-      /* Once we reach here, at least 55% of the data was fetched */
-      new_progress = 55 + (guint) (45 * ((double) transferred_extra_data_bytes) / total_extra_data_bytes);
-    }
-  else if (outstanding_writes)
-    {
-      g_string_append_printf (buf, "Writing objects: %u", outstanding_writes);
-
-      /* Writing the objects advances 3% of progress */
-      new_progress = outstanding_extra_data ? 52 : 97;
-      new_progress += get_write_progress (outstanding_writes);
+      /* Go up to 5% until the metadata is all fetched */
+      new_progress = get_metadata_progress (metadata_fetched, outstanding_metadata_fetches);
     }
   else
     {
-      g_string_append_printf (buf, "Scanning metadata: %u", n_scanned_metadata);
+      /* This is the very specific case where we're downloading static deltas
+       * and nothing else. We can use bytes_transferred in this case, instead
+       * of fetched_delta_part_size.
+       *
+       * The reason for that is that fetched_delta_part_size is only updated
+       * after a delta object is fully downloaded, causing jumps in the progress.
+       */
+      if (outstanding_delta_fetches == outstanding_fetches)
+        total_transferred = bytes_transferred + transferred_extra_data_bytes;
+
+      /* The download progress goes up to 97% */
+      new_progress = 5 + ((total_transferred / (gdouble) total) * 92);
+
+      /* And the writing of the objects adds 3% to the progress */
+      new_progress += get_write_progress (outstanding_writes);
+
+      g_string_append_printf (buf, "Downloading: %u%% (%" G_GUINT64_FORMAT "/%" G_GUINT64_FORMAT ") %s/s %s",
+                              (guint) new_progress,
+                              total_transferred,
+                              total,
+                              formatted_bytes_sec,
+                              formatted_bytes_transferred);
     }
 
+out:
   if (new_progress < last_progress)
     new_progress = last_progress;
   g_object_set_data (G_OBJECT (progress), "last_progress", GUINT_TO_POINTER (new_progress));
