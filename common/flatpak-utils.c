@@ -2493,30 +2493,42 @@ flatpak_summary_match_subrefs (GVariant *summary, const char *ref)
   gsize n, i;
   g_auto(GStrv) parts = NULL;
   g_autofree char *parts_prefix = NULL;
+  g_autofree char *ref_prefix = NULL;
+  g_autofree char *ref_suffix = NULL;
 
   parts = g_strsplit (ref, "/", 0);
   parts_prefix = g_strconcat (parts[1], ".", NULL);
+
+  ref_prefix = g_strconcat (parts[0], "/", NULL);
+  ref_suffix = g_strconcat ("/", parts[2], "/", parts[3], NULL);
 
   n = g_variant_n_children (refs);
   for (i = 0; i < n; i++)
     {
       g_autoptr(GVariant) child = NULL;
       g_auto(GStrv) cur_parts = NULL;
+      g_autoptr(GVariant) cur_v = NULL;
       const char *cur;
+      const char *id_start;
 
       child = g_variant_get_child_value (refs, i);
-      g_variant_get_child (child, 0, "&s", &cur, NULL);
+      cur_v = g_variant_get_child_value (child, 0);
+      cur = g_variant_get_data (cur_v);
 
-      cur_parts = g_strsplit (cur, "/", 0);
+      /* Must match type */
+      if (!g_str_has_prefix (cur, ref_prefix))
+        continue;
 
-      /* Must match type, arch, branch */
-      if (strcmp (parts[0], cur_parts[0]) != 0 ||
-          strcmp (parts[2], cur_parts[2]) != 0 ||
-          strcmp (parts[3], cur_parts[3]) != 0)
+      /* Must match arch & branch */
+      if (!g_str_has_prefix (cur, ref_prefix))
+        continue;
+
+      id_start = strchr (cur, '/');
+      if (id_start == NULL)
         continue;
 
       /* But only prefix of id */
-      if (!g_str_has_prefix (cur_parts[1], parts_prefix))
+      if (!g_str_has_prefix (id_start + 1, parts_prefix))
         continue;
 
       g_ptr_array_add (res, g_strdup (cur));
