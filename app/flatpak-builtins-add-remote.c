@@ -27,14 +27,11 @@
 
 #include <glib/gi18n.h>
 
-#include <gio/gunixinputstream.h>
-
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils.h"
-#include "flatpak-chain-input-stream.h"
 
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
@@ -84,76 +81,6 @@ static GOptionEntry common_options[] = {
   { NULL }
 };
 
-static gboolean
-open_source_stream (GInputStream **out_source_stream,
-                    GCancellable  *cancellable,
-                    GError       **error)
-{
-  g_autoptr(GInputStream) source_stream = NULL;
-  guint n_keyrings = 0;
-  g_autoptr(GPtrArray) streams = NULL;
-
-  if (opt_gpg_import != NULL)
-    n_keyrings = g_strv_length (opt_gpg_import);
-
-  guint ii;
-
-  streams = g_ptr_array_new_with_free_func (g_object_unref);
-
-  for (ii = 0; ii < n_keyrings; ii++)
-    {
-      GInputStream *input_stream = NULL;
-
-      if (strcmp (opt_gpg_import[ii], "-") == 0)
-        {
-          input_stream = g_unix_input_stream_new (STDIN_FILENO, FALSE);
-        }
-      else
-        {
-          g_autoptr(GFile) file = g_file_new_for_commandline_arg (opt_gpg_import[ii]);
-          input_stream = G_INPUT_STREAM (g_file_read (file, cancellable, error));
-
-          if (input_stream == NULL)
-            {
-              g_prefix_error (error, "The file %s specified for --gpg-import was not found: ", opt_gpg_import[ii]);
-              return FALSE;
-            }
-        }
-
-      /* Takes ownership. */
-      g_ptr_array_add (streams, input_stream);
-    }
-
-  /* Chain together all the --keyring options as one long stream. */
-  source_stream = (GInputStream *) flatpak_chain_input_stream_new (streams);
-
-  *out_source_stream = g_steal_pointer (&source_stream);
-
-  return TRUE;
-}
-
-static GBytes *
-load_keys (GCancellable *cancellable,
-           GError      **error)
-{
-  g_autoptr(GInputStream) input_stream = NULL;
-  g_autoptr(GOutputStream) output_stream = NULL;
-  gssize n_bytes_written;
-
-  if (!open_source_stream (&input_stream, cancellable, error))
-    return FALSE;
-
-  output_stream = g_memory_output_stream_new_resizable ();
-
-  n_bytes_written = g_output_stream_splice (output_stream, input_stream,
-                                            G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE |
-                                            G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
-                                            NULL, error);
-  if (n_bytes_written < 0)
-    return NULL;
-
-  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
-}
 
 static GKeyFile *
 get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *changed)
@@ -462,7 +389,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
 
   if (opt_gpg_import != NULL)
     {
-      gpg_data = load_keys (cancellable, error);
+      gpg_data = flatpak_load_gpg_keys (opt_gpg_import, cancellable, error);
       if (gpg_data == NULL)
         return FALSE;
     }
@@ -551,7 +478,7 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
 
   if (opt_gpg_import != NULL)
     {
-      gpg_data = load_keys (cancellable, error);
+      gpg_data = flatpak_load_gpg_keys (opt_gpg_import, cancellable, error);
       if (gpg_data == NULL)
         return FALSE;
       changed = TRUE;

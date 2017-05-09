@@ -22,6 +22,10 @@
 
 #include <glib/gi18n.h>
 
+
+#include <gio/gunixinputstream.h>
+#include "flatpak-chain-input-stream.h"
+
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils.h"
 
@@ -247,4 +251,78 @@ flatpak_find_installed_pref (const char *pref, FlatpakKinds kinds, const char *d
 
   *out_ref = g_steal_pointer (&ref);
   return g_object_ref (dir);
+}
+
+
+static gboolean
+open_source_stream (char **gpg_import,
+                    GInputStream **out_source_stream,
+                    GCancellable  *cancellable,
+                    GError       **error)
+{
+  g_autoptr(GInputStream) source_stream = NULL;
+  guint n_keyrings = 0;
+  g_autoptr(GPtrArray) streams = NULL;
+
+  if (gpg_import != NULL)
+    n_keyrings = g_strv_length (gpg_import);
+
+  guint ii;
+
+  streams = g_ptr_array_new_with_free_func (g_object_unref);
+
+  for (ii = 0; ii < n_keyrings; ii++)
+    {
+      GInputStream *input_stream = NULL;
+
+      if (strcmp (gpg_import[ii], "-") == 0)
+        {
+          input_stream = g_unix_input_stream_new (STDIN_FILENO, FALSE);
+        }
+      else
+        {
+          g_autoptr(GFile) file = g_file_new_for_commandline_arg (gpg_import[ii]);
+          input_stream = G_INPUT_STREAM (g_file_read (file, cancellable, error));
+
+          if (input_stream == NULL)
+            {
+              g_prefix_error (error, "The file %s specified for --gpg-import was not found: ", gpg_import[ii]);
+              return FALSE;
+            }
+        }
+
+      /* Takes ownership. */
+      g_ptr_array_add (streams, input_stream);
+    }
+
+  /* Chain together all the --keyring options as one long stream. */
+  source_stream = (GInputStream *) flatpak_chain_input_stream_new (streams);
+
+  *out_source_stream = g_steal_pointer (&source_stream);
+
+  return TRUE;
+}
+
+GBytes *
+flatpak_load_gpg_keys (char **gpg_import,
+                       GCancellable *cancellable,
+                       GError      **error)
+{
+  g_autoptr(GInputStream) input_stream = NULL;
+  g_autoptr(GOutputStream) output_stream = NULL;
+  gssize n_bytes_written;
+
+  if (!open_source_stream (gpg_import, &input_stream, cancellable, error))
+    return FALSE;
+
+  output_stream = g_memory_output_stream_new_resizable ();
+
+  n_bytes_written = g_output_stream_splice (output_stream, input_stream,
+                                            G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE |
+                                            G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
+                                            NULL, error);
+  if (n_bytes_written < 0)
+    return NULL;
+
+  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
 }
