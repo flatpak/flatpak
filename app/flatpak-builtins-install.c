@@ -277,9 +277,6 @@ install_bundle (FlatpakDir *dir,
   if (!flatpak_transaction_add_install_bundle (transaction, file, gpg_data, error))
     return FALSE;
 
-  if (!flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
-    return FALSE;
-
   if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
     return FALSE;
 
@@ -374,6 +371,9 @@ install_from (FlatpakDir *dir,
   if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
     return FALSE;
 
+  if (!flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
+    return FALSE;
+
   if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
     return FALSE;
 
@@ -455,6 +455,9 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
       if (!flatpak_transaction_add_install (transaction, remote, ref, (const char **)opt_subpaths, error))
         return FALSE;
     }
+
+  if (!flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
+    return FALSE;
 
   if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
     return FALSE;
