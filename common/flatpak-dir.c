@@ -5253,46 +5253,6 @@ flatpak_dir_update (FlatpakDir          *self,
 }
 
 gboolean
-flatpak_dir_install_or_update (FlatpakDir          *self,
-                               gboolean             no_pull,
-                               gboolean             no_deploy,
-                               gboolean             no_static_deltas,
-                               const char          *ref,
-                               const char          *remote_name,
-                               const char         **opt_subpaths,
-                               OstreeAsyncProgress *progress,
-                               GCancellable        *cancellable,
-                               GError             **error)
-{
-  g_autoptr(GFile) deploy_dir = NULL;
-
-  deploy_dir = flatpak_dir_get_if_deployed (self, ref, NULL, cancellable);
-  if (deploy_dir)
-    return flatpak_dir_update (self,
-                               no_pull,
-                               no_deploy,
-                               no_static_deltas,
-                               ref,
-                               remote_name,
-                               NULL,
-                               opt_subpaths,
-                               progress,
-                               cancellable,
-                               error);
-  else
-    return flatpak_dir_install (self,
-                                no_pull,
-                                no_deploy,
-                                no_static_deltas,
-                                ref,
-                                remote_name,
-                                opt_subpaths,
-                                progress,
-                                cancellable,
-                                error);
-}
-
-gboolean
 flatpak_dir_uninstall (FlatpakDir          *self,
                        const char          *ref,
                        FlatpakHelperUninstallFlags flags,
