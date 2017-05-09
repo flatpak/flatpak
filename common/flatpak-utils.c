@@ -2587,6 +2587,25 @@ flatpak_repo_set_title (OstreeRepo *repo,
   return TRUE;
 }
 
+gboolean
+flatpak_repo_set_gpg_keys (OstreeRepo *repo,
+                           GBytes *bytes,
+                           GError    **error)
+{
+  g_autoptr(GKeyFile) config = NULL;
+  g_autofree char *value_base64 = NULL;
+
+  config = ostree_repo_copy_config (repo);
+
+  value_base64 = g_base64_encode (g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes));
+
+  g_key_file_set_string (config, "flatpak", "gpg-keys", value_base64);
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+
+  return TRUE;
+}
 
 gboolean
 flatpak_repo_set_default_branch (OstreeRepo *repo,
@@ -2831,6 +2850,7 @@ flatpak_repo_update (OstreeRepo   *repo,
   GKeyFile *config;
   g_autofree char *title = NULL;
   g_autofree char *default_branch = NULL;
+  g_autofree char *gpg_keys = NULL;
   g_autoptr(GVariant) old_summary = NULL;
   g_autoptr(GVariant) new_summary = NULL;
   g_autoptr(GHashTable) refs = NULL;
@@ -2848,6 +2868,7 @@ flatpak_repo_update (OstreeRepo   *repo,
     {
       title = g_key_file_get_string (config, "flatpak", "title", NULL);
       default_branch = g_key_file_get_string (config, "flatpak", "default-branch", NULL);
+      gpg_keys = g_key_file_get_string (config, "flatpak", "gpg-keys", NULL);
     }
 
   if (title)
@@ -2857,6 +2878,19 @@ flatpak_repo_update (OstreeRepo   *repo,
   if (default_branch)
     g_variant_builder_add (&builder, "{sv}", "xa.default-branch",
                            g_variant_new_string (default_branch));
+
+  if (gpg_keys)
+    {
+      guchar *decoded;
+      gsize decoded_len;
+
+      gpg_keys = g_strstrip (gpg_keys);
+      decoded = g_base64_decode (gpg_keys, &decoded_len);
+
+      g_variant_builder_add (&builder, "{sv}", "xa.gpg-keys",
+                             g_variant_new_from_data (G_VARIANT_TYPE ("ay"), decoded, decoded_len,
+                                                      TRUE, (GDestroyNotify)g_free, decoded));
+    }
 
   g_variant_builder_init (&ref_data_builder, G_VARIANT_TYPE ("a{s(tts)}"));
 

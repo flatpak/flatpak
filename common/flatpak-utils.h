@@ -288,6 +288,9 @@ gboolean flatpak_repo_set_title (OstreeRepo *repo,
 gboolean flatpak_repo_set_default_branch (OstreeRepo *repo,
                                           const char *branch,
                                           GError    **error);
+gboolean flatpak_repo_set_gpg_keys (OstreeRepo *repo,
+                                    GBytes *bytes,
+                                    GError    **error);
 gboolean flatpak_repo_update (OstreeRepo   *repo,
                               const char  **gpg_key_ids,
                               const char   *gpg_homedir,

@@ -7748,12 +7748,15 @@ flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
      flatpak_repo_set_* () family of functions) */
   static const char *const supported_params[] = {
     "xa.title",
-    "xa.default-branch", NULL
+    "xa.default-branch",
+    "xa.gpg-keys",
+    NULL
   };
 
   g_autoptr(GVariant) extensions = NULL;
   g_autoptr(GPtrArray) updated_params = NULL;
   GVariantIter iter;
+  g_autoptr(GBytes) gpg_keys = NULL;
 
   updated_params = g_ptr_array_new_with_free_func (g_free);
 
@@ -7767,15 +7770,32 @@ flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
 
       while (g_variant_iter_next (&iter, "{sv}", &key, &value_var))
         {
-          /* At the moment, every supported parameter are strings */
-          if (g_strv_contains (supported_params, key) &&
-              g_variant_get_type_string (value_var))
+          if (g_strv_contains (supported_params, key))
             {
-              const char *value = g_variant_get_string(value_var, NULL);
-              if (value != NULL && *value != 0)
+              if (strcmp (key, "xa.gpg-keys") == 0)
                 {
-                  g_ptr_array_add (updated_params, g_strdup (key));
-                  g_ptr_array_add (updated_params, g_strdup (value));
+                  if (g_variant_is_of_type (value_var, G_VARIANT_TYPE_BYTESTRING))
+                    {
+                      const guchar *gpg_data = g_variant_get_data (value_var);
+                      gsize gpg_size = g_variant_get_size (value_var);
+                      g_autofree gchar *gpg_data_checksum = g_compute_checksum_for_data (G_CHECKSUM_SHA256, gpg_data, gpg_size);
+
+                      gpg_keys = g_bytes_new (gpg_data, gpg_size);
+
+                      /* We store the hash so that we can detect when things changed or not
+                         instead of re-importing the key over-and-over */
+                      g_ptr_array_add (updated_params, g_strdup ("xa.gpg-keys-hash"));
+                      g_ptr_array_add (updated_params, g_steal_pointer (&gpg_data_checksum));
+                    }
+                }
+              else if (g_variant_is_of_type (value_var, G_VARIANT_TYPE_STRING))
+                {
+                  const char *value = g_variant_get_string(value_var, NULL);
+                  if (value != NULL && *value != 0)
+                    {
+                      g_ptr_array_add (updated_params, g_strdup (key));
+                      g_ptr_array_add (updated_params, g_strdup (value));
+                    }
                 }
             }
 
@@ -7826,7 +7846,7 @@ flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
       return TRUE;
 
     /* Update the local remote configuration with the updated info. */
-    if (!flatpak_dir_modify_remote (self, remote, config, NULL, cancellable, error))
+    if (!flatpak_dir_modify_remote (self, remote, config, gpg_keys, cancellable, error))
       return FALSE;
   }
 
