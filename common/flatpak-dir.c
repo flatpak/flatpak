@@ -7946,6 +7946,8 @@ flatpak_dir_parse_summary_for_ref (FlatpakDir   *self,
   g_autoptr(GVariant) cache_v = NULL;
   g_autoptr(GVariant) cache = NULL;
   g_autoptr(GVariant) res = NULL;
+  g_autoptr(GVariant) refdata = NULL;
+  int pos;
 
   extensions = g_variant_get_child_value (summary, 1);
 
@@ -7958,13 +7960,16 @@ flatpak_dir_parse_summary_for_ref (FlatpakDir   *self,
     }
 
   cache = g_variant_get_child_value (cache_v, 0);
-  res = g_variant_lookup_value (cache, ref, NULL);
-  if (res == NULL)
+
+  if (!flatpak_variant_bsearch_str (cache, ref, &pos))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                    _("No entry for %s in remote summary flatpak cache "), ref);
       return FALSE;
     }
+
+  refdata = g_variant_get_child_value (cache, pos);
+  res = g_variant_get_child_value (refdata, 1);
 
   if (installed_size)
     {
