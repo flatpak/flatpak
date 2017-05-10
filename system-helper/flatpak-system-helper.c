@@ -688,9 +688,6 @@ handle_update_remote (FlatpakSystemHelper *object,
 {
   g_autoptr(FlatpakDir) system = NULL;
   g_autoptr(GError) error = NULL;
-  g_autoptr(GKeyFile) config = g_key_file_new ();
-  g_autofree char *group = g_strdup_printf ("remote \"%s\"", arg_remote);
-  g_autoptr(GBytes) gpg_data = NULL;
   char *summary_data = NULL;
   gsize summary_size;
   g_autoptr(GBytes) summary_bytes = NULL;

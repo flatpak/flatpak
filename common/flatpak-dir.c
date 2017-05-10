@@ -5036,13 +5036,11 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
   g_autofree const char **old_subpaths = NULL;
   g_autofree const char *remote_and_branch = NULL;
   const char **subpaths;
-  g_autoptr(GBytes) summary_bytes = NULL;
   g_autofree char *url = NULL;
   g_autofree char *latest_rev = NULL;
   const char *target_rev = NULL;
   const char *installed_commit;
   const char *installed_alt_id;
-  g_autoptr(GVariant) summary = NULL;
 
   deploy_data = flatpak_dir_get_deploy_data (self, ref,
                                              cancellable, NULL);
@@ -5084,8 +5082,6 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
     }
   else
     {
-      g_autoptr(GVariant) summary = NULL;
-
       latest_rev = flatpak_dir_lookup_ref_from_summary (self, remote_name, ref, NULL, NULL, error);
       if (latest_rev == NULL)
         return NULL;
