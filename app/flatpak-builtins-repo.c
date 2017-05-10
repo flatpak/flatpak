@@ -41,6 +41,7 @@ print_info (GVariant *summary)
   const char *title;
   const char *default_branch;
   const char *redirect_url;
+  g_autoptr(GVariant) gpg_keys = NULL;
 
   meta = g_variant_get_child_value (summary, 1);
 
@@ -52,6 +53,15 @@ print_info (GVariant *summary)
 
   if (g_variant_lookup (meta, "xa.redirect-url", "&s", &redirect_url))
     g_print ("Redirect URL: %s\n", redirect_url);
+
+  if ((gpg_keys = g_variant_lookup_value (meta, "xa.gpg-keys", G_VARIANT_TYPE_BYTESTRING)) != NULL)
+    {
+      const guchar *gpg_data = g_variant_get_data (gpg_keys);
+      gsize gpg_size = g_variant_get_size (gpg_keys);
+      g_autofree gchar *gpg_data_checksum = g_compute_checksum_for_data (G_CHECKSUM_SHA256, gpg_data, gpg_size);
+
+      g_print ("GPG key hash: %s\n", gpg_data_checksum);
+    }
 
   cache = g_variant_lookup_value (meta, "xa.cache", NULL);
   if (cache)
