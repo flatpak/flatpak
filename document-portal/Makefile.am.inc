@@ -10,7 +10,6 @@ $(xdp_dbus_built_sources) : data/org.freedesktop.portal.Documents.xml
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.portal.	\
 		--c-namespace XdpDbus				\
-                --c-generate-autocleanup all                    \
 		--generate-c-code $(builddir)/document-portal/xdp-dbus	\
                 --annotate "org.freedesktop.portal.Documents.Add()" org.gtk.GDBus.C.UnixFD "yes" \
 		$(srcdir)/data/org.freedesktop.portal.Documents.xml	\

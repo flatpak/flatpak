@@ -31,6 +31,7 @@
 #include "flatpak-dbus.h"
 #include <ostree.h>
 #include <json-glib/json-glib.h>
+#include "document-portal/xdp-dbus.h"
 
 typedef enum {
   FLATPAK_HOST_COMMAND_FLAGS_CLEAR_ENV = 1 << 0,
@@ -546,6 +547,8 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GUnixFDList, g_object_unref)
  */
 typedef FlatpakSessionHelper AutoFlatpakSessionHelper;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (AutoFlatpakSessionHelper, g_object_unref)
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (XdpDbusDocuments, g_object_unref)
 
 typedef struct FlatpakXml FlatpakXml;
 
