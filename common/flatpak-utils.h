@@ -663,4 +663,12 @@ void               flatpak_complete_options (FlatpakCompletion *completion,
                                              GOptionEntry      *entries);
 void               flatpak_completion_free  (FlatpakCompletion *completion);
 
+typedef void (*FlatpakProgressCallback)(const char *status,
+                                        guint       progress,
+                                        gboolean    estimating,
+                                        gpointer    user_data);
+
+OstreeAsyncProgress *flatpak_progress_new (FlatpakProgressCallback progress,
+                                           gpointer                progress_data);
+
 #endif /* __FLATPAK_UTILS_H__ */
