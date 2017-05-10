@@ -120,6 +120,7 @@ dist_test_scripts = \
 	tests/test-run-deltas.sh \
 	tests/test-run-system-deltas.sh \
 	tests/test-repo.sh \
+	tests/test-repo-system.sh \
 	tests/test-extensions.sh \
 	tests/test-bundle.sh \
 	tests/test-bundle-system.sh \
