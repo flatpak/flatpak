@@ -179,8 +179,8 @@ export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
 
 setup_repo () {
     REPONAME=${1:-test}
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Platform bash ls cat echo readlink > /dev/null
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh ${REPONAME} > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Platform bash ls cat echo readlink > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} > /dev/null
     update_repo $REPONAME
     if [ $REPONAME == "test" ]; then
         $(dirname $0)/test-webserver.sh repos
@@ -188,30 +188,30 @@ setup_repo () {
         mv httpd-port httpd-port-main
     fi
     port=$(cat httpd-port-main)
-    flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
+    flatpak remote-add ${U} --gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
 }
 
 update_repo () {
     REPONAME=${1:-test}
-    ${FLATPAK} build-update-repo $FL_GPGARGS ${UPDATE_REPO_ARGS-} repos/${REPONAME}
+    ${FLATPAK} build-update-repo ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}
 }
 
 make_updated_app () {
     REPONAME=${1:-test}
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh ${REPONAME} ${2:-UPDATED} > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} ${2:-UPDATED} > /dev/null
     update_repo $REPONAME
 }
 
 setup_sdk_repo () {
     REPONAME=${1:-test}
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
     update_repo $REPONAME
 }
 
 setup_python2_repo () {
     REPONAME=${1:-test}
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonPlatform bash python2 ls cat echo readlink > /dev/null
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonSdk python2 bash ls cat echo readlink make mkdir cp touch > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonPlatform bash python2 ls cat echo readlink > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonSdk python2 bash ls cat echo readlink make mkdir cp touch > /dev/null
     update_repo $REPONAME
 }
 
