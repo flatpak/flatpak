@@ -119,6 +119,7 @@ dist_test_scripts = \
 	tests/test-run-system.sh \
 	tests/test-run-deltas.sh \
 	tests/test-run-system-deltas.sh \
+	tests/test-repo.sh \
 	tests/test-extensions.sh \
 	tests/test-bundle.sh \
 	tests/test-bundle-system.sh \
