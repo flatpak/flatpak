@@ -2506,7 +2506,6 @@ flatpak_summary_match_subrefs (GVariant *summary, const char *ref)
   for (i = 0; i < n; i++)
     {
       g_autoptr(GVariant) child = NULL;
-      g_auto(GStrv) cur_parts = NULL;
       g_autoptr(GVariant) cur_v = NULL;
       const char *cur;
       const char *id_start;
