@@ -162,7 +162,7 @@ handle_runtime_repo_deps (FlatpakDir *dir, const char *dep_url, GError **error)
   config = flatpak_dir_parse_repofile (dir, new_remote, dep_data, &gpg_key, NULL, error);
   if (config == NULL)
     {
-      g_prefix_error (error, "Can't parse dependent file %s", dep_url);
+      g_prefix_error (error, "Can't parse dependent file %s: ", dep_url);
       return FALSE;
     }
 
