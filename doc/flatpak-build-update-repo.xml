@@ -69,6 +69,14 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--redirect-url=URL</option></term>
+
+                <listitem><para>
+                    Redirect this repo to a new URL.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--title=TITLE</option></term>
 
                 <listitem><para>
@@ -82,6 +90,15 @@
 
                 <listitem><para>
                     A default branch for the repository, mainly for use in a UI.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--gpg-import=FILE</option></term>
+
+                <listitem><para>
+                    Import a new default GPG public key from the
+                    given file.
                 </para></listitem>
             </varlistentry>
 
