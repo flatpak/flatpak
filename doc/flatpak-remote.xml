@@ -106,8 +106,16 @@
                     <listitem><para>An optional title to use when presenting this remote in a UI.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>xa.title-is-set</option> (boolean)</term>
+                    <listitem><para>This key is set to true if <option>xa.title</option> has been explicitly set.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>xa.default-branch</option> (string)</term>
                     <listitem><para>The default branch to use when installing from this remote.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>xa.default-branch-is-set</option> (boolean)</term>
+                    <listitem><para>This key is set to true if <option>xa.default-branch</option> has been explicitly set.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>xa.default-branch</option> (string)</term>
