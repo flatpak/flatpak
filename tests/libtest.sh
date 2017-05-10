@@ -170,12 +170,17 @@ assert_file_empty() {
 }
 
 export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
+export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
 mkdir -p ${FL_GPG_HOMEDIR}
+mkdir -p ${FL_GPG_HOMEDIR2}
 # This need to be writable, so copy the keys
 cp $(dirname $0)/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
+cp $(dirname $0)/test-keyring2/*.gpg ${FL_GPG_HOMEDIR2}/
 
 export FL_GPG_ID=7B0961FD
+export FL_GPG_ID2=B2314EFC
 export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
+export FL_GPGARGS2="--gpg-homedir=${FL_GPG_HOMEDIR2} --gpg-sign=${FL_GPG_ID2}"
 
 setup_repo () {
     REPONAME=${1:-test}

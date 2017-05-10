@@ -78,6 +78,9 @@ Flatpak-1.0.*
 /tests/test-keyring/.gpg-v21-migrated
 /tests/test-keyring/private-keys-v1.d/
 /tests/test-keyring/trustdb.gpg
+/tests/test-keyring2/.gpg-v21-migrated
+/tests/test-keyring2/private-keys-v1.d/
+/tests/test-keyring2/trustdb.gpg
 /tests/hello*.flatpak
 /tests/platform*.flatpak
 /tests/repo
