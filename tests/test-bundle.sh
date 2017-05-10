@@ -148,7 +148,7 @@ assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
 echo "ok update"
 
-make_updated_app UPDATED2
+make_updated_app test UPDATED2
 
 ${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello2.flatpak org.test.Hello
 assert_has_file bundles/hello2.flatpak

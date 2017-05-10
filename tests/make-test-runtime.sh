@@ -4,6 +4,8 @@ set -e
 
 DIR=`mktemp -d`
 
+REPONAME=$1
+shift
 ID=$1
 shift
 
@@ -64,5 +66,5 @@ mkdir -p ${DIR}/usr/lib/locale/
 cp -r /usr/lib/locale/C.* ${DIR}/usr/lib/locale/en_US
 
 mkdir -p repos
-flatpak build-export --runtime ${GPGARGS-} repos/test ${DIR}
+flatpak build-export --runtime ${GPGARGS-} repos/${REPONAME} ${DIR}
 rm -rf ${DIR}

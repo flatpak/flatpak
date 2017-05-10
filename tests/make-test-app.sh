@@ -4,6 +4,9 @@ set -e
 
 DIR=`mktemp -d`
 
+REPONAME=$1
+shift
+
 EXTRA="${1-}"
 
 ARCH=`flatpak --default-arch`
@@ -62,5 +65,5 @@ cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64
 
 flatpak build-finish --command=hello.sh ${DIR}
 mkdir -p repos
-flatpak build-export ${GPGARGS-} repos/test ${DIR}
+flatpak build-export ${GPGARGS-} repos/${REPONAME} ${DIR}
 rm -rf ${DIR}

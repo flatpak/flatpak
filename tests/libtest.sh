@@ -178,47 +178,58 @@ export FL_GPG_ID=7B0961FD
 export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
 
 setup_repo () {
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh > /dev/null
-    update_repo
-    $(dirname $0)/test-webserver.sh repos
-    port=$(cat httpd-port)
-    FLATPAK_HTTP_PID=$(cat httpd-pid)
-    flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test"
+    REPONAME=${1:-test}
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Platform bash ls cat echo readlink > /dev/null
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh ${REPONAME} > /dev/null
+    update_repo $REPONAME
+    if [ $REPONAME == "test" ]; then
+        $(dirname $0)/test-webserver.sh repos
+        FLATPAK_HTTP_PID=$(cat httpd-pid)
+        mv httpd-port httpd-port-main
+    fi
+    port=$(cat httpd-port-main)
+    flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
 }
 
 update_repo () {
-    ${FLATPAK} build-update-repo $FL_GPGARGS ${UPDATE_REPO_ARGS-} repos/test
+    REPONAME=${1:-test}
+    ${FLATPAK} build-update-repo $FL_GPGARGS ${UPDATE_REPO_ARGS-} repos/${REPONAME}
 }
 
 make_updated_app () {
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh ${1:-UPDATED} > /dev/null
-    update_repo
+    REPONAME=${1:-test}
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh ${REPONAME} ${2:-UPDATED} > /dev/null
+    update_repo $REPONAME
 }
 
 setup_sdk_repo () {
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
-    update_repo
+    REPONAME=${1:-test}
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
+    update_repo $REPONAME
 }
 
 setup_python2_repo () {
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.PythonPlatform bash python2 ls cat echo readlink > /dev/null
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.PythonSdk python2 bash ls cat echo readlink make mkdir cp touch > /dev/null
-    update_repo
+    REPONAME=${1:-test}
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonPlatform bash python2 ls cat echo readlink > /dev/null
+    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonSdk python2 bash ls cat echo readlink make mkdir cp touch > /dev/null
+    update_repo $REPONAME
 }
 
 install_repo () {
-    ${FLATPAK} ${U} install test-repo org.test.Platform master
-    ${FLATPAK} ${U} install test-repo org.test.Hello master
+    REPONAME=${1:-test}
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.Platform master
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.Hello master
 }
 
 install_sdk_repo () {
-    ${FLATPAK} ${U} install test-repo org.test.Sdk master
+    REPONAME=${1:-test}
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.Sdk master
 }
 
 install_python2_repo () {
-    ${FLATPAK} ${U} install test-repo org.test.PythonPlatform master
-    ${FLATPAK} ${U} install test-repo org.test.PythonSdk master
+    REPONAME=${1:-test}
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.PythonPlatform master
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.PythonSdk master
 }
 
 run () {

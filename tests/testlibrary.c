@@ -530,7 +530,7 @@ make_test_runtime (void)
   g_autoptr(GError) error = NULL;
   g_autofree char *arg0 = NULL;
   char *argv[] = {
-    NULL, "org.test.Platform", "bash", "ls", "cat", "echo", "readlink", NULL
+    NULL, "test", "org.test.Platform", "bash", "ls", "cat", "echo", "readlink", NULL
   };
   GSpawnFlags flags = G_SPAWN_DEFAULT;
 
@@ -556,7 +556,7 @@ make_test_app (void)
   int status;
   g_autoptr(GError) error = NULL;
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, NULL };
+  char *argv[] = { NULL, "test", NULL };
   GSpawnFlags flags = G_SPAWN_DEFAULT;
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
