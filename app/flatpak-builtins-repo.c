@@ -40,6 +40,7 @@ print_info (GVariant *summary)
   g_autoptr(GVariant) cache = NULL;
   const char *title;
   const char *default_branch;
+  const char *redirect_url;
 
   meta = g_variant_get_child_value (summary, 1);
 
@@ -48,6 +49,9 @@ print_info (GVariant *summary)
 
   if (g_variant_lookup (meta, "xa.default-branch", "&s", &default_branch))
     g_print ("Default branch: %s\n", default_branch);
+
+  if (g_variant_lookup (meta, "xa.redirect-url", "&s", &redirect_url))
+    g_print ("Redirect URL: %s\n", redirect_url);
 
   cache = g_variant_lookup_value (meta, "xa.cache", NULL);
   if (cache)
