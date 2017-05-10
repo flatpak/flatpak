@@ -424,15 +424,15 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
     }
 
   if (opt_title &&
-      !flatpak_repo_set_title (repo, opt_title, error))
+      !flatpak_repo_set_title (repo, opt_title[0] ? opt_title : NULL, error))
     return FALSE;
 
   if (opt_redirect_url &&
-      !flatpak_repo_set_redirect_url (repo, opt_redirect_url, error))
+      !flatpak_repo_set_redirect_url (repo, opt_redirect_url[0] ? opt_redirect_url : NULL, error))
     return FALSE;
 
   if (opt_default_branch &&
-      !flatpak_repo_set_default_branch (repo, opt_default_branch, error))
+      !flatpak_repo_set_default_branch (repo, opt_default_branch[0] ? opt_default_branch : NULL, error))
     return FALSE;
 
   if (opt_gpg_import)
