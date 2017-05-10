@@ -637,6 +637,8 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
   /* Reload changed configuration */
   if (!flatpak_dir_recreate_repo (self->dir, cancellable, error))
     return FALSE;
+
+  return TRUE;
 }
 
 gboolean
