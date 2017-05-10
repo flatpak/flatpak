@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_without_user_xattrs
 
-echo "1..4"
+echo "1..6"
 
 #Regular repo
 setup_repo
@@ -77,3 +77,32 @@ fi
 assert_file_has_content install-error-log "GPG signatures found, but none are in trusted keyring"
 
 echo "ok fail with wrong gpg key"
+
+${FLATPAK} ${U} remotes -d | grep ^test-repo > repo-info
+assert_not_file_has_content repo-info "new-title"
+UPDATE_REPO_ARGS=--title=new-title update_repo
+assert_file_has_content repos/test/config new-title
+
+# This should make us automatically pick up the new metadata
+${FLATPAK} ${U} install test-repo org.test.Platform
+${FLATPAK} ${U} remotes -d | grep ^test-repo > repo-info
+assert_file_has_content repo-info "new-title"
+
+echo "ok update metadata"
+
+port=$(cat httpd-port-main)
+UPDATE_REPO_ARGS="--redirect-url=http://127.0.0.1:${port}/test-gpg2 --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg" update_repo
+
+${FLATPAK} ${U} update org.test.Platform
+${FLATPAK} ${U} remotes -d | grep ^test-repo > repo-info
+# Ensure we have the new uri
+assert_file_has_content repo-info "/test-gpg2"
+
+# Make sure we also get new installs from the new repo
+GPGARGS="${FL_GPGARGS2}" make_updated_app test-gpg2
+update_repo test-gpg2
+
+${FLATPAK} ${U} install test-repo org.test.Hello
+assert_file_has_content $FL_DIR/app/org.test.Hello/$ARCH/master/active/files/bin/hello.sh UPDATED
+
+echo "ok redirect url and gpg key"
