@@ -591,6 +591,12 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
                                 const char *commit,
                                 GError **error)
 {
+  const char *all_paths[] = { NULL };
+
+  /* If specify an empty subpath, that means all subpaths */
+  if (subpaths != NULL && subpaths[0] != NULL && subpaths[0][0] == 0)
+    subpaths = all_paths;
+
   return flatpak_transaction_add_ref (self, NULL, ref, subpaths, commit, FLATPAK_TRANSACTION_OP_KIND_UPDATE, NULL, NULL, error);
 }
 
