@@ -3087,7 +3087,7 @@ flatpak_dir_read_active (FlatpakDir   *self,
 gboolean
 flatpak_dir_set_active (FlatpakDir   *self,
                         const char   *ref,
-                        const char   *checksum,
+                        const char   *active_id,
                         GCancellable *cancellable,
                         GError      **error)
 {
@@ -3102,11 +3102,11 @@ flatpak_dir_set_active (FlatpakDir   *self,
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
   active_link = g_file_get_child (deploy_base, "active");
 
-  if (checksum != NULL)
+  if (active_id != NULL)
     {
       glnx_gen_temp_name (tmpname);
       active_tmp_link = g_file_get_child (deploy_base, tmpname);
-      if (!g_file_make_symbolic_link (active_tmp_link, checksum, cancellable, error))
+      if (!g_file_make_symbolic_link (active_tmp_link, active_id, cancellable, error))
         goto out;
 
       if (!flatpak_file_rename (active_tmp_link,
@@ -4472,7 +4472,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   g_autoptr(GVariant) old_deploy_data = NULL;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   g_autofree const char **old_subpaths = NULL;
-  const char *old_active;
+  g_autofree char *old_active = NULL;
   const char *old_origin;
 
   if (!flatpak_dir_lock (self, &lock,
@@ -4484,8 +4484,9 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
   if (old_deploy_data == NULL)
     return FALSE;
 
+  old_active = flatpak_dir_read_active (self, ref, cancellable);
+
   old_origin = flatpak_deploy_data_get_origin (old_deploy_data);
-  old_active = flatpak_deploy_data_get_commit (old_deploy_data);
   old_subpaths = flatpak_deploy_data_get_subpaths (old_deploy_data);
   if (!flatpak_dir_deploy (self,
                            old_origin,
@@ -4496,7 +4497,8 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            cancellable, error))
     return FALSE;
 
-  if (!flatpak_dir_undeploy (self, ref, old_active,
+  if (old_active &&
+      !flatpak_dir_undeploy (self, ref, old_active,
                              TRUE, FALSE,
                              cancellable, error))
     return FALSE;
@@ -5510,14 +5512,14 @@ out:
 gboolean
 flatpak_dir_list_deployed (FlatpakDir   *self,
                            const char   *ref,
-                           char       ***deployed_checksums,
+                           char       ***deployed_ids,
                            GCancellable *cancellable,
                            GError      **error)
 {
   gboolean ret = FALSE;
 
   g_autoptr(GFile) deploy_base = NULL;
-  g_autoptr(GPtrArray) checksums = NULL;
+  g_autoptr(GPtrArray) ids = NULL;
   GError *temp_error = NULL;
   g_autoptr(GFileEnumerator) dir_enum = NULL;
   g_autoptr(GFile) child = NULL;
@@ -5526,7 +5528,7 @@ flatpak_dir_list_deployed (FlatpakDir   *self,
 
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
 
-  checksums = g_ptr_array_new_with_free_func (g_free);
+  ids = g_ptr_array_new_with_free_func (g_free);
 
   dir_enum = g_file_enumerate_children (deploy_base, OSTREE_GIO_FAST_QUERYINFO,
                                         G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS,
@@ -5553,7 +5555,7 @@ flatpak_dir_list_deployed (FlatpakDir   *self,
       if (g_file_info_get_file_type (child_info) == G_FILE_TYPE_DIRECTORY &&
           name[0] != '.' &&
           strlen (name) == 64)
-        g_ptr_array_add (checksums, g_strdup (name));
+        g_ptr_array_add (ids, g_strdup (name));
 
       g_clear_object (&child_info);
     }
@@ -5569,8 +5571,8 @@ flatpak_dir_list_deployed (FlatpakDir   *self,
 out:
   if (ret)
     {
-      g_ptr_array_add (checksums, NULL);
-      *deployed_checksums = (char **) g_ptr_array_free (g_steal_pointer (&checksums), FALSE);
+      g_ptr_array_add (ids, NULL);
+      *deployed_ids = (char **) g_ptr_array_free (g_steal_pointer (&ids), FALSE);
     }
 
   return ret;
@@ -5605,7 +5607,7 @@ dir_is_locked (GFile *dir)
 gboolean
 flatpak_dir_undeploy (FlatpakDir   *self,
                       const char   *ref,
-                      const char   *checksum,
+                      const char   *active_id,
                       gboolean      is_update,
                       gboolean      force_remove,
                       GCancellable *cancellable,
@@ -5617,48 +5619,48 @@ flatpak_dir_undeploy (FlatpakDir   *self,
   g_autoptr(GFile) checkoutdir = NULL;
   g_autoptr(GFile) removed_subdir = NULL;
   g_autoptr(GFile) removed_dir = NULL;
-  g_autofree char *tmpname = g_strdup_printf ("removed-%s-XXXXXX", checksum);
-  g_autofree char *active = NULL;
+  g_autofree char *tmpname = g_strdup_printf ("removed-%s-XXXXXX", active_id);
+  g_autofree char *current_active = NULL;
   g_autoptr(GFile) change_file = NULL;
   int i;
 
   g_assert (ref != NULL);
-  g_assert (checksum != NULL);
+  g_assert (active_id != NULL);
 
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
 
-  checkoutdir = g_file_get_child (deploy_base, checksum);
+  checkoutdir = g_file_get_child (deploy_base, active_id);
   if (!g_file_query_exists (checkoutdir, cancellable))
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
-                   _("%s branch %s not installed"), ref, checksum);
+                   _("%s branch %s not installed"), ref, active_id);
       goto out;
     }
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     goto out;
 
-  active = flatpak_dir_read_active (self, ref, cancellable);
-  if (active != NULL && strcmp (active, checksum) == 0)
+  current_active = flatpak_dir_read_active (self, ref, cancellable);
+  if (current_active != NULL && strcmp (current_active, active_id) == 0)
     {
-      g_auto(GStrv) deployed_checksums = NULL;
+      g_auto(GStrv) deployed_ids = NULL;
       const char *some_deployment;
 
       /* We're removing the active deployment, start by repointing that
          to another deployment if one exists */
 
       if (!flatpak_dir_list_deployed (self, ref,
-                                      &deployed_checksums,
+                                      &deployed_ids,
                                       cancellable, error))
         goto out;
 
       some_deployment = NULL;
-      for (i = 0; deployed_checksums[i] != NULL; i++)
+      for (i = 0; deployed_ids[i] != NULL; i++)
         {
-          if (strcmp (deployed_checksums[i], checksum) == 0)
+          if (strcmp (deployed_ids[i], active_id) == 0)
             continue;
 
-          some_deployment = deployed_checksums[i];
+          some_deployment = deployed_ids[i];
           break;
         }
 
