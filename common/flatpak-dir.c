@@ -7877,9 +7877,24 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       gboolean has_changed = FALSE;
+      gboolean gpg_verify_summary;
+      gboolean gpg_verify;
+
+      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote, &gpg_verify_summary, error))
+        return FALSE;
+
+      if (!ostree_repo_remote_get_gpg_verify (self->repo, remote, &gpg_verify, error))
+        return FALSE;
+
+      if (!gpg_verify_summary || !gpg_verify)
+        {
+          g_debug ("Ignoring automatic updates for system-helper remotes without gpg signatures");
+          return TRUE;
+        }
 
       if (!flatpak_dir_update_remote_configuration_for_summary (self, remote, summary, TRUE, &has_changed, cancellable, error))
         return FALSE;
+
 
       if (summary_sig_bytes == NULL)
         {
