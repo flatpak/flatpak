@@ -215,11 +215,13 @@ builder_source_git_download (BuilderSource  *source,
 
   if (self->commit != NULL && self->branch != NULL)
     {
-      g_autofree char *current_commit = builder_git_get_current_commit (location,get_branch (self), context, error);
-      if (current_commit == NULL)
+      /* We want to support the commit being both a tag object and the real commit object that it points too */
+      g_autofree char *current_commit = builder_git_get_current_commit (location,get_branch (self), FALSE, context, error);
+      g_autofree char *current_commit2 = builder_git_get_current_commit (location,get_branch (self), TRUE, context, error);
+      if (current_commit == NULL || current_commit2 == NULL)
         return FALSE;
-      if (strcmp (current_commit, self->commit) != 0)
-        return flatpak_fail (error, "Git commit for branch %s is %s, but expected %s\n", self->branch, current_commit, self->commit);
+      if (strcmp (current_commit, self->commit) != 0 && strcmp (current_commit2, self->commit) != 0)
+        return flatpak_fail (error, "Git commit for branch %s is %s, but expected %s\n", self->branch, current_commit2, self->commit);
     }
 
   return TRUE;
@@ -299,7 +301,7 @@ builder_source_git_checksum (BuilderSource  *source,
   location = get_url_or_path (self, context, &error);
   if (location != NULL)
     {
-      current_commit = builder_git_get_current_commit (location,get_branch (self), context, &error);
+      current_commit = builder_git_get_current_commit (location,get_branch (self), FALSE, context, &error);
       if (current_commit)
         builder_cache_checksum_str (cache, current_commit);
       else if (error)
@@ -324,7 +326,7 @@ builder_source_git_update (BuilderSource  *source,
   if (location == NULL)
     return FALSE;
 
-  current_commit = builder_git_get_current_commit (location, get_branch (self), context, NULL);
+  current_commit = builder_git_get_current_commit (location, get_branch (self), FALSE, context, NULL);
   if (current_commit)
     {
       g_free (self->branch);

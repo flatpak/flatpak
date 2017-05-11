@@ -35,6 +35,7 @@ gboolean builder_git_mirror_repo        (const char      *repo_location,
                                          GError         **error);
 char *   builder_git_get_current_commit (const char      *repo_location,
                                          const char      *branch,
+                                         gboolean        ensure_commit,
                                          BuilderContext  *context,
                                          GError         **error);
 gboolean builder_git_checkout           (const char      *repo_location,

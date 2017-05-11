@@ -71,13 +71,20 @@ git_get_mirror_dir (const char     *url_or_path,
 static char *
 git_get_current_commit (GFile          *repo_dir,
                         const char     *branch,
+                        gboolean        ensure_commit,
                         BuilderContext *context,
                         GError        **error)
 {
   char *output = NULL;
+  g_autofree char *arg = NULL;
+
+  if (ensure_commit)
+    arg = g_strconcat (branch, "^{commit}", NULL);
+  else
+    arg = g_strdup (branch);
 
   if (!git (repo_dir, &output, error,
-            "rev-parse", branch, NULL))
+            "rev-parse", arg, NULL))
     return NULL;
 
   /* Trim trailing whitespace */
@@ -89,13 +96,14 @@ git_get_current_commit (GFile          *repo_dir,
 char *
 builder_git_get_current_commit (const char     *repo_location,
                                 const char     *branch,
+                                gboolean        ensure_commit,
                                 BuilderContext *context,
                                 GError        **error)
 {
   g_autoptr(GFile) mirror_dir = NULL;
 
   mirror_dir = git_get_mirror_dir (repo_location, context);
-  return git_get_current_commit (mirror_dir, branch, context, error);
+  return git_get_current_commit (mirror_dir, branch, ensure_commit, context, error);
 }
 
 char *
@@ -326,7 +334,7 @@ builder_git_mirror_repo (const char     *repo_location,
 
   if (mirror_submodules)
     {
-      current_commit = git_get_current_commit (mirror_dir, ref, context, error);
+      current_commit = git_get_current_commit (mirror_dir, ref, FALSE, context, error);
       if (current_commit == NULL)
         return FALSE;
 
