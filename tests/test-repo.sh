@@ -37,11 +37,15 @@ GPGPUBKEY="${FL_GPG_HOMEDIR2}/pubring.gpg" GPGARGS="${FL_GPGARGS2}" setup_repo t
 
 #remote with missing GPG key
 port=$(cat httpd-port-main)
-flatpak remote-add ${U} test-missing-gpg-repo "http://127.0.0.1:${port}/test"
+if flatpak remote-add ${U} test-missing-gpg-repo "http://127.0.0.1:${port}/test"; then
+    assert_not_reached "Should fail metadata-update due to missing gpg key"
+fi
 
 #remote with wrong GPG key
 port=$(cat httpd-port-main)
-flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg test-wrong-gpg-repo "http://127.0.0.1:${port}/test"
+if flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR2}/pubring.gpg test-wrong-gpg-repo "http://127.0.0.1:${port}/test"; then
+    assert_not_reached "Should fail metadata-update due to wrong gpg key"
+fi
 
 install_repo test-no-gpg
 echo "ok install without gpg key"

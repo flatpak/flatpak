@@ -276,47 +276,6 @@ load_options (const char *filename,
     }
 }
 
-static gboolean
-update_remote_with_extra_metadata (FlatpakDir* dir,
-                                   const char *remote,
-                                   GBytes *gpg_data,
-                                   GCancellable *cancellable,
-                                   GError **error)
-{
-  g_autofree char *title = NULL;
-  g_autofree char *default_branch = NULL;
-  g_autoptr(GKeyFile) config = NULL;
-  gboolean changed = FALSE;
-
-  if (opt_title == NULL)
-    {
-      title = flatpak_dir_fetch_remote_title (dir,
-                                              remote,
-                                              NULL,
-                                              NULL);
-      if (title)
-        opt_title = title;
-    }
-
-    if (opt_default_branch == NULL)
-    {
-      default_branch = flatpak_dir_fetch_remote_default_branch (dir,
-                                                                remote,
-                                                                NULL,
-                                                                NULL);
-      if (default_branch)
-        opt_default_branch = default_branch;
-    }
-
-    if (title != NULL || default_branch != NULL)
-      {
-        config = get_config_from_opts (dir, remote, &changed);
-        return flatpak_dir_modify_remote (dir, remote, config, gpg_data, cancellable, error);
-      }
-
-    return TRUE;
-}
-
 gboolean
 flatpak_builtin_add_remote (int argc, char **argv,
                             GCancellable *cancellable, GError **error)
@@ -403,7 +362,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
 
   /* We can't retrieve the extra metadata until the remote has been added locally, since
      ostree_repo_remote_fetch_summary() works with the repository's name, not its URL. */
-  return update_remote_with_extra_metadata (dir, remote_name, gpg_data, cancellable, error);
+  return flatpak_dir_update_remote_configuration (dir, remote_name, cancellable, error);
 }
 
 gboolean
