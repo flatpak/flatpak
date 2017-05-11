@@ -246,11 +246,19 @@ builder_git_mirror_repo (const char     *repo_location,
     {
       g_autofree char *filename = g_file_get_basename (mirror_dir);
       g_autoptr(GFile) parent = g_file_get_parent (mirror_dir);
-      g_autofree char *filename_tmp = g_strconcat (filename, ".clone_tmp", NULL);
-      g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
+      g_autofree char *mirror_path = g_file_get_path (mirror_dir);
+      g_autofree char *path_tmp = g_strconcat (mirror_path, ".clone_XXXXXX", NULL);
+      g_autofree char *filename_tmp = NULL;
+      g_autoptr(GFile) mirror_dir_tmp = NULL;
       g_autoptr(GFile) cached_git_dir = NULL;
       gboolean res;
       g_autoptr(GPtrArray) args = g_ptr_array_new ();
+
+      if (g_mkdtemp_full (path_tmp, 0755) == NULL)
+        return flatpak_fail (error, "Can't create temporary directory");
+
+      mirror_dir_tmp = g_file_new_for_path (path_tmp);
+      filename_tmp = g_file_get_basename (mirror_dir_tmp);
 
       g_ptr_array_add (args, "git");
       g_ptr_array_add (args, "clone");

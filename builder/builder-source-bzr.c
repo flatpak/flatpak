@@ -184,12 +184,23 @@ builder_source_bzr_download (BuilderSource  *source,
     {
       g_autofree char *filename = g_file_get_basename (mirror_dir);
       g_autoptr(GFile) parent = g_file_get_parent (mirror_dir);
-      g_autofree char *filename_tmp = g_strconcat ("./", filename, ".clone_tmp", NULL);
-      g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
+      g_autofree char *mirror_path = g_file_get_path (mirror_dir);
+      g_autofree char *path_tmp = g_strconcat (mirror_path, ".clone_XXXXXX", NULL);
+      g_autofree char *filename_tmp = NULL;
+      g_autoptr(GFile) mirror_dir_tmp = NULL;
       g_autoptr(GFile) cached_bzr_dir = NULL;
       const char *branch_source;
 
       g_print ("Getting bzr repo %s\n", self->url);
+
+      if (g_mkdtemp_full (path_tmp, 0755) == NULL)
+        return flatpak_fail (error, "Can't create temporary directory");
+
+      /* bzr can't check out to the empty dir, so remove it */
+      g_rmdir (path_tmp);
+
+      mirror_dir_tmp = g_file_new_for_path (path_tmp);
+      filename_tmp = g_file_get_basename (mirror_dir_tmp);
 
       branch_source = self->url;
 
