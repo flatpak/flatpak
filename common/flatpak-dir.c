@@ -3318,6 +3318,55 @@ maybe_quote (const char *str)
   return g_strdup (str);
 }
 
+typedef enum {
+  INI_FILE_TYPE_SEARCH_PROVIDER = 1,
+} ExportedIniFileType;
+
+static gboolean
+export_ini_file (int           parent_fd,
+                 const char   *name,
+                 ExportedIniFileType ini_type,
+                 struct stat  *stat_buf,
+                 char        **target,
+                 GCancellable *cancellable,
+                 GError      **error)
+{
+  glnx_fd_close int desktop_fd = -1;
+  g_autofree char *tmpfile_name = g_strdup_printf ("export-ini-XXXXXX");
+  g_autoptr(GOutputStream) out_stream = NULL;
+  g_autofree gchar *data = NULL;
+  gsize data_len;
+  g_autofree gchar *new_data = NULL;
+  gsize new_data_len;
+  g_autoptr(GKeyFile) keyfile = NULL;
+
+  if (!flatpak_openat_noatime (parent_fd, name, &desktop_fd, cancellable, error) ||
+      !read_fd (desktop_fd, stat_buf, &data, &data_len, error))
+    return FALSE;
+
+  keyfile = g_key_file_new ();
+  if (!g_key_file_load_from_data (keyfile, data, data_len, G_KEY_FILE_KEEP_TRANSLATIONS, error))
+    return FALSE;
+
+  if (ini_type == INI_FILE_TYPE_SEARCH_PROVIDER)
+    g_key_file_set_boolean (keyfile, "Shell Search Provider", "DefaultDisabled", TRUE);
+
+  new_data = g_key_file_to_data (keyfile, &new_data_len, error);
+  if (new_data == NULL)
+    return FALSE;
+
+  if (!flatpak_open_in_tmpdir_at (parent_fd, 0755, tmpfile_name, &out_stream, cancellable, error) ||
+      !g_output_stream_write_all (out_stream, new_data, new_data_len, NULL, cancellable, error) ||
+      !g_output_stream_close (out_stream, cancellable, error))
+    return FALSE;
+
+  if (target)
+    *target = g_steal_pointer (&tmpfile_name);
+
+  return TRUE;
+}
+
+
 static gboolean
 export_desktop_file (const char   *app,
                      const char   *branch,
@@ -3531,6 +3580,8 @@ rewrite_export_dir (const char   *app,
         }
       else if (S_ISREG (stbuf.st_mode))
         {
+          g_autofree gchar *new_name = NULL;
+
           if (!flatpak_has_name_prefix (dent->d_name, app))
             {
               g_warning ("Non-prefixed filename %s in app %s, removing.", dent->d_name, app);
@@ -3544,12 +3595,21 @@ rewrite_export_dir (const char   *app,
           if (g_str_has_suffix (dent->d_name, ".desktop") ||
               g_str_has_suffix (dent->d_name, ".service"))
             {
-              g_autofree gchar *new_name = NULL;
-
               if (!export_desktop_file (app, branch, arch, metadata,
                                         source_iter.fd, dent->d_name, &stbuf, &new_name, cancellable, error))
                 goto out;
+            }
 
+          if (strcmp (source_name, "search-providers") == 0 &&
+              g_str_has_suffix (dent->d_name, ".ini"))
+            {
+              if (!export_ini_file (source_iter.fd, dent->d_name, INI_FILE_TYPE_SEARCH_PROVIDER,
+                                    &stbuf, &new_name, cancellable, error))
+                goto out;
+            }
+
+          if (new_name)
+            {
               g_hash_table_insert (visited_children, g_strdup (new_name), GINT_TO_POINTER (1));
 
               if (renameat (source_iter.fd, new_name, source_iter.fd, dent->d_name) != 0)
