@@ -60,6 +60,7 @@ static FlatpakOciRegistry *flatpak_dir_create_system_child_oci_registry (Flatpak
 
 static OstreeRepo * flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                                           GLnxLockFile *file_lock,
+                                                          const char   *optional_checksum,
                                                           GError      **error);
 
 static gboolean flatpak_dir_mirror_oci (FlatpakDir          *self,
@@ -1696,7 +1697,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
         }
       else
         {
-          g_autoptr(OstreeRepo) child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
+          g_autoptr(OstreeRepo) child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, NULL, error);
           if (child_repo == NULL)
             return FALSE;
 
@@ -4588,6 +4589,7 @@ flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
 static OstreeRepo *
 flatpak_dir_create_system_child_repo (FlatpakDir   *self,
                                       GLnxLockFile *file_lock,
+                                      const char   *optional_commit,
                                       GError      **error)
 {
   g_autoptr(GFile) cache_dir = NULL;
@@ -4653,6 +4655,17 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   if (!ostree_repo_open (repo, NULL, error))
     return NULL;
 
+  /* Create a commitpartial in the child repo to ensure we download everything, because
+     any commitpartial state in the parent will not be inherited */
+  if (optional_commit)
+    {
+      g_autofree char *commitpartial_basename = g_strconcat (optional_commit, ".commitpartial", NULL);
+      g_autoptr(GFile) commitpartial =
+        flatpak_build_file (ostree_repo_get_path (repo),
+                            "state", commitpartial_basename, NULL);
+
+      g_file_replace_contents (commitpartial, "", 0, NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION, NULL, NULL, NULL);
+    }
   return g_steal_pointer (&repo);
 }
 
@@ -4755,7 +4768,7 @@ flatpak_dir_install (FlatpakDir          *self,
              user and hand back the resulting data to the system-helper, that trusts us
              due to the GPG signatures in the repo */
 
-          child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
+          child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, NULL, error);
           if (child_repo == NULL)
             return FALSE;
 
@@ -5259,7 +5272,7 @@ flatpak_dir_update (FlatpakDir          *self,
              user and hand back the resulting data to the system-helper, that trusts us
              due to the GPG signatures in the repo */
 
-          child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
+          child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, commit, error);
           if (child_repo == NULL)
             return FALSE;
 
