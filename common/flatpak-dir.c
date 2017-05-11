@@ -4597,6 +4597,7 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   g_autofree char *tmpdir_name = NULL;
   g_autoptr(OstreeRepo) new_repo = NULL;
   g_autoptr(GKeyFile) config = NULL;
+  OstreeRepoMode parent_mode;
 
   g_assert (!self->user);
 
@@ -4620,18 +4621,23 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
 
   new_repo = ostree_repo_new (repo_dir);
 
+  parent_mode = ostree_repo_get_mode (self->repo);
+
   repo_dir_config = g_file_get_child (repo_dir, "config");
   if (!g_file_query_exists (repo_dir_config, NULL))
     {
-      OstreeRepoMode parent_mode = ostree_repo_get_mode (self->repo);
-
       if (!ostree_repo_create (new_repo, parent_mode, NULL, error))
         return NULL;
     }
   else
     {
-      if (!ostree_repo_open (new_repo, NULL, error))
-        return NULL;
+      /* Try to open, but on failure, re-create */
+      if (!ostree_repo_open (new_repo, NULL, NULL))
+        {
+          flatpak_rm_rf (repo_dir, NULL, NULL);
+          if (!ostree_repo_create (new_repo, parent_mode, NULL, error))
+            return NULL;
+        }
     }
 
   /* Ensure the config is updated */
