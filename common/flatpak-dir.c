@@ -3062,7 +3062,6 @@ flatpak_dir_read_latest (FlatpakDir   *self,
   return res;
 }
 
-
 char *
 flatpak_dir_read_active (FlatpakDir   *self,
                          const char   *ref,
@@ -4121,6 +4120,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GVariant) commit_data = NULL;
   g_autofree char *tmp_dir_path = NULL;
   g_autofree char *alt_id = NULL;
+  g_autofree char *checkout_basename = NULL;
   gboolean created_extra_data = FALSE;
   g_autoptr(GVariant) commit_metadata = NULL;
   GVariantBuilder metadata_builder;
@@ -4161,7 +4161,27 @@ flatpak_dir_deploy (FlatpakDir          *self,
   commit_metadata = g_variant_get_child_value (commit_data, 0);
   g_variant_lookup (commit_metadata, "xa.alt-id", "s", &alt_id);
 
-  real_checkoutdir = g_file_get_child (deploy_base, checksum);
+  if (subpaths == NULL || *subpaths == NULL)
+    checkout_basename = g_strdup (checksum);
+  else
+    {
+      GString *str = g_string_new (checksum);
+      int i;
+      for (i = 0; subpaths[i] != NULL; i++)
+        {
+          const char *s = subpaths[i];
+          g_string_append_c (str, '-');
+          while (*s)
+            {
+              if (*s != '/')
+                g_string_append_c (str, *s);
+              s++;
+            }
+        }
+      checkout_basename = g_string_free (str, FALSE);
+    }
+
+  real_checkoutdir = g_file_get_child (deploy_base, checkout_basename);
   if (g_file_query_exists (real_checkoutdir, cancellable))
     {
       g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
@@ -4169,7 +4189,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
       return FALSE;
     }
 
-  g_autofree char *template = g_strdup_printf (".%s-XXXXXX", checksum);
+  g_autofree char *template = g_strdup_printf (".%s-XXXXXX", checkout_basename);
   tmp_dir_template = g_file_get_child (deploy_base, template);
   tmp_dir_path = g_file_get_path (tmp_dir_template);
 
@@ -4383,7 +4403,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
                     cancellable, NULL, NULL, error))
     return FALSE;
 
-  if (!flatpak_dir_set_active (self, ref, checksum, cancellable, error))
+  if (!flatpak_dir_set_active (self, ref, checkout_basename, cancellable, error))
     return FALSE;
 
   return TRUE;
