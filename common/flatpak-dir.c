@@ -3764,7 +3764,7 @@ flatpak_export_dir (GFile        *source,
   const char *exported_subdirs[] = {
     "share/applications",                  "../..",
     "share/icons",                         "../..",
-    "share/dbus-1/services",               "../..",
+    "share/dbus-1/services",               "../../..",
     "share/gnome-shell/search-providers",  "../../..",
     "share/mime/packages",                 "../../..",
   };
