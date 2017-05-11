@@ -639,6 +639,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GVariant) metadata_dict_v = NULL;
   gboolean is_runtime = FALSE;
   gboolean is_extension = FALSE;
+  guint64 installed_size = 0,download_size = 0;
   GTimeVal ts;
 
   context = g_option_context_new (_("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"));
@@ -817,6 +818,13 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
     goto out;
+
+  if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
+    goto out;
+
+  g_variant_dict_insert_value (&metadata_dict, "xa.metadata", g_variant_new_string (metadata_contents));
+  g_variant_dict_insert_value (&metadata_dict, "xa.installed-size", g_variant_new_uint64 (GUINT64_TO_BE (installed_size)));
+  g_variant_dict_insert_value (&metadata_dict, "xa.download-size", g_variant_new_uint64 (GUINT64_TO_BE (download_size)));
 
   metadata_dict_v = g_variant_ref_sink (g_variant_dict_end (&metadata_dict));
 
