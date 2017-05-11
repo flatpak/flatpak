@@ -2589,15 +2589,16 @@ out:
 }
 
 static gboolean
-repo_pull_one_untrusted (OstreeRepo          *self,
-                         const char          *remote_name,
-                         const char          *url,
-                         const char         **dirs_to_pull,
-                         const char          *ref,
-                         const char          *checksum,
-                         OstreeAsyncProgress *progress,
-                         GCancellable        *cancellable,
-                         GError             **error)
+repo_pull_one_local_untrusted (FlatpakDir          *self,
+                               OstreeRepo          *repo,
+                               const char          *remote_name,
+                               const char          *url,
+                               const char         **dirs_to_pull,
+                               const char          *ref,
+                               const char          *checksum,
+                               OstreeAsyncProgress *progress,
+                               GCancellable        *cancellable,
+                               GError             **error)
 {
   /* The latter flag was introduced in https://github.com/ostreedev/ostree/pull/926 */
   const OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED |OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
@@ -2647,7 +2648,7 @@ repo_pull_one_untrusted (OstreeRepo          *self,
                              g_variant_new_variant (g_variant_new_boolean (TRUE)));
     }
 
-  res = ostree_repo_pull_with_options (self, url, g_variant_builder_end (&builder),
+  res = ostree_repo_pull_with_options (repo, url, g_variant_builder_end (&builder),
                                        progress, cancellable, error);
 
   if (progress)
@@ -2784,10 +2785,10 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   /* Past this we must use goto out, so we abort the transaction on error */
 
-  if (!repo_pull_one_untrusted (self->repo, remote_name, url,
-                                subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
-                                ref, checksum, progress,
-                                cancellable, error))
+  if (!repo_pull_one_local_untrusted (self, self->repo, remote_name, url,
+                                      subdirs_arg ? (const char **)subdirs_arg->pdata : NULL,
+                                      ref, checksum, progress,
+                                      cancellable, error))
     {
       g_prefix_error (error, _("While pulling %s from remote %s: "), ref, remote_name);
       goto out;
