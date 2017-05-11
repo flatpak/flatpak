@@ -4121,6 +4121,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autoptr(GVariant) commit_data = NULL;
   g_autofree char *tmp_dir_path = NULL;
   g_autofree char *alt_id = NULL;
+  const char *xa_metadata = NULL;
   g_autofree char *checkout_basename = NULL;
   gboolean created_extra_data = FALSE;
   g_autoptr(GVariant) commit_metadata = NULL;
@@ -4302,6 +4303,25 @@ flatpak_dir_deploy (FlatpakDir          *self,
       if (!apply_extra_data (self, checkoutdir, cancellable, error))
         {
           g_prefix_error (error, _("While trying to apply extra data: "));
+          return FALSE;
+        }
+    }
+
+  /* Check the metadata in the commit to make sure it matches the actual
+     deployed metadata, in case we relied on the one in the commit for
+     a decision */
+  g_variant_lookup (commit_metadata, "xa.metadata", "s", &xa_metadata);
+  if (xa_metadata != NULL)
+    {
+      g_autoptr(GFile) metadata_file = g_file_resolve_relative_path (checkoutdir, "metadata");
+      char *metadata_contents;
+
+      if (!g_file_load_contents (metadata_file, NULL,
+                                 &metadata_contents, NULL, NULL, NULL) ||
+          strcmp (metadata_contents, xa_metadata) != 0)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                       _("Deployed metadata does not match commit"));
           return FALSE;
         }
     }
