@@ -45,6 +45,7 @@
 #include "libglnx/libglnx.h"
 #include <libsoup/soup.h>
 #include <gio/gunixoutputstream.h>
+#include <gio/gunixinputstream.h>
 
 /* This is also here so the common code can report these errors to the lib */
 static const GDBusErrorEntry flatpak_error_entries[] = {
@@ -2739,10 +2740,41 @@ _flatpak_repo_collect_sizes (OstreeRepo   *repo,
 
       if (download_size)
         {
+          g_autoptr(GInputStream) input = NULL;
+          GInputStream *base_input;
+          g_autoptr(GError) local_error = NULL;
+
           if (!ostree_repo_query_object_storage_size (repo,
                                                       OSTREE_OBJECT_TYPE_FILE, checksum,
-                                                      &obj_size, cancellable, error))
-            return FALSE;
+                                                      &obj_size, cancellable, &local_error))
+            {
+              int fd;
+              struct stat stbuf;
+
+              /* Ostree does not look at the staging directory when querying storage
+                 size, so may return a NOT_FOUND error here. We work around this
+                 by loading the object and walking back until we find the original
+                 fd which we can fstat(). */
+              if (!g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+                return FALSE;
+
+              if (!ostree_repo_load_file (repo, checksum,  &input, NULL, NULL, NULL, error))
+                return FALSE;
+
+              base_input = input;
+              while (G_IS_FILTER_INPUT_STREAM (base_input))
+                base_input = g_filter_input_stream_get_base_stream (G_FILTER_INPUT_STREAM (base_input));
+
+              if (!G_IS_UNIX_INPUT_STREAM (base_input))
+                return flatpak_fail (error, "Unable to find size of commit %s, not an unix stream\n", checksum);
+
+              fd = g_unix_input_stream_get_fd (G_UNIX_INPUT_STREAM (base_input));
+
+              if (fstat (fd, &stbuf) != 0)
+                return glnx_throw_errno_prefix (error, "Can't find commit size: ");
+
+              obj_size = stbuf.st_size;
+            }
 
           *download_size += obj_size;
         }
