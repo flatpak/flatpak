@@ -197,7 +197,7 @@ builder_source_bzr_download (BuilderSource  *source,
         return flatpak_fail (error, "Can't create temporary directory");
 
       /* bzr can't check out to the empty dir, so remove it */
-      g_rmdir (path_tmp);
+      rmdir (path_tmp);
 
       mirror_dir_tmp = g_file_new_for_path (path_tmp);
       filename_tmp = g_file_get_basename (mirror_dir_tmp);
