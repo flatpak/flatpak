@@ -60,6 +60,9 @@ test_error_errno (void)
     {
       g_assert (!glnx_throw_errno (&error));
       g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_assert (!glnx_prefix_error (&error, "myprefix"));
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_assert (g_str_has_prefix (error->message, "myprefix: "));
       g_clear_error (&error);
     }
   else
@@ -71,6 +74,10 @@ test_error_errno (void)
       gpointer dummy = glnx_null_throw_errno (&error);
       g_assert (dummy == NULL);
       g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      dummy = glnx_prefix_error_null (&error, "myprefix");
+      g_assert (dummy == NULL);
+      g_assert_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND);
+      g_assert (g_str_has_prefix (error->message, "myprefix: "));
       g_clear_error (&error);
     }
   else

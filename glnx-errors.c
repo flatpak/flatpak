@@ -24,6 +24,22 @@
 #include <glnx-errors.h>
 
 void
+glnx_real_set_prefix_error_va (GError     *error,
+                               const char *format,
+                               va_list     args)
+{
+  if (error == NULL)
+    return;
+
+  g_autofree char *old_msg = g_steal_pointer (&error->message);
+  g_autoptr(GString) buf = g_string_new ("");
+  g_string_append_vprintf (buf, format, args);
+  g_string_append (buf, ": ");
+  g_string_append (buf, old_msg);
+  error->message = g_string_free (g_steal_pointer (&buf), FALSE);
+}
+
+void
 glnx_real_set_prefix_error_from_errno_va (GError     **error,
                                           gint         errsv,
                                           const char  *format,
@@ -32,13 +48,9 @@ glnx_real_set_prefix_error_from_errno_va (GError     **error,
   if (!error)
     return;
 
-  /* TODO - enhance GError to have a "set and take ownership" API */
-  g_autoptr(GString) buf = g_string_new ("");
-  g_string_append_vprintf (buf, format, args);
-  g_string_append (buf, ": ");
-  g_string_append (buf, g_strerror (errsv));
   g_set_error_literal (error,
                        G_IO_ERROR,
                        g_io_error_from_errno (errsv),
-                       buf->str);
+                       g_strerror (errsv));
+  glnx_real_set_prefix_error_va (*error, format, args);
 }
