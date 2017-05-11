@@ -30,6 +30,9 @@
 
 #include <glib/gi18n.h>
 
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
 #include <gio/gio.h>
 #include <gio/gunixsocketaddress.h>
 #include "libglnx/libglnx.h"
@@ -3366,6 +3369,121 @@ export_ini_file (int           parent_fd,
   return TRUE;
 }
 
+static inline void
+xml_autoptr_cleanup_generic_free (void *p)
+{
+  void **pp = (void**)p;
+  if (*pp)
+    xmlFree (*pp);
+}
+
+
+#define xml_autofree _GLIB_CLEANUP(xml_autoptr_cleanup_generic_free)
+
+/* This verifies the basic layout of the files, then it removes
+ * any magic matches, and makes all glob matches have a very low
+ * priority (weight = 5). This should make it pretty safe to
+ * export mime types, because the should not override the system
+ * ones in any weird ways. */
+static gboolean
+rewrite_mime_xml (xmlDoc *doc)
+{
+  xmlNode *root_element = xmlDocGetRootElement (doc);
+  xmlNode *top_node = NULL;
+
+  for (top_node = root_element; top_node; top_node = top_node->next)
+    {
+      xmlNode *mime_node = NULL;
+      if (top_node->type != XML_ELEMENT_NODE)
+        continue;
+
+      if (strcmp ((char *)top_node->name, "mime-info") != 0)
+        return FALSE;
+
+      for (mime_node = top_node->children; mime_node; mime_node = mime_node->next)
+        {
+          xmlNode *sub_node = NULL;
+          xmlNode *next_sub_node = NULL;
+
+          xml_autofree xmlChar *mimetype = NULL;
+          if (mime_node->type != XML_ELEMENT_NODE)
+            continue;
+
+          if (strcmp ((char *)mime_node->name, "mime-type") != 0)
+            return FALSE;
+
+          mimetype = xmlGetProp (mime_node, (xmlChar *)"type");
+          for (sub_node = mime_node->children; sub_node; sub_node = next_sub_node)
+            {
+              next_sub_node = sub_node->next;
+
+              if (sub_node->type != XML_ELEMENT_NODE)
+                continue;
+
+              if (strcmp ((char *)sub_node->name, "magic") == 0)
+                {
+                  g_warning ("Removing magic mime rule from exports");
+                  xmlUnlinkNode (sub_node);
+                  xmlFreeNode(sub_node);
+                }
+              else if (strcmp ((char *)sub_node->name, "glob") == 0)
+                {
+                  xmlSetProp (sub_node,
+                              (const xmlChar *)"weight",
+                              (const xmlChar *)"5");
+                }
+            }
+        }
+    }
+
+  return TRUE;
+}
+
+static gboolean
+export_mime_file (int           parent_fd,
+                  const char   *name,
+                  struct stat  *stat_buf,
+                  char        **target,
+                  GCancellable *cancellable,
+                  GError      **error)
+{
+  glnx_fd_close int desktop_fd = -1;
+  g_autofree char *tmpfile_name = g_strdup_printf ("export-mime-XXXXXX");
+  g_autoptr(GOutputStream) out_stream = NULL;
+  g_autofree gchar *data = NULL;
+  gsize data_len;
+  g_autoptr(GKeyFile) keyfile = NULL;
+  xmlDoc *doc = NULL;
+  xml_autofree xmlChar *xmlbuff = NULL;
+  int buffersize;
+
+  if (!flatpak_openat_noatime (parent_fd, name, &desktop_fd, cancellable, error) ||
+      !read_fd (desktop_fd, stat_buf, &data, &data_len, error))
+    return FALSE;
+
+  doc = xmlReadMemory (data, data_len, NULL, NULL,  0);
+  if (doc == NULL)
+    return flatpak_fail (error, _("Error reading mimetype xml file"));
+
+  if (!rewrite_mime_xml (doc))
+    {
+      xmlFreeDoc (doc);
+      return flatpak_fail (error, _("Invalid mimetype xml file"));
+    }
+
+  xmlDocDumpFormatMemory (doc, &xmlbuff, &buffersize, 1);
+  xmlFreeDoc (doc);
+
+  if (!flatpak_open_in_tmpdir_at (parent_fd, 0755, tmpfile_name, &out_stream, cancellable, error) ||
+      !g_output_stream_write_all (out_stream, xmlbuff, buffersize, NULL, cancellable, error) ||
+      !g_output_stream_close (out_stream, cancellable, error))
+    return FALSE;
+
+  if (target)
+    *target = g_steal_pointer (&tmpfile_name);
+
+  return TRUE;
+}
 
 static gboolean
 export_desktop_file (const char   *app,
@@ -3605,6 +3723,14 @@ rewrite_export_dir (const char   *app,
             {
               if (!export_ini_file (source_iter.fd, dent->d_name, INI_FILE_TYPE_SEARCH_PROVIDER,
                                     &stbuf, &new_name, cancellable, error))
+                goto out;
+            }
+
+          if (strcmp (source_name, "packages") == 0 &&
+              g_str_has_suffix (dent->d_name, ".xml"))
+            {
+              if (!export_mime_file (source_iter.fd, dent->d_name,
+                                     &stbuf, &new_name, cancellable, error))
                 goto out;
             }
 
