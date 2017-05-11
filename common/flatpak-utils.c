@@ -3035,23 +3035,42 @@ flatpak_repo_update (OstreeRepo   *repo,
       guint64 installed_size = 0;
       guint64 download_size = 0;
       g_autofree char *metadata_contents = NULL;
+      g_autofree char *commit = NULL;
+      g_autoptr(GVariant) commit_v = NULL;
+      g_autoptr(GVariant) commit_metadata = NULL;
       CommitData *rev_data;
 
       /* See if we already have the info on this revision */
       if (g_hash_table_lookup (commit_data_cache, rev))
         continue;
 
-      if (!ostree_repo_read_commit (repo, rev, &root, NULL, NULL, error))
+      if (!ostree_repo_read_commit (repo, rev, &root, &commit, NULL, error))
         return FALSE;
 
-      if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
+      if (!ostree_repo_load_commit (repo, commit, &commit_v, NULL, error))
         return FALSE;
+
+      commit_metadata = g_variant_get_child_value (commit_v, 0);
+      if (!g_variant_lookup (commit_metadata, "xa.metadata", "s", &metadata_contents))
+        {
+          metadata = g_file_get_child (root, "metadata");
+          if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
+            metadata_contents = g_strdup ("");
+        }
+
+      if (g_variant_lookup (commit_metadata, "xa.installed-size", "t", &installed_size) &&
+          g_variant_lookup (commit_metadata, "xa.download-size", "t", &download_size))
+        {
+          installed_size = GUINT64_FROM_BE (installed_size);
+          download_size = GUINT64_FROM_BE (download_size);
+        }
+      else
+        {
+          if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
+            return FALSE;
+        }
 
       flatpak_repo_collect_extra_data_sizes (repo, rev, &installed_size, &download_size);
-
-      metadata = g_file_get_child (root, "metadata");
-      if (!g_file_load_contents (metadata, cancellable, &metadata_contents, NULL, NULL, NULL))
-        metadata_contents = g_strdup ("");
 
       rev_data = g_new (CommitData, 1);
       rev_data->installed_size = installed_size;
