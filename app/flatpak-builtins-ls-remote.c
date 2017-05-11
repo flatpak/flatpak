@@ -134,13 +134,12 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
       if (opt_only_updates)
         {
-          g_autofree char *deployed = NULL;
+          g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, NULL);
 
-          deployed = flatpak_dir_read_active (dir, ref, cancellable);
-          if (deployed == NULL)
+          if (deploy_data == NULL)
             continue;
 
-          if (g_strcmp0 (deployed, checksum) == 0)
+          if (g_strcmp0 (flatpak_deploy_data_get_commit (deploy_data), checksum) == 0)
             continue;
         }
 
