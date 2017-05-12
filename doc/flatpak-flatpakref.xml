@@ -39,6 +39,11 @@
         </para>
 
         <para>
+            flatpakref files may also contain additional information that is useful
+            when displaying the application to the user, e.g. in an app store.
+        </para>
+
+        <para>
            The filename extension commonly used for flatpakref files is <filename>.flatpakref</filename>.
         </para>
 
@@ -67,6 +72,10 @@
             </para>
             <variablelist>
                 <varlistentry>
+                    <term><option>Version</option> (uint64)</term>
+                    <listitem><para>The version of the file format, must be 1 if present.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>Name</option> (string)</term>
                     <listitem><para>The fully qualified name of the runtime that is used by the application. This key is mandatory.</para></listitem>
                 </varlistentry>
@@ -82,6 +91,23 @@
                     <term><option>Title</option> (string)</term>
                     <listitem><para>The title of the application or runtime. This should be a user-friendly name that can be displayed e.g. in an app store.</para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>Comment</option> (string)</term>
+                    <listitem><para>A short summary of the application or runtime, for display e.g. in an app store.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Description</option> (string)</term>
+                    <listitem><para>A longer description of the application or runtime, for display e.g. in an app store..</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Icon</option> (string)</term>
+                    <listitem><para>The url for an icon that can be used to represent the application or runtime.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Homepage</option> (string)</term>
+                    <listitem><para>The url of a webpage describing the application or runtime.</para></listitem>
+                </varlistentry>
+
                 <varlistentry>
                     <term><option>IsRuntime</option> (boolean)</term>
                     <listitem><para>Whether this file refers to a runtime. If this key is not specified, the file is assumed to refer to an application.</para></listitem>
