@@ -55,6 +55,8 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
 #define FLATPAK_REPO_NODEPS_KEY "NoDeps"
 
+#define FLATPAK_DEFAULT_UPDATE_FREQUENCY 100
+
 typedef struct
 {
   char           *ref;
