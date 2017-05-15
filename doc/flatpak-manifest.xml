@@ -305,6 +305,10 @@
                     <listitem><para>Don't call make with arguments to build in parallel</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>install-rule</option> (string)</term>
+                    <listitem><para>Name of the rule passed to make for the install phase, default is install</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>no-make-install</option> (boolean)</term>
                     <listitem><para>Don't run the make install (or equivalent) stage</para></listitem>
                 </varlistentry>

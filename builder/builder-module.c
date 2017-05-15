@@ -47,6 +47,7 @@ struct BuilderModule
   char          **config_opts;
   char          **make_args;
   char          **make_install_args;
+  char           *install_rule;
   char           *buildsystem;
   char          **ensure_writable;
   char          **only_arches;
@@ -89,6 +90,7 @@ enum {
   PROP_NO_MAKE_INSTALL,
   PROP_NO_PYTHON_TIMESTAMP_FIX,
   PROP_CMAKE,
+  PROP_INSTALL_RULE,
   PROP_BUILDSYSTEM,
   PROP_BUILDDIR,
   PROP_CONFIG_OPTS,
@@ -130,6 +132,7 @@ builder_module_finalize (GObject *object)
   g_free (self->json_path);
   g_free (self->name);
   g_free (self->subdir);
+  g_free (self->install_rule);
   g_free (self->buildsystem);
   g_strfreev (self->post_install);
   g_strfreev (self->config_opts);
@@ -199,6 +202,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_BUILDSYSTEM:
       g_value_set_string (value, self->buildsystem);
+      break;
+
+    case PROP_INSTALL_RULE:
+      g_value_set_string (value, self->install_rule);
       break;
 
     case PROP_BUILDDIR:
@@ -318,6 +325,11 @@ builder_module_set_property (GObject      *object,
     case PROP_BUILDSYSTEM:
       g_free (self->buildsystem);
       self->buildsystem = g_value_dup_string (value);
+      break;
+
+    case PROP_INSTALL_RULE:
+      g_free (self->install_rule);
+      self->install_rule = g_value_dup_string (value);
       break;
 
     case PROP_BUILDDIR:
@@ -480,6 +492,13 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_BUILDSYSTEM,
                                    g_param_spec_string ("buildsystem",
+                                                         "",
+                                                         "",
+                                                         NULL,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_INSTALL_RULE,
+                                   g_param_spec_string ("install-rule",
                                                          "",
                                                          "",
                                                          NULL,
@@ -1533,7 +1552,8 @@ builder_module_build (BuilderModule  *self,
   if (!self->no_make_install && make_cmd)
     {
       if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
-                  make_cmd, "install", strv_arg, self->make_install_args, NULL))
+                  make_cmd, self->install_rule ? self->install_rule : "install",
+                  strv_arg, self->make_install_args, NULL))
         return FALSE;
     }
 
@@ -1653,6 +1673,7 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_boolean (cache, self->builddir);
   builder_cache_checksum_compat_strv (cache, self->build_commands);
   builder_cache_checksum_compat_str (cache, self->buildsystem);
+  builder_cache_checksum_compat_str (cache, self->install_rule);
 
   if (self->build_options)
     builder_options_checksum (self->build_options, cache, context);
