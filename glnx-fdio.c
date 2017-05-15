@@ -146,12 +146,37 @@ glnx_renameat2_exchange (int olddirfd, const char *oldpath,
   return 0;
 }
 
+/* Deallocate a tmpfile */
+void
+glnx_tmpfile_clear (GLnxTmpfile *tmpf)
+{
+  if (tmpf->src_dfd == -1)
+    return;
+  if (tmpf->fd == -1)
+    return;
+  (void) close (tmpf->fd);
+  /* If ->path is set, we're likely aborting due to an error. Clean it up */
+  if (tmpf->path)
+    {
+      (void) unlinkat (tmpf->src_dfd, tmpf->path, 0);
+      g_free (tmpf->path);
+    }
+}
+
+/* Allocate a temporary file, using Linux O_TMPFILE if available.
+ * The result will be stored in @out_tmpf, which is caller allocated
+ * so you can store it on the stack in common scenarios.
+ *
+ * Note that with O_TMPFILE, the file mode will be `000`; you likely
+ * want to chmod it before calling glnx_link_tmpfile_at().
+ *
+ * The directory fd @dfd must live at least as long as the output @out_tmpf.
+ */
 gboolean
 glnx_open_tmpfile_linkable_at (int dfd,
                                const char *subpath,
                                int flags,
-                               int *out_fd,
-                               char **out_path,
+                               GLnxTmpfile *out_tmpf,
                                GError **error)
 {
   glnx_fd_close int fd = -1;
@@ -172,9 +197,9 @@ glnx_open_tmpfile_linkable_at (int dfd,
     return glnx_throw_errno_prefix (error, "open(O_TMPFILE)");
   if (fd != -1)
     {
-      *out_fd = fd;
-      fd = -1;
-      *out_path = NULL;
+      out_tmpf->src_dfd = dfd;
+      out_tmpf->fd = fd; fd = -1; /* Transfer */
+      out_tmpf->path = NULL;
       return TRUE;
     }
   /* Fallthrough */
@@ -182,7 +207,7 @@ glnx_open_tmpfile_linkable_at (int dfd,
 
   { g_autofree char *tmp = g_strconcat (subpath, "/tmp.XXXXXX", NULL);
     const guint count_max = 100;
-  
+
     for (count = 0; count < count_max; count++)
       {
         glnx_gen_temp_name (tmp);
@@ -197,9 +222,9 @@ glnx_open_tmpfile_linkable_at (int dfd,
           }
         else
           {
-            *out_fd = fd;
-            fd = -1;
-            *out_path = g_steal_pointer (&tmp);
+            out_tmpf->src_dfd = dfd;
+            out_tmpf->fd = fd; fd = -1; /* Transfer */
+            out_tmpf->path = g_steal_pointer (&tmp);
             return TRUE;
           }
       }
@@ -209,11 +234,12 @@ glnx_open_tmpfile_linkable_at (int dfd,
   return FALSE;
 }
 
+/* Use this after calling glnx_open_tmpfile_linkable_at() to give
+ * the file its final name (link into place).
+ */
 gboolean
-glnx_link_tmpfile_at (int dfd,
+glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
                       GLnxLinkTmpfileReplaceMode mode,
-                      int fd,
-                      const char *tmpfile_path,
                       int target_dfd,
                       const char *target,
                       GError **error)
@@ -221,46 +247,40 @@ glnx_link_tmpfile_at (int dfd,
   const gboolean replace = (mode == GLNX_LINK_TMPFILE_REPLACE);
   const gboolean ignore_eexist = (mode == GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST);
 
-  g_return_val_if_fail (fd >= 0, FALSE);
+  g_return_val_if_fail (tmpf->src_dfd >= 0, FALSE);
 
   /* Unlike the original systemd code, this function also supports
    * replacing existing files.
    */
 
   /* We have `tmpfile_path` for old systems without O_TMPFILE. */
-  if (tmpfile_path)
+  if (tmpf->path)
     {
       if (replace)
         {
           /* We have a regular tempfile, we're overwriting - this is a
            * simple renameat().
            */
-          if (renameat (dfd, tmpfile_path, target_dfd, target) < 0)
-            {
-              int errsv = errno;
-              (void) unlinkat (dfd, tmpfile_path, 0);
-              errno = errsv;
-              return glnx_throw_errno_prefix (error, "renameat");
-            }
+          if (renameat (tmpf->src_dfd, tmpf->path, target_dfd, target) < 0)
+            return glnx_throw_errno_prefix (error, "renameat");
         }
       else
         {
           /* We need to use renameat2(..., NOREPLACE) or emulate it */
-          if (!rename_file_noreplace_at (dfd, tmpfile_path, target_dfd, target,
+          if (!rename_file_noreplace_at (tmpf->src_dfd, tmpf->path, target_dfd, target,
                                          ignore_eexist,
                                          error))
-            {
-              (void) unlinkat (dfd, tmpfile_path, 0);
-              return FALSE;
-            }
+            return FALSE;
         }
+      /* Now, clear the pointer so we don't try to unlink it */
+      g_clear_pointer (&tmpf->path, g_free);
     }
   else
     {
       /* This case we have O_TMPFILE, so our reference to it is via /proc/self/fd */
-      char proc_fd_path[strlen("/proc/self/fd/") + DECIMAL_STR_MAX(fd) + 1];
+      char proc_fd_path[strlen("/proc/self/fd/") + DECIMAL_STR_MAX(tmpf->fd) + 1];
 
-      sprintf (proc_fd_path, "/proc/self/fd/%i", fd);
+      sprintf (proc_fd_path, "/proc/self/fd/%i", tmpf->fd);
 
       if (replace)
         {
@@ -907,11 +927,9 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   if (mode == (mode_t) -1)
     mode = 0644;
 
-  glnx_fd_close int fd = -1;
-  g_autofree char *tmpfile_path = NULL;
+  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
   if (!glnx_open_tmpfile_linkable_at (dfd, dn, O_WRONLY | O_CLOEXEC,
-                                      &fd, &tmpfile_path,
-                                      error))
+                                      &tmpf, error))
     return FALSE;
 
   if (len == -1)
@@ -920,7 +938,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   /* Note that posix_fallocate does *not* set errno but returns it. */
   if (len > 0)
     {
-      r = posix_fallocate (fd, 0, len);
+      r = posix_fallocate (tmpf.fd, 0, len);
       if (r != 0)
         {
           errno = r;
@@ -928,7 +946,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
         }
     }
 
-  if (glnx_loop_write (fd, buf, len) < 0)
+  if (glnx_loop_write (tmpf.fd, buf, len) < 0)
     return glnx_throw_errno (error);
 
   if (!(flags & GLNX_FILE_REPLACE_NODATASYNC))
@@ -947,22 +965,22 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
 
       if (do_sync)
         {
-          if (fdatasync (fd) != 0)
+          if (fdatasync (tmpf.fd) != 0)
             return glnx_throw_errno_prefix (error, "fdatasync");
         }
     }
 
   if (uid != (uid_t) -1)
     {
-      if (fchown (fd, uid, gid) != 0)
+      if (fchown (tmpf.fd, uid, gid) != 0)
         return glnx_throw_errno (error);
     }
 
-  if (fchmod (fd, mode) != 0)
+  if (fchmod (tmpf.fd, mode) != 0)
     return glnx_throw_errno (error);
 
-  if (!glnx_link_tmpfile_at (dfd, GLNX_LINK_TMPFILE_REPLACE,
-                             fd, tmpfile_path, dfd, subpath, error))
+  if (!glnx_link_tmpfile_at (&tmpf, GLNX_LINK_TMPFILE_REPLACE,
+                             dfd, subpath, error))
     return FALSE;
 
   return TRUE;
