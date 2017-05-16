@@ -2027,11 +2027,13 @@ flatpak_dir_setup_extra_data (FlatpakDir           *self,
 
   if (progress)
     {
-      ostree_async_progress_set_uint (progress, "outstanding-extra-data", n_extra_data);
-      ostree_async_progress_set_uint (progress, "total-extra-data", n_extra_data);
-      ostree_async_progress_set_uint64 (progress, "total-extra-data-bytes", total_download_size);
-      ostree_async_progress_set_uint64 (progress, "transferred-extra-data-bytes", 0);
-      ostree_async_progress_set_uint (progress, "downloading-extra-data", 0);
+      ostree_async_progress_set (progress,
+                                 "outstanding-extra-data", "u", n_extra_data,
+                                 "total-extra-data", "u", n_extra_data,
+                                 "total-extra-data-bytes", "t", total_download_size,
+                                 "transferred-extra-data-bytes", "t", (guint64) 0,
+                                 "downloading-extra-data", "u", 0,
+                                 NULL);
     }
 
   return TRUE;
@@ -2081,8 +2083,10 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
   /* Other fields were already set in flatpak_dir_setup_extra_data() */
   if (progress)
     {
-      ostree_async_progress_set_uint64 (progress, "start-time-extra-data", g_get_monotonic_time ());
-      ostree_async_progress_set_uint (progress, "downloading-extra-data", 1);
+      ostree_async_progress_set (progress,
+                                 "start-time-extra-data", "t", g_get_monotonic_time (),
+                                 "downloading-extra-data", "u", 1,
+                                 NULL);
     }
 
   extra_data_progress.progress = progress;
@@ -2234,31 +2238,32 @@ oci_pull_init_progress (OstreeAsyncProgress *progress)
   if (progress == NULL)
     return;
 
-  ostree_async_progress_set_uint (progress, "outstanding-fetches", 0);
-  ostree_async_progress_set_uint (progress, "outstanding-writes", 0);
-  ostree_async_progress_set_uint (progress, "fetched", 0);
-  ostree_async_progress_set_uint (progress, "requested", 0);
-  ostree_async_progress_set_uint (progress, "scanning", 0);
-  ostree_async_progress_set_uint (progress, "scanned-metadata", 0);
-  ostree_async_progress_set_uint64 (progress, "bytes-transferred", 0);
-  ostree_async_progress_set_uint64 (progress, "start-time", start_time);
-  ostree_async_progress_set_uint (progress, "outstanding-metadata-fetches", 0);
-  ostree_async_progress_set_uint (progress, "metadata-fetched", 0);
-  ostree_async_progress_set_uint (progress, "outstanding-extra-data", 0);
-  ostree_async_progress_set_uint (progress, "total-extra-data", 0);
-  ostree_async_progress_set_uint64 (progress, "total-extra-data-bytes", 0);
-  ostree_async_progress_set_uint64 (progress, "transferred-extra-data-bytes", 0);
-  ostree_async_progress_set_uint (progress, "downloading-extra-data", 0);
-  ostree_async_progress_set_uint (progress, "fetched-delta-parts", 0);
-  ostree_async_progress_set_uint (progress, "total-delta-parts", 0);
-  ostree_async_progress_set_uint (progress, "fetched-delta-fallbacks", 0);
-  ostree_async_progress_set_uint (progress, "total-delta-fallbacks", 0);
-  ostree_async_progress_set_uint64 (progress, "fetched-delta-part-size", 0);
-  ostree_async_progress_set_uint64 (progress, "total-delta-part-size", 0);
-  ostree_async_progress_set_uint64 (progress, "total-delta-part-usize", 0);
-  ostree_async_progress_set_uint (progress, "total-delta-superblocks", 0);
-
-  ostree_async_progress_set_status (progress, NULL);
+  ostree_async_progress_set (progress,
+                             "outstanding-fetches", "u", 0,
+                             "outstanding-writes", "u", 0,
+                             "fetched", "u", 0,
+                             "requested", "u", 0,
+                             "scanning", "u", 0,
+                             "scanned-metadata", "u", 0,
+                             "bytes-transferred", "t", (guint64) 0,
+                             "start-time", "t", start_time,
+                             "outstanding-metadata-fetches", "u", 0,
+                             "metadata-fetched", "u", 0,
+                             "outstanding-extra-data", "u", 0,
+                             "total-extra-data", "u", 0,
+                             "total-extra-data-bytes", "t", (guint64) 0,
+                             "transferred-extra-data-bytes", "t", (guint64) 0,
+                             "downloading-extra-data", "u", 0,
+                             "fetched-delta-parts", "u", 0,
+                             "total-delta-parts", "u", 0,
+                             "fetched-delta-fallbacks", "u", 0,
+                             "total-delta-fallbacks", "u", 0,
+                             "fetched-delta-part-size", "t", (guint64) 0,
+                             "total-delta-part-size", "t", (guint64) 0,
+                             "total-delta-part-usize", "t", (guint64) 0,
+                             "total-delta-superblocks", "u", 0,
+                             "status", "s", "",
+                             NULL);
 }
 
 static void
@@ -2272,15 +2277,17 @@ oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
     return;
 
   /* Deltas */
-  ostree_async_progress_set_uint (progress, "outstanding-fetches", n_layers - pulled_layers);
-  ostree_async_progress_set_uint (progress, "fetched-delta-parts", pulled_layers);
-  ostree_async_progress_set_uint (progress, "total-delta-parts", n_layers);
-  ostree_async_progress_set_uint (progress, "fetched-delta-fallbacks", 0);
-  ostree_async_progress_set_uint (progress, "total-delta-fallbacks", 0);
-  ostree_async_progress_set_uint64 (progress, "fetched-delta-part-size", pulled_size);
-  ostree_async_progress_set_uint64 (progress, "total-delta-part-size", total_size);
-  ostree_async_progress_set_uint64 (progress, "total-delta-part-usize", total_size);
-  ostree_async_progress_set_uint (progress, "total-delta-superblocks", 0);
+  ostree_async_progress_set (progress,
+                             "outstanding-fetches", "u", n_layers - pulled_layers,
+                             "fetched-delta-parts", "u", pulled_layers,
+                             "total-delta-parts", "u", n_layers,
+                             "fetched-delta-fallbacks", "u", 0,
+                             "total-delta-fallbacks", "u", 0,
+                             "fetched-delta-part-size", "t", pulled_size,
+                             "total-delta-part-size", "t", total_size,
+                             "total-delta-part-usize", "t", total_size,
+                             "total-delta-superblocks", "u", 0,
+                             NULL);
 }
 
 static gboolean
