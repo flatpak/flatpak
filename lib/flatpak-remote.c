@@ -26,6 +26,18 @@
 #include "flatpak-enum-types.h"
 
 #include <string.h>
+#include <ostree.h>
+
+#ifdef FLATPAK_ENABLE_P2P
+#include <ostree-repo-finder-avahi.h>
+#endif  /* FLATPAK_ENABLE_P2P */
+
+#ifndef FLATPAK_ENABLE_P2P
+/* Avoid too many #ifdefs by redefining this enum when compiling without P2P support. */
+typedef enum {
+  FLATPAK_REMOTE_TYPE_STATIC = 0,
+} FlatpakRemoteType;
+#endif  /* FLATPAK_ENABLE_P2P */
 
 /**
  * SECTION:flatpak-remote
@@ -61,6 +73,7 @@ struct _FlatpakRemotePrivate
   gboolean    local_nodeps;
   gboolean    local_disabled;
   int         local_prio;
+  FlatpakRemoteType type;
 
   guint       local_url_set : 1;
   guint       local_title_set : 1;
@@ -80,6 +93,7 @@ enum {
   PROP_0,
 
   PROP_NAME,
+  PROP_TYPE,
 };
 
 static void
@@ -117,6 +131,10 @@ flatpak_remote_set_property (GObject      *object,
       priv->name = g_value_dup_string (value);
       break;
 
+    case PROP_TYPE:
+      priv->type = g_value_get_enum (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -136,6 +154,10 @@ flatpak_remote_get_property (GObject    *object,
     {
     case PROP_NAME:
       g_value_set_string (value, priv->name);
+      break;
+
+    case PROP_TYPE:
+      g_value_set_enum (value, priv->type);
       break;
 
     default:
@@ -160,6 +182,19 @@ flatpak_remote_class_init (FlatpakRemoteClass *klass)
                                                         "The name of the remote",
                                                         NULL,
                                                         G_PARAM_READWRITE));
+
+#ifdef FLATPAK_ENABLE_P2P
+#ifndef __GI_SCANNER__
+  g_object_class_install_property (object_class,
+                                   PROP_TYPE,
+                                   g_param_spec_enum ("type",
+                                                      "Type",
+                                                      "The type of the remote",
+                                                      FLATPAK_TYPE_REMOTE_TYPE,
+                                                      FLATPAK_REMOTE_TYPE_STATIC,
+                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+#endif  /* !__GI_SCANNER__ */
+#endif  /* FLATPAK_ENABLE_P2P */
 }
 
 static void
@@ -637,6 +672,37 @@ flatpak_remote_new_with_dir (const char *name,
   return self;
 }
 
+#ifdef FLATPAK_ENABLE_P2P
+static FlatpakRemoteType
+repo_finder_to_remote_type (OstreeRepoFinder *repo_finder)
+{
+  if (OSTREE_IS_REPO_FINDER_AVAHI (repo_finder))
+    return FLATPAK_REMOTE_TYPE_LAN;
+  else if (OSTREE_IS_REPO_FINDER_MOUNT (repo_finder))
+    return FLATPAK_REMOTE_TYPE_USB;
+  else
+    return FLATPAK_REMOTE_TYPE_STATIC;
+}
+
+FlatpakRemote *
+flatpak_remote_new_from_ostree (OstreeRemote     *remote,
+                                OstreeRepoFinder *repo_finder,
+                                FlatpakDir       *dir)
+{
+  FlatpakRemotePrivate *priv;
+  FlatpakRemote *self = g_object_new (FLATPAK_TYPE_REMOTE,
+                                      "name", ostree_remote_get_name (remote),
+                                      "type", repo_finder_to_remote_type (repo_finder),
+                                      NULL);
+
+  priv = flatpak_remote_get_instance_private (self);
+  if (dir)
+    priv->dir = g_object_ref (dir);
+
+  return self;
+}
+#endif  /* FLATPAK_ENABLE_P2P */
+
 /**
  * flatpak_remote_new:
  * @name: a name
@@ -669,6 +735,9 @@ flatpak_remote_commit (FlatpakRemote   *self,
   url = flatpak_remote_get_url (self);
   if (url == NULL || *url == 0)
     return flatpak_fail (error, "No url specified");
+
+  if (priv->type != FLATPAK_REMOTE_TYPE_STATIC)
+    return flatpak_fail (error, "Dynamic remote cannot be committed");
 
   config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
   if (priv->local_url_set)

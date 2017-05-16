@@ -32,6 +32,12 @@
 FlatpakRemote *flatpak_remote_new_with_dir (const char *name,
                                             FlatpakDir *dir);
 
+#ifdef FLATPAK_ENABLE_P2P
+FlatpakRemote *flatpak_remote_new_from_ostree (OstreeRemote     *remote,
+                                               OstreeRepoFinder *repo_finder,
+                                               FlatpakDir       *dir);
+#endif  /* FLATPAK_ENABLE_P2P */
+
 gboolean flatpak_remote_commit (FlatpakRemote   *self,
                                 FlatpakDir      *dir,
                                 GCancellable    *cancellable,

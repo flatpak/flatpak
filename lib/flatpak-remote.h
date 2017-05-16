@@ -25,6 +25,15 @@
 #ifndef __FLATPAK_REMOTE_H__
 #define __FLATPAK_REMOTE_H__
 
+#ifdef FLATPAK_ENABLE_P2P
+typedef enum
+{
+  FLATPAK_REMOTE_TYPE_STATIC,  /*< skip >*/
+  FLATPAK_REMOTE_TYPE_USB,  /*< skip >*/
+  FLATPAK_REMOTE_TYPE_LAN,  /*< skip >*/
+} FlatpakRemoteType;
+#endif  /* FLATPAK_ENABLE_P2P */
+
 typedef struct _FlatpakRemote FlatpakRemote;
 
 #include <gio/gio.h>
@@ -84,6 +93,9 @@ FLATPAK_EXTERN int           flatpak_remote_get_prio (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_prio (FlatpakRemote *self,
                                                       int            prio);
 
+#ifdef FLATPAK_ENABLE_P2P
+FLATPAK_EXTERN FlatpakRemoteType flatpak_remote_get_remote_type (FlatpakRemote *self);
+#endif  /* FLATPAK_ENABLE_P2P */
 
 
 #endif /* __FLATPAK_REMOTE_H__ */
