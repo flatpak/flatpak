@@ -3251,10 +3251,11 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
                                GError        **error)
 {
   g_autofree char *tmp_path = NULL;
-  int fd;
+  int fd, fd2;
   g_autoptr(GKeyFile) keyfile = NULL;
   g_autofree char *runtime_path = NULL;
   g_autofree char *fd_str = NULL;
+  g_autofree char *fd2_str = NULL;
   g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
   const char *group;
 
@@ -3302,6 +3303,17 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
   if (!g_key_file_save_to_file (keyfile, tmp_path, error))
     return FALSE;
 
+  /* We want to create a file on /.flatpak-info that the app cannot modify, which
+     we do by creating a read-only bind mount. This way one can openat()
+     /proc/$pid/root, and if that succeeds use openat via that to find the
+     unfakable .flatpak-info file. However, there is a tiny race in that if
+     you manage to open /proc/$pid/root, but then the pid dies, then
+     every mount but the root is unmounted in the namespace, so the
+     .flatpak-info will be empty. We fix this by first creating a real file
+     with the real info in, then bind-mounting on top of that, the same info.
+     This way even if the bind-mount is unmounted we can find the real data.
+  */
+
   fd = open (tmp_path, O_RDONLY);
   if (fd == -1)
     {
@@ -3311,14 +3323,29 @@ flatpak_run_add_app_info_args (GPtrArray      *argv_array,
       return FALSE;
     }
 
+  fd2 = open (tmp_path, O_RDONLY);
+  if (fd2 == -1)
+    {
+      close (fd);
+      int errsv = errno;
+      g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errsv),
+                   _("Failed to open temp file: %s"), g_strerror (errsv));
+      return FALSE;
+    }
+
   unlink (tmp_path);
 
   fd_str = g_strdup_printf ("%d", fd);
+  fd2_str = g_strdup_printf ("%d", fd2);
   if (fd_array)
-    g_array_append_val (fd_array, fd);
+    {
+      g_array_append_val (fd_array, fd);
+      g_array_append_val (fd_array, fd2);
+    }
 
   add_args (argv_array,
-            "--ro-bind-data", fd_str, "/.flatpak-info",
+            "--file", fd_str, "/.flatpak-info",
+            "--ro-bind-data", fd2_str, "/.flatpak-info",
             "--symlink", "../../../.flatpak-info", old_dest,
             NULL);
 
@@ -3551,7 +3578,9 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
   g_ptr_array_add (bwrap_args, g_strdup (proxy_socket_dir));
   g_ptr_array_add (bwrap_args, g_strdup (proxy_socket_dir));
 
-  g_ptr_array_add (bwrap_args, g_strdup ("--ro-bind-data"));
+  /* This is a file rather than a bind mount, because it will then
+     not be unmounted from the namespace when the namespace dies. */
+  g_ptr_array_add (bwrap_args, g_strdup ("--file"));
   g_ptr_array_add (bwrap_args, g_strdup_printf ("%d", app_info_fd));
   g_ptr_array_add (bwrap_args, g_strdup ("/.flatpak-info"));
 
