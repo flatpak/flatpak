@@ -748,8 +748,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
                                   GError              **error)
 {
   g_autofree char *subpath = NULL;
-  glnx_fd_close int fd = -1;
-  g_autofree char *tmp_path = NULL;
+  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
   g_autoptr(GOutputStream) out_stream = NULL;
   struct stat stbuf;
   g_autofree char *checksum = NULL;
@@ -773,7 +772,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
 
   if (!glnx_open_tmpfile_linkable_at (self->dfd, "blobs/sha256",
                                       O_RDWR | O_CLOEXEC | O_NOCTTY,
-                                      &fd, &tmp_path, error))
+                                      &tmpf, error))
     return FALSE;
 
   if (source_registry->dfd != -1)
@@ -784,7 +783,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       if (src_fd == -1)
         return FALSE;
 
-      if (glnx_regfile_copy_bytes (src_fd, fd, (off_t)-1, TRUE) < 0)
+      if (glnx_regfile_copy_bytes (src_fd, tmpf.fd, (off_t)-1, TRUE) < 0)
         return glnx_throw_errno_prefix (error, "copyfile");
     }
   else
@@ -800,7 +799,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
           return FALSE;
         }
 
-      out_stream = g_unix_output_stream_new (fd, FALSE);
+      out_stream = g_unix_output_stream_new (tmpf.fd, FALSE);
 
       uri_s = soup_uri_to_string (uri, FALSE);
       if (!flatpak_download_http_uri (source_registry->soup_session, uri_s, out_stream,
@@ -812,9 +811,9 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
         return FALSE;
     }
 
-  lseek (fd, 0, SEEK_SET);
+  lseek (tmpf.fd, 0, SEEK_SET);
 
-  checksum = checksum_fd (fd, cancellable, error);
+  checksum = checksum_fd (tmpf.fd, cancellable, error);
   if (checksum == NULL)
     return FALSE;
 
@@ -825,9 +824,8 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       return FALSE;
     }
 
-  if (!glnx_link_tmpfile_at (self->dfd,
+  if (!glnx_link_tmpfile_at (&tmpf,
                              GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST,
-                             fd, tmp_path,
                              self->dfd, subpath,
                              error))
     return FALSE;
@@ -934,8 +932,7 @@ struct FlatpakOciLayerWriter
   GZlibCompressor *compressor;
   guint64 uncompressed_size;
   guint64 compressed_size;
-  char *tmp_path;
-  int tmp_fd;
+  GLnxTmpfile tmpf;
 };
 
 typedef struct
@@ -957,18 +954,7 @@ propagate_libarchive_error (GError      **error,
 static void
 flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)
 {
-  if (self->tmp_path)
-    {
-      (void) unlinkat (self->registry->dfd, self->tmp_path, 0);
-      g_free (self->tmp_path);
-      self->tmp_path = NULL;
-    }
-
-  if (self->tmp_fd != -1)
-    {
-      close (self->tmp_fd);
-      self->tmp_fd = -1;
-    }
+  glnx_tmpfile_clear (&self->tmpf);
 
   g_checksum_reset (self->uncompressed_checksum);
   g_checksum_reset (self->compressed_checksum);
@@ -992,6 +978,7 @@ flatpak_oci_layer_writer_finalize (GObject *object)
 
   g_checksum_free (self->compressed_checksum);
   g_checksum_free (self->uncompressed_checksum);
+  glnx_tmpfile_clear (&self->tmpf);
 
   g_clear_object (&self->registry);
 
@@ -1012,6 +999,7 @@ flatpak_oci_layer_writer_init (FlatpakOciLayerWriter *self)
 {
   self->uncompressed_checksum = g_checksum_new (G_CHECKSUM_SHA256);
   self->compressed_checksum = g_checksum_new (G_CHECKSUM_SHA256);
+  self->tmpf.src_dfd = -1;
 }
 
 static int
@@ -1062,7 +1050,7 @@ flatpak_oci_layer_writer_compress (FlatpakOciLayerWriter *self,
       to_write = compressed_buffer;
       while (to_write_len > 0)
         {
-          ssize_t res = write (self->tmp_fd, to_write, to_write_len);
+          ssize_t res = write (self->tmpf.fd, to_write, to_write_len);
           if (res <= 0)
             {
               if (errno == EINTR)
@@ -1116,8 +1104,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
 {
   g_autoptr(FlatpakOciLayerWriter) oci_layer_writer = NULL;
   free_write_archive struct archive *a = NULL;
-  glnx_fd_close int tmp_fd = -1;
-  g_autofree char *tmp_path = NULL;
+  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
 
   g_assert (self->valid);
 
@@ -1134,12 +1121,11 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
   if (!glnx_open_tmpfile_linkable_at (self->dfd,
                                       "blobs/sha256",
                                       O_WRONLY,
-                                      &tmp_fd,
-                                      &tmp_path,
+                                      &tmpf,
                                       error))
     return NULL;
 
-  if (fchmod (tmp_fd, 0644) != 0)
+  if (fchmod (tmpf.fd, 0644) != 0)
     {
       glnx_set_error_from_errno (error);
       return NULL;
@@ -1165,8 +1151,8 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
   flatpak_oci_layer_writer_reset (oci_layer_writer);
 
   oci_layer_writer->archive = g_steal_pointer (&a);
-  oci_layer_writer->tmp_fd = glnx_steal_fd (&tmp_fd);
-  oci_layer_writer->tmp_path = g_steal_pointer (&tmp_path);
+  /* Transfer ownership of the tmpfile */
+  oci_layer_writer->tmpf = tmpf; tmpf.src_dfd = -1;
   oci_layer_writer->compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
 
   return g_steal_pointer (&oci_layer_writer);
@@ -1187,19 +1173,12 @@ flatpak_oci_layer_writer_close (FlatpakOciLayerWriter  *self,
   path = g_strdup_printf ("blobs/sha256/%s",
                           g_checksum_get_string (self->compressed_checksum));
 
-  if (!glnx_link_tmpfile_at (self->registry->dfd,
+  if (!glnx_link_tmpfile_at (&self->tmpf,
                              GLNX_LINK_TMPFILE_REPLACE,
-                             self->tmp_fd,
-                             self->tmp_path,
                              self->registry->dfd,
                              path,
                              error))
     return FALSE;
-
-  close (self->tmp_fd);
-  self->tmp_fd = -1;
-  g_free (self->tmp_path);
-  self->tmp_path = NULL;
 
   if (uncompressed_digest_out != NULL)
     *uncompressed_digest_out = g_strdup_printf ("sha256:%s", g_checksum_get_string (self->uncompressed_checksum));
@@ -1598,8 +1577,7 @@ flatpak_oci_sign_data (GBytes *data,
                        const char *homedir,
                        GError **error)
 {
-  glnx_fd_close int tmp_fd = -1;
-  g_autofree char *tmp_path = NULL;
+  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
   g_autoptr(GOutputStream) tmp_signature_output = NULL;
   flatpak_auto_gpgme_ctx gpgme_ctx_t context = NULL;
   gpgme_error_t err;
@@ -1609,10 +1587,10 @@ flatpak_oci_sign_data (GBytes *data,
   int i;
 
   if (!glnx_open_tmpfile_linkable_at (AT_FDCWD, "/tmp", O_RDWR | O_CLOEXEC,
-                                      &tmp_fd, &tmp_path, error))
+                                      &tmpf, error))
     return NULL;
 
-  tmp_signature_output = g_unix_output_stream_new (tmp_fd, FALSE);
+  tmp_signature_output = g_unix_output_stream_new (tmpf.fd, FALSE);
 
   context = flatpak_gpgme_new_ctx (homedir, error);
   if (!context)
@@ -1668,7 +1646,7 @@ flatpak_oci_sign_data (GBytes *data,
   if (!g_output_stream_close (tmp_signature_output, NULL, error))
     return NULL;
 
-  signature_file = g_mapped_file_new_from_fd (tmp_fd, FALSE, error);
+  signature_file = g_mapped_file_new_from_fd (tmpf.fd, FALSE, error);
   if (!signature_file)
     return NULL;
 
