@@ -680,27 +680,21 @@ progress_cb (const char *status,
 
   g_string_append (str, "[");
 
-  if (estimating)
-    {
-      for (; i < BAR_LENGTH; i++)
-        g_string_append (str, "?");
-    }
-  else
-    {
-      n_full = (BAR_LENGTH * progress) / 100;
-      remainder = progress - (n_full * 100 / BAR_LENGTH);
-      partial = (remainder * strlen(BAR_CHARS) * BAR_LENGTH) / 100;
+  n_full = (BAR_LENGTH * progress) / 100;
+  remainder = progress - (n_full * 100 / BAR_LENGTH);
+  partial = (remainder * strlen(BAR_CHARS) * BAR_LENGTH) / 100;
 
-      for (i = 0; i < n_full; i++)
-        g_string_append_c (str, BAR_CHARS[strlen(BAR_CHARS)-1]);
-      if (i < BAR_LENGTH)
-        {
-          g_string_append_c (str, BAR_CHARS[partial]);
-          i++;
-        }
-      for (; i < BAR_LENGTH; i++)
-        g_string_append (str, " ");
+  for (i = 0; i < n_full; i++)
+    g_string_append_c (str, BAR_CHARS[strlen(BAR_CHARS)-1]);
+
+  if (i < BAR_LENGTH)
+    {
+      g_string_append_c (str, BAR_CHARS[partial]);
+      i++;
     }
+
+  for (; i < BAR_LENGTH; i++)
+    g_string_append (str, " ");
 
   g_string_append (str, "] ");
   g_string_append (str, status);
