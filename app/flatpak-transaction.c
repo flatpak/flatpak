@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <glib/gi18n.h>
 
@@ -647,6 +648,78 @@ flatpak_transaction_update_metadata (FlatpakTransaction  *self,
   return TRUE;
 }
 
+typedef struct {
+  int inited;
+  int n_columns;
+  int last_width;
+} TerminalProgress;
+
+#define BAR_LENGTH 20
+#define BAR_CHARS " -=#"
+
+static void
+progress_cb (const char *status,
+             guint       progress,
+             gboolean    estimating,
+             gpointer    user_data)
+{
+  g_autoptr(GString) str = g_string_new ("");
+  TerminalProgress *term = user_data;
+  int i;
+  int n_full, remainder, partial;
+  int width, padded_width;
+
+  if (!term->inited)
+    {
+      struct winsize w;
+      ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+      term->n_columns = w.ws_col;
+      term->last_width = 0;
+      term->inited = 1;
+    }
+
+  g_string_append (str, "[");
+
+  if (estimating)
+    {
+      for (; i < BAR_LENGTH; i++)
+        g_string_append (str, "?");
+    }
+  else
+    {
+      n_full = (BAR_LENGTH * progress) / 100;
+      remainder = progress - (n_full * 100 / BAR_LENGTH);
+      partial = (remainder * strlen(BAR_CHARS) * BAR_LENGTH) / 100;
+
+      for (i = 0; i < n_full; i++)
+        g_string_append_c (str, BAR_CHARS[strlen(BAR_CHARS)-1]);
+      if (i < BAR_LENGTH)
+        {
+          g_string_append_c (str, BAR_CHARS[partial]);
+          i++;
+        }
+      for (; i < BAR_LENGTH; i++)
+        g_string_append (str, " ");
+    }
+
+  g_string_append (str, "] ");
+  g_string_append (str, status);
+
+  g_print ("\r");
+  width = MIN (strlen (str->str), term->n_columns);
+  padded_width = MAX (term->last_width, width);
+  term->last_width = width;
+  g_print ("%-*.*s", padded_width, padded_width, str->str);
+}
+
+static void
+progress_end (TerminalProgress *term)
+{
+  if (term->inited)
+    g_print("\n");
+}
+
+
 gboolean
 flatpak_transaction_run (FlatpakTransaction *self,
                          gboolean stop_on_first_error,
@@ -666,6 +739,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
       const char *pref;
       const char *opname;
       FlatpakTransactionOpKind kind;
+      TerminalProgress terminal_progress = { 0 };
 
       kind = op->kind;
       if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE)
@@ -695,8 +769,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
       pref = strchr (op->ref, '/') + 1;
 
+
       if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
         {
+          g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (progress_cb, &terminal_progress);
           opname = _("install");
           g_print (_("Installing: %s from %s\n"), pref, op->remote);
           res = flatpak_dir_install (self->dir,
@@ -705,8 +781,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                      self->no_static_deltas,
                                      op->ref, op->remote,
                                      (const char **)op->subpaths,
-                                     NULL,
+                                     progress,
                                      cancellable, &local_error);
+          ostree_async_progress_finish (progress);
+          progress_end (&terminal_progress);
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
         {
@@ -718,6 +796,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
           if (target_commit != NULL)
             {
               g_print (_("Updating: %s from %s\n"), pref, op->remote);
+              g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (progress_cb, &terminal_progress);
               res = flatpak_dir_update (self->dir,
                                         self->no_pull,
                                         self->no_deploy,
@@ -725,8 +804,10 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                         op->commit != NULL, /* Allow downgrade if we specify commit */
                                         op->ref, op->remote, target_commit,
                                         (const char **)op->subpaths,
-                                        NULL,
+                                        progress,
                                         cancellable, &local_error);
+              ostree_async_progress_finish (progress);
+              progress_end (&terminal_progress);
               if (res)
                 {
                   g_autoptr(GVariant) deploy_data = NULL;
