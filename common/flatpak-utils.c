@@ -5767,24 +5767,6 @@ flatpak_get_current_locale_subpaths (void)
 }
 
 static inline guint
-get_metadata_progress (guint metadata_fetched,
-                       guint outstanding_metadata_fetches)
-{
-  guint total_metadata = metadata_fetched + outstanding_metadata_fetches;
-
-  /* Defensive check */
-  if (total_metadata == 0)
-    return 1;
-
-  /* Below 5, there's still a high chance to overestimate the
-   * progress */
-  if (total_metadata < 5)
-    return 1;
-
-  return (guint) 5 * (metadata_fetched / (gdouble) total_metadata);
-}
-
-static inline guint
 get_write_progress (guint outstanding_writes)
 {
   return outstanding_writes > 0 ? (guint) (3 / (gdouble) outstanding_writes) : 3;
@@ -5909,7 +5891,8 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
   g_object_set_data (G_OBJECT (progress), "last-was-metadata", GUINT_TO_POINTER (FALSE));
 
   if (total_delta_parts == 0 &&
-      (outstanding_metadata_fetches > 0 || last_was_metadata))
+      (outstanding_metadata_fetches > 0 || last_was_metadata)  &&
+      metadata_fetched < 20)
     {
       /* We need to hit two callbacks with no metadata outstanding, because
          sometimes we get called when we just handled a metadata, but did
@@ -5924,10 +5907,12 @@ progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
       estimating = TRUE;
 
       g_string_append_printf (buf, "Downloading metadata: %u/(estimating) %s",
-                              metadata_fetched, formatted_bytes_total_transferred);
+                              fetched, formatted_bytes_total_transferred);
 
       /* Go up to 5% until the metadata is all fetched */
-      new_progress = get_metadata_progress (metadata_fetched, outstanding_metadata_fetches);
+      new_progress = 0;
+      if (requested > 0)
+        new_progress = fetched * 5 / requested;
     }
   else
     {
