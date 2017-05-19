@@ -118,7 +118,7 @@ fixup_python_time_stamp (const char *path,
                          GError **error)
 {
   glnx_fd_close int fd = -1;
-  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
+  g_auto(GLnxTmpfile) tmpf = { 0, };
   guint8 buffer[8];
   ssize_t res;
   guint32 pyc_mtime;
