@@ -1776,7 +1776,6 @@ appstream_compose (GFile   *app_dir,
   g_autoptr(GPtrArray) args = NULL;
   const gchar *arg;
   va_list ap;
-  g_autoptr(GError) local_error = NULL;
 
   args = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (args, g_strdup ("flatpak"));
@@ -1791,9 +1790,9 @@ appstream_compose (GFile   *app_dir,
   g_ptr_array_add (args, NULL);
   va_end (ap);
 
-  if (!builder_maybe_host_spawnv (NULL, NULL, &local_error, (const char * const *)args->pdata))
+  if (!builder_maybe_host_spawnv (NULL, NULL, error, (const char * const *)args->pdata))
     {
-      g_print ("ERROR: appstream-compose failed: %s\n", local_error->message);
+      g_prefix_error (error, "ERROR: appstream-compose failed: ");
       return FALSE;
     }
 
