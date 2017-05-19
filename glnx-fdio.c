@@ -150,7 +150,7 @@ glnx_renameat2_exchange (int olddirfd, const char *oldpath,
 void
 glnx_tmpfile_clear (GLnxTmpfile *tmpf)
 {
-  if (tmpf->src_dfd == -1)
+  if (!tmpf->initialized)
     return;
   if (tmpf->fd == -1)
     return;
@@ -182,6 +182,8 @@ glnx_open_tmpfile_linkable_at (int dfd,
   glnx_fd_close int fd = -1;
   int count;
 
+  dfd = glnx_dirfd_canonicalize (dfd);
+
   /* Don't allow O_EXCL, as that has a special meaning for O_TMPFILE */
   g_return_val_if_fail ((flags & O_EXCL) == 0, FALSE);
 
@@ -197,8 +199,9 @@ glnx_open_tmpfile_linkable_at (int dfd,
     return glnx_throw_errno_prefix (error, "open(O_TMPFILE)");
   if (fd != -1)
     {
-      out_tmpf->src_dfd = dfd;
-      out_tmpf->fd = fd; fd = -1; /* Transfer */
+      out_tmpf->initialized = TRUE;
+      out_tmpf->src_dfd = dfd; /* Copied; caller must keep open */
+      out_tmpf->fd = glnx_steal_fd (&fd);
       out_tmpf->path = NULL;
       return TRUE;
     }
@@ -222,8 +225,9 @@ glnx_open_tmpfile_linkable_at (int dfd,
           }
         else
           {
-            out_tmpf->src_dfd = dfd;
-            out_tmpf->fd = fd; fd = -1; /* Transfer */
+            out_tmpf->initialized = TRUE;
+            out_tmpf->src_dfd = dfd;  /* Copied; caller must keep open */
+            out_tmpf->fd = glnx_steal_fd (&fd);
             out_tmpf->path = g_steal_pointer (&tmp);
             return TRUE;
           }
@@ -247,7 +251,7 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
   const gboolean replace = (mode == GLNX_LINK_TMPFILE_REPLACE);
   const gboolean ignore_eexist = (mode == GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST);
 
-  g_return_val_if_fail (tmpf->src_dfd >= 0, FALSE);
+  g_return_val_if_fail (tmpf->fd >= 0, FALSE);
 
   /* Unlike the original systemd code, this function also supports
    * replacing existing files.
@@ -928,7 +932,7 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   if (mode == (mode_t) -1)
     mode = 0644;
 
-  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
+  g_auto(GLnxTmpfile) tmpf = { 0, };
   if (!glnx_open_tmpfile_linkable_at (dfd, dn, O_WRONLY | O_CLOEXEC,
                                       &tmpf, error))
     return FALSE;
