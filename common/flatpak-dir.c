@@ -3459,7 +3459,6 @@ export_mime_file (int           parent_fd,
   g_autoptr(GOutputStream) out_stream = NULL;
   g_autofree gchar *data = NULL;
   gsize data_len;
-  g_autoptr(GKeyFile) keyfile = NULL;
   xmlDoc *doc = NULL;
   xml_autofree xmlChar *xmlbuff = NULL;
   int buffersize;
