@@ -5321,6 +5321,7 @@ flatpak_complete_word (FlatpakCompletion *completion,
   va_list args;
   const char *rest;
   const char *shell_cur;
+  const char *shell_cur_end;
   g_autofree char *string = NULL;
 
   g_return_if_fail (format != NULL);
@@ -5337,11 +5338,18 @@ flatpak_complete_word (FlatpakCompletion *completion,
 
   shell_cur = completion->shell_cur ? completion->shell_cur : "";
 
-  /* I'm not sure exactly what bash is doing here, but this seems to work... */
-  if (strcmp (shell_cur, "=") == 0)
-    rest = string + strlen (completion->cur) - strlen (shell_cur) + 1;
-  else
-    rest = string + strlen (completion->cur) - strlen (shell_cur);
+  rest = string + strlen (completion->cur);
+
+  shell_cur_end = shell_cur + strlen(shell_cur);
+  while (shell_cur_end > shell_cur &&
+         rest > string &&
+         shell_cur_end[-1] == rest[-1] &&
+         /* I'm not sure exactly what bash is doing here with =, but this seems to work... */
+         shell_cur_end[-1] != '=')
+    {
+      rest--;
+      shell_cur_end--;
+    }
 
   flatpak_completion_debug ("completing word: '%s' (%s)", string, rest);
 
