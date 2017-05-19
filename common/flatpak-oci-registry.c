@@ -999,7 +999,7 @@ flatpak_oci_layer_writer_init (FlatpakOciLayerWriter *self)
 {
   self->uncompressed_checksum = g_checksum_new (G_CHECKSUM_SHA256);
   self->compressed_checksum = g_checksum_new (G_CHECKSUM_SHA256);
-  self->tmpf.src_dfd = -1;
+  self->tmpf.fd = -1;
 }
 
 static int
