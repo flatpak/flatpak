@@ -12,6 +12,13 @@ typedef enum {
   XDP_PERMISSION_FLAGS_ALL               = ((1 << 4) - 1)
 } XdpPermissionFlags;
 
+typedef enum {
+  XDP_ADD_FLAGS_REUSE_EXISTING             = (1 << 0),
+  XDP_ADD_FLAGS_PERSISTENT                 = (1 << 1),
+
+  XDP_ADD_FLAGS_FLAGS_ALL                  = ((1 << 2) - 1)
+} XdpAddFullFlags;
+
 G_END_DECLS
 
 #endif /* XDP_ENUMS_H */
