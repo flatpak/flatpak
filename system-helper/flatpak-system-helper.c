@@ -922,6 +922,8 @@ on_bus_acquired (GDBusConnection *connection,
 
   helper = flatpak_system_helper_skeleton_new ();
 
+  flatpak_system_helper_set_version (FLATPAK_SYSTEM_HELPER (helper), 1);
+
   g_object_set_data_full (G_OBJECT(helper), "track-alive", GINT_TO_POINTER(42), skeleton_died_cb);
 
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (helper),

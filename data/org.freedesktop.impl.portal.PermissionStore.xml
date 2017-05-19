@@ -42,6 +42,7 @@
       (in the form of a GVariant) with each resource.
   -->
   <interface name='org.freedesktop.impl.portal.PermissionStore'>
+    <property name="version" type="u" access="read"/>
 
     <!--
         Lookup:

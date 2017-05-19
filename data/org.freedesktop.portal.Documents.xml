@@ -47,6 +47,7 @@
       in the POSIX mode bits in the fuse filesystem.
   -->
   <interface name='org.freedesktop.portal.Documents'>
+    <property name="version" type="u" access="read"/>
 
     <!--
         GetMountPoint:
