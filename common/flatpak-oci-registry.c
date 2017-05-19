@@ -1152,7 +1152,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
 
   oci_layer_writer->archive = g_steal_pointer (&a);
   /* Transfer ownership of the tmpfile */
-  oci_layer_writer->tmpf = tmpf; tmpf.src_dfd = -1;
+  oci_layer_writer->tmpf = tmpf; tmpf.fd = -1;
   oci_layer_writer->compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
 
   return g_steal_pointer (&oci_layer_writer);
