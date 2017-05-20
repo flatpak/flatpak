@@ -1733,29 +1733,40 @@ rename_icon_cb (BuilderManifest *self,
                 int              depth,
                 GError         **error)
 {
-  if (S_ISREG (stbuf->st_mode) &&
-      depth == 3 &&
-      g_str_has_prefix (source_name, self->rename_icon) &&
-      (g_str_has_prefix (source_name + strlen (self->rename_icon), ".") ||
-       g_str_has_prefix (source_name + strlen (self->rename_icon), "-symbolic.")))
+  if (g_str_has_prefix (source_name, self->rename_icon))
     {
-      const char *extension = source_name + strlen (self->rename_icon);
-      g_autofree char *new_name = g_strconcat (self->id, extension, NULL);
-      int res;
-
-      *found = TRUE;
-
-      g_print ("%s icon %s/%s to %s/%s\n", self->copy_icon ? "Copying" : "Renaming", rel_dir, source_name, rel_dir, new_name);
-
-      if (self->copy_icon)
-        res = linkat (source_parent_fd, source_name, source_parent_fd, new_name, AT_SYMLINK_FOLLOW);
-      else
-        res = renameat (source_parent_fd, source_name, source_parent_fd, new_name);
-
-      if (res != 0)
+      if (S_ISREG (stbuf->st_mode) &&
+          depth == 3 &&
+          (g_str_has_prefix (source_name + strlen (self->rename_icon), ".") ||
+           g_str_has_prefix (source_name + strlen (self->rename_icon), "-symbolic.")))
         {
-          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Can't rename icon %s/%s", rel_dir, source_name);
-          return FALSE;
+          const char *extension = source_name + strlen (self->rename_icon);
+          g_autofree char *new_name = g_strconcat (self->id, extension, NULL);
+          int res;
+
+          *found = TRUE;
+
+          g_print ("%s icon %s/%s to %s/%s\n", self->copy_icon ? "Copying" : "Renaming", rel_dir, source_name, rel_dir, new_name);
+
+          if (self->copy_icon)
+            res = linkat (source_parent_fd, source_name, source_parent_fd, new_name, AT_SYMLINK_FOLLOW);
+          else
+            res = renameat (source_parent_fd, source_name, source_parent_fd, new_name);
+
+          if (res != 0)
+            {
+              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Can't rename icon %s/%s", rel_dir, source_name);
+              return FALSE;
+            }
+        }
+      else
+        {
+          if (!S_ISREG (stbuf->st_mode))
+            g_debug ("%s/%s matches 'rename-icon', but not a regular file", full_dir, source_name);
+          else if (depth != 3)
+            g_debug ("%s/%s matches 'rename-icon', but not at depth 3", full_dir, source_name);
+          else
+            g_debug ("%s/%s matches 'rename-icon', but name does not continue with '.' or '-symbolic.'", full_dir, source_name);
         }
     }
 
