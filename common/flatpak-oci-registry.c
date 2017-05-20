@@ -748,7 +748,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
                                   GError              **error)
 {
   g_autofree char *subpath = NULL;
-  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
+  g_auto(GLnxTmpfile) tmpf = { 0, };
   g_autoptr(GOutputStream) out_stream = NULL;
   struct stat stbuf;
   g_autofree char *checksum = NULL;
@@ -1104,7 +1104,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
 {
   g_autoptr(FlatpakOciLayerWriter) oci_layer_writer = NULL;
   free_write_archive struct archive *a = NULL;
-  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
+  g_auto(GLnxTmpfile) tmpf = { 0, };
 
   g_assert (self->valid);
 
@@ -1577,7 +1577,7 @@ flatpak_oci_sign_data (GBytes *data,
                        const char *homedir,
                        GError **error)
 {
-  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
+  g_auto(GLnxTmpfile) tmpf = { 0, };
   g_autoptr(GOutputStream) tmp_signature_output = NULL;
   flatpak_auto_gpgme_ctx gpgme_ctx_t context = NULL;
   gpgme_error_t err;
