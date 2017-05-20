@@ -698,8 +698,8 @@ portal_add_full (GDBusMethodInvocation *invocation,
     }
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
-  g_variant_builder_add (&builder, "{s@v}", "mountpoint",
-                         g_variant_new_variant (g_variant_new_string (xdp_fuse_get_mountpoint ())));
+  g_variant_builder_add (&builder, "{sv}", "mountpoint",
+                         g_variant_new_bytestring (xdp_fuse_get_mountpoint ()));
 
   g_dbus_method_invocation_return_value (invocation,
                                          g_variant_new ("(^as@a{sv})",
