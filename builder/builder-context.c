@@ -171,12 +171,12 @@ builder_context_constructed (GObject *object)
   g_autoptr(GFile) user_cache_dir = g_file_new_for_path (g_get_user_cache_dir ());
 
   self->state_dir = g_file_get_child (self->run_dir, ".flatpak-builder");
-  self->download_dir = g_file_get_child (self->state_dir, "downloads");
   self->build_dir = g_file_get_child (self->state_dir, "build");
   self->cache_dir = g_file_get_child (self->state_dir, "cache");
   self->checksums_dir = g_file_get_child (self->state_dir, "checksums");
   self->ccache_dir = g_file_get_child (self->state_dir, "ccache");
   self->user_state_dir = g_file_get_child (user_cache_dir, "flatpak-builder");
+  self->download_dir = g_file_get_child (self->user_state_dir, "downloads");
 }
 
 static void
