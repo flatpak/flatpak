@@ -180,6 +180,9 @@ char * flatpak_build_runtime_ref (const char *runtime,
 char * flatpak_build_app_ref (const char *app,
                               const char *branch,
                               const char *arch);
+char * flatpak_find_current_ref (const char *app_id,
+                                 GCancellable *cancellable,
+                                 GError      **error);
 GFile *flatpak_find_deploy_dir_for_ref (const char   *ref,
                                         FlatpakDir **dir_out,
                                         GCancellable *cancellable,

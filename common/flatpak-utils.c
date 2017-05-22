@@ -1286,6 +1286,41 @@ flatpak_find_unmaintained_extension_dir_if_exists (const char   *name,
   return g_steal_pointer(&extension_dir);
 }
 
+char *
+flatpak_find_current_ref (const char *app_id,
+                          GCancellable *cancellable,
+                          GError      **error)
+{
+  g_autofree char *current_ref = NULL;
+  g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
+  int i;
+
+  current_ref = flatpak_dir_current_ref (user_dir, app_id, NULL);
+  if (current_ref == NULL)
+    {
+      g_autoptr(GPtrArray) system_dirs = NULL;
+
+      system_dirs = flatpak_dir_get_system_list (cancellable, error);
+      if (system_dirs == NULL)
+        return FALSE;
+
+      for (i = 0; i < system_dirs->len; i++)
+        {
+          FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
+          current_ref = flatpak_dir_current_ref (dir, app_id, cancellable);
+          if (current_ref != NULL)
+            break;
+        }
+    }
+
+  if (current_ref)
+    return g_steal_pointer (&current_ref);
+
+  g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
+               _("%s not installed"), app_id);
+  return NULL;
+}
+
 FlatpakDeploy *
 flatpak_find_deploy_for_ref (const char   *ref,
                              GCancellable *cancellable,
