@@ -65,6 +65,7 @@ static char *opt_gpg_homedir;
 static char **opt_key_ids;
 static char **opt_sources_dirs;
 static int opt_jobs;
+static char *opt_mirror_screenshots_url;
 
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
@@ -100,6 +101,7 @@ static GOptionEntry entries[] = {
   { "build-shell", 0, 0, G_OPTION_ARG_STRING, &opt_build_shell, "Extract and prepare sources for module, then start build shell", "MODULENAME"},
   { "from-git", 0, 0, G_OPTION_ARG_STRING, &opt_from_git, "Get input files from git repo", "URL"},
   { "from-git-branch", 0, 0, G_OPTION_ARG_STRING, &opt_from_git_branch, "Branch to use in --from-git", "BRANCH"},
+  { "mirror-screenshots-url", 0, 0, G_OPTION_ARG_STRING, &opt_mirror_screenshots_url, "Download and rewrite screenshots to match this url", "URL"},
   { NULL }
 };
 
@@ -607,6 +609,49 @@ main (int    argc,
 
   if (!opt_require_changes)
     builder_cache_ensure_checkout (cache);
+
+  if (opt_mirror_screenshots_url)
+    {
+      g_autofree char *screenshot_subdir = g_strdup_printf ("%s-%s", builder_manifest_get_id (manifest),
+                                                            builder_manifest_get_branch (manifest, opt_default_branch));
+      g_autofree char *url = g_build_filename (opt_mirror_screenshots_url, screenshot_subdir, NULL);
+      g_autofree char *xml_relpath = g_strdup_printf ("files/share/app-info/xmls/%s.xml.gz", builder_manifest_get_id (manifest));
+      g_autoptr(GFile) xml = g_file_resolve_relative_path (app_dir, xml_relpath);
+      g_autoptr(GFile) cache = flatpak_build_file (builder_context_get_state_dir (build_context), "screenshots-cache", NULL);
+      g_autoptr(GFile) screenshots = flatpak_build_file (app_dir, "screenshots", NULL);
+      g_autoptr(GFile) screenshots_sub = flatpak_build_file (screenshots, screenshot_subdir, NULL);
+      const char *argv[] = {
+        "appstream-util",
+        "mirror-screenshots",
+        flatpak_file_get_path_cached (xml),
+        url,
+        flatpak_file_get_path_cached (cache),
+        flatpak_file_get_path_cached (screenshots_sub),
+        NULL
+      };
+
+      g_print ("Mirroring screenshots from appdata\n");
+
+      if (!flatpak_mkdir_p (screenshots, NULL, &error))
+        {
+          g_printerr ("Error creating screenshot dir: %s\n", error->message);
+          return 1;
+        }
+
+      if (g_file_query_exists (xml, NULL))
+        {
+          if (!builder_maybe_host_spawnv (NULL,
+                                          NULL,
+                                          &error,
+                                          argv))
+            {
+              g_printerr ("Error mirroring screenshots: %s\n", error->message);
+              return 1;
+            }
+        }
+
+      g_print ("Saved screenshots in %s\n", flatpak_file_get_path_cached (screenshots));
+    }
 
   if (!opt_build_only && opt_repo && builder_cache_has_checkout (cache))
     {

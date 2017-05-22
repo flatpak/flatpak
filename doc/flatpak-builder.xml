@@ -384,6 +384,17 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--mirror-screenshots-url=URL</option></term>
+
+                <listitem><para>
+                  Mirror any screenshots in the appstream and rewrite the appstream xml
+                  as if they were on the specified URL. The resulting files will
+                  be stored in the "screenshots" subdirectory in the app directory
+                  and needs to be copied to the specified URL for the appdata to work.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--from-git=GIT</option></term>
 
                 <listitem><para>
