@@ -111,26 +111,7 @@ flatpak_builtin_run (int argc, char **argv, GCancellable *cancellable, GError **
 
   if (branch == NULL || arch == NULL)
     {
-      g_autofree char *current_ref = NULL;
-      g_autoptr(FlatpakDir) user_dir = flatpak_dir_get_user ();
-
-      current_ref = flatpak_dir_current_ref (user_dir, id, cancellable);
-      if (current_ref == NULL)
-        {
-          g_autoptr(GPtrArray) system_dirs = NULL;
-
-          system_dirs = flatpak_dir_get_system_list (cancellable, error);
-          if (system_dirs == NULL)
-            return FALSE;
-
-          for (i = 0; i < system_dirs->len; i++)
-            {
-              FlatpakDir *dir = g_ptr_array_index (system_dirs, i);
-              current_ref = flatpak_dir_current_ref (dir, id, cancellable);
-              if (current_ref != NULL)
-                break;
-            }
-        }
+      g_autofree char *current_ref = flatpak_find_current_ref (id, NULL, NULL);
 
       if (current_ref)
         {
