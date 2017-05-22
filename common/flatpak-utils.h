@@ -666,6 +666,18 @@ void               flatpak_complete_options (FlatpakCompletion *completion,
                                              GOptionEntry      *entries);
 void               flatpak_completion_free  (FlatpakCompletion *completion);
 
+typedef struct {
+  int inited;
+  int n_columns;
+  int last_width;
+} FlatpakTerminalProgress;
+
+void flatpak_terminal_progress_cb (const char *status,
+                                   guint       progress,
+                                   gboolean    estimating,
+                                   gpointer    user_data);
+void flatpak_terminal_progress_end (FlatpakTerminalProgress *term);
+
 typedef void (*FlatpakProgressCallback)(const char *status,
                                         guint       progress,
                                         gboolean    estimating,
