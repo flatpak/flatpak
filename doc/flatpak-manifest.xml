@@ -230,7 +230,7 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>env</option> (object)</term>
-                    <listitem><para>This is a dictionary defining environment variables to be set during the build.</para></listitem>
+                    <listitem><para>This is a dictionary defining environment variables to be set during the build. Elements in this override the properties that set the environment, like cflags and ldflags.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>build-args</option> (array of strings)</term>
