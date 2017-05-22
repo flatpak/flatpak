@@ -748,7 +748,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
                                   GError              **error)
 {
   g_autofree char *subpath = NULL;
-  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
+  g_auto(GLnxTmpfile) tmpf = { 0 };
   g_autoptr(GOutputStream) out_stream = NULL;
   struct stat stbuf;
   g_autofree char *checksum = NULL;
@@ -999,7 +999,6 @@ flatpak_oci_layer_writer_init (FlatpakOciLayerWriter *self)
 {
   self->uncompressed_checksum = g_checksum_new (G_CHECKSUM_SHA256);
   self->compressed_checksum = g_checksum_new (G_CHECKSUM_SHA256);
-  self->tmpf.fd = -1;
 }
 
 static int
@@ -1104,7 +1103,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
 {
   g_autoptr(FlatpakOciLayerWriter) oci_layer_writer = NULL;
   free_write_archive struct archive *a = NULL;
-  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
+  g_auto(GLnxTmpfile) tmpf = { 0 };
 
   g_assert (self->valid);
 
@@ -1152,7 +1151,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
 
   oci_layer_writer->archive = g_steal_pointer (&a);
   /* Transfer ownership of the tmpfile */
-  oci_layer_writer->tmpf = tmpf; tmpf.fd = -1;
+  oci_layer_writer->tmpf = tmpf; tmpf.initialized = 0;
   oci_layer_writer->compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
 
   return g_steal_pointer (&oci_layer_writer);
@@ -1577,7 +1576,7 @@ flatpak_oci_sign_data (GBytes *data,
                        const char *homedir,
                        GError **error)
 {
-  g_auto(GLnxTmpfile) tmpf = GLNX_TMPFILE_INIT;
+  g_auto(GLnxTmpfile) tmpf = { 0 };
   g_autoptr(GOutputStream) tmp_signature_output = NULL;
   flatpak_auto_gpgme_ctx gpgme_ctx_t context = NULL;
   gpgme_error_t err;
