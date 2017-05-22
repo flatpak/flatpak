@@ -650,15 +650,15 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
 
   cflags = builder_options_get_cflags (self, context);
   if (cflags)
-    envp = g_environ_setenv (envp, "CFLAGS", cflags, TRUE);
+    envp = g_environ_setenv (envp, "CFLAGS", cflags, FALSE);
 
   cxxflags = builder_options_get_cxxflags (self, context);
   if (cxxflags)
-    envp = g_environ_setenv (envp, "CXXFLAGS", cxxflags, TRUE);
+    envp = g_environ_setenv (envp, "CXXFLAGS", cxxflags, FALSE);
 
   ldflags = builder_options_get_ldflags (self, context);
   if (ldflags)
-    envp = g_environ_setenv (envp, "LDFLAGS", ldflags, TRUE);
+    envp = g_environ_setenv (envp, "LDFLAGS", ldflags, FALSE);
 
   return envp;
 }
