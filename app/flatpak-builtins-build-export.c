@@ -822,6 +822,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
     goto out;
 
+  g_variant_dict_insert_value (&metadata_dict, "xa.ref", g_variant_new_string (full_branch));
   g_variant_dict_insert_value (&metadata_dict, "xa.metadata", g_variant_new_string (metadata_contents));
   g_variant_dict_insert_value (&metadata_dict, "xa.installed-size", g_variant_new_uint64 (GUINT64_TO_BE (installed_size)));
   g_variant_dict_insert_value (&metadata_dict, "xa.download-size", g_variant_new_uint64 (GUINT64_TO_BE (download_size)));

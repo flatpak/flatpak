@@ -277,6 +277,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
          the commit-from gets a different commit id, which avoids problems with e.g.
          sharing .commitmeta files (signatures) */
       g_variant_builder_add (&metadata_builder, "{sv}", "xa.from_commit", g_variant_new_string (resolved_ref));
+      g_variant_builder_add (&metadata_builder, "{sv}", "xa.ref", g_variant_new_string (dst_ref));
 
       if (!ostree_repo_write_commit_with_time (dst_repo, dst_parent, subject, body, g_variant_builder_end (&metadata_builder),
                                                OSTREE_REPO_FILE (dst_root),
