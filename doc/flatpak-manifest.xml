@@ -216,6 +216,10 @@
                     <listitem><para>This is set in the environment variable CFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatinated with spaces inbetween.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>cppflags</option> (string)</term>
+                    <listitem><para>This is set in the environment variable CPPFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatinated with spaces inbetween.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>cxxflags</option> (string)</term>
                     <listitem><para>This is set in the environment variable CXXFLAGS during the build. Multiple specifications of this (in e.g. per-arch area) are concatinated with spaces inbetween.</para></listitem>
                 </varlistentry>
