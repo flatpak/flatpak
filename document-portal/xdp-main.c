@@ -630,6 +630,8 @@ portal_add_full (GDBusMethodInvocation *invocation,
           return;
         }
 
+      g_ptr_array_index(paths,i) = g_strdup (path_buffer);
+
       if (st_buf.st_dev == fuse_dev)
         {
           /* The passed in fd is on the fuse filesystem itself */
@@ -643,46 +645,45 @@ portal_add_full (GDBusMethodInvocation *invocation,
             }
           g_ptr_array_index(ids,i) = id;
         }
-      else
-        {
-          g_ptr_array_index(paths,i) = g_strdup (path_buffer);
-        }
     }
 
-  for (i = 0; i < n_args; i++)
-    {
-      AUTOLOCK (db);
+  {
+    XdpPermissionFlags caller_perms =
+      XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
+      XDP_PERMISSION_FLAGS_READ |
+      XDP_PERMISSION_FLAGS_WRITE;
 
-      if (g_ptr_array_index(ids,i) == NULL)
-        {
-          const char *path = g_ptr_array_index(paths,i);
-          g_assert (path != NULL);
+    /* If its a unique one its safe for the creator to
+       delete it at will */
+    if (!reuse_existing)
+      caller_perms |= XDP_PERMISSION_FLAGS_DELETE;
 
-          id = do_create_doc (&real_parent_st_bufs[i], path, reuse_existing, persistent);
-          g_ptr_array_index(ids,i) = id;
-          if (app_id[0] != '\0' && strcmp (app_id, target_app_id) != 0)
-            {
-              g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (db, id);;
-              XdpPermissionFlags perms =
-                XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
-                XDP_PERMISSION_FLAGS_READ |
-                XDP_PERMISSION_FLAGS_WRITE;
+    AUTOLOCK (db); /* Lock once for all ops */
 
-              /* If its a unique one its safe for the creator to
-                 delete it at will */
-              if (!reuse_existing)
-                perms |= XDP_PERMISSION_FLAGS_DELETE;
+    for (i = 0; i < n_args; i++)
+      {
+        const char *path = g_ptr_array_index(paths,i);
+        g_assert (path != NULL);
 
-              do_set_permissions (entry, id, app_id, perms);
-            }
+        if (g_ptr_array_index(ids,i) == NULL)
+          {
+            id = do_create_doc (&real_parent_st_bufs[i], path, reuse_existing, persistent);
+            g_ptr_array_index(ids,i) = id;
 
-          if (target_app_id[0] != '\0' && target_perms != 0)
-            {
-              g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (db, id);
-              do_set_permissions (entry, id, target_app_id, target_perms);
-            }
-        }
-    }
+            if (app_id[0] != '\0' && strcmp (app_id, target_app_id) != 0)
+              {
+                g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (db, id);;
+                do_set_permissions (entry, id, app_id, caller_perms);
+              }
+
+            if (target_app_id[0] != '\0' && target_perms != 0)
+              {
+                g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (db, id);
+                do_set_permissions (entry, id, target_app_id, target_perms);
+              }
+          }
+      }
+  }
 
   /* Invalidate with lock dropped to avoid deadlock */
   for (i = 0; i < n_args; i++)
