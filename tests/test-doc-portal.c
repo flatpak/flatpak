@@ -331,9 +331,6 @@ test_recursive_doc (void)
 static void
 test_create_docs (void)
 {
-  g_autofree char *doc_path = NULL;
-  g_autofree char *doc_app_path = NULL;
-  g_autofree char *host_path = NULL;
   GError *error = NULL;
   g_autofree char *path1 = NULL;
   g_autofree char *path2 = NULL;
