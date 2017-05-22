@@ -18,6 +18,7 @@
 #include "flatpak-dbus.h"
 #include "flatpak-utils.h"
 #include "flatpak-dir.h"
+#include "flatpak-run.h"
 #include "flatpak-portal-error.h"
 #include "permission-store/permission-store-dbus.h"
 #include "xdp-fuse.h"
@@ -575,7 +576,7 @@ portal_add_full (GDBusMethodInvocation *invocation,
   char path_buffer[PATH_MAX + 1];
   const int *fds = NULL;
   struct stat st_buf;
-  gboolean reuse_existing, persistent;
+  gboolean reuse_existing, persistent, as_needed_by_app;
   GError *error = NULL;
   guint32 flags = 0;
   GKeyFile *app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
@@ -589,6 +590,7 @@ portal_add_full (GDBusMethodInvocation *invocation,
   gsize n_args;
   XdpPermissionFlags target_perms;
   GVariantBuilder builder;
+  g_autoptr(FlatpakExports) app_exports = NULL;
 
   g_variant_get (parameters, "(@ahus^a&s)",
                  &array, &flags, &target_app_id, &permissions);
@@ -603,6 +605,14 @@ portal_add_full (GDBusMethodInvocation *invocation,
 
   reuse_existing = (flags & XDP_ADD_FLAGS_REUSE_EXISTING) != 0;
   persistent = (flags & XDP_ADD_FLAGS_PERSISTENT) != 0;
+  as_needed_by_app = (flags & XDP_ADD_FLAGS_AS_NEEDED_BY_APP) != 0;
+
+  if (as_needed_by_app && target_app_id[0] != '\0')
+    {
+      g_autoptr(FlatpakContext) app_context = flatpak_context_load_for_app (target_app_id, NULL);
+      if (app_context)
+        app_exports = flatpak_exports_from_context (app_context);
+    }
 
   target_perms = xdp_parse_permissions (permissions);
 
@@ -665,6 +675,14 @@ portal_add_full (GDBusMethodInvocation *invocation,
         const char *path = g_ptr_array_index(paths,i);
         g_assert (path != NULL);
 
+        if (app_exports &&
+            flatpak_exports_path_is_visible (app_exports, path))
+          {
+            g_free (g_ptr_array_index(ids,i));
+            g_ptr_array_index(ids,i) = g_strdup ("");
+            continue;
+          }
+
         if (g_ptr_array_index(ids,i) == NULL)
           {
             id = do_create_doc (&real_parent_st_bufs[i], path, reuse_existing, persistent);
@@ -690,6 +708,9 @@ portal_add_full (GDBusMethodInvocation *invocation,
     {
       id = g_ptr_array_index (ids,i);
       g_assert (id != NULL);
+
+      if (*id == 0)
+        continue;
 
       xdp_fuse_invalidate_doc_app (id, NULL);
       if (app_id[0] != '\0')

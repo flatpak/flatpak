@@ -15,8 +15,9 @@ typedef enum {
 typedef enum {
   XDP_ADD_FLAGS_REUSE_EXISTING             = (1 << 0),
   XDP_ADD_FLAGS_PERSISTENT                 = (1 << 1),
+  XDP_ADD_FLAGS_AS_NEEDED_BY_APP           = (1 << 2),
 
-  XDP_ADD_FLAGS_FLAGS_ALL                  = ((1 << 2) - 1)
+  XDP_ADD_FLAGS_FLAGS_ALL                  = ((1 << 3) - 1)
 } XdpAddFullFlags;
 
 G_END_DECLS
