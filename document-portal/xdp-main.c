@@ -582,7 +582,6 @@ portal_add_full (GDBusMethodInvocation *invocation,
   g_autoptr(GVariant) array = NULL;
   const char *target_app_id;
   g_autofree const char **permissions = NULL;
-  g_autofree guint32 *arg_fds = NULL;
   g_autoptr(GPtrArray) ids = g_ptr_array_new_with_free_func (g_free);
   g_autoptr(GPtrArray) paths = g_ptr_array_new_with_free_func (g_free);
   g_autofree struct stat *real_parent_st_bufs = NULL;
