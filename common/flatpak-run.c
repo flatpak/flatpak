@@ -4520,6 +4520,35 @@ add_rest_args (const char  *app_id,
   return TRUE;
 }
 
+FlatpakContext *
+flatpak_context_load_for_app (const char     *app_id,
+                              GError        **error)
+{
+  g_autofree char *app_ref = NULL;
+  g_autoptr(FlatpakContext) app_context = NULL;
+  g_autoptr(FlatpakDeploy) app_deploy = NULL;
+  g_autoptr(FlatpakContext) overrides = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+
+  app_ref = flatpak_find_current_ref (app_id, NULL, error);
+  if (app_ref == NULL)
+    return NULL;
+
+  app_deploy = flatpak_find_deploy_for_ref (app_ref, NULL, error);
+  if (app_deploy == NULL)
+    return NULL;
+
+  metakey = flatpak_deploy_get_metadata (app_deploy);
+  app_context = flatpak_app_compute_permissions (metakey, NULL, error);
+  if (app_context == NULL)
+    return NULL;
+
+  overrides = flatpak_deploy_get_overrides (app_deploy);
+  flatpak_context_merge (app_context, overrides);
+
+  return g_steal_pointer (&app_context);
+}
+
 gboolean
 flatpak_run_app (const char     *app_ref,
                  FlatpakDeploy  *app_deploy,
