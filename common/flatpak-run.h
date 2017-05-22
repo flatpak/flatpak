@@ -91,6 +91,14 @@ typedef enum {
 
 typedef struct _FlatpakExports FlatpakExports;
 
+void flatpak_exports_free (FlatpakExports *exports);
+
+gboolean flatpak_exports_path_is_visible (FlatpakExports *exports,
+                                          const char *path);
+FlatpakExports *flatpak_exports_from_context (FlatpakContext *context);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
+
 gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
                                           char       ***envp_p,
                                           GKeyFile     *metakey,

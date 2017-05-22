@@ -2366,14 +2366,12 @@ exports_new (void)
   return exports;
 }
 
-static void
+void
 flatpak_exports_free (FlatpakExports *exports)
 {
   g_hash_table_destroy (exports->hash);
   g_free (exports);
 }
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free)
 
 /* Returns TRUE if the location of this export
    is not visible due to parents being exported */
@@ -2501,9 +2499,9 @@ path_is_mapped (const char **keys,
     ep->mode != FAKE_MODE_HIDDEN;
 }
 
-static gboolean
-exports_path_is_visible (FlatpakExports *exports,
-                         const char *path)
+gboolean
+flatpak_exports_path_is_visible (FlatpakExports *exports,
+                                 const char *path)
 {
   guint n_keys;
   g_autofree const char **keys = (const char **)g_hash_table_get_keys_as_array (exports->hash, &n_keys);
@@ -2541,7 +2539,7 @@ exports_path_is_visible (FlatpakExports *exports,
               if (resolved == NULL)
                 return FALSE;
 
-              return exports_path_is_visible (exports, resolved);
+              return flatpak_exports_path_is_visible (exports, resolved);
             }
         }
       else if (parts[i+1] == NULL)
@@ -2669,6 +2667,143 @@ exports_path_expose (FlatpakExports *exports,
   return _exports_path_expose (exports, mode, path, 0);
 }
 
+static void
+export_paths_export_context (FlatpakContext *context,
+                             FlatpakExports *exports,
+                             gboolean  do_create,
+                             GString *xdg_dirs_conf,
+                             gboolean *home_access_out)
+{
+  gboolean home_access = FALSE;
+  FlatpakFilesystemMode fs_mode, home_mode;
+  GHashTableIter iter;
+  gpointer key, value;
+
+  fs_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "host");
+  if (fs_mode != 0)
+    {
+      DIR *dir;
+      struct dirent *dirent;
+
+      g_debug ("Allowing host-fs access");
+      home_access = TRUE;
+
+      /* Bind mount most dirs in / into the new root */
+      dir = opendir ("/");
+      if (dir != NULL)
+        {
+          while ((dirent = readdir (dir)))
+            {
+              g_autofree char *path = NULL;
+
+              if (g_strv_contains (dont_mount_in_root, dirent->d_name))
+                continue;
+
+              path = g_build_filename ("/", dirent->d_name, NULL);
+              exports_path_expose (exports, fs_mode, path);
+            }
+          closedir (dir);
+        }
+      exports_path_expose (exports, fs_mode, "/run/media");
+    }
+
+  home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
+  if (home_mode != 0)
+    {
+      g_debug ("Allowing homedir access");
+      home_access = TRUE;
+
+      exports_path_expose (exports, MAX (home_mode, fs_mode), g_get_home_dir ());
+    }
+
+  g_hash_table_iter_init (&iter, context->filesystems);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+      const char *filesystem = key;
+      FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
+
+      if (value == NULL ||
+          strcmp (filesystem, "host") == 0 ||
+          strcmp (filesystem, "home") == 0)
+        continue;
+
+      if (g_str_has_prefix (filesystem, "xdg-"))
+        {
+          const char *path, *rest = NULL;
+          const char *config_key = NULL;
+          g_autofree char *subpath = NULL;
+
+          if (!get_xdg_user_dir_from_string (filesystem, &config_key, &rest, &path))
+            {
+              g_warning ("Unsupported xdg dir %s\n", filesystem);
+              continue;
+            }
+
+          if (path == NULL)
+            continue; /* Unconfigured, ignore */
+
+          if (strcmp (path, g_get_home_dir ()) == 0)
+            {
+              /* xdg-user-dirs sets disabled dirs to $HOME, and its in general not a good
+                 idea to set full access to $HOME other than explicitly, so we ignore
+                 these */
+              g_debug ("Xdg dir %s is $HOME (i.e. disabled), ignoring\n", filesystem);
+              continue;
+            }
+
+          subpath = g_build_filename (path, rest, NULL);
+
+          if (mode == FLATPAK_FILESYSTEM_MODE_CREATE && do_create)
+            g_mkdir_with_parents (subpath, 0755);
+
+          if (g_file_test (subpath, G_FILE_TEST_EXISTS))
+            {
+              if (config_key && xdg_dirs_conf)
+                g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n",
+                                        config_key, path);
+
+              exports_path_expose (exports, mode, subpath);
+            }
+        }
+      else if (g_str_has_prefix (filesystem, "~/"))
+        {
+          g_autofree char *path = NULL;
+
+          path = g_build_filename (g_get_home_dir (), filesystem + 2, NULL);
+
+          if (mode == FLATPAK_FILESYSTEM_MODE_CREATE && do_create)
+            g_mkdir_with_parents (path, 0755);
+
+          if (g_file_test (path, G_FILE_TEST_EXISTS))
+            exports_path_expose (exports, mode, path);
+        }
+      else if (g_str_has_prefix (filesystem, "/"))
+        {
+          if (mode == FLATPAK_FILESYSTEM_MODE_CREATE && do_create)
+            g_mkdir_with_parents (filesystem, 0755);
+
+          if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
+            exports_path_expose (exports, mode, filesystem);
+        }
+      else
+        {
+          g_warning ("Unexpected filesystem arg %s\n", filesystem);
+        }
+    }
+
+  if (home_access_out != NULL)
+    *home_access_out = home_access;
+}
+
+FlatpakExports *
+flatpak_exports_from_context (FlatpakContext *context)
+{
+  g_autoptr(FlatpakExports) exports = exports_new ();
+
+  export_paths_export_context (context, exports, FALSE, NULL, NULL);
+  return g_steal_pointer (&exports);
+}
+
 gboolean
 flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                   GArray         *fd_array,
@@ -2682,14 +2817,13 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                   GCancellable   *cancellable,
                                   GError        **error)
 {
+  gboolean home_access = FALSE;
   GHashTableIter iter;
   gpointer key, value;
   gboolean unrestricted_session_bus;
   gboolean unrestricted_system_bus;
-  gboolean home_access = FALSE;
-  GString *xdg_dirs_conf = NULL;
+  g_autoptr(GString) xdg_dirs_conf = g_string_new ("");
   g_autoptr(GError) my_error = NULL;
-  FlatpakFilesystemMode fs_mode, home_mode;
   g_autoptr(GFile) user_flatpak_dir = NULL;
   g_autoptr(FlatpakExports) exports = exports_new ();
   g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
@@ -2754,42 +2888,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
         }
     }
 
-  fs_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "host");
-  if (fs_mode != 0)
-    {
-      DIR *dir;
-      struct dirent *dirent;
-
-      g_debug ("Allowing host-fs access");
-      home_access = TRUE;
-
-      /* Bind mount most dirs in / into the new root */
-      dir = opendir ("/");
-      if (dir != NULL)
-        {
-          while ((dirent = readdir (dir)))
-            {
-              g_autofree char *path = NULL;
-
-              if (g_strv_contains (dont_mount_in_root, dirent->d_name))
-                continue;
-
-              path = g_build_filename ("/", dirent->d_name, NULL);
-              exports_path_expose (exports, fs_mode, path);
-            }
-          closedir (dir);
-        }
-      exports_path_expose (exports, fs_mode, "/run/media");
-    }
-
-  home_mode = (FlatpakFilesystemMode) g_hash_table_lookup (context->filesystems, "home");
-  if (home_mode != 0)
-    {
-      g_debug ("Allowing homedir access");
-      home_access = TRUE;
-
-      exports_path_expose (exports, MAX (home_mode, fs_mode), g_get_home_dir ());
-    }
+  export_paths_export_context (context, exports, TRUE, xdg_dirs_conf, &home_access);
 
   if (!home_access)
     {
@@ -2823,84 +2922,6 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                   "--bind", run_user_app_src, run_user_app_dst,
                   NULL);
   }
-
-  g_hash_table_iter_init (&iter, context->filesystems);
-  while (g_hash_table_iter_next (&iter, &key, &value))
-    {
-      const char *filesystem = key;
-      FlatpakFilesystemMode mode = GPOINTER_TO_INT (value);
-
-      if (value == NULL ||
-          strcmp (filesystem, "host") == 0 ||
-          strcmp (filesystem, "home") == 0)
-        continue;
-
-      if (g_str_has_prefix (filesystem, "xdg-"))
-        {
-          const char *path, *rest = NULL;
-          const char *config_key = NULL;
-          g_autofree char *subpath = NULL;
-
-          if (!get_xdg_user_dir_from_string (filesystem, &config_key, &rest, &path))
-            {
-              g_warning ("Unsupported xdg dir %s\n", filesystem);
-              continue;
-            }
-
-          if (path == NULL)
-            continue; /* Unconfigured, ignore */
-
-          if (strcmp (path, g_get_home_dir ()) == 0)
-            {
-              /* xdg-user-dirs sets disabled dirs to $HOME, and its in general not a good
-                 idea to set full access to $HOME other than explicitly, so we ignore
-                 these */
-              g_debug ("Xdg dir %s is $HOME (i.e. disabled), ignoring\n", filesystem);
-              continue;
-            }
-
-          subpath = g_build_filename (path, rest, NULL);
-
-          if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
-            g_mkdir_with_parents (subpath, 0755);
-
-          if (g_file_test (subpath, G_FILE_TEST_EXISTS))
-            {
-              if (xdg_dirs_conf == NULL)
-                xdg_dirs_conf = g_string_new ("");
-
-              if (config_key)
-                g_string_append_printf (xdg_dirs_conf, "%s=\"%s\"\n",
-                                        config_key, path);
-
-              exports_path_expose (exports, mode, subpath);
-            }
-        }
-      else if (g_str_has_prefix (filesystem, "~/"))
-        {
-          g_autofree char *path = NULL;
-
-          path = g_build_filename (g_get_home_dir (), filesystem + 2, NULL);
-
-          if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
-            g_mkdir_with_parents (path, 0755);
-
-          if (g_file_test (path, G_FILE_TEST_EXISTS))
-            exports_path_expose (exports, mode, path);
-        }
-      else if (g_str_has_prefix (filesystem, "/"))
-        {
-          if (mode == FLATPAK_FILESYSTEM_MODE_CREATE)
-            g_mkdir_with_parents (filesystem, 0755);
-
-          if (g_file_test (filesystem, G_FILE_TEST_EXISTS))
-            exports_path_expose (exports, mode, filesystem);
-        }
-      else
-        {
-          g_warning ("Unexpected filesystem arg %s\n", filesystem);
-        }
-    }
 
   if (app_id_dir)
     {
@@ -2972,7 +2993,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                   "--ro-bind", src_path, path,
                   NULL);
     }
-  else if (xdg_dirs_conf != NULL && app_id_dir != NULL)
+  else if (xdg_dirs_conf->len > 0 && app_id_dir != NULL)
     {
       g_autofree char *tmp_path = NULL;
       g_autofree char *path = NULL;
@@ -2998,7 +3019,6 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                 }
             }
         }
-      g_string_free (xdg_dirs_conf, TRUE);
     }
 
   flatpak_run_add_x11_args (argv_array, fd_array, envp_p,
@@ -4469,8 +4489,8 @@ add_rest_args (const char  *app_id,
             file = g_file_new_for_path (args[i]);
         }
 
-      if (file && !exports_path_is_visible (exports,
-                                            flatpak_file_get_path_cached (file)))
+      if (file && !flatpak_exports_path_is_visible (exports,
+                                                    flatpak_file_get_path_cached (file)))
         {
           g_autofree char *doc_id = NULL;
           g_autofree char *basename = NULL;
