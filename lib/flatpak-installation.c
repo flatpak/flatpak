@@ -70,6 +70,11 @@ enum {
 };
 
 static void
+no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
+{
+}
+
+static void
 flatpak_installation_finalize (GObject *object)
 {
   FlatpakInstallation *self = FLATPAK_INSTALLATION (object);
@@ -1252,6 +1257,8 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
 
   if (progress)
     ostree_progress = flatpak_progress_new (progress, progress_data);
+  else
+    ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
   if (!flatpak_dir_install (dir_clone, FALSE, FALSE,
                             (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
@@ -1384,6 +1391,8 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
 
   if (progress)
     ostree_progress = flatpak_progress_new (progress, progress_data);
+  else
+    ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
   if (!flatpak_dir_update (dir_clone,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
@@ -1668,11 +1677,6 @@ flatpak_installation_fetch_remote_ref_sync (FlatpakInstallation *self,
   return NULL;
 }
 
-static void
-no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
-{
-}
-
 /**
  * flatpak_installation_update_appstream_sync:
  * @self: a #FlatpakInstallation
@@ -1683,6 +1687,7 @@ no_progress_cb (OstreeAsyncProgress *progress, gpointer user_data)
  * @error: return location for a #GError
  *
  * Updates the local copy of appstream for @remote_name for the specified @arch.
+ * If you need progress feedback, use flatpak_installation_update_appstream_full_sync().
  *
  * Returns: %TRUE on success, or %FALSE on error
  */
@@ -1693,6 +1698,37 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
                                             gboolean            *out_changed,
                                             GCancellable        *cancellable,
                                             GError             **error)
+{
+  return flatpak_installation_update_appstream_full_sync (self, remote_name, arch,
+                                                          NULL, NULL, out_changed,
+                                                          cancellable, error);
+
+}
+
+/**
+ * flatpak_installation_update_appstream_full_sync:
+ * @self: a #FlatpakInstallation
+ * @remote_name: the name of the remote
+ * @arch: Architecture to update, or %NULL for the local machine arch
+ * @progress: (scope call): progress callback
+ * @progress_data: user data passed to @progress
+ * @out_changed: (nullable): Set to %TRUE if the contents of the appstream changed, %FALSE if nothing changed
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Updates the local copy of appstream for @remote_name for the specified @arch.
+ *
+ * Returns: %TRUE on success, or %FALSE on error
+ */
+gboolean
+flatpak_installation_update_appstream_full_sync (FlatpakInstallation *self,
+                                                 const char          *remote_name,
+                                                 const char          *arch,
+                                                 FlatpakProgressCallback progress,
+                                                 gpointer                progress_data,
+                                                 gboolean            *out_changed,
+                                                 GCancellable        *cancellable,
+                                                 GError             **error)
 {
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
   g_autoptr(FlatpakDir) dir_clone = NULL;
@@ -1709,7 +1745,10 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
   main_context = g_main_context_new ();
   g_main_context_push_thread_default (main_context);
 
-  ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
+  if (progress)
+    ostree_progress = flatpak_progress_new (progress, progress_data);
+  else
+    ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
   res = flatpak_dir_update_appstream (dir_clone,
                                       remote_name,
@@ -1726,6 +1765,7 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
 
   return res;
 }
+
 
 /**
  * flatpak_installation_create_monitor:
