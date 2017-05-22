@@ -1377,7 +1377,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                                                 (const char **)subpaths,
                                                 (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
                                                 cancellable, error);
-  if (target_commit != NULL)
+  if (target_commit == NULL)
     return NULL;
 
   /* Pull, prune, etc are not threadsafe, so we work on a copy */
