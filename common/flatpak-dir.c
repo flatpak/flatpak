@@ -4347,6 +4347,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_autofree char *tmp_dir_path = NULL;
   g_autofree char *alt_id = NULL;
   const char *xa_metadata = NULL;
+  const char *xa_ref = NULL;
   g_autofree char *checkout_basename = NULL;
   gboolean created_extra_data = FALSE;
   g_autoptr(GVariant) commit_metadata = NULL;
@@ -4528,6 +4529,17 @@ flatpak_dir_deploy (FlatpakDir          *self,
       if (!apply_extra_data (self, checkoutdir, cancellable, error))
         {
           g_prefix_error (error, _("While trying to apply extra data: "));
+          return FALSE;
+        }
+    }
+
+  g_variant_lookup (commit_metadata, "xa.ref", "s", &xa_ref);
+  if (xa_ref != NULL)
+    {
+      if (strcmp (ref, xa_ref) != 0)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                       _("Deployed ref %s does not match commit (%s)"), ref, xa_ref);
           return FALSE;
         }
     }
