@@ -1,3 +1,84 @@
+Major changes in 0.9.4
+======================
+
+ Changes in flatpak:
+
+ * Now requires ostree 2017.6 and bubblewrap 0.1.8
+ * Better progress reporting in CLI and UI
+ * Improved output from commands info, list, remotes,
+   remote-ls: More detail, colors, nicer table formating.
+ * New command flatpak repo that lets you show information
+   about local repositories.
+ * When launching exported desktop files, the paths
+   passed to it are automatically created as documents
+   to allow access to the arguments, if needed.
+ * Flatpak install of an already installed application is
+   now a warning, not an error.
+ * flatpak build now kills all the processes in the
+   sandbox when it exits.
+ * flatpak update --subpath=... now updates the app event
+   if there is no new upstream version, but the subpath is
+   different from what is currently installed.
+ * Exports are now whitelisted, and the only thing you can
+   export are:
+     desktop files, icons, dbus services, mime definitions, and
+     gnome-shell search providers
+ * Exported gnome-shell search providers are automatically
+   disabled by default.
+ * Exported mimetypes are rewritten to only allow globs, and to
+   make the globs have a low priority vs system mime info.
+ * A remote can now redirect to a new URL and/or a new GPG key, by
+   using build-update-repo --redirect-url=URL --gpg-import=FILE.
+   When clients see this they permanently change the local configuration.
+   This is very useful when migrating official repositories.
+ * flatpak caches in the homedir are now stored in ~/.cache
+   (or $XDG_CACHE_HOME) instead of ~/.local/share/flatpak/system-cache.
+ * Added version field to all exported dbus interfaces.
+ * New AddFull method in the Document Portal, which allows
+   exporting multiple files, as-needed by a particular target
+   app. This is useful for implementations of dbus activation
+   for desktop files.
+ * New flag --no-static-deltas for install/update without
+   using static deltas. Mostly useful for debugging.
+ * TMPDIR is now unset in the sandbox, if set on the
+   host. Each sandbox has a personal /tmp that is used.
+ * Flatpak run now works if /tmp is a symlink on the
+   host.
+ * /etc/hosts and /etc/hosts.conf from the host are now exposed
+   in the sandbox in addition to /etc/resolv.conf.
+ * Titles and default branches are now automatically updated from
+   the remote unless they are explicitly set. You no longer have
+   to run flatpak remote-modify --update.
+ * Some performance inprovements when installing apps.
+ * When exporting a build, the commit objects now always include
+   the branchname, the metadata and install/download size.
+   The sizes are reused for faster summary building, and the
+   others changes are for future use. The fields are verified
+   against the deployed metadata during installation, so it
+   is trusted.
+ * Fixed minor race condition in portal application identification.
+ * lib: New  flatpak_installation_update_appstream_full_sync method
+   that allows progress reporting.
+ * bash-completion: Fix out-of-bounds read that could produce
+   weird completion at times.
+
+ Changes in flatpak-builder:
+
+ * Added support for appdata screenshot mirroring.
+ * New property "install-rule" lets you change what Makefile rule to
+   use in the install phase.
+ * The git "commit" property can now specify both a tag object and the
+   commit object it refers to.
+ * New cppflags property, similar to e.g. cflags.
+ * The "env" property now overrides the cflags/cxxflags/ldflags
+   properties, to allow these to be reset.
+ * Initial checkout of git/bzr to a temporary directory so that errors
+   during checkout do not persist.
+ * Properly take the "buildsystem" field into account when calculating
+   cache freshness.
+ * Don't crash if appstream-compose fails.
+ * "ldflags" property now works  correctly.
+
 Major changes in 0.9.3
 ======================
  Changes in flatpak-builder:
