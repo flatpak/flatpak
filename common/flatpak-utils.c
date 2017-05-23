@@ -6095,5 +6095,8 @@ flatpak_progress_new (FlatpakProgressCallback progress,
   g_object_set_data (G_OBJECT (ostree_progress), "callback", progress);
   g_object_set_data (G_OBJECT (ostree_progress), "last_progress", GUINT_TO_POINTER (0));
 
+  if (progress == flatpak_terminal_progress_cb)
+    g_object_set_data (G_OBJECT (ostree_progress), "update-frequency", GUINT_TO_POINTER (FLATPAK_CLI_UPDATE_FREQUENCY));
+
   return ostree_progress;
 }

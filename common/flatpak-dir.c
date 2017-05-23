@@ -1799,6 +1799,7 @@ repo_pull_one_dir (OstreeRepo          *self,
   const char *refs_to_fetch[2];
   const char *revs_to_fetch[2];
   gboolean res;
+  guint32 update_freq = 0;
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
 
@@ -1829,8 +1830,13 @@ repo_pull_one_dir (OstreeRepo          *self,
   g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
                          g_variant_new_variant (g_variant_new_strv ((const char * const *) revs_to_fetch, -1)));
 
+  if (progress != NULL)
+    update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
+  if (update_freq == 0)
+    update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
+
   g_variant_builder_add (&builder, "{s@v}", "update-frequency",
-                         g_variant_new_variant (g_variant_new_uint32 (FLATPAK_DEFAULT_UPDATE_FREQUENCY)));
+                         g_variant_new_variant (g_variant_new_uint32 (update_freq)));
 
   options = g_variant_ref_sink (g_variant_builder_end (&builder));
 
