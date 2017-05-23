@@ -102,6 +102,7 @@ dist_installed_test_data = \
 	$(NULL)
 
 installed_test_keyringdir = $(installed_testdir)/test-keyring
+installed_test_keyring2dir = $(installed_testdir)/test-keyring2
 installed_test_dbsdir = $(installed_testdir)/dbs
 
 if ENABLE_INSTALLED_TESTS
@@ -109,6 +110,8 @@ dist_installed_test_keyring_DATA = \
 	tests/test-keyring/README \
 	tests/test-keyring/pubring.gpg \
 	tests/test-keyring/secring.gpg \
+	$(NULL)
+dist_installed_test_keyring2_DATA = \
 	tests/test-keyring2/README \
 	tests/test-keyring2/pubring.gpg \
 	tests/test-keyring2/secring.gpg \
