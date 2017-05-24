@@ -1401,7 +1401,7 @@ builder_module_build (BuilderModule  *self,
         }
 
       var_require_builddir = strstr (configure_content, "buildapi-variable-require-builddir") != NULL;
-      use_builddir = var_require_builddir || self->builddir;
+      use_builddir = var_require_builddir || self->builddir || meson;
 
       if (use_builddir)
         {
