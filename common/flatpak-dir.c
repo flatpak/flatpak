@@ -8164,6 +8164,9 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
   g_autoptr(GBytes) summary_sig_bytes = NULL;
   gboolean is_oci;
 
+  if (flatpak_dir_get_remote_disabled (self, remote))
+    return TRUE;
+
   is_oci = flatpak_dir_get_remote_oci (self, remote);
   if (is_oci)
     return TRUE;
