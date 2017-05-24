@@ -4484,6 +4484,8 @@ add_rest_args (const char  *app_id,
             {
               if (g_str_has_prefix (args[i], "file:"))
                 file = g_file_new_for_uri (args[i]);
+              else if (G_IS_DIR_SEPARATOR(args[i][0]))
+                file = g_file_new_for_path (args[i]);
             }
           else
             file = g_file_new_for_path (args[i]);
