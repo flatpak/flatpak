@@ -611,7 +611,7 @@ portal_add_full (GDBusMethodInvocation *invocation,
     {
       g_autoptr(FlatpakContext) app_context = flatpak_context_load_for_app (target_app_id, NULL);
       if (app_context)
-        app_exports = flatpak_exports_from_context (app_context);
+        app_exports = flatpak_exports_from_context (app_context, target_app_id);
     }
 
   target_perms = xdp_parse_permissions (permissions);

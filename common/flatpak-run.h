@@ -97,7 +97,8 @@ void flatpak_exports_free (FlatpakExports *exports);
 
 gboolean flatpak_exports_path_is_visible (FlatpakExports *exports,
                                           const char *path);
-FlatpakExports *flatpak_exports_from_context (FlatpakContext *context);
+FlatpakExports *flatpak_exports_from_context (FlatpakContext *context,
+                                              const char *app_id);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
 

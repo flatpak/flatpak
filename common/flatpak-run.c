@@ -2670,7 +2670,8 @@ exports_path_expose (FlatpakExports *exports,
 static void
 export_paths_export_context (FlatpakContext *context,
                              FlatpakExports *exports,
-                             gboolean  do_create,
+                             GFile *app_id_dir,
+                             gboolean do_create,
                              GString *xdg_dirs_conf,
                              gboolean *home_access_out)
 {
@@ -2791,16 +2792,28 @@ export_paths_export_context (FlatpakContext *context,
         }
     }
 
+  if (app_id_dir)
+    {
+      g_autoptr(GFile) apps_dir = g_file_get_parent (app_id_dir);
+      /* Hide the .var/app dir by default (unless explicitly made visible) */
+      exports_path_hide (exports, flatpak_file_get_path_cached (apps_dir));
+      /* But let the app write to the per-app dir in it */
+      exports_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
+                           flatpak_file_get_path_cached (app_id_dir));
+    }
+
   if (home_access_out != NULL)
     *home_access_out = home_access;
 }
 
 FlatpakExports *
-flatpak_exports_from_context (FlatpakContext *context)
+flatpak_exports_from_context (FlatpakContext *context,
+                              const char *app_id)
 {
   g_autoptr(FlatpakExports) exports = exports_new ();
+  g_autoptr(GFile) app_id_dir = flatpak_get_data_dir (app_id);
 
-  export_paths_export_context (context, exports, FALSE, NULL, NULL);
+  export_paths_export_context (context, exports, app_id_dir, FALSE, NULL, NULL);
   return g_steal_pointer (&exports);
 }
 
@@ -2888,7 +2901,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
         }
     }
 
-  export_paths_export_context (context, exports, TRUE, xdg_dirs_conf, &home_access);
+  export_paths_export_context (context, exports, app_id_dir, TRUE, xdg_dirs_conf, &home_access);
 
   if (!home_access)
     {
@@ -2922,16 +2935,6 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                   "--bind", run_user_app_src, run_user_app_dst,
                   NULL);
   }
-
-  if (app_id_dir)
-    {
-      g_autoptr(GFile) apps_dir = g_file_get_parent (app_id_dir);
-      /* Hide the .var/app dir by default (unless explicitly made visible) */
-      exports_path_hide (exports, flatpak_file_get_path_cached (apps_dir));
-      /* But let the app write to the per-app dir in it */
-      exports_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
-                           flatpak_file_get_path_cached (app_id_dir));
-    }
 
   /* Hide the flatpak dir by default (unless explicitly made visible) */
   user_flatpak_dir = flatpak_get_user_base_dir_location ();
