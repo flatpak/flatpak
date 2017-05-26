@@ -99,19 +99,14 @@ glnx_dirfd_iterator_init_at (int                     dfd,
                              GLnxDirFdIterator      *out_dfd_iter,
                              GError                **error)
 {
-  gboolean ret = FALSE;
   glnx_fd_close int fd = -1;
-  
   if (!glnx_opendirat (dfd, path, follow, &fd, error))
-    goto out;
+    return FALSE;
 
-  if (!glnx_dirfd_iterator_init_take_fd (fd, out_dfd_iter, error))
-    goto out;
-  fd = -1; /* Transfer ownership */
+  if (!glnx_dirfd_iterator_init_take_fd (glnx_steal_fd (&fd), out_dfd_iter, error))
+    return FALSE;
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }
 
 /**
@@ -128,24 +123,16 @@ glnx_dirfd_iterator_init_take_fd (int                dfd,
                                   GLnxDirFdIterator *dfd_iter,
                                   GError           **error)
 {
-  gboolean ret = FALSE;
   GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
-  DIR *d = NULL;
-
-  d = fdopendir (dfd);
+  DIR *d = fdopendir (dfd);
   if (!d)
-    {
-      glnx_set_prefix_error_from_errno (error, "%s", "fdopendir");
-      goto out;
-    }
+    return glnx_throw_errno_prefix (error, "fdopendir");
 
   real_dfd_iter->fd = dfd;
   real_dfd_iter->d = d;
   real_dfd_iter->initialized = TRUE;
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }
 
 /**
@@ -165,31 +152,25 @@ glnx_dirfd_iterator_next_dent (GLnxDirFdIterator  *dfd_iter,
                                GCancellable       *cancellable,
                                GError             **error)
 {
-  gboolean ret = FALSE;
   GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
 
   g_return_val_if_fail (out_dent, FALSE);
   g_return_val_if_fail (dfd_iter->initialized, FALSE);
 
   if (g_cancellable_set_error_if_cancelled (cancellable, error))
-    goto out;
+    return FALSE;
 
   do
     {
       errno = 0;
       *out_dent = readdir (real_dfd_iter->d);
       if (*out_dent == NULL && errno != 0)
-        {
-          glnx_set_prefix_error_from_errno (error, "%s", "fdopendir");
-          goto out;
-        }
+        return glnx_throw_errno_prefix (error, "readdir");
     } while (*out_dent &&
              (strcmp ((*out_dent)->d_name, ".") == 0 ||
               strcmp ((*out_dent)->d_name, "..") == 0));
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }
 
 /**
