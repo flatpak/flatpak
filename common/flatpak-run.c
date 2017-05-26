@@ -4176,6 +4176,51 @@ setup_seccomp (GPtrArray  *argv_array,
 }
 #endif
 
+static const char *multiarch_ldso_names_x86_64[] =
+{
+  "ld-linux.so.2",
+  NULL
+};
+
+static const char *multiarch_ldso_names_aarch64[] =
+{
+  "ld-linux.so.3",
+  "ld-linux-armhf.so.3",
+  NULL
+};
+
+static void
+setup_multiarch_ldso_binds (GPtrArray  *argv_array,
+                            GFile      *app_files,
+                            const char *arch)
+{
+  g_autoptr(GFile) app_libdir = NULL;
+  const char **ldso_names = NULL;
+
+  /* We only do this for application bundles, not runtimes. */
+  if (!app_files)
+    return;
+
+  if (strcmp (arch, "x86_64") == 0)
+    ldso_names = multiarch_ldso_names_x86_64;
+  else if (strcmp (arch, "aarch64") == 0)
+    ldso_names = multiarch_ldso_names_aarch64;
+  else
+    return;
+
+  app_libdir = g_file_get_child (app_files, "lib");
+  for (; *ldso_names; ldso_names++)
+    {
+      g_autoptr(GFile) app_ldso = g_file_resolve_relative_path (app_libdir, *ldso_names);
+      if (g_file_query_exists (app_ldso, NULL))
+        {
+          g_autofree char *lib_ldso_path = g_build_filename ("/usr/lib", *ldso_names, NULL);
+          g_autofree char *app_ldso_path = g_file_get_path (app_ldso);
+          add_args (argv_array, "--ro-bind", app_ldso_path, lib_ldso_path, NULL);
+        }
+    }
+}
+
 gboolean
 flatpak_run_setup_base_argv (GPtrArray      *argv_array,
                              GArray         *fd_array,
@@ -4684,8 +4729,19 @@ flatpak_run_app (const char     *app_ref,
     envp = flatpak_run_apply_env_appid (envp, app_id_dir);
 
   add_args (argv_array,
-            "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
+            "--bind", flatpak_file_get_path_cached (runtime_files), "/usr",
             "--lock-file", "/usr/.ref",
+            NULL);
+
+  if (app_context->features & FLATPAK_CONTEXT_FEATURE_MULTIARCH)
+    {
+      flags |= FLATPAK_RUN_FLAG_MULTIARCH;
+      setup_multiarch_ldso_binds (argv_array, app_files, app_ref_parts[2]);
+    }
+
+  add_args (argv_array,
+            "--remount-ro",
+            "/usr",
             NULL);
 
   if (app_files != NULL)
@@ -4700,9 +4756,6 @@ flatpak_run_app (const char     *app_ref,
 
   if (app_context->features & FLATPAK_CONTEXT_FEATURE_DEVEL)
     flags |= FLATPAK_RUN_FLAG_DEVEL;
-
-  if (app_context->features & FLATPAK_CONTEXT_FEATURE_MULTIARCH)
-    flags |= FLATPAK_RUN_FLAG_MULTIARCH;
 
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, app_id_dir, app_ref_parts[2], flags, error))
     return FALSE;
