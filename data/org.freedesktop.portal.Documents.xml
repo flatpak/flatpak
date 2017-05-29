@@ -99,7 +99,7 @@
     <!--
         AddFull:
         @o_path_fds: open file descriptors for the files to export
-        @flags: flags, 1 == reuse_existing, 2 == persistent
+        @flags: flags, 1 == reuse_existing, 2 == persistent, 3 == as-needed-by-app
         @app_id: an application ID, or empty string
         @permissions: the permissions to grant, possible values are 'read', 'write', 'grant-permissions' and 'delete'
         @doc_ids: the IDs of the files in the document store
@@ -108,6 +108,11 @@
         Adds multiple files to the document store. The file is passed in the
         form of an open file descriptor to prove that the caller has
         access to the file.
+
+        If the as-needed-by-app flag is given, files will only be added to
+        the document store if the application does not already have access to them.
+        For files that are not added to the document store, the doc_ids array will
+        contain an empty string.
 
         Additionally, if app_id is specified, it will be given the permissions
         listed in GrantPermission.
