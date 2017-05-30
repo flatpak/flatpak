@@ -36,6 +36,7 @@
 static gboolean opt_show_details;
 static gboolean opt_runtime;
 static gboolean opt_app;
+static gboolean opt_all;
 static gboolean opt_only_updates;
 static char *opt_arch;
 
@@ -45,6 +46,7 @@ static GOptionEntry options[] = {
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Show only apps"), NULL },
   { "updates", 0, 0, G_OPTION_ARG_NONE, &opt_only_updates, N_("Show only those where updates are available"), NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Limit to this arch (* for all)"), N_("ARCH") },
+  { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
   { NULL }
 };
 
@@ -156,6 +158,34 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
         name = parts[1];
       else
         name = ref;
+
+      if (!opt_all &&
+          strcmp (parts[0], "runtime") == 0 &&
+          (g_str_has_suffix (parts[1], ".Locale") ||
+           g_str_has_suffix (parts[1], ".Debug")))
+        {
+          g_autofree char *prefix_partial_ref1 = NULL;
+          g_autofree char *prefix_partial_ref2 = NULL;
+          char *last_dot = strrchr (parts[1], '.');
+
+          *last_dot = 0;
+          prefix_partial_ref1 = g_strconcat ("app/", parts[1], "/", parts[2], "/", parts[3], NULL);
+          prefix_partial_ref2 = g_strconcat ("runtime/", parts[1], "/", parts[2], "/", parts[3], NULL);
+          *last_dot = '.';
+
+          if (g_hash_table_lookup (refs, prefix_partial_ref1) ||
+              g_hash_table_lookup (refs, prefix_partial_ref2))
+            continue;
+        }
+
+      if (!opt_all && opt_arch == NULL &&
+          /* Hide non-primary arches if the primary arch exists */
+          strcmp (arches[0], parts[2]) != 0)
+        {
+          g_autofree char *alt_arch_ref = g_strconcat (parts[0], "/", parts[1], "/", arches[0], "/", parts[3], NULL);
+          if (g_hash_table_lookup (refs, alt_arch_ref))
+            continue;
+        }
 
       if (g_hash_table_lookup (names, name) == NULL)
         g_hash_table_insert (names, g_strdup (name), g_strdup (checksum));

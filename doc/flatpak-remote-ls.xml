@@ -119,6 +119,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--all</option></term>
+                <term><option>-a</option></term>
+
+                <listitem><para> Show everything. By default locale and
+                debug extensions as well as secondary arches when the primary
+                arch in available are hidden.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--updates</option></term>
 
                 <listitem><para>
