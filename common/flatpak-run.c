@@ -3716,13 +3716,13 @@ join_args (GPtrArray *argv_array, gsize *len_out)
   gint i;
   gsize len = 0;
 
-  for (i = 0; i < argv_array->len; i++)
+  for (i = 0; i < argv_array->len && argv_array->pdata[i] != NULL; i++)
     len +=  strlen (argv_array->pdata[i]) + 1;
 
   string = g_new (gchar, len);
   *string = 0;
   ptr = string;
-  for (i = 0; i < argv_array->len; i++)
+  for (i = 0; i < argv_array->len && argv_array->pdata[i] != NULL; i++)
     ptr = g_stpcpy (ptr, argv_array->pdata[i]) + 1;
 
   *len_out = len;
@@ -3817,6 +3817,12 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
   g_ptr_array_add (bwrap_args, g_strdup ("--file"));
   g_ptr_array_add (bwrap_args, g_strdup_printf ("%d", app_info_fd));
   g_ptr_array_add (bwrap_args, g_strdup ("/.flatpak-info"));
+  g_ptr_array_add (bwrap_args, NULL);
+
+  {
+    g_autofree char *commandline = flatpak_quote_argv ((const char **) bwrap_args->pdata);
+    g_debug ("bwrap args '%s'", commandline);
+  }
 
   bwrap_args_data = join_args (bwrap_args, &bwrap_args_len);
   bwrap_args_fd = create_tmp_fd (bwrap_args_data, bwrap_args_len, error);
