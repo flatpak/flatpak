@@ -822,6 +822,35 @@ out:
   return ret;
 }
 
+/* Dashes are only valid in the last part of the app id, so
+   we replace them with underscore so we can suffix the id */
+char *
+flatpak_make_valid_id_prefix (const char *orig_id)
+{
+  char *id, *t;
+
+  id = g_strdup (orig_id);
+  t = id;
+  while (*t != 0 && *t != '/')
+    {
+      if (*t == '-')
+        *t = '_';
+
+      t++;
+    }
+
+  return id;
+}
+
+gboolean
+flatpak_id_has_subref_suffix (const char *id)
+{
+  return
+    g_str_has_suffix (id, ".Locale") ||
+    g_str_has_suffix (id, ".Debug") ||
+    g_str_has_suffix (id, ".Sources");
+}
+
 char **
 flatpak_decompose_ref (const char *full_ref,
                        GError    **error)

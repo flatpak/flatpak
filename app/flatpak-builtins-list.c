@@ -143,7 +143,7 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
       RefsData *refs_data = NULL;
       FlatpakDir *dir = NULL;
       g_auto(GStrv) dir_refs = NULL;
-      g_autoptr(GHashTable) ref_hash = g_hash_table_new (g_str_hash, g_str_equal);
+      g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
       int j;
 
       refs_data = (RefsData *) g_ptr_array_index (refs_array, i);
@@ -153,8 +153,8 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
       for (j = 0; dir_refs[j] != NULL; j++)
         {
           char *ref = dir_refs[j];
-          char *partial_ref = strchr (ref, '/') + 1;
-          g_hash_table_insert (ref_hash, partial_ref, ref);
+          char *partial_ref = flatpak_make_valid_id_prefix (strchr (ref, '/') + 1);
+          g_hash_table_insert (pref_hash, partial_ref, ref);
         }
 
       for (j = 0; dir_refs[j] != NULL; j++)
@@ -183,9 +183,7 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
             continue;
 
           if (!opt_all && strcmp (parts[0], "runtime") == 0 &&
-              (g_str_has_suffix (parts[1], ".Locale") ||
-               g_str_has_suffix (parts[1], ".Debug") ||
-               g_str_has_suffix (parts[1], ".Sources")))
+              flatpak_id_has_subref_suffix (parts[1]))
             {
               g_autofree char *prefix_partial_ref = NULL;
               char *last_dot = strrchr (parts[1], '.');
@@ -193,7 +191,8 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
               *last_dot = 0;
               prefix_partial_ref = g_strconcat (parts[1], "/", parts[2], "/", parts[3], NULL);
               *last_dot = '.';
-              if (g_hash_table_lookup (ref_hash, prefix_partial_ref))
+
+              if (g_hash_table_lookup (pref_hash, prefix_partial_ref))
                 continue;
             }
 

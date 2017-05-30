@@ -67,6 +67,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   const char **arches = flatpak_get_arches ();
   const char *opt_arches[] = {NULL, NULL};
   g_autoptr(GVariant) refdata = NULL;
+  g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   context = g_option_context_new (_(" REMOTE - Show available runtimes and applications"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -122,6 +123,14 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   g_hash_table_iter_init (&iter, refs);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
+      char *ref = key;
+      char *partial_ref = flatpak_make_valid_id_prefix (strchr (ref, '/') + 1);
+      g_hash_table_insert (pref_hash, partial_ref, ref);
+    }
+
+  g_hash_table_iter_init (&iter, refs);
+  while (g_hash_table_iter_next (&iter, &key, &value))
+    {
       const char *ref = key;
       const char *checksum = value;
       const char *name = NULL;
@@ -161,21 +170,17 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
       if (!opt_all &&
           strcmp (parts[0], "runtime") == 0 &&
-          (g_str_has_suffix (parts[1], ".Locale") ||
-           g_str_has_suffix (parts[1], ".Debug") ||
-           g_str_has_suffix (parts[1], ".Sources")))
+          flatpak_id_has_subref_suffix (parts[1]))
         {
-          g_autofree char *prefix_partial_ref1 = NULL;
-          g_autofree char *prefix_partial_ref2 = NULL;
+          g_autofree char *prefix_partial_ref = NULL;
           char *last_dot = strrchr (parts[1], '.');
+          g_autofree char *prefix = NULL;
 
           *last_dot = 0;
-          prefix_partial_ref1 = g_strconcat ("app/", parts[1], "/", parts[2], "/", parts[3], NULL);
-          prefix_partial_ref2 = g_strconcat ("runtime/", parts[1], "/", parts[2], "/", parts[3], NULL);
+          prefix_partial_ref = g_strconcat (parts[1], "/", parts[2], "/", parts[3], NULL);
           *last_dot = '.';
 
-          if (g_hash_table_lookup (refs, prefix_partial_ref1) ||
-              g_hash_table_lookup (refs, prefix_partial_ref2))
+          if (g_hash_table_lookup (pref_hash, prefix_partial_ref))
             continue;
         }
 

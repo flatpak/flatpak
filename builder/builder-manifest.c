@@ -1030,42 +1030,24 @@ builder_manifest_get_id (BuilderManifest *self)
   return self->id;
 }
 
-/* Dashes are only valid in the last part of the app id, so
-   we replace them with underscore so we can suffix the id */
-static char *
-make_valid_id_prefix (const char *orig_id)
-{
-  char *id, *t;
-
-  id = g_strdup (orig_id);
-  t = strchr (id, '-');
-  while (t != NULL)
-    {
-      *t = '_';
-      t = strchr (t + 1, '-');
-    }
-
-  return id;
-}
-
 char *
 builder_manifest_get_locale_id (BuilderManifest *self)
 {
-  g_autofree char *id = make_valid_id_prefix (self->id);
+  g_autofree char *id = flatpak_make_valid_id_prefix (self->id);
   return g_strdup_printf ("%s.Locale", id);
 }
 
 char *
 builder_manifest_get_debug_id (BuilderManifest *self)
 {
-  g_autofree char *id = make_valid_id_prefix (self->id);
+  g_autofree char *id = flatpak_make_valid_id_prefix (self->id);
   return g_strdup_printf ("%s.Debug", id);
 }
 
 char *
 builder_manifest_get_sources_id (BuilderManifest *self)
 {
-  g_autofree char *id = make_valid_id_prefix (self->id);
+  g_autofree char *id = flatpak_make_valid_id_prefix (self->id);
   return g_strdup_printf ("%s.Sources", id);
 }
 
@@ -1082,7 +1064,7 @@ builder_manifest_get_locale_id_platform (BuilderManifest *self)
 
   if (self->id_platform != NULL)
     {
-      g_autofree char *id = make_valid_id_prefix (self->id_platform);
+      g_autofree char *id = flatpak_make_valid_id_prefix (self->id_platform);
       res = g_strdup_printf ("%s.Locale", id);
     }
 
