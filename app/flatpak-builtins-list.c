@@ -38,6 +38,7 @@ static gboolean opt_user;
 static gboolean opt_system;
 static gboolean opt_runtime;
 static gboolean opt_app;
+static gboolean opt_all;
 static char **opt_installations;
 static char *opt_arch;
 
@@ -49,6 +50,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to show"), N_("ARCH") },
+  { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
   { NULL }
 };
 
@@ -141,11 +143,19 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
       RefsData *refs_data = NULL;
       FlatpakDir *dir = NULL;
       g_auto(GStrv) dir_refs = NULL;
+      g_autoptr(GHashTable) ref_hash = g_hash_table_new (g_str_hash, g_str_equal);
       int j;
 
       refs_data = (RefsData *) g_ptr_array_index (refs_array, i);
       dir = refs_data->dir;
       dir_refs = join_strv (refs_data->app_refs, refs_data->runtime_refs);
+
+      for (j = 0; dir_refs[j] != NULL; j++)
+        {
+          char *ref = dir_refs[j];
+          char *partial_ref = strchr (ref, '/') + 1;
+          g_hash_table_insert (ref_hash, partial_ref, ref);
+        }
 
       for (j = 0; dir_refs[j] != NULL; j++)
         {
@@ -171,6 +181,21 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
           deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, NULL);
           if (deploy_data == NULL)
             continue;
+
+          if (!opt_all && strcmp (parts[0], "runtime") == 0 &&
+              (g_str_has_suffix (parts[1], ".Locale") ||
+               g_str_has_suffix (parts[1], ".Debug")))
+            {
+              g_autofree char *prefix_partial_ref = NULL;
+              char *last_dot = strrchr (parts[1], '.');
+
+              *last_dot = 0;
+              prefix_partial_ref = g_strconcat (parts[1], "/", parts[2], "/", parts[3], NULL);
+              *last_dot = '.';
+              if (g_hash_table_lookup (ref_hash, prefix_partial_ref))
+                continue;
+            }
+
 
           repo = flatpak_deploy_data_get_origin (deploy_data);
 

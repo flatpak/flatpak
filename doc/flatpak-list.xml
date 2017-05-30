@@ -129,6 +129,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--all</option></term>
+                <term><option>-a</option></term>
+
+                <listitem><para>
+                    List all installed runtimes, including locale and debug extensions. These are hidden by default.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-v</option></term>
                 <term><option>--verbose</option></term>
 
