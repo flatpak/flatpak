@@ -4294,8 +4294,8 @@ apply_extra_data (FlatpakDir          *self,
 
   if (exit_status != 0)
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                           _("apply_extra script failed"));
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   _("apply_extra script failed, exit status %d"), exit_status);
       return FALSE;
     }
 
