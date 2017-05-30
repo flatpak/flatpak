@@ -184,7 +184,8 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
 
           if (!opt_all && strcmp (parts[0], "runtime") == 0 &&
               (g_str_has_suffix (parts[1], ".Locale") ||
-               g_str_has_suffix (parts[1], ".Debug")))
+               g_str_has_suffix (parts[1], ".Debug") ||
+               g_str_has_suffix (parts[1], ".Sources")))
             {
               g_autofree char *prefix_partial_ref = NULL;
               char *last_dot = strrchr (parts[1], '.');

@@ -162,7 +162,8 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       if (!opt_all &&
           strcmp (parts[0], "runtime") == 0 &&
           (g_str_has_suffix (parts[1], ".Locale") ||
-           g_str_has_suffix (parts[1], ".Debug")))
+           g_str_has_suffix (parts[1], ".Debug") ||
+           g_str_has_suffix (parts[1], ".Sources")))
         {
           g_autofree char *prefix_partial_ref1 = NULL;
           g_autofree char *prefix_partial_ref2 = NULL;
