@@ -453,10 +453,6 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       !generate_all_deltas (repo, &unwanted_deltas, cancellable, error))
     return FALSE;
 
-  g_print (_("Updating summary\n"));
-  if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
-    return FALSE;
-
   if (unwanted_deltas != NULL)
     {
       int i;
@@ -469,6 +465,10 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
             g_printerr ("Unable to delete delta %s: %s\n", delta, my_error->message);
         }
     }
+
+  g_print (_("Updating summary\n"));
+  if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+    return FALSE;
 
   if (opt_prune)
     {
