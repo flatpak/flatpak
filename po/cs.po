@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-05-23 12:06+0200\n"
-"PO-Revision-Date: 2017-05-24 15:52+0200\n"
+"PO-Revision-Date: 2017-05-30 12:04+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -1834,8 +1834,8 @@ msgid "While writing extra data file '%s': "
 msgstr "Během zapisování souboru dodatečných dat „%s“: "
 
 #: common/flatpak-dir.c:4298
-msgid "apply_extra script failed"
-msgstr "apply_extra skript selhal"
+msgid "apply_extra script failed, exit status %d"
+msgstr "apply_extra skript selhal, návratová hodnota %d"
 
 #: common/flatpak-dir.c:4368
 #, c-format
