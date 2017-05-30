@@ -216,7 +216,7 @@ PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
 
 PKG_CHECK_MODULES(FUSE, [fuse])
 
-PKG_CHECK_MODULES(JSON, [json-glib-1.0])
+PKG_CHECK_MODULES(JSON, [json-glib-1.0 >= 1.2])
 
 AC_ARG_ENABLE([seccomp],
               AC_HELP_STRING([--disable-seccomp],
