@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-05-23 12:06+0200\n"
-"PO-Revision-Date: 2017-05-30 12:04+0200\n"
+"PO-Revision-Date: 2017-05-31 12:42+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -1095,6 +1095,10 @@ msgstr "Vypsat seznam instalovaných aplikací"
 #: app/flatpak-builtins-list.c:51
 msgid "Arch to show"
 msgstr "Architektura, která se má zobrazit"
+
+#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-ls-remote.c:49
+msgid "List all refs (including locale/debug)"
+msgstr "Zobrazit všechny ref soubory (včetně locale/debug)"
 
 #: app/flatpak-builtins-list.c:129 app/flatpak-builtins-ls-remote.c:169
 #: app/flatpak-builtins-repo.c:95
