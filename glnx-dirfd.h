@@ -55,7 +55,7 @@ typedef struct GLnxDirFdIterator GLnxDirFdIterator;
 gboolean glnx_dirfd_iterator_init_at (int dfd, const char *path,
                                     gboolean follow,
                                     GLnxDirFdIterator *dfd_iter, GError **error);
-gboolean glnx_dirfd_iterator_init_take_fd (int dfd, GLnxDirFdIterator *dfd_iter, GError **error);
+gboolean glnx_dirfd_iterator_init_take_fd (int *dfd, GLnxDirFdIterator *dfd_iter, GError **error);
 gboolean glnx_dirfd_iterator_next_dent (GLnxDirFdIterator  *dfd_iter,
                                         struct dirent     **out_dent,
                                         GCancellable       *cancellable,

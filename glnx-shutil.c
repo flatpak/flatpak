@@ -110,9 +110,8 @@ glnx_shutil_rm_rf_at (int                   dfd,
     }
   else
     {
-      if (!glnx_dirfd_iterator_init_take_fd (target_dfd, &dfd_iter, error))
+      if (!glnx_dirfd_iterator_init_take_fd (&target_dfd, &dfd_iter, error))
         return FALSE;
-      target_dfd = -1;
 
       if (!glnx_shutil_rm_rf_children (&dfd_iter, cancellable, error))
         return FALSE;

@@ -103,7 +103,7 @@ glnx_dirfd_iterator_init_at (int                     dfd,
   if (!glnx_opendirat (dfd, path, follow, &fd, error))
     return FALSE;
 
-  if (!glnx_dirfd_iterator_init_take_fd (glnx_steal_fd (&fd), out_dfd_iter, error))
+  if (!glnx_dirfd_iterator_init_take_fd (&fd, out_dfd_iter, error))
     return FALSE;
 
   return TRUE;
@@ -111,7 +111,7 @@ glnx_dirfd_iterator_init_at (int                     dfd,
 
 /**
  * glnx_dirfd_iterator_init_take_fd:
- * @dfd: File descriptor - ownership is taken
+ * @dfd: File descriptor - ownership is taken, and the value is set to -1
  * @dfd_iter: A directory iterator
  * @error: Error
  *
@@ -119,16 +119,16 @@ glnx_dirfd_iterator_init_at (int                     dfd,
  * iteration.
  */
 gboolean
-glnx_dirfd_iterator_init_take_fd (int                dfd,
+glnx_dirfd_iterator_init_take_fd (int               *dfd,
                                   GLnxDirFdIterator *dfd_iter,
                                   GError           **error)
 {
   GLnxRealDirfdIterator *real_dfd_iter = (GLnxRealDirfdIterator*) dfd_iter;
-  DIR *d = fdopendir (dfd);
+  DIR *d = fdopendir (*dfd);
   if (!d)
     return glnx_throw_errno_prefix (error, "fdopendir");
 
-  real_dfd_iter->fd = dfd;
+  real_dfd_iter->fd = glnx_steal_fd (dfd);
   real_dfd_iter->d = d;
   real_dfd_iter->initialized = TRUE;
 
