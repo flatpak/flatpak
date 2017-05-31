@@ -238,6 +238,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--export-only</option></term>
+
+                <listitem><para>
+                    Only do the export stages, picking up the build result from a previous build.
+                    This can be used to split the build and export/signature into two calls
+                    by leaving out --repo in the first call.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--require-changes</option></term>
 
                 <listitem><para>

@@ -41,6 +41,7 @@ static gboolean opt_download_only;
 static gboolean opt_bundle_sources;
 static gboolean opt_build_only;
 static gboolean opt_finish_only;
+static gboolean opt_export_only;
 static gboolean opt_show_deps;
 static gboolean opt_disable_download;
 static gboolean opt_disable_updates;
@@ -83,6 +84,7 @@ static GOptionEntry entries[] = {
   { "extra-sources", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sources_dirs, "Add a directory of sources specified by SOURCE-DIR, multiple uses of this option possible", "SOURCE-DIR"},
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "finish-only", 0, 0, G_OPTION_ARG_NONE, &opt_finish_only, "Only run clean and finish and export phases", NULL },
+  { "export-only", 0, 0, G_OPTION_ARG_NONE, &opt_export_only, "Only run export phase", NULL },
   { "allow-missing-runtimes", 0, 0, G_OPTION_ARG_NONE, &opt_allow_missing_runtimes, "Don't fail if runtime and sdk missing", NULL },
   { "show-deps", 0, 0, G_OPTION_ARG_NONE, &opt_show_deps, "List the dependencies of the json file (see --show-deps --help)", NULL },
   { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir or export if no changes", NULL },
@@ -477,7 +479,7 @@ main (int    argc,
   g_assert (!opt_run);
   g_assert (!opt_show_deps);
 
-  if (opt_finish_only || opt_build_shell)
+  if (opt_export_only || opt_finish_only || opt_build_shell)
     {
       if (app_dir_is_empty)
         {
@@ -517,6 +519,7 @@ main (int    argc,
     }
 
   if (!opt_finish_only &&
+      !opt_export_only &&
       !opt_disable_download &&
       !builder_manifest_download (manifest, !opt_disable_updates, opt_build_shell, build_context, &error))
     {
@@ -552,7 +555,7 @@ main (int    argc,
 
   builder_manifest_checksum (manifest, cache, build_context);
 
-  if (!opt_finish_only)
+  if (!opt_finish_only && !opt_export_only)
     {
       if (!builder_cache_lookup (cache, "init"))
         {
@@ -579,7 +582,7 @@ main (int    argc,
         }
     }
 
-  if (!opt_build_only)
+  if (!opt_build_only && !opt_export_only)
     {
       if (!builder_manifest_cleanup (manifest, cache, build_context, &error))
         {
@@ -607,10 +610,10 @@ main (int    argc,
         }
     }
 
-  if (!opt_require_changes)
+  if (!opt_require_changes && !opt_export_only)
     builder_cache_ensure_checkout (cache);
 
-  if (opt_mirror_screenshots_url)
+  if (opt_mirror_screenshots_url && !opt_export_only)
     {
       g_autofree char *screenshot_subdir = g_strdup_printf ("%s-%s", builder_manifest_get_id (manifest),
                                                             builder_manifest_get_branch (manifest, opt_default_branch));
@@ -653,7 +656,7 @@ main (int    argc,
       g_print ("Saved screenshots in %s\n", flatpak_file_get_path_cached (screenshots));
     }
 
-  if (!opt_build_only && opt_repo && builder_cache_has_checkout (cache))
+  if (!opt_build_only && opt_repo && (opt_export_only || builder_cache_has_checkout (cache)))
     {
       g_autoptr(GFile) debuginfo_metadata = NULL;
       g_autoptr(GFile) sourcesinfo_metadata = NULL;
