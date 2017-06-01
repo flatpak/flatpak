@@ -2948,11 +2948,11 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
             "--dir", g_get_home_dir (),
             NULL);
 
-  /* Special case subdirectories of the cache, config and data xdg dirs.
-   * If these are accessible explicilty, in a read-write fashion, then
-   * we bind-mount these in the app-id dir. This allows applications to
-   * explicitly opt out of keeping some config/cache/data in the
-   * app-specific directory.
+  /* Special case subdirectories of the cache, config and data xdg
+   * dirs.  If these are accessible explicilty, then we bind-mount
+   * these in the app-id dir. This allows applications to explicitly
+   * opt out of keeping some config/cache/data in the app-specific
+   * directory.
    */
   if (app_id_dir)
     {
@@ -2967,7 +2967,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
           xdg_path = get_xdg_dir_from_string (filesystem, &rest, &where);
 
           if (xdg_path != NULL && *rest != 0 &&
-              mode >= FLATPAK_FILESYSTEM_MODE_READ_WRITE)
+              mode >= FLATPAK_FILESYSTEM_MODE_READ_ONLY)
             {
               g_autoptr(GFile) app_version = g_file_get_child (app_id_dir, where);
               g_autoptr(GFile) app_version_subdir = g_file_resolve_relative_path (app_version, rest);
@@ -2977,7 +2977,8 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                 {
                   g_autofree char *xdg_path_in_app = g_file_get_path (app_version_subdir);
                   add_args (argv_array,
-                            "--bind", xdg_path, xdg_path_in_app,
+                            mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY ? "--ro-bind" : "--bind",
+                            xdg_path, xdg_path_in_app,
                             NULL);
                 }
             }
