@@ -2791,10 +2791,10 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
               g_autoptr(GFile) app_version = g_file_get_child (app_id_dir, where);
               g_autoptr(GFile) app_version_subdir = g_file_resolve_relative_path (app_version, rest);
 
-              if (g_file_test (xdg_path, G_FILE_TEST_IS_DIR))
+              if (g_file_test (xdg_path, G_FILE_TEST_IS_DIR) ||
+                  g_file_test (xdg_path, G_FILE_TEST_IS_REGULAR))
                 {
                   g_autofree char *xdg_path_in_app = g_file_get_path (app_version_subdir);
-                  g_mkdir_with_parents (xdg_path_in_app, 0755);
                   add_args (argv_array,
                             "--bind", xdg_path, xdg_path_in_app,
                             NULL);
