@@ -7350,7 +7350,7 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
               g_ptr_array_add (updated_params, g_steal_pointer (&gpg_data_checksum));
             }
           else if (g_strv_contains (supported_params, key) &&
-                   g_variant_get_type_string (value_var))
+                   g_variant_is_of_type (value_var, G_VARIANT_TYPE_STRING))
             {
               const char *value = g_variant_get_string(value_var, NULL);
               if (value != NULL && *value != 0)
