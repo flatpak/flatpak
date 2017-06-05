@@ -231,6 +231,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       const char *body;
       g_autofree char *commit_checksum = NULL;
       GVariantBuilder metadata_builder;
+      gint j;
 
       if (!ostree_repo_resolve_rev (dst_repo, dst_ref, TRUE, &dst_parent, error))
         return FALSE;
@@ -272,12 +273,27 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       if (opt_body)
         body = (const char *)opt_body;
 
-      flatpak_variant_builder_init_from_variant (&metadata_builder, "a{sv}", commitv_metadata);
-      /* Additionally record the source commit. This is nice to have, but it also means
-         the commit-from gets a different commit id, which avoids problems with e.g.
-         sharing .commitmeta files (signatures) */
-      g_variant_builder_add (&metadata_builder, "{sv}", "xa.from_commit", g_variant_new_string (resolved_ref));
+      /* Copy old metadata */
+      g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
       g_variant_builder_add (&metadata_builder, "{sv}", "xa.ref", g_variant_new_string (dst_ref));
+      /* Record the source commit. This is nice to have, but it also
+         means the commit-from gets a different commit id, which
+         avoids problems with e.g.  sharing .commitmeta files
+         (signatures) */
+      g_variant_builder_add (&metadata_builder, "{sv}", "xa.from_commit", g_variant_new_string (resolved_ref));
+
+      for (j = 0; j < g_variant_n_children (commitv_metadata); j++)
+        {
+          g_autoptr(GVariant) child = g_variant_get_child_value (commitv_metadata, j);
+          g_autoptr(GVariant) keyv = g_variant_get_child_value (child, 0);
+          const char *key = g_variant_get_string (keyv, NULL);
+
+          if (strcmp (key, "xa.ref") == 0 ||
+              strcmp (key, "xa.from_commit") == 0)
+            continue;
+
+          g_variant_builder_add_value (&metadata_builder, child);
+        }
 
       if (!ostree_repo_write_commit_with_time (dst_repo, dst_parent, subject, body, g_variant_builder_end (&metadata_builder),
                                                OSTREE_REPO_FILE (dst_root),
