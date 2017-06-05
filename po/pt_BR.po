@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-05-23 12:06+0200\n"
+"POT-Creation-Date: 2017-06-05 13:52+0200\n"
 "PO-Revision-Date: 2017-04-27 13:57-0200\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
@@ -138,8 +138,8 @@ msgstr "LOCALIZAÇÃO deve ser especificada"
 #: app/flatpak-builtins-document-list.c:70
 #: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:112
 #: app/flatpak-builtins-install.c:251 app/flatpak-builtins-install.c:329
-#: app/flatpak-builtins-list.c:352 app/flatpak-builtins-list-remotes.c:66
-#: app/flatpak-builtins-ls-remote.c:82 app/flatpak-builtins-make-current.c:67
+#: app/flatpak-builtins-list.c:377 app/flatpak-builtins-list-remotes.c:66
+#: app/flatpak-builtins-ls-remote.c:85 app/flatpak-builtins-make-current.c:67
 #: app/flatpak-builtins-override.c:66
 msgid "Too many arguments"
 msgstr "Número excessivo de argumentos"
@@ -193,8 +193,8 @@ msgstr "Arquitetura para a qual será empacotada"
 #: app/flatpak-builtins-build-bundle.c:56
 #: app/flatpak-builtins-build-export.c:52 app/flatpak-builtins-build-init.c:49
 #: app/flatpak-builtins-build-sign.c:41 app/flatpak-builtins-info.c:48
-#: app/flatpak-builtins-install.c:56 app/flatpak-builtins-list.c:51
-#: app/flatpak-builtins-ls-remote.c:47 app/flatpak-builtins-make-current.c:38
+#: app/flatpak-builtins-install.c:56 app/flatpak-builtins-list.c:52
+#: app/flatpak-builtins-ls-remote.c:48 app/flatpak-builtins-make-current.c:38
 #: app/flatpak-builtins-run.c:51 app/flatpak-builtins-uninstall.c:44
 #: app/flatpak-builtins-update.c:53
 msgid "ARCH"
@@ -331,7 +331,7 @@ msgstr "Nenhum ponto de extensão correspondendo %s em %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Faltando \"=\" na opção de montagem associativa \"%s\""
 
-#: app/flatpak-builtins-build.c:396 common/flatpak-run.c:4795
+#: app/flatpak-builtins-build.c:396 common/flatpak-run.c:4807
 msgid "Unable to start app"
 msgstr "Não foi possível iniciar o aplicativo"
 
@@ -417,7 +417,7 @@ msgstr ""
 msgid "Either --src-repo or --src-ref must be specified."
 msgstr "--src-repo ou --src-ref deve ser especificado."
 
-#: app/flatpak-builtins-build-commit-from.c:249
+#: app/flatpak-builtins-build-commit-from.c:250
 msgid "Can't commit from partial source commit."
 msgstr "Não foi possível fazer commit de commit fonte parcial."
 
@@ -891,17 +891,17 @@ msgstr "Não foi possível trocar o gid"
 msgid "Can't switch uid"
 msgstr "Não foi possível trocar o uid"
 
-#: app/flatpak-builtins-info.c:49 app/flatpak-builtins-list.c:45
+#: app/flatpak-builtins-info.c:49 app/flatpak-builtins-list.c:46
 #: app/flatpak-builtins-list-remotes.c:43
 msgid "Show user installations"
 msgstr "Mostra instalações do usuário"
 
-#: app/flatpak-builtins-info.c:50 app/flatpak-builtins-list.c:46
+#: app/flatpak-builtins-info.c:50 app/flatpak-builtins-list.c:47
 #: app/flatpak-builtins-list-remotes.c:44
 msgid "Show system-wide installations"
 msgstr "Mostra instalações do sistema"
 
-#: app/flatpak-builtins-info.c:51 app/flatpak-builtins-list.c:47
+#: app/flatpak-builtins-info.c:51 app/flatpak-builtins-list.c:48
 #: app/flatpak-builtins-list-remotes.c:45
 msgid "Show specific system-wide installations"
 msgstr "Mostra instalações específicas do sistema"
@@ -1093,49 +1093,53 @@ msgstr "LOCALIZAÇÃO/REMOTO [REF...] - Instala aplicativos ou runtimes"
 msgid "REMOTE and REF must be specified"
 msgstr "REMOTE e REF devem ser especificados"
 
-#: app/flatpak-builtins-list.c:48
+#: app/flatpak-builtins-list.c:49
 msgid "Show extra information"
 msgstr "Mostra informações extras"
 
-#: app/flatpak-builtins-list.c:49
+#: app/flatpak-builtins-list.c:50
 msgid "List installed runtimes"
 msgstr "Lista runtimes instalados"
 
-#: app/flatpak-builtins-list.c:50
+#: app/flatpak-builtins-list.c:51
 msgid "List installed applications"
 msgstr "Lista aplicativos instalados"
 
-#: app/flatpak-builtins-list.c:51
+#: app/flatpak-builtins-list.c:52
 msgid "Arch to show"
 msgstr "Arquitetura para mostrar"
 
-#: app/flatpak-builtins-list.c:129 app/flatpak-builtins-ls-remote.c:169
+#: app/flatpak-builtins-list.c:53 app/flatpak-builtins-ls-remote.c:49
+msgid "List all refs (including locale/debug)"
+msgstr ""
+
+#: app/flatpak-builtins-list.c:131 app/flatpak-builtins-ls-remote.c:205
 #: app/flatpak-builtins-repo.c:95
 msgid "Ref"
 msgstr ""
 
-#: app/flatpak-builtins-list.c:132
+#: app/flatpak-builtins-list.c:134
 msgid "Origin"
 msgstr ""
 
-#: app/flatpak-builtins-list.c:133
+#: app/flatpak-builtins-list.c:135
 msgid "Active commit"
 msgstr ""
 
-#: app/flatpak-builtins-list.c:134
+#: app/flatpak-builtins-list.c:136
 msgid "Latest commit"
 msgstr ""
 
-#: app/flatpak-builtins-list.c:135 app/flatpak-builtins-ls-remote.c:171
+#: app/flatpak-builtins-list.c:137 app/flatpak-builtins-ls-remote.c:207
 #, fuzzy
 msgid "Installed size"
 msgstr "Instalar runtime assinado"
 
-#: app/flatpak-builtins-list.c:137 app/flatpak-builtins-list-remotes.c:112
+#: app/flatpak-builtins-list.c:139 app/flatpak-builtins-list-remotes.c:112
 msgid "Options"
 msgstr ""
 
-#: app/flatpak-builtins-list.c:345
+#: app/flatpak-builtins-list.c:370
 msgid " - List installed apps and/or runtimes"
 msgstr " - Lista os aplicativos e/ou runtimes instalados"
 
@@ -1163,39 +1167,39 @@ msgstr ""
 msgid "Priority"
 msgstr ""
 
-#: app/flatpak-builtins-ls-remote.c:43
+#: app/flatpak-builtins-ls-remote.c:44
 msgid "Show arches and branches"
 msgstr "Mostra arquiteturas e ramos"
 
-#: app/flatpak-builtins-ls-remote.c:44
+#: app/flatpak-builtins-ls-remote.c:45
 msgid "Show only runtimes"
 msgstr "Mostra apenas runtimes"
 
-#: app/flatpak-builtins-ls-remote.c:45
+#: app/flatpak-builtins-ls-remote.c:46
 msgid "Show only apps"
 msgstr "Mostra apenas aplicativos"
 
-#: app/flatpak-builtins-ls-remote.c:46
+#: app/flatpak-builtins-ls-remote.c:47
 msgid "Show only those where updates are available"
 msgstr "Mostra apenas aqueles com atualizações disponíveis"
 
-#: app/flatpak-builtins-ls-remote.c:47
+#: app/flatpak-builtins-ls-remote.c:48
 msgid "Limit to this arch (* for all)"
 msgstr "Limita a essa arquitetura (* para todas)"
 
-#: app/flatpak-builtins-ls-remote.c:69
+#: app/flatpak-builtins-ls-remote.c:72
 msgid " REMOTE - Show available runtimes and applications"
 msgstr " REMOTO - Mostra runtimes e aplicativos disponíveis"
 
-#: app/flatpak-builtins-ls-remote.c:79
+#: app/flatpak-builtins-ls-remote.c:82
 msgid "REMOTE must be specified"
 msgstr "REMOTO deve ser especificado"
 
-#: app/flatpak-builtins-ls-remote.c:170
+#: app/flatpak-builtins-ls-remote.c:206
 msgid "Commit"
 msgstr ""
 
-#: app/flatpak-builtins-ls-remote.c:172
+#: app/flatpak-builtins-ls-remote.c:208
 #, fuzzy
 msgid "Download size"
 msgstr "Mostra tamanho"
@@ -1317,7 +1321,7 @@ msgstr "LOCALIZAÇÃO - Atualiza metadados de um repositório"
 msgid "Updating appstream branch\n"
 msgstr "Atualizando ramo do appstream\n"
 
-#: app/flatpak-builtins-repo-update.c:456
+#: app/flatpak-builtins-repo-update.c:469
 msgid "Updating summary\n"
 msgstr "Atualizando resumo\n"
 
@@ -1682,8 +1686,8 @@ msgstr "O runtime exigido %s não foi localizado em um remoto configurado.\n"
 
 #: app/flatpak-transaction.c:469 common/flatpak-dir.c:1019
 #: common/flatpak-dir.c:1276 common/flatpak-dir.c:1312
-#: common/flatpak-dir.c:1334 common/flatpak-dir.c:8600
-#: common/flatpak-utils.c:1227 common/flatpak-utils.c:1321
+#: common/flatpak-dir.c:1334 common/flatpak-dir.c:8603
+#: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
 #, c-format
 msgid "%s not installed"
 msgstr "%s não instalado"
@@ -1854,7 +1858,8 @@ msgid "While writing extra data file '%s': "
 msgstr "Enquanto escrevia o arquivo de dados extras \"%s\": "
 
 #: common/flatpak-dir.c:4298
-msgid "apply_extra script failed"
+#, fuzzy, c-format
+msgid "apply_extra script failed, exit status %d"
 msgstr "script apply_extra falhou"
 
 #: common/flatpak-dir.c:4368
@@ -1962,11 +1967,11 @@ msgstr "Título remoto não definido"
 msgid "Remote default-branch not set"
 msgstr "Ramo padrão remoto não definido"
 
-#: common/flatpak-dir.c:8270
+#: common/flatpak-dir.c:8273
 msgid "No flatpak cache in remote summary"
 msgstr "Nenhum cache de flatpak no sumário remoto"
 
-#: common/flatpak-dir.c:8279
+#: common/flatpak-dir.c:8282
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Nenhuma entrada para %s no cache de flatpak de sumário remoto "
@@ -2146,30 +2151,30 @@ msgstr "Falha ao desvincular arquivo temporário"
 msgid "Failed to write to temporary file"
 msgstr "Falha ao escrever para arquivo temporário"
 
-#: common/flatpak-run.c:3479
+#: common/flatpak-run.c:3483
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Falha ao abrir arquivo temporário de flatpak-info: %s"
 
-#: common/flatpak-run.c:3534 common/flatpak-run.c:3544
+#: common/flatpak-run.c:3538 common/flatpak-run.c:3548
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Falha ao abrir arquivo temporário: %s"
 
-#: common/flatpak-run.c:3859
+#: common/flatpak-run.c:3869
 msgid "Unable to create sync pipe"
 msgstr "Não foi possível criar um pipe de sincronização"
 
-#: common/flatpak-run.c:3884
+#: common/flatpak-run.c:3894
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Falha ao abrir arquivo informação do aplicativo: %s"
 
-#: common/flatpak-run.c:3914
+#: common/flatpak-run.c:3924
 msgid "Failed to sync with dbus proxy"
 msgstr "Falha ao sincronizar com proxy de dbus"
 
-#: common/flatpak-utils.c:2701
+#: common/flatpak-utils.c:2730
 msgid "No extra data sources"
 msgstr "Nenhuma fonte de dados extras"
 
