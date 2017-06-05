@@ -1,3 +1,29 @@
+Major changes in 0.8.6
+======================
+
+ * TMPDIR is now unset in the sandbox, if set on the
+   host. Each sandbox has a personal /tmp that is used.
+ * Flatpak run now works if /tmp is a symlink on the
+   host.
+ * /etc/hosts and /etc/hosts.conf from the host are now exposed
+   in the sandbox in addition to /etc/resolv.conf.
+ * flatpak now stores the app id in the X-Flatpak key when exporting a
+   desktop file.
+ * Exports are now whitelisted, and the only thing you can
+   export are:
+     desktop files, icons, dbus services
+   This is somewhat different from the 0.9.x series, where als
+   mime definitions, and gnome-shell search providers are allowed.
+ * Fixed minor race condition in portal application identification.
+ * Support WAYLAND_DISPLAY environment var.
+ * dbus-portal: Fix handling of NameHasOwner
+ * run: Allow regular files for --filesystem=xdg-config/path
+ * run: Allow --filesystem=xdg-config/subdir:ro (previously
+   it needed to be writable).
+ * Support for updating to new gpg keys and url when using
+   flatpak remote-modify --update-metadata. This is a manual
+   operation in 0.8.x but is automatic in the 0.9.x series.
+
 Major changes in 0.8.5
 ======================
 
