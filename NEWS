@@ -1,3 +1,33 @@
+Major changes in 0.9.5
+======================
+
+ Changes in flatpak:
+
+ * Fix installation of installed tests
+ * Don't show an error when updating if a remote is disabled
+ * Store the app id in the X-Flatpak key when exporting a
+   desktop file.
+ * flatpak run: Handle paths when rewriting %u urls during
+   file forwarding.
+ * builder: Always assume separate builddir when using meson, as
+   meson only works with this.
+ * document-portal: The app-specific directory is always accessible
+   to the app, take this into consideration for AddFull.
+ * builder: Don't warn for unknown keys if they start with x-
+ * Fix a race condition whe restarting the document portal
+ * build-update-repo: Don't list removed deltas in the summary
+ * list: Don't show .Locale/.Debug/.Sources by default. Show with -a.
+ * remote-ls: Don't show .Locale/.Debug/.Sources, or non-primary
+   arches (unless the primary does not exist) by default.
+   Show with -a.
+ * dbus-portal: Fix handling of NameHasOwner
+ * builder: Add --export-only to export a previous build.
+ * run: Allow regular files for --filesystem=xdg-config/path
+ * run: Allow --filesystem=xdg-config/subdir:ro (previously
+   it needed to be writable).
+ * build-commit-from: Properly handle xa.ref when rewriting
+   refnames.
+
 Major changes in 0.9.4
 ======================
 
