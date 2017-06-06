@@ -118,10 +118,6 @@
                     <listitem><para>This key is set to true if <option>xa.default-branch</option> has been explicitly set.</para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>xa.default-branch</option> (string)</term>
-                    <listitem><para>The default branch to use when installing from this remote.</para></listitem>
-                </varlistentry>
-                <varlistentry>
                     <term><option>xa.main-ref</option> (string)</term>
                     <listitem><para>The main reference served by this remote. This is used for origin remotes of applications installed via a flatpakref file.</para></listitem>
                 </varlistentry>

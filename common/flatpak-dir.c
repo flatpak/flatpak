@@ -8371,7 +8371,7 @@ add_related (FlatpakDir *self,
              gboolean autodelete)
 {
   g_autoptr(GVariant) deploy_data = NULL;
-  const char **old_subpaths = NULL;
+  g_autofree const char **old_subpaths = NULL;
   g_autoptr(GPtrArray) subpaths = g_ptr_array_new_with_free_func (g_free);
   int i;
   FlatpakRelated *rel;

@@ -758,7 +758,8 @@ is_valid_branch_character (gint c)
     (c == '.');
 }
 
-/** flatpak_is_valid_branch:
+/**
+ * flatpak_is_valid_branch:
  * @string: The string to check
  * @error: return location for an error
  *
