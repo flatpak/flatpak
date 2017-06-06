@@ -631,7 +631,7 @@ portal_add_full (GDBusMethodInvocation *invocation,
       g_variant_get_child (array, i, "h", &fd_id);
 
       fd = -1;
-      if (fds != NULL & fd_id < fds_len)
+      if (fds != NULL && fd_id < fds_len)
         fd = fds[fd_id];
 
       if (!validate_fd (fd, app_info, &st_buf, &real_parent_st_bufs[i], path_buffer, &error))
