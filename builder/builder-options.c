@@ -679,7 +679,7 @@ builder_options_get_env (BuilderOptions *self, BuilderContext *context)
 
   cppflags = builder_options_get_cppflags (self, context);
   if (cppflags)
-    envp = g_environ_setenv (envp, "CPPFLAGS", cxxflags, FALSE);
+    envp = g_environ_setenv (envp, "CPPFLAGS", cppflags, FALSE);
 
   cxxflags = builder_options_get_cxxflags (self, context);
   if (cxxflags)
