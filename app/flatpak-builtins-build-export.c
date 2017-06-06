@@ -169,14 +169,18 @@ commit_filter (OstreeRepo *repo,
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
 
   mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
-  /* No setuid */
-  mode = mode & ~07000;
+  /* No set{u,g}id */
+  mode = mode & ~(S_ISUID | S_ISGID);
   /* Canonical permission mode == same as what bare-user mode uses for checkouts */
   if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_REGULAR)
     mode = mode | 0744;
   /* Always make directories readable and executable */
   if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
     mode = mode | 0555;
+  /* And no world-writable files or directories */
+  if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_REGULAR ||
+      g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
+    mode = mode & ~(S_IWOTH);
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", mode);
 
   if (matches_patterns (commit_data->exclude, path) &&

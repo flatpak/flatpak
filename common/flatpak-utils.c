@@ -3208,6 +3208,141 @@ flatpak_mtree_create_root (OstreeRepo        *repo,
   return TRUE;
 }
 
+static gboolean
+validate_mode (guint32 mode,
+               GError **error)
+{
+  if (mode & S_ISUID)
+    return glnx_throw (error, "suid");
+  if (mode & S_ISGID)
+    return glnx_throw (error, "sgid");
+  if (mode & S_IWOTH)
+    return glnx_throw (error, "world-writable");
+  return TRUE;
+}
+
+static gboolean
+check_commit_content_perms_recurse (OstreeRepo                     *repo,
+                                    OstreeRepoCommitTraverseIter   *iter,
+                                    GCancellable                   *cancellable,
+                                    GError                        **error)
+{
+  while (TRUE)
+    {
+      OstreeRepoCommitIterResult iterres =
+        ostree_repo_commit_traverse_iter_next (iter, cancellable, error);
+      g_autoptr(GError) local_error = NULL;
+
+      if (iterres == OSTREE_REPO_COMMIT_ITER_RESULT_ERROR)
+        return FALSE;
+      else if (iterres == OSTREE_REPO_COMMIT_ITER_RESULT_END)
+        break;
+      else if (iterres == OSTREE_REPO_COMMIT_ITER_RESULT_FILE)
+        {
+          char *name;
+          char *checksum;
+
+          ostree_repo_commit_traverse_iter_get_file (iter, &name, &checksum);
+
+          g_autoptr(GFileInfo) finfo = NULL;
+          g_autoptr(GVariant) xattrs = NULL;
+          if (!ostree_repo_load_file (repo, checksum, NULL, &finfo, &xattrs,
+                                      cancellable, &local_error))
+            {
+              /* Content may not have been pulled yet */
+              if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+                continue;
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
+
+          if (g_file_info_get_file_type (finfo) != G_FILE_TYPE_REGULAR)
+            continue;
+
+          const guint32 mode = g_file_info_get_attribute_uint32 (finfo, "unix::mode");
+          if (!validate_mode (mode, error))
+            return g_prefix_error (error, "validating content object %s: ", checksum), FALSE;
+
+          if (g_variant_n_children (xattrs) > 0)
+            return glnx_throw (error, "validating content object %s: xattrs present", checksum);
+        }
+      else if (iterres == OSTREE_REPO_COMMIT_ITER_RESULT_DIR)
+        {
+          char *name;
+          char *content_checksum;
+          char *meta_checksum;
+          g_autoptr(GVariant) dirtree = NULL;
+          g_autoptr(GVariant) dirmeta = NULL;
+          ostree_cleanup_repo_commit_traverse_iter
+            OstreeRepoCommitTraverseIter subiter = { 0, };
+
+          ostree_repo_commit_traverse_iter_get_dir (iter, &name, &content_checksum, &meta_checksum);
+
+          if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_DIR_TREE,
+                                         content_checksum, &dirtree,
+                                         error))
+            return FALSE;
+          if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_DIR_META,
+                                         meta_checksum, &dirmeta,
+                                         error))
+            return FALSE;
+
+          guint32 mode;
+          g_variant_get_child (dirmeta, 2, "u", &mode);
+          mode = GUINT32_FROM_BE(mode);
+          if (!validate_mode (mode, error))
+            return g_prefix_error (error, "validating directory meta %s: ", meta_checksum), FALSE;
+
+          g_autoptr(GVariant) xattrs = g_variant_get_child_value (dirmeta, 3);
+          if (g_variant_n_children (xattrs) > 0)
+            return glnx_throw (error, "validating directory meta: xattrs present");
+
+          if (!ostree_repo_commit_traverse_iter_init_dirtree (&subiter, repo, dirtree,
+                                                              OSTREE_REPO_COMMIT_TRAVERSE_FLAG_NONE,
+                                                              error))
+            return FALSE;
+
+          if (!check_commit_content_perms_recurse (repo, &subiter, cancellable, error))
+            return FALSE;
+        }
+      else
+        g_assert_not_reached ();
+    }
+
+  return TRUE;
+}
+
+
+
+/* Given a commit in a repo, ensure it doesn't have any set{u,g}id or
+ * world-writable files/dirs.
+ */
+gboolean
+flatpak_check_commit_content_perms (OstreeRepo        *repo,
+                                    const char        *checksum,
+                                    GCancellable      *cancellable,
+                                    GError           **error)
+{
+  g_autoptr(GVariant) commit = NULL;
+
+  if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT,
+                                 checksum, &commit, error))
+    return FALSE;
+
+  ostree_cleanup_repo_commit_traverse_iter
+    OstreeRepoCommitTraverseIter iter = { 0, };
+  if (!ostree_repo_commit_traverse_iter_init_commit (&iter, repo, commit,
+                                                     OSTREE_REPO_COMMIT_TRAVERSE_FLAG_NONE,
+                                                     error))
+    return FALSE;
+
+  if (!check_commit_content_perms_recurse (repo, &iter, cancellable, error))
+    return FALSE;
+
+  return TRUE;
+}
+
+
 static OstreeRepoCommitFilterResult
 commit_filter (OstreeRepo *repo,
                const char *path,

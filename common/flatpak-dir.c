@@ -1795,6 +1795,7 @@ repo_pull_one_dir (OstreeRepo          *self,
   g_autofree char *current_checksum = NULL;
   g_autoptr(GVariant) options = NULL;
   g_autoptr(GVariant) old_commit = NULL;
+  g_autofree char *new_rev = NULL;
   g_autoptr(GVariant) new_commit = NULL;
   const char *refs_to_fetch[2];
   const char *revs_to_fetch[2];
@@ -1847,8 +1848,12 @@ repo_pull_one_dir (OstreeRepo          *self,
       !ostree_repo_load_commit (self, current_checksum, &old_commit, NULL, error))
     return FALSE;
 
+  /* FIXME - why is there a `res` here, shouldn't we return? */
   res = ostree_repo_pull_with_options (self, remote_name, options,
                                        progress, cancellable, error);
+
+  if (!ostree_repo_resolve_rev (self, rev_to_fetch, FALSE, &new_rev, error))
+    return FALSE;
 
   if (old_commit &&
       (flatpak_flags & FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE) == 0)
@@ -1856,7 +1861,7 @@ repo_pull_one_dir (OstreeRepo          *self,
       guint64 old_timestamp;
       guint64 new_timestamp;
 
-      if (!ostree_repo_load_commit (self, rev_to_fetch, &new_commit, NULL, error))
+      if (!ostree_repo_load_commit (self, new_rev, &new_commit, NULL, error))
         return FALSE;
 
       old_timestamp = ostree_commit_get_timestamp (old_commit);
@@ -1864,6 +1869,12 @@ repo_pull_one_dir (OstreeRepo          *self,
 
       if (new_timestamp < old_timestamp)
         return flatpak_fail (error, "Update is older then current version");
+    }
+
+  if ((flags & OSTREE_REPO_PULL_FLAGS_COMMIT_ONLY) == 0)
+    {
+      if (!flatpak_check_commit_content_perms (self, new_rev, cancellable, error))
+        return FALSE;
     }
 
   return res;
