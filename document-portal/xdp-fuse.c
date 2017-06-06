@@ -2324,7 +2324,7 @@ xdp_fuse_init (GError **error)
 
   path = xdp_fuse_get_mountpoint ();
   if ((stat (path, &st) == -1 && errno == ENOTCONN) ||
-      ((statfs_res = statfs (path, &stfs)) == -1 && errno == ENOTCONN ||
+      (((statfs_res = statfs (path, &stfs)) == -1 && errno == ENOTCONN) ||
        (statfs_res == 0 && stfs.f_type == 0x65735546 /* fuse */)))
     {
       int count;
