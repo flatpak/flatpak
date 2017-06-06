@@ -174,7 +174,6 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
         {
           g_autofree char *prefix_partial_ref = NULL;
           char *last_dot = strrchr (parts[1], '.');
-          g_autofree char *prefix = NULL;
 
           *last_dot = 0;
           prefix_partial_ref = g_strconcat (parts[1], "/", parts[2], "/", parts[3], NULL);
