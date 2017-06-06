@@ -330,6 +330,11 @@ gboolean flatpak_mtree_create_root (OstreeRepo        *repo,
                                     GCancellable      *cancellable,
                                     GError           **error);
 
+gboolean flatpak_check_commit_content_perms (OstreeRepo        *repo,
+                                             const char        *checksum,
+                                             GCancellable      *cancellable,
+                                             GError           **error);
+
 GVariant * flatpak_bundle_load (GFile   *file,
                                 char   **commit,
                                 char   **ref,
