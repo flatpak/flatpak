@@ -1,0 +1,68 @@
+<!DOCTYPE node PUBLIC
+"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<!--
+ Copyright (C) 2015 Red Hat, Inc.
+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General
+ Public License along with this library; if not, write to the
+ Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA 02110-1301, USA.
+
+ Author: Alexander Larsson <alexl@redhat.com>
+-->
+
+<node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
+  <interface name="org.freedesktop.portal.FileChooser">
+    <method name="OpenFile">
+      <arg type="s" name="parent_window" direction="in"/>
+      <arg type="s" name="title" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+      <arg type="o" name="handle" direction="out"/>
+    </method>
+    <signal name="OpenFileResponse">
+      <arg type="o" name="handle"/>
+      <arg type="u" name="response"/>
+      <arg type="s" name="uri"/>
+      <arg type="a{sv}" name="options"/>
+    </signal>
+    <method name="OpenFiles">
+      <arg type="s" name="parent_window" direction="in"/>
+      <arg type="s" name="title" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+      <arg type="o" name="handle" direction="out"/>
+    </method>
+    <signal name="OpenFilesResponse">
+      <arg type="o" name="handle"/>
+      <arg type="u" name="response"/>
+      <arg type="as" name="uris"/>
+      <arg type="a{sv}" name="options"/>
+    </signal>
+    <method name="SaveFile">
+      <arg type="s" name="parent_window" direction="in"/>
+      <arg type="s" name="title" direction="in"/>
+      <arg type="a{sv}" name="options" direction="in"/>
+      <arg type="o" name="handle" direction="out"/>
+    </method>
+    <signal name="SaveFileResponse">
+      <arg type="o" name="handle"/>
+      <arg type="u" name="response"/>
+      <arg type="s" name="uri"/>
+      <arg type="a{sv}" name="options"/>
+    </signal>
+    <method name="Close">
+      <arg type="o" name="handle" direction="in"/>
+    </method>
+  </interface>
+</node>
