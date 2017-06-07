@@ -1724,7 +1724,6 @@ repo_pull_one_dir (OstreeRepo          *self,
   g_autoptr(GVariant) new_commit = NULL;
   const char *refs_to_fetch[2];
   const char *revs_to_fetch[2];
-  gboolean res;
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
 
@@ -1764,8 +1763,9 @@ repo_pull_one_dir (OstreeRepo          *self,
       !ostree_repo_load_commit (self, current_checksum, &old_commit, NULL, error))
     return FALSE;
 
-  res = ostree_repo_pull_with_options (self, remote_name, options,
-                                       progress, cancellable, error);
+  if (!ostree_repo_pull_with_options (self, remote_name, options,
+                                      progress, cancellable, error))
+    return FALSE;
 
   if (old_commit &&
       (flatpak_flags & FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE) == 0)
@@ -1783,7 +1783,7 @@ repo_pull_one_dir (OstreeRepo          *self,
         return flatpak_fail (error, "Update is older then current version");
     }
 
-  return res;
+  return TRUE;
 }
 
 static void
