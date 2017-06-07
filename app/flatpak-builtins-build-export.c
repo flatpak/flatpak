@@ -168,15 +168,25 @@ commit_filter (OstreeRepo *repo,
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
 
+  /* In flatpak, there is no real reason for files to have different
+   * permissions based on the group or user really, everything is
+   * always used readonly for everyone. Having things be writeable
+   * for anyone but the user just causes risks for the system-installed
+   * case. So, we canonicalize the mode to writable only by the user,
+   * readable to all, and executable for all for directories and
+   * files that the user can execute.
+  */
   mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
-  /* No setuid */
-  mode = mode & ~07000;
-  /* Canonical permission mode == same as what bare-user mode uses for checkouts */
-  if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_REGULAR)
-    mode = mode | 0744;
-  /* Always make directories readable and executable */
   if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
-    mode = mode | 0555;
+    mode = 0755 | S_IFDIR;
+  else if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_REGULAR)
+    {
+      /* If use can execute, make executable by all */
+      if (mode & S_IXUSR)
+        mode = 0755 | S_IFREG;
+      else /* otherwise executable by none */
+        mode = 0644 | S_IFREG;
+    }
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", mode);
 
   if (matches_patterns (commit_data->exclude, path) &&
