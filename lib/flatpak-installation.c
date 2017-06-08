@@ -1106,8 +1106,8 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
  * flatpak_installation_install_bundle:
  * @self: a #FlatpakInstallation
  * @file: a #GFile that is an flatpak bundle
- * @progress: (scope call): progress callback
- * @progress_data: user data passed to @progress
+ * @progress: (scope call) (nullable): progress callback
+ * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1202,8 +1202,8 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
  * @arch: (nullable): which architecture to fetch (default: current architecture)
  * @branch: (nullable): which branch to fetch (default: 'master')
  * @subpaths: (nullable): A list of subpaths to fetch, or %NULL for everything
- * @progress: (scope call): progress callback
- * @progress_data: user data passed to @progress
+ * @progress: (scope call) (nullable): progress callback
+ * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1288,8 +1288,8 @@ out:
  * @name: name of the app/runtime to fetch
  * @arch: (nullable): which architecture to fetch (default: current architecture)
  * @branch: (nullable): which branch to fetch (default: 'master')
- * @progress: (scope call): progress callback
- * @progress_data: user data passed to @progress
+ * @progress: (scope call) (nullable): progress callback
+ * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1324,8 +1324,8 @@ flatpak_installation_install (FlatpakInstallation    *self,
  * @arch: (nullable): architecture of the app or runtime to update (default: current architecture)
  * @branch: (nullable): name of the branch of the app or runtime to update (default: master)
  * @subpaths: (nullable): A list of subpaths to fetch, or %NULL for everything
- * @progress: (scope call): the callback
- * @progress_data: user data passed to @progress
+ * @progress: (scope call) (nullable): the callback
+ * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1425,8 +1425,8 @@ out:
  * @name: name of the app or runtime to update
  * @arch: (nullable): architecture of the app or runtime to update (default: current architecture)
  * @branch: (nullable): name of the branch of the app or runtime to update (default: master)
- * @progress: (scope call): the callback
- * @progress_data: user data passed to @progress
+ * @progress: (scope call) (nullable): the callback
+ * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1458,8 +1458,8 @@ flatpak_installation_update (FlatpakInstallation    *self,
  * @name: name of the app or runtime to uninstall
  * @arch: architecture of the app or runtime to uninstall
  * @branch: name of the branch of the app or runtime to uninstall
- * @progress: (scope call): the callback
- * @progress_data: user data passed to @progress
+ * @progress: (scope call) (nullable): the callback
+ * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
  *
@@ -1710,8 +1710,8 @@ flatpak_installation_update_appstream_sync (FlatpakInstallation *self,
  * @self: a #FlatpakInstallation
  * @remote_name: the name of the remote
  * @arch: Architecture to update, or %NULL for the local machine arch
- * @progress: (scope call): progress callback
- * @progress_data: user data passed to @progress
+ * @progress: (scope call) (nullable): progress callback
+ * @progress_data: (closure progress) (nullable): user data passed to @progress
  * @out_changed: (nullable): Set to %TRUE if the contents of the appstream changed, %FALSE if nothing changed
  * @cancellable: (nullable): a #GCancellable
  * @error: return location for a #GError
