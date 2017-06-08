@@ -1347,7 +1347,44 @@ flatpak_dir_ensure_path (FlatpakDir   *self,
                          GCancellable *cancellable,
                          GError      **error)
 {
-  return flatpak_mkdir_p (self->basedir, cancellable, error);
+  /* In the system case, we use default perms */
+  if (!self->user)
+    return flatpak_mkdir_p (self->basedir, cancellable, error);
+  else
+    {
+      /* First make the parent */
+      g_autoptr(GFile) parent = g_file_get_parent (self->basedir);
+      if (!flatpak_mkdir_p (parent, cancellable, error))
+        return FALSE;
+      glnx_fd_close int parent_dfd = -1;
+      if (!glnx_opendirat (AT_FDCWD, flatpak_file_get_path_cached (parent), TRUE,
+                           &parent_dfd, error))
+        return FALSE;
+      g_autofree char *name = g_file_get_basename (self->basedir);
+      /* Use 0700 in the user case to neuter any suid or world-writable
+       * bits that happen to be in content; see
+       * https://github.com/flatpak/flatpak/pull/837
+       */
+      if (mkdirat (parent_dfd, name, 0700) < 0)
+        {
+          if (errno == EEXIST)
+            {
+              /* And fix up any existing installs that had too-wide perms */
+              struct stat stbuf;
+              if (fstatat (parent_dfd, name, &stbuf, 0) < 0)
+                return glnx_throw_errno_prefix (error, "fstatat");
+              if (stbuf.st_mode & S_IXOTH)
+                {
+                  if (fchmodat (parent_dfd, name, 0700, 0) < 0)
+                    return glnx_throw_errno_prefix (error, "fchmodat");
+                }
+            }
+          else
+            return glnx_throw_errno_prefix (error, "mkdirat");
+        }
+
+      return TRUE;
+    }
 }
 
 /* Warning: This is not threadsafe, don't use in libflatpak */
