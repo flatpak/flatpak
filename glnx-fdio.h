@@ -167,6 +167,38 @@ int glnx_renameat2_exchange (int olddirfd, const char *oldpath,
                              int newdirfd, const char *newpath);
 
 /**
+ * glnx_try_fallocate:
+ * @fd: File descriptor
+ * @size: Size
+ * @error: Error
+ *
+ * Wrapper for Linux fallocate().  Explicitly ignores a @size of zero.
+ * Also, will silently do nothing if the underlying filesystem doesn't
+ * support it.  Use this instead of posix_fallocate(), since the glibc fallback
+ * is bad: https://sourceware.org/bugzilla/show_bug.cgi?id=18515
+ */
+static inline gboolean
+glnx_try_fallocate (int      fd,
+                    off_t    offset,
+                    off_t    size,
+                    GError **error)
+{
+  /* This is just nicer than throwing an error */
+  if (size == 0)
+    return TRUE;
+
+  if (fallocate (fd, 0, offset, size) < 0)
+    {
+      if (errno == ENOSYS || errno == EOPNOTSUPP)
+        ; /* Ignore */
+      else
+        return glnx_throw_errno_prefix (error, "fallocate");
+    }
+
+  return TRUE;
+}
+
+/**
  * glnx_fstat:
  * @fd: FD to stat
  * @buf: (out caller-allocates): Return location for stat details

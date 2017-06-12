@@ -920,7 +920,6 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
                                           GCancellable         *cancellable,
                                           GError              **error)
 {
-  int r;
   char *dnbuf = strdupa (subpath);
   const char *dn = dirname (dnbuf);
 
@@ -940,16 +939,8 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   if (len == -1)
     len = strlen ((char*)buf);
 
-  /* Note that posix_fallocate does *not* set errno but returns it. */
-  if (len > 0)
-    {
-      r = posix_fallocate (tmpf.fd, 0, len);
-      if (r != 0)
-        {
-          errno = r;
-          return glnx_throw_errno_prefix (error, "fallocate");
-        }
-    }
+  if (!glnx_try_fallocate (tmpf.fd, 0, len, error))
+    return FALSE;
 
   if (glnx_loop_write (tmpf.fd, buf, len) < 0)
     return glnx_throw_errno (error);
