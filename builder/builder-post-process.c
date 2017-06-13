@@ -197,7 +197,9 @@ fixup_python_time_stamp (const char *path,
 
   if (lstat (py_path, &stbuf) != 0)
     {
-      remove_pyc = TRUE;
+      /* pyc file without .py file, this happens for binary-only deployments.
+       *  Accept it as-is. */
+      return TRUE;
     }
   else if (pyc_mtime == OSTREE_TIMESTAMP)
     {

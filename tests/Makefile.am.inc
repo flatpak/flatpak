@@ -98,6 +98,7 @@ dist_installed_test_data = \
 	tests/session.conf.in \
 	tests/0001-Add-test-logo.patch \
 	tests/org.test.Python.json \
+	tests/org.test.Python2.json \
 	tests/importme.py \
 	tests/importme2.py \
 	$(NULL)

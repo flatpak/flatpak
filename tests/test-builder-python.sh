@@ -25,7 +25,7 @@ skip_without_bwrap
 skip_without_user_xattrs
 skip_without_python2
 
-echo "1..1"
+echo "1..2"
 
 setup_repo
 install_repo
@@ -37,6 +37,7 @@ REPO=`pwd`/repo
 cd $TEST_DATA_DIR/
 
 cp $(dirname $0)/org.test.Python.json .
+cp $(dirname $0)/org.test.Python2.json .
 cp -a $(dirname $0)/empty-configure .
 cp -a $(dirname $0)/testpython.py .
 cp $(dirname $0)/importme.py .
@@ -51,3 +52,14 @@ flatpak-builder --run appdir org.test.Python.json testpython.py > testpython.out
 assert_file_has_content testpython.out ^modified$
 
 echo "ok handled pyc rewriting multiple times"
+
+flatpak-builder --force-clean appdir org.test.Python2.json
+
+assert_not_has_file appdir/files/bin/importme.py
+assert_has_file appdir/files/bin/importme.pyc
+
+flatpak-builder --run appdir org.test.Python2.json testpython.py > testpython.out
+
+assert_file_has_content testpython.out "^first   $"
+
+echo "ok handled .pyc without .py"

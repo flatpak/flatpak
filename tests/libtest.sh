@@ -215,8 +215,8 @@ setup_sdk_repo () {
 
 setup_python2_repo () {
     REPONAME=${1:-test}
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonPlatform bash python2 ls cat echo readlink > /dev/null
-    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonSdk python2 bash ls cat echo readlink make mkdir cp touch > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonPlatform bash python2 ls cat echo rm readlink > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonSdk python2 bash ls cat echo rm readlink make mkdir cp touch > /dev/null
     update_repo $REPONAME
 }
 
