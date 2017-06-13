@@ -37,7 +37,6 @@
 
 #include <glnx-fdio.h>
 #include <glnx-dirfd.h>
-#include <glnx-alloca.h>
 #include <glnx-errors.h>
 #include <glnx-xattrs.h>
 #include <glnx-backport-autoptr.h>
@@ -65,7 +64,7 @@ glnx_renameat2_noreplace (int olddirfd, const char *oldpath,
 #ifndef ENABLE_WRPSEUDO_COMPAT
   if (renameat2 (olddirfd, oldpath, newdirfd, newpath, RENAME_NOREPLACE) < 0)
     {
-      if (errno == EINVAL || errno == ENOSYS)
+      if (G_IN_SET(errno, EINVAL, ENOSYS))
         {
           /* Fall through */
         }
@@ -119,7 +118,7 @@ glnx_renameat2_exchange (int olddirfd, const char *oldpath,
     return 0;
   else
     {
-      if (errno == ENOSYS || errno == EINVAL)
+      if (G_IN_SET(errno, ENOSYS, EINVAL))
         {
           /* Fall through */
         }
@@ -195,7 +194,7 @@ glnx_open_tmpfile_linkable_at (int dfd,
    * in full. */
 #if defined(O_TMPFILE) && !defined(DISABLE_OTMPFILE) && !defined(ENABLE_WRPSEUDO_COMPAT)
   fd = openat (dfd, subpath, O_TMPFILE|flags, 0600);
-  if (fd == -1 && !(errno == ENOSYS || errno == EISDIR || errno == EOPNOTSUPP))
+  if (fd == -1 && !(G_IN_SET(errno, ENOSYS, EISDIR, EOPNOTSUPP)))
     return glnx_throw_errno_prefix (error, "open(O_TMPFILE)");
   if (fd != -1)
     {

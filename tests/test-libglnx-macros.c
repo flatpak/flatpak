@@ -1,6 +1,6 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*-
  *
- * Copyright (C) 2012,2013,2015 Colin Walters <walters@verbum.org>.
+ * Copyright (C) 2017 Red Hat, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,22 +18,31 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#pragma once
-
+#include "config.h"
+#include "libglnx.h"
+#include <glib.h>
+#include <stdlib.h>
 #include <gio/gio.h>
+#include <string.h>
 
-G_BEGIN_DECLS
+static void
+test_inset (void)
+{
+  g_assert (G_IN_SET (7, 7));
+  g_assert (G_IN_SET (7, 42, 7));
+  g_assert (G_IN_SET (7, 7,42,3,9));
+  g_assert (G_IN_SET (42, 7,42,3,9));
+  g_assert (G_IN_SET (3, 7,42,3,9));
+  g_assert (G_IN_SET (9, 7,42,3,9));
+  g_assert (!G_IN_SET (8, 7,42,3,9));
+  g_assert (!G_IN_SET (-1, 7,42,3,9));
+  g_assert (G_IN_SET ('x', 'a', 'x', 'c'));
+  g_assert (!G_IN_SET ('y', 'a', 'x', 'c'))
+}
 
-#include <glnx-macros.h>
-#include <glnx-local-alloc.h>
-#include <glnx-backport-autocleanups.h>
-#include <glnx-backports.h>
-#include <glnx-lockfile.h>
-#include <glnx-errors.h>
-#include <glnx-dirfd.h>
-#include <glnx-shutil.h>
-#include <glnx-xattrs.h>
-#include <glnx-console.h>
-#include <glnx-fdio.h>
-
-G_END_DECLS
+int main (int argc, char **argv)
+{
+  g_test_init (&argc, &argv, NULL);
+  g_test_add_func ("/inset", test_inset);
+  return g_test_run();
+}

@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <glnx-macros.h>
 #include <glnx-xattrs.h>
 #include <glnx-errors.h>
 #include <glnx-local-alloc.h>
@@ -249,7 +250,7 @@ glnx_dfd_name_get_all_xattrs (int            dfd,
                               GCancellable  *cancellable,
                               GError       **error)
 {
-  if (dfd == AT_FDCWD || dfd == -1)
+  if (G_IN_SET(dfd, AT_FDCWD, -1))
     {
       return get_xattrs_impl (name, -1, out_xattrs, cancellable, error);
     }
@@ -306,7 +307,7 @@ glnx_dfd_name_set_all_xattrs (int            dfd,
                               GCancellable  *cancellable,
                               GError       **error)
 {
-  if (dfd == AT_FDCWD || dfd == -1)
+  if (G_IN_SET(dfd, AT_FDCWD, -1))
     {
       return set_all_xattrs_for_path (name, xattrs, cancellable, error);
     }

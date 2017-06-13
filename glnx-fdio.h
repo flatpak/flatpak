@@ -35,6 +35,7 @@
 #include <libgen.h>
 #undef basename
 
+#include <glnx-macros.h>
 #include <glnx-errors.h>
 
 G_BEGIN_DECLS
@@ -189,7 +190,7 @@ glnx_try_fallocate (int      fd,
 
   if (fallocate (fd, 0, offset, size) < 0)
     {
-      if (errno == ENOSYS || errno == EOPNOTSUPP)
+      if (G_IN_SET(errno, ENOSYS, EOPNOTSUPP))
         ; /* Ignore */
       else
         return glnx_throw_errno_prefix (error, "fallocate");
