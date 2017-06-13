@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-06-05 13:52+0200\n"
-"PO-Revision-Date: 2017-05-31 12:42+0200\n"
+"PO-Revision-Date: 2017-06-13 14:24+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -1016,11 +1016,11 @@ msgstr "Hledat aplikaci s určeným názvem"
 
 #: app/flatpak-builtins-install.c:64
 msgid "Assume LOCATION is a .flatpak single-file bundle"
-msgstr ""
+msgstr "Předpokládat, že UMÍSTĚNÍ je jednosouborový balíček .flatpak"
 
 #: app/flatpak-builtins-install.c:65
 msgid "Assume LOCATION is a .flatpakref application description"
-msgstr ""
+msgstr "Předpokládat, že UMÍSTĚNÍ je popis aplikace .flatpakref"
 
 #: app/flatpak-builtins-install.c:66
 msgid "Check bundle signatures with GPG key from FILE (- for stdin)"
@@ -2124,7 +2124,7 @@ msgstr "Selhalo vytvoření dočasného souboru"
 
 #: common/flatpak-run.c:1870
 msgid "Failed to unlink temporary file"
-msgstr ""
+msgstr "Selhalo odlinkování dočasného souboru"
 
 #: common/flatpak-run.c:1888
 msgid "Failed to write to temporary file"
@@ -2142,7 +2142,7 @@ msgstr "Selhalo otevření dočasného souboru: %s"
 
 #: common/flatpak-run.c:3869
 msgid "Unable to create sync pipe"
-msgstr ""
+msgstr "Selhalo vytvoření synchronizační roury"
 
 #: common/flatpak-run.c:3894
 #, c-format
