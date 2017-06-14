@@ -111,5 +111,63 @@ G_BEGIN_DECLS
 
 #endif /* ifndef G_IN_SET */
 
+#define _GLNX_CONCAT(a, b)  a##b
+#define _GLNX_CONCAT_INDIRECT(a, b) _GLNX_CONCAT(a, b)
+#define _GLNX_MAKE_ANONYMOUS(a) _GLNX_CONCAT_INDIRECT(a, __COUNTER__)
+
+#define _GLNX_HASH_TABLE_FOREACH_IMPL_KV(guard, ht, it, kt, k, vt, v)          \
+    gboolean guard = TRUE;                                                     \
+    for (GHashTableIter it;                                                    \
+         guard && ({ g_hash_table_iter_init (&it, ht), TRUE; });               \
+         guard = FALSE)                                                        \
+            for (kt k; guard; guard = FALSE)                                   \
+                for (vt v; g_hash_table_iter_next (&it, (gpointer)&k, (gpointer)&v);)
+
+
+/* Cleaner method to iterate over a GHashTable. I.e. rather than
+ *
+ *   gpointer k, v;
+ *   GHashTableIter it;
+ *   g_hash_table_iter_init (&it, table);
+ *   while (g_hash_table_iter_next (&it, &k, &v))
+ *     {
+ *       const char *str = k;
+ *       GPtrArray *arr = v;
+ *       ...
+ *     }
+ *
+ * you can simply do
+ *
+ *   GLNX_HASH_TABLE_FOREACH_IT (table, it, const char*, str, GPtrArray*, arr)
+ *     {
+ *       ...
+ *     }
+ *
+ * All variables are scoped within the loop. You may use the `it` variable as
+ * usual, e.g. to remove an element using g_hash_table_iter_remove(&it). There
+ * are shorter variants for the more common cases where you do not need access
+ * to the iterator or to values:
+ *
+ *   GLNX_HASH_TABLE_FOREACH (table, const char*, str) { ... }
+ *   GLNX_HASH_TABLE_FOREACH_KV (table, const char*, str, MyData*, data) { ... }
+ *
+ */
+#define GLNX_HASH_TABLE_FOREACH_IT(ht, it, kt, k, vt, v) \
+    _GLNX_HASH_TABLE_FOREACH_IMPL_KV( \
+         _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_guard_), ht, it, kt, k, vt, v)
+
+/* Variant of GLNX_HASH_TABLE_FOREACH without having to specify an iterator. An
+ * anonymous iterator will be created. */
+#define GLNX_HASH_TABLE_FOREACH_KV(ht, kt, k, vt, v) \
+    _GLNX_HASH_TABLE_FOREACH_IMPL_KV( \
+         _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_guard_), ht, \
+         _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_it_), kt, k, vt, v)
+
+/* Variant of GLNX_HASH_TABLE_FOREACH_KV which omits unpacking vals. */
+#define GLNX_HASH_TABLE_FOREACH(ht, kt, k) \
+    _GLNX_HASH_TABLE_FOREACH_IMPL_KV( \
+         _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_guard_), ht, \
+         _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_it_), kt, k, \
+         gpointer, _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_v_))
 
 G_END_DECLS

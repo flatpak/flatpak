@@ -40,9 +40,62 @@ test_inset (void)
   g_assert (!G_IN_SET ('y', 'a', 'x', 'c'));
 }
 
+static void
+test_hash_table_foreach (void)
+{
+  /* use var names all different from the macro metavars to ensure proper
+   * substitution */
+  g_autoptr(GHashTable) table = g_hash_table_new (g_str_hash, g_str_equal);
+  const char *keys[] = {"key1", "key2"};
+  const char *vals[] = {"val1", "val2"};
+  g_hash_table_insert (table, (gpointer)keys[0], (gpointer)vals[0]);
+  g_hash_table_insert (table, (gpointer)keys[1], (gpointer)vals[1]);
+
+  guint i = 0;
+  GLNX_HASH_TABLE_FOREACH_IT (table, it, const char*, key, const char*, val)
+    {
+      g_assert_cmpstr (key, ==, keys[i]);
+      g_assert_cmpstr (val, ==, vals[i]);
+      i++;
+    }
+  g_assert_cmpuint (i, ==, 2);
+
+  i = 0;
+  GLNX_HASH_TABLE_FOREACH_IT (table, it, const char*, key, const char*, val)
+    {
+      g_hash_table_iter_remove (&it);
+      break;
+    }
+  g_assert_cmpuint (g_hash_table_size (table), ==, 1);
+
+  g_hash_table_insert (table, (gpointer)keys[1], (gpointer)vals[1]);
+  g_assert_cmpuint (g_hash_table_size (table), ==, 1);
+
+  g_hash_table_insert (table, (gpointer)keys[0], (gpointer)vals[0]);
+  g_assert_cmpuint (g_hash_table_size (table), ==, 2);
+
+  i = 0;
+  GLNX_HASH_TABLE_FOREACH_KV (table, const char*, key, const char*, val)
+    {
+      g_assert_cmpstr (key, ==, keys[i]);
+      g_assert_cmpstr (val, ==, vals[i]);
+      i++;
+    }
+  g_assert_cmpuint (i, ==, 2);
+
+  i = 0;
+  GLNX_HASH_TABLE_FOREACH (table, const char*, key)
+    {
+      g_assert_cmpstr (key, ==, keys[i]);
+      i++;
+    }
+  g_assert_cmpuint (i, ==, 2);
+}
+
 int main (int argc, char **argv)
 {
   g_test_init (&argc, &argv, NULL);
   g_test_add_func ("/inset", test_inset);
+  g_test_add_func ("/hash_table_foreach", test_hash_table_foreach);
   return g_test_run();
 }
