@@ -1609,6 +1609,7 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   options.mode = OSTREE_REPO_CHECKOUT_MODE_USER;
   options.overwrite_mode = OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES;
   options.enable_fsync = FALSE; /* We checkout to a temp dir and sync before moving it in place */
+  options.bareuseronly_dirs = TRUE; /* https://github.com/ostreedev/ostree/pull/927 */
 
   if (!ostree_repo_checkout_at (self->repo, &options,
                                 AT_FDCWD, checkout_dir_path, new_checksum,
@@ -1836,6 +1837,9 @@ repo_pull_one_dir (OstreeRepo          *self,
   const char *refs_to_fetch[2];
   const char *revs_to_fetch[2];
   guint32 update_freq = 0;
+
+  /* We always want this on for every type of pull */
+  flags |= OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
 
@@ -2568,7 +2572,8 @@ repo_pull_one_untrusted (OstreeRepo          *self,
                          GCancellable        *cancellable,
                          GError             **error)
 {
-  OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED;
+  /* The latter flag was introduced in https://github.com/ostreedev/ostree/pull/926 */
+  const OstreeRepoPullFlags flags = OSTREE_REPO_PULL_FLAGS_UNTRUSTED |OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
   GVariantBuilder builder;
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
@@ -4479,6 +4484,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   options.mode = OSTREE_REPO_CHECKOUT_MODE_USER;
   options.overwrite_mode = OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES;
   options.enable_fsync = FALSE; /* We checkout to a temp dir and sync before moving it in place */
+  options.bareuseronly_dirs = TRUE; /* https://github.com/ostreedev/ostree/pull/927 */
   checkoutdirpath = g_file_get_path (checkoutdir);
 
   if (subpaths == NULL || *subpaths == NULL)
