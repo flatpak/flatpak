@@ -1440,16 +1440,13 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
 
       if (!g_file_query_exists (repodir, cancellable))
         {
-          OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER;
+          OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
+          const char *mode_env = g_getenv ("FLATPAK_OSTREE_REPO_MODE");
 
-#if OSTREE_CHECK_VERSION(2017, 3)
-          {
-            const char *mode_env = g_getenv ("FLATPAK_OSTREE_REPO_MODE");
-
-            if (g_strcmp0 (mode_env, "user-only") == 0)
-              mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
-          }
-#endif
+          if (g_strcmp0 (mode_env, "user-only") == 0)
+            mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
+          if (g_strcmp0 (mode_env, "user") == 0)
+            mode = OSTREE_REPO_MODE_BARE_USER;
 
           if (!ostree_repo_create (repo, mode, cancellable, error))
             {
