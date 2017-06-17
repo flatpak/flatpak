@@ -37,7 +37,7 @@ test_inset (void)
   g_assert (!G_IN_SET (8, 7,42,3,9));
   g_assert (!G_IN_SET (-1, 7,42,3,9));
   g_assert (G_IN_SET ('x', 'a', 'x', 'c'));
-  g_assert (!G_IN_SET ('y', 'a', 'x', 'c'))
+  g_assert (!G_IN_SET ('y', 'a', 'x', 'c'));
 }
 
 int main (int argc, char **argv)
