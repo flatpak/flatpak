@@ -2110,6 +2110,96 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   return TRUE;
 }
 
+static gboolean
+ensure_safe_objdir (int dir_fd, const char *rel_path, GError **error)
+{
+  g_auto(GLnxDirFdIterator) iter = {0};
+
+  if (!glnx_dirfd_iterator_init_at (dir_fd, rel_path, TRUE, &iter, error))
+    return FALSE;
+
+  while (TRUE)
+    {
+      struct dirent *dent;
+
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&iter, &dent, NULL, error))
+        return FALSE;
+
+      if (dent == NULL)
+        break;
+
+      if (dent->d_type == DT_DIR)
+        {
+          if (!ensure_safe_objdir (iter.fd, dent->d_name, error))
+            return FALSE;
+        }
+      else
+        {
+          struct stat stbuf;
+          if (fstatat (iter.fd, dent->d_name, &stbuf, 0) == 0 &&
+              ((stbuf.st_mode & ~S_IFMT) & ~0775) != 0)
+            return flatpak_fail (error, "Invalid file mode 0%04o", stbuf.st_mode);
+
+          if (g_str_has_suffix (dent->d_name, ".dirmeta"))
+            {
+              glnx_fd_close int dirmeta_fd = -1;
+              g_autoptr(GBytes) data = NULL;
+              g_autoptr(GVariant) variant = NULL;
+              guint32 mode;
+
+              dirmeta_fd = openat (iter.fd, dent->d_name, O_RDONLY | O_CLOEXEC);
+              if (dirmeta_fd < 0)
+                flatpak_fail(error, "Can't read dirmeta");
+
+              data = glnx_fd_readall_bytes (dirmeta_fd, NULL, error);
+              if (!data)
+                return FALSE;
+              variant = g_variant_new_from_bytes (OSTREE_DIRMETA_GVARIANT_FORMAT, data, TRUE);
+              g_variant_ref_sink (variant);
+
+              g_variant_get_child (variant, 2, "u", &mode);
+              mode = GUINT32_FROM_BE (mode);
+              if (((mode & ~S_IFMT) & ~0775) != 0)
+                return flatpak_fail (error, "Invalid directory mode 0%04o", mode);
+            }
+        }
+    }
+
+  return TRUE;
+}
+
+
+static gboolean
+ensure_safe_staging_permissions (OstreeRepo *repo, GError **error)
+{
+  g_auto(GLnxDirFdIterator) tmp_iter = {0};
+
+  /* We don't know which stage dir is in use, so check all */
+
+  if (!glnx_dirfd_iterator_init_at (ostree_repo_get_dfd (repo), "tmp", TRUE, &tmp_iter, error))
+    return FALSE;
+
+  while (TRUE)
+    {
+      struct dirent *dent;
+
+      if (!glnx_dirfd_iterator_next_dent_ensure_dtype (&tmp_iter, &dent, NULL, error))
+        return FALSE;
+
+      if (dent == NULL)
+        break;
+
+      if (dent->d_type == DT_DIR && g_str_has_prefix (dent->d_name, "staging-") &&
+          !ensure_safe_objdir (tmp_iter.fd, dent->d_name, error))
+        {
+          glnx_shutil_rm_rf_at (tmp_iter.fd, dent->d_name, NULL, NULL);
+          return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_pull (FlatpakDir          *self,
                   const char          *repository,
@@ -2237,6 +2327,9 @@ flatpak_dir_pull (FlatpakDir          *self,
                                     error))
     goto out;
 
+
+  if (!ensure_safe_staging_permissions (repo, error))
+    goto out;
 
   if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
     goto out;

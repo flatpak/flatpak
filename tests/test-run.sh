@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_without_user_xattrs
 
-echo "1..10"
+echo "1..12"
 
 setup_repo
 install_repo
@@ -338,3 +338,34 @@ ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 ${FLATPAK} ${U} update org.test.OldVersion
 
 echo "ok version checks"
+
+rm -rf app
+flatpak build-init app org.test.Writable org.test.Platform org.test.Platform
+mkdir -p app/files/a-dir
+chmod a+rwx app/files/a-dir
+flatpak build-finish --command=hello.sh app
+ostree --repo=repos/test commit  ${FL_GPGARGS} --branch=app/org.test.Writable/$ARCH/master app
+update_repo
+
+if ${FLATPAK} ${U} install test-repo org.test.Writable &> err.txt; then
+    assert_not_reached "Should not be able to install with world-writable directory"
+fi
+assert_file_has_content err.txt [Ii]nvalid
+
+echo "ok no world writable dir"
+
+rm -rf app
+flatpak build-init app org.test.Setuid org.test.Platform org.test.Platform
+mkdir -p app/files/
+touch app/files/exe
+chmod u+s app/files/exe
+flatpak build-finish --command=hello.sh app
+ostree --repo=repos/test commit  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/master app
+update_repo
+
+if ${FLATPAK} ${U} install test-repo org.test.Setuid &> err2.txt; then
+    assert_not_reached "Should not be able to install with setuid file"
+fi
+assert_file_has_content err2.txt [Ii]nvalid
+
+echo "ok no setuid"
