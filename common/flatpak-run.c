@@ -2569,7 +2569,7 @@ exports_path_hide (FlatpakExports *exports,
   ep->path = g_strdup (path);
   ep->level = 0;
   ep->mode = MAX (old_mode, FAKE_MODE_HIDDEN);
-  g_hash_table_insert (exports->hash, ep->path, ep);
+  g_hash_table_replace (exports->hash, ep->path, ep);
 }
 
 static gboolean
@@ -2651,7 +2651,7 @@ _exports_path_expose (FlatpakExports *exports,
           ep->path = g_strdup (path);
           ep->mode = MAX (old_mode, mode);
           ep->level = level;
-          g_hash_table_insert (exports->hash, ep->path, ep);
+          g_hash_table_replace (exports->hash, ep->path, ep);
           return TRUE;
         }
     }
