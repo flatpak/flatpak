@@ -2116,6 +2116,7 @@ builder_manifest_finish (BuilderManifest *self,
   if (!builder_cache_lookup (cache, "finish"))
     {
       GFile *app_dir = NULL;
+      g_autofree char *ref = NULL;
       g_print ("Finishing app\n");
 
       if (!builder_context_enable_rofiles (context, error))
@@ -2123,6 +2124,13 @@ builder_manifest_finish (BuilderManifest *self,
 
       /* Call after enabling rofiles */
       app_dir = builder_context_get_app_dir (context);
+
+      ref = flatpak_compose_ref (!self->build_runtime && !self->build_extension,
+                                 builder_manifest_get_id (self),
+                                 builder_manifest_get_branch (self),
+                                 builder_context_get_arch (context), error);
+      if (ref == NULL)
+        return FALSE;
 
       if (self->metadata)
         {
@@ -2352,7 +2360,11 @@ builder_manifest_finish (BuilderManifest *self,
 
           metadata_locale_file = g_file_get_child (app_dir, "metadata.locale");
           metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s\n", locale_id);
+                                               "name=%s\n"
+                                               "\n"
+                                               "[ExtensionOf]\n"
+                                               "ref=%s\n",
+                                               locale_id, ref);
           if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_locale_file),
                                     metadata_contents, strlen (metadata_contents),
                                     error))
@@ -2388,7 +2400,11 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
 
           metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s\n", debug_id);
+                                               "name=%s\n"
+                                               "\n"
+                                               "[ExtensionOf]\n"
+                                               "ref=%s\n",
+                                               debug_id, ref);
           if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_debuginfo_file),
                                     metadata_contents, strlen (metadata_contents), error))
             return FALSE;
@@ -2433,6 +2449,7 @@ builder_manifest_create_platform (BuilderManifest *self,
       g_autoptr(GSubprocess) subp = NULL;
       g_autoptr(GPtrArray) args = NULL;
       GFile *app_dir = NULL;
+      g_autofree char *ref = NULL;
 
       g_print ("Creating platform based on %s\n", self->runtime);
 
@@ -2441,6 +2458,13 @@ builder_manifest_create_platform (BuilderManifest *self,
 
       /* Call after enabling rofiles */
       app_dir = builder_context_get_app_dir (context);
+
+      ref = flatpak_compose_ref (!self->build_runtime && !self->build_extension,
+                                 builder_manifest_get_id_platform (self),
+                                 builder_manifest_get_branch (self),
+                                 builder_context_get_arch (context), error);
+      if (ref == NULL)
+        return FALSE;
 
       platform_dir = g_file_get_child (app_dir, "platform");
 
@@ -2676,7 +2700,10 @@ builder_manifest_create_platform (BuilderManifest *self,
 
           metadata_locale_file = g_file_get_child (app_dir, "metadata.platform.locale");
           metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s\n", locale_id);
+                                               "name=%s\n"
+                                               "\n"
+                                               "[ExtensionOf]\n"
+                                               "ref=%s\n", locale_id, ref);
           if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_locale_file),
                                     metadata_contents, strlen (metadata_contents),
                                     error))
