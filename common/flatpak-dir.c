@@ -1652,6 +1652,10 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
       g_autoptr(OstreeRepo) child_repo = NULL;
       g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
       FlatpakSystemHelper *system_helper;
+      g_autoptr(GBytes) summary_copy = NULL;
+      g_autoptr(GBytes) summary_sig_copy = NULL;
+      g_autoptr(GFile) summary_file = NULL;
+      g_autoptr(GFile) summary_sig_file = NULL;
 
       child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
       if (child_repo == NULL)
@@ -1661,9 +1665,28 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
       g_assert (system_helper != NULL);
 
+      if (!flatpak_dir_remote_fetch_summary (self, remote,
+                                             &summary_copy, &summary_sig_copy,
+                                             cancellable, error))
+        return FALSE;
+
       if (!flatpak_dir_pull (self, remote, branch, NULL, NULL,
                              child_repo, FLATPAK_PULL_FLAGS_NONE, OSTREE_REPO_PULL_FLAGS_MIRROR,
                              progress, cancellable, error))
+        return FALSE;
+
+      summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
+      if (!g_file_replace_contents (summary_file,
+                                    g_bytes_get_data (summary_copy, NULL),
+                                    g_bytes_get_size (summary_copy),
+                                    NULL, FALSE, 0, NULL, cancellable, NULL))
+        return FALSE;
+
+      summary_sig_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary.sig");
+      if (!g_file_replace_contents (summary_sig_file,
+                                    g_bytes_get_data (summary_sig_copy, NULL),
+                                    g_bytes_get_size (summary_sig_copy),
+                                    NULL, FALSE, 0, NULL, cancellable, NULL))
         return FALSE;
 
       if (!ostree_repo_resolve_rev (child_repo, branch, TRUE, &new_checksum, error))
@@ -4979,6 +5002,10 @@ flatpak_dir_update (FlatpakDir          *self,
              user and hand back the resulting data to the system-helper, that trusts us
              due to the GPG signatures in the repo */
           FlatpakPullFlags flatpak_flags;
+          g_autoptr(GBytes) summary_copy = NULL;
+          g_autoptr(GBytes) summary_sig_copy = NULL;
+          g_autoptr(GFile) summary_file = NULL;
+          g_autoptr(GFile) summary_sig_file = NULL;
 
           child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, error);
           if (child_repo == NULL)
@@ -4988,10 +5015,29 @@ flatpak_dir_update (FlatpakDir          *self,
           if (checksum_or_latest != NULL)
             flatpak_flags |= FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE;
 
+          if (!flatpak_dir_remote_fetch_summary (self, remote_name,
+                                                 &summary_copy, &summary_sig_copy,
+                                                 cancellable, error))
+            return FALSE;
+
           if (!flatpak_dir_pull (self, remote_name, ref, rev, subpaths,
                                  child_repo,
                                  flatpak_flags, OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
+            return FALSE;
+
+          summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
+          if (!g_file_replace_contents (summary_file,
+                                        g_bytes_get_data (summary_copy, NULL),
+                                        g_bytes_get_size (summary_copy),
+                                        NULL, FALSE, 0, NULL, cancellable, NULL))
+            return FALSE;
+
+          summary_sig_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary.sig");
+          if (!g_file_replace_contents (summary_sig_file,
+                                        g_bytes_get_data (summary_sig_copy, NULL),
+                                        g_bytes_get_size (summary_sig_copy),
+                                        NULL, FALSE, 0, NULL, cancellable, NULL))
             return FALSE;
 
           if (!ostree_repo_resolve_rev (child_repo, ref, FALSE, &latest_checksum, error))
