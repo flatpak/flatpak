@@ -1110,21 +1110,26 @@ builder_manifest_get_runtime_version (BuilderManifest *self)
 }
 
 const char *
-builder_manifest_get_branch (BuilderManifest *self, const char *default_branch)
+builder_manifest_get_branch (BuilderManifest *self)
 {
   if (self->branch)
     return self->branch;
 
-  if (default_branch)
-    return default_branch;
-
   return "master";
+}
+
+void
+builder_manifest_set_default_branch (BuilderManifest *self,
+                                     const char *default_branch)
+{
+  if (self->branch == NULL)
+    self->branch = g_strdup (default_branch);
 }
 
 static const char *
 builder_manifest_get_base_version (BuilderManifest *self)
 {
-  return self->base_version ? self->base_version : builder_manifest_get_branch (self, NULL);
+  return self->base_version ? self->base_version : builder_manifest_get_branch (self);
 }
 
 static char *

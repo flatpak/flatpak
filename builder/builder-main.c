@@ -438,6 +438,9 @@ main (int    argc,
       return 1;
     }
 
+  if (opt_default_branch)
+    builder_manifest_set_default_branch (manifest, opt_default_branch);
+
   if (is_run && argc == 3)
     return usage (context, "Program to run must be specified");
 
@@ -616,7 +619,7 @@ main (int    argc,
   if (opt_mirror_screenshots_url && !opt_export_only)
     {
       g_autofree char *screenshot_subdir = g_strdup_printf ("%s-%s", builder_manifest_get_id (manifest),
-                                                            builder_manifest_get_branch (manifest, opt_default_branch));
+                                                            builder_manifest_get_branch (manifest));
       g_autofree char *url = g_build_filename (opt_mirror_screenshots_url, screenshot_subdir, NULL);
       g_autofree char *xml_relpath = g_strdup_printf ("files/share/app-info/xmls/%s.xml.gz", builder_manifest_get_id (manifest));
       g_autoptr(GFile) xml = g_file_resolve_relative_path (app_dir, xml_relpath);
@@ -668,7 +671,7 @@ main (int    argc,
                       "--exclude=/lib/debug/*",
                       "--include=/lib/debug/app",
                       builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
-                      opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
+                      opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
         {
           g_printerr ("Export failed: %s\n", error->message);
           return 1;
@@ -698,7 +701,7 @@ main (int    argc,
           if (!do_export (build_context, &error, TRUE,
                           metadata_arg,
                           files_arg,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;
@@ -715,7 +718,7 @@ main (int    argc,
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.debuginfo",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;
@@ -732,7 +735,7 @@ main (int    argc,
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.sources",
                           "--files=sources",
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;
@@ -750,7 +753,7 @@ main (int    argc,
                           "--metadata=metadata.platform",
                           "--files=platform",
                           builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;
@@ -780,7 +783,7 @@ main (int    argc,
           if (!do_export (build_context, &error, TRUE,
                           metadata_arg,
                           files_arg,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest, opt_default_branch), NULL))
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;

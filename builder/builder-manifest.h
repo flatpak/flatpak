@@ -56,8 +56,9 @@ const char *    builder_manifest_get_id_platform (BuilderManifest *self);
 char *          builder_manifest_get_locale_id_platform (BuilderManifest *self);
 BuilderOptions *builder_manifest_get_build_options (BuilderManifest *self);
 GList *         builder_manifest_get_modules (BuilderManifest *self);
-const char *    builder_manifest_get_branch (BuilderManifest *self,
-                                             const char *default_branch);
+const char *    builder_manifest_get_branch (BuilderManifest *self);
+void            builder_manifest_set_default_branch (BuilderManifest *self,
+                                                     const char *default_branch);
 
 gboolean        builder_manifest_start (BuilderManifest *self,
                                         gboolean         allow_missing_runtimes,
