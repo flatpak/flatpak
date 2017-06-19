@@ -397,7 +397,7 @@ test_install_launch_uninstall (void)
   g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
-  quit_id = g_timeout_add (500, quit, NULL);
+  quit_id = g_timeout_add (1000, quit, loop);
   g_main_loop_run (loop);
   g_source_remove (quit_id);
 
@@ -442,7 +442,7 @@ test_install_launch_uninstall (void)
   g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
-  quit_id = g_timeout_add (500, quit, loop);
+  quit_id = g_timeout_add (1000, quit, loop);
   g_main_loop_run (loop);
   g_source_remove (quit_id);
 
