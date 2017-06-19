@@ -4897,6 +4897,7 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   g_autoptr(OstreeRepo) new_repo = NULL;
   g_autoptr(GKeyFile) config = NULL;
   OstreeRepoMode parent_mode;
+  const char *mode_env = g_getenv ("FLATPAK_OSTREE_REPO_MODE");
 
   g_assert (!self->user);
 
@@ -4921,6 +4922,12 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   new_repo = ostree_repo_new (repo_dir);
 
   parent_mode = ostree_repo_get_mode (self->repo);
+
+  /* We will be pulling from this repo, so we can't allow
+     it to be bare-user-only, as that is potentially lossy */
+  if (parent_mode == OSTREE_REPO_MODE_BARE_USER_ONLY &&
+      g_strcmp0 (mode_env, "user-only") != 0)
+    parent_mode = OSTREE_REPO_MODE_BARE_USER;
 
   repo_dir_config = g_file_get_child (repo_dir, "config");
   if (!g_file_query_exists (repo_dir_config, NULL))
