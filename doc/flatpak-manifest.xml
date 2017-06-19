@@ -137,6 +137,11 @@
                     <listitem><para>Install these extra extensions from the base application when initializing
                     the application directory.</para></listitem>
                 </varlistentry>
+                <varlistentry>
+                    <term><option>inherit-extensions</option> (array of strings)</term>
+                    <listitem><para>Inherit these extra extensions points from the base application or sdk when
+                    finishing the build.</para></listitem>
+                </varlistentry>
 
                 <varlistentry>
                     <term><option>tags</option> (array of strings)</term>
