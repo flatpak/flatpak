@@ -149,7 +149,7 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   metakey = flatpak_deploy_get_metadata (deploy);
 
-  if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size)
+  if (opt_show_ref || opt_show_origin || opt_show_commit || opt_show_size || opt_show_metadata)
     friendly = FALSE;
 
   if (friendly)
@@ -213,6 +213,22 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
       if (!first)
         g_print ("\n");
+
+      if (opt_show_metadata)
+        {
+          g_autoptr(GFile) deploy_dir = NULL;
+          g_autoptr(GFile) file = NULL;
+          g_autofree char *data = NULL;
+          gsize data_size;
+
+          deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
+          file = g_file_get_child (deploy_dir, "metadata");
+
+          if (!g_file_load_contents (file, cancellable, &data, &data_size, NULL, error))
+            return FALSE;
+
+          g_print ("%s", data);
+        }
     }
 
   if (opt_show_extensions)
@@ -262,24 +278,6 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
                g_print ("%s%s%s %s\n", on, _("Subpaths:"), off, subpath_str);
              }
          }
-    }
-
-  if (opt_show_metadata)
-    {
-      g_autoptr(GFile) deploy_dir = NULL;
-      g_autoptr(GFile) file = NULL;
-      g_autofree char *data = NULL;
-      gsize data_size;
-
-      g_print ("\n%s%s%s\n", on, _("Metadata:"), off);
-
-      deploy_dir = flatpak_dir_get_if_deployed (dir, ref, NULL, cancellable);
-      file = g_file_get_child (deploy_dir, "metadata");
-
-      if (!g_file_load_contents (file, cancellable, &data, &data_size, NULL, error))
-        return FALSE;
-
-      g_print ("%s\n", data);
     }
 
   return TRUE;
