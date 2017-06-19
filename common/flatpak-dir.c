@@ -5071,6 +5071,10 @@ flatpak_dir_install (FlatpakDir          *self,
           /* We're pulling from a remote source, we do the network mirroring pull as a
              user and hand back the resulting data to the system-helper, that trusts us
              due to the GPG signatures in the repo */
+          g_autoptr(GBytes) summary_copy = NULL;
+          g_autoptr(GBytes) summary_sig_copy = NULL;
+          g_autoptr(GFile) summary_file = NULL;
+          g_autoptr(GFile) summary_sig_file = NULL;
 
           child_repo = flatpak_dir_create_system_child_repo (self, &child_repo_lock, NULL, error);
           if (child_repo == NULL)
@@ -5078,11 +5082,30 @@ flatpak_dir_install (FlatpakDir          *self,
 
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
 
+          if (!flatpak_dir_remote_fetch_summary (self, remote_name,
+                                                 &summary_copy, &summary_sig_copy,
+                                                 cancellable, error))
+            return FALSE;
+
           if (!flatpak_dir_pull (self, remote_name, ref, NULL, subpaths,
                                  child_repo,
                                  flatpak_flags,
                                  OSTREE_REPO_PULL_FLAGS_MIRROR,
                                  progress, cancellable, error))
+            return FALSE;
+
+          summary_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary");
+          if (!g_file_replace_contents (summary_file,
+                                        g_bytes_get_data (summary_copy, NULL),
+                                        g_bytes_get_size (summary_copy),
+                                        NULL, FALSE, 0, NULL, cancellable, NULL))
+            return FALSE;
+
+          summary_sig_file = g_file_get_child (ostree_repo_get_path (child_repo), "summary.sig");
+          if (!g_file_replace_contents (summary_sig_file,
+                                        g_bytes_get_data (summary_sig_copy, NULL),
+                                        g_bytes_get_size (summary_sig_copy),
+                                        NULL, FALSE, 0, NULL, cancellable, NULL))
             return FALSE;
 
           child_repo_path = g_file_get_path (ostree_repo_get_path (child_repo));
