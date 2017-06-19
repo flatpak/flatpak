@@ -4897,6 +4897,8 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   g_autoptr(OstreeRepo) new_repo = NULL;
   g_autoptr(GKeyFile) config = NULL;
   OstreeRepoMode mode = OSTREE_REPO_MODE_BARE_USER;
+  const char *mode_str = "bare-user";
+  g_autofree char *current_mode = NULL;
   const char *mode_env = g_getenv ("FLATPAK_OSTREE_REPO_MODE");
 
   g_assert (!self->user);
@@ -4922,8 +4924,10 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
   new_repo = ostree_repo_new (repo_dir);
 
   /* Allow to override the mode when user-only is needed (e.g. live systems) */
-  if (g_strcmp0 (mode_env, "user-only") == 0)
+  if (g_strcmp0 (mode_env, "user-only") == 0) {
     mode = OSTREE_REPO_MODE_BARE_USER_ONLY;
+    mode_str = "bare-user-only";
+  }
 
   repo_dir_config = g_file_get_child (repo_dir, "config");
   if (!g_file_query_exists (repo_dir_config, NULL))
@@ -4942,8 +4946,28 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
         }
     }
 
-  /* Ensure the config is updated */
   config = ostree_repo_copy_config (new_repo);
+
+  /* Verify that the mode is the expected one; if it isn't, recreate the repo */
+  current_mode = g_key_file_get_string (config, "core", "mode", NULL);
+  if (current_mode == NULL || g_strcmp0 (current_mode, mode_str) != 0)
+    {
+      flatpak_rm_rf (repo_dir, NULL, NULL);
+
+      /* Re-initialize the object because its dir's contents have been deleted (and it
+       * holds internal references to them) */
+      g_object_unref (new_repo);
+      new_repo = ostree_repo_new (repo_dir);
+
+      if (!ostree_repo_create (new_repo, mode, NULL, error))
+        return NULL;
+
+      /* Reload the repo config */
+      g_key_file_free (config);
+      config = ostree_repo_copy_config (new_repo);
+    }
+
+  /* Ensure the config is updated */
   g_key_file_set_string (config, "core", "parent",
                          flatpak_file_get_path_cached (ostree_repo_get_path (self->repo)));
 
