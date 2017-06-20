@@ -2215,6 +2215,10 @@ builder_manifest_finish (BuilderManifest *self,
                     return FALSE;
                   g_key_file_set_value (keyfile, group, keys[j], value);
                 }
+
+              if (!g_key_file_has_key (keyfile, group, "version", NULL) &&
+                  !g_key_file_has_key (keyfile, group, "versions", NULL))
+                g_key_file_set_value (keyfile, group, "version", parent_version);
             }
 
           if (!g_key_file_save_to_file (keyfile,
