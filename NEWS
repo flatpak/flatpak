@@ -1,3 +1,20 @@
+Major changes in 0.8.7
+======================
+
+This is a minor security update, matching the behaviour on master
+where we avoid ever creating setuid files or world-writable
+directories. However, the fix is more localized and does not
+require a new ostree.
+
+Changes:
+ * After pulling from a remote, always verify that the staged
+   new files and directories have safe permissions.
+ * Ensure ~/.local/share/flatpak is not readable to other users, to
+   avoid anyone ever seeing possibly world-writeable directories
+   therein.
+ * Fix double-setting a error in case of errors when pulling
+ * Fix timeout in testcase
+
 Major changes in 0.8.6
 ======================
 
