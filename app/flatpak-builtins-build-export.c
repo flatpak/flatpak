@@ -753,7 +753,11 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (opt_body)
     body = g_strdup (opt_body);
   else
-    body = g_strconcat ("Name: ", id, "\nArch: ", arch, "\nBranch: ", branch, NULL);
+    body = g_strdup_printf ("Name: %s\n"
+                            "Arch: %s\n"
+                            "Branch: %s\n"
+                            "Built with: "PACKAGE_STRING"\n",
+                            id, arch, branch, NULL);
 
   full_branch = g_strconcat ((opt_runtime || is_runtime) ? "runtime/" : "app/", id, "/", arch, "/", branch, NULL);
 
