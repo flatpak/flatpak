@@ -1,3 +1,33 @@
+Major changes in 0.9.6
+======================
+
+This version requires the latest ostree version (2017.7) because it
+uses a new feature that hardens the security of flatpak. Previously,
+if you installed to a system-wide repository, the files created for an
+application were as specified by the remote repo, but owned by root,
+which could include problematic permissions like setuid or
+world-writable. We now never create such problematic files or
+directories on disk. Flatpak export was also changed to never
+create problematic files in new apps.
+
+Related to this, newly created flatpak installations also use the
+new "bare-user-only" mode for the repositories, which means you
+can now install applications even if your filesystem does not
+support extended attributes.
+
+Other changes:
+
+ * flatpak info --show-metadata now only shows the metadata, in
+   a machine parseable way.
+ * build-export now records the flatpak version in the commit message
+ * builder: The .pyc timestamp fixer now allows .pyc files with no
+   corresponding .py file.
+ * builder: New feature 'inherit-extensions' lets you copy extension
+   info from the parent runtime.
+ * builder: Set ExtensionOf in auto-created extensions (like Locale
+   and Debug)
+ * builder: Setting CPPFLAGS now works
+
 Major changes in 0.9.5
 ======================
 
