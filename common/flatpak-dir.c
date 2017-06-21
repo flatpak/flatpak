@@ -3143,7 +3143,7 @@ flatpak_dir_read_latest (FlatpakDir   *self,
       g_autoptr(GVariant) commit_metadata = NULL;
 
       if (!ostree_repo_load_commit (self->repo, res, &commit_data, NULL, error))
-        return FALSE;
+        return NULL;
 
       commit_metadata = g_variant_get_child_value (commit_data, 0);
       g_variant_lookup (commit_metadata, "xa.alt-id", "s", &alt_id);
