@@ -176,7 +176,7 @@
         <title>Examples</title>
 
         <para>
-            <command>$ flatpak --user remote-ls --only-apps testrepo</command>
+            <command>$ flatpak --user remote-ls --app testrepo</command>
         </para>
 <programlisting>
 org.gnome.Builder
