@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-06-20 14:49+0200\n"
-"PO-Revision-Date: 2017-03-17 16:41+0200\n"
+"POT-Creation-Date: 2017-06-24 03:24+0000\n"
+"PO-Revision-Date: 2017-06-24 15:47+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -220,9 +220,8 @@ msgid "Export oci image instead of flatpak bundle"
 msgstr "Експортувати образ OCI замість пакунка flatpak"
 
 #: app/flatpak-builtins-build-bundle.c:61
-#, fuzzy
 msgid "GPG Key ID to sign the OCI image with"
-msgstr "Ідентифікатор ключа GPG для підписування резюме"
+msgstr "Ідентифікатор ключа GPG для підписування образу OCI"
 
 #: app/flatpak-builtins-build-bundle.c:61
 #: app/flatpak-builtins-build-commit-from.c:55
@@ -924,19 +923,16 @@ msgid "Show origin"
 msgstr "Показ початку координат"
 
 #: app/flatpak-builtins-info.c:55
-#, fuzzy
 msgid "Show size"
-msgstr "Показати посилання"
+msgstr "Показ розміру"
 
 #: app/flatpak-builtins-info.c:56
-#, fuzzy
 msgid "Show metadata"
-msgstr "Показати подробиці щодо віддаленого сховища"
+msgstr "Показ метаданих"
 
 #: app/flatpak-builtins-info.c:57
-#, fuzzy
 msgid "Show extensions"
-msgstr "Показати параметри доступ до довідки"
+msgstr "Показати розширення"
 
 #: app/flatpak-builtins-info.c:98
 msgid "NAME [BRANCH] - Get info about installed app and/or runtime"
@@ -946,67 +942,63 @@ msgstr ""
 
 #: app/flatpak-builtins-info.c:157
 msgid "Ref:"
-msgstr ""
+msgstr "Джерело:"
 
 #: app/flatpak-builtins-info.c:158 app/flatpak-builtins-info.c:268
 msgid "ID:"
-msgstr ""
+msgstr "Ід.:"
 
 #: app/flatpak-builtins-info.c:159
 msgid "Arch:"
-msgstr ""
+msgstr "Арх.:"
 
 #: app/flatpak-builtins-info.c:160
-#, fuzzy
 msgid "Branch:"
-msgstr "Гілка, яку слід використовувати"
+msgstr "Гілка:"
 
 #: app/flatpak-builtins-info.c:161 app/flatpak-builtins-info.c:269
 msgid "Origin:"
-msgstr ""
+msgstr "Походження:"
 
 #: app/flatpak-builtins-info.c:164
 msgid "Active commit:"
-msgstr ""
+msgstr "Активний внесок:"
 
 #: app/flatpak-builtins-info.c:165
 msgid "Latest commit:"
-msgstr ""
+msgstr "Останній внесок:"
 
 #: app/flatpak-builtins-info.c:168 app/flatpak-builtins-info.c:270
 msgid "Commit:"
-msgstr ""
+msgstr "Внесок:"
 
 #: app/flatpak-builtins-info.c:170
 msgid "alt-id:"
-msgstr ""
+msgstr "альт-ід.:"
 
 #: app/flatpak-builtins-info.c:171
 msgid "Location:"
-msgstr ""
+msgstr "Місце:"
 
 #: app/flatpak-builtins-info.c:172 app/flatpak-builtins-info.c:271
-#, fuzzy
 msgid "Installed size:"
-msgstr "Встановлення підписаного середовища виконання"
+msgstr "Розмір встановленого:"
 
 #: app/flatpak-builtins-info.c:177
-#, fuzzy
 msgid "Runtime:"
-msgstr "Середовище виконання, яке слід використовувати"
+msgstr "Середовище виконання:"
 
 #: app/flatpak-builtins-info.c:182
 msgid "Installed subdirectories:"
-msgstr ""
+msgstr "Встановлені підкаталоги:"
 
 #: app/flatpak-builtins-info.c:267
-#, fuzzy
 msgid "Extension:"
-msgstr "Показати параметри доступ до довідки"
+msgstr "Суфікс:"
 
 #: app/flatpak-builtins-info.c:278
 msgid "Subpaths:"
-msgstr ""
+msgstr "Підшляхи:"
 
 #: app/flatpak-builtins-install.c:57
 msgid "Don't pull, only install from local cache"
@@ -1026,7 +1018,7 @@ msgstr "Не перевіряти або не встановлювати зал�
 
 #: app/flatpak-builtins-install.c:61 app/flatpak-builtins-update.c:60
 msgid "Don't use static deltas"
-msgstr ""
+msgstr "Не використовувати статичні різниці"
 
 #: app/flatpak-builtins-install.c:63 app/flatpak-builtins-uninstall.c:49
 #: app/flatpak-builtins-update.c:62
@@ -1118,33 +1110,32 @@ msgstr "Архітектура для показу"
 
 #: app/flatpak-builtins-list.c:53 app/flatpak-builtins-ls-remote.c:49
 msgid "List all refs (including locale/debug)"
-msgstr ""
+msgstr "Вивести список усіх джерел (включно з locale/debug)"
 
 #: app/flatpak-builtins-list.c:131 app/flatpak-builtins-ls-remote.c:204
 #: app/flatpak-builtins-repo.c:95
 msgid "Ref"
-msgstr ""
+msgstr "Джерело"
 
 #: app/flatpak-builtins-list.c:134
 msgid "Origin"
-msgstr ""
+msgstr "Походження"
 
 #: app/flatpak-builtins-list.c:135
 msgid "Active commit"
-msgstr ""
+msgstr "Активний внесок"
 
 #: app/flatpak-builtins-list.c:136
 msgid "Latest commit"
-msgstr ""
+msgstr "Останній внесок"
 
 #: app/flatpak-builtins-list.c:137 app/flatpak-builtins-ls-remote.c:206
-#, fuzzy
 msgid "Installed size"
-msgstr "Встановлення підписаного середовища виконання"
+msgstr "Розмір встановленого"
 
 #: app/flatpak-builtins-list.c:139 app/flatpak-builtins-list-remotes.c:112
 msgid "Options"
-msgstr ""
+msgstr "Параметри"
 
 #: app/flatpak-builtins-list.c:370
 msgid " - List installed apps and/or runtimes"
@@ -1164,15 +1155,15 @@ msgstr " - Вивести список віддалених сховищ"
 
 #: app/flatpak-builtins-list-remotes.c:105
 msgid "Name"
-msgstr ""
+msgstr "Назва"
 
 #: app/flatpak-builtins-list-remotes.c:108
 msgid "Title"
-msgstr ""
+msgstr "Заголовок"
 
 #: app/flatpak-builtins-list-remotes.c:110
 msgid "Priority"
-msgstr ""
+msgstr "Пріоритетність"
 
 #: app/flatpak-builtins-ls-remote.c:44
 msgid "Show arches and branches"
@@ -1204,12 +1195,11 @@ msgstr "Має бути вказано СХОВИЩЕ"
 
 #: app/flatpak-builtins-ls-remote.c:205
 msgid "Commit"
-msgstr ""
+msgstr "Внесок"
 
 #: app/flatpak-builtins-ls-remote.c:207
-#, fuzzy
 msgid "Download size"
-msgstr "Показати посилання"
+msgstr "Розмір отриманого"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -1238,36 +1228,32 @@ msgid "APP - Override settings for application"
 msgstr "ПРОГРАМА - Перевизначити параметри програми"
 
 #: app/flatpak-builtins-repo.c:96
-#, fuzzy
 msgid "Installed"
-msgstr "встановити"
+msgstr "Встановлено"
 
 #: app/flatpak-builtins-repo.c:97
 msgid "Download"
-msgstr ""
+msgstr "Отримати"
 
 #: app/flatpak-builtins-repo.c:150
-#, fuzzy
 msgid "Print general information about the repository"
-msgstr "ФАЙЛ - Отримати інформацію щодо експортованого файла"
+msgstr "Вивести загальну інформацію щодо сховища"
 
 #: app/flatpak-builtins-repo.c:151
-#, fuzzy
 msgid "List the branches in the repository"
-msgstr "Типова гілка для цього сховища"
+msgstr "Вивести список гілок у сховищі"
 
 #: app/flatpak-builtins-repo.c:152
 msgid "Print metadata for a branch"
-msgstr ""
+msgstr "Вивести метадані для гілки"
 
 #: app/flatpak-builtins-repo.c:166
-#, fuzzy
 msgid "LOCATION - Repository maintenance"
-msgstr "РОЗТАШУВАННЯ - Оновити метадані сховища"
+msgstr "РОЗТАШУВАННЯ - Супровід сховища"
 
 #: app/flatpak-builtins-repo-update.c:50
 msgid "Redirect this repo to a new URL"
-msgstr ""
+msgstr "Переспрямувати це сховище на нову адресу"
 
 #: app/flatpak-builtins-repo-update.c:51
 msgid "A nice name to use for this repository"
@@ -1279,7 +1265,7 @@ msgstr "Типова гілка для цього сховища"
 
 #: app/flatpak-builtins-repo-update.c:53
 msgid "Import new default GPG public key from FILE"
-msgstr ""
+msgstr "Імпортувати новий типовий відкритий ключ GPG з файла ФАЙЛ"
 
 #: app/flatpak-builtins-repo-update.c:54
 msgid "GPG Key ID to sign the summary with"
@@ -1314,14 +1300,14 @@ msgid "Generating delta: %s (%.10s-%.10s)\n"
 msgstr "Створюємо різницю: %s (%.10s-%.10s)\n"
 
 #: app/flatpak-builtins-repo-update.c:197
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to generate delta %s (%.10s): "
-msgstr "Не вдалося створити різницю %s (%.10s): %s\n"
+msgstr "Не вдалося створити різницю %s (%.10s): "
 
 #: app/flatpak-builtins-repo-update.c:200
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to generate delta %s (%.10s-%.10s): "
-msgstr "Не вдалося створити різницю %s (%.10s-%.10s): %s\n"
+msgstr "Не вдалося створити різницю %s (%.10s-%.10s): "
 
 #: app/flatpak-builtins-repo-update.c:402
 msgid "LOCATION - Update repository metadata"
@@ -1379,7 +1365,7 @@ msgstr "Записувати до журналу виклики до канал�
 
 #: app/flatpak-builtins-run.c:59
 msgid "Enable file forwarding"
-msgstr ""
+msgstr "Увімкнути переспрямовування файлів"
 
 #: app/flatpak-builtins-run.c:80
 msgid "APP [args...] - Run an app"
@@ -1606,9 +1592,8 @@ msgid "Create new commit based on existing ref"
 msgstr "Створити внесок на основі наявного посилання"
 
 #: app/flatpak-main.c:100
-#, fuzzy
 msgid "Print information about a repo"
-msgstr "ФАЙЛ - Отримати інформацію щодо експортованого файла"
+msgstr "Вивести інформація щодо сховища"
 
 #: app/flatpak-main.c:106
 msgid "Print debug information during command processing"
@@ -1651,9 +1636,8 @@ msgid "Work on a specific system-wide installation"
 msgstr "Працювати із вказаним загальносистемним встановленням"
 
 #: app/flatpak-main.c:123
-#, fuzzy
 msgid "NAME"
-msgstr "НАЗВА ФАЙЛА"
+msgstr "НАЗВА"
 
 #: app/flatpak-main.c:149
 msgid "Builtin Commands:"
@@ -1711,9 +1695,9 @@ msgid "Remote %s disabled, ignoring %s update"
 msgstr "Сховище %s вимкнено, ігноруємо оновлення %s"
 
 #: app/flatpak-transaction.c:485
-#, fuzzy, c-format
+#, c-format
 msgid "%s already installed, skipping\n"
-msgstr "%s вже встановлено"
+msgstr "%s вже встановлено, пропускаємо\n"
 
 #: app/flatpak-transaction.c:529
 #, c-format
@@ -1815,9 +1799,9 @@ msgid "Invalid checksum for extra data %s"
 msgstr "Некоректна контрольна сума додаткових даних, %s"
 
 #: common/flatpak-dir.c:2325
-#, fuzzy, c-format
+#, c-format
 msgid "%s commit %s already installed"
-msgstr "Гілку %s %s вже встановлено"
+msgstr "%s, внесок %s вже встановлено"
 
 #: common/flatpak-dir.c:2555 common/flatpak-dir.c:2785
 #, c-format
@@ -1839,11 +1823,11 @@ msgstr "Не вдалося виконати читання з експорто�
 
 #: common/flatpak-dir.c:3553
 msgid "Error reading mimetype xml file"
-msgstr ""
+msgstr "Помилка під час читання файла xml типу MIME"
 
 #: common/flatpak-dir.c:3558
 msgid "Invalid mimetype xml file"
-msgstr ""
+msgstr "Некоректний файл xml типу MIME"
 
 #: common/flatpak-dir.c:4100
 msgid "While getting detached metadata: "
@@ -1871,9 +1855,9 @@ msgid "While writing extra data file '%s': "
 msgstr "Під час записування файла додаткових даних «%s»: "
 
 #: common/flatpak-dir.c:4360
-#, fuzzy, c-format
+#, c-format
 msgid "apply_extra script failed, exit status %d"
-msgstr "Помилка скрипту apply_extra"
+msgstr "Помилка скрипту apply_extra, стан виходу %d"
 
 #: common/flatpak-dir.c:4430
 #, c-format
@@ -1917,11 +1901,11 @@ msgstr "Під час спроби застосування додаткових
 #: common/flatpak-dir.c:4605
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
-msgstr ""
+msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
 #: common/flatpak-dir.c:4624
 msgid "Deployed metadata does not match commit"
-msgstr ""
+msgstr "Розміщені метадані не відповідають внеску"
 
 #: common/flatpak-dir.c:5346
 #, c-format
@@ -2020,12 +2004,13 @@ msgid "Unknown feature type %s, valid types are: %s"
 msgstr "Невідомий тип можливості %s, коректними типами є такі: %s"
 
 #: common/flatpak-run.c:769
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Unknown filesystem location %s, valid locations are: host, home, xdg-"
 "*[/...], ~/dir, /dir"
 msgstr ""
-"Невідоме розташування файлової системи, %s, коректними типами є такі: host, "
+"Невідоме розташування файлової системи, %s, коректними розташуваннями є такі: "
+"host, "
 "home, xdg-*[/...], ~/dir, /dir"
 
 #: common/flatpak-run.c:1035
@@ -2244,14 +2229,12 @@ msgstr "Оновлення підписаного середовища вико�
 #. - Normal users do not need authentication to update metadata
 #. from signed repositories.
 #: system-helper/org.freedesktop.Flatpak.policy.in:91
-#, fuzzy
 msgid "Update remote metadata"
-msgstr "РОЗТАШУВАННЯ - Оновити метадані сховища"
+msgstr "Оновити віддалені метадані"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:92
-#, fuzzy
 msgid "Authentication is required to update remote info"
-msgstr "Для оновлення програмного забезпечення слід пройти розпізнавання"
+msgstr "Для оновлення даних віддаленого сховища слід пройти розпізнавання"
 
 #: system-helper/org.freedesktop.Flatpak.policy.in:102
 msgid "Install bundle"
