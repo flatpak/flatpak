@@ -12,6 +12,7 @@ static char *flatpak_installationsdir;
 static char *gpg_homedir;
 static char *gpg_args;
 static char *repo_url;
+int httpd_pid = -1;
 
 static const char *gpg_id = "7B0961FD";
 const char *repo_name = "test-repo";
@@ -46,8 +47,8 @@ test_user_installation (void)
   g_autofree char *expected_path = NULL;
 
   inst = flatpak_installation_new_user (NULL, &error);
-  g_assert_nonnull (inst);
   g_assert_no_error (error);
+  g_assert_nonnull (inst);
 
   g_assert_true (flatpak_installation_get_is_user (inst));
 
@@ -66,8 +67,8 @@ test_system_installation (void)
   g_autofree char *path = NULL;
 
   inst = flatpak_installation_new_system (NULL, &error);
-  g_assert_nonnull (inst);
   g_assert_no_error (error);
+  g_assert_nonnull (inst);
 
   g_assert_false (flatpak_installation_get_is_user (inst));
 
@@ -98,8 +99,8 @@ test_multiple_system_installations (void)
   int i;
 
   system_dirs = flatpak_get_system_installations (NULL, &error);
-  g_assert_nonnull (system_dirs);
   g_assert_no_error (error);
+  g_assert_nonnull (system_dirs);
   g_assert_cmpint (system_dirs->len, ==, 4);
 
   for (i = 0; i < system_dirs->len; i++)
@@ -195,8 +196,8 @@ test_ref (void)
 
   valid = "app/org.flatpak.Hello/x86_64/master";
   ref = flatpak_ref_parse (valid, &error);
-  g_assert (FLATPAK_IS_REF (ref));
   g_assert_no_error (error);
+  g_assert (FLATPAK_IS_REF (ref));
   g_assert_cmpint (flatpak_ref_get_kind (ref), ==, FLATPAK_REF_KIND_APP);
   g_assert_cmpstr (flatpak_ref_get_name (ref), ==, "org.flatpak.Hello");
   g_assert_cmpstr (flatpak_ref_get_arch (ref), ==, "x86_64");
@@ -367,9 +368,9 @@ test_install_launch_uninstall (void)
   g_assert_no_error (error);
 
   monitor = flatpak_installation_create_monitor (inst, NULL, &error);
-  g_file_monitor_set_rate_limit (monitor, 100);
-  g_assert (G_IS_FILE_MONITOR (monitor));
   g_assert_no_error (error);
+  g_assert (G_IS_FILE_MONITOR (monitor));
+  g_file_monitor_set_rate_limit (monitor, 100);
 
   loop = g_main_loop_new (NULL, TRUE);
 
@@ -396,7 +397,7 @@ test_install_launch_uninstall (void)
   g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
-  quit_id = g_timeout_add (500, quit, NULL);
+  quit_id = g_timeout_add (1000, quit, loop);
   g_main_loop_run (loop);
   g_source_remove (quit_id);
 
@@ -441,7 +442,7 @@ test_install_launch_uninstall (void)
   g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
-  quit_id = g_timeout_add (500, quit, loop);
+  quit_id = g_timeout_add (1000, quit, loop);
   g_main_loop_run (loop);
   g_source_remove (quit_id);
 
@@ -529,7 +530,7 @@ make_test_runtime (void)
   g_autoptr(GError) error = NULL;
   g_autofree char *arg0 = NULL;
   char *argv[] = {
-    NULL, "org.test.Platform", "bash", "ls", "cat", "echo", "readlink", NULL
+    NULL, "test", "org.test.Platform", "bash", "ls", "cat", "echo", "readlink", NULL
   };
   GSpawnFlags flags = G_SPAWN_DEFAULT;
 
@@ -555,7 +556,7 @@ make_test_app (void)
   int status;
   g_autoptr(GError) error = NULL;
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, NULL };
+  char *argv[] = { NULL, "test", NULL };
   GSpawnFlags flags = G_SPAWN_DEFAULT;
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
@@ -605,7 +606,8 @@ launch_httpd (void)
 {
   int status;
   g_autoptr(GError) error = NULL;
-  char *argv[] = { "ostree", "trivial-httpd", "--autoexit", "--daemonize", "-p", "http-port", "repos", NULL };
+  g_autofree char *path = g_test_build_filename (G_TEST_DIST, "test-webserver.sh", NULL);
+  char *argv[] = {path , "repos", NULL };
   GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 
   if (g_test_verbose ())
@@ -629,11 +631,18 @@ add_remote (void)
   char *argv[] = { "flatpak", "remote-add", "--user", "--gpg-import=", "name", "url", NULL };
   g_autofree char *gpgimport = NULL;
   g_autofree char *port = NULL;
+  g_autofree char *pid = NULL;
   GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 
   launch_httpd ();
 
-  g_file_get_contents ("http-port", &port, NULL, &error);
+  g_file_get_contents ("httpd-pid", &pid, NULL, &error);
+  g_assert_no_error (error);
+
+  httpd_pid = atoi (pid);
+  g_assert_cmpint (httpd_pid, !=, 0);
+
+  g_file_get_contents ("httpd-port", &port, NULL, &error);
   g_assert_no_error (error);
 
   if (port[strlen (port) - 1] == '\n')
@@ -823,6 +832,9 @@ global_teardown (void)
     {
       flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
     }
+
+  if (httpd_pid != -1)
+    kill (httpd_pid, SIGKILL);
 
   /* mostly ignore failure here */
   if (!g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error) ||

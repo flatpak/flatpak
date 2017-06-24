@@ -63,6 +63,8 @@ gboolean      builder_gc (BuilderCache *self,
 
 void builder_cache_checksum_str (BuilderCache *self,
                                  const char   *str);
+void builder_cache_checksum_compat_str (BuilderCache *self,
+                                        const char   *str);
 void builder_cache_checksum_strv (BuilderCache *self,
                                   char        **strv);
 void builder_cache_checksum_compat_strv (BuilderCache *self,

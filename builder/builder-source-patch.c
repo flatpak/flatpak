@@ -140,13 +140,15 @@ get_source_file (BuilderSourcePatch *self,
                  BuilderContext     *context,
                  GError            **error)
 {
+  GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
+
   if (self->path == NULL || self->path[0] == 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "path not specified");
       return NULL;
     }
 
-  return g_file_resolve_relative_path (builder_context_get_base_dir (context), self->path);
+  return g_file_resolve_relative_path (base_dir, self->path);
 }
 
 static gboolean
@@ -204,6 +206,7 @@ patch (GFile      *dir,
   if (use_git) {
     g_ptr_array_add (args, "git");
     g_ptr_array_add (args, "apply");
+    g_ptr_array_add (args, "-v");
   } else {
     g_ptr_array_add (args, "patch");
   }
@@ -254,6 +257,47 @@ builder_source_patch_extract (BuilderSource  *source,
   return TRUE;
 }
 
+static gboolean
+builder_source_patch_bundle (BuilderSource  *source,
+                             BuilderContext *context,
+                             GError        **error)
+{
+  BuilderSourcePatch *self = BUILDER_SOURCE_PATCH (source);
+  GFile *manifest_base_dir = builder_context_get_base_dir (context);
+  g_autoptr(GFile) src = NULL;
+  g_autoptr(GFile) destination_file = NULL;
+  g_autofree char *rel_path = NULL;
+  g_autoptr(GFile) destination_dir = NULL;
+
+  src = get_source_file (self, context, error);
+
+  if (src == NULL)
+    return FALSE;
+
+  rel_path = g_file_get_relative_path (manifest_base_dir, src);
+  if (rel_path == NULL)
+    {
+      g_warning ("Patch %s is outside manifest tree, not bundling", flatpak_file_get_path_cached (src));
+      return TRUE;
+    }
+
+  destination_file = flatpak_build_file (builder_context_get_app_dir (context),
+                                         "sources/manifest", rel_path, NULL);
+
+  destination_dir = g_file_get_parent (destination_file);
+  if (!flatpak_mkdir_p (destination_dir, NULL, error))
+    return FALSE;
+
+  if (!g_file_copy (src, destination_file,
+                    G_FILE_COPY_OVERWRITE,
+                    NULL,
+                    NULL, NULL,
+                    error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 builder_source_patch_checksum (BuilderSource  *source,
                                BuilderCache   *cache,
@@ -290,6 +334,7 @@ builder_source_patch_class_init (BuilderSourcePatchClass *klass)
   source_class->show_deps = builder_source_patch_show_deps;
   source_class->download = builder_source_patch_download;
   source_class->extract = builder_source_patch_extract;
+  source_class->bundle = builder_source_patch_bundle;
   source_class->checksum = builder_source_patch_checksum;
 
   g_object_class_install_property (object_class,

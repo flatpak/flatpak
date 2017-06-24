@@ -211,13 +211,12 @@ get_uri (BuilderSourceArchive *self,
 static GFile *
 get_download_location (BuilderSourceArchive *self,
                        BuilderContext       *context,
+                       gboolean             *is_local,
                        GError              **error)
 {
   g_autoptr(SoupURI) uri = NULL;
   const char *path;
   g_autofree char *base_name = NULL;
-  GFile *download_dir = NULL;
-  g_autoptr(GFile) sha256_dir = NULL;
   g_autoptr(GFile) file = NULL;
 
   uri = get_uri (self, error);
@@ -234,11 +233,21 @@ get_download_location (BuilderSourceArchive *self,
       return FALSE;
     }
 
-  download_dir = builder_context_get_download_dir (context);
-  sha256_dir = g_file_get_child (download_dir, self->sha256);
-  file = g_file_get_child (sha256_dir, base_name);
+  file = builder_context_find_in_sources_dirs (context,
+                                               "downloads",
+                                               self->sha256,
+                                               base_name,
+                                               NULL);
+  if (file)
+    {
+      *is_local = TRUE;
+      return g_steal_pointer (&file);
+    }
 
-  return g_steal_pointer (&file);
+  return flatpak_build_file (builder_context_get_download_dir (context),
+                             self->sha256,
+                             base_name,
+                             NULL);
 }
 
 static GFile *
@@ -247,12 +256,12 @@ get_source_file (BuilderSourceArchive *self,
                  gboolean             *is_local,
                  GError              **error)
 {
-  GFile *base_dir = builder_context_get_base_dir (context);
+  GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
 
   if (self->url != NULL && self->url[0] != 0)
     {
       *is_local = FALSE;
-      return get_download_location (self, context, error);
+      return get_download_location (self, context, is_local, error);
     }
 
   if (self->path != NULL && self->path[0] != 0)
@@ -580,6 +589,52 @@ builder_source_archive_extract (BuilderSource  *source,
   return TRUE;
 }
 
+static gboolean
+builder_source_archive_bundle (BuilderSource  *source,
+                               BuilderContext *context,
+                               GError        **error)
+{
+  BuilderSourceArchive *self = BUILDER_SOURCE_ARCHIVE (source);
+
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GFile) download_dir = NULL;
+  g_autoptr(GFile) destination_file = NULL;
+  g_autofree char *download_dir_path = NULL;
+  g_autofree char *file_name = NULL;
+  g_autofree char *destination_file_path = NULL;
+  g_autofree char *app_dir_path = NULL;
+  gboolean is_local;
+
+  file = get_source_file (self, context, &is_local, error);
+  if (file == NULL)
+    return FALSE;
+
+  app_dir_path = g_file_get_path (builder_context_get_app_dir (context));
+  download_dir_path = g_build_filename (app_dir_path,
+                                        "sources",
+                                        "downloads",
+                                        self->sha256,
+                                        NULL);
+  download_dir = g_file_new_for_path (download_dir_path);
+  if (!flatpak_mkdir_p (download_dir, NULL, error))
+    return FALSE;
+
+  file_name = g_file_get_basename (file);
+  destination_file_path = g_build_filename (download_dir_path,
+                                            file_name,
+                                            NULL);
+  destination_file = g_file_new_for_path (destination_file_path);
+
+  if (!g_file_copy (file, destination_file,
+                    G_FILE_COPY_OVERWRITE,
+                    NULL,
+                    NULL, NULL,
+                    error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 builder_source_archive_checksum (BuilderSource  *source,
                                  BuilderCache   *cache,
@@ -606,6 +661,7 @@ builder_source_archive_class_init (BuilderSourceArchiveClass *klass)
   source_class->show_deps = builder_source_archive_show_deps;
   source_class->download = builder_source_archive_download;
   source_class->extract = builder_source_archive_extract;
+  source_class->bundle = builder_source_archive_bundle;
   source_class->checksum = builder_source_archive_checksum;
 
   g_object_class_install_property (object_class,

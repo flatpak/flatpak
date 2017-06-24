@@ -1,0 +1,19 @@
+{
+    "name": "module2",
+    "buildsystem": "simple",
+    "ensure-writable": [ "/modify_me"],
+    "build-commands": [
+        "echo module2 > /app/ran_module2",
+        "echo module2 > /app/modify_me"
+    ],
+    "sources": [
+      {
+          "type": "file",
+          "path": "data2"
+      },
+      {
+          "type": "patch",
+          "path": "data2.patch"
+      }
+    ]
+}

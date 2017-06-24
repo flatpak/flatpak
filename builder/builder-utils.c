@@ -989,7 +989,7 @@ handle_dwarf2_section (DebuginfoData *data, GHashTable *files, GError **error)
     }
   else
     {
-      return flatpak_fail (0, 0, "%s: Wrong ELF data encoding", data->filename);
+      return flatpak_fail (error, "%s: Wrong ELF data encoding", data->filename);
     }
 
   debug_sections = data->debug_sections;
@@ -1600,6 +1600,32 @@ builder_maybe_host_spawnv (GFile                *dir,
   return flatpak_spawnv (dir, output, error, argv);
 }
 
+typedef struct {
+  int stage;
+  gboolean printed_something;
+} DownloadPromptData;
+
+static void
+download_progress (guint64 downloaded_bytes,
+                   gpointer user_data)
+{
+  DownloadPromptData *progress_data = user_data;
+  char chrs[] = { '|', '/', '-', '\\' };
+
+  if (progress_data->printed_something)
+    g_print ("\b");
+  progress_data->printed_something = TRUE;
+  g_print ("%c", chrs[progress_data->stage]);
+  progress_data->stage =  (progress_data->stage + 1) % G_N_ELEMENTS(chrs);
+}
+
+static void
+download_progress_cleanup (DownloadPromptData *progress_data)
+{
+  if (progress_data->printed_something)
+    g_print ("\b");
+}
+
 gboolean
 builder_download_uri (const char     *url,
                       GFile          *dest,
@@ -1613,7 +1639,7 @@ builder_download_uri (const char     *url,
   g_autoptr(GFile) tmp = NULL;
   g_autoptr(GFile) dir = NULL;
   g_autoptr(GChecksum) checksum = g_checksum_new (G_CHECKSUM_SHA256);
-
+  DownloadPromptData progress_data = {0};
   g_autofree char *basename = g_file_get_basename (dest);
   g_autofree char *template = g_strconcat (".", basename, "XXXXXX", NULL);
 
@@ -1637,7 +1663,7 @@ builder_download_uri (const char     *url,
   if (input == NULL)
     return FALSE;
 
-  if (!flatpak_splice_update_checksum (G_OUTPUT_STREAM (out), input, checksum, NULL, error))
+  if (!flatpak_splice_update_checksum (G_OUTPUT_STREAM (out), input, checksum, download_progress, &progress_data, NULL, error))
     {
       unlink (flatpak_file_get_path_cached (tmp));
       return FALSE;
@@ -1649,6 +1675,8 @@ builder_download_uri (const char     *url,
       unlink (flatpak_file_get_path_cached (tmp));
       return FALSE;
     }
+
+  download_progress_cleanup (&progress_data);
 
   if (sha256 != NULL && strcmp (g_checksum_get_string (checksum), sha256) != 0)
     {
@@ -1665,4 +1693,15 @@ builder_download_uri (const char     *url,
     }
 
   return TRUE;
+}
+
+GParamSpec *
+builder_serializable_find_property_with_error (JsonSerializable *serializable,
+                                               const char       *name)
+{
+  GParamSpec *pspec = g_object_class_find_property (G_OBJECT_GET_CLASS (serializable), name);
+  if (pspec == NULL &&
+      !g_str_has_prefix (name, "x-"))
+    g_warning ("Unknown property %s for type %s\n", name, g_type_name_from_instance ((GTypeInstance *)serializable));
+  return pspec;
 }

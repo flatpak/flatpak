@@ -60,6 +60,7 @@ FlatpakOciRegistry  *  flatpak_oci_registry_new                  (const char    
                                                                   int                   tmp_dfd,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
+const char          *  flatpak_oci_registry_get_uri              (FlatpakOciRegistry   *self);
 FlatpakOciIndex     *  flatpak_oci_registry_load_index           (FlatpakOciRegistry   *self,
                                                                   const char           *etag,
                                                                   char               **etag_out,
@@ -83,12 +84,20 @@ char *                 flatpak_oci_registry_store_blob           (FlatpakOciRegi
                                                                   GBytes               *data,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
+gboolean               flatpak_oci_registry_mirror_blob          (FlatpakOciRegistry   *self,
+                                                                  FlatpakOciRegistry   *source_registry,
+                                                                  const char           *digest,
+                                                                  FlatpakLoadUriProgress progress_cb,
+                                                                  gpointer               user_data,
+                                                                  GCancellable         *cancellable,
+                                                                  GError              **error);
 FlatpakOciDescriptor * flatpak_oci_registry_store_json           (FlatpakOciRegistry   *self,
                                                                   FlatpakJson          *json,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
 FlatpakOciVersioned *  flatpak_oci_registry_load_versioned       (FlatpakOciRegistry   *self,
                                                                   const char           *digest,
+                                                                  gsize                *out_size,
                                                                   GCancellable         *cancellable,
                                                                   GError              **error);
 FlatpakOciLayerWriter *flatpak_oci_registry_write_layer          (FlatpakOciRegistry   *self,
@@ -101,5 +110,20 @@ gboolean        flatpak_oci_layer_writer_close       (FlatpakOciLayerWriter  *se
                                                       FlatpakOciDescriptor **res_out,
                                                       GCancellable          *cancellable,
                                                       GError               **error);
+
+gboolean flatpak_archive_read_open_fd_with_checksum (struct archive *a,
+                                                     int fd,
+                                                     GChecksum *checksum,
+                                                     GError **error);
+
+GBytes *flatpak_oci_sign_data (GBytes *data,
+                               const gchar **okey_ids,
+                               const char *homedir,
+                               GError **error);
+
+FlatpakOciSignature *flatpak_oci_verify_signature (OstreeRepo *repo,
+                                                   const char *remote_name,
+                                                   GBytes *signature,
+                                                   GError **error);
 
 #endif /* __FLATPAK_OCI_REGISTRY_H__ */

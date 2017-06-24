@@ -36,12 +36,18 @@
 
 #define LOCALES_SEPARATE_DIR "share/runtime/locale"
 
-static BuilderContext *demarshal_build_context = NULL;
+static GFile *demarshal_base_dir = NULL;
 
 void
-builder_manifest_set_demarshal_buid_context (BuilderContext *build_context)
+builder_manifest_set_demarshal_base_dir (GFile *dir)
 {
-  g_set_object (&demarshal_build_context, build_context);
+  g_set_object (&demarshal_base_dir, dir);
+}
+
+GFile *
+builder_manifest_get_demarshal_base_dir (void)
+{
+  return g_object_ref (demarshal_base_dir);
 }
 
 struct BuilderManifest
@@ -70,6 +76,7 @@ struct BuilderManifest
   char          **cleanup_platform;
   char          **cleanup_platform_commands;
   char          **finish_args;
+  char          **inherit_extensions;
   char          **tags;
   char           *rename_desktop_file;
   char           *rename_appdata_file;
@@ -132,6 +139,7 @@ enum {
   PROP_SDK_EXTENSIONS,
   PROP_PLATFORM_EXTENSIONS,
   PROP_FINISH_ARGS,
+  PROP_INHERIT_EXTENSIONS,
   PROP_TAGS,
   PROP_RENAME_DESKTOP_FILE,
   PROP_RENAME_APPDATA_FILE,
@@ -169,6 +177,7 @@ builder_manifest_finalize (GObject *object)
   g_strfreev (self->cleanup_platform);
   g_strfreev (self->cleanup_platform_commands);
   g_strfreev (self->finish_args);
+  g_strfreev (self->inherit_extensions);
   g_strfreev (self->tags);
   g_free (self->rename_desktop_file);
   g_free (self->rename_appdata_file);
@@ -328,6 +337,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_FINISH_ARGS:
       g_value_set_boxed (value, self->finish_args);
+      break;
+
+    case PROP_INHERIT_EXTENSIONS:
+      g_value_set_boxed (value, self->inherit_extensions);
       break;
 
     case PROP_TAGS:
@@ -525,6 +538,12 @@ builder_manifest_set_property (GObject      *object,
     case PROP_FINISH_ARGS:
       tmp = self->finish_args;
       self->finish_args = g_strdupv (g_value_get_boxed (value));
+      g_strfreev (tmp);
+      break;
+
+    case PROP_INHERIT_EXTENSIONS:
+      tmp = self->inherit_extensions;
+      self->inherit_extensions = g_strdupv (g_value_get_boxed (value));
       g_strfreev (tmp);
       break;
 
@@ -777,6 +796,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                        G_TYPE_STRV,
                                                        G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
+                                   PROP_INHERIT_EXTENSIONS,
+                                   g_param_spec_boxed ("inherit-extensions",
+                                                       "",
+                                                       "",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
                                    PROP_BUILD_RUNTIME,
                                    g_param_spec_boolean ("build-runtime",
                                                          "",
@@ -940,6 +966,7 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
         {
           JsonArray *array = json_node_get_array (property_node);
           guint i, array_len = json_array_get_length (array);
+          g_autoptr(GFile) saved_demarshal_base_dir = builder_manifest_get_demarshal_base_dir ();
           GList *modules = NULL;
           GObject *module;
 
@@ -954,17 +981,23 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
                 {
                   const char *module_relpath = json_node_get_string (element_node);
                   g_autoptr(GFile) module_file =
-                    g_file_resolve_relative_path (builder_context_get_base_dir (demarshal_build_context), module_relpath);
+                    g_file_resolve_relative_path (demarshal_base_dir, module_relpath);
                   const char *module_path = flatpak_file_get_path_cached (module_file);
                   g_autofree char *json = NULL;
                   g_autoptr(GError) error = NULL;
 
                   if (g_file_get_contents (module_path, &json, NULL, &error))
                     {
+                      g_autoptr(GFile) module_file_dir = g_file_get_parent (module_file);
+                      builder_manifest_set_demarshal_base_dir (module_file_dir);
                       module = json_gobject_from_data (BUILDER_TYPE_MODULE,
                                                        json, -1, &error);
+                      builder_manifest_set_demarshal_base_dir (saved_demarshal_base_dir);
                       if (module)
-                        builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                        {
+                          builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                          builder_module_set_base_dir (BUILDER_MODULE (module), module_file_dir);
+                        }
                     }
                   if (error != NULL)
                     {
@@ -972,7 +1005,11 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
                     }
                 }
               else if (JSON_NODE_HOLDS_OBJECT (element_node))
-                module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+                {
+                  module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+                  if (module != NULL)
+                    builder_module_set_base_dir (BUILDER_MODULE (module), saved_demarshal_base_dir);
+                }
 
               if (module == NULL)
                 {
@@ -1004,6 +1041,7 @@ serializable_iface_init (JsonSerializableIface *serializable_iface)
 {
   serializable_iface->serialize_property = builder_manifest_serialize_property;
   serializable_iface->deserialize_property = builder_manifest_deserialize_property;
+  serializable_iface->find_property = builder_serializable_find_property_with_error;
 }
 
 const char *
@@ -1012,36 +1050,25 @@ builder_manifest_get_id (BuilderManifest *self)
   return self->id;
 }
 
-/* Dashes are only valid in the last part of the app id, so
-   we replace them with underscore so we can suffix the id */
-static char *
-make_valid_id_prefix (const char *orig_id)
-{
-  char *id, *t;
-
-  id = g_strdup (orig_id);
-  t = strchr (id, '-');
-  while (t != NULL)
-    {
-      *t = '_';
-      t = strchr (t + 1, '-');
-    }
-
-  return id;
-}
-
 char *
 builder_manifest_get_locale_id (BuilderManifest *self)
 {
-  g_autofree char *id = make_valid_id_prefix (self->id);
+  g_autofree char *id = flatpak_make_valid_id_prefix (self->id);
   return g_strdup_printf ("%s.Locale", id);
 }
 
 char *
 builder_manifest_get_debug_id (BuilderManifest *self)
 {
-  g_autofree char *id = make_valid_id_prefix (self->id);
+  g_autofree char *id = flatpak_make_valid_id_prefix (self->id);
   return g_strdup_printf ("%s.Debug", id);
+}
+
+char *
+builder_manifest_get_sources_id (BuilderManifest *self)
+{
+  g_autofree char *id = flatpak_make_valid_id_prefix (self->id);
+  return g_strdup_printf ("%s.Sources", id);
 }
 
 const char *
@@ -1057,7 +1084,7 @@ builder_manifest_get_locale_id_platform (BuilderManifest *self)
 
   if (self->id_platform != NULL)
     {
-      g_autofree char *id = make_valid_id_prefix (self->id_platform);
+      g_autofree char *id = flatpak_make_valid_id_prefix (self->id_platform);
       res = g_strdup_printf ("%s.Locale", id);
     }
 
@@ -1085,7 +1112,18 @@ builder_manifest_get_runtime_version (BuilderManifest *self)
 const char *
 builder_manifest_get_branch (BuilderManifest *self)
 {
-  return self->branch ? self->branch : "master";
+  if (self->branch)
+    return self->branch;
+
+  return "master";
+}
+
+void
+builder_manifest_set_default_branch (BuilderManifest *self,
+                                     const char *default_branch)
+{
+  if (self->branch == NULL)
+    self->branch = g_strdup (default_branch);
 }
 
 static const char *
@@ -1212,13 +1250,14 @@ builder_manifest_init_app_dir (BuilderManifest *self,
         g_ptr_array_add (args, g_strdup ("--type=runtime"));
       else
         g_ptr_array_add (args, g_strdup ("--writable-sdk"));
-
-      for (i = 0; self->sdk_extensions != NULL && self->sdk_extensions[i] != NULL; i++)
-        {
-          const char *ext = self->sdk_extensions[i];
-          g_ptr_array_add (args, g_strdup_printf ("--sdk-extension=%s", ext));
-        }
     }
+
+  for (i = 0; self->sdk_extensions != NULL && self->sdk_extensions[i] != NULL; i++)
+    {
+      const char *ext = self->sdk_extensions[i];
+      g_ptr_array_add (args, g_strdup_printf ("--sdk-extension=%s", ext));
+    }
+
   if (self->build_extension)
     {
       g_ptr_array_add (args, g_strdup ("--type=extension"));
@@ -1347,6 +1386,7 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
   builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_FINISH_VERSION);
   builder_cache_checksum_strv (cache, self->finish_args);
   builder_cache_checksum_str (cache, self->command);
+  builder_cache_checksum_compat_strv (cache, self->inherit_extensions);
 
   if (self->metadata)
     {
@@ -1363,6 +1403,14 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
     }
 }
 
+void
+builder_manifest_checksum_for_bundle_sources (BuilderManifest *self,
+                                              BuilderCache    *cache,
+                                              BuilderContext  *context)
+{
+  builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_BUNDLE_SOURCES_VERSION);
+  builder_cache_checksum_boolean (cache, builder_context_get_bundle_sources (context));
+}
 
 void
 builder_manifest_checksum_for_platform (BuilderManifest *self,
@@ -1693,29 +1741,40 @@ rename_icon_cb (BuilderManifest *self,
                 int              depth,
                 GError         **error)
 {
-  if (S_ISREG (stbuf->st_mode) &&
-      depth == 3 &&
-      g_str_has_prefix (source_name, self->rename_icon) &&
-      (g_str_has_prefix (source_name + strlen (self->rename_icon), ".") ||
-       g_str_has_prefix (source_name + strlen (self->rename_icon), "-symbolic.")))
+  if (g_str_has_prefix (source_name, self->rename_icon))
     {
-      const char *extension = source_name + strlen (self->rename_icon);
-      g_autofree char *new_name = g_strconcat (self->id, extension, NULL);
-      int res;
-
-      *found = TRUE;
-
-      g_print ("%s icon %s/%s to %s/%s\n", self->copy_icon ? "Copying" : "Renaming", rel_dir, source_name, rel_dir, new_name);
-
-      if (self->copy_icon)
-        res = linkat (source_parent_fd, source_name, source_parent_fd, new_name, AT_SYMLINK_FOLLOW);
-      else
-        res = renameat (source_parent_fd, source_name, source_parent_fd, new_name);
-
-      if (res != 0)
+      if (S_ISREG (stbuf->st_mode) &&
+          depth == 3 &&
+          (g_str_has_prefix (source_name + strlen (self->rename_icon), ".") ||
+           g_str_has_prefix (source_name + strlen (self->rename_icon), "-symbolic.")))
         {
-          g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Can't rename icon %s/%s", rel_dir, source_name);
-          return FALSE;
+          const char *extension = source_name + strlen (self->rename_icon);
+          g_autofree char *new_name = g_strconcat (self->id, extension, NULL);
+          int res;
+
+          *found = TRUE;
+
+          g_print ("%s icon %s/%s to %s/%s\n", self->copy_icon ? "Copying" : "Renaming", rel_dir, source_name, rel_dir, new_name);
+
+          if (self->copy_icon)
+            res = linkat (source_parent_fd, source_name, source_parent_fd, new_name, AT_SYMLINK_FOLLOW);
+          else
+            res = renameat (source_parent_fd, source_name, source_parent_fd, new_name);
+
+          if (res != 0)
+            {
+              g_set_error (error, G_IO_ERROR, g_io_error_from_errno (errno), "Can't rename icon %s/%s", rel_dir, source_name);
+              return FALSE;
+            }
+        }
+      else
+        {
+          if (!S_ISREG (stbuf->st_mode))
+            g_debug ("%s/%s matches 'rename-icon', but not a regular file", full_dir, source_name);
+          else if (depth != 3)
+            g_debug ("%s/%s matches 'rename-icon', but not at depth 3", full_dir, source_name);
+          else
+            g_debug ("%s/%s matches 'rename-icon', but name does not continue with '.' or '-symbolic.'", full_dir, source_name);
         }
     }
 
@@ -1736,7 +1795,6 @@ appstream_compose (GFile   *app_dir,
   g_autoptr(GPtrArray) args = NULL;
   const gchar *arg;
   va_list ap;
-  g_autoptr(GError) local_error = NULL;
 
   args = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (args, g_strdup ("flatpak"));
@@ -1751,8 +1809,11 @@ appstream_compose (GFile   *app_dir,
   g_ptr_array_add (args, NULL);
   va_end (ap);
 
-  if (!builder_maybe_host_spawnv (NULL, NULL, &local_error, (const char * const *)args->pdata))
-    g_print ("WARNING: appstream-compose failed: %s\n", local_error->message);
+  if (!builder_maybe_host_spawnv (NULL, NULL, error, (const char * const *)args->pdata))
+    {
+      g_prefix_error (error, "ERROR: appstream-compose failed: ");
+      return FALSE;
+    }
 
   return TRUE;
 }
@@ -1934,20 +1995,44 @@ builder_manifest_cleanup (BuilderManifest *self,
                                           error))
             return FALSE;
 
+          desktop_keys = g_key_file_get_keys (keyfile,
+                                              G_KEY_FILE_DESKTOP_GROUP,
+                                              NULL, NULL);
+
           if (self->rename_icon)
             {
+              g_autofree char *original_icon_name = g_key_file_get_string (keyfile,
+                                                                           G_KEY_FILE_DESKTOP_GROUP,
+                                                                           G_KEY_FILE_DESKTOP_KEY_ICON,
+                                                                           NULL);
+
               g_key_file_set_string (keyfile,
                                      G_KEY_FILE_DESKTOP_GROUP,
                                      G_KEY_FILE_DESKTOP_KEY_ICON,
                                      self->id);
+
+              /* Also rename localized version of the Icon= field */
+              for (i = 0; desktop_keys[i]; i++)
+                {
+                  /* Only rename untranslated icon names */
+                  if (g_str_has_prefix (desktop_keys[i], "Icon["))
+                    {
+                      g_autofree char *icon_name = g_key_file_get_string (keyfile,
+                                                                          G_KEY_FILE_DESKTOP_GROUP,
+                                                                          desktop_keys[i], NULL);
+
+                      if (strcmp (icon_name, original_icon_name) == 0)
+                        g_key_file_set_string (keyfile,
+                                               G_KEY_FILE_DESKTOP_GROUP,
+                                               desktop_keys[i],
+                                               self->id);
+                    }
+                }
             }
 
           if (self->desktop_file_name_suffix ||
               self->desktop_file_name_prefix)
             {
-              desktop_keys = g_key_file_get_keys (keyfile,
-                                                  G_KEY_FILE_DESKTOP_GROUP,
-                                                  NULL, NULL);
               for (i = 0; desktop_keys[i]; i++)
                 {
                   if (strcmp (desktop_keys[i], "Name") == 0 ||
@@ -2017,6 +2102,7 @@ builder_manifest_finish (BuilderManifest *self,
 {
   g_autoptr(GFile) manifest_file = NULL;
   g_autoptr(GFile) debuginfo_dir = NULL;
+  g_autoptr(GFile) sources_dir = NULL;
   g_autoptr(GFile) locale_parent_dir = NULL;
   g_autofree char *json = NULL;
   g_autofree char *commandline = NULL;
@@ -2030,6 +2116,7 @@ builder_manifest_finish (BuilderManifest *self,
   if (!builder_cache_lookup (cache, "finish"))
     {
       GFile *app_dir = NULL;
+      g_autofree char *ref = NULL;
       g_print ("Finishing app\n");
 
       if (!builder_context_enable_rofiles (context, error))
@@ -2037,6 +2124,13 @@ builder_manifest_finish (BuilderManifest *self,
 
       /* Call after enabling rofiles */
       app_dir = builder_context_get_app_dir (context);
+
+      ref = flatpak_compose_ref (!self->build_runtime && !self->build_extension,
+                                 builder_manifest_get_id (self),
+                                 builder_manifest_get_branch (self),
+                                 builder_context_get_arch (context), error);
+      if (ref == NULL)
+        return FALSE;
 
       if (self->metadata)
         {
@@ -2055,12 +2149,102 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
         }
 
+      if (self->inherit_extensions && self->inherit_extensions[0] != NULL)
+        {
+          g_autoptr(GFile) metadata = g_file_get_child (app_dir, "metadata");
+          g_autoptr(GKeyFile) keyfile = g_key_file_new ();
+          g_autoptr(GKeyFile) base_keyfile = g_key_file_new ();
+          g_autofree char *arch_option = NULL;
+          const char *parent_id = NULL;
+          const char *parent_version = NULL;
+          g_autofree char *base_metadata = NULL;
+          g_auto(GStrv) groups = NULL;
+
+          arch_option = g_strdup_printf ("--arch=%s", builder_context_get_arch (context));
+
+          if (self->base != NULL && *self->base != 0)
+            {
+              parent_id = self->base;
+              parent_version = builder_manifest_get_base_version (self);
+            }
+          else
+            {
+              parent_id = self->sdk;
+              parent_version = builder_manifest_get_runtime_version (self);
+            }
+
+          base_metadata = flatpak (NULL, "info", arch_option, "--show-metadata", parent_id, parent_version, NULL);
+          if (base_metadata == NULL)
+            return flatpak_fail (error, "Inherit extensions specified, but could not get metadata for parent %s version %s", parent_id, parent_version);
+
+          if (!g_key_file_load_from_data (base_keyfile,
+                                          base_metadata, -1,
+                                          G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS,
+                                          error))
+            {
+              g_prefix_error (error, "Can't load metadata file: ");
+              return FALSE;
+            }
+
+          if (!g_key_file_load_from_file (keyfile,
+                                          flatpak_file_get_path_cached (metadata),
+                                          G_KEY_FILE_KEEP_COMMENTS|G_KEY_FILE_KEEP_TRANSLATIONS,
+                                          error))
+            {
+              g_prefix_error (error, "Can't load metadata file: ");
+              return FALSE;
+            }
+
+          for (i = 0; self->inherit_extensions[i] != NULL; i++)
+            {
+              g_autofree char *group = g_strdup_printf ("Extension %s", self->inherit_extensions[i]);
+              g_auto(GStrv) keys = NULL;
+              int j;
+
+              if (!g_key_file_has_group (base_keyfile, group))
+                return flatpak_fail (error, "Can't find inherited extension point %s", self->inherit_extensions[i]);
+
+              keys = g_key_file_get_keys (base_keyfile, group, NULL, error);
+              if (keys == NULL)
+                return FALSE;
+
+              for (j = 0; keys[j] != NULL; j++)
+                {
+                  g_autofree char *value = g_key_file_get_value (base_keyfile, group, keys[j], error);
+                  if (value == NULL)
+                    return FALSE;
+                  g_key_file_set_value (keyfile, group, keys[j], value);
+                }
+
+              if (!g_key_file_has_key (keyfile, group, "version", NULL) &&
+                  !g_key_file_has_key (keyfile, group, "versions", NULL))
+                g_key_file_set_value (keyfile, group, "version", parent_version);
+            }
+
+          if (!g_key_file_save_to_file (keyfile,
+                                        flatpak_file_get_path_cached (metadata),
+                                        error))
+            {
+              g_prefix_error (error, "Can't save metadata.platform: ");
+              return FALSE;
+            }
+        }
+
       if (self->command)
         {
-          g_autoptr(GFile) bin_dir = g_file_resolve_relative_path (app_dir, "files/bin");
-          g_autoptr(GFile) bin_command = g_file_get_child (bin_dir, self->command);
+          g_autoptr(GFile) files_dir = g_file_resolve_relative_path (app_dir, "files");
+          g_autoptr(GFile) command_file = NULL;
 
-          if (!g_file_query_exists (bin_command, NULL))
+          if (!g_path_is_absolute (self->command))
+            {
+              g_autoptr(GFile) bin_dir = g_file_resolve_relative_path (files_dir, "bin");
+              command_file = g_file_get_child (bin_dir, self->command);
+            }
+          else if (g_str_has_prefix (self->command, "/app/"))
+            command_file = g_file_resolve_relative_path (files_dir, self->command + strlen ("/app/"));
+
+          if (command_file != NULL &&
+              !g_file_query_exists (command_file, NULL))
             {
               const char *help = "";
 
@@ -2148,6 +2332,7 @@ builder_manifest_finish (BuilderManifest *self,
           debuginfo_dir = g_file_resolve_relative_path (app_dir, "files/lib/debug");
           locale_parent_dir = g_file_resolve_relative_path (app_dir, "files/" LOCALES_SEPARATE_DIR);
         }
+      sources_dir = g_file_resolve_relative_path (app_dir, "sources");
 
       if (self->separate_locales && g_file_query_exists (locale_parent_dir, NULL))
         {
@@ -2179,7 +2364,11 @@ builder_manifest_finish (BuilderManifest *self,
 
           metadata_locale_file = g_file_get_child (app_dir, "metadata.locale");
           metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s\n", locale_id);
+                                               "name=%s\n"
+                                               "\n"
+                                               "[ExtensionOf]\n"
+                                               "ref=%s\n",
+                                               locale_id, ref);
           if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_locale_file),
                                     metadata_contents, strlen (metadata_contents),
                                     error))
@@ -2215,7 +2404,11 @@ builder_manifest_finish (BuilderManifest *self,
             return FALSE;
 
           metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s\n", debug_id);
+                                               "name=%s\n"
+                                               "\n"
+                                               "[ExtensionOf]\n"
+                                               "ref=%s\n",
+                                               debug_id, ref);
           if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_debuginfo_file),
                                     metadata_contents, strlen (metadata_contents), error))
             return FALSE;
@@ -2260,6 +2453,7 @@ builder_manifest_create_platform (BuilderManifest *self,
       g_autoptr(GSubprocess) subp = NULL;
       g_autoptr(GPtrArray) args = NULL;
       GFile *app_dir = NULL;
+      g_autofree char *ref = NULL;
 
       g_print ("Creating platform based on %s\n", self->runtime);
 
@@ -2268,6 +2462,13 @@ builder_manifest_create_platform (BuilderManifest *self,
 
       /* Call after enabling rofiles */
       app_dir = builder_context_get_app_dir (context);
+
+      ref = flatpak_compose_ref (!self->build_runtime && !self->build_extension,
+                                 builder_manifest_get_id_platform (self),
+                                 builder_manifest_get_branch (self),
+                                 builder_context_get_arch (context), error);
+      if (ref == NULL)
+        return FALSE;
 
       platform_dir = g_file_get_child (app_dir, "platform");
 
@@ -2503,7 +2704,10 @@ builder_manifest_create_platform (BuilderManifest *self,
 
           metadata_locale_file = g_file_get_child (app_dir, "metadata.platform.locale");
           metadata_contents = g_strdup_printf ("[Runtime]\n"
-                                               "name=%s\n", locale_id);
+                                               "name=%s\n"
+                                               "\n"
+                                               "[ExtensionOf]\n"
+                                               "ref=%s\n", locale_id, ref);
           if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_locale_file),
                                     metadata_contents, strlen (metadata_contents),
                                     error))
@@ -2524,6 +2728,71 @@ builder_manifest_create_platform (BuilderManifest *self,
   return TRUE;
 }
 
+gboolean
+builder_manifest_bundle_sources (BuilderManifest *self,
+                                 const char      *json,
+                                 BuilderCache    *cache,
+                                 BuilderContext  *context,
+                                 GError         **error)
+{
+
+  builder_manifest_checksum_for_bundle_sources (self, cache, context);
+  if (!builder_cache_lookup (cache, "bundle-sources"))
+    {
+      g_autofree char *sources_id = builder_manifest_get_sources_id (self);
+      GFile *app_dir;
+      g_autoptr(GFile) metadata_sources_file = NULL;
+      g_autoptr(GFile) json_dir = NULL;
+      g_autofree char *manifest_filename = NULL;
+      g_autoptr(GFile) manifest_file = NULL;
+      g_autofree char *metadata_contents = NULL;
+      GList *l;
+
+      g_print ("Bundling sources\n");
+
+      if (!builder_context_enable_rofiles (context, error))
+        return FALSE;
+
+      app_dir = builder_context_get_app_dir (context);
+      metadata_sources_file = g_file_get_child (app_dir, "metadata.sources");
+      metadata_contents = g_strdup_printf ("[Runtime]\n"
+                                           "name=%s\n", sources_id);
+      if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_sources_file),
+                                metadata_contents, strlen (metadata_contents), error))
+        return FALSE;
+
+      json_dir = g_file_resolve_relative_path (app_dir, "sources/manifest");
+      if (!flatpak_mkdir_p (json_dir, NULL, error))
+        return FALSE;
+
+      manifest_filename = g_strconcat (self->id, ".json", NULL);
+      manifest_file = g_file_get_child (json_dir, manifest_filename);
+      if (!g_file_set_contents (flatpak_file_get_path_cached (manifest_file),
+                                json, strlen (json), error))
+        return FALSE;
+
+
+      for (l = self->expanded_modules; l != NULL; l = l->next)
+        {
+          BuilderModule *m = l->data;
+
+          if (!builder_module_bundle_sources (m, context, error))
+            return FALSE;
+        }
+
+      if (!builder_context_disable_rofiles (context, error))
+        return FALSE;
+
+      if (!builder_cache_commit (cache, "Bundled sources", error))
+        return FALSE;
+    }
+  else
+    {
+      g_print ("Cache hit for bundle-sources, skipping\n");
+    }
+
+  return TRUE;
+}
 
 gboolean
 builder_manifest_show_deps (BuilderManifest *self,
@@ -2602,8 +2871,9 @@ builder_manifest_run (BuilderManifest *self,
   /* Just add something so that we get the default rules (own our own id) */
   g_ptr_array_add (args, g_strdup ("--talk-name=org.freedesktop.DBus"));
 
-  /* Inherit all finish args except the filesystem and command
-   * ones so the command gets the same access as the final app
+  /* Inherit all finish args except --filesystem and some that
+   * build doesn't understand so the command gets the same access
+   * as the final app
    */
   if (self->finish_args)
     {
@@ -2614,7 +2884,9 @@ builder_manifest_run (BuilderManifest *self,
               !g_str_has_prefix (arg, "--extension") &&
               !g_str_has_prefix (arg, "--sdk") &&
               !g_str_has_prefix (arg, "--runtime") &&
-              !g_str_has_prefix (arg, "--command"))
+              !g_str_has_prefix (arg, "--command") &&
+              !g_str_has_prefix (arg, "--extra-data") &&
+              !g_str_has_prefix (arg, "--require-version"))
             g_ptr_array_add (args, g_strdup (arg));
         }
     }

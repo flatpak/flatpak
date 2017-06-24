@@ -167,8 +167,6 @@ get_download_location (BuilderSourceFile *self,
   g_autoptr(SoupURI) uri = NULL;
   const char *path;
   g_autofree char *base_name = NULL;
-  GFile *download_dir = NULL;
-  g_autoptr(GFile) sha256_dir = NULL;
   g_autoptr(GFile) file = NULL;
 
   uri = get_uri (self, error);
@@ -182,6 +180,7 @@ get_download_location (BuilderSourceFile *self,
       *is_inline = TRUE;
       return g_file_new_for_path ("inline data");
     }
+  *is_inline = FALSE;
 
   base_name = g_path_get_basename (path);
 
@@ -191,11 +190,18 @@ get_download_location (BuilderSourceFile *self,
       return FALSE;
     }
 
-  download_dir = builder_context_get_download_dir (context);
-  sha256_dir = g_file_get_child (download_dir, self->sha256);
-  file = g_file_get_child (sha256_dir, base_name);
+  file = builder_context_find_in_sources_dirs (context,
+                                               "downloads",
+                                               self->sha256,
+                                               base_name,
+                                               NULL);
+  if (file != NULL)
+    return g_steal_pointer (&file);
 
-  *is_inline = FALSE;
+  file = flatpak_build_file (builder_context_get_download_dir (context),
+                             self->sha256,
+                             base_name,
+                             NULL);
   return g_steal_pointer (&file);
 }
 
@@ -206,7 +212,7 @@ get_source_file (BuilderSourceFile *self,
                  gboolean          *is_inline,
                  GError           **error)
 {
-  GFile *base_dir = builder_context_get_base_dir (context);
+  GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
 
   if (self->url != NULL && self->url[0] != 0)
     {
@@ -389,25 +395,6 @@ builder_source_file_extract (BuilderSource  *source,
     }
   else
     {
-      if (is_local)
-        {
-          g_autofree char *data = NULL;
-          g_autofree char *base64 = NULL;
-          gsize len;
-
-          if (!g_file_load_contents (src, NULL, &data, &len, NULL, error))
-            return FALSE;
-
-          base64 = g_base64_encode ((const guchar *) data, len);
-          g_free (self->url);
-          self->url = g_strdup_printf ("data:text/plain;charset=utf8;base64,%s", base64);
-          if (self->dest_filename == NULL || *self->dest_filename == 0)
-            {
-              g_free (self->dest_filename);
-              self->dest_filename = g_file_get_basename (src);
-            }
-        }
-
       /* Make sure the target is gone, because g_file_copy does
          truncation on hardlinked destinations */
       (void)g_file_delete (dest_file, NULL, NULL);
@@ -424,38 +411,69 @@ builder_source_file_extract (BuilderSource  *source,
 }
 
 static gboolean
-builder_source_file_update (BuilderSource  *source,
+builder_source_file_bundle (BuilderSource  *source,
                             BuilderContext *context,
                             GError        **error)
 {
   BuilderSourceFile *self = BUILDER_SOURCE_FILE (source);
 
-  g_autoptr(GFile) src = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autoptr(GFile) destination_file = NULL;
+  g_autoptr(GFile) destination_dir = NULL;
+  g_autofree char *file_name = NULL;
   gboolean is_local, is_inline;
 
-  src = get_source_file (self, context, &is_local, &is_inline, error);
-  if (src == NULL)
+  file = get_source_file (self, context, &is_local, &is_inline, error);
+  if (file == NULL)
     return FALSE;
+
+  /* Inline URIs (data://) need not be bundled */
+  if (is_inline)
+    return TRUE;
 
   if (is_local)
     {
-      g_autofree char *data = NULL;
-      g_autofree char *base64 = NULL;
-      gsize len;
+      GFile *manifest_base_dir = builder_context_get_base_dir (context);
+      g_autofree char *rel_path = g_file_get_relative_path (manifest_base_dir, file);
 
-      if (!g_file_load_contents (src, NULL, &data, &len, NULL, error))
-        return FALSE;
-
-      base64 = g_base64_encode ((const guchar *) data, len);
-      g_free (self->url);
-      self->url = g_strdup_printf ("data:text/plain;charset=utf8;base64,%s", base64);
-      if (self->dest_filename == NULL || *self->dest_filename == 0)
+      if (rel_path == NULL)
         {
-          g_free (self->dest_filename);
-          self->dest_filename = g_file_get_basename (src);
+          g_warning ("Local file %s is outside manifest tree, not bundling", flatpak_file_get_path_cached (file));
+          return TRUE;
         }
+
+      destination_file = flatpak_build_file (builder_context_get_app_dir (context),
+                                             "sources/manifest", rel_path, NULL);
+    }
+  else
+    {
+      file_name = g_file_get_basename (file);
+      destination_file = flatpak_build_file (builder_context_get_app_dir (context),
+                                             "sources/downloads",
+                                             self->sha256,
+                                             file_name,
+                                             NULL);
     }
 
+  destination_dir = g_file_get_parent (destination_file);
+  if (!flatpak_mkdir_p (destination_dir, NULL, error))
+    return FALSE;
+
+  if (!g_file_copy (file, destination_file,
+                    G_FILE_COPY_OVERWRITE,
+                    NULL,
+                    NULL, NULL,
+                    error))
+    return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+builder_source_file_update (BuilderSource  *source,
+                            BuilderContext *context,
+                            GError        **error)
+{
   return TRUE;
 }
 
@@ -498,6 +516,7 @@ builder_source_file_class_init (BuilderSourceFileClass *klass)
   source_class->show_deps = builder_source_file_show_deps;
   source_class->download = builder_source_file_download;
   source_class->extract = builder_source_file_extract;
+  source_class->bundle = builder_source_file_bundle;
   source_class->update = builder_source_file_update;
   source_class->checksum = builder_source_file_checksum;
 

@@ -25,6 +25,7 @@
 
 <node name="/" xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
   <interface name='org.freedesktop.Flatpak.SessionHelper'>
+    <property name="version" type="u" access="read"/>
 
     <method name="RequestMonitor">
       <arg type='ay' name='path' direction='out'/>
@@ -32,6 +33,7 @@
   </interface>
 
   <interface name='org.freedesktop.Flatpak.Development'>
+    <property name="version" type="u" access="read"/>
 
     <!-- This methods let you start processes, sandboxed or not on the
          host, so its not generally safe to allow access to it to any
@@ -59,6 +61,8 @@
   </interface>
 
   <interface name='org.freedesktop.Flatpak.SystemHelper'>
+    <property name="version" type="u" access="read"/>
+
     <method name="Deploy">
       <arg type='ay' name='repo_path' direction='in'/>
       <arg type='u' name='flags' direction='in'/>
@@ -97,6 +101,14 @@
         <annotation name="org.gtk.GDBus.C.ForceGVariant" value="true"/>
       </arg>
       <arg type='s' name='installation' direction='in'/>
+    </method>
+
+    <method name="UpdateRemote">
+      <arg type='u' name='flags' direction='in'/>
+      <arg type='s' name='remote' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+      <arg type='ay' name='summary_path' direction='in'/>
+      <arg type='ay' name='summary_sig_path' direction='in'/>
     </method>
 
   </interface>

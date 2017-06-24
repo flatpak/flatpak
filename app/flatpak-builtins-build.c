@@ -269,7 +269,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   argv_array = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
 
-  run_flags = FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER;
+  run_flags =
+    FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER |
+    FLATPAK_RUN_FLAG_SET_PERSONALITY | FLATPAK_RUN_FLAG_DIE_WITH_PARENT;
   if (custom_usr)
     run_flags |= FLATPAK_RUN_FLAG_WRITABLE_ETC;
 
@@ -328,14 +330,12 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             "--bind", flatpak_file_get_path_cached (var), "/var",
             NULL);
 
-  app_context = flatpak_context_new ();
-  if (runtime_metakey)
-    {
-      if (!flatpak_context_load_metadata (app_context, runtime_metakey, error))
-        return FALSE;
-    }
-  if (!flatpak_context_load_metadata (app_context, metakey, error))
+  app_context = flatpak_app_compute_permissions (metakey,
+                                                 runtime_metakey,
+                                                 error);
+  if (app_context == NULL)
     return FALSE;
+
   flatpak_context_allow_host_fs (app_context);
   flatpak_context_merge (app_context, arg_context);
 
@@ -358,7 +358,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   if (!flatpak_run_add_environment_args (argv_array, NULL, &envp, app_info_path, run_flags, id,
-                                         app_context, NULL, cancellable, error))
+                                         app_context, NULL, NULL, cancellable, error))
     return FALSE;
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)

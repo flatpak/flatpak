@@ -56,6 +56,7 @@ struct FlatpakTransaction {
   gboolean no_interaction;
   gboolean no_pull;
   gboolean no_deploy;
+  gboolean no_static_deltas;
   gboolean add_deps;
   gboolean add_related;
 };
@@ -160,6 +161,7 @@ flatpak_transaction_new (FlatpakDir *dir,
                          gboolean no_interaction,
                          gboolean no_pull,
                          gboolean no_deploy,
+                         gboolean no_static_deltas,
                          gboolean add_deps,
                          gboolean add_related)
 {
@@ -171,6 +173,7 @@ flatpak_transaction_new (FlatpakDir *dir,
   t->no_interaction = no_interaction;
   t->no_pull = no_pull;
   t->no_deploy = no_deploy;
+  t->no_static_deltas = no_static_deltas;
   t->add_deps = add_deps;
   t->add_related = add_related;
   return t;
@@ -479,9 +482,8 @@ flatpak_transaction_add_ref (FlatpakTransaction *self,
       g_assert (remote != NULL);
       if (dir_ref_is_installed (self->dir, ref, NULL, NULL))
         {
-          g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED,
-                       _("%s already installed"), pref);
-          return FALSE;
+          g_printerr (_("%s already installed, skipping\n"), pref);
+          return TRUE;
         }
     }
 
@@ -589,7 +591,60 @@ flatpak_transaction_add_update (FlatpakTransaction *self,
                                 const char *commit,
                                 GError **error)
 {
+  const char *all_paths[] = { NULL };
+
+  /* If specify an empty subpath, that means all subpaths */
+  if (subpaths != NULL && subpaths[0] != NULL && subpaths[0][0] == 0)
+    subpaths = all_paths;
+
   return flatpak_transaction_add_ref (self, NULL, ref, subpaths, commit, FLATPAK_TRANSACTION_OP_KIND_UPDATE, NULL, NULL, error);
+}
+
+gboolean
+flatpak_transaction_update_metadata (FlatpakTransaction  *self,
+                                     gboolean             all_remotes,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
+{
+  g_auto(GStrv) remotes = NULL;
+  int i;
+  GList *l;
+
+  /* Collect all dir+remotes used in this transaction */
+
+  if (all_remotes)
+    {
+      remotes = flatpak_dir_list_remotes (self->dir, NULL, error);
+      if (remotes == NULL)
+        return FALSE;
+    }
+  else
+    {
+      g_autoptr(GHashTable) ht = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+      for (l = self->ops; l != NULL; l = l->next)
+        {
+          FlatpakTransactionOp *op = l->data;
+          g_hash_table_add (ht, g_strdup (op->remote));
+        }
+      remotes = (char **)g_hash_table_get_keys_as_array (ht, NULL);
+      g_hash_table_steal_all (ht); /* Move ownership to remotes */
+    }
+
+  /* Update metadata for said remotes */
+  for (i = 0; remotes[i] != NULL; i++)
+    {
+      char *remote = remotes[i];
+
+      g_debug ("Updating remote metadata for %s", remote);
+      if (!flatpak_dir_update_remote_configuration (self->dir, remote, cancellable, error))
+        return FALSE;
+    }
+
+  /* Reload changed configuration */
+  if (!flatpak_dir_recreate_repo (self->dir, cancellable, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 gboolean
@@ -611,6 +666,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
       const char *pref;
       const char *opname;
       FlatpakTransactionOpKind kind;
+      FlatpakTerminalProgress terminal_progress = { 0 };
 
       kind = op->kind;
       if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL_OR_UPDATE)
@@ -640,45 +696,70 @@ flatpak_transaction_run (FlatpakTransaction *self,
 
       pref = strchr (op->ref, '/') + 1;
 
+
       if (kind == FLATPAK_TRANSACTION_OP_KIND_INSTALL)
         {
+          g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
           opname = _("install");
           g_print (_("Installing: %s from %s\n"), pref, op->remote);
           res = flatpak_dir_install (self->dir,
                                      self->no_pull,
                                      self->no_deploy,
+                                     self->no_static_deltas,
                                      op->ref, op->remote,
                                      (const char **)op->subpaths,
-                                     NULL,
+                                     progress,
                                      cancellable, &local_error);
+          ostree_async_progress_finish (progress);
+          flatpak_terminal_progress_end (&terminal_progress);
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
         {
           opname = _("update");
-          g_print (_("Updating: %s from %s\n"), pref, op->remote);
-          res = flatpak_dir_update (self->dir,
-                                    self->no_pull,
-                                    self->no_deploy,
-                                    op->ref, op->remote, op->commit,
-                                    (const char **)op->subpaths,
-                                    NULL,
-                                    cancellable, &local_error);
-
-          if (res)
+          g_autofree char *target_commit = flatpak_dir_check_for_update (self->dir, op->ref, op->remote, op->commit,
+                                                                         (const char **)op->subpaths,
+                                                                         self->no_pull,
+                                                                         cancellable, &local_error);
+          if (target_commit != NULL)
             {
-              g_autoptr(GVariant) deploy_data = NULL;
-              g_autofree char *commit = NULL;
-              deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
-              commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
-              g_print (_("Now at %s.\n"), commit);
+              g_print (_("Updating: %s from %s\n"), pref, op->remote);
+              g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
+              res = flatpak_dir_update (self->dir,
+                                        self->no_pull,
+                                        self->no_deploy,
+                                        self->no_static_deltas,
+                                        op->commit != NULL, /* Allow downgrade if we specify commit */
+                                        op->ref, op->remote, target_commit,
+                                        (const char **)op->subpaths,
+                                        progress,
+                                        cancellable, &local_error);
+              ostree_async_progress_finish (progress);
+              flatpak_terminal_progress_end (&terminal_progress);
+              if (res)
+                {
+                  g_autoptr(GVariant) deploy_data = NULL;
+                  g_autofree char *commit = NULL;
+                  deploy_data = flatpak_dir_get_deploy_data (self->dir, op->ref, NULL, NULL);
+                  commit = g_strndup (flatpak_deploy_data_get_commit (deploy_data), 12);
+                  g_print (_("Now at %s.\n"), commit);
+                }
+
+              /* Handle noop-updates */
+              if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+                {
+                  g_print (_("No updates.\n"));
+                  res = TRUE;
+                  g_clear_error (&local_error);
+                }
             }
-
-          /* Handle noop-updates */
-          if (!res && g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+          else
             {
-              g_print (_("No updates.\n"));
-              res = TRUE;
-              g_clear_error (&local_error);
+              res = FALSE;
+              if (g_error_matches (local_error, FLATPAK_ERROR, FLATPAK_ERROR_ALREADY_INSTALLED))
+                {
+                  res = TRUE;
+                  g_clear_error (&local_error);
+                }
             }
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_BUNDLE)

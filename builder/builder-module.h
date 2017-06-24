@@ -47,6 +47,8 @@ GList *      builder_module_get_sources (BuilderModule *self);
 GList *      builder_module_get_modules (BuilderModule *self);
 void         builder_module_set_json_path (BuilderModule *self,
                                            const char *json_path);
+void         builder_module_set_base_dir (BuilderModule *self,
+                                          GFile* base_dir);
 GPtrArray *  builder_module_get_changes (BuilderModule *self);
 void         builder_module_set_changes (BuilderModule *self,
                                          GPtrArray     *changes);
@@ -62,6 +64,9 @@ gboolean builder_module_extract_sources (BuilderModule  *self,
                                          GFile          *dest,
                                          BuilderContext *context,
                                          GError        **error);
+gboolean builder_module_bundle_sources (BuilderModule  *self,
+                                        BuilderContext *context,
+                                        GError        **error);
 gboolean builder_module_ensure_writable (BuilderModule  *self,
                                          BuilderCache   *cache,
                                          BuilderContext *context,

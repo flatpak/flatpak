@@ -61,7 +61,7 @@ static GOptionEntry options[] = {
 };
 
 static gboolean
-copy_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
+ensure_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
                  char *src_extensions[], GFile *top_dir, GCancellable *cancellable, GError **error)
 {
   g_autoptr(GKeyFile) metakey = flatpak_deploy_get_metadata (src_deploy);
@@ -83,10 +83,6 @@ copy_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
           if (strcmp (ext->installed_id, requested_extension) == 0 ||
               strcmp (ext->id, requested_extension) == 0)
             {
-              g_autoptr(GFile) target = g_file_resolve_relative_path (top_dir, ext->directory);
-              g_autoptr(GFile) target_parent = g_file_get_parent (target);
-              g_autoptr(GFile) ext_deploy_files = g_file_new_for_path (ext->files_path);
-
               if (!ext->is_unmaintained)
                 {
                   g_autoptr(FlatpakDir) src_dir = NULL;
@@ -106,17 +102,24 @@ copy_extensions (FlatpakDeploy *src_deploy, const char *default_branch,
                     return flatpak_fail (error, _("Requested extension %s is only partially installed"), ext->installed_id);
                 }
 
-              if (!flatpak_mkdir_p (target_parent, cancellable, error))
-                return FALSE;
+              if (top_dir)
+                {
+                  g_autoptr(GFile) target = g_file_resolve_relative_path (top_dir, ext->directory);
+                  g_autoptr(GFile) target_parent = g_file_get_parent (target);
+                  g_autoptr(GFile) ext_deploy_files = g_file_new_for_path (ext->files_path);
 
-              /* An extension overrides whatever is there before, so we clean up first */
-              if (!flatpak_rm_rf (target, cancellable, error))
-                return FALSE;
+                  if (!flatpak_mkdir_p (target_parent, cancellable, error))
+                    return FALSE;
 
-              if (!flatpak_cp_a (ext_deploy_files, target,
-                                 FLATPAK_CP_FLAGS_NO_CHOWN,
-                                 cancellable, error))
-                return FALSE;
+                  /* An extension overrides whatever is there before, so we clean up first */
+                  if (!flatpak_rm_rf (target, cancellable, error))
+                    return FALSE;
+
+                  if (!flatpak_cp_a (ext_deploy_files, target,
+                                     FLATPAK_CP_FLAGS_NO_CHOWN,
+                                     cancellable, error))
+                    return FALSE;
+                }
 
               found = TRUE;
             }
@@ -148,6 +151,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
   g_autoptr(GFile) metadata_file = NULL;
   g_autoptr(GString) metadata_contents = NULL;
   g_autoptr(GError) my_error = NULL;
+  g_autoptr(FlatpakDeploy) sdk_deploy = NULL;
   const char *app_id;
   const char *directory;
   const char *sdk_pref;
@@ -221,10 +225,6 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
     return FALSE;
 
   files_dir = g_file_get_child (base, "files");
-  if (opt_sdk_dir)
-    usr_dir = g_file_get_child (base, opt_sdk_dir);
-  else
-    usr_dir = g_file_get_child (base, "usr");
   var_dir = g_file_get_child (base, "var");
   var_tmp_dir = g_file_get_child (var_dir, "tmp");
   var_run_dir = g_file_get_child (var_dir, "run");
@@ -234,14 +234,18 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
       g_file_query_exists (files_dir, cancellable))
     return flatpak_fail (error, _("Build directory %s already initialized"), directory);
 
+  sdk_deploy = flatpak_dir_load_deployed (sdk_dir, sdk_ref, NULL, cancellable, error);
+  if (sdk_deploy == NULL)
+    return FALSE;
+
   if (opt_writable_sdk || is_runtime)
     {
       g_autoptr(GFile) sdk_deploy_files = NULL;
-      g_autoptr(FlatpakDeploy) sdk_deploy = NULL;
 
-      sdk_deploy = flatpak_dir_load_deployed (sdk_dir, sdk_ref, NULL, cancellable, error);
-      if (sdk_deploy == NULL)
-        return FALSE;
+      if (opt_sdk_dir)
+        usr_dir = g_file_get_child (base, opt_sdk_dir);
+      else
+        usr_dir = g_file_get_child (base, "usr");
 
       if (!flatpak_rm_rf (usr_dir, NULL, &my_error))
         {
@@ -257,11 +261,12 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
       sdk_deploy_files = flatpak_deploy_get_files (sdk_deploy);
       if (!flatpak_cp_a (sdk_deploy_files, usr_dir, FLATPAK_CP_FLAGS_NO_CHOWN, cancellable, error))
         return FALSE;
-
-      if (opt_sdk_extensions &&
-          !copy_extensions (sdk_deploy, default_branch, opt_sdk_extensions, usr_dir, cancellable, error))
-        return FALSE;
     }
+
+  if (opt_sdk_extensions &&
+      !ensure_extensions (sdk_deploy, default_branch,
+                          opt_sdk_extensions, usr_dir, cancellable, error))
+    return FALSE;
 
   if (opt_var)
     {
@@ -299,7 +304,7 @@ flatpak_builtin_build_init (int argc, char **argv, GCancellable *cancellable, GE
 
 
       if (opt_base_extensions &&
-          !copy_extensions (base_deploy, base_branch, opt_base_extensions, files_dir, cancellable, error))
+          !ensure_extensions (base_deploy, base_branch, opt_base_extensions, files_dir, cancellable, error))
         return FALSE;
     }
 

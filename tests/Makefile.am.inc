@@ -28,7 +28,8 @@ test_doc_portal_LDADD = \
              libglnx.la \
              libflatpak-common.la \
              $(NULL)
-test_doc_portal_SOURCES = tests/test-doc-portal.c $(xdp_dbus_built_sources)
+test_doc_portal_SOURCES = tests/test-doc-portal.c
+nodist_test_doc_portal_SOURCES = $(xdp_dbus_built_sources)
 
 testlibrary_CFLAGS = $(BASE_CFLAGS)
 testlibrary_LDADD = \
@@ -80,6 +81,7 @@ dist_installed_test_extra_scripts += \
 	tests/make-test-runtime.sh \
 	tests/make-test-bundles.sh \
 	tests/testpython.py \
+	tests/test-webserver.sh \
 	$(NULL)
 
 dist_installed_test_data = \
@@ -87,14 +89,22 @@ dist_installed_test_data = \
 	tests/org.test.Hello.png \
 	tests/package_version.txt \
 	tests/test.json \
+	tests/module1.json \
+	tests/data1 \
+	tests/data1.patch \
+	tests/module2.json \
+	tests/data2 \
+	tests/data2.patch \
 	tests/session.conf.in \
 	tests/0001-Add-test-logo.patch \
 	tests/org.test.Python.json \
+	tests/org.test.Python2.json \
 	tests/importme.py \
 	tests/importme2.py \
 	$(NULL)
 
 installed_test_keyringdir = $(installed_testdir)/test-keyring
+installed_test_keyring2dir = $(installed_testdir)/test-keyring2
 installed_test_dbsdir = $(installed_testdir)/dbs
 
 if ENABLE_INSTALLED_TESTS
@@ -102,6 +112,11 @@ dist_installed_test_keyring_DATA = \
 	tests/test-keyring/README \
 	tests/test-keyring/pubring.gpg \
 	tests/test-keyring/secring.gpg \
+	$(NULL)
+dist_installed_test_keyring2_DATA = \
+	tests/test-keyring2/README \
+	tests/test-keyring2/pubring.gpg \
+	tests/test-keyring2/secring.gpg \
 	$(NULL)
 dist_installed_test_dbs_DATA = tests/dbs/no_tables
 endif
@@ -112,6 +127,8 @@ dist_test_scripts = \
 	tests/test-run-system.sh \
 	tests/test-run-deltas.sh \
 	tests/test-run-system-deltas.sh \
+	tests/test-repo.sh \
+	tests/test-repo-system.sh \
 	tests/test-extensions.sh \
 	tests/test-bundle.sh \
 	tests/test-bundle-system.sh \

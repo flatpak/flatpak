@@ -26,6 +26,7 @@
 
 #include "libglnx.h"
 
+#include <gpgme.h>
 #include <libsoup/soup.h>
 #include "flatpak-oci-registry.h"
 #include "flatpak-utils.h"
@@ -183,6 +184,12 @@ flatpak_oci_registry_init (FlatpakOciRegistry *self)
   self->tmp_dfd = -1;
 }
 
+const char *
+flatpak_oci_registry_get_uri (FlatpakOciRegistry   *self)
+{
+  return self->uri;
+}
+
 FlatpakOciRegistry *
 flatpak_oci_registry_new (const char *uri,
                          gboolean for_write,
@@ -205,10 +212,12 @@ flatpak_oci_registry_new (const char *uri,
 static int
 local_open_file (int dfd,
                  const char *subpath,
+                 struct stat *st_buf,
                  GCancellable *cancellable,
                  GError **error)
 {
   glnx_fd_close int fd = -1;
+  struct stat tmp_st_buf;
 
   do
     fd = openat (dfd, subpath, O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
@@ -216,6 +225,22 @@ local_open_file (int dfd,
   if (fd == -1)
     {
       glnx_set_error_from_errno (error);
+      return -1;
+    }
+
+  if (st_buf == NULL)
+    st_buf = &tmp_st_buf;
+
+  if (fstat (fd, st_buf) != 0)
+    {
+      glnx_set_error_from_errno (error);
+      return -1;
+    }
+
+  if (!S_ISREG (st_buf->st_mode))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Non-regular file in OCI registry at %s", subpath);
       return -1;
     }
 
@@ -235,15 +260,9 @@ local_load_file (int dfd,
   GBytes *bytes;
   g_autofree char *current_etag = NULL;
 
-  fd = local_open_file (dfd, subpath, cancellable, error);
+  fd = local_open_file (dfd, subpath, &st_buf, cancellable, error);
   if (fd == -1)
     return NULL;
-
-  if (fstat (fd, &st_buf) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      return NULL;
-    }
 
   current_etag = g_strdup_printf ("%lu", st_buf.st_mtime);
 
@@ -456,7 +475,7 @@ flatpak_oci_registry_ensure_remote (FlatpakOciRegistry *self,
       return FALSE;
     }
 
-  self->soup_session = flatpak_create_soup_session ("flatpak");
+  self->soup_session = flatpak_create_soup_session (PACKAGE_STRING);
   baseuri = soup_uri_new (self->uri);
   if (baseuri == NULL)
     {
@@ -612,6 +631,19 @@ splice_update_checksum (GOutputStream  *out,
   return TRUE;
 }
 
+static char *
+get_digest_subpath (const char *digest,
+                    GError **error)
+{
+  if (!g_str_has_prefix (digest, "sha256:"))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Unsupported digest type %s", digest);
+      return NULL;
+    }
+
+  return g_strdup_printf ("blobs/sha256/%s", digest + strlen ("sha256:"));
+}
 
 static char *
 checksum_fd (int fd, GCancellable *cancellable, GError **error)
@@ -640,19 +672,14 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
 
   g_assert (self->valid);
 
-  if (!g_str_has_prefix (digest, "sha256:"))
-    {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Unsupported digest type %s", digest);
-      return -1;
-    }
-
-  subpath = g_strdup_printf ("blobs/sha256/%s", digest + strlen ("sha256:"));
+  subpath = get_digest_subpath (digest, error);
+  if (subpath == NULL)
+    return -1;
 
   if (self->dfd != -1)
     {
       /* Local case, trust checksum */
-      fd = local_open_file (self->dfd, subpath, cancellable, error);
+      fd = local_open_file (self->dfd, subpath, NULL, cancellable, error);
       if (fd == -1)
         return -1;
     }
@@ -680,7 +707,7 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
                                       &out_stream, cancellable, error))
         return -1;
 
-      fd = local_open_file (self->tmp_dfd, tmpfile_name, cancellable, error);
+      fd = local_open_file (self->tmp_dfd, tmpfile_name, NULL, cancellable, error);
       (void)unlinkat (self->tmp_dfd, tmpfile_name, 0);
 
       if (fd == -1)
@@ -711,6 +738,101 @@ flatpak_oci_registry_download_blob (FlatpakOciRegistry    *self,
   return glnx_steal_fd (&fd);
 }
 
+gboolean
+flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
+                                  FlatpakOciRegistry    *source_registry,
+                                  const char            *digest,
+                                  FlatpakLoadUriProgress progress_cb,
+                                  gpointer               user_data,
+                                  GCancellable         *cancellable,
+                                  GError              **error)
+{
+  g_autofree char *subpath = NULL;
+  g_auto(GLnxTmpfile) tmpf = { 0 };
+  g_autoptr(GOutputStream) out_stream = NULL;
+  struct stat stbuf;
+  g_autofree char *checksum = NULL;
+
+  g_assert (self->valid);
+
+  if (!self->for_write)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
+                   "Write not supported to registry");
+      return FALSE;
+    }
+
+  subpath = get_digest_subpath (digest, error);
+  if (subpath == NULL)
+    return FALSE;
+
+  /* Check if its already available */
+  if (fstatat (self->dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
+    return TRUE;
+
+  if (!glnx_open_tmpfile_linkable_at (self->dfd, "blobs/sha256",
+                                      O_RDWR | O_CLOEXEC | O_NOCTTY,
+                                      &tmpf, error))
+    return FALSE;
+
+  if (source_registry->dfd != -1)
+    {
+      glnx_fd_close int src_fd = -1;
+
+      src_fd = local_open_file (source_registry->dfd, subpath, NULL, cancellable, error);
+      if (src_fd == -1)
+        return FALSE;
+
+      if (glnx_regfile_copy_bytes (src_fd, tmpf.fd, (off_t)-1, TRUE) < 0)
+        return glnx_throw_errno_prefix (error, "copyfile");
+    }
+  else
+    {
+      g_autoptr(SoupURI) uri = NULL;
+      g_autofree char *uri_s = NULL;
+
+      uri = soup_uri_new_with_base (source_registry->base_uri, subpath);
+      if (uri == NULL)
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT,
+                       "Invalid relative url %s", subpath);
+          return FALSE;
+        }
+
+      out_stream = g_unix_output_stream_new (tmpf.fd, FALSE);
+
+      uri_s = soup_uri_to_string (uri, FALSE);
+      if (!flatpak_download_http_uri (source_registry->soup_session, uri_s, out_stream,
+                                      progress_cb, user_data,
+                                      cancellable, error))
+        return FALSE;
+
+      if (!g_output_stream_close (out_stream, cancellable, error))
+        return FALSE;
+    }
+
+  lseek (tmpf.fd, 0, SEEK_SET);
+
+  checksum = checksum_fd (tmpf.fd, cancellable, error);
+  if (checksum == NULL)
+    return FALSE;
+
+  if (strcmp (checksum, digest + strlen ("sha256:")) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Checksum digest did not match (%s != %s)", digest, checksum);
+      return FALSE;
+    }
+
+  if (!glnx_link_tmpfile_at (&tmpf,
+                             GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST,
+                             self->dfd, subpath,
+                             error))
+    return FALSE;
+
+  return TRUE;
+}
+
 GBytes *
 flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
                                const char         *digest,
@@ -718,19 +840,27 @@ flatpak_oci_registry_load_blob (FlatpakOciRegistry  *self,
                                GError            **error)
 {
   g_autofree char *subpath = NULL;
+  g_autoptr(GBytes) bytes = NULL;
+  g_autofree char *json_checksum = NULL;
 
   g_assert (self->valid);
 
-  if (!g_str_has_prefix (digest, "sha256:"))
+  subpath = get_digest_subpath (digest, error);
+  if (subpath == NULL)
+    return NULL;
+
+  bytes = flatpak_oci_registry_load_file (self, subpath, NULL, NULL, cancellable, error);
+
+  json_checksum = g_compute_checksum_for_bytes  (G_CHECKSUM_SHA256, bytes);
+
+  if (strcmp (json_checksum, digest + strlen ("sha256:")) != 0)
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
-                   "Unsupported digest type %s", digest);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
+                   "Checksum for digest %s is wrong (was %s)", digest, json_checksum);
       return NULL;
     }
 
-  subpath = g_strdup_printf ("blobs/sha256/%s", digest + strlen ("sha256:"));
-
-  return flatpak_oci_registry_load_file (self, subpath, NULL, NULL, cancellable, error);
+  return g_steal_pointer (&bytes);
 }
 
 char *
@@ -772,9 +902,10 @@ flatpak_oci_registry_store_json (FlatpakOciRegistry    *self,
 
 FlatpakOciVersioned *
 flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
-                                    const char         *digest,
-                                    GCancellable       *cancellable,
-                                    GError            **error)
+                                     const char          *digest,
+                                     gsize               *out_size,
+                                     GCancellable        *cancellable,
+                                     GError             **error)
 {
   g_autoptr(GBytes) bytes = NULL;
 
@@ -784,6 +915,8 @@ flatpak_oci_registry_load_versioned (FlatpakOciRegistry  *self,
   if (bytes == NULL)
     return NULL;
 
+  if (out_size)
+    *out_size = g_bytes_get_size (bytes);
   return flatpak_oci_versioned_from_json (bytes, error);
 }
 
@@ -799,8 +932,7 @@ struct FlatpakOciLayerWriter
   GZlibCompressor *compressor;
   guint64 uncompressed_size;
   guint64 compressed_size;
-  char *tmp_path;
-  int tmp_fd;
+  GLnxTmpfile tmpf;
 };
 
 typedef struct
@@ -822,18 +954,7 @@ propagate_libarchive_error (GError      **error,
 static void
 flatpak_oci_layer_writer_reset (FlatpakOciLayerWriter *self)
 {
-  if (self->tmp_path)
-    {
-      (void) unlinkat (self->registry->dfd, self->tmp_path, 0);
-      g_free (self->tmp_path);
-      self->tmp_path = NULL;
-    }
-
-  if (self->tmp_fd != -1)
-    {
-      close (self->tmp_fd);
-      self->tmp_fd = -1;
-    }
+  glnx_tmpfile_clear (&self->tmpf);
 
   g_checksum_reset (self->uncompressed_checksum);
   g_checksum_reset (self->compressed_checksum);
@@ -857,6 +978,7 @@ flatpak_oci_layer_writer_finalize (GObject *object)
 
   g_checksum_free (self->compressed_checksum);
   g_checksum_free (self->uncompressed_checksum);
+  glnx_tmpfile_clear (&self->tmpf);
 
   g_clear_object (&self->registry);
 
@@ -927,7 +1049,7 @@ flatpak_oci_layer_writer_compress (FlatpakOciLayerWriter *self,
       to_write = compressed_buffer;
       while (to_write_len > 0)
         {
-          ssize_t res = write (self->tmp_fd, to_write, to_write_len);
+          ssize_t res = write (self->tmpf.fd, to_write, to_write_len);
           if (res <= 0)
             {
               if (errno == EINTR)
@@ -981,8 +1103,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
 {
   g_autoptr(FlatpakOciLayerWriter) oci_layer_writer = NULL;
   free_write_archive struct archive *a = NULL;
-  glnx_fd_close int tmp_fd = -1;
-  g_autofree char *tmp_path = NULL;
+  g_auto(GLnxTmpfile) tmpf = { 0 };
 
   g_assert (self->valid);
 
@@ -999,12 +1120,11 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
   if (!glnx_open_tmpfile_linkable_at (self->dfd,
                                       "blobs/sha256",
                                       O_WRONLY,
-                                      &tmp_fd,
-                                      &tmp_path,
+                                      &tmpf,
                                       error))
     return NULL;
 
-  if (fchmod (tmp_fd, 0644) != 0)
+  if (fchmod (tmpf.fd, 0644) != 0)
     {
       glnx_set_error_from_errno (error);
       return NULL;
@@ -1030,8 +1150,8 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
   flatpak_oci_layer_writer_reset (oci_layer_writer);
 
   oci_layer_writer->archive = g_steal_pointer (&a);
-  oci_layer_writer->tmp_fd = glnx_steal_fd (&tmp_fd);
-  oci_layer_writer->tmp_path = g_steal_pointer (&tmp_path);
+  /* Transfer ownership of the tmpfile */
+  oci_layer_writer->tmpf = tmpf; tmpf.initialized = 0;
   oci_layer_writer->compressor = g_zlib_compressor_new (G_ZLIB_COMPRESSOR_FORMAT_GZIP, -1);
 
   return g_steal_pointer (&oci_layer_writer);
@@ -1052,19 +1172,12 @@ flatpak_oci_layer_writer_close (FlatpakOciLayerWriter  *self,
   path = g_strdup_printf ("blobs/sha256/%s",
                           g_checksum_get_string (self->compressed_checksum));
 
-  if (!glnx_link_tmpfile_at (self->registry->dfd,
+  if (!glnx_link_tmpfile_at (&self->tmpf,
                              GLNX_LINK_TMPFILE_REPLACE,
-                             self->tmp_fd,
-                             self->tmp_path,
                              self->registry->dfd,
                              path,
                              error))
     return FALSE;
-
-  close (self->tmp_fd);
-  self->tmp_fd = -1;
-  g_free (self->tmp_path);
-  self->tmp_path = NULL;
 
   if (uncompressed_digest_out != NULL)
     *uncompressed_digest_out = g_strdup_printf ("sha256:%s", g_checksum_get_string (self->uncompressed_checksum));
@@ -1082,4 +1195,652 @@ struct archive *
 flatpak_oci_layer_writer_get_archive (FlatpakOciLayerWriter  *self)
 {
   return self->archive;
+}
+
+typedef struct {
+  int fd;
+  GChecksum *checksum;
+  char buffer[16*1024];
+} FlatpakArchiveReadWithChecksum;
+
+static int
+checksum_open_cb (struct archive *a, void *user_data)
+{
+  return ARCHIVE_OK;
+}
+
+
+static ssize_t
+checksum_read_cb (struct archive *a, void *user_data, const void **buff)
+{
+  FlatpakArchiveReadWithChecksum *data = user_data;
+  ssize_t bytes_read;
+
+  *buff = &data->buffer;
+  do
+    bytes_read = read (data->fd, &data->buffer, sizeof (data->buffer));
+  while (G_UNLIKELY (bytes_read == -1 && errno == EINTR));
+
+  if (bytes_read < 0)
+    {
+      archive_set_error (a, errno, "Read error on fd %d", data->fd);
+      return -1;
+    }
+
+  g_checksum_update (data->checksum, (guchar *)data->buffer, bytes_read);
+
+  return bytes_read;
+}
+
+static int64_t
+checksum_skip_cb (struct archive *a, void *user_data, int64_t request)
+{
+  FlatpakArchiveReadWithChecksum *data = user_data;
+  int64_t old_offset, new_offset;
+
+  if (((old_offset = lseek (data->fd, 0, SEEK_CUR)) >= 0) &&
+      ((new_offset = lseek (data->fd, request, SEEK_CUR)) >= 0))
+    return new_offset - old_offset;
+
+  archive_set_error (a, errno, "Error seeking");
+  return -1;
+}
+
+static int
+checksum_close_cb (struct archive *a, void *user_data)
+{
+  FlatpakArchiveReadWithChecksum *data = user_data;
+
+  g_free (data);
+
+  return ARCHIVE_OK;
+}
+
+gboolean
+flatpak_archive_read_open_fd_with_checksum (struct archive *a,
+                                            int fd,
+                                            GChecksum *checksum,
+                                            GError **error)
+{
+  FlatpakArchiveReadWithChecksum *data = g_new0 (FlatpakArchiveReadWithChecksum, 1);
+
+  data->fd = fd;
+  data->checksum = checksum;
+
+  if (archive_read_open2 (a, data,
+                          checksum_open_cb,
+                          checksum_read_cb,
+                          checksum_skip_cb,
+                          checksum_close_cb) != ARCHIVE_OK)
+    return propagate_libarchive_error (error, a);
+
+  return TRUE;
+}
+
+GLNX_DEFINE_CLEANUP_FUNCTION0(gpgme_data_t, flatpak_cleanup_gpgme_data, gpgme_data_release)
+#define flatpak_auto_gpgme_data __attribute__((cleanup(flatpak_cleanup_gpgme_data)))
+
+GLNX_DEFINE_CLEANUP_FUNCTION0(gpgme_ctx_t, flatpak_cleanup_gpgme_ctx, gpgme_release)
+#define flatpak_auto_gpgme_ctx __attribute__((cleanup(flatpak_cleanup_gpgme_ctx)))
+
+GLNX_DEFINE_CLEANUP_FUNCTION0(gpgme_key_t, flatpak_cleanup_gpgme_key, gpgme_key_release)
+#define flatpak_auto_gpgme_key __attribute__((cleanup(flatpak_cleanup_gpgme_key)))
+
+static void
+flatpak_gpgme_error_to_gio_error (gpgme_error_t   gpg_error,
+                                  GError        **error)
+{
+  GIOErrorEnum errcode;
+
+  /* XXX This list is incomplete.  Add cases as needed. */
+
+  switch (gpgme_err_code (gpg_error))
+    {
+      /* special case - shouldn't be here */
+      case GPG_ERR_NO_ERROR:
+        g_return_if_reached ();
+
+      /* special case - abort on out-of-memory */
+      case GPG_ERR_ENOMEM:
+        g_error ("%s: out of memory",
+                 gpgme_strsource (gpg_error));
+
+      case GPG_ERR_INV_VALUE:
+        errcode = G_IO_ERROR_INVALID_ARGUMENT;
+        break;
+
+      default:
+        errcode = G_IO_ERROR_FAILED;
+        break;
+    }
+
+  g_set_error (error, G_IO_ERROR, errcode, "%s: error code %d",
+               gpgme_strsource (gpg_error), gpgme_err_code (gpg_error));
+}
+
+/**** The functions below are based on seahorse-gpgme-data.c ****/
+
+static void
+set_errno_from_gio_error (GError *error)
+{
+  /* This is the reverse of g_io_error_from_errno() */
+
+  g_return_if_fail (error != NULL);
+
+  switch (error->code)
+    {
+      case G_IO_ERROR_FAILED:
+        errno = EIO;
+        break;
+      case G_IO_ERROR_NOT_FOUND:
+        errno = ENOENT;
+        break;
+      case G_IO_ERROR_EXISTS:
+        errno = EEXIST;
+        break;
+      case G_IO_ERROR_IS_DIRECTORY:
+        errno = EISDIR;
+        break;
+      case G_IO_ERROR_NOT_DIRECTORY:
+        errno = ENOTDIR;
+        break;
+      case G_IO_ERROR_NOT_EMPTY:
+        errno = ENOTEMPTY;
+        break;
+      case G_IO_ERROR_NOT_REGULAR_FILE:
+      case G_IO_ERROR_NOT_SYMBOLIC_LINK:
+      case G_IO_ERROR_NOT_MOUNTABLE_FILE:
+        errno = EBADF;
+        break;
+      case G_IO_ERROR_FILENAME_TOO_LONG:
+        errno = ENAMETOOLONG;
+        break;
+      case G_IO_ERROR_INVALID_FILENAME:
+        errno = EINVAL;
+        break;
+      case G_IO_ERROR_TOO_MANY_LINKS:
+        errno = EMLINK;
+        break;
+      case G_IO_ERROR_NO_SPACE:
+        errno = ENOSPC;
+        break;
+      case G_IO_ERROR_INVALID_ARGUMENT:
+        errno = EINVAL;
+        break;
+      case G_IO_ERROR_PERMISSION_DENIED:
+        errno = EPERM;
+        break;
+      case G_IO_ERROR_NOT_SUPPORTED:
+        errno = ENOTSUP;
+        break;
+      case G_IO_ERROR_NOT_MOUNTED:
+        errno = ENOENT;
+        break;
+      case G_IO_ERROR_ALREADY_MOUNTED:
+        errno = EALREADY;
+        break;
+      case G_IO_ERROR_CLOSED:
+        errno = EBADF;
+        break;
+      case G_IO_ERROR_CANCELLED:
+        errno = EINTR;
+        break;
+      case G_IO_ERROR_PENDING:
+        errno = EALREADY;
+        break;
+      case G_IO_ERROR_READ_ONLY:
+        errno = EACCES;
+        break;
+      case G_IO_ERROR_CANT_CREATE_BACKUP:
+        errno = EIO;
+        break;
+      case G_IO_ERROR_WRONG_ETAG:
+        errno = EACCES;
+        break;
+      case G_IO_ERROR_TIMED_OUT:
+        errno = EIO;
+        break;
+      case G_IO_ERROR_WOULD_RECURSE:
+        errno = ELOOP;
+        break;
+      case G_IO_ERROR_BUSY:
+        errno = EBUSY;
+        break;
+      case G_IO_ERROR_WOULD_BLOCK:
+        errno = EWOULDBLOCK;
+        break;
+      case G_IO_ERROR_HOST_NOT_FOUND:
+        errno = EHOSTDOWN;
+        break;
+      case G_IO_ERROR_WOULD_MERGE:
+        errno = EIO;
+        break;
+      case G_IO_ERROR_FAILED_HANDLED:
+        errno = 0;
+        break;
+      default:
+        errno = EIO;
+        break;
+    }
+}
+
+static ssize_t
+data_write_cb (void *handle, const void *buffer, size_t size)
+{
+  GOutputStream *output_stream = handle;
+  gsize bytes_written;
+  GError *local_error = NULL;
+
+  g_return_val_if_fail (G_IS_OUTPUT_STREAM (output_stream), -1);
+
+  if (g_output_stream_write_all (output_stream, buffer, size,
+                                 &bytes_written, NULL, &local_error))
+    {
+      g_output_stream_flush (output_stream, NULL, &local_error);
+    }
+
+  if (local_error != NULL)
+    {
+      set_errno_from_gio_error (local_error);
+      g_clear_error (&local_error);
+      bytes_written = -1;
+    }
+
+  return bytes_written;
+}
+
+static off_t
+data_seek_cb (void *handle, off_t offset, int whence)
+{
+  GObject *stream = handle;
+  GSeekable *seekable;
+  GSeekType seek_type = 0;
+  off_t position = -1;
+  GError *local_error = NULL;
+
+  g_return_val_if_fail (G_IS_INPUT_STREAM (stream) ||
+                        G_IS_OUTPUT_STREAM (stream), -1);
+
+  if (!G_IS_SEEKABLE (stream)) {
+    errno = EOPNOTSUPP;
+    goto out;
+  }
+
+  switch (whence)
+    {
+      case SEEK_SET:
+        seek_type = G_SEEK_SET;
+        break;
+      case SEEK_CUR:
+        seek_type = G_SEEK_CUR;
+        break;
+      case SEEK_END:
+        seek_type = G_SEEK_END;
+        break;
+      default:
+        g_assert_not_reached ();
+    }
+
+  seekable = G_SEEKABLE (stream);
+
+  if (!g_seekable_seek (seekable, offset, seek_type, NULL, &local_error))
+    {
+      set_errno_from_gio_error (local_error);
+      g_clear_error (&local_error);
+      goto out;
+    }
+
+  position = g_seekable_tell (seekable);
+
+out:
+  return position;
+}
+
+static void
+data_release_cb (void *handle)
+{
+  GObject *stream = handle;
+
+  g_return_if_fail (G_IS_INPUT_STREAM (stream) ||
+                    G_IS_OUTPUT_STREAM (stream));
+
+  g_object_unref (stream);
+}
+
+static struct gpgme_data_cbs data_output_cbs = {
+  NULL,
+  data_write_cb,
+  data_seek_cb,
+  data_release_cb
+};
+
+static gpgme_data_t
+flatpak_gpgme_data_output (GOutputStream *output_stream)
+{
+  gpgme_data_t data = NULL;
+  gpgme_error_t gpg_error;
+
+  g_return_val_if_fail (G_IS_OUTPUT_STREAM (output_stream), NULL);
+
+  gpg_error = gpgme_data_new_from_cbs (&data, &data_output_cbs, output_stream);
+
+  /* The only possible error is ENOMEM, which we abort on. */
+  if (gpg_error != GPG_ERR_NO_ERROR)
+    {
+      g_assert (gpgme_err_code (gpg_error) == GPG_ERR_ENOMEM);
+      flatpak_gpgme_error_to_gio_error (gpg_error, NULL);
+      g_assert_not_reached ();
+    }
+
+  g_object_ref (output_stream);
+
+  return data;
+}
+
+static gpgme_ctx_t
+flatpak_gpgme_new_ctx (const char *homedir,
+                       GError **error)
+{
+  gpgme_error_t err;
+  flatpak_auto_gpgme_ctx gpgme_ctx_t context = NULL;
+
+  if ((err = gpgme_new (&context)) != GPG_ERR_NO_ERROR)
+    {
+      flatpak_gpgme_error_to_gio_error (err, error);
+      g_prefix_error (error, "Unable to create gpg context: ");
+      return NULL;
+    }
+
+  if (homedir != NULL)
+    {
+      gpgme_engine_info_t info;
+
+      info = gpgme_ctx_get_engine_info (context);
+
+      if ((err = gpgme_ctx_set_engine_info (context, info->protocol, NULL, homedir))
+          != GPG_ERR_NO_ERROR)
+        {
+          flatpak_gpgme_error_to_gio_error (err, error);
+          g_prefix_error (error, "Unable to set gpg homedir to '%s': ",
+                          homedir);
+          return NULL;
+        }
+    }
+
+  return g_steal_pointer (&context);
+}
+
+GBytes *
+flatpak_oci_sign_data (GBytes *data,
+                       const gchar **key_ids,
+                       const char *homedir,
+                       GError **error)
+{
+  g_auto(GLnxTmpfile) tmpf = { 0 };
+  g_autoptr(GOutputStream) tmp_signature_output = NULL;
+  flatpak_auto_gpgme_ctx gpgme_ctx_t context = NULL;
+  gpgme_error_t err;
+  flatpak_auto_gpgme_data gpgme_data_t commit_buffer = NULL;
+  flatpak_auto_gpgme_data gpgme_data_t signature_buffer = NULL;
+  g_autoptr(GMappedFile) signature_file = NULL;
+  int i;
+
+  if (!glnx_open_tmpfile_linkable_at (AT_FDCWD, "/tmp", O_RDWR | O_CLOEXEC,
+                                      &tmpf, error))
+    return NULL;
+
+  tmp_signature_output = g_unix_output_stream_new (tmpf.fd, FALSE);
+
+  context = flatpak_gpgme_new_ctx (homedir, error);
+  if (!context)
+    return NULL;
+
+  for (i = 0; key_ids[i] != NULL; i++)
+    {
+      flatpak_auto_gpgme_key gpgme_key_t key = NULL;
+
+      /* Get the secret keys with the given key id */
+      err = gpgme_get_key (context, key_ids[i], &key, 1);
+      if (gpgme_err_code (err) == GPG_ERR_EOF)
+        {
+          flatpak_fail (error,"No gpg key found with ID %s (homedir: %s)", key_ids[i],
+                        homedir ? homedir : "<default>");
+          return NULL;
+        }
+      else if (err != GPG_ERR_NO_ERROR)
+        {
+          flatpak_fail (error, "Unable to lookup key ID %s: %d)", key_ids[i], err);
+          return NULL;
+        }
+
+      /* Add the key to the context as a signer */
+      if ((err = gpgme_signers_add (context, key)) != GPG_ERR_NO_ERROR)
+        {
+          flatpak_fail (error, "Error signing commit: %d", err);
+          return NULL;
+        }
+    }
+
+  {
+    gsize len;
+    const char *buf = g_bytes_get_data (data, &len);
+    if ((err = gpgme_data_new_from_mem (&commit_buffer, buf, len, FALSE)) != GPG_ERR_NO_ERROR)
+      {
+        flatpak_gpgme_error_to_gio_error (err, error);
+        g_prefix_error (error, "Failed to create buffer from commit file: ");
+        return NULL;
+      }
+  }
+
+  signature_buffer = flatpak_gpgme_data_output (tmp_signature_output);
+
+  if ((err = gpgme_op_sign (context, commit_buffer, signature_buffer, GPGME_SIG_MODE_NORMAL))
+      != GPG_ERR_NO_ERROR)
+    {
+      flatpak_gpgme_error_to_gio_error (err, error);
+      g_prefix_error (error, "Failure signing commit file: ");
+      return NULL;
+    }
+
+  if (!g_output_stream_close (tmp_signature_output, NULL, error))
+    return NULL;
+
+  signature_file = g_mapped_file_new_from_fd (tmpf.fd, FALSE, error);
+  if (!signature_file)
+    return NULL;
+
+  return g_mapped_file_get_bytes (signature_file);
+}
+
+static gboolean
+signature_is_valid (gpgme_signature_t signature)
+{
+  /* Mimic the way librepo tests for a valid signature, checking both
+   * summary and status fields.
+   *
+   * - VALID summary flag means the signature is fully valid.
+   * - GREEN summary flag means the signature is valid with caveats.
+   * - No summary but also no error means the signature is valid but
+   *   the signing key is not certified with a trusted signature.
+   */
+  return (signature->summary & GPGME_SIGSUM_VALID) ||
+         (signature->summary & GPGME_SIGSUM_GREEN) ||
+         (signature->summary == 0 && signature->status == GPG_ERR_NO_ERROR);
+}
+
+static GString *
+read_gpg_buffer (gpgme_data_t buffer, GError **error)
+{
+  g_autoptr(GString) res = g_string_new ("");
+  char buf[1024];
+  int ret;
+
+  ret = gpgme_data_seek (buffer, 0, SEEK_SET);
+  if (ret)
+    {
+      flatpak_fail (error, "Can't seek in gpg plain text");
+      return NULL;
+    }
+  while ((ret = gpgme_data_read (buffer, buf, sizeof(buf)-1)) > 0)
+    g_string_append_len (res, buf, ret);
+  if (ret < 0)
+    {
+      flatpak_fail (error, "Can't read in gpg plain text");
+      return NULL;
+    }
+
+  return g_steal_pointer (&res);
+}
+
+static gboolean
+flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t     gpgme_ctx,
+                                char          **out_tmp_home_dir,
+                                OstreeRepo     *repo,
+                                const char     *remote_name,
+                                GCancellable   *cancellable,
+                                GError        **error)
+{
+  g_autofree char *tmp_home_dir = NULL;
+  gpgme_error_t gpg_error;
+  gboolean ret = FALSE;
+  g_autoptr(GFile) keyring_file = NULL;
+  g_autofree char *keyring_name = NULL;
+  g_autoptr(GFile) pubring_file = NULL;
+  g_autofree char *pubring_path = NULL;
+
+  g_return_val_if_fail (gpgme_ctx != NULL, FALSE);
+
+  /* GPGME has no API for using multiple keyrings (aka, gpg --keyring),
+   * so we create a temporary directory and tell GPGME to use it as the
+   * home directory.  Then (optionally) create a pubring.gpg file there
+   * and hand the caller an open output stream to concatenate necessary
+   * keyring files. */
+
+  tmp_home_dir = g_build_filename (g_get_tmp_dir (), "flatpak-gpg-XXXXXX", NULL);
+  if (mkdtemp (tmp_home_dir) == NULL)
+    {
+      glnx_set_error_from_errno (error);
+      goto out;
+    }
+
+  /* Not documented, but gpgme_ctx_set_engine_info() accepts NULL for
+   * the executable file name, which leaves the old setting unchanged. */
+  gpg_error = gpgme_ctx_set_engine_info (gpgme_ctx,
+                                         GPGME_PROTOCOL_OpenPGP,
+                                         NULL, tmp_home_dir);
+  if (gpg_error != GPG_ERR_NO_ERROR)
+    {
+      flatpak_gpgme_error_to_gio_error (gpg_error, error);
+      goto out;
+    }
+
+  keyring_name = g_strdup_printf ("%s.trustedkeys.gpg", remote_name);
+  keyring_file = g_file_get_child (ostree_repo_get_path (repo), keyring_name);
+
+  pubring_path = g_build_filename (tmp_home_dir, "pubring.gpg", NULL);
+  pubring_file = g_file_new_for_path (pubring_path);
+
+  if (g_file_query_exists (keyring_file, NULL) &&
+      !glnx_file_copy_at (AT_FDCWD, flatpak_file_get_path_cached (keyring_file), NULL,
+                          AT_FDCWD, flatpak_file_get_path_cached (pubring_file),
+                          GLNX_FILE_COPY_OVERWRITE | GLNX_FILE_COPY_NOXATTRS,
+                          cancellable, error))
+    goto out;
+
+  if (out_tmp_home_dir != NULL)
+    *out_tmp_home_dir = g_steal_pointer (&tmp_home_dir);
+
+  ret = TRUE;
+
+out:
+  if (!ret)
+    {
+      /* Clean up our mess on error. */
+      (void) glnx_shutil_rm_rf_at (AT_FDCWD, tmp_home_dir, NULL, NULL);
+    }
+
+  return ret;
+}
+
+FlatpakOciSignature *
+flatpak_oci_verify_signature (OstreeRepo *repo,
+                              const char *remote_name,
+                              GBytes *signed_data,
+                              GError **error)
+{
+  gpgme_ctx_t context;
+  gpgme_error_t gpg_error;
+  flatpak_auto_gpgme_data gpgme_data_t signed_data_buffer = NULL;
+  flatpak_auto_gpgme_data gpgme_data_t plain_buffer = NULL;
+  g_autofree char *tmp_home_dir = NULL;
+  gpgme_verify_result_t vresult;
+  gpgme_signature_t sig;
+  int valid_count;
+  g_autoptr(GString) plain = NULL;
+  g_autoptr(GBytes) plain_bytes = NULL;
+  g_autoptr(FlatpakJson) json = NULL;
+
+  gpg_error = gpgme_new (&context);
+  if (gpg_error != GPG_ERR_NO_ERROR)
+    {
+      flatpak_gpgme_error_to_gio_error (gpg_error, error);
+      g_prefix_error (error, "Unable to create context: ");
+      return NULL;
+    }
+
+  if (!flatpak_gpgme_ctx_tmp_home_dir (context, &tmp_home_dir, repo, remote_name, NULL, error))
+    return NULL;
+
+  gpg_error = gpgme_data_new_from_mem (&signed_data_buffer,
+                                       g_bytes_get_data (signed_data, NULL),
+                                       g_bytes_get_size (signed_data),
+                                       0 /* do not copy */);
+  if (gpg_error != GPG_ERR_NO_ERROR)
+    {
+      flatpak_gpgme_error_to_gio_error (gpg_error, error);
+      g_prefix_error (error, "Unable to read signed data: ");
+      return NULL;
+    }
+
+  gpg_error = gpgme_data_new (&plain_buffer);
+  if (gpg_error != GPG_ERR_NO_ERROR)
+    {
+      flatpak_gpgme_error_to_gio_error (gpg_error, error);
+      g_prefix_error (error, "Unable to allocate plain buffer: ");
+      return NULL;
+    }
+
+  gpg_error = gpgme_op_verify (context, signed_data_buffer, NULL, plain_buffer);
+  if (gpg_error != GPG_ERR_NO_ERROR)
+    {
+      flatpak_gpgme_error_to_gio_error (gpg_error, error);
+      g_prefix_error (error, "Unable to complete signature verification: ");
+      return NULL;
+    }
+
+  vresult = gpgme_op_verify_result (context);
+
+  valid_count = 0;
+  for (sig = vresult->signatures; sig != NULL; sig = sig->next)
+    {
+      if (signature_is_valid (sig))
+        valid_count++;
+    }
+
+  if (valid_count == 0)
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "GPG signatures found, but none are in trusted keyring");
+      return FALSE;
+    }
+
+  plain = read_gpg_buffer (plain_buffer, error);
+  if (plain == NULL)
+    return NULL;
+  plain_bytes = g_string_free_to_bytes (g_steal_pointer (&plain));
+  json = flatpak_json_from_bytes (plain_bytes, FLATPAK_TYPE_OCI_SIGNATURE, error);
+  if (json == NULL)
+    return FALSE;
+
+  return g_steal_pointer (&json);
 }

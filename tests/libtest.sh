@@ -80,6 +80,7 @@ mkdir -p ${TEST_DATA_DIR}/system
 export FLATPAK_SYSTEM_DIR=${TEST_DATA_DIR}/system
 export FLATPAK_SYSTEM_HELPER_ON_SESSION=1
 
+export XDG_CACHE_HOME=${TEST_DATA_DIR}/home/cache
 export XDG_DATA_HOME=${TEST_DATA_DIR}/home/share
 export XDG_RUNTIME_DIR=${TEST_DATA_DIR}/runtime
 
@@ -138,6 +139,14 @@ assert_not_file_has_content () {
     fi
 }
 
+assert_file_has_mode () {
+    mode=$(stat -c '%a' $1)
+    if [ "$mode" != "$2" ]; then
+        echo 1>&2 "File '$1' has wrong mode: expected $2, but got $mode"
+        exit 1
+    fi
+}
+
 assert_not_has_dir () {
     if test -d "$1"; then
 	echo 1>&2 "Directory '$1' exists"; exit 1
@@ -169,54 +178,71 @@ assert_file_empty() {
 }
 
 export FL_GPG_HOMEDIR=${TEST_DATA_DIR}/gpghome
+export FL_GPG_HOMEDIR2=${TEST_DATA_DIR}/gpghome2
 mkdir -p ${FL_GPG_HOMEDIR}
+mkdir -p ${FL_GPG_HOMEDIR2}
 # This need to be writable, so copy the keys
 cp $(dirname $0)/test-keyring/*.gpg ${FL_GPG_HOMEDIR}/
+cp $(dirname $0)/test-keyring2/*.gpg ${FL_GPG_HOMEDIR2}/
 
 export FL_GPG_ID=7B0961FD
+export FL_GPG_ID2=B2314EFC
 export FL_GPGARGS="--gpg-homedir=${FL_GPG_HOMEDIR} --gpg-sign=${FL_GPG_ID}"
+export FL_GPGARGS2="--gpg-homedir=${FL_GPG_HOMEDIR2} --gpg-sign=${FL_GPG_ID2}"
 
 setup_repo () {
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Platform bash ls cat echo readlink > /dev/null
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh > /dev/null
-    update_repo
-    ostree trivial-httpd --autoexit --daemonize -p httpd-port repos
-    port=$(cat httpd-port)
-    flatpak remote-add ${U} --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg test-repo "http://127.0.0.1:${port}/test"
+    REPONAME=${1:-test}
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Platform bash ls cat echo readlink > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} > /dev/null
+    update_repo $REPONAME
+    if [ $REPONAME == "test" ]; then
+        $(dirname $0)/test-webserver.sh repos
+        FLATPAK_HTTP_PID=$(cat httpd-pid)
+        mv httpd-port httpd-port-main
+    fi
+    port=$(cat httpd-port-main)
+    flatpak remote-add ${U} --gpg-import=${GPGPUBKEY:-${FL_GPG_HOMEDIR}/pubring.gpg} ${REPONAME}-repo "http://127.0.0.1:${port}/$REPONAME"
 }
 
 update_repo () {
-    ${FLATPAK} build-update-repo $FL_GPGARGS ${UPDATE_REPO_ARGS-} repos/test
+    REPONAME=${1:-test}
+    ${FLATPAK} build-update-repo ${GPGARGS:-${FL_GPGARGS}} ${UPDATE_REPO_ARGS-} repos/${REPONAME}
 }
 
 make_updated_app () {
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-app.sh ${1:-UPDATED} > /dev/null
-    update_repo
+    REPONAME=${1:-test}
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-app.sh ${REPONAME} ${2:-UPDATED} > /dev/null
+    update_repo $REPONAME
 }
 
 setup_sdk_repo () {
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
-    update_repo
+    REPONAME=${1:-test}
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.Sdk bash ls cat echo readlink make mkdir cp touch > /dev/null
+    update_repo $REPONAME
 }
 
 setup_python2_repo () {
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.PythonPlatform bash python2 ls cat echo readlink > /dev/null
-    GPGARGS="$FL_GPGARGS" . $(dirname $0)/make-test-runtime.sh org.test.PythonSdk python2 bash ls cat echo readlink make mkdir cp touch > /dev/null
-    update_repo
+    REPONAME=${1:-test}
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonPlatform bash python2 ls cat echo rm readlink > /dev/null
+    GPGARGS="${GPGARGS:-${FL_GPGARGS}}" . $(dirname $0)/make-test-runtime.sh ${REPONAME} org.test.PythonSdk python2 bash ls cat echo rm readlink make mkdir cp touch > /dev/null
+    update_repo $REPONAME
 }
 
 install_repo () {
-    ${FLATPAK} ${U} install test-repo org.test.Platform master
-    ${FLATPAK} ${U} install test-repo org.test.Hello master
+    REPONAME=${1:-test}
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.Platform master
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.Hello master
 }
 
 install_sdk_repo () {
-    ${FLATPAK} ${U} install test-repo org.test.Sdk master
+    REPONAME=${1:-test}
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.Sdk master
 }
 
 install_python2_repo () {
-    ${FLATPAK} ${U} install test-repo org.test.PythonPlatform master
-    ${FLATPAK} ${U} install test-repo org.test.PythonSdk master
+    REPONAME=${1:-test}
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.PythonPlatform master
+    ${FLATPAK} ${U} install ${REPONAME}-repo org.test.PythonSdk master
 }
 
 run () {
@@ -266,7 +292,7 @@ if ! /bin/kill -0 "$DBUS_SESSION_BUS_PID"; then
 fi
 
 cleanup () {
-    /bin/kill $DBUS_SESSION_BUS_PID
+    /bin/kill $DBUS_SESSION_BUS_PID ${FLATPAK_HTTP_PID:-}
     gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
     fusermount -u $XDG_RUNTIME_DIR/doc || :
     rm -rf $TEST_DATA_DIR

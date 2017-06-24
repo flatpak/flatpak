@@ -329,6 +329,86 @@ test_recursive_doc (void)
 }
 
 static void
+test_create_docs (void)
+{
+  GError *error = NULL;
+  g_autofree char *path1 = NULL;
+  g_autofree char *path2 = NULL;
+  int fd1, fd2;
+  guint32 fd_ids[2];
+  GUnixFDList *fd_list = NULL;
+  gboolean res;
+  char **out_doc_ids;
+  g_autoptr(GVariant) out_extra = NULL;
+  const char *permissions[] = { "read", NULL };
+  const char *basenames[] = { "doc1", "doc2" };
+  int i;
+
+  if (!have_fuse)
+    {
+      g_test_skip ("this test requires FUSE");
+      return;
+    }
+
+  path1 = g_build_filename (outdir, basenames[0], NULL);
+  g_file_set_contents (path1, basenames[0], -1, &error);
+  g_assert_no_error (error);
+
+  fd1 = open (path1, O_PATH | O_CLOEXEC);
+  g_assert (fd1 >= 0);
+
+  path2 = g_build_filename (outdir, basenames[1], NULL);
+  g_file_set_contents (path2, basenames[1], -1, &error);
+  g_assert_no_error (error);
+
+  fd2 = open (path2, O_PATH | O_CLOEXEC);
+  g_assert (fd2 >= 0);
+
+  fd_list = g_unix_fd_list_new ();
+  fd_ids[0] = g_unix_fd_list_append (fd_list, fd1, &error);
+  g_assert_no_error (error);
+  close (fd1);
+  fd_ids[1] = g_unix_fd_list_append (fd_list, fd2, &error);
+  g_assert_no_error (error);
+  close (fd2);
+
+  res = xdp_dbus_documents_call_add_full_sync (documents,
+                                               g_variant_new_fixed_array (G_VARIANT_TYPE_HANDLE,
+                                                                          fd_ids, 2, sizeof (guint32)),
+                                               0,
+                                               "org.other.App",
+                                               permissions,
+                                               fd_list,
+                                               &out_doc_ids,
+                                               &out_extra,
+                                               NULL,
+                                               NULL, &error);
+  g_assert_no_error (error);
+  g_assert (res);
+
+  g_assert (g_strv_length (out_doc_ids) == 2);
+  for (i = 0; i < 2; i++)
+    {
+      const char *id = out_doc_ids[i];
+
+      /* Ensure its there and not viewable by apps */
+      assert_doc_has_contents (id, basenames[i], NULL, basenames[i]);
+      assert_host_has_contents (basenames[i], basenames[i]);
+      assert_doc_not_exist (id, basenames[i], "com.test.App1");
+      assert_doc_not_exist (id, basenames[i], "com.test.App2");
+      assert_doc_not_exist (id, "another-file", NULL);
+      assert_doc_not_exist ("anotherid", basenames[i], NULL);
+
+      assert_doc_has_contents (id, basenames[i], "org.other.App", basenames[i]);
+      update_doc (id, basenames[i], "org.other.App", "tmpdata2", &error);
+      g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_ACCES);
+      g_clear_error (&error);
+    }
+  g_assert (g_variant_lookup_value (out_extra, "mountpoint", G_VARIANT_TYPE_VARIANT) == 0);
+}
+
+
+static void
 global_setup (void)
 {
   gboolean inited;
@@ -413,6 +493,7 @@ main (int argc, char **argv)
 
   g_test_add_func ("/db/create_doc", test_create_doc);
   g_test_add_func ("/db/recursive_doc", test_recursive_doc);
+  g_test_add_func ("/db/create_docs", test_create_docs);
 
   global_setup ();
 

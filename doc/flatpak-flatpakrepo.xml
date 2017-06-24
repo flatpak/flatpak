@@ -39,6 +39,11 @@
         </para>
 
         <para>
+            flatpakrepo files may also contain additional information that is useful
+            when displaying a remote to the user, e.g. in an app store.
+        </para>
+
+        <para>
            The filename extension commonly used for flatpakrepo files is <filename>.flatpakrepo</filename>.
         </para>
 
@@ -63,12 +68,12 @@
             </para>
             <variablelist>
                 <varlistentry>
-                    <term><option>Url</option> (string)</term>
-                    <listitem><para>The url for the remote. This key is mandatory.</para></listitem>
+                    <term><option>Version</option> (uint64)</term>
+                    <listitem><para>The version of the file format, must be 1 if present.</para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>Title</option> (string)</term>
-                    <listitem><para>The title of the remote. This should be a user-friendly name that can be displayed e.g. in an app store.</para></listitem>
+                    <term><option>Url</option> (string)</term>
+                    <listitem><para>The url for the remote. This key is mandatory.</para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>GPGKey</option> (string)</term>
@@ -77,6 +82,26 @@
                 <varlistentry>
                     <term><option>DefaultBranch</option> (string)</term>
                     <listitem><para>The default branch to use for this remote.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Title</option> (string)</term>
+                    <listitem><para>The title of the remote. This should be a user-friendly name that can be displayed e.g. in an app store.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Comment</option> (string)</term>
+                    <listitem><para>A short summary of the remote, for display e.g. in an app store.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Description</option> (string)</term>
+                    <listitem><para>A longer description of the remote, for display e.g. in an app store..</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Icon</option> (string)</term>
+                    <listitem><para>The url for an icon that can be used to represent the remote.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Homepage</option> (string)</term>
+                    <listitem><para>The url of a webpage describing the remote.</para></listitem>
                 </varlistentry>
             </variablelist>
         </refsect2>

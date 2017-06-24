@@ -89,7 +89,7 @@
 
                 <listitem><para>
                     List a system-wide installation specified by <arg choice="plain">NAME</arg>
-                    among those defined in <filename>/etc/flatpak/installations.d</filename>.
+                    among those defined in <filename>/etc/flatpak/installations.d/</filename>.
                     Using <arg choice="plain">--installation=default</arg> is equivalent to using
                     <arg choice="plain">--system</arg>.
                 </para></listitem>
@@ -125,6 +125,15 @@
 
                 <listitem><para>
                     List runtimes.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--all</option></term>
+                <term><option>-a</option></term>
+
+                <listitem><para>
+                    List all installed runtimes, including locale and debug extensions. These are hidden by default.
                 </para></listitem>
             </varlistentry>
 

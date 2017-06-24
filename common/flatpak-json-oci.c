@@ -855,3 +855,87 @@ flatpak_oci_parse_commit_annotations (GHashTable *annotations,
         }
     }
 }
+
+
+G_DEFINE_TYPE (FlatpakOciSignature, flatpak_oci_signature, FLATPAK_TYPE_JSON);
+
+static void
+flatpak_oci_signature_critical_destroy (FlatpakOciSignatureCritical *self)
+{
+  g_free (self->type);
+  g_free (self->image.digest);
+  g_free (self->identity.ref);
+}
+
+static void
+flatpak_oci_signature_optional_destroy (FlatpakOciSignatureOptional *self)
+{
+  g_free (self->creator);
+}
+
+static void
+flatpak_oci_signature_finalize (GObject *object)
+{
+  FlatpakOciSignature *self = (FlatpakOciSignature *) object;
+
+  flatpak_oci_signature_critical_destroy (&self->critical);
+  flatpak_oci_signature_optional_destroy (&self->optional);
+
+  G_OBJECT_CLASS (flatpak_oci_signature_parent_class)->finalize (object);
+}
+
+static void
+flatpak_oci_signature_class_init (FlatpakOciSignatureClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  FlatpakJsonClass *json_class = FLATPAK_JSON_CLASS (klass);
+  static FlatpakJsonProp image_props[] = {
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciSignatureCriticalImage, digest, "oci-image-manifest-digest"),
+    FLATPAK_JSON_LAST_PROP
+  };
+  static FlatpakJsonProp identity_props[] = {
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciSignatureCriticalIdentity, ref, "oci-image-ref"),
+    FLATPAK_JSON_LAST_PROP
+  };
+  static FlatpakJsonProp critical_props[] = {
+    FLATPAK_JSON_MANDATORY_STRING_PROP (FlatpakOciSignatureCritical, type, "type"),
+    FLATPAK_JSON_MANDATORY_STRICT_STRUCT_PROP(FlatpakOciSignatureCritical, image, "image", image_props),
+    FLATPAK_JSON_MANDATORY_STRICT_STRUCT_PROP(FlatpakOciSignatureCritical, identity, "identity", identity_props),
+    FLATPAK_JSON_LAST_PROP
+  };
+  static FlatpakJsonProp optional_props[] = {
+    FLATPAK_JSON_STRING_PROP (FlatpakOciSignatureOptional, creator, "creator"),
+    FLATPAK_JSON_INT64_PROP (FlatpakOciSignatureOptional, timestamp, "timestamp"),
+    FLATPAK_JSON_LAST_PROP
+  };
+  static FlatpakJsonProp props[] = {
+    FLATPAK_JSON_MANDATORY_STRICT_STRUCT_PROP (FlatpakOciSignature, critical, "critical", critical_props),
+    FLATPAK_JSON_STRUCT_PROP (FlatpakOciSignature, optional, "optional", optional_props),
+    FLATPAK_JSON_LAST_PROP
+  };
+
+  object_class->finalize = flatpak_oci_signature_finalize;
+  json_class->props = props;
+}
+
+static void
+flatpak_oci_signature_init (FlatpakOciSignature *self)
+{
+}
+
+FlatpakOciSignature *
+flatpak_oci_signature_new (const char *digest, const char *ref)
+{
+  FlatpakOciSignature *signature;
+
+  signature = g_object_new (FLATPAK_TYPE_OCI_SIGNATURE, NULL);
+
+  /* Some default values */
+  signature->critical.type = g_strdup (FLATPAK_OCI_SIGNATURE_TYPE_FLATPAK);
+  signature->critical.image.digest = g_strdup (digest);
+  signature->critical.identity.ref = g_strdup (ref);
+  signature->optional.creator = g_strdup ("flatpak " PACKAGE_VERSION);
+  signature->optional.timestamp = time (NULL);
+
+  return signature;
+}

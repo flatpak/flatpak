@@ -108,9 +108,9 @@ $FLATPAK list ${U} --runtime | grep org.test.Platform > /dev/null
 $FLATPAK list ${U} -d --runtime | grep org.test.Platform | grep org.test.Platform-origin > /dev/null
 $FLATPAK list ${U} -d --runtime | grep org.test.Platform | grep ${ID:0:12} > /dev/null
 
-$FLATPAK info ${U} --runtime org.test.Platform > /dev/null
-$FLATPAK info ${U} --runtime org.test.Platform | grep org.test.Platform-origin > /dev/null
-$FLATPAK info ${U} --runtime org.test.Platform | grep $ID > /dev/null
+$FLATPAK info ${U} org.test.Platform > /dev/null
+$FLATPAK info ${U} org.test.Platform | grep org.test.Platform-origin > /dev/null
+$FLATPAK info ${U} org.test.Platform | grep $ID > /dev/null
 
 $FLATPAK remote-list ${U} -d | grep org.test.Platform-origin > /dev/null
 $FLATPAK remote-list ${U} -d | grep org.test.Platform-origin | grep no-enumerate > /dev/null
@@ -148,7 +148,7 @@ assert_file_has_content hello_out '^Hello world, from a sandboxUPDATED$'
 
 echo "ok update"
 
-make_updated_app UPDATED2
+make_updated_app test UPDATED2
 
 ${FLATPAK} build-bundle repos/test --repo-url=file://`pwd`/repos/test --gpg-keys=${FL_GPG_HOMEDIR}/pubring.gpg bundles/hello2.flatpak org.test.Hello
 assert_has_file bundles/hello2.flatpak

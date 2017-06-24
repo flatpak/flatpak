@@ -38,8 +38,10 @@ static gboolean opt_run;
 static gboolean opt_disable_cache;
 static gboolean opt_disable_rofiles;
 static gboolean opt_download_only;
+static gboolean opt_bundle_sources;
 static gboolean opt_build_only;
 static gboolean opt_finish_only;
+static gboolean opt_export_only;
 static gboolean opt_show_deps;
 static gboolean opt_disable_download;
 static gboolean opt_disable_updates;
@@ -56,17 +58,21 @@ static char *opt_from_git_branch;
 static char *opt_stop_at;
 static char *opt_build_shell;
 static char *opt_arch;
+static char *opt_default_branch;
 static char *opt_repo;
 static char *opt_subject;
 static char *opt_body;
 static char *opt_gpg_homedir;
 static char **opt_key_ids;
+static char **opt_sources_dirs;
 static int opt_jobs;
+static char *opt_mirror_screenshots_url;
 
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
   { "version", 0, 0, G_OPTION_ARG_NONE, &opt_version, "Print version information and exit", NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, "Architecture to build for (must be host compatible)", "ARCH" },
+  { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, "Change the default branch", "BRANCH" },
   { "run", 0, 0, G_OPTION_ARG_NONE, &opt_run, "Run a command in the build directory (see --run --help)", NULL },
   { "ccache", 0, 0, G_OPTION_ARG_NONE, &opt_ccache, "Use ccache", NULL },
   { "disable-cache", 0, 0, G_OPTION_ARG_NONE, &opt_disable_cache, "Disable cache lookups", NULL },
@@ -74,8 +80,11 @@ static GOptionEntry entries[] = {
   { "disable-download", 0, 0, G_OPTION_ARG_NONE, &opt_disable_download, "Don't download any new sources", NULL },
   { "disable-updates", 0, 0, G_OPTION_ARG_NONE, &opt_disable_updates, "Only download missing sources, never update to latest vcs version", NULL },
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
+  { "bundle-sources", 0, 0, G_OPTION_ARG_NONE, &opt_bundle_sources, "Bundle module sources as runtime", NULL },
+  { "extra-sources", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sources_dirs, "Add a directory of sources specified by SOURCE-DIR, multiple uses of this option possible", "SOURCE-DIR"},
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "finish-only", 0, 0, G_OPTION_ARG_NONE, &opt_finish_only, "Only run clean and finish and export phases", NULL },
+  { "export-only", 0, 0, G_OPTION_ARG_NONE, &opt_export_only, "Only run export phase", NULL },
   { "allow-missing-runtimes", 0, 0, G_OPTION_ARG_NONE, &opt_allow_missing_runtimes, "Don't fail if runtime and sdk missing", NULL },
   { "show-deps", 0, 0, G_OPTION_ARG_NONE, &opt_show_deps, "List the dependencies of the json file (see --show-deps --help)", NULL },
   { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir or export if no changes", NULL },
@@ -94,6 +103,7 @@ static GOptionEntry entries[] = {
   { "build-shell", 0, 0, G_OPTION_ARG_STRING, &opt_build_shell, "Extract and prepare sources for module, then start build shell", "MODULENAME"},
   { "from-git", 0, 0, G_OPTION_ARG_STRING, &opt_from_git, "Get input files from git repo", "URL"},
   { "from-git-branch", 0, 0, G_OPTION_ARG_STRING, &opt_from_git_branch, "Branch to use in --from-git", "BRANCH"},
+  { "mirror-screenshots-url", 0, 0, G_OPTION_ARG_STRING, &opt_mirror_screenshots_url, "Download and rewrite screenshots to match this url", "URL"},
   { NULL }
 };
 
@@ -319,6 +329,19 @@ main (int    argc,
   builder_context_set_sandboxed (build_context, opt_sandboxed);
   builder_context_set_jobs (build_context, opt_jobs);
   builder_context_set_rebuild_on_sdk_change (build_context, opt_rebuild_on_sdk_change);
+  builder_context_set_bundle_sources (build_context, opt_bundle_sources);
+
+  if (opt_sources_dirs)
+    {
+      g_autoptr(GPtrArray) sources_dirs = NULL;
+      sources_dirs = g_ptr_array_new_with_free_func (g_object_unref);
+      for (i = 0; opt_sources_dirs != NULL && opt_sources_dirs[i] != NULL; i++)
+        {
+          GFile *file = g_file_new_for_commandline_arg (opt_sources_dirs[i]);
+          g_ptr_array_add (sources_dirs, file);
+        }
+      builder_context_set_sources_dirs (build_context, sources_dirs);
+    }
 
   if (opt_arch)
     builder_context_set_arch (build_context, opt_arch);
@@ -344,7 +367,8 @@ main (int    argc,
       g_autoptr(GFile) build_subdir = NULL;
 
       if (!builder_git_mirror_repo (opt_from_git,
-                                    !opt_disable_updates, FALSE,
+                                    NULL,
+                                    !opt_disable_updates, FALSE, FALSE,
                                     git_branch, build_context, &error))
         {
           g_printerr ("Can't clone manifest repo: %s\n", error->message);
@@ -401,18 +425,21 @@ main (int    argc,
     }
 
   /* Can't push this as user data to the demarshalling :/ */
-  builder_manifest_set_demarshal_buid_context (build_context);
+  builder_manifest_set_demarshal_base_dir (builder_context_get_base_dir (build_context));
 
   manifest = (BuilderManifest *) json_gobject_from_data (BUILDER_TYPE_MANIFEST,
                                                          json, -1, &error);
 
-  builder_manifest_set_demarshal_buid_context (NULL);
+  builder_manifest_set_demarshal_base_dir (NULL);
 
   if (manifest == NULL)
     {
       g_printerr ("Can't parse '%s': %s\n", manifest_rel_path, error->message);
       return 1;
     }
+
+  if (opt_default_branch)
+    builder_manifest_set_default_branch (manifest, opt_default_branch);
 
   if (is_run && argc == 3)
     return usage (context, "Program to run must be specified");
@@ -455,7 +482,7 @@ main (int    argc,
   g_assert (!opt_run);
   g_assert (!opt_show_deps);
 
-  if (opt_finish_only || opt_build_shell)
+  if (opt_export_only || opt_finish_only || opt_build_shell)
     {
       if (app_dir_is_empty)
         {
@@ -480,7 +507,7 @@ main (int    argc,
           else
             {
               g_printerr ("App dir '%s' is not empty. Please delete "
-                          "the existing contents.\n", app_dir_path);
+                          "the existing contents or use --force-clean.\n", app_dir_path);
               return 1;
             }
         }
@@ -495,6 +522,7 @@ main (int    argc,
     }
 
   if (!opt_finish_only &&
+      !opt_export_only &&
       !opt_disable_download &&
       !builder_manifest_download (manifest, !opt_disable_updates, opt_build_shell, build_context, &error))
     {
@@ -530,7 +558,7 @@ main (int    argc,
 
   builder_manifest_checksum (manifest, cache, build_context);
 
-  if (!opt_finish_only)
+  if (!opt_finish_only && !opt_export_only)
     {
       if (!builder_cache_lookup (cache, "init"))
         {
@@ -557,7 +585,7 @@ main (int    argc,
         }
     }
 
-  if (!opt_build_only)
+  if (!opt_build_only && !opt_export_only)
     {
       if (!builder_manifest_cleanup (manifest, cache, build_context, &error))
         {
@@ -576,14 +604,65 @@ main (int    argc,
           g_printerr ("Error: %s\n", error->message);
           return 1;
         }
+
+      if (builder_context_get_bundle_sources (build_context) &&
+          !builder_manifest_bundle_sources (manifest, json, cache, build_context, &error))
+        {
+          g_printerr ("Error: %s\n", error->message);
+          return 1;
+        }
     }
 
-  if (!opt_require_changes)
+  if (!opt_require_changes && !opt_export_only)
     builder_cache_ensure_checkout (cache);
 
-  if (!opt_build_only && opt_repo && builder_cache_has_checkout (cache))
+  if (opt_mirror_screenshots_url && !opt_export_only)
+    {
+      g_autofree char *screenshot_subdir = g_strdup_printf ("%s-%s", builder_manifest_get_id (manifest),
+                                                            builder_manifest_get_branch (manifest));
+      g_autofree char *url = g_build_filename (opt_mirror_screenshots_url, screenshot_subdir, NULL);
+      g_autofree char *xml_relpath = g_strdup_printf ("files/share/app-info/xmls/%s.xml.gz", builder_manifest_get_id (manifest));
+      g_autoptr(GFile) xml = g_file_resolve_relative_path (app_dir, xml_relpath);
+      g_autoptr(GFile) cache = flatpak_build_file (builder_context_get_state_dir (build_context), "screenshots-cache", NULL);
+      g_autoptr(GFile) screenshots = flatpak_build_file (app_dir, "screenshots", NULL);
+      g_autoptr(GFile) screenshots_sub = flatpak_build_file (screenshots, screenshot_subdir, NULL);
+      const char *argv[] = {
+        "appstream-util",
+        "mirror-screenshots",
+        flatpak_file_get_path_cached (xml),
+        url,
+        flatpak_file_get_path_cached (cache),
+        flatpak_file_get_path_cached (screenshots_sub),
+        NULL
+      };
+
+      g_print ("Mirroring screenshots from appdata\n");
+
+      if (!flatpak_mkdir_p (screenshots, NULL, &error))
+        {
+          g_printerr ("Error creating screenshot dir: %s\n", error->message);
+          return 1;
+        }
+
+      if (g_file_query_exists (xml, NULL))
+        {
+          if (!builder_maybe_host_spawnv (NULL,
+                                          NULL,
+                                          &error,
+                                          argv))
+            {
+              g_printerr ("Error mirroring screenshots: %s\n", error->message);
+              return 1;
+            }
+        }
+
+      g_print ("Saved screenshots in %s\n", flatpak_file_get_path_cached (screenshots));
+    }
+
+  if (!opt_build_only && opt_repo && (opt_export_only || builder_cache_has_checkout (cache)))
     {
       g_autoptr(GFile) debuginfo_metadata = NULL;
+      g_autoptr(GFile) sourcesinfo_metadata = NULL;
 
       g_print ("Exporting %s to repo\n", builder_manifest_get_id (manifest));
 
@@ -639,6 +718,23 @@ main (int    argc,
           if (!do_export (build_context, &error, TRUE,
                           "--metadata=metadata.debuginfo",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
+            {
+              g_printerr ("Export failed: %s\n", error->message);
+              return 1;
+            }
+        }
+
+      /* Export sources extensions */
+      sourcesinfo_metadata = g_file_get_child (app_dir, "metadata.sources");
+      if (g_file_query_exists (sourcesinfo_metadata, NULL))
+        {
+          g_autofree char *sources_id = builder_manifest_get_sources_id (manifest);
+          g_print ("Exporting %s to repo\n", sources_id);
+
+          if (!do_export (build_context, &error, TRUE,
+                          "--metadata=metadata.sources",
+                          "--files=sources",
                           opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);

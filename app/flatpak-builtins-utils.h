@@ -30,6 +30,10 @@ gboolean    looks_like_branch (const char  *branch);
 GBytes *    download_uri      (const char  *url,
                                GError     **error);
 
+GBytes * flatpak_load_gpg_keys (char **gpg_import,
+                                GCancellable *cancellable,
+                                GError      **error);
+
 FlatpakDir * flatpak_find_installed_pref (const char *pref,
                                           FlatpakKinds kinds,
                                           const char *default_arch,

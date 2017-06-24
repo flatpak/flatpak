@@ -24,6 +24,7 @@ $(systemd_dbus_built_sources) : data/org.freedesktop.systemd1.xml
 nodist_libflatpak_common_la_SOURCES = \
 	$(dbus_built_sources)		\
 	$(systemd_dbus_built_sources)	\
+	$(xdp_dbus_built_sources) \
 	$(NULL)
 
 BUILT_SOURCES += $(nodist_libflatpak_common_la_SOURCES)
@@ -39,6 +40,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-portal-error.h \
 	common/flatpak-utils.c \
 	common/flatpak-utils.h \
+	common/flatpak-table-printer.c \
+	common/flatpak-table-printer.h \
 	common/flatpak-chain-input-stream.c \
 	common/flatpak-chain-input-stream.h \
 	common/gvdb/gvdb-reader.h	\
@@ -65,6 +68,7 @@ libflatpak_common_la_CFLAGS = \
 	$(JSON_CFLAGS) \
 	$(XAUTH_CFLAGS) \
 	$(LIBSECCOMP_CFLAGS) \
+	$(INTERNAL_GPGME_CFLAGS) \
 	-I$(srcdir)/dbus-proxy \
 	$(NULL)
-libflatpak_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS)
+libflatpak_common_la_LIBADD = libglnx.la $(BASE_LIBS) $(OSTREE_LIBS) $(SOUP_LIBS) $(JSON_LIBS) $(XAUTH_LIBS) $(LIBSECCOMP_LIBS) $(INTERNAL_GPGME_LIBS)

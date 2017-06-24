@@ -44,13 +44,15 @@
             Show info about and installed application and/or runtime.
         </para>
         <para>
+            By default, the output is formatted in a friendly format.
+            If you specify one of the options --show-ref, --show-commit,
+            --show-origin, --show-metadata or --show-size, the output is instead formatted
+            in a machine-readable format.
+        </para>
+        <para>
             By default, both per-user and system-wide installations
             are queried. Use the --user, --system or --installation
             options to change this.
-        </para>
-        <para>
-            By default this queries the installed apps and runtimes, but you can
-            limit this by using the --app or --runtime option.
         </para>
 
     </refsect1>
@@ -91,25 +93,9 @@
 
                 <listitem><para>
                     Query a system-wide installation by <arg choice="plain">NAME</arg> among
-                    those defined in <filename>/etc/flatpak/installations.d</filename>.
+                    those defined in <filename>/etc/flatpak/installations.d/</filename>.
                     Using <arg choice="plain">--installation=default</arg> is equivalent to using
                     <arg choice="plain">--system</arg>.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--app</option></term>
-
-                <listitem><para>
-                    Query for applications.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
-                <term><option>--runtime</option></term>
-
-                <listitem><para>
-                    Query for runtimes.
                 </para></listitem>
             </varlistentry>
 
@@ -145,6 +131,33 @@
 
                 <listitem><para>
                     Show the installed commit id.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-s</option></term>
+                <term><option>--show-size</option></term>
+
+                <listitem><para>
+                    Show the installed size.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-m</option></term>
+                <term><option>--show-metadata</option></term>
+
+                <listitem><para>
+                    Show the metadata.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-e</option></term>
+                <term><option>--show-extensions</option></term>
+
+                <listitem><para>
+                    Show the matching extensions.
                 </para></listitem>
             </varlistentry>
 

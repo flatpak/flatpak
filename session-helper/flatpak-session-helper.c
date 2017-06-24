@@ -359,6 +359,9 @@ on_bus_acquired (GDBusConnection *connection,
   GError *error = NULL;
 
   helper = flatpak_session_helper_skeleton_new ();
+
+  flatpak_session_helper_set_version (FLATPAK_SESSION_HELPER (helper), 1);
+
   g_signal_connect (helper, "handle-request-monitor", G_CALLBACK (handle_request_monitor), NULL);
 
   if (!g_dbus_interface_skeleton_export (G_DBUS_INTERFACE_SKELETON (helper),
@@ -371,6 +374,7 @@ on_bus_acquired (GDBusConnection *connection,
     }
 
   devel = flatpak_development_skeleton_new ();
+  flatpak_development_set_version (FLATPAK_DEVELOPMENT (devel), 1);
   g_signal_connect (devel, "handle-host-command", G_CALLBACK (handle_host_command), NULL);
   g_signal_connect (devel, "handle-host-command-signal", G_CALLBACK (handle_host_command_signal), NULL);
 
@@ -529,6 +533,8 @@ main (int    argc,
     }
 
   setup_file_monitor ("/etc/resolv.conf");
+  setup_file_monitor ("/etc/host.conf");
+  setup_file_monitor ("/etc/hosts");
   setup_file_monitor ("/etc/localtime");
 
   flags = G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT;

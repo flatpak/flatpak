@@ -1,0 +1,97 @@
+<?xml version='1.0'?> <!--*-nxml-*-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<refentry id="flatpak-installation">
+
+    <refentryinfo>
+        <title>flatpak installation</title>
+        <productname>flatpak</productname>
+
+        <authorgroup>
+            <author>
+                <contrib>Developer</contrib>
+                <firstname>Alexander</firstname>
+                <surname>Larsson</surname>
+                <email>alexl@redhat.com</email>
+            </author>
+        </authorgroup>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>flatpak installation</refentrytitle>
+        <manvolnum>5</manvolnum>
+    </refmeta>
+
+    <refnamediv>
+        <refname>flatpak-installation</refname>
+        <refpurpose>Configuration for an installation location</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+        <title>Description</title>
+
+        <para>
+            flatpak can operate in system-wide or per-user mode. The system-wide data
+            is located in <filename>$prefix/var/lib/flatpak/</filename>, and the per-user data is in
+            <filename>$HOME/.local/share/flatpak/</filename>.
+        </para>
+
+        <para>
+            In addition to the default installation locations, more system-wide installations
+            can be defined via configuration files <filename>/etc/flatpak/installations.d/</filename>,
+            which must have the .conf extension and follow the format described below.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>File format</title>
+
+        <para>
+            The installation config file format is using the same .ini file format that is used
+            for systemd unit files or application .desktop files.
+        </para>
+
+        <refsect2>
+            <title>[Installation …]</title>
+            <para>
+                All the configuration for the the installation location with name NAME is contained
+                in the [Installation "NAME"] group.
+            </para>
+            <para>
+                The following keys are recognized:
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>Path</option> (string)</term>
+                    <listitem><para>The path for this installation. This key is mandatory.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>DisplayName</option> (string)</term>
+                    <listitem><para>The name to use when showing this installation in the UI.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>Priority</option> (integer)</term>
+                    <listitem><para>A priority for this installation.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>StorageType</option> (string)</term>
+                    <listitem><para>The type of storage used for this installation. Possible values include: mmc, sdcard, harddisk.</para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+    </refsect1>
+
+    <refsect1>
+        <title>Examples</title>
+
+<programlisting>
+[Installation "extra"]
+Path=/location/of/sdcard
+DisplayName=Extra Installation
+StorageType=sdcard
+</programlisting>
+
+    </refsect1>
+
+</refentry>

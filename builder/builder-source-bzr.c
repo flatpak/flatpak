@@ -184,14 +184,49 @@ builder_source_bzr_download (BuilderSource  *source,
     {
       g_autofree char *filename = g_file_get_basename (mirror_dir);
       g_autoptr(GFile) parent = g_file_get_parent (mirror_dir);
-      g_autofree char *filename_tmp = g_strconcat ("./", filename, ".clone_tmp", NULL);
-      g_autoptr(GFile) mirror_dir_tmp = g_file_get_child (parent, filename_tmp);
+      g_autofree char *mirror_path = g_file_get_path (mirror_dir);
+      g_autofree char *path_tmp = g_strconcat (mirror_path, ".clone_XXXXXX", NULL);
+      g_autofree char *filename_tmp = NULL;
+      g_autoptr(GFile) mirror_dir_tmp = NULL;
+      g_autoptr(GFile) cached_bzr_dir = NULL;
+      const char *branch_source;
 
       g_print ("Getting bzr repo %s\n", self->url);
 
+      if (g_mkdtemp_full (path_tmp, 0755) == NULL)
+        return flatpak_fail (error, "Can't create temporary directory");
+
+      /* bzr can't check out to the empty dir, so remove it */
+      rmdir (path_tmp);
+
+      mirror_dir_tmp = g_file_new_for_path (path_tmp);
+      filename_tmp = g_file_get_basename (mirror_dir_tmp);
+
+      branch_source = self->url;
+
+      cached_bzr_dir = builder_context_find_in_sources_dirs (context, "bzr", filename, NULL);
+      if (cached_bzr_dir != NULL)
+        branch_source = flatpak_file_get_path_cached (cached_bzr_dir);
+
       if (!bzr (parent, NULL, error,
-                "branch", self->url,  filename_tmp, NULL) ||
-          !g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
+                "branch", branch_source,  filename_tmp, NULL))
+        return FALSE;
+
+      /* Rewrite to real url if we used the cache */
+      if (cached_bzr_dir != NULL)
+        {
+          g_autofree char *setting = g_strdup_printf ("parent_location=%s", self->url);
+          if (!bzr (mirror_dir_tmp, NULL, error,
+                    "config", setting, NULL))
+            return FALSE;
+
+          if (update_vcs &&
+              !bzr (mirror_dir_tmp, NULL, error,
+                    "pull", NULL))
+            return FALSE;
+        }
+
+      if (!g_file_move (mirror_dir_tmp, mirror_dir, 0, NULL, NULL, NULL, error))
         return FALSE;
     }
   else if (update_vcs)
@@ -235,6 +270,55 @@ builder_source_bzr_extract (BuilderSource  *source,
                 "revert", revarg, NULL))
         return FALSE;
     }
+
+  return TRUE;
+}
+
+static gboolean
+builder_source_bzr_bundle (BuilderSource  *source,
+                           BuilderContext *context,
+                           GError        **error)
+{
+  BuilderSourceBzr *self = BUILDER_SOURCE_BZR (source);
+
+  g_autoptr(GFile) sources_dir = NULL;
+  g_autoptr(GFile) dest_dir = NULL;
+  g_autoptr(GFile) dest_dir_tmp = NULL;
+  g_autoptr(GFile) bzr_sources_dir = NULL;
+
+  g_autofree char *sources_dir_path = NULL;
+
+  g_autofree char *base_name = NULL;
+  g_autofree char *base_name_tmp = NULL;
+
+  sources_dir = get_mirror_dir (self, context);
+
+  if (sources_dir == NULL) {
+    g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Can't locate repo with URL '%s'", self->url);
+    return FALSE;
+  }
+
+  base_name = g_file_get_basename (sources_dir);
+
+  bzr_sources_dir = flatpak_build_file (builder_context_get_app_dir (context),
+                                        "sources/bzr",
+                                        NULL);
+  if (!flatpak_mkdir_p (bzr_sources_dir, NULL, error))
+    return FALSE;
+
+  base_name_tmp = g_strconcat (base_name, ".clone_tmp", NULL);
+  dest_dir_tmp = flatpak_build_file (bzr_sources_dir,
+                                          base_name_tmp,
+                                          NULL);
+  dest_dir = flatpak_build_file (bzr_sources_dir,
+                                 base_name,
+                                 NULL);
+
+  sources_dir_path = g_file_get_path (sources_dir);
+  if (!bzr (bzr_sources_dir, NULL, error,
+            "branch", sources_dir_path, base_name_tmp, NULL) ||
+      !g_file_move (dest_dir_tmp, dest_dir, 0, NULL, NULL, NULL, error))
+    return FALSE;
 
   return TRUE;
 }
@@ -289,6 +373,7 @@ builder_source_bzr_class_init (BuilderSourceBzrClass *klass)
 
   source_class->download = builder_source_bzr_download;
   source_class->extract = builder_source_bzr_extract;
+  source_class->bundle = builder_source_bzr_bundle;
   source_class->update = builder_source_bzr_update;
   source_class->checksum = builder_source_bzr_checksum;
 

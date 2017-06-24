@@ -1,0 +1,25 @@
+{
+    "name": "module1",
+    "modules": [
+        {
+            "name": "module1-first",
+            "buildsystem": "simple",
+            "build-commands": [
+                "echo module1 > /app/ran_module1",
+                "echo module1 > /app/modify_me"
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "path": "data1"
+                },
+                {
+                    "type": "patch",
+                    "strip-components": 0,
+                    "path": "data1.patch"
+                }
+            ]
+        },
+        "include2/module2.json"
+    ]
+}

@@ -56,9 +56,17 @@ builder_source_finalize (GObject *object)
 {
   BuilderSource *self = BUILDER_SOURCE (object);
 
+  g_clear_object (&self->base_dir);
   g_free (self->dest);
 
   G_OBJECT_CLASS (builder_source_parent_class)->finalize (object);
+}
+
+void
+builder_source_set_base_dir (BuilderSource  *self,
+                             GFile          *base_dir)
+{
+  g_set_object (&self->base_dir, base_dir);
 }
 
 static void
@@ -151,6 +159,16 @@ builder_source_real_extract (BuilderSource  *self,
 }
 
 static gboolean
+builder_source_real_bundle (BuilderSource  *self,
+                            BuilderContext *context,
+                            GError        **error)
+{
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+               "Bundle not implemented for type %s", g_type_name_from_instance ((GTypeInstance *) self));
+  return FALSE;
+}
+
+static gboolean
 builder_source_real_update (BuilderSource  *self,
                             BuilderContext *context,
                             GError        **error)
@@ -170,6 +188,7 @@ builder_source_class_init (BuilderSourceClass *klass)
   klass->show_deps = builder_source_real_show_deps;
   klass->download = builder_source_real_download;
   klass->extract = builder_source_real_extract;
+  klass->bundle = builder_source_real_bundle;
   klass->update = builder_source_real_update;
 
   g_object_class_install_property (object_class,
@@ -200,9 +219,19 @@ builder_source_init (BuilderSource *self)
 {
 }
 
+static GParamSpec *
+builder_source_find_property (JsonSerializable *serializable,
+                              const char       *name)
+{
+  if (strcmp (name, "type") == 0)
+    return NULL;
+  return builder_serializable_find_property_with_error (serializable, name);
+}
+
 static void
 serializable_iface_init (JsonSerializableIface *serializable_iface)
 {
+  serializable_iface->find_property = builder_source_find_property;
 }
 
 JsonNode *
@@ -320,6 +349,17 @@ builder_source_extract (BuilderSource  *self,
 
 
   return class->extract (self, real_dest, build_options, context, error);
+}
+
+gboolean
+builder_source_bundle (BuilderSource  *self,
+                       BuilderContext *context,
+                       GError        **error)
+{
+  BuilderSourceClass *class;
+  class = BUILDER_SOURCE_GET_CLASS (self);
+
+  return class->bundle (self, context, error);
 }
 
 gboolean

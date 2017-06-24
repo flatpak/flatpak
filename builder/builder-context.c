@@ -47,6 +47,7 @@ struct BuilderContext
   char           *stop_at;
 
   GFile          *download_dir;
+  GPtrArray      *sources_dirs;
   GFile          *state_dir;
   GFile          *build_dir;
   GFile          *cache_dir;
@@ -65,9 +66,11 @@ struct BuilderContext
   gboolean        build_runtime;
   gboolean        build_extension;
   gboolean        separate_locales;
+  gboolean        bundle_sources;
   gboolean        sandboxed;
   gboolean        rebuild_on_sdk_change;
   gboolean        use_rofiles;
+  gboolean        have_rofiles;
 };
 
 typedef struct
@@ -107,6 +110,8 @@ builder_context_finalize (GObject *object)
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_platform);
   glnx_release_lock_file(&self->rofiles_file_lock);
+
+  g_clear_pointer (&self->sources_dirs, g_ptr_array_unref);
 
   G_OBJECT_CLASS (builder_context_parent_class)->finalize (object);
 }
@@ -200,7 +205,11 @@ static void
 builder_context_init (BuilderContext *self)
 {
   GLnxLockFile init = GLNX_LOCK_FILE_INIT;
+  g_autofree char *path = NULL;
+
   self->rofiles_file_lock = init;
+  path = g_find_program_in_path ("rofiles-fuse");
+  self->have_rofiles = path != NULL;
 }
 
 GFile *
@@ -246,6 +255,59 @@ GFile *
 builder_context_get_download_dir (BuilderContext *self)
 {
   return self->download_dir;
+}
+
+GPtrArray *
+builder_context_get_sources_dirs (BuilderContext *self)
+{
+  return self->sources_dirs;
+}
+
+void
+builder_context_set_sources_dirs (BuilderContext *self,
+                                  GPtrArray      *sources_dirs)
+{
+  g_clear_pointer (&self->sources_dirs, g_ptr_array_unref);
+  self->sources_dirs = g_ptr_array_ref (sources_dirs);
+}
+
+GFile *
+builder_context_find_in_sources_dirs_va (BuilderContext *self,
+                                         va_list args)
+{
+  int i;
+
+  if (self->sources_dirs == NULL)
+    return NULL;
+
+  for (i = 0; i < self->sources_dirs->len; i++)
+    {
+      GFile *dir = g_ptr_array_index (self->sources_dirs, i);
+      g_autoptr(GFile) local_file = NULL;
+      va_list args2;
+
+      va_copy(args2, args);
+      local_file = flatpak_build_file_va (dir, args2);
+
+      if (g_file_query_exists (local_file, NULL))
+        return g_steal_pointer (&local_file);
+    }
+
+  return NULL;
+}
+
+GFile *
+builder_context_find_in_sources_dirs (BuilderContext *self,
+                                      ...)
+{
+  GFile *res;
+  va_list args;
+
+  va_start (args, self);
+  res = builder_context_find_in_sources_dirs_va (self, args);
+  va_end (args);
+
+  return res;
 }
 
 GFile *
@@ -335,7 +397,7 @@ SoupSession *
 builder_context_get_soup_session (BuilderContext *self)
 {
   if (self->soup_session == NULL)
-    self->soup_session = flatpak_create_soup_session ("flatpak-builder");
+    self->soup_session = flatpak_create_soup_session ("flatpak-builder " PACKAGE_VERSION);
 
   return self->soup_session;
 }
@@ -492,6 +554,19 @@ builder_context_set_separate_locales (BuilderContext *self,
   self->separate_locales = !!separate_locales;
 }
 
+gboolean
+builder_context_get_bundle_sources (BuilderContext *self)
+{
+  return self->bundle_sources;
+}
+
+void
+builder_context_set_bundle_sources (BuilderContext *self,
+                                    gboolean        bundle_sources)
+{
+  self->bundle_sources = !!bundle_sources;
+}
+
 static char *rofiles_unmount_path = NULL;
 
 void
@@ -542,6 +617,12 @@ builder_context_enable_rofiles (BuilderContext *self,
 
   if (!self->use_rofiles)
     return TRUE;
+
+  if (!self->have_rofiles)
+    {
+      g_warning ("rofiles-fuse not available, doing without");
+      return TRUE;
+    }
 
   g_assert (self->rofiles_dir == NULL);
 
@@ -599,7 +680,7 @@ builder_context_enable_rofiles (BuilderContext *self,
   rofiles_dir = g_object_ref (self->rofiles_allocated_dir);
   argv[4] = (char *)flatpak_file_get_path_cached (rofiles_dir);
 
-  g_debug ("starting: rofiles-fuse %s %s", argv[1], argv[4]);
+  g_debug ("starting: rofiles-fuse %s %s", argv[3], argv[4]);
   if (!g_spawn_sync (NULL, (char **)argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_CLOEXEC_PIPES, rofiles_child_setup, NULL, NULL, NULL, &exit_status, error))
     {
       g_prefix_error (error, "Can't spawn rofiles-fuse");
@@ -624,6 +705,9 @@ builder_context_disable_rofiles (BuilderContext *self,
                      NULL };
 
   if (!self->use_rofiles)
+    return TRUE;
+
+  if (!self->have_rofiles)
     return TRUE;
 
   g_assert (self->rofiles_dir != NULL);

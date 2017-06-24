@@ -28,6 +28,7 @@
 
 #include "flatpak-dbus.h"
 #include "flatpak-dir.h"
+#include "flatpak-oci-registry.h"
 #include "lib/flatpak-error.h"
 
 static PolkitAuthority *authority = NULL;
@@ -149,6 +150,7 @@ handle_deploy (FlatpakSystemHelper   *object,
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) deploy_dir = NULL;
   gboolean is_update;
+  gboolean is_oci;
   gboolean no_deploy;
   gboolean local_pull;
   g_autoptr(GMainContext) main_context = NULL;
@@ -217,7 +219,64 @@ handle_deploy (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  if (strlen (arg_repo_path) > 0)
+  is_oci = flatpak_dir_get_remote_oci (system, arg_origin);
+
+  if (strlen (arg_repo_path) > 0 && is_oci)
+    {
+      g_autoptr(GFile) registry_file = g_file_new_for_path (arg_repo_path);
+      g_autofree char *registry_uri = g_file_get_uri (registry_file);
+      g_autoptr(FlatpakOciRegistry) registry = NULL;
+      g_autoptr(FlatpakOciIndex) index = NULL;
+      const FlatpakOciManifestDescriptor *desc;
+      g_autoptr(FlatpakOciVersioned) versioned = NULL;
+      g_autofree char *checksum = NULL;
+      const char *signature_digest;
+
+      registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
+      if (registry == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't open child OCI registry: %s", error->message);
+          return TRUE;
+        }
+
+      index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, &error);
+      if (index == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't open child OCI registry index: %s", error->message);
+          return TRUE;
+        }
+
+      desc = flatpak_oci_index_get_manifest (index, arg_ref);
+      if (desc == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't find ref %s in child OCI registry index", arg_ref);
+          return TRUE;
+        }
+
+      signature_digest = g_hash_table_lookup (desc->parent.annotations, "org.flatpak.signature-digest");
+
+      versioned = flatpak_oci_registry_load_versioned (registry, desc->parent.digest, NULL,
+                                                       NULL, &error);
+      if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't open child manifest");
+          return TRUE;
+        }
+
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
+                                        arg_origin, arg_ref, signature_digest, NULL, NULL, NULL, &error);
+      if (checksum == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't pull ref %s from child OCI registry index: %s", arg_ref, error->message);
+          return TRUE;
+        }
+    }
+  else if (strlen (arg_repo_path) > 0)
     {
       /* Work around ostree-pull spinning the default main context for the sync calls */
       main_context = g_main_context_new ();
@@ -319,6 +378,7 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
   g_autoptr(GError) error = NULL;
   g_autoptr(GMainContext) main_context = NULL;
   g_autofree char *branch = NULL;
+  gboolean is_oci;
 
   g_debug ("DeployAppstream %s %s %s %s", arg_repo_path, arg_origin, arg_arch, arg_installation);
 
@@ -342,26 +402,86 @@ handle_deploy_appstream (FlatpakSystemHelper   *object,
       return TRUE;
     }
 
-  /* Work around ostree-pull spinning the default main context for the sync calls */
-  main_context = g_main_context_new ();
-  g_main_context_push_thread_default (main_context);
+  is_oci = flatpak_dir_get_remote_oci (system, arg_origin);
 
   branch = g_strdup_printf ("appstream/%s", arg_arch);
 
-  if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
-                                         arg_origin,
-                                         branch,
-                                         NULL,
-                                         NULL,
-                                         NULL, &error))
+  if (is_oci)
     {
-      g_main_context_pop_thread_default (main_context);
-      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
-                                             "Error pulling from repo: %s", error->message);
-      return TRUE;
-    }
+      g_autoptr(GFile) registry_file = g_file_new_for_path (arg_repo_path);
+      g_autofree char *registry_uri = g_file_get_uri (registry_file);
+      g_autoptr(FlatpakOciRegistry) registry = NULL;
+      g_autoptr(FlatpakOciIndex) index = NULL;
+      const FlatpakOciManifestDescriptor *desc;
+      g_autoptr(FlatpakOciVersioned) versioned = NULL;
+      g_autofree char *checksum = NULL;
+      const char *signature_digest;
 
-  g_main_context_pop_thread_default (main_context);
+      registry = flatpak_oci_registry_new (registry_uri, FALSE, -1, NULL, &error);
+      if (registry == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't open child OCI registry: %s", error->message);
+          return TRUE;
+        }
+
+      index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, &error);
+      if (index == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't open child OCI registry index: %s", error->message);
+          return TRUE;
+        }
+
+      desc = flatpak_oci_index_get_manifest (index, branch);
+      if (desc == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't find ref %s in child OCI registry index", branch);
+          return TRUE;
+        }
+
+      signature_digest = g_hash_table_lookup (desc->parent.annotations, "org.flatpak.signature-digest");
+
+      versioned = flatpak_oci_registry_load_versioned (registry, desc->parent.digest, NULL,
+                                                       NULL, &error);
+      if (versioned == NULL || !FLATPAK_IS_OCI_MANIFEST (versioned))
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't open child manifest");
+          return TRUE;
+        }
+
+      checksum = flatpak_pull_from_oci (flatpak_dir_get_repo (system), registry, desc->parent.digest, FLATPAK_OCI_MANIFEST (versioned),
+                                        arg_origin, branch, signature_digest, NULL, NULL, NULL, &error);
+      if (checksum == NULL)
+        {
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Can't pull ref %s from child OCI registry index: %s", branch, error->message);
+          return TRUE;
+        }
+    }
+  else
+    {
+      /* Work around ostree-pull spinning the default main context for the sync calls */
+      main_context = g_main_context_new ();
+      g_main_context_push_thread_default (main_context);
+
+      if (!flatpak_dir_pull_untrusted_local (system, arg_repo_path,
+                                             arg_origin,
+                                             branch,
+                                             NULL,
+                                             NULL,
+                                             NULL, &error))
+        {
+          g_main_context_pop_thread_default (main_context);
+          g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_FAILED,
+                                                 "Error pulling from repo: %s", error->message);
+          return TRUE;
+        }
+
+      g_main_context_pop_thread_default (main_context);
+    }
 
   if (!flatpak_dir_deploy_appstream (system,
                                      arg_origin,
@@ -558,6 +678,96 @@ handle_configure_remote (FlatpakSystemHelper *object,
 }
 
 static gboolean
+handle_update_remote (FlatpakSystemHelper *object,
+                      GDBusMethodInvocation *invocation,
+                      guint arg_flags,
+                      const gchar *arg_remote,
+                      const gchar *arg_installation,
+                      const gchar *arg_summary_path,
+                      const gchar *arg_summary_sig_path)
+{
+  g_autoptr(FlatpakDir) system = NULL;
+  g_autoptr(GError) error = NULL;
+  char *summary_data = NULL;
+  gsize summary_size;
+  g_autoptr(GBytes) summary_bytes = NULL;
+  g_autoptr(GVariant) summary = NULL;
+  char *summary_sig_data = NULL;
+  gsize summary_sig_size;
+  g_autoptr(GBytes) summary_sig_bytes = NULL;
+  g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
+
+  g_debug ("UpdateRemote %u %s %s %s %s", arg_flags, arg_remote, arg_installation, arg_summary_path, arg_summary_sig_path);
+
+  system = dir_get_system (arg_installation, &error);
+  if (system == NULL)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+
+  if (*arg_remote == 0 || strchr (arg_remote, '/') != NULL)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Invalid remote name: %s", arg_remote);
+      return TRUE;
+    }
+
+  if ((arg_flags & ~FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation, G_DBUS_ERROR, G_DBUS_ERROR_INVALID_ARGS,
+                                             "Unsupported flags enabled: 0x%x", (arg_flags & ~FLATPAK_HELPER_UPDATE_REMOTE_FLAGS_ALL));
+      return TRUE;
+    }
+
+  if (!flatpak_dir_ensure_repo (system, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror  (invocation, error);
+      return TRUE;
+    }
+
+  if (!g_file_get_contents (arg_summary_path, &summary_data, &summary_size, &error))
+    {
+      g_dbus_method_invocation_return_gerror  (invocation, error);
+      return TRUE;
+    }
+  summary_bytes = g_bytes_new_take (summary_data, summary_size);
+
+  if (!g_file_get_contents (arg_summary_sig_path, &summary_sig_data, &summary_sig_size, &error))
+    {
+      g_dbus_method_invocation_return_gerror  (invocation, error);
+      return TRUE;
+    }
+  summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_size);
+
+  gpg_result = ostree_repo_verify_summary (flatpak_dir_get_repo (system),
+                                           arg_remote,
+                                           summary_bytes,
+                                           summary_sig_bytes,
+                                           NULL, &error);
+  if (gpg_result == NULL ||
+      !ostree_gpg_verify_result_require_valid_signature (gpg_result, &error))
+    {
+      g_dbus_method_invocation_return_gerror  (invocation, error);
+      return TRUE;
+    }
+
+
+  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                          summary_bytes, FALSE));
+  if (!flatpak_dir_update_remote_configuration_for_summary (system, arg_remote, summary,
+                                                            FALSE, NULL, NULL, &error))
+    {
+      g_dbus_method_invocation_return_gerror  (invocation, error);
+      return TRUE;
+    }
+
+  flatpak_system_helper_complete_update_remote (object, invocation);
+
+  return TRUE;
+}
+
+static gboolean
 flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
                                   GDBusMethodInvocation  *invocation,
                                   gpointer                user_data)
@@ -660,6 +870,16 @@ flatpak_authorize_method_handler (GDBusInterfaceSkeleton *interface,
 
       polkit_details_insert (details, "remote", remote);
     }
+  else if (g_strcmp0 (method_name, "UpdateRemote") == 0)
+    {
+      const char *remote;
+
+      g_variant_get_child (parameters, 1, "&s", &remote);
+
+      action = "org.freedesktop.Flatpak.update-remote";
+
+      polkit_details_insert (details, "remote", remote);
+    }
 
   if (action)
     {
@@ -702,6 +922,8 @@ on_bus_acquired (GDBusConnection *connection,
 
   helper = flatpak_system_helper_skeleton_new ();
 
+  flatpak_system_helper_set_version (FLATPAK_SYSTEM_HELPER (helper), 1);
+
   g_object_set_data_full (G_OBJECT(helper), "track-alive", GINT_TO_POINTER(42), skeleton_died_cb);
 
   g_dbus_interface_skeleton_set_flags (G_DBUS_INTERFACE_SKELETON (helper),
@@ -712,6 +934,7 @@ on_bus_acquired (GDBusConnection *connection,
   g_signal_connect (helper, "handle-uninstall", G_CALLBACK (handle_uninstall), NULL);
   g_signal_connect (helper, "handle-install-bundle", G_CALLBACK (handle_install_bundle), NULL);
   g_signal_connect (helper, "handle-configure-remote", G_CALLBACK (handle_configure_remote), NULL);
+  g_signal_connect (helper, "handle-update-remote", G_CALLBACK (handle_update_remote), NULL);
 
   g_signal_connect (helper, "g-authorize-method",
                     G_CALLBACK (flatpak_authorize_method_handler),

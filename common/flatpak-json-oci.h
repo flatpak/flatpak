@@ -32,6 +32,8 @@ G_BEGIN_DECLS
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_LAYER_NONDISTRIBUTABLE "application/vnd.oci.image.layer.nondistributable.v1.tar+gzip"
 #define FLATPAK_OCI_MEDIA_TYPE_IMAGE_CONFIG "application/vnd.oci.image.config.v1+json"
 
+#define FLATPAK_OCI_SIGNATURE_TYPE_FLATPAK "flatpak oci image signature"
+
 const char * flatpak_arch_to_oci_arch (const char *flatpak_arch);
 void flatpak_oci_export_annotations (GHashTable *source,
                                      GHashTable *dest);
@@ -228,5 +230,46 @@ void flatpak_oci_parse_commit_annotations  (GHashTable       *annotations,
                                             char            **out_commit,
                                             char            **out_parent_commit,
                                             GVariantBuilder  *metadata_builder);
+
+#define FLATPAK_TYPE_OCI_SIGNATURE flatpak_oci_signature_get_type ()
+G_DECLARE_FINAL_TYPE (FlatpakOciSignature, flatpak_oci_signature, FLATPAK, OCI_SIGNATURE, FlatpakJson)
+
+typedef struct
+{
+  char *digest;
+} FlatpakOciSignatureCriticalImage;
+
+typedef struct
+{
+  char *ref;
+} FlatpakOciSignatureCriticalIdentity;
+
+typedef struct
+{
+  char *type;
+  FlatpakOciSignatureCriticalImage image;
+  FlatpakOciSignatureCriticalIdentity identity;
+} FlatpakOciSignatureCritical;
+
+typedef struct
+{
+  char *creator;
+  gint64 timestamp;
+} FlatpakOciSignatureOptional;
+
+struct _FlatpakOciSignature
+{
+  FlatpakJson parent;
+
+  FlatpakOciSignatureCritical critical;
+  FlatpakOciSignatureOptional optional;
+};
+
+struct _FlatpakOciSignatureClass
+{
+  FlatpakJsonClass parent_class;
+};
+
+FlatpakOciSignature *flatpak_oci_signature_new (const char *digest, const char *ref);
 
 #endif /* __FLATPAK_JSON_OCI_H__ */

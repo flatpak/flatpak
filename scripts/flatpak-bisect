@@ -177,7 +177,7 @@ class Bisector():
         if pager:
             stdout = subprocess.PIPE
         else:
-            stdout = subprocess.STDOUT
+            stdout = None
         p = subprocess.Popen(cmd, stdout=stdout)
         if pager:
             ps = subprocess.check_call((pager), stdin=p.stdout)

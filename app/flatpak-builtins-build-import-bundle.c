@@ -96,7 +96,7 @@ import_oci (OstreeRepo *repo, GFile *file,
   oci_digest = desc->parent.digest;
 
   versioned = flatpak_oci_registry_load_versioned (registry,
-                                                   oci_digest,
+                                                   oci_digest, NULL,
                                                    cancellable, error);
   if (versioned == NULL)
     return NULL;
@@ -116,7 +116,7 @@ import_oci (OstreeRepo *repo, GFile *file,
     }
 
   commit_checksum = flatpak_pull_from_oci (repo, registry, oci_digest, manifest,
-                                           target_ref, NULL, NULL, cancellable, error);
+                                           NULL, target_ref, NULL, NULL, NULL, cancellable, error);
   if (commit_checksum == NULL)
     return NULL;
 

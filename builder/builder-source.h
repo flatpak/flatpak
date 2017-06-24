@@ -41,6 +41,7 @@ struct BuilderSource
 {
   GObject parent;
 
+  GFile  *base_dir;
   char   *dest;
   char  **only_arches;
   char  **skip_arches;
@@ -61,6 +62,9 @@ typedef struct
                        BuilderOptions *build_options,
                        BuilderContext *context,
                        GError        **error);
+  gboolean (* bundle)(BuilderSource  *self,
+                      BuilderContext *context,
+                      GError        **error);
   gboolean (* update)(BuilderSource  *self,
                       BuilderContext *context,
                       GError        **error);
@@ -74,6 +78,10 @@ GType builder_source_get_type (void);
 BuilderSource * builder_source_from_json (JsonNode *node);
 JsonNode *      builder_source_to_json (BuilderSource *self);
 
+
+void builder_source_set_base_dir (BuilderSource  *self,
+                                  GFile          *base_dir);
+
 gboolean builder_source_show_deps (BuilderSource  *self,
                                    GError        **error);
 gboolean builder_source_download (BuilderSource  *self,
@@ -85,6 +93,9 @@ gboolean builder_source_extract (BuilderSource  *self,
                                  BuilderOptions *build_options,
                                  BuilderContext *context,
                                  GError        **error);
+gboolean builder_source_bundle (BuilderSource  *self,
+                                BuilderContext *context,
+                                GError        **error);
 gboolean builder_source_update (BuilderSource  *self,
                                 BuilderContext *context,
                                 GError        **error);

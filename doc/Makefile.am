@@ -46,13 +46,17 @@ man1 = \
 	flatpak-build-update-repo.1	\
 	flatpak-build-sign.1		\
 	flatpak-build-commit-from.1	\
+	flatpak-repo.1			\
 	flatpak-builder.1		\
 	$(NULL)
 
 man5 = \
+	flatpak-manifest.5		\
 	flatpak-metadata.5		\
 	flatpak-flatpakrepo.5		\
 	flatpak-flatpakref.5		\
+	flatpak-remote.5		\
+	flatpak-installation.5		\
 	$(NULL)
 
 man_MANS = \

@@ -48,6 +48,8 @@ static char *opt_runtime_repo;
 static gboolean opt_runtime = FALSE;
 static char **opt_gpg_file;
 static gboolean opt_oci = FALSE;
+static char **opt_gpg_key_ids;
+static char *opt_gpg_homedir;
 
 static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Export runtime instead of app"), NULL },
@@ -56,6 +58,8 @@ static GOptionEntry options[] = {
   { "runtime-repo", 0, 0, G_OPTION_ARG_STRING, &opt_runtime_repo, N_("Url for runtime flatpakrepo file"), N_("URL") },
   { "gpg-keys", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_file, N_("Add GPG key from FILE (- for stdin)"), N_("FILE") },
   { "oci", 0, 0, G_OPTION_ARG_NONE, &opt_oci, N_("Export oci image instead of flatpak bundle"), NULL },
+  { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the OCI image with"), N_("KEY-ID") },
+  { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
 
   { NULL }
 };
@@ -401,6 +405,26 @@ build_oci (OstreeRepo *repo, GFile *dir,
 
   flatpak_oci_export_annotations (manifest->annotations, manifest_desc->annotations);
 
+  if (opt_gpg_key_ids)
+    {
+      g_autoptr(FlatpakOciSignature) sig = flatpak_oci_signature_new (manifest_desc->digest, ref);
+      g_autoptr(GBytes) sig_bytes = flatpak_json_to_bytes (FLATPAK_JSON (sig));
+      g_autoptr(GBytes) res = NULL;
+      g_autofree char *signature_digest = NULL;
+
+      res = flatpak_oci_sign_data (sig_bytes, (const char **)opt_gpg_key_ids, opt_gpg_homedir, error);
+      if (res == NULL)
+        return FALSE;
+
+      signature_digest = flatpak_oci_registry_store_blob (registry, res, cancellable, error);
+      if (signature_digest == NULL)
+        return FALSE;
+
+      g_hash_table_replace (manifest_desc->annotations,
+                            g_strdup ("org.flatpak.signature-digest"),
+                            g_strdup (signature_digest));
+    }
+
   index = flatpak_oci_registry_load_index (registry, NULL, NULL, NULL, NULL);
   if (index == NULL)
     index = flatpak_oci_index_new ();
@@ -467,7 +491,7 @@ flatpak_builtin_build_bundle (int argc, char **argv, GCancellable *cancellable, 
         return flatpak_fail (error, _("'%s' is not a valid name: %s"), name, my_error->message);
 
       if (!flatpak_is_valid_branch (branch, &my_error))
-        return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, &my_error);
+        return flatpak_fail (error, _("'%s' is not a valid branch name: %s"), branch, my_error->message);
 
       if (opt_runtime)
         full_branch = flatpak_build_runtime_ref (name, branch, opt_arch);

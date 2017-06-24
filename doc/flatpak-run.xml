@@ -61,6 +61,10 @@
             command: Access is allowed if it was requested either in the application
             metadata file or with an option and the user hasn't overridden it.
         </para>
+        <para>
+            The remaining arguments are passed to the command that gets run in the sandboxed
+            environment. See the <option>--file-forwarding</option> for handling of file arguments.
+        </para>
 
     </refsect1>
 
@@ -374,6 +378,20 @@ key=v1;v2;
                     your D-Bus policy.
                 </para></listitem>
             </varlistentry>
+
+            <varlistentry>
+                <term><option>--file-forwarding</option></term>
+
+                <listitem><para>
+                    If this option is specified, the remaining arguments are scanned, and all arguments
+                    that are enclosed between a pair of '@@' arguments are interpreted as file paths,
+                    exported in the document store, and passed to the command in the form of the
+                    resulting document path. Arguments between '@@u' and '@@' are considered uris,
+                    and any file: uris are exported. The exports are non-persistent and with read and write
+                    permissions for the application.
+                </para></listitem>
+            </varlistentry>
+
         </variablelist>
     </refsect1>
 

@@ -31,7 +31,7 @@ setup_repo
 ${FLATPAK} ${U} install test-repo org.test.Platform master
 
 mkdir -p oci
-${FLATPAK} build-bundle --oci repos/test oci/registry org.test.Hello
+${FLATPAK} build-bundle --oci $FL_GPGARGS repos/test oci/registry org.test.Hello
 
 assert_has_file oci/registry/oci-layout
 assert_has_dir oci/registry/blobs/sha256
@@ -56,7 +56,7 @@ assert_has_file checked-out/metadata
 
 echo "ok commit oci"
 
-${FLATPAK} remote-add ${U} --oci oci-remote oci/registry
+${FLATPAK} remote-add ${U} --oci --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg oci-remote oci/registry
 ${FLATPAK} install ${U} -v oci-remote org.test.Hello
 
 run org.test.Hello > hello_out
@@ -66,7 +66,7 @@ echo "ok install oci"
 
 sleep 1 # Make sure the index.json mtime is changed
 make_updated_app
-${FLATPAK} build-bundle -v --oci repos/test oci/registry org.test.Hello
+${FLATPAK} build-bundle -v --oci $FL_GPGARGS repos/test oci/registry org.test.Hello
 
 ${FLATPAK} update ${U} -v org.test.Hello
 run org.test.Hello > hello_out
@@ -76,13 +76,14 @@ echo "ok update oci"
 
 flatpak uninstall  ${U} org.test.Hello
 
-make_updated_app HTTP
-${FLATPAK} build-bundle --oci repos/test oci/registry org.test.Hello
+make_updated_app test HTTP
+${FLATPAK} build-bundle --oci $FL_GPGARGS repos/test oci/registry org.test.Hello
 
-ostree trivial-httpd --autoexit --daemonize -p oci-port `pwd`/oci
-ociport=$(cat oci-port)
+$(dirname $0)/test-webserver.sh `pwd`/oci
+ociport=$(cat httpd-port)
+FLATPAK_HTTP_PID="${FLATPAK_HTTP_PID} $(cat httpd-pid)"
 
-${FLATPAK} remote-add ${U} --oci oci-remote-http http://127.0.0.1:${ociport}/registry
+${FLATPAK} remote-add ${U} --oci --gpg-import=${FL_GPG_HOMEDIR}/pubring.gpg oci-remote-http http://127.0.0.1:${ociport}/registry
 ${FLATPAK} install -v ${U} oci-remote-http org.test.Hello
 
 run org.test.Hello > hello_out
@@ -90,8 +91,8 @@ assert_file_has_content hello_out '^Hello world, from a sandboxHTTP$'
 
 echo "ok install oci http"
 
-make_updated_app UPDATEDHTTP
-${FLATPAK} build-bundle --oci repos/test oci/registry org.test.Hello
+make_updated_app test UPDATEDHTTP
+${FLATPAK} build-bundle --oci $FL_GPGARGS repos/test oci/registry org.test.Hello
 
 ${FLATPAK} update ${U} org.test.Hello
 run org.test.Hello > hello_out

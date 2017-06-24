@@ -49,6 +49,13 @@ GFile *         builder_context_allocate_build_subdir (BuilderContext *self,
                                                        GError **error);
 GFile *         builder_context_get_ccache_dir (BuilderContext *self);
 GFile *         builder_context_get_download_dir (BuilderContext *self);
+GPtrArray *     builder_context_get_sources_dirs (BuilderContext *self);
+void            builder_context_set_sources_dirs (BuilderContext *self,
+                                                  GPtrArray      *sources_dirs);
+GFile *         builder_context_find_in_sources_dirs (BuilderContext *self,
+                                                      ...) G_GNUC_NULL_TERMINATED;
+GFile *         builder_context_find_in_sources_dirs_va (BuilderContext *self,
+                                                         va_list args);
 SoupSession *   builder_context_get_soup_session (BuilderContext *self);
 const char *    builder_context_get_arch (BuilderContext *self);
 void            builder_context_set_arch (BuilderContext *self,
@@ -83,6 +90,9 @@ void            builder_context_set_build_extension (BuilderContext *self,
 gboolean        builder_context_get_separate_locales (BuilderContext *self);
 void            builder_context_set_separate_locales (BuilderContext *self,
                                                       gboolean        separate_locales);
+void            builder_context_set_bundle_sources (BuilderContext *self,
+                                                    gboolean        bundle_sources);
+gboolean        builder_context_get_bundle_sources (BuilderContext *self);
 gboolean        builder_context_get_rebuild_on_sdk_change (BuilderContext *self);
 void            builder_context_set_rebuild_on_sdk_change (BuilderContext *self,
                                                            gboolean        rebuild_on_sdk_change);
@@ -91,7 +101,6 @@ char *          builder_context_get_checksum_for (BuilderContext *self,
 void            builder_context_set_checksum_for (BuilderContext *self,
                                                   const char *name,
                                                   const char *checksum);
-
 
 BuilderContext *builder_context_new (GFile *run_dir,
                                      GFile *app_dir);

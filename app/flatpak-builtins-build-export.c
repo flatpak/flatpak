@@ -168,11 +168,25 @@ commit_filter (OstreeRepo *repo,
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
 
+  /* In flatpak, there is no real reason for files to have different
+   * permissions based on the group or user really, everything is
+   * always used readonly for everyone. Having things be writeable
+   * for anyone but the user just causes risks for the system-installed
+   * case. So, we canonicalize the mode to writable only by the user,
+   * readable to all, and executable for all for directories and
+   * files that the user can execute.
+  */
   mode = g_file_info_get_attribute_uint32 (file_info, "unix::mode");
-  /* No setuid */
-  mode = mode & ~07000;
-  /* All files readable */
-  mode = mode | 0444;
+  if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
+    mode = 0755 | S_IFDIR;
+  else if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_REGULAR)
+    {
+      /* If use can execute, make executable by all */
+      if (mode & S_IXUSR)
+        mode = 0755 | S_IFREG;
+      else /* otherwise executable by none */
+        mode = 0644 | S_IFREG;
+    }
   g_file_info_set_attribute_uint32 (file_info, "unix::mode", mode);
 
   if (matches_patterns (commit_data->exclude, path) &&
@@ -210,7 +224,7 @@ add_file_to_mtree (GFile             *file,
   g_file_info_set_file_type (file_info, G_FILE_TYPE_REGULAR);
   g_file_info_set_attribute_uint32 (file_info, "unix::uid", 0);
   g_file_info_set_attribute_uint32 (file_info, "unix::gid", 0);
-  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100644);
+  g_file_info_set_attribute_uint32 (file_info, "unix::mode", 0100744);
 
   raw_input = (GInputStream *) g_file_read (file, cancellable, error);
   if (raw_input == NULL)
@@ -635,6 +649,7 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   g_autoptr(GVariant) metadata_dict_v = NULL;
   gboolean is_runtime = FALSE;
   gboolean is_extension = FALSE;
+  guint64 installed_size = 0,download_size = 0;
   GTimeVal ts;
 
   context = g_option_context_new (_("LOCATION DIRECTORY [BRANCH] - Create a repository from a build directory"));
@@ -738,7 +753,11 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (opt_body)
     body = g_strdup (opt_body);
   else
-    body = g_strconcat ("Name: ", id, "\nArch: ", arch, "\nBranch: ", branch, NULL);
+    body = g_strdup_printf ("Name: %s\n"
+                            "Arch: %s\n"
+                            "Branch: %s\n"
+                            "Built with: "PACKAGE_STRING"\n",
+                            id, arch, branch, NULL);
 
   full_branch = g_strconcat ((opt_runtime || is_runtime) ? "runtime/" : "app/", id, "/", arch, "/", branch, NULL);
 
@@ -813,6 +832,14 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
 
   if (!ostree_repo_write_mtree (repo, mtree, &root, cancellable, error))
     goto out;
+
+  if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
+    goto out;
+
+  g_variant_dict_insert_value (&metadata_dict, "xa.ref", g_variant_new_string (full_branch));
+  g_variant_dict_insert_value (&metadata_dict, "xa.metadata", g_variant_new_string (metadata_contents));
+  g_variant_dict_insert_value (&metadata_dict, "xa.installed-size", g_variant_new_uint64 (GUINT64_TO_BE (installed_size)));
+  g_variant_dict_insert_value (&metadata_dict, "xa.download-size", g_variant_new_uint64 (GUINT64_TO_BE (download_size)));
 
   metadata_dict_v = g_variant_ref_sink (g_variant_dict_end (&metadata_dict));
 

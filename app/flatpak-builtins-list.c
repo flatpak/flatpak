@@ -31,12 +31,14 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "flatpak-table-printer.h"
 
 static gboolean opt_show_details;
 static gboolean opt_user;
 static gboolean opt_system;
 static gboolean opt_runtime;
 static gboolean opt_app;
+static gboolean opt_all;
 static char **opt_installations;
 static char *opt_arch;
 
@@ -48,6 +50,7 @@ static GOptionEntry options[] = {
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("List installed runtimes"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("List installed applications"), NULL },
   { "arch", 0, 0, G_OPTION_ARG_STRING, &opt_arch, N_("Arch to show"), N_("ARCH") },
+  { "all", 'a', 0, G_OPTION_ARG_NONE, &opt_all, N_("List all refs (including locale/debug)"), NULL },
   { NULL }
 };
 
@@ -124,16 +127,35 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
   FlatpakTablePrinter *printer = flatpak_table_printer_new ();
   int i;
 
+  i = 0;
+  flatpak_table_printer_set_column_title (printer, i++, _("Ref"));
+  if (opt_show_details)
+    {
+      flatpak_table_printer_set_column_title (printer, i++, _("Origin"));
+      flatpak_table_printer_set_column_title (printer, i++, _("Active commit"));
+      flatpak_table_printer_set_column_title (printer, i++, _("Latest commit"));
+      flatpak_table_printer_set_column_title (printer, i++, _("Installed size"));
+    }
+  flatpak_table_printer_set_column_title (printer, i++, _("Options"));
+
   for (i = 0; i < refs_array->len; i++)
     {
       RefsData *refs_data = NULL;
       FlatpakDir *dir = NULL;
       g_auto(GStrv) dir_refs = NULL;
+      g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
       int j;
 
       refs_data = (RefsData *) g_ptr_array_index (refs_array, i);
       dir = refs_data->dir;
       dir_refs = join_strv (refs_data->app_refs, refs_data->runtime_refs);
+
+      for (j = 0; dir_refs[j] != NULL; j++)
+        {
+          char *ref = dir_refs[j];
+          char *partial_ref = flatpak_make_valid_id_prefix (strchr (ref, '/') + 1);
+          g_hash_table_insert (pref_hash, partial_ref, ref);
+        }
 
       for (j = 0; dir_refs[j] != NULL; j++)
         {
@@ -159,6 +181,21 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
           deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, NULL);
           if (deploy_data == NULL)
             continue;
+
+          if (!opt_all && strcmp (parts[0], "runtime") == 0 &&
+              flatpak_id_has_subref_suffix (parts[1]))
+            {
+              g_autofree char *prefix_partial_ref = NULL;
+              char *last_dot = strrchr (parts[1], '.');
+
+              *last_dot = 0;
+              prefix_partial_ref = g_strconcat (parts[1], "/", parts[2], "/", parts[3], NULL);
+              *last_dot = '.';
+
+              if (g_hash_table_lookup (pref_hash, prefix_partial_ref))
+                continue;
+            }
+
 
           repo = flatpak_deploy_data_get_origin (deploy_data);
 
@@ -194,7 +231,7 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
 
               size = flatpak_deploy_data_get_installed_size (deploy_data);
               size_s = g_format_size (size);
-              flatpak_table_printer_add_column (printer, size_s);
+              flatpak_table_printer_add_decimal_column (printer, size_s);
             }
 
           flatpak_table_printer_add_column (printer, ""); /* Options */
@@ -225,20 +262,10 @@ print_table_for_refs (gboolean print_apps, GPtrArray* refs_array, const char *ar
                 flatpak_table_printer_append_with_comma (printer, "runtime");
             }
 
-          if (opt_show_details)
+          subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
+          if (subpaths[0] != NULL)
             {
-              subpaths = flatpak_deploy_data_get_subpaths (deploy_data);
-              if (subpaths[0] == NULL)
-                {
-                  flatpak_table_printer_add_column (printer, "");
-                }
-              else
-                {
-                  int i;
-                  flatpak_table_printer_add_column (printer, ""); /* subpaths */
-                  for (i = 0; subpaths[i] != NULL; i++)
-                    flatpak_table_printer_append_with_comma (printer, subpaths[i]);
-                }
+              flatpak_table_printer_append_with_comma (printer, "partial");
             }
           flatpak_table_printer_finish_row (printer);
         }

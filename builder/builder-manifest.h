@@ -40,20 +40,25 @@ typedef struct BuilderManifest BuilderManifest;
 #define BUILDER_MANIFEST_CHECKSUM_VERSION "4"
 #define BUILDER_MANIFEST_CHECKSUM_CLEANUP_VERSION "1"
 #define BUILDER_MANIFEST_CHECKSUM_FINISH_VERSION "2"
+#define BUILDER_MANIFEST_CHECKSUM_BUNDLE_SOURCES_VERSION "1"
 #define BUILDER_MANIFEST_CHECKSUM_PLATFORM_VERSION "1"
 
 GType builder_manifest_get_type (void);
 
-void builder_manifest_set_demarshal_buid_context (BuilderContext *build_context);
+void builder_manifest_set_demarshal_base_dir (GFile *dir);
+GFile *builder_manifest_get_demarshal_base_dir (void);
 
 const char *    builder_manifest_get_id (BuilderManifest *self);
 char *          builder_manifest_get_locale_id (BuilderManifest *self);
 char *          builder_manifest_get_debug_id (BuilderManifest *self);
+char *          builder_manifest_get_sources_id (BuilderManifest *self);
 const char *    builder_manifest_get_id_platform (BuilderManifest *self);
 char *          builder_manifest_get_locale_id_platform (BuilderManifest *self);
 BuilderOptions *builder_manifest_get_build_options (BuilderManifest *self);
 GList *         builder_manifest_get_modules (BuilderManifest *self);
 const char *    builder_manifest_get_branch (BuilderManifest *self);
+void            builder_manifest_set_default_branch (BuilderManifest *self,
+                                                     const char *default_branch);
 
 gboolean        builder_manifest_start (BuilderManifest *self,
                                         gboolean         allow_missing_runtimes,
@@ -96,6 +101,11 @@ gboolean        builder_manifest_finish (BuilderManifest *self,
                                          BuilderCache    *cache,
                                          BuilderContext  *context,
                                          GError         **error);
+gboolean        builder_manifest_bundle_sources (BuilderManifest *self,
+                                                 const char      *json,
+                                                 BuilderCache    *cache,
+                                                 BuilderContext  *context,
+                                                 GError         **error);
 gboolean        builder_manifest_create_platform (BuilderManifest *self,
                                                   BuilderCache    *cache,
                                                   BuilderContext  *context,

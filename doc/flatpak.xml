@@ -66,8 +66,8 @@
         <para>
             In addition to the system-wide installation in <filename>$prefix/var/lib/flatpak/</filename>,
             which is always considered the default one unless overridden, more
-            system-wide installations can be defined via configuration files
-            <filename>/etc/flatpak/installations.d</filename>, which must define
+            system-wide installations can be defined via configuration files in
+            <filename>/etc/flatpak/installations.d/</filename>, which must define
             at least the id of the installation and the absolute path to it.
             Other optional parameters like <arg choice="plain">DisplayName</arg>,
             <arg choice="plain">Priority</arg> or <arg choice="plain">StorageType</arg>
@@ -211,6 +211,13 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-make-current</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Specify the default version to run.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>flatpak-enter</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
@@ -339,6 +346,13 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
+                <term><citerefentry><refentrytitle>flatpak-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+
+                <listitem><para>
+                    Sign an application or runtime after its been exported.
+                </para></listitem>
+            </varlistentry>
+            <varlistentry>
                 <term><citerefentry><refentrytitle>flatpak-build-update-repo</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
@@ -346,13 +360,49 @@
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><citerefentry><refentrytitle>flatpak-build-sign</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
+                <term><citerefentry><refentrytitle>flatpak-build-commit-from</refentrytitle><manvolnum>1</manvolnum></citerefentry></term>
 
                 <listitem><para>
-                    Sign an application or runtime after its been exported.
+                    Create a new commit based on an existing ref.
                 </para></listitem>
             </varlistentry>
         </variablelist>
+    </refsect1>
+
+    <refsect1>
+        <title>Environment</title>
+            <para>
+              Besides standard environment variables such as <envar>XDG_DATA_DIRS</envar> and
+              <envar>XDG_DATA_HOME</envar>, flatpak is consulting some of its own.
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><envar>FLATPAK_USER_DIR</envar></term>
+
+                    <listitem><para>
+                      The location of the per-user installation. If this is not set,
+                      <filename>$XDG_DATA_HOME/flatpak</filename> is used.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><envar>FLATPAK_SYSTEM_DIR</envar></term>
+
+                    <listitem><para>
+                      The location of the default system-wide installation. If this is not set,
+                      <filename>/var/lib/flatpak</filename> is used (unless overridden at build
+                      time by --localstatedir or --with-system-install-dir).
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><envar>FLATPAK_CONFIG_DIR</envar></term>
+
+                    <listitem><para>
+                      The location of flatpak site configuration. If this is not set,
+                      <filename>/etc/flatpak</filename> is used (unless overridden at build
+                      time by --sysconfdir).
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
     </refsect1>
 
     <refsect1>
@@ -361,6 +411,7 @@
             <para>
                 <citerefentry><refentrytitle>ostree</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
                 <citerefentry><refentrytitle>ostree.repo</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+                <citerefentry><refentrytitle>flatpak-remote</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
             </para>
 
     </refsect1>

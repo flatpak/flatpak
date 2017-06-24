@@ -34,6 +34,7 @@
 #include "builder-utils.h"
 #include "builder-module.h"
 #include "builder-post-process.h"
+#include "builder-manifest.h"
 
 struct BuilderModule
 {
@@ -46,6 +47,7 @@ struct BuilderModule
   char          **config_opts;
   char          **make_args;
   char          **make_install_args;
+  char           *install_rule;
   char           *buildsystem;
   char          **ensure_writable;
   char          **only_arches;
@@ -88,6 +90,7 @@ enum {
   PROP_NO_MAKE_INSTALL,
   PROP_NO_PYTHON_TIMESTAMP_FIX,
   PROP_CMAKE,
+  PROP_INSTALL_RULE,
   PROP_BUILDSYSTEM,
   PROP_BUILDDIR,
   PROP_CONFIG_OPTS,
@@ -129,6 +132,7 @@ builder_module_finalize (GObject *object)
   g_free (self->json_path);
   g_free (self->name);
   g_free (self->subdir);
+  g_free (self->install_rule);
   g_free (self->buildsystem);
   g_strfreev (self->post_install);
   g_strfreev (self->config_opts);
@@ -198,6 +202,10 @@ builder_module_get_property (GObject    *object,
 
     case PROP_BUILDSYSTEM:
       g_value_set_string (value, self->buildsystem);
+      break;
+
+    case PROP_INSTALL_RULE:
+      g_value_set_string (value, self->install_rule);
       break;
 
     case PROP_BUILDDIR:
@@ -317,6 +325,11 @@ builder_module_set_property (GObject      *object,
     case PROP_BUILDSYSTEM:
       g_free (self->buildsystem);
       self->buildsystem = g_value_dup_string (value);
+      break;
+
+    case PROP_INSTALL_RULE:
+      g_free (self->install_rule);
+      self->install_rule = g_value_dup_string (value);
       break;
 
     case PROP_BUILDDIR:
@@ -479,6 +492,13 @@ builder_module_class_init (BuilderModuleClass *klass)
   g_object_class_install_property (object_class,
                                    PROP_BUILDSYSTEM,
                                    g_param_spec_string ("buildsystem",
+                                                         "",
+                                                         "",
+                                                         NULL,
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_INSTALL_RULE,
+                                   g_param_spec_string ("install-rule",
                                                          "",
                                                          "",
                                                          NULL,
@@ -667,6 +687,7 @@ builder_module_deserialize_property (JsonSerializable *serializable,
         {
           JsonArray *array = json_node_get_array (property_node);
           guint i, array_len = json_array_get_length (array);
+          g_autoptr(GFile) saved_demarshal_base_dir = builder_manifest_get_demarshal_base_dir ();
           GList *modules = NULL;
           GObject *module;
 
@@ -679,15 +700,32 @@ builder_module_deserialize_property (JsonSerializable *serializable,
               if (JSON_NODE_HOLDS_VALUE (element_node) &&
                   json_node_get_value_type (element_node) == G_TYPE_STRING)
                 {
-                  const char *module_path = json_node_get_string (element_node);
+                  const char *module_relpath = json_node_get_string (element_node);
+                  g_autoptr(GFile) module_file =
+                    g_file_resolve_relative_path (saved_demarshal_base_dir, module_relpath);
+                  const char *module_path = flatpak_file_get_path_cached (module_file);
                   g_autofree char *json = NULL;
 
                   if (g_file_get_contents (module_path, &json, NULL, NULL))
-                    module = json_gobject_from_data (BUILDER_TYPE_MODULE,
-                                                     json, -1, NULL);
+                    {
+                      g_autoptr(GFile) module_file_dir = g_file_get_parent (module_file);
+                      builder_manifest_set_demarshal_base_dir (module_file_dir);
+                      module = json_gobject_from_data (BUILDER_TYPE_MODULE,
+                                                       json, -1, NULL);
+                      builder_manifest_set_demarshal_base_dir (saved_demarshal_base_dir);
+                      if (module)
+                        {
+                          builder_module_set_json_path (BUILDER_MODULE (module), module_path);
+                          builder_module_set_base_dir (BUILDER_MODULE (module), module_file_dir);
+                        }
+                    }
                 }
               else if (JSON_NODE_HOLDS_OBJECT (element_node))
-                module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+                {
+                  module = json_gobject_deserialize (BUILDER_TYPE_MODULE, element_node);
+                  if (module != NULL)
+                    builder_module_set_base_dir (BUILDER_MODULE (module), saved_demarshal_base_dir);
+                }
 
               if (module == NULL)
                 {
@@ -760,6 +798,7 @@ serializable_iface_init (JsonSerializableIface *serializable_iface)
 {
   serializable_iface->serialize_property = builder_module_serialize_property;
   serializable_iface->deserialize_property = builder_module_deserialize_property;
+  serializable_iface->find_property = builder_serializable_find_property_with_error;
 }
 
 const char *
@@ -873,6 +912,59 @@ builder_module_extract_sources (BuilderModule  *self,
         continue;
 
       if (!builder_source_extract (source, dest, self->build_options, context, error))
+        {
+          g_prefix_error (error, "module %s: ", self->name);
+          return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
+gboolean
+builder_module_bundle_sources (BuilderModule  *self,
+                               BuilderContext *context,
+                               GError        **error)
+{
+  GList *l;
+
+  if (self->json_path)
+    {
+      g_autoptr(GFile) json_file = g_file_new_for_path (self->json_path);
+      g_autoptr(GFile) destination_file = NULL;
+      g_autoptr(GFile) destination_dir = NULL;
+      GFile *manifest_base_dir = builder_context_get_base_dir (context);
+      g_autofree char *rel_path = g_file_get_relative_path (manifest_base_dir, json_file);
+
+      if (rel_path == NULL)
+        {
+          g_warning ("Included manifest %s is outside manifest tree, not bundling", self->json_path);
+          return TRUE;
+        }
+
+      destination_file = flatpak_build_file (builder_context_get_app_dir (context),
+                                             "sources/manifest", rel_path, NULL);
+
+      destination_dir = g_file_get_parent (destination_file);
+      if (!flatpak_mkdir_p (destination_dir, NULL, error))
+        return FALSE;
+
+      if (!g_file_copy (json_file, destination_file,
+                        G_FILE_COPY_OVERWRITE,
+                        NULL,
+                        NULL, NULL,
+                        error))
+        return FALSE;
+    }
+
+  for (l = self->sources; l != NULL; l = l->next)
+    {
+      BuilderSource *source = l->data;
+
+      if (!builder_source_is_enabled (source, context))
+        continue;
+
+      if (!builder_source_bundle (source, context, error))
         {
           g_prefix_error (error, "module %s: ", self->name);
           return FALSE;
@@ -1256,7 +1348,7 @@ builder_module_build (BuilderModule  *self,
 
   if (configure_file && !has_configure && !self->no_autogen)
     {
-      const char *autogen_names[] =  {"autogen", "autogen.sh", "bootstrap", NULL};
+      const char *autogen_names[] =  {"autogen", "autogen.sh", "bootstrap", "bootstrap.sh", NULL};
       g_autofree char *autogen_cmd = NULL;
       g_auto(GStrv) env_with_noconfigure = NULL;
 
@@ -1309,7 +1401,7 @@ builder_module_build (BuilderModule  *self,
         }
 
       var_require_builddir = strstr (configure_content, "buildapi-variable-require-builddir") != NULL;
-      use_builddir = var_require_builddir || self->builddir;
+      use_builddir = var_require_builddir || self->builddir || meson;
 
       if (use_builddir)
         {
@@ -1460,7 +1552,8 @@ builder_module_build (BuilderModule  *self,
   if (!self->no_make_install && make_cmd)
     {
       if (!build (app_dir, self->name, context, source_dir, build_dir_relative, build_args, env, error,
-                  make_cmd, "install", strv_arg, self->make_install_args, NULL))
+                  make_cmd, self->install_rule ? self->install_rule : "install",
+                  strv_arg, self->make_install_args, NULL))
         return FALSE;
     }
 
@@ -1578,6 +1671,9 @@ builder_module_checksum (BuilderModule  *self,
   builder_cache_checksum_boolean (cache, self->no_python_timestamp_fix);
   builder_cache_checksum_boolean (cache, self->cmake);
   builder_cache_checksum_boolean (cache, self->builddir);
+  builder_cache_checksum_compat_strv (cache, self->build_commands);
+  builder_cache_checksum_compat_str (cache, self->buildsystem);
+  builder_cache_checksum_compat_str (cache, self->install_rule);
 
   if (self->build_options)
     builder_options_checksum (self->build_options, cache, context);
@@ -1616,6 +1712,16 @@ builder_module_set_json_path (BuilderModule *self,
                               const char *json_path)
 {
   self->json_path = g_strdup (json_path);
+}
+
+void
+builder_module_set_base_dir (BuilderModule *self,
+                             GFile* base_dir)
+{
+  GList *l;
+
+  for (l = self->sources; l != NULL; l = l->next)
+    builder_source_set_base_dir (l->data, base_dir);
 }
 
 GPtrArray *

@@ -11,6 +11,8 @@ $(xdp_dbus_built_sources) : data/org.freedesktop.portal.Documents.xml
 		--interface-prefix org.freedesktop.portal.	\
 		--c-namespace XdpDbus				\
 		--generate-c-code $(builddir)/document-portal/xdp-dbus	\
+                --annotate "org.freedesktop.portal.Documents.Add()" org.gtk.GDBus.C.UnixFD "yes" \
+                --annotate "org.freedesktop.portal.Documents.AddFull()" org.gtk.GDBus.C.UnixFD "yes" \
 		$(srcdir)/data/org.freedesktop.portal.Documents.xml	\
 		$(NULL)
 

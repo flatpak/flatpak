@@ -118,8 +118,7 @@ fixup_python_time_stamp (const char *path,
                          GError **error)
 {
   glnx_fd_close int fd = -1;
-  glnx_fd_close int write_fd = -1;
-  g_autofree char *write_name = NULL;
+  g_auto(GLnxTmpfile) tmpf = { 0 };
   guint8 buffer[8];
   ssize_t res;
   guint32 pyc_mtime;
@@ -198,7 +197,9 @@ fixup_python_time_stamp (const char *path,
 
   if (lstat (py_path, &stbuf) != 0)
     {
-      remove_pyc = TRUE;
+      /* pyc file without .py file, this happens for binary-only deployments.
+       *  Accept it as-is. */
+      return TRUE;
     }
   else if (pyc_mtime == OSTREE_TIMESTAMP)
     {
@@ -224,27 +225,26 @@ fixup_python_time_stamp (const char *path,
 
   if (!glnx_open_tmpfile_linkable_at (AT_FDCWD, dir,
                                       O_RDWR | O_CLOEXEC | O_NOFOLLOW,
-                                      &write_fd, &write_name,
+                                      &tmpf,
                                       error))
     return FALSE;
 
-  if (!flatpak_copy_bytes (fd, write_fd, error))
-    return FALSE;
+  if (glnx_regfile_copy_bytes (fd, tmpf.fd, (off_t)-1, TRUE) < 0)
+    return glnx_throw_errno_prefix (error, "copyfile");
 
   /* Change to mtime 0 which is what ostree uses for checkouts */
   buffer[4] = OSTREE_TIMESTAMP;
   buffer[5] = buffer[6] = buffer[7] = 0;
 
-  res = pwrite (write_fd, buffer, 8, 0);
+  res = pwrite (tmpf.fd, buffer, 8, 0);
   if (res != 8)
     {
       glnx_set_error_from_errno (error);
       return FALSE;
     }
 
-  if (!glnx_link_tmpfile_at (AT_FDCWD,
+  if (!glnx_link_tmpfile_at (&tmpf,
                              GLNX_LINK_TMPFILE_REPLACE,
-                             write_fd, write_name,
                              AT_FDCWD,
                              path,
                              error))

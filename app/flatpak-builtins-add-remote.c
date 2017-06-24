@@ -27,14 +27,11 @@
 
 #include <glib/gi18n.h>
 
-#include <gio/gunixinputstream.h>
-
 #include "libglnx/libglnx.h"
 
 #include "flatpak-builtins.h"
 #include "flatpak-builtins-utils.h"
 #include "flatpak-utils.h"
-#include "flatpak-chain-input-stream.h"
 
 static gboolean opt_no_gpg_verify;
 static gboolean opt_do_gpg_verify;
@@ -84,79 +81,9 @@ static GOptionEntry common_options[] = {
   { NULL }
 };
 
-static gboolean
-open_source_stream (GInputStream **out_source_stream,
-                    GCancellable  *cancellable,
-                    GError       **error)
-{
-  g_autoptr(GInputStream) source_stream = NULL;
-  guint n_keyrings = 0;
-  g_autoptr(GPtrArray) streams = NULL;
-
-  if (opt_gpg_import != NULL)
-    n_keyrings = g_strv_length (opt_gpg_import);
-
-  guint ii;
-
-  streams = g_ptr_array_new_with_free_func (g_object_unref);
-
-  for (ii = 0; ii < n_keyrings; ii++)
-    {
-      GInputStream *input_stream = NULL;
-
-      if (strcmp (opt_gpg_import[ii], "-") == 0)
-        {
-          input_stream = g_unix_input_stream_new (STDIN_FILENO, FALSE);
-        }
-      else
-        {
-          g_autoptr(GFile) file = g_file_new_for_commandline_arg (opt_gpg_import[ii]);
-          input_stream = G_INPUT_STREAM (g_file_read (file, cancellable, error));
-
-          if (input_stream == NULL)
-            {
-              g_prefix_error (error, "The file %s specified for --gpg-import was not found: ", opt_gpg_import[ii]);
-              return FALSE;
-            }
-        }
-
-      /* Takes ownership. */
-      g_ptr_array_add (streams, input_stream);
-    }
-
-  /* Chain together all the --keyring options as one long stream. */
-  source_stream = (GInputStream *) flatpak_chain_input_stream_new (streams);
-
-  *out_source_stream = g_steal_pointer (&source_stream);
-
-  return TRUE;
-}
-
-static GBytes *
-load_keys (GCancellable *cancellable,
-           GError      **error)
-{
-  g_autoptr(GInputStream) input_stream = NULL;
-  g_autoptr(GOutputStream) output_stream = NULL;
-  gssize n_bytes_written;
-
-  if (!open_source_stream (&input_stream, cancellable, error))
-    return FALSE;
-
-  output_stream = g_memory_output_stream_new_resizable ();
-
-  n_bytes_written = g_output_stream_splice (output_stream, input_stream,
-                                            G_OUTPUT_STREAM_SPLICE_CLOSE_SOURCE |
-                                            G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
-                                            NULL, error);
-  if (n_bytes_written < 0)
-    return NULL;
-
-  return g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
-}
 
 static GKeyFile *
-get_config_from_opts (FlatpakDir *dir, const char *remote_name)
+get_config_from_opts (FlatpakDir *dir, const char *remote_name, gboolean *changed)
 {
   GKeyFile *config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
@@ -165,12 +92,14 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", FALSE);
       g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
+      *changed = TRUE;
     }
 
   if (opt_do_gpg_verify)
     {
       g_key_file_set_boolean (config, group, "gpg-verify", TRUE);
       g_key_file_set_boolean (config, group, "gpg-verify-summary", TRUE);
+      *changed = TRUE;
     }
 
   if (opt_url)
@@ -179,38 +108,69 @@ get_config_from_opts (FlatpakDir *dir, const char *remote_name)
         g_key_file_set_string (config, group, "metalink", opt_url + strlen ("metalink="));
       else
         g_key_file_set_string (config, group, "url", opt_url);
+      *changed = TRUE;
     }
 
   if (opt_title)
-    g_key_file_set_string (config, group, "xa.title", opt_title);
+    {
+      g_key_file_set_string (config, group, "xa.title", opt_title);
+      g_key_file_set_boolean (config, group, "xa.title-is-set", TRUE);
+      *changed = TRUE;
+    }
 
   if (opt_default_branch)
-    g_key_file_set_string (config, group, "xa.default-branch", opt_default_branch);
+    {
+      g_key_file_set_string (config, group, "xa.default-branch", opt_default_branch);
+      g_key_file_set_boolean (config, group, "xa.default-branch-is-set", TRUE);
+      *changed = TRUE;
+    }
 
   if (opt_no_enumerate)
-    g_key_file_set_boolean (config, group, "xa.noenumerate", TRUE);
+    {
+      g_key_file_set_boolean (config, group, "xa.noenumerate", TRUE);
+      *changed = TRUE;
+    }
 
   if (opt_do_enumerate)
-    g_key_file_set_boolean (config, group, "xa.noenumerate", FALSE);
+    {
+      g_key_file_set_boolean (config, group, "xa.noenumerate", FALSE);
+      *changed = TRUE;
+    }
 
   if (opt_no_deps)
-    g_key_file_set_boolean (config, group, "xa.nodeps", TRUE);
+    {
+      g_key_file_set_boolean (config, group, "xa.nodeps", TRUE);
+      *changed = TRUE;
+    }
 
   if (opt_do_deps)
-    g_key_file_set_boolean (config, group, "xa.nodeps", FALSE);
+    {
+      g_key_file_set_boolean (config, group, "xa.nodeps", FALSE);
+      *changed = TRUE;
+    }
 
   if (opt_disable)
-    g_key_file_set_boolean (config, group, "xa.disable", TRUE);
+    {
+      g_key_file_set_boolean (config, group, "xa.disable", TRUE);
+      *changed = TRUE;
+    }
   else if (opt_enable)
-    g_key_file_set_boolean (config, group, "xa.disable", FALSE);
+    {
+      g_key_file_set_boolean (config, group, "xa.disable", FALSE);
+      *changed = TRUE;
+    }
 
   if (opt_oci)
-    g_key_file_set_boolean (config, group, "xa.oci", TRUE);
+    {
+      g_key_file_set_boolean (config, group, "xa.oci", TRUE);
+      *changed = TRUE;
+    }
 
   if (opt_prio != -1)
     {
       g_autofree char *prio_as_string = g_strdup_printf ("%d", opt_prio);
       g_key_file_set_string (config, group, "xa.prio", prio_as_string);
+      *changed = TRUE;
     }
 
   return config;
@@ -316,46 +276,6 @@ load_options (const char *filename,
     }
 }
 
-static gboolean
-update_remote_with_extra_metadata (FlatpakDir* dir,
-                                   const char *remote,
-                                   GBytes *gpg_data,
-                                   GCancellable *cancellable,
-                                   GError **error)
-{
-  g_autofree char *title = NULL;
-  g_autofree char *default_branch = NULL;
-  g_autoptr(GKeyFile) config = NULL;
-
-  if (opt_title == NULL)
-    {
-      title = flatpak_dir_fetch_remote_title (dir,
-                                              remote,
-                                              NULL,
-                                              NULL);
-      if (title)
-        opt_title = title;
-    }
-
-    if (opt_default_branch == NULL)
-    {
-      default_branch = flatpak_dir_fetch_remote_default_branch (dir,
-                                                                remote,
-                                                                NULL,
-                                                                NULL);
-      if (default_branch)
-        opt_default_branch = default_branch;
-    }
-
-    if (title != NULL || default_branch != NULL)
-      {
-        config = get_config_from_opts (dir, remote);
-        return flatpak_dir_modify_remote (dir, remote, config, gpg_data, cancellable, error);
-      }
-
-    return TRUE;
-}
-
 gboolean
 flatpak_builtin_add_remote (int argc, char **argv,
                             GCancellable *cancellable, GError **error)
@@ -369,6 +289,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
   const char *location = NULL;
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
+  gboolean changed = FALSE;
 
   context = g_option_context_new (_("NAME LOCATION - Add a remote repository"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -403,7 +324,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
     }
 
   if (opt_from ||
-      g_str_has_suffix (location, ".flatpakrepo"))
+      flatpak_file_arg_has_suffix (location, ".flatpakrepo"))
     {
       load_options (location, &gpg_data);
       if (opt_url == NULL)
@@ -423,11 +344,11 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (!opt_no_gpg_verify)
     opt_do_gpg_verify = TRUE;
 
-  config = get_config_from_opts (dir, remote_name);
+  config = get_config_from_opts (dir, remote_name, &changed);
 
   if (opt_gpg_import != NULL)
     {
-      gpg_data = load_keys (cancellable, error);
+      gpg_data = flatpak_load_gpg_keys (opt_gpg_import, cancellable, error);
       if (gpg_data == NULL)
         return FALSE;
     }
@@ -441,7 +362,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
 
   /* We can't retrieve the extra metadata until the remote has been added locally, since
      ostree_repo_remote_fetch_summary() works with the repository's name, not its URL. */
-  return update_remote_with_extra_metadata (dir, remote_name, gpg_data, cancellable, error);
+  return flatpak_dir_update_remote_configuration (dir, remote_name, cancellable, error);
 }
 
 gboolean
@@ -478,6 +399,7 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   const char *remote_name;
+  gboolean changed = FALSE;
 
   context = g_option_context_new (_("NAME - Modify a remote repository"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -511,14 +433,18 @@ flatpak_builtin_modify_remote (int argc, char **argv, GCancellable *cancellable,
         return FALSE;
     }
 
-  config = get_config_from_opts (dir, remote_name);
+  config = get_config_from_opts (dir, remote_name, &changed);
 
   if (opt_gpg_import != NULL)
     {
-      gpg_data = load_keys (cancellable, error);
+      gpg_data = flatpak_load_gpg_keys (opt_gpg_import, cancellable, error);
       if (gpg_data == NULL)
         return FALSE;
+      changed = TRUE;
     }
+
+  if (!changed)
+    return TRUE;
 
   return flatpak_dir_modify_remote (dir, remote_name, config, gpg_data, cancellable, error);
 }

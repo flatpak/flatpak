@@ -41,6 +41,8 @@ struct BuilderSourceGit
   char         *url;
   char         *path;
   char         *branch;
+  char         *commit;
+  gboolean      disable_fsckobjects;
 };
 
 typedef struct
@@ -55,6 +57,8 @@ enum {
   PROP_URL,
   PROP_PATH,
   PROP_BRANCH,
+  PROP_COMMIT,
+  PROP_DISABLE_FSCKOBJECTS,
   LAST_PROP
 };
 
@@ -66,6 +70,7 @@ builder_source_git_finalize (GObject *object)
   g_free (self->url);
   g_free (self->path);
   g_free (self->branch);
+  g_free (self->commit);
 
   G_OBJECT_CLASS (builder_source_git_parent_class)->finalize (object);
 }
@@ -90,6 +95,14 @@ builder_source_git_get_property (GObject    *object,
 
     case PROP_BRANCH:
       g_value_set_string (value, self->branch);
+      break;
+
+    case PROP_COMMIT:
+      g_value_set_string (value, self->commit);
+      break;
+
+    case PROP_DISABLE_FSCKOBJECTS:
+      g_value_set_boolean (value, self->disable_fsckobjects);
       break;
 
     default:
@@ -122,6 +135,15 @@ builder_source_git_set_property (GObject      *object,
       self->branch = g_value_dup_string (value);
       break;
 
+    case PROP_COMMIT:
+      g_free (self->commit);
+      self->commit = g_value_dup_string (value);
+      break;
+
+    case PROP_DISABLE_FSCKOBJECTS:
+      self->disable_fsckobjects = g_value_get_boolean (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -132,6 +154,8 @@ get_branch (BuilderSourceGit *self)
 {
   if (self->branch)
     return self->branch;
+  else if (self->commit)
+    return self->commit;
   else
     return "master";
 }
@@ -142,6 +166,7 @@ get_url_or_path (BuilderSourceGit *self,
                  GError          **error)
 {
   g_autoptr(GFile) repo = NULL;
+  GFile *base_dir = BUILDER_SOURCE (self)->base_dir;
 
   if (self->url == NULL && self->path == NULL)
     {
@@ -155,15 +180,14 @@ get_url_or_path (BuilderSourceGit *self,
       scheme = g_uri_parse_scheme (self->url);
       if (scheme == NULL)
         {
-          repo = g_file_resolve_relative_path (builder_context_get_base_dir (context),
-                                               self->url);
+          repo = g_file_resolve_relative_path (base_dir, self->url);
           return g_file_get_uri (repo);
         }
 
       return g_strdup (self->url);
     }
 
-  repo = g_file_resolve_relative_path (builder_context_get_base_dir (context),
+  repo = g_file_resolve_relative_path (base_dir,
                                        self->path);
   return g_file_get_path (repo);
 }
@@ -182,11 +206,23 @@ builder_source_git_download (BuilderSource  *source,
     return FALSE;
 
   if (!builder_git_mirror_repo (location,
-                                update_vcs, TRUE,
+                                NULL,
+                                update_vcs, TRUE, self->disable_fsckobjects,
                                 get_branch (self),
                                 context,
                                 error))
     return FALSE;
+
+  if (self->commit != NULL && self->branch != NULL)
+    {
+      /* We want to support the commit being both a tag object and the real commit object that it points too */
+      g_autofree char *current_commit = builder_git_get_current_commit (location,get_branch (self), FALSE, context, error);
+      g_autofree char *current_commit2 = builder_git_get_current_commit (location,get_branch (self), TRUE, context, error);
+      if (current_commit == NULL || current_commit2 == NULL)
+        return FALSE;
+      if (strcmp (current_commit, self->commit) != 0 && strcmp (current_commit2, self->commit) != 0)
+        return flatpak_fail (error, "Git commit for branch %s is %s, but expected %s\n", self->branch, current_commit2, self->commit);
+    }
 
   return TRUE;
 }
@@ -212,6 +248,40 @@ builder_source_git_extract (BuilderSource  *source,
   return TRUE;
 }
 
+static gboolean
+builder_source_git_bundle (BuilderSource  *source,
+                           BuilderContext *context,
+                           GError        **error)
+{
+  BuilderSourceGit *self = BUILDER_SOURCE_GIT (source);
+
+  g_autofree char *location = NULL;
+  g_autoptr(GFile) mirror_dir = NULL;
+
+  location = get_url_or_path (self, context, error);
+
+  g_print ("builder_source_git_bundle %s\n", location);
+
+  if (location == NULL)
+    return FALSE;
+
+  mirror_dir = flatpak_build_file (builder_context_get_app_dir (context),
+                                   "sources/git",
+                                   NULL);
+  if (!flatpak_mkdir_p (mirror_dir, NULL, error))
+    return FALSE;
+
+  if (!builder_git_mirror_repo (location,
+                                flatpak_file_get_path_cached (mirror_dir),
+                                FALSE, TRUE, FALSE,
+                                get_branch (self),
+                                context,
+                                error))
+    return FALSE;
+
+  return TRUE;
+}
+
 static void
 builder_source_git_checksum (BuilderSource  *source,
                              BuilderCache   *cache,
@@ -225,11 +295,13 @@ builder_source_git_checksum (BuilderSource  *source,
   builder_cache_checksum_str (cache, self->url);
   builder_cache_checksum_str (cache, self->path);
   builder_cache_checksum_str (cache, self->branch);
+  builder_cache_checksum_compat_str (cache, self->commit);
+  builder_cache_checksum_compat_boolean (cache, self->disable_fsckobjects);
 
   location = get_url_or_path (self, context, &error);
   if (location != NULL)
     {
-      current_commit = builder_git_get_current_commit (location,get_branch (self), context, &error);
+      current_commit = builder_git_get_current_commit (location,get_branch (self), FALSE, context, &error);
       if (current_commit)
         builder_cache_checksum_str (cache, current_commit);
       else if (error)
@@ -254,7 +326,7 @@ builder_source_git_update (BuilderSource  *source,
   if (location == NULL)
     return FALSE;
 
-  current_commit = builder_git_get_current_commit (location, get_branch (self), context, NULL);
+  current_commit = builder_git_get_current_commit (location, get_branch (self), FALSE, context, NULL);
   if (current_commit)
     {
       g_free (self->branch);
@@ -276,6 +348,7 @@ builder_source_git_class_init (BuilderSourceGitClass *klass)
 
   source_class->download = builder_source_git_download;
   source_class->extract = builder_source_git_extract;
+  source_class->bundle = builder_source_git_bundle;
   source_class->update = builder_source_git_update;
   source_class->checksum = builder_source_git_checksum;
 
@@ -300,6 +373,20 @@ builder_source_git_class_init (BuilderSourceGitClass *klass)
                                                         "",
                                                         NULL,
                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_COMMIT,
+                                   g_param_spec_string ("commit",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_DISABLE_FSCKOBJECTS,
+                                   g_param_spec_boolean ("disable-fsckobjects",
+                                                         "",
+                                                         "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE));
 }
 
 static void

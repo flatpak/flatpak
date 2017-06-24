@@ -79,13 +79,12 @@ message_handler (const gchar   *log_domain,
 static void
 printerr_handler (const gchar *string)
 {
-  int is_tty = isatty (1);
   const char *prefix = "";
   const char *suffix = "";
-  if (is_tty)
+  if (flatpak_fancy_output ())
     {
-      prefix = "\x1b[31m\x1b[1m"; /* red, bold */
-      suffix = "\x1b[22m\x1b[0m"; /* bold off, color reset */
+      prefix = FLATPAK_ANSI_RED FLATPAK_ANSI_BOLD_ON;
+      suffix = FLATPAK_ANSI_BOLD_OFF FLATPAK_ANSI_COLOR_RESET;
     }
   fprintf (stderr, "%serror: %s%s\n", prefix, suffix, string);
 }

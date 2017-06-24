@@ -31,9 +31,15 @@
 
 #include "flatpak-builtins.h"
 #include "flatpak-utils.h"
+#include "flatpak-builtins-utils.h"
 
 static char *opt_title;
+static char *opt_redirect_url;
 static char *opt_default_branch;
+static char **opt_gpg_import;
+static char *opt_generate_delta_from;
+static char *opt_generate_delta_to;
+static char *opt_generate_delta_ref;
 static char *opt_gpg_homedir;
 static char **opt_gpg_key_ids;
 static gboolean opt_prune;
@@ -41,87 +47,20 @@ static gboolean opt_generate_deltas;
 static gint opt_prune_depth = -1;
 
 static GOptionEntry options[] = {
+  { "redirect-url", 0, 0, G_OPTION_ARG_STRING, &opt_redirect_url, N_("Redirect this repo to a new URL"), N_("URL") },
   { "title", 0, 0, G_OPTION_ARG_STRING, &opt_title, N_("A nice name to use for this repository"), N_("TITLE") },
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this repository"), N_("BRANCH") },
+  { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import new default GPG public key from FILE"), N_("FILE") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
   { "gpg-homedir", 0, 0, G_OPTION_ARG_STRING, &opt_gpg_homedir, N_("GPG Homedir to use when looking for keyrings"), N_("HOMEDIR") },
   { "generate-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_generate_deltas, N_("Generate delta files"), NULL },
   { "prune", 0, 0, G_OPTION_ARG_NONE, &opt_prune, N_("Prune unused objects"), NULL },
   { "prune-depth", 0, 0, G_OPTION_ARG_INT, &opt_prune_depth, N_("Only traverse DEPTH parents for each commit (default: -1=infinite)"), N_("DEPTH") },
+  { "generate-static-delta-from", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_from, NULL, NULL },
+  { "generate-static-delta-to", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_to, NULL, NULL },
+  { "generate-static-delta-ref", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &opt_generate_delta_ref, NULL, NULL },
   { NULL }
 };
-
-typedef struct {
-  OstreeRepo *repo;
-  GVariant *params;
-  char *ref;
-  char *from;
-  char *to;
-} DeltaData;
-
-static void
-delta_data_free (DeltaData *data)
-{
-  g_object_unref (data->repo);
-  g_variant_unref (data->params);
-  g_free (data->ref);
-  g_free (data->from);
-  g_free (data->to);
-  g_free (data);
-}
-
-static DeltaData *
-delta_data_push (GThreadPool *pool,
-                 OstreeRepo *repo,
-                 GVariant *params,
-                 const char *ref,
-                 const char *from,
-                 const char *to,
-                 GError **error)
-{
-  DeltaData *data = g_new0 (DeltaData, 1);
-
-  data->repo = g_object_ref (repo);
-  data->params = g_variant_ref (params);
-  data->ref = g_strdup (ref);
-  data->from = g_strdup (from);
-  data->to = g_strdup (to);
-
-  if (!g_thread_pool_push (pool, data, error))
-    {
-      delta_data_free (data);
-      return NULL;
-    }
-
-  return data;
-}
-
-static void
-generate_delta_thread (gpointer       _data,
-                       gpointer       user_data)
-{
-  DeltaData *data = (DeltaData*) _data;
-  g_autoptr(GError) error = NULL;
-
-  if (data->from == NULL)
-    g_print (_("Generating delta: %s (%.10s)\n"), data->ref, data->to);
-  else
-    g_print (_("Generating delta: %s (%.10s-%.10s)\n"), data->ref, data->from, data->to);
-
-  if (!ostree_repo_static_delta_generate (data->repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
-                                          data->from, data->to, NULL,
-                                          data->params,
-                                          NULL, &error))
-    {
-      if (data->from == NULL)
-        g_printerr (_("Failed to generate delta %s (%.10s): %s\n"),
-                    data->ref, data->to, error->message);
-      else
-        g_printerr (_("Failed to generate delta %s (%.10s-%.10s): %s\n"),
-                    data->ref, data->from, data->to, error->message);
-    }
-  delta_data_free (data);
-}
 
 static void
 _ostree_parse_delta_name (const char  *delta_name,
@@ -224,6 +163,111 @@ _ostree_repo_static_delta_delete (OstreeRepo                    *self,
   return ret;
 }
 
+static gboolean
+generate_one_delta (OstreeRepo *repo,
+                    const char *from,
+                    const char *to,
+                    const char *ref,
+                    GCancellable *cancellable,
+                    GError **error)
+{
+  g_autoptr(GVariantBuilder) parambuilder = NULL;
+  g_autoptr(GVariant) params = NULL;
+
+  parambuilder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
+  /* Fall back for 1 meg files */
+  g_variant_builder_add (parambuilder, "{sv}",
+                         "min-fallback-size", g_variant_new_uint32 (1));
+  params = g_variant_ref_sink (g_variant_builder_end (parambuilder));
+
+  if (ref == NULL)
+    ref = "";
+
+  if (from == NULL)
+    g_print (_("Generating delta: %s (%.10s)\n"), ref, to);
+  else
+    g_print (_("Generating delta: %s (%.10s-%.10s)\n"), ref, from, to);
+
+  if (!ostree_repo_static_delta_generate (repo, OSTREE_STATIC_DELTA_GENERATE_OPT_MAJOR,
+                                          from, to, NULL,
+                                          params,
+                                          cancellable, error))
+    {
+      if (from == NULL)
+        g_prefix_error (error, _("Failed to generate delta %s (%.10s): "),
+                        ref, to);
+      else
+        g_prefix_error (error, _("Failed to generate delta %s (%.10s-%.10s): "),
+                        ref, from, to);
+      return FALSE;
+
+    }
+
+  return TRUE;
+}
+
+
+static void
+delta_generation_done (GObject      *source_object,
+                       GAsyncResult *result,
+                       gpointer      user_data)
+{
+  int *n_spawned_delta_generate = user_data;
+  (*n_spawned_delta_generate)--;
+}
+
+static gboolean
+spawn_delete_generation (GMainContext *context,
+                         int *n_spawned_delta_generate,
+                         OstreeRepo *repo,
+                         GVariant *params,
+                         const char *ref,
+                         const char *from,
+                         const char *to,
+                         GError **error)
+{
+  g_autoptr(GSubprocessLauncher) launcher = g_subprocess_launcher_new (0);
+  g_autoptr(GSubprocess) subprocess = NULL;
+  const char *argv[] = {
+    "/proc/self/exe",
+    "build-update-repo",
+    "--generate-static-delta-ref",
+    ref,
+    "--generate-static-delta-to",
+    to,
+    NULL, NULL, NULL, NULL
+  };
+  int i = 6;
+  g_autofree char *exe = NULL;
+
+  exe = flatpak_readlink ("/proc/self/exe", NULL);
+  if (exe)
+    argv[0] = exe;
+
+  if (from)
+    {
+      argv[i++] = "--generate-static-delta-from";
+      argv[i++] = from;
+    }
+
+  argv[i++] = flatpak_file_get_path_cached (ostree_repo_get_path (repo));
+  argv[i++] = NULL;
+
+  g_assert (i <= G_N_ELEMENTS (argv));
+
+  while (*n_spawned_delta_generate > g_get_num_processors ())
+    g_main_context_iteration (context, TRUE);
+
+  subprocess = g_subprocess_launcher_spawnv (launcher, argv, error);
+  if (subprocess == NULL)
+    return FALSE;
+
+  (*n_spawned_delta_generate)++;
+
+  g_subprocess_wait_async (subprocess, NULL, delta_generation_done, n_spawned_delta_generate);
+
+  return TRUE;
+}
 
 static gboolean
 generate_all_deltas (OstreeRepo *repo,
@@ -231,6 +275,7 @@ generate_all_deltas (OstreeRepo *repo,
                      GCancellable *cancellable,
                      GError **error)
 {
+  g_autoptr(GMainContext) context = g_main_context_new ();
   g_autoptr(GHashTable) all_refs = NULL;
   g_autoptr(GHashTable) all_deltas_hash = NULL;
   g_autoptr(GHashTable) wanted_deltas_hash = NULL;
@@ -240,7 +285,7 @@ generate_all_deltas (OstreeRepo *repo,
   gpointer key, value;
   g_autoptr(GVariantBuilder) parambuilder = NULL;
   g_autoptr(GVariant) params = NULL;
-  GThreadPool *thread_pool;
+  int n_spawned_delta_generate = 0;
 
   g_print ("Generating static deltas\n");
 
@@ -266,11 +311,7 @@ generate_all_deltas (OstreeRepo *repo,
                               cancellable, error))
     return FALSE;
 
-  thread_pool = g_thread_pool_new (generate_delta_thread, NULL,
-                                   g_get_num_processors (), FALSE,
-                                   error);
-  if (thread_pool == NULL)
-    return FALSE;
+  g_main_context_push_thread_default (context);
 
   g_hash_table_iter_init (&iter, all_refs);
   while (g_hash_table_iter_next (&iter, &key, &value))
@@ -284,16 +325,16 @@ generate_all_deltas (OstreeRepo *repo,
       if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
                                      &variant, NULL))
         {
-          g_warning ("Couldn't load commit %s\n", commit);
+          g_warning ("Couldn't load commit %s", commit);
           continue;
         }
 
       /* From empty */
       if (!g_hash_table_contains (all_deltas_hash, commit))
         {
-          if (!delta_data_push (thread_pool, repo, params,
-                                ref, NULL, commit,
-                                error))
+          if (!spawn_delete_generation (context, &n_spawned_delta_generate, repo, params,
+                                        ref, NULL, commit,
+                                        error))
             goto error;
         }
 
@@ -306,7 +347,7 @@ generate_all_deltas (OstreeRepo *repo,
           !ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, parent_commit,
                                      &parent_variant, NULL))
         {
-          g_warning ("Couldn't load parent commit %s\n", parent_commit);
+          g_warning ("Couldn't load parent commit %s", parent_commit);
           continue;
         }
 
@@ -317,9 +358,9 @@ generate_all_deltas (OstreeRepo *repo,
 
           if (!g_hash_table_contains (all_deltas_hash, from_parent))
             {
-              if (!delta_data_push (thread_pool, repo, params,
-                                    ref, parent_commit, commit,
-                                    error))
+              if (!spawn_delete_generation (context, &n_spawned_delta_generate, repo, params,
+                                            ref, parent_commit, commit,
+                                            error))
                 goto error;
             }
 
@@ -327,6 +368,11 @@ generate_all_deltas (OstreeRepo *repo,
           g_hash_table_insert (wanted_deltas_hash, g_strdup (from_parent), GINT_TO_POINTER (1));
         }
     }
+
+  while (n_spawned_delta_generate > 0)
+    g_main_context_iteration (context, TRUE);
+
+  g_main_context_pop_thread_default (context);
 
   *unwanted_deltas = g_ptr_array_new_with_free_func (g_free);
   for (i = 0; i < all_deltas->len; i++)
@@ -336,15 +382,10 @@ generate_all_deltas (OstreeRepo *repo,
         g_ptr_array_add (*unwanted_deltas, g_strdup (delta));
     }
 
-  /* This block until all are done */
-  g_thread_pool_free (thread_pool, FALSE, TRUE);
-
   return TRUE;
 
  error:
-  /* TODO: In this error case we're leaking all the DeltaDatas we have not yet
-     processed. I don't know how to fix this though... */
-  g_thread_pool_free (thread_pool, TRUE, FALSE);
+  g_main_context_pop_thread_default (context);
   return FALSE;
 }
 
@@ -375,13 +416,34 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
   if (!ostree_repo_open (repo, cancellable, error))
     return FALSE;
 
+  if (opt_generate_delta_to)
+    {
+      if (!generate_one_delta (repo, opt_generate_delta_from, opt_generate_delta_to, opt_generate_delta_ref, cancellable, error))
+        return FALSE;
+      return TRUE;
+    }
+
   if (opt_title &&
-      !flatpak_repo_set_title (repo, opt_title, error))
+      !flatpak_repo_set_title (repo, opt_title[0] ? opt_title : NULL, error))
+    return FALSE;
+
+  if (opt_redirect_url &&
+      !flatpak_repo_set_redirect_url (repo, opt_redirect_url[0] ? opt_redirect_url : NULL, error))
     return FALSE;
 
   if (opt_default_branch &&
-      !flatpak_repo_set_default_branch (repo, opt_default_branch, error))
+      !flatpak_repo_set_default_branch (repo, opt_default_branch[0] ? opt_default_branch : NULL, error))
     return FALSE;
+
+  if (opt_gpg_import)
+    {
+      g_autoptr(GBytes) gpg_data = flatpak_load_gpg_keys (opt_gpg_import, cancellable, error);
+      if (gpg_data == NULL)
+        return FALSE;
+
+      if (!flatpak_repo_set_gpg_keys (repo, gpg_data, error))
+        return FALSE;
+    }
 
   g_print (_("Updating appstream branch\n"));
   if (!flatpak_repo_generate_appstream (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, 0, cancellable, error))
@@ -389,10 +451,6 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
   if (opt_generate_deltas &&
       !generate_all_deltas (repo, &unwanted_deltas, cancellable, error))
-    return FALSE;
-
-  g_print (_("Updating summary\n"));
-  if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
     return FALSE;
 
   if (unwanted_deltas != NULL)
@@ -407,6 +465,10 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
             g_printerr ("Unable to delete delta %s: %s\n", delta, my_error->message);
         }
     }
+
+  g_print (_("Updating summary\n"));
+  if (!flatpak_repo_update (repo, (const char **) opt_gpg_key_ids, opt_gpg_homedir, cancellable, error))
+    return FALSE;
 
   if (opt_prune)
     {

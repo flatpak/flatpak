@@ -18,6 +18,7 @@
 #include "flatpak-dbus.h"
 #include "flatpak-utils.h"
 #include "flatpak-dir.h"
+#include "flatpak-run.h"
 #include "flatpak-portal-error.h"
 #include "permission-store/permission-store-dbus.h"
 #include "xdp-fuse.h"
@@ -452,6 +453,36 @@ validate_fd (int fd,
   return TRUE;
 }
 
+static char *
+verify_existing_document (struct stat *st_buf, gboolean reuse_existing)
+{
+  g_autoptr(FlatpakDbEntry) old_entry = NULL;
+  g_autofree char *id = NULL;
+
+  g_assert (st_buf->st_dev == fuse_dev);
+
+  /* The passed in fd is on the fuse filesystem itself */
+  id = xdp_fuse_lookup_id_for_inode (st_buf->st_ino);
+  g_debug ("path on fuse, id %s", id);
+  if (id == NULL)
+    return NULL;
+
+  /* Don't lock the db before doing the fuse call above, because it takes takes a lock
+     that can block something calling back, causing a deadlock on the db lock */
+  AUTOLOCK (db);
+
+  /* If the entry doesn't exist anymore, fail.  Also fail if not
+   * reuse_existing, because otherwise the user could use this to
+   * get a copy with permissions and thus escape later permission
+   * revocations
+   */
+  old_entry = flatpak_db_lookup (db, id);
+  if (old_entry == NULL || !reuse_existing)
+    return NULL;
+
+  return g_steal_pointer (&id);
+}
+
 static void
 portal_add (GDBusMethodInvocation *invocation,
             GVariant              *parameters,
@@ -490,31 +521,8 @@ portal_add (GDBusMethodInvocation *invocation,
   if (st_buf.st_dev == fuse_dev)
     {
       /* The passed in fd is on the fuse filesystem itself */
-      g_autoptr(FlatpakDbEntry) old_entry = NULL;
-
-      id = xdp_fuse_lookup_id_for_inode (st_buf.st_ino);
-      g_debug ("path on fuse, id %s", id);
+      id = verify_existing_document (&st_buf, reuse_existing);
       if (id == NULL)
-        {
-          g_dbus_method_invocation_return_error (invocation,
-                                                 FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
-                                                 "Invalid fd passed");
-          return;
-        }
-
-      /* Don't lock the db before doing the fuse call above, because it takes takes a lock
-         that can block something calling back, causing a deadlock on the db lock */
-
-      AUTOLOCK (db);
-
-      /* If the entry doesn't exist anymore, fail.  Also fail if not
-       * reuse_existing, because otherwise the user could use this to
-       * get a copy with permissions and thus escape later permission
-       * revocations
-       */
-      old_entry = flatpak_db_lookup (db, id);
-      if (old_entry == NULL ||
-          !reuse_existing)
         {
           g_dbus_method_invocation_return_error (invocation,
                                                  FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
@@ -531,21 +539,18 @@ portal_add (GDBusMethodInvocation *invocation,
 
         if (app_id[0] != '\0')
           {
-            g_autoptr(FlatpakDbEntry) entry = NULL;
+            g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (db, id);
             XdpPermissionFlags perms =
               XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
               XDP_PERMISSION_FLAGS_READ |
               XDP_PERMISSION_FLAGS_WRITE;
-            {
-              entry = flatpak_db_lookup (db, id);
 
-              /* If its a unique one its safe for the creator to
-                 delete it at will */
-              if (!reuse_existing)
-                perms |= XDP_PERMISSION_FLAGS_DELETE;
+            /* If its a unique one its safe for the creator to
+               delete it at will */
+            if (!reuse_existing)
+              perms |= XDP_PERMISSION_FLAGS_DELETE;
 
-              do_set_permissions (entry, id, app_id, perms);
-            }
+            do_set_permissions (entry, id, app_id, perms);
           }
       }
 
@@ -557,6 +562,171 @@ portal_add (GDBusMethodInvocation *invocation,
 
   g_dbus_method_invocation_return_value (invocation,
                                          g_variant_new ("(s)", id));
+}
+
+static void
+portal_add_full (GDBusMethodInvocation *invocation,
+                 GVariant              *parameters,
+                 const char            *app_id)
+{
+  GDBusMessage *message;
+  GUnixFDList *fd_list;
+  char *id;
+  int fd_id, fd, fds_len;
+  char path_buffer[PATH_MAX + 1];
+  const int *fds = NULL;
+  struct stat st_buf;
+  gboolean reuse_existing, persistent, as_needed_by_app;
+  GError *error = NULL;
+  guint32 flags = 0;
+  GKeyFile *app_info = g_object_get_data (G_OBJECT (invocation), "app-info");
+  g_autoptr(GVariant) array = NULL;
+  const char *target_app_id;
+  g_autofree const char **permissions = NULL;
+  g_autoptr(GPtrArray) ids = g_ptr_array_new_with_free_func (g_free);
+  g_autoptr(GPtrArray) paths = g_ptr_array_new_with_free_func (g_free);
+  g_autofree struct stat *real_parent_st_bufs = NULL;
+  int i;
+  gsize n_args;
+  XdpPermissionFlags target_perms;
+  GVariantBuilder builder;
+  g_autoptr(FlatpakExports) app_exports = NULL;
+
+  g_variant_get (parameters, "(@ahus^a&s)",
+                 &array, &flags, &target_app_id, &permissions);
+
+  if ((flags & ~XDP_ADD_FLAGS_FLAGS_ALL) != 0)
+    {
+      g_dbus_method_invocation_return_error (invocation,
+                                             FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                                             "Invalid flags");
+      return;
+    }
+
+  reuse_existing = (flags & XDP_ADD_FLAGS_REUSE_EXISTING) != 0;
+  persistent = (flags & XDP_ADD_FLAGS_PERSISTENT) != 0;
+  as_needed_by_app = (flags & XDP_ADD_FLAGS_AS_NEEDED_BY_APP) != 0;
+
+  if (as_needed_by_app && target_app_id[0] != '\0')
+    {
+      g_autoptr(FlatpakContext) app_context = flatpak_context_load_for_app (target_app_id, NULL);
+      if (app_context)
+        app_exports = flatpak_exports_from_context (app_context, target_app_id);
+    }
+
+  target_perms = xdp_parse_permissions (permissions);
+
+  n_args = g_variant_n_children (array);
+  g_ptr_array_set_size (ids, n_args + 1);
+  g_ptr_array_set_size (paths, n_args + 1);
+  real_parent_st_bufs = g_new0 (struct stat, n_args);
+
+  message = g_dbus_method_invocation_get_message (invocation);
+  fd_list = g_dbus_message_get_unix_fd_list (message);
+  if (fd_list != NULL)
+    fds = g_unix_fd_list_peek_fds (fd_list, &fds_len);
+
+  for (i = 0; i < n_args; i++)
+    {
+      g_variant_get_child (array, i, "h", &fd_id);
+
+      fd = -1;
+      if (fds != NULL && fd_id < fds_len)
+        fd = fds[fd_id];
+
+      if (!validate_fd (fd, app_info, &st_buf, &real_parent_st_bufs[i], path_buffer, &error))
+        {
+          g_dbus_method_invocation_take_error (invocation, error);
+          return;
+        }
+
+      g_ptr_array_index(paths,i) = g_strdup (path_buffer);
+
+      if (st_buf.st_dev == fuse_dev)
+        {
+          /* The passed in fd is on the fuse filesystem itself */
+          id = verify_existing_document (&st_buf, reuse_existing);
+          if (id == NULL)
+            {
+              g_dbus_method_invocation_return_error (invocation,
+                                                     FLATPAK_PORTAL_ERROR, FLATPAK_PORTAL_ERROR_INVALID_ARGUMENT,
+                                                     "Invalid fd passed");
+              return;
+            }
+          g_ptr_array_index(ids,i) = id;
+        }
+    }
+
+  {
+    XdpPermissionFlags caller_perms =
+      XDP_PERMISSION_FLAGS_GRANT_PERMISSIONS |
+      XDP_PERMISSION_FLAGS_READ |
+      XDP_PERMISSION_FLAGS_WRITE;
+
+    /* If its a unique one its safe for the creator to
+       delete it at will */
+    if (!reuse_existing)
+      caller_perms |= XDP_PERMISSION_FLAGS_DELETE;
+
+    AUTOLOCK (db); /* Lock once for all ops */
+
+    for (i = 0; i < n_args; i++)
+      {
+        const char *path = g_ptr_array_index(paths,i);
+        g_assert (path != NULL);
+
+        if (app_exports &&
+            flatpak_exports_path_is_visible (app_exports, path))
+          {
+            g_free (g_ptr_array_index(ids,i));
+            g_ptr_array_index(ids,i) = g_strdup ("");
+            continue;
+          }
+
+        if (g_ptr_array_index(ids,i) == NULL)
+          {
+            id = do_create_doc (&real_parent_st_bufs[i], path, reuse_existing, persistent);
+            g_ptr_array_index(ids,i) = id;
+
+            if (app_id[0] != '\0' && strcmp (app_id, target_app_id) != 0)
+              {
+                g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (db, id);;
+                do_set_permissions (entry, id, app_id, caller_perms);
+              }
+
+            if (target_app_id[0] != '\0' && target_perms != 0)
+              {
+                g_autoptr(FlatpakDbEntry) entry = flatpak_db_lookup (db, id);
+                do_set_permissions (entry, id, target_app_id, target_perms);
+              }
+          }
+      }
+  }
+
+  /* Invalidate with lock dropped to avoid deadlock */
+  for (i = 0; i < n_args; i++)
+    {
+      id = g_ptr_array_index (ids,i);
+      g_assert (id != NULL);
+
+      if (*id == 0)
+        continue;
+
+      xdp_fuse_invalidate_doc_app (id, NULL);
+      if (app_id[0] != '\0')
+        xdp_fuse_invalidate_doc_app (id, app_id);
+      if (target_app_id[0] != '\0' && target_perms != 0)
+        xdp_fuse_invalidate_doc_app (id, target_app_id);
+    }
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  g_variant_builder_add (&builder, "{sv}", "mountpoint",
+                         g_variant_new_bytestring (xdp_fuse_get_mountpoint ()));
+
+  g_dbus_method_invocation_return_value (invocation,
+                                         g_variant_new ("(^as@a{sv})",
+                                                        (char **)ids->pdata,
+                                                        g_variant_builder_end (&builder)));
 }
 
 static void
@@ -873,9 +1043,12 @@ on_bus_acquired (GDBusConnection *connection,
 
   dbus_api = xdp_dbus_documents_skeleton_new ();
 
+  xdp_dbus_documents_set_version (XDP_DBUS_DOCUMENTS (dbus_api), 2);
+
   g_signal_connect_swapped (dbus_api, "handle-get-mount-point", G_CALLBACK (handle_get_mount_point), NULL);
   g_signal_connect_swapped (dbus_api, "handle-add", G_CALLBACK (handle_method), portal_add);
   g_signal_connect_swapped (dbus_api, "handle-add-named", G_CALLBACK (handle_method), portal_add_named);
+  g_signal_connect_swapped (dbus_api, "handle-add-full", G_CALLBACK (handle_method), portal_add_full);
   g_signal_connect_swapped (dbus_api, "handle-grant-permissions", G_CALLBACK (handle_method), portal_grant_permissions);
   g_signal_connect_swapped (dbus_api, "handle-revoke-permissions", G_CALLBACK (handle_method), portal_revoke_permissions);
   g_signal_connect_swapped (dbus_api, "handle-delete", G_CALLBACK (handle_method), portal_delete);
@@ -1049,13 +1222,12 @@ message_handler (const gchar   *log_domain,
 static void
 printerr_handler (const gchar *string)
 {
-  int is_tty = isatty (1);
   const char *prefix = "";
   const char *suffix = "";
-  if (is_tty)
+  if (flatpak_fancy_output ())
     {
-      prefix = "\x1b[31m\x1b[1m"; /* red, bold */
-      suffix = "\x1b[22m\x1b[0m"; /* bold off, color reset */
+      prefix = FLATPAK_ANSI_RED FLATPAK_ANSI_BOLD_ON;
+      suffix = FLATPAK_ANSI_BOLD_OFF FLATPAK_ANSI_COLOR_RESET;
     }
   fprintf (stderr, "%serror: %s%s\n", prefix, suffix, string);
 }

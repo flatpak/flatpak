@@ -18,6 +18,7 @@
     "cleanup": ["/cleanup", "*.cleanup"],
     "cleanup-commands": [ "touch /app/cleaned_up" ],
     "modules": [
+        "include1/module1.json",
         {
             "name": "root",
             "modules": [

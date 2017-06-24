@@ -43,6 +43,7 @@ static gboolean opt_no_pull;
 static gboolean opt_no_deploy;
 static gboolean opt_no_related;
 static gboolean opt_no_deps;
+static gboolean opt_no_static_deltas;
 static gboolean opt_runtime;
 static gboolean opt_app;
 static gboolean opt_appstream;
@@ -56,6 +57,7 @@ static GOptionEntry options[] = {
   { "no-deploy", 0, 0, G_OPTION_ARG_NONE, &opt_no_deploy, N_("Don't deploy, only download to local cache"), NULL },
   { "no-related", 0, 0, G_OPTION_ARG_NONE, &opt_no_related, N_("Don't update related refs"), NULL},
   { "no-deps", 0, 0, G_OPTION_ARG_NONE, &opt_no_deps, N_("Don't verify/install runtime dependencies"), NULL },
+  { "no-static-deltas", 0, 0, G_OPTION_ARG_NONE, &opt_no_static_deltas, N_("Don't use static deltas"), NULL },
   { "runtime", 0, 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Look for runtime with the specified name"), NULL },
   { "app", 0, 0, G_OPTION_ARG_NONE, &opt_app, N_("Look for app with the specified name"), NULL },
   { "appstream", 0, 0, G_OPTION_ARG_NONE, &opt_appstream, N_("Update appstream for remote"), NULL },
@@ -68,6 +70,7 @@ static gboolean
 update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable, GError **error)
 {
   gboolean changed;
+  gboolean res;
 
   if (opt_arch == NULL)
     opt_arch = (char *)flatpak_get_arch ();
@@ -84,21 +87,30 @@ update_appstream (FlatpakDir *dir, const char *remote, GCancellable *cancellable
       for (i = 0; remotes[i] != NULL; i++)
         {
           g_autoptr(GError) local_error = NULL;
+          FlatpakTerminalProgress terminal_progress = { 0 };
 
           if (flatpak_dir_get_remote_disabled (dir, remotes[i]))
             continue;
 
           g_print (_("Updating appstream for remote %s\n"), remotes[i]);
+          g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
           if (!flatpak_dir_update_appstream (dir, remotes[i], opt_arch, &changed,
-                                             NULL, cancellable, &local_error))
+                                             progress, cancellable, &local_error))
             g_printerr ("Error updating: %s\n", local_error->message);
+          ostree_async_progress_finish (progress);
+          flatpak_terminal_progress_end (&terminal_progress);
         }
     }
   else
     {
-      if (!flatpak_dir_update_appstream (dir, remote, opt_arch, &changed,
-                                         NULL, cancellable, error))
+      FlatpakTerminalProgress terminal_progress = { 0 };
+      g_autoptr(OstreeAsyncProgress) progress = flatpak_progress_new (flatpak_terminal_progress_cb, &terminal_progress);
+      res = flatpak_dir_update_appstream (dir, remote, opt_arch, &changed,
+                                          progress, cancellable, error);
+      ostree_async_progress_finish (progress);
+      if (!res)
         return FALSE;
+      flatpak_terminal_progress_end (&terminal_progress);
     }
 
   return TRUE;
@@ -138,7 +150,7 @@ flatpak_builtin_update (int           argc,
     }
 
   transaction = flatpak_transaction_new (dir, opt_yes, opt_no_pull, opt_no_deploy,
-                                         !opt_no_deps, !opt_no_related);
+                                         opt_no_static_deltas, !opt_no_deps, !opt_no_related);
   kinds = flatpak_kinds_from_bools (opt_app, opt_runtime);
 
   g_print ("Looking for updates...\n");
@@ -232,6 +244,9 @@ flatpak_builtin_update (int           argc,
           return FALSE;
         }
     }
+
+  if (!flatpak_transaction_update_metadata (transaction, n_prefs == 0, cancellable, error))
+    return FALSE;
 
   if (!flatpak_transaction_run (transaction, FALSE, cancellable, error))
     return FALSE;

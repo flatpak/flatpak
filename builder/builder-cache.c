@@ -1070,6 +1070,18 @@ builder_gc (BuilderCache *self,
                             NULL, error);
 }
 
+/* Only add to cache if non-empty. This means we can add
+   these things compatibly without invalidating the cache.
+   This is useful if empty means no change from what was
+   before */
+void
+builder_cache_checksum_compat_str (BuilderCache *self,
+                                   const char   *str)
+{
+  if (str)
+    builder_cache_checksum_str (self, str);
+}
+
 void
 builder_cache_checksum_str (BuilderCache *self,
                             const char   *str)

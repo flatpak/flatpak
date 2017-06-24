@@ -174,6 +174,16 @@ builder_source_script_extract (BuilderSource  *source,
   return TRUE;
 }
 
+static gboolean
+builder_source_script_bundle (BuilderSource  *source,
+                              BuilderContext *context,
+                              GError        **error)
+{
+  /* no need to bundle anything here as this part
+     can be reconstructed from the manifest */
+  return TRUE;
+}
+
 static void
 builder_source_script_checksum (BuilderSource  *source,
                                 BuilderCache   *cache,
@@ -197,6 +207,7 @@ builder_source_script_class_init (BuilderSourceScriptClass *klass)
 
   source_class->download = builder_source_script_download;
   source_class->extract = builder_source_script_extract;
+  source_class->bundle = builder_source_script_bundle;
   source_class->checksum = builder_source_script_checksum;
 
   g_object_class_install_property (object_class,
