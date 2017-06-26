@@ -1530,9 +1530,6 @@ builder_manifest_build_shell (BuilderManifest *self,
   if (found == NULL)
     return flatpak_fail (error, "Can't find module %s", modulename);
 
-  if (!builder_module_get_sources (found))
-    return flatpak_fail (error, "No sources for module %s", modulename);
-
   if (!builder_module_build (found, NULL, context, TRUE, error))
     return FALSE;
 
@@ -1566,7 +1563,7 @@ builder_manifest_build (BuilderManifest *self,
           return TRUE;
         }
 
-      if (!builder_module_get_sources (m))
+      if (!builder_module_should_build (m))
         {
           g_print ("Skipping module %s (no sources)\n", name);
           continue;

@@ -43,6 +43,7 @@ const char * builder_module_get_name (BuilderModule *self);
 gboolean     builder_module_is_enabled (BuilderModule *self,
                                         BuilderContext *context);
 gboolean     builder_module_get_disabled (BuilderModule *self);
+gboolean     builder_module_should_build (BuilderModule *self);
 GList *      builder_module_get_sources (BuilderModule *self);
 GList *      builder_module_get_modules (BuilderModule *self);
 void         builder_module_set_json_path (BuilderModule *self,

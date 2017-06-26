@@ -827,6 +827,19 @@ builder_module_is_enabled (BuilderModule *self,
 }
 
 gboolean
+builder_module_should_build (BuilderModule *self)
+{
+  if (self->sources != NULL)
+    return TRUE;
+
+  /* We allow building simple types even without sources, that is often useful */
+  if (!g_strcmp0 (self->buildsystem, "simple"))
+    return TRUE;
+
+  return FALSE;
+}
+
+gboolean
 builder_module_get_disabled (BuilderModule *self)
 {
   return self->disabled;
