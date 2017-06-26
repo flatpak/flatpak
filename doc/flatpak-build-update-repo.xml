@@ -102,6 +102,21 @@
                 </para></listitem>
             </varlistentry>
 
+            <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
+            <varlistentry>
+                <term><option>-FIXME-collection-id=COLLECTION-ID</option></term>
+
+                <listitem><para>
+                    The globally unique identifier of the remote repository, to
+                    allow mirrors to be grouped. This must be set to a globally
+                    unique reverse DNS string if the repository is to be made
+                    publicly available. If a collection ID is already set on an
+                    existing repository, this will update it. If not specified,
+                    the existing collection ID will be left unchanged.
+                </para></listitem>
+            </varlistentry>
+            -->
+
             <varlistentry>
                 <term><option>--gpg-sign=KEYID</option></term>
 
