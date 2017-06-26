@@ -319,15 +319,13 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
                "Exhausted %u attempts to create temporary file", count);
               return FALSE;
             }
-          if (renameat (target_dfd, tmpname_buf, target_dfd, target) < 0)
+          if (!glnx_renameat (target_dfd, tmpname_buf, target_dfd, target, error))
             {
               /* This is currently the only case where we need to have
                * a cleanup unlinkat() still with O_TMPFILE.
                */
-              int errsv = errno;
               (void) unlinkat (target_dfd, tmpname_buf, 0);
-              errno = errsv;
-              return glnx_throw_errno_prefix (error, "renameat");
+              return FALSE;
             }
         }
       else

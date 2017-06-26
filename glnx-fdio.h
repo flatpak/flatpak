@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/xattr.h>
 /* From systemd/src/shared/util.h */
 /* When we include libgen.h because we need dirname() we immediately
@@ -244,8 +245,42 @@ glnx_fstatat (int           dfd,
               GError      **error)
 {
   if (TEMP_FAILURE_RETRY (fstatat (dfd, path, buf, flags)) != 0)
-    return glnx_throw_errno (error);
+    return glnx_throw_errno_prefix (error, "fstatat(%s)", path);
+  return TRUE;
+}
 
+/**
+ * glnx_renameat:
+ *
+ * Wrapper around renameat() which adds #GError support and ensures that it
+ * retries on %EINTR.
+ */
+static inline gboolean
+glnx_renameat (int           src_dfd,
+               const gchar  *src_path,
+               int           dest_dfd,
+               const gchar  *dest_path,
+               GError      **error)
+{
+  if (TEMP_FAILURE_RETRY (renameat (src_dfd, src_path, dest_dfd, dest_path)) != 0)
+    return glnx_throw_errno_prefix (error, "renameat(%s, %s)", src_path, dest_path);
+  return TRUE;
+}
+
+/**
+ * glnx_unlinkat:
+ *
+ * Wrapper around unlinkat() which adds #GError support and ensures that it
+ * retries on %EINTR.
+ */
+static inline gboolean
+glnx_unlinkat (int           dfd,
+               const gchar  *path,
+               int           flags,
+               GError      **error)
+{
+  if (TEMP_FAILURE_RETRY (unlinkat (dfd, path, flags)) != 0)
+    return glnx_throw_errno_prefix (error, "unlinkat(%s)", path);
   return TRUE;
 }
 
