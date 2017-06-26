@@ -38,12 +38,16 @@ print_info (GVariant *meta)
 {
   g_autoptr(GVariant) cache = NULL;
   const char *title;
+  const char *collection_id;
   const char *default_branch;
   const char *redirect_url;
   g_autoptr(GVariant) gpg_keys = NULL;
 
   if (g_variant_lookup (meta, "xa.title", "&s", &title))
     g_print ("Title: %s\n", title);
+
+  if (g_variant_lookup (meta, "collection-id", "&s", &collection_id))
+    g_print ("Collection ID: %s\n", collection_id);
 
   if (g_variant_lookup (meta, "xa.default-branch", "&s", &default_branch))
     g_print ("Default branch: %s\n", default_branch);

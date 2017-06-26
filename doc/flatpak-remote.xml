@@ -80,6 +80,12 @@
                     <term><option>gpg-verify-summary</option> (boolean)</term>
                     <listitem><para>Whether to use GPG verification for the summary of this remote.</para></listitem>
                 </varlistentry>
+                <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
+                <varlistentry>
+                    <term><option>collection-id</option> (string)</term>
+                    <listitem><para>The globally unique identifier for the upstream collection repository, to allow mirrors to be grouped.</para></listitem>
+                </varlistentry>
+                -->
             </variablelist>
             <para>
                 All flatpak-specific keys have a xa. prefix:

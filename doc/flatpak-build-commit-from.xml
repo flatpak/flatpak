@@ -46,6 +46,11 @@
             contents (and most of the metadata) taken from another
             branch, either from another repo, or from another branch in
             the same repository.
+            <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
+            The collection ID set on
+            <arg choice="plain">DST-REPO</arg> (if set) will be used for the
+            newly created commits.
+            -->
         </para>
         <para>
             This command is very useful when you want to maintain a branch

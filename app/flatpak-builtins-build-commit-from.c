@@ -232,6 +232,7 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       g_autofree char *commit_checksum = NULL;
       GVariantBuilder metadata_builder;
       gint j;
+      const char *dst_collection_id = NULL;
 
       if (!ostree_repo_resolve_rev (dst_repo, dst_ref, TRUE, &dst_parent, error))
         return FALSE;
@@ -273,9 +274,22 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       if (opt_body)
         body = (const char *)opt_body;
 
+#ifdef FLATPAK_ENABLE_P2P
+      dst_collection_id = ostree_repo_get_collection_id (dst_repo);
+#endif  /* FLATPAK_ENABLE_P2P */
+
       /* Copy old metadata */
       g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
+
+      /* Bindings. xa.ref is deprecated but added anyway for backwards compatibility.
+       * Add the bindings even if we are not built with P2P support, since other
+       * flatpak builds might be. */
+      g_variant_builder_add (&metadata_builder, "{sv}", "ostree.collection-binding",
+                             g_variant_new_string (dst_collection_id ? dst_collection_id : ""));
+      g_variant_builder_add (&metadata_builder, "{sv}", "ostree.ref-binding",
+                             g_variant_new_strv (&dst_ref, 1));
       g_variant_builder_add (&metadata_builder, "{sv}", "xa.ref", g_variant_new_string (dst_ref));
+
       /* Record the source commit. This is nice to have, but it also
          means the commit-from gets a different commit id, which
          avoids problems with e.g.  sharing .commitmeta files
@@ -289,7 +303,9 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
           const char *key = g_variant_get_string (keyv, NULL);
 
           if (strcmp (key, "xa.ref") == 0 ||
-              strcmp (key, "xa.from_commit") == 0)
+              strcmp (key, "xa.from_commit") == 0 ||
+              strcmp (key, "ostree.collection-binding") == 0 ||
+              strcmp (key, "ostree.ref-binding") == 0)
             continue;
 
           g_variant_builder_add_value (&metadata_builder, child);
@@ -330,7 +346,17 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
             }
         }
 
-      ostree_repo_transaction_set_ref (dst_repo, NULL, dst_ref, commit_checksum);
+#ifdef FLATPAK_ENABLE_P2P
+      if (dst_collection_id != NULL)
+        {
+          OstreeCollectionRef ref = { (char *) dst_collection_id, (char *) dst_ref };
+          ostree_repo_transaction_set_collection_ref (dst_repo, &ref, commit_checksum);
+        }
+      else
+#endif  /* FLATPAK_ENABLE_P2P */
+        {
+          ostree_repo_transaction_set_ref (dst_repo, NULL, dst_ref, commit_checksum);
+        }
     }
 
   if (!ostree_repo_commit_transaction (dst_repo, NULL, cancellable, error))
