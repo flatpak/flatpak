@@ -151,6 +151,9 @@ static gboolean
 do_export (BuilderContext *build_context,
            GError        **error,
            gboolean        runtime,
+           const gchar    *location,
+           const gchar    *directory,
+           const gchar    *branch,
            ...)
 {
   va_list ap;
@@ -181,11 +184,17 @@ do_export (BuilderContext *build_context,
   for (i = 0; opt_key_ids != NULL && opt_key_ids[i] != NULL; i++)
     g_ptr_array_add (args, g_strdup_printf ("--gpg-sign=%s", opt_key_ids[i]));
 
-  va_start (ap, runtime);
+  /* Additional flags. */
+  va_start (ap, branch);
   while ((arg = va_arg (ap, const gchar *)))
     if (arg != skip_arg)
       g_ptr_array_add (args, g_strdup ((gchar *) arg));
   va_end (ap);
+
+  /* Mandatory positional arguments. */
+  g_ptr_array_add (args, g_strdup (location));
+  g_ptr_array_add (args, g_strdup (directory));
+  g_ptr_array_add (args, g_strdup (branch));
 
   g_ptr_array_add (args, NULL);
 
@@ -668,10 +677,11 @@ main (int    argc,
 
       if (!do_export (build_context, &error,
                       FALSE,
+                      opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
                       "--exclude=/lib/debug/*",
                       "--include=/lib/debug/app",
                       builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
-                      opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
+                      NULL))
         {
           g_printerr ("Export failed: %s\n", error->message);
           return 1;
@@ -699,9 +709,10 @@ main (int    argc,
           files_arg = g_strconcat (builder_context_get_build_runtime (build_context) ? "--files=usr" : "--files=files",
                                    "/share/runtime/locale/", NULL);
           if (!do_export (build_context, &error, TRUE,
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
                           metadata_arg,
                           files_arg,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
+                          NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;
@@ -716,9 +727,10 @@ main (int    argc,
           g_print ("Exporting %s to repo\n", debug_id);
 
           if (!do_export (build_context, &error, TRUE,
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
                           "--metadata=metadata.debuginfo",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
+                          NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;
@@ -733,9 +745,10 @@ main (int    argc,
           g_print ("Exporting %s to repo\n", sources_id);
 
           if (!do_export (build_context, &error, TRUE,
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
                           "--metadata=metadata.sources",
                           "--files=sources",
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
+                          NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;
@@ -750,10 +763,11 @@ main (int    argc,
           g_print ("Exporting %s to repo\n", platform_id);
 
           if (!do_export (build_context, &error, TRUE,
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
                           "--metadata=metadata.platform",
                           "--files=platform",
                           builder_context_get_separate_locales (build_context) ? "--exclude=/share/runtime/locale/*/*" : skip_arg,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
+                          NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;
@@ -781,9 +795,10 @@ main (int    argc,
           metadata_arg = g_strdup_printf ("--metadata=%s", name);
           files_arg = g_strconcat ("--files=platform/share/runtime/locale/", NULL);
           if (!do_export (build_context, &error, TRUE,
+                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
                           metadata_arg,
                           files_arg,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest), NULL))
+                          NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
               return 1;
