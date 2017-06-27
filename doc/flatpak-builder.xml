@@ -99,6 +99,16 @@
             new commits added, or the first module where some changes to the <arg choice="plain">MANIFEST</arg> file caused
             the build environment to change. This makes flatpak-builder very efficient for incremental builds.
         </para>
+        <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
+        <para>
+            When building a flatpak to be published to the internet,
+            <option>-FIXME-collection-id=COLLECTION-ID</option> should be specified
+            as a globally unique reverse DNS value to identify the collection of
+            flatpaks this will be added to. Setting a globally unique collection
+            ID allows the apps in the repository to be shared over peer to peer
+            systems without needing further configuration.
+        </para>
+        -->
     </refsect1>
 
     <refsect1>
@@ -313,6 +323,21 @@
                     Used when exporting the build results.
                 </para></listitem>
             </varlistentry>
+
+            <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
+            <varlistentry>
+                <term><option>-FIXME-collection-id=COLLECTION-ID</option></term>
+
+                <listitem><para>
+                    Set as the collection ID of the repository. Setting a globally
+                    unique collection ID allows the apps in the repository to be shared over
+                    peer to peer systems without needing further configuration.
+                    If building in an existing repository, the collection ID
+                    must match the existing configured collection ID for that
+                    repository.
+                </para></listitem>
+            </varlistentry>
+            -->
 
             <varlistentry>
                 <term><option>--gpg-sign=KEYID</option></term>

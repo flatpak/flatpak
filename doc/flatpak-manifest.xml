@@ -60,6 +60,18 @@
                     <term><option>branch</option> (string)</term>
                     <listitem><para>The branch of the application, defaults to master.</para></listitem>
                 </varlistentry>
+                <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
+                <varlistentry>
+                    <term><option>collection-id</option> (string)</term>
+                    <listitem><para>The collection ID of the repository,
+                    defaults to being unset. Setting a globally
+                    unique collection ID allows the apps in the repository to be shared over
+                    peer to peer systems without needing further configuration.
+                    If building in an existing repository, the collection ID
+                    must match the existing configured collection ID for that
+                    repository.</para></listitem>
+                </varlistentry>
+                -->
                 <varlistentry>
                     <term><option>runtime</option> (string)</term>
                     <listitem><para>The name of the runtime that the application uses.</para></listitem>
