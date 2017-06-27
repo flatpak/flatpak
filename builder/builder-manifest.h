@@ -59,6 +59,9 @@ GList *         builder_manifest_get_modules (BuilderManifest *self);
 const char *    builder_manifest_get_branch (BuilderManifest *self);
 void            builder_manifest_set_default_branch (BuilderManifest *self,
                                                      const char *default_branch);
+const char *    builder_manifest_get_collection_id (BuilderManifest *self);
+void            builder_manifest_set_default_collection_id (BuilderManifest *self,
+                                                            const char      *default_collection_id);
 
 gboolean        builder_manifest_start (BuilderManifest *self,
                                         gboolean         allow_missing_runtimes,

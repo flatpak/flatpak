@@ -57,6 +57,7 @@ struct BuilderManifest
   char           *id;
   char           *id_platform;
   char           *branch;
+  char           *collection_id;
   char           *type;
   char           *runtime;
   char           *runtime_commit;
@@ -147,6 +148,7 @@ enum {
   PROP_COPY_ICON,
   PROP_DESKTOP_FILE_NAME_PREFIX,
   PROP_DESKTOP_FILE_NAME_SUFFIX,
+  PROP_COLLECTION_ID,
   LAST_PROP
 };
 
@@ -157,6 +159,7 @@ builder_manifest_finalize (GObject *object)
 
   g_free (self->id);
   g_free (self->branch);
+  g_free (self->collection_id);
   g_free (self->runtime);
   g_free (self->runtime_commit);
   g_free (self->runtime_version);
@@ -399,6 +402,10 @@ builder_manifest_get_property (GObject    *object,
       g_value_set_string (value, self->desktop_file_name_suffix);
       break;
 
+    case PROP_COLLECTION_ID:
+      g_value_set_string (value, self->collection_id);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -612,6 +619,11 @@ builder_manifest_set_property (GObject      *object,
     case PROP_DESKTOP_FILE_NAME_SUFFIX:
       g_free (self->desktop_file_name_suffix);
       self->desktop_file_name_suffix = g_value_dup_string (value);
+      break;
+
+    case PROP_COLLECTION_ID:
+      g_free (self->collection_id);
+      self->collection_id = g_value_dup_string (value);
       break;
 
     default:
@@ -900,6 +912,13 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                         "",
                                                         NULL,
                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
+                                   PROP_COLLECTION_ID,
+                                   g_param_spec_string ("collection-id",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE));
 }
 
 static void
@@ -1124,6 +1143,20 @@ builder_manifest_set_default_branch (BuilderManifest *self,
 {
   if (self->branch == NULL)
     self->branch = g_strdup (default_branch);
+}
+
+const char *
+builder_manifest_get_collection_id (BuilderManifest *self)
+{
+  return self->collection_id;
+}
+
+void
+builder_manifest_set_default_collection_id (BuilderManifest *self,
+                                            const char      *default_collection_id)
+{
+  if (self->collection_id == NULL)
+    self->collection_id = g_strdup (default_collection_id);
 }
 
 static const char *
