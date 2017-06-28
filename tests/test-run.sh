@@ -358,14 +358,15 @@ rm -rf app
 flatpak build-init app org.test.Setuid org.test.Platform org.test.Platform
 mkdir -p app/files/
 touch app/files/exe
-chmod u+s app/files/exe
+chmod 04644 app/files/exe
 flatpak build-finish --command=hello.sh app
 ostree --repo=repos/test commit  ${FL_GPGARGS} --branch=app/org.test.Setuid/$ARCH/master app
 update_repo
 
 if ${FLATPAK} ${U} install test-repo org.test.Setuid &> err2.txt; then
-    assert_not_reached "Should not be able to install with setuid file"
+    assert_file_has_mode "$FL_DIR/app/org.test.Setuid/$ARCH/master/active/files/exe" 644
+else
+    assert_file_has_content err2.txt [Ii]nvalid
 fi
-assert_file_has_content err2.txt [Ii]nvalid
 
 echo "ok no setuid"
