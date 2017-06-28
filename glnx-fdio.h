@@ -58,7 +58,7 @@ typedef struct {
   char *path;
 } GLnxTmpfile;
 void glnx_tmpfile_clear (GLnxTmpfile *tmpf);
-G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxTmpfile, glnx_tmpfile_clear);
+G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxTmpfile, glnx_tmpfile_clear)
 
 gboolean
 glnx_open_anonymous_tmpfile (int flags,
