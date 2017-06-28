@@ -145,10 +145,16 @@ glnx_renameat2_exchange (int olddirfd, const char *oldpath,
   return 0;
 }
 
-/* Deallocate a tmpfile */
+/* Deallocate a tmpfile, closing the fd and deleting the path, if any. This is
+ * normally called by default by the autocleanup attribute, but you can also
+ * invoke this directly.
+ */
 void
 glnx_tmpfile_clear (GLnxTmpfile *tmpf)
 {
+  /* Support being passed NULL so we work nicely in a GPtrArray */
+  if (!tmpf)
+    return;
   if (!tmpf->initialized)
     return;
   if (tmpf->fd == -1)
@@ -160,6 +166,7 @@ glnx_tmpfile_clear (GLnxTmpfile *tmpf)
       (void) unlinkat (tmpf->src_dfd, tmpf->path, 0);
       g_free (tmpf->path);
     }
+  tmpf->initialized = FALSE;
 }
 
 /* Allocate a temporary file, using Linux O_TMPFILE if available.
