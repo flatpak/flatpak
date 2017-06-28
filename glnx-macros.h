@@ -28,6 +28,9 @@
 
 G_BEGIN_DECLS
 
+/* All of these are for C only. */
+#ifndef __GI_SCANNER__
+
 /* Taken from https://github.com/systemd/systemd/src/basic/string-util.h
  * at revision v228-666-gcf6c8c4
  */
@@ -178,5 +181,7 @@ G_BEGIN_DECLS
          _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_guard_), ht, \
          _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_it_), kt, k, \
          gpointer, _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_v_))
+
+#endif /* GI_SCANNER */
 
 G_END_DECLS
