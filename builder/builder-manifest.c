@@ -1815,6 +1815,30 @@ appstream_compose (GFile   *app_dir,
   return TRUE;
 }
 
+static char **
+strcatv (char **strv1,
+         char **strv2)
+{
+    if (strv1 == NULL && strv2 == NULL)
+        return NULL;
+    if (strv1 == NULL)
+        return g_strdupv (strv2);
+    if (strv2 == NULL)
+        return g_strdupv (strv1);
+
+    unsigned len1 = g_strv_length (strv1);
+    unsigned len2 = g_strv_length (strv2);
+    char **retval = g_new (char *, len1 + len2 + 1);
+    unsigned ix;
+
+    for (ix = 0; ix < len1; ix++)
+        retval[ix] = g_strdup (strv1[ix]);
+    for (ix = 0; ix < len2; ix++)
+        retval[len1 + ix] = g_strdup (strv2[ix]);
+    retval[len1 + len2] = NULL;
+
+    return retval;
+}
 
 gboolean
 builder_manifest_cleanup (BuilderManifest *self,
@@ -1849,10 +1873,13 @@ builder_manifest_cleanup (BuilderManifest *self,
 
       if (self->cleanup_commands)
         {
+          g_auto(GStrv) build_args = builder_options_get_build_args (self->build_options, context, error);
+          if (!build_args)
+            return FALSE;
           env = builder_options_get_env (self->build_options, context);
           for (i = 0; self->cleanup_commands[i] != NULL; i++)
             {
-              if (!command (app_dir, env, NULL, self->cleanup_commands[i], error))
+              if (!command (app_dir, env, build_args, self->cleanup_commands[i], error))
                 return FALSE;
             }
         }
@@ -2662,7 +2689,11 @@ builder_manifest_create_platform (BuilderManifest *self,
       if (self->cleanup_platform_commands)
         {
           g_auto(GStrv) env = builder_options_get_env (self->build_options, context);
-          char *extra_args[] = { "--sdk-dir=platform", "--metadata=metadata.platform", NULL};
+          g_auto(GStrv) build_args = builder_options_get_build_args (self->build_options, context, error);
+          if (!build_args)
+            return FALSE;
+          char *platform_args[] = { "--sdk-dir=platform", "--metadata=metadata.platform", NULL };
+          g_auto(GStrv) extra_args = strcatv (build_args, platform_args);
 
           for (i = 0; self->cleanup_platform_commands[i] != NULL; i++)
             {
