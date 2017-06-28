@@ -244,6 +244,27 @@ glnx_open_tmpfile_linkable_at (int dfd,
   return FALSE;
 }
 
+/* A variant of `glnx_open_tmpfile_linkable_at()` which doesn't support linking.
+ * Useful for true temporary storage. The fd will be allocated in /var/tmp to
+ * ensure maximum storage space.
+ */
+gboolean
+glnx_open_anonymous_tmpfile (int          flags,
+                             GLnxTmpfile *out_tmpf,
+                             GError     **error)
+{
+  if (!glnx_open_tmpfile_linkable_at (AT_FDCWD, "/var/tmp", flags, out_tmpf, error))
+    return FALSE;
+  if (out_tmpf->path)
+    {
+      (void) unlinkat (out_tmpf->src_dfd, out_tmpf->path, 0);
+      g_clear_pointer (&out_tmpf->path, g_free);
+    }
+  out_tmpf->anonymous = TRUE;
+  out_tmpf->src_dfd = -1;
+  return TRUE;
+}
+
 /* Use this after calling glnx_open_tmpfile_linkable_at() to give
  * the file its final name (link into place).
  */
@@ -257,7 +278,9 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
   const gboolean replace = (mode == GLNX_LINK_TMPFILE_REPLACE);
   const gboolean ignore_eexist = (mode == GLNX_LINK_TMPFILE_NOREPLACE_IGNORE_EXIST);
 
+  g_return_val_if_fail (!tmpf->anonymous, FALSE);
   g_return_val_if_fail (tmpf->fd >= 0, FALSE);
+  g_return_val_if_fail (tmpf->src_dfd == AT_FDCWD || tmpf->src_dfd >= 0, FALSE);
 
   /* Unlike the original systemd code, this function also supports
    * replacing existing files.
