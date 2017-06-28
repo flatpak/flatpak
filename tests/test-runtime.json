@@ -1,0 +1,19 @@
+{
+    "build-runtime": true,
+    "id": "org.test.Hello.Sdk",
+    "id-platform": "org.test.Hello.Platform",
+    "runtime": "org.test.Platform",
+    "sdk": "org.test.Sdk",
+    "tags": ["test"],
+    "cleanup-commands": [ "fdghksdfjhsdfkg" ],
+    "cleanup-platform-commands": [ "sdjfgkafyewgdbvhsail" ],
+    "build-options": {
+        "build-args": ["--help"]
+    },
+
+    "modules": [
+        {
+            "name": "empty"
+        }
+    ]
+}

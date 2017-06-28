@@ -89,6 +89,7 @@ dist_installed_test_data = \
 	tests/org.test.Hello.png \
 	tests/package_version.txt \
 	tests/test.json \
+	tests/test-runtime.json \
 	tests/module1.json \
 	tests/data1 \
 	tests/data1.patch \

@@ -24,7 +24,7 @@ set -euo pipefail
 skip_without_bwrap
 skip_without_user_xattrs
 
-echo "1..3"
+echo "1..4"
 
 setup_repo
 install_repo
@@ -38,6 +38,7 @@ cd $TEST_DATA_DIR/
 cp -a $(dirname $0)/test-configure .
 echo "version1" > app-data
 cp $(dirname $0)/test.json .
+cp $(dirname $0)/test-runtime.json .
 cp $(dirname $0)/0001-Add-test-logo.patch .
 mkdir include1
 cp $(dirname $0)/module1.json include1/
@@ -88,3 +89,10 @@ run --command=cat org.test.Hello2 /app/share/app-data > app_data_2
 assert_file_has_content app_data_2 version2
 
 echo "ok update"
+
+# The build-args of --help should prevent the faulty cleanup and
+# platform-cleanup commands from executing
+${FLATPAK_BUILDER} $FL_GPGARGS --repo=$REPO --force-clean runtimedir \
+    test-runtime.json
+
+echo "ok runtime build cleanup with build-args"
