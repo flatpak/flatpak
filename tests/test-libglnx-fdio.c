@@ -80,7 +80,7 @@ test_renameat2_noreplace (void)
       glnx_set_error_from_errno (error);
       goto out;
     }
-  if (!glnx_fstatat (destfd, "bar", &stbuf, AT_SYMLINK_NOFOLLOW))
+  if (!glnx_fstatat (destfd, "bar", &stbuf, AT_SYMLINK_NOFOLLOW, error))
     goto out;
 
   if (fstatat (srcfd, "foo", &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
