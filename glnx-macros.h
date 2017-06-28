@@ -146,9 +146,10 @@ G_BEGIN_DECLS
  * All variables are scoped within the loop. You may use the `it` variable as
  * usual, e.g. to remove an element using g_hash_table_iter_remove(&it). There
  * are shorter variants for the more common cases where you do not need access
- * to the iterator or to values:
+ * to the iterator or to keys/values:
  *
  *   GLNX_HASH_TABLE_FOREACH (table, const char*, str) { ... }
+ *   GLNX_HASH_TABLE_FOREACH_V (table, MyData*, data) { ... }
  *   GLNX_HASH_TABLE_FOREACH_KV (table, const char*, str, MyData*, data) { ... }
  *
  */
@@ -162,6 +163,14 @@ G_BEGIN_DECLS
     _GLNX_HASH_TABLE_FOREACH_IMPL_KV( \
          _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_guard_), ht, \
          _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_it_), kt, k, vt, v)
+
+/* Variant of GLNX_HASH_TABLE_FOREACH_KV which omits unpacking keys. */
+#define GLNX_HASH_TABLE_FOREACH_V(ht, vt, v) \
+    _GLNX_HASH_TABLE_FOREACH_IMPL_KV( \
+         _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_guard_), ht, \
+         _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_it_), \
+         gpointer, _GLNX_MAKE_ANONYMOUS(_glnx_ht_iter_v_), \
+         vt, v)
 
 /* Variant of GLNX_HASH_TABLE_FOREACH_KV which omits unpacking vals. */
 #define GLNX_HASH_TABLE_FOREACH(ht, kt, k) \

@@ -90,6 +90,14 @@ test_hash_table_foreach (void)
       i++;
     }
   g_assert_cmpuint (i, ==, 2);
+
+  i = 0;
+  GLNX_HASH_TABLE_FOREACH_V (table, const char*, val)
+    {
+      g_assert_cmpstr (val, ==, vals[i]);
+      i++;
+    }
+  g_assert_cmpuint (i, ==, 2);
 }
 
 int main (int argc, char **argv)
