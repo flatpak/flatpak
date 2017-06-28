@@ -79,14 +79,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>--version</option></term>
-
-                <listitem><para>
-                    Print version information and exit.
-                </para></listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>-r</option></term>
                 <term><option>--runtime</option></term>
 
