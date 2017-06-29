@@ -295,6 +295,10 @@ cleanup () {
     /bin/kill $DBUS_SESSION_BUS_PID ${FLATPAK_HTTP_PID:-}
     gpg-connect-agent --homedir "${FL_GPG_HOMEDIR}" killagent /bye || true
     fusermount -u $XDG_RUNTIME_DIR/doc || :
-    rm -rf $TEST_DATA_DIR
+    if test -n "${TEST_SKIP_CLEANUP:-}"; then
+        echo "Skipping cleanup of ${TEST_DATA_DIR}"
+    else
+        rm -rf $TEST_DATA_DIR
+    fi
 }
 trap cleanup EXIT
