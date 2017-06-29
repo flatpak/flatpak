@@ -34,16 +34,13 @@
 #include "flatpak-table-printer.h"
 
 static void
-print_info (GVariant *summary)
+print_info (GVariant *meta)
 {
-  g_autoptr(GVariant) meta = NULL;
   g_autoptr(GVariant) cache = NULL;
   const char *title;
   const char *default_branch;
   const char *redirect_url;
   g_autoptr(GVariant) gpg_keys = NULL;
-
-  meta = g_variant_get_child_value (summary, 1);
 
   if (g_variant_lookup (meta, "xa.title", "&s", &title))
     g_print ("Title: %s\n", title);
@@ -74,12 +71,10 @@ print_info (GVariant *summary)
 }
 
 static void
-print_branches (GVariant *summary)
+print_branches (GVariant *meta)
 {
-  g_autoptr(GVariant) meta = NULL;
   g_autoptr(GVariant) cache = NULL;
 
-  meta = g_variant_get_child_value (summary, 1);
   cache = g_variant_lookup_value (meta, "xa.cache", NULL);
   if (cache)
     {
@@ -115,13 +110,11 @@ print_branches (GVariant *summary)
 }
 
 static void
-print_metadata (GVariant   *summary,
+print_metadata (GVariant   *meta,
                 const char *branch)
 {
-  g_autoptr(GVariant) meta = NULL;
   g_autoptr(GVariant) cache = NULL;
 
-  meta = g_variant_get_child_value (summary, 1);
   cache = g_variant_lookup_value (meta, "xa.cache", NULL);
   if (cache)
     {
@@ -162,6 +155,7 @@ flatpak_builtin_repo (int argc, char **argv,
   g_autofree char *data = NULL;
   gsize size;
   g_autoptr(GVariant) summary = NULL;
+  g_autoptr(GVariant) meta = NULL;
 
   context = g_option_context_new (_("LOCATION - Repository maintenance"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -182,15 +176,16 @@ flatpak_builtin_repo (int argc, char **argv,
                                      data, size,
                                      FALSE, NULL, NULL);
   g_variant_ref_sink (summary);
+  meta = g_variant_get_child_value (summary, 1);
 
   if (opt_info)
-    print_info (summary);
+    print_info (meta);
 
   if (opt_branches)
-    print_branches (summary);
+    print_branches (meta);
 
   if (opt_metadata_branch)
-    print_metadata (summary, opt_metadata_branch);
+    print_metadata (meta, opt_metadata_branch);
 
   return TRUE;
 }
