@@ -341,6 +341,7 @@ GVariant * flatpak_bundle_load (GFile   *file,
                                 char   **app_metadata,
                                 guint64 *installed_size,
                                 GBytes **gpg_keys,
+                                char   **collection_id,
                                 GError **error);
 
 gboolean flatpak_pull_from_bundle (OstreeRepo   *repo,

@@ -48,6 +48,11 @@
             in the repository at <arg choice="plain">LOCATION</arg>. If
             a <arg choice="plain">BRANCH</arg> is specified, this branch of
             the application is used.
+            <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
+            The collection ID set on the repository at
+            <arg choice="plain">LOCATION</arg> (if set) will be used for the
+            bundle.
+            -->
         </para>
         <para>
             The format of the bundle file is that of an ostree static delta

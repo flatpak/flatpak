@@ -47,6 +47,10 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REF_NAME_KEY "Name"
 #define FLATPAK_REF_BRANCH_KEY "Branch"
 
+#ifdef FLATPAK_ENABLE_P2P
+#define FLATPAK_REF_COLLECTION_ID_KEY "CollectionID"
+#endif  /* FLATPAK_ENABLE_P2P */
+
 #define FLATPAK_REPO_GROUP "Flatpak Repo"
 #define FLATPAK_REPO_VERSION_KEY "Version"
 #define FLATPAK_REPO_URL_KEY "Url"
@@ -54,6 +58,10 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REPO_DEFAULT_BRANCH_KEY "DefaultBranch"
 #define FLATPAK_REPO_GPGKEY_KEY "GPGKey"
 #define FLATPAK_REPO_NODEPS_KEY "NoDeps"
+
+#ifdef FLATPAK_ENABLE_P2P
+#define FLATPAK_REPO_COLLECTION_ID_KEY "CollectionID"
+#endif  /* FLATPAK_ENABLE_P2P */
 
 #define FLATPAK_DEFAULT_UPDATE_FREQUENCY 100
 #define FLATPAK_CLI_UPDATE_FREQUENCY 300
@@ -486,6 +494,7 @@ char      *flatpak_dir_create_origin_remote (FlatpakDir   *self,
                                              const char   *title,
                                              const char   *main_ref,
                                              GBytes       *gpg_data,
+                                             const char   *collection_id,
                                              GCancellable *cancellable,
                                              GError      **error);
 gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir   *self,
@@ -502,7 +511,8 @@ GKeyFile * flatpak_dir_parse_repofile (FlatpakDir   *self,
                                        GError      **error);
 
 char      *flatpak_dir_find_remote_by_uri (FlatpakDir   *self,
-                                           const char   *uri);
+                                           const char   *uri,
+                                           const char   *collection_id);
 char     **flatpak_dir_list_remotes (FlatpakDir   *self,
                                      GCancellable *cancellable,
                                      GError      **error);

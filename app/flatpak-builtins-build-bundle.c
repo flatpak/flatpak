@@ -126,6 +126,7 @@ build_bundle (OstreeRepo *repo, GFile *file,
   g_autoptr(GBytes) gpg_data = NULL;
   g_autoptr(GVariant) params = NULL;
   g_autoptr(GVariant) metadata = NULL;
+  const char *collection_id;
 
   if (!ostree_repo_resolve_rev (repo, full_branch, FALSE, &commit_checksum, error))
     return FALSE;
@@ -230,6 +231,14 @@ build_bundle (OstreeRepo *repo, GFile *file,
 
   if (opt_runtime_repo)
     g_variant_builder_add (&metadata_builder, "{sv}", "runtime-repo", g_variant_new_string (opt_runtime_repo));
+
+#ifdef FLATPAK_ENABLE_P2P
+  collection_id = ostree_repo_get_collection_id (repo);
+#else  /* if !FLATPAK_ENABLE_P2P */
+  collection_id = NULL;
+#endif  /* !FLATPAK_ENABLE_P2P */
+  g_variant_builder_add (&metadata_builder, "{sv}", "collection-id",
+                         g_variant_new_string (collection_id ? collection_id : ""));
 
   if (opt_gpg_file != NULL)
     {

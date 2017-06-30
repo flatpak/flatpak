@@ -124,6 +124,7 @@ handle_runtime_repo_deps (FlatpakDir *dir, const char *dep_url, GError **error)
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_key = NULL;
   g_autofree char *group = NULL;
+  g_autofree char *runtime_collection_id = NULL;
   char *t;
   int i;
 
@@ -170,8 +171,11 @@ handle_runtime_repo_deps (FlatpakDir *dir, const char *dep_url, GError **error)
   group = g_strdup_printf ("remote \"%s\"", new_remote);
   runtime_url = g_key_file_get_string (config, group, "url", NULL);
   g_assert (runtime_url != NULL);
+#ifdef FLATPAK_ENABLE_P2P
+  runtime_collection_id = g_key_file_get_string (config, group, "collection-id", NULL);
+#endif  /* FLATPAK_ENABLE_P2P */
 
-  old_remote = flatpak_dir_find_remote_by_uri (dir, runtime_url);
+  old_remote = flatpak_dir_find_remote_by_uri (dir, runtime_url, runtime_collection_id);
   if (old_remote == NULL && flatpak_dir_is_user (dir))
     {
       g_autoptr(GPtrArray) system_dirs = NULL;
@@ -184,7 +188,7 @@ handle_runtime_repo_deps (FlatpakDir *dir, const char *dep_url, GError **error)
       for (i = 0; i < system_dirs->len; i++)
         {
           FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
-          old_remote = flatpak_dir_find_remote_by_uri (system_dir, runtime_url);
+          old_remote = flatpak_dir_find_remote_by_uri (system_dir, runtime_url, runtime_collection_id);
           if (old_remote != NULL)
             break;
         }
@@ -222,6 +226,7 @@ handle_runtime_repo_deps_from_bundle (FlatpakDir *dir, GFile *file, GError **err
                                   NULL,
                                   NULL,
                                   &dep_url,
+                                  NULL,
                                   NULL,
                                   NULL,
                                   NULL,

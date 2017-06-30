@@ -134,10 +134,12 @@ import_bundle (OstreeRepo *repo, GFile *file,
   g_autofree char *to_checksum = NULL;
   const char *ref;
 
+  /* Don’t need to check the collection ID of the bundle here;
+   * flatpak_pull_from_bundle() does that. */
   metadata = flatpak_bundle_load (file, &to_checksum,
                                   &bundle_ref,
                                   NULL, NULL, NULL,
-                                  NULL, NULL, error);
+                                  NULL, NULL, NULL, error);
   if (metadata == NULL)
     return NULL;
 

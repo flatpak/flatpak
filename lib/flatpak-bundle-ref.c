@@ -286,9 +286,10 @@ flatpak_bundle_ref_new (GFile   *file,
   g_autoptr(GVariant) icon_64 = NULL;
   g_autoptr(GVariant) icon_128 = NULL;
   guint64 installed_size;
+  g_autofree char *collection_id = NULL;
 
   metadata = flatpak_bundle_load (file, &commit, &full_ref, &origin, &runtime_repo, &metadata_contents, &installed_size,
-                                  NULL, error);
+                                  NULL, &collection_id, error);
   if (metadata == NULL)
     return NULL;
 
@@ -306,6 +307,9 @@ flatpak_bundle_ref_new (GFile   *file,
                       "branch", parts[3],
                       "commit", commit,
                       "file", file,
+#ifdef FLATPAK_ENABLE_P2P
+                      "collection-id", collection_id,
+#endif  /* FLATPAK_ENABLE_P2P */
                       NULL);
   priv = flatpak_bundle_ref_get_instance_private (ref);
 
