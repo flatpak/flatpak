@@ -1,5 +1,6 @@
 /*
  * Copyright © 2014 Red Hat, Inc
+ * Copyright © 2017 Endless Mobile, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +17,7 @@
  *
  * Authors:
  *       Alexander Larsson <alexl@redhat.com>
+ *       Philip Withnall <withnall@endlessm.com>
  */
 
 #include "config.h"
@@ -37,6 +39,7 @@
 #include <gio/gunixsocketaddress.h>
 #include "libglnx/libglnx.h"
 #include "lib/flatpak-error.h"
+#include <ostree.h>
 
 #include "flatpak-dir.h"
 #include "flatpak-utils.h"
@@ -1816,6 +1819,17 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
                                        error);
 }
 
+#ifdef FLATPAK_ENABLE_P2P
+static void
+async_result_cb (GObject      *obj,
+                 GAsyncResult *result,
+                 gpointer      user_data)
+{
+  GAsyncResult **result_out = user_data;
+  *result_out = g_object_ref (result);
+}
+#endif  /* FLATPAK_ENABLE_P2P */
+
 static void
 default_progress_changed (OstreeAsyncProgress *progress,
                           gpointer             user_data)
@@ -1853,69 +1867,181 @@ repo_pull_one_dir (OstreeRepo          *self,
                    GCancellable        *cancellable,
                    GError             **error)
 {
-  GVariantBuilder builder;
   gboolean force_disable_deltas = (flatpak_flags & FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS) != 0;
   g_autofree char *remote_and_branch = NULL;
   g_autofree char *current_checksum = NULL;
-  g_autoptr(GVariant) options = NULL;
   g_autoptr(GVariant) old_commit = NULL;
   g_autoptr(GVariant) new_commit = NULL;
-  const char *refs_to_fetch[2];
   const char *revs_to_fetch[2];
+  gboolean res = FALSE;
   guint32 update_freq = 0;
+#ifdef FLATPAK_ENABLE_P2P
+  g_autofree gchar *collection_id = NULL;
+#endif  /* FLATPAK_ENABLE_P2P */
 
   /* We always want this on for every type of pull */
   flags |= OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
 
-  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+#ifdef FLATPAK_ENABLE_P2P
+  if (!ostree_repo_get_remote_option (self, remote_name, "collection-id", NULL,
+                                      &collection_id, NULL))
+    g_clear_pointer (&collection_id, g_free);
 
-  if (dirs_to_pull)
+  if (collection_id != NULL)
     {
-      g_variant_builder_add (&builder, "{s@v}", "subdirs",
-                             g_variant_new_variant (g_variant_new_strv ((const char * const *)dirs_to_pull, -1)));
-      force_disable_deltas = TRUE;
+      GVariantBuilder find_builder, pull_builder;
+      g_autoptr(GVariant) find_options = NULL, pull_options = NULL;
+      g_autoptr(GMainContext) context = NULL;
+      g_autoptr(GAsyncResult) find_result = NULL, pull_result = NULL;
+      g_auto(OstreeRepoFinderResultv) results = NULL;
+      OstreeCollectionRef collection_ref;
+      OstreeCollectionRef *collection_refs_to_fetch[2];
+
+      g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
+      g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
+
+      if (dirs_to_pull)
+        {
+          g_variant_builder_add (&pull_builder, "{s@v}", "subdirs",
+                                 g_variant_new_variant (g_variant_new_strv ((const char * const *)dirs_to_pull, -1)));
+          force_disable_deltas = TRUE;
+        }
+
+      if (force_disable_deltas)
+        {
+          g_variant_builder_add (&find_builder, "{s@v}", "disable-static-deltas",
+                                 g_variant_new_variant (g_variant_new_boolean (TRUE)));
+          g_variant_builder_add (&pull_builder, "{s@v}", "disable-static-deltas",
+                                 g_variant_new_variant (g_variant_new_boolean (TRUE)));
+        }
+
+      g_variant_builder_add (&pull_builder, "{s@v}", "inherit-transaction",
+                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
+      g_variant_builder_add (&pull_builder, "{s@v}", "flags",
+                             g_variant_new_variant (g_variant_new_int32 (flags)));
+
+      collection_ref.collection_id = collection_id;
+      collection_ref.ref_name = (char *) ref_to_fetch;
+
+      collection_refs_to_fetch[0] = &collection_ref;
+      collection_refs_to_fetch[1] = NULL;
+
+      revs_to_fetch[0] = rev_to_fetch;
+      revs_to_fetch[1] = NULL;
+      g_variant_builder_add (&find_builder, "{s@v}", "override-commit-ids",
+                             g_variant_new_variant (g_variant_new_strv ((const char * const *) revs_to_fetch, -1)));
+
+      if (progress != NULL)
+        update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
+      if (update_freq == 0)
+        update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
+
+      g_variant_builder_add (&find_builder, "{s@v}", "update-frequency",
+                             g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+      g_variant_builder_add (&pull_builder, "{s@v}", "update-frequency",
+                             g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+
+      find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
+      pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
+
+      context = g_main_context_new ();
+      g_main_context_push_thread_default (context);
+
+      ostree_repo_find_remotes_async (self, (const OstreeCollectionRef * const *) collection_refs_to_fetch,
+                                      find_options,
+                                      NULL  /* default finders */, progress, cancellable,
+                                      async_result_cb, &find_result);
+
+      while (find_result == NULL)
+        g_main_context_iteration (context, TRUE);
+
+      results = ostree_repo_find_remotes_finish (self, find_result, error);
+
+      if (results != NULL)
+        {
+          ostree_repo_pull_from_remotes_async (self, (const OstreeRepoFinderResult * const *) results,
+                                               pull_options, progress,
+                                               cancellable, async_result_cb,
+                                               &pull_result);
+
+          while (pull_result == NULL)
+            g_main_context_iteration (context, TRUE);
+
+          res = ostree_repo_pull_from_remotes_finish (self, pull_result, error);
+        }
+      else
+        res = FALSE;
+
+      g_main_context_pop_thread_default (context);
     }
+  else
+    res = FALSE;
 
-  if (force_disable_deltas)
-    g_variant_builder_add (&builder, "{s@v}", "disable-static-deltas",
-                           g_variant_new_variant (g_variant_new_boolean (TRUE)));
+  if (!res)
+    {
+      if (error != NULL && *error != NULL)
+        g_debug ("Failed to pull using find-remotes; falling back to normal pull: %s", (*error)->message);
+      g_clear_error (error);
+    }
+#endif  /* FLATPAK_ENABLE_P2P */
 
-  g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
-                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+  if (!res)
+    {
+      GVariantBuilder builder;
+      g_autoptr(GVariant) options = NULL;
+      const char *refs_to_fetch[2];
 
-  g_variant_builder_add (&builder, "{s@v}", "flags",
-                         g_variant_new_variant (g_variant_new_int32 (flags)));
+      g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
 
-  refs_to_fetch[0] = ref_to_fetch;
-  refs_to_fetch[1] = NULL;
-  g_variant_builder_add (&builder, "{s@v}", "refs",
-                         g_variant_new_variant (g_variant_new_strv ((const char * const *) refs_to_fetch, -1)));
+      if (dirs_to_pull)
+        {
+          g_variant_builder_add (&builder, "{s@v}", "subdirs",
+                                 g_variant_new_variant (g_variant_new_strv ((const char * const *)dirs_to_pull, -1)));
+          force_disable_deltas = TRUE;
+        }
 
-  revs_to_fetch[0] = rev_to_fetch;
-  revs_to_fetch[1] = NULL;
-  g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
-                         g_variant_new_variant (g_variant_new_strv ((const char * const *) revs_to_fetch, -1)));
+      if (force_disable_deltas)
+        g_variant_builder_add (&builder, "{s@v}", "disable-static-deltas",
+                               g_variant_new_variant (g_variant_new_boolean (TRUE)));
 
-  if (progress != NULL)
-    update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
-  if (update_freq == 0)
-    update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
+      g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
+                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
 
-  g_variant_builder_add (&builder, "{s@v}", "update-frequency",
-                         g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+      g_variant_builder_add (&builder, "{s@v}", "flags",
+                             g_variant_new_variant (g_variant_new_int32 (flags)));
 
-  options = g_variant_ref_sink (g_variant_builder_end (&builder));
+      refs_to_fetch[0] = ref_to_fetch;
+      refs_to_fetch[1] = NULL;
+      g_variant_builder_add (&builder, "{s@v}", "refs",
+                             g_variant_new_variant (g_variant_new_strv ((const char * const *) refs_to_fetch, -1)));
 
-  remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref_to_fetch);
-  if (!ostree_repo_resolve_rev (self, remote_and_branch, TRUE, &current_checksum, error))
-    return FALSE;
-  if (current_checksum != NULL &&
-      !ostree_repo_load_commit (self, current_checksum, &old_commit, NULL, error))
-    return FALSE;
+      revs_to_fetch[0] = rev_to_fetch;
+      revs_to_fetch[1] = NULL;
+      g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
+                             g_variant_new_variant (g_variant_new_strv ((const char * const *) revs_to_fetch, -1)));
 
-  if (!ostree_repo_pull_with_options (self, remote_name, options,
-                                      progress, cancellable, error))
-    return FALSE;
+      if (progress != NULL)
+        update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
+      if (update_freq == 0)
+        update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
+
+      g_variant_builder_add (&builder, "{s@v}", "update-frequency",
+                             g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+
+      options = g_variant_ref_sink (g_variant_builder_end (&builder));
+
+      remote_and_branch = g_strdup_printf ("%s:%s", remote_name, ref_to_fetch);
+      if (!ostree_repo_resolve_rev (self, remote_and_branch, TRUE, &current_checksum, error))
+        return FALSE;
+      if (current_checksum != NULL &&
+          !ostree_repo_load_commit (self, current_checksum, &old_commit, NULL, error))
+        return FALSE;
+
+      if (!ostree_repo_pull_with_options (self, remote_name, options,
+                                          progress, cancellable, error))
+        return FALSE;
+    }
 
   if (old_commit &&
       (flatpak_flags & FLATPAK_PULL_FLAGS_ALLOW_DOWNGRADE) == 0)
