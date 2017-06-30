@@ -30,6 +30,30 @@
 #include <gio/gunixfdmessage.h>
 
 /**
+ *
+ * |------------------|
+ * | Host dbus-daemon |
+ * |------------------|
+ *     Server socket
+ *          ^   ^
+ *          |   \--------- Portals and other services
+ *          |
+ *   host_dbus_address
+ *          |
+ * |------------------|
+ * | This proxy       |
+ * |------------------|
+ *          ^                       ....Sandbox......
+ *          |            bind mount .               .
+ *  socket_path_for_app - - - - - - - /run/.../bus  .
+ *                                  .     ^         .
+ *                                  .     |         .
+ *                                  . |-------|     .
+ *                                  . |Flatpak|     .
+ *                                  . |  app  |     .
+ *                                  . |-------|     .
+ *                                  .................
+ *
  * The proxy listens to a unix domain socket, and for each new
  * connection it opens up a new connection to a specified dbus bus
  * address (typically the session bus) and forwards data between the
@@ -286,8 +310,11 @@ struct FlatpakProxy
   gboolean       log_messages;
 
   GList         *clients;
-  char          *socket_path;
-  char          *dbus_address;
+  /* Socket path that will be bound into the container side */
+  char          *socket_path_for_app;
+  /* Address to connect to for the real bus */
+  char          *host_dbus_address;
+  /* Flatpak app ID */
   char          *app_id;
 
   gboolean       filter;
@@ -584,7 +611,7 @@ flatpak_proxy_finalize (GObject *object)
   FlatpakProxy *proxy = FLATPAK_PROXY (object);
 
   if (g_socket_service_is_active (G_SOCKET_SERVICE (proxy)))
-    unlink (proxy->socket_path);
+    unlink (proxy->socket_path_for_app);
 
   g_assert (proxy->clients == NULL);
 
@@ -592,8 +619,8 @@ flatpak_proxy_finalize (GObject *object)
   g_hash_table_destroy (proxy->wildcard_policy);
   g_hash_table_destroy (proxy->filters);
 
-  g_free (proxy->socket_path);
-  g_free (proxy->dbus_address);
+  g_free (proxy->socket_path_for_app);
+  g_free (proxy->host_dbus_address);
   g_free (proxy->app_id);
 
   G_OBJECT_CLASS (flatpak_proxy_parent_class)->finalize (object);
@@ -610,11 +637,11 @@ flatpak_proxy_set_property (GObject      *object,
   switch (prop_id)
     {
     case PROP_DBUS_ADDRESS:
-      proxy->dbus_address = g_value_dup_string (value);
+      proxy->host_dbus_address = g_value_dup_string (value);
       break;
 
     case PROP_SOCKET_PATH:
-      proxy->socket_path = g_value_dup_string (value);
+      proxy->socket_path_for_app = g_value_dup_string (value);
       break;
 
     case PROP_APP_ID:
@@ -638,11 +665,11 @@ flatpak_proxy_get_property (GObject    *object,
   switch (prop_id)
     {
     case PROP_DBUS_ADDRESS:
-      g_value_set_string (value, proxy->dbus_address);
+      g_value_set_string (value, proxy->host_dbus_address);
       break;
 
     case PROP_SOCKET_PATH:
-      g_value_set_string (value, proxy->socket_path);
+      g_value_set_string (value, proxy->socket_path_for_app);
       break;
 
     case PROP_APP_ID:
@@ -2587,7 +2614,7 @@ flatpak_proxy_incoming (GSocketService    *service,
 
   client = flatpak_proxy_client_new (proxy, connection);
 
-  g_dbus_address_get_stream (proxy->dbus_address,
+  g_dbus_address_get_stream (proxy->host_dbus_address,
                              NULL,
                              client_connected_to_dbus,
                              client);
@@ -2660,9 +2687,9 @@ flatpak_proxy_start (FlatpakProxy *proxy, GError **error)
   GSocketAddress *address;
   gboolean res;
 
-  unlink (proxy->socket_path);
+  unlink (proxy->socket_path_for_app);
 
-  address = g_unix_socket_address_new (proxy->socket_path);
+  address = g_unix_socket_address_new (proxy->socket_path_for_app);
 
   error = NULL;
   res = g_socket_listener_add_address (G_SOCKET_LISTENER (proxy),
@@ -2685,7 +2712,7 @@ flatpak_proxy_start (FlatpakProxy *proxy, GError **error)
 void
 flatpak_proxy_stop (FlatpakProxy *proxy)
 {
-  unlink (proxy->socket_path);
+  unlink (proxy->socket_path_for_app);
 
   g_socket_service_stop (G_SOCKET_SERVICE (proxy));
 }
