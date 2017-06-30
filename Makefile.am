@@ -51,6 +51,7 @@ AM_CPPFLAGS =							\
 	-I$(builddir)/common					\
 	-I$(srcdir)/lib						\
 	-I$(builddir)/lib					\
+	-include "config.h"					\
 	$(NULL)
 
 AM_CFLAGS = $(WARN_CFLAGS)
