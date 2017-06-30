@@ -82,6 +82,12 @@ static gboolean flatpak_dir_remote_fetch_summary (FlatpakDir   *self,
                                                   GCancellable *cancellable,
                                                   GError      **error);
 
+static GVariant *fetch_remote_summary_file (FlatpakDir    *self,
+                                            const char    *remote,
+                                            GBytes       **summary_sig_bytes_out,
+                                            GCancellable  *cancellable,
+                                            GError       **error);
+
 typedef struct
 {
   GBytes *bytes;
@@ -2211,16 +2217,12 @@ flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
                                      GError             **error)
 {
   g_autoptr(GVariant) summary = NULL;
-  g_autoptr(GBytes) summary_bytes = NULL;
   g_autofree char *latest_rev = NULL;
 
-  if (!flatpak_dir_remote_fetch_summary (self, remote,
-                                         &summary_bytes, NULL,
-                                         cancellable, error))
+  summary = fetch_remote_summary_file (self, remote, NULL, cancellable, error);
+  if (summary == NULL)
     return NULL;
 
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                          summary_bytes, FALSE));
   if (!flatpak_summary_lookup_ref (summary, ref, &latest_rev, out_variant))
     {
       flatpak_fail (error, "No such ref '%s' in remote %s", ref, remote);
@@ -6756,20 +6758,15 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
                             const char   *remote,
                             const char   *ref)
 {
-  g_autoptr(GBytes) summary_bytes = NULL;
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GError) local_error = NULL;
 
-  if (!flatpak_dir_remote_fetch_summary (self, remote,
-                                         &summary_bytes, NULL,
-                                         NULL, &local_error))
+  summary = fetch_remote_summary_file (self, remote, NULL, NULL, &local_error);
+  if (summary == NULL)
     {
       g_debug ("Can't get summary for remote %s: %s\n", remote, local_error->message);
       return FALSE;
     }
-
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                          summary_bytes, FALSE));
 
   return flatpak_summary_lookup_ref (summary, ref, NULL, NULL);
 }
@@ -6783,21 +6780,17 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
                               GCancellable     *cancellable,
                               GError          **error)
 {
-  g_autoptr(GBytes) summary_bytes = NULL;
   g_autoptr(GHashTable) ret_all_refs = NULL;
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) ref_map = NULL;
   GVariantIter iter;
   GVariant *child;
 
-  if (!flatpak_dir_remote_fetch_summary (self, remote_name,
-                                         &summary_bytes, NULL,
-                                         cancellable, error))
-    return FALSE;
-
   ret_all_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                          summary_bytes, FALSE));
+
+  summary = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
+  if (summary == NULL)
+    return FALSE;
 
   ref_map = g_variant_get_child_value (summary, 0);
 
@@ -8486,19 +8479,11 @@ flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                              GCancellable *cancellable,
                              GError      **error)
 {
-  g_autoptr(GBytes) summary_bytes = NULL;
   g_autoptr(GVariant) summary = NULL;
 
-  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+  summary = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
+  if (summary == NULL)
     return FALSE;
-
-  if (!flatpak_dir_remote_fetch_summary (self, remote_name,
-                                         &summary_bytes, NULL,
-                                         cancellable, error))
-    return FALSE;
-
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                          summary_bytes, FALSE));
 
   return flatpak_dir_parse_summary_for_ref (self, summary, ref,
                                             download_size, installed_size,
@@ -8610,7 +8595,6 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                                  GCancellable *cancellable,
                                  GError **error)
 {
-  g_autoptr(GBytes) summary_bytes = NULL;
   g_autoptr(GVariant) summary = NULL;
   g_autofree char *metadata = NULL;
   g_autoptr(GKeyFile) metakey = g_key_file_new ();
@@ -8635,13 +8619,9 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
   if (*url == 0)
     return g_steal_pointer (&related);  /* Empty url, silently disables updates */
 
-  if (!flatpak_dir_remote_fetch_summary (self, remote_name,
-                                         &summary_bytes, NULL,
-                                         cancellable, error))
+  summary = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
+  if (summary == NULL)
     return NULL;
-
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                          summary_bytes, FALSE));
 
   if (flatpak_dir_parse_summary_for_ref (self, summary, ref,
                                          NULL, NULL, &metadata,
