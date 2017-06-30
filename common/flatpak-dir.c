@@ -2235,6 +2235,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
   g_autoptr(GVariantBuilder) extra_data_builder = NULL;
   g_autoptr(GVariant) new_detached_metadata = NULL;
   g_autoptr(GVariant) extra_data = NULL;
+  g_autoptr(GFile) base_dir = NULL;
   int i;
   gsize n_extra_data;
   ExtraDataProgress extra_data_progress = { NULL };
@@ -2263,6 +2264,8 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
   extra_data_progress.progress = progress;
 
+  base_dir = flatpak_get_user_base_dir_location ();
+
   for (i = 0; i < n_extra_data; i++)
     {
       const char *extra_data_uri = NULL;
@@ -2273,6 +2276,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
       g_autofree char *sha256 = NULL;
       const guchar *sha256_bytes;
       g_autoptr(GBytes) bytes = NULL;
+      g_autoptr(GFile) extra_local_file = NULL;
 
       flatpak_repo_parse_extra_data_sources (extra_data_sources, i,
                                              &extra_data_name,
@@ -2299,10 +2303,30 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
       /* TODO: Download to disk to support resumed downloads on error */
 
-      ensure_soup_session (self);
-      bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, NULL, NULL,
-                                     extra_data_progress_report, &extra_data_progress,
-                                     cancellable, error);
+      extra_local_file = flatpak_build_file (base_dir, "extra-data", extra_data_sha256, extra_data_name, NULL);
+      if (g_file_query_exists (extra_local_file, cancellable))
+        {
+          g_debug ("Loading extra-data from local file %s", g_file_get_path (extra_local_file));
+          gsize extra_local_size;
+          g_autofree char *extra_local_contents = NULL;
+          if (g_file_load_contents (extra_local_file, cancellable, &extra_local_contents, &extra_local_size, NULL, NULL) &&
+              extra_local_size == download_size)
+            {
+              bytes = g_bytes_new (extra_local_contents, extra_local_size);
+            }
+          else
+            {
+              return flatpak_fail (error, _("Wrong size for extra-data %s"), g_file_get_path (extra_local_file));
+            };
+        }
+      else
+        {
+          ensure_soup_session (self);
+          bytes = flatpak_load_http_uri (self->soup_session, extra_data_uri, NULL, NULL,
+                                         extra_data_progress_report, &extra_data_progress,
+                                         cancellable, error);
+        }
+
       if (bytes == NULL)
         {
           reset_async_progress_extra_data (progress);
