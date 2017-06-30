@@ -487,7 +487,6 @@ flatpak_proxy_finalize (GObject *object)
   if (g_socket_service_is_active (G_SOCKET_SERVICE (proxy)))
     unlink (proxy->socket_path);
 
-  g_clear_pointer (&proxy->dbus_address, g_free);
   g_assert (proxy->clients == NULL);
 
   g_hash_table_destroy (proxy->policy);
