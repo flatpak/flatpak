@@ -243,6 +243,28 @@ AC_ARG_ENABLE(sudo,
               [SUDO_BIN="sudo"], [SUDO_BIN=""])
 AC_SUBST([SUDO_BIN])
 
+# Do we enable building peer to peer support using libostree’s experimental (non-stable) API?
+# If so, OSTREE_ENABLE_EXPERIMENTAL_API needs to be #defined before ostree.h is
+# included.
+AC_ARG_ENABLE([p2p],
+  [AS_HELP_STRING([--enable-p2p],
+                  [Enable unstable peer to peer support [default=no]])],,
+  [enable_p2p=no])
+AS_IF([test x$enable_p2p = xyes],[
+  PKG_CHECK_MODULES(OSTREE, [ostree-1 >= $OSTREE_REQS])
+
+  ostree_features=$($PKG_CONFIG --variable=features ostree-1)
+  AS_CASE(["$ostree_features"],
+          [*experimental*],[have_ostree_experimental=yes])
+
+  AS_IF([test "x$have_ostree_experimental" != "xyes"],
+        [AC_MSG_ERROR([Experimental API not found in ostree-1, which is needed for --enable-p2p. OSTree must be compiled with --enable-experimental-api.])])
+
+  AC_DEFINE([OSTREE_ENABLE_EXPERIMENTAL_API],[1],[Define if libostree experimental API should be enabled])
+  AC_DEFINE([FLATPAK_ENABLE_P2P],[1],[Define if peer to peer support should be enabled])
+])
+AM_CONDITIONAL([ENABLE_P2P],[test x$enable_p2p = xyes])
+
 dnl ************************
 dnl *** check for libelf ***
 dnl ************************
@@ -464,4 +486,5 @@ echo "          Use sandboxed triggers: $enable_sandboxed_triggers"
 echo "          Use seccomp:            $enable_seccomp"
 echo "          Privileged group:       $PRIVILEGED_GROUP"
 echo "          Privilege mode:         $with_priv_mode"
+echo "          Peer to peer support:   $enable_p2p"
 echo ""
