@@ -5,7 +5,7 @@ libexec_PROGRAMS += \
 xdp_dbus_built_sources = document-portal/xdp-dbus.c document-portal/xdp-dbus.h
 BUILT_SOURCES += $(xdp_dbus_built_sources)
 
-document-portal/xdp-dbus.c: data/org.freedesktop.portal.Documents.xml
+document-portal/xdp-dbus.c: data/org.freedesktop.portal.Documents.xml Makefile
 	mkdir -p $(builddir)/document-portal
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.portal.	\
