@@ -715,10 +715,13 @@ flatpak_transaction_run (FlatpakTransaction *self,
         }
       else if (kind == FLATPAK_TRANSACTION_OP_KIND_UPDATE)
         {
+          g_auto(OstreeRepoFinderResultv) check_results = NULL;
+
           opname = _("update");
           g_autofree char *target_commit = flatpak_dir_check_for_update (self->dir, op->ref, op->remote, op->commit,
                                                                          (const char **)op->subpaths,
                                                                          self->no_pull,
+                                                                         &check_results,
                                                                          cancellable, &local_error);
           if (target_commit != NULL)
             {
@@ -730,6 +733,7 @@ flatpak_transaction_run (FlatpakTransaction *self,
                                         self->no_static_deltas,
                                         op->commit != NULL, /* Allow downgrade if we specify commit */
                                         op->ref, op->remote, target_commit,
+                                        (const OstreeRepoFinderResult * const *) check_results,
                                         (const char **)op->subpaths,
                                         progress,
                                         cancellable, &local_error);

@@ -4863,6 +4863,8 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
   else
     full_ref = g_strdup (ref);
 
+  /* Don’t need to set the collection ID here, since the ref is bound to a
+   * collection via its remote. */
   ostree_repo_transaction_set_ref (repo, NULL, full_ref, commit_checksum);
 
   if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))

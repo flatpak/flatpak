@@ -120,6 +120,17 @@ typedef enum {
 
 GQuark       flatpak_dir_error_quark (void);
 
+#ifndef FLATPAK_ENABLE_P2P
+/* Rather than putting #ifdefs around all the function arguments for result sets,
+ * define away OstreeRepoFinderResult if we’re compiling without P2P support.
+ * The surrounding code should always pass in NULL if P2P support is disabled. */
+typedef void OstreeRepoFinderResult;
+typedef void** OstreeRepoFinderResultv;
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (OstreeRepoFinderResult, void)
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC (OstreeRepoFinderResultv, void, NULL)
+#endif  /* !FLATPAK_ENABLE_P2P */
+
 /**
  * FLATPAK_DEPLOY_DATA_GVARIANT_FORMAT:
  *
@@ -292,6 +303,7 @@ gboolean    flatpak_dir_pull (FlatpakDir          *self,
                               const char          *repository,
                               const char          *ref,
                               const char          *opt_rev,
+                              const OstreeRepoFinderResult * const *results,
                               const char         **subpaths,
                               OstreeRepo          *repo,
                               FlatpakPullFlags     flatpak_flags,
@@ -402,6 +414,7 @@ char * flatpak_dir_check_for_update (FlatpakDir          *self,
                                      const char          *checksum_or_latest,
                                      const char         **opt_subpaths,
                                      gboolean             no_pull,
+                                     OstreeRepoFinderResult ***out_results,
                                      GCancellable        *cancellable,
                                      GError             **error);
 gboolean   flatpak_dir_update (FlatpakDir          *self,
@@ -412,6 +425,7 @@ gboolean   flatpak_dir_update (FlatpakDir          *self,
                                const char          *ref,
                                const char          *remote_name,
                                const char          *checksum_or_latest,
+                               const OstreeRepoFinderResult * const *results,
                                const char         **opt_subpaths,
                                OstreeAsyncProgress *progress,
                                GCancellable        *cancellable,
