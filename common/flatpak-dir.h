@@ -555,6 +555,10 @@ GVariant *flatpak_dir_fetch_remote_summary (FlatpakDir   *self,
                                             const char   *remote,
                                             GCancellable *cancellable,
                                             GError      **error);
+gboolean flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
+                                                 const char    *remote_name,
+                                                 GCancellable  *cancellable,
+                                                 GError       **error);
 char *   flatpak_dir_fetch_remote_title (FlatpakDir   *self,
                                          const char   *remote,
                                          GCancellable *cancellable,
@@ -574,6 +578,13 @@ gboolean flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self
                                                               gboolean     *has_changed_out,
                                                               GCancellable *cancellable,
                                                               GError      **error);
+gboolean flatpak_dir_update_remote_configuration_for_repo_metadata (FlatpakDir    *self,
+                                                                    const char    *remote,
+                                                                    GVariant      *summary,
+                                                                    gboolean       dry_run,
+                                                                    gboolean      *has_changed_out,
+                                                                    GCancellable  *cancellable,
+                                                                    GError       **error);
 gboolean flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                                       const char   *remote_name,
                                       const char   *ref,
