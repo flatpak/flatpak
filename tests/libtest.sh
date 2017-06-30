@@ -284,6 +284,13 @@ skip_without_python2 () {
     fi
 }
 
+skip_without_p2p () {
+    if ! ${FLATPAK} remote-add --help | grep -q -e '--collection-id'; then
+        echo "1..0 # SKIP this test requires peer to peer support (--enable-p2p)"
+        exit 0
+    fi
+}
+
 
 sed s#@testdir@#${test_builddir}# ${test_srcdir}/session.conf.in > session.conf
 dbus-daemon --fork --config-file=session.conf --print-address=3 --print-pid=4 \
