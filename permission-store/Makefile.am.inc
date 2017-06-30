@@ -12,7 +12,7 @@ nodist_xdg_permission_store_SOURCES = permission-store/permission-store-dbus.c p
 BUILT_SOURCES += $(nodist_xdg_permission_store_SOURCES)
 CLEANFILES += $(nodist_xdg_permission_store_SOURCES)
 
-permission-store/permission-store-dbus.c: data/org.freedesktop.impl.portal.PermissionStore.xml
+permission-store/permission-store-dbus.c: data/org.freedesktop.impl.portal.PermissionStore.xml Makefile
 	mkdir -p $(builddir)/permission-store
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.impl.portal.	\

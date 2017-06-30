@@ -3,7 +3,7 @@ noinst_LTLIBRARIES += libflatpak-common.la
 dbus_built_sources = common/flatpak-dbus.c common/flatpak-dbus.h
 systemd_dbus_built_sources = common/flatpak-systemd-dbus.c common/flatpak-systemd-dbus.h
 
-common/flatpak-dbus.c: data/org.freedesktop.Flatpak.xml
+common/flatpak-dbus.c: data/org.freedesktop.Flatpak.xml Makefile
 	mkdir -p $(builddir)/common
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.Flatpak.	\
@@ -12,7 +12,7 @@ common/flatpak-dbus.c: data/org.freedesktop.Flatpak.xml
 		$(srcdir)/data/org.freedesktop.Flatpak.xml	\
 		$(NULL)
 
-common/flatpak-systemd-dbus.c: data/org.freedesktop.systemd1.xml
+common/flatpak-systemd-dbus.c: data/org.freedesktop.systemd1.xml Makefile
 	mkdir -p $(builddir)/common
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.systemd1.	\
