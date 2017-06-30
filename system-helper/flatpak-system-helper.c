@@ -696,6 +696,7 @@ handle_update_remote (FlatpakSystemHelper *object,
   gsize summary_sig_size;
   g_autoptr(GBytes) summary_sig_bytes = NULL;
   g_autoptr(OstreeGpgVerifyResult) gpg_result = NULL;
+  g_autofree char *collection_id = NULL;
 
   g_debug ("UpdateRemote %u %s %s %s %s", arg_flags, arg_remote, arg_installation, arg_summary_path, arg_summary_sig_path);
 
@@ -726,6 +727,17 @@ handle_update_remote (FlatpakSystemHelper *object,
       return TRUE;
     }
 
+#ifdef FLATPAK_ENABLE_P2P
+  if (!ostree_repo_get_remote_option (flatpak_dir_get_repo (system), arg_remote, "collection-id",
+                                      NULL, &collection_id, &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      return TRUE;
+    }
+  else if (collection_id != NULL && *collection_id == '\0')
+    g_clear_pointer (&collection_id, g_free);
+#endif  /* FLATPAK_ENABLE_P2P */
+
   if (!g_file_get_contents (arg_summary_path, &summary_data, &summary_size, &error))
     {
       g_dbus_method_invocation_return_gerror  (invocation, error);
@@ -733,33 +745,44 @@ handle_update_remote (FlatpakSystemHelper *object,
     }
   summary_bytes = g_bytes_new_take (summary_data, summary_size);
 
-  if (!g_file_get_contents (arg_summary_sig_path, &summary_sig_data, &summary_sig_size, &error))
+  if (collection_id == NULL)
     {
-      g_dbus_method_invocation_return_gerror  (invocation, error);
-      return TRUE;
+      if (!g_file_get_contents (arg_summary_sig_path, &summary_sig_data, &summary_sig_size, &error))
+        {
+          g_dbus_method_invocation_return_gerror  (invocation, error);
+          return TRUE;
+        }
+      summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_size);
+
+      gpg_result = ostree_repo_verify_summary (flatpak_dir_get_repo (system),
+                                               arg_remote,
+                                               summary_bytes,
+                                               summary_sig_bytes,
+                                               NULL, &error);
+      if (gpg_result == NULL ||
+          !ostree_gpg_verify_result_require_valid_signature (gpg_result, &error))
+        {
+          g_dbus_method_invocation_return_gerror  (invocation, error);
+          return TRUE;
+        }
+
+      summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
+                                                              summary_bytes, FALSE));
+      if (!flatpak_dir_update_remote_configuration_for_summary (system, arg_remote, summary,
+                                                                FALSE, NULL, NULL, &error))
+        {
+          g_dbus_method_invocation_return_gerror  (invocation, error);
+          return TRUE;
+        }
     }
-  summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_size);
-
-  gpg_result = ostree_repo_verify_summary (flatpak_dir_get_repo (system),
-                                           arg_remote,
-                                           summary_bytes,
-                                           summary_sig_bytes,
-                                           NULL, &error);
-  if (gpg_result == NULL ||
-      !ostree_gpg_verify_result_require_valid_signature (gpg_result, &error))
+  else
     {
-      g_dbus_method_invocation_return_gerror  (invocation, error);
-      return TRUE;
-    }
-
-
-  summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                                          summary_bytes, FALSE));
-  if (!flatpak_dir_update_remote_configuration_for_summary (system, arg_remote, summary,
-                                                            FALSE, NULL, NULL, &error))
-    {
-      g_dbus_method_invocation_return_gerror  (invocation, error);
-      return TRUE;
+      if (!flatpak_dir_update_remote_configuration_for_repo_metadata (system, arg_remote, summary,
+                                                                      FALSE, NULL, NULL, &error))
+        {
+          g_dbus_method_invocation_return_gerror  (invocation, error);
+          return TRUE;
+        }
     }
 
   flatpak_system_helper_complete_update_remote (object, invocation);

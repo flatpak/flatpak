@@ -3031,6 +3031,11 @@ populate_commit_data_cache (GVariant   *metadata,
     }
 }
 
+/* Update the metadata in the summary file for @repo, and then re-sign the file.
+ * If the repo has a collection ID set, additionally store the metadata on a
+ * contentless commit in a well-known branch, which is the preferred way of
+ * broadcasting per-repo metadata (putting it in the summary file is deprecated,
+ * but kept for backwards compatibility). */
 gboolean
 flatpak_repo_update (OstreeRepo   *repo,
                      const char  **gpg_key_ids,
@@ -3053,6 +3058,9 @@ flatpak_repo_update (OstreeRepo   *repo,
   g_autoptr(GList) ordered_keys = NULL;
   GList *l = NULL;
   g_autoptr(GHashTable) commit_data_cache = NULL;
+  const char *collection_id;
+  g_autofree char *old_ostree_metadata_checksum = NULL;
+  g_autoptr(GVariant) old_ostree_metadata_v = NULL;
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
 
@@ -3065,6 +3073,12 @@ flatpak_repo_update (OstreeRepo   *repo,
       gpg_keys = g_key_file_get_string (config, "flatpak", "gpg-keys", NULL);
       redirect_url = g_key_file_get_string (config, "flatpak", "redirect-url", NULL);
     }
+
+#ifdef FLATPAK_ENABLE_P2P
+  collection_id = ostree_repo_get_collection_id (repo);
+#else  /* if !FLATPAK_ENABLE_P2P */
+  collection_id = NULL;
+#endif  /* FLATPAK_ENABLE_P2P */
 
   if (title)
     g_variant_builder_add (&builder, "{sv}", "xa.title",
@@ -3120,7 +3134,22 @@ flatpak_repo_update (OstreeRepo   *repo,
                                              g_free, commit_data_free);
 
   old_summary = flatpak_repo_load_summary (repo, NULL);
-  if (old_summary != NULL)
+
+#ifdef FLATPAK_ENABLE_P2P
+  if (!ostree_repo_resolve_rev (repo, OSTREE_REPO_METADATA_REF,
+                                TRUE, &old_ostree_metadata_checksum, error))
+    return FALSE;
+#endif  /* FLATPAK_ENABLE_P2P */
+
+  if (old_summary != NULL &&
+      old_ostree_metadata_checksum != NULL &&
+      ostree_repo_load_commit (repo, old_ostree_metadata_checksum, &old_ostree_metadata_v, NULL, NULL))
+    {
+      g_autoptr(GVariant) metadata = g_variant_get_child_value (old_ostree_metadata_v, 0);
+
+      populate_commit_data_cache (metadata, old_summary, commit_data_cache);
+    }
+  else if (old_summary != NULL)
     {
       g_autoptr(GVariant) extensions = g_variant_get_child_value (old_summary, 1);
 
@@ -3201,6 +3230,71 @@ flatpak_repo_update (OstreeRepo   *repo,
                          g_variant_new_variant (g_variant_builder_end (&ref_data_builder)));
 
   new_summary = g_variant_ref_sink (g_variant_builder_end (&builder));
+
+  /* Write out a new metadata commit for the repository. */
+  if (collection_id != NULL)
+    {
+#ifdef FLATPAK_ENABLE_P2P
+      OstreeCollectionRef collection_ref = { (gchar *) collection_id, (gchar *) OSTREE_REPO_METADATA_REF };
+      g_autofree gchar *new_ostree_metadata_checksum = NULL;
+      g_autoptr(OstreeMutableTree) mtree = NULL;
+      g_autoptr(OstreeRepoFile) repo_file = NULL;
+      g_autoptr(GVariantDict) new_summary_commit_dict = NULL;
+      g_autoptr(GVariant) new_summary_commit = NULL;
+
+      /* Add bindings to the metadata. */
+      new_summary_commit_dict = g_variant_dict_new (new_summary);
+      g_variant_dict_insert (new_summary_commit_dict, "ostree.collection-binding",
+                             "s", collection_ref.collection_id);
+      g_variant_dict_insert_value (new_summary_commit_dict, "ostree.ref-binding",
+                                   g_variant_new_strv ((const gchar * const *) &collection_ref.ref_name, 1));
+      new_summary_commit = g_variant_dict_end (new_summary_commit_dict);
+
+      if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
+        goto out;
+
+      mtree = ostree_mutable_tree_new ();
+      if (!ostree_repo_write_dfd_to_mtree (repo, AT_FDCWD, ".", mtree, NULL, NULL, error))
+        goto out;
+      if (!ostree_repo_write_mtree (repo, mtree, (GFile **) &repo_file, NULL, error))
+        goto out;
+
+      if (!ostree_repo_write_commit (repo, old_ostree_metadata_checksum,
+                                     NULL  /* subject */, NULL  /* body */,
+                                     new_summary_commit, repo_file, &new_ostree_metadata_checksum,
+                                     NULL, error))
+        goto out;
+
+      if (gpg_key_ids != NULL)
+        {
+          const char * const *iter;
+
+          for (iter = gpg_key_ids; iter != NULL && *iter != NULL; iter++)
+            {
+              const char *key_id = *iter;
+
+              if (!ostree_repo_sign_commit (repo,
+                                            new_ostree_metadata_checksum,
+                                            key_id,
+                                            gpg_homedir,
+                                            cancellable,
+                                            error))
+                goto out;
+            }
+        }
+
+      ostree_repo_transaction_set_collection_ref (repo, &collection_ref,
+                                                  new_ostree_metadata_checksum);
+
+      if (!ostree_repo_commit_transaction (repo, NULL, cancellable, error))
+        goto out;
+#else  /* if !FLATPAK_ENABLE_P2P */
+      g_assert_not_reached ();
+      goto out;
+#endif  /* FLATPAK_ENABLE_P2P */
+    }
+
+  /* Regenerate and re-sign the summary file. */
   if (!ostree_repo_regenerate_summary (repo, new_summary, cancellable, error))
     return FALSE;
 
@@ -3215,6 +3309,11 @@ flatpak_repo_update (OstreeRepo   *repo,
     }
 
   return TRUE;
+
+out:
+  if (repo != NULL)
+    ostree_repo_abort_transaction (repo, cancellable, NULL);
+  return FALSE;
 }
 
 gboolean
