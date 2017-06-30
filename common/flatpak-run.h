@@ -184,6 +184,7 @@ gboolean flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                         const char     *runtime_ref,
                                         FlatpakContext *final_app_context,
                                         char          **app_info_path_out,
+                                        GVariant      **metadata_dict_out,
                                         GError        **error);
 
 gboolean flatpak_run_app (const char     *app_ref,

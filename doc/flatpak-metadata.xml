@@ -118,6 +118,15 @@
                     </para></listitem>
                 </varlistentry>
             </variablelist>
+            <para>
+              When app metadata is made available as a D-Bus data
+              structure, this group is represented by an entry where
+              the name is the same as the group's name
+              (<literal>Application</literal> or <literal>Runtime</literal>),
+              and the value is a string/variant dictionary (type
+              <literal>a{sv}</literal>) with the same keys and values as
+              the group.
+            </para>
         </refsect2>
         <refsect2>
             <title>[Context]</title>
@@ -450,6 +459,13 @@
                     </para></listitem>
                 </varlistentry>
             </variablelist>
+            <para>
+              When app instance metadata is made available as a D-Bus data
+              structure, this group is represented by an entry where
+              the name is <literal>Instance</literal> and the value is a
+              string/variant dictionary (type <literal>a{sv}</literal>)
+              with the same keys and values as the group.
+            </para>
         </refsect2>
         <refsect2>
             <title>[Session Bus Policy]</title>
@@ -696,6 +712,10 @@
                 </varlistentry>
                 -->
             </variablelist>
+            <para>
+              When app metadata is made available as a D-Bus data
+              structure, this group is not represented.
+            </para>
         </refsect2>
         <refsect2>
             <title>[ExtensionOf]</title>
@@ -719,6 +739,10 @@
                     </para></listitem>
                 </varlistentry>
             </variablelist>
+            <para>
+              When app metadata is made available as a D-Bus data
+              structure, this group is not represented.
+            </para>
         </refsect2>
         <refsect2>
             <title>[Extra Data]</title>
@@ -766,6 +790,10 @@
                     </para></listitem>
                 </varlistentry>
             </variablelist>
+            <para>
+              When app metadata is made available as a D-Bus data
+              structure, this group is not represented.
+            </para>
         </refsect2>
         <refsect2>
           <title>[Policy SUBSYSTEM]</title>
@@ -815,7 +843,46 @@ subdirectories=true
 
 [Extension org.gnome.Calculator.Debug]
 directory=lib/debug
+
+[Policy acme-security]
+Allow=coyote;dynamite;
+Deny=roadrunner;
 </programlisting>
+
+        <para>
+          That example could be represented D-Bus as a binary message
+          body item corresponding to this piece of GVariant text format:
+        </para>
+
+<programlisting>
+{
+  'Application': @a{sv} {
+    'name': &lt;'org.gnome.Calculator'&gt;,
+    'runtime': &lt;'org.gnome.Platform/x86_64/3.20'&gt;,
+    'sdk': &lt;'org.gnome.Sdk/x86_64/3.20'&gt;,
+    'command': &lt;'gnome-calculator'&gt;,
+  },
+  'Context': @a{sv} {
+    'shared': &lt;['network', 'ipc']&gt;,
+    'sockets': &lt;['x11', 'wayland']&gt;,
+    'filesystems': &lt;['xdg-run/dconf', '~/.config/dconf:ro']&gt;,
+    'session-bus-proxy': &lt;true&gt;,
+  },
+  'Session Bus Policy': @a{ss} {
+    'ca.desrt.dconf': 'talk',
+  },
+  'Environment': @a{ss} {
+    'DCONF_USER_CONFIG_DIR': '.config/dconf',
+  },
+  'Policies': @a{sa{sas}} {
+    'acme-security': {
+      'Allow': ['coyote', 'dynamite'],
+      'Deny': ['roadrunner'],
+    },
+  },
+}
+</programlisting>
+
     </refsect1>
 
     <refsect1>

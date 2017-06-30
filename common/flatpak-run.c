@@ -1440,6 +1440,7 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
                                const char     *runtime_ref,
                                FlatpakContext *final_app_context,
                                char          **app_info_path_out,
+                               GVariant      **metadata_dict_out,
                                GError        **error)
 {
   g_autofree char *tmp_path = NULL;
@@ -1448,6 +1449,9 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   g_autofree char *runtime_path = NULL;
   g_autofree char *old_dest = g_strdup_printf ("/run/user/%d/flatpak-info", getuid ());
   const char *group;
+  g_auto(GVariantDict) dict = {};
+  g_auto(GVariantDict) main_dict = {};
+  g_auto(GVariantDict) instance_dict = {};
 
   fd = g_file_open_tmp ("flatpak-context-XXXXXX", &tmp_path, NULL);
   if (fd < 0)
@@ -1461,6 +1465,8 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   close (fd);
 
   keyfile = g_key_file_new ();
+  g_variant_dict_init (&dict, NULL);
+  g_variant_dict_init (&main_dict, NULL);
 
   if (app_files)
     group = FLATPAK_METADATA_GROUP_APPLICATION;
@@ -1468,14 +1474,24 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
     group = FLATPAK_METADATA_GROUP_RUNTIME;
 
   g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_NAME, app_id);
+  g_variant_dict_insert (&main_dict, FLATPAK_METADATA_KEY_NAME, "s", app_id);
   g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_RUNTIME,
                          runtime_ref);
+  g_variant_dict_insert (&main_dict, FLATPAK_METADATA_KEY_RUNTIME, "s",
+                         runtime_ref);
+  g_variant_dict_insert_value (&dict, group, g_variant_dict_end (&main_dict));
+
+  g_variant_dict_init (&instance_dict, NULL);
 
   if (app_files)
     {
       g_autofree char *app_path = g_file_get_path (app_files);
+      /* FIXME: Can we assume this is UTF-8? If not, we'd have to use ^ay
+       * for the GVariant and some sort of escaping in the GKeyFile */
       g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                              FLATPAK_METADATA_KEY_APP_PATH, app_path);
+      g_variant_dict_insert (&instance_dict, FLATPAK_METADATA_KEY_APP_PATH,
+                             "s", app_path);
     }
   if (app_deploy_data)
     g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
@@ -1483,31 +1499,69 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
   if (app_extensions && *app_extensions != 0)
     g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                            FLATPAK_METADATA_KEY_APP_EXTENSIONS, app_extensions);
+
+  /* FIXME: Can we assume this is UTF-8? */
   runtime_path = g_file_get_path (runtime_files);
   g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                          FLATPAK_METADATA_KEY_RUNTIME_PATH, runtime_path);
+  g_variant_dict_insert (&instance_dict, FLATPAK_METADATA_KEY_RUNTIME_PATH,
+                         "s", runtime_path);
+
   if (runtime_deploy_data)
-    g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
-                           FLATPAK_METADATA_KEY_RUNTIME_COMMIT, flatpak_deploy_data_get_commit (runtime_deploy_data));
+    {
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                             FLATPAK_METADATA_KEY_RUNTIME_COMMIT,
+                             flatpak_deploy_data_get_commit (runtime_deploy_data));
+      g_variant_dict_insert (&instance_dict,
+                             FLATPAK_METADATA_KEY_RUNTIME_COMMIT, "s",
+                             flatpak_deploy_data_get_commit (runtime_deploy_data));
+    }
+
   if (runtime_extensions && *runtime_extensions != 0)
-    g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
-                           FLATPAK_METADATA_KEY_RUNTIME_EXTENSIONS, runtime_extensions);
+    {
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                             FLATPAK_METADATA_KEY_RUNTIME_EXTENSIONS,
+                             runtime_extensions);
+      g_variant_dict_insert (&instance_dict,
+                             FLATPAK_METADATA_KEY_RUNTIME_EXTENSIONS, "s",
+                             runtime_extensions);
+    }
+
   if (app_branch != NULL)
-    g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
-                           FLATPAK_METADATA_KEY_BRANCH, app_branch);
+    {
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                             FLATPAK_METADATA_KEY_BRANCH, app_branch);
+      g_variant_dict_insert (&instance_dict, FLATPAK_METADATA_KEY_BRANCH,
+                             "s", app_branch);
+    }
 
   g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
                          FLATPAK_METADATA_KEY_FLATPAK_VERSION, PACKAGE_VERSION);
+  g_variant_dict_insert (&instance_dict, FLATPAK_METADATA_KEY_FLATPAK_VERSION,
+                         "s", PACKAGE_VERSION);
 
   if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_SESSION_BUS) == 0)
-    g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
-                            FLATPAK_METADATA_KEY_SESSION_BUS_PROXY, TRUE);
+    {
+      g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                              FLATPAK_METADATA_KEY_SESSION_BUS_PROXY, TRUE);
+      g_variant_dict_insert (&instance_dict,
+                             FLATPAK_METADATA_KEY_SESSION_BUS_PROXY,
+                             "b", TRUE);
+    }
 
   if ((final_app_context->sockets & FLATPAK_CONTEXT_SOCKET_SYSTEM_BUS) == 0)
-    g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
-                            FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY, TRUE);
+    {
+      g_key_file_set_boolean (keyfile, FLATPAK_METADATA_GROUP_INSTANCE,
+                              FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY, TRUE);
+      g_variant_dict_insert (&instance_dict,
+                             FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY,
+                             "b", TRUE);
+    }
 
-  flatpak_context_save_metadata (final_app_context, TRUE, keyfile, NULL);
+  g_variant_dict_insert_value (&dict, FLATPAK_METADATA_GROUP_INSTANCE,
+                               g_variant_dict_end (&instance_dict));
+
+  flatpak_context_save_metadata (final_app_context, TRUE, keyfile, &dict);
 
   if (!g_key_file_save_to_file (keyfile, tmp_path, error))
     return FALSE;
@@ -1554,6 +1608,11 @@ flatpak_run_add_app_info_args (FlatpakBwrap   *bwrap,
 
   if (app_info_path_out != NULL)
     *app_info_path_out = g_strdup_printf ("/proc/self/fd/%d", fd);
+
+  if (metadata_dict_out != NULL)
+    *metadata_dict_out = g_variant_ref_sink (g_variant_dict_end (&dict));
+  else
+    g_variant_dict_clear (&dict);
 
   return TRUE;
 }
@@ -2954,7 +3013,8 @@ flatpak_run_app (const char     *app_ref,
                                       app_files, app_deploy_data, app_extensions,
                                       runtime_files, runtime_deploy_data, runtime_extensions,
                                       app_ref_parts[1], app_ref_parts[3],
-                                      runtime_ref, app_context, &app_info_path, error))
+                                      runtime_ref, app_context, &app_info_path,
+                                      NULL, error))
     return FALSE;
 
   add_document_portal_args (bwrap, app_ref_parts[1], &doc_mount_path);
