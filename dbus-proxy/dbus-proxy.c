@@ -30,10 +30,10 @@
 
 #include "flatpak-proxy.h"
 
-GList *proxies;
-int sync_fd = -1;
+static GList *proxies;
+static int sync_fd = -1;
 
-int
+static int
 parse_generic_args (int n_args, const char *args[])
 {
   if (g_str_has_prefix (args[0], "--fd="))
@@ -59,7 +59,7 @@ parse_generic_args (int n_args, const char *args[])
     }
 }
 
-int
+static int
 start_proxy (int n_args, const char *args[])
 {
   g_autoptr(FlatpakProxy) proxy = NULL;
