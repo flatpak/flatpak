@@ -235,20 +235,22 @@ builder_git_mirror_repo (const char     *repo_location,
                          BuilderContext *context,
                          GError        **error)
 {
+  g_autoptr(GFile) cache_mirror_dir = NULL;
   g_autoptr(GFile) mirror_dir = NULL;
   g_autofree char *current_commit = NULL;
 
-  mirror_dir = git_get_mirror_dir (repo_location, context);
+  cache_mirror_dir = git_get_mirror_dir (repo_location, context);
 
   if (destination_path != NULL)
     {
-      g_autofree char *file_name = g_file_get_basename (mirror_dir);
+      g_autofree char *file_name = g_file_get_basename (cache_mirror_dir);
       g_autofree char *destination_file_path = g_build_filename (destination_path,
                                                                  file_name,
                                                                  NULL);
-      g_object_unref (mirror_dir);
       mirror_dir = g_file_new_for_path (destination_file_path);
     }
+  else
+    mirror_dir = g_object_ref (cache_mirror_dir);
 
   if (!g_file_query_exists (mirror_dir, NULL))
     {
@@ -282,6 +284,8 @@ builder_git_mirror_repo (const char     *repo_location,
       /* If we're doing a regular download, look for cache sources */
       if (destination_path == NULL)
         cached_git_dir = builder_context_find_in_sources_dirs (context, "git", filename, NULL);
+      else
+        cached_git_dir = g_object_ref (cache_mirror_dir);
 
       g_print ("Cloning git repo %s\n", repo_location);
 
