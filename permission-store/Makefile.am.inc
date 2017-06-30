@@ -12,7 +12,7 @@ nodist_xdg_permission_store_SOURCES = permission-store/permission-store-dbus.c p
 BUILT_SOURCES += $(nodist_xdg_permission_store_SOURCES)
 CLEANFILES += $(nodist_xdg_permission_store_SOURCES)
 
-$(nodist_xdg_permission_store_SOURCES) : data/org.freedesktop.impl.portal.PermissionStore.xml
+permission-store/permission-store-dbus.c: data/org.freedesktop.impl.portal.PermissionStore.xml
 	mkdir -p $(builddir)/permission-store
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.impl.portal.	\
@@ -20,6 +20,9 @@ $(nodist_xdg_permission_store_SOURCES) : data/org.freedesktop.impl.portal.Permis
 		--generate-c-code $(builddir)/permission-store/permission-store-dbus	\
 		$(srcdir)/data/org.freedesktop.impl.portal.PermissionStore.xml	\
 		$(NULL)
+
+permission-store/%-dbus.h: permission-store/%-dbus.c
+	@true # Built as a side-effect of the rules for the .c
 
 # also used by the document portal
 ps_dbus_built_sources = $(nodist_xdg_permission_store_SOURCES)

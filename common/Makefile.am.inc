@@ -3,7 +3,7 @@ noinst_LTLIBRARIES += libflatpak-common.la
 dbus_built_sources = common/flatpak-dbus.c common/flatpak-dbus.h
 systemd_dbus_built_sources = common/flatpak-systemd-dbus.c common/flatpak-systemd-dbus.h
 
-$(dbus_built_sources) : data/org.freedesktop.Flatpak.xml
+common/flatpak-dbus.c: data/org.freedesktop.Flatpak.xml
 	mkdir -p $(builddir)/common
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.Flatpak.	\
@@ -12,7 +12,7 @@ $(dbus_built_sources) : data/org.freedesktop.Flatpak.xml
 		$(srcdir)/data/org.freedesktop.Flatpak.xml	\
 		$(NULL)
 
-$(systemd_dbus_built_sources) : data/org.freedesktop.systemd1.xml
+common/flatpak-systemd-dbus.c: data/org.freedesktop.systemd1.xml
 	mkdir -p $(builddir)/common
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.systemd1.	\
@@ -20,6 +20,9 @@ $(systemd_dbus_built_sources) : data/org.freedesktop.systemd1.xml
 		--generate-c-code $(builddir)/common/flatpak-systemd-dbus	\
 		$(srcdir)/data/org.freedesktop.systemd1.xml	\
 		$(NULL)
+
+common/%-dbus.h: common/%-dbus.c
+	@true # Built as a side-effect of the rules for the .c
 
 nodist_libflatpak_common_la_SOURCES = \
 	$(dbus_built_sources)		\
