@@ -1,3 +1,10 @@
+Major changes in 0.9.7
+======================
+
+ * Don't re-download git repo when bundling sources
+ * Build modules with no source if buildsystem is "simple"
+ * Build cleanups
+
 Major changes in 0.9.6
 ======================
 
