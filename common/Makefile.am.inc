@@ -30,6 +30,15 @@ common/flatpak-systemd-dbus.c: data/org.freedesktop.systemd1.xml Makefile
 		$(srcdir)/data/org.freedesktop.systemd1.xml	\
 		$(NULL)
 
+common/flatpak-containers1-dbus.c: data/org.freedesktop.DBus.Containers1.xml Makefile
+	mkdir -p $(builddir)/common
+	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
+		--interface-prefix org.freedesktop.DBus.	\
+		--c-namespace FpDBus				\
+		--generate-c-code $(builddir)/common/flatpak-containers1-dbus	\
+		$(srcdir)/data/org.freedesktop.DBus.Containers1.xml	\
+		$(NULL)
+
 common/%-dbus.h: common/%-dbus.c
 	@true # Built as a side-effect of the rules for the .c
 
@@ -37,6 +46,8 @@ nodist_libflatpak_common_la_SOURCES = \
 	$(dbus_built_sources)		\
 	$(systemd_dbus_built_sources)	\
 	$(xdp_dbus_built_sources) \
+	common/flatpak-containers1-dbus.c \
+	common/flatpak-containers1-dbus.h \
 	$(NULL)
 
 BUILT_SOURCES += $(nodist_libflatpak_common_la_SOURCES)

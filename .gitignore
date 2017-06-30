@@ -60,6 +60,7 @@ lib/flatpak-enum-types.c
 lib/flatpak-enum-types.h
 test-libflatpak
 Flatpak-1.0.*
+/common/flatpak-containers1-dbus.[ch]
 /doc/reference/gtkdoc-check.log
 /doc/reference/gtkdoc-check.test
 /doc/reference/gtkdoc-check.trs
