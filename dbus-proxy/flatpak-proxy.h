@@ -43,7 +43,8 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakProxy, g_object_unref)
 GType flatpak_proxy_get_type (void);
 
 FlatpakProxy *flatpak_proxy_new (const char *dbus_address,
-                                 const char *socket_path);
+                                 const char *socket_path,
+                                 const char *app_id);
 void         flatpak_proxy_set_log_messages (FlatpakProxy *proxy,
                                              gboolean      log);
 void         flatpak_proxy_set_filter (FlatpakProxy *proxy,

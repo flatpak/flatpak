@@ -288,6 +288,7 @@ struct FlatpakProxy
   GList         *clients;
   char          *socket_path;
   char          *dbus_address;
+  char          *app_id;
 
   gboolean       filter;
   gboolean       sloppy_names;
@@ -307,7 +308,8 @@ enum {
   PROP_0,
 
   PROP_DBUS_ADDRESS,
-  PROP_SOCKET_PATH
+  PROP_SOCKET_PATH,
+  PROP_APP_ID
 };
 
 #define FLATPAK_TYPE_PROXY flatpak_proxy_get_type ()
@@ -592,6 +594,7 @@ flatpak_proxy_finalize (GObject *object)
 
   g_free (proxy->socket_path);
   g_free (proxy->dbus_address);
+  g_free (proxy->app_id);
 
   G_OBJECT_CLASS (flatpak_proxy_parent_class)->finalize (object);
 }
@@ -612,6 +615,10 @@ flatpak_proxy_set_property (GObject      *object,
 
     case PROP_SOCKET_PATH:
       proxy->socket_path = g_value_dup_string (value);
+      break;
+
+    case PROP_APP_ID:
+      proxy->app_id = g_value_dup_string (value);
       break;
 
     default:
@@ -636,6 +643,10 @@ flatpak_proxy_get_property (GObject    *object,
 
     case PROP_SOCKET_PATH:
       g_value_set_string (value, proxy->socket_path);
+      break;
+
+    case PROP_APP_ID:
+      g_value_set_string (value, proxy->app_id);
       break;
 
     default:
@@ -2618,16 +2629,28 @@ flatpak_proxy_class_init (FlatpakProxyClass *klass)
                                                         "",
                                                         NULL,
                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+  g_object_class_install_property (object_class,
+                                   PROP_APP_ID,
+                                   g_param_spec_string ("app-id",
+                                                        "",
+                                                        "",
+                                                        NULL,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
 }
 
 FlatpakProxy *
 flatpak_proxy_new (const char *dbus_address,
-                   const char *socket_path)
+                   const char *socket_path,
+                   const char *app_id)
 {
   FlatpakProxy *proxy;
 
-  proxy = g_object_new (FLATPAK_TYPE_PROXY, "dbus-address", dbus_address, "socket-path", socket_path, NULL);
+  proxy = g_object_new (FLATPAK_TYPE_PROXY,
+                        "dbus-address", dbus_address,
+                        "socket-path", socket_path,
+                        "app-id", app_id,
+                        NULL);
   return proxy;
 }
 

@@ -64,6 +64,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      GPtrArray *a11y_dbus_proxy_argv,
                      gboolean   enable_a11y_logging,
                      int        sync_fds[2],
+                     const char *app_id,
                      const char *app_info_path,
                      GError   **error);
 
@@ -963,7 +964,7 @@ flatpak_run_add_environment_args (FlatpakBwrap   *bwrap,
                             session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
                             system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
                             a11y_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0,
-                            sync_fds, app_info_path, error))
+                            sync_fds, app_id, app_info_path, error))
     return FALSE;
 
   if (sync_fds[1] != -1)
@@ -1858,6 +1859,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      GPtrArray *a11y_dbus_proxy_argv,
                      gboolean   enable_a11y_logging,
                      int        sync_fds[2],
+                     const char *app_id,
                      const char *app_info_path,
                      GError   **error)
 {
@@ -1895,6 +1897,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   dbus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
   g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy));
   g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--fd=%d", sync_fds[1]));
+  g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--app-id=%s", app_id));
 
   append_proxy_args (dbus_proxy_argv, session_dbus_proxy_argv, enable_session_logging);
   append_proxy_args (dbus_proxy_argv, system_dbus_proxy_argv, enable_system_logging);

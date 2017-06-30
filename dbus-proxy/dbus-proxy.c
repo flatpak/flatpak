@@ -29,9 +29,11 @@
 #include "libglnx/libglnx.h"
 
 #include "flatpak-proxy.h"
+#include "flatpak-utils.h"
 
 static GList *proxies;
 static int sync_fd = -1;
+static gchar *app_id = NULL;
 
 static int
 parse_generic_args (int n_args, const char *args[])
@@ -49,6 +51,21 @@ parse_generic_args (int n_args, const char *args[])
           return -1;
         }
       sync_fd = fd;
+
+      return 1;
+    }
+  else if (g_str_has_prefix (args[0], "--app-id="))
+    {
+      g_autoptr(GError) error = NULL;
+
+      g_free (app_id);
+      app_id = g_strdup (args[0] + strlen ("--app-id="));
+
+      if (!flatpak_is_valid_name (app_id, &error))
+        {
+          g_printerr ("Invalid app ID %s: %s\n", app_id, error->message);
+          return -1;
+        }
 
       return 1;
     }
@@ -82,7 +99,7 @@ start_proxy (int n_args, const char *args[])
     }
   socket_path = args[n++];
 
-  proxy = flatpak_proxy_new (bus_address, socket_path);
+  proxy = flatpak_proxy_new (bus_address, socket_path, app_id);
 
   while (n < n_args)
     {
@@ -241,5 +258,6 @@ main (int argc, const char *argv[])
 
   g_main_loop_unref (service_loop);
 
+  g_free (app_id);
   return 0;
 }
