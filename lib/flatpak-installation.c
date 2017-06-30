@@ -1355,6 +1355,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   g_autofree char *remote_name = NULL;
   FlatpakInstalledRef *result = NULL;
   g_autofree char *target_commit = NULL;
+  g_auto(OstreeRepoFinderResultv) check_results = NULL;
 
   ref = flatpak_compose_ref (kind == FLATPAK_REF_KIND_APP, name, branch, arch, error);
   if (ref == NULL)
@@ -1376,6 +1377,7 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
   target_commit = flatpak_dir_check_for_update (dir, ref, remote_name, NULL,
                                                 (const char **)subpaths,
                                                 (flags & FLATPAK_UPDATE_FLAGS_NO_PULL) != 0,
+                                                &check_results,
                                                 cancellable, error);
   if (target_commit == NULL)
     return NULL;
@@ -1399,7 +1401,9 @@ flatpak_installation_update_full (FlatpakInstallation    *self,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_DEPLOY) != 0,
                            (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
                            FALSE,
-                           ref, remote_name, target_commit, (const char **)subpaths,
+                           ref, remote_name, target_commit,
+                           (const OstreeRepoFinderResult * const *) check_results,
+                           (const char **)subpaths,
                            ostree_progress, cancellable, error))
     goto out;
 
