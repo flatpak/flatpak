@@ -247,7 +247,7 @@ start_proxy (int n_args, const char *args[])
       n++;
     }
 
-  if (!flatpak_proxy_start (proxy, &error))
+  if (!flatpak_proxy_start (proxy, metadata, &error))
     {
       g_printerr ("Failed to start proxy for %s: %s\n", bus_address, error->message);
       return -1;

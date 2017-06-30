@@ -29,21 +29,29 @@
 #include <gio/gunixconnection.h>
 #include <gio/gunixfdmessage.h>
 
+#include "common/flatpak-containers1-dbus.h"
+
+/* TODO: Remove this and use gdbus-codegen --c-generate-autocleanup=all
+ * when we depend on GLib >= 2.50 */
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FpDBusContainers1, g_object_unref)
+
 /**
  *
- * |------------------|
- * | Host dbus-daemon |
- * |------------------|
- *     Server socket
- *          ^   ^
- *          |   \--------- Portals and other services
- *          |
- *   host_dbus_address
- *          |
- * |------------------|
- * | This proxy       |
- * |------------------|
- *          ^                       ....Sandbox......
+ * |--------------------------------------------------|
+ * | Host dbus-daemon                                 |
+ * |--------------------------------------------------|
+ *     Containers1 server       Main server socket
+ *          ^                       ^    ^
+ *          |                       |    |   Portals and
+ *          |                       |    \-- other services
+ *          |                       |
+ *   container_address       host_dbus_address
+ *          |                       |
+ * |--------------------------------------------------|
+ * | This proxy                                       |
+ * |--------------------------------------------------|
+ *          ^
+ *          |                       ....Sandbox......
  *          |            bind mount .               .
  *  socket_path_for_app - - - - - - - /run/.../bus  .
  *                                  .     ^         .
@@ -197,6 +205,9 @@
 
 typedef struct FlatpakProxyClient FlatpakProxyClient;
 
+#define DBUS_NAME_DBUS "org.freedesktop.DBus"
+#define DBUS_PATH_DBUS "/org/freedesktop/DBus"
+
 #define FIND_AUTH_END_CONTINUE -1
 #define FIND_AUTH_END_ABORT -2
 
@@ -316,6 +327,11 @@ struct FlatpakProxy
   char          *host_dbus_address;
   /* Flatpak app ID */
   char          *app_id;
+  /* Connection to the real bus that acts as the "container manager".
+   * When this disconnects, we can no longer accept new connections. */
+  GDBusConnection *container_manager_connection;
+  /* Address to connect to when we are acting on behalf of the confined app */
+  gchar         *container_address;
 
   gboolean       filter;
   gboolean       sloppy_names;
@@ -606,6 +622,20 @@ flatpak_proxy_add_filter (FlatpakProxy *proxy,
 }
 
 static void
+flatpak_proxy_dispose (GObject *object)
+{
+  FlatpakProxy *proxy = FLATPAK_PROXY (object);
+
+  if (proxy->container_manager_connection != NULL)
+    g_dbus_connection_close_sync (proxy->container_manager_connection,
+                                  NULL, NULL);
+
+  g_clear_object (&proxy->container_manager_connection);
+
+  G_OBJECT_CLASS (flatpak_proxy_parent_class)->dispose (object);
+}
+
+static void
 flatpak_proxy_finalize (GObject *object)
 {
   FlatpakProxy *proxy = FLATPAK_PROXY (object);
@@ -622,6 +652,7 @@ flatpak_proxy_finalize (GObject *object)
   g_free (proxy->socket_path_for_app);
   g_free (proxy->host_dbus_address);
   g_free (proxy->app_id);
+  g_free (proxy->container_address);
 
   G_OBJECT_CLASS (flatpak_proxy_parent_class)->finalize (object);
 }
@@ -2611,13 +2642,23 @@ flatpak_proxy_incoming (GSocketService    *service,
 {
   FlatpakProxy *proxy = FLATPAK_PROXY (service);
   FlatpakProxyClient *client;
+  const gchar *address;
 
   client = flatpak_proxy_client_new (proxy, connection);
 
-  g_dbus_address_get_stream (proxy->host_dbus_address,
-                             NULL,
-                             client_connected_to_dbus,
-                             client);
+  /* If we were able to create a server to represent this container instance,
+   * proxy the client's connection onto that, not the main server. This will
+   * mean the container identity that we set up in flatpak_proxy_start()
+   * will be used.
+   *
+   * If not, the best we can do is to proxy the client's connection onto the
+   * main server as was done in Flatpak 0.10.x. */
+  if (proxy->container_address != NULL)
+    address = proxy->container_address;
+  else
+    address = proxy->host_dbus_address;
+
+  g_dbus_address_get_stream (address, NULL, client_connected_to_dbus, client);
   return TRUE;
 }
 
@@ -2638,6 +2679,7 @@ flatpak_proxy_class_init (FlatpakProxyClass *klass)
 
   object_class->get_property = flatpak_proxy_get_property;
   object_class->set_property = flatpak_proxy_set_property;
+  object_class->dispose = flatpak_proxy_dispose;
   object_class->finalize = flatpak_proxy_finalize;
 
   socket_service_class->incoming = flatpak_proxy_incoming;
@@ -2682,10 +2724,77 @@ flatpak_proxy_new (const char *dbus_address,
 }
 
 gboolean
-flatpak_proxy_start (FlatpakProxy *proxy, GError **error)
+flatpak_proxy_start (FlatpakProxy  *proxy,
+                     GVariant      *metadata,
+                     GError       **error)
 {
+  g_autoptr(GDBusConnection) conn = NULL;
+  g_autoptr(FpDBusContainers1) containers1 = NULL;
+  g_autoptr(GError) local_error = NULL;
   GSocketAddress *address;
   gboolean res;
+
+  conn = g_dbus_connection_new_for_address_sync (proxy->host_dbus_address,
+                                                 (G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT |
+                                                  G_DBUS_CONNECTION_FLAGS_MESSAGE_BUS_CONNECTION),
+                                                 NULL, NULL, error);
+
+  if (conn == NULL)
+    return FALSE;
+
+  containers1 = fp_dbus_containers1_proxy_new_sync (conn,
+                                                    G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                    DBUS_NAME_DBUS,
+                                                    DBUS_PATH_DBUS, NULL,
+                                                    &local_error);
+
+  if (containers1 != NULL)
+    {
+      g_autofree gchar *instance_path = NULL;
+      g_autofree gchar *container_socket_path = NULL;
+      g_autofree gchar *container_address = NULL;
+      GVariantDict named_arguments;
+
+      g_variant_dict_init (&named_arguments, NULL);
+
+      /* Floating ref will be sunk by call_..._sync */
+      if (metadata == NULL)
+        metadata = g_variant_new ("a{sv}", NULL);
+
+      if (fp_dbus_containers1_call_add_server_sync (containers1,
+                                                    "org.flatpak",
+                                                    proxy->app_id,
+                                                    metadata,
+                                                    g_variant_dict_end (&named_arguments),
+                                                    &instance_path,
+                                                    &container_socket_path,
+                                                    &container_address,
+                                                    NULL,
+                                                    &local_error))
+        {
+          g_debug ("Container instance: %s", instance_path);
+          g_debug ("Socket path: %s", container_socket_path);
+          g_debug ("Will connect to \"%s\" when acting on behalf of the app",
+                   container_address);
+
+          g_free (proxy->container_address);
+          proxy->container_address = g_steal_pointer (&container_address);
+          g_clear_object (&proxy->container_manager_connection);
+          proxy->container_manager_connection = g_object_ref (conn);
+        }
+      else
+        {
+          g_debug ("Unable to get container server: %s", local_error->message);
+          g_clear_error (&local_error);
+          /* No point in remaining connected now */
+          g_dbus_connection_close_sync (conn, NULL, NULL);
+        }
+    }
+  else
+    {
+      g_debug ("Unable to get Containers1 proxy: %s", local_error->message);
+      g_clear_error (&local_error);
+    }
 
   unlink (proxy->socket_path_for_app);
 

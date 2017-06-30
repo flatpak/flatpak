@@ -61,6 +61,7 @@ void         flatpak_proxy_add_filter (FlatpakProxy *proxy,
                                        const char   *name,
                                        const char   *rule);
 gboolean     flatpak_proxy_start (FlatpakProxy *proxy,
+                                  GVariant     *metadata,
                                   GError      **error);
 void         flatpak_proxy_stop (FlatpakProxy *proxy);
 
