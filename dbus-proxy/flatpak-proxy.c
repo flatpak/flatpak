@@ -170,9 +170,6 @@
 
 typedef struct FlatpakProxyClient FlatpakProxyClient;
 
-FlatpakPolicy flatpak_proxy_get_policy (FlatpakProxy *proxy,
-                                        const char   *name);
-
 /* We start looking ignoring the first cr-lf
    since there is no previous line initially */
 #define AUTH_END_INIT_OFFSET 2
@@ -439,7 +436,7 @@ flatpak_proxy_get_wildcard_policy (FlatpakProxy *proxy,
   return wildcard_policy;
 }
 
-FlatpakPolicy
+static FlatpakPolicy
 flatpak_proxy_get_policy (FlatpakProxy *proxy,
                           const char   *name)
 {
