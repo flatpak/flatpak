@@ -5,7 +5,7 @@ libexec_PROGRAMS += \
 xdp_dbus_built_sources = document-portal/xdp-dbus.c document-portal/xdp-dbus.h
 BUILT_SOURCES += $(xdp_dbus_built_sources)
 
-$(xdp_dbus_built_sources) : data/org.freedesktop.portal.Documents.xml
+document-portal/xdp-dbus.c: data/org.freedesktop.portal.Documents.xml
 	mkdir -p $(builddir)/document-portal
 	$(AM_V_GEN) $(GDBUS_CODEGEN)				\
 		--interface-prefix org.freedesktop.portal.	\
@@ -15,6 +15,9 @@ $(xdp_dbus_built_sources) : data/org.freedesktop.portal.Documents.xml
                 --annotate "org.freedesktop.portal.Documents.AddFull()" org.gtk.GDBus.C.UnixFD "yes" \
 		$(srcdir)/data/org.freedesktop.portal.Documents.xml	\
 		$(NULL)
+
+document-portal/%-dbus.h: document-portal/%-dbus.c
+	@true # Built as a side-effect of the rules for the .c
 
 service_in_files += document-portal/xdg-document-portal.service.in
 systemduserunit_DATA += document-portal/xdg-document-portal.service
