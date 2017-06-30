@@ -97,16 +97,9 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
   if (opt_show_details)
     {
-      g_autoptr(GVariant) summary = NULL;
-      g_autoptr(GVariant) meta = NULL;
-      g_autoptr(GVariant) cache = NULL;
-
-      summary = flatpak_dir_fetch_remote_summary (dir, repository, cancellable, error);
-      if (summary == NULL)
+      if (!flatpak_dir_lookup_repo_metadata (dir, repository, cancellable, error,
+                                             "xa.cache", "v", &refdata))
         return FALSE;
-      meta = g_variant_get_child_value (summary, 1);
-      cache = g_variant_lookup_value (meta, "xa.cache", NULL);
-      refdata = g_variant_get_variant (cache);
     }
 
   if (opt_arch != NULL)
