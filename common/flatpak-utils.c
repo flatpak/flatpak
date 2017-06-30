@@ -4370,6 +4370,7 @@ flatpak_bundle_load (GFile   *file,
                      char   **app_metadata,
                      guint64 *installed_size,
                      GBytes **gpg_keys,
+                     char   **collection_id,
                      GError **error)
 {
   g_autoptr(GVariant) delta = NULL;
@@ -4443,6 +4444,16 @@ flatpak_bundle_load (GFile   *file,
         *runtime_repo = NULL;
     }
 
+  if (collection_id != NULL)
+    {
+#ifdef FLATPAK_ENABLE_P2P
+      if (!g_variant_lookup (metadata, "collection-id", "s", collection_id))
+        *collection_id = NULL;
+#else  /* if !FLATPAK_ENABLE_P2P */
+      *collection_id = NULL;
+#endif  /* !FLATPAK_ENABLE_P2P */
+    }
+
   if (app_metadata != NULL)
     {
       if (!g_variant_lookup (metadata, "metadata", "s", app_metadata))
@@ -4492,14 +4503,28 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
   g_autoptr(GError) my_error = NULL;
   g_autoptr(GVariant) metadata = NULL;
   gboolean metadata_valid;
+  g_autofree char *remote_collection_id = NULL;
+  g_autofree char *collection_id = NULL;
 
-  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, error);
+  metadata = flatpak_bundle_load (file, &to_checksum, NULL, NULL, NULL, &metadata_contents, NULL, NULL, &collection_id, error);
   if (metadata == NULL)
     return FALSE;
+
+#ifdef FLATPAK_ENABLE_P2P
+  if (!ostree_repo_get_remote_option (repo, remote, "collection-id", NULL,
+                                      &remote_collection_id, NULL))
+    remote_collection_id = NULL;
+#endif  /* FLATPAK_ENABLE_P2P */
+
+  if (remote_collection_id != NULL && collection_id != NULL &&
+      strcmp (remote_collection_id, collection_id) != 0)
+    return flatpak_fail (error, "Collection ‘%s’ of bundle doesn’t match collection ‘%s’ of remote",
+                         collection_id, remote_collection_id);
 
   if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
     return FALSE;
 
+  /* Don’t need to set the collection ID here, since the remote binds this ref to the collection. */
   ostree_repo_transaction_set_ref (repo, remote, ref, to_checksum);
 
   if (!ostree_repo_static_delta_execute_offline (repo,
