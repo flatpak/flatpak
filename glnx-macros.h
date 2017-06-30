@@ -120,6 +120,8 @@ G_BEGIN_DECLS
 
 #define _GLNX_HASH_TABLE_FOREACH_IMPL_KV(guard, ht, it, kt, k, vt, v)          \
     gboolean guard = TRUE;                                                     \
+    G_STATIC_ASSERT (sizeof (kt) == sizeof (void*));                           \
+    G_STATIC_ASSERT (sizeof (vt) == sizeof (void*));                           \
     for (GHashTableIter it;                                                    \
          guard && ({ g_hash_table_iter_init (&it, ht), TRUE; });               \
          guard = FALSE)                                                        \
