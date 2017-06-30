@@ -2717,6 +2717,25 @@ flatpak_repo_set_default_branch (OstreeRepo *repo,
   return TRUE;
 }
 
+gboolean
+flatpak_repo_set_collection_id (OstreeRepo  *repo,
+                                const char  *collection_id,
+                                GError     **error)
+{
+#ifdef FLATPAK_ENABLE_P2P
+  g_autoptr(GKeyFile) config = NULL;
+
+  config = ostree_repo_copy_config (repo);
+  if (!ostree_repo_set_collection_id (repo, collection_id, error))
+    return FALSE;
+
+  if (!ostree_repo_write_config (repo, config, error))
+    return FALSE;
+#endif  /* FLATPAK_ENABLE_P2P */
+
+  return TRUE;
+}
+
 GVariant *
 flatpak_commit_get_extra_data_sources (GVariant *commitv,
                                        GError      **error)
