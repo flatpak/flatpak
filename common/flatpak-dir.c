@@ -8194,14 +8194,14 @@ flatpak_dir_fetch_remote_summary (FlatpakDir    *self,
   return fetch_remote_summary_file (self, remote, NULL, cancellable, error);
 }
 
-gboolean
-flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
-                                                     const char   *remote,
-                                                     GVariant     *summary,
-                                                     gboolean      dry_run,
-                                                     gboolean     *has_changed_out,
-                                                     GCancellable *cancellable,
-                                                     GError      **error)
+static gboolean
+flatpak_dir_update_remote_configuration_for_dict (FlatpakDir    *self,
+                                                  const char    *remote,
+                                                  GVariant      *metadata,
+                                                  gboolean       dry_run,
+                                                  gboolean      *has_changed_out,
+                                                  GCancellable  *cancellable,
+                                                  GError       **error)
 {
   /* We only support those configuration parameters that can
      be set in the server when building the repo (see the
@@ -8214,16 +8214,13 @@ flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
     NULL
   };
 
-  g_autoptr(GVariant) extensions = NULL;
   g_autoptr(GPtrArray) updated_params = NULL;
   GVariantIter iter;
   g_autoptr(GBytes) gpg_keys = NULL;
 
   updated_params = g_ptr_array_new_with_free_func (g_free);
 
-  extensions = g_variant_get_child_value (summary, 1);
-
-  g_variant_iter_init (&iter, extensions);
+  g_variant_iter_init (&iter, metadata);
   if (g_variant_iter_n_children (&iter) > 0)
     {
       GVariant *value_var = NULL;
@@ -8315,6 +8312,24 @@ flatpak_dir_update_remote_configuration_for_summary (FlatpakDir   *self,
   }
 
   return TRUE;
+}
+
+gboolean
+flatpak_dir_update_remote_configuration_for_summary (FlatpakDir    *self,
+                                                     const char    *remote,
+                                                     GVariant      *summary,
+                                                     gboolean       dry_run,
+                                                     gboolean      *has_changed_out,
+                                                     GCancellable  *cancellable,
+                                                     GError       **error)
+{
+  g_autoptr(GVariant) extensions = NULL;
+
+  extensions = g_variant_get_child_value (summary, 1);
+
+  return flatpak_dir_update_remote_configuration_for_dict (self, remote, extensions,
+                                                           dry_run, has_changed_out,
+                                                           cancellable, error);
 }
 
 gboolean
