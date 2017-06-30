@@ -2290,6 +2290,50 @@ oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
                              NULL);
 }
 
+/* Look up a piece of per-repository metadata. */
+gboolean
+flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
+                                  const char    *remote_name,
+                                  GCancellable  *cancellable,
+                                  GError       **error,
+                                  const char    *key,
+                                  const char    *format_string,
+                                  ...)
+{
+  va_list args;
+  g_autofree char *collection_id = NULL;
+  g_autoptr(GVariant) metadata = NULL;
+  g_autoptr(GVariant) value = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  if (TRUE)
+    {
+      g_autoptr(GVariant) summary_v = NULL;
+
+      summary_v = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
+      if (summary_v == NULL)
+        return FALSE;
+
+      metadata = g_variant_get_child_value (summary_v, 1);
+    }
+
+  /* Extract the metadata from it, if set. */
+  value = g_variant_lookup_value (metadata, key, NULL);
+
+  if (value == NULL)
+    return FALSE;
+  if (!g_variant_check_format_string (value, format_string, FALSE))
+    return FALSE;
+
+  va_start (args, format_string);
+  g_variant_get_va (value, format_string, NULL, &args);
+  va_end (args);
+
+  return TRUE;
+}
+
 static gboolean
 flatpak_dir_mirror_oci (FlatpakDir          *self,
                         FlatpakOciRegistry  *dst_registry,
@@ -8110,26 +8154,16 @@ fetch_remote_summary_file (FlatpakDir   *self,
                                                        summary_bytes, FALSE));
 }
 
-
 char *
 flatpak_dir_fetch_remote_title (FlatpakDir   *self,
                                 const char   *remote,
                                 GCancellable *cancellable,
                                 GError      **error)
 {
-  g_autoptr(GVariant) summary = NULL;
-  g_autoptr(GVariant) extensions = NULL;
   g_autofree char *title = NULL;
 
-  summary = fetch_remote_summary_file (self, remote, NULL, cancellable, error);
-  if (summary == NULL)
-    return NULL;
-
-  extensions = g_variant_get_child_value (summary, 1);
-
-  g_variant_lookup (extensions, "xa.title", "s", &title);
-
-  if (title == NULL)
+  if (!flatpak_dir_lookup_repo_metadata (self, remote, cancellable, error,
+                                         "xa.title", "s", &title))
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                            _("Remote title not set"));
@@ -8145,18 +8179,10 @@ flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
                                          GCancellable *cancellable,
                                          GError      **error)
 {
-  g_autoptr(GVariant) summary = NULL;
-  g_autoptr(GVariant) extensions = NULL;
   g_autofree char *default_branch = NULL;
 
-  summary = fetch_remote_summary_file (self, remote, NULL, cancellable, error);
-  if (summary == NULL)
-    return NULL;
-
-  extensions = g_variant_get_child_value (summary, 1);
-  g_variant_lookup (extensions, "xa.default-branch", "s", &default_branch);
-
-  if (default_branch == NULL)
+  if (!flatpak_dir_lookup_repo_metadata (self, remote, cancellable, error,
+                                         "xa.default-branch", "s", &default_branch))
     {
       g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
                            _("Remote default-branch not set"));

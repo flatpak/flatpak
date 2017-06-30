@@ -569,4 +569,12 @@ GPtrArray * flatpak_dir_find_local_related (FlatpakDir *self,
                                             GCancellable *cancellable,
                                             GError **error);
 
+gboolean flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
+                                           const char    *remote_name,
+                                           GCancellable  *cancellable,
+                                           GError       **error,
+                                           const char    *key,
+                                           const char    *format_string,
+                                           ...);
+
 #endif /* __FLATPAK_DIR_H__ */
