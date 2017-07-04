@@ -2303,7 +2303,6 @@ flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
                                   ...)
 {
   va_list args;
-  g_autofree char *collection_id = NULL;
   g_autoptr(GVariant) metadata = NULL;
   g_autoptr(GVariant) value = NULL;
 
