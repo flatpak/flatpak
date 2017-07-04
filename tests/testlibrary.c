@@ -766,6 +766,9 @@ copy_gpg (void)
 static void
 global_setup (void)
 {
+  g_autofree char *cachedir = NULL;
+  g_autofree char *configdir = NULL;
+  g_autofree char *datadir = NULL;
   g_autofree char *homedir = NULL;
 
   testdir = g_strdup ("/var/tmp/flatpak-test-XXXXXX");
@@ -773,11 +776,29 @@ global_setup (void)
   if (g_test_verbose ())
     g_print ("testdir: %s\n", testdir);
 
-  homedir = g_strconcat (testdir, "/home/share", NULL);
+  homedir = g_strconcat (testdir, "/home", NULL);
   g_mkdir_with_parents (homedir, S_IRWXU|S_IRWXG|S_IRWXO);
-  g_setenv ("XDG_DATA_HOME", homedir, TRUE);
+  g_setenv ("HOME", homedir, TRUE);
   if (g_test_verbose ())
-    g_print ("setting XDG_DATA_HOME=%s\n", homedir);
+    g_print ("setting HOME=%s\n", datadir);
+
+  cachedir = g_strconcat (testdir, "/home/cache", NULL);
+  g_mkdir_with_parents (cachedir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_setenv ("XDG_CACHE_HOME", cachedir, TRUE);
+  if (g_test_verbose ())
+    g_print ("setting XDG_CACHE_HOME=%s\n", cachedir);
+
+  configdir = g_strconcat (testdir, "/home/config", NULL);
+  g_mkdir_with_parents (configdir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_setenv ("XDG_CONFIG_HOME", configdir, TRUE);
+  if (g_test_verbose ())
+    g_print ("setting XDG_CONFIG_HOME=%s\n", configdir);
+
+  datadir = g_strconcat (testdir, "/home/share", NULL);
+  g_mkdir_with_parents (datadir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_setenv ("XDG_DATA_HOME", datadir, TRUE);
+  if (g_test_verbose ())
+    g_print ("setting XDG_DATA_HOME=%s\n", datadir);
 
   flatpak_runtimedir = g_strconcat (testdir, "/runtime", NULL);
   g_mkdir_with_parents (flatpak_runtimedir, S_IRWXU|S_IRWXG|S_IRWXO);
