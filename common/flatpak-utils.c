@@ -3226,6 +3226,12 @@ flatpak_repo_update (OstreeRepo   *repo,
                              rev_data->metadata_contents);
     }
 
+  /* Note: xa.cache doesn’t need to support collection IDs for the refs listed
+   * in it, because the xa.cache metadata is stored on the ostree-metadata ref,
+   * which is itself strongly bound to a collection ID — so that collection ID
+   * is bound to all the refs in xa.cache. If a client is using the xa.cache
+   * data from a summary file (rather than an ostree-metadata branch), they are
+   * too old to care about collection IDs anyway. */
   g_variant_builder_add (&builder, "{sv}", "xa.cache",
                          g_variant_new_variant (g_variant_builder_end (&ref_data_builder)));
 
