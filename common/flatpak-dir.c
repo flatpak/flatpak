@@ -2546,6 +2546,17 @@ flatpak_dir_pull (FlatpakDir          *self,
   if (*url == 0)
     return TRUE; /* Empty url, silently disables updates */
 
+  /* Set up progress reporting. */
+  if (progress == NULL)
+    {
+      glnx_console_lock (&console);
+      if (console.is_tty)
+        {
+          console_progress = ostree_async_progress_new_and_connect (default_progress_changed, &console);
+          progress = console_progress;
+        }
+    }
+
   /* We get the rev ahead of time so that we know it for looking up e.g. extra-data
      and to make sure we're atomically using a single rev if we happen to do multiple
      pulls (e.g. with subpaths) */
@@ -2560,16 +2571,6 @@ flatpak_dir_pull (FlatpakDir          *self,
 
   if (repo == NULL)
     repo = self->repo;
-
-  if (progress == NULL)
-    {
-      glnx_console_lock (&console);
-      if (console.is_tty)
-        {
-          console_progress = ostree_async_progress_new_and_connect (default_progress_changed, &console);
-          progress = console_progress;
-        }
-    }
 
   /* Past this we must use goto out, so we clean up console and
      abort the transaction on error */
