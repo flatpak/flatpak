@@ -2955,6 +2955,59 @@ commit_data_free (gpointer data)
   g_free (rev_data);
 }
 
+/* For all the refs listed in @cache_v (an xa.cache value) which exist in the
+ * @summary, insert their data into @commit_data_cache if it isn’t already there. */
+static void
+populate_commit_data_cache (GVariant   *metadata,
+                            GVariant   *summary,
+                            GHashTable *commit_data_cache  /* (element-type utf8 CommitData) */)
+{
+  g_autoptr(GVariant) cache_v = NULL;
+  g_autoptr(GVariant) cache = NULL;
+  gsize n, i;
+
+  cache_v = g_variant_lookup_value (metadata, "xa.cache", NULL);
+
+  if (cache_v == NULL)
+    return;
+
+  cache = g_variant_get_child_value (cache_v, 0);
+
+  n = g_variant_n_children (cache);
+  for (i = 0; i < n; i++)
+    {
+      g_autoptr(GVariant) old_element = g_variant_get_child_value (cache, i);
+      g_autoptr(GVariant) old_ref_v = g_variant_get_child_value (old_element, 0);
+      const char *old_ref = g_variant_get_string (old_ref_v, NULL);
+      g_autofree char *old_rev = NULL;
+      g_autoptr(GVariant) old_commit_data_v = g_variant_get_child_value (old_element, 1);
+      CommitData *old_rev_data;
+
+      if (flatpak_summary_lookup_ref (summary, old_ref, &old_rev, NULL))
+        {
+          guint64 old_installed_size, old_download_size;
+          g_autofree char *old_metadata = NULL;
+
+          /* See if we already have the info on this revision */
+          if (g_hash_table_lookup (commit_data_cache, old_rev))
+            continue;
+
+          g_variant_get_child (old_commit_data_v, 0, "t", &old_installed_size);
+          old_installed_size = GUINT64_FROM_BE (old_installed_size);
+          g_variant_get_child (old_commit_data_v, 1, "t", &old_download_size);
+          old_download_size = GUINT64_FROM_BE (old_download_size);
+          g_variant_get_child (old_commit_data_v, 2, "s", &old_metadata);
+
+          old_rev_data = g_new (CommitData, 1);
+          old_rev_data->installed_size = old_installed_size;
+          old_rev_data->download_size = old_download_size;
+          old_rev_data->metadata_contents = g_steal_pointer (&old_metadata);
+
+          g_hash_table_insert (commit_data_cache, g_steal_pointer (&old_rev), old_rev_data);
+        }
+    }
+}
+
 gboolean
 flatpak_repo_update (OstreeRepo   *repo,
                      const char  **gpg_key_ids,
@@ -3047,47 +3100,8 @@ flatpak_repo_update (OstreeRepo   *repo,
   if (old_summary != NULL)
     {
       g_autoptr(GVariant) extensions = g_variant_get_child_value (old_summary, 1);
-      g_autoptr(GVariant) cache_v = g_variant_lookup_value (extensions, "xa.cache", NULL);
-      g_autoptr(GVariant) cache = NULL;
-      if (cache_v != NULL)
-        {
-          cache = g_variant_get_child_value (cache_v, 0);
-          gsize n, i;
 
-          n = g_variant_n_children (cache);
-          for (i = 0; i < n; i++)
-            {
-              g_autoptr(GVariant) old_element = g_variant_get_child_value (cache, i);
-              g_autoptr(GVariant) old_ref_v = g_variant_get_child_value (old_element, 0);
-              const char *old_ref = g_variant_get_string (old_ref_v, NULL);
-              g_autofree char *old_rev = NULL;
-              g_autoptr(GVariant) old_commit_data_v = g_variant_get_child_value (old_element, 1);
-              CommitData *old_rev_data;
-
-              if (flatpak_summary_lookup_ref (old_summary, old_ref, &old_rev, NULL))
-                {
-                  guint64 old_installed_size, old_download_size;
-                  g_autofree char *old_metadata = NULL;
-
-                  /* See if we already have the info on this revision */
-                  if (g_hash_table_lookup (commit_data_cache, old_rev))
-                    continue;
-
-                  g_variant_get_child (old_commit_data_v, 0, "t", &old_installed_size);
-                  old_installed_size = GUINT64_FROM_BE (old_installed_size);
-                  g_variant_get_child (old_commit_data_v, 1, "t", &old_download_size);
-                  old_download_size = GUINT64_FROM_BE (old_download_size);
-                  g_variant_get_child (old_commit_data_v, 2, "s", &old_metadata);
-
-                  old_rev_data = g_new (CommitData, 1);
-                  old_rev_data->installed_size = old_installed_size;
-                  old_rev_data->download_size = old_download_size;
-                  old_rev_data->metadata_contents = g_steal_pointer (&old_metadata);
-
-                  g_hash_table_insert (commit_data_cache, g_steal_pointer (&old_rev), old_rev_data);
-                }
-            }
-        }
+      populate_commit_data_cache (extensions, old_summary, commit_data_cache);
     }
 
   ordered_keys = g_hash_table_get_keys (refs);
