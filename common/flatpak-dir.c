@@ -1857,6 +1857,29 @@ default_progress_changed (OstreeAsyncProgress *progress,
     ostree_repo_pull_default_console_progress_changed (progress, user_data);
 }
 
+/* Get the configured collection-id for @remote_name, squashing empty strings into
+ * %NULL. Return %TRUE if the ID was fetched successfully, or if it was unset or
+ * empty. */
+static gboolean
+repo_get_remote_collection_id (OstreeRepo  *repo,
+                               const char  *remote_name,
+                               char       **collection_id_out,
+                               GError     **error)
+{
+#ifdef FLATPAK_ENABLE_P2P
+  if (!ostree_repo_get_remote_option (repo, remote_name, "collection-id",
+                                      NULL, collection_id_out, error))
+    return FALSE;
+  if (collection_id_out != NULL && *collection_id_out != NULL && **collection_id_out == '\0')
+    g_clear_pointer (collection_id_out, g_free);
+#else  /* if !FLATPAK_ENABLE_P2P */
+  if (collection_id_out != NULL)
+    *collection_id_out = NULL;
+#endif  /* !FLATPAK_ENABLE_P2P */
+
+  return TRUE;
+}
+
 /* This is a copy of ostree_repo_pull_one_dir that always disables
    static deltas if subdir is used */
 static gboolean
@@ -1880,9 +1903,7 @@ repo_pull_one_dir (OstreeRepo          *self,
   const char *revs_to_fetch[2];
   gboolean res = FALSE;
   guint32 update_freq = 0;
-#ifdef FLATPAK_ENABLE_P2P
   g_autofree gchar *collection_id = NULL;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   /* If @results_to_fetch is set, @rev_to_fetch must be. */
   g_assert (results_to_fetch == NULL || rev_to_fetch != NULL);
@@ -1890,11 +1911,10 @@ repo_pull_one_dir (OstreeRepo          *self,
   /* We always want this on for every type of pull */
   flags |= OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES;
 
-#ifdef FLATPAK_ENABLE_P2P
-  if (!ostree_repo_get_remote_option (self, remote_name, "collection-id", NULL,
-                                      &collection_id, NULL))
+  if (!repo_get_remote_collection_id (self, remote_name, &collection_id, NULL))
     g_clear_pointer (&collection_id, g_free);
 
+#ifdef FLATPAK_ENABLE_P2P
   if (collection_id != NULL)
     {
       GVariantBuilder find_builder, pull_builder;
@@ -2450,11 +2470,8 @@ flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
 
-#ifdef FLATPAK_ENABLE_P2P
-  if (!ostree_repo_get_remote_option (self->repo, remote_name, "collection-id",
-                                      NULL, &collection_id, error))
+  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
     return FALSE;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (collection_id == NULL)
     {
@@ -3002,11 +3019,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
                                                   &gpg_verify_summary, error))
     return FALSE;
 
-#ifdef FLATPAK_ENABLE_P2P
-  if (!ostree_repo_get_remote_option (self->repo, remote_name, "collection-id",
-                                      NULL, &collection_id, error))
+  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
     return FALSE;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
                                           &gpg_verify, error))
@@ -5397,11 +5411,8 @@ flatpak_dir_install (FlatpakDir          *self,
                                                       &gpg_verify_summary, error))
         return FALSE;
 
-#ifdef FLATPAK_ENABLE_P2P
-      if (!ostree_repo_get_remote_option (self->repo, remote_name, "collection-id",
-                                          NULL, &collection_id, error))
+      if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
         return FALSE;
-#endif  /* FLATPAK_ENABLE_P2P */
 
       if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
                                               &gpg_verify, error))
@@ -5842,11 +5853,8 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
       return NULL;
     }
 
-#ifdef FLATPAK_ENABLE_P2P
-  if (!ostree_repo_get_remote_option (self->repo, remote_name, "collection-id", NULL,
-                                      &collection_id, NULL))
+  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, NULL))
     g_clear_pointer (&collection_id, g_free);
-#endif  /* FLATPAK_ENABLE_P2P */
 
   if (no_pull)
     {
@@ -6010,11 +6018,8 @@ flatpak_dir_update (FlatpakDir          *self,
                                                       &gpg_verify_summary, error))
         return FALSE;
 
-#ifdef FLATPAK_ENABLE_P2P
-      if (!ostree_repo_get_remote_option (self->repo, remote_name, "collection-id", NULL,
-                                          &collection_id, NULL))
+      if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, NULL))
         collection_id = NULL;
-#endif  /* FLATPAK_ENABLE_P2P */
 
       if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
                                               &gpg_verify, error))
@@ -8181,11 +8186,8 @@ flatpak_dir_find_remote_by_uri (FlatpakDir   *self,
                                            &remote_uri,
                                            NULL))
             continue;
-#ifdef FLATPAK_ENABLE_P2P
-          if (!ostree_repo_get_remote_option (self->repo, remote, "collection-id",
-                                              NULL, &remote_collection_id, NULL))
+          if (!repo_get_remote_collection_id (self->repo, remote, &remote_collection_id, NULL))
             continue;
-#endif  /* FLATPAK_ENABLE_P2P */
 
           if (strcmp (uri, remote_uri) == 0 &&
               g_strcmp0 (collection_id, remote_collection_id) == 0)
@@ -8666,8 +8668,7 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
                                                       &gpg_verify_summary, error))
         return FALSE;
 
-      if (!ostree_repo_get_remote_option (self->repo, remote_name, "collection-id",
-                                          NULL, &collection_id, error))
+      if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
         return FALSE;
 
       if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
@@ -8942,11 +8943,8 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
   if (is_oci)
     return TRUE;
 
-#ifdef FLATPAK_ENABLE_P2P
-  if (!ostree_repo_get_remote_option (self->repo, remote, "collection-id",
-                                      NULL, &collection_id, error))
+  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
     return FALSE;
-#endif  /* FLATPAK_ENABLE_P2P */
 
   summary = fetch_remote_summary_file (self, remote, &summary_sig_bytes, cancellable, error);
   if (summary == NULL)
