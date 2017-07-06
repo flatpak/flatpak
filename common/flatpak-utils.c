@@ -3740,8 +3740,15 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
   GHashTableIter iter;
   gpointer key;
   gboolean skip_commit = FALSE;
+  const char *collection_id;
 
   arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+#ifdef FLATPAK_ENABLE_P2P
+  collection_id = ostree_repo_get_collection_id (repo);
+#else  /* if !FLATPAK_ENABLE_P2P */
+  collection_id = NULL;
+#endif  /* !FLATPAK_ENABLE_P2P */
 
   if (!ostree_repo_list_refs (repo,
                               NULL,
@@ -3866,9 +3873,21 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       if (!skip_commit)
         {
+          g_autoptr(GVariantDict) metadata_dict = NULL;
+          g_autoptr(GVariant) metadata = NULL;
+
+          /* Add bindings to the metadata. Do this even if P2P support is not
+           * enabled, as it might be enable for other flatpak builds. */
+          metadata_dict = g_variant_dict_new (NULL);
+          g_variant_dict_insert (metadata_dict, "ostree.collection-binding",
+                                 "s", (collection_id != NULL) ? collection_id : "");
+          g_variant_dict_insert_value (metadata_dict, "ostree.ref-binding",
+                                       g_variant_new_strv ((const gchar * const *) &branch, 1));
+          metadata = g_variant_dict_end (metadata_dict);
+
           if (timestamp > 0)
             {
-              if (!ostree_repo_write_commit_with_time (repo, parent, "Update", NULL, NULL,
+              if (!ostree_repo_write_commit_with_time (repo, parent, "Update", NULL, metadata,
                                                        OSTREE_REPO_FILE (root),
                                                        timestamp,
                                                        &commit_checksum,
@@ -3877,7 +3896,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
             }
           else
             {
-              if (!ostree_repo_write_commit (repo, parent, "Update", NULL, NULL,
+              if (!ostree_repo_write_commit (repo, parent, "Update", NULL, metadata,
                                              OSTREE_REPO_FILE (root),
                                              &commit_checksum, cancellable, error))
                 goto out;
@@ -3901,7 +3920,17 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                 }
             }
 
-          ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
+#ifdef FLATPAK_ENABLE_P2P
+          if (collection_id != NULL)
+            {
+              const OstreeCollectionRef collection_ref = { (char *) collection_id, branch };
+              ostree_repo_transaction_set_collection_ref (repo, &collection_ref, commit_checksum);
+            }
+          else
+#endif  /* FLATPAK_ENABLE_P2P */
+            {
+              ostree_repo_transaction_set_ref (repo, NULL, branch, commit_checksum);
+            }
 
           if (!ostree_repo_commit_transaction (repo, &stats, cancellable, error))
             goto out;
