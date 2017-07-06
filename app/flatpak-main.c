@@ -137,7 +137,7 @@ message_handler (const gchar   *log_domain,
     g_printerr ("%s: %s\n", g_get_prgname (), message);
 }
 
-GOptionContext *
+static GOptionContext *
 flatpak_option_context_new_with_commands (FlatpakCommand *commands)
 {
   GOptionContext *context;
@@ -173,7 +173,7 @@ flatpak_option_context_new_with_commands (FlatpakCommand *commands)
   return context;
 }
 
-int
+static int
 flatpak_usage (FlatpakCommand *commands,
                gboolean        is_error)
 {
@@ -292,7 +292,7 @@ usage_error (GOptionContext *context, const char *message, GError **error)
   return FALSE;
 }
 
-FlatpakCommand *
+static FlatpakCommand *
 extract_command (int     *argc,
                  char   **argv,
                  const char **command_name_out)
@@ -340,7 +340,7 @@ extract_command (int     *argc,
 }
 
 
-int
+static int
 flatpak_run (int      argc,
              char   **argv,
              GError **res_error)

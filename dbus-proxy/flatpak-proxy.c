@@ -401,7 +401,7 @@ flatpak_proxy_client_init (FlatpakProxyClient *client)
   client->unique_id_policy = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 }
 
-FlatpakProxyClient *
+static FlatpakProxyClient *
 flatpak_proxy_client_new (FlatpakProxy *proxy, GSocketConnection *connection)
 {
   FlatpakProxyClient *client;

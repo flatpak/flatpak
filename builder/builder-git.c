@@ -106,7 +106,7 @@ builder_git_get_current_commit (const char     *repo_location,
   return git_get_current_commit (mirror_dir, branch, ensure_commit, context, error);
 }
 
-char *
+static char *
 make_absolute (const char *orig_parent, const char *orig_relpath, GError **error)
 {
   g_autofree char *parent = g_strdup (orig_parent);

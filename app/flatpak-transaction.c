@@ -192,7 +192,7 @@ flatpak_transaction_free (FlatpakTransaction *self)
   g_free (self);
 }
 
-gboolean
+static gboolean
 flatpak_transaction_contains_ref (FlatpakTransaction *self,
                                   const char *ref)
 {
@@ -245,7 +245,7 @@ kind_to_str (FlatpakTransactionOpKind kind)
   return "unknown";
 }
 
-FlatpakTransactionOp *
+static FlatpakTransactionOp *
 flatpak_transaction_add_op (FlatpakTransaction *self,
                             const char *remote,
                             const char *ref,

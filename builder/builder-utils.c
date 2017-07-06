@@ -63,7 +63,7 @@ builder_uri_to_filename (const char *uri)
   return g_string_free (s, FALSE);
 }
 
-const char *
+static const char *
 inplace_basename (const char *path)
 {
   const char *last_slash;

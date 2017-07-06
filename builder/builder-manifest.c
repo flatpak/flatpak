@@ -1353,7 +1353,7 @@ builder_manifest_checksum (BuilderManifest *self,
     builder_options_checksum (self->build_options, cache, context);
 }
 
-void
+static void
 builder_manifest_checksum_for_cleanup (BuilderManifest *self,
                                        BuilderCache    *cache,
                                        BuilderContext  *context)
@@ -1378,7 +1378,7 @@ builder_manifest_checksum_for_cleanup (BuilderManifest *self,
     }
 }
 
-void
+static void
 builder_manifest_checksum_for_finish (BuilderManifest *self,
                                       BuilderCache    *cache,
                                       BuilderContext  *context)
@@ -1403,7 +1403,7 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
     }
 }
 
-void
+static void
 builder_manifest_checksum_for_bundle_sources (BuilderManifest *self,
                                               BuilderCache    *cache,
                                               BuilderContext  *context)
@@ -1412,7 +1412,7 @@ builder_manifest_checksum_for_bundle_sources (BuilderManifest *self,
   builder_cache_checksum_boolean (cache, builder_context_get_bundle_sources (context));
 }
 
-void
+static void
 builder_manifest_checksum_for_platform (BuilderManifest *self,
                                         BuilderCache    *cache,
                                         BuilderContext  *context)
