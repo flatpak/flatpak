@@ -426,7 +426,7 @@ flatpak_oci_index_add_manifest (FlatpakOciIndex *self,
   int count;
 
   if (desc->annotations != NULL)
-    m_ref = g_hash_table_lookup (desc->annotations, "org.opencontainers.ref.name");
+    m_ref = g_hash_table_lookup (desc->annotations, "org.opencontainers.image.ref.name");
 
   if (m_ref != NULL)
     flatpak_oci_index_remove_manifest (self, m_ref);
@@ -449,7 +449,7 @@ flatpak_oci_manifest_descriptor_get_ref (FlatpakOciManifestDescriptor *m)
   if (m->parent.annotations == NULL)
     return NULL;
 
-  return g_hash_table_lookup (m->parent.annotations, "org.opencontainers.ref.name");
+  return g_hash_table_lookup (m->parent.annotations, "org.opencontainers.image.ref.name");
 }
 
 static int
@@ -703,7 +703,7 @@ flatpak_oci_export_annotations (GHashTable *source,
                                 GHashTable *dest)
 {
   const char *keys[] = {
-    "org.opencontainers.ref.name",
+    "org.opencontainers.image.ref.name",
     "org.flatpak.installed-size",
     "org.flatpak.download-size",
     "org.flatpak.metadata",
@@ -750,7 +750,7 @@ flatpak_oci_add_annotations_for_commit (GHashTable *annotations,
                                        GVariant *commit_data)
 {
   if (ref)
-    add_annotation (annotations,"org.opencontainers.ref.name", ref);
+    add_annotation (annotations,"org.opencontainers.image.ref.name", ref);
 
   if (commit)
     add_annotation (annotations,"org.flatpak.commit", commit);
@@ -809,7 +809,7 @@ flatpak_oci_parse_commit_annotations (GHashTable *annotations,
   GHashTableIter iter;
   gpointer _key, _value;
 
-  oci_ref = g_hash_table_lookup (annotations, "org.opencontainers.ref.name");
+  oci_ref = g_hash_table_lookup (annotations, "org.opencontainers.image.ref.name");
   if (oci_ref != NULL && out_ref != NULL && *out_ref == NULL)
     *out_ref = g_strdup (oci_ref);
 
