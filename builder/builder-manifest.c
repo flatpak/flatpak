@@ -2182,7 +2182,6 @@ builder_manifest_finish (BuilderManifest *self,
           const char *parent_id = NULL;
           const char *parent_version = NULL;
           g_autofree char *base_metadata = NULL;
-          g_auto(GStrv) groups = NULL;
 
           arch_option = g_strdup_printf ("--arch=%s", builder_context_get_arch (context));
 
