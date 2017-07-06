@@ -3606,10 +3606,9 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  GError      **error)
 {
   g_autoptr(GHashTable) all_refs = NULL;
-  g_autoptr(GHashTable) arches = NULL;
+  g_autoptr(GHashTable) arches = NULL;  /* (element-type utf8 utf8) */
   GHashTableIter iter;
   gpointer key;
-  gpointer value;
   gboolean skip_commit = FALSE;
 
   arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -3622,7 +3621,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
     return FALSE;
 
   g_hash_table_iter_init (&iter, all_refs);
-  while (g_hash_table_iter_next (&iter, &key, &value))
+  while (g_hash_table_iter_next (&iter, &key, NULL))
     {
       const char *ref = key;
       const char *arch;
@@ -3634,11 +3633,11 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       arch = split[2];
       if (!g_hash_table_contains (arches, arch))
-        g_hash_table_insert (arches, g_strdup (arch), GINT_TO_POINTER (1));
+        g_hash_table_add (arches, g_strdup (arch));
     }
 
   g_hash_table_iter_init (&iter, arches);
-  while (g_hash_table_iter_next (&iter, &key, &value))
+  while (g_hash_table_iter_next (&iter, &key, NULL))
     {
       GHashTableIter iter2;
       const char *arch = key;
@@ -3663,7 +3662,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
       appstream_root = flatpak_appstream_xml_new ();
 
       g_hash_table_iter_init (&iter2, all_refs);
-      while (g_hash_table_iter_next (&iter2, &key, &value))
+      while (g_hash_table_iter_next (&iter2, &key, NULL))
         {
           const char *ref = key;
           g_auto(GStrv) split = NULL;
