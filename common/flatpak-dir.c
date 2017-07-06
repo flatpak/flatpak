@@ -5479,6 +5479,10 @@ flatpak_dir_install (FlatpakDir          *self,
 
           /* Don’t resolve a rev or OstreeRepoFinderResult set early; the pull
            * code will do this. */
+          /* FIXME: Ideally we could merge these two flatpak_dir_pull() calls
+           * so @ref and  %OSTREE_REPO_METADATA_REF are resolved atomically.
+           * However, pulling them separately is no worse than the old code path
+           * where the summary and ref were pulled separately. */
           if (!flatpak_dir_pull (self, remote_name, ref, NULL, NULL, subpaths,
                                  child_repo,
                                  flatpak_flags,
@@ -6079,6 +6083,10 @@ flatpak_dir_update (FlatpakDir          *self,
                                                  cancellable, error))
             return FALSE;
 
+          /* FIXME: Ideally we could merge these two flatpak_dir_pull() calls
+           * so @ref and  %OSTREE_REPO_METADATA_REF are resolved atomically.
+           * However, pulling them separately is no worse than the old code path
+           * where the summary and ref were pulled separately. */
           flatpak_flags |= FLATPAK_PULL_FLAGS_SIDELOAD_EXTRA_DATA;
           if (!flatpak_dir_pull (self, remote_name, ref, commit, results, subpaths,
                                  child_repo,
@@ -6812,6 +6820,7 @@ flatpak_dir_get_unmaintained_extension_dir_if_exists (FlatpakDir *self,
 
 G_LOCK_DEFINE_STATIC (cache);
 
+/* FIXME: Move all this caching into libostree. */
 static void
 cached_summary_free (CachedSummary *summary)
 {
@@ -7154,6 +7163,8 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
 
 /* This duplicates ostree_repo_list_refs so it can use flatpak_dir_remote_fetch_summary
    and get caching */
+/* FIXME: For command line completion support for collection–refs over P2P,
+ * we need a version of ostree_repo_list_collection_refs(). */
 static gboolean
 flatpak_dir_remote_list_refs (FlatpakDir       *self,
                               const char       *remote_name,
@@ -7356,6 +7367,8 @@ find_matching_ref (GHashTable *refs,
   return NULL;
 }
 
+/* FIXME: For command line completion support for collection–refs over P2P,
+ * we need a version which works with collections. */
 char **
 flatpak_dir_find_remote_refs (FlatpakDir   *self,
                              const char   *remote,
@@ -7385,6 +7398,8 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
   return (char **)g_ptr_array_free (matched_refs, FALSE);
 }
 
+/* FIXME: For command line completion support for collection–refs over P2P,
+ * we need a version which works with collections. */
 char *
 flatpak_dir_find_remote_ref (FlatpakDir   *self,
                              const char   *remote,
