@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <sys/statfs.h>
 
+#include <glib/gi18n.h>
 #include <gio/gio.h>
 #include "libglnx/libglnx.h"
 
@@ -895,6 +896,8 @@ builder_module_download_sources (BuilderModule  *self,
       if (!builder_source_is_enabled (source, context))
         continue;
 
+      builder_set_term_title (_("Downloading %s"), self->name);
+
       if (!builder_source_download (source, update_vcs, context, error))
         {
           g_prefix_error (error, "module %s: ", self->name);
@@ -1265,6 +1268,8 @@ builder_module_build (BuilderModule  *self,
   g_print ("Building module %s in %s\n", self->name, source_dir_path);
   g_print ("========================================================================\n");
 
+  builder_set_term_title (_("Building %s"), self->name);
+
   if (!builder_module_extract_sources (self, source_dir, context, error))
     return FALSE;
 
@@ -1540,6 +1545,8 @@ builder_module_build (BuilderModule  *self,
 
   /* Build and install */
 
+  builder_set_term_title (_("Installing %s"), self->name);
+
   if (meson || cmake_ninja)
     make_cmd = "ninja";
   else if (simple)
@@ -1571,6 +1578,8 @@ builder_module_build (BuilderModule  *self,
     }
 
   /* Post installation scripts */
+
+  builder_set_term_title (_("Post-Install %s"), self->name);
 
   if (builder_context_get_separate_locales (context))
     {
@@ -1617,6 +1626,8 @@ builder_module_build (BuilderModule  *self,
 
   /* Clean up build dir */
 
+  builder_set_term_title (_("Cleanup %s"), self->name);
+
   if (!builder_context_get_keep_build_dirs (context))
     {
       if (!g_file_delete (build_link, NULL, error))
@@ -1648,6 +1659,8 @@ builder_module_update (BuilderModule  *self,
 
       if (!builder_source_is_enabled (source, context))
         continue;
+
+      builder_set_term_title (_("Updating %s"), self->name);
 
       if (!builder_source_update (source, context, error))
         {
