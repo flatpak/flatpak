@@ -12,8 +12,9 @@ else
 TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
 endif
 
-testdb_CFLAGS = $(BASE_CFLAGS)
+testdb_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
 testdb_LDADD = \
+             $(AM_LDADD) \
              $(BASE_LIBS) \
              $(OSTREE_LIBS) \
              libglnx.la \
@@ -21,8 +22,9 @@ testdb_LDADD = \
              $(NULL)
 testdb_SOURCES = tests/testdb.c
 
-test_doc_portal_CFLAGS = $(BASE_CFLAGS)
+test_doc_portal_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
 test_doc_portal_LDADD = \
+             $(AM_LDADD) \
              $(BASE_LIBS) \
              $(OSTREE_LIBS) \
              libglnx.la \
@@ -31,8 +33,9 @@ test_doc_portal_LDADD = \
 test_doc_portal_SOURCES = tests/test-doc-portal.c
 nodist_test_doc_portal_SOURCES = $(xdp_dbus_built_sources)
 
-testlibrary_CFLAGS = $(BASE_CFLAGS)
+testlibrary_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
 testlibrary_LDADD = \
+             $(AM_LDADD) \
              $(BASE_LIBS) \
              libglnx.la \
              libflatpak.la \

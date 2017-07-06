@@ -38,6 +38,6 @@ flatpak_builder_SOURCES = \
 	builder/builder-git.h \
 	$(NULL)
 
-flatpak_builder_LDADD = $(BASE_LIBS) $(OSTREE_LIBS) $(JSON_LIBS) $(SOUP_LIBS) $(LIBELF_LIBS) \
+flatpak_builder_LDADD = $(AM_LDADD) $(BASE_LIBS) $(OSTREE_LIBS) $(JSON_LIBS) $(SOUP_LIBS) $(LIBELF_LIBS) \
 			libglnx.la libflatpak-common.la
-flatpak_builder_CFLAGS = $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(JSON_CFLAGS) $(SOUP_CFLAGS)
+flatpak_builder_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(OSTREE_CFLAGS) $(JSON_CFLAGS) $(SOUP_CFLAGS)
