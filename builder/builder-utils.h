@@ -72,6 +72,9 @@ gboolean builder_download_uri (const char     *url,
 GParamSpec * builder_serializable_find_property_with_error (JsonSerializable *serializable,
                                                             const char       *name);
 
+void builder_set_term_title (const gchar *format,
+                             ...) G_GNUC_PRINTF (1, 2);
+
 G_END_DECLS
 
 #endif /* __BUILDER_UTILS_H__ */
