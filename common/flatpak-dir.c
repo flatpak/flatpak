@@ -8616,15 +8616,6 @@ flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
   return g_steal_pointer (&default_branch);
 }
 
-GVariant *
-flatpak_dir_fetch_remote_summary (FlatpakDir    *self,
-                                  const char    *remote,
-                                  GCancellable  *cancellable,
-                                  GError       **error)
-{
-  return fetch_remote_summary_file (self, remote, NULL, cancellable, error);
-}
-
 gboolean
 flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
                                         const char    *remote_name,

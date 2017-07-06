@@ -551,10 +551,6 @@ gboolean   flatpak_dir_list_remote_refs (FlatpakDir   *self,
                                          GHashTable  **refs,
                                          GCancellable *cancellable,
                                          GError      **error);
-GVariant *flatpak_dir_fetch_remote_summary (FlatpakDir   *self,
-                                            const char   *remote,
-                                            GCancellable *cancellable,
-                                            GError      **error);
 gboolean flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
                                                  const char    *remote_name,
                                                  GCancellable  *cancellable,
