@@ -2458,7 +2458,9 @@ oci_pull_progress_cb (guint64 total_size, guint64 pulled_size,
 
 /* Look up a piece of per-repository metadata. Previously, this was stored in
  * the summary file; now it’s stored the commit metadata of a special branch.
- * Differentiate based on whether the collection ID is set for the remote. */
+ * Differentiate based on whether the collection ID is set for the remote.
+ * Returns %FALSE on error or if @key doesn’t exist (in which case, no error is
+ * set). */
 gboolean
 flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
                                   const char    *remote_name,
@@ -8681,12 +8683,15 @@ flatpak_dir_fetch_remote_title (FlatpakDir   *self,
                                 GError      **error)
 {
   g_autofree char *title = NULL;
+  g_autoptr(GError) local_error = NULL;
 
-  if (!flatpak_dir_lookup_repo_metadata (self, remote, cancellable, error,
+  if (!flatpak_dir_lookup_repo_metadata (self, remote, cancellable, &local_error,
                                          "xa.title", "s", &title))
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                           _("Remote title not set"));
+      if (local_error == NULL)
+        g_set_error_literal (&local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                             _("Remote title not set"));
+      g_propagate_error (error, g_steal_pointer (&local_error));
       return FALSE;
     }
 
@@ -8700,12 +8705,15 @@ flatpak_dir_fetch_remote_default_branch (FlatpakDir   *self,
                                          GError      **error)
 {
   g_autofree char *default_branch = NULL;
+  g_autoptr(GError) local_error = NULL;
 
-  if (!flatpak_dir_lookup_repo_metadata (self, remote, cancellable, error,
+  if (!flatpak_dir_lookup_repo_metadata (self, remote, cancellable, &local_error,
                                          "xa.default-branch", "s", &default_branch))
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-                           _("Remote default-branch not set"));
+      if (local_error == NULL)
+        g_set_error_literal (&local_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                             _("Remote default-branch not set"));
+      g_propagate_error (error, g_steal_pointer (&local_error));
       return FALSE;
     }
 
