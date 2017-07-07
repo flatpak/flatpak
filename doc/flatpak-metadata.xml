@@ -48,7 +48,10 @@
 
         <para>
             A metadata file describing the effective configuration is available
-            inside the running sandbox at <filename>/run/user/$UID/flatpak-info</filename>.
+            inside the running sandbox at <filename>/.flatpak-info</filename>.
+            For compatibility with older Flatpak versions,
+            <filename>/run/user/$UID/flatpak-info</filename> is a symbolic
+            link to the same file.
         </para>
     </refsect1>
 
