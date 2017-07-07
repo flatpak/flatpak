@@ -48,7 +48,10 @@
 
         <para>
             A metadata file describing the effective configuration is available
-            inside the running sandbox at <filename>/run/user/$UID/flatpak-info</filename>.
+            inside the running sandbox at <filename>/.flatpak-info</filename>.
+            For compatibility with older Flatpak versions,
+            <filename>/run/user/$UID/flatpak-info</filename> is a symbolic
+            link to the same file.
         </para>
     </refsect1>
 
@@ -86,6 +89,21 @@
                 <varlistentry>
                     <term><option>command</option> (string)</term>
                     <listitem><para>The command to run. Only relevant for applications.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>required-flatpak</option> (string)</term>
+                    <listitem><para>
+                        The required version of Flatpak to run this application
+                        or runtime.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>tags</option> (string list)</term>
+                    <listitem><para>
+                        Tags to include in AppStream XML.
+                        <!-- TODO: what are these tags for? What should they
+                        be? -->
+                    </para></listitem>
                 </varlistentry>
             </variablelist>
         </refsect2>
@@ -153,6 +171,77 @@
                       in the sandbox a bind mount to "~/.var/app/org.my.App/.myapp",
                       thus allowing an unmodified application to save data in
                       the per-application location.
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>features</option> (list)</term>
+                    <listitem><para>
+                        List of features available or unavailable to the
+                        application, currently from the following list:
+                        devel, multiarch.
+                        A feature can be prefixed with ! to indicate the absence
+                        of that feature, for example !devel if development and
+                        debugging are not allowed.
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+        <refsect2>
+            <title>[Instance]</title>
+            <para>
+                This group only appears in <filename>/.flatpak-info</filename>
+                for a running app, and not in the metadata files written by
+                application authors. It is filled in by Flatpak itself.
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>app-path</option> (string)</term>
+                    <listitem><para>
+                        The absolute path on the host system of the app's
+                        app files, as mounted at <filename>/app</filename>
+                        inside the container
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>branch</option> (string)</term>
+                    <listitem><para>
+                        The branch of the app, for example
+                        <literal>stable</literal>
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>flatpak-version</option> (string)</term>
+                    <listitem><para>
+                        The version number of the Flatpak version that ran
+                        this app
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>runtime-path</option> (string)</term>
+                    <listitem><para>
+                        The absolute path on the host system of the app's
+                        runtime files, as mounted at <filename>/usr</filename>
+                        inside the container
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>session-bus-proxy</option> (boolean)</term>
+                    <listitem><para>
+                        True if this app cannot access the D-Bus session bus
+                        directly (either it goes via a proxy, or it cannot
+                        access the session bus at all)
+                        <!-- TODO: Those semantics are weird, are they
+                        intended? -->
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>system-bus-proxy</option> (boolean)</term>
+                    <listitem><para>
+                        True if this app cannot access the D-Bus system bus
+                        directly (either it goes via a proxy, or it cannot
+                        access the system bus at all)
+                        <!-- TODO: Those semantics are weird, are they
+                        intended? -->
                     </para></listitem>
                 </varlistentry>
             </variablelist>
@@ -406,6 +495,16 @@
                     </para></listitem>
                 </varlistentry>
             </variablelist>
+        </refsect2>
+        <refsect2>
+          <title>[Policy SUBSYSTEM]</title>
+          <para>
+            Subsystems can define their own policies to be placed in a group
+            whose name has this form. Their values are treated as lists,
+            in which items can have their meaning negated by prepending !
+            to the value. They are not otherwise parsed by Flatpak.
+            <!-- TODO: More information would be nice -->
+          </para>
         </refsect2>
     </refsect1>
 

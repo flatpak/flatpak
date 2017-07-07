@@ -29,17 +29,62 @@
 gboolean flatpak_run_in_transient_unit (const char *app_id,
                                         GError    **error);
 
+/* See flatpak-metadata(5) */
+
+#define FLATPAK_METADATA_GROUP_APPLICATION "Application"
+#define FLATPAK_METADATA_GROUP_RUNTIME "Runtime"
+#define FLATPAK_METADATA_KEY_COMMAND "command"
+#define FLATPAK_METADATA_KEY_NAME "name"
+#define FLATPAK_METADATA_KEY_REQUIRED_FLATPAK "required-flatpak"
+#define FLATPAK_METADATA_KEY_RUNTIME "runtime"
+#define FLATPAK_METADATA_KEY_SDK "sdk"
+#define FLATPAK_METADATA_KEY_TAGS "tags"
+
 #define FLATPAK_METADATA_GROUP_CONTEXT "Context"
-#define FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
-#define FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
-#define FLATPAK_METADATA_GROUP_PREFIX_POLICY "Policy "
-#define FLATPAK_METADATA_GROUP_ENVIRONMENT "Environment"
 #define FLATPAK_METADATA_KEY_SHARED "shared"
 #define FLATPAK_METADATA_KEY_SOCKETS "sockets"
 #define FLATPAK_METADATA_KEY_FILESYSTEMS "filesystems"
 #define FLATPAK_METADATA_KEY_PERSISTENT "persistent"
 #define FLATPAK_METADATA_KEY_DEVICES "devices"
 #define FLATPAK_METADATA_KEY_FEATURES "features"
+
+#define FLATPAK_METADATA_GROUP_INSTANCE "Instance"
+#define FLATPAK_METADATA_KEY_APP_PATH "app-path"
+#define FLATPAK_METADATA_KEY_BRANCH "branch"
+#define FLATPAK_METADATA_KEY_FLATPAK_VERSION "flatpak-version"
+#define FLATPAK_METADATA_KEY_RUNTIME_PATH "runtime-path"
+#define FLATPAK_METADATA_KEY_SESSION_BUS_PROXY "session-bus-proxy"
+#define FLATPAK_METADATA_KEY_SYSTEM_BUS_PROXY "system-bus-proxy"
+
+#define FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY "Session Bus Policy"
+#define FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY "System Bus Policy"
+#define FLATPAK_METADATA_GROUP_PREFIX_POLICY "Policy "
+#define FLATPAK_METADATA_GROUP_ENVIRONMENT "Environment"
+
+#define FLATPAK_METADATA_GROUP_PREFIX_EXTENSION "Extension "
+#define FLATPAK_METADATA_KEY_ADD_LD_PATH "add-ld-path"
+#define FLATPAK_METADATA_KEY_AUTODELETE "autodelete"
+#define FLATPAK_METADATA_KEY_DIRECTORY "directory"
+#define FLATPAK_METADATA_KEY_DOWNLOAD_IF "download-if"
+#define FLATPAK_METADATA_KEY_ENABLE_IF "enable-if"
+#define FLATPAK_METADATA_KEY_MERGE_DIRS "merge-dirs"
+#define FLATPAK_METADATA_KEY_NO_AUTODOWNLOAD "no-autodownload"
+#define FLATPAK_METADATA_KEY_SUBDIRECTORIES "subdirectories"
+#define FLATPAK_METADATA_KEY_SUBDIRECTORY_SUFFIX "subdirectory-suffix"
+#define FLATPAK_METADATA_KEY_VERSION "version"
+#define FLATPAK_METADATA_KEY_VERSIONS "versions"
+
+#define FLATPAK_METADATA_GROUP_EXTRA_DATA "Extra Data"
+#define FLATPAK_METADATA_KEY_EXTRA_DATA_CHECKSUM "checksum"
+#define FLATPAK_METADATA_KEY_EXTRA_DATA_INSTALLED_SIZE "installed-size"
+#define FLATPAK_METADATA_KEY_EXTRA_DATA_NAME "name"
+#define FLATPAK_METADATA_KEY_EXTRA_DATA_SIZE "size"
+#define FLATPAK_METADATA_KEY_EXTRA_DATA_URI "uri"
+#define FLATPAK_METADATA_KEY_NO_RUNTIME "NoRuntime"
+
+#define FLATPAK_METADATA_GROUP_EXTENSION_OF "ExtensionOf"
+#define FLATPAK_METADATA_KEY_PRIORITY "priority"
+#define FLATPAK_METADATA_KEY_REF "ref"
 
 extern const char *flatpak_context_sockets[];
 extern const char *flatpak_context_devices[];

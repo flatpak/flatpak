@@ -2220,7 +2220,9 @@ builder_manifest_finish (BuilderManifest *self,
 
           for (i = 0; self->inherit_extensions[i] != NULL; i++)
             {
-              g_autofree char *group = g_strdup_printf ("Extension %s", self->inherit_extensions[i]);
+              g_autofree char *group = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION,
+                                                    self->inherit_extensions[i],
+                                                    NULL);
               g_auto(GStrv) keys = NULL;
               int j;
 
@@ -2239,9 +2241,13 @@ builder_manifest_finish (BuilderManifest *self,
                   g_key_file_set_value (keyfile, group, keys[j], value);
                 }
 
-              if (!g_key_file_has_key (keyfile, group, "version", NULL) &&
-                  !g_key_file_has_key (keyfile, group, "versions", NULL))
-                g_key_file_set_value (keyfile, group, "version", parent_version);
+              if (!g_key_file_has_key (keyfile, group,
+                                       FLATPAK_METADATA_KEY_VERSION, NULL) &&
+                  !g_key_file_has_key (keyfile, group,
+                                       FLATPAK_METADATA_KEY_VERSIONS, NULL))
+                g_key_file_set_value (keyfile, group,
+                                      FLATPAK_METADATA_KEY_VERSION,
+                                      parent_version);
             }
 
           if (!g_key_file_save_to_file (keyfile,
@@ -2564,7 +2570,7 @@ builder_manifest_create_platform (BuilderManifest *self,
           g_autoptr(GFile) dest_metadata = g_file_get_child (app_dir, "metadata.platform");
           g_autoptr(GKeyFile) keyfile = g_key_file_new ();
           g_auto(GStrv) groups = NULL;
-          g_autofree char *sdk_group_prefix = g_strdup_printf ("Extension %s.", self->id);
+          g_autofree char *sdk_group_prefix = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION, self->id, NULL);
           int j;
 
           if (!g_key_file_load_from_file (keyfile,
@@ -2576,7 +2582,8 @@ builder_manifest_create_platform (BuilderManifest *self,
               return FALSE;
             }
 
-          g_key_file_set_string (keyfile, "Runtime", "name", self->id_platform);
+          g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_RUNTIME,
+                                 FLATPAK_METADATA_KEY_NAME, self->id_platform);
 
           groups = g_key_file_get_groups (keyfile, NULL);
           for (j = 0; groups[j] != NULL; j++)

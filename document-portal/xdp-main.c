@@ -422,8 +422,12 @@ validate_fd (int fd,
   /* For apps we translate /app and /usr to the installed locations.
      Also, we need to rewrite to drop the /newroot prefix added by
      bubblewrap for other files to work. */
-  app_path = g_key_file_get_string (app_info, "Instance", "app-path", NULL);
-  runtime_path = g_key_file_get_string (app_info, "Instance", "runtime-path", NULL);
+  app_path = g_key_file_get_string (app_info, FLATPAK_METADATA_GROUP_INSTANCE,
+                                    FLATPAK_METADATA_KEY_APP_PATH, NULL);
+  runtime_path = g_key_file_get_string (app_info,
+                                        FLATPAK_METADATA_GROUP_INSTANCE,
+                                        FLATPAK_METADATA_KEY_RUNTIME_PATH,
+                                        NULL);
   if (app_path != NULL || runtime_path != NULL)
     {
       if (app_path != NULL &&
@@ -824,7 +828,9 @@ got_app_id_cb (GObject      *source_object,
 
   app_info = flatpak_invocation_lookup_app_info_finish (invocation, res, &error);
   if (app_info != NULL)
-    app_id = g_key_file_get_string (app_info, "Application", "name", &error);
+    app_id = g_key_file_get_string (app_info,
+                                    FLATPAK_METADATA_GROUP_APPLICATION,
+                                    FLATPAK_METADATA_KEY_NAME, &error);
 
   if (app_id == NULL)
     g_dbus_method_invocation_return_gerror (invocation, error);

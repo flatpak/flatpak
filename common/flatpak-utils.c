@@ -1676,7 +1676,8 @@ parse_app_id_from_fileinfo (int pid)
       if (errno == ENOENT)
         {
           /* No file => on the host */
-          g_key_file_set_string (metadata, "Application", "name", "");
+          g_key_file_set_string (metadata, FLATPAK_METADATA_GROUP_APPLICATION,
+                                 FLATPAK_METADATA_KEY_NAME, "");
           return g_steal_pointer (&metadata);
         }
 
@@ -3351,13 +3352,15 @@ flatpak_appstream_xml_migrate (FlatpakXml *source,
     return FALSE;
 
   if (g_str_has_prefix (ref, "app/"))
-    group = "Application";
+    group = FLATPAK_METADATA_GROUP_APPLICATION;
   else
-    group = "Runtime";
+    group = FLATPAK_METADATA_GROUP_RUNTIME;
 
-  tags = g_key_file_get_string_list (metadata, group, "tags", NULL, NULL);
-  runtime = g_key_file_get_string (metadata, group, "runtime", NULL);
-  sdk = g_key_file_get_string (metadata, group, "sdk", NULL);
+  tags = g_key_file_get_string_list (metadata, group, FLATPAK_METADATA_KEY_TAGS,
+                                     NULL, NULL);
+  runtime = g_key_file_get_string (metadata, group,
+                                   FLATPAK_METADATA_KEY_RUNTIME, NULL);
+  sdk = g_key_file_get_string (metadata, group, FLATPAK_METADATA_KEY_SDK, NULL);
 
   source_components = source->first_child;
   dest_components = dest->first_child;
@@ -3831,7 +3834,10 @@ flatpak_extension_new (const char *id,
       g_autofree char *metadata_path = g_build_filename (ext->files_path, "../metadata", NULL);
 
       if (g_key_file_load_from_file (keyfile, metadata_path, G_KEY_FILE_NONE, NULL))
-        ext->priority = g_key_file_get_integer (keyfile, "ExtensionOf", "priority", NULL);
+        ext->priority = g_key_file_get_integer (keyfile,
+                                                FLATPAK_METADATA_GROUP_EXTENSION_OF,
+                                                FLATPAK_METADATA_KEY_PRIORITY,
+                                                NULL);
     }
 
   return ext;
@@ -3879,11 +3885,21 @@ add_extension (GKeyFile   *metakey,
                GList *res)
 {
   FlatpakExtension *ext;
-  g_autofree char *directory = g_key_file_get_string (metakey, group, "directory", NULL);
-  g_autofree char *add_ld_path = g_key_file_get_string (metakey, group, "add-ld-path", NULL);
-  g_auto(GStrv) merge_dirs = g_key_file_get_string_list (metakey, group, "merge-dirs", NULL, NULL);
-  g_autofree char *enable_if = g_key_file_get_string (metakey, group, "enable-if", NULL);
-  g_autofree char *subdir_suffix = g_key_file_get_string (metakey, group, "subdirectory-suffix", NULL);
+  g_autofree char *directory = g_key_file_get_string (metakey, group,
+                                                      FLATPAK_METADATA_KEY_DIRECTORY,
+                                                      NULL);
+  g_autofree char *add_ld_path = g_key_file_get_string (metakey, group,
+                                                        FLATPAK_METADATA_KEY_ADD_LD_PATH,
+                                                        NULL);
+  g_auto(GStrv) merge_dirs = g_key_file_get_string_list (metakey, group,
+                                                         FLATPAK_METADATA_KEY_MERGE_DIRS,
+                                                         NULL, NULL);
+  g_autofree char *enable_if = g_key_file_get_string (metakey, group,
+                                                      FLATPAK_METADATA_KEY_ENABLE_IF,
+                                                      NULL);
+  g_autofree char *subdir_suffix = g_key_file_get_string (metakey, group,
+                                                          FLATPAK_METADATA_KEY_SUBDIRECTORY_SUFFIX,
+                                                          NULL);
   g_autofree char *ref = NULL;
   gboolean is_unmaintained = FALSE;
   g_autoptr(GFile) files = NULL;
@@ -3910,7 +3926,7 @@ add_extension (GKeyFile   *metakey,
         }
     }
   else if (g_key_file_get_boolean (metakey, group,
-                                   "subdirectories", NULL))
+                                   FLATPAK_METADATA_KEY_SUBDIRECTORIES, NULL))
     {
       g_autofree char *prefix = g_strconcat (extension, ".", NULL);
       g_auto(GStrv) refs = NULL;
@@ -3973,11 +3989,15 @@ flatpak_list_extensions (GKeyFile   *metakey,
     {
       char *extension;
 
-      if (g_str_has_prefix (groups[i], "Extension ") &&
-          *(extension = (groups[i] + strlen ("Extension "))) != 0)
+      if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
+          *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
         {
-          g_autofree char *version = g_key_file_get_string (metakey, groups[i], "version", NULL);
-          g_auto(GStrv) versions = g_key_file_get_string_list (metakey, groups[i], "versions", NULL, NULL);
+          g_autofree char *version = g_key_file_get_string (metakey, groups[i],
+                                                            FLATPAK_METADATA_KEY_VERSION,
+                                                            NULL);
+          g_auto(GStrv) versions = g_key_file_get_string_list (metakey, groups[i],
+                                                               FLATPAK_METADATA_KEY_VERSIONS,
+                                                               NULL, NULL);
           const char *default_branches[] = { default_branch, NULL};
           const char **branches;
 

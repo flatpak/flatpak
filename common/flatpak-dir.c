@@ -4307,7 +4307,7 @@ apply_extra_data (FlatpakDir          *self,
   g_autoptr(GArray) fd_array = NULL;
   g_auto(GStrv) envp = NULL;
   int exit_status;
-  const char *group = "Application";
+  const char *group = FLATPAK_METADATA_GROUP_APPLICATION;
   g_autoptr(GError) local_error = NULL;
 
   apply_extra_file = g_file_resolve_relative_path (checkoutdir, "files/bin/apply_extra");
@@ -4323,11 +4323,13 @@ apply_extra_data (FlatpakDir          *self,
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     return FALSE;
 
-  id = g_key_file_get_string (metakey, group, "name", &local_error);
+  id = g_key_file_get_string (metakey, group, FLATPAK_METADATA_KEY_NAME,
+                              &local_error);
   if (id == NULL)
     {
-      group = "Runtime";
-      id = g_key_file_get_string (metakey, group, "name", NULL);
+      group = FLATPAK_METADATA_GROUP_RUNTIME;
+      id = g_key_file_get_string (metakey, group, FLATPAK_METADATA_KEY_NAME,
+                                  NULL);
       if (id == NULL)
         {
           g_propagate_error (error, g_steal_pointer (&local_error));
@@ -4336,7 +4338,8 @@ apply_extra_data (FlatpakDir          *self,
       g_clear_error (&local_error);
     }
 
-  runtime = g_key_file_get_string (metakey, group, "runtime", error);
+  runtime = g_key_file_get_string (metakey, group,
+                                   FLATPAK_METADATA_KEY_RUNTIME, error);
   if (runtime == NULL)
     return FALSE;
 
@@ -4346,7 +4349,8 @@ apply_extra_data (FlatpakDir          *self,
   if (runtime_ref_parts == NULL)
     return FALSE;
 
-  if (!g_key_file_get_boolean (metakey, "Extra Data", "NoRuntime", NULL))
+  if (!g_key_file_get_boolean (metakey, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                               FLATPAK_METADATA_KEY_NO_RUNTIME, NULL))
     {
       runtime_deploy = flatpak_find_deploy_for_ref (runtime_ref, cancellable, error);
       if (runtime_deploy == NULL)
@@ -8649,19 +8653,19 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
         {
           char *extension;
 
-          if (g_str_has_prefix (groups[i], "Extension ") &&
-              *(extension = (groups[i] + strlen ("Extension "))) != 0)
+          if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
+              *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
             {
               g_autofree char *version = g_key_file_get_string (metakey, groups[i],
-                                                                "version", NULL);
+                                                                FLATPAK_METADATA_KEY_VERSION, NULL);
               gboolean subdirectories = g_key_file_get_boolean (metakey, groups[i],
-                                                                "subdirectories", NULL);
+                                                                FLATPAK_METADATA_KEY_SUBDIRECTORIES, NULL);
               gboolean no_autodownload = g_key_file_get_boolean (metakey, groups[i],
-                                                                 "no-autodownload", NULL);
+                                                                 FLATPAK_METADATA_KEY_NO_AUTODOWNLOAD, NULL);
               g_autofree char *download_if = g_key_file_get_string (metakey, groups[i],
-                                                                    "download-if", NULL);
+                                                                    FLATPAK_METADATA_KEY_DOWNLOAD_IF, NULL);
               gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
-                                                            "autodelete", NULL);
+                                                            FLATPAK_METADATA_KEY_AUTODELETE, NULL);
               const char *branch;
               g_autofree char *extension_ref = NULL;
               g_autofree char *checksum = NULL;
@@ -8781,19 +8785,19 @@ flatpak_dir_find_local_related (FlatpakDir *self,
         {
           char *extension;
 
-          if (g_str_has_prefix (groups[i], "Extension ") &&
-              *(extension = (groups[i] + strlen ("Extension "))) != 0)
+          if (g_str_has_prefix (groups[i], FLATPAK_METADATA_GROUP_PREFIX_EXTENSION) &&
+              *(extension = (groups[i] + strlen (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION))) != 0)
             {
               g_autofree char *version = g_key_file_get_string (metakey, groups[i],
-                                                                "version", NULL);
+                                                                FLATPAK_METADATA_KEY_VERSION, NULL);
               gboolean subdirectories = g_key_file_get_boolean (metakey, groups[i],
-                                                                "subdirectories", NULL);
+                                                                FLATPAK_METADATA_KEY_SUBDIRECTORIES, NULL);
               gboolean no_autodownload = g_key_file_get_boolean (metakey, groups[i],
-                                                                 "no-autodownload", NULL);
+                                                                 FLATPAK_METADATA_KEY_NO_AUTODOWNLOAD, NULL);
               g_autofree char *download_if = g_key_file_get_string (metakey, groups[i],
-                                                                    "download-if", NULL);
+                                                                    FLATPAK_METADATA_KEY_DOWNLOAD_IF, NULL);
               gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
-                                                            "autodelete", NULL);
+                                                            FLATPAK_METADATA_KEY_AUTODELETE, NULL);
               const char *branch;
               g_autofree char *extension_ref = NULL;
               g_autofree char *prefixed_extension_ref = NULL;
