@@ -97,6 +97,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   g_auto(GStrv) runtime_ref_parts = NULL;
   FlatpakRunFlags run_flags;
   const char *group = NULL;
+  const char *runtime_key = NULL;
   const char *dest = NULL;
   gboolean is_app = FALSE;
   gboolean is_extension = FALSE;
@@ -146,19 +147,21 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     return FALSE;
 
-  if (g_key_file_has_group (metakey, "Application"))
+  if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_APPLICATION))
     {
-      group = "Application";
+      group = FLATPAK_METADATA_GROUP_APPLICATION;
       is_app = TRUE;
     }
-  else if (g_key_file_has_group (metakey, "Runtime"))
+  else if (g_key_file_has_group (metakey, FLATPAK_METADATA_GROUP_RUNTIME))
     {
-      group = "Runtime";
+      group = FLATPAK_METADATA_GROUP_RUNTIME;
     }
   else
     return flatpak_fail (error, _("metadata invalid, not application or runtime"));
 
-  extensionof_ref = g_key_file_get_string (metakey, "ExtensionOf", "ref", NULL);
+  extensionof_ref = g_key_file_get_string (metakey,
+                                           FLATPAK_METADATA_GROUP_EXTENSION_OF,
+                                           FLATPAK_METADATA_KEY_REF, NULL);
   if (extensionof_ref != NULL)
     {
       is_extension = TRUE;
@@ -167,11 +170,16 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     }
 
 
-  id = g_key_file_get_string (metakey, group, "name", error);
+  id = g_key_file_get_string (metakey, group, FLATPAK_METADATA_KEY_NAME, error);
   if (id == NULL)
     return FALSE;
 
-  runtime = g_key_file_get_string (metakey, group, opt_runtime ? "runtime" : "sdk", error);
+  if (opt_runtime)
+    runtime_key = FLATPAK_METADATA_KEY_RUNTIME;
+  else
+    runtime_key = FLATPAK_METADATA_KEY_SDK;
+
+  runtime = g_key_file_get_string (metakey, group, runtime_key, error);
   if (runtime == NULL)
     return FALSE;
 
@@ -222,7 +230,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
       x_metakey = flatpak_deploy_get_metadata (extensionof_deploy);
 
-      x_group = g_strdup_printf ("Extension %s", id);
+      x_group = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION, id, NULL);
       if (!g_key_file_has_group (x_metakey, x_group))
         {
           /* Failed, look for subdirectories=true parent */
@@ -232,8 +240,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             {
               char *parent_id = g_strndup (id, last_dot - id);
               g_free (x_group);
-              x_group = g_strdup_printf ("Extension %s", parent_id);
-              if (g_key_file_get_boolean (x_metakey, x_group, "subdirectories", NULL))
+              x_group = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION,
+                                     parent_id, NULL);
+              if (g_key_file_get_boolean (x_metakey, x_group,
+                                          FLATPAK_METADATA_KEY_SUBDIRECTORIES,
+                                          NULL))
                 x_subdir = last_dot + 1;
             }
 
@@ -241,12 +252,14 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             return flatpak_fail (error, _("No extension point matching %s in %s"), id, extensionof_ref);
         }
 
-      x_dir = g_key_file_get_string (x_metakey, x_group, "directory", error);
+      x_dir = g_key_file_get_string (x_metakey, x_group,
+                                     FLATPAK_METADATA_KEY_DIRECTORY, error);
       if (x_dir == NULL)
         return FALSE;
 
       x_subdir_suffix = g_key_file_get_string (x_metakey, x_group,
-                                               "subdirectory-suffix", NULL);
+                                               FLATPAK_METADATA_KEY_SUBDIRECTORY_SUFFIX,
+                                               NULL);
 
       if (is_app_extension)
         {

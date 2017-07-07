@@ -258,9 +258,9 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
     goto out;
 
   if (is_runtime)
-    group = "Runtime";
+    group = FLATPAK_METADATA_GROUP_RUNTIME;
   else
-    group = "Application";
+    group = FLATPAK_METADATA_GROUP_APPLICATION;
 
   path = g_file_get_path (metadata);
   keyfile = g_key_file_new ();
@@ -269,8 +269,13 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
 
   if (opt_sdk != NULL || opt_runtime != NULL)
     {
-      g_autofree char *old_runtime = g_key_file_get_string (keyfile, group, "runtime", NULL);
-      g_autofree char *old_sdk = g_key_file_get_string (keyfile, group, "sdk", NULL);
+      g_autofree char *old_runtime = g_key_file_get_string (keyfile,
+                                                            group,
+                                                            FLATPAK_METADATA_KEY_RUNTIME, NULL);
+      g_autofree char *old_sdk = g_key_file_get_string (keyfile,
+                                                        group,
+                                                        FLATPAK_METADATA_KEY_SDK,
+                                                        NULL);
       const char *old_sdk_arch = NULL;
       const char *old_runtime_arch = NULL;
       const char *old_sdk_branch = NULL;
@@ -316,7 +321,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
             return FALSE;
 
           ref = flatpak_build_untyped_ref (id, branch, arch);
-          g_key_file_set_string (keyfile, group, "sdk", ref);
+          g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_SDK, ref);
         }
 
       if (opt_runtime)
@@ -333,24 +338,24 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
             return FALSE;
 
           ref = flatpak_build_untyped_ref (id, branch, arch);
-          g_key_file_set_string (keyfile, group, "runtime", ref);
+          g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_RUNTIME, ref);
         }
     }
 
   if (!is_runtime)
     {
-      if (g_key_file_has_key (keyfile, group, "command", NULL))
+      if (g_key_file_has_key (keyfile, group, FLATPAK_METADATA_KEY_COMMAND, NULL))
         {
           g_debug ("Command key is present");
 
           if (opt_command)
-            g_key_file_set_string (keyfile, group, "command", opt_command);
+            g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_COMMAND, opt_command);
         }
       else if (opt_command)
         {
           g_debug ("Using explicitly provided command %s", opt_command);
 
-          g_key_file_set_string (keyfile, group, "command", opt_command);
+          g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_COMMAND, opt_command);
         }
       else
         {
@@ -386,7 +391,7 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
           if (command)
             {
               g_print ("Using %s as command\n", command);
-              g_key_file_set_string (keyfile, group, "command", command);
+              g_key_file_set_string (keyfile, group, FLATPAK_METADATA_KEY_COMMAND, command);
             }
           else
             {
@@ -427,19 +432,26 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
           goto out;
         }
 
-      uri_key = g_strconcat ("uri", suffix, NULL);
-      name_key = g_strconcat ("name", suffix, NULL);
-      checksum_key = g_strconcat ("checksum", suffix, NULL);
-      size_key = g_strconcat ("size", suffix, NULL);
-      installed_size_key = g_strconcat ("installed-size", suffix, NULL);
+      uri_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_URI, suffix, NULL);
+      name_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_NAME, suffix, NULL);
+      checksum_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_CHECKSUM,
+                                  suffix, NULL);
+      size_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_SIZE, suffix, NULL);
+      installed_size_key = g_strconcat (FLATPAK_METADATA_KEY_EXTRA_DATA_INSTALLED_SIZE,
+                                        suffix, NULL);
 
       if (strlen (elements[0]) > 0)
-        g_key_file_set_string (keyfile, "Extra Data", name_key, elements[0]);
-      g_key_file_set_string (keyfile, "Extra Data", checksum_key, elements[1]);
-      g_key_file_set_string (keyfile, "Extra Data", size_key, elements[2]);
+        g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                               name_key, elements[0]);
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                             checksum_key, elements[1]);
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                             size_key, elements[2]);
       if (strlen (elements[3]) > 0)
-        g_key_file_set_string (keyfile, "Extra Data", installed_size_key, elements[3]);
-      g_key_file_set_string (keyfile, "Extra Data", uri_key, elements[4]);
+        g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                               installed_size_key, elements[3]);
+      g_key_file_set_string (keyfile, FLATPAK_METADATA_GROUP_EXTRA_DATA,
+                             uri_key, elements[4]);
     }
 
   for (i = 0; opt_metadata != NULL && opt_metadata[i] != NULL; i++)
@@ -467,7 +479,8 @@ update_metadata (GFile *base, FlatpakContext *arg_context, gboolean is_runtime, 
           goto out;
         }
 
-      groupname = g_strdup_printf ("Extension %s", elements[0]);
+      groupname = g_strconcat (FLATPAK_METADATA_GROUP_PREFIX_EXTENSION,
+                               elements[0], NULL);
 
       g_key_file_set_string (keyfile, groupname, elements[1], elements[2] ? elements[2] : "true");
     }
@@ -531,10 +544,12 @@ flatpak_builtin_build_finish (int argc, char **argv, GCancellable *cancellable, 
   if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
     return FALSE;
 
-  id = g_key_file_get_string (metakey, "Application", "name", NULL);
+  id = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_APPLICATION,
+                              FLATPAK_METADATA_KEY_NAME, NULL);
   if (id == NULL)
     {
-      id = g_key_file_get_string (metakey, "Runtime", "name", NULL);
+      id = g_key_file_get_string (metakey, FLATPAK_METADATA_GROUP_RUNTIME,
+                                  FLATPAK_METADATA_KEY_NAME, NULL);
       if (id == NULL)
         return flatpak_fail (error, _("No name specified in the metadata"));
       is_runtime = TRUE;
