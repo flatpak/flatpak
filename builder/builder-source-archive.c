@@ -60,6 +60,7 @@ enum {
 
 typedef enum {
   UNKNOWN,
+  DEB,
   RPM,
   TAR,
   TAR_GZIP,
@@ -389,6 +390,24 @@ unrpm (GFile   *dir,
   return res;
 }
 
+static gboolean
+undeb (GFile   *dir,
+       const char *deb_path,
+       GError **error)
+{
+  gboolean res;
+  const gchar *argv[] = { "sh", "-c", NULL, NULL };
+  char *undeb_cmdline = g_strdup_printf("ar t %s | grep data.tar | xargs ar x %s",
+                                        deb_path,
+                                        deb_path);
+
+  argv[2] = undeb_cmdline;
+  res = flatpak_spawnv (dir, NULL, error, argv);
+  g_free(undeb_cmdline);
+
+  return res;
+}
+
 BuilderArchiveType
 get_type (GFile *archivefile)
 {
@@ -434,6 +453,9 @@ get_type (GFile *archivefile)
 
   if (g_str_has_suffix (lower, ".rpm"))
     return RPM;
+
+  if (g_str_has_suffix (lower, ".deb"))
+    return DEB;
 
   return UNKNOWN;
 }
@@ -577,6 +599,23 @@ builder_source_archive_extract (BuilderSource  *source,
       if (self->strip_components > 0)
         {
           if (!strip_components_into (dest, rpm_dest, self->strip_components, error))
+            return FALSE;
+        }
+    }
+  else if (type == DEB)
+    {
+      g_autoptr(GFile) deb_dest = NULL;
+
+      deb_dest = create_uncompress_directory (self, dest, error);
+      if (deb_dest == NULL)
+        return FALSE;
+
+      if (!undeb (deb_dest, archive_path, error))
+        return FALSE;
+
+      if (self->strip_components > 0)
+        {
+          if (!strip_components_into (dest, deb_dest, self->strip_components, error))
             return FALSE;
         }
     }
