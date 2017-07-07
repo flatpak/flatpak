@@ -187,6 +187,66 @@
             </variablelist>
         </refsect2>
         <refsect2>
+            <title>[Instance]</title>
+            <para>
+                This group only appears in <filename>/.flatpak-info</filename>
+                for a running app, and not in the metadata files written by
+                application authors. It is filled in by Flatpak itself.
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>app-path</option> (string)</term>
+                    <listitem><para>
+                        The absolute path on the host system of the app's
+                        app files, as mounted at <filename>/app</filename>
+                        inside the container
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>branch</option> (string)</term>
+                    <listitem><para>
+                        The branch of the app, for example
+                        <literal>stable</literal>
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>flatpak-version</option> (string)</term>
+                    <listitem><para>
+                        The version number of the Flatpak version that ran
+                        this app
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>runtime-path</option> (string)</term>
+                    <listitem><para>
+                        The absolute path on the host system of the app's
+                        runtime files, as mounted at <filename>/usr</filename>
+                        inside the container
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>session-bus-proxy</option> (boolean)</term>
+                    <listitem><para>
+                        True if this app cannot access the D-Bus session bus
+                        directly (either it goes via a proxy, or it cannot
+                        access the session bus at all)
+                        <!-- TODO: Those semantics are weird, are they
+                        intended? -->
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>system-bus-proxy</option> (boolean)</term>
+                    <listitem><para>
+                        True if this app cannot access the D-Bus system bus
+                        directly (either it goes via a proxy, or it cannot
+                        access the system bus at all)
+                        <!-- TODO: Those semantics are weird, are they
+                        intended? -->
+                    </para></listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+        <refsect2>
             <title>[Session Bus Policy]</title>
             <para>
                 If the <option>sockets</option> key is not allowing full access
