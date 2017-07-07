@@ -496,6 +496,16 @@
                 </varlistentry>
             </variablelist>
         </refsect2>
+        <refsect2>
+          <title>[Policy SUBSYSTEM]</title>
+          <para>
+            Subsystems can define their own policies to be placed in a group
+            whose name has this form. Their values are treated as lists,
+            in which items can have their meaning negated by prepending !
+            to the value. They are not otherwise parsed by Flatpak.
+            <!-- TODO: More information would be nice -->
+          </para>
+        </refsect2>
     </refsect1>
 
     <refsect1>
