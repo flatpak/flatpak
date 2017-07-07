@@ -54,7 +54,7 @@ looks_like_branch (const char *branch)
   return TRUE;
 }
 
-SoupSession *
+static SoupSession *
 get_soup_session (void)
 {
   static SoupSession *soup_session = NULL;

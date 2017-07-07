@@ -274,7 +274,7 @@ portal_delete (GDBusMethodInvocation *invocation,
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 }
 
-char *
+static char *
 do_create_doc (struct stat *parent_st_buf, const char *path, gboolean reuse_existing, gboolean persistent)
 {
   g_autoptr(GVariant) data = NULL;

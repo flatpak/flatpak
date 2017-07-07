@@ -41,6 +41,8 @@ const char *builder_options_get_cflags (BuilderOptions *self,
                                         BuilderContext *context);
 const char *builder_options_get_cxxflags (BuilderOptions *self,
                                           BuilderContext *context);
+const char *builder_options_get_cppflags (BuilderOptions *self,
+                                          BuilderContext *context);
 const char *builder_options_get_ldflags (BuilderOptions *self,
                                          BuilderContext *context);
 const char *builder_options_get_prefix (BuilderOptions *self,

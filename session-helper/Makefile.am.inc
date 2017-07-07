@@ -12,5 +12,5 @@ flatpak_session_helper_SOURCES = \
 	session-helper/flatpak-session-helper.c	\
 	$(NULL)
 
-flatpak_session_helper_LDADD = $(BASE_LIBS) libflatpak-common.la
-flatpak_session_helper_CFLAGS = $(BASE_CFLAGS) $(SOUP_CFLAGS) $(OSTREE_CFLAGS) $(GSYSTEM_CFLAGS) $(JSON_CFLAGS)
+flatpak_session_helper_LDADD = $(AM_LDADD) $(BASE_LIBS) libflatpak-common.la
+flatpak_session_helper_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) $(SOUP_CFLAGS) $(OSTREE_CFLAGS) $(GSYSTEM_CFLAGS) $(JSON_CFLAGS)

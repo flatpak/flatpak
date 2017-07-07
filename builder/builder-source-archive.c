@@ -72,13 +72,13 @@ typedef enum {
   ZIP
 } BuilderArchiveType;
 
-gboolean
+static gboolean
 is_tar (BuilderArchiveType type)
 {
   return (type >= TAR) && (type <= TAR_XZ);
 }
 
-const char *
+static const char *
 tar_decompress_flag (BuilderArchiveType type)
 {
   switch (type)
@@ -389,7 +389,7 @@ unrpm (GFile   *dir,
   return res;
 }
 
-BuilderArchiveType
+static BuilderArchiveType
 get_type (GFile *archivefile)
 {
   g_autofree char *base_name = NULL;

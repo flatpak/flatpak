@@ -674,10 +674,6 @@ add_extra_installation (const char *id,
                         const char *storage_type,
                         const char *priority)
 {
-  static const char *base_fmt_string =
-    "[Installation \"%s\"]\n"
-    "Path=%s";
-
   g_autofree char *conffile_path = NULL;
   g_autofree char *contents_string = NULL;
   g_autofree char *path = NULL;
@@ -689,7 +685,10 @@ add_extra_installation (const char *id,
 
   contents_array = g_ptr_array_new_with_free_func ((GDestroyNotify)g_free);
 
-  g_ptr_array_add (contents_array, g_strdup_printf (base_fmt_string, id, path));
+  g_ptr_array_add (contents_array,
+      g_strdup_printf ("[Installation \"%s\"]\n"
+                       "Path=%s",
+                       id, path));
 
   if (display_name != NULL)
     g_ptr_array_add (contents_array, g_strdup_printf ("DisplayName=%s", display_name));

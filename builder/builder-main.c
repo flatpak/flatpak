@@ -135,7 +135,7 @@ message_handler (const gchar   *log_domain,
     g_printerr ("%s: %s\n", g_get_prgname (), message);
 }
 
-int
+static int
 usage (GOptionContext *context, const char *message)
 {
   g_autofree gchar *help = g_option_context_get_help (context, TRUE, NULL);

@@ -573,7 +573,7 @@ xdp_inode_rename_child (XdpInode   *dir,
 }
 
 /* NULL if removed */
-char *
+static char *
 xdp_inode_get_filename (XdpInode *inode)
 {
   AUTOLOCK (inodes);
@@ -1043,7 +1043,7 @@ xdp_fuse_lookup (fuse_req_t  req,
   fuse_reply_entry (req, &e);
 }
 
-void
+static void
 xdp_fuse_forget (fuse_req_t req, fuse_ino_t ino, unsigned long nlookup)
 {
   g_autoptr(XdpInode) inode = NULL;

@@ -569,7 +569,7 @@ builder_context_set_bundle_sources (BuilderContext *self,
 
 static char *rofiles_unmount_path = NULL;
 
-void
+static void
 rofiles_umount_handler (int signum)
 {
   char *argv[] = { "fusermount", "-u", NULL,

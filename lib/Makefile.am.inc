@@ -79,12 +79,14 @@ libflatpak_la_CFLAGS = \
 	$(NULL)
 
 libflatpak_la_LDFLAGS = \
+	$(AM_LDFLAGS) \
 	-version-info $(LT_VERSION_INFO)	\
 	-export-dynamic				\
 	-rpath $(libdir)			\
 	$(NULL)
 
 libflatpak_la_LIBADD = \
+	$(AM_LIBADD) \
         libflatpak-common.la \
 	$(BASE_LIBS)	\
 	$(OSTREE_LIBS)	\
@@ -97,12 +99,14 @@ test_libflatpak_SOURCES = \
 	$(NULL)
 
 test_libflatpak_CFLAGS = \
+	$(AM_CFLAGS) \
 	$(BASE_CFLAGS) \
 	-I$(top_srcdir)/lib \
 	-I$(top_builddir)/lib \
 	$(NULL)
 
 test_libflatpak_LDADD = \
+	$(AM_LDADD) \
 	$(BASE_LIBS)	\
         libflatpak.la \
 	$(NULL)

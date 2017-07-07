@@ -199,7 +199,7 @@ commit_filter (OstreeRepo *repo,
   return OSTREE_REPO_COMMIT_FILTER_ALLOW;
 }
 
-gboolean
+static gboolean
 add_file_to_mtree (GFile             *file,
                    const char        *name,
                    OstreeRepo        *repo,

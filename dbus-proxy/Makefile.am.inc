@@ -8,5 +8,5 @@ flatpak_dbus_proxy_SOURCES = \
 	dbus-proxy/dbus-proxy.c		\
 	$(NULL)
 
-flatpak_dbus_proxy_LDADD = $(BASE_LIBS) libglnx.la
-flatpak_dbus_proxy_CFLAGS = $(BASE_CFLAGS) -I$(srcdir)/dbus-proxy
+flatpak_dbus_proxy_LDADD = $(AM_LDADD) $(BASE_LIBS) libglnx.la
+flatpak_dbus_proxy_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS) -I$(srcdir)/dbus-proxy
