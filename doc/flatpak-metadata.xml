@@ -430,6 +430,18 @@
                         point when deleting a 'related' application or runtime.
                     </para></listitem>
                 </varlistentry>
+                <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
+                <varlistentry>
+                    <term><option>collection-id</option> (string)</term>
+                    <listitem><para>
+                        The ID of the collection that this extension point belongs to. If this
+                        is unspecified, it defaults to the collection ID of the application
+                        or runtime that the extension point is for.
+                        Currently, extension points must be in the same collection as the
+                        application or runtime that they are for.
+                    </para></listitem>
+                </varlistentry>
+                -->
             </variablelist>
         </refsect2>
         <refsect2>

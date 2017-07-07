@@ -68,6 +68,7 @@ GType flatpak_deploy_get_type (void);
 
 typedef struct
 {
+  char           *collection_id;  /* (nullable) */
   char           *ref;
   char           *commit;
   char          **subpaths;
