@@ -2555,11 +2555,46 @@ flatpak_variant_bsearch_str (GVariant   *array,
   return FALSE;
 }
 
-/* This matches all refs that have ref, followed by '.'  as prefix */
-char **
-flatpak_summary_match_subrefs (GVariant *summary, const char *ref)
+/* Find the list of refs which belong to the given @collection_id in @summary.
+ * If @collection_id is %NULL, the main refs list from the summary will be
+ * returned. If @collection_id doesn’t match any collection IDs in the summary
+ * file, %NULL will be returned. */
+static GVariant *
+summary_find_refs_list (GVariant   *summary,
+                        const char *collection_id)
 {
-  g_autoptr(GVariant) refs = g_variant_get_child_value (summary, 0);
+  g_autoptr(GVariant) refs = NULL;
+  g_autoptr(GVariant) metadata = g_variant_get_child_value (summary, 1);
+  const char *summary_collection_id;
+
+  if (!g_variant_lookup (metadata, "ostree.summary.collection-id", "&s", &summary_collection_id))
+    summary_collection_id = NULL;
+
+  if (collection_id == NULL || g_strcmp0 (collection_id, summary_collection_id) == 0)
+    {
+      refs = g_variant_get_child_value (summary, 0);
+    }
+  else if (collection_id != NULL)
+    {
+      g_autoptr(GVariant) collection_map = NULL;
+
+      collection_map = g_variant_lookup_value (metadata, "ostree.summary.collection-map",
+                                               G_VARIANT_TYPE ("a{sa(s(taya{sv}))}"));
+      if (collection_map != NULL)
+        refs = g_variant_lookup_value (collection_map, collection_id, G_VARIANT_TYPE ("a(s(taya{sv}))"));
+    }
+
+  return g_steal_pointer (&refs);
+}
+
+/* This matches all refs from @collection_id that have ref, followed by '.'  as prefix */
+char **
+flatpak_summary_match_subrefs (GVariant   *summary,
+                               const char *collection_id,
+                               const char *ref)
+{
+  g_autoptr(GVariant) refs = NULL;
+  g_autoptr(GVariant) metadata = g_variant_get_child_value (summary, 1);
   GPtrArray *res = g_ptr_array_new ();
   gsize n, i;
   g_auto(GStrv) parts = NULL;
@@ -2567,41 +2602,48 @@ flatpak_summary_match_subrefs (GVariant *summary, const char *ref)
   g_autofree char *ref_prefix = NULL;
   g_autofree char *ref_suffix = NULL;
 
-  parts = g_strsplit (ref, "/", 0);
-  parts_prefix = g_strconcat (parts[1], ".", NULL);
+  /* Work out which refs list to use, based on the @collection_id. */
+  refs = summary_find_refs_list (summary, collection_id);
 
-  ref_prefix = g_strconcat (parts[0], "/", NULL);
-  ref_suffix = g_strconcat ("/", parts[2], "/", parts[3], NULL);
-
-  n = g_variant_n_children (refs);
-  for (i = 0; i < n; i++)
+  if (refs != NULL)
     {
-      g_autoptr(GVariant) child = NULL;
-      g_autoptr(GVariant) cur_v = NULL;
-      const char *cur;
-      const char *id_start;
+      /* Match against the refs. */
+      parts = g_strsplit (ref, "/", 0);
+      parts_prefix = g_strconcat (parts[1], ".", NULL);
 
-      child = g_variant_get_child_value (refs, i);
-      cur_v = g_variant_get_child_value (child, 0);
-      cur = g_variant_get_data (cur_v);
+      ref_prefix = g_strconcat (parts[0], "/", NULL);
+      ref_suffix = g_strconcat ("/", parts[2], "/", parts[3], NULL);
 
-      /* Must match type */
-      if (!g_str_has_prefix (cur, ref_prefix))
-        continue;
+      n = g_variant_n_children (refs);
+      for (i = 0; i < n; i++)
+        {
+          g_autoptr(GVariant) child = NULL;
+          g_autoptr(GVariant) cur_v = NULL;
+          const char *cur;
+          const char *id_start;
 
-      /* Must match arch & branch */
-      if (!g_str_has_suffix (cur, ref_suffix))
-        continue;
+          child = g_variant_get_child_value (refs, i);
+          cur_v = g_variant_get_child_value (child, 0);
+          cur = g_variant_get_data (cur_v);
 
-      id_start = strchr (cur, '/');
-      if (id_start == NULL)
-        continue;
+          /* Must match type */
+          if (!g_str_has_prefix (cur, ref_prefix))
+            continue;
 
-      /* But only prefix of id */
-      if (!g_str_has_prefix (id_start + 1, parts_prefix))
-        continue;
+          /* Must match arch & branch */
+          if (!g_str_has_suffix (cur, ref_suffix))
+            continue;
 
-      g_ptr_array_add (res, g_strdup (cur));
+          id_start = strchr (cur, '/');
+          if (id_start == NULL)
+            continue;
+
+          /* But only prefix of id */
+          if (!g_str_has_prefix (id_start + 1, parts_prefix))
+            continue;
+
+          g_ptr_array_add (res, g_strdup (cur));
+        }
     }
 
   g_ptr_array_add (res, NULL);
@@ -2609,14 +2651,22 @@ flatpak_summary_match_subrefs (GVariant *summary, const char *ref)
 }
 
 gboolean
-flatpak_summary_lookup_ref (GVariant *summary, const char *ref, char **out_checksum, GVariant **out_variant)
+flatpak_summary_lookup_ref (GVariant    *summary,
+                            const char  *collection_id,
+                            const char  *ref,
+                            char       **out_checksum,
+                            GVariant   **out_variant)
 {
-  g_autoptr(GVariant) refs = g_variant_get_child_value (summary, 0);
+  g_autoptr(GVariant) refs = NULL;
   int pos;
   g_autoptr(GVariant) refdata = NULL;
   g_autoptr(GVariant) reftargetdata = NULL;
   guint64 commit_size;
   g_autoptr(GVariant) commit_csum_v = NULL;
+
+  refs = summary_find_refs_list (summary, collection_id);
+  if (refs == NULL)
+    return FALSE;
 
   if (!flatpak_variant_bsearch_str (refs, ref, &pos))
     return FALSE;
@@ -2988,6 +3038,14 @@ populate_commit_data_cache (GVariant   *metadata,
   g_autoptr(GVariant) cache_v = NULL;
   g_autoptr(GVariant) cache = NULL;
   gsize n, i;
+  const char *old_collection_id;
+
+#if FLATPAK_ENABLE_P2P
+  if (!g_variant_lookup (metadata, "ostree.summary.collection-id", "&s", &old_collection_id))
+    old_collection_id = NULL;
+#else  /* if !FLATPAK_ENABLE_P2P */
+  old_collection_id = NULL;
+#endif  /* !FLATPAK_ENABLE_P2P */
 
   cache_v = g_variant_lookup_value (metadata, "xa.cache", NULL);
 
@@ -3006,7 +3064,7 @@ populate_commit_data_cache (GVariant   *metadata,
       g_autoptr(GVariant) old_commit_data_v = g_variant_get_child_value (old_element, 1);
       CommitData *old_rev_data;
 
-      if (flatpak_summary_lookup_ref (summary, old_ref, &old_rev, NULL))
+      if (flatpak_summary_lookup_ref (summary, old_collection_id, old_ref, &old_rev, NULL))
         {
           guint64 old_installed_size, old_download_size;
           g_autofree char *old_metadata = NULL;

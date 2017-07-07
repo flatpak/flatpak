@@ -128,12 +128,14 @@ gboolean flatpak_variant_bsearch_str (GVariant   *array,
                                       int        *out_pos);
 GVariant *flatpak_repo_load_summary (OstreeRepo *repo,
                                      GError **error);
-char **  flatpak_summary_match_subrefs (GVariant *summary,
+char **  flatpak_summary_match_subrefs (GVariant   *summary,
+                                        const char *collection_id,
                                         const char *ref);
-gboolean flatpak_summary_lookup_ref (GVariant   *summary,
-                                     const char *ref,
-                                     char      **out_checksum,
-                                     GVariant **out_variant);
+gboolean flatpak_summary_lookup_ref (GVariant    *summary,
+                                     const char  *collection_id,
+                                     const char  *ref,
+                                     char       **out_checksum,
+                                     GVariant   **out_variant);
 
 gboolean flatpak_has_name_prefix (const char *string,
                                   const char *name);

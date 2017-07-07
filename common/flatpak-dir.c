@@ -2376,12 +2376,18 @@ flatpak_dir_lookup_ref_from_summary (FlatpakDir          *self,
 {
   g_autoptr(GVariant) summary = NULL;
   g_autofree char *latest_rev = NULL;
+  g_autofree char *collection_id = NULL;
 
   summary = fetch_remote_summary_file (self, remote, NULL, cancellable, error);
   if (summary == NULL)
     return NULL;
 
-  if (!flatpak_summary_lookup_ref (summary, ref, &latest_rev, out_variant))
+  /* Derive the collection ID from the remote we are querying. This will act as
+   * a sanity check on the summary ref lookup. */
+  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
+    return FALSE;
+
+  if (!flatpak_summary_lookup_ref (summary, collection_id, ref, &latest_rev, out_variant))
     {
       flatpak_fail (error, "No such ref '%s' in remote %s", ref, remote);
       return NULL;
@@ -3062,6 +3068,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
 
   summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
   if (!flatpak_summary_lookup_ref (summary,
+                                   collection_id,
                                    ref,
                                    &checksum, NULL))
     {
@@ -7150,6 +7157,7 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
 {
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GError) local_error = NULL;
+  g_autofree char *collection_id = NULL;
 
   summary = fetch_remote_summary_file (self, remote, NULL, NULL, &local_error);
   if (summary == NULL)
@@ -7158,7 +7166,15 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
       return FALSE;
     }
 
-  return flatpak_summary_lookup_ref (summary, ref, NULL, NULL);
+  /* Derive the collection ID from the remote we are querying. This will act as
+   * a sanity check on the summary ref lookup. */
+  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, &local_error))
+    {
+      g_debug ("Can’t get collection ID for remote %s: %s", remote, local_error->message);
+      return FALSE;
+    }
+
+  return flatpak_summary_lookup_ref (summary, collection_id, ref, NULL, NULL);
 }
 
 /* This duplicates ostree_repo_list_refs so it can use flatpak_dir_remote_fetch_summary
@@ -8914,8 +8930,14 @@ flatpak_dir_update_remote_configuration_for_repo_metadata (FlatpakDir    *self,
   g_autofree char *latest_rev = NULL;
   g_autoptr(GVariant) commit_v = NULL;
   g_autoptr(GVariant) metadata = NULL;
+  g_autofree char *collection_id = NULL;
 
-  if (!flatpak_summary_lookup_ref (summary, OSTREE_REPO_METADATA_REF, &latest_rev, NULL))
+  /* Derive the collection ID from the remote we are querying. This will act as
+   * a sanity check on the summary ref lookup. */
+  if (!repo_get_remote_collection_id (self->repo, remote, &collection_id, error))
+    return FALSE;
+
+  if (!flatpak_summary_lookup_ref (summary, collection_id, OSTREE_REPO_METADATA_REF, &latest_rev, NULL))
     return flatpak_fail (error, "No such ref '%s' in remote %s", OSTREE_REPO_METADATA_REF, remote);
 
   if (!ostree_repo_load_commit (self->repo, latest_rev, &commit_v, NULL, error))
@@ -9041,14 +9063,14 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
 }
 
 static gboolean
-flatpak_dir_parse_summary_for_ref (FlatpakDir   *self,
-                                   const char   *remote_name,
-                                   const char   *ref,
-                                   guint64      *download_size,
-                                   guint64      *installed_size,
-                                   char        **metadata,
-                                   GCancellable *cancellable,
-                                   GError      **error)
+flatpak_dir_parse_repo_metadata_for_ref (FlatpakDir    *self,
+                                         const char    *remote_name,
+                                         const char    *ref,
+                                         guint64       *download_size,
+                                         guint64       *installed_size,
+                                         char         **metadata,
+                                         GCancellable  *cancellable,
+                                         GError       **error)
 {
   g_autoptr(GVariant) cache_v = NULL;
   g_autoptr(GVariant) cache = NULL;
@@ -9109,15 +9131,16 @@ flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
                              GCancellable *cancellable,
                              GError      **error)
 {
-  return flatpak_dir_parse_summary_for_ref (self, remote_name, ref,
-                                            download_size, installed_size,
-                                            metadata,
-                                            cancellable, error);
+  return flatpak_dir_parse_repo_metadata_for_ref (self, remote_name, ref,
+                                                  download_size, installed_size,
+                                                  metadata,
+                                                  cancellable, error);
 }
 
 void
 flatpak_related_free (FlatpakRelated *self)
 {
+  g_free (self->collection_id);
   g_free (self->ref);
   g_free (self->commit);
   g_strfreev (self->subpaths);
@@ -9143,6 +9166,7 @@ static void
 add_related (FlatpakDir *self,
              GPtrArray *related,
              const char *extension,
+             const char *extension_collection_id,
              const char *extension_ref,
              const char *checksum,
              gboolean no_autodownload,
@@ -9203,6 +9227,7 @@ add_related (FlatpakDir *self,
   g_ptr_array_add (subpaths, NULL);
 
   rel = g_new0 (FlatpakRelated, 1);
+  rel->collection_id = g_strdup (extension_collection_id);
   rel->ref = g_strdup (extension_ref);
   rel->commit = g_strdup (checksum);
   rel->subpaths = (char **)g_ptr_array_free (g_steal_pointer (&subpaths), FALSE);
@@ -9226,6 +9251,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
   g_auto(GStrv) parts = NULL;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_related_free);
   g_autofree char *url = NULL;
+  g_autofree char *collection_id = NULL;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
@@ -9243,13 +9269,18 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
   if (*url == 0)
     return g_steal_pointer (&related);  /* Empty url, silently disables updates */
 
+  /* Derive the collection ID from the remote we are querying. This will act as
+   * a sanity check on the summary ref lookup. */
+  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
+    return NULL;
+
   summary = fetch_remote_summary_file (self, remote_name, NULL, cancellable, error);
   if (summary == NULL)
     return NULL;
 
-  if (flatpak_dir_parse_summary_for_ref (self, remote_name, ref,
-                                         NULL, NULL, &metadata,
-                                         NULL, NULL) &&
+  if (flatpak_dir_parse_repo_metadata_for_ref (self, remote_name, ref,
+                                               NULL, NULL, &metadata,
+                                               NULL, NULL) &&
       g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
     {
       g_auto(GStrv) groups = NULL;
@@ -9272,6 +9303,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                                                                     FLATPAK_METADATA_KEY_DOWNLOAD_IF, NULL);
               gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
                                                             FLATPAK_METADATA_KEY_AUTODELETE, NULL);
+              g_autofree char *extension_collection_id = NULL;
               const char *branch;
               g_autofree char *extension_ref = NULL;
               g_autofree char *checksum = NULL;
@@ -9281,20 +9313,39 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
               else
                 branch = parts[3];
 
+#ifdef FLATPAK_ENABLE_P2P
+              extension_collection_id = g_key_file_get_string (metakey, groups[i],
+                                                               FLATPAK_METADATA_KEY_COLLECTION_ID, NULL);
+#endif  /* FLATPAK_ENABLE_P2P */
+
+              /* For the moment, none of the related ref machinery handles
+               * collection IDs which don’t match the original ref. */
+              if (extension_collection_id != NULL && *extension_collection_id != '\0' &&
+                  g_strcmp0 (extension_collection_id, collection_id) != 0)
+                {
+                  g_debug ("Skipping related extension ‘%s’ because it’s in collection "
+                           "‘%s’ which does not match the current remote ‘%s’.",
+                           extension, extension_collection_id, collection_id);
+                  continue;
+                }
+
+              g_clear_pointer (&extension_collection_id, g_free);
+              extension_collection_id = g_strdup (collection_id);
+
               extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
 
-              if (flatpak_summary_lookup_ref (summary, extension_ref, &checksum, NULL))
+              if (flatpak_summary_lookup_ref (summary, extension_collection_id, extension_ref, &checksum, NULL))
                 {
-                  add_related (self, related, extension, extension_ref, checksum, no_autodownload, download_if, autodelete);
+                  add_related (self, related, extension, extension_collection_id, extension_ref, checksum, no_autodownload, download_if, autodelete);
                 }
               else if (subdirectories)
                 {
-                  g_auto(GStrv) refs = flatpak_summary_match_subrefs (summary, extension_ref);
+                  g_auto(GStrv) refs = flatpak_summary_match_subrefs (summary, extension_collection_id, extension_ref);
                   int j;
                   for (j = 0; refs[j] != NULL; j++)
                     {
-                      if (flatpak_summary_lookup_ref (summary, refs[j], &checksum, NULL))
-                        add_related (self, related, extension, refs[j], checksum, no_autodownload, download_if, autodelete);
+                      if (flatpak_summary_lookup_ref (summary, extension_collection_id, refs[j], &checksum, NULL))
+                        add_related (self, related, extension, extension_collection_id, refs[j], checksum, no_autodownload, download_if, autodelete);
                     }
                 }
             }
@@ -9362,6 +9413,12 @@ flatpak_dir_find_local_related (FlatpakDir *self,
   int i;
   g_auto(GStrv) parts = NULL;
   g_autoptr(GPtrArray) related = g_ptr_array_new_with_free_func ((GDestroyNotify)flatpak_related_free);
+  g_autofree char *collection_id = NULL;
+
+  /* Derive the collection ID from the remote we are querying. This will act as
+   * a sanity check on the summary ref lookup. */
+  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
+    return NULL;
 
   parts = flatpak_decompose_ref (ref, error);
   if (parts == NULL)
@@ -9408,11 +9465,32 @@ flatpak_dir_find_local_related (FlatpakDir *self,
               g_autofree char *extension_ref = NULL;
               g_autofree char *prefixed_extension_ref = NULL;
               g_autofree char *checksum = NULL;
+              g_autofree char *extension_collection_id = NULL;
 
               if (version)
                 branch = version;
               else
                 branch = parts[3];
+
+#ifdef FLATPAK_ENABLE_P2P
+              extension_collection_id = g_key_file_get_string (metakey, groups[i],
+                                                               FLATPAK_METADATA_KEY_COLLECTION_ID, NULL);
+#endif  /* FLATPAK_ENABLE_P2P */
+
+              /* As we’re looking locally, we can’t support extension
+               * collection IDs which don’t match the current remote (since the
+               * associated refs could be anywhere). */
+              if (extension_collection_id != NULL && *extension_collection_id != '\0' &&
+                  g_strcmp0 (extension_collection_id, collection_id) != 0)
+                {
+                  g_debug ("Skipping related extension ‘%s’ because it’s in collection "
+                           "‘%s’ which does not match the current remote ‘%s’.",
+                           extension, extension_collection_id, collection_id);
+                  continue;
+                }
+
+              g_clear_pointer (&extension_collection_id, g_free);
+              extension_collection_id = g_strdup (collection_id);
 
               extension_ref = g_build_filename ("runtime", extension, parts[2], branch, NULL);
               prefixed_extension_ref = g_strdup_printf ("%s:%s", remote_name, extension_ref);
@@ -9422,7 +9500,7 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                                            &checksum,
                                            NULL))
                 {
-                  add_related (self, related, extension, extension_ref,
+                  add_related (self, related, extension, extension_collection_id, extension_ref,
                                checksum, no_autodownload, download_if, autodelete);
                 }
               else if (subdirectories)
@@ -9444,7 +9522,7 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                                                    NULL))
                         {
                           add_related (self, related, extension,
-                                       match, match_checksum,
+                                       extension_collection_id, match, match_checksum,
                                        no_autodownload, download_if, autodelete);
                         }
                     }
