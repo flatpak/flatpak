@@ -3066,6 +3066,8 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
         return flatpak_fail (error, "GPG signatures found, but none are in trusted keyring");
     }
 
+  g_clear_object (&gpg_result);
+
   summary = g_variant_ref_sink (g_variant_new_from_bytes (OSTREE_SUMMARY_GVARIANT_FORMAT, summary_bytes, FALSE));
   if (!flatpak_summary_lookup_ref (summary,
                                    collection_id,
@@ -3089,8 +3091,71 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   if (!ostree_repo_open (src_repo, cancellable, error))
     return FALSE;
 
+  if (gpg_verify)
+    {
+      gpg_result = ostree_repo_verify_commit_for_remote (src_repo, checksum, remote_name, cancellable, error);
+      if (gpg_result == NULL)
+        return FALSE;
+
+      if (ostree_gpg_verify_result_count_valid (gpg_result) == 0)
+        return flatpak_fail (error, "GPG signatures found, but none are in trusted keyring");
+    }
+
+  g_clear_object (&gpg_result);
+
   if (!ostree_repo_load_commit (src_repo, checksum, &new_commit, NULL, error))
     return FALSE;
+
+#ifdef FLATPAK_ENABLE_P2P
+  if (gpg_verify)
+    {
+      /* Verify the commit’s binding to the ref and to the repo. See
+       * verify_bindings() in libostree. */
+      g_autoptr(GVariant) new_commit_metadata = g_variant_get_child_value (new_commit, 0);
+      g_autofree const char **commit_refs = NULL;
+
+      if (!g_variant_lookup (new_commit_metadata,
+                             "ostree.ref-binding",
+                             "^a&s",
+                             &commit_refs))
+        {
+          /* Early return here - if the remote collection ID is NULL, then
+           * we certainly will not verify the collection binding in the
+           * commit.
+           */
+          if (collection_id != NULL)
+            return flatpak_fail (error,
+                                 "expected commit metadata to have ref "
+                                 "binding information, found none");
+        }
+
+      if (collection_id != NULL &&
+          !g_strv_contains ((const char *const *) commit_refs, ref))
+        {
+          return flatpak_fail (error, "commit has no requested ref ‘%s’ "
+                               "in ref binding metadata",
+                               ref);
+        }
+
+      if (collection_id != NULL)
+        {
+          const char *commit_collection_id;
+          if (!g_variant_lookup (new_commit_metadata,
+                                 "ostree.collection-binding",
+                                 "&s",
+                                 &commit_collection_id))
+            return flatpak_fail (error,
+                                 "expected commit metadata to have collection ID "
+                                 "binding information, found none");
+          if (!g_str_equal (commit_collection_id, collection_id))
+            return flatpak_fail (error,
+                                 "commit has collection ID ‘%s’ in collection binding "
+                                 "metadata, while the remote it came from has "
+                                 "collection ID ‘%s’",
+                                 commit_collection_id, collection_id);
+        }
+    }
+#endif  /* FLATPAK_ENABLE_P2P */
 
   if (old_commit)
     {
