@@ -26,6 +26,7 @@
 #include <gelf.h>
 #include <dwarf.h>
 #include <sys/mman.h>
+#include <sys/uio.h>
 #include <stdio.h>
 
 #include <string.h>
@@ -1704,4 +1705,21 @@ builder_serializable_find_property_with_error (JsonSerializable *serializable,
       !g_str_has_prefix (name, "x-"))
     g_warning ("Unknown property %s for type %s\n", name, g_type_name_from_instance ((GTypeInstance *)serializable));
   return pspec;
+}
+
+void
+builder_set_term_title (const gchar *format,
+                        ...)
+{
+  g_autofree gchar *message = NULL;
+  va_list args;
+
+  if (isatty (STDOUT_FILENO) != 1)
+    return;
+
+  va_start (args, format);
+  message = g_strdup_vprintf (format, args);
+  va_end (args);
+
+  g_print ("\033]2;flatpak-builder: %s\007", message);
 }
