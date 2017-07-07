@@ -1233,7 +1233,15 @@ parse_negated (const char *option, gboolean *negated)
   return option;
 }
 
-/* This is a merge, not a replace */
+/*
+ * Merge the FLATPAK_METADATA_GROUP_CONTEXT,
+ * FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
+ * FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY and
+ * FLATPAK_METADATA_GROUP_ENVIRONMENT groups, and all groups starting
+ * with FLATPAK_METADATA_GROUP_PREFIX_POLICY, from metakey into context.
+ *
+ * This is a merge, not a replace!
+ */
 gboolean
 flatpak_context_load_metadata (FlatpakContext *context,
                                GKeyFile       *metakey,
@@ -1444,6 +1452,13 @@ flatpak_context_load_metadata (FlatpakContext *context,
   return TRUE;
 }
 
+/*
+ * Save the FLATPAK_METADATA_GROUP_CONTEXT,
+ * FLATPAK_METADATA_GROUP_SESSION_BUS_POLICY,
+ * FLATPAK_METADATA_GROUP_SYSTEM_BUS_POLICY and
+ * FLATPAK_METADATA_GROUP_ENVIRONMENT groups, and all groups starting
+ * with FLATPAK_METADATA_GROUP_PREFIX_POLICY, into metakey
+ */
 void
 flatpak_context_save_metadata (FlatpakContext *context,
                                gboolean        flatten,
