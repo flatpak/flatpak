@@ -4724,7 +4724,7 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
         }
 
       /* Success! It is valid */
-      g_debug ("Verified OCI signature for %s %s\n", signature->critical.identity.ref, digest);
+      g_debug ("Verified OCI signature for %s %s", signature->critical.identity.ref, digest);
     }
 
   annotations = flatpak_oci_manifest_get_annotations (manifest);
@@ -5101,7 +5101,7 @@ stream_closed (GObject *source, GAsyncResult *res, gpointer user_data)
   g_autoptr(GError) error = NULL;
 
   if (!g_input_stream_close_finish (stream, res, &error))
-    g_warning ("Error closing http stream: %s\n", error->message);
+    g_warning ("Error closing http stream: %s", error->message);
 
   g_main_loop_quit (data->loop);
 }

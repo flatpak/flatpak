@@ -462,7 +462,7 @@ xdg_permission_store_start (GDBusConnection *connection)
                                          "/org/freedesktop/impl/portal/PermissionStore",
                                          &error))
     {
-      g_warning ("error: %s\n", error->message);
+      g_warning ("error: %s", error->message);
       g_error_free (error);
     }
 }

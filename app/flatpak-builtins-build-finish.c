@@ -150,7 +150,7 @@ export_dir (int           source_parent_fd,
       else
         {
           source_printable = g_build_filename (source_relpath, dent->d_name, NULL);
-          g_debug ("Not exporting non-regular file %s\n", source_printable);
+          g_debug ("Not exporting non-regular file %s", source_printable);
         }
     }
 

@@ -381,7 +381,7 @@ append_locations_from_config_file (GPtrArray    *locations,
 
   if (!g_key_file_load_from_file (keyfile, file_path, G_KEY_FILE_NONE, &my_error))
     {
-      g_debug ("Could not get list of system installations: %s\n", my_error->message);
+      g_debug ("Could not get list of system installations: %s", my_error->message);
       g_propagate_error (error, g_steal_pointer (&my_error));
       goto out;
     }
@@ -414,7 +414,7 @@ append_locations_from_config_file (GPtrArray    *locations,
       path = g_key_file_get_string (keyfile, groups[i], "Path", &my_error);
       if (path == NULL)
         {
-          g_debug ("Unable to get path for installation '%s': %s\n", id, my_error->message);
+          g_debug ("Unable to get path for installation '%s': %s", id, my_error->message);
           g_propagate_error (error, g_steal_pointer (&my_error));
           goto out;
         }
@@ -667,7 +667,7 @@ flatpak_dir_get_system_helper (FlatpakDir *self)
                                                       NULL, &error);
       if (error != NULL)
         {
-          g_warning ("Can't find org.freedesktop.Flatpak.SystemHelper: %s\n", error->message);
+          g_warning ("Can't find org.freedesktop.Flatpak.SystemHelper: %s", error->message);
           system_helper = NO_SYSTEM_HELPER;
         }
       else
@@ -1654,7 +1654,7 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
     {
       old_checkout_dir = g_file_get_child (arch_dir, old_checksum);
       if (!flatpak_rm_rf (old_checkout_dir, cancellable, &tmp_error))
-        g_warning ("Unable to remove old appstream checkout: %s\n", tmp_error->message);
+        g_warning ("Unable to remove old appstream checkout: %s", tmp_error->message);
     }
 
   if (!g_file_replace_contents (timestamp_file, "", 0, NULL, FALSE,
@@ -2396,7 +2396,7 @@ flatpak_dir_mirror_oci (FlatpakDir          *self,
 
   oci_pull_init_progress (progress);
 
-  g_debug ("Mirroring OCI image %s\n", oci_digest);
+  g_debug ("Mirroring OCI image %s", oci_digest);
 
   res = flatpak_mirror_image_from_oci (dst_registry, registry, oci_digest, signature_digest, oci_pull_progress_cb,
                                        progress, cancellable, error);
@@ -2494,7 +2494,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
 
   oci_pull_init_progress (progress);
 
-  g_debug ("Pulling OCI image %s\n", oci_digest);
+  g_debug ("Pulling OCI image %s", oci_digest);
 
   checksum = flatpak_pull_from_oci (repo, registry, oci_digest, FLATPAK_OCI_MANIFEST (versioned),
                                     remote, ref, signature_digest, oci_pull_progress_cb, progress, cancellable, error);
@@ -2505,7 +2505,7 @@ flatpak_dir_pull_oci (FlatpakDir          *self,
   if (checksum == NULL)
     return FALSE;
 
-  g_debug ("Imported OCI image as checksum %s\n", checksum);
+  g_debug ("Imported OCI image as checksum %s", checksum);
 
   return TRUE;
 }
@@ -6179,7 +6179,7 @@ flatpak_dir_undeploy (FlatpakDir   *self,
 
       if (!flatpak_rm_rf (removed_subdir, cancellable, &tmp_error))
         {
-          g_warning ("Unable to remove old checkout: %s\n", tmp_error->message);
+          g_warning ("Unable to remove old checkout: %s", tmp_error->message);
           g_error_free (tmp_error);
         }
     }
@@ -6302,7 +6302,7 @@ flatpak_dir_cleanup_removed (FlatpakDir   *self,
           GError *tmp_error = NULL;
           if (!flatpak_rm_rf (child, cancellable, &tmp_error))
             {
-              g_warning ("Unable to remove old checkout: %s\n", tmp_error->message);
+              g_warning ("Unable to remove old checkout: %s", tmp_error->message);
               g_error_free (tmp_error);
             }
         }
@@ -6764,7 +6764,7 @@ flatpak_dir_remote_has_ref (FlatpakDir   *self,
   summary = fetch_remote_summary_file (self, remote, NULL, NULL, &local_error);
   if (summary == NULL)
     {
-      g_debug ("Can't get summary for remote %s: %s\n", remote, local_error->message);
+      g_debug ("Can't get summary for remote %s: %s", remote, local_error->message);
       return FALSE;
     }
 

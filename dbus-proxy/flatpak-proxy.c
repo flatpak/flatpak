@@ -1449,7 +1449,7 @@ get_dbus_method_handler (FlatpakProxyClient *client, Header *header)
           strcmp (method, "ListActivatableNames") == 0)
         return HANDLE_FILTER_NAME_LIST_REPLY;
 
-      g_warning ("Unknown bus method %s\n", method);
+      g_warning ("Unknown bus method %s", method);
       return HANDLE_DENY;
     }
   else
@@ -2100,7 +2100,7 @@ got_buffer_from_bus (FlatpakProxyClient *client, ProxySide *side, Buffer *buffer
               break;
 
             default:
-              g_warning ("Unexpected expected reply type %d\n", expected_reply);
+              g_warning ("Unexpected expected reply type %d", expected_reply);
             }
         }
       else /* Not reply */
@@ -2346,7 +2346,7 @@ client_connected_to_dbus (GObject      *source_object,
   stream = g_dbus_address_get_stream_finish (res, NULL, &error);
   if (stream == NULL)
     {
-      g_warning ("Failed to connect to bus: %s\n", error->message);
+      g_warning ("Failed to connect to bus: %s", error->message);
       g_object_unref (client);
       return;
     }

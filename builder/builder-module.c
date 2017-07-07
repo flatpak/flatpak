@@ -1189,7 +1189,7 @@ builder_module_ensure_writable (BuilderModule  *self,
       const char *path = key;
       g_autoptr(GFile) dest = g_file_resolve_relative_path (app_dir, path);
 
-      g_debug ("Breaking hardlink %s\n", path);
+      g_debug ("Breaking hardlink %s", path);
       if (!flatpak_break_hardlink (dest, error))
         return FALSE;
     }

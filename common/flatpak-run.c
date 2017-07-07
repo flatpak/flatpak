@@ -2736,7 +2736,7 @@ export_paths_export_context (FlatpakContext *context,
 
           if (!get_xdg_user_dir_from_string (filesystem, &config_key, &rest, &path))
             {
-              g_warning ("Unsupported xdg dir %s\n", filesystem);
+              g_warning ("Unsupported xdg dir %s", filesystem);
               continue;
             }
 
@@ -2748,7 +2748,7 @@ export_paths_export_context (FlatpakContext *context,
               /* xdg-user-dirs sets disabled dirs to $HOME, and its in general not a good
                  idea to set full access to $HOME other than explicitly, so we ignore
                  these */
-              g_debug ("Xdg dir %s is $HOME (i.e. disabled), ignoring\n", filesystem);
+              g_debug ("Xdg dir %s is $HOME (i.e. disabled), ignoring", filesystem);
               continue;
             }
 
@@ -2788,7 +2788,7 @@ export_paths_export_context (FlatpakContext *context,
         }
       else
         {
-          g_warning ("Unexpected filesystem arg %s\n", filesystem);
+          g_warning ("Unexpected filesystem arg %s", filesystem);
         }
     }
 
@@ -3070,7 +3070,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
     {
       /* We still run along even if we don't get a cgroup, as nothing
          really depends on it. Its just nice to have */
-      g_debug ("Failed to run in transient scope: %s\n", my_error->message);
+      g_debug ("Failed to run in transient scope: %s", my_error->message);
       g_clear_error (&my_error);
     }
 
@@ -3689,7 +3689,7 @@ add_document_portal_args (GPtrArray   *argv_array,
         {
           if (g_dbus_message_to_gerror (reply, &local_error))
             {
-              g_message ("Can't get document portal: %s\n", local_error->message);
+              g_message ("Can't get document portal: %s", local_error->message);
             }
           else
             {
@@ -4456,7 +4456,7 @@ add_rest_args (const char  *app_id,
 
   if (file_forwarding && doc_mount_path == NULL)
     {
-      g_message ("Can't get document portal mount path\n");
+      g_message ("Can't get document portal mount path");
       can_forward = FALSE;
     }
   else if (file_forwarding)
@@ -4470,7 +4470,7 @@ add_rest_args (const char  *app_id,
                                                              &local_error);
       if (documents == NULL)
         {
-          g_message ("Can't get document portal: %s\n", local_error->message);
+          g_message ("Can't get document portal: %s", local_error->message);
           can_forward = FALSE;
         }
     }
