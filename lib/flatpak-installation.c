@@ -1112,7 +1112,7 @@ flatpak_installation_load_app_overrides (FlatpakInstallation *self,
  * @error: return location for a #GError
  *
  * Install an application or runtime from an flatpak bundle file.
- * See flatpak-build-bundle(1) for how to create brundles.
+ * See flatpak-build-bundle(1) for how to create bundles.
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
