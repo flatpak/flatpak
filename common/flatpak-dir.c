@@ -8581,7 +8581,7 @@ add_related (FlatpakDir *self,
 
   if (g_str_has_suffix (extension, ".Locale"))
     {
-      g_autofree char ** current_subpaths = flatpak_get_current_locale_subpaths ();
+      g_autofree char ** current_subpaths = flatpak_dir_get_locale_subpaths (self);
       for (i = 0; current_subpaths[i] != NULL; i++)
         {
           g_autofree char *subpath = current_subpaths[i];
@@ -8848,4 +8848,19 @@ flatpak_dir_find_local_related (FlatpakDir *self,
     }
 
   return g_steal_pointer (&related);
+}
+
+char **
+flatpak_dir_get_locale_subpaths (FlatpakDir *self)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+  char **subpaths = NULL;
+
+  if (config)
+    subpaths = g_key_file_get_string_list (config, "core", "xa.languages", NULL, NULL);
+
+  if (!subpaths)
+    subpaths = flatpak_get_current_locale_subpaths ();
+
+  return subpaths;
 }
