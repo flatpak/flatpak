@@ -154,7 +154,7 @@ msgstr "Zu viele Argumente"
 #: app/flatpak-builtins-add-remote.c:323
 #, c-format
 msgid "Remote %s already exists"
-msgstr "Entfernte Quelle %s existiert bereits"
+msgstr "Entfernt gelegene Quelle %s existiert bereits"
 
 #: app/flatpak-builtins-add-remote.c:331
 msgid "No url specified in flatpakrepo file"
