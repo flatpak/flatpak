@@ -1261,7 +1261,7 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
     ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
   if (!flatpak_dir_install (dir_clone, FALSE, FALSE,
-                            (flags & FLATPAK_UPDATE_FLAGS_NO_STATIC_DELTAS) != 0,
+                            (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
                             ref, remote_name, (const char **)subpaths,
                             ostree_progress, cancellable, error))
     goto out;
