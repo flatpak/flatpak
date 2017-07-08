@@ -8860,7 +8860,12 @@ flatpak_dir_get_locale_subpaths (FlatpakDir *self)
     subpaths = g_key_file_get_string_list (config, "core", "xa.languages", NULL, NULL);
 
   if (!subpaths)
-    subpaths = flatpak_get_current_locale_subpaths ();
+    {
+      if (flatpak_dir_is_user (self))
+        subpaths = flatpak_get_current_locale_subpaths ();
+      else
+        subpaths = g_new0 (char *, 1);
+    }
 
   return subpaths;
 }
