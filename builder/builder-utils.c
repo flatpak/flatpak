@@ -1341,7 +1341,7 @@ builder_get_debuginfo_file_references (const char *filename, GError **error)
     return NULL;
 
   if (elf_end (elf) < 0)
-    g_warning ("elf_end failed: %s\n", elf_errmsg (elf_errno ()));
+    g_warning ("elf_end failed: %s", elf_errmsg (elf_errno ()));
 
   res = (char **) g_hash_table_get_keys_as_array (files, NULL);
   g_hash_table_steal_all (files);
@@ -1703,7 +1703,7 @@ builder_serializable_find_property_with_error (JsonSerializable *serializable,
   GParamSpec *pspec = g_object_class_find_property (G_OBJECT_GET_CLASS (serializable), name);
   if (pspec == NULL &&
       !g_str_has_prefix (name, "x-"))
-    g_warning ("Unknown property %s for type %s\n", name, g_type_name_from_instance ((GTypeInstance *)serializable));
+    g_warning ("Unknown property %s for type %s", name, g_type_name_from_instance ((GTypeInstance *)serializable));
   return pspec;
 }
 

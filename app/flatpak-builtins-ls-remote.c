@@ -132,7 +132,7 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       parts = flatpak_decompose_ref (ref, NULL);
       if (parts == NULL)
         {
-          g_debug ("Invalid remote ref %s\n", ref);
+          g_debug ("Invalid remote ref %s", ref);
           continue;
         }
 

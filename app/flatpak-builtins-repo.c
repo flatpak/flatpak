@@ -151,11 +151,10 @@ flatpak_builtin_repo (int argc, char **argv,
                       GCancellable *cancellable, GError **error)
 {
   g_autoptr(GOptionContext) context = NULL;
-  g_autofree char *location = NULL;
-  g_autofree char *data = NULL;
-  gsize size;
+  g_autoptr(GFile) location = NULL;
   g_autoptr(GVariant) summary = NULL;
   g_autoptr(GVariant) meta = NULL;
+  g_autoptr(OstreeRepo) repo = NULL;
 
   context = g_option_context_new (_("LOCATION - Repository maintenance"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -166,16 +165,14 @@ flatpak_builtin_repo (int argc, char **argv,
   if (argc < 2)
     return usage_error (context, _("LOCATION must be specified"), error);
 
-  location = g_build_filename (argv[1], "summary", NULL);
+  location = g_file_new_for_commandline_arg (argv[1]);
+  repo = ostree_repo_new (location);
+  if (!ostree_repo_open (repo, cancellable, error))
+    return FALSE;
 
-  if (!g_file_get_contents (location, &data, &size, error)) {
-    exit (1);
-  }
-
-  summary = g_variant_new_from_data (OSTREE_SUMMARY_GVARIANT_FORMAT,
-                                     data, size,
-                                     FALSE, NULL, NULL);
-  g_variant_ref_sink (summary);
+  summary = flatpak_repo_load_summary (repo, error);
+  if (summary == NULL)
+    return FALSE;
   meta = g_variant_get_child_value (summary, 1);
 
   if (opt_info)

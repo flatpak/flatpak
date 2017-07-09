@@ -74,7 +74,7 @@ main (int argc, char *argv[])
 
               if (related == NULL)
                 {
-                  g_warning ("Error: %s\n", error->message);
+                  g_warning ("Error: %s", error->message);
                   continue;
                 }
 

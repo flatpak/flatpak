@@ -808,7 +808,7 @@ main (int    argc,
 
   if (!builder_gc (cache, &error))
     {
-      g_warning ("Failed to GC build cache: %s\n", error->message);
+      g_warning ("Failed to GC build cache: %s", error->message);
       g_clear_error (&error);
     }
 
