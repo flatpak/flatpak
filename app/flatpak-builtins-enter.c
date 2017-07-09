@@ -104,6 +104,10 @@ flatpak_builtin_enter (int           argc,
       return FALSE;
     }
 
+  /* Before further checks, warn if we are not already root */
+  if (geteuid () != 0)
+    g_printerr ("%s\n", _("Not running as root, may be unable to enter namespace"));
+
   pid_s = argv[rest_argv_start];
 
   pid = atoi (pid_s);
