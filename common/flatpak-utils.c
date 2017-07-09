@@ -2587,7 +2587,7 @@ flatpak_summary_match_subrefs (GVariant *summary, const char *ref)
         continue;
 
       /* Must match arch & branch */
-      if (!g_str_has_prefix (cur, ref_prefix))
+      if (!g_str_has_suffix (cur, ref_suffix))
         continue;
 
       id_start = strchr (cur, '/');
