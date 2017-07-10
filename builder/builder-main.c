@@ -453,6 +453,12 @@ main (int    argc,
   if (is_run && argc == 3)
     return usage (context, "Program to run must be specified");
 
+  if (opt_show_deps && !is_show_deps)
+    return usage (context, "Can't use --show-deps after a non-option");
+
+  if (opt_run && !is_run)
+    return usage (context, "Can't use --run after a non-option");
+
   if (is_show_deps)
     {
       if (!builder_manifest_show_deps (manifest, build_context, &error))
