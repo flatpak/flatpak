@@ -160,6 +160,28 @@ test_tmpfile (void)
   g_assert_no_error (local_error);
 }
 
+static void
+test_stdio_file (void)
+{
+  g_autoptr(GError) local_error = NULL;
+  GError **error = &local_error;
+  g_auto(GLnxTmpfile) tmpf = { 0, };
+  if (!glnx_open_anonymous_tmpfile (O_RDWR|O_CLOEXEC, &tmpf, error))
+    goto out;
+
+  g_autoptr(FILE) f = fdopen (tmpf.fd, "w");
+  if (fwrite ("hello", 1, strlen ("hello"), f) != strlen ("hello"))
+    {
+      (void)glnx_throw_errno_prefix (error, "fwrite");
+      goto out;
+    }
+  if (!glnx_stdio_file_flush (f, error))
+    goto out;
+
+ out:
+  g_assert_no_error (local_error);
+}
+
 int main (int argc, char **argv)
 {
   int ret;
@@ -167,6 +189,7 @@ int main (int argc, char **argv)
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/tmpfile", test_tmpfile);
+  g_test_add_func ("/stdio-file", test_stdio_file);
   g_test_add_func ("/renameat2-noreplace", test_renameat2_noreplace);
   g_test_add_func ("/renameat2-exchange", test_renameat2_exchange);
 

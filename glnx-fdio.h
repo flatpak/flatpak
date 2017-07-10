@@ -50,6 +50,23 @@ const char *glnx_basename (const char *path)
   return (basename) (path);
 }
 
+/* Utilities for standard FILE* */
+static inline void
+glnx_stdio_file_cleanup (void *filep)
+{
+  FILE *f = filep;
+  if (f)
+    fclose (f);
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(FILE, glnx_stdio_file_cleanup)
+
+/**
+ * glnx_stdio_file_flush:
+ * Call fflush() and check ferror().
+ */
+gboolean
+glnx_stdio_file_flush (FILE *f, GError **error);
+
 typedef struct {
   gboolean initialized;
   gboolean anonymous;

@@ -53,6 +53,15 @@
             sizeof(type) <= 4 ? 10 :                                    \
             sizeof(type) <= 8 ? 20 : sizeof(int[-2*(sizeof(type) > 8)])))
 
+gboolean
+glnx_stdio_file_flush (FILE *f, GError **error)
+{
+  if (fflush (f) != 0)
+    return glnx_throw_errno_prefix (error, "fflush");
+  if (ferror (f) != 0)
+    return glnx_throw_errno_prefix (error, "ferror");
+  return TRUE;
+}
 
 /* An implementation of renameat2(..., RENAME_NOREPLACE)
  * with fallback to a non-atomic version.
