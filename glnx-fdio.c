@@ -169,12 +169,11 @@ glnx_tmpfile_clear (GLnxTmpfile *tmpf)
   tmpf->initialized = FALSE;
 }
 
-/* Allocate a temporary file, using Linux O_TMPFILE if available.
+/* Allocate a temporary file, using Linux O_TMPFILE if available. The file mode
+ * will be 0600.
+ *
  * The result will be stored in @out_tmpf, which is caller allocated
  * so you can store it on the stack in common scenarios.
- *
- * Note that with O_TMPFILE, the file mode will be `000`; you likely
- * want to chmod it before calling glnx_link_tmpfile_at().
  *
  * The directory fd @dfd must live at least as long as the output @out_tmpf.
  */
@@ -185,6 +184,7 @@ glnx_open_tmpfile_linkable_at (int dfd,
                                GLnxTmpfile *out_tmpf,
                                GError **error)
 {
+  const guint mode = 0600;
   glnx_fd_close int fd = -1;
   int count;
 
@@ -200,11 +200,16 @@ glnx_open_tmpfile_linkable_at (int dfd,
    * link_tmpfile() below to rename the result after writing the file
    * in full. */
 #if defined(O_TMPFILE) && !defined(DISABLE_OTMPFILE) && !defined(ENABLE_WRPSEUDO_COMPAT)
-  fd = openat (dfd, subpath, O_TMPFILE|flags, 0600);
+  fd = openat (dfd, subpath, O_TMPFILE|flags, mode);
   if (fd == -1 && !(G_IN_SET(errno, ENOSYS, EISDIR, EOPNOTSUPP)))
     return glnx_throw_errno_prefix (error, "open(O_TMPFILE)");
   if (fd != -1)
     {
+      /* Workaround for https://sourceware.org/bugzilla/show_bug.cgi?id=17523
+       * See also https://github.com/ostreedev/ostree/issues/991
+       */
+      if (fchmod (fd, mode) < 0)
+        return glnx_throw_errno_prefix (error, "fchmod");
       out_tmpf->initialized = TRUE;
       out_tmpf->src_dfd = dfd; /* Copied; caller must keep open */
       out_tmpf->fd = glnx_steal_fd (&fd);
@@ -221,7 +226,7 @@ glnx_open_tmpfile_linkable_at (int dfd,
       {
         glnx_gen_temp_name (tmp);
 
-        fd = openat (dfd, tmp, O_CREAT|O_EXCL|O_NOFOLLOW|O_NOCTTY|flags, 0600);
+        fd = openat (dfd, tmp, O_CREAT|O_EXCL|O_NOFOLLOW|O_NOCTTY|flags, mode);
         if (fd < 0)
           {
             if (errno == EEXIST)

@@ -137,12 +137,36 @@ test_renameat2_exchange (void)
   g_assert_no_error (local_error);
 }
 
+static void
+test_tmpfile (void)
+{
+  g_autoptr(GError) local_error = NULL;
+  GError **error = &local_error;
+  g_auto(GLnxTmpfile) tmpf = { 0, };
+
+  if (!glnx_open_tmpfile_linkable_at (AT_FDCWD, ".", O_WRONLY|O_CLOEXEC, &tmpf, error))
+    goto out;
+
+  if (glnx_loop_write (tmpf.fd, "foo", strlen ("foo")) < 0)
+    {
+      (void)glnx_throw_errno_prefix (error, "write");
+      goto out;
+    }
+
+  if (glnx_link_tmpfile_at (&tmpf, GLNX_LINK_TMPFILE_NOREPLACE, AT_FDCWD, "foo", error))
+    goto out;
+
+ out:
+  g_assert_no_error (local_error);
+}
+
 int main (int argc, char **argv)
 {
   int ret;
 
   g_test_init (&argc, &argv, NULL);
 
+  g_test_add_func ("/tmpfile", test_tmpfile);
   g_test_add_func ("/renameat2-noreplace", test_renameat2_noreplace);
   g_test_add_func ("/renameat2-exchange", test_renameat2_exchange);
 
