@@ -236,8 +236,7 @@ glnx_fstat (int           fd,
             GError      **error)
 {
   if (TEMP_FAILURE_RETRY (fstat (fd, buf)) != 0)
-    return glnx_throw_errno (error);
-
+    return glnx_throw_errno_prefix (error, "fstat");
   return TRUE;
 }
 
