@@ -181,11 +181,6 @@ glnx_file_copy_at (int                   src_dfd,
                    GCancellable         *cancellable,
                    GError              **error);
 
-gboolean
-glnx_stream_fstat (GFileDescriptorBased *stream,
-                   struct stat          *stbuf,
-                   GError              **error);
-
 int glnx_renameat2_noreplace (int olddirfd, const char *oldpath,
                               int newdirfd, const char *newpath);
 int glnx_renameat2_exchange (int olddirfd, const char *oldpath,

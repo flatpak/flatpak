@@ -1022,28 +1022,3 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
 
   return TRUE;
 }
-
-/**
- * glnx_stream_fstat:
- * @stream: A stream containing a Unix file descriptor
- * @stbuf: Memory location to write stat buffer
- * @error:
- *
- * Some streams created via libgsystem are #GUnixInputStream; these do
- * not support e.g. g_file_input_stream_query_info().  This function
- * allows dropping to the raw unix fstat() call for these types of
- * streams, while still conveniently wrapped with the normal GLib
- * handling of @error.
- */
-gboolean
-glnx_stream_fstat (GFileDescriptorBased *stream,
-                   struct stat          *stbuf,
-                   GError              **error)
-{
-  int fd = g_file_descriptor_based_get_fd (stream);
-
-  if (fstat (fd, stbuf) == -1)
-    return glnx_throw_errno_prefix (error, "fstat");
-
-  return TRUE;
-}
