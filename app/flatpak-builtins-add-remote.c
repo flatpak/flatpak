@@ -290,6 +290,7 @@ flatpak_builtin_add_remote (int argc, char **argv,
   g_autoptr(GKeyFile) config = NULL;
   g_autoptr(GBytes) gpg_data = NULL;
   gboolean changed = FALSE;
+  g_autoptr(GError) local_error = NULL;
 
   context = g_option_context_new (_("NAME LOCATION - Add a remote repository"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -361,8 +362,23 @@ flatpak_builtin_add_remote (int argc, char **argv,
     return FALSE;
 
   /* We can't retrieve the extra metadata until the remote has been added locally, since
-     ostree_repo_remote_fetch_summary() works with the repository's name, not its URL. */
-  return flatpak_dir_update_remote_configuration (dir, remote_name, cancellable, error);
+     ostree_repo_remote_fetch_summary() works with the repository's name, not its URL.
+     Don't propagate IO failed errors here because we might just be offline - the
+     remote should already be usable. */
+  if (!flatpak_dir_update_remote_configuration (dir, remote_name, cancellable, &local_error))
+    {
+      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_FAILED))
+        {
+          g_printerr (_("Warning: Could not update extra metadata for '%s': %s\n"), remote_name, local_error->message);
+        }
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&local_error));
+          return FALSE;
+        }
+    }
+
+  return TRUE;
 }
 
 gboolean
