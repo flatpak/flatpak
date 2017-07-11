@@ -242,6 +242,28 @@ glnx_fstat (int           fd,
 }
 
 /**
+ * glnx_fchmod:
+ * @fd: FD
+ * @mode: Mode
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Wrapper around fchmod() which adds #GError support and ensures that it
+ * retries on %EINTR.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ * Since: UNRELEASED
+ */
+static inline gboolean
+glnx_fchmod (int           fd,
+             mode_t        mode,
+             GError      **error)
+{
+  if (TEMP_FAILURE_RETRY (fchmod (fd, mode)) != 0)
+    return glnx_throw_errno_prefix (error, "fchmod");
+  return TRUE;
+}
+
+/**
  * glnx_fstatat:
  * @dfd: Directory FD to stat beneath
  * @path: Path to stat beneath @dfd
