@@ -79,6 +79,7 @@ libglnx_srcpath := $(srcdir)/libglnx
 libglnx_cflags := \
 	$(BASE_CFLAGS) \
 	"-I$(libglnx_srcpath)" \
+	-std=gnu99 \
 	$(HIDDEN_VISIBILITY_CFLAGS) \
 	$(NULL)
 libglnx_libs := $(BASE_LIBS)
