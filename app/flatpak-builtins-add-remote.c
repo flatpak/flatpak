@@ -367,7 +367,8 @@ flatpak_builtin_add_remote (int argc, char **argv,
      remote should already be usable. */
   if (!flatpak_dir_update_remote_configuration (dir, remote_name, cancellable, &local_error))
     {
-      if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_FAILED))
+      if (local_error->domain == G_RESOLVER_ERROR ||
+          g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_FAILED))
         {
           g_printerr (_("Warning: Could not update extra metadata for '%s': %s\n"), remote_name, local_error->message);
         }
