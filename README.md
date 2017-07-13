@@ -17,7 +17,7 @@ Why?
 ----
 
 There are multiple projects which have a hard dependency on Linux and
-GLib, such as NetworkManager, ostree, xdg-app, etc.  It makes sense
+GLib, such as NetworkManager, ostree, flatpak, etc.  It makes sense
 for them to be able to share Linux-specific APIs.
 
 This module also contains some code taken from systemd, which has very
