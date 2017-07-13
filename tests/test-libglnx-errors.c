@@ -125,6 +125,48 @@ test_error_errno (void)
     g_assert_cmpint (fd, ==, -1);
 }
 
+static void
+test_error_auto_nothrow (GError **error)
+{
+  GLNX_AUTO_PREFIX_ERROR("foo", error);
+  /* Side effect to avoid otherwise empty function */
+  g_assert_no_error (*error);
+}
+
+static void
+test_error_auto_throw (GError **error)
+{
+  GLNX_AUTO_PREFIX_ERROR("foo", error);
+  (void) glnx_throw (error, "oops");
+}
+
+static void
+test_error_auto_throw_recurse (GError **error)
+{
+  GLNX_AUTO_PREFIX_ERROR("foo", error);
+
+  if (TRUE)
+    {
+      GLNX_AUTO_PREFIX_ERROR("bar", error);
+      (void) glnx_throw (error, "oops");
+    }
+}
+
+static void
+test_error_auto (void)
+{
+  g_autoptr(GError) error = NULL;
+  test_error_auto_nothrow (&error);
+  g_assert_no_error (error);
+  test_error_auto_throw (&error);
+  g_assert_nonnull (error);
+  g_assert_cmpstr (error->message, ==, "foo: oops");
+  g_clear_error (&error);
+  test_error_auto_throw_recurse (&error);
+  g_assert_nonnull (error);
+  g_assert_cmpstr (error->message, ==, "foo: bar: oops");
+}
+
 int main (int argc, char **argv)
 {
   int ret;
@@ -133,6 +175,7 @@ int main (int argc, char **argv)
 
   g_test_add_func ("/error-throw", test_error_throw);
   g_test_add_func ("/error-errno", test_error_errno);
+  g_test_add_func ("/error-auto", test_error_auto);
 
   ret = g_test_run();
 
