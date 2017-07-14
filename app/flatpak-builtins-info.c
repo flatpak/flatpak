@@ -78,7 +78,6 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   g_autoptr(FlatpakDeploy) deploy = NULL;
   g_autoptr(GKeyFile) metakey = NULL;
   const char *commit = NULL;
-  const char *latest = NULL;
   const char *alt_id = NULL;
   const char *pref = NULL;
   const char *default_branch = NULL;
@@ -141,7 +140,6 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
   commit = flatpak_deploy_data_get_commit (deploy_data);
   alt_id = flatpak_deploy_data_get_alt_id (deploy_data);
   origin = flatpak_deploy_data_get_origin (deploy_data);
-  latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
   size = flatpak_deploy_data_get_installed_size (deploy_data);
   formatted = g_format_size (size);
   path = g_file_get_path (flatpak_deploy_get_dir (deploy));
@@ -154,6 +152,10 @@ flatpak_builtin_info (int argc, char **argv, GCancellable *cancellable, GError *
 
   if (friendly)
     {
+      const char *latest = flatpak_dir_read_latest (dir, origin, ref, NULL, NULL, NULL);
+      if (latest == NULL)
+        latest = _("ref not present in origin");
+
       g_print ("%s%s%s %s\n", on, _("Ref:"), off, ref);
       g_print ("%s%s%s %s\n", on, _("ID:"), off, parts[1]);
       g_print ("%s%s%s %s\n", on, _("Arch:"), off, parts[2]);
