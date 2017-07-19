@@ -102,6 +102,13 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
                       const char *target,
                       GError **error);
 
+gboolean
+glnx_openat_rdonly (int             dfd,
+                    const char     *path,
+                    gboolean        follow,
+                    int            *out_fd,
+                    GError        **error);
+
 GBytes *
 glnx_fd_readall_bytes (int               fd,
                        GCancellable     *cancellable,

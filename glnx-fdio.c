@@ -387,6 +387,35 @@ glnx_link_tmpfile_at (GLnxTmpfile *tmpf,
   return TRUE;
 }
 
+/**
+ * glnx_openat_rdonly:
+ * @dfd: File descriptor for origin directory
+ * @path: Pathname, relative to @dfd
+ * @follow: Whether or not to follow symbolic links in the final component
+ * @out_fd: (out): File descriptor
+ * @error: Error
+ *
+ * Use openat() to open a file, with flags `O_RDONLY | O_CLOEXEC | O_NOCTTY`.
+ * Like the other libglnx wrappers, will use `TEMP_FAILURE_RETRY` and
+ * also includes @path in @error in case of failure.
+ */
+gboolean
+glnx_openat_rdonly (int             dfd,
+                    const char     *path,
+                    gboolean        follow,
+                    int            *out_fd,
+                    GError        **error)
+{
+  int flags = O_RDONLY | O_CLOEXEC | O_NOCTTY;
+  if (!follow)
+    flags |= O_NOFOLLOW;
+  int fd = TEMP_FAILURE_RETRY (openat (dfd, path, flags));
+  if (fd == -1)
+    return glnx_throw_errno_prefix (error, "openat(%s)", path);
+  *out_fd = fd;
+  return TRUE;
+}
+
 static guint8*
 glnx_fd_readall_malloc (int               fd,
                         gsize            *out_len,
@@ -524,9 +553,9 @@ glnx_file_get_contents_utf8_at (int                   dfd,
 {
   dfd = glnx_dirfd_canonicalize (dfd);
 
-  glnx_fd_close int fd = TEMP_FAILURE_RETRY (openat (dfd, subpath, O_RDONLY | O_NOCTTY | O_CLOEXEC));
-  if (G_UNLIKELY (fd == -1))
-    return glnx_null_throw_errno_prefix (error, "open(%s)", subpath);
+  glnx_fd_close int fd = -1;
+  if (!glnx_openat_rdonly (dfd, subpath, TRUE, &fd, error))
+    return NULL;
 
   gsize len;
   g_autofree char *buf = glnx_fd_readall_utf8 (fd, &len, cancellable, error);
@@ -822,12 +851,8 @@ glnx_file_copy_at (int                   src_dfd,
       goto out;
     }
 
-  src_fd = TEMP_FAILURE_RETRY (openat (src_dfd, src_subpath, O_RDONLY | O_CLOEXEC | O_NOCTTY | O_NOFOLLOW));
-  if (src_fd == -1)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+  if (!glnx_openat_rdonly (src_dfd, src_subpath, FALSE, &src_fd, error))
+    goto out;
 
   dest_open_flags = O_WRONLY | O_CREAT | O_CLOEXEC | O_NOCTTY;
   if (!(copyflags & GLNX_FILE_COPY_OVERWRITE))

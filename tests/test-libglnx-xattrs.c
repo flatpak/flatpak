@@ -107,22 +107,17 @@ do_write_run (GLnxDirFdIterator *dfd_iter, GError **error)
     {
       while (TRUE)
         {
-          g_autoptr(GVariant) current_xattrs = NULL;
-          glnx_fd_close int fd = -1;
-
           struct dirent *dent;
           if (!glnx_dirfd_iterator_next_dent (dfd_iter, &dent, NULL, error))
             return FALSE;
           if (!dent)
             break;
 
-          fd = openat (dfd_iter->fd, dent->d_name, O_RDONLY | O_CLOEXEC);
-          if (fd < 0)
-            {
-              glnx_set_error_from_errno (error);
-              return FALSE;
-            }
+          glnx_fd_close int fd = -1;
+          if (!glnx_openat_rdonly (dfd_iter->fd, dent->d_name, FALSE, &fd, error))
+            return FALSE;
 
+          g_autoptr(GVariant) current_xattrs = NULL;
           if (!glnx_fd_get_all_xattrs (fd, &current_xattrs, NULL, error))
             return FALSE;
 
@@ -156,22 +151,17 @@ do_read_run (GLnxDirFdIterator *dfd_iter,
   guint nattrs = 0;
   while (TRUE)
     {
-      g_autoptr(GVariant) current_xattrs = NULL;
-      glnx_fd_close int fd = -1;
-
       struct dirent *dent;
       if (!glnx_dirfd_iterator_next_dent (dfd_iter, &dent, NULL, error))
         return FALSE;
       if (!dent)
         break;
 
-      fd = openat (dfd_iter->fd, dent->d_name, O_RDONLY | O_CLOEXEC);
-      if (fd < 0)
-        {
-          glnx_set_error_from_errno (error);
-          return FALSE;
-        }
+      glnx_fd_close int fd = -1;
+      if (!glnx_openat_rdonly (dfd_iter->fd, dent->d_name, FALSE, &fd, error))
+        return FALSE;
 
+      g_autoptr(GVariant) current_xattrs = NULL;
       if (!glnx_fd_get_all_xattrs (fd, &current_xattrs, NULL, error))
         return FALSE;
 
