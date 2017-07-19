@@ -67,9 +67,7 @@ glnx_opendirat (int             dfd,
 {
   int ret = glnx_opendirat_with_errno (dfd, path, follow);
   if (ret == -1)
-    {
-      return glnx_throw_errno_prefix (error, "openat");
-    }
+    return glnx_throw_errno_prefix (error, "opendir(%s)", path);
   *out_fd = ret;
   return TRUE;
 }
