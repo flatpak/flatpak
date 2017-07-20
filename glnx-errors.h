@@ -112,7 +112,8 @@ glnx_cleanup_auto_prefix_error (GLnxAutoErrorPrefix *prefix)
   g_prefix_error (prefix->error, "%s: ", prefix->prefix);
 }
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxAutoErrorPrefix, glnx_cleanup_auto_prefix_error)
-#define GLNX_AUTO_PREFIX_ERROR(text, error) g_auto(GLnxAutoErrorPrefix) _GLNX_MAKE_ANONYMOUS(_glnxautoprefixerror_) = { text, error }
+#define GLNX_AUTO_PREFIX_ERROR(text, error) \
+  G_GNUC_UNUSED g_auto(GLnxAutoErrorPrefix) _GLNX_MAKE_ANONYMOUS(_glnxautoprefixerror_) = { text, error }
 
 /* Set @error using the value of `g_strerror (errno)`.
  *
