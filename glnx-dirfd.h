@@ -21,6 +21,8 @@
 #pragma once
 
 #include <glnx-backport-autocleanups.h>
+#include <glnx-macros.h>
+#include <glnx-errors.h>
 #include <limits.h>
 #include <dirent.h>
 #include <sys/stat.h>
