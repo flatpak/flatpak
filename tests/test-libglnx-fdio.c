@@ -166,10 +166,17 @@ test_stdio_file (void)
   g_autoptr(GError) local_error = NULL;
   GError **error = &local_error;
   g_auto(GLnxTmpfile) tmpf = { 0, };
+  g_autoptr(FILE) f = NULL;
+
   if (!glnx_open_anonymous_tmpfile (O_RDWR|O_CLOEXEC, &tmpf, error))
     goto out;
+  f = fdopen (tmpf.fd, "w");
+  if (!f)
+    {
+      (void)glnx_throw_errno_prefix (error, "fdopen");
+      goto out;
+    }
 
-  g_autoptr(FILE) f = fdopen (tmpf.fd, "w");
   if (fwrite ("hello", 1, strlen ("hello"), f) != strlen ("hello"))
     {
       (void)glnx_throw_errno_prefix (error, "fwrite");
