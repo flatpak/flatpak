@@ -94,7 +94,7 @@ glnx_prefix_error (GError **error, const char *fmt, ...)
  * ```
  * gboolean start_http_request (..., GError **error)
  * {
- *   GLNX_AUTO_PREFIX_ERROR("HTTP request", error)
+ *   GLNX_AUTO_PREFIX_ERROR ("HTTP request", error)
  *
  *   if (!libhttp_request_start (..., error))
  *     return FALSE;
@@ -109,7 +109,8 @@ typedef struct {
 static inline void
 glnx_cleanup_auto_prefix_error (GLnxAutoErrorPrefix *prefix)
 {
-  g_prefix_error (prefix->error, "%s: ", prefix->prefix);
+  if (prefix->error && *(prefix->error))
+    g_prefix_error (prefix->error, "%s: ", prefix->prefix);
 }
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxAutoErrorPrefix, glnx_cleanup_auto_prefix_error)
 #define GLNX_AUTO_PREFIX_ERROR(text, error) \
