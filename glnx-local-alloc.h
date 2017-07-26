@@ -204,7 +204,8 @@ glnx_cleanup_close_fdp (int *fdp)
   if (fd >= 0)
     {
       errsv = errno;
-      (void) close (fd);
+      if (close (fd) < 0)
+        g_assert (errno != EBADF);
       errno = errsv;
     }
 }
