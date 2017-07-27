@@ -836,6 +836,13 @@ flatpak_builtin_build_export (int argc, char **argv, GCancellable *cancellable, 
   if (!flatpak_repo_collect_sizes (repo, root, &installed_size, &download_size, cancellable, error))
     goto out;
 
+  /* ostree.ref-binding obsoletes xa.ref, but we write both for now:
+   * https://github.com/ostreedev/ostree/releases/tag/v2017.9
+   */
+
+#if OSTREE_CHECK_VERSION(2017, 9)
+  g_variant_dict_insert_value (&metadata_dict, OSTREE_COMMIT_META_KEY_REF_BINDING, g_variant_new_string (full_branch));
+#endif
   g_variant_dict_insert_value (&metadata_dict, "xa.ref", g_variant_new_string (full_branch));
   g_variant_dict_insert_value (&metadata_dict, "xa.metadata", g_variant_new_string (metadata_contents));
   g_variant_dict_insert_value (&metadata_dict, "xa.installed-size", g_variant_new_uint64 (GUINT64_TO_BE (installed_size)));

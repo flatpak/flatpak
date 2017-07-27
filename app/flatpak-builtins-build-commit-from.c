@@ -276,6 +276,9 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
       /* Copy old metadata */
       g_variant_builder_init (&metadata_builder, G_VARIANT_TYPE ("a{sv}"));
       g_variant_builder_add (&metadata_builder, "{sv}", "xa.ref", g_variant_new_string (dst_ref));
+#if OSTREE_CHECK_VERSION(2017, 9)
+      g_variant_builder_add (&metadata_builder, "{sv}", OSTREE_COMMIT_META_KEY_REF_BINDING, g_variant_new_string (dst_ref));
+#endif
       /* Record the source commit. This is nice to have, but it also
          means the commit-from gets a different commit id, which
          avoids problems with e.g.  sharing .commitmeta files
@@ -291,6 +294,12 @@ flatpak_builtin_build_commit_from (int argc, char **argv, GCancellable *cancella
           if (strcmp (key, "xa.ref") == 0 ||
               strcmp (key, "xa.from_commit") == 0)
             continue;
+
+#if OSTREE_CHECK_VERSION(2017, 9)
+          if (strcmp (key, OSTREE_COMMIT_META_KEY_REF_BINDING) == 0 ||
+              strcmp (key, OSTREE_COMMIT_META_KEY_COLLECTION_BINDING) == 0)
+            continue;
+#endif
 
           g_variant_builder_add_value (&metadata_builder, child);
         }
