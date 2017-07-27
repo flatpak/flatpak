@@ -9,7 +9,7 @@ dn=$(dirname $0)
 pkg_install_builddeps flatpak
 pkg_install sudo which attr fuse \
     libubsan libasan libtsan \
-    elfutils ostree \
+    elfutils ostree git \
     /usr/bin/{update-mime-database,update-desktop-database,gtk-update-icon-cache}
 pkg_install_if_os fedora gjs parallel clang
 
