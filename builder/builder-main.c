@@ -65,6 +65,7 @@ static char *opt_body;
 static char *opt_gpg_homedir;
 static char **opt_key_ids;
 static char **opt_sources_dirs;
+static char **opt_sources_urls;
 static int opt_jobs;
 static char *opt_mirror_screenshots_url;
 
@@ -82,6 +83,7 @@ static GOptionEntry entries[] = {
   { "download-only", 0, 0, G_OPTION_ARG_NONE, &opt_download_only, "Only download sources, don't build", NULL },
   { "bundle-sources", 0, 0, G_OPTION_ARG_NONE, &opt_bundle_sources, "Bundle module sources as runtime", NULL },
   { "extra-sources", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sources_dirs, "Add a directory of sources specified by SOURCE-DIR, multiple uses of this option possible", "SOURCE-DIR"},
+  { "extra-sources-url", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_sources_urls, "Add a url of sources specified by SOURCE-URL multiple uses of this option possible", "SOURCE-URL"},
   { "build-only", 0, 0, G_OPTION_ARG_NONE, &opt_build_only, "Stop after build, don't run clean and finish phases", NULL },
   { "finish-only", 0, 0, G_OPTION_ARG_NONE, &opt_finish_only, "Only run clean and finish and export phases", NULL },
   { "export-only", 0, 0, G_OPTION_ARG_NONE, &opt_export_only, "Only run export phase", NULL },
@@ -350,6 +352,23 @@ main (int    argc,
           g_ptr_array_add (sources_dirs, file);
         }
       builder_context_set_sources_dirs (build_context, sources_dirs);
+    }
+
+  if (opt_sources_urls)
+    {
+      g_autoptr(GPtrArray) sources_urls = NULL;
+      sources_urls = g_ptr_array_new_with_free_func ((GDestroyNotify)soup_uri_free);
+      for (i = 0; opt_sources_urls[i] != NULL; i++)
+        {
+          SoupURI *uri = soup_uri_new (opt_sources_urls[i]);
+          if (uri == NULL)
+            {
+              g_printerr ("Invalid URL '%s'", opt_sources_urls[i]);
+              return 1;
+            }
+          g_ptr_array_add (sources_urls, uri);
+        }
+      builder_context_set_sources_urls (build_context, sources_urls);
     }
 
   if (opt_arch)

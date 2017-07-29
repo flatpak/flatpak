@@ -405,6 +405,24 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--extra-sources=SOURCE-DIR</option></term>
+
+                <listitem><para>
+                  When downloading sources (archives, files, git, bzr), look in this
+                  directory for pre-existing copies and use them instead of downloading.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--extra-sources-url=URL</option></term>
+
+                <listitem><para>
+                  When downloading sources (archives, files, git, bzr), look at this url
+                  for mirrored downloads before downloading from the original url.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--from-git=GIT</option></term>
 
                 <listitem><para>

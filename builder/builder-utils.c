@@ -1628,7 +1628,7 @@ download_progress_cleanup (DownloadPromptData *progress_data)
 }
 
 gboolean
-builder_download_uri (const char     *url,
+builder_download_uri (SoupURI        *uri,
                       GFile          *dest,
                       char           *sha256,
                       SoupSession    *session,
@@ -1656,13 +1656,23 @@ builder_download_uri (const char     *url,
   if (out == NULL)
     return FALSE;
 
-  req = soup_session_request (session, url, error);
+  req = soup_session_request_uri (session, uri, error);
   if (req == NULL)
     return FALSE;
 
   input = soup_request_send (req, NULL, error);
   if (input == NULL)
     return FALSE;
+
+  if (SOUP_IS_REQUEST_HTTP (req))
+    {
+      g_autoptr(SoupMessage) msg = soup_request_http_get_message (SOUP_REQUEST_HTTP(req));
+      if (!SOUP_STATUS_IS_SUCCESSFUL(msg->status_code))
+        {
+          g_set_error_literal (error, SOUP_HTTP_ERROR, msg->status_code, msg->reason_phrase);
+          return FALSE;
+        }
+    }
 
   if (!flatpak_splice_update_checksum (G_OUTPUT_STREAM (out), input, checksum, download_progress, &progress_data, NULL, error))
     {

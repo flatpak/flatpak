@@ -31,9 +31,11 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <glib/gi18n.h>
 #include "flatpak-utils.h"
 #include "builder-context.h"
 #include "builder-cache.h"
+#include "builder-utils.h"
 
 struct BuilderContext
 {
@@ -48,6 +50,7 @@ struct BuilderContext
 
   GFile          *download_dir;
   GPtrArray      *sources_dirs;
+  GPtrArray      *sources_urls;
   GFile          *state_dir;
   GFile          *build_dir;
   GFile          *cache_dir;
@@ -112,6 +115,7 @@ builder_context_finalize (GObject *object)
   glnx_release_lock_file(&self->rofiles_file_lock);
 
   g_clear_pointer (&self->sources_dirs, g_ptr_array_unref);
+  g_clear_pointer (&self->sources_urls, g_ptr_array_unref);
 
   G_OBJECT_CLASS (builder_context_parent_class)->finalize (object);
 }
@@ -308,6 +312,70 @@ builder_context_find_in_sources_dirs (BuilderContext *self,
   va_end (args);
 
   return res;
+}
+
+GPtrArray *
+builder_context_get_sources_urls (BuilderContext *self)
+{
+  return self->sources_urls;
+}
+
+void
+builder_context_set_sources_urls (BuilderContext *self,
+                                  GPtrArray      *sources_urls)
+{
+  g_clear_pointer (&self->sources_urls, g_ptr_array_unref);
+  self->sources_urls = g_ptr_array_ref (sources_urls);
+}
+
+gboolean
+builder_context_download_uri (BuilderContext *self,
+                              const char     *url,
+                              GFile          *dest,
+                              char           *sha256,
+                              GError        **error)
+{
+  int i;
+  g_autoptr(SoupURI) original_uri = soup_uri_new (url);
+
+  if (original_uri == NULL)
+    return flatpak_fail (error, _("Could not parse URI “%s”"), url);
+
+  g_print ("Downloading %s\n", url);
+
+  if (self->sources_urls != NULL)
+    {
+      g_autofree char *base_name = g_path_get_basename (soup_uri_get_path (original_uri));
+      g_autofree char *rel = g_build_filename ("downloads", sha256, base_name, NULL);
+
+      for (i = 0; i < self->sources_urls->len; i++)
+        {
+          SoupURI *base_uri = g_ptr_array_index (self->sources_urls, i);
+          g_autoptr(SoupURI) mirror_uri = soup_uri_new_with_base (base_uri, rel);
+          g_autofree char *mirror_uri_str = soup_uri_to_string (mirror_uri, FALSE);
+          g_print ("Trying mirror %s\n", mirror_uri_str);
+          g_autoptr(GError) my_error = NULL;
+
+          if (builder_download_uri (mirror_uri,
+                                    dest,
+                                    sha256,
+                                    builder_context_get_soup_session (self),
+                                    &my_error))
+            return TRUE;
+
+          if (!g_error_matches (my_error, SOUP_HTTP_ERROR, SOUP_STATUS_NOT_FOUND))
+            g_warning ("Error downloading from mirror: %s\n", my_error->message);
+        }
+    }
+
+  if (!builder_download_uri (original_uri,
+                             dest,
+                             sha256,
+                             builder_context_get_soup_session (self),
+                             error))
+    return FALSE;
+
+  return TRUE;
 }
 
 GFile *

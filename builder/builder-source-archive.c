@@ -332,12 +332,11 @@ builder_source_archive_download (BuilderSource  *source,
       return FALSE;
     }
 
-  g_print ("Downloading %s\n", self->url);
-  if (!builder_download_uri (self->url,
-                             file,
-                             self->sha256,
-                             builder_context_get_soup_session (context),
-                             error))
+  if (!builder_context_download_uri (context,
+                                     self->url,
+                                     file,
+                                     self->sha256,
+                                     error))
     return FALSE;
 
   return TRUE;

@@ -56,6 +56,14 @@ GFile *         builder_context_find_in_sources_dirs (BuilderContext *self,
                                                       ...) G_GNUC_NULL_TERMINATED;
 GFile *         builder_context_find_in_sources_dirs_va (BuilderContext *self,
                                                          va_list args);
+GPtrArray *     builder_context_get_sources_urls (BuilderContext *self);
+void            builder_context_set_sources_urls (BuilderContext *self,
+                                                  GPtrArray      *sources_urls);
+gboolean        builder_context_download_uri (BuilderContext *self,
+                                              const char     *url,
+                                              GFile          *dest,
+                                              char           *sha256,
+                                              GError        **error);
 SoupSession *   builder_context_get_soup_session (BuilderContext *self);
 const char *    builder_context_get_arch (BuilderContext *self);
 void            builder_context_set_arch (BuilderContext *self,
