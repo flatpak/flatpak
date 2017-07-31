@@ -145,8 +145,8 @@ get_xattrs_impl (const char      *path,
 {
   gboolean ret = FALSE;
   ssize_t bytes_read, real_size;
-  glnx_free char *xattr_names = NULL;
-  glnx_free char *xattr_names_canonical = NULL;
+  g_autofree char *xattr_names = NULL;
+  g_autofree char *xattr_names_canonical = NULL;
   GVariantBuilder builder;
   gboolean builder_initialized = FALSE;
   g_autoptr(GVariant) ret_xattrs = NULL;
