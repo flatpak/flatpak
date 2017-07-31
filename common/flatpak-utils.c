@@ -2078,7 +2078,7 @@ flatpak_file_get_path_cached (GFile *file)
   const char *path;
   static GQuark _file_path_quark = 0;
 
-  if (G_UNLIKELY (_file_path_quark) == 0)
+  if (G_UNLIKELY (_file_path_quark == 0))
     _file_path_quark = g_quark_from_static_string ("flatpak-file-path");
 
   do
