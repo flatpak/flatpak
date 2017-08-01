@@ -528,13 +528,13 @@ handle_uninstall (FlatpakSystemHelper *object,
 
   if (!flatpak_dir_ensure_repo (system, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror  (invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
 
   if (!flatpak_dir_uninstall (system, arg_ref, arg_flags, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror  (invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
 
@@ -581,7 +581,7 @@ handle_install_bundle (FlatpakSystemHelper   *object,
 
   if (!flatpak_dir_install_bundle (system, path, arg_remote, &ref, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror  (invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
 
@@ -640,7 +640,7 @@ handle_configure_remote (FlatpakSystemHelper *object,
 
   if (!flatpak_dir_ensure_repo (system, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror  (invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
 
@@ -655,7 +655,7 @@ handle_configure_remote (FlatpakSystemHelper *object,
       if (!flatpak_dir_modify_remote (system, arg_remote, config,
                                       gpg_data, NULL, &error))
         {
-          g_dbus_method_invocation_return_gerror  (invocation, error);
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return TRUE;
         }
     }
@@ -667,7 +667,7 @@ handle_configure_remote (FlatpakSystemHelper *object,
                                       arg_remote,
                                       NULL, &error))
         {
-          g_dbus_method_invocation_return_gerror  (invocation, error);
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return TRUE;
         }
     }
@@ -723,7 +723,7 @@ handle_update_remote (FlatpakSystemHelper *object,
 
   if (!flatpak_dir_ensure_repo (system, NULL, &error))
     {
-      g_dbus_method_invocation_return_gerror  (invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
 
@@ -740,7 +740,7 @@ handle_update_remote (FlatpakSystemHelper *object,
 
   if (!g_file_get_contents (arg_summary_path, &summary_data, &summary_size, &error))
     {
-      g_dbus_method_invocation_return_gerror  (invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       return TRUE;
     }
   summary_bytes = g_bytes_new_take (summary_data, summary_size);
@@ -749,7 +749,7 @@ handle_update_remote (FlatpakSystemHelper *object,
     {
       if (!g_file_get_contents (arg_summary_sig_path, &summary_sig_data, &summary_sig_size, &error))
         {
-          g_dbus_method_invocation_return_gerror  (invocation, error);
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return TRUE;
         }
       summary_sig_bytes = g_bytes_new_take (summary_sig_data, summary_sig_size);
@@ -762,7 +762,7 @@ handle_update_remote (FlatpakSystemHelper *object,
       if (gpg_result == NULL ||
           !ostree_gpg_verify_result_require_valid_signature (gpg_result, &error))
         {
-          g_dbus_method_invocation_return_gerror  (invocation, error);
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return TRUE;
         }
 
@@ -771,7 +771,7 @@ handle_update_remote (FlatpakSystemHelper *object,
       if (!flatpak_dir_update_remote_configuration_for_summary (system, arg_remote, summary,
                                                                 FALSE, NULL, NULL, &error))
         {
-          g_dbus_method_invocation_return_gerror  (invocation, error);
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return TRUE;
         }
     }
@@ -780,7 +780,7 @@ handle_update_remote (FlatpakSystemHelper *object,
       if (!flatpak_dir_update_remote_configuration_for_repo_metadata (system, arg_remote, summary,
                                                                       FALSE, NULL, NULL, &error))
         {
-          g_dbus_method_invocation_return_gerror  (invocation, error);
+          g_dbus_method_invocation_return_gerror (invocation, error);
           return TRUE;
         }
     }
