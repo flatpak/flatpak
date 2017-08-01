@@ -9,7 +9,7 @@ service_in_files += system-helper/org.freedesktop.Flatpak.SystemHelper.service.i
 dbussystemservice_DATA = system-helper/org.freedesktop.Flatpak.SystemHelper.service
 
 dbusconfdir = $(DBUS_CONFIG_DIR)
-dbusconf_DATA = system-helper/org.freedesktop.Flatpak.SystemHelper.conf
+dist_dbusconf_DATA = system-helper/org.freedesktop.Flatpak.SystemHelper.conf
 
 service_in_files += system-helper/flatpak-system-helper.service.in
 systemdsystemunit_DATA = system-helper/flatpak-system-helper.service
@@ -36,7 +36,8 @@ polkit_policy_DATA =					\
 %.policy: %.policy.in
 	$(AM_V_GEN) $(MSGFMT) --xml -d $(top_srcdir)/po --template $< -o $@ || cp $< $@
 
-EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf system-helper/org.freedesktop.Flatpak.rules.in
 DISTCLEANFILES += system-helper/org.freedesktop.Flatpak.policy system-helper/org.freedesktop.Flatpak.rules system-helper/flatpak-system-helper.service system-helper/org.freedesktop.Flatpak.SystemHelper.service
 
 endif
+
+EXTRA_DIST += system-helper/org.freedesktop.Flatpak.policy.in system-helper/org.freedesktop.Flatpak.SystemHelper.conf system-helper/org.freedesktop.Flatpak.rules.in system-helper/org.freedesktop.Flatpak.SystemHelper.service.in system-helper/flatpak-system-helper.service.in
