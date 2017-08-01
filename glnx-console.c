@@ -187,10 +187,11 @@ text_percent_internal (const char *text,
   const guint n_spaces = sizeof (spaces) - 1;
   const guint ncolumns = glnx_console_columns ();
   const guint bar_min = 10;
-  const guint input_textlen = text ? strlen (text) : 0;
 
   if (text && !*text)
     text = NULL;
+
+  const guint input_textlen = text ? strlen (text) : 0;
 
   if (percentage == current_percent
       && g_strcmp0 (text, current_text) == 0)
