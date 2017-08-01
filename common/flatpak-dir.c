@@ -1867,11 +1867,14 @@ repo_get_remote_collection_id (OstreeRepo  *repo,
                                GError     **error)
 {
 #ifdef FLATPAK_ENABLE_P2P
-  if (!ostree_repo_get_remote_option (repo, remote_name, "collection-id",
-                                      NULL, collection_id_out, error))
-    return FALSE;
-  if (collection_id_out != NULL && *collection_id_out != NULL && **collection_id_out == '\0')
-    g_clear_pointer (collection_id_out, g_free);
+  if (collection_id_out != NULL)
+    {
+      if (!ostree_repo_get_remote_option (repo, remote_name, "collection-id",
+                                          NULL, collection_id_out, error))
+        return FALSE;
+      if (*collection_id_out != NULL && **collection_id_out == '\0')
+        g_clear_pointer (collection_id_out, g_free);
+    }
 #else  /* if !FLATPAK_ENABLE_P2P */
   if (collection_id_out != NULL)
     *collection_id_out = NULL;
