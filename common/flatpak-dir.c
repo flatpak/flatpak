@@ -9138,15 +9138,15 @@ flatpak_dir_update_remote_configuration (FlatpakDir   *self,
     return flatpak_dir_update_remote_configuration_for_repo_metadata (self, remote, summary, FALSE, NULL, cancellable, error);
 }
 
-static gboolean
-flatpak_dir_parse_repo_metadata_for_ref (FlatpakDir    *self,
-                                         const char    *remote_name,
-                                         const char    *ref,
-                                         guint64       *download_size,
-                                         guint64       *installed_size,
-                                         char         **metadata,
-                                         GCancellable  *cancellable,
-                                         GError       **error)
+gboolean
+flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
+                             const char   *remote_name,
+                             const char   *ref,
+                             guint64      *download_size,
+                             guint64      *installed_size,
+                             char        **metadata,
+                             GCancellable *cancellable,
+                             GError      **error)
 {
   g_autoptr(GVariant) cache_v = NULL;
   g_autoptr(GVariant) cache = NULL;
@@ -9195,22 +9195,6 @@ flatpak_dir_parse_repo_metadata_for_ref (FlatpakDir    *self,
     g_variant_get_child (res, 2, "s", metadata);
 
   return TRUE;
-}
-
-gboolean
-flatpak_dir_fetch_ref_cache (FlatpakDir   *self,
-                             const char   *remote_name,
-                             const char   *ref,
-                             guint64      *download_size,
-                             guint64      *installed_size,
-                             char        **metadata,
-                             GCancellable *cancellable,
-                             GError      **error)
-{
-  return flatpak_dir_parse_repo_metadata_for_ref (self, remote_name, ref,
-                                                  download_size, installed_size,
-                                                  metadata,
-                                                  cancellable, error);
 }
 
 void
@@ -9354,9 +9338,9 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
   if (summary == NULL)
     return NULL;
 
-  if (flatpak_dir_parse_repo_metadata_for_ref (self, remote_name, ref,
-                                               NULL, NULL, &metadata,
-                                               NULL, NULL) &&
+  if (flatpak_dir_fetch_ref_cache (self, remote_name, ref,
+                                   NULL, NULL, &metadata,
+                                   NULL, NULL) &&
       g_key_file_load_from_data (metakey, metadata, -1, 0, NULL))
     {
       g_auto(GStrv) groups = NULL;
