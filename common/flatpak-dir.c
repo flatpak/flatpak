@@ -5934,8 +5934,8 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
       return NULL;
     }
 
-  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, NULL))
-    g_clear_pointer (&collection_id, g_free);
+  if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
+    return NULL;
 
   if (no_pull)
     {
@@ -6099,8 +6099,8 @@ flatpak_dir_update (FlatpakDir          *self,
                                                       &gpg_verify_summary, error))
         return FALSE;
 
-      if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, NULL))
-        collection_id = NULL;
+      if (!repo_get_remote_collection_id (self->repo, remote_name, &collection_id, error))
+        return FALSE;
 
       if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
                                               &gpg_verify, error))
