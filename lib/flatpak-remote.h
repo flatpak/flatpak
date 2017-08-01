@@ -26,12 +26,17 @@
 #define __FLATPAK_REMOTE_H__
 
 #ifdef FLATPAK_ENABLE_P2P
-typedef enum
+#ifndef __GTK_DOC_IGNORE__
+typedef enum  /*< skip >*/
 {
   FLATPAK_REMOTE_TYPE_STATIC,  /*< skip >*/
   FLATPAK_REMOTE_TYPE_USB,  /*< skip >*/
   FLATPAK_REMOTE_TYPE_LAN,  /*< skip >*/
 } FlatpakRemoteType;
+
+FLATPAK_EXTERN GType flatpak_remote_type_get_type (void);
+#define FLATPAK_TYPE_REMOTE_TYPE flatpak_remote_type_get_type ()
+#endif  /* !__GTK_DOC_IGNORE__ */
 #endif  /* FLATPAK_ENABLE_P2P */
 
 typedef struct _FlatpakRemote FlatpakRemote;

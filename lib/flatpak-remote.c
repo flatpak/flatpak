@@ -37,6 +37,26 @@
 typedef enum {
   FLATPAK_REMOTE_TYPE_STATIC = 0,
 } FlatpakRemoteType;
+#else  /* if FLATPAK_ENABLE_P2P */
+GType
+flatpak_remote_type_get_type (void)
+{
+  static volatile gsize g_define_type_id__volatile = 0;
+
+  if (g_once_init_enter (&g_define_type_id__volatile))
+    {
+      static const GEnumValue values[] = {
+        { FLATPAK_REMOTE_TYPE_STATIC, "FLATPAK_REMOTE_TYPE_STATIC", "static" },
+        { FLATPAK_REMOTE_TYPE_USB, "FLATPAK_REMOTE_TYPE_USB", "usb" },
+        { FLATPAK_REMOTE_TYPE_LAN, "FLATPAK_REMOTE_TYPE_LAN", "lan" },
+        { 0, NULL, NULL }
+      };
+      GType g_define_type_id = g_enum_register_static (g_intern_static_string ("FlatpakRemoteType"), values);
+      g_once_init_leave (&g_define_type_id__volatile, g_define_type_id);
+    }
+
+  return g_define_type_id__volatile;
+}
 #endif  /* FLATPAK_ENABLE_P2P */
 
 /**
