@@ -52,3 +52,44 @@ static inline int renameat2(int oldfd, const char *oldname, int newfd, const cha
 #  endif
 }
 #endif
+
+/* Copied from systemd git:
+   commit 6bda23dd6aaba50cf8e3e6024248cf736cc443ca
+   Author:     Yu Watanabe <watanabe.yu+github@gmail.com>
+   AuthorDate: Thu Jul 27 20:22:54 2017 +0900
+   Commit:     Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
+   CommitDate: Thu Jul 27 07:22:54 2017 -0400
+*/
+#if !HAVE_DECL_COPY_FILE_RANGE
+#  ifndef __NR_copy_file_range
+#    if defined(__x86_64__)
+#      define __NR_copy_file_range 326
+#    elif defined(__i386__)
+#      define __NR_copy_file_range 377
+#    elif defined __s390__
+#      define __NR_copy_file_range 375
+#    elif defined __arm__
+#      define __NR_copy_file_range 391
+#    elif defined __aarch64__
+#      define __NR_copy_file_range 285
+#    elif defined __powerpc__
+#      define __NR_copy_file_range 379
+#    elif defined __arc__
+#      define __NR_copy_file_range 285
+#    else
+#      warning "__NR_copy_file_range not defined for your architecture"
+#    endif
+#  endif
+
+static inline ssize_t copy_file_range(int fd_in, loff_t *off_in,
+                                      int fd_out, loff_t *off_out,
+                                      size_t len,
+                                      unsigned int flags) {
+#  ifdef __NR_copy_file_range
+        return syscall(__NR_copy_file_range, fd_in, off_in, fd_out, off_out, len, flags);
+#  else
+        errno = ENOSYS;
+        return -1;
+#  endif
+}
+#endif
