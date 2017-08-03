@@ -8872,6 +8872,7 @@ flatpak_dir_update_remote_configuration_for_dict (FlatpakDir    *self,
     "xa.default-branch",
     "xa.gpg-keys",
     "xa.redirect-url",
+    "xa.collection-id",
     NULL
   };
 
@@ -8914,6 +8915,8 @@ flatpak_dir_update_remote_configuration_for_dict (FlatpakDir    *self,
                     {
                       if (strcmp (key, "xa.redirect-url") == 0)
                         g_ptr_array_add (updated_params, g_strdup ("url"));
+                      else if (strcmp (key, "xa.collection-id") == 0)
+                        g_ptr_array_add (updated_params, g_strdup ("collection-id"));
                       else
                         g_ptr_array_add (updated_params, g_strdup (key));
                       g_ptr_array_add (updated_params, g_strdup (value));
@@ -8951,10 +8954,26 @@ flatpak_dir_update_remote_configuration_for_dict (FlatpakDir    *self,
         if (!is_set)
           {
             current_val = g_key_file_get_string (config, group, key, NULL);
-            if (g_strcmp0 (current_val, new_val) != 0)
+            if ((!g_str_equal (key, "collection-id") &&
+                 g_strcmp0 (current_val, new_val) != 0) ||
+                (g_str_equal (key, "collection-id") &&
+                 (current_val == NULL || *current_val == '\0') &&
+                 new_val != NULL && *new_val != '\0'))
               {
                 has_changed = TRUE;
                 g_key_file_set_string (config, group, key, new_val);
+
+                /* Special case for collection-id: if it’s set, gpg-verify-summary
+                 * must be set to false. The logic above ensures that the
+                 * collection-id is only set if we’re transitioning from an
+                 * unset to a set collection-ID. We *must not* allow the
+                 * collection ID to be changed from one set value to another
+                 * without the user manually verifying it; or a malicious
+                 * repository could assume the collection ID of another without
+                 * the user’s consent. */
+                if (g_str_equal (key, "collection-id") &&
+                    new_val != NULL && *new_val != '\0')
+                  g_key_file_set_boolean (config, group, "gpg-verify-summary", FALSE);
               }
           }
 
