@@ -577,4 +577,6 @@ gboolean flatpak_dir_lookup_repo_metadata (FlatpakDir    *self,
                                            const char    *format_string,
                                            ...);
 
+char ** flatpak_dir_get_locale_subpaths (FlatpakDir *self);
+
 #endif /* __FLATPAK_DIR_H__ */
