@@ -140,6 +140,7 @@ dist_test_scripts = \
 	tests/test-builder-python.sh \
 	tests/test-oci.sh \
 	tests/test-unsigned-summaries.sh \
+	tests/test-update-remote-configuration.sh \
 	$(NULL)
 
 test_programs = testdb test-doc-portal testlibrary
