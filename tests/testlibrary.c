@@ -12,6 +12,9 @@ static char *flatpak_installationsdir;
 static char *gpg_homedir;
 static char *gpg_args;
 static char *repo_url;
+#ifdef FLATPAK_ENABLE_P2P
+static char *repo_collection_id;
+#endif  /* FLATPAK_ENABLE_P2P */
 int httpd_pid = -1;
 
 static const char *gpg_id = "7B0961FD";
@@ -251,6 +254,10 @@ test_remote_by_name (void)
   g_assert_false (flatpak_remote_get_disabled (remote));
   g_assert_true (flatpak_remote_get_gpg_verify (remote));
   g_assert_cmpint (flatpak_remote_get_prio (remote), ==, 1);
+
+#ifdef FLATPAK_ENABLE_P2P
+  g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, repo_collection_id);
+#endif  /* FLATPAK_ENABLE_P2P */
 }
 
 static void
@@ -266,6 +273,12 @@ test_remote (void)
 
   remote = flatpak_installation_get_remote_by_name (inst, repo_name, NULL, &error);
   g_assert_no_error (error);
+
+#ifdef FLATPAK_ENABLE_P2P
+  g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, NULL);
+  flatpak_remote_set_collection_id (remote, "org.example.CollectionID");
+  g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, "org.example.CollectionID");
+#endif  /* FLATPAK_ENABLE_P2P */
 
   g_assert_cmpstr (flatpak_remote_get_title (remote), ==, NULL);
   flatpak_remote_set_title (remote, "Test Repo");

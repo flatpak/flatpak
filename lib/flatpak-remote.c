@@ -86,6 +86,7 @@ struct _FlatpakRemotePrivate
   FlatpakDir *dir;
 
   char       *local_url;
+  char       *local_collection_id;
   char       *local_title;
   char       *local_default_branch;
   gboolean    local_gpg_verify;
@@ -96,6 +97,7 @@ struct _FlatpakRemotePrivate
   FlatpakRemoteType type;
 
   guint       local_url_set : 1;
+  guint       local_collection_id_set : 1;
   guint       local_title_set : 1;
   guint       local_default_branch_set : 1;
   guint       local_gpg_verify_set : 1;
@@ -129,6 +131,7 @@ flatpak_remote_finalize (GObject *object)
     g_bytes_unref (priv->local_gpg_key);
 
   g_free (priv->local_url);
+  g_free (priv->local_collection_id);
   g_free (priv->local_title);
   g_free (priv->local_default_branch);
 
@@ -342,6 +345,52 @@ flatpak_remote_set_url (FlatpakRemote *self,
   priv->local_url = g_strdup (url);
   priv->local_url_set = TRUE;
 }
+
+#ifdef FLATPAK_ENABLE_P2P
+/**
+ * flatpak_remote_get_collection_id:
+ * @self: a #FlatpakRemote
+ *
+ * Returns the repository collection ID of this remote, if set.
+ *
+ * Returns: (transfer full) (nullable): the collection ID, or %NULL if unset
+ */
+char *
+flatpak_remote_get_collection_id (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (priv->local_collection_id_set)
+    return g_strdup (priv->local_collection_id);
+
+  if (priv->dir)
+    return flatpak_dir_get_remote_collection_id (priv->dir, priv->name);
+
+  return NULL;
+}
+
+/**
+ * flatpak_remote_set_collection_id:
+ * @self: a #FlatpakRemote
+ * @collection_id: The new collection ID
+ *
+ * Sets the repository collection ID of this remote.
+ *
+ * Note: This is a local modification of this object, you must commit changes
+ * using flatpak_installation_modify_remote() for the changes to take
+ * effect.
+ */
+void
+flatpak_remote_set_collection_id (FlatpakRemote *self,
+                                  const char    *collection_id)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_free (priv->local_collection_id);
+  priv->local_collection_id = g_strdup (collection_id);
+  priv->local_collection_id_set = TRUE;
+}
+#endif  /* FLATPAK_ENABLE_P2P */
 
 /**
  * flatpak_remote_get_title:
@@ -762,6 +811,9 @@ flatpak_remote_commit (FlatpakRemote   *self,
   config = ostree_repo_copy_config (flatpak_dir_get_repo (dir));
   if (priv->local_url_set)
     g_key_file_set_string (config, group, "url", priv->local_url);
+
+  if (priv->local_collection_id_set)
+    g_key_file_set_string (config, group, "collection-id", priv->local_collection_id);
 
   if (priv->local_title_set)
     g_key_file_set_string (config, group, "xa.title", priv->local_title);

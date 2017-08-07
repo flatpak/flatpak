@@ -7775,6 +7775,19 @@ get_group (const char *remote_name)
 }
 
 char *
+flatpak_dir_get_remote_collection_id (FlatpakDir *self,
+                                      const char *remote_name)
+{
+  GKeyFile *config = ostree_repo_get_config (self->repo);
+  g_autofree char *group = get_group (remote_name);
+
+  if (config)
+    return g_key_file_get_string (config, group, "collection-id", NULL);
+
+  return NULL;
+}
+
+char *
 flatpak_dir_get_remote_title (FlatpakDir *self,
                               const char *remote_name)
 {

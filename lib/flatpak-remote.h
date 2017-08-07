@@ -74,6 +74,11 @@ FLATPAK_EXTERN GFile *       flatpak_remote_get_appstream_timestamp (FlatpakRemo
 FLATPAK_EXTERN char *        flatpak_remote_get_url (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_url (FlatpakRemote *self,
                                                      const char    *url);
+#ifdef FLATPAK_ENABLE_P2P
+FLATPAK_EXTERN char *        flatpak_remote_get_collection_id (FlatpakRemote *self);
+FLATPAK_EXTERN void          flatpak_remote_set_collection_id (FlatpakRemote *self,
+                                                               const char    *collection_id);
+#endif  /* FLATPAK_ENABLE_P2P */
 FLATPAK_EXTERN char *        flatpak_remote_get_title (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_title (FlatpakRemote *self,
                                                        const char    *title);
