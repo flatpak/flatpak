@@ -357,10 +357,17 @@ main (int argc, char *argv[])
     {
       FlatpakRemote *remote = g_ptr_array_index (remotes, i);
       g_autoptr(GPtrArray) refs = NULL;
-      g_print ("\nRemote: %s %d %s %s %s %d %d %s\n",
+      const char *collection_id = NULL;
+
+#ifdef FLATPAK_ENABLE_P2P
+      collection_id = flatpak_remote_get_collection_id (remote);
+#endif  /* !FLATPAK_ENABLE_P2P */
+
+      g_print ("\nRemote: %s %d %s %s %s %s %d %d %s\n",
                flatpak_remote_get_name (remote),
                flatpak_remote_get_prio (remote),
                flatpak_remote_get_url (remote),
+               collection_id,
                flatpak_remote_get_title (remote),
                flatpak_remote_get_default_branch (remote),
                flatpak_remote_get_gpg_verify (remote),
