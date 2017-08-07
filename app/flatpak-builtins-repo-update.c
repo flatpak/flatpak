@@ -37,6 +37,7 @@ static char *opt_title;
 static char *opt_redirect_url;
 static char *opt_default_branch;
 static char *opt_collection_id = NULL;
+static gboolean opt_deploy_collection_id = FALSE;
 static char **opt_gpg_import;
 static char *opt_generate_delta_from;
 static char *opt_generate_delta_to;
@@ -53,6 +54,7 @@ static GOptionEntry options[] = {
   { "default-branch", 0, 0, G_OPTION_ARG_STRING, &opt_default_branch, N_("Default branch to use for this repository"), N_("BRANCH") },
 #ifdef FLATPAK_ENABLE_P2P
   { "collection-id", 0, 0, G_OPTION_ARG_STRING, &opt_collection_id, N_("Collection ID"), N_("COLLECTION-ID") },
+  { "deploy-collection-id", 0, 0, G_OPTION_ARG_NONE, &opt_deploy_collection_id, N_("Permanently deploy collection ID to client remote configurations"), NULL },
 #endif  /* FLATPAK_ENABLE_P2P */
   { "gpg-import", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &opt_gpg_import, N_("Import new default GPG public key from FILE"), N_("FILE") },
   { "gpg-sign", 0, 0, G_OPTION_ARG_STRING_ARRAY, &opt_gpg_key_ids, N_("GPG Key ID to sign the summary with"), N_("KEY-ID") },
@@ -441,6 +443,10 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
 
   if (opt_collection_id &&
       !flatpak_repo_set_collection_id (repo, opt_collection_id[0] ? opt_collection_id : NULL, error))
+    return FALSE;
+
+  if (opt_deploy_collection_id &&
+      !flatpak_repo_set_deploy_collection_id (repo, TRUE, error))
     return FALSE;
 
   if (opt_gpg_import)

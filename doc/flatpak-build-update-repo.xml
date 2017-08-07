@@ -115,6 +115,19 @@
                     the existing collection ID will be left unchanged.
                 </para></listitem>
             </varlistentry>
+
+            <varlistentry>
+                <term><option>-FIXME-deploy-collection-id</option></term>
+
+                <listitem><para>
+                    Deploy the collection ID (set using <option>-FIXME-collection-id</option>
+                    in the static remote configuration for all clients. This is
+                    irrevocable once published in a repository. Use it to decide
+                    when to roll out a collection ID to users of an existing repository.
+                    If constructing a new repository which has a collection ID,
+                    you should typically always pass this option.
+                </para></listitem>
+            </varlistentry>
             -->
 
             <varlistentry>

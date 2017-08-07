@@ -41,6 +41,7 @@ print_info (GVariant *meta)
   const char *collection_id;
   const char *default_branch;
   const char *redirect_url;
+  const char *redirect_collection_id;
   g_autoptr(GVariant) gpg_keys = NULL;
 
   if (g_variant_lookup (meta, "xa.title", "&s", &title))
@@ -54,6 +55,9 @@ print_info (GVariant *meta)
 
   if (g_variant_lookup (meta, "xa.redirect-url", "&s", &redirect_url))
     g_print ("Redirect URL: %s\n", redirect_url);
+
+  if (g_variant_lookup (meta, "xa.collection-id", "&s", &redirect_collection_id))
+    g_print ("Redirect collection ID: %s\n", redirect_collection_id);
 
   if ((gpg_keys = g_variant_lookup_value (meta, "xa.gpg-keys", G_VARIANT_TYPE_BYTESTRING)) != NULL)
     {
