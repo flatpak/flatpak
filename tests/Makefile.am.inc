@@ -1,4 +1,4 @@
-TESTS_ENVIRONMENT += FLATPAK_TESTS_DEBUG=1 \
+AM_TESTS_ENVIRONMENT = FLATPAK_TESTS_DEBUG=1 \
 	FLATPAK_TRIGGERSDIR=$$(cd $(top_srcdir) && pwd)/triggers \
 	FLATPAK_DBUSPROXY=$$(cd $(top_builddir) && pwd)/flatpak-dbus-proxy \
 	GI_TYPELIB_PATH=$$(cd $(top_builddir) && pwd)$${GI_TYPELIB_PATH:+:$$GI_TYPELIB_PATH} \
@@ -7,9 +7,9 @@ TESTS_ENVIRONMENT += FLATPAK_TESTS_DEBUG=1 \
 	$(NULL)
 
 if WITH_SYSTEM_BWRAP
-TESTS_ENVIRONMENT += FLATPAK_BWRAP=$(BWRAP)
+AM_TESTS_ENVIRONMENT += FLATPAK_BWRAP=$(BWRAP)
 else
-TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
+AM_TESTS_ENVIRONMENT += FLATPAK_BWRAP=$$(cd $(top_builddir) && pwd)/flatpak-bwrap
 endif
 
 testdb_CFLAGS = $(AM_CFLAGS) $(BASE_CFLAGS)
