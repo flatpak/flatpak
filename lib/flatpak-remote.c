@@ -372,7 +372,7 @@ flatpak_remote_get_collection_id (FlatpakRemote *self)
 /**
  * flatpak_remote_set_collection_id:
  * @self: a #FlatpakRemote
- * @collection_id: The new collection ID
+ * @collection_id: (nullable): The new collection ID, or %NULL to unset
  *
  * Sets the repository collection ID of this remote.
  *
@@ -385,6 +385,9 @@ flatpak_remote_set_collection_id (FlatpakRemote *self,
                                   const char    *collection_id)
 {
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  if (collection_id != NULL && *collection_id == '\0')
+    collection_id = NULL;
 
   g_free (priv->local_collection_id);
   priv->local_collection_id = g_strdup (collection_id);
@@ -813,7 +816,12 @@ flatpak_remote_commit (FlatpakRemote   *self,
     g_key_file_set_string (config, group, "url", priv->local_url);
 
   if (priv->local_collection_id_set)
-    g_key_file_set_string (config, group, "collection-id", priv->local_collection_id);
+    {
+      if (priv->local_collection_id != NULL)
+        g_key_file_set_string (config, group, "collection-id", priv->local_collection_id);
+      else
+        g_key_file_remove_key (config, group, "collection-id", NULL);
+    }
 
   if (priv->local_title_set)
     g_key_file_set_string (config, group, "xa.title", priv->local_title);
