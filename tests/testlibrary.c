@@ -278,6 +278,9 @@ test_remote (void)
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, NULL);
   flatpak_remote_set_collection_id (remote, "org.example.CollectionID");
   g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, "org.example.CollectionID");
+  /* Don’t leave the collection ID set since the repos aren’t configured with one. */
+  flatpak_remote_set_collection_id (remote, NULL);
+  g_assert_cmpstr (flatpak_remote_get_collection_id (remote), ==, NULL);
 #endif  /* FLATPAK_ENABLE_P2P */
 
   g_assert_cmpstr (flatpak_remote_get_title (remote), ==, NULL);
@@ -552,7 +555,7 @@ make_test_runtime (void)
   g_autoptr(GError) error = NULL;
   g_autofree char *arg0 = NULL;
   char *argv[] = {
-    NULL, "test", "org.test.Platform", "bash", "ls", "cat", "echo", "readlink", NULL
+    NULL, "test", "org.test.Platform", "", "bash", "ls", "cat", "echo", "readlink", NULL
   };
   GSpawnFlags flags = G_SPAWN_DEFAULT;
 
@@ -578,7 +581,7 @@ make_test_app (void)
   int status;
   g_autoptr(GError) error = NULL;
   g_autofree char *arg0 = NULL;
-  char *argv[] = { NULL, "test", NULL };
+  char *argv[] = { NULL, "test", "", NULL };
   GSpawnFlags flags = G_SPAWN_DEFAULT;
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
