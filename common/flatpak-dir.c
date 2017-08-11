@@ -8746,6 +8746,15 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
 {
 #ifdef FLATPAK_ENABLE_P2P
   FlatpakPullFlags flatpak_flags;
+  gboolean gpg_verify;
+
+  /* We can only fetch metadata if we’re going to verify it with GPG. */
+  if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
+                                          &gpg_verify, error))
+    return FALSE;
+
+  if (!gpg_verify)
+    return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
 
   flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
   flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
