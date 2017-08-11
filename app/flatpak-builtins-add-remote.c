@@ -330,6 +330,10 @@ flatpak_builtin_add_remote (int argc, char **argv,
   if (opt_collection_id != NULL &&
       !ostree_validate_collection_id (opt_collection_id, &local_error))
     return flatpak_fail (error, _("‘%s’ is not a valid collection ID: %s"), opt_collection_id, local_error->message);
+
+  if (opt_collection_id != NULL &&
+      (opt_no_gpg_verify || opt_gpg_import == NULL || opt_gpg_import[0] == NULL))
+    return flatpak_fail (error, _("GPG verification is required if collections are enabled"));
 #endif  /* FLATPAK_ENABLE_P2P */
 
   remote_name = argv[1];
