@@ -8747,6 +8747,9 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
 #ifdef FLATPAK_ENABLE_P2P
   FlatpakPullFlags flatpak_flags;
   gboolean gpg_verify;
+  g_autofree char *checksum_from_summary = NULL;
+  g_autofree char *checksum_from_repo = NULL;
+  g_autofree char *refspec = NULL;
 
   /* We can only fetch metadata if we’re going to verify it with GPG. */
   if (!ostree_repo_remote_get_gpg_verify (self->repo, remote_name,
@@ -8756,6 +8759,24 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
   if (!gpg_verify)
     return flatpak_fail (error, "Can't pull from untrusted non-gpg verified remote");
 
+  /* Look up the checksum as advertised by the summary file. If it differs from
+   * what we currently have on disk, try and pull the updated ostree-metadata ref.
+   * This is how we implement caching. Ignore failure and pull the ref anyway. */
+  checksum_from_summary = flatpak_dir_lookup_ref_from_summary (self, remote_name,
+                                                               OSTREE_REPO_METADATA_REF,
+                                                               NULL, NULL, NULL);
+  refspec = g_strdup_printf ("%s:%s", remote_name, OSTREE_REPO_METADATA_REF);
+  if (!ostree_repo_resolve_rev (self->repo, refspec, TRUE, &checksum_from_repo, error))
+    return FALSE;
+
+  g_debug ("%s: Comparing %s from summary and %s from repo",
+           G_STRFUNC, checksum_from_summary, checksum_from_repo);
+
+  if (checksum_from_summary != NULL && checksum_from_repo != NULL &&
+      g_str_equal (checksum_from_summary, checksum_from_repo))
+    return TRUE;
+
+  /* Do the pull into the local repository. */
   flatpak_flags = FLATPAK_PULL_FLAGS_DOWNLOAD_EXTRA_DATA;
   flatpak_flags |= FLATPAK_PULL_FLAGS_NO_STATIC_DELTAS;
 
