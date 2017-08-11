@@ -2839,7 +2839,8 @@ flatpak_dir_pull (FlatpakDir          *self,
             rev = g_hash_table_lookup (results[i]->ref_to_checksum, &collection_ref);
 
           if (rev == NULL)
-            return flatpak_fail (error, "No such ref '%s' in remote %s", ref, repository);
+            return flatpak_fail (error, "No such ref (%s, %s) in remote %s or elsewhere",
+                                 collection_ref.collection_id, collection_ref.ref_name, repository);
         }
       else
 #endif  /* FLATPAK_ENABLE_P2P */
@@ -4839,7 +4840,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
   if (checksum_or_latest == NULL)
     {
-      g_debug ("No checksum specified, getting tip of %s", ref);
+      g_debug ("No checksum specified, getting tip of %s from origin %s", ref, origin);
 
       resolved_ref = flatpak_dir_read_latest (self, origin, ref, NULL, cancellable, error);
       if (resolved_ref == NULL)
@@ -5980,7 +5981,8 @@ flatpak_dir_check_for_update (FlatpakDir          *self,
 
       if (latest_rev == NULL)
         {
-          flatpak_fail (error, "No such ref '%s' in remote %s", ref, remote_name);
+          flatpak_fail (error, "No such ref (%s, %s) in remote %s or elsewhere",
+                        collection_ref.collection_id, collection_ref.ref_name, remote_name);
           return NULL;
         }
 
