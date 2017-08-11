@@ -8,6 +8,8 @@ REPONAME=$1
 shift
 ID=$1
 shift
+COLLECTION_ID=$1
+shift
 
 mkdir ${DIR}/files
 mkdir ${DIR}/usr
@@ -65,6 +67,12 @@ done
 mkdir -p ${DIR}/usr/lib/locale/
 cp -r /usr/lib/locale/C.* ${DIR}/usr/lib/locale/en_US
 
+if [ x$COLLECTION_ID != x ]; then
+    collection_args=--collection-id=${COLLECTION_ID}
+else
+    collection_args=
+fi
+
 mkdir -p repos
-flatpak build-export --runtime ${GPGARGS-} repos/${REPONAME} ${DIR}
+flatpak build-export ${collection_args} --runtime ${GPGARGS-} repos/${REPONAME} ${DIR}
 rm -rf ${DIR}

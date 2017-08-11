@@ -76,7 +76,7 @@ echo "ok update oci"
 
 flatpak uninstall  ${U} org.test.Hello
 
-make_updated_app test HTTP
+make_updated_app test org.test.Collection.test HTTP
 ${FLATPAK} build-bundle --oci $FL_GPGARGS repos/test oci/registry org.test.Hello
 
 $(dirname $0)/test-webserver.sh `pwd`/oci
@@ -91,7 +91,7 @@ assert_file_has_content hello_out '^Hello world, from a sandboxHTTP$'
 
 echo "ok install oci http"
 
-make_updated_app test UPDATEDHTTP
+make_updated_app test org.test.Collection.test UPDATEDHTTP
 ${FLATPAK} build-bundle --oci $FL_GPGARGS repos/test oci/registry org.test.Hello
 
 ${FLATPAK} update ${U} org.test.Hello

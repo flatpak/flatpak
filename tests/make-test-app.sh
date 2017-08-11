@@ -6,6 +6,8 @@ DIR=`mktemp -d`
 
 REPONAME=$1
 shift
+COLLECTION_ID=$1
+shift
 
 EXTRA="${1-}"
 
@@ -63,7 +65,13 @@ gzip -c > ${DIR}/files/share/app-info/xmls/org.test.Hello.xml.gz <<EOF
 EOF
 cp $(dirname $0)/org.test.Hello.png ${DIR}/files/share/app-info/icons/flatpak/64x64/
 
+if [ x$COLLECTION_ID != x ]; then
+    collection_args=--collection-id=${COLLECTION_ID}
+else
+    collection_args=
+fi
+
 flatpak build-finish --command=hello.sh ${DIR}
 mkdir -p repos
-flatpak build-export ${GPGARGS-} repos/${REPONAME} ${DIR}
+flatpak build-export ${collection_args} ${GPGARGS-} repos/${REPONAME} ${DIR}
 rm -rf ${DIR}
