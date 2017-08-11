@@ -371,6 +371,8 @@ test_install_launch_uninstall (void)
     {
       gint exit_code = 0;
       char *argv[] = { (char *)bwrap, "--ro-bind", "/", "/", "/bin/true", NULL };
+      g_autofree char *argv_str = g_strjoinv (" ", argv);
+      g_test_message ("Spawning %s", argv_str);
       g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &exit_code, &error);
       g_assert_no_error (error);
       if (exit_code != 0)
@@ -562,6 +564,7 @@ make_test_runtime (void)
   char *argv[] = {
     NULL, "test", "org.test.Platform", "", "bash", "ls", "cat", "echo", "readlink", NULL
   };
+  g_autofree char *argv_str = NULL;
   GSpawnFlags flags = G_SPAWN_DEFAULT;
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
@@ -575,6 +578,8 @@ make_test_runtime (void)
   else
     flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
 
+  argv_str = g_strjoinv (" ", argv);
+  g_test_message ("Spawning %s", argv_str);
   g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
   g_assert_no_error (error);
   g_assert_cmpint (status, ==, 0);
@@ -587,6 +592,7 @@ make_test_app (void)
   g_autoptr(GError) error = NULL;
   g_autofree char *arg0 = NULL;
   char *argv[] = { NULL, "test", "", NULL };
+  g_autofree char *argv_str = NULL;
   GSpawnFlags flags = G_SPAWN_DEFAULT;
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
@@ -600,6 +606,8 @@ make_test_app (void)
   else
     flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
 
+  argv_str = g_strjoinv (" ", argv);
+  g_test_message ("Spawning %s", argv_str);
   g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
   g_assert_no_error (error);
   g_assert_cmpint (status, ==, 0);
@@ -611,6 +619,7 @@ update_repo (void)
   int status;
   g_autoptr(GError) error = NULL;
   char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", "repos/test", NULL };
+  g_autofree char *argv_str = NULL;
   GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
   g_auto(GStrv) gpgargs = NULL;
 
@@ -626,6 +635,8 @@ update_repo (void)
   else
     flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
 
+  argv_str = g_strjoinv (" ", argv);
+  g_test_message ("Spawning %s", argv_str);
   g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
   g_assert_no_error (error);
   g_assert_cmpint (status, ==, 0);
@@ -638,6 +649,7 @@ launch_httpd (void)
   g_autoptr(GError) error = NULL;
   g_autofree char *path = g_test_build_filename (G_TEST_DIST, "test-webserver.sh", NULL);
   char *argv[] = {path , "repos", NULL };
+  g_autofree char *argv_str = NULL;
   GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 
   if (g_test_verbose ())
@@ -648,6 +660,8 @@ launch_httpd (void)
   else
     flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
 
+  argv_str = g_strjoinv (" ", argv);
+  g_test_message ("Spawning %s", argv_str);
   g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
   g_assert_no_error (error);
   g_assert_cmpint (status, ==, 0);
@@ -659,6 +673,7 @@ add_remote (void)
   int status;
   g_autoptr(GError) error = NULL;
   char *argv[] = { "flatpak", "remote-add", "--user", "--gpg-import=", "name", "url", NULL };
+  g_autofree char *argv_str = NULL;
   g_autofree char *gpgimport = NULL;
   g_autofree char *port = NULL;
   g_autofree char *pid = NULL;
@@ -693,6 +708,8 @@ add_remote (void)
   else
     flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
 
+  argv_str = g_strjoinv (" ", argv);
+  g_test_message ("Spawning %s", argv_str);
   g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
   g_assert_no_error (error);
   g_assert_cmpint (status, ==, 0);
@@ -866,6 +883,7 @@ global_teardown (void)
   int status;
   g_autoptr (GError) error = NULL;
   char *argv[] = { "gpg-connect-agent", "--homedir", "<placeholder>", "killagent", "/bye", NULL };
+  g_autofree char *argv_str = NULL;
   GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 
   if (g_getenv ("SKIP_TEARDOWN"))
@@ -885,6 +903,9 @@ global_teardown (void)
 
   if (httpd_pid != -1)
     kill (httpd_pid, SIGKILL);
+
+  argv_str = g_strjoinv (" ", argv);
+  g_test_message ("Spawning %s", argv_str);
 
   /* mostly ignore failure here */
   if (!g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error) ||
