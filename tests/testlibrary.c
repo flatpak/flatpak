@@ -330,8 +330,6 @@ progress_cb (const char *status,
   *count += 1;
 }
 
-static int changed_count;
-
 static void
 changed_cb (GFileMonitor *monitor,
             GFile *file,
@@ -339,16 +337,15 @@ changed_cb (GFileMonitor *monitor,
             GFileMonitorEvent event_type,
             gpointer user_data)
 {
-  GMainLoop *loop = user_data;
-  g_main_loop_quit (loop);
-  changed_count += 1;
+  int *count = user_data;
+  *count += 1;
 }
 
 static gboolean
-quit (gpointer data)
+timeout_cb (gpointer data)
 {
-  GMainLoop *loop = data;
-  g_main_loop_quit (loop);
+  gboolean *timeout_reached = data;
+  *timeout_reached = TRUE;
   return G_SOURCE_CONTINUE;
 }
 
@@ -364,9 +361,9 @@ test_install_launch_uninstall (void)
   GPtrArray *refs = NULL;
   g_autofree char *s = NULL;
   g_autofree char *s1 = NULL;
-  int progress_count;
-  g_autoptr(GMainLoop) loop = NULL;
-  guint quit_id;
+  int progress_count, changed_count;
+  gboolean timeout_reached;
+  guint timeout_id;
   gboolean res;
   const char *bwrap = g_getenv ("FLATPAK_BWRAP");
 
@@ -391,9 +388,7 @@ test_install_launch_uninstall (void)
   g_assert (G_IS_FILE_MONITOR (monitor));
   g_file_monitor_set_rate_limit (monitor, 100);
 
-  loop = g_main_loop_new (NULL, TRUE);
-
-  g_signal_connect (monitor, "changed", G_CALLBACK (changed_cb), loop);
+  g_signal_connect (monitor, "changed", G_CALLBACK (changed_cb), &changed_count);
 
   refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
   g_assert_no_error (error);
@@ -402,6 +397,7 @@ test_install_launch_uninstall (void)
 
   changed_count = 0;
   progress_count = 0;
+  timeout_reached = FALSE;
   ref = flatpak_installation_install (inst,
                                       repo_name,
                                       FLATPAK_REF_KIND_RUNTIME,
@@ -416,9 +412,10 @@ test_install_launch_uninstall (void)
   g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
-  quit_id = g_timeout_add (1000, quit, loop);
-  g_main_loop_run (loop);
-  g_source_remove (quit_id);
+  timeout_id = g_timeout_add (1000, timeout_cb, &timeout_reached);
+  while (!timeout_reached && changed_count == 0)
+    g_main_context_iteration (NULL, TRUE);
+  g_source_remove (timeout_id);
 
   g_assert_cmpint (changed_count, >, 0);
 
@@ -450,6 +447,7 @@ test_install_launch_uninstall (void)
 
   changed_count = 0;
   progress_count = 0;
+  timeout_reached = FALSE;
   ref = flatpak_installation_install (inst,
                                       repo_name,
                                       FLATPAK_REF_KIND_APP,
@@ -464,9 +462,10 @@ test_install_launch_uninstall (void)
   g_assert (FLATPAK_IS_INSTALLED_REF (ref));
   g_assert_cmpint (progress_count, >, 0);
 
-  quit_id = g_timeout_add (1000, quit, loop);
-  g_main_loop_run (loop);
-  g_source_remove (quit_id);
+  timeout_id = g_timeout_add (1000, timeout_cb, &timeout_reached);
+  while (!timeout_reached && changed_count == 0)
+    g_main_context_iteration (NULL, TRUE);
+  g_source_remove (timeout_id);
 
   g_assert_cmpint (changed_count, >, 0);
 
@@ -491,9 +490,11 @@ test_install_launch_uninstall (void)
   g_assert_no_error (error);
   g_assert_true (res);
 
-  quit_id = g_timeout_add (500, quit, loop);
-  g_main_loop_run (loop);
-  g_source_remove (quit_id);
+  timeout_reached = FALSE;
+  timeout_id = g_timeout_add (500, timeout_cb, &timeout_reached);
+  while (!timeout_reached)
+    g_main_context_iteration (NULL, TRUE);
+  g_source_remove (timeout_id);
 
   changed_count = 0;
   progress_count = 0;
@@ -511,9 +512,11 @@ test_install_launch_uninstall (void)
   //FIXME: no progress for uninstall
   //g_assert_cmpint (progress_count, >, 0);
 
-  quit_id = g_timeout_add (500, quit, loop);
-  g_main_loop_run (loop);
-  g_source_remove (quit_id);
+  timeout_reached = FALSE;
+  timeout_id = g_timeout_add (500, timeout_cb, &timeout_reached);
+  while (!timeout_reached && changed_count == 0)
+    g_main_context_iteration (NULL, TRUE);
+  g_source_remove (timeout_id);
 
   refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
   g_assert_no_error (error);
@@ -537,9 +540,11 @@ test_install_launch_uninstall (void)
   //FIXME: no progress for uninstall
   //g_assert_cmpint (progress_count, >, 0);
 
-  quit_id = g_timeout_add (500, quit, loop);
-  g_main_loop_run (loop);
-  g_source_remove (quit_id);
+  timeout_reached = FALSE;
+  timeout_id = g_timeout_add (500, timeout_cb, &timeout_reached);
+  while (!timeout_reached && changed_count == 0)
+    g_main_context_iteration (NULL, TRUE);
+  g_source_remove (timeout_id);
 
   refs = flatpak_installation_list_installed_refs (inst, NULL, &error);
   g_assert_no_error (error);
