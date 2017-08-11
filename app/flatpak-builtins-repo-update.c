@@ -441,9 +441,27 @@ flatpak_builtin_build_update_repo (int argc, char **argv,
       !flatpak_repo_set_default_branch (repo, opt_default_branch[0] ? opt_default_branch : NULL, error))
     return FALSE;
 
-  if (opt_collection_id &&
-      !flatpak_repo_set_collection_id (repo, opt_collection_id[0] ? opt_collection_id : NULL, error))
-    return FALSE;
+  if (opt_collection_id != NULL)
+    {
+      /* Only allow a transition from no collection ID to a non-empty collection ID.
+       * Changing the collection ID between two different non-empty values is too
+       * dangerous: it will break all clients who have previously pulled from the repository.
+       * Require the user to recreate the repository from scratch in that case. */
+#ifdef FLATPAK_ENABLE_P2P
+      const char *old_collection_id = ostree_repo_get_collection_id (repo);
+#else  /* if !FLATPAK_ENABLE_P2P */
+      const char *old_collection_id = NULL;
+#endif  /* !FLATPAK_ENABLE_P2P */
+      const char *new_collection_id = opt_collection_id[0] ? opt_collection_id : NULL;
+
+      if (old_collection_id != NULL &&
+          g_strcmp0 (old_collection_id, new_collection_id) != 0)
+        return flatpak_fail (error, "The collection ID of an existing repository cannot be changed. "
+                                    "Recreate the repository to change or clear its collection ID.");
+
+      if (!flatpak_repo_set_collection_id (repo, new_collection_id, error))
+        return FALSE;
+    }
 
   if (opt_deploy_collection_id &&
       !flatpak_repo_set_deploy_collection_id (repo, TRUE, error))
