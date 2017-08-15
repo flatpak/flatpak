@@ -4491,9 +4491,9 @@ flatpak_pull_from_bundle (OstreeRepo   *repo,
                                               NULL, NULL, cancellable, &my_error);
   if (gpg_result == NULL)
     {
-      /* NOT_FOUND means no gpg signature, we ignore this *if* there
-       * is no gpg key specified in the bundle or by the user */
-      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) &&
+      /* no gpg signature, we ignore this *if* there is no gpg key
+       * specified in the bundle or by the user */
+      if (g_error_matches (my_error, OSTREE_GPG_ERROR, OSTREE_GPG_ERROR_NO_SIGNATURE) &&
           !require_gpg_signature)
         {
           g_clear_error (&my_error);
