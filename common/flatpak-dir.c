@@ -6612,7 +6612,8 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
   additional_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
   /* The summary has to be sorted by ref, so pre-sort the manifests */
-  qsort (index->manifests, flatpak_oci_index_get_n_manifests (index), sizeof (FlatpakOciManifestDescriptor *), compare_mdp);
+  if (index->manifests != NULL)
+    qsort (index->manifests, flatpak_oci_index_get_n_manifests (index), sizeof (FlatpakOciManifestDescriptor *), compare_mdp);
 
   for (i = 0; index->manifests != NULL && index->manifests[i] != NULL; i++)
     {
@@ -6832,6 +6833,7 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
   return TRUE;
 }
 
+/* Guarantees to return refs which are decomposable. */
 static GPtrArray *
 find_matching_refs (GHashTable *refs,
                     const char   *opt_name,
@@ -6944,6 +6946,7 @@ find_matching_ref (GHashTable *refs,
             {
               char *current_ref = g_ptr_array_index (matched_refs, j);
               g_auto(GStrv) parts = flatpak_decompose_ref (current_ref, NULL);
+              g_assert (parts != NULL);
 
               if (g_strcmp0 (opt_default_branch, parts[3]) == 0)
                 return g_strdup (current_ref);
@@ -6957,6 +6960,7 @@ find_matching_ref (GHashTable *refs,
       for (j = 0; j < matched_refs->len; j++)
         {
           g_auto(GStrv) parts = flatpak_decompose_ref (g_ptr_array_index (matched_refs, j), NULL);
+          g_assert (parts != NULL);
           if (j != 0)
             g_string_append (err, ", ");
 

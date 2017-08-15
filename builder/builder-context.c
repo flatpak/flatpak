@@ -290,8 +290,9 @@ builder_context_find_in_sources_dirs_va (BuilderContext *self,
       g_autoptr(GFile) local_file = NULL;
       va_list args2;
 
-      va_copy(args2, args);
+      va_copy (args2, args);
       local_file = flatpak_build_file_va (dir, args2);
+      va_end (args2);
 
       if (g_file_query_exists (local_file, NULL))
         return g_steal_pointer (&local_file);
