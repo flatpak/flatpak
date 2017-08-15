@@ -83,7 +83,7 @@ typedef struct GLnxRealDirfdIterator GLnxRealDirfdIterator;
 /**
  * glnx_dirfd_iterator_init_at:
  * @dfd: File descriptor, may be AT_FDCWD or -1
- * @path: Path, may be relative to @df
+ * @path: Path, may be relative to @dfd
  * @follow: If %TRUE and the last component of @path is a symlink, follow it
  * @out_dfd_iter: (out caller-allocates): A directory iterator, will be initialized
  * @error: Error
