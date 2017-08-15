@@ -1461,13 +1461,9 @@ builder_module_build (BuilderModule  *self,
               configure_cmd = "cmake";
               configure_final_arg = g_strdup (".");
             }
-          else if (meson)
+          else
             {
-              g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "module %s: Meson does not support building in sourcedir, set \"builddir\" to true.", self->name);
-              return FALSE;
-            }
-            else
-            {
+              g_assert (!meson);
               configure_cmd = "./configure";
             }
         }
