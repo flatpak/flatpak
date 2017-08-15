@@ -222,7 +222,8 @@ text_percent_internal (const char *text,
 
   if (percentage == -1)
     {
-      fwrite (text, 1, input_textlen, stdout);
+      if (text != NULL)
+        fwrite (text, 1, input_textlen, stdout);
 
       /* Overwrite remaining space, if any */
       if (ncolumns > input_textlen)
