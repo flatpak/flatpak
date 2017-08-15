@@ -765,8 +765,7 @@ handle_dwarf2_line (DebuginfoData *data, uint32_t off, char *comp_dir, GHashTabl
         }
       canonicalize_path (s, s);
 
-      if (s)
-        g_hash_table_insert (files, s, NULL);
+      g_hash_table_insert (files, s, NULL);
 
       (void) read_uleb128 (ptr);
       (void) read_uleb128 (ptr);
