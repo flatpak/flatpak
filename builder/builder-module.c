@@ -1012,6 +1012,8 @@ setup_build_args (GFile          *app_dir,
   g_ptr_array_add (args, g_strdup ("build"));
 
   source_dir_path_canonical = realpath (source_dir_path, NULL);
+  if (source_dir_path_canonical == NULL)
+    source_dir_path_canonical = g_strdup (source_dir_path);
 
   if (builder_context_get_build_runtime (context))
     builddir = "/run/build-runtime/";
@@ -1025,7 +1027,7 @@ setup_build_args (GFile          *app_dir,
 
   /* Also make sure the original path is available (if it was not canonical, in case something references that. */
   if (strcmp (source_dir_path_canonical, source_dir_path) != 0)
-  g_ptr_array_add (args, g_strdup_printf ("--bind-mount=%s=%s", source_dir_path, source_dir_path_canonical));
+    g_ptr_array_add (args, g_strdup_printf ("--bind-mount=%s=%s", source_dir_path, source_dir_path_canonical));
 
   g_ptr_array_add (args, g_strdup_printf ("--bind-mount=%s%s=%s", builddir, module_name, source_dir_path_canonical));
   if (cwd_subdir)
