@@ -6612,7 +6612,8 @@ flatpak_dir_remote_make_oci_summary (FlatpakDir   *self,
   additional_metadata_builder = g_variant_builder_new (G_VARIANT_TYPE ("a{sv}"));
 
   /* The summary has to be sorted by ref, so pre-sort the manifests */
-  qsort (index->manifests, flatpak_oci_index_get_n_manifests (index), sizeof (FlatpakOciManifestDescriptor *), compare_mdp);
+  if (index->manifests != NULL)
+    qsort (index->manifests, flatpak_oci_index_get_n_manifests (index), sizeof (FlatpakOciManifestDescriptor *), compare_mdp);
 
   for (i = 0; index->manifests != NULL && index->manifests[i] != NULL; i++)
     {
