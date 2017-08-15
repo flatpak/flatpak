@@ -275,7 +275,7 @@ void
 glnx_console_progress_text_percent (const char *text,
                                     guint percentage)
 {
-  g_return_if_fail (percentage >= 0 && percentage <= 100);
+  g_return_if_fail (percentage <= 100);
 
   text_percent_internal (text, percentage);
 }
