@@ -327,6 +327,7 @@ generate_all_deltas (OstreeRepo *repo,
       g_autoptr(GVariant) variant = NULL;
       g_autoptr(GVariant) parent_variant = NULL;
       g_autofree char *parent_commit = NULL;
+      g_autofree char *grandparent_commit = NULL;
 
       if (!ostree_repo_load_variant (repo, OSTREE_OBJECT_TYPE_COMMIT, commit,
                                      &variant, NULL))
@@ -370,8 +371,21 @@ generate_all_deltas (OstreeRepo *repo,
                 goto error;
             }
 
-          /* Mark this one as wanted */
+          /* Mark parent-to-current as wanted */
           g_hash_table_insert (wanted_deltas_hash, g_strdup (from_parent), GINT_TO_POINTER (1));
+
+          /* We also want to keep around the parent and the grandparent-to-parent deltas
+           * because otherwise these will be deleted immediately which may cause a race if
+           * someone is currently downloading them.
+           * However, there is no need to generate these if they don't exist.
+           */
+
+          g_hash_table_insert (wanted_deltas_hash, g_strdup (parent_commit), GINT_TO_POINTER (1));
+          grandparent_commit = ostree_commit_get_parent (parent_variant);
+          if (grandparent_commit != NULL)
+            g_hash_table_insert (wanted_deltas_hash,
+                                 g_strdup_printf ("%s-%s", grandparent_commit, parent_commit),
+                                 GINT_TO_POINTER (1));
         }
     }
 
