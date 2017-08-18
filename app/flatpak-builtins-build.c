@@ -338,11 +338,6 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
             "--setenv", "FLATPAK_DEST", dest,
             NULL);
 
-  /* After setup_base to avoid conflicts with /var symlinks */
-  add_args (argv_array,
-            "--bind", flatpak_file_get_path_cached (var), "/var",
-            NULL);
-
   app_context = flatpak_app_compute_permissions (metakey,
                                                  runtime_metakey,
                                                  error);
@@ -373,6 +368,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (!flatpak_run_add_environment_args (argv_array, NULL, &envp, app_info_path, run_flags, id,
                                          app_context, NULL, NULL, cancellable, error))
     return FALSE;
+
+  /* After setup_base to avoid conflicts with /var symlinks */
+  add_args (argv_array,
+            "--bind", flatpak_file_get_path_cached (var), "/var",
+            NULL);
 
   for (i = 0; opt_bind_mounts != NULL && opt_bind_mounts[i] != NULL; i++)
     {
