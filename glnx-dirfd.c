@@ -25,6 +25,7 @@
 #include <glnx-dirfd.h>
 #include <glnx-errors.h>
 #include <glnx-local-alloc.h>
+#include <glnx-shutil.h>
 
 /**
  * glnx_opendirat_with_errno:
@@ -283,27 +284,36 @@ glnx_gen_temp_name (gchar *tmpl)
 /**
  * glnx_mkdtempat:
  * @dfd: Directory fd
- * @tmpl: (type filename): template directory name, last 6 characters will be replaced
- * @mode: permissions to create the temporary directory with
+ * @tmpl: (type filename): Initial template directory name, last 6 characters will be replaced
+ * @mode: permissions with which to create the temporary directory
+ * @out_tmpdir: (out caller-allocates): Initialized tempdir structure
  * @error: Error
  *
- * Similar to g_mkdtemp_full, but using openat.
+ * Somewhat similar to g_mkdtemp_full(), but fd-relative, and returns a
+ * structure that uses autocleanups.  Note that the supplied @dfd lifetime
+ * must match or exceed that of @out_tmpdir in order to remove the directory.
  */
 gboolean
-glnx_mkdtempat (int dfd,
-                gchar *tmpl,
-                int mode,
-                GError **error)
+glnx_mkdtempat (int dfd, const char *tmpl, int mode,
+                GLnxTmpDir *out_tmpdir, GError **error)
 {
-  int count;
+  g_return_val_if_fail (tmpl != NULL, FALSE);
+  g_return_val_if_fail (out_tmpdir != NULL, FALSE);
+  g_return_val_if_fail (!out_tmpdir->initialized, FALSE);
 
-  g_return_val_if_fail (tmpl != NULL, -1);
+  dfd = glnx_dirfd_canonicalize (dfd);
 
-  for (count = 0; count < 100; count++)
+  g_autofree char *path = g_strdup (tmpl);
+  for (int count = 0; count < 100; count++)
     {
-      glnx_gen_temp_name (tmpl);
+      glnx_gen_temp_name (path);
 
-      if (mkdirat (dfd, tmpl, mode) == -1)
+      /* Ideally we could use openat(O_DIRECTORY | O_CREAT | O_EXCL) here
+       * to create and open the directory atomically, but that’s not supported by
+       * current kernel versions: http://www.openwall.com/lists/oss-security/2014/11/26/14
+       * (Tested on kernel 4.10.10-200.fc25.x86_64). For the moment, accept a
+       * TOCTTOU race here. */
+      if (mkdirat (dfd, path, mode) == -1)
         {
           if (errno == EEXIST)
             continue;
@@ -314,77 +324,72 @@ glnx_mkdtempat (int dfd,
           return glnx_throw_errno_prefix (error, "mkdirat");
         }
 
+      /* And open it */
+      glnx_fd_close int ret_dfd = -1;
+      if (!glnx_opendirat (dfd, path, FALSE, &ret_dfd, error))
+        {
+          /* If we fail to open, let's try to clean up */
+          (void)unlinkat (dfd, path, AT_REMOVEDIR);
+          return FALSE;
+        }
+
+      /* Return the initialized directory struct */
+      out_tmpdir->initialized = TRUE;
+      out_tmpdir->src_dfd = dfd; /* referenced; see above docs */
+      out_tmpdir->fd = glnx_steal_fd (&ret_dfd);
+      out_tmpdir->path = g_steal_pointer (&path);
       return TRUE;
     }
 
+  /* Failure */
   g_set_error (error, G_IO_ERROR, G_IO_ERROR_EXISTS,
-               "mkstempat ran out of combinations to try.");
+               "glnx_mkdtempat ran out of combinations to try");
   return FALSE;
 }
 
 /**
- * glnx_mkdtempat_open:
- * @dfd: Directory FD
- * @tmpl: (type filename): template directory name, last 6 characters will be replaced
+ * glnx_mkdtemp:
+ * @tmpl: (type filename): Source template directory name, last 6 characters will be replaced
  * @mode: permissions to create the temporary directory with
- * @out_dfd: (out caller-allocates): Return location for an FD for the new
- *   temporary directory, or `-1` on error
+ * @out_tmpdir: (out caller-allocates): Return location for tmpdir data
  * @error: Return location for a #GError, or %NULL
  *
- * Similar to glnx_mkdtempat(), except it will open the resulting temporary
- * directory and return a directory FD to it.
+ * Similar to glnx_mkdtempat(), but will use g_get_tmp_dir() as the parent
+ * directory to @tmpl.
  *
  * Returns: %TRUE on success, %FALSE otherwise
  * Since: UNRELEASED
  */
 gboolean
-glnx_mkdtempat_open (int      dfd,
-                     gchar   *tmpl,
-                     int      mode,
-                     int     *out_dfd,
-                     GError **error)
+glnx_mkdtemp (const gchar   *tmpl,
+              int      mode,
+              GLnxTmpDir *out_tmpdir,
+              GError **error)
 {
-  /* FIXME: Ideally we could use openat(O_DIRECTORY | O_CREAT | O_EXCL) here
-   * to create and open the directory atomically, but that’s not supported by
-   * current kernel versions: http://www.openwall.com/lists/oss-security/2014/11/26/14
-   * (Tested on kernel 4.10.10-200.fc25.x86_64). For the moment, accept a
-   * TOCTTOU race here. */
-  *out_dfd = -1;
-
-  if (!glnx_mkdtempat (dfd, tmpl, mode, error))
-    return FALSE;
-
-  return glnx_opendirat (dfd, tmpl, FALSE, out_dfd, error);
+  g_autofree char *path = g_build_filename (g_get_tmp_dir (), tmpl, NULL);
+  return glnx_mkdtempat (AT_FDCWD, path, mode,
+                         out_tmpdir, error);
 }
 
-/**
- * glnx_mkdtempat_open_in_system:
- * @tmpl: (type filename): template directory name, last 6 characters will be replaced
- * @mode: permissions to create the temporary directory with
- * @out_dfd: (out caller-allocates): Return location for an FD for the new
- *   temporary directory, or `-1` on error
- * @error: Return location for a #GError, or %NULL
- *
- * Similar to glnx_mkdtempat_open(), except it will use the system temporary
- * directory (from g_get_tmp_dir()) as the parent directory to @tmpl.
- *
- * Returns: %TRUE on success, %FALSE otherwise
- * Since: UNRELEASED
+/* Deallocate a tmpdir, closing the fd and (recursively) deleting the path. This
+ * is normally called by default by the autocleanup attribute, but you can also
+ * invoke this directly.
  */
-gboolean
-glnx_mkdtempat_open_in_system (gchar   *tmpl,
-                               int      mode,
-                               int     *out_dfd,
-                               GError **error)
+void
+glnx_tmpdir_clear (GLnxTmpDir *tmpd)
 {
-  glnx_fd_close int tmp_dfd = -1;
-
-  *out_dfd = -1;
-
-  if (!glnx_opendirat (-1, g_get_tmp_dir (), TRUE, &tmp_dfd, error))
-    return FALSE;
-
-  return glnx_mkdtempat_open (tmp_dfd, tmpl, mode, out_dfd, error);
+  /* Support being passed NULL so we work nicely in a GPtrArray */
+  if (!tmpd)
+    return;
+  if (!tmpd->initialized)
+    return;
+  g_assert_cmpint (tmpd->fd, !=, -1);
+  (void) close (tmpd->fd);
+  g_assert (tmpd->path);
+  g_assert_cmpint (tmpd->src_dfd, !=, -1);
+  (void) glnx_shutil_rm_rf_at (tmpd->src_dfd, tmpd->path, NULL, NULL);
+  g_free (tmpd->path);
+  tmpd->initialized = FALSE;
 }
 
 

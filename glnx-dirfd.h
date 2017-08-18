@@ -113,20 +113,19 @@ glnx_ensure_dir (int           dfd,
   return TRUE;
 }
 
-gboolean glnx_mkdtempat (int dfd,
-                         gchar *tmpl,
-                         int mode,
-                         GError **error);
+typedef struct {
+  gboolean initialized;
+  int src_dfd;
+  int fd;
+  char *path;
+} GLnxTmpDir;
+void glnx_tmpdir_clear (GLnxTmpDir *tmpf);
+G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxTmpDir, glnx_tmpdir_clear)
 
-gboolean glnx_mkdtempat_open (int      dfd,
-                              gchar   *tmpl,
-                              int      mode,
-                              int     *out_dfd,
-                              GError **error);
+gboolean glnx_mkdtempat (int dfd, const char *tmpl, int mode,
+                         GLnxTmpDir *out_tmpdir, GError **error);
 
-gboolean glnx_mkdtempat_open_in_system (gchar   *tmpl,
-                                        int      mode,
-                                        int     *out_dfd,
-                                        GError **error);
+gboolean glnx_mkdtemp (const char *tmpl, int      mode,
+                       GLnxTmpDir *out_tmpdir, GError **error);
 
 G_END_DECLS
