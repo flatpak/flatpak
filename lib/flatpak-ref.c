@@ -216,8 +216,6 @@ flatpak_ref_class_init (FlatpakRefClass *klass)
                                                       FLATPAK_TYPE_REF_KIND,
                                                       FLATPAK_REF_KIND_APP,
                                                       G_PARAM_READWRITE));
-
-#ifdef FLATPAK_ENABLE_P2P
   g_object_class_install_property (object_class,
                                    PROP_COLLECTION_ID,
                                    g_param_spec_string ("collection-id",
@@ -225,7 +223,6 @@ flatpak_ref_class_init (FlatpakRefClass *klass)
                                                         "The collection ID",
                                                         NULL,
                                                         G_PARAM_READWRITE));
-#endif  /* FLATPAK_ENABLE_P2P */
 }
 
 static void
@@ -383,7 +380,6 @@ flatpak_ref_parse (const char *ref, GError **error)
                                     NULL));
 }
 
-#ifdef FLATPAK_ENABLE_P2P
 /**
  * flatpak_ref_get_collection_id:
  * @self: a #FlatpakRef
@@ -399,4 +395,3 @@ flatpak_ref_get_collection_id (FlatpakRef *self)
 
   return priv->collection_id;
 }
-#endif  /* FLATPAK_ENABLE_P2P */

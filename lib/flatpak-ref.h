@@ -70,9 +70,6 @@ FLATPAK_EXTERN FlatpakRefKind flatpak_ref_get_kind (FlatpakRef *self);
 FLATPAK_EXTERN char *        flatpak_ref_format_ref (FlatpakRef *self);
 FLATPAK_EXTERN FlatpakRef *   flatpak_ref_parse (const char *ref,
                                                  GError    **error);
-
-#ifdef FLATPAK_ENABLE_P2P
 FLATPAK_EXTERN const char *   flatpak_ref_get_collection_id (FlatpakRef *self);
-#endif  /* FLATPAK_ENABLE_P2P */
 
 #endif /* __FLATPAK_REF_H__ */

@@ -25,19 +25,12 @@
 #ifndef __FLATPAK_REMOTE_H__
 #define __FLATPAK_REMOTE_H__
 
-#ifdef FLATPAK_ENABLE_P2P
-#ifndef __GTK_DOC_IGNORE__
-typedef enum  /*< skip >*/
+typedef enum
 {
-  FLATPAK_REMOTE_TYPE_STATIC,  /*< skip >*/
-  FLATPAK_REMOTE_TYPE_USB,  /*< skip >*/
-  FLATPAK_REMOTE_TYPE_LAN,  /*< skip >*/
+  FLATPAK_REMOTE_TYPE_STATIC,
+  FLATPAK_REMOTE_TYPE_USB,
+  FLATPAK_REMOTE_TYPE_LAN,
 } FlatpakRemoteType;
-
-FLATPAK_EXTERN GType flatpak_remote_type_get_type (void);
-#define FLATPAK_TYPE_REMOTE_TYPE flatpak_remote_type_get_type ()
-#endif  /* !__GTK_DOC_IGNORE__ */
-#endif  /* FLATPAK_ENABLE_P2P */
 
 typedef struct _FlatpakRemote FlatpakRemote;
 
@@ -74,11 +67,9 @@ FLATPAK_EXTERN GFile *       flatpak_remote_get_appstream_timestamp (FlatpakRemo
 FLATPAK_EXTERN char *        flatpak_remote_get_url (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_url (FlatpakRemote *self,
                                                      const char    *url);
-#ifdef FLATPAK_ENABLE_P2P
 FLATPAK_EXTERN char *        flatpak_remote_get_collection_id (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_collection_id (FlatpakRemote *self,
                                                                const char    *collection_id);
-#endif  /* FLATPAK_ENABLE_P2P */
 FLATPAK_EXTERN char *        flatpak_remote_get_title (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_title (FlatpakRemote *self,
                                                        const char    *title);
@@ -103,9 +94,7 @@ FLATPAK_EXTERN int           flatpak_remote_get_prio (FlatpakRemote *self);
 FLATPAK_EXTERN void          flatpak_remote_set_prio (FlatpakRemote *self,
                                                       int            prio);
 
-#ifdef FLATPAK_ENABLE_P2P
 FLATPAK_EXTERN FlatpakRemoteType flatpak_remote_get_remote_type (FlatpakRemote *self);
-#endif  /* FLATPAK_ENABLE_P2P */
 
 
 #endif /* __FLATPAK_REMOTE_H__ */

@@ -32,33 +32,6 @@
 #include <ostree-repo-finder-avahi.h>
 #endif  /* FLATPAK_ENABLE_P2P */
 
-#ifndef FLATPAK_ENABLE_P2P
-/* Avoid too many #ifdefs by redefining this enum when compiling without P2P support. */
-typedef enum {
-  FLATPAK_REMOTE_TYPE_STATIC = 0,
-} FlatpakRemoteType;
-#else  /* if FLATPAK_ENABLE_P2P */
-GType
-flatpak_remote_type_get_type (void)
-{
-  static volatile gsize g_define_type_id__volatile = 0;
-
-  if (g_once_init_enter (&g_define_type_id__volatile))
-    {
-      static const GEnumValue values[] = {
-        { FLATPAK_REMOTE_TYPE_STATIC, "FLATPAK_REMOTE_TYPE_STATIC", "static" },
-        { FLATPAK_REMOTE_TYPE_USB, "FLATPAK_REMOTE_TYPE_USB", "usb" },
-        { FLATPAK_REMOTE_TYPE_LAN, "FLATPAK_REMOTE_TYPE_LAN", "lan" },
-        { 0, NULL, NULL }
-      };
-      GType g_define_type_id = g_enum_register_static (g_intern_static_string ("FlatpakRemoteType"), values);
-      g_once_init_leave (&g_define_type_id__volatile, g_define_type_id);
-    }
-
-  return g_define_type_id__volatile;
-}
-#endif  /* FLATPAK_ENABLE_P2P */
-
 /**
  * SECTION:flatpak-remote
  * @Short_description: Remote repository
@@ -206,8 +179,6 @@ flatpak_remote_class_init (FlatpakRemoteClass *klass)
                                                         NULL,
                                                         G_PARAM_READWRITE));
 
-#ifdef FLATPAK_ENABLE_P2P
-#ifndef __GI_SCANNER__
   g_object_class_install_property (object_class,
                                    PROP_TYPE,
                                    g_param_spec_enum ("type",
@@ -216,8 +187,6 @@ flatpak_remote_class_init (FlatpakRemoteClass *klass)
                                                       FLATPAK_TYPE_REMOTE_TYPE,
                                                       FLATPAK_REMOTE_TYPE_STATIC,
                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
-#endif  /* !__GI_SCANNER__ */
-#endif  /* FLATPAK_ENABLE_P2P */
 }
 
 static void
@@ -346,7 +315,6 @@ flatpak_remote_set_url (FlatpakRemote *self,
   priv->local_url_set = TRUE;
 }
 
-#ifdef FLATPAK_ENABLE_P2P
 /**
  * flatpak_remote_get_collection_id:
  * @self: a #FlatpakRemote
@@ -358,6 +326,7 @@ flatpak_remote_set_url (FlatpakRemote *self,
 char *
 flatpak_remote_get_collection_id (FlatpakRemote *self)
 {
+#ifdef FLATPAK_ENABLE_P2P
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
   if (priv->local_collection_id_set)
@@ -365,6 +334,7 @@ flatpak_remote_get_collection_id (FlatpakRemote *self)
 
   if (priv->dir)
     return flatpak_dir_get_remote_collection_id (priv->dir, priv->name);
+#endif  /** FLATPAK_ENABLE_P2P */
 
   return NULL;
 }
@@ -384,6 +354,7 @@ void
 flatpak_remote_set_collection_id (FlatpakRemote *self,
                                   const char    *collection_id)
 {
+#ifdef FLATPAK_ENABLE_P2P
   FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
 
   if (collection_id != NULL && *collection_id == '\0')
@@ -392,8 +363,8 @@ flatpak_remote_set_collection_id (FlatpakRemote *self,
   g_free (priv->local_collection_id);
   priv->local_collection_id = g_strdup (collection_id);
   priv->local_collection_id_set = TRUE;
-}
 #endif  /* FLATPAK_ENABLE_P2P */
+}
 
 /**
  * flatpak_remote_get_title:
