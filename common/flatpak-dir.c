@@ -1883,6 +1883,45 @@ repo_get_remote_collection_id (OstreeRepo  *repo,
   return TRUE;
 }
 
+/* Get options for the OSTree pull operation which can be shared between
+ * collection-based and normal pulls. Update @builder in place. */
+static void
+get_common_pull_options (GVariantBuilder     *builder,
+                         const gchar * const *dirs_to_pull,
+                         gboolean             force_disable_deltas,
+                         OstreeRepoPullFlags  flags,
+                         OstreeAsyncProgress *progress)
+{
+  guint32 update_freq = 0;
+
+  if (dirs_to_pull)
+    {
+      g_variant_builder_add (builder, "{s@v}", "subdirs",
+                             g_variant_new_variant (g_variant_new_strv ((const char * const *)dirs_to_pull, -1)));
+      force_disable_deltas = TRUE;
+    }
+
+  if (force_disable_deltas)
+    {
+      g_variant_builder_add (builder, "{s@v}", "disable-static-deltas",
+                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
+    }
+
+  g_variant_builder_add (builder, "{s@v}", "inherit-transaction",
+                         g_variant_new_variant (g_variant_new_boolean (TRUE)));
+
+  g_variant_builder_add (builder, "{s@v}", "flags",
+                         g_variant_new_variant (g_variant_new_int32 (flags)));
+
+  if (progress != NULL)
+    update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
+  if (update_freq == 0)
+    update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
+
+  g_variant_builder_add (builder, "{s@v}", "update-frequency",
+                         g_variant_new_variant (g_variant_new_uint32 (update_freq)));
+}
+
 /* This is a copy of ostree_repo_pull_one_dir that always disables
    static deltas if subdir is used */
 static gboolean
@@ -1905,7 +1944,6 @@ repo_pull_one_dir (OstreeRepo          *self,
   g_autoptr(GVariant) new_commit = NULL;
   const char *revs_to_fetch[2];
   gboolean res = FALSE;
-  guint32 update_freq = 0;
   g_autofree gchar *collection_id = NULL;
 
   /* If @results_to_fetch is set, @rev_to_fetch must be. */
@@ -1927,30 +1965,16 @@ repo_pull_one_dir (OstreeRepo          *self,
       g_auto(OstreeRepoFinderResultv) results = NULL;
       OstreeCollectionRef collection_ref;
       OstreeCollectionRef *collection_refs_to_fetch[2];
+      guint32 update_freq = 0;
 
+      /* Find options */
       g_variant_builder_init (&find_builder, G_VARIANT_TYPE ("a{sv}"));
-      g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
-
-      if (dirs_to_pull)
-        {
-          g_variant_builder_add (&pull_builder, "{s@v}", "subdirs",
-                                 g_variant_new_variant (g_variant_new_strv ((const char * const *)dirs_to_pull, -1)));
-          force_disable_deltas = TRUE;
-        }
 
       if (force_disable_deltas)
         {
           g_variant_builder_add (&find_builder, "{s@v}", "disable-static-deltas",
                                  g_variant_new_variant (g_variant_new_boolean (TRUE)));
-          g_variant_builder_add (&pull_builder, "{s@v}", "disable-static-deltas",
-                                 g_variant_new_variant (g_variant_new_boolean (TRUE)));
         }
-
-      g_variant_builder_add (&pull_builder, "{s@v}", "inherit-transaction",
-                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
-
-      g_variant_builder_add (&pull_builder, "{s@v}", "flags",
-                             g_variant_new_variant (g_variant_new_int32 (flags)));
 
       collection_ref.collection_id = collection_id;
       collection_ref.ref_name = (char *) ref_to_fetch;
@@ -1965,10 +1989,13 @@ repo_pull_one_dir (OstreeRepo          *self,
 
       g_variant_builder_add (&find_builder, "{s@v}", "update-frequency",
                              g_variant_new_variant (g_variant_new_uint32 (update_freq)));
-      g_variant_builder_add (&pull_builder, "{s@v}", "update-frequency",
-                             g_variant_new_variant (g_variant_new_uint32 (update_freq)));
 
       find_options = g_variant_ref_sink (g_variant_builder_end (&find_builder));
+
+      /* Pull options */
+      g_variant_builder_init (&pull_builder, G_VARIANT_TYPE ("a{sv}"));
+      get_common_pull_options (&pull_builder, dirs_to_pull,
+                               force_disable_deltas, flags, progress);
       pull_options = g_variant_ref_sink (g_variant_builder_end (&pull_builder));
 
       context = g_main_context_new ();
@@ -2022,24 +2049,10 @@ repo_pull_one_dir (OstreeRepo          *self,
       g_autoptr(GVariant) options = NULL;
       const char *refs_to_fetch[2];
 
+      /* Pull options */
       g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
-
-      if (dirs_to_pull)
-        {
-          g_variant_builder_add (&builder, "{s@v}", "subdirs",
-                                 g_variant_new_variant (g_variant_new_strv ((const char * const *)dirs_to_pull, -1)));
-          force_disable_deltas = TRUE;
-        }
-
-      if (force_disable_deltas)
-        g_variant_builder_add (&builder, "{s@v}", "disable-static-deltas",
-                               g_variant_new_variant (g_variant_new_boolean (TRUE)));
-
-      g_variant_builder_add (&builder, "{s@v}", "inherit-transaction",
-                             g_variant_new_variant (g_variant_new_boolean (TRUE)));
-
-      g_variant_builder_add (&builder, "{s@v}", "flags",
-                             g_variant_new_variant (g_variant_new_int32 (flags)));
+      get_common_pull_options (&builder, dirs_to_pull,
+                               force_disable_deltas, flags, progress);
 
       refs_to_fetch[0] = ref_to_fetch;
       refs_to_fetch[1] = NULL;
@@ -2050,14 +2063,6 @@ repo_pull_one_dir (OstreeRepo          *self,
       revs_to_fetch[1] = NULL;
       g_variant_builder_add (&builder, "{s@v}", "override-commit-ids",
                              g_variant_new_variant (g_variant_new_strv ((const char * const *) revs_to_fetch, -1)));
-
-      if (progress != NULL)
-        update_freq = GPOINTER_TO_UINT (g_object_get_data (G_OBJECT (progress), "update-frequency"));
-      if (update_freq == 0)
-        update_freq = FLATPAK_DEFAULT_UPDATE_FREQUENCY;
-
-      g_variant_builder_add (&builder, "{s@v}", "update-frequency",
-                             g_variant_new_variant (g_variant_new_uint32 (update_freq)));
 
       options = g_variant_ref_sink (g_variant_builder_end (&builder));
 
