@@ -76,6 +76,9 @@ void            builder_context_set_jobs (BuilderContext *self,
                                           int n_jobs);
 void            builder_context_set_keep_build_dirs (BuilderContext *self,
                                                      gboolean        keep_build_dirs);
+gboolean        builder_context_get_delete_build_dirs (BuilderContext *self);
+void            builder_context_set_delete_build_dirs (BuilderContext *self,
+                                                       gboolean        delete_build_dirs);
 gboolean        builder_context_get_keep_build_dirs (BuilderContext *self);
 void            builder_context_set_sandboxed (BuilderContext *self,
                                                gboolean        sandboxed);

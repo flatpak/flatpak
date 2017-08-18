@@ -48,6 +48,7 @@ static gboolean opt_disable_updates;
 static gboolean opt_ccache;
 static gboolean opt_require_changes;
 static gboolean opt_keep_build_dirs;
+static gboolean opt_delete_build_dirs;
 static gboolean opt_force_clean;
 static gboolean opt_allow_missing_runtimes;
 static gboolean opt_sandboxed;
@@ -96,6 +97,7 @@ static GOptionEntry entries[] = {
   { "show-deps", 0, 0, G_OPTION_ARG_NONE, &opt_show_deps, "List the dependencies of the json file (see --show-deps --help)", NULL },
   { "require-changes", 0, 0, G_OPTION_ARG_NONE, &opt_require_changes, "Don't create app dir or export if no changes", NULL },
   { "keep-build-dirs", 0, 0, G_OPTION_ARG_NONE, &opt_keep_build_dirs, "Don't remove build directories after install", NULL },
+  { "delete-build-dirs", 0, 0, G_OPTION_ARG_NONE, &opt_delete_build_dirs, "Always remove build directories, even after build failure", NULL },
   { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo, "Repo to export into", "DIR"},
   { "subject", 's', 0, G_OPTION_ARG_STRING, &opt_subject, "One line subject (passed to build-export)", "SUBJECT" },
   { "body", 'b', 0, G_OPTION_ARG_STRING, &opt_body, "Full description (passed to build-export)", "BODY" },
@@ -363,6 +365,7 @@ main (int    argc,
 
   builder_context_set_use_rofiles (build_context, !opt_disable_rofiles);
   builder_context_set_keep_build_dirs (build_context, opt_keep_build_dirs);
+  builder_context_set_delete_build_dirs (build_context, opt_delete_build_dirs);
   builder_context_set_sandboxed (build_context, opt_sandboxed);
   builder_context_set_jobs (build_context, opt_jobs);
   builder_context_set_rebuild_on_sdk_change (build_context, opt_rebuild_on_sdk_change);

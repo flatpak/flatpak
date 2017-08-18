@@ -277,6 +277,16 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--delete-build-dirs</option></term>
+
+                <listitem><para>
+                    Always remove the sources and build after having built each module, even if the build
+                    failed. The default is to keep failed build directories but remote successful ones.
+                    This is useful in e.g. automatic build systems.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--ccache</option></term>
 
                 <listitem><para>

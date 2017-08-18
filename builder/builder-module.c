@@ -1203,12 +1203,13 @@ builder_module_ensure_writable (BuilderModule  *self,
   return TRUE;
 }
 
-gboolean
-builder_module_build (BuilderModule  *self,
-                      BuilderCache   *cache,
-                      BuilderContext *context,
-                      gboolean        run_shell,
-                      GError        **error)
+static gboolean
+builder_module_build_helper (BuilderModule  *self,
+                             BuilderCache   *cache,
+                             BuilderContext *context,
+                             GFile          *source_dir,
+                             gboolean        run_shell,
+                             GError        **error)
 {
   GFile *app_dir = builder_context_get_app_dir (context);
   g_autofree char *make_j = NULL;
@@ -1217,9 +1218,7 @@ builder_module_build (BuilderModule  *self,
 
   gboolean autotools = FALSE, cmake = FALSE, cmake_ninja = FALSE, meson = FALSE, simple = FALSE;
   g_autoptr(GFile) configure_file = NULL;
-  GFile *build_parent_dir = NULL;
   g_autoptr(GFile) build_dir = NULL;
-  g_autoptr(GFile) build_link = NULL;
   g_autofree char *build_dir_relative = NULL;
   gboolean has_configure;
   gboolean var_require_builddir;
@@ -1228,43 +1227,13 @@ builder_module_build (BuilderModule  *self,
   g_auto(GStrv) env = NULL;
   g_auto(GStrv) build_args = NULL;
   g_auto(GStrv) config_opts = NULL;
-  g_autoptr(GFile) source_dir = NULL;
   g_autoptr(GFile) source_subdir = NULL;
   const char *source_subdir_relative = NULL;
   g_autofree char *source_dir_path = NULL;
-  g_autofree char *buildname = NULL;
   g_autoptr(GError) my_error = NULL;
   BuilderPostProcessFlags post_process_flags = 0;
 
-  source_dir = builder_context_allocate_build_subdir (context, self->name, error);
-  if (source_dir == NULL)
-    {
-      g_prefix_error (error, "module %s: ", self->name);
-      return FALSE;
-    }
-
-  build_parent_dir = g_file_get_parent (source_dir);
-  buildname = g_file_get_basename (source_dir);
   source_dir_path = g_file_get_path (source_dir);
-
-  /* Make an unversioned symlink */
-  build_link = g_file_get_child (build_parent_dir, self->name);
-  if (!g_file_delete (build_link, NULL, &my_error) &&
-      !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-    {
-      g_propagate_error (error, g_steal_pointer (&my_error));
-      g_prefix_error (error, "module %s: ", self->name);
-      return FALSE;
-    }
-  g_clear_error (&my_error);
-
-  if (!g_file_make_symbolic_link (build_link,
-                                  buildname,
-                                  NULL, error))
-    {
-      g_prefix_error (error, "module %s: ", self->name);
-      return FALSE;
-    }
 
   g_print ("========================================================================\n");
   g_print ("Building module %s in %s\n", self->name, source_dir_path);
@@ -1622,12 +1591,63 @@ builder_module_build (BuilderModule  *self,
       return FALSE;
     }
 
+
+  return TRUE;
+}
+
+gboolean
+builder_module_build (BuilderModule  *self,
+                      BuilderCache   *cache,
+                      BuilderContext *context,
+                      gboolean        run_shell,
+                      GError        **error)
+{
+  g_autoptr(GFile) source_dir = NULL;
+  g_autoptr(GFile) build_parent_dir = NULL;
+  g_autoptr(GFile) build_link = NULL;
+  g_autoptr(GError) my_error = NULL;
+  g_autofree char *buildname = NULL;
+  gboolean res;
+
+  source_dir = builder_context_allocate_build_subdir (context, self->name, error);
+  if (source_dir == NULL)
+    {
+      g_prefix_error (error, "module %s: ", self->name);
+      return FALSE;
+    }
+
+  build_parent_dir = g_file_get_parent (source_dir);
+  buildname = g_file_get_basename (source_dir);
+
+  /* Make an unversioned symlink */
+  build_link = g_file_get_child (build_parent_dir, self->name);
+  if (!g_file_delete (build_link, NULL, &my_error) &&
+      !g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+    {
+      g_propagate_error (error, g_steal_pointer (&my_error));
+      g_prefix_error (error, "module %s: ", self->name);
+      return FALSE;
+    }
+  g_clear_error (&my_error);
+
+  if (!g_file_make_symbolic_link (build_link,
+                                  buildname,
+                                  NULL, error))
+    {
+      g_prefix_error (error, "module %s: ", self->name);
+      return FALSE;
+    }
+
+  res = builder_module_build_helper (self, cache, context, source_dir, run_shell, error);
+
   /* Clean up build dir */
 
-  builder_set_term_title (_("Cleanup %s"), self->name);
-
-  if (!builder_context_get_keep_build_dirs (context))
+  if (!run_shell &&
+      (!builder_context_get_keep_build_dirs (context) &&
+       (res || builder_context_get_delete_build_dirs (context))))
     {
+      builder_set_term_title (_("Cleanup %s"), self->name);
+
       if (!g_file_delete (build_link, NULL, error))
         {
           g_prefix_error (error, "module %s: ", self->name);
@@ -1641,7 +1661,7 @@ builder_module_build (BuilderModule  *self,
         }
     }
 
-  return TRUE;
+  return res;
 }
 
 gboolean

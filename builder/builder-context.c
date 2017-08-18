@@ -62,6 +62,7 @@ struct BuilderContext
 
   BuilderOptions *options;
   gboolean        keep_build_dirs;
+  gboolean        delete_build_dirs;
   int             jobs;
   char          **cleanup;
   char          **cleanup_platform;
@@ -538,6 +539,13 @@ builder_context_set_keep_build_dirs (BuilderContext *self,
 }
 
 void
+builder_context_set_delete_build_dirs (BuilderContext *self,
+                                       gboolean        delete_build_dirs)
+{
+  self->delete_build_dirs = delete_build_dirs;
+}
+
+void
 builder_context_set_global_cleanup (BuilderContext *self,
                                     const char    **cleanup)
 {
@@ -569,6 +577,12 @@ gboolean
 builder_context_get_keep_build_dirs (BuilderContext *self)
 {
   return self->keep_build_dirs;
+}
+
+gboolean
+builder_context_get_delete_build_dirs (BuilderContext *self)
+{
+  return self->delete_build_dirs;
 }
 
 void
