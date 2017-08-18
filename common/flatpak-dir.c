@@ -4654,6 +4654,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
         }
     }
 
+  /* Note this is obsoleted by ostree.ref-binding: https://github.com/ostreedev/ostree/releases/tag/v2017.9 */
   g_variant_lookup (commit_metadata, "xa.ref", "s", &xa_ref);
   if (xa_ref != NULL)
     {
