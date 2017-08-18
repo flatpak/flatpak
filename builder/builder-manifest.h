@@ -81,6 +81,12 @@ gboolean        builder_manifest_build (BuilderManifest *self,
                                         BuilderCache    *cache,
                                         BuilderContext  *context,
                                         GError         **error);
+gboolean        builder_manifest_install_deps (BuilderManifest *self,
+                                               BuilderContext  *context,
+                                               const char *remote,
+                                               gboolean opt_user,
+                                               const char *opt_installation,
+                                               GError         **error);
 gboolean        builder_manifest_run (BuilderManifest *self,
                                       BuilderContext  *context,
                                       FlatpakContext  *arg_context,

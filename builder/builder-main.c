@@ -68,6 +68,10 @@ static char **opt_sources_dirs;
 static char **opt_sources_urls;
 static int opt_jobs;
 static char *opt_mirror_screenshots_url;
+static char *opt_install_deps_from;
+static gboolean opt_install_deps_only;
+static gboolean opt_user;
+static char *opt_installation;
 
 static GOptionEntry entries[] = {
   { "verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose, "Print debug information during command processing", NULL },
@@ -106,6 +110,11 @@ static GOptionEntry entries[] = {
   { "from-git", 0, 0, G_OPTION_ARG_STRING, &opt_from_git, "Get input files from git repo", "URL"},
   { "from-git-branch", 0, 0, G_OPTION_ARG_STRING, &opt_from_git_branch, "Branch to use in --from-git", "BRANCH"},
   { "mirror-screenshots-url", 0, 0, G_OPTION_ARG_STRING, &opt_mirror_screenshots_url, "Download and rewrite screenshots to match this url", "URL"},
+  { "install-deps-from", 0, 0, G_OPTION_ARG_STRING, &opt_install_deps_from, "Install build dependencies from this remote", "REMOTE"},
+  { "install-deps-only", 0, 0, G_OPTION_ARG_NONE, &opt_install_deps_only, "Stop after installing dependencies"},
+  { "user", 0, 0, G_OPTION_ARG_NONE, &opt_user, "Install dependencies in user installations", NULL },
+  { "system", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &opt_user, "Install dependencies in system-wide installations (default)", NULL },
+  { "installation", 0, 0, G_OPTION_ARG_STRING, &opt_installation, "Install dependencies in a specific system-wide installation", "NAME" },
   { NULL }
 };
 
@@ -487,6 +496,17 @@ main (int    argc,
         }
 
       return 0;
+    }
+
+  if (opt_install_deps_from != NULL)
+    {
+      if (!builder_manifest_install_deps (manifest, build_context, opt_install_deps_from, opt_user, opt_installation, &error))
+        {
+          g_printerr ("Error running %s: %s\n", argv[3], error->message);
+          return 1;
+        }
+      if (opt_install_deps_only)
+        return 0;
     }
 
   app_dir_is_empty = !g_file_query_exists (app_dir, NULL) ||

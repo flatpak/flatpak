@@ -438,6 +438,51 @@
                   The branch to use with --from-git.
                 </para></listitem>
             </varlistentry>
+
+            <varlistentry>
+                <term><option>--install-deps-from=REMOTE</option></term>
+
+                <listitem><para>
+                    Install/update build required dependencies from the specified remote.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--install-deps-only</option></term>
+
+                <listitem><para>
+                    Stop after downloading dependencies.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--user</option></term>
+
+                <listitem><para>
+                    Install the dependencies in a per-user installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--system</option></term>
+
+                <listitem><para>
+                    Install the dependenceis in the default system-wide installation.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>--installation=NAME</option></term>
+
+                <listitem><para>
+                    Install the dependencies in a system-wide installation
+                    specified by <arg choice="plain">NAME</arg> among those defined in
+                    <filename>/etc/flatpak/installations.d/</filename>. Using
+                    <arg choice="plain">--installation=default</arg> is equivalent to using
+                    <arg choice="plain">--system</arg>.
+                </para></listitem>
+            </varlistentry>
+
           </variablelist>
     </refsect1>
 
