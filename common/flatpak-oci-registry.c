@@ -35,8 +35,8 @@ G_DEFINE_QUARK (flatpak_oci_error, flatpak_oci_error)
 
 #define MAX_JSON_SIZE (1024 * 1024)
 
-GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_write_archive, archive_write_free)
-#define free_write_archive __attribute__((cleanup (flatpak_local_free_write_archive)))
+typedef struct archive FlatpakAutoArchiveWrite;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(FlatpakAutoArchiveWrite, archive_write_free)
 
 static void flatpak_oci_registry_initable_iface_init (GInitableIface *iface);
 
@@ -783,7 +783,7 @@ flatpak_oci_registry_mirror_blob (FlatpakOciRegistry    *self,
       if (src_fd == -1)
         return FALSE;
 
-      if (glnx_regfile_copy_bytes (src_fd, tmpf.fd, (off_t)-1, TRUE) < 0)
+      if (glnx_regfile_copy_bytes (src_fd, tmpf.fd, (off_t)-1) < 0)
         return glnx_throw_errno_prefix (error, "copyfile");
     }
   else
@@ -1102,7 +1102,7 @@ flatpak_oci_registry_write_layer (FlatpakOciRegistry    *self,
                                  GError              **error)
 {
   g_autoptr(FlatpakOciLayerWriter) oci_layer_writer = NULL;
-  free_write_archive struct archive *a = NULL;
+  g_autoptr(FlatpakAutoArchiveWrite) a = NULL;
   g_auto(GLnxTmpfile) tmpf = { 0 };
 
   g_assert (self->valid);
@@ -1277,14 +1277,9 @@ flatpak_archive_read_open_fd_with_checksum (struct archive *a,
   return TRUE;
 }
 
-GLNX_DEFINE_CLEANUP_FUNCTION0(gpgme_data_t, flatpak_cleanup_gpgme_data, gpgme_data_release)
-#define flatpak_auto_gpgme_data __attribute__((cleanup(flatpak_cleanup_gpgme_data)))
-
-GLNX_DEFINE_CLEANUP_FUNCTION0(gpgme_ctx_t, flatpak_cleanup_gpgme_ctx, gpgme_release)
-#define flatpak_auto_gpgme_ctx __attribute__((cleanup(flatpak_cleanup_gpgme_ctx)))
-
-GLNX_DEFINE_CLEANUP_FUNCTION0(gpgme_key_t, flatpak_cleanup_gpgme_key, gpgme_key_release)
-#define flatpak_auto_gpgme_key __attribute__((cleanup(flatpak_cleanup_gpgme_key)))
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC(gpgme_data_t, gpgme_data_release, NULL)
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC(gpgme_ctx_t, gpgme_release, NULL)
+G_DEFINE_AUTO_CLEANUP_FREE_FUNC(gpgme_key_t, gpgme_key_unref, NULL)
 
 static void
 flatpak_gpgme_error_to_gio_error (gpgme_error_t   gpg_error,
@@ -1542,7 +1537,7 @@ flatpak_gpgme_new_ctx (const char *homedir,
                        GError **error)
 {
   gpgme_error_t err;
-  flatpak_auto_gpgme_ctx gpgme_ctx_t context = NULL;
+  g_auto(gpgme_ctx_t) context = NULL;
 
   if ((err = gpgme_new (&context)) != GPG_ERR_NO_ERROR)
     {
@@ -1578,10 +1573,10 @@ flatpak_oci_sign_data (GBytes *data,
 {
   g_auto(GLnxTmpfile) tmpf = { 0 };
   g_autoptr(GOutputStream) tmp_signature_output = NULL;
-  flatpak_auto_gpgme_ctx gpgme_ctx_t context = NULL;
+  g_auto(gpgme_ctx_t) context = NULL;
   gpgme_error_t err;
-  flatpak_auto_gpgme_data gpgme_data_t commit_buffer = NULL;
-  flatpak_auto_gpgme_data gpgme_data_t signature_buffer = NULL;
+  g_auto(gpgme_data_t) commit_buffer = NULL;
+  g_auto(gpgme_data_t) signature_buffer = NULL;
   g_autoptr(GMappedFile) signature_file = NULL;
   int i;
 
@@ -1597,7 +1592,7 @@ flatpak_oci_sign_data (GBytes *data,
 
   for (i = 0; key_ids[i] != NULL; i++)
     {
-      flatpak_auto_gpgme_key gpgme_key_t key = NULL;
+      g_auto(gpgme_key_t) key = NULL;
 
       /* Get the secret keys with the given key id */
       err = gpgme_get_key (context, key_ids[i], &key, 1);
@@ -1770,8 +1765,8 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
 {
   gpgme_ctx_t context;
   gpgme_error_t gpg_error;
-  flatpak_auto_gpgme_data gpgme_data_t signed_data_buffer = NULL;
-  flatpak_auto_gpgme_data gpgme_data_t plain_buffer = NULL;
+  g_auto(gpgme_data_t) signed_data_buffer = NULL;
+  g_auto(gpgme_data_t) plain_buffer = NULL;
   g_autofree char *tmp_home_dir = NULL;
   gpgme_verify_result_t vresult;
   gpgme_signature_t sig;

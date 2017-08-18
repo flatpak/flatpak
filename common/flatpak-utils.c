@@ -54,9 +54,8 @@ static const GDBusErrorEntry flatpak_error_entries[] = {
   {FLATPAK_ERROR_NOT_INSTALLED,         "org.freedesktop.Flatpak.Error.NotInstalled"},
 };
 
-
-GLNX_DEFINE_CLEANUP_FUNCTION (void *, flatpak_local_free_read_archive, archive_read_free)
-#define free_read_archive __attribute__((cleanup (flatpak_local_free_read_archive)))
+typedef struct archive FlatpakAutoArchiveRead;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(FlatpakAutoArchiveRead, archive_read_free)
 
 static void
 propagate_libarchive_error (GError      **error,
@@ -5057,7 +5056,7 @@ flatpak_pull_from_oci (OstreeRepo   *repo,
     {
       FlatpakOciDescriptor *layer = manifest->layers[i];
       OstreeRepoImportArchiveOptions opts = { 0, };
-      free_read_archive struct archive *a = NULL;
+      g_autoptr(FlatpakAutoArchiveRead) a = NULL;
       glnx_fd_close int layer_fd = -1;
       g_autoptr(GChecksum) checksum = g_checksum_new (G_CHECKSUM_SHA256);
       const char *layer_checksum;
