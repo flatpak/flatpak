@@ -1597,7 +1597,7 @@ builder_maybe_host_spawnv (GFile                *dir,
   if (flatpak_is_in_sandbox ())
     return builder_host_spawnv (dir, output, error, argv);
 
-  return flatpak_spawnv (dir, output, error, argv);
+  return flatpak_spawnv (dir, output, 0, error, argv);
 }
 
 typedef struct {

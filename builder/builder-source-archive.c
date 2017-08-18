@@ -383,7 +383,7 @@ unrpm (GFile   *dir,
       rpm_path, /* shell's $1 */
       NULL };
 
-  res = flatpak_spawnv (dir, NULL, error, argv);
+  res = flatpak_spawnv (dir, NULL, 0, error, argv);
 
   return res;
 }

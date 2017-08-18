@@ -405,6 +405,7 @@ gboolean            flatpak_spawn (GFile       *dir,
 
 gboolean            flatpak_spawnv (GFile                *dir,
                                     char                **output,
+                                    GSubprocessFlags      flags,
                                     GError              **error,
                                     const gchar * const  *argv);
 

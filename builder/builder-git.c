@@ -304,7 +304,7 @@ builder_git_mirror_repo (const char     *repo_location,
       g_ptr_array_add (args, filename_tmp);
       g_ptr_array_add (args, NULL);
 
-      res = flatpak_spawnv (parent, NULL, error,
+      res = flatpak_spawnv (parent, NULL, 0, error,
                             (const gchar * const *) args->pdata);
 
       if (cached_git_dir && !update &&

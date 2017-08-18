@@ -1956,7 +1956,7 @@ flatpak_spawn (GFile       *dir,
     g_ptr_array_add (args, (gchar *) arg);
   g_ptr_array_add (args, NULL);
 
-  res = flatpak_spawnv (dir, output, error, (const gchar * const *) args->pdata);
+  res = flatpak_spawnv (dir, output, 0, error, (const gchar * const *) args->pdata);
 
   g_ptr_array_free (args, TRUE);
 
@@ -1966,6 +1966,7 @@ flatpak_spawn (GFile       *dir,
 gboolean
 flatpak_spawnv (GFile                *dir,
                 char                **output,
+                GSubprocessFlags      flags,
                 GError              **error,
                 const gchar * const  *argv)
 {
@@ -1980,7 +1981,9 @@ flatpak_spawnv (GFile                *dir,
   launcher = g_subprocess_launcher_new (0);
 
   if (output)
-    g_subprocess_launcher_set_flags (launcher, G_SUBPROCESS_FLAGS_STDOUT_PIPE);
+    flags |= G_SUBPROCESS_FLAGS_STDOUT_PIPE;
+
+  g_subprocess_launcher_set_flags (launcher, flags);
 
   if (dir)
     {
