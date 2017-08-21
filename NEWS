@@ -1,3 +1,25 @@
+Major changes in 0.9.8
+======================
+
+Core:
+
+ * Experimental support for peer2peer installation, enable with --enable-p2p
+ * Add default language setting to flatpak config. Defaults to all locales for
+   system installs and the users locale for per-user installs.
+ * build-update-repo: Now always keeps the *two* latest deltas around to avoid
+   race conditions with outstanding downloads at the time or running the update.
+ * Support loading extra data from local lookaside cache.
+
+Flatpak-builder:
+
+ * Set terminal title to the currently building module
+ * Added ability to specify http url for sources mirror with --extra-sources-url.
+ * --install-deps-from=REMOTE installs the dependencies needed for the
+   manifest.
+ * New option --delete-build-dirs to always delete build directories,
+   even on a failed build.
+ * New property "add-extension" makes it nicer to create extension points.
+
 Major changes in 0.9.7
 ======================
 
