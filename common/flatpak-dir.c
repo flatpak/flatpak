@@ -2309,15 +2309,15 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
           g_debug ("Loading extra-data from local file %s", g_file_get_path (extra_local_file));
           gsize extra_local_size;
           g_autofree char *extra_local_contents = NULL;
-          if (g_file_load_contents (extra_local_file, cancellable, &extra_local_contents, &extra_local_size, NULL, NULL) &&
-              extra_local_size == download_size)
-            {
-              bytes = g_bytes_new (extra_local_contents, extra_local_size);
-            }
-          else
-            {
-              return flatpak_fail (error, _("Wrong size for extra-data %s"), g_file_get_path (extra_local_file));
-            };
+          g_autoptr(GError) my_error = NULL;
+
+          if (!g_file_load_contents (extra_local_file, cancellable, &extra_local_contents, &extra_local_size, NULL, &my_error))
+            return flatpak_fail (error, _("Failed to load local extra-data %s: %s"),
+                                 flatpak_file_get_path_cached (extra_local_file), my_error->message);
+          if (extra_local_size != download_size)
+            return flatpak_fail (error, _("Wrong size for extra-data %s"), flatpak_file_get_path_cached (extra_local_file));
+
+          bytes = g_bytes_new (extra_local_contents, extra_local_size);
         }
       else
         {
