@@ -3092,7 +3092,10 @@ builder_manifest_install_dep (BuilderManifest *self,
   g_ptr_array_add (args, g_strdup ("flatpak"));
   add_installation_args (args, opt_user, opt_installation);
   if (installed)
-    g_ptr_array_add (args, g_strdup ("update"));
+    {
+      g_ptr_array_add (args, g_strdup ("update"));
+      g_ptr_array_add (args, g_strdup ("--subpath="));
+    }
   else
     {
       g_ptr_array_add (args, g_strdup ("install"));
