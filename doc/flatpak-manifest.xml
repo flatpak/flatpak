@@ -170,6 +170,10 @@
                     See below for details.</para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>add-extensions</option> (objects)</term>
+                    <listitem><para>This is a dictionary of extension objects. The key is the name of the extension. See below for details.</para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>cleanup</option> (array of strings)</term>
                     <listitem><para>An array of file patterns that should be removed at the end.
                     Patterns starting with / are taken to be full pathnames (without the /app prefix), otherwise they just match
@@ -275,6 +279,36 @@
                     <listitem><para>This is a dictionary defining for each arch a separate build options object that override the main one.</para></listitem>
                 </varlistentry>
             </variablelist>
+        </refsect2>
+        <refsect2>
+            <title>Extension</title>
+            <para>
+              Extension define extension points in the app/runtime that can be implemented by extensions, supplying extra files
+              which are available during runtime..
+            </para>
+            <para>
+                These are the properties that are accepted:
+            </para>
+            <variablelist>
+                <varlistentry>
+                    <term><option>directory</option> (string)</term>
+                    <listitem><para>The directory where the extension is mounted.</para></listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><option>bundle</option> (boolean)</term>
+                    <listitem><para>If this is true, then the data
+                    created in the extension directory is omitted from
+                    the result, and instead packaged in a separate
+                    extension..</para></listitem>
+                </varlistentry>
+            </variablelist>
+            <para>
+              Additionally the standard flatpak extension properies
+              are supported, and put directly into the metadata file:
+              autodelete, no-autodownload, subdirectories,
+              add-ld-path, download-if, enable-if, merge-dirs,
+              subdirectory-suffix, version, versions.
+            </para>
         </refsect2>
         <refsect2>
             <title>Module</title>

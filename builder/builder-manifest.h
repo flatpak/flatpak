@@ -27,6 +27,7 @@
 #include "builder-options.h"
 #include "builder-module.h"
 #include "builder-cache.h"
+#include "builder-extension.h"
 
 G_BEGIN_DECLS
 
@@ -56,12 +57,16 @@ const char *    builder_manifest_get_id_platform (BuilderManifest *self);
 char *          builder_manifest_get_locale_id_platform (BuilderManifest *self);
 BuilderOptions *builder_manifest_get_build_options (BuilderManifest *self);
 GList *         builder_manifest_get_modules (BuilderManifest *self);
+GList *         builder_manifest_get_add_extensions (BuilderManifest *self);
 const char *    builder_manifest_get_branch (BuilderManifest *self);
 void            builder_manifest_set_default_branch (BuilderManifest *self,
                                                      const char *default_branch);
 const char *    builder_manifest_get_collection_id (BuilderManifest *self);
 void            builder_manifest_set_default_collection_id (BuilderManifest *self,
                                                             const char      *default_collection_id);
+
+
+char **         builder_manifest_get_exclude_dirs (BuilderManifest *self);
 
 gboolean        builder_manifest_start (BuilderManifest *self,
                                         gboolean         allow_missing_runtimes,

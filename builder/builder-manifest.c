@@ -31,6 +31,7 @@
 #include "builder-utils.h"
 #include "flatpak-utils.h"
 #include "builder-post-process.h"
+#include "builder-extension.h"
 
 #include "libglnx/libglnx.h"
 
@@ -95,6 +96,7 @@ struct BuilderManifest
   BuilderOptions *build_options;
   GList          *modules;
   GList          *expanded_modules;
+  GList          *add_extensions;
 };
 
 typedef struct
@@ -149,6 +151,7 @@ enum {
   PROP_DESKTOP_FILE_NAME_PREFIX,
   PROP_DESKTOP_FILE_NAME_SUFFIX,
   PROP_COLLECTION_ID,
+  PROP_ADD_EXTENSIONS,
   LAST_PROP
 };
 
@@ -174,6 +177,7 @@ builder_manifest_finalize (GObject *object)
   g_free (self->command);
   g_clear_object (&self->build_options);
   g_list_free_full (self->modules, g_object_unref);
+  g_list_free_full (self->add_extensions, g_object_unref);
   g_list_free (self->expanded_modules);
   g_strfreev (self->cleanup);
   g_strfreev (self->cleanup_commands);
@@ -320,6 +324,10 @@ builder_manifest_get_property (GObject    *object,
 
     case PROP_MODULES:
       g_value_set_pointer (value, self->modules);
+      break;
+
+    case PROP_ADD_EXTENSIONS:
+      g_value_set_pointer (value, self->add_extensions);
       break;
 
     case PROP_CLEANUP:
@@ -516,6 +524,12 @@ builder_manifest_set_property (GObject      *object,
       g_list_free_full (self->modules, g_object_unref);
       /* NOTE: This takes ownership of the list! */
       self->modules = g_value_get_pointer (value);
+      break;
+
+    case PROP_ADD_EXTENSIONS:
+      g_list_free_full (self->add_extensions, g_object_unref);
+      /* NOTE: This takes ownership of the list! */
+      self->add_extensions = g_value_get_pointer (value);
       break;
 
     case PROP_CLEANUP:
@@ -773,6 +787,12 @@ builder_manifest_class_init (BuilderManifestClass *klass)
                                                          "",
                                                          G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
+                                   PROP_ADD_EXTENSIONS,
+                                   g_param_spec_pointer ("add-extensions",
+                                                         "",
+                                                         "",
+                                                         G_PARAM_READWRITE));
+  g_object_class_install_property (object_class,
                                    PROP_CLEANUP,
                                    g_param_spec_boxed ("cleanup",
                                                        "",
@@ -958,6 +978,31 @@ builder_manifest_serialize_property (JsonSerializable *serializable,
 
       return retval;
     }
+  else if (strcmp (property_name, "add-extensions") == 0)
+    {
+      BuilderManifest *self = BUILDER_MANIFEST (serializable);
+      JsonNode *retval = NULL;
+
+      if (self->add_extensions)
+        {
+          JsonObject *object;
+          GList *l;
+
+          object = json_object_new ();
+
+          for (l = self->add_extensions; l != NULL; l = l->next)
+            {
+              BuilderExtension *e = l->data;
+              JsonNode *child = json_gobject_serialize (G_OBJECT (e));
+              json_object_set_member (object, (char *) builder_extension_get_name (e), child);
+            }
+
+          retval = json_node_init_object (json_node_alloc (), object);
+          json_object_unref (object);
+        }
+
+      return retval;
+    }
   else
     {
       return json_serializable_default_serialize_property (serializable,
@@ -965,6 +1010,14 @@ builder_manifest_serialize_property (JsonSerializable *serializable,
                                                            value,
                                                            pspec);
     }
+}
+
+static gint
+sort_extension (gconstpointer  a,
+                gconstpointer  b)
+{
+  return strcmp (builder_extension_get_name (BUILDER_EXTENSION (a)),
+                 builder_extension_get_name (BUILDER_EXTENSION (b)));
 }
 
 static gboolean
@@ -1046,6 +1099,48 @@ builder_manifest_deserialize_property (JsonSerializable *serializable,
 
       return FALSE;
     }
+  else if (strcmp (property_name, "add-extensions") == 0)
+    {
+      if (JSON_NODE_TYPE (property_node) == JSON_NODE_NULL)
+        {
+          g_value_set_pointer (value, NULL);
+          return TRUE;
+        }
+      else if (JSON_NODE_TYPE (property_node) == JSON_NODE_OBJECT)
+        {
+          JsonObject *object = json_node_get_object (property_node);
+          g_autoptr(GHashTable) hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_object_unref);
+          g_autoptr(GList) members = NULL;
+          GList *extensions;
+          GList *l;
+
+          members = json_object_get_members (object);
+          for (l = members; l != NULL; l = l->next)
+            {
+              const char *member_name = l->data;
+              JsonNode *val;
+              GObject *extension;
+
+              val = json_object_get_member (object, member_name);
+              extension = json_gobject_deserialize (BUILDER_TYPE_EXTENSION, val);
+              if (extension == NULL)
+                return FALSE;
+
+              builder_extension_set_name (BUILDER_EXTENSION (extension), member_name);
+              g_hash_table_insert (hash, (char *)builder_extension_get_name (BUILDER_EXTENSION (extension)), extension);
+            }
+
+          extensions = g_hash_table_get_values (hash);
+          g_hash_table_steal_all (hash);
+
+          extensions = g_list_sort (extensions, sort_extension);
+          g_value_set_pointer (value, extensions);
+
+          return TRUE;
+        }
+
+      return FALSE;
+    }
   else
     {
       return json_serializable_default_deserialize_property (serializable,
@@ -1120,6 +1215,12 @@ GList *
 builder_manifest_get_modules (BuilderManifest *self)
 {
   return self->modules;
+}
+
+GList *
+builder_manifest_get_add_extensions (BuilderManifest *self)
+{
+  return self->add_extensions;
 }
 
 static const char *
@@ -1459,10 +1560,18 @@ builder_manifest_checksum_for_finish (BuilderManifest *self,
                                       BuilderCache    *cache,
                                       BuilderContext  *context)
 {
+  GList *l;
+
   builder_cache_checksum_str (cache, BUILDER_MANIFEST_CHECKSUM_FINISH_VERSION);
   builder_cache_checksum_strv (cache, self->finish_args);
   builder_cache_checksum_str (cache, self->command);
   builder_cache_checksum_compat_strv (cache, self->inherit_extensions);
+
+  for (l = self->add_extensions; l != NULL; l = l->next)
+    {
+      BuilderExtension *e = l->data;
+      builder_extension_checksum (e, cache, context);
+    }
 
   if (self->metadata)
     {
@@ -2209,6 +2318,7 @@ builder_manifest_finish (BuilderManifest *self,
   g_autoptr(GPtrArray) args = NULL;
   g_autoptr(GSubprocess) subp = NULL;
   int i;
+  GList *l;
   JsonNode *node;
   JsonGenerator *generator;
 
@@ -2375,6 +2485,9 @@ builder_manifest_finish (BuilderManifest *self,
             g_ptr_array_add (args, g_strdup (self->finish_args[i]));
         }
 
+      for (l = self->add_extensions; l != NULL; l = l->next)
+        builder_extension_add_finish_args (l->data, args);
+
       g_ptr_array_add (args, g_file_get_path (app_dir));
       g_ptr_array_add (args, NULL);
 
@@ -2515,6 +2628,30 @@ builder_manifest_finish (BuilderManifest *self,
                                                "ref=%s\n",
                                                debug_id, ref);
           if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_debuginfo_file),
+                                    metadata_contents, strlen (metadata_contents), error))
+            return FALSE;
+        }
+
+
+      for (l = self->add_extensions; l != NULL; l = l->next)
+        {
+          BuilderExtension *e = l->data;
+          g_autofree char *extension_metadata_name = NULL;
+          g_autoptr(GFile) metadata_extension_file = NULL;
+          g_autofree char *metadata_contents = NULL;
+
+          if (!builder_extension_is_bundled (e))
+            continue;
+
+          extension_metadata_name = g_strdup_printf ("metadata.%s", builder_extension_get_name (e));
+          metadata_extension_file = g_file_get_child (app_dir, extension_metadata_name);
+          metadata_contents = g_strdup_printf ("[Runtime]\n"
+                                               "name=%s\n"
+                                               "\n"
+                                               "[ExtensionOf]\n"
+                                               "ref=%s\n",
+                                               builder_extension_get_name (e), ref);
+          if (!g_file_set_contents (flatpak_file_get_path_cached (metadata_extension_file),
                                     metadata_contents, strlen (metadata_contents), error))
             return FALSE;
         }
@@ -3172,4 +3309,24 @@ builder_manifest_run (BuilderManifest *self,
 
   /* Not reached */
   return TRUE;
+}
+
+char **
+builder_manifest_get_exclude_dirs (BuilderManifest *self)
+{
+  g_autoptr(GPtrArray) dirs = NULL;
+  GList *l;
+
+  dirs = g_ptr_array_new ();
+
+  for (l = self->add_extensions; l != NULL; l = l->next)
+    {
+      BuilderExtension *e = l->data;
+
+      if (builder_extension_is_bundled (e))
+        g_ptr_array_add (dirs, g_strdup (builder_extension_get_directory (e)));
+    }
+  g_ptr_array_add (dirs, NULL);
+
+  return (char **)g_ptr_array_free (g_steal_pointer (&dirs), FALSE);
 }

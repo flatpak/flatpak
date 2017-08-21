@@ -170,6 +170,7 @@ do_export (BuilderContext *build_context,
            gboolean        runtime,
            const gchar    *location,
            const gchar    *directory,
+           char          **exclude_dirs,
            const gchar    *branch,
            const gchar    *collection_id,
            ...)
@@ -211,6 +212,12 @@ do_export (BuilderContext *build_context,
     if (arg != skip_arg)
       g_ptr_array_add (args, g_strdup ((gchar *) arg));
   va_end (ap);
+
+  if (exclude_dirs)
+    {
+      for (i = 0; exclude_dirs[i] != NULL; i++)
+        g_ptr_array_add (args, g_strdup_printf ("--exclude=/%s/*", exclude_dirs[i]));
+    }
 
   /* Mandatory positional arguments. */
   g_ptr_array_add (args, g_strdup (location));
@@ -740,12 +747,14 @@ main (int    argc,
     {
       g_autoptr(GFile) debuginfo_metadata = NULL;
       g_autoptr(GFile) sourcesinfo_metadata = NULL;
+      g_auto(GStrv) exclude_dirs = builder_manifest_get_exclude_dirs (manifest);
+      GList *l;
 
       g_print ("Exporting %s to repo\n", builder_manifest_get_id (manifest));
 
       if (!do_export (build_context, &error,
                       FALSE,
-                      opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
+                      opt_repo, app_dir_path, exclude_dirs, builder_manifest_get_branch (manifest),
                       builder_manifest_get_collection_id (manifest),
                       "--exclude=/lib/debug/*",
                       "--include=/lib/debug/app",
@@ -778,7 +787,7 @@ main (int    argc,
           files_arg = g_strconcat (builder_context_get_build_runtime (build_context) ? "--files=usr" : "--files=files",
                                    "/share/runtime/locale/", NULL);
           if (!do_export (build_context, &error, TRUE,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
+                          opt_repo, app_dir_path, NULL, builder_manifest_get_branch (manifest),
                           builder_manifest_get_collection_id (manifest),
                           metadata_arg,
                           files_arg,
@@ -797,10 +806,39 @@ main (int    argc,
           g_print ("Exporting %s to repo\n", debug_id);
 
           if (!do_export (build_context, &error, TRUE,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
+                          opt_repo, app_dir_path, NULL, builder_manifest_get_branch (manifest),
                           builder_manifest_get_collection_id (manifest),
                           "--metadata=metadata.debuginfo",
                           builder_context_get_build_runtime (build_context) ? "--files=usr/lib/debug" : "--files=files/lib/debug",
+                          NULL))
+            {
+              g_printerr ("Export failed: %s\n", error->message);
+              return 1;
+            }
+        }
+
+      for (l = builder_manifest_get_add_extensions (manifest); l != NULL; l = l->next)
+        {
+          BuilderExtension *e = l->data;
+          const char *extension_id = NULL;
+          g_autofree char *metadata_arg = NULL;
+          g_autofree char *files_arg = NULL;
+
+          if (!builder_extension_is_bundled (e))
+            continue;
+
+          extension_id = builder_extension_get_name (e);
+          g_print ("Exporting %s to repo\n", extension_id);
+
+          metadata_arg = g_strdup_printf ("--metadata=metadata.%s", extension_id);
+          files_arg = g_strdup_printf ("--files=%s/%s",
+                                       builder_context_get_build_runtime (build_context) ? "usr" : "files",
+                                       builder_extension_get_directory (e));
+
+          if (!do_export (build_context, &error, TRUE,
+                          opt_repo, app_dir_path, NULL, builder_manifest_get_branch (manifest),
+                          builder_manifest_get_collection_id (manifest),
+                          metadata_arg, files_arg,
                           NULL))
             {
               g_printerr ("Export failed: %s\n", error->message);
@@ -816,7 +854,7 @@ main (int    argc,
           g_print ("Exporting %s to repo\n", sources_id);
 
           if (!do_export (build_context, &error, TRUE,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
+                          opt_repo, app_dir_path, NULL, builder_manifest_get_branch (manifest),
                           builder_manifest_get_collection_id (manifest),
                           "--metadata=metadata.sources",
                           "--files=sources",
@@ -835,7 +873,7 @@ main (int    argc,
           g_print ("Exporting %s to repo\n", platform_id);
 
           if (!do_export (build_context, &error, TRUE,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
+                          opt_repo, app_dir_path, NULL, builder_manifest_get_branch (manifest),
                           builder_manifest_get_collection_id (manifest),
                           "--metadata=metadata.platform",
                           "--files=platform",
@@ -868,7 +906,7 @@ main (int    argc,
           metadata_arg = g_strdup_printf ("--metadata=%s", name);
           files_arg = g_strconcat ("--files=platform/share/runtime/locale/", NULL);
           if (!do_export (build_context, &error, TRUE,
-                          opt_repo, app_dir_path, builder_manifest_get_branch (manifest),
+                          opt_repo, app_dir_path, NULL, builder_manifest_get_branch (manifest),
                           builder_manifest_get_collection_id (manifest),
                           metadata_arg,
                           files_arg,

@@ -8,6 +8,8 @@ flatpak_builder_SOURCES = \
 	builder/builder-manifest.h \
 	builder/builder-options.c \
 	builder/builder-options.h \
+	builder/builder-extension.c \
+	builder/builder-extension.h \
 	builder/builder-module.c \
 	builder/builder-module.h \
 	builder/builder-post-process.c \
