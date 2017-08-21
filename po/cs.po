@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-08-21 18:19+0200\n"
-"PO-Revision-Date: 2017-06-13 14:24+0200\n"
+"PO-Revision-Date: 2017-08-21 19:54+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 2.0.3\n"
 
 #: app/flatpak-builtins-add-remote.c:57
 msgid "Do nothing if the provided remote exists"
@@ -156,9 +156,9 @@ msgstr "Příliš mnoho parametrů"
 
 #: app/flatpak-builtins-add-remote.c:332
 #: app/flatpak-builtins-build-export.c:692
-#, fuzzy, c-format
+#, c-format
 msgid "‘%s’ is not a valid collection ID: %s"
-msgstr "„%s“ není platným názvem aplikace: %s"
+msgstr ""
 
 #: app/flatpak-builtins-add-remote.c:336
 msgid "GPG verification is required if collections are enabled"
@@ -175,9 +175,9 @@ msgid "No url specified in flatpakrepo file"
 msgstr "Žádný url není určen ve flatpakrepo souboru"
 
 #: app/flatpak-builtins-add-remote.c:400
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: Could not update extra metadata for '%s': %s\n"
-msgstr "Nepodařilo se aktualizovat dodatečná metadata pro %s"
+msgstr "Varování: Nepodařilo se aktualizovat dodatečná metadata pro „%s“: %s\n"
 
 #: app/flatpak-builtins-add-remote.c:448
 msgid "NAME - Modify a remote repository"
@@ -200,9 +200,7 @@ msgstr "Aktualizuji dodatečná metadata ze vzdáleného shrnutí pro %s\n"
 #: app/flatpak-builtins-add-remote.c:471
 #, c-format
 msgid "Error updating extra metadata for '%s': %s\n"
-msgstr ""
-"Chyba během aktualizace dodatečných metadat pro „%s“: %s\n"
-"\n"
+msgstr "Chyba během aktualizace dodatečných metadat pro „%s“: %s\n"
 
 #: app/flatpak-builtins-add-remote.c:472
 #, c-format
@@ -861,7 +859,7 @@ msgstr "SANDBOXEDPID a PŘÍKAZ musí být určeny"
 
 #: app/flatpak-builtins-enter.c:109
 msgid "Not running as root, may be unable to enter namespace"
-msgstr ""
+msgstr "Neběží jako root, možná nebude možno vstoupit do jmenného prostoru"
 
 #: app/flatpak-builtins-enter.c:115
 #, c-format
@@ -1788,36 +1786,36 @@ msgid "Could not parse URI “%s”"
 msgstr ""
 
 #: builder/builder-module.c:899
-#, fuzzy, c-format
+#, c-format
 msgid "Downloading %s"
-msgstr "Stahovaná velikost"
+msgstr "Stahuji %s"
 
 #: builder/builder-module.c:1242
 #, c-format
 msgid "Building %s"
-msgstr ""
+msgstr "Sestavuji %s"
 
 #. Build and install
 #: builder/builder-module.c:1515
-#, fuzzy, c-format
+#, c-format
 msgid "Installing %s"
-msgstr "Instaluji: %s\n"
+msgstr "Instaluji %s"
 
 #. Post installation scripts
 #: builder/builder-module.c:1549
-#, fuzzy, c-format
+#, c-format
 msgid "Post-Install %s"
-msgstr "Instaluji: %s\n"
+msgstr ""
 
 #: builder/builder-module.c:1649
 #, c-format
 msgid "Cleanup %s"
-msgstr ""
+msgstr "Čištění %s"
 
 #: builder/builder-module.c:1681
-#, fuzzy, c-format
+#, c-format
 msgid "Updating %s"
-msgstr "Aktualizace shrnutí\n"
+msgstr "Aktualizuji %s"
 
 #: common/flatpak-dir.c:921
 #, c-format
@@ -1849,12 +1847,12 @@ msgid "Unsupported extra data uri %s"
 msgstr "Nepodporovaný uri dodatečných dat %s"
 
 #: common/flatpak-dir.c:2315
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to load local extra-data %s: %s"
-msgstr "Nelze číst commit %s: "
+msgstr ""
 
 #: common/flatpak-dir.c:2318
-#, fuzzy, c-format
+#, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Chybná velikost pro dodatečná data %s"
 
