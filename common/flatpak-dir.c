@@ -9695,6 +9695,7 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
   char **object_path;
   GList *langs = NULL;
   GList *l = NULL;
+  GString *langs_cache = g_string_new(NULL);
   GPtrArray *subpaths = g_ptr_array_new ();
   int i;
 
@@ -9764,7 +9765,18 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
       if (strcmp (dir, "/C") == 0)
         continue;
 
-      g_ptr_array_add (subpaths, g_steal_pointer (&dir));
+      /* handle language == "" */
+      if (strcmp (dir, "/") == 0)
+        continue;
+
+      /* filter duplicate language */
+      if (g_strrstr (langs_cache->str, dir) == NULL)
+        {
+          g_string_append (langs_cache, dir);
+          g_string_append_c (langs_cache, ':');
+          g_ptr_array_add (subpaths, g_steal_pointer (&dir));
+        }
+
       l = l->next;
     }
 
@@ -9781,6 +9793,8 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
       l = l->next;
     }
   g_list_free (langs);
+
+  g_string_free(langs_cache, TRUE);
 
   g_ptr_array_add (subpaths, NULL);
 
