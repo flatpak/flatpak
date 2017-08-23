@@ -9697,6 +9697,7 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
   GList *l = NULL;
   GString *langs_cache = g_string_new(NULL);
   GPtrArray *subpaths = g_ptr_array_new ();
+  gboolean use_full_language = FALSE;
   int i;
 
   GVariant *ret;
@@ -9767,7 +9768,10 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
 
       /* handle language == "" */
       if (strcmp (dir, "/") == 0)
-        continue;
+        {
+          use_full_language = TRUE;
+          break;
+        }
 
       /* filter duplicate language */
       if (g_strrstr (langs_cache->str, dir) == NULL)
@@ -9798,7 +9802,13 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
 
   g_ptr_array_add (subpaths, NULL);
 
-  return (char **)g_ptr_array_free (subpaths, FALSE);
+  if (use_full_language)
+    {
+      g_ptr_array_free (subpaths, TRUE);
+      return NULL;
+    }
+  else
+    return (char **)g_ptr_array_free (subpaths, FALSE);
 }
 
 char **
@@ -9816,16 +9826,19 @@ flatpak_dir_get_locale_subpaths (FlatpakDir *self)
         subpaths = flatpak_get_current_locale_subpaths ();
       else
         {
+          /* If proxy is not NULL, it means that AccountService exists
+           * and gets the list of languages from AccountService. */
           GDBusProxy *proxy = get_accounts_dbus_proxy ();
-          if (proxy)
+          if (proxy != NULL)
             {
               subpaths = get_locale_subpaths_from_accounts_dbus (proxy);
               g_object_unref (proxy);
 
-              if (!subpaths)
+              /* If subpaths is NULL, it means using all languages */
+              if (subpaths == NULL)
                 subpaths = g_new0 (char *, 1);
             }
-          else
+          else /* proxy is NULL, falling back to all languages */
             subpaths = g_new0 (char *, 1);
         }
     }
