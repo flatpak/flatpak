@@ -250,6 +250,7 @@ test_remote_by_name (void)
   g_assert_cmpstr (flatpak_remote_get_name (remote), ==, repo_name);
   g_assert_cmpstr (flatpak_remote_get_url (remote), ==, repo_url);
   g_assert_cmpstr (flatpak_remote_get_title (remote), ==, NULL);
+  g_assert_cmpint (flatpak_remote_get_remote_type (remote), ==, FLATPAK_REMOTE_TYPE_STATIC);
   g_assert_false (flatpak_remote_get_noenumerate (remote));
   g_assert_false (flatpak_remote_get_disabled (remote));
   g_assert_true (flatpak_remote_get_gpg_verify (remote));

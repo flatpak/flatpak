@@ -839,3 +839,22 @@ flatpak_remote_commit (FlatpakRemote   *self,
 
   return flatpak_dir_modify_remote (dir, priv->name, config, priv->local_gpg_key, cancellable, error);
 }
+
+/**
+ * flatpak_remote_get_remote_type:
+ * @self: a #FlatpakRemote
+ *
+ * Get the value of #FlatpakRemote:type.
+ *
+ * Returns: the type of remote this is
+ * Since: 0.9.8
+ */
+FlatpakRemoteType
+flatpak_remote_get_remote_type (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_return_val_if_fail (FLATPAK_IS_REMOTE (self), FLATPAK_REMOTE_TYPE_STATIC);
+
+  return priv->type;
+}
