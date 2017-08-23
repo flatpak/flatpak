@@ -363,8 +363,9 @@ main (int argc, char *argv[])
       collection_id = flatpak_remote_get_collection_id (remote);
 #endif  /* !FLATPAK_ENABLE_P2P */
 
-      g_print ("\nRemote: %s %d %s %s %s %s %d %d %s\n",
+      g_print ("\nRemote: %s %u %d %s %s %s %s %d %d %s\n",
                flatpak_remote_get_name (remote),
+               flatpak_remote_get_remote_type (remote),
                flatpak_remote_get_prio (remote),
                flatpak_remote_get_url (remote),
                collection_id,

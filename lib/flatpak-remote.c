@@ -171,6 +171,14 @@ flatpak_remote_class_init (FlatpakRemoteClass *klass)
   object_class->set_property = flatpak_remote_set_property;
   object_class->finalize = flatpak_remote_finalize;
 
+  /**
+   * FlatpakRemote:name:
+   *
+   * Name of the remote, as used in configuration files and when interfacing
+   * with OSTree. This is typically human readable, but could be generated, and
+   * must conform to ostree_validate_remote_name(). It should typically not be
+   * presented in the UI.
+   */
   g_object_class_install_property (object_class,
                                    PROP_NAME,
                                    g_param_spec_string ("name",
@@ -179,6 +187,17 @@ flatpak_remote_class_init (FlatpakRemoteClass *klass)
                                                         NULL,
                                                         G_PARAM_READWRITE));
 
+  /**
+   * FlatpakRemote:type:
+   *
+   * The type of the remote: whether it comes from static configuration files
+   * (@FLATPAK_REMOTE_TYPE_STATIC) or has been dynamically found from the local
+   * network or a mounted USB drive (@FLATPAK_REMOTE_TYPE_LAN,
+   * @FLATPAK_REMOTE_TYPE_USB). Dynamic remotes may be added and removed over
+   * time.
+   *
+   * Since: 0.9.8
+   */
   g_object_class_install_property (object_class,
                                    PROP_TYPE,
                                    g_param_spec_enum ("type",
@@ -819,4 +838,23 @@ flatpak_remote_commit (FlatpakRemote   *self,
     }
 
   return flatpak_dir_modify_remote (dir, priv->name, config, priv->local_gpg_key, cancellable, error);
+}
+
+/**
+ * flatpak_remote_get_remote_type:
+ * @self: a #FlatpakRemote
+ *
+ * Get the value of #FlatpakRemote:type.
+ *
+ * Returns: the type of remote this is
+ * Since: 0.9.8
+ */
+FlatpakRemoteType
+flatpak_remote_get_remote_type (FlatpakRemote *self)
+{
+  FlatpakRemotePrivate *priv = flatpak_remote_get_instance_private (self);
+
+  g_return_val_if_fail (FLATPAK_IS_REMOTE (self), FLATPAK_REMOTE_TYPE_STATIC);
+
+  return priv->type;
 }
