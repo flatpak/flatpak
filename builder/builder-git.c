@@ -57,7 +57,7 @@ git_get_mirror_dir (const char     *url_or_path,
   g_autofree char *filename = NULL;
   g_autofree char *git_dir_path = NULL;
 
-  git_dir = g_file_get_child (builder_context_get_state_dir (context),
+  git_dir = g_file_get_child (builder_context_get_user_state_dir (context),
                               "git");
 
   git_dir_path = g_file_get_path (git_dir);

@@ -52,6 +52,7 @@ struct BuilderContext
   GPtrArray      *sources_dirs;
   GPtrArray      *sources_urls;
   GFile          *state_dir;
+  GFile          *user_state_dir;
   GFile          *build_dir;
   GFile          *cache_dir;
   GFile          *checksums_dir;
@@ -98,6 +99,7 @@ builder_context_finalize (GObject *object)
   BuilderContext *self = (BuilderContext *) object;
 
   g_clear_object (&self->state_dir);
+  g_clear_object (&self->user_state_dir);
   g_clear_object (&self->download_dir);
   g_clear_object (&self->build_dir);
   g_clear_object (&self->cache_dir);
@@ -171,13 +173,15 @@ static void
 builder_context_constructed (GObject *object)
 {
   BuilderContext *self = BUILDER_CONTEXT (object);
+  g_autoptr(GFile) user_cache_dir = g_file_new_for_path (g_get_user_cache_dir ());
 
   self->state_dir = g_file_get_child (self->run_dir, ".flatpak-builder");
-  self->download_dir = g_file_get_child (self->state_dir, "downloads");
   self->build_dir = g_file_get_child (self->state_dir, "build");
   self->cache_dir = g_file_get_child (self->state_dir, "cache");
   self->checksums_dir = g_file_get_child (self->state_dir, "checksums");
   self->ccache_dir = g_file_get_child (self->state_dir, "ccache");
+  self->user_state_dir = g_file_get_child (user_cache_dir, "flatpak-builder");
+  self->download_dir = g_file_get_child (self->user_state_dir, "downloads");
 }
 
 static void
@@ -240,6 +244,12 @@ GFile *
 builder_context_get_state_dir (BuilderContext *self)
 {
   return self->state_dir;
+}
+
+GFile *
+builder_context_get_user_state_dir (BuilderContext *self)
+{
+  return self->user_state_dir;
 }
 
 GFile *

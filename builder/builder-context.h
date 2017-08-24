@@ -42,6 +42,7 @@ GFile *         builder_context_get_base_dir (BuilderContext *self);
 void            builder_context_set_base_dir (BuilderContext *self,
                                               GFile          *base_dir);
 GFile *         builder_context_get_state_dir (BuilderContext *self);
+GFile *         builder_context_get_user_state_dir (BuilderContext *self);
 GFile *         builder_context_get_cache_dir (BuilderContext *self);
 GFile *         builder_context_get_build_dir (BuilderContext *self);
 GFile *         builder_context_allocate_build_subdir (BuilderContext *self,

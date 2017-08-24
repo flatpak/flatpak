@@ -137,7 +137,7 @@ get_mirror_dir (BuilderSourceBzr *self, BuilderContext *context)
   g_autofree char *filename = NULL;
   g_autofree char *bzr_dir_path = NULL;
 
-  bzr_dir = g_file_get_child (builder_context_get_state_dir (context),
+  bzr_dir = g_file_get_child (builder_context_get_user_state_dir (context),
                               "bzr");
 
   bzr_dir_path = g_file_get_path (bzr_dir);
