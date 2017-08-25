@@ -29,8 +29,6 @@ app/flatpak-builtins-uninstall.c
 app/flatpak-builtins-update.c
 app/flatpak-main.c
 app/flatpak-transaction.c
-builder/builder-context.c
-builder/builder-module.c
 common/flatpak-dir.c
 common/flatpak-run.c
 common/flatpak-utils.c

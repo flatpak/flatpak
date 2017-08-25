@@ -16,7 +16,6 @@
     <chapter>
       <title>Executables</title>
       <xi:include href="@srcdir@/flatpak.xml"/>
-      <xi:include href="@srcdir@/flatpak-builder.xml"/>
     </chapter>
     <chapter>
       <title>Commands</title>
@@ -53,7 +52,6 @@
       <xi:include href="@srcdir@/flatpak-metadata.xml"/>
       <xi:include href="@srcdir@/flatpak-flatpakrepo.xml"/>
       <xi:include href="@srcdir@/flatpak-flatpakref.xml"/>
-      <xi:include href="@srcdir@/flatpak-manifest.xml"/>
       <xi:include href="@srcdir@/flatpak-remote.xml"/>
       <xi:include href="@srcdir@/flatpak-installation.xml"/>
     </chapter>
