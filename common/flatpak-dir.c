@@ -9699,25 +9699,21 @@ flatpak_dir_find_local_related (FlatpakDir *self,
 static GDBusProxy *
 get_accounts_dbus_proxy (void)
 {
-  GDBusConnection *conn = NULL;
-  GDBusProxy *proxy = NULL;
+  g_autoptr(GDBusConnection) conn = NULL;
 
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_object_path = "/org/freedesktop/Accounts";
   const char *accounts_interface_name = accounts_bus_name;
 
   conn = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, NULL);
-  proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
-                                         G_DBUS_PROXY_FLAGS_NONE,
-                                         NULL,
-                                         accounts_bus_name,
-                                         accounts_object_path,
-                                         accounts_interface_name,
-                                         NULL,
-                                         NULL);
-  g_object_unref (conn);
-
-  return proxy;
+  return g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                        G_DBUS_PROXY_FLAGS_NONE,
+                                        NULL,
+                                        accounts_bus_name,
+                                        accounts_object_path,
+                                        accounts_interface_name,
+                                        NULL,
+                                        NULL);
 }
 
 static char **
@@ -9728,12 +9724,12 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
   char **object_path;
   GList *langs = NULL;
   GList *l = NULL;
-  GString *langs_cache = g_string_new(NULL);
-  GPtrArray *subpaths = g_ptr_array_new ();
+  g_autoptr(GString) langs_cache = g_string_new (NULL);
+  g_autoptr(GPtrArray) subpaths = g_ptr_array_new ();
   gboolean use_full_language = FALSE;
   int i;
+  g_autoptr(GVariant) ret = NULL;
 
-  GVariant *ret;
   ret = g_dbus_proxy_call_sync (G_DBUS_PROXY (proxy),
                                 "ListCachedUsers",
                                 g_variant_new ("()"),
@@ -9742,21 +9738,16 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
                                 NULL,
                                 NULL);
   if (ret != NULL)
-    {
-      g_variant_get (ret,
-                     "(^ao)",
-                     &object_path);
-      g_variant_unref (ret);
-    }
+    g_variant_get (ret,
+                   "(^ao)",
+                   &object_path);
 
   if (object_path != NULL)
     {
       for (i = 0; object_path[i] != NULL; i++)
         {
-          GDBusProxy *accounts_proxy = NULL;
-          GVariant *value = NULL;
-          gsize size;
-          char *lang;
+          g_autoptr(GDBusProxy) accounts_proxy = NULL;
+          g_autoptr(GVariant) value = NULL;
 
           accounts_proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
                                                           G_DBUS_PROXY_FLAGS_NONE,
@@ -9767,21 +9758,16 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
                                                           NULL,
                                                           NULL);
 
-          value = g_dbus_proxy_get_cached_property (accounts_proxy, "Language");
-          if (value != NULL)
+          if (accounts_proxy)
             {
-              size = g_variant_get_size (value);
-              lang = g_strdup (g_variant_get_string (value, &size));
-              langs = g_list_append (langs, lang);
-
-              g_variant_unref (value);
-              g_object_unref (accounts_proxy);
+              value = g_dbus_proxy_get_cached_property (accounts_proxy, "Language");
+              if (value != NULL)
+                langs = g_list_append (langs, g_variant_dup_string (value, NULL));
             }
         }
   }
 
-  l = langs;
-  while (l != NULL)
+  for (l = langs; l != NULL; l = l->next)
     {
       g_autofree char *dir = g_strconcat ("/", l->data, NULL);
       char *c;
@@ -9813,35 +9799,19 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
           g_string_append_c (langs_cache, ':');
           g_ptr_array_add (subpaths, g_steal_pointer (&dir));
         }
-
-      l = l->next;
     }
 
   if (langs == NULL)
-    {
-      return NULL;
-    }
+    return NULL;
 
-  l = langs;
-  while (l != NULL)
-    {
-      if (l->data != NULL)
-        g_free (l->data);
-      l = l->next;
-    }
-  g_list_free (langs);
-
-  g_string_free(langs_cache, TRUE);
+  g_list_free_full (langs, g_free);
 
   g_ptr_array_add (subpaths, NULL);
 
   if (use_full_language)
-    {
-      g_ptr_array_free (subpaths, TRUE);
-      return NULL;
-    }
+    return NULL;
   else
-    return (char **)g_ptr_array_free (subpaths, FALSE);
+    return (char **)g_ptr_array_free (g_steal_pointer (&subpaths), FALSE);
 }
 
 char **
@@ -9861,17 +9831,12 @@ flatpak_dir_get_locale_subpaths (FlatpakDir *self)
         {
           /* If proxy is not NULL, it means that AccountService exists
            * and gets the list of languages from AccountService. */
-          GDBusProxy *proxy = get_accounts_dbus_proxy ();
+          g_autoptr(GDBusProxy) proxy = get_accounts_dbus_proxy ();
           if (proxy != NULL)
-            {
-              subpaths = get_locale_subpaths_from_accounts_dbus (proxy);
-              g_object_unref (proxy);
+            subpaths = get_locale_subpaths_from_accounts_dbus (proxy);
 
-              /* If subpaths is NULL, it means using all languages */
-              if (subpaths == NULL)
-                subpaths = g_new0 (char *, 1);
-            }
-          else /* proxy is NULL, falling back to all languages */
+          /* If subpaths is NULL, it means using all languages */
+          if (subpaths == NULL)
             subpaths = g_new0 (char *, 1);
         }
     }
