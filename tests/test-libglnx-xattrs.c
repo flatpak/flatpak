@@ -223,7 +223,6 @@ test_xattr_races (void)
   GThread *threads[nprocs];
   g_autoptr(GError) local_error = NULL;
   GError **error = &local_error;
-  glnx_fd_close int dfd = -1;
   g_auto(GLnxTmpDir) tmpdir = { 0, };
   g_autofree char *tmpdir_path = g_strdup_printf ("%s/libglnx-xattrs-XXXXXX",
                                                   getenv ("TMPDIR") ?: "/var/tmp");
