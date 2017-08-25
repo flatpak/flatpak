@@ -4641,7 +4641,7 @@ flatpak_run_app (const char     *app_ref,
       if ((flags & FLATPAK_RUN_FLAG_DEVEL) != 0)
         key = FLATPAK_METADATA_KEY_SDK;
       else
-        key = FLATPAK_METADATA_KEY_RUNTIME,
+        key = FLATPAK_METADATA_KEY_RUNTIME;
 
       metakey = flatpak_deploy_get_metadata (app_deploy);
       default_runtime = g_key_file_get_string (metakey,
