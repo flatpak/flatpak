@@ -3933,7 +3933,8 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
 
       mtree = ostree_mutable_tree_new ();
 
-      modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS,
+      modifier = ostree_repo_commit_modifier_new (OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS |
+                                                  OSTREE_REPO_COMMIT_MODIFIER_FLAGS_CANONICAL_PERMISSIONS,
                                                   (OstreeRepoCommitFilter) commit_filter, NULL, NULL);
 
       if (!ostree_repo_write_directory_to_mtree (repo, G_FILE (tmpdir_file), mtree, modifier, cancellable, error))
