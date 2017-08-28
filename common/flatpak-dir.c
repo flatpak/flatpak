@@ -8056,6 +8056,7 @@ flatpak_dir_create_origin_remote (FlatpakDir   *self,
 GKeyFile *
 flatpak_dir_parse_repofile (FlatpakDir   *self,
                             const char   *remote_name,
+                            gboolean      from_ref,
                             GBytes       *data,
                             GBytes      **gpg_data_out,
                             GCancellable *cancellable,
@@ -8070,6 +8071,13 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
   g_autofree char *collection_id = NULL;
   g_autofree char *default_branch = NULL;
   gboolean nodeps;
+  const char *source_group;
+
+  if (from_ref)
+    source_group = FLATPAK_REF_GROUP;
+  else
+    source_group = FLATPAK_REPO_GROUP;
+
   GKeyFile *config = g_key_file_new ();
   g_autofree char *group = g_strdup_printf ("remote \"%s\"", remote_name);
 
@@ -8082,13 +8090,13 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
       return NULL;
     }
 
-  if (!g_key_file_has_group (keyfile, FLATPAK_REPO_GROUP))
+  if (!g_key_file_has_group (keyfile, source_group))
     {
       flatpak_fail (error, "Invalid .flatpakref\n");
       return NULL;
     }
 
-  uri = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+  uri = g_key_file_get_string (keyfile, source_group,
                                FLATPAK_REPO_URL_KEY, NULL);
   if (uri == NULL)
     {
@@ -8098,22 +8106,22 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
 
   g_key_file_set_string (config, group, "url", uri);
 
-  title = g_key_file_get_locale_string (keyfile, FLATPAK_REPO_GROUP,
+  title = g_key_file_get_locale_string (keyfile, source_group,
                                         FLATPAK_REPO_TITLE_KEY, NULL, NULL);
   if (title != NULL)
     g_key_file_set_string (config, group, "xa.title", title);
 
-  default_branch = g_key_file_get_locale_string (keyfile, FLATPAK_REPO_GROUP,
+  default_branch = g_key_file_get_locale_string (keyfile, source_group,
                                                  FLATPAK_REPO_DEFAULT_BRANCH_KEY, NULL, NULL);
   if (default_branch != NULL)
     g_key_file_set_string (config, group, "xa.default-branch", default_branch);
 
-  nodeps = g_key_file_get_boolean (keyfile, FLATPAK_REPO_GROUP,
+  nodeps = g_key_file_get_boolean (keyfile, source_group,
                                    FLATPAK_REPO_NODEPS_KEY, NULL);
   if (nodeps)
     g_key_file_set_boolean (config, group, "xa.nodeps", TRUE);
 
-  gpg_key = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+  gpg_key = g_key_file_get_string (keyfile, source_group,
                                    FLATPAK_REPO_GPGKEY_KEY, NULL);
   if (gpg_key != NULL)
     {
@@ -8133,7 +8141,7 @@ flatpak_dir_parse_repofile (FlatpakDir   *self,
     }
 
 #ifdef FLATPAK_ENABLE_P2P
-  collection_id = g_key_file_get_string (keyfile, FLATPAK_REPO_GROUP,
+  collection_id = g_key_file_get_string (keyfile, source_group,
                                          FLATPAK_REPO_COLLECTION_ID_KEY, NULL);
 #else  /* if !FLATPAK_ENABLE_P2P */
   collection_id = NULL;

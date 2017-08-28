@@ -41,6 +41,7 @@ GType flatpak_deploy_get_type (void);
 #define FLATPAK_REF_VERSION_KEY "Version"
 #define FLATPAK_REF_URL_KEY "Url"
 #define FLATPAK_REF_RUNTIME_REPO_KEY "RuntimeRepo"
+#define FLATPAK_REF_SUGGEST_REMOTE_NAME_KEY "SuggestRemoteName"
 #define FLATPAK_REF_TITLE_KEY "Title"
 #define FLATPAK_REF_GPGKEY_KEY "GPGKey"
 #define FLATPAK_REF_IS_RUNTIME_KEY "IsRuntime"
@@ -504,8 +505,12 @@ gboolean   flatpak_dir_create_remote_for_ref_file (FlatpakDir   *self,
                                                    char   **remote_name_out,
                                                    char   **ref_out,
                                                    GError **error);
+gboolean   flatpak_dir_create_suggested_remote_for_ref_file (FlatpakDir   *self,
+                                                             GBytes  *data,
+                                                             GError **error);
 GKeyFile * flatpak_dir_parse_repofile (FlatpakDir   *self,
                                        const char   *remote_name,
+                                       gboolean      from_ref,
                                        GBytes       *data,
                                        GBytes      **gpg_data_out,
                                        GCancellable *cancellable,
