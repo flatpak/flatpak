@@ -112,11 +112,39 @@ read_gpg_data (GCancellable *cancellable,
 }
 
 static gboolean
+remote_is_already_configured (FlatpakDir *dir,
+                              const char *url,
+                              const char *collection_id)
+{
+  g_autofree char *old_remote = NULL;
+
+  old_remote = flatpak_dir_find_remote_by_uri (dir, url, collection_id);
+  if (old_remote == NULL && flatpak_dir_is_user (dir))
+    {
+      g_autoptr(GPtrArray) system_dirs = NULL;
+      int i;
+
+      system_dirs = flatpak_dir_get_system_list (NULL, NULL);
+      if (system_dirs == NULL)
+        return FALSE;
+
+      for (i = 0; i < system_dirs->len; i++)
+        {
+          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
+          old_remote = flatpak_dir_find_remote_by_uri (system_dir, url, collection_id);
+          if (old_remote != NULL)
+            break;
+        }
+    }
+
+  return old_remote != NULL;
+}
+
+static gboolean
 handle_runtime_repo_deps (FlatpakDir *dir, const char *dep_url, GError **error)
 {
   g_autoptr(GBytes) dep_data = NULL;
   g_autofree char *runtime_url = NULL;
-  g_autofree char *old_remote = NULL;
   g_autofree char *new_remote = NULL;
   g_autofree char *basename = NULL;
   g_autoptr(SoupURI) uri = NULL;
@@ -175,26 +203,7 @@ handle_runtime_repo_deps (FlatpakDir *dir, const char *dep_url, GError **error)
   runtime_collection_id = g_key_file_get_string (config, group, "collection-id", NULL);
 #endif  /* FLATPAK_ENABLE_P2P */
 
-  old_remote = flatpak_dir_find_remote_by_uri (dir, runtime_url, runtime_collection_id);
-  if (old_remote == NULL && flatpak_dir_is_user (dir))
-    {
-      g_autoptr(GPtrArray) system_dirs = NULL;
-      int i;
-
-      system_dirs = flatpak_dir_get_system_list (NULL, error);
-      if (system_dirs == NULL)
-        return FALSE;
-
-      for (i = 0; i < system_dirs->len; i++)
-        {
-          FlatpakDir *system_dir = g_ptr_array_index (system_dirs, i);
-          old_remote = flatpak_dir_find_remote_by_uri (system_dir, runtime_url, runtime_collection_id);
-          if (old_remote != NULL)
-            break;
-        }
-    }
-
-  if (old_remote != NULL)
+  if (remote_is_already_configured (dir, runtime_url, runtime_collection_id))
     return TRUE;
 
   if (opt_yes ||
