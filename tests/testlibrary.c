@@ -1,6 +1,11 @@
 #include "config.h"
+
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #include <glib.h>
+
 #include "libglnx/libglnx.h"
 #include "flatpak.h"
 
@@ -556,129 +561,118 @@ test_install_launch_uninstall (void)
   g_ptr_array_unref (refs);
 }
 
+typedef enum
+{
+  RUN_TEST_SUBPROCESS_DEFAULT = 0,
+  RUN_TEST_SUBPROCESS_IGNORE_FAILURE = (1 << 0),
+  RUN_TEST_SUBPROCESS_NO_CAPTURE = (1 << 1),
+} RunTestSubprocessFlags;
+
 static void
-make_test_runtime (void)
+run_test_subprocess (char **argv,
+                     RunTestSubprocessFlags flags)
 {
   int status;
   g_autoptr(GError) error = NULL;
+  g_autofree char *argv_str = g_strjoinv (" ", argv);
+  g_autofree char *output = NULL;
+  g_autofree char *errors = NULL;
+
+  g_test_message ("Spawning %s", argv_str);
+
+  if (flags & RUN_TEST_SUBPROCESS_NO_CAPTURE)
+    g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL, NULL, NULL, NULL, NULL, &status, &error);
+  else
+    g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &output, &errors, &status, &error);
+
+  g_assert_no_error (error);
+
+  if (output != NULL && output[0] != '\0')
+    {
+      g_autofree char *escaped = g_strescape (output, NULL);
+
+      g_test_message ("\"%s\" stdout: %s", argv_str, escaped);
+    }
+
+  if (errors != NULL && errors[0] != '\0')
+    {
+      g_autofree char *escaped = g_strescape (errors, NULL);
+
+      g_test_message ("\"%s\" stderr: %s", argv_str, escaped);
+    }
+
+  g_test_message ("\"%s\" wait status: %d", argv_str, status);
+
+  if (WIFEXITED (status))
+    g_test_message ("\"%s\" exited %d", argv_str, WEXITSTATUS (status));
+
+  if (WIFSIGNALED (status))
+    g_test_message ("\"%s\" killed by signal %d", argv_str, WTERMSIG (status));
+
+  if (g_spawn_check_exit_status (status, &error))
+    return;
+  else if (flags & RUN_TEST_SUBPROCESS_IGNORE_FAILURE)
+    g_test_message ("\"%s\" failed: %s", argv_str, error->message);
+  else
+    g_assert_no_error (error);
+}
+
+static void
+make_test_runtime (void)
+{
   g_autofree char *arg0 = NULL;
   char *argv[] = {
     NULL, "test", "org.test.Platform", "", "bash", "ls", "cat", "echo", "readlink", NULL
   };
-  g_autofree char *argv_str = NULL;
-  GSpawnFlags flags = G_SPAWN_DEFAULT;
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-runtime.sh", NULL);
   argv[0] = arg0;
-
-  if (g_test_verbose ())
-    {
-      g_autofree char *commandline = g_strjoinv (" ", argv);
-      g_print ("running %s\n", commandline);
-    }
-  else
-    flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
-
-  argv_str = g_strjoinv (" ", argv);
-  g_test_message ("Spawning %s", argv_str);
-  g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (status, ==, 0);
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
 make_test_app (void)
 {
-  int status;
-  g_autoptr(GError) error = NULL;
   g_autofree char *arg0 = NULL;
   char *argv[] = { NULL, "test", "", NULL };
-  g_autofree char *argv_str = NULL;
-  GSpawnFlags flags = G_SPAWN_DEFAULT;
 
   arg0 = g_test_build_filename (G_TEST_DIST, "make-test-app.sh", NULL);
   argv[0] = arg0;
-
-  if (g_test_verbose ())
-    {
-      g_autofree char *commandline = g_strjoinv (" ", argv);
-      g_print ("running %s\n", commandline);
-    }
-  else
-    flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
-
-  argv_str = g_strjoinv (" ", argv);
-  g_test_message ("Spawning %s", argv_str);
-  g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (status, ==, 0);
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
 update_repo (void)
 {
-  int status;
-  g_autoptr(GError) error = NULL;
   char *argv[] = { "flatpak", "build-update-repo", "--gpg-homedir=", "--gpg-sign=", "repos/test", NULL };
-  g_autofree char *argv_str = NULL;
-  GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
   g_auto(GStrv) gpgargs = NULL;
 
   gpgargs = g_strsplit (gpg_args, " ", 0);
   argv[2] = gpgargs[0];
   argv[3] = gpgargs[1];
-
-  if (g_test_verbose ())
-    {
-      g_autofree char *commandline = g_strjoinv (" ", argv);
-      g_print ("running %s\n", commandline);
-    }
-  else
-    flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
-
-  argv_str = g_strjoinv (" ", argv);
-  g_test_message ("Spawning %s", argv_str);
-  g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (status, ==, 0);
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
 launch_httpd (void)
 {
-  int status;
-  g_autoptr(GError) error = NULL;
   g_autofree char *path = g_test_build_filename (G_TEST_DIST, "test-webserver.sh", NULL);
   char *argv[] = {path , "repos", NULL };
-  g_autofree char *argv_str = NULL;
-  GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 
-  if (g_test_verbose ())
-    {
-      g_autofree char *commandline = g_strjoinv (" ", argv);
-      g_print ("running %s\n", commandline);
-    }
-  else
-    flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
-
-  argv_str = g_strjoinv (" ", argv);
-  g_test_message ("Spawning %s", argv_str);
-  g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (status, ==, 0);
+  /* The web server puts itself in the background, so we can't wait
+   * for EOF on its stdout, stderr */
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_NO_CAPTURE);
 }
 
 static void
 add_remote (void)
 {
-  int status;
   g_autoptr(GError) error = NULL;
   char *argv[] = { "flatpak", "remote-add", "--user", "--gpg-import=", "name", "url", NULL };
   g_autofree char *argv_str = NULL;
   g_autofree char *gpgimport = NULL;
   g_autofree char *port = NULL;
   g_autofree char *pid = NULL;
-  GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 
   launch_httpd ();
 
@@ -700,20 +694,7 @@ add_remote (void)
   argv[3] = gpgimport;
   argv[4] = (char *)repo_name;
   argv[5] = repo_url;
-
-  if (g_test_verbose ())
-    {
-      g_autofree char *commandline = g_strjoinv (" ", argv);
-      g_print ("running %s\n", commandline);
-    }
-  else
-    flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
-
-  argv_str = g_strjoinv (" ", argv);
-  g_test_message ("Spawning %s", argv_str);
-  g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error);
-  g_assert_no_error (error);
-  g_assert_cmpint (status, ==, 0);
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_DEFAULT);
 }
 
 static void
@@ -782,8 +763,7 @@ copy_file (const char *src, const char *dest)
   gsize length;
   g_autoptr(GError) error = NULL;
 
-  if (g_test_verbose ())
-    g_print ("copying %s to %s\n", src, dest);
+  g_test_message ("copying %s to %s", src, dest);
 
   if (g_file_get_contents (src, &buffer, &length, &error))
     g_file_set_contents (dest, buffer, length, &error);
@@ -820,58 +800,49 @@ global_setup (void)
 
   testdir = g_strdup ("/var/tmp/flatpak-test-XXXXXX");
   g_mkdtemp (testdir);
-  if (g_test_verbose ())
-    g_print ("testdir: %s\n", testdir);
+  g_test_message ("testdir: %s", testdir);
 
   homedir = g_strconcat (testdir, "/home", NULL);
   g_mkdir_with_parents (homedir, S_IRWXU|S_IRWXG|S_IRWXO);
+
   g_setenv ("HOME", homedir, TRUE);
-  if (g_test_verbose ())
-    g_print ("setting HOME=%s\n", datadir);
+  g_test_message ("setting HOME=%s", datadir);
 
   cachedir = g_strconcat (testdir, "/home/cache", NULL);
   g_mkdir_with_parents (cachedir, S_IRWXU|S_IRWXG|S_IRWXO);
   g_setenv ("XDG_CACHE_HOME", cachedir, TRUE);
-  if (g_test_verbose ())
-    g_print ("setting XDG_CACHE_HOME=%s\n", cachedir);
+  g_test_message ("setting XDG_CACHE_HOME=%s", cachedir);
 
   configdir = g_strconcat (testdir, "/home/config", NULL);
   g_mkdir_with_parents (configdir, S_IRWXU|S_IRWXG|S_IRWXO);
   g_setenv ("XDG_CONFIG_HOME", configdir, TRUE);
-  if (g_test_verbose ())
-    g_print ("setting XDG_CONFIG_HOME=%s\n", configdir);
+  g_test_message ("setting XDG_CONFIG_HOME=%s", configdir);
 
   datadir = g_strconcat (testdir, "/home/share", NULL);
   g_mkdir_with_parents (datadir, S_IRWXU|S_IRWXG|S_IRWXO);
   g_setenv ("XDG_DATA_HOME", datadir, TRUE);
-  if (g_test_verbose ())
-    g_print ("setting XDG_DATA_HOME=%s\n", datadir);
+  g_test_message ("setting XDG_DATA_HOME=%s", datadir);
 
   flatpak_runtimedir = g_strconcat (testdir, "/runtime", NULL);
   g_mkdir_with_parents (flatpak_runtimedir, S_IRWXU|S_IRWXG|S_IRWXO);
-  g_setenv ("XDG_RUNTIME_DIR", flatpak_runtimedir, TRUE);
-  if (g_test_verbose ())
-    g_print ("setting XDG_RUNTIME_DIR=%s\n", flatpak_runtimedir);
+  g_test_message ("setting XDG_RUNTIME_DIR=%s", flatpak_runtimedir);
 
   flatpak_systemdir = g_strconcat (testdir, "/system", NULL);
   g_mkdir_with_parents (flatpak_systemdir, S_IRWXU|S_IRWXG|S_IRWXO);
   g_setenv ("FLATPAK_SYSTEM_DIR", flatpak_systemdir, TRUE);
-  if (g_test_verbose ())
-    g_print ("setting FLATPAK_SYSTEM_DIR=%s\n", flatpak_systemdir);
+  g_test_message ("setting FLATPAK_SYSTEM_DIR=%s", flatpak_systemdir);
 
   flatpak_configdir = g_strconcat (testdir, "/config", NULL);
   g_mkdir_with_parents (flatpak_configdir, S_IRWXU|S_IRWXG|S_IRWXO);
   g_setenv ("FLATPAK_CONFIG_DIR", flatpak_configdir, TRUE);
-  if (g_test_verbose ())
-    g_print ("setting FLATPAK_CONFIG_DIR=%s\n", flatpak_configdir);
+  g_test_message ("setting FLATPAK_CONFIG_DIR=%s", flatpak_configdir);
 
   gpg_homedir = g_strconcat (testdir, "/gpghome", NULL);
   g_mkdir_with_parents (gpg_homedir, S_IRWXU|S_IRWXG|S_IRWXO);
 
   gpg_args = g_strdup_printf ("--gpg-homedir=%s --gpg-sign=%s", gpg_homedir, gpg_id);
   g_setenv ("GPGARGS", gpg_args, TRUE);
-  if (g_test_verbose ())
-    g_print ("setting GPGARGS=%s\n", gpg_args);
+  g_test_message ("setting GPGARGS=%s", gpg_args);
 
   copy_gpg ();
   setup_multiple_installations();
@@ -881,39 +852,17 @@ global_setup (void)
 static void
 global_teardown (void)
 {
-  int status;
-  g_autoptr (GError) error = NULL;
   char *argv[] = { "gpg-connect-agent", "--homedir", "<placeholder>", "killagent", "/bye", NULL };
-  g_autofree char *argv_str = NULL;
-  GSpawnFlags flags = G_SPAWN_SEARCH_PATH;
 
   if (g_getenv ("SKIP_TEARDOWN"))
     return;
 
   argv[2] = gpg_homedir;
 
-  if (g_test_verbose ())
-    {
-      g_autofree char *commandline = g_strjoinv (" ", argv);
-      g_print ("running %s\n", commandline);
-    }
-  else
-    {
-      flags |= G_SPAWN_STDOUT_TO_DEV_NULL | G_SPAWN_STDERR_TO_DEV_NULL;
-    }
-
   if (httpd_pid != -1)
     kill (httpd_pid, SIGKILL);
 
-  argv_str = g_strjoinv (" ", argv);
-  g_test_message ("Spawning %s", argv_str);
-
-  /* mostly ignore failure here */
-  if (!g_spawn_sync (NULL, (char **)argv, NULL, flags, NULL, NULL, NULL, NULL, &status, &error) ||
-      !g_spawn_check_exit_status (status, &error))
-    {
-      g_print ("# failed to run gpg-connect-agent to stop gpg-agent: %s\n", error->message);
-    }
+  run_test_subprocess (argv, RUN_TEST_SUBPROCESS_IGNORE_FAILURE);
 
   glnx_shutil_rm_rf_at (-1, testdir, NULL, NULL);
   g_free (testdir);
