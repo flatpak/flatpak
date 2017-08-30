@@ -85,6 +85,7 @@ BUILTINPROTO (document_list)
 BUILTINPROTO (override)
 BUILTINPROTO (repo)
 BUILTINPROTO (config)
+BUILTINPROTO (search)
 
 #undef BUILTINPROTO
 

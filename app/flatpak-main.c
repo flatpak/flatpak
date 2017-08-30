@@ -67,6 +67,10 @@ static FlatpakCommand commands[] = {
   { "config", N_("Configure flatpak"), flatpak_builtin_config, flatpak_complete_config },
 
    /* translators: please keep the leading newline and space */
+  { N_("\n Finding applications") },
+  { "search", N_("Search for applications"), flatpak_builtin_search, flatpak_complete_search },
+
+   /* translators: please keep the leading newline and space */
   { N_("\n Running applications") },
   { "run", N_("Run an application"), flatpak_builtin_run, flatpak_complete_run },
   { "override", N_("Override permissions for an application"), flatpak_builtin_override, flatpak_complete_override },

@@ -26,6 +26,7 @@ app/flatpak-builtins-override.c
 app/flatpak-builtins-repo.c
 app/flatpak-builtins-repo-update.c
 app/flatpak-builtins-run.c
+app/flatpak-builtins-search.c
 app/flatpak-builtins-uninstall.c
 app/flatpak-builtins-update.c
 app/flatpak-main.c
