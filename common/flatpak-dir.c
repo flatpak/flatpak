@@ -604,6 +604,57 @@ flatpak_get_user_base_dir_location (void)
   return g_object_ref ((GFile *)file);
 }
 
+/* This is a cache directory similar to ~/.cache/flatpak/system-cache,
+ * but in /var/tmp. This is useful for things like the system child
+ * repos, because it is more likely to be on the same filesystem as
+ * the system repo (thus increasing chances for e.g. reflink copying),
+ * and avoids filling the users homedirectory with temporary data.
+ *
+ * In order to re-use this between instances we create a symlink
+ * in /run to it and verify it before use.
+ */
+static GFile *
+flatpak_ensure_system_user_cache_dir_location (GError **error)
+{
+  g_autofree char *path = NULL;
+  g_autofree char *symlink_path = NULL;
+  struct stat st_buf;
+  const char *custom_path = g_getenv ("FLATPAK_SYSTEM_CACHE_DIR");
+
+  if (custom_path != NULL && *custom_path != 0)
+    {
+      if (g_mkdir_with_parents (custom_path, 0755) != 0)
+        {
+          glnx_set_error_from_errno (error);
+          return NULL;
+        }
+
+      return g_file_new_for_path (custom_path);
+    }
+
+  symlink_path = g_build_filename (g_get_user_runtime_dir (), ".flatpak-cache", NULL);
+  path = flatpak_readlink (symlink_path, NULL);
+
+  if (stat (path, &st_buf) == 0 &&
+      /* Must be owned by us */
+      st_buf.st_uid == getuid () &&
+      /* and not writeable by others */
+      (st_buf.st_mode && 0022) != 0)
+    return g_file_new_for_path (path);
+
+  path = g_strdup ("/var/tmp/flatpak-cache-XXXXXX");
+
+  if (g_mkdtemp_full (path, 0755) == NULL)
+    {
+      flatpak_fail (error, "Can't create temporary directory");
+      return NULL;
+    }
+
+  symlink (path, symlink_path);
+
+  return g_file_new_for_path (path);
+}
+
 static GFile *
 flatpak_get_user_cache_dir_location (void)
 {
@@ -5328,7 +5379,7 @@ flatpak_dir_create_system_child_oci_registry (FlatpakDir   *self,
   if (!flatpak_dir_ensure_repo (self, NULL, error))
     return NULL;
 
-  cache_dir = flatpak_ensure_user_cache_dir_location (error);
+  cache_dir = flatpak_ensure_system_user_cache_dir_location (error);
   if (cache_dir == NULL)
     return NULL;
 
@@ -5380,7 +5431,7 @@ flatpak_dir_create_system_child_repo (FlatpakDir   *self,
 
   orig_config = ostree_repo_get_config (self->repo);
 
-  cache_dir = flatpak_ensure_user_cache_dir_location (error);
+  cache_dir = flatpak_ensure_system_user_cache_dir_location (error);
   if (cache_dir == NULL)
     return NULL;
 
