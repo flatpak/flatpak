@@ -3973,6 +3973,7 @@ static gboolean
 setup_seccomp (GPtrArray  *argv_array,
                GArray     *fd_array,
                const char *arch,
+               gulong      allowed_personality,
                gboolean    multiarch,
                gboolean    devel,
                GError    **error)
@@ -4018,7 +4019,7 @@ setup_seccomp (GPtrArray  *argv_array,
     /* Useless old syscall */
     {SCMP_SYS (uselib)},
     /* Don't allow you to switch to bsd emulation or whatnot */
-    {SCMP_SYS (personality)},
+    {SCMP_SYS (personality), &SCMP_A0(SCMP_CMP_NE, allowed_personality)},
     /* Don't allow disabling accounting */
     {SCMP_SYS (acct)},
     /* 16-bit code is unnecessary in the sandbox, and modify_ldt is a
@@ -4386,6 +4387,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   if (!setup_seccomp (argv_array,
                       fd_array,
                       arch,
+                      pers,
                       (flags & FLATPAK_RUN_FLAG_MULTIARCH) != 0,
                       (flags & FLATPAK_RUN_FLAG_DEVEL) != 0,
                       error))
