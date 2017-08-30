@@ -4224,6 +4224,7 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
   g_autofree char *group_fd_str = NULL;
   g_autofree char *group_contents = NULL;
   struct group *g = getgrgid (getgid ());
+  gulong pers;
 
   g_autoptr(GFile) etc = NULL;
 
@@ -4369,6 +4370,17 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
         }
     }
 
+  pers = PER_LINUX;
+
+  if ((flags & FLATPAK_RUN_FLAG_SET_PERSONALITY) &&
+      flatpak_is_linux32_arch (arch))
+    {
+      g_debug ("Setting personality linux32");
+      pers = PER_LINUX32;
+    }
+
+  /* Always set the personallity, and clear all weird flags */
+  personality (pers);
 
 #ifdef ENABLE_SECCOMP
   if (!setup_seccomp (argv_array,
@@ -4382,13 +4394,6 @@ flatpak_run_setup_base_argv (GPtrArray      *argv_array,
 
   if ((flags & FLATPAK_RUN_FLAG_WRITABLE_ETC) == 0)
     add_monitor_path_args ((flags & FLATPAK_RUN_FLAG_NO_SESSION_HELPER) == 0, argv_array);
-
-  if ((flags & FLATPAK_RUN_FLAG_SET_PERSONALITY) &&
-      flatpak_is_linux32_arch (arch))
-    {
-      g_debug ("Setting personality linux32");
-      personality (PER_LINUX32);
-    }
 
   return TRUE;
 }
