@@ -39,6 +39,7 @@ static char *opt_build_dir;
 static char **opt_bind_mounts;
 static char *opt_sdk_dir;
 static char *opt_metadata;
+static gboolean opt_die_with_parent;
 
 static GOptionEntry options[] = {
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Use Platform runtime rather than Sdk"), NULL },
@@ -46,6 +47,7 @@ static GOptionEntry options[] = {
   { "build-dir", 0, 0, G_OPTION_ARG_STRING, &opt_build_dir, N_("Start build in this directory"), N_("DIR") },
   { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, N_("Where to look for custom sdk dir (defaults to 'usr')"), N_("DIR") },
   { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, N_("Use alternative file for the metadata"), N_("FILE") },
+  { "die-with-parent", 'p', 0, G_OPTION_ARG_NONE, &opt_die_with_parent, N_("Kill processes when the parent process dies"), NULL },
   { NULL }
 };
 
@@ -284,7 +286,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   run_flags =
     FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER |
-    FLATPAK_RUN_FLAG_SET_PERSONALITY | FLATPAK_RUN_FLAG_DIE_WITH_PARENT;
+    FLATPAK_RUN_FLAG_SET_PERSONALITY;
+  if (opt_die_with_parent)
+    run_flags |= FLATPAK_RUN_FLAG_DIE_WITH_PARENT;
   if (custom_usr)
     run_flags |= FLATPAK_RUN_FLAG_WRITABLE_ETC;
 

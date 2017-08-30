@@ -87,6 +87,15 @@
                 </para></listitem>
             </varlistentry>
 
+            <varlistentry>
+                <term><option>-p</option></term>
+                <term><option>--die-with-parent</option></term>
+
+                <listitem><para>
+                    Kill the build process and all children when the launching process dies.
+                </para></listitem>
+            </varlistentry>
+
            <varlistentry>
                 <term><option>--bind-mount=DEST=SOURCE</option></term>
 
