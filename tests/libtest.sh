@@ -77,6 +77,7 @@ mkdir -p ${TEST_DATA_DIR}/home
 mkdir -p ${TEST_DATA_DIR}/runtime
 mkdir -p ${TEST_DATA_DIR}/system
 export FLATPAK_SYSTEM_DIR=${TEST_DATA_DIR}/system
+export FLATPAK_SYSTEM_CACHE_DIR=${TEST_DATA_DIR}/system-cache
 export FLATPAK_SYSTEM_HELPER_ON_SESSION=1
 
 export HOME=${TEST_DATA_DIR}/home

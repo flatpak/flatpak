@@ -12,6 +12,7 @@
 static char *testdir;
 static char *flatpak_runtimedir;
 static char *flatpak_systemdir;
+static char *flatpak_systemcachedir;
 static char *flatpak_configdir;
 static char *flatpak_installationsdir;
 static char *gpg_homedir;
@@ -831,6 +832,11 @@ global_setup (void)
   g_mkdir_with_parents (flatpak_systemdir, S_IRWXU|S_IRWXG|S_IRWXO);
   g_setenv ("FLATPAK_SYSTEM_DIR", flatpak_systemdir, TRUE);
   g_test_message ("setting FLATPAK_SYSTEM_DIR=%s", flatpak_systemdir);
+
+  flatpak_systemcachedir = g_strconcat (testdir, "/system-cache", NULL);
+  g_mkdir_with_parents (flatpak_systemcachedir, S_IRWXU|S_IRWXG|S_IRWXO);
+  g_setenv ("FLATPAK_SYSTEM_CACHE_DIR", flatpak_systemcachedir, TRUE);
+  g_test_message ("setting FLATPAK_SYSTEM_CACHE_DIR=%s", flatpak_systemcachedir);
 
   flatpak_configdir = g_strconcat (testdir, "/config", NULL);
   g_mkdir_with_parents (flatpak_configdir, S_IRWXU|S_IRWXG|S_IRWXO);
