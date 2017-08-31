@@ -1353,6 +1353,7 @@ typedef enum {
   HANDLE_VALIDATE_OWN,
   HANDLE_VALIDATE_SEE,
   HANDLE_VALIDATE_TALK,
+  HANDLE_VALIDATE_MATCH,
 } BusHandler;
 
 static gboolean
@@ -1414,8 +1415,10 @@ get_dbus_method_handler (FlatpakProxyClient *client, Header *header)
       if (method == NULL)
         return HANDLE_DENY;
 
+      if (strcmp (method, "AddMatch") == 0)
+        return HANDLE_VALIDATE_MATCH;
+
       if (strcmp (method, "Hello") == 0 ||
-          strcmp (method, "AddMatch") == 0 ||
           strcmp (method, "RemoveMatch") == 0 ||
           strcmp (method, "GetId") == 0)
         return HANDLE_PASS;
@@ -1494,6 +1497,28 @@ get_arg0_string (Buffer *buffer)
   g_object_unref (message);
 
   return name;
+}
+
+static gboolean
+validate_arg0_match (FlatpakProxyClient *client, Buffer *buffer)
+{
+  GDBusMessage *message = g_dbus_message_new_from_blob (buffer->data, buffer->size, 0, NULL);
+  GVariant *body, *arg0;
+  const char *match;
+  gboolean res = TRUE;
+
+  if (message != NULL &&
+      (body = g_dbus_message_get_body (message)) != NULL &&
+      (arg0 = g_variant_get_child_value (body, 0)) != NULL &&
+      g_variant_is_of_type (arg0, G_VARIANT_TYPE_STRING))
+    {
+      match = g_variant_get_string (arg0, NULL);
+      if (strstr (match, "eavesdrop=") != NULL)
+        res = FALSE;
+    }
+
+  g_object_unref (message);
+  return res;
 }
 
 static gboolean
@@ -1875,6 +1900,20 @@ got_buffer_from_client (FlatpakProxyClient *client, ProxySide *side, Buffer *buf
               else
                 buffer = get_bool_reply_for_roundtrip (client, header, FALSE);
 
+              expecting_reply = EXPECTED_REPLY_REWRITE;
+              break;
+            }
+
+          goto handle_pass;
+
+        case HANDLE_VALIDATE_MATCH:
+          if (!validate_arg0_match (client, buffer))
+            {
+              if (client->proxy->log_messages)
+                g_print ("*DENIED* (ping)\n");
+              g_clear_pointer (&buffer, buffer_unref);
+              buffer = get_error_for_roundtrip (client, header,
+                                                "org.freedesktop.DBus.Error.AccessDenied");
               expecting_reply = EXPECTED_REPLY_REWRITE;
               break;
             }
