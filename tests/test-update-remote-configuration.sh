@@ -25,7 +25,6 @@ set -euo pipefail
 . $(dirname $0)/libtest.sh
 
 skip_without_bwrap
-skip_without_user_xattrs
 skip_without_p2p
 
 echo "1..3"
