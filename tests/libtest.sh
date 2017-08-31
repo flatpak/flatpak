@@ -72,7 +72,8 @@ fi
 export MALLOC_CHECK_=3
 export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
-TEST_DATA_DIR=`mktemp -d /tmp/test-flatpak-XXXXXX`
+# We need this to be in /var/tmp because /tmp has no xattr support
+TEST_DATA_DIR=`mktemp -d /var/tmp/test-flatpak-XXXXXX`
 mkdir -p ${TEST_DATA_DIR}/home
 mkdir -p ${TEST_DATA_DIR}/runtime
 mkdir -p ${TEST_DATA_DIR}/system
