@@ -55,20 +55,22 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 {
   g_autoptr(GOptionContext) context = NULL;
   g_autoptr(FlatpakDir) dir = NULL;
-  g_autoptr(GHashTable) refs = NULL;
+  GHashTableIter refs_iter;
   GHashTableIter iter;
+  gpointer refs_key;
+  gpointer refs_value;
   gpointer key;
   gpointer value;
   g_autoptr(GHashTable) names = NULL;
   guint n_keys;
   g_autofree const char **keys = NULL;
   int i;
-  const char *repository;
   const char **arches = flatpak_get_arches ();
   const char *opt_arches[] = {NULL, NULL};
-  g_autoptr(GVariant) refdata = NULL;
+  g_auto(GStrv) remotes = NULL;
   g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  g_autoptr(GError) local_error = NULL;
+  g_autoptr(GHashTable) refs_hash = g_hash_table_new_full(g_direct_hash, g_direct_equal, (GDestroyNotify)g_hash_table_unref, g_free);
+  g_autoptr(GHashTable) ref_hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
   context = g_option_context_new (_(" REMOTE - Show available runtimes and applications"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -79,34 +81,37 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   if (!opt_app && !opt_runtime)
     opt_app = opt_runtime = TRUE;
 
-  if (argc < 2)
-    return usage_error (context, _("REMOTE must be specified"), error);
-
   if (argc > 2)
     return usage_error (context, _("Too many arguments"), error);
 
-  repository = argv[1];
+  if (argc < 2)
+    {
+      remotes = flatpak_dir_list_remotes (dir, cancellable, error);
+      if (remotes == NULL)
+        return FALSE;
+    }
+  else
+    {
+      remotes = g_new (char *, 2);
+      remotes[0] = g_strdup(argv[1]);
+      remotes[1] = NULL;
+    }
 
+  for (i = 0; remotes[i] != NULL; i++)
+    {
+      g_autoptr(GHashTable) refs = NULL;
+      const char *remote_name = remotes[i];
 
-  if (!flatpak_dir_list_remote_refs (dir,
-                                     repository,
-                                     &refs,
-                                     cancellable, error))
-    return FALSE;
+      if (!flatpak_dir_list_remote_refs (dir,
+                                         remote_name,
+                                         &refs,
+                                         cancellable, error))
+        return FALSE;
+
+      g_hash_table_insert (refs_hash, g_steal_pointer (&refs), g_strdup (remote_name));
+    }
 
   names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-
-  if (opt_show_details)
-    {
-      if (!flatpak_dir_lookup_repo_metadata (dir, repository, cancellable, &local_error,
-                                             "xa.cache", "v", &refdata))
-        {
-          if (local_error == NULL)
-            flatpak_fail (&local_error, _("No ref information available in repository"));
-          g_propagate_error (error, g_steal_pointer (&local_error));
-          return FALSE;
-        }
-    }
 
   if (opt_arch != NULL)
     {
@@ -119,80 +124,90 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
         }
     }
 
-  g_hash_table_iter_init (&iter, refs);
-  while (g_hash_table_iter_next (&iter, &key, &value))
+  g_hash_table_iter_init (&refs_iter, refs_hash);
+  while (g_hash_table_iter_next (&refs_iter, &refs_key, &refs_value))
     {
-      char *ref = key;
-      char *partial_ref = flatpak_make_valid_id_prefix (strchr (ref, '/') + 1);
-      g_hash_table_insert (pref_hash, partial_ref, ref);
-    }
+      GHashTable *refs = refs_key;
+      char *remote = refs_value;
 
-  g_hash_table_iter_init (&iter, refs);
-  while (g_hash_table_iter_next (&iter, &key, &value))
-    {
-      const char *ref = key;
-      const char *checksum = value;
-      const char *name = NULL;
-      g_auto(GStrv) parts = NULL;
-
-      parts = flatpak_decompose_ref (ref, NULL);
-      if (parts == NULL)
+      g_hash_table_iter_init (&iter, refs);
+      while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          g_debug ("Invalid remote ref %s", ref);
-          continue;
+          char *ref = key;
+          char *partial_ref = flatpak_make_valid_id_prefix (strchr (ref, '/') + 1);
+          g_hash_table_insert (pref_hash, partial_ref, ref);
         }
 
-      if (opt_only_updates)
+      g_hash_table_iter_init (&iter, refs);
+      while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, NULL);
+          const char *ref = key;
+          const char *checksum = value;
+          const char *name = NULL;
+          g_auto(GStrv) parts = NULL;
 
-          if (deploy_data == NULL)
+          parts = flatpak_decompose_ref (ref, NULL);
+          if (parts == NULL)
+            {
+              g_debug ("Invalid remote ref %s", ref);
+              continue;
+            }
+
+          if (opt_only_updates)
+            {
+              g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (dir, ref, cancellable, NULL);
+
+              if (deploy_data == NULL)
+                continue;
+
+              if (g_strcmp0 (flatpak_deploy_data_get_commit (deploy_data), checksum) == 0)
+                continue;
+            }
+
+          if (arches != NULL && !g_strv_contains (arches, parts[2]))
             continue;
 
-          if (g_strcmp0 (flatpak_deploy_data_get_commit (deploy_data), checksum) == 0)
+          if (strcmp (parts[0], "runtime") == 0 && !opt_runtime)
             continue;
+
+          if (strcmp (parts[0], "app") == 0 && !opt_app)
+            continue;
+
+          if (!opt_show_details)
+            name = parts[1];
+          else
+            name = ref;
+
+          if (!opt_all &&
+              strcmp (parts[0], "runtime") == 0 &&
+              flatpak_id_has_subref_suffix (parts[1]))
+            {
+              g_autofree char *prefix_partial_ref = NULL;
+              char *last_dot = strrchr (parts[1], '.');
+
+              *last_dot = 0;
+              prefix_partial_ref = g_strconcat (parts[1], "/", parts[2], "/", parts[3], NULL);
+              *last_dot = '.';
+
+              if (g_hash_table_lookup (pref_hash, prefix_partial_ref))
+                continue;
+            }
+
+          if (!opt_all && opt_arch == NULL &&
+              /* Hide non-primary arches if the primary arch exists */
+              strcmp (arches[0], parts[2]) != 0)
+            {
+              g_autofree char *alt_arch_ref = g_strconcat (parts[0], "/", parts[1], "/", arches[0], "/", parts[3], NULL);
+              if (g_hash_table_lookup (refs, alt_arch_ref))
+                continue;
+            }
+
+          if (g_hash_table_lookup (names, name) == NULL)
+            {
+              g_hash_table_insert (names, g_strdup (name), g_strdup (checksum));
+              g_hash_table_insert(ref_hash, g_strdup (name), g_strdup (remote));
+            }
         }
-
-      if (arches != NULL && !g_strv_contains (arches, parts[2]))
-        continue;
-
-      if (strcmp (parts[0], "runtime") == 0 && !opt_runtime)
-        continue;
-
-      if (strcmp (parts[0], "app") == 0 && !opt_app)
-        continue;
-
-      if (!opt_show_details)
-        name = parts[1];
-      else
-        name = ref;
-
-      if (!opt_all &&
-          strcmp (parts[0], "runtime") == 0 &&
-          flatpak_id_has_subref_suffix (parts[1]))
-        {
-          g_autofree char *prefix_partial_ref = NULL;
-          char *last_dot = strrchr (parts[1], '.');
-
-          *last_dot = 0;
-          prefix_partial_ref = g_strconcat (parts[1], "/", parts[2], "/", parts[3], NULL);
-          *last_dot = '.';
-
-          if (g_hash_table_lookup (pref_hash, prefix_partial_ref))
-            continue;
-        }
-
-      if (!opt_all && opt_arch == NULL &&
-          /* Hide non-primary arches if the primary arch exists */
-          strcmp (arches[0], parts[2]) != 0)
-        {
-          g_autofree char *alt_arch_ref = g_strconcat (parts[0], "/", parts[1], "/", arches[0], "/", parts[3], NULL);
-          if (g_hash_table_lookup (refs, alt_arch_ref))
-            continue;
-        }
-
-      if (g_hash_table_lookup (names, name) == NULL)
-        g_hash_table_insert (names, g_strdup (name), g_strdup (checksum));
     }
 
   keys = (const char **) g_hash_table_get_keys_as_array (names, &n_keys);
@@ -201,9 +216,10 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   FlatpakTablePrinter *printer = flatpak_table_printer_new ();
 
   flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
-  flatpak_table_printer_set_column_title (printer, 1, _("Commit"));
-  flatpak_table_printer_set_column_title (printer, 2, _("Installed size"));
-  flatpak_table_printer_set_column_title (printer, 3, _("Download size"));
+  flatpak_table_printer_set_column_title (printer, 1, _("Origin"));
+  flatpak_table_printer_set_column_title (printer, 2, _("Commit"));
+  flatpak_table_printer_set_column_title (printer, 3, _("Installed size"));
+  flatpak_table_printer_set_column_title (printer, 4, _("Download size"));
 
   for (i = 0; i < n_keys; i++)
     {
@@ -211,13 +227,28 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       if (opt_show_details)
         {
           g_autofree char *value = NULL;
+          g_autofree char *repo = NULL;
+          g_autoptr(GVariant) refdata = NULL;
+          g_autoptr(GError) local_error = NULL;
           guint64 installed_size;
           guint64 download_size;
           const char *metadata;
 
+          repo = g_strdup ((char *) g_hash_table_lookup (ref_hash, keys[i]));
+          flatpak_table_printer_add_column (printer, repo);
+
           value = g_strdup ((char *) g_hash_table_lookup (names, keys[i]));
           value[MIN (strlen (value), 12)] = 0;
           flatpak_table_printer_add_column (printer, value);
+
+          if (!flatpak_dir_lookup_repo_metadata (dir, repo, cancellable, &local_error,
+                                                 "xa.cache", "v", &refdata))
+            {
+              if (local_error == NULL)
+                flatpak_fail (&local_error, _("No ref information available in repository"));
+              g_propagate_error (error, g_steal_pointer (&local_error));
+              return FALSE;
+            }
 
           if (g_variant_lookup (refdata, keys[i], "(tt&s)", &installed_size, &download_size, &metadata))
             {
