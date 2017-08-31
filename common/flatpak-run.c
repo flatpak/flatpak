@@ -129,8 +129,10 @@ const char *flatpak_context_features[] = {
 
 static gboolean
 add_dbus_proxy_args (GPtrArray *argv_array,
-                     GPtrArray *dbus_proxy_argv,
-                     gboolean   enable_logging,
+                     GPtrArray *session_dbus_proxy_argv,
+                     gboolean   enable_session_logging,
+                     GPtrArray *system_dbus_proxy_argv,
+                     gboolean   enable_system_logging,
                      int        sync_fds[2],
                      const char *app_info_path,
                      GError   **error);
@@ -3089,11 +3091,9 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       g_clear_error (&my_error);
     }
 
-  if (!add_dbus_proxy_args (argv_array, session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
-                            sync_fds, app_info_path, error))
-    return FALSE;
-
-  if (!add_dbus_proxy_args (argv_array, system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
+  if (!add_dbus_proxy_args (argv_array,
+                            session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
+                            system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
                             sync_fds, app_info_path, error))
     return FALSE;
 
@@ -3867,9 +3867,34 @@ prepend_bwrap_argv_wrapper (GPtrArray *argv,
 }
 
 static gboolean
+has_args (GPtrArray *args)
+{
+  return args != NULL && args->len > 0;
+}
+
+static void
+append_proxy_args (GPtrArray *dbus_proxy_argv,
+                   GPtrArray *args,
+                   gboolean   enable_logging)
+{
+  if (has_args (args))
+    {
+      int i;
+
+      for (i = 0; i < args->len; i++)
+        g_ptr_array_add (dbus_proxy_argv, g_strdup (args->pdata[i]));
+
+      if (enable_logging)
+        g_ptr_array_add (dbus_proxy_argv, g_strdup ("--log"));
+    }
+}
+
+static gboolean
 add_dbus_proxy_args (GPtrArray *argv_array,
-                     GPtrArray *dbus_proxy_argv,
-                     gboolean   enable_logging,
+                     GPtrArray *session_dbus_proxy_argv,
+                     gboolean   enable_session_logging,
+                     GPtrArray *system_dbus_proxy_argv,
+                     gboolean   enable_system_logging,
                      int        sync_fds[2],
                      const char *app_info_path,
                      GError   **error)
@@ -3880,9 +3905,10 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   DbusProxySpawnData spawn_data;
   glnx_fd_close int app_info_fd = -1;
   glnx_fd_close int bwrap_args_fd = -1;
+  g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
 
-  if (dbus_proxy_argv == NULL ||
-      dbus_proxy_argv->len == 0)
+  if (!has_args (session_dbus_proxy_argv) &&
+      !has_args (system_dbus_proxy_argv))
     return TRUE;
 
   if (sync_fds[0] == -1)
@@ -3904,11 +3930,12 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   if (proxy == NULL)
     proxy = DBUSPROXY;
 
-  g_ptr_array_insert (dbus_proxy_argv, 0, g_strdup (proxy));
-  g_ptr_array_insert (dbus_proxy_argv, 1, g_strdup_printf ("--fd=%d", sync_fds[1]));
+  dbus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (dbus_proxy_argv, g_strdup (proxy));
+  g_ptr_array_add (dbus_proxy_argv, g_strdup_printf ("--fd=%d", sync_fds[1]));
 
-  if (enable_logging)
-    g_ptr_array_add (dbus_proxy_argv, g_strdup ("--log"));
+  append_proxy_args (dbus_proxy_argv, session_dbus_proxy_argv, enable_session_logging);
+  append_proxy_args (dbus_proxy_argv, system_dbus_proxy_argv, enable_system_logging);
 
   g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
 
