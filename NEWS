@@ -1,3 +1,29 @@
+Major changes in 0.9.9
+======================
+
+flatpak-builder was split out into its own module:
+  https://github.com/flatpak/flatpak-builder
+
+ * When downloading to a temporary directory for later install to the
+   system repo we now write to /var/tmp instead of $HOME. This is more
+   likely to be the same filesystem as /var/lib/flatpak, and thus will
+   not run into issues with e.g. filesystem full.
+ * We now get the default language list from AccountService if possible.
+ * A regression that made --devel crash was fixed.
+ * New feature for flatpakrefs, SuggestRemoteName=remotename will cause
+   flatpak to ask if you want to create a generic (not app specific)
+   remote for the repo url.
+ * flatpak build now does not die with the parent by default, you have
+   to pass --die-with-parent. This was done because die-with-parent
+   uses PR_SET_PDEATHSIG which does not work well if the parent is
+   threaded, like e.g. gnome-software is.
+ * We now always re-set the personality in the sandboxed process
+   in order to avoid inheriting weird settings.
+ * We now share a single dbus proxy instance for all proxies for a sandbox.
+ * dbus-proxy now properly disallows old-style eavesdropping.
+ * We now support accessibility by starting a customized dbus proxy for the
+   a11y bus.
+
 Major changes in 0.9.8
 ======================
 
