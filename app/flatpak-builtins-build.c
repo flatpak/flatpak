@@ -299,6 +299,9 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   if (!flatpak_context_get_needs_system_bus_proxy (arg_context))
     run_flags |= FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY;
 
+  /* Never set up an a11y bus for builds */
+  run_flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
+
   if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, NULL, runtime_ref_parts[2],
                                     run_flags, error))
     return FALSE;

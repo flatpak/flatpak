@@ -133,6 +133,8 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      gboolean   enable_session_logging,
                      GPtrArray *system_dbus_proxy_argv,
                      gboolean   enable_system_logging,
+                     GPtrArray *a11y_dbus_proxy_argv,
+                     gboolean   enable_a11y_logging,
                      int        sync_fds[2],
                      const char *app_info_path,
                      GError   **error);
@@ -2858,6 +2860,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   g_autoptr(FlatpakExports) exports = exports_new ();
   g_autoptr(GPtrArray) session_bus_proxy_argv = NULL;
   g_autoptr(GPtrArray) system_bus_proxy_argv = NULL;
+  g_autoptr(GPtrArray) a11y_bus_proxy_argv = NULL;
   int sync_fds[2] = {-1, -1};
 
   if ((flags & FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY) == 0)
@@ -3072,6 +3075,81 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       !unrestricted_system_bus && system_bus_proxy_argv)
     flatpak_add_bus_filters (system_bus_proxy_argv, context->system_bus_policy, NULL, context);
 
+  if ((flags & FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY) == 0)
+    {
+      g_autoptr(GDBusConnection) session_bus = NULL;
+      g_autofree char *a11y_address = NULL;
+
+      session_bus = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
+      if (session_bus)
+        {
+          g_autoptr(GError) local_error = NULL;
+          g_autoptr(GDBusMessage) reply = NULL;
+          g_autoptr(GDBusMessage) msg =
+            g_dbus_message_new_method_call ("org.a11y.Bus",
+                                            "/org/a11y/bus",
+                                            "org.a11y.Bus",
+                                            "GetAddress");
+          g_dbus_message_set_body (msg, g_variant_new ("()"));
+          reply =
+            g_dbus_connection_send_message_with_reply_sync (session_bus, msg,
+                                                            G_DBUS_SEND_MESSAGE_FLAGS_NONE,
+                                                            30000,
+                                                            NULL,
+                                                            NULL,
+                                                            NULL);
+          if (reply)
+            {
+              if (g_dbus_message_to_gerror (reply, &local_error))
+                {
+                  if (!g_error_matches (local_error, G_DBUS_ERROR, G_DBUS_ERROR_SERVICE_UNKNOWN))
+                    g_message ("Can't find a11y bus: %s", local_error->message);
+                }
+              else
+                {
+                  g_variant_get (g_dbus_message_get_body (reply),
+                                 "(s)", &a11y_address);
+                }
+            }
+        }
+
+      if (a11y_address)
+        {
+          g_autofree char *proxy_socket = create_proxy_socket ("a11y-bus-proxy-XXXXXX");
+          if (proxy_socket)
+            {
+              g_autofree char *sandbox_socket_path = g_strdup_printf ("/run/user/%d/at-spi-bus", getuid ());
+              g_autofree char *sandbox_dbus_address = g_strdup_printf ("unix:path=/run/user/%d/at-spi-bus", getuid ());
+
+              a11y_bus_proxy_argv = g_ptr_array_new_with_free_func (g_free);
+
+              g_ptr_array_add (a11y_bus_proxy_argv, g_strdup (a11y_address));
+              g_ptr_array_add (a11y_bus_proxy_argv, g_strdup (proxy_socket));
+              g_ptr_array_add (a11y_bus_proxy_argv, g_strdup ("--filter"));
+              g_ptr_array_add (a11y_bus_proxy_argv, g_strdup ("--sloppy-names"));
+              g_ptr_array_add (a11y_bus_proxy_argv,
+                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Embed@/org/a11y/atspi/accessible/root"));
+              g_ptr_array_add (a11y_bus_proxy_argv,
+                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.Socket.Unembed@/org/a11y/atspi/accessible/root"));
+              g_ptr_array_add (a11y_bus_proxy_argv,
+                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.Registry.GetRegisteredEvents@/org/a11y/atspi/registry"));
+              g_ptr_array_add (a11y_bus_proxy_argv,
+                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetKeystrokeListeners@/org/a11y/atspi/registry/deviceeventcontroller"));
+              g_ptr_array_add (a11y_bus_proxy_argv,
+                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.GetDeviceEventListeners@/org/a11y/atspi/registry/deviceeventcontroller"));
+              g_ptr_array_add (a11y_bus_proxy_argv,
+                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersSync@/org/a11y/atspi/registry/deviceeventcontroller"));
+              g_ptr_array_add (a11y_bus_proxy_argv,
+                               g_strdup ("--filter=org.a11y.atspi.Registry=org.a11y.atspi.DeviceEventController.NotifyListenersAsync@/org/a11y/atspi/registry/deviceeventcontroller"));
+
+              add_args (argv_array,
+                        "--bind", proxy_socket, sandbox_socket_path,
+                        NULL);
+              *envp_p = g_environ_setenv (*envp_p, "AT_SPI_BUS_ADDRESS", sandbox_dbus_address, TRUE);
+            }
+        }
+    }
+
   if (g_environ_getenv (*envp_p, "LD_LIBRARY_PATH") != NULL)
     {
       /* LD_LIBRARY_PATH is overridden for setuid helper, so pass it as cmdline arg */
@@ -3094,6 +3172,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
   if (!add_dbus_proxy_args (argv_array,
                             session_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SESSION_BUS) != 0,
                             system_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_SYSTEM_BUS) != 0,
+                            a11y_bus_proxy_argv, (flags & FLATPAK_RUN_FLAG_LOG_A11Y_BUS) != 0,
                             sync_fds, app_info_path, error))
     return FALSE;
 
@@ -3895,6 +3974,8 @@ add_dbus_proxy_args (GPtrArray *argv_array,
                      gboolean   enable_session_logging,
                      GPtrArray *system_dbus_proxy_argv,
                      gboolean   enable_system_logging,
+                     GPtrArray *a11y_dbus_proxy_argv,
+                     gboolean   enable_a11y_logging,
                      int        sync_fds[2],
                      const char *app_info_path,
                      GError   **error)
@@ -3908,7 +3989,8 @@ add_dbus_proxy_args (GPtrArray *argv_array,
   g_autoptr(GPtrArray) dbus_proxy_argv = NULL;
 
   if (!has_args (session_dbus_proxy_argv) &&
-      !has_args (system_dbus_proxy_argv))
+      !has_args (system_dbus_proxy_argv) &&
+      !has_args (a11y_dbus_proxy_argv))
     return TRUE;
 
   if (sync_fds[0] == -1)
@@ -3936,6 +4018,7 @@ add_dbus_proxy_args (GPtrArray *argv_array,
 
   append_proxy_args (dbus_proxy_argv, session_dbus_proxy_argv, enable_session_logging);
   append_proxy_args (dbus_proxy_argv, system_dbus_proxy_argv, enable_system_logging);
+  append_proxy_args (dbus_proxy_argv, a11y_dbus_proxy_argv, enable_a11y_logging);
 
   g_ptr_array_add (dbus_proxy_argv, NULL); /* NULL terminate */
 

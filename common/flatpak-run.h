@@ -138,6 +138,8 @@ typedef enum {
   FLATPAK_RUN_FLAG_SET_PERSONALITY    = (1 << 9),
   FLATPAK_RUN_FLAG_FILE_FORWARDING    = (1 << 10),
   FLATPAK_RUN_FLAG_DIE_WITH_PARENT    = (1 << 11),
+  FLATPAK_RUN_FLAG_LOG_A11Y_BUS       = (1 << 12),
+  FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY  = (1 << 13),
 } FlatpakRunFlags;
 
 typedef struct _FlatpakExports FlatpakExports;
