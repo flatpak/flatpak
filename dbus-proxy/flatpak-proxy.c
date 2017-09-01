@@ -289,6 +289,7 @@ struct FlatpakProxy
   char          *dbus_address;
 
   gboolean       filter;
+  gboolean       sloppy_names;
 
   GHashTable    *wildcard_policy;
   GHashTable    *policy;
@@ -465,6 +466,13 @@ flatpak_proxy_set_filter (FlatpakProxy *proxy,
                           gboolean      filter)
 {
   proxy->filter = filter;
+}
+
+void
+flatpak_proxy_set_sloppy_names (FlatpakProxy *proxy,
+                                gboolean      sloppy_names)
+{
+  proxy->sloppy_names = sloppy_names;
 }
 
 void
@@ -1729,7 +1737,8 @@ should_filter_name_owner_changed (FlatpakProxyClient *client, Buffer *buffer)
   old = g_variant_get_string (arg1, NULL);
   new = g_variant_get_string (arg2, NULL);
 
-  if (flatpak_proxy_client_get_policy (client, name) >= FLATPAK_POLICY_SEE)
+  if (flatpak_proxy_client_get_policy (client, name) >= FLATPAK_POLICY_SEE ||
+      (client->proxy->sloppy_names && name[0] == ':'))
     {
       if (name[0] != ':')
         {

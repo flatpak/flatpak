@@ -48,6 +48,8 @@ void         flatpak_proxy_set_log_messages (FlatpakProxy *proxy,
                                              gboolean      log);
 void         flatpak_proxy_set_filter (FlatpakProxy *proxy,
                                        gboolean      filter);
+void         flatpak_proxy_set_sloppy_names (FlatpakProxy *proxy,
+                                             gboolean      sloppy_names);
 void         flatpak_proxy_add_policy (FlatpakProxy *proxy,
                                        const char   *name,
                                        FlatpakPolicy policy);

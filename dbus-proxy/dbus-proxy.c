@@ -144,6 +144,12 @@ start_proxy (int n_args, const char *args[])
         {
           flatpak_proxy_set_filter (proxy, TRUE);
         }
+      else if (g_str_equal (args[n], "--sloppy-names"))
+        {
+          /* This means we're reporing the name changes for all unique names,
+             which is needed for the a11y bus */
+          flatpak_proxy_set_sloppy_names (proxy, TRUE);
+        }
       else
         {
           int res = parse_generic_args (n_args - n, &args[n]);
