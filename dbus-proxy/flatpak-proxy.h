@@ -27,6 +27,7 @@
 typedef enum {
   FLATPAK_POLICY_NONE,
   FLATPAK_POLICY_SEE,
+  FLATPAK_POLICY_FILTERED,
   FLATPAK_POLICY_TALK,
   FLATPAK_POLICY_OWN
 } FlatpakPolicy;
@@ -53,6 +54,9 @@ void         flatpak_proxy_add_policy (FlatpakProxy *proxy,
 void         flatpak_proxy_add_wildcarded_policy (FlatpakProxy *proxy,
                                                   const char   *name,
                                                   FlatpakPolicy policy);
+void         flatpak_proxy_add_filter (FlatpakProxy *proxy,
+                                       const char   *name,
+                                       const char   *rule);
 gboolean     flatpak_proxy_start (FlatpakProxy *proxy,
                                   GError      **error);
 void         flatpak_proxy_stop (FlatpakProxy *proxy);

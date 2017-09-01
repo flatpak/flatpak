@@ -91,6 +91,7 @@ start_proxy (int n_args, const char *args[])
 
       if (g_str_has_prefix (args[n], "--see=") ||
           g_str_has_prefix (args[n], "--talk=") ||
+          g_str_has_prefix (args[n], "--filter=") ||
           g_str_has_prefix (args[n], "--own="))
         {
           FlatpakPolicy policy = FLATPAK_POLICY_SEE;
@@ -99,14 +100,29 @@ start_proxy (int n_args, const char *args[])
 
           if (args[n][2] == 't')
             policy = FLATPAK_POLICY_TALK;
+          else if (args[n][2] == 'f')
+            policy = FLATPAK_POLICY_FILTERED;
           else if (args[n][2] == 'o')
             policy = FLATPAK_POLICY_OWN;
 
           name = g_strdup (strchr (args[n], '=') + 1);
-          if (g_str_has_suffix (name, ".*"))
+
+          if (policy == FLATPAK_POLICY_FILTERED)
             {
-              name[strlen (name) - 2] = 0;
-              wildcard = TRUE;
+              char *rule = strchr (name, '=');
+              if (rule != NULL)
+                {
+                  *rule++ = 0;
+                  flatpak_proxy_add_filter (proxy, name, rule);
+                }
+            }
+          else
+            {
+              if (g_str_has_suffix (name, ".*"))
+                {
+                  name[strlen (name) - 2] = 0;
+                  wildcard = TRUE;
+                }
             }
 
           if (name[0] == ':' || !g_dbus_is_name (name))
