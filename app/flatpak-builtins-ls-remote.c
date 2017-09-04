@@ -61,13 +61,13 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
   gpointer refs_value;
   gpointer key;
   gpointer value;
-  g_autoptr(GHashTable) names = NULL;
   guint n_keys;
   g_autofree const char **keys = NULL;
   int i;
   const char **arches = flatpak_get_arches ();
   const char *opt_arches[] = {NULL, NULL};
   g_auto(GStrv) remotes = NULL;
+  gboolean has_remote;
   g_autoptr(GHashTable) pref_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
   g_autoptr(GHashTable) refs_hash = g_hash_table_new_full(g_direct_hash, g_direct_equal, (GDestroyNotify)g_hash_table_unref, g_free);
   g_autoptr(GHashTable) ref_hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
@@ -86,12 +86,14 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
 
   if (argc < 2)
     {
+      has_remote = FALSE;
       remotes = flatpak_dir_list_remotes (dir, cancellable, error);
       if (remotes == NULL)
         return FALSE;
     }
   else
     {
+      has_remote = TRUE;
       remotes = g_new (char *, 2);
       remotes[0] = g_strdup(argv[1]);
       remotes[1] = NULL;
@@ -111,8 +113,6 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
       g_hash_table_insert (refs_hash, g_steal_pointer (&refs), g_strdup (remote_name));
     }
 
-  names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-
   if (opt_arch != NULL)
     {
       if (strcmp (opt_arch, "*") == 0)
@@ -124,11 +124,22 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
         }
     }
 
+  FlatpakTablePrinter *printer = flatpak_table_printer_new ();
+
+  i = 0;
+  flatpak_table_printer_set_column_title (printer, i++, _("Ref"));
+  if (!has_remote)
+    flatpak_table_printer_set_column_title (printer, i++, _("Origin"));
+  flatpak_table_printer_set_column_title (printer, i++, _("Commit"));
+  flatpak_table_printer_set_column_title (printer, i++, _("Installed size"));
+  flatpak_table_printer_set_column_title (printer, i++, _("Download size"));
+
   g_hash_table_iter_init (&refs_iter, refs_hash);
   while (g_hash_table_iter_next (&refs_iter, &refs_key, &refs_value))
     {
       GHashTable *refs = refs_key;
       char *remote = refs_value;
+      g_autoptr(GHashTable) names = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
       g_hash_table_iter_init (&iter, refs);
       while (g_hash_table_iter_next (&iter, &key, &value))
@@ -203,63 +214,51 @@ flatpak_builtin_ls_remote (int argc, char **argv, GCancellable *cancellable, GEr
             }
 
           if (g_hash_table_lookup (names, name) == NULL)
-            {
-              g_hash_table_insert (names, g_strdup (name), g_strdup (checksum));
-              g_hash_table_insert(ref_hash, g_strdup (name), g_strdup (remote));
-            }
+            g_hash_table_insert (names, g_strdup (name), g_strdup (checksum));
         }
-    }
+      keys = (const char **) g_hash_table_get_keys_as_array (names, &n_keys);
+      g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
 
-  keys = (const char **) g_hash_table_get_keys_as_array (names, &n_keys);
-  g_qsort_with_data (keys, n_keys, sizeof (char *), (GCompareDataFunc) flatpak_strcmp0_ptr, NULL);
-
-  FlatpakTablePrinter *printer = flatpak_table_printer_new ();
-
-  flatpak_table_printer_set_column_title (printer, 0, _("Ref"));
-  flatpak_table_printer_set_column_title (printer, 1, _("Origin"));
-  flatpak_table_printer_set_column_title (printer, 2, _("Commit"));
-  flatpak_table_printer_set_column_title (printer, 3, _("Installed size"));
-  flatpak_table_printer_set_column_title (printer, 4, _("Download size"));
-
-  for (i = 0; i < n_keys; i++)
-    {
-      flatpak_table_printer_add_column (printer, keys[i]);
-      if (opt_show_details)
+      for (i = 0; i < n_keys; i++)
         {
-          g_autofree char *value = NULL;
-          g_autofree char *repo = NULL;
-          g_autoptr(GVariant) refdata = NULL;
-          g_autoptr(GError) local_error = NULL;
-          guint64 installed_size;
-          guint64 download_size;
-          const char *metadata;
+          flatpak_table_printer_add_column (printer, keys[i]);
 
-          repo = g_strdup ((char *) g_hash_table_lookup (ref_hash, keys[i]));
-          flatpak_table_printer_add_column (printer, repo);
+          if (!has_remote)
+              flatpak_table_printer_add_column (printer, remote);
 
-          value = g_strdup ((char *) g_hash_table_lookup (names, keys[i]));
-          value[MIN (strlen (value), 12)] = 0;
-          flatpak_table_printer_add_column (printer, value);
-
-          if (!flatpak_dir_lookup_repo_metadata (dir, repo, cancellable, &local_error,
-                                                 "xa.cache", "v", &refdata))
+          if (opt_show_details)
             {
-              if (local_error == NULL)
-                flatpak_fail (&local_error, _("No ref information available in repository"));
-              g_propagate_error (error, g_steal_pointer (&local_error));
-              return FALSE;
-            }
+              g_autofree char *value = NULL;
+              g_autoptr(GVariant) refdata = NULL;
+              g_autoptr(GError) local_error = NULL;
+              guint64 installed_size;
+              guint64 download_size;
+              const char *metadata;
 
-          if (g_variant_lookup (refdata, keys[i], "(tt&s)", &installed_size, &download_size, &metadata))
-            {
-              g_autofree char *installed = g_format_size (GUINT64_FROM_BE (installed_size));
-              g_autofree char *download = g_format_size (GUINT64_FROM_BE (download_size));
+              value = g_strdup ((char *) g_hash_table_lookup (names, keys[i]));
+              value[MIN (strlen (value), 12)] = 0;
+              flatpak_table_printer_add_column (printer, value);
 
-              flatpak_table_printer_add_decimal_column (printer, installed);
-              flatpak_table_printer_add_decimal_column (printer, download);
+              if (!flatpak_dir_lookup_repo_metadata (dir, remote, cancellable, &local_error,
+                                                     "xa.cache", "v", &refdata))
+                {
+                  if (local_error == NULL)
+                    flatpak_fail (&local_error, _("No ref information available in repository"));
+                  g_propagate_error (error, g_steal_pointer (&local_error));
+                  return FALSE;
+                }
+
+              if (g_variant_lookup (refdata, keys[i], "(tt&s)", &installed_size, &download_size, &metadata))
+                {
+                  g_autofree char *installed = g_format_size (GUINT64_FROM_BE (installed_size));
+                  g_autofree char *download = g_format_size (GUINT64_FROM_BE (download_size));
+
+                  flatpak_table_printer_add_decimal_column (printer, installed);
+                  flatpak_table_printer_add_decimal_column (printer, download);
+                }
             }
+          flatpak_table_printer_finish_row (printer);
         }
-      flatpak_table_printer_finish_row (printer);
     }
 
   flatpak_table_printer_print (printer);
