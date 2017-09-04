@@ -3,6 +3,7 @@
 # This file is distributed under the same license as the flatpak package.
 # Sebastian Rasmussen <sebras@gmail.com>, 2016.
 # Josef Andersson <l10nl18nsweja@gmail.com>, 2017.
+
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
