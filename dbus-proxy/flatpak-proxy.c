@@ -431,18 +431,19 @@ flatpak_proxy_client_new (FlatpakProxy *proxy, GSocketConnection *connection)
 
 static FlatpakPolicy
 flatpak_proxy_get_wildcard_policy (FlatpakProxy *proxy,
-                                   const char   *name)
+                                   const char   *_name)
 {
-  guint wildcard_policy = 0;
+  guint policy, wildcard_policy = 0;
   char *dot;
-  char buffer[256];
+  g_autofree char *name = g_strdup (_name);
 
-  dot = strrchr (name, '.');
-  if (dot && (dot - name) <= 255)
+  dot = name + strlen (name);
+  while (dot)
     {
-      strncpy (buffer, name, dot - name);
-      buffer[dot - name] = 0;
-      wildcard_policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->wildcard_policy, buffer));
+      *dot = 0;
+      policy = GPOINTER_TO_INT (g_hash_table_lookup (proxy->wildcard_policy, name));
+      wildcard_policy = MAX (wildcard_policy, policy);
+      dot = strrchr (name, '.');
     }
 
   return wildcard_policy;
