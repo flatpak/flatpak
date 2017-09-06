@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-04 08:40+0200\n"
-"PO-Revision-Date: 2017-08-18 18:42+0200\n"
+"POT-Creation-Date: 2017-09-06 16:12+0000\n"
+"PO-Revision-Date: 2017-09-06 18:14+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -148,7 +148,7 @@ msgstr "Należy podać POŁOŻENIE"
 #: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:111
 #: app/flatpak-builtins-install.c:265 app/flatpak-builtins-install.c:399
 #: app/flatpak-builtins-list.c:377 app/flatpak-builtins-list-remotes.c:66
-#: app/flatpak-builtins-ls-remote.c:86 app/flatpak-builtins-make-current.c:67
+#: app/flatpak-builtins-ls-remote.c:84 app/flatpak-builtins-make-current.c:67
 #: app/flatpak-builtins-override.c:66
 msgid "Too many arguments"
 msgstr "Za dużo parametrów"
@@ -336,7 +336,7 @@ msgstr "Używa alternatywnego pliku dla metadanych"
 
 #: app/flatpak-builtins-build.c:50
 msgid "Kill processes when the parent process dies"
-msgstr ""
+msgstr "Usuwa procesy po usunięciu procesu nadrzędnego"
 
 #: app/flatpak-builtins-build.c:109
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
@@ -1134,6 +1134,8 @@ msgid ""
 "The remote '%s', at location %s contains additional applications.\n"
 "Do you want to install other applications from here?"
 msgstr ""
+"Repozytorium „%s” w położeniu %s zawiera dodatkowe programy.\n"
+"Zainstalować pozostałe programy z tego repozytorium?"
 
 #: app/flatpak-builtins-install.c:396
 msgid "Filename or uri must be specified"
@@ -1174,12 +1176,12 @@ msgstr "Wyświetlana architektura"
 msgid "List all refs (including locale/debug)"
 msgstr "Wyświetla listę wszystkich odniesień (także lokalizacji/debugowania)"
 
-#: app/flatpak-builtins-list.c:131 app/flatpak-builtins-ls-remote.c:203
+#: app/flatpak-builtins-list.c:131 app/flatpak-builtins-ls-remote.c:129
 #: app/flatpak-builtins-repo.c:98
 msgid "Ref"
 msgstr "Odniesienie"
 
-#: app/flatpak-builtins-list.c:134
+#: app/flatpak-builtins-list.c:134 app/flatpak-builtins-ls-remote.c:131
 msgid "Origin"
 msgstr "Pochodzenie"
 
@@ -1191,7 +1193,7 @@ msgstr "Aktywne zatwierdzenie"
 msgid "Latest commit"
 msgstr "Najnowsze zatwierdzenie"
 
-#: app/flatpak-builtins-list.c:137 app/flatpak-builtins-ls-remote.c:205
+#: app/flatpak-builtins-list.c:137 app/flatpak-builtins-ls-remote.c:133
 msgid "Installed size"
 msgstr "Rozmiar po instalacji"
 
@@ -1248,26 +1250,22 @@ msgstr "Wyświetla tylko z dostępnymi aktualizacjami"
 msgid "Limit to this arch (* for all)"
 msgstr "Ogranicza do tej architektury (* dla wszystkich)"
 
-#: app/flatpak-builtins-ls-remote.c:73
+#: app/flatpak-builtins-ls-remote.c:74
 msgid " REMOTE - Show available runtimes and applications"
 msgstr ""
 " REPOZYTORIUM — wyświetla listę dostępnych środowisk wykonawczych i programów"
 
-#: app/flatpak-builtins-ls-remote.c:83
-msgid "REMOTE must be specified"
-msgstr "Należy podać REPOZYTORIUM"
-
-#: app/flatpak-builtins-ls-remote.c:105
-msgid "No ref information available in repository"
-msgstr "Brak dostępnych informacji o odniesieniu w repozytorium"
-
-#: app/flatpak-builtins-ls-remote.c:204
+#: app/flatpak-builtins-ls-remote.c:132
 msgid "Commit"
 msgstr "Zatwierdzenie"
 
-#: app/flatpak-builtins-ls-remote.c:206
+#: app/flatpak-builtins-ls-remote.c:134
 msgid "Download size"
 msgstr "Rozmiar do pobrania"
+
+#: app/flatpak-builtins-ls-remote.c:245
+msgid "No ref information available in repository"
+msgstr "Brak dostępnych informacji o odniesieniu w repozytorium"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -1437,9 +1435,8 @@ msgid "Log system bus calls"
 msgstr "Zapisywanie wywołań magistrali systemu w dzienniku"
 
 #: app/flatpak-builtins-run.c:60
-#, fuzzy
 msgid "Log accessibility bus calls"
-msgstr "Zapisywanie wywołań magistrali sesji w dzienniku"
+msgstr "Zapisywanie wywołań magistrali ułatwień dostępu w dzienniku"
 
 #: app/flatpak-builtins-run.c:61
 msgid "Enable file forwarding"
@@ -1864,12 +1861,12 @@ msgid "Unsupported extra data uri %s"
 msgstr "Nieobsługiwany adres URI %s dodatkowych danych"
 
 #: common/flatpak-dir.c:2366
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to load local extra-data %s: %s"
-msgstr "Odczytanie zatwierdzenia %s się nie powiodło: "
+msgstr "Wczytanie lokalnych dodatkowych danych %s się nie powiodło: %s"
 
 #: common/flatpak-dir.c:2369
-#, fuzzy, c-format
+#, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Błędny rozmiar dodatkowych danych %s"
 
@@ -2362,24 +2359,3 @@ msgstr ""
 #: system-helper/org.freedesktop.Flatpak.policy.in:153
 msgid "Update appstream"
 msgstr "Aktualizacja danych AppStream"
-
-#~ msgid "Could not parse URI “%s”"
-#~ msgstr "Nie można przetworzyć adresu URI „%s”"
-
-#~ msgid "Downloading %s"
-#~ msgstr "Pobieranie %s"
-
-#~ msgid "Building %s"
-#~ msgstr "Budowanie %s"
-
-#~ msgid "Installing %s"
-#~ msgstr "Instalowanie %s"
-
-#~ msgid "Post-Install %s"
-#~ msgstr "Wykonywanie zadań po instalacji %s"
-
-#~ msgid "Cleanup %s"
-#~ msgstr "Czyszczenie %s"
-
-#~ msgid "Updating %s"
-#~ msgstr "Aktualizowanie %s"
