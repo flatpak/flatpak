@@ -189,6 +189,27 @@ test_stdio_file (void)
   g_assert_no_error (local_error);
 }
 
+static void
+test_fstatat (void)
+{
+  g_autoptr(GError) local_error = NULL;
+  GError **error = &local_error;
+  struct stat stbuf = { 0, };
+
+  if (!glnx_fstatat_allow_noent (AT_FDCWD, ".", &stbuf, 0, error))
+    goto out;
+  g_assert_cmpint (errno, ==, 0);
+  g_assert_no_error (local_error);
+  g_assert (S_ISDIR (stbuf.st_mode));
+  if (!glnx_fstatat_allow_noent (AT_FDCWD, "nosuchfile", &stbuf, 0, error))
+    goto out;
+  g_assert_cmpint (errno, ==, ENOENT);
+  g_assert_no_error (local_error);
+
+ out:
+  g_assert_no_error (local_error);
+}
+
 int main (int argc, char **argv)
 {
   int ret;
@@ -199,6 +220,7 @@ int main (int argc, char **argv)
   g_test_add_func ("/stdio-file", test_stdio_file);
   g_test_add_func ("/renameat2-noreplace", test_renameat2_noreplace);
   g_test_add_func ("/renameat2-exchange", test_renameat2_exchange);
+  g_test_add_func ("/fstat", test_fstatat);
 
   ret = g_test_run();
 

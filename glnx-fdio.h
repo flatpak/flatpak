@@ -296,6 +296,44 @@ glnx_fstatat (int           dfd,
 }
 
 /**
+ * glnx_fstatat_allow_noent:
+ * @dfd: Directory FD to stat beneath
+ * @path: Path to stat beneath @dfd
+ * @buf: (out caller-allocates): Return location for stat details
+ * @flags: Flags to pass to fstatat()
+ * @error: Return location for a #GError, or %NULL
+ *
+ * Like glnx_fstatat(), but handles `ENOENT` in a non-error way.  Instead,
+ * on success `errno` will be zero, otherwise it will be preserved.  Hence
+ * you can test `if (errno == 0)` to conditionalize on the file existing,
+ * or `if (errno == ENOENT)` for non-existence.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise (errno is preserved)
+ * Since: UNRELEASED
+ */
+static inline gboolean
+glnx_fstatat_allow_noent (int               dfd,
+                          const char       *path,
+                          struct stat      *out_buf,
+                          int               flags,
+                          GError          **error)
+{
+  if (TEMP_FAILURE_RETRY (fstatat (dfd, path, out_buf, flags)) != 0)
+    {
+      if (errno != ENOENT)
+        {
+          int errsv = errno;
+          (void) glnx_throw_errno_prefix (error, "fstatat(%s)", path);
+          errno = errsv;
+          return FALSE;
+        }
+    }
+  else
+    errno = 0;
+  return TRUE;
+}
+
+/**
  * glnx_renameat:
  *
  * Wrapper around renameat() which adds #GError support and ensures that it
