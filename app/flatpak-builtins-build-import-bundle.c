@@ -264,7 +264,7 @@ flatpak_complete_build_import (FlatpakCompletion *completion)
       break;
 
     case 2: /* FILENAME */
-      flatpak_complete_file (completion);
+      flatpak_complete_file (completion, "__FLATPAK_BUNDLE_FILE");
       break;
     }
 

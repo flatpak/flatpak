@@ -5668,10 +5668,11 @@ is_word_separator (char c)
 }
 
 void
-flatpak_complete_file (FlatpakCompletion *completion)
+flatpak_complete_file (FlatpakCompletion *completion,
+                       const char        *file_type)
 {
   flatpak_completion_debug ("completing FILE");
-  g_print ("%s\n", "__FLATPAK_FILE");
+  g_print ("%s\n", file_type);
 }
 
 void
@@ -5928,7 +5929,7 @@ flatpak_complete_options (FlatpakCompletion *completion,
                 }
               else if (strcmp (e->arg_description, "FILE") == 0)
                 {
-                  flatpak_complete_file (completion);
+                  flatpak_complete_file (completion, "__FLATPAK_FILE");
                 }
               else
                 flatpak_complete_word (completion, "%s", prefix);

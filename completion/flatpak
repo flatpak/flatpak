@@ -11,19 +11,24 @@ __flatpak() {
     COMPREPLY=()
     for i in "${!RES[@]}"; do
         if [[ "${RES[$i]}" = "__FLATPAK_FILE" ]]; then
-           if [[ "${cur}" = "=" ]]; then
-               CUR=""
-           else
-               CUR="${cur}"
-           fi
-            COMPREPLY=("${COMPREPLY[@]}" $(compgen -f -- "${CUR}") )
+            declare -a COMPGEN_OPTS=('-f')
+        elif [[ "${RES[$i]}" = "__FLATPAK_BUNDLE_FILE" ]]; then
+            declare -a COMPGEN_OPTS=('-f' '-G' '*.flatpak')
+        elif [[ "${RES[$i]}" = "__FLATPAK_BUNDLE_OR_REF_FILE" ]]; then
+            declare -a COMPGEN_OPTS=('-f' '-G' '*.flatpak@(|ref)')
         elif [[ "${RES[$i]}" = "__FLATPAK_DIR" ]]; then
-           if [[ "${cur}" = "=" ]]; then
-               CUR=""
-           else
-               CUR="${cur}"
-           fi
-            COMPREPLY=("${COMPREPLY[@]}" $(compgen -d -- "${CUR}") )
+            declare -a COMPGEN_OPTS=('-d')
+        else
+            declare -a COMPGEN_OPTS=()
+        fi
+
+        if [[ ${#COMPGEN_OPTS[@]} -ne 0 ]]; then
+            if [[ "${cur}" = "=" ]]; then
+                CUR=""
+            else
+                CUR="${cur}"
+            fi
+            COMPREPLY=("${COMPREPLY[@]}" $(compgen ${COMPGEN_OPTS[@]} -- "${CUR}") )
         else
             COMPREPLY=("${COMPREPLY[@]}" "${RES[$i]}")
         fi
