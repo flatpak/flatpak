@@ -556,17 +556,20 @@ flatpak_complete_install (FlatpakCompletion *completion)
   switch (completion->argc)
     {
     case 0:
-    case 1: /* REMOTE */
+    case 1: /* LOCATION/REMOTE */
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
       flatpak_complete_options (completion, user_entries);
 
+      flatpak_complete_file (completion, "__FLATPAK_BUNDLE_OR_REF_FILE");
+
       {
         g_auto(GStrv) remotes = flatpak_dir_list_remotes (dir, NULL, NULL);
-        if (remotes == NULL)
-          return FALSE;
-        for (i = 0; remotes[i] != NULL; i++)
-          flatpak_complete_word (completion, "%s ", remotes[i]);
+        if (remotes != NULL)
+          {
+            for (i = 0; remotes[i] != NULL; i++)
+              flatpak_complete_word (completion, "%s ", remotes[i]);
+          }
       }
 
       break;
