@@ -112,7 +112,7 @@ flatpak_complete_document_unexport (FlatpakCompletion *completion)
       flatpak_complete_options (completion, global_entries);
       flatpak_complete_options (completion, options);
 
-      flatpak_complete_file (completion);
+      flatpak_complete_file (completion, "__FLATPAK_FILE");
       break;
     }
 

@@ -673,7 +673,8 @@ void               flatpak_complete_partial_ref (FlatpakCompletion *completion,
                                                  const char *only_arch,
                                                  FlatpakDir *dir,
                                                  const char *remote);
-void               flatpak_complete_file    (FlatpakCompletion *completion);
+void               flatpak_complete_file    (FlatpakCompletion *completion,
+                                             const char        *file_type);
 void               flatpak_complete_dir     (FlatpakCompletion *completion);
 void               flatpak_complete_options (FlatpakCompletion *completion,
                                              GOptionEntry      *entries);
