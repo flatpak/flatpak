@@ -3,12 +3,11 @@
 # This file is distributed under the same license as the flatpak package.
 # Sebastian Rasmussen <sebras@gmail.com>, 2016.
 # Josef Andersson <l10nl18nsweja@gmail.com>, 2017.
-
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-01 16:37+0200\n"
+"POT-Creation-Date: 2017-09-04 15:24+0000\n"
 "PO-Revision-Date: 2017-09-02 23:47+0200\n"
 "Last-Translator: Josef Andersson <josef.andersson@fripost.org>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -148,7 +147,7 @@ msgstr "PLATS måste anges"
 #: app/flatpak-builtins-document-unexport.c:67 app/flatpak-builtins-info.c:111
 #: app/flatpak-builtins-install.c:265 app/flatpak-builtins-install.c:399
 #: app/flatpak-builtins-list.c:377 app/flatpak-builtins-list-remotes.c:66
-#: app/flatpak-builtins-ls-remote.c:86 app/flatpak-builtins-make-current.c:67
+#: app/flatpak-builtins-ls-remote.c:84 app/flatpak-builtins-make-current.c:67
 #: app/flatpak-builtins-override.c:66
 msgid "Too many arguments"
 msgstr "För många argument"
@@ -176,7 +175,7 @@ msgstr "Ingen url angiven i flatpakrepo-fil"
 #: app/flatpak-builtins-add-remote.c:400
 #, c-format
 msgid "Warning: Could not update extra metadata for '%s': %s\n"
-msgstr "Varning: Det gick inte att uppdatera extra metadata för %s': %s\n"
+msgstr "Varning: Det gick inte att uppdatera extra metadata för ”%s”: %s\n"
 
 #: app/flatpak-builtins-add-remote.c:448
 msgid "NAME - Modify a remote repository"
@@ -1153,12 +1152,12 @@ msgstr "Ark att visa"
 msgid "List all refs (including locale/debug)"
 msgstr "Lista alla referenser (inklusive locale/debug)"
 
-#: app/flatpak-builtins-list.c:131 app/flatpak-builtins-ls-remote.c:203
+#: app/flatpak-builtins-list.c:131 app/flatpak-builtins-ls-remote.c:129
 #: app/flatpak-builtins-repo.c:98
 msgid "Ref"
-msgstr "Reg"
+msgstr "Ref"
 
-#: app/flatpak-builtins-list.c:134
+#: app/flatpak-builtins-list.c:134 app/flatpak-builtins-ls-remote.c:131
 msgid "Origin"
 msgstr "Origin"
 
@@ -1170,7 +1169,7 @@ msgstr "Aktiv incheckning"
 msgid "Latest commit"
 msgstr "Senaste incheckning"
 
-#: app/flatpak-builtins-list.c:137 app/flatpak-builtins-ls-remote.c:205
+#: app/flatpak-builtins-list.c:137 app/flatpak-builtins-ls-remote.c:133
 msgid "Installed size"
 msgstr "Installerad storlek"
 
@@ -1226,25 +1225,21 @@ msgstr "Visa endast de där uppdateringar finns tillgängliga"
 msgid "Limit to this arch (* for all)"
 msgstr "Begränsa till denna ark (* för alla)"
 
-#: app/flatpak-builtins-ls-remote.c:73
+#: app/flatpak-builtins-ls-remote.c:74
 msgid " REMOTE - Show available runtimes and applications"
 msgstr " FJÄRRFÖRRÅD - Visa tillgängliga exekveringsmiljöer och program"
 
-#: app/flatpak-builtins-ls-remote.c:83
-msgid "REMOTE must be specified"
-msgstr "FJÄRRFÖRRÅD måste anges"
-
-#: app/flatpak-builtins-ls-remote.c:105
-msgid "No ref information available in repository"
-msgstr "Ingen ref-information tillgänlig i arkiv"
-
-#: app/flatpak-builtins-ls-remote.c:204
+#: app/flatpak-builtins-ls-remote.c:132
 msgid "Commit"
 msgstr "Incheckning"
 
-#: app/flatpak-builtins-ls-remote.c:206
+#: app/flatpak-builtins-ls-remote.c:134
 msgid "Download size"
 msgstr "Hämtningsstorlek"
+
+#: app/flatpak-builtins-ls-remote.c:245
+msgid "No ref information available in repository"
+msgstr "Ingen ref-information tillgänglig i arkiv"
 
 #: app/flatpak-builtins-make-current.c:38
 msgid "Arch to make current for"
@@ -1310,7 +1305,7 @@ msgstr "Standardgren att använda för detta förråd"
 
 #: app/flatpak-builtins-repo-update.c:57
 msgid "Permanently deploy collection ID to client remote configurations"
-msgstr "Distribuera permant samlings-ID till fjärrklienters konfigurationer"
+msgstr "Distribuera permanent samlings-ID till fjärrklienters konfigurationer"
 
 #: app/flatpak-builtins-repo-update.c:59
 msgid "Import new default GPG public key from FILE"
@@ -1886,11 +1881,11 @@ msgstr "Misslyckades med att läsa från exporterad fil"
 
 #: common/flatpak-dir.c:4047
 msgid "Error reading mimetype xml file"
-msgstr "Fel vid läsning av mimetypen xml-file"
+msgstr "Fel vid läsning av xml-fil för mimetyp"
 
 #: common/flatpak-dir.c:4052
 msgid "Invalid mimetype xml file"
-msgstr "Ogiltig mimetyp xml-file"
+msgstr "Ogiltig xml-fil för mimetyp"
 
 #: common/flatpak-dir.c:4594
 msgid "While getting detached metadata: "
@@ -2338,6 +2333,9 @@ msgstr "Autentisering krävs för att konfigurera programförråd"
 #: system-helper/org.freedesktop.Flatpak.policy.in:153
 msgid "Update appstream"
 msgstr "Uppdatera appstream"
+
+#~ msgid "REMOTE must be specified"
+#~ msgstr "FJÄRRFÖRRÅD måste anges"
 
 #, fuzzy
 #~ msgid "Downloading %s"
