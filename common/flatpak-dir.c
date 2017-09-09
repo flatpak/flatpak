@@ -9780,7 +9780,7 @@ get_locale_subpaths_from_accounts_dbus (GDBusProxy *proxy)
 {
   const char *accounts_bus_name = "org.freedesktop.Accounts";
   const char *accounts_interface_name = "org.freedesktop.Accounts.User";
-  char **object_path;
+  char **object_path = NULL;
   GList *langs = NULL;
   GList *l = NULL;
   g_autoptr(GString) langs_cache = g_string_new (NULL);
