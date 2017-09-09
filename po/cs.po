@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-09-04 08:40+0200\n"
-"PO-Revision-Date: 2017-09-09 13:54+0200\n"
+"PO-Revision-Date: 2017-09-09 14:26+0200\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -158,11 +158,11 @@ msgstr "Příliš mnoho parametrů"
 #: app/flatpak-builtins-build-export.c:692
 #, c-format
 msgid "‘%s’ is not a valid collection ID: %s"
-msgstr ""
+msgstr "„%s“ není platným ID kolekce: %s"
 
 #: app/flatpak-builtins-add-remote.c:336
 msgid "GPG verification is required if collections are enabled"
-msgstr ""
+msgstr "Ověřování pomocí GPG je vyžadováno, pokud jsou povoleny kolekce"
 
 #. Do nothing
 #: app/flatpak-builtins-add-remote.c:351
@@ -331,7 +331,7 @@ msgstr "Použít alternativní soubor pro metadata"
 
 #: app/flatpak-builtins-build.c:50
 msgid "Kill processes when the parent process dies"
-msgstr ""
+msgstr "Zabít procesy v případě, že rodičovský proces zemře"
 
 #: app/flatpak-builtins-build.c:109
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
@@ -450,6 +450,7 @@ msgstr ""
 #: app/flatpak-builtins-build-export.c:55
 msgid "Architecture to export for (must be host compatible)"
 msgstr ""
+"Architektura, pro kterou exportovat (musí být kompatibilní s hostitelem)"
 
 #: app/flatpak-builtins-build-export.c:56
 msgid "Commit runtime (/usr), not /app"
@@ -478,11 +479,11 @@ msgstr "Vyloučené soubory k zahrnutí"
 
 #: app/flatpak-builtins-build-export.c:65
 msgid "Override the timestamp of the commit"
-msgstr ""
+msgstr "Přepsat časovou značku commitu"
 
 #: app/flatpak-builtins-build-export.c:65
 msgid "ISO-8601-TIMESTAMP"
-msgstr ""
+msgstr "ISO-8601-TIMESTAMP"
 
 #: app/flatpak-builtins-build-export.c:551
 #, c-format
