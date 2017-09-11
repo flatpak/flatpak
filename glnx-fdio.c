@@ -168,9 +168,11 @@ glnx_tmpfile_clear (GLnxTmpfile *tmpf)
     return;
   if (!tmpf->initialized)
     return;
-  if (tmpf->fd == -1)
-    return;
-  (void) close (tmpf->fd);
+  if (tmpf->fd != -1)
+    {
+      if (close (tmpf->fd) < 0)
+        g_assert (errno != EBADF);
+    }
   /* If ->path is set, we're likely aborting due to an error. Clean it up */
   if (tmpf->path)
     {

@@ -171,6 +171,7 @@ test_stdio_file (void)
   if (!glnx_open_anonymous_tmpfile (O_RDWR|O_CLOEXEC, &tmpf, error))
     goto out;
   f = fdopen (tmpf.fd, "w");
+  tmpf.fd = -1; /* Ownership was transferred via fdopen() */
   if (!f)
     {
       (void)glnx_throw_errno_prefix (error, "fdopen");
