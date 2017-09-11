@@ -211,6 +211,67 @@ test_fstatat (void)
   g_assert_no_error (local_error);
 }
 
+static void
+test_filecopy (void)
+{
+  g_autoptr(GError) local_error = NULL;
+  GError **error = &local_error;
+  g_auto(GLnxTmpfile) tmpf = { 0, };
+  const char foo[] = "foo";
+
+  if (!glnx_file_replace_contents_at (AT_FDCWD, foo, (guint8*)foo, sizeof (foo),
+                                      GLNX_FILE_REPLACE_NODATASYNC, NULL, error))
+    goto out;
+
+  if (!glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "bar",
+                          GLNX_FILE_COPY_NOXATTRS, NULL, error))
+    goto out;
+
+  if (glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "bar",
+                         GLNX_FILE_COPY_NOXATTRS, NULL, error))
+    g_assert_not_reached ();
+  g_assert_error (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS);
+  g_clear_error (&local_error);
+
+  if (!glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "bar",
+                          GLNX_FILE_COPY_NOXATTRS | GLNX_FILE_COPY_OVERWRITE,
+                          NULL, error))
+    goto out;
+
+  if (symlinkat ("nosuchtarget", AT_FDCWD, "link") < 0)
+    {
+      glnx_throw_errno_prefix (error, "symlinkat");
+      goto out;
+    }
+
+  /* Shouldn't be able to overwrite a symlink without GLNX_FILE_COPY_OVERWRITE */
+  if (glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "link",
+                         GLNX_FILE_COPY_NOXATTRS,
+                         NULL, error))
+    g_assert_not_reached ();
+  g_assert_error (local_error, G_IO_ERROR, G_IO_ERROR_EXISTS);
+  g_clear_error (&local_error);
+
+  /* Test overwriting symlink */
+  if (!glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "link",
+                          GLNX_FILE_COPY_NOXATTRS | GLNX_FILE_COPY_OVERWRITE,
+                          NULL, error))
+    goto out;
+
+  struct stat stbuf;
+  if (!glnx_fstatat_allow_noent (AT_FDCWD, "nosuchtarget", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    goto out;
+  g_assert_cmpint (errno, ==, ENOENT);
+  g_assert_no_error (local_error);
+
+  if (!glnx_fstatat (AT_FDCWD, "link", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    goto out;
+  g_assert (S_ISREG (stbuf.st_mode));
+
+ out:
+  g_assert_no_error (local_error);
+}
+
 int main (int argc, char **argv)
 {
   int ret;
@@ -219,6 +280,7 @@ int main (int argc, char **argv)
 
   g_test_add_func ("/tmpfile", test_tmpfile);
   g_test_add_func ("/stdio-file", test_stdio_file);
+  g_test_add_func ("/filecopy", test_filecopy);
   g_test_add_func ("/renameat2-noreplace", test_renameat2_noreplace);
   g_test_add_func ("/renameat2-exchange", test_renameat2_exchange);
   g_test_add_func ("/fstat", test_fstatat);

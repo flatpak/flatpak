@@ -872,11 +872,15 @@ glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes)
  * @cancellable: cancellable
  * @error: Error
  *
- * Perform a full copy of the regular file or
- * symbolic link from @src_subpath to @dest_subpath.
+ * Perform a full copy of the regular file or symbolic link from @src_subpath to
+ * @dest_subpath; if @src_subpath is anything other than a regular file or
+ * symbolic link, an error will be returned.
  *
- * If @src_subpath is anything other than a regular
- * file or symbolic link, an error will be returned.
+ * If the source is a regular file and the destination exists as a symbolic
+ * link, the symbolic link will not be followed; rather the link itself will be
+ * replaced. Related to this: for regular files, when `GLNX_FILE_COPY_OVERWRITE`
+ * is specified, this function always uses `O_TMPFILE` (if available) and does a
+ * rename-into-place rather than `open(O_TRUNC)`.
  */
 gboolean
 glnx_file_copy_at (int                   src_dfd,
@@ -888,31 +892,23 @@ glnx_file_copy_at (int                   src_dfd,
                    GCancellable         *cancellable,
                    GError              **error)
 {
-  gboolean ret = FALSE;
-  int r;
-  int dest_open_flags;
-  struct timespec ts[2];
-  glnx_fd_close int src_fd = -1;
-  glnx_fd_close int dest_fd = -1;
-  struct stat local_stbuf;
-
-  if (g_cancellable_set_error_if_cancelled (cancellable, error))
-    goto out;
-
+  /* Canonicalize dfds */
   src_dfd = glnx_dirfd_canonicalize (src_dfd);
   dest_dfd = glnx_dirfd_canonicalize (dest_dfd);
 
+  if (g_cancellable_set_error_if_cancelled (cancellable, error))
+    return FALSE;
+
   /* Automatically do stat() if no stat buffer was supplied */
+  struct stat local_stbuf;
   if (!src_stbuf)
     {
-      if (fstatat (src_dfd, src_subpath, &local_stbuf, AT_SYMLINK_NOFOLLOW) != 0)
-        {
-          glnx_set_error_from_errno (error);
-          goto out;
-        }
+      if (!glnx_fstatat (src_dfd, src_subpath, &local_stbuf, AT_SYMLINK_NOFOLLOW, error))
+        return FALSE;
       src_stbuf = &local_stbuf;
     }
 
+  /* For symlinks, defer entirely to copy_symlink_at() */
   if (S_ISLNK (src_stbuf->st_mode))
     {
       return copy_symlink_at (src_dfd, src_subpath, src_stbuf,
@@ -924,47 +920,26 @@ glnx_file_copy_at (int                   src_dfd,
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_SUPPORTED,
                    "Cannot copy non-regular/non-symlink file: %s", src_subpath);
-      goto out;
+      return FALSE;
     }
 
+  /* Regular file path below here */
+
+  glnx_fd_close int src_fd = -1;
   if (!glnx_openat_rdonly (src_dfd, src_subpath, FALSE, &src_fd, error))
-    goto out;
+    return FALSE;
 
-  dest_open_flags = O_WRONLY | O_CREAT | O_CLOEXEC | O_NOCTTY;
-  if (!(copyflags & GLNX_FILE_COPY_OVERWRITE))
-    dest_open_flags |= O_EXCL;
-  else
-    dest_open_flags |= O_TRUNC;
+  /* Open a tmpfile for dest */
+  g_auto(GLnxTmpfile) tmp_dest = { 0, };
+  if (!glnx_open_tmpfile_linkable_at (dest_dfd, ".", O_WRONLY | O_CLOEXEC,
+                                      &tmp_dest, error))
+    return FALSE;
 
-  dest_fd = TEMP_FAILURE_RETRY (openat (dest_dfd, dest_subpath, dest_open_flags, src_stbuf->st_mode));
-  if (dest_fd == -1)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+  if (glnx_regfile_copy_bytes (src_fd, tmp_dest.fd, (off_t) -1) < 0)
+    return glnx_throw_errno_prefix (error, "regfile copy");
 
-  r = glnx_regfile_copy_bytes (src_fd, dest_fd, (off_t) -1);
-  if (r < 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-
-  if (fchown (dest_fd, src_stbuf->st_uid, src_stbuf->st_gid) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-
-  if (fchmod (dest_fd, src_stbuf->st_mode & 07777) != 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-
-  ts[0] = src_stbuf->st_atim;
-  ts[1] = src_stbuf->st_mtim;
-  (void) futimens (dest_fd, ts);
+  if (fchown (tmp_dest.fd, src_stbuf->st_uid, src_stbuf->st_gid) != 0)
+    return glnx_throw_errno_prefix (error, "fchown");
 
   if (!(copyflags & GLNX_FILE_COPY_NOXATTRS))
     {
@@ -972,35 +947,40 @@ glnx_file_copy_at (int                   src_dfd,
 
       if (!glnx_fd_get_all_xattrs (src_fd, &xattrs,
                                    cancellable, error))
-        goto out;
+        return FALSE;
 
-      if (!glnx_fd_set_all_xattrs (dest_fd, xattrs,
+      if (!glnx_fd_set_all_xattrs (tmp_dest.fd, xattrs,
                                    cancellable, error))
-        goto out;
+        return FALSE;
     }
+
+  /* Always chmod after setting xattrs, in case the file has mode 0400 or less,
+   * like /etc/shadow.  Linux currently allows write() on non-writable open files
+   * but not fsetxattr().
+   */
+  if (fchmod (tmp_dest.fd, src_stbuf->st_mode & 07777) != 0)
+    return glnx_throw_errno_prefix (error, "fchmod");
+
+  struct timespec ts[2];
+  ts[0] = src_stbuf->st_atim;
+  ts[1] = src_stbuf->st_mtim;
+  (void) futimens (tmp_dest.fd, ts);
 
   if (copyflags & GLNX_FILE_COPY_DATASYNC)
     {
-      if (fdatasync (dest_fd) < 0)
-        {
-          glnx_set_error_from_errno (error);
-          goto out;
-        }
-    }
-  
-  r = close (dest_fd);
-  dest_fd = -1;
-  if (r < 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
+      if (fdatasync (tmp_dest.fd) < 0)
+        return glnx_throw_errno_prefix (error, "fdatasync");
     }
 
-  ret = TRUE;
- out:
-  if (!ret)
-    (void) unlinkat (dest_dfd, dest_subpath, 0);
-  return ret;
+  const GLnxLinkTmpfileReplaceMode replacemode =
+    (copyflags & GLNX_FILE_COPY_OVERWRITE) ?
+    GLNX_LINK_TMPFILE_REPLACE :
+    GLNX_LINK_TMPFILE_NOREPLACE;
+
+  if (!glnx_link_tmpfile_at (&tmp_dest, replacemode, dest_dfd, dest_subpath, error))
+    return FALSE;
+
+  return TRUE;
 }
 
 /**
