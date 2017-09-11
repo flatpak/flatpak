@@ -180,29 +180,17 @@ glnx_tmpfile_clear (GLnxTmpfile *tmpf)
   tmpf->initialized = FALSE;
 }
 
-/* Allocate a temporary file, using Linux O_TMPFILE if available. The file mode
- * will be 0600.
- *
- * The result will be stored in @out_tmpf, which is caller allocated
- * so you can store it on the stack in common scenarios.
- *
- * The directory fd @dfd must live at least as long as the output @out_tmpf.
- */
-gboolean
-glnx_open_tmpfile_linkable_at (int dfd,
-                               const char *subpath,
-                               int flags,
-                               GLnxTmpfile *out_tmpf,
-                               GError **error)
+static gboolean
+open_tmpfile_core (int dfd, const char *subpath,
+                   int flags,
+                   GLnxTmpfile *out_tmpf,
+                   GError **error)
 {
   const guint mode = 0600;
   glnx_fd_close int fd = -1;
   int count;
 
   dfd = glnx_dirfd_canonicalize (dfd);
-
-  /* Don't allow O_EXCL, as that has a special meaning for O_TMPFILE */
-  g_return_val_if_fail ((flags & O_EXCL) == 0, FALSE);
 
   /* Creates a temporary file, that shall be renamed to "target"
    * later. If possible, this uses O_TMPFILE – in which case
@@ -260,6 +248,29 @@ glnx_open_tmpfile_linkable_at (int dfd,
   return FALSE;
 }
 
+/* Allocate a temporary file, using Linux O_TMPFILE if available. The file mode
+ * will be 0600.
+ *
+ * The result will be stored in @out_tmpf, which is caller allocated
+ * so you can store it on the stack in common scenarios.
+ *
+ * The directory fd @dfd must live at least as long as the output @out_tmpf.
+ */
+gboolean
+glnx_open_tmpfile_linkable_at (int dfd,
+                               const char *subpath,
+                               int flags,
+                               GLnxTmpfile *out_tmpf,
+                               GError **error)
+{
+  /* Don't allow O_EXCL, as that has a special meaning for O_TMPFILE;
+   * it's used for glnx_open_anonymous_tmpfile().
+   */
+  g_return_val_if_fail ((flags & O_EXCL) == 0, FALSE);
+
+  return open_tmpfile_core (dfd, subpath, flags, out_tmpf, error);
+}
+
 /* A variant of `glnx_open_tmpfile_linkable_at()` which doesn't support linking.
  * Useful for true temporary storage. The fd will be allocated in /var/tmp to
  * ensure maximum storage space.
@@ -269,7 +280,8 @@ glnx_open_anonymous_tmpfile (int          flags,
                              GLnxTmpfile *out_tmpf,
                              GError     **error)
 {
-  if (!glnx_open_tmpfile_linkable_at (AT_FDCWD, "/var/tmp", flags, out_tmpf, error))
+  /* Add in O_EXCL */
+  if (!open_tmpfile_core (AT_FDCWD, "/var/tmp", flags | O_EXCL, out_tmpf, error))
     return FALSE;
   if (out_tmpf->path)
     {
