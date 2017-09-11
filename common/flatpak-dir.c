@@ -5097,7 +5097,60 @@ flatpak_dir_deploy (FlatpakDir          *self,
   g_variant_lookup (commit_metadata, "xa.ref", "s", &xa_ref);
   if (xa_ref != NULL)
     {
-      if (strcmp (ref, xa_ref) != 0)
+      gboolean gpg_verify_summary;
+
+      if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, origin, &gpg_verify_summary, error))
+        return FALSE;
+
+      if (gpg_verify_summary)
+        {
+          g_auto(GStrv) checkout_ref = NULL;
+          g_auto(GStrv) commit_ref = NULL;
+
+          checkout_ref = flatpak_decompose_ref (ref, error);
+          if (checkout_ref == NULL)
+            {
+              g_prefix_error (error, _("Invalid deployed ref %s: "), ref);
+              return FALSE;
+            }
+
+          commit_ref = flatpak_decompose_ref (xa_ref, error);
+          if (commit_ref == NULL)
+            {
+              g_prefix_error (error, _("Invalid commit ref %s: "), xa_ref);
+              return FALSE;
+            }
+
+          /* Fatal if kind/name/arch don't match. Warn for branch mismatch. */
+          if (strcmp (checkout_ref[0], commit_ref[0]) != 0)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                           _("Deployed ref %s kind does not match commit (%s)"),
+                           ref, xa_ref);
+              return FALSE;
+            }
+
+          if (strcmp (checkout_ref[1], commit_ref[1]) != 0)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                           _("Deployed ref %s name does not match commit (%s)"),
+                           ref, xa_ref);
+              return FALSE;
+            }
+
+          if (strcmp (checkout_ref[2], commit_ref[2]) != 0)
+            {
+              g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
+                           _("Deployed ref %s arch does not match commit (%s)"),
+                           ref, xa_ref);
+              return FALSE;
+            }
+
+          if (strcmp (checkout_ref[3], commit_ref[3]) != 0)
+            g_warning (_("Deployed ref %s branch does not match commit (%s)"),
+                       ref, xa_ref);
+        }
+      else if (strcmp (ref, xa_ref) != 0)
         {
           g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
                        _("Deployed ref %s does not match commit (%s)"), ref, xa_ref);
