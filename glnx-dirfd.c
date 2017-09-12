@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include <glnx-dirfd.h>
+#include <glnx-fdio.h>
 #include <glnx-errors.h>
 #include <glnx-local-alloc.h>
 #include <glnx-shutil.h>
@@ -204,8 +205,8 @@ glnx_dirfd_iterator_next_dent_ensure_dtype (GLnxDirFdIterator  *dfd_iter,
       if (ret_dent->d_type == DT_UNKNOWN)
         {
           struct stat stbuf;
-          if (TEMP_FAILURE_RETRY (fstatat (dfd_iter->fd, ret_dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW)) != 0)
-            return glnx_throw_errno (error);
+          if (!glnx_fstatat (dfd_iter->fd, ret_dent->d_name, &stbuf, AT_SYMLINK_NOFOLLOW, error))
+            return FALSE;
           ret_dent->d_type = IFTODT (stbuf.st_mode);
         }
     }

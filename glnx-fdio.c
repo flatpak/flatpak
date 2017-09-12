@@ -112,7 +112,7 @@ rename_file_noreplace_at (int olddirfd, const char *oldpath,
           return TRUE;
         }
       else
-        return glnx_throw_errno (error);
+        return glnx_throw_errno_prefix (error, "renameat");
     }
   return TRUE;
 }
@@ -442,8 +442,8 @@ glnx_fd_readall_malloc (int               fd,
   const guint maxreadlen = 4096;
 
   struct stat stbuf;
-  if (TEMP_FAILURE_RETRY (fstat (fd, &stbuf)) < 0)
-    return glnx_null_throw_errno (error);
+  if (!glnx_fstat (fd, &stbuf, error))
+    return FALSE;
 
   gsize buf_allocated;
   if (S_ISREG (stbuf.st_mode) && stbuf.st_size > 0)
@@ -611,7 +611,7 @@ glnx_readlinkat_malloc (int            dfd,
       c = g_malloc (l);
       n = TEMP_FAILURE_RETRY (readlinkat (dfd, subpath, c, l-1));
       if (n < 0)
-        return glnx_null_throw_errno (error);
+        return glnx_null_throw_errno_prefix (error, "readlinkat");
 
       if ((size_t) n < l-1)
         {
@@ -658,7 +658,7 @@ copy_symlink_at (int                   src_dfd,
   if (TEMP_FAILURE_RETRY (fchownat (dest_dfd, dest_subpath,
                                     src_stbuf->st_uid, src_stbuf->st_gid,
                                     AT_SYMLINK_NOFOLLOW)) != 0)
-    return glnx_throw_errno (error);
+    return glnx_throw_errno_prefix (error, "fchownat");
 
   return TRUE;
 }
@@ -1066,19 +1066,17 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
     return FALSE;
 
   if (glnx_loop_write (tmpf.fd, buf, len) < 0)
-    return glnx_throw_errno (error);
+    return glnx_throw_errno_prefix (error, "write");
 
   if (!(flags & GLNX_FILE_REPLACE_NODATASYNC))
     {
       struct stat stbuf;
       gboolean do_sync;
 
-      if (fstatat (dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW) != 0)
-        {
-          if (errno != ENOENT)
-            return glnx_throw_errno (error);
-          do_sync = (flags & GLNX_FILE_REPLACE_DATASYNC_NEW) > 0;
-        }
+      if (!glnx_fstatat_allow_noent (dfd, subpath, &stbuf, AT_SYMLINK_NOFOLLOW, error))
+        return FALSE;
+      if (errno == ENOENT)
+        do_sync = (flags & GLNX_FILE_REPLACE_DATASYNC_NEW) > 0;
       else
         do_sync = TRUE;
 
@@ -1092,11 +1090,11 @@ glnx_file_replace_contents_with_perms_at (int                   dfd,
   if (uid != (uid_t) -1)
     {
       if (fchown (tmpf.fd, uid, gid) != 0)
-        return glnx_throw_errno (error);
+        return glnx_throw_errno_prefix (error, "fchown");
     }
 
   if (fchmod (tmpf.fd, mode) != 0)
-    return glnx_throw_errno (error);
+    return glnx_throw_errno_prefix (error, "fchmod");
 
   if (!glnx_link_tmpfile_at (&tmpf, GLNX_LINK_TMPFILE_REPLACE,
                              dfd, subpath, error))

@@ -105,7 +105,7 @@ glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile *out_loc
                                 r = flock(fd, operation);
 
                         if (r < 0)
-                                return glnx_throw_errno(error);
+                                return glnx_throw_errno_prefix (error, "flock");
                 }
 
                 /* If we acquired the lock, let's check if the file
@@ -114,9 +114,8 @@ glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile *out_loc
                  * it. In such a case our acquired lock is worthless,
                  * hence try again. */
 
-                r = fstat(fd, &st);
-                if (r < 0)
-                        return glnx_throw_errno(error);
+                if (!glnx_fstat (fd, &st, error))
+                        return FALSE;
                 if (st.st_nlink > 0)
                         break;
 
