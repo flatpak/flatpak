@@ -26,6 +26,8 @@
 #include <err.h>
 #include <string.h>
 
+#include "libglnx-testlib.h"
+
 static gboolean
 renameat_test_setup (int *out_srcfd, int *out_destfd,
                      GError **error)
@@ -59,14 +61,13 @@ renameat_test_setup (int *out_srcfd, int *out_destfd,
 static void
 test_renameat2_noreplace (void)
 {
-  g_autoptr(GError) local_error = NULL;
-  GError **error = &local_error;
+  _GLNX_TEST_DECLARE_ERROR(local_error, error);
   glnx_fd_close int srcfd = -1;
   glnx_fd_close int destfd = -1;
   struct stat stbuf;
 
   if (!renameat_test_setup (&srcfd, &destfd, error))
-    goto out;
+    return;
 
   if (glnx_renameat2_noreplace (srcfd, "foo", destfd, "bar") == 0)
     g_assert_not_reached ();
@@ -76,156 +77,106 @@ test_renameat2_noreplace (void)
     }
 
   if (glnx_renameat2_noreplace (srcfd, "foo", destfd, "baz") < 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+    return (void)glnx_throw_errno_prefix (error, "renameat");
   if (!glnx_fstatat (destfd, "bar", &stbuf, AT_SYMLINK_NOFOLLOW, error))
-    goto out;
+    return;
 
   if (fstatat (srcfd, "foo", &stbuf, AT_SYMLINK_NOFOLLOW) == 0)
     g_assert_not_reached ();
   else
     g_assert_cmpint (errno, ==, ENOENT);
-
- out:
-  g_assert_no_error (local_error);
 }
 
 static void
 test_renameat2_exchange (void)
 {
-  g_autoptr(GError) local_error = NULL;
-  GError **error = &local_error;
+  _GLNX_TEST_DECLARE_ERROR(local_error, error);
+
   glnx_fd_close int srcfd = -1;
   glnx_fd_close int destfd = -1;
-  struct stat stbuf;
-
   if (!renameat_test_setup (&srcfd, &destfd, error))
-    goto out;
+    return;
 
   if (glnx_renameat2_exchange (AT_FDCWD, "srcdir", AT_FDCWD, "destdir") < 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+    return (void)glnx_throw_errno_prefix (error, "renameat");
 
   /* Ensure the dir fds are the same */
-  if (fstatat (srcfd, "foo", &stbuf, AT_SYMLINK_NOFOLLOW) < 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-  if (fstatat (destfd, "bar", &stbuf, AT_SYMLINK_NOFOLLOW) < 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+  struct stat stbuf;
+  if (!glnx_fstatat (srcfd, "foo", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    return;
+  if (!glnx_fstatat (destfd, "bar", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    return;
   /* But the dirs should be swapped */
-  if (fstatat (AT_FDCWD, "destdir/foo", &stbuf, AT_SYMLINK_NOFOLLOW) < 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-  if (fstatat (AT_FDCWD, "srcdir/bar", &stbuf, AT_SYMLINK_NOFOLLOW) < 0)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
-
- out:
-  g_assert_no_error (local_error);
+  if (!glnx_fstatat (AT_FDCWD, "destdir/foo", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    return;
+  if (!glnx_fstatat (AT_FDCWD, "srcdir/bar", &stbuf, AT_SYMLINK_NOFOLLOW, error))
+    return;
 }
 
 static void
 test_tmpfile (void)
 {
-  g_autoptr(GError) local_error = NULL;
-  GError **error = &local_error;
+  _GLNX_TEST_DECLARE_ERROR(local_error, error);
+
   g_auto(GLnxTmpfile) tmpf = { 0, };
-
   if (!glnx_open_tmpfile_linkable_at (AT_FDCWD, ".", O_WRONLY|O_CLOEXEC, &tmpf, error))
-    goto out;
-
+    return;
   if (glnx_loop_write (tmpf.fd, "foo", strlen ("foo")) < 0)
-    {
-      (void)glnx_throw_errno_prefix (error, "write");
-      goto out;
-    }
-
+    return (void)glnx_throw_errno_prefix (error, "write");
   if (glnx_link_tmpfile_at (&tmpf, GLNX_LINK_TMPFILE_NOREPLACE, AT_FDCWD, "foo", error))
-    goto out;
-
- out:
-  g_assert_no_error (local_error);
+    return;
 }
 
 static void
 test_stdio_file (void)
 {
-  g_autoptr(GError) local_error = NULL;
-  GError **error = &local_error;
+  _GLNX_TEST_DECLARE_ERROR(local_error, error);
   g_auto(GLnxTmpfile) tmpf = { 0, };
   g_autoptr(FILE) f = NULL;
 
   if (!glnx_open_anonymous_tmpfile (O_RDWR|O_CLOEXEC, &tmpf, error))
-    goto out;
+    return;
   f = fdopen (tmpf.fd, "w");
   tmpf.fd = -1; /* Ownership was transferred via fdopen() */
   if (!f)
-    {
-      (void)glnx_throw_errno_prefix (error, "fdopen");
-      goto out;
-    }
-
+    return (void)glnx_throw_errno_prefix (error, "fdopen");
   if (fwrite ("hello", 1, strlen ("hello"), f) != strlen ("hello"))
-    {
-      (void)glnx_throw_errno_prefix (error, "fwrite");
-      goto out;
-    }
+    return (void)glnx_throw_errno_prefix (error, "fwrite");
   if (!glnx_stdio_file_flush (f, error))
-    goto out;
-
- out:
-  g_assert_no_error (local_error);
+    return;
 }
 
 static void
 test_fstatat (void)
 {
-  g_autoptr(GError) local_error = NULL;
-  GError **error = &local_error;
+  _GLNX_TEST_DECLARE_ERROR(local_error, error);
   struct stat stbuf = { 0, };
 
   if (!glnx_fstatat_allow_noent (AT_FDCWD, ".", &stbuf, 0, error))
-    goto out;
+    return;
   g_assert_cmpint (errno, ==, 0);
   g_assert_no_error (local_error);
   g_assert (S_ISDIR (stbuf.st_mode));
   if (!glnx_fstatat_allow_noent (AT_FDCWD, "nosuchfile", &stbuf, 0, error))
-    goto out;
+    return;
   g_assert_cmpint (errno, ==, ENOENT);
-  g_assert_no_error (local_error);
-
- out:
   g_assert_no_error (local_error);
 }
 
 static void
 test_filecopy (void)
 {
-  g_autoptr(GError) local_error = NULL;
-  GError **error = &local_error;
+  _GLNX_TEST_DECLARE_ERROR(local_error, error);
   g_auto(GLnxTmpfile) tmpf = { 0, };
   const char foo[] = "foo";
 
   if (!glnx_file_replace_contents_at (AT_FDCWD, foo, (guint8*)foo, sizeof (foo),
                                       GLNX_FILE_REPLACE_NODATASYNC, NULL, error))
-    goto out;
+    return;
 
   if (!glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "bar",
                           GLNX_FILE_COPY_NOXATTRS, NULL, error))
-    goto out;
+    return;
 
   if (glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "bar",
                          GLNX_FILE_COPY_NOXATTRS, NULL, error))
@@ -236,13 +187,10 @@ test_filecopy (void)
   if (!glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "bar",
                           GLNX_FILE_COPY_NOXATTRS | GLNX_FILE_COPY_OVERWRITE,
                           NULL, error))
-    goto out;
+    return;
 
   if (symlinkat ("nosuchtarget", AT_FDCWD, "link") < 0)
-    {
-      glnx_throw_errno_prefix (error, "symlinkat");
-      goto out;
-    }
+    return (void) glnx_throw_errno_prefix (error, "symlinkat");
 
   /* Shouldn't be able to overwrite a symlink without GLNX_FILE_COPY_OVERWRITE */
   if (glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "link",
@@ -256,20 +204,17 @@ test_filecopy (void)
   if (!glnx_file_copy_at (AT_FDCWD, foo, NULL, AT_FDCWD, "link",
                           GLNX_FILE_COPY_NOXATTRS | GLNX_FILE_COPY_OVERWRITE,
                           NULL, error))
-    goto out;
+    return;
 
   struct stat stbuf;
   if (!glnx_fstatat_allow_noent (AT_FDCWD, "nosuchtarget", &stbuf, AT_SYMLINK_NOFOLLOW, error))
-    goto out;
+    return;
   g_assert_cmpint (errno, ==, ENOENT);
   g_assert_no_error (local_error);
 
   if (!glnx_fstatat (AT_FDCWD, "link", &stbuf, AT_SYMLINK_NOFOLLOW, error))
-    goto out;
+    return;
   g_assert (S_ISREG (stbuf.st_mode));
-
- out:
-  g_assert_no_error (local_error);
 }
 
 int main (int argc, char **argv)
