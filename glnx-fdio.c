@@ -866,6 +866,7 @@ glnx_regfile_copy_bytes (int fdf, int fdt, off_t max_bytes)
  * glnx_file_copy_at:
  * @src_dfd: Source directory fd
  * @src_subpath: Subpath relative to @src_dfd
+ * @src_stbuf: (allow-none): Optional stat buffer for source; if a stat() has already been done
  * @dest_dfd: Target directory fd
  * @dest_subpath: Destination name
  * @copyflags: Flags
