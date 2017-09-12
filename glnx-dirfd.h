@@ -119,8 +119,14 @@ typedef struct {
   int fd;
   char *path;
 } GLnxTmpDir;
-void glnx_tmpdir_clear (GLnxTmpDir *tmpf);
-G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxTmpDir, glnx_tmpdir_clear)
+gboolean glnx_tmpdir_delete (GLnxTmpDir *tmpf, GCancellable *cancellable, GError **error);
+void glnx_tmpdir_unset (GLnxTmpDir *tmpf);
+static inline void
+glnx_tmpdir_cleanup (GLnxTmpDir *tmpf)
+{
+  (void)glnx_tmpdir_delete (tmpf, NULL, NULL);
+}
+G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxTmpDir, glnx_tmpdir_cleanup)
 
 gboolean glnx_mkdtempat (int dfd, const char *tmpl, int mode,
                          GLnxTmpDir *out_tmpdir, GError **error);

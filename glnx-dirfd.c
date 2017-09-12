@@ -371,25 +371,62 @@ glnx_mkdtemp (const gchar   *tmpl,
                          out_tmpdir, error);
 }
 
-/* Deallocate a tmpdir, closing the fd and (recursively) deleting the path. This
- * is normally called by default by the autocleanup attribute, but you can also
- * invoke this directly.
- */
-void
-glnx_tmpdir_clear (GLnxTmpDir *tmpd)
+static gboolean
+_glnx_tmpdir_free (GLnxTmpDir *tmpd,
+                   gboolean    delete_dir,
+                   GCancellable *cancellable,
+                   GError    **error)
 {
   /* Support being passed NULL so we work nicely in a GPtrArray */
-  if (!tmpd)
-    return;
-  if (!tmpd->initialized)
-    return;
+  if (!(tmpd && tmpd->initialized))
+    return TRUE;
   g_assert_cmpint (tmpd->fd, !=, -1);
   (void) close (tmpd->fd);
+  tmpd->fd = -1;
   g_assert (tmpd->path);
   g_assert_cmpint (tmpd->src_dfd, !=, -1);
-  (void) glnx_shutil_rm_rf_at (tmpd->src_dfd, tmpd->path, NULL, NULL);
-  g_free (tmpd->path);
+  g_autofree char *path = tmpd->path; /* Take ownership */
   tmpd->initialized = FALSE;
+  if (delete_dir)
+    {
+      if (!glnx_shutil_rm_rf_at (tmpd->src_dfd, path, cancellable, error))
+        return FALSE;
+    }
+  return TRUE;
 }
 
+/**
+ * glnx_tmpdir_delete:
+ * @tmpf: Temporary dir
+ * @cancellable: Cancellable
+ * @error: Error
+ *
+ * Deallocate a tmpdir, closing the fd and recursively deleting the path. This
+ * is normally called indirectly via glnx_tmpdir_cleanup() by the autocleanup
+ * attribute, but you can also invoke this directly.
+ *
+ * If an error occurs while deleting the filesystem path, @tmpf will still have
+ * been deallocated and should not be reused.
+ *
+ * See also `glnx_tmpdir_unset` to avoid deleting the path.
+ */
+gboolean
+glnx_tmpdir_delete (GLnxTmpDir *tmpf, GCancellable *cancellable, GError **error)
+{
+  return _glnx_tmpdir_free (tmpf, TRUE, cancellable, error);
+}
 
+/**
+ * glnx_tmpdir_unset:
+ * @tmpf: Temporary dir
+ * @cancellable: Cancellable
+ * @error: Error
+ *
+ * Deallocate a tmpdir, but do not delete the filesystem path.  See also
+ * `glnx_tmpdir_delete()`.
+ */
+void
+glnx_tmpdir_unset (GLnxTmpDir *tmpf)
+{
+  (void) _glnx_tmpdir_free (tmpf, FALSE, NULL, NULL);
+}
