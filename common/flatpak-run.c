@@ -3523,6 +3523,21 @@ add_font_path_args (GPtrArray *argv_array)
 }
 
 static void
+add_icon_path_args (GPtrArray *argv_array)
+{
+  g_autoptr(GFile) home = NULL;
+  g_autoptr(GFile) user_font1 = NULL;
+  g_autoptr(GFile) user_font2 = NULL;
+
+  if (g_file_test ("/usr/share/icons", G_FILE_TEST_IS_DIR))
+    {
+      add_args (argv_array,
+                "--ro-bind", "/usr/share/icons", "/run/host/share/icons",
+                NULL);
+    }
+}
+
+static void
 add_default_permissions (FlatpakContext *app_context)
 {
   flatpak_context_set_session_bus_policy (app_context,
@@ -4884,6 +4899,7 @@ flatpak_run_app (const char     *app_ref,
 
   flatpak_run_add_journal_args (argv_array);
   add_font_path_args (argv_array);
+  add_icon_path_args (argv_array);
 
   add_args (argv_array,
             /* Not in base, because we don't want this for flatpak build */
