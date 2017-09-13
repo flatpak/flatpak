@@ -5104,6 +5104,12 @@ flatpak_dir_deploy (FlatpakDir          *self,
 
       if (gpg_verify_summary)
         {
+          /* If we're using signed summaries, then the security is really due to the signatures on
+           * the summary, and the xa.ref is not needed for security. In particular, endless are
+           * currently using one single commit on multiple branches to handle devel/stable promotion.
+           * So, to support this we report branch discrepancies as a warning, rather than as an error.
+           * See https://github.com/flatpak/flatpak/pull/1013 for more discussion.
+           */
           g_auto(GStrv) checkout_ref = NULL;
           g_auto(GStrv) commit_ref = NULL;
 
