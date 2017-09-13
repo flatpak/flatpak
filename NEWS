@@ -1,3 +1,14 @@
+Major changes in 0.9.11
+=======================
+
+ * You can now show all outstanding updates with: flatpak remote-ls --updates
+ * The dbus filter "org.name.*" now means all subnames of org.name, not just
+   the first level. This matches how dbus arg0namespace works, and how the
+   comming dbus container support will work.
+ * Fixed segfauld on update
+ * Better commandline tab completion
+ * Flatpak now exposes host icons readonly as /run/host/share/icons to the sandbox.
+
 Major changes in 0.9.10
 =======================
 
