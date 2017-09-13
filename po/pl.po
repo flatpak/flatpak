@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-06 16:12+0000\n"
+"POT-Creation-Date: 2017-09-13 15:50+0200\n"
 "PO-Revision-Date: 2017-09-06 18:14+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
@@ -367,7 +367,7 @@ msgstr "Brak punktu rozszerzeń pasującego do %s w %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Brak „=” w opcji montowania dowiązania „%s”"
 
-#: app/flatpak-builtins-build.c:416 common/flatpak-run.c:4960
+#: app/flatpak-builtins-build.c:416 common/flatpak-run.c:4976
 msgid "Unable to start app"
 msgstr "Nie można uruchomić programu"
 
@@ -1760,7 +1760,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:469 common/flatpak-dir.c:1079
 #: common/flatpak-dir.c:1336 common/flatpak-dir.c:1372
-#: common/flatpak-dir.c:1394 common/flatpak-dir.c:9655
+#: common/flatpak-dir.c:1394 common/flatpak-dir.c:9714
 #: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
 #, c-format
 msgid "%s not installed"
@@ -1956,9 +1956,9 @@ msgstr "Podczas rozwiązywania odniesienia %s: "
 msgid "%s is not available"
 msgstr "%s jest niedostępne"
 
-#: common/flatpak-dir.c:4976 common/flatpak-dir.c:5255
-#: common/flatpak-dir.c:6023 common/flatpak-dir.c:6036
-#: common/flatpak-dir.c:6112
+#: common/flatpak-dir.c:4976 common/flatpak-dir.c:5314
+#: common/flatpak-dir.c:6082 common/flatpak-dir.c:6095
+#: common/flatpak-dir.c:6171
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "Już zainstalowano %s gałąź %s"
@@ -1985,77 +1985,107 @@ msgstr "Podczas usuwania istniejącego dodatkowego katalogu: "
 msgid "While trying to apply extra data: "
 msgstr "Podczas zastosowywania dodatkowych danych: "
 
-#: common/flatpak-dir.c:5103
+#: common/flatpak-dir.c:5119
+#, fuzzy, c-format
+msgid "Invalid deployed ref %s: "
+msgstr "Nieprawidłowy PID %s"
+
+#: common/flatpak-dir.c:5126
+#, fuzzy, c-format
+msgid "Invalid commit ref %s: "
+msgstr "Nieprawidłowy PID %s"
+
+#: common/flatpak-dir.c:5134
+#, fuzzy, c-format
+msgid "Deployed ref %s kind does not match commit (%s)"
+msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
+
+#: common/flatpak-dir.c:5142
+#, fuzzy, c-format
+msgid "Deployed ref %s name does not match commit (%s)"
+msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
+
+#: common/flatpak-dir.c:5150
+#, fuzzy, c-format
+msgid "Deployed ref %s arch does not match commit (%s)"
+msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
+
+#: common/flatpak-dir.c:5156
+#, fuzzy, c-format
+msgid "Deployed ref %s branch does not match commit (%s)"
+msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
+
+#: common/flatpak-dir.c:5162
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
 
-#: common/flatpak-dir.c:5122
+#: common/flatpak-dir.c:5181
 msgid "Deployed metadata does not match commit"
 msgstr "Wdrożone metadane nie pasują do zatwierdzenia"
 
-#: common/flatpak-dir.c:5884
+#: common/flatpak-dir.c:5943
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Ta wersja programu %s jest już zainstalowana"
 
-#: common/flatpak-dir.c:5891
+#: common/flatpak-dir.c:5950
 msgid "Can't change remote during bundle install"
 msgstr "Nie można zmienić repozytorium podczas instalacji pakietu"
 
-#: common/flatpak-dir.c:6434
+#: common/flatpak-dir.c:6493
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "Nie zainstalowano %s gałęzi %s"
 
-#: common/flatpak-dir.c:6678
+#: common/flatpak-dir.c:6737
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "Nie zainstalowano %s gałęzi %s"
 
-#: common/flatpak-dir.c:7543
+#: common/flatpak-dir.c:7602
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Nic nie pasuje do %s"
 
-#: common/flatpak-dir.c:7629
+#: common/flatpak-dir.c:7688
 #, c-format
 msgid "Can't find %s%s%s%s%s in remote %s"
 msgstr "Nie można odnaleźć %s%s%s%s%s w repozytorium %s"
 
-#: common/flatpak-dir.c:7746
+#: common/flatpak-dir.c:7805
 #, c-format
 msgid "%s %s not installed"
 msgstr "Nie zainstalowano %s %s"
 
-#: common/flatpak-dir.c:7819
+#: common/flatpak-dir.c:7878
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Nie można odnaleźć instalacji %s"
 
-#: common/flatpak-dir.c:8348
+#: common/flatpak-dir.c:8407
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Już zainstalowano środowisko wykonawcze %s, gałąź %s"
 
-#: common/flatpak-dir.c:8349
+#: common/flatpak-dir.c:8408
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Już zainstalowano program %s, gałąź %s"
 
-#: common/flatpak-dir.c:8808
+#: common/flatpak-dir.c:8867
 msgid "Remote title not set"
 msgstr "Nie ustawiono tytułu repozytorium"
 
-#: common/flatpak-dir.c:8830
+#: common/flatpak-dir.c:8889
 msgid "Remote default-branch not set"
 msgstr "Nie ustawiono domyślnej gałęzi repozytorium"
 
-#: common/flatpak-dir.c:9324
+#: common/flatpak-dir.c:9383
 msgid "No flatpak cache in remote summary"
 msgstr "Brak pamięci podręcznej Flatpak w podsumowaniu repozytorium"
 
-#: common/flatpak-dir.c:9334
+#: common/flatpak-dir.c:9393
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr ""
@@ -2235,26 +2265,26 @@ msgstr "Odwiązanie pliku tymczasowego się nie powiodło"
 msgid "Failed to write to temporary file"
 msgstr "Zapisanie do pliku tymczasowego się nie powiodło"
 
-#: common/flatpak-run.c:3581
+#: common/flatpak-run.c:3596
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Otwarcie pliku tymczasowego „flatpak-info” się nie powiodło: %s"
 
-#: common/flatpak-run.c:3643 common/flatpak-run.c:3653
+#: common/flatpak-run.c:3658 common/flatpak-run.c:3668
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Otwarcie pliku tymczasowego się nie powiodło: %s"
 
-#: common/flatpak-run.c:4003
+#: common/flatpak-run.c:4018
 msgid "Unable to create sync pipe"
 msgstr "Utworzenie potoku synchronizacji się nie powiodło"
 
-#: common/flatpak-run.c:4030
+#: common/flatpak-run.c:4045
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Otwarcie pliku informacji o programie się nie powiodło: %s"
 
-#: common/flatpak-run.c:4060
+#: common/flatpak-run.c:4075
 msgid "Failed to sync with dbus proxy"
 msgstr "Synchronizacja z pośrednikiem D-Bus się nie powiodła"
 

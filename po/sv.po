@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-04 15:24+0000\n"
+"POT-Creation-Date: 2017-09-13 15:50+0200\n"
 "PO-Revision-Date: 2017-09-02 23:47+0200\n"
 "Last-Translator: Josef Andersson <josef.andersson@fripost.org>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
@@ -359,7 +359,7 @@ msgstr "Ingen utökningspunkt matchar %s i %s"
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Saknar ”=” i bindningsmonteringsargument ”%s”"
 
-#: app/flatpak-builtins-build.c:416 common/flatpak-run.c:4960
+#: app/flatpak-builtins-build.c:416 common/flatpak-run.c:4976
 msgid "Unable to start app"
 msgstr "Kunde inte starta program"
 
@@ -1730,7 +1730,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:469 common/flatpak-dir.c:1079
 #: common/flatpak-dir.c:1336 common/flatpak-dir.c:1372
-#: common/flatpak-dir.c:1394 common/flatpak-dir.c:9655
+#: common/flatpak-dir.c:1394 common/flatpak-dir.c:9714
 #: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
 #, c-format
 msgid "%s not installed"
@@ -1927,9 +1927,9 @@ msgstr "Under upplösningsförsök för ref %s: "
 msgid "%s is not available"
 msgstr "%s är inte tillgängligt"
 
-#: common/flatpak-dir.c:4976 common/flatpak-dir.c:5255
-#: common/flatpak-dir.c:6023 common/flatpak-dir.c:6036
-#: common/flatpak-dir.c:6112
+#: common/flatpak-dir.c:4976 common/flatpak-dir.c:5314
+#: common/flatpak-dir.c:6082 common/flatpak-dir.c:6095
+#: common/flatpak-dir.c:6171
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s gren %s redan installerat"
@@ -1956,78 +1956,108 @@ msgstr "Under försök att ta bort extra existerande katalog: "
 msgid "While trying to apply extra data: "
 msgstr "Under försök att tillämpa extra data: "
 
-#: common/flatpak-dir.c:5103
+#: common/flatpak-dir.c:5119
+#, fuzzy, c-format
+msgid "Invalid deployed ref %s: "
+msgstr "Ogiltig pid %s"
+
+#: common/flatpak-dir.c:5126
+#, fuzzy, c-format
+msgid "Invalid commit ref %s: "
+msgstr "Ogiltig pid %s"
+
+#: common/flatpak-dir.c:5134
+#, fuzzy, c-format
+msgid "Deployed ref %s kind does not match commit (%s)"
+msgstr "Distribuerad ref %s matchar inte incheckning (%s)"
+
+#: common/flatpak-dir.c:5142
+#, fuzzy, c-format
+msgid "Deployed ref %s name does not match commit (%s)"
+msgstr "Distribuerad ref %s matchar inte incheckning (%s)"
+
+#: common/flatpak-dir.c:5150
+#, fuzzy, c-format
+msgid "Deployed ref %s arch does not match commit (%s)"
+msgstr "Distribuerad ref %s matchar inte incheckning (%s)"
+
+#: common/flatpak-dir.c:5156
+#, fuzzy, c-format
+msgid "Deployed ref %s branch does not match commit (%s)"
+msgstr "Distribuerad ref %s matchar inte incheckning (%s)"
+
+#: common/flatpak-dir.c:5162
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Distribuerad ref %s matchar inte incheckning (%s)"
 
-#: common/flatpak-dir.c:5122
+#: common/flatpak-dir.c:5181
 msgid "Deployed metadata does not match commit"
 msgstr "Distribuerad metadata matchar inte incheckning"
 
-#: common/flatpak-dir.c:5884
+#: common/flatpak-dir.c:5943
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Denna version av %s är redan installerad"
 
-#: common/flatpak-dir.c:5891
+#: common/flatpak-dir.c:5950
 msgid "Can't change remote during bundle install"
 msgstr "Kan inte ändra fjärrförråd under buntinstallering"
 
-#: common/flatpak-dir.c:6434
+#: common/flatpak-dir.c:6493
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s gren %s är inte installerad"
 
-#: common/flatpak-dir.c:6678
+#: common/flatpak-dir.c:6737
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "%s gren %s inte installerad"
 
-#: common/flatpak-dir.c:7543
+#: common/flatpak-dir.c:7602
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Ingenting matchar %s"
 
 # sebras: how to translate in here?
-#: common/flatpak-dir.c:7629
+#: common/flatpak-dir.c:7688
 #, c-format
 msgid "Can't find %s%s%s%s%s in remote %s"
 msgstr "Kan inte hitta %s%s%s%s%s i fjärrförrådet %s"
 
-#: common/flatpak-dir.c:7746
+#: common/flatpak-dir.c:7805
 #, c-format
 msgid "%s %s not installed"
 msgstr "%s %s inte installerad"
 
-#: common/flatpak-dir.c:7819
+#: common/flatpak-dir.c:7878
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Kunde inte hitta installationen %s"
 
-#: common/flatpak-dir.c:8348
+#: common/flatpak-dir.c:8407
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Exekveringsmiljö %s, gren %s är redan installerad"
 
-#: common/flatpak-dir.c:8349
+#: common/flatpak-dir.c:8408
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Program %s, gren %s är redan installerad"
 
-#: common/flatpak-dir.c:8808
+#: common/flatpak-dir.c:8867
 msgid "Remote title not set"
 msgstr "Titel för fjärrförråd inte angett"
 
-#: common/flatpak-dir.c:8830
+#: common/flatpak-dir.c:8889
 msgid "Remote default-branch not set"
 msgstr "Standardfjärrgren inte inställd"
 
-#: common/flatpak-dir.c:9324
+#: common/flatpak-dir.c:9383
 msgid "No flatpak cache in remote summary"
 msgstr "Ingen flatpak-cache i fjärrförrådets sammanfattning"
 
-#: common/flatpak-dir.c:9334
+#: common/flatpak-dir.c:9393
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Ingen post för %s i sammanfattningen av fjärrförrådets flatpak-cache "
@@ -2210,27 +2240,27 @@ msgstr "Misslyckades med att avlänka temporärfil"
 msgid "Failed to write to temporary file"
 msgstr "Misslyckades med att skriva till temporärfil"
 
-#: common/flatpak-run.c:3581
+#: common/flatpak-run.c:3596
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Misslyckades med att öppna temporär flatpak-info-fil: %s"
 
-#: common/flatpak-run.c:3643 common/flatpak-run.c:3653
+#: common/flatpak-run.c:3658 common/flatpak-run.c:3668
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Misslyckades med att öppna temporärfil: %s"
 
 # sebras: sync?
-#: common/flatpak-run.c:4003
+#: common/flatpak-run.c:4018
 msgid "Unable to create sync pipe"
 msgstr "Kan inte skapa sync-rör"
 
-#: common/flatpak-run.c:4030
+#: common/flatpak-run.c:4045
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Misslyckades med att öppna prog-info-fil: %s"
 
-#: common/flatpak-run.c:4060
+#: common/flatpak-run.c:4075
 msgid "Failed to sync with dbus proxy"
 msgstr "Misslyckades med att synkronisera med dbus-proxy"
 
