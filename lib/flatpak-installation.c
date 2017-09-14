@@ -1310,6 +1310,14 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
  *
  * Install a new application or runtime.
  *
+ * Note that this function was originally written to always return a
+ * #FlatpakInstalledRef. Since 0.9.12.12, passing
+ * FLATPAK_INSTALL_FLAGS_NO_DEPLOY will only pull refs into the local flatpak
+ * repository without deploying them, however this function will
+ * be unable to provide information on the installed ref, so
+ * FLATPAK_ERROR_ONLY_PULLED will be set and the caller must respond
+ * accordingly.
+ *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */
 FlatpakInstalledRef *
@@ -1361,11 +1369,25 @@ flatpak_installation_install_full (FlatpakInstallation    *self,
   else
     ostree_progress = ostree_async_progress_new_and_connect (no_progress_cb, NULL);
 
-  if (!flatpak_dir_install (dir_clone, FALSE, FALSE,
+  if (!flatpak_dir_install (dir_clone,
+                            (flags & FLATPAK_INSTALL_FLAGS_NO_PULL) != 0,
+                            (flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0,
                             (flags & FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS) != 0,
                             ref, remote_name, (const char **)subpaths,
                             ostree_progress, cancellable, error))
     goto out;
+
+  /* Note that if the caller sets FLATPAK_INSTALL_FLAGS_NO_DEPLOY we must
+   * always return an error, as explained above. Otherwise get_ref will
+   * always return an error. */
+  if ((flags & FLATPAK_INSTALL_FLAGS_NO_DEPLOY) != 0)
+    {
+      g_set_error (error,
+                   FLATPAK_ERROR, FLATPAK_ERROR_ONLY_PULLED,
+                   "As requested, %s was only pulled, but not installed",
+                   name);
+      goto out;
+    }
 
   result = get_ref (dir, ref, cancellable, error);
   if (result == NULL)
@@ -1395,6 +1417,14 @@ out:
  * @error: return location for a #GError
  *
  * Install a new application or runtime.
+ *
+ * Note that this function was originally written to always return a
+ * #FlatpakInstalledRef. Since 0.9.12.12, passing
+ * FLATPAK_INSTALL_FLAGS_NO_DEPLOY will only pull refs into the local flatpak
+ * repository without deploying them, however this function will
+ * be unable to provide information on the installed ref, so
+ * FLATPAK_ERROR_ONLY_PULLED will be set and the caller must respond
+ * accordingly.
  *
  * Returns: (transfer full): The ref for the newly installed app or %NULL on failure
  */

@@ -71,6 +71,8 @@ typedef enum {
 typedef enum {
   FLATPAK_INSTALL_FLAGS_NONE             = 0,
   FLATPAK_INSTALL_FLAGS_NO_STATIC_DELTAS = (1 << 0),
+  FLATPAK_INSTALL_FLAGS_NO_DEPLOY        = (1 << 2),
+  FLATPAK_INSTALL_FLAGS_NO_PULL          = (1 << 3),
 } FlatpakInstallFlags;
 
 /**
