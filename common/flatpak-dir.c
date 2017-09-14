@@ -2418,7 +2418,7 @@ flatpak_dir_pull_extra_data (FlatpakDir          *self,
 
   g_variant_dict_init (&new_metadata_dict, detached_metadata);
   g_variant_dict_insert_value (&new_metadata_dict, "xa.extra-data", extra_data);
-  new_detached_metadata = g_variant_dict_end (&new_metadata_dict);
+  new_detached_metadata = g_variant_ref_sink (g_variant_dict_end (&new_metadata_dict));
 
   /* There is a commitmeta size limit when pulling, so we have to side-load it
      when installing in the system repo */

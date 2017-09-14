@@ -3338,7 +3338,7 @@ flatpak_repo_update (OstreeRepo   *repo,
                              "s", collection_ref.collection_id);
       g_variant_dict_insert_value (new_summary_commit_dict, "ostree.ref-binding",
                                    g_variant_new_strv ((const gchar * const *) &collection_ref.ref_name, 1));
-      new_summary_commit = g_variant_dict_end (new_summary_commit_dict);
+      new_summary_commit = g_variant_ref_sink (g_variant_dict_end (new_summary_commit_dict));
 
       if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
         goto out;
@@ -3968,7 +3968,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
                                  "s", (collection_id != NULL) ? collection_id : "");
           g_variant_dict_insert_value (metadata_dict, "ostree.ref-binding",
                                        g_variant_new_strv ((const gchar * const *) &branch, 1));
-          metadata = g_variant_dict_end (metadata_dict);
+          metadata = g_variant_ref_sink (g_variant_dict_end (metadata_dict));
 
           if (timestamp > 0)
             {
