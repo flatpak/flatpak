@@ -4831,7 +4831,8 @@ apply_extra_data (FlatpakDir          *self,
   envp = flatpak_run_get_minimal_env (FALSE);
   if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp, NULL,
                                          FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
-                                         FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY,
+                                         FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
+                                         FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY,
                                          id,
                                          app_context, NULL, NULL, cancellable, error))
     return FALSE;
