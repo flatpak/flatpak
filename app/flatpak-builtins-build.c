@@ -286,7 +286,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
 
   run_flags =
     FLATPAK_RUN_FLAG_DEVEL | FLATPAK_RUN_FLAG_NO_SESSION_HELPER |
-    FLATPAK_RUN_FLAG_SET_PERSONALITY;
+    FLATPAK_RUN_FLAG_SET_PERSONALITY | FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
   if (opt_die_with_parent)
     run_flags |= FLATPAK_RUN_FLAG_DIE_WITH_PARENT;
   if (custom_usr)
