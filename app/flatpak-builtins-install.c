@@ -521,8 +521,14 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
                                           &matched_kinds, &id, &arch, &branch, error))
         return FALSE;
 
-      ref = flatpak_dir_find_remote_ref (dir, remote, id, branch, default_branch, arch,
-                                         matched_kinds, &kind, cancellable, error);
+
+      if (opt_no_pull)
+        ref = flatpak_dir_find_local_ref (dir, remote, id, branch, default_branch, arch,
+                                          matched_kinds, &kind, cancellable, error);
+      else
+        ref = flatpak_dir_find_remote_ref (dir, remote, id, branch, default_branch, arch,
+                                           matched_kinds, &kind, cancellable, error);
+
       if (ref == NULL)
         return FALSE;
 
@@ -530,7 +536,8 @@ flatpak_builtin_install (int argc, char **argv, GCancellable *cancellable, GErro
         return FALSE;
     }
 
-  if (!flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
+  if (!opt_no_pull &&
+      !flatpak_transaction_update_metadata (transaction, FALSE, cancellable, error))
     return FALSE;
 
   if (!flatpak_transaction_run (transaction, TRUE, cancellable, error))
