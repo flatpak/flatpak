@@ -3342,8 +3342,9 @@ flatpak_repo_update (OstreeRepo   *repo,
       if (!ostree_repo_prepare_transaction (repo, NULL, cancellable, error))
         goto out;
 
+      /* Set up an empty mtree. */
       mtree = ostree_mutable_tree_new ();
-      if (!ostree_repo_write_dfd_to_mtree (repo, AT_FDCWD, ".", mtree, NULL, NULL, error))
+      if (!flatpak_mtree_create_root (repo, mtree, cancellable, error))
         goto out;
       if (!ostree_repo_write_mtree (repo, mtree, (GFile **) &repo_file, NULL, error))
         goto out;
