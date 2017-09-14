@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-13 15:50+0200\n"
+"POT-Creation-Date: 2017-09-14 09:03+0200\n"
 "PO-Revision-Date: 2017-06-24 15:47+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
@@ -1744,7 +1744,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:469 common/flatpak-dir.c:1079
 #: common/flatpak-dir.c:1336 common/flatpak-dir.c:1372
-#: common/flatpak-dir.c:1394 common/flatpak-dir.c:9714
+#: common/flatpak-dir.c:1394 common/flatpak-dir.c:9715
 #: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
 #, c-format
 msgid "%s not installed"
@@ -1825,7 +1825,7 @@ msgstr "Не знайдено перевизначень для %s"
 msgid "While opening repository %s: "
 msgstr "Під час спроби відкрити сховище %s: "
 
-#: common/flatpak-dir.c:1660 common/flatpak-dir.c:4987
+#: common/flatpak-dir.c:1660 common/flatpak-dir.c:4988
 msgid "Can't create deploy directory"
 msgstr "Не вдалося створити каталог розгортання"
 
@@ -1925,151 +1925,151 @@ msgstr "Некоректна контрольна сума додаткових 
 msgid "While writing extra data file '%s': "
 msgstr "Під час записування файла додаткових даних «%s»: "
 
-#: common/flatpak-dir.c:4858
+#: common/flatpak-dir.c:4859
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "Помилка скрипту apply_extra, стан виходу %d"
 
-#: common/flatpak-dir.c:4928
+#: common/flatpak-dir.c:4929
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Під час спроби визначити посилання %s: "
 
-#: common/flatpak-dir.c:4943
+#: common/flatpak-dir.c:4944
 #, c-format
 msgid "%s is not available"
 msgstr "%s недоступний"
 
-#: common/flatpak-dir.c:4976 common/flatpak-dir.c:5314
-#: common/flatpak-dir.c:6082 common/flatpak-dir.c:6095
-#: common/flatpak-dir.c:6171
+#: common/flatpak-dir.c:4977 common/flatpak-dir.c:5315
+#: common/flatpak-dir.c:6083 common/flatpak-dir.c:6096
+#: common/flatpak-dir.c:6172
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "Гілку %s %s вже встановлено"
 
-#: common/flatpak-dir.c:4995
+#: common/flatpak-dir.c:4996
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Не вдалося прочитати внесок %s: "
 
-#: common/flatpak-dir.c:5015
+#: common/flatpak-dir.c:5016
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Під час спроби вивантаження %s до %s: "
 
-#: common/flatpak-dir.c:5040 common/flatpak-dir.c:5071
+#: common/flatpak-dir.c:5041 common/flatpak-dir.c:5072
 msgid "While trying to checkout metadata subpath: "
 msgstr "Під час спроби вивантаження підшляху метаданих: "
 
-#: common/flatpak-dir.c:5081
+#: common/flatpak-dir.c:5082
 msgid "While trying to remove existing extra dir: "
 msgstr "Під час спроби вилучення наявного додаткового каталогу: "
 
-#: common/flatpak-dir.c:5092
+#: common/flatpak-dir.c:5093
 msgid "While trying to apply extra data: "
 msgstr "Під час спроби застосування додаткових даних: "
 
-#: common/flatpak-dir.c:5119
+#: common/flatpak-dir.c:5120
 #, fuzzy, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Некоректний pid %s"
 
-#: common/flatpak-dir.c:5126
+#: common/flatpak-dir.c:5127
 #, fuzzy, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Некоректний pid %s"
 
-#: common/flatpak-dir.c:5134
+#: common/flatpak-dir.c:5135
 #, fuzzy, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5142
+#: common/flatpak-dir.c:5143
 #, fuzzy, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5150
+#: common/flatpak-dir.c:5151
 #, fuzzy, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5156
+#: common/flatpak-dir.c:5157
 #, fuzzy, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5162
+#: common/flatpak-dir.c:5163
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Розміщене джерело %s не відповідає внеску (%s)"
 
-#: common/flatpak-dir.c:5181
+#: common/flatpak-dir.c:5182
 msgid "Deployed metadata does not match commit"
 msgstr "Розміщені метадані не відповідають внеску"
 
-#: common/flatpak-dir.c:5943
+#: common/flatpak-dir.c:5944
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Цю версію %s вже встановлено"
 
-#: common/flatpak-dir.c:5950
+#: common/flatpak-dir.c:5951
 msgid "Can't change remote during bundle install"
 msgstr "Не можна змінювати сховище під час встановлення пакунка"
 
-#: common/flatpak-dir.c:6493
+#: common/flatpak-dir.c:6494
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s, гілка %s не встановлено"
 
-#: common/flatpak-dir.c:6737
+#: common/flatpak-dir.c:6738
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "%s, гілка %s не встановлено"
 
-#: common/flatpak-dir.c:7602
+#: common/flatpak-dir.c:7603
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Немає відповідників %s"
 
-#: common/flatpak-dir.c:7688
+#: common/flatpak-dir.c:7689
 #, c-format
 msgid "Can't find %s%s%s%s%s in remote %s"
 msgstr "Не вдалося знайти %s%s%s%s%s у віддаленому сховищі %s"
 
-#: common/flatpak-dir.c:7805
+#: common/flatpak-dir.c:7806
 #, c-format
 msgid "%s %s not installed"
 msgstr "Не встановлено %s %s"
 
-#: common/flatpak-dir.c:7878
+#: common/flatpak-dir.c:7879
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Не вдалося знайти встановлення %s"
 
-#: common/flatpak-dir.c:8407
+#: common/flatpak-dir.c:8408
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Середовище виконання %s, гілка %s вже встановлено"
 
-#: common/flatpak-dir.c:8408
+#: common/flatpak-dir.c:8409
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Програму %s, гілка %s вже встановлено"
 
-#: common/flatpak-dir.c:8867
+#: common/flatpak-dir.c:8868
 msgid "Remote title not set"
 msgstr "Заголовок віддаленого сховища не встановлено"
 
-#: common/flatpak-dir.c:8889
+#: common/flatpak-dir.c:8890
 msgid "Remote default-branch not set"
 msgstr "Не встановлено типову гілку віддаленого сховища"
 
-#: common/flatpak-dir.c:9383
+#: common/flatpak-dir.c:9384
 msgid "No flatpak cache in remote summary"
 msgstr "У резюме сховища немає кешу flatpak"
 
-#: common/flatpak-dir.c:9393
+#: common/flatpak-dir.c:9394
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Немає запису %s у кеші flatpak резюме сховища "

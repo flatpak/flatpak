@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-13 15:50+0200\n"
+"POT-Creation-Date: 2017-09-14 09:03+0200\n"
 "PO-Revision-Date: 2017-02-10 11:59+0300\n"
 "Last-Translator: Roman Kharin <romiq.kh@gmail.com>\n"
 "Language-Team: romiq.kh@gmail.com\n"
@@ -1758,7 +1758,7 @@ msgstr ""
 
 #: app/flatpak-transaction.c:469 common/flatpak-dir.c:1079
 #: common/flatpak-dir.c:1336 common/flatpak-dir.c:1372
-#: common/flatpak-dir.c:1394 common/flatpak-dir.c:9714
+#: common/flatpak-dir.c:1394 common/flatpak-dir.c:9715
 #: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
 #, c-format
 msgid "%s not installed"
@@ -1839,7 +1839,7 @@ msgstr "Не найдено переопределений для %s"
 msgid "While opening repository %s: "
 msgstr "Во время открытия репозитория %s:"
 
-#: common/flatpak-dir.c:1660 common/flatpak-dir.c:4987
+#: common/flatpak-dir.c:1660 common/flatpak-dir.c:4988
 msgid "Can't create deploy directory"
 msgstr "Невозможно создать каталог для развёртывания"
 
@@ -1939,151 +1939,151 @@ msgstr "Некорректная контрольная сумма для доп
 msgid "While writing extra data file '%s': "
 msgstr "Во время записи в файл дополнительных данных '%s': "
 
-#: common/flatpak-dir.c:4858
+#: common/flatpak-dir.c:4859
 #, fuzzy, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "скрипт apply_extra закончился с ошибкой"
 
-#: common/flatpak-dir.c:4928
+#: common/flatpak-dir.c:4929
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Во время поиска назначения ссылки %s: "
 
-#: common/flatpak-dir.c:4943
+#: common/flatpak-dir.c:4944
 #, c-format
 msgid "%s is not available"
 msgstr "%s не доступно"
 
-#: common/flatpak-dir.c:4976 common/flatpak-dir.c:5314
-#: common/flatpak-dir.c:6082 common/flatpak-dir.c:6095
-#: common/flatpak-dir.c:6171
+#: common/flatpak-dir.c:4977 common/flatpak-dir.c:5315
+#: common/flatpak-dir.c:6083 common/flatpak-dir.c:6096
+#: common/flatpak-dir.c:6172
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s ветка %s уже установлено"
 
-#: common/flatpak-dir.c:4995
+#: common/flatpak-dir.c:4996
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Ошибка чтения зафиксированного изменения %s: "
 
-#: common/flatpak-dir.c:5015
+#: common/flatpak-dir.c:5016
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Во время получения %s в %s: "
 
-#: common/flatpak-dir.c:5040 common/flatpak-dir.c:5071
+#: common/flatpak-dir.c:5041 common/flatpak-dir.c:5072
 msgid "While trying to checkout metadata subpath: "
 msgstr "Во время получения метаданных подкаталога "
 
-#: common/flatpak-dir.c:5081
+#: common/flatpak-dir.c:5082
 msgid "While trying to remove existing extra dir: "
 msgstr "Во время удаления существующего каталога с дополнительными данными: "
 
-#: common/flatpak-dir.c:5092
+#: common/flatpak-dir.c:5093
 msgid "While trying to apply extra data: "
 msgstr "Во время применения дополнительных данных: "
 
-#: common/flatpak-dir.c:5119
+#: common/flatpak-dir.c:5120
 #, fuzzy, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Неверный pid %s"
 
-#: common/flatpak-dir.c:5126
+#: common/flatpak-dir.c:5127
 #, fuzzy, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Неверный pid %s"
 
-#: common/flatpak-dir.c:5134
+#: common/flatpak-dir.c:5135
 #, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5142
+#: common/flatpak-dir.c:5143
 #, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5150
+#: common/flatpak-dir.c:5151
 #, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5156
+#: common/flatpak-dir.c:5157
 #, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5162
+#: common/flatpak-dir.c:5163
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr ""
 
-#: common/flatpak-dir.c:5181
+#: common/flatpak-dir.c:5182
 msgid "Deployed metadata does not match commit"
 msgstr ""
 
-#: common/flatpak-dir.c:5943
+#: common/flatpak-dir.c:5944
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Указанная версия %s уже установлена"
 
-#: common/flatpak-dir.c:5950
+#: common/flatpak-dir.c:5951
 msgid "Can't change remote during bundle install"
 msgstr "Невозможно изменить удалённый репозиторий во время установки пакета"
 
-#: common/flatpak-dir.c:6493
+#: common/flatpak-dir.c:6494
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s ветка %s не установлено"
 
-#: common/flatpak-dir.c:6737
+#: common/flatpak-dir.c:6738
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "%s ветка %s не установлена"
 
-#: common/flatpak-dir.c:7602
+#: common/flatpak-dir.c:7603
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Совпадений не обнаружено %s"
 
-#: common/flatpak-dir.c:7688
+#: common/flatpak-dir.c:7689
 #, c-format
 msgid "Can't find %s%s%s%s%s in remote %s"
 msgstr "Невозможно найти %s%s%s%s%s в удалённом репозитории %s"
 
-#: common/flatpak-dir.c:7805
+#: common/flatpak-dir.c:7806
 #, c-format
 msgid "%s %s not installed"
 msgstr "%s %s не установлено"
 
-#: common/flatpak-dir.c:7878
+#: common/flatpak-dir.c:7879
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Не возможно найти %s в установленных"
 
-#: common/flatpak-dir.c:8407
+#: common/flatpak-dir.c:8408
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Среда исполнения %s, ветка %s уже установлена"
 
-#: common/flatpak-dir.c:8408
+#: common/flatpak-dir.c:8409
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Приложение %s, ветка %s уже установлено"
 
-#: common/flatpak-dir.c:8867
+#: common/flatpak-dir.c:8868
 msgid "Remote title not set"
 msgstr "Заголовок удаленного репозитория не установлен"
 
-#: common/flatpak-dir.c:8889
+#: common/flatpak-dir.c:8890
 msgid "Remote default-branch not set"
 msgstr "Ветка по умолчанию в удалённом репозитории не установлена"
 
-#: common/flatpak-dir.c:9383
+#: common/flatpak-dir.c:9384
 msgid "No flatpak cache in remote summary"
 msgstr "Отсутствует путь к кэшу в сводной информации удалённого репозитория"
 
-#: common/flatpak-dir.c:9393
+#: common/flatpak-dir.c:9394
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Нет записи для %s в сводной информации кэша flatpak"
