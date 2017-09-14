@@ -1,3 +1,9 @@
+Major changes in 0.9.12
+=======================
+
+ * Fixed a regression in extra-data installation
+ * Don't expose the a11y bus in flatpak build
+
 Major changes in 0.9.11
 =======================
 
