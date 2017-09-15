@@ -202,6 +202,9 @@ gint        flatpak_dir_get_priority (FlatpakDir *self);
 FlatpakDirStorageType flatpak_dir_get_storage_type (FlatpakDir *self);
 GFile *     flatpak_dir_get_deploy_dir (FlatpakDir *self,
                                         const char *ref);
+char *      flatpak_dir_get_deploy_subdir (FlatpakDir *self,
+                                           const char *checksum,
+                                           const char * const * subpaths);
 GFile *     flatpak_dir_get_unmaintained_extension_dir (FlatpakDir *self,
                                                         const char *name,
                                                         const char *arch,

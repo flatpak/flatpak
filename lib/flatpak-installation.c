@@ -569,6 +569,7 @@ get_ref (FlatpakDir          *dir,
   g_autoptr(GFile) deploy_subdir = NULL;
   g_autofree char *deploy_path = NULL;
   g_autofree char *latest_commit = NULL;
+  g_autofree char *deploy_subdirname = NULL;
   g_autoptr(GVariant) deploy_data = NULL;
   g_autofree const char **subpaths = NULL;
   gboolean is_current = FALSE;
@@ -586,7 +587,8 @@ get_ref (FlatpakDir          *dir,
   installed_size = flatpak_deploy_data_get_installed_size (deploy_data);
 
   deploy_dir = flatpak_dir_get_deploy_dir (dir, full_ref);
-  deploy_subdir = g_file_get_child (deploy_dir, commit);
+  deploy_subdirname = flatpak_dir_get_deploy_subdir (dir, commit, subpaths);
+  deploy_subdir = g_file_get_child (deploy_dir, deploy_subdirname);
   deploy_path = g_file_get_path (deploy_subdir);
 
   if (strcmp (parts[0], "app") == 0)

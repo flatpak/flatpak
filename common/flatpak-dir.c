@@ -1057,6 +1057,11 @@ flatpak_save_override_keyfile (GKeyFile   *metakey,
   return g_key_file_save_to_file (metakey, filename, error);
 }
 
+/* Note: passing a checksum only works here for non-sub-set deploys, not
+   e.g. a partial locale install, because it will not find the real
+   deploy directory. This is ok for now, because checksum is only
+   currently passed from flatpak_installation_launch() when launching
+   a particular version of an app, which is not used for locales. */
 FlatpakDeploy *
 flatpak_dir_load_deployed (FlatpakDir   *self,
                            const char   *ref,
@@ -1118,6 +1123,32 @@ flatpak_dir_get_deploy_dir (FlatpakDir *self,
                             const char *ref)
 {
   return g_file_resolve_relative_path (self->basedir, ref);
+}
+
+char *
+flatpak_dir_get_deploy_subdir (FlatpakDir *self,
+                               const char *checksum,
+                               const char * const * subpaths)
+{
+  if (subpaths == NULL || *subpaths == NULL)
+    return g_strdup (checksum);
+  else
+    {
+      GString *str = g_string_new (checksum);
+      int i;
+      for (i = 0; subpaths[i] != NULL; i++)
+        {
+          const char *s = subpaths[i];
+          g_string_append_c (str, '-');
+          while (*s)
+            {
+              if (*s != '/')
+                g_string_append_c (str, *s);
+              s++;
+            }
+        }
+      return g_string_free (str, FALSE);
+    }
 }
 
 GFile *
@@ -4950,25 +4981,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   commit_metadata = g_variant_get_child_value (commit_data, 0);
   g_variant_lookup (commit_metadata, "xa.alt-id", "s", &alt_id);
 
-  if (subpaths == NULL || *subpaths == NULL)
-    checkout_basename = g_strdup (checksum);
-  else
-    {
-      GString *str = g_string_new (checksum);
-      int i;
-      for (i = 0; subpaths[i] != NULL; i++)
-        {
-          const char *s = subpaths[i];
-          g_string_append_c (str, '-');
-          while (*s)
-            {
-              if (*s != '/')
-                g_string_append_c (str, *s);
-              s++;
-            }
-        }
-      checkout_basename = g_string_free (str, FALSE);
-    }
+  checkout_basename = flatpak_dir_get_deploy_subdir (self, checksum, subpaths);
 
   real_checkoutdir = g_file_get_child (deploy_base, checkout_basename);
   if (g_file_query_exists (real_checkoutdir, cancellable))
