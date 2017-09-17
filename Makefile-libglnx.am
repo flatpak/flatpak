@@ -46,6 +46,7 @@ libglnx_la_SOURCES = \
 	$(libglnx_srcpath)/glnx-shutil.h \
 	$(libglnx_srcpath)/glnx-shutil.c \
 	$(libglnx_srcpath)/libglnx.h \
+	$(libglnx_srcpath)/tests/libglnx-testlib.h \
 	$(NULL)
 
 libglnx_la_CFLAGS = $(AM_CFLAGS) $(libglnx_cflags)
