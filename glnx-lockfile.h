@@ -27,6 +27,7 @@
 #include "glnx-backport-autoptr.h"
 
 typedef struct GLnxLockFile {
+        gboolean initialized;
         int dfd;
         char *path;
         int fd;
@@ -37,5 +38,3 @@ gboolean glnx_make_lock_file(int dfd, const char *p, int operation, GLnxLockFile
 void glnx_release_lock_file(GLnxLockFile *f);
 
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(GLnxLockFile, glnx_release_lock_file)
-
-#define GLNX_LOCK_FILE_INIT { .fd = -1, .dfd = AT_FDCWD, .path = NULL }
