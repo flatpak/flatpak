@@ -5320,6 +5320,9 @@ flatpak_yes_no_prompt (const char *prompt, ...)
 static gboolean
 is_number (const char *s)
 {
+  if (*s == '\0')
+    return FALSE;
+
   while (*s != 0)
     {
       if (!g_ascii_isdigit (*s))
