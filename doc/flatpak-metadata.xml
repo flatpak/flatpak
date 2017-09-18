@@ -84,23 +84,35 @@
                 </varlistentry>
                 <varlistentry>
                     <term><option>sdk</option> (string)</term>
-                    <listitem><para>The fully qualified name of the sdk that matches the runtime.</para></listitem>
+                    <listitem>
+                      <para>
+                        The fully qualified name of the sdk that matches the
+                        runtime. Available since 0.1.</para>
+                    </listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>command</option> (string)</term>
-                    <listitem><para>The command to run. Only relevant for applications.</para></listitem>
+                    <listitem>
+                      <para>
+                        The command to run. Only relevant for applications.
+                        Available since 0.1.
+                      </para>
+                    </listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>required-flatpak</option> (string)</term>
                     <listitem><para>
                         The required version of Flatpak to run this application
-                        or runtime.
+                        or runtime. For applications, this was available since
+                        0.8.0. For runtimes, this was available since 0.9.1,
+                        and backported to 0.8.3 for the 0.8.x branch.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>tags</option> (string list)</term>
                     <listitem><para>
                         Tags to include in AppStream XML.
+                        Available since 0.4.12.
                         <!-- TODO: what are these tags for? What should they
                         be? -->
                     </para></listitem>
@@ -122,8 +134,10 @@
                     <listitem><para>
                         List of subsystems to share with the host system.
                         Possible subsystems: network, ipc.
+                        Available since 0.3.
                     </para></listitem>
                 </varlistentry>
+
                 <varlistentry>
                     <term><option>sockets</option> (list)</term>
                     <listitem><para>
@@ -133,31 +147,191 @@
                         well-known environment variables like DISPLAY or
                         DBUS_SYSTEM_BUS_ADDRESS to let the application
                         find sockets that are not in a fixed location.
+                        Available since 0.3.
                     </para></listitem>
                 </varlistentry>
+
                 <varlistentry>
                     <term><option>devices</option> (list)</term>
                     <listitem><para>
                         List of devices to make available in the sandbox.
-                        Possible values: dri, kvm, all.
+                        Possible values:
+                        <variablelist>
+
+                            <varlistentry><term><option>dri</option></term>
+                            <listitem><para>
+                                Graphics direct rendering
+                                (<filename>/dev/dri</filename>).
+                                Available since 0.3.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>kvm</option></term>
+                            <listitem><para>
+                                Virtualization
+                                (<filename>/dev/kvm</filename>).
+                                Available since 0.6.12.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>all</option></term>
+                            <listitem><para>
+                                All device nodes in <filename>/dev</filename>.
+                                Available since 0.6.6.
+                            </para></listitem></varlistentry>
+
+                        </variablelist>
                     </para></listitem>
                 </varlistentry>
+
                 <varlistentry>
                     <term><option>filesystems</option> (list)</term>
                     <listitem><para>
                         List of filesystem subsets to make available to the
-                        application. Possible values: home, host, xdg-desktop,
-                        xdg-documents, xdg-download xdg-music, xdg-pictures,
-                        xdg-public-share, xdg-templates, xdg-videos, xdg-run,
-                        xdg-config, xdg-cache, xdg-data,
-                        an absolute path, or a homedir-relative path like
-                        ~/dir or paths relative to the xdg dirs, like
-                        xdg-download/subdir. The xdg-* arguments can also
-                        specify a subdirectory, such as xdg-pictures/screenshots.
-                        Each entry can have a suffix of
-                        :ro, :rw or :create to indicate if the path should be shared
-                        read-only, read-write or read-write + create if needed
-                        (default is read-write).
+                        application. Possible values:
+                        <variablelist>
+
+                            <varlistentry><term><option>home</option></term>
+                            <listitem><para>
+                                The entire home directory.
+                                Available since 0.3.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>host</option></term>
+                            <listitem><para>
+                                The entire host file system, except for
+                                directories that are handled specially by
+                                Flatpak.
+                                In particular, this shares
+                                <filename>/home</filename>,
+                                <filename>/media</filename>,
+                                <filename>/opt</filename>,
+                                <filename>/run/media</filename> and
+                                <filename>/srv</filename> if they exist.
+                            </para>
+                            <para>
+                                <filename>/dev</filename> is not shared:
+                                use <option>devices=all;</option> instead.
+                            </para>
+                            <para>
+                                Parts of <filename>/sys</filename> are always
+                                shared. This option does not make additional
+                                files in /sys available.
+                            </para>
+                            <para>
+                                These other reserved directories are
+                                currently excluded:
+                                <filename>/app</filename>,
+                                <filename>/bin</filename>,
+                                <filename>/boot</filename>,
+                                <filename>/etc</filename>,
+                                <filename>/lib</filename>,
+                                <filename>/lib32</filename>,
+                                <filename>/lib64</filename>,
+                                <filename>/proc</filename>,
+                                <filename>/root</filename>,
+                                <filename>/run</filename>,
+                                <filename>/sbin</filename>,
+                                <filename>/tmp</filename>,
+                                <filename>/usr</filename>,
+                                <filename>/var</filename>.
+                            </para>
+                            <para>
+                                Available since 0.3.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>xdg-desktop</option>,
+                                <option>xdg-documents</option>,
+                                <option>xdg-download</option>,
+                                <option>xdg-music</option>,
+                                <option>xdg-pictures</option>,
+                                <option>xdg-public-share</option>,
+                                <option>xdg-videos</option>,
+                                <option>xdg-templates</option>
+                            </term><listitem><para>
+                                <ulink url="https://www.freedesktop.org/wiki/Software/xdg-user-dirs/"
+                                  >freedesktop.org special directories</ulink>.
+                                Available since 0.3.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>xdg-desktop/<replaceable>path</replaceable></option>,
+                                <option>xdg-documents/<replaceable>path</replaceable></option>,
+                                etc.
+                            </term><listitem><para>
+                                Subdirectories of freedesktop.org special
+                                directories. Available since 0.4.13.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term>
+                                <option>xdg-cache</option>,
+                                <option>xdg-config</option>,
+                                <option>xdg-data</option>
+                            </term><listitem><para>
+                                Directories defined by the
+                                <ulink url="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html"
+                                  >freedesktop.org Base Directory
+                                  Specification</ulink>.
+                                Available since 0.6.14.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term>
+                                <option>xdg-cache/<replaceable>path</replaceable></option>,
+                                <option>xdg-config/<replaceable>path</replaceable></option>,
+                                <option>xdg-data/<replaceable>path</replaceable></option>
+                            </term><listitem><para>
+                                Subdirectories of directories defined by the
+                                freedesktop.org Base Directory Specification.
+                                Available since 0.6.14.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term>
+                                <option>xdg-run/<replaceable>path</replaceable></option>
+                            </term><listitem><para>
+                                Subdirectories of the
+                                <envar>XDG_RUNTIME_DIR</envar> defined by
+                                the
+                                <ulink url="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html"
+                                  >freedesktop.org Base Directory
+                                  Specification</ulink>. Note that
+                                <option>xdg-run</option> on its own is not
+                                supported. Available since 0.4.13.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term>
+                                <option>/<replaceable>path</replaceable></option>
+                            </term><listitem><para>
+                                An arbitrary absolute path. Available since 0.3.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term>
+                                <option>~/<replaceable>path</replaceable></option>
+                            </term><listitem><para>
+                                An arbitrary path relative to the home
+                                directory. Available since 0.3.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term>
+                                One of the above followed by
+                                <option>:ro</option>
+                            </term><listitem><para>
+                                Make the given directory available read-only.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term>
+                                One of the above followed by
+                                <option>:rw</option>
+                            </term><listitem><para>
+                                Make the given directory available read/write.
+                                This is the default.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term>
+                                One of the above followed by
+                                <option>:create</option>
+                            </term><listitem><para>
+                                Make the given directory available read/write,
+                                and create it if it does not already exist.
+                            </para></listitem></varlistentry>
+
+                        </variablelist>
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -170,7 +344,7 @@
                       For instance making ".myapp" persistent would make "~/.myapp"
                       in the sandbox a bind mount to "~/.var/app/org.my.App/.myapp",
                       thus allowing an unmodified application to save data in
-                      the per-application location.
+                      the per-application location. Available since 0.3.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -178,10 +352,30 @@
                     <listitem><para>
                         List of features available or unavailable to the
                         application, currently from the following list:
-                        devel, multiarch.
-                        A feature can be prefixed with ! to indicate the absence
-                        of that feature, for example !devel if development and
-                        debugging are not allowed.
+                        <variablelist>
+
+                            <varlistentry><term><option>devel</option></term>
+                            <listitem><para>
+                                Allow system calls used by development-oriented
+                                tools such as <command>perf</command>,
+                                <command>strace</command> and
+                                <command>gdb</command>.
+                                Available since 0.6.10.
+                            </para></listitem></varlistentry>
+
+                            <varlistentry><term><option>multiarch</option></term>
+                            <listitem><para>
+                                Allow running multilib/multiarch binaries, for
+                                example <literal>i386</literal> binaries in an
+                                <literal>x86_64</literal> environment.
+                                Available since 0.6.12.
+                            </para></listitem></varlistentry>
+
+                        </variablelist>
+                        A feature can be prefixed with <option>!</option> to
+                        indicate the absence of that feature, for example
+                        <option>!devel</option> if development and debugging
+                        are not allowed.
                     </para></listitem>
                 </varlistentry>
             </variablelist>
@@ -193,27 +387,31 @@
                 for a running app, and not in the metadata files written by
                 application authors. It is filled in by Flatpak itself.
             </para>
+            <!-- In versions prior to 0.6.10 some of this information was
+            in [Application], but for simplicity that isn't documented
+            here. -->
             <variablelist>
                 <varlistentry>
                     <term><option>app-path</option> (string)</term>
                     <listitem><para>
                         The absolute path on the host system of the app's
                         app files, as mounted at <filename>/app</filename>
-                        inside the container
+                        inside the container. Available since 0.6.10.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>branch</option> (string)</term>
                     <listitem><para>
                         The branch of the app, for example
-                        <literal>stable</literal>
+                        <literal>stable</literal>. Available since
+                        0.6.10.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>flatpak-version</option> (string)</term>
                     <listitem><para>
                         The version number of the Flatpak version that ran
-                        this app
+                        this app. Available since 0.6.11.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -221,7 +419,7 @@
                     <listitem><para>
                         The absolute path on the host system of the app's
                         runtime files, as mounted at <filename>/usr</filename>
-                        inside the container
+                        inside the container. Available since 0.6.10.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -229,7 +427,7 @@
                     <listitem><para>
                         True if this app cannot access the D-Bus session bus
                         directly (either it goes via a proxy, or it cannot
-                        access the session bus at all)
+                        access the session bus at all). Available since 0.8.0.
                         <!-- TODO: Those semantics are weird, are they
                         intended? -->
                     </para></listitem>
@@ -239,7 +437,7 @@
                     <listitem><para>
                         True if this app cannot access the D-Bus system bus
                         directly (either it goes via a proxy, or it cannot
-                        access the system bus at all)
+                        access the system bus at all). Available since 0.8.0.
                         <!-- TODO: Those semantics are weird, are they
                         intended? -->
                     </para></listitem>
@@ -285,24 +483,28 @@
                     <term><option>none</option></term>
                     <listitem><para>
                         The bus name or names in question is invisible to the application.
+                        Available since 0.2.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>see</option></term>
                     <listitem><para>
                         The bus name or names can be enumerated by the application.
+                        Available since 0.2.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>talk</option></term>
                     <listitem><para>
                         The application can send messages/ and receive replies and signals from the bus name or names.
+                        Available since 0.2.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>own</option></term>
                     <listitem><para>
                         The application can own the bus name or names (as well as all the above).
+                        Available since 0.2.
                     </para></listitem>
                 </varlistentry>
             </variablelist>
@@ -313,7 +515,7 @@
                 If the <option>sockets</option> key is not allowing full access
                 to the D-Bus system bus, then flatpak does not make the system
                 bus available unless the [System Bus Policy] group is present
-                and provides a policy for filtered access.
+                and provides a policy for filtered access. Available since 0.2.
             </para>
             <para>
                 Entries in this group have the same form as for the [Session Bus Policy] group.
@@ -324,7 +526,7 @@
             <title>[Environment]</title>
             <para>
                 The [Environment] group specifies environment variables to set
-                when running the application.
+                when running the application. Available since 0.3.
             </para>
             <para>
                 Entries in this group have the form <option>VAR=VALUE</option>
@@ -350,7 +552,7 @@
                         the sandbox. If the extension point is for an application, the
                         path is relative to <filename>/app</filename>, otherwise
                         it is relative to <filename>/usr</filename>. This key
-                        is mandatory.
+                        is mandatory. Available since 0.1.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -359,6 +561,7 @@
                         The branch to use when looking for the extension. If this is
                         not specified, it defaults to the branch of the application or
                         runtime that the extension point is for.
+                        Available since 0.4.1.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -366,21 +569,24 @@
                     <listitem><para>
                         The branches to use when looking for the extension. If this is
                         not specified, it defaults to the branch of the application or
-                        runtime that the extension point is for.
+                        runtime that the extension point is for. Available since
+                        0.9.1, and backported to the 0.8.x branch in 0.8.4.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>add-ld-path</option> (string)</term>
                     <listitem><para>
                         A path relative to the extension point directory that will be appended
-                        to LD_LIBRARY_PATH.
+                        to LD_LIBRARY_PATH. Available since 0.9.1, and
+                        backported to the 0.8.x branch in 0.8.3.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>merge-dirs</option> (string)</term>
                     <listitem><para>
                         A list of relative paths of directories below the extension point directory
-                        that will be merged.
+                        that will be merged. Available since 0.9.1, and
+                        backported to the 0.8.x branch in 0.8.3.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -389,6 +595,8 @@
                         A condition that must be true for the extension to be auto-downloaded.
                         The only currently recognized value is active-gl-driver, which is true
                         if the name of the active GL driver matches the extension point basename.
+                        Available since 0.9.1, and backported to the 0.8.x
+                        branch in 0.8.3.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -397,6 +605,8 @@
                         A condition that must be true for the extension to be enabled.
                         The only currently recognized value is active-gl-driver, which is true
                         if the name of the active GL driver matches the extension point basename.
+                        Available since 0.9.1, and backported to the 0.8.x
+                        branch in 0.8.3.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -406,6 +616,8 @@
                         useful when the extension point naming scheme is "reversed". For example,
                         an extension point for GTK+ themes would be /usr/share/themes/$NAME/gtk-3.0,
                         which could be achieved using subdirectory-suffix=gtk-3.0.
+                        Available since 0.9.1, and backported to the 0.8.x
+                        branch in 0.8.3.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -414,6 +626,7 @@
                         If this key is set to true, then flatpak will look for
                         extensions whose name is a prefix of the extension point name, and
                         mount them at the corresponding name below the subdirectory.
+                        Available since 0.1.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -421,6 +634,7 @@
                     <listitem><para>
                         Whether to automatically download extensions matching this extension
                         point when updating or installing a 'related' application or runtime.
+                        Available since 0.6.7.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -428,6 +642,7 @@
                     <listitem><para>
                         Whether to automatically delete extensions matching this extension
                         point when deleting a 'related' application or runtime.
+                        Available since 0.6.7.
                     </para></listitem>
                 </varlistentry>
                 <!-- FIXME: Uncomment this when enable-p2p is enabled unconditionally.
@@ -439,6 +654,7 @@
                         or runtime that the extension point is for.
                         Currently, extension points must be in the same collection as the
                         application or runtime that they are for.
+                        Available since FIXME.
                     </para></listitem>
                 </varlistentry>
                 -->
@@ -454,14 +670,15 @@
                     <term><option>ref</option> (string)</term>
                     <listitem><para>
                         The ref of the runtime or application that this extension
-                        belongs to.
+                        belongs to. Available since 0.9.1.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><option>priority</option> (integer)</term>
                     <listitem><para>
                         The priority to give this extension when looking for the
-                        best match. Default is 0.
+                        best match. Default is 0. Available since 0.9.1, and
+                        backported to the 0.8.x branch in 0.8.3.
                     </para></listitem>
                 </varlistentry>
             </variablelist>
@@ -485,25 +702,30 @@
                     <listitem><para>
                         Whether to mount the runtime while running the /app/bin/apply_extra
                         script. Defaults to true, i.e. not mounting the runtime.
+                        Available since 0.9.1, and backported to the 0.8.x
+                        branch in 0.8.4.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>uriX</option> (string)</term>
+                    <term><option>uri<replaceable>X</replaceable></option> (string)</term>
                     <listitem><para>
-                        The uri for extra data source X. The only supported uri schemes are
-                        http and https.
+                        The uri for extra data source
+                        <replaceable>X</replaceable>. The only supported uri
+                        schemes are http and https. Available since 0.6.13.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>sizeX</option> (integer)</term>
+                    <term><option>size<replaceable>X</replaceable></option> (integer)</term>
                     <listitem><para>
-                        The size for extra data source X.
+                        The size for extra data source
+                        <replaceable>X</replaceable>. Available since 0.6.13.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><option>checksumX</option> (string)</term>
+                    <term><option>checksum<replaceable>X</replaceable></option> (string)</term>
                     <listitem><para>
-                        The sha256 sum for extra data source X.
+                        The sha256 sum for extra data source
+                        <replaceable>X</replaceable>. Available since 0.6.13.
                     </para></listitem>
                 </varlistentry>
             </variablelist>
@@ -515,6 +737,7 @@
             whose name has this form. Their values are treated as lists,
             in which items can have their meaning negated by prepending !
             to the value. They are not otherwise parsed by Flatpak.
+            Available since 0.6.13.
             <!-- TODO: More information would be nice -->
           </para>
         </refsect2>
