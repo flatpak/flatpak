@@ -3953,7 +3953,10 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
             goto out;
 
           if (g_file_equal (root, parent_root))
-            skip_commit = TRUE;
+            {
+              skip_commit = TRUE;
+              g_debug ("Not updating %s, no change", branch);
+            }
         }
 
       if (!skip_commit)
