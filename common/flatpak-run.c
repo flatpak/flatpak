@@ -3498,12 +3498,27 @@ add_font_path_args (GPtrArray *argv_array)
   g_autoptr(GFile) home = NULL;
   g_autoptr(GFile) user_font1 = NULL;
   g_autoptr(GFile) user_font2 = NULL;
+  g_autoptr(GFile) user_font_cache = NULL;
+  g_auto(GStrv) system_cache_dirs = NULL;
+  int i;
 
   if (g_file_test (SYSTEM_FONTS_DIR, G_FILE_TEST_EXISTS))
     {
       add_args (argv_array,
                 "--ro-bind", SYSTEM_FONTS_DIR, "/run/host/fonts",
                 NULL);
+    }
+
+  system_cache_dirs = g_strsplit (SYSTEM_FONT_CACHE_DIRS, ":", 0);
+  for (i = 0; system_cache_dirs[i] != NULL; i++)
+    {
+      if (g_file_test (system_cache_dirs[i], G_FILE_TEST_EXISTS))
+        {
+          add_args (argv_array,
+                    "--ro-bind", system_cache_dirs[i], "/run/host/fonts-cache",
+                    NULL);
+          break;
+        }
     }
 
   home = g_file_new_for_path (g_get_home_dir ());
@@ -3520,6 +3535,14 @@ add_font_path_args (GPtrArray *argv_array)
     {
       add_args (argv_array,
                 "--ro-bind", flatpak_file_get_path_cached (user_font2), "/run/host/user-fonts",
+                NULL);
+    }
+
+  user_font_cache = g_file_resolve_relative_path (home, ".cache/fontconfig");
+  if (g_file_query_exists (user_font_cache, NULL))
+    {
+      add_args (argv_array,
+                "--ro-bind", flatpak_file_get_path_cached (user_font_cache), "/run/host/user-fonts-cache",
                 NULL);
     }
 }
