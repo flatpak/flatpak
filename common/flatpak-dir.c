@@ -7709,6 +7709,64 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
   return NULL;
 }
 
+char *
+flatpak_dir_find_local_ref (FlatpakDir   *self,
+                            const char   *remote,
+                            const char   *name,
+                            const char   *opt_branch,
+                            const char   *opt_default_branch,
+                            const char   *opt_arch,
+                            FlatpakKinds  kinds,
+                            FlatpakKinds *out_kind,
+                            GCancellable *cancellable,
+                            GError      **error)
+{
+  g_autofree char *local_ref = NULL;
+  g_autoptr(GHashTable) local_refs = NULL;
+  g_autoptr(GError) my_error = NULL;
+
+  if (!flatpak_dir_ensure_repo (self, NULL, error))
+    return NULL;
+
+  if (!ostree_repo_list_refs (self->repo, NULL, &local_refs, cancellable, error))
+    return NULL;
+
+  local_ref = find_matching_ref (local_refs, name, opt_branch, opt_default_branch,
+                                 opt_arch, kinds, &my_error);
+  if (local_ref == NULL)
+    {
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        g_clear_error (&my_error);
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
+    }
+  else
+    {
+      if (out_kind != NULL)
+        {
+          if (g_str_has_prefix (local_ref, "app/"))
+            *out_kind = FLATPAK_KINDS_APP;
+          else
+            *out_kind = FLATPAK_KINDS_RUNTIME;
+        }
+
+      return g_steal_pointer (&local_ref);
+    }
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+               _("Can't find %s%s%s%s%s in remote %s"), name,
+               (opt_arch != NULL || opt_branch != NULL) ? "/" : "",
+               opt_arch ? opt_arch : "",
+               opt_branch ? "/" : "",
+               opt_branch ? opt_branch : "",
+               remote);
+
+  return NULL;
+}
+
 
 static GHashTable *
 flatpak_dir_get_all_installed_refs (FlatpakDir  *self,
