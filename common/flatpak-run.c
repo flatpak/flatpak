@@ -2922,6 +2922,8 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
     }
 
   export_paths_export_context (context, exports, app_id_dir, TRUE, xdg_dirs_conf, &home_access);
+  if (app_id_dir != NULL)
+    *envp_p = flatpak_run_apply_env_appid (*envp_p, app_id_dir);
 
   if (!home_access)
     {
@@ -4852,8 +4854,6 @@ flatpak_run_app (const char     *app_ref,
   envp = g_get_environ ();
   envp = flatpak_run_apply_env_default (envp);
   envp = flatpak_run_apply_env_vars (envp, app_context);
-  if (app_id_dir != NULL)
-    envp = flatpak_run_apply_env_appid (envp, app_id_dir);
 
   add_args (argv_array,
             "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",

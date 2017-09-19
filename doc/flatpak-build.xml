@@ -241,6 +241,15 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>--with-appdir</option></term>
+
+                <listitem><para>
+                  Expose and configure access to the per-app storage directory in $HOME/.var/app. This is
+                  not normally useful when building, but helps when testing built apps.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--add-policy=SUBSYSTEM.KEY=VALUE</option></term>
 
                 <listitem><para>

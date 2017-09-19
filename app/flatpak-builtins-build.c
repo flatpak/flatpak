@@ -40,6 +40,7 @@ static char **opt_bind_mounts;
 static char *opt_sdk_dir;
 static char *opt_metadata;
 static gboolean opt_die_with_parent;
+static gboolean opt_with_appdir;
 
 static GOptionEntry options[] = {
   { "runtime", 'r', 0, G_OPTION_ARG_NONE, &opt_runtime, N_("Use Platform runtime rather than Sdk"), NULL },
@@ -48,6 +49,7 @@ static GOptionEntry options[] = {
   { "sdk-dir", 0, 0, G_OPTION_ARG_STRING, &opt_sdk_dir, N_("Where to look for custom sdk dir (defaults to 'usr')"), N_("DIR") },
   { "metadata", 0, 0, G_OPTION_ARG_STRING, &opt_metadata, N_("Use alternative file for the metadata"), N_("FILE") },
   { "die-with-parent", 'p', 0, G_OPTION_ARG_NONE, &opt_die_with_parent, N_("Kill processes when the parent process dies"), NULL },
+  { "with-appdir", 0, 0, G_OPTION_ARG_NONE, &opt_with_appdir, N_("Export application homedir directory to build"), NULL },
   { NULL }
 };
 
@@ -105,6 +107,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   gboolean is_extension = FALSE;
   gboolean is_app_extension = FALSE;
   g_autofree char *app_info_path = NULL;
+  g_autoptr(GFile) app_id_dir = NULL;
 
   context = g_option_context_new (_("DIRECTORY [COMMAND [args...]] - Build in directory"));
   g_option_context_set_translation_domain (context, GETTEXT_PACKAGE);
@@ -216,7 +219,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   res_files = g_file_get_child (res_deploy, "files");
 
   if (is_app)
-    app_files = g_object_ref (res_files);
+    {
+      app_files = g_object_ref (res_files);
+      if (opt_with_appdir)
+        app_id_dir = flatpak_ensure_data_dir (id, cancellable, NULL);
+    }
   else if (is_extension)
     {
       g_autoptr(GKeyFile) x_metakey = NULL;
@@ -302,7 +309,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   /* Never set up an a11y bus for builds */
   run_flags |= FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY;
 
-  if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, NULL, runtime_ref_parts[2],
+  if (!flatpak_run_setup_base_argv (argv_array, NULL, runtime_files, app_id_dir, runtime_ref_parts[2],
                                     run_flags, error))
     return FALSE;
 
@@ -373,7 +380,7 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
     return FALSE;
 
   if (!flatpak_run_add_environment_args (argv_array, NULL, &envp, app_info_path, run_flags, id,
-                                         app_context, NULL, NULL, cancellable, error))
+                                         app_context, app_id_dir, NULL, cancellable, error))
     return FALSE;
 
   /* After setup_base to avoid conflicts with /var symlinks */
