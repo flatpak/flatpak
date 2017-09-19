@@ -7648,6 +7648,57 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
   return (char **)g_ptr_array_free (matched_refs, FALSE);
 }
 
+static char *
+find_ref_for_refs_set (GHashTable *refs,
+                       const char   *name,
+                       const char   *opt_branch,
+                       const char   *opt_default_branch,
+                       const char   *opt_arch,
+                       FlatpakKinds  kinds,
+                       FlatpakKinds *out_kind,
+                       GError      **error)
+{
+  g_autoptr(GError) my_error = NULL;
+  g_autofree gchar *ref = find_matching_ref (refs,
+                                             name,
+                                             opt_branch,
+                                             opt_default_branch,
+                                             opt_arch,
+                                             kinds,
+                                             &my_error);
+  if (ref == NULL)
+    {
+      if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        g_clear_error (&my_error);
+      else
+        {
+          g_propagate_error (error, g_steal_pointer (&my_error));
+          return NULL;
+        }
+    }
+  else
+    {
+      if (out_kind != NULL)
+        {
+          if (g_str_has_prefix (ref, "app/"))
+            *out_kind = FLATPAK_KINDS_APP;
+          else
+            *out_kind = FLATPAK_KINDS_RUNTIME;
+        }
+
+      return g_steal_pointer (&ref);
+    }
+
+  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+               _("Can't find ref %s%s%s%s%s"), name,
+               (opt_arch != NULL || opt_branch != NULL) ? "/" : "",
+               opt_arch ? opt_arch : "",
+               opt_branch ? "/" : "",
+               opt_branch ? opt_branch : "");
+
+  return NULL;
+}
+
 /* FIXME: For command line completion support for collection–refs over P2P,
  * we need a version which works with collections. */
 char *
@@ -7673,40 +7724,27 @@ flatpak_dir_find_remote_ref (FlatpakDir   *self,
                                      &remote_refs, cancellable, error))
     return NULL;
 
-  remote_ref = find_matching_ref (remote_refs, name, opt_branch, opt_default_branch,
-                                  opt_arch, kinds, &my_error);
-  if (remote_ref == NULL)
+  remote_ref = find_ref_for_refs_set (remote_refs, name, opt_branch,
+                                      opt_default_branch, opt_arch, kinds,
+                                      out_kind, &my_error);
+  if (!remote_ref)
     {
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        g_clear_error (&my_error);
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                       _("Error searching remote %s: %s"),
+                       remote,
+                       my_error->message);
+          return NULL;
+        }
       else
         {
           g_propagate_error (error, g_steal_pointer (&my_error));
           return NULL;
         }
     }
-  else
-    {
-      if (out_kind != NULL)
-        {
-          if (g_str_has_prefix (remote_ref, "app/"))
-            *out_kind = FLATPAK_KINDS_APP;
-          else
-            *out_kind = FLATPAK_KINDS_RUNTIME;
-        }
 
-      return g_steal_pointer (&remote_ref);
-    }
-
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-               _("Can't find %s%s%s%s%s in remote %s"), name,
-               (opt_arch != NULL || opt_branch != NULL) ? "/" : "",
-               opt_arch ? opt_arch : "",
-               opt_branch ? "/" : "",
-               opt_branch ? opt_branch : "",
-               remote);
-
-  return NULL;
+  return g_steal_pointer (&remote_ref);
 }
 
 char *
@@ -7731,40 +7769,26 @@ flatpak_dir_find_local_ref (FlatpakDir   *self,
   if (!ostree_repo_list_refs (self->repo, NULL, &local_refs, cancellable, error))
     return NULL;
 
-  local_ref = find_matching_ref (local_refs, name, opt_branch, opt_default_branch,
-                                 opt_arch, kinds, &my_error);
-  if (local_ref == NULL)
+  local_ref = find_ref_for_refs_set (local_refs, name, opt_branch,
+                                     opt_default_branch, opt_arch, kinds,
+                                     out_kind, &my_error);
+  if (!local_ref)
     {
       if (g_error_matches (my_error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
-        g_clear_error (&my_error);
+        {
+          g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                       _("Error searching local repository: %s"),
+                       my_error->message);
+          return NULL;
+        }
       else
         {
           g_propagate_error (error, g_steal_pointer (&my_error));
           return NULL;
         }
     }
-  else
-    {
-      if (out_kind != NULL)
-        {
-          if (g_str_has_prefix (local_ref, "app/"))
-            *out_kind = FLATPAK_KINDS_APP;
-          else
-            *out_kind = FLATPAK_KINDS_RUNTIME;
-        }
 
-      return g_steal_pointer (&local_ref);
-    }
-
-  g_set_error (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
-               _("Can't find %s%s%s%s%s in local repository"), name,
-               (opt_arch != NULL || opt_branch != NULL) ? "/" : "",
-               opt_arch ? opt_arch : "",
-               opt_branch ? "/" : "",
-               opt_branch ? opt_branch : "",
-               remote);
-
-  return NULL;
+  return g_steal_pointer (&local_ref);
 }
 
 
