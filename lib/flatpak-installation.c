@@ -1311,7 +1311,7 @@ flatpak_installation_install_ref_file (FlatpakInstallation *self,
  * Install a new application or runtime.
  *
  * Note that this function was originally written to always return a
- * #FlatpakInstalledRef. Since 0.9.12.12, passing
+ * #FlatpakInstalledRef. Since 0.9.13, passing
  * FLATPAK_INSTALL_FLAGS_NO_DEPLOY will only pull refs into the local flatpak
  * repository without deploying them, however this function will
  * be unable to provide information on the installed ref, so
@@ -1419,7 +1419,7 @@ out:
  * Install a new application or runtime.
  *
  * Note that this function was originally written to always return a
- * #FlatpakInstalledRef. Since 0.9.12.12, passing
+ * #FlatpakInstalledRef. Since 0.9.13, passing
  * FLATPAK_INSTALL_FLAGS_NO_DEPLOY will only pull refs into the local flatpak
  * repository without deploying them, however this function will
  * be unable to provide information on the installed ref, so
