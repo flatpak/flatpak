@@ -3500,6 +3500,7 @@ add_font_path_args (GPtrArray *argv_array)
   g_autoptr(GFile) user_font2 = NULL;
   g_autoptr(GFile) user_font_cache = NULL;
   g_auto(GStrv) system_cache_dirs = NULL;
+  gboolean found_cache = FALSE;
   int i;
 
   if (g_file_test (SYSTEM_FONTS_DIR, G_FILE_TEST_EXISTS))
@@ -3517,8 +3518,19 @@ add_font_path_args (GPtrArray *argv_array)
           add_args (argv_array,
                     "--ro-bind", system_cache_dirs[i], "/run/host/fonts-cache",
                     NULL);
+          found_cache = TRUE;
           break;
         }
+    }
+
+  if (!found_cache)
+    {
+      /* We ensure these directories are never writable, or fontconfig
+         will use them to write the default cache */
+      add_args (argv_array,
+                "--tmpfs", "/run/host/fonts-cache",
+                "--remount-ro", "/run/host/fonts-cache",
+                NULL);
     }
 
   home = g_file_new_for_path (g_get_home_dir ());
@@ -3543,6 +3555,15 @@ add_font_path_args (GPtrArray *argv_array)
     {
       add_args (argv_array,
                 "--ro-bind", flatpak_file_get_path_cached (user_font_cache), "/run/host/user-fonts-cache",
+                NULL);
+    }
+  else
+    {
+      /* We ensure these directories are never writable, or fontconfig
+         will use them to write the default cache */
+      add_args (argv_array,
+                "--tmpfs", "/run/host/user-fonts-cache",
+                "--remount-ro", "/run/host/user-fonts-cache",
                 NULL);
     }
 }
