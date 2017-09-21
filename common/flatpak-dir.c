@@ -9547,7 +9547,8 @@ add_related (FlatpakDir *self,
              const char *checksum,
              gboolean no_autodownload,
              const char *download_if,
-             gboolean autodelete)
+             gboolean autodelete,
+             gboolean locale_subset)
 {
   g_autoptr(GVariant) deploy_data = NULL;
   g_autofree const char **old_subpaths = NULL;
@@ -9579,13 +9580,16 @@ add_related (FlatpakDir *self,
       delete = TRUE;
     }
 
+  if (g_str_has_suffix (extension, ".Locale"))
+    locale_subset = TRUE;
+
   if (old_subpaths)
     {
       for (i = 0; old_subpaths[i] != NULL; i++)
         g_ptr_array_add (subpaths, g_strdup (old_subpaths[i]));
     }
 
-  if (g_str_has_suffix (extension, ".Locale"))
+  if (locale_subset)
     {
       g_autofree char ** current_subpaths = flatpak_dir_get_locale_subpaths (self);
       for (i = 0; current_subpaths[i] != NULL; i++)
@@ -9679,6 +9683,8 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                                                                     FLATPAK_METADATA_KEY_DOWNLOAD_IF, NULL);
               gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
                                                             FLATPAK_METADATA_KEY_AUTODELETE, NULL);
+              gboolean locale_subset = g_key_file_get_boolean (metakey, groups[i],
+                                                               FLATPAK_METADATA_KEY_LOCALE_SUBSET, NULL);
               g_autofree char *extension_collection_id = NULL;
               const char *branch;
               g_autofree char *extension_ref = NULL;
@@ -9712,7 +9718,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
 
               if (flatpak_summary_lookup_ref (summary, extension_collection_id, extension_ref, &checksum, NULL))
                 {
-                  add_related (self, related, extension, extension_collection_id, extension_ref, checksum, no_autodownload, download_if, autodelete);
+                  add_related (self, related, extension, extension_collection_id, extension_ref, checksum, no_autodownload, download_if, autodelete, locale_subset);
                 }
               else if (subdirectories)
                 {
@@ -9721,7 +9727,7 @@ flatpak_dir_find_remote_related (FlatpakDir *self,
                   for (j = 0; refs[j] != NULL; j++)
                     {
                       if (flatpak_summary_lookup_ref (summary, extension_collection_id, refs[j], &checksum, NULL))
-                        add_related (self, related, extension, extension_collection_id, refs[j], checksum, no_autodownload, download_if, autodelete);
+                        add_related (self, related, extension, extension_collection_id, refs[j], checksum, no_autodownload, download_if, autodelete, locale_subset);
                     }
                 }
             }
@@ -9837,6 +9843,8 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                                                                     FLATPAK_METADATA_KEY_DOWNLOAD_IF, NULL);
               gboolean autodelete = g_key_file_get_boolean (metakey, groups[i],
                                                             FLATPAK_METADATA_KEY_AUTODELETE, NULL);
+              gboolean locale_subset = g_key_file_get_boolean (metakey, groups[i],
+                                                               FLATPAK_METADATA_KEY_LOCALE_SUBSET, NULL);
               const char *branch;
               g_autofree char *extension_ref = NULL;
               g_autofree char *prefixed_extension_ref = NULL;
@@ -9877,7 +9885,7 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                                            NULL))
                 {
                   add_related (self, related, extension, extension_collection_id, extension_ref,
-                               checksum, no_autodownload, download_if, autodelete);
+                               checksum, no_autodownload, download_if, autodelete, locale_subset);
                 }
               else if (subdirectories)
                 {
@@ -9899,7 +9907,7 @@ flatpak_dir_find_local_related (FlatpakDir *self,
                         {
                           add_related (self, related, extension,
                                        extension_collection_id, match, match_checksum,
-                                       no_autodownload, download_if, autodelete);
+                                       no_autodownload, download_if, autodelete, locale_subset);
                         }
                     }
                 }

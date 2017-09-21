@@ -638,6 +638,15 @@
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
+                    <term><option>locale-subset</option> (boolean)</term>
+                    <listitem><para>
+                        If set, then the extensions are partially downloaded by default,
+                        based on the currently configured locales. This means that the extension
+                        contents should be a set of directories with the language code as name.
+                        Available since 0.9.13 (and 0.6.6 for any extensions called *.Locale)
+                    </para></listitem>
+                </varlistentry>
+                <varlistentry>
                     <term><option>autodelete</option> (boolean)</term>
                     <listitem><para>
                         Whether to automatically delete extensions matching this extension

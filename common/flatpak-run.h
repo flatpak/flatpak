@@ -71,6 +71,7 @@ gboolean flatpak_run_in_transient_unit (const char *app_id,
 #define FLATPAK_METADATA_KEY_NO_AUTODOWNLOAD "no-autodownload"
 #define FLATPAK_METADATA_KEY_SUBDIRECTORIES "subdirectories"
 #define FLATPAK_METADATA_KEY_SUBDIRECTORY_SUFFIX "subdirectory-suffix"
+#define FLATPAK_METADATA_KEY_LOCALE_SUBSET "locale-subset"
 #define FLATPAK_METADATA_KEY_VERSION "version"
 #define FLATPAK_METADATA_KEY_VERSIONS "versions"
 
