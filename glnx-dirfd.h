@@ -92,7 +92,7 @@ void glnx_gen_temp_name (gchar *tmpl);
  * @mode: Mode
  * @error: Return location for a #GError, or %NULL
  *
- * Wrapper around mkdirat() which ignores adds #GError support, ensures that
+ * Wrapper around mkdirat() which adds #GError support, ensures that
  * it retries on %EINTR, and also ignores `EEXIST`.
  *
  * See also `glnx_shutil_mkdir_p_at()` for recursive handling.
