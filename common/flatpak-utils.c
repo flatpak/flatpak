@@ -5234,20 +5234,16 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
   while (tmpdir_name == NULL)
     {
       g_autofree char *tmpdir_name_template = g_strconcat (tmpdir_prefix, "XXXXXX", NULL);
-      glnx_fd_close int new_tmpdir_fd = -1;
       g_autoptr(GError) local_error = NULL;
       g_autofree char *lock_name = NULL;
-
+      g_auto(GLnxTmpDir) new_tmpdir = { 0, };
       /* No existing tmpdir found, create a new */
 
-      if (!glnx_mkdtempat (dfd_iter.fd, tmpdir_name_template, 0777, error))
+      if (!glnx_mkdtempat (dfd_iter.fd, tmpdir_name_template, 0777,
+                           &new_tmpdir, error))
         return FALSE;
 
-      if (!glnx_opendirat (dfd_iter.fd, tmpdir_name_template, FALSE,
-                           &new_tmpdir_fd, error))
-        return FALSE;
-
-      lock_name = g_strconcat (tmpdir_name_template, "-lock", NULL);
+      lock_name = g_strconcat (new_tmpdir.path, "-lock", NULL);
 
       /* Note, at this point we can race with another process that picks up this
        * new directory. If that happens we need to retry, making a new directory. */
@@ -5256,6 +5252,7 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
         {
           if (g_error_matches (local_error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
             {
+              glnx_tmpdir_unset (&new_tmpdir); /* Don't delete */
               continue;
             }
           else
@@ -5265,8 +5262,9 @@ flatpak_allocate_tmpdir (int           tmpdir_dfd,
             }
         }
 
-      tmpdir_name = g_steal_pointer (&tmpdir_name_template);
-      tmpdir_fd = glnx_steal_fd (&new_tmpdir_fd);
+      tmpdir_name = g_strdup (new_tmpdir.path);
+      tmpdir_fd = dup (new_tmpdir.fd);
+      glnx_tmpdir_unset (&new_tmpdir); /* Don't delete */
     }
 
   if (tmpdir_name_out)

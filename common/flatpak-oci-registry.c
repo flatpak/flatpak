@@ -1689,19 +1689,16 @@ read_gpg_buffer (gpgme_data_t buffer, GError **error)
 
 static gboolean
 flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t     gpgme_ctx,
-                                char          **out_tmp_home_dir,
+                                GLnxTmpDir     *tmpdir,
                                 OstreeRepo     *repo,
                                 const char     *remote_name,
                                 GCancellable   *cancellable,
                                 GError        **error)
 {
-  g_autofree char *tmp_home_dir = NULL;
+  g_autofree char *tmp_home_dir_pattern = NULL;
   gpgme_error_t gpg_error;
-  gboolean ret = FALSE;
   g_autoptr(GFile) keyring_file = NULL;
   g_autofree char *keyring_name = NULL;
-  g_autoptr(GFile) pubring_file = NULL;
-  g_autofree char *pubring_path = NULL;
 
   g_return_val_if_fail (gpgme_ctx != NULL, FALSE);
 
@@ -1711,50 +1708,34 @@ flatpak_gpgme_ctx_tmp_home_dir (gpgme_ctx_t     gpgme_ctx,
    * and hand the caller an open output stream to concatenate necessary
    * keyring files. */
 
-  tmp_home_dir = g_build_filename (g_get_tmp_dir (), "flatpak-gpg-XXXXXX", NULL);
-  if (mkdtemp (tmp_home_dir) == NULL)
-    {
-      glnx_set_error_from_errno (error);
-      goto out;
-    }
+  tmp_home_dir_pattern = g_build_filename (g_get_tmp_dir (), "flatpak-gpg-XXXXXX", NULL);
+
+  if (!glnx_mkdtempat (AT_FDCWD, tmp_home_dir_pattern, 0700,
+                       tmpdir, error))
+    return FALSE;
 
   /* Not documented, but gpgme_ctx_set_engine_info() accepts NULL for
    * the executable file name, which leaves the old setting unchanged. */
   gpg_error = gpgme_ctx_set_engine_info (gpgme_ctx,
                                          GPGME_PROTOCOL_OpenPGP,
-                                         NULL, tmp_home_dir);
+                                         NULL, tmpdir->path);
   if (gpg_error != GPG_ERR_NO_ERROR)
     {
       flatpak_gpgme_error_to_gio_error (gpg_error, error);
-      goto out;
+      return FALSE;
     }
 
   keyring_name = g_strdup_printf ("%s.trustedkeys.gpg", remote_name);
   keyring_file = g_file_get_child (ostree_repo_get_path (repo), keyring_name);
 
-  pubring_path = g_build_filename (tmp_home_dir, "pubring.gpg", NULL);
-  pubring_file = g_file_new_for_path (pubring_path);
-
   if (g_file_query_exists (keyring_file, NULL) &&
       !glnx_file_copy_at (AT_FDCWD, flatpak_file_get_path_cached (keyring_file), NULL,
-                          AT_FDCWD, flatpak_file_get_path_cached (pubring_file),
+                          tmpdir->fd, "pubring.gpg",
                           GLNX_FILE_COPY_OVERWRITE | GLNX_FILE_COPY_NOXATTRS,
                           cancellable, error))
-    goto out;
+    return FALSE;
 
-  if (out_tmp_home_dir != NULL)
-    *out_tmp_home_dir = g_steal_pointer (&tmp_home_dir);
-
-  ret = TRUE;
-
-out:
-  if (!ret)
-    {
-      /* Clean up our mess on error. */
-      (void) glnx_shutil_rm_rf_at (AT_FDCWD, tmp_home_dir, NULL, NULL);
-    }
-
-  return ret;
+  return TRUE;
 }
 
 FlatpakOciSignature *
@@ -1767,13 +1748,13 @@ flatpak_oci_verify_signature (OstreeRepo *repo,
   gpgme_error_t gpg_error;
   g_auto(gpgme_data_t) signed_data_buffer = NULL;
   g_auto(gpgme_data_t) plain_buffer = NULL;
-  g_autofree char *tmp_home_dir = NULL;
   gpgme_verify_result_t vresult;
   gpgme_signature_t sig;
   int valid_count;
   g_autoptr(GString) plain = NULL;
   g_autoptr(GBytes) plain_bytes = NULL;
   g_autoptr(FlatpakJson) json = NULL;
+  g_auto(GLnxTmpDir) tmp_home_dir = { 0, };
 
   gpg_error = gpgme_new (&context);
   if (gpg_error != GPG_ERR_NO_ERROR)
