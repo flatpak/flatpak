@@ -60,6 +60,8 @@ libflatpak_common_la_SOURCES = \
 	common/flatpak-json-oci.h \
 	common/flatpak-oci-registry.c \
 	common/flatpak-oci-registry.h \
+	common/flatpak-transaction-log.c \
+	common/flatpak-transaction-log.h \
 	$(NULL)
 
 libflatpak_common_la_CFLAGS = \
