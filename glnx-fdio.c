@@ -930,11 +930,16 @@ glnx_file_copy_at (int                   src_dfd,
   if (!glnx_openat_rdonly (src_dfd, src_subpath, FALSE, &src_fd, error))
     return FALSE;
 
-  /* Open a tmpfile for dest */
+  /* Open a tmpfile for dest. Particularly for AT_FDCWD calls, we really want to
+   * open in the target directory, otherwise we may not be able to link.
+   */
   g_auto(GLnxTmpfile) tmp_dest = { 0, };
-  if (!glnx_open_tmpfile_linkable_at (dest_dfd, ".", O_WRONLY | O_CLOEXEC,
-                                      &tmp_dest, error))
-    return FALSE;
+  { char *dnbuf = strdupa (dest_subpath);
+    const char *dn = dirname (dnbuf);
+    if (!glnx_open_tmpfile_linkable_at (dest_dfd, dn, O_WRONLY | O_CLOEXEC,
+                                        &tmp_dest, error))
+      return FALSE;
+  }
 
   if (glnx_regfile_copy_bytes (src_fd, tmp_dest.fd, (off_t) -1) < 0)
     return glnx_throw_errno_prefix (error, "regfile copy");
