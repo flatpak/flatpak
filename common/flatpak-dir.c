@@ -1201,6 +1201,34 @@ flatpak_dir_lock (FlatpakDir   *self,
   return glnx_make_lock_file (AT_FDCWD, lock_path, LOCK_EX, lockfile, error);
 }
 
+
+/* This is an lock that protects the repo itself. Any operation that
+ * relies on objects not disappearing from the repo need to hold this
+ * in a non-exclusive mode, while anything that can remove objects
+ * (i.e. prune) need to take it in exclusive mode.
+ *
+ * The following operations depends on objects not disappearing:
+ *  * pull into a staging directory (pre-existing objects are not downloaded)
+ *  * moving a staging directory into the repo (no ref keeps the object alive during copy)
+ *  * Deploying a ref (a parallel update + prune could cause objects to be removed)
+ *
+ * In practice this means we hold a shared lock during deploy and
+ * pull, and an excusive lock during prune.
+ */
+gboolean
+flatpak_dir_repo_lock (FlatpakDir   *self,
+                       GLnxLockFile *lockfile,
+                       int           operation,
+                       GCancellable *cancellable,
+                       GError      **error)
+{
+  g_autoptr(GFile) lock_file = g_file_get_child (flatpak_dir_get_path (self), "repo-lock");
+  g_autofree char *lock_path = g_file_get_path (lock_file);
+
+  return glnx_make_lock_file (AT_FDCWD, lock_path, operation, lockfile, error);
+}
+
+
 const char *
 flatpak_deploy_data_get_origin (GVariant *deploy_data)
 {
@@ -1635,6 +1663,13 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   glnx_fd_close int dfd = -1;
   g_autoptr(GFileInfo) file_info = NULL;
   g_autofree char *tmpname = g_strdup (".active-XXXXXX");
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+
+  /* Keep a shared repo lock to avoid prunes removing objects we're relying on
+   * while we do the checkout. This could happen if the ref changes after we
+   * read its current value for the checkout. */
+  if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
+    return FALSE;
 
   appstream_dir = g_file_get_child (flatpak_dir_get_path (self), "appstream");
   remote_dir = g_file_get_child (appstream_dir, remote);
@@ -2844,11 +2879,21 @@ flatpak_dir_pull (FlatpakDir          *self,
   g_autoptr(GPtrArray) subdirs_arg = NULL;
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
   const OstreeRepoFinderResult * const *results;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   /* If @opt_results is set, @opt_rev must be. */
   g_return_val_if_fail (opt_results == NULL || opt_rev != NULL, FALSE);
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  /* Keep a shared repo lock to avoid prunes removing objects we're relying on
+   * while we do the pull. There are two cases we protect against. 1) objects
+   * we need but that were already decided was locall available could be removed,
+   * and 2) during the transaction commit objects that not yet have a ref to the
+   * could be considered unreachable.
+   */
+  if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
   if (flatpak_dir_get_remote_oci (self, repository))
@@ -3133,9 +3178,19 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autoptr(GVariant) new_commit = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
   gboolean ret = FALSE;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  /* Keep a shared repo lock to avoid prunes removing objects we're relying on
+   * while we do the pull. There are two cases we protect against. 1) objects
+   * we need but that were already decided was locall available could be removed,
+   * and 2) during the transaction commit objects that not yet have a ref to the
+   * could be considered unreachable.
+   */
+  if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
   if (!ostree_repo_remote_get_gpg_verify_summary (self->repo, remote_name,
@@ -4944,8 +4999,15 @@ flatpak_dir_deploy (FlatpakDir          *self,
   gboolean created_extra_data = FALSE;
   g_autoptr(GVariant) commit_metadata = NULL;
   GVariantBuilder metadata_builder;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
+    return FALSE;
+
+  /* Keep a shared repo lock to avoid prunes removing objects we're relying on
+   * while we do the checkout. This could happen if the ref changes after we
+   * read its current value for the checkout. */
+  if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
   deploy_base = flatpak_dir_get_deploy_dir (self, ref);
@@ -6960,6 +7022,8 @@ flatpak_dir_prune (FlatpakDir   *self,
   guint64 pruned_object_size_total;
   g_autofree char *formatted_freed_size = NULL;
   g_autoptr(GError) local_error = NULL;
+  g_autoptr(GError) lock_error = NULL;
+  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
   if (error == NULL)
     error = &local_error;
@@ -6967,6 +7031,22 @@ flatpak_dir_prune (FlatpakDir   *self,
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     goto out;
 
+  /* This could remove objects, so take an exclusive repo lock */
+  if (!flatpak_dir_repo_lock (self, &lock, LOCK_EX | LOCK_NB, cancellable, &lock_error))
+    {
+      /* If we can't get an exclusive lock, don't block for a long time. Eventually
+         the shared lock operation is released and we will do a prune then */
+      if (g_error_matches (lock_error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
+        {
+          g_debug ("Skipping prune do to in progress operation");
+          return TRUE;
+        }
+
+      g_propagate_error (error, g_steal_pointer (&lock_error));
+      return FALSE;
+    }
+
+  g_debug ("Pruning repo");
   if (!ostree_repo_prune (self->repo,
                           OSTREE_REPO_PRUNE_FLAGS_REFS_ONLY,
                           0,

@@ -387,6 +387,11 @@ gboolean    flatpak_dir_lock (FlatpakDir   *self,
                               GLnxLockFile *lockfile,
                               GCancellable *cancellable,
                               GError      **error);
+gboolean    flatpak_dir_repo_lock (FlatpakDir   *self,
+                                   GLnxLockFile *lockfile,
+                                   gboolean      exclusive,
+                                   GCancellable *cancellable,
+                                   GError      **error);
 gboolean    flatpak_dir_deploy (FlatpakDir          *self,
                                 const char          *origin,
                                 const char          *ref,
