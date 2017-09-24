@@ -309,4 +309,13 @@ FLATPAK_EXTERN GPtrArray    *    flatpak_installation_list_installed_related_ref
                                                                                         GCancellable        *cancellable,
                                                                                         GError             **error);
 
+FLATPAK_EXTERN gboolean          flatpak_installation_remove_local_ref_sync (FlatpakInstallation *self,
+                                                                             const char          *remote_name,
+                                                                             const char          *ref,
+                                                                             GCancellable        *cancellable,
+                                                                             GError              **error);
+FLATPAK_EXTERN gboolean          flatpak_installation_cleanup_local_refs_sync (FlatpakInstallation *self,
+                                                                               GCancellable        *cancellable,
+                                                                               GError              **error);
+
 #endif /* __FLATPAK_INSTALLATION_H__ */
