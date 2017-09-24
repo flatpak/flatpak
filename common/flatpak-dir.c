@@ -7033,6 +7033,58 @@ out:
   return ret;
 }
 
+static GHashTable *
+filter_out_deployed_refs (FlatpakDir *self,
+                          GHashTable *local_refs)
+{
+  GHashTable *undeployed_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  g_autoptr(GVariant) deploy_data = NULL;
+  GHashTableIter hash_iter;
+  gpointer key;
+
+  g_hash_table_iter_init (&hash_iter, local_refs);
+  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+    {
+      g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (self, key, NULL, NULL);
+
+      if (!deploy_data)
+        g_hash_table_add (undeployed_refs, g_strdup (key));
+    }
+
+  return undeployed_refs;
+}
+
+gboolean
+flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
+                                     GCancellable *cancellable,
+                                     GError      **error)
+{
+  g_autoptr(GHashTable) local_refs = NULL;
+  g_autoptr(GHashTable) undeployed_refs = NULL;
+  GHashTableIter hash_iter;
+  gpointer key;
+
+  if (!ostree_repo_list_refs (self->repo, NULL, &local_refs, cancellable, error))
+    return FALSE;
+
+  undeployed_refs = filter_out_deployed_refs (self, local_refs);
+  g_hash_table_iter_init (&hash_iter, undeployed_refs);
+
+  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
+    {
+      g_autofree gchar *remote = NULL;
+      g_autofree gchar *ref = NULL;
+
+      if (!ostree_parse_refspec (key, &remote, &ref, error))
+        return FALSE;
+
+      if (!flatpak_dir_remove_ref (self, remote, ref, cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 gboolean
 flatpak_dir_prune (FlatpakDir   *self,
                    GCancellable *cancellable,
