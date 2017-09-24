@@ -2041,3 +2041,59 @@ flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self
 
   return g_steal_pointer (&refs);
 }
+
+/**
+ * flatpak_installation_remove_local_ref_sync
+ * @self: a #FlatpakInstallation
+ * @remote_name: the name of the remote
+ * @ref: the ref
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Remove the OSTree ref given by @remote_name:@ref from the local flatpak
+ * repository. The next time the underlying OSTree repo is pruned, objects
+ * which were attached to that ref will be removed. This is useful if you
+ * pulled a flatpak ref using flatpak_installation_install_full() and
+ * specified %FLATPAK_INSTALL_FLAGS_NO_DEPLOY but then decided not to
+ * deploy the ref later on and want to remove the local ref to prevent it
+ * from taking up disk space.
+ *
+ * Returns: %TRUE on success
+ */
+gboolean
+flatpak_installation_remove_local_ref_sync (FlatpakInstallation *self,
+                                            const char          *remote_name,
+                                            const char          *ref,
+                                            GCancellable        *cancellable,
+                                            GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+
+  return flatpak_dir_remove_ref (dir, remote_name, ref, cancellable, error);
+}
+
+/**
+ * flatpak_installation_cleanup_local_refs_sync
+ * @self: a #FlatpakInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Remove all OSTree refs from the local flatpak repository which are not
+ * in a deployed state. The next time the underlying OSTree repo is pruned,
+ * objects which were attached to that ref will be removed. This is useful if
+ * you pulled a flatpak refs using flatpak_installation_install_full() and
+ * specified %FLATPAK_INSTALL_FLAGS_NO_DEPLOY but then decided not to
+ * deploy the refs later on and want to remove the local refs to prevent them
+ * from taking up disk space.
+ *
+ * Returns: %TRUE on success
+ */
+gboolean
+flatpak_installation_cleanup_local_refs_sync (FlatpakInstallation *self,
+                                              GCancellable        *cancellable,
+                                              GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+
+  return flatpak_dir_cleanup_undeployed_refs (dir, cancellable, error);
+}
