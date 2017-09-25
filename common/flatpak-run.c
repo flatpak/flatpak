@@ -2880,6 +2880,21 @@ flatpak_exports_from_context (FlatpakContext *context,
   return g_steal_pointer (&exports);
 }
 
+/* This resolves the target here rather than the destination, because
+   it may not resolve in bwrap setup due to absolute relative links
+   conflicting with /newroot root. */
+static void
+add_bind_arg (GPtrArray *argv_array,
+              const char *type,
+              const char *src,
+              const char *dest)
+{
+  g_autofree char *dest_real = realpath (dest, NULL);
+
+  if (dest_real)
+    add_args (argv_array, type, src, dest_real, NULL);
+}
+
 gboolean
 flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                   GArray         *fd_array,
@@ -2982,9 +2997,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
 
           g_mkdir_with_parents (src, 0755);
 
-          add_args (argv_array,
-                    "--bind", src, dest,
-                    NULL);
+          add_bind_arg (argv_array, "--bind", src, dest);
         }
     }
 
@@ -3042,10 +3055,9 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
                   g_file_test (xdg_path, G_FILE_TEST_IS_REGULAR))
                 {
                   g_autofree char *xdg_path_in_app = g_file_get_path (app_version_subdir);
-                  add_args (argv_array,
-                            mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY ? "--ro-bind" : "--bind",
-                            xdg_path, xdg_path_in_app,
-                            NULL);
+                  add_bind_arg (argv_array,
+                                mode == FLATPAK_FILESYSTEM_MODE_READ_ONLY ? "--ro-bind" : "--bind",
+                                xdg_path, xdg_path_in_app);
                 }
             }
         }
@@ -3059,9 +3071,7 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
       g_autofree char *path = g_build_filename (flatpak_file_get_path_cached (app_id_dir),
                                                 "config/user-dirs.dirs", NULL);
       if (g_file_test (src_path, G_FILE_TEST_EXISTS))
-        add_args (argv_array,
-                  "--ro-bind", src_path, path,
-                  NULL);
+        add_bind_arg (argv_array, "--ro-bind", src_path, path);
     }
   else if (xdg_dirs_conf->len > 0 && app_id_dir != NULL)
     {
