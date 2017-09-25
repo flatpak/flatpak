@@ -2357,13 +2357,13 @@ make_relative (const char *base, const char *path)
   return g_string_free (s, FALSE);
 }
 
-#define FAKE_MODE_HIDDEN 0
+#define FAKE_MODE_DIR -1 /* Ensure a dir, either on tmpfs or mapped parent */
+#define FAKE_MODE_TMPFS 0
 #define FAKE_MODE_SYMLINK G_MAXINT
 
 typedef struct {
   char *path;
-  int level;
-  guint mode;
+  gint mode;
 } ExportedPath;
 
 struct _FlatpakExports {
@@ -2395,13 +2395,13 @@ flatpak_exports_free (FlatpakExports *exports)
 /* Returns TRUE if the location of this export
    is not visible due to parents being exported */
 static gboolean
-path_needs_creation (const char **keys,
-                     guint n_keys,
-                     GHashTable *hash_table,
-                     const char *path)
+path_parent_is_mapped (const char **keys,
+                       guint n_keys,
+                       GHashTable *hash_table,
+                       const char *path)
 {
   guint i;
-  gboolean needs_creation = TRUE;
+  gboolean is_mapped = FALSE;
 
   /* The keys are sorted so shorter (i.e. parents) are first */
   for (i = 0; i < n_keys; i++)
@@ -2410,27 +2410,55 @@ path_needs_creation (const char **keys,
       ExportedPath *ep = g_hash_table_lookup (hash_table, mounted_path);
 
       if (flatpak_has_path_prefix (path, mounted_path) &&
-          strcmp (path, mounted_path) != 0)
+          (strcmp (path, mounted_path) != 0))
         {
-          if (ep->mode == FAKE_MODE_HIDDEN)
-            /* If the parent needs creation, then we don't have to create a mountpoint to hide it */
-            needs_creation = !needs_creation;
-          else if (ep->mode != FAKE_MODE_SYMLINK)
-            needs_creation = FALSE;
+          /* FAKE_MODE_DIR has same mapped value as parent */
+          if (ep->mode == FAKE_MODE_DIR)
+            continue;
+
+          is_mapped = ep->mode != FAKE_MODE_TMPFS;
         }
     }
 
-  return needs_creation;
+  return is_mapped;
+}
+
+static gboolean
+path_is_mapped (const char **keys,
+                guint n_keys,
+                GHashTable *hash_table,
+                const char *path)
+{
+  guint i;
+  gboolean is_mapped = FALSE;
+
+  /* The keys are sorted so shorter (i.e. parents) are first */
+  for (i = 0; i < n_keys; i++)
+    {
+      const char *mounted_path = keys[i];
+      ExportedPath *ep = g_hash_table_lookup (hash_table, mounted_path);
+
+      if (flatpak_has_path_prefix (path, mounted_path))
+        {
+          /* FAKE_MODE_DIR has same mapped value as parent */
+          if (ep->mode == FAKE_MODE_DIR)
+            continue;
+
+          if (ep->mode == FAKE_MODE_SYMLINK)
+            is_mapped = strcmp (path, mounted_path) == 0;
+          else
+            is_mapped = ep->mode != FAKE_MODE_TMPFS;
+        }
+    }
+
+  return is_mapped;
 }
 
 static gint
 compare_eps (const ExportedPath *a,
              const ExportedPath *b)
 {
-  if (a->level == b->level)
-    return g_strcmp0 (a->path, b->path);
-  else
-    return b->level - a->level;
+  return g_strcmp0 (a->path, b->path);
 }
 
 /* This differs from g_file_test (path, G_FILE_TEST_IS_DIR) which
@@ -2478,7 +2506,7 @@ exports_add_bwrap_args (FlatpakExports *exports,
 
       if (ep->mode == FAKE_MODE_SYMLINK)
         {
-          if (path_needs_creation (keys, n_keys, exports->hash, path))
+          if (!path_parent_is_mapped (keys, n_keys, exports->hash, path))
             {
               g_autofree char *resolved = flatpak_resolve_link (path, NULL);
               if (resolved)
@@ -2489,15 +2517,23 @@ exports_add_bwrap_args (FlatpakExports *exports,
                 }
             }
         }
-      else if (ep->mode == FAKE_MODE_HIDDEN)
+      else if (ep->mode == FAKE_MODE_TMPFS)
         {
-          /* Mount a tmpfs to hide the subdirectory, but only if
-             either its not visible (then we can always create the
-             dir on the tmpfs, or if there is a pre-existing dir
-             we can mount the path on. */
-          if (path_needs_creation (keys, n_keys, exports->hash, path) ||
-              path_is_dir (path))
-            add_args (argv_array, "--tmpfs", path, NULL);
+          /* Mount a tmpfs to hide the subdirectory, but only if there
+             is a pre-existing dir we can mount the path on. */
+          if (path_is_dir (path))
+            {
+              if (!path_parent_is_mapped (keys, n_keys, exports->hash, path))
+                /* If the parent is not mapped, it will be a tmpfs, no need to mount another one */
+                add_args (argv_array, "--dir", path, NULL);
+              else
+                add_args (argv_array, "--tmpfs", path, NULL);
+            }
+        }
+      else if (ep->mode == FAKE_MODE_DIR)
+        {
+          if (path_is_dir (path))
+            add_args (argv_array, "--dir", path, NULL);
         }
       else
         {
@@ -2506,42 +2542,6 @@ exports_add_bwrap_args (FlatpakExports *exports,
                     path, path, NULL);
         }
     }
-}
-
-static ExportedPath *
-find_innermost_export (const char **keys,
-                      guint n_keys,
-                      GHashTable *hash_table,
-                      const char *path)
-{
-  guint i;
-  ExportedPath *export = NULL;
-
-  /* The keys are sorted so shorter (i.e. parents) are first */
-  for (i = 0; i < n_keys; i++)
-    {
-      const char *mounted_path = keys[i];
-
-      if (flatpak_has_path_prefix (path, mounted_path))
-        export = g_hash_table_lookup (hash_table, mounted_path);
-    }
-
-  return export;
-}
-
-static gboolean
-path_is_mapped (const char **keys,
-                guint n_keys,
-                GHashTable *hash_table,
-                const char *path)
-{
-  ExportedPath *ep;
-
-  ep = find_innermost_export (keys, n_keys, hash_table, path);
-
-  return
-    ep != NULL &&
-    ep->mode != FAKE_MODE_HIDDEN;
 }
 
 gboolean
@@ -2605,36 +2605,6 @@ flatpak_exports_path_is_visible (FlatpakExports *exports,
   return TRUE;
 }
 
-static void
-exports_path_hide (FlatpakExports *exports,
-                   const char *path)
-{
-  guint old_mode;
-  ExportedPath *ep = g_new0 (ExportedPath, 1);
-  ExportedPath *old_ep;
-  g_autofree char *canonical = NULL;
-
-  path = canonical = flatpak_canonicalize_filename (path);
-
-  old_ep = g_hash_table_lookup (exports->hash, path);
-  if (old_ep)
-    old_mode = old_ep->mode;
-  else
-    old_mode = 0;
-
-  ep->path = g_strdup (path);
-  ep->level = 0;
-  ep->mode = MAX (old_mode, FAKE_MODE_HIDDEN);
-  g_hash_table_replace (exports->hash, ep->path, ep);
-
-  if (path_is_symlink (path))
-    {
-      g_autofree char *resolved = flatpak_resolve_link (path, NULL);
-      if (resolved)
-        exports_path_hide (exports, resolved);
-    }
-}
-
 static gboolean
 never_export_as_symlink (const char *path)
 {
@@ -2647,13 +2617,26 @@ never_export_as_symlink (const char *path)
   return FALSE;
 }
 
-/* We use the level to make sure we get the ordering somewhat right.
- * For instance if /symlink -> /z_dir is exported, then we want to create
- * /z_dir before /symlink, because otherwise an export like /symlink/foo
- * will fail. The approach we use is to just bump the sort prio based on the
- * symlink resolve depth. This it not perfect, but gets the common situation
- * such as --filesystem=/link --filesystem=/link/dir right.
- */
+static void
+do_export_path (FlatpakExports *exports,
+                const char *path,
+                gint mode)
+{
+  ExportedPath *old_ep = g_hash_table_lookup (exports->hash, path);
+  gint old_mode = 0;
+  ExportedPath *ep;
+
+  if (old_ep != NULL)
+    old_mode = old_ep->mode;
+
+  ep = g_new0 (ExportedPath, 1);
+  ep->path = g_strdup (path);
+  ep->mode = MAX (old_mode, mode);
+  g_hash_table_replace (exports->hash, ep->path, ep);
+}
+
+
+/* We use level to avoid infinite recursion */
 static gboolean
 _exports_path_expose (FlatpakExports *exports,
                       FlatpakFilesystemMode mode,
@@ -2662,13 +2645,31 @@ _exports_path_expose (FlatpakExports *exports,
 {
   g_autofree char *canonical = NULL;
   struct stat st;
+  char *slash;
   int i;
+
+  if (level > 40) /* 40 is the current kernel ELOOP check */
+    {
+      g_debug ("Expose too deep, bail");
+      return FALSE;
+    }
 
   if (!g_path_is_absolute (path))
     {
       g_debug ("Not exposing relative path %s", path);
       return FALSE;
     }
+
+  /* Check if it exists at all */
+  if (lstat (path, &st) != 0)
+    return FALSE;
+
+  /* Don't expose weird things */
+  if (!(S_ISDIR (st.st_mode) ||
+        S_ISREG (st.st_mode) ||
+        S_ISLNK (st.st_mode) ||
+        S_ISSOCK (st.st_mode)))
+    return FALSE;
 
   path = canonical = flatpak_canonicalize_filename (path);
 
@@ -2684,50 +2685,65 @@ _exports_path_expose (FlatpakExports *exports,
         }
     }
 
-  if (lstat (path, &st) != 0)
-    return FALSE;
-
-  if (S_ISDIR (st.st_mode) ||
-      S_ISREG (st.st_mode) ||
-      S_ISLNK (st.st_mode) ||
-      S_ISSOCK (st.st_mode))
+  /* Handle any symlinks prior to the target itself. This includes path itself,
+     because we expose the target of the symlink. */
+  slash = canonical;
+  do
     {
-      ExportedPath *old_ep = g_hash_table_lookup (exports->hash, path);
-      guint old_mode = 0;
+      slash = strchr (slash + 1, '/');
+      if (slash)
+        *slash = 0;
 
-      if (old_ep != NULL)
-        old_mode = old_ep->mode;
-
-      if (S_ISLNK (st.st_mode) && !never_export_as_symlink (path))
+      if (path_is_symlink (path) && !never_export_as_symlink (path))
         {
           g_autofree char *resolved = flatpak_resolve_link (path, NULL);
+          g_autofree char *new_target = NULL;
 
-          if (resolved && _exports_path_expose (exports, mode, resolved, level + 1))
-            mode = FAKE_MODE_SYMLINK;
-          else
-            mode = 0;
-        }
+          if (resolved)
+            {
+              if (slash)
+                new_target = g_build_filename (resolved, slash + 1, NULL);
+              else
+                new_target = g_strdup (resolved);
 
-      if (mode > 0)
-        {
-          ExportedPath *ep = g_new0 (ExportedPath, 1);
-          ep->path = g_strdup (path);
-          ep->mode = MAX (old_mode, mode);
-          ep->level = level;
-          g_hash_table_replace (exports->hash, ep->path, ep);
-          return TRUE;
+              if (_exports_path_expose (exports, mode, new_target, level + 1))
+                {
+                  do_export_path (exports, path, FAKE_MODE_SYMLINK);
+                  return TRUE;
+                }
+            }
+
+          return FALSE;
         }
+      if (slash)
+        *slash = '/';
     }
+  while (slash != NULL);
 
-  return FALSE;
+  do_export_path (exports, path, mode);
+  return TRUE;
 }
 
-static gboolean
+static void
 exports_path_expose (FlatpakExports *exports,
                      FlatpakFilesystemMode mode,
                      const char *path)
 {
-  return _exports_path_expose (exports, mode, path, 0);
+  _exports_path_expose (exports, mode, path, 0);
+}
+
+static void
+exports_path_tmpfs (FlatpakExports *exports,
+                    const char *path)
+{
+  _exports_path_expose (exports, FAKE_MODE_TMPFS, path, 0);
+}
+
+static void
+exports_path_dir (FlatpakExports *exports,
+                  const char *path)
+{
+  _exports_path_expose (exports, FAKE_MODE_DIR, path, 0);
 }
 
 static void
@@ -2859,7 +2875,7 @@ export_paths_export_context (FlatpakContext *context,
     {
       g_autoptr(GFile) apps_dir = g_file_get_parent (app_id_dir);
       /* Hide the .var/app dir by default (unless explicitly made visible) */
-      exports_path_hide (exports, flatpak_file_get_path_cached (apps_dir));
+      exports_path_tmpfs (exports, flatpak_file_get_path_cached (apps_dir));
       /* But let the app write to the per-app dir in it */
       exports_path_expose (exports, FLATPAK_FILESYSTEM_MODE_READ_WRITE,
                            flatpak_file_get_path_cached (app_id_dir));
@@ -3017,15 +3033,13 @@ flatpak_run_add_environment_args (GPtrArray      *argv_array,
 
   /* Hide the flatpak dir by default (unless explicitly made visible) */
   user_flatpak_dir = flatpak_get_user_base_dir_location ();
-  exports_path_hide (exports, flatpak_file_get_path_cached (user_flatpak_dir));
+  exports_path_tmpfs (exports, flatpak_file_get_path_cached (user_flatpak_dir));
+
+  /* Ensure we always have a homedir */
+  exports_path_dir (exports, g_get_home_dir ());
 
   /* This actually outputs the args for the hide/expose operations above */
   exports_add_bwrap_args (exports, argv_array);
-
-  /* Ensure we always have a homedir */
-  add_args (argv_array,
-            "--dir", g_get_home_dir (),
-            NULL);
 
   /* Special case subdirectories of the cache, config and data xdg
    * dirs.  If these are accessible explicilty, then we bind-mount
