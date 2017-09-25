@@ -335,6 +335,7 @@ build_oci (OstreeRepo *repo, GFile *dir,
   GHashTable *annotations;
   gsize metadata_size;
   g_autofree char *metadata_contents = NULL;
+  g_auto(GStrv) ref_parts = NULL;
 
   if (!ostree_repo_resolve_rev (repo, ref, FALSE, &commit_checksum, error))
     return FALSE;
@@ -346,6 +347,10 @@ build_oci (OstreeRepo *repo, GFile *dir,
     return FALSE;
 
   if (!ostree_repo_read_commit_detached_metadata (repo, commit_checksum, &commit_metadata, cancellable, error))
+    return FALSE;
+
+  ref_parts = flatpak_decompose_ref (ref, error);
+  if (ref_parts == NULL)
     return FALSE;
 
   dir_uri = g_file_get_uri (dir);
@@ -373,6 +378,7 @@ build_oci (OstreeRepo *repo, GFile *dir,
 
   image = flatpak_oci_image_new ();
   flatpak_oci_image_set_layer (image, uncompressed_digest);
+  flatpak_oci_image_set_architecture (image, flatpak_arch_to_oci_arch (ref_parts[2]));
 
   timestamp = timestamp_to_iso8601 (ostree_commit_get_timestamp (commit_data));
   flatpak_oci_image_set_created (image, timestamp);
