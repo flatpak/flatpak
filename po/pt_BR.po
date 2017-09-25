@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
-"POT-Creation-Date: 2017-09-14 09:03+0200\n"
+"POT-Creation-Date: 2017-09-25 17:16+0200\n"
 "PO-Revision-Date: 2017-09-08 21:48-0200\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
@@ -109,7 +109,7 @@ msgid "Import GPG key from FILE (- for stdin)"
 msgstr "Importa uma chave GPG do ARQUIVO (- para stdin)"
 
 #: app/flatpak-builtins-add-remote.c:82 app/flatpak-builtins-build-bundle.c:59
-#: app/flatpak-builtins-build.c:49 app/flatpak-builtins-build-export.c:60
+#: app/flatpak-builtins-build.c:50 app/flatpak-builtins-build-export.c:60
 #: app/flatpak-builtins-install.c:66 app/flatpak-builtins-repo-update.c:59
 msgid "FILE"
 msgstr "ARQUIVO"
@@ -137,7 +137,7 @@ msgid "LOCATION must be specified"
 msgstr "LOCALIZAÇÃO deve ser especificada"
 
 #: app/flatpak-builtins-add-remote.c:327
-#: app/flatpak-builtins-build-bundle.c:473
+#: app/flatpak-builtins-build-bundle.c:479
 #: app/flatpak-builtins-build-export.c:676
 #: app/flatpak-builtins-build-import-bundle.c:182
 #: app/flatpak-builtins-build-init.c:181 app/flatpak-builtins-build-sign.c:74
@@ -173,35 +173,35 @@ msgstr "O remoto %s já existe"
 msgid "No url specified in flatpakrepo file"
 msgstr "Nenhuma url especificada no arquivo flatpakrepo"
 
-#: app/flatpak-builtins-add-remote.c:400
+#: app/flatpak-builtins-add-remote.c:403
 #, c-format
 msgid "Warning: Could not update extra metadata for '%s': %s\n"
 msgstr "Aviso: Não foi possível atualizar metadados extras para “%s”: %s\n"
 
-#: app/flatpak-builtins-add-remote.c:448
+#: app/flatpak-builtins-add-remote.c:451
 msgid "NAME - Modify a remote repository"
 msgstr "NOME – Modifica um repositório remoto"
 
-#: app/flatpak-builtins-add-remote.c:457
+#: app/flatpak-builtins-add-remote.c:460
 msgid "Remote NAME must be specified"
 msgstr "NOME remoto deve ser especificado"
 
-#: app/flatpak-builtins-add-remote.c:462
+#: app/flatpak-builtins-add-remote.c:465
 #, c-format
 msgid "No remote %s"
 msgstr "Nenhum remoto %s"
 
-#: app/flatpak-builtins-add-remote.c:468
+#: app/flatpak-builtins-add-remote.c:471
 #, c-format
 msgid "Updating extra metadata from remote summary for %s\n"
 msgstr "Atualizando metadados extras para resumo de remoto para %s\n"
 
-#: app/flatpak-builtins-add-remote.c:471
+#: app/flatpak-builtins-add-remote.c:474
 #, c-format
 msgid "Error updating extra metadata for '%s': %s\n"
 msgstr "Erro ao atualizar metadados extras para “%s”: %s\n"
 
-#: app/flatpak-builtins-add-remote.c:472
+#: app/flatpak-builtins-add-remote.c:475
 #, c-format
 msgid "Could not update extra metadata for %s"
 msgstr "Não foi possível atualizar metadados extras para %s"
@@ -268,7 +268,7 @@ msgstr "Diretório do GPG para usar quando estiver procurando por chaveiros"
 msgid "HOMEDIR"
 msgstr "DIRETÓRIO"
 
-#: app/flatpak-builtins-build-bundle.c:463
+#: app/flatpak-builtins-build-bundle.c:469
 msgid ""
 "LOCATION FILENAME NAME [BRANCH] - Create a single file bundle from a local "
 "repository"
@@ -276,11 +276,11 @@ msgstr ""
 "LOCALIZAÇÃO ARQUIVO NOME [RAMO] – Cria um único arquivo de pacote de um "
 "repositório local"
 
-#: app/flatpak-builtins-build-bundle.c:470
+#: app/flatpak-builtins-build-bundle.c:476
 msgid "LOCATION, FILENAME and NAME must be specified"
 msgstr "LOCALIZAÇÃO, ARQUIVO e NOME devem ser especificados"
 
-#: app/flatpak-builtins-build-bundle.c:488
+#: app/flatpak-builtins-build-bundle.c:494
 #: app/flatpak-builtins-build-commit-from.c:103
 #: app/flatpak-builtins-build-commit-from.c:113
 #: app/flatpak-builtins-build-import-bundle.c:191
@@ -288,78 +288,82 @@ msgstr "LOCALIZAÇÃO, ARQUIVO e NOME devem ser especificados"
 msgid "'%s' is not a valid repository"
 msgstr "“%s” não é um repositório válido"
 
-#: app/flatpak-builtins-build-bundle.c:500 app/flatpak-builtins-build-sign.c:86
+#: app/flatpak-builtins-build-bundle.c:506 app/flatpak-builtins-build-sign.c:86
 #, c-format
 msgid "'%s' is not a valid name: %s"
 msgstr "“%s” não é um nome válido: %s"
 
-#: app/flatpak-builtins-build-bundle.c:503
+#: app/flatpak-builtins-build-bundle.c:509
 #: app/flatpak-builtins-build-export.c:699 app/flatpak-builtins-build-sign.c:89
 #, c-format
 msgid "'%s' is not a valid branch name: %s"
 msgstr "“%s” não é um nome de ramo válido: %s"
 
-#: app/flatpak-builtins-build.c:45
+#: app/flatpak-builtins-build.c:46
 msgid "Use Platform runtime rather than Sdk"
 msgstr "Usa runtime Platform em vez de Sdk"
 
-#: app/flatpak-builtins-build.c:46
+#: app/flatpak-builtins-build.c:47
 msgid "Add bind mount"
 msgstr "Adiciona montagem associativa (bind)"
 
-#: app/flatpak-builtins-build.c:46
+#: app/flatpak-builtins-build.c:47
 msgid "DEST=SRC"
 msgstr "DEST=ORIG"
 
-#: app/flatpak-builtins-build.c:47
+#: app/flatpak-builtins-build.c:48
 msgid "Start build in this directory"
 msgstr "Começa compilação neste diretório"
 
-#: app/flatpak-builtins-build.c:47 app/flatpak-builtins-build.c:48
+#: app/flatpak-builtins-build.c:48 app/flatpak-builtins-build.c:49
 #: app/flatpak-builtins-build-init.c:58
 msgid "DIR"
 msgstr "DIR"
 
-#: app/flatpak-builtins-build.c:48
+#: app/flatpak-builtins-build.c:49
 msgid "Where to look for custom sdk dir (defaults to 'usr')"
 msgstr "Onde procurar por diretório de sdk personalizado (padrão é “usr”)"
 
-#: app/flatpak-builtins-build.c:49 app/flatpak-builtins-build-export.c:60
+#: app/flatpak-builtins-build.c:50 app/flatpak-builtins-build-export.c:60
 msgid "Use alternative file for the metadata"
 msgstr "Usa um arquivo alternativo para os metadados"
 
-#: app/flatpak-builtins-build.c:50
+#: app/flatpak-builtins-build.c:51
 msgid "Kill processes when the parent process dies"
 msgstr "Mata processos quando o processo pai morre"
 
-#: app/flatpak-builtins-build.c:109
+#: app/flatpak-builtins-build.c:52
+msgid "Export application homedir directory to build"
+msgstr ""
+
+#: app/flatpak-builtins-build.c:112
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
 msgstr "DIRETÓRIO [COMANDO [args…]] – Compila no diretório"
 
-#: app/flatpak-builtins-build.c:132 app/flatpak-builtins-build-finish.c:526
+#: app/flatpak-builtins-build.c:135 app/flatpak-builtins-build-finish.c:526
 msgid "DIRECTORY must be specified"
 msgstr "DIRETÓRIO deve ser especificado"
 
-#: app/flatpak-builtins-build.c:143 app/flatpak-builtins-build-export.c:721
+#: app/flatpak-builtins-build.c:146 app/flatpak-builtins-build-export.c:721
 #, c-format
 msgid "Build directory %s not initialized, use flatpak build-init"
 msgstr "Diretório de compilação %s não inicializado, use flatpak build-init"
 
-#: app/flatpak-builtins-build.c:162
+#: app/flatpak-builtins-build.c:165
 msgid "metadata invalid, not application or runtime"
 msgstr "metadados inválido, não é aplicativo ou runtime"
 
-#: app/flatpak-builtins-build.c:254
+#: app/flatpak-builtins-build.c:261
 #, c-format
 msgid "No extension point matching %s in %s"
 msgstr "Nenhum ponto de extensão correspondendo %s em %s"
 
-#: app/flatpak-builtins-build.c:390
+#: app/flatpak-builtins-build.c:397
 #, c-format
 msgid "Missing '=' in bind mount option '%s'"
 msgstr "Faltando “=” na opção de montagem associativa “%s”"
 
-#: app/flatpak-builtins-build.c:416 common/flatpak-run.c:4976
+#: app/flatpak-builtins-build.c:423 common/flatpak-run.c:5088
 msgid "Unable to start app"
 msgstr "Não foi possível iniciar o aplicativo"
 
@@ -1732,9 +1736,9 @@ msgstr "Runtime exigido para %s (%s) não está instalado, pesquisando…\n"
 msgid "The required runtime %s was not found in a configured remote.\n"
 msgstr "O runtime exigido %s não foi localizado em um remoto configurado.\n"
 
-#: app/flatpak-transaction.c:469 common/flatpak-dir.c:1079
-#: common/flatpak-dir.c:1336 common/flatpak-dir.c:1372
-#: common/flatpak-dir.c:1394 common/flatpak-dir.c:9715
+#: app/flatpak-transaction.c:469 common/flatpak-dir.c:1084
+#: common/flatpak-dir.c:1395 common/flatpak-dir.c:1431
+#: common/flatpak-dir.c:1453 common/flatpak-dir.c:9915
 #: common/flatpak-utils.c:1256 common/flatpak-utils.c:1350
 #, c-format
 msgid "%s not installed"
@@ -1810,256 +1814,266 @@ msgstr "Uma ou mais operações falharam"
 msgid "No overrides found for %s"
 msgstr "Nenhuma substituição localizada para %s"
 
-#: common/flatpak-dir.c:1527
+#: common/flatpak-dir.c:1586
 #, c-format
 msgid "While opening repository %s: "
 msgstr "Ao abrir o repositório %s: "
 
-#: common/flatpak-dir.c:1660 common/flatpak-dir.c:4988
+#: common/flatpak-dir.c:1745 common/flatpak-dir.c:5082
 msgid "Can't create deploy directory"
 msgstr "Não foi possível criar um diretório de deploy"
 
-#: common/flatpak-dir.c:2340
+#: common/flatpak-dir.c:2425
 #, c-format
 msgid "Invalid sha256 for extra data uri %s"
 msgstr "sha256 inválido para uri de dados extras %s"
 
-#: common/flatpak-dir.c:2345
+#: common/flatpak-dir.c:2430
 #, c-format
 msgid "Empty name for extra data uri %s"
 msgstr "Nome vazio para uri de dados extras %s"
 
-#: common/flatpak-dir.c:2352
+#: common/flatpak-dir.c:2437
 #, c-format
 msgid "Unsupported extra data uri %s"
 msgstr "Sem suporte à uri de dados extras %s"
 
-#: common/flatpak-dir.c:2366
+#: common/flatpak-dir.c:2451
 #, c-format
 msgid "Failed to load local extra-data %s: %s"
 msgstr "Falha ao carregar extra-data local %s: %s"
 
-#: common/flatpak-dir.c:2369
+#: common/flatpak-dir.c:2454
 #, c-format
 msgid "Wrong size for extra-data %s"
 msgstr "Tamanho inválido para extra-data %s"
 
-#: common/flatpak-dir.c:2384
+#: common/flatpak-dir.c:2469
 #, c-format
 msgid "While downloading %s: "
 msgstr "Enquanto baixava %s: "
 
-#: common/flatpak-dir.c:2391
+#: common/flatpak-dir.c:2476
 #, c-format
 msgid "Wrong size for extra data %s"
 msgstr "Tamanho inválido para dados extras %s"
 
-#: common/flatpak-dir.c:2402
+#: common/flatpak-dir.c:2487
 #, c-format
 msgid "Invalid checksum for extra data %s"
 msgstr "Soma de verificação inválida para dados extras %s"
 
-#: common/flatpak-dir.c:2658
+#: common/flatpak-dir.c:2743
 #, c-format
 msgid "%s commit %s already installed"
 msgstr "%s commit %s já está instalado"
 
-#: common/flatpak-dir.c:2975 common/flatpak-dir.c:3279
+#: common/flatpak-dir.c:3070 common/flatpak-dir.c:3384
 #, c-format
 msgid "While pulling %s from remote %s: "
 msgstr "Enquanto executava pull de %s a partir do remoto %s: "
 
-#: common/flatpak-dir.c:3164
+#: common/flatpak-dir.c:3269
 #, c-format
 msgid "Can't find %s in remote %s"
 msgstr "Não foi possível localizar %s no remoto %s"
 
-#: common/flatpak-dir.c:3837
+#: common/flatpak-dir.c:3942
 msgid "Not enough memory"
 msgstr "Memória insuficiente"
 
-#: common/flatpak-dir.c:3856
+#: common/flatpak-dir.c:3961
 msgid "Failed to read from exported file"
 msgstr "Falha ao ler do arquivo exportado"
 
-#: common/flatpak-dir.c:4047
+#: common/flatpak-dir.c:4152
 msgid "Error reading mimetype xml file"
 msgstr "Erro ao ler o arquivo xml de tipo mime"
 
-#: common/flatpak-dir.c:4052
+#: common/flatpak-dir.c:4157
 msgid "Invalid mimetype xml file"
 msgstr "Arquivo inválido de xml de tipo mim"
 
-#: common/flatpak-dir.c:4594
+#: common/flatpak-dir.c:4699
 msgid "While getting detached metadata: "
 msgstr "Enquanto obtinha metadados destacados: "
 
-#: common/flatpak-dir.c:4612
+#: common/flatpak-dir.c:4717
 msgid "While creating extradir: "
 msgstr "Enquanto criava extradir: "
 
-#: common/flatpak-dir.c:4633
+#: common/flatpak-dir.c:4738
 msgid "Invalid sha256 for extra data"
 msgstr "sha256 inválido para dados extras"
 
-#: common/flatpak-dir.c:4662
+#: common/flatpak-dir.c:4767
 msgid "Wrong size for extra data"
 msgstr "Tamanho inválido para dados extras"
 
-#: common/flatpak-dir.c:4666
+#: common/flatpak-dir.c:4771
 msgid "Invalid checksum for extra data"
 msgstr "Soma de verificação inválida para dados extras"
 
-#: common/flatpak-dir.c:4675
+#: common/flatpak-dir.c:4780
 #, c-format
 msgid "While writing extra data file '%s': "
 msgstr "Enquanto escrevia o arquivo de dados extras “%s”: "
 
-#: common/flatpak-dir.c:4859
+#: common/flatpak-dir.c:4964
 #, c-format
 msgid "apply_extra script failed, exit status %d"
 msgstr "script apply_extra falhou, status de saída %d"
 
-#: common/flatpak-dir.c:4929
+#: common/flatpak-dir.c:5041
 #, c-format
 msgid "While trying to resolve ref %s: "
 msgstr "Enquanto tentava resolver ref %s: "
 
-#: common/flatpak-dir.c:4944
+#: common/flatpak-dir.c:5056
 #, c-format
 msgid "%s is not available"
 msgstr "%s não está disponível"
 
-#: common/flatpak-dir.c:4977 common/flatpak-dir.c:5315
-#: common/flatpak-dir.c:6083 common/flatpak-dir.c:6096
-#: common/flatpak-dir.c:6172
+#: common/flatpak-dir.c:5071 common/flatpak-dir.c:5409
+#: common/flatpak-dir.c:6177 common/flatpak-dir.c:6190
+#: common/flatpak-dir.c:6266
 #, c-format
 msgid "%s branch %s already installed"
 msgstr "%s ramo %s já está instalado"
 
-#: common/flatpak-dir.c:4996
+#: common/flatpak-dir.c:5090
 #, c-format
 msgid "Failed to read commit %s: "
 msgstr "Falha ao ler commit %s: "
 
-#: common/flatpak-dir.c:5016
+#: common/flatpak-dir.c:5110
 #, c-format
 msgid "While trying to checkout %s into %s: "
 msgstr "Enquanto tentava fazer checkout de %s para %s: "
 
-#: common/flatpak-dir.c:5041 common/flatpak-dir.c:5072
+#: common/flatpak-dir.c:5135 common/flatpak-dir.c:5166
 msgid "While trying to checkout metadata subpath: "
 msgstr "Enquanto tentava fazer checkout do subcaminho de metadados: "
 
-#: common/flatpak-dir.c:5082
+#: common/flatpak-dir.c:5176
 msgid "While trying to remove existing extra dir: "
 msgstr "Enquanto tentava remover diretório extra existente: "
 
-#: common/flatpak-dir.c:5093
+#: common/flatpak-dir.c:5187
 msgid "While trying to apply extra data: "
 msgstr "Enquanto tentava aplicar dados extras: "
 
-#: common/flatpak-dir.c:5120
+#: common/flatpak-dir.c:5214
 #, fuzzy, c-format
 msgid "Invalid deployed ref %s: "
 msgstr "Pid inválido %s"
 
-#: common/flatpak-dir.c:5127
+#: common/flatpak-dir.c:5221
 #, fuzzy, c-format
 msgid "Invalid commit ref %s: "
 msgstr "Pid inválido %s"
 
-#: common/flatpak-dir.c:5135
+#: common/flatpak-dir.c:5229
 #, fuzzy, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
 msgstr "Ref implementado %s não coincide com o commit (%s)"
 
-#: common/flatpak-dir.c:5143
+#: common/flatpak-dir.c:5237
 #, fuzzy, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
 msgstr "Ref implementado %s não coincide com o commit (%s)"
 
-#: common/flatpak-dir.c:5151
+#: common/flatpak-dir.c:5245
 #, fuzzy, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
 msgstr "Ref implementado %s não coincide com o commit (%s)"
 
-#: common/flatpak-dir.c:5157
+#: common/flatpak-dir.c:5251
 #, fuzzy, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
 msgstr "Ref implementado %s não coincide com o commit (%s)"
 
-#: common/flatpak-dir.c:5163
+#: common/flatpak-dir.c:5257
 #, c-format
 msgid "Deployed ref %s does not match commit (%s)"
 msgstr "Ref implementado %s não coincide com o commit (%s)"
 
-#: common/flatpak-dir.c:5182
+#: common/flatpak-dir.c:5276
 msgid "Deployed metadata does not match commit"
 msgstr "Metadados implementados não coincidem com o commit"
 
-#: common/flatpak-dir.c:5944
+#: common/flatpak-dir.c:6038
 #, c-format
 msgid "This version of %s is already installed"
 msgstr "Essa versão de %s já está instalada"
 
-#: common/flatpak-dir.c:5951
+#: common/flatpak-dir.c:6045
 msgid "Can't change remote during bundle install"
 msgstr "Não é possível alterar remoto durante instalação de pacote"
 
-#: common/flatpak-dir.c:6494
+#: common/flatpak-dir.c:6588
 #, c-format
 msgid "%s branch %s is not installed"
 msgstr "%s ramo %s não está instalado"
 
-#: common/flatpak-dir.c:6738
+#: common/flatpak-dir.c:6832
 #, c-format
 msgid "%s branch %s not installed"
 msgstr "%s ramo %s não está instalado"
 
-#: common/flatpak-dir.c:7603
+#: common/flatpak-dir.c:7715
 #, c-format
 msgid "Nothing matches %s"
 msgstr "Sem combinações com %s"
 
-#: common/flatpak-dir.c:7689
-#, c-format
-msgid "Can't find %s%s%s%s%s in remote %s"
+#: common/flatpak-dir.c:7792
+#, fuzzy, c-format
+msgid "Can't find ref %s%s%s%s%s"
 msgstr "Não foi possível localizar %s%s%s%s%s no remoto %s"
 
-#: common/flatpak-dir.c:7806
+#: common/flatpak-dir.c:7834
+#, fuzzy, c-format
+msgid "Error searching remote %s: %s"
+msgstr "Erro: Falha ao %s %s: %s\n"
+
+#: common/flatpak-dir.c:7879
+#, fuzzy, c-format
+msgid "Error searching local repository: %s"
+msgstr "Mantém referência no repositório local"
+
+#: common/flatpak-dir.c:8000
 #, c-format
 msgid "%s %s not installed"
 msgstr "%s %s não instalado"
 
-#: common/flatpak-dir.c:7879
+#: common/flatpak-dir.c:8073
 #, c-format
 msgid "Could not find installation %s"
 msgstr "Não foi possível localizar instalação de %s"
 
-#: common/flatpak-dir.c:8408
+#: common/flatpak-dir.c:8602
 #, c-format
 msgid "Runtime %s, branch %s is already installed"
 msgstr "Runtime %s, ramo %s já está instalado"
 
-#: common/flatpak-dir.c:8409
+#: common/flatpak-dir.c:8603
 #, c-format
 msgid "App %s, branch %s is already installed"
 msgstr "Aplicativo %s, ramo %s já está instalado"
 
-#: common/flatpak-dir.c:8868
+#: common/flatpak-dir.c:9062
 msgid "Remote title not set"
 msgstr "Título remoto não definido"
 
-#: common/flatpak-dir.c:8890
+#: common/flatpak-dir.c:9084
 msgid "Remote default-branch not set"
 msgstr "Ramo padrão remoto não definido"
 
-#: common/flatpak-dir.c:9384
+#: common/flatpak-dir.c:9578
 msgid "No flatpak cache in remote summary"
 msgstr "Nenhum cache de flatpak no sumário remoto"
 
-#: common/flatpak-dir.c:9394
+#: common/flatpak-dir.c:9588
 #, c-format
 msgid "No entry for %s in remote summary flatpak cache "
 msgstr "Nenhuma entrada para %s no cache de flatpak de sumário remoto "
@@ -2239,26 +2253,26 @@ msgstr "Falha ao desvincular arquivo temporário"
 msgid "Failed to write to temporary file"
 msgstr "Falha ao escrever para arquivo temporário"
 
-#: common/flatpak-run.c:3596
+#: common/flatpak-run.c:3710
 #, c-format
 msgid "Failed to open flatpak-info temp file: %s"
 msgstr "Falha ao abrir arquivo temporário de flatpak-info: %s"
 
-#: common/flatpak-run.c:3658 common/flatpak-run.c:3668
+#: common/flatpak-run.c:3772 common/flatpak-run.c:3782
 #, c-format
 msgid "Failed to open temp file: %s"
 msgstr "Falha ao abrir arquivo temporário: %s"
 
-#: common/flatpak-run.c:4018
+#: common/flatpak-run.c:4132
 msgid "Unable to create sync pipe"
 msgstr "Não foi possível criar um pipe de sincronização"
 
-#: common/flatpak-run.c:4045
+#: common/flatpak-run.c:4159
 #, c-format
 msgid "Failed to open app info file: %s"
 msgstr "Falha ao abrir arquivo informação do aplicativo: %s"
 
-#: common/flatpak-run.c:4075
+#: common/flatpak-run.c:4189
 msgid "Failed to sync with dbus proxy"
 msgstr "Falha ao sincronizar com proxy de dbus"
 
