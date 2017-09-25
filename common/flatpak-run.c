@@ -2409,10 +2409,12 @@ path_needs_creation (const char **keys,
       const char *mounted_path = keys[i];
       ExportedPath *ep = g_hash_table_lookup (hash_table, mounted_path);
 
-      if (flatpak_has_path_prefix (path, mounted_path))
+      if (flatpak_has_path_prefix (path, mounted_path) &&
+          strcmp (path, mounted_path) != 0)
         {
           if (ep->mode == FAKE_MODE_HIDDEN)
-            needs_creation = TRUE;
+            /* If the parent needs creation, then we don't have to create a mountpoint to hide it */
+            needs_creation = !needs_creation;
           else if (ep->mode != FAKE_MODE_SYMLINK)
             needs_creation = FALSE;
         }
@@ -2429,6 +2431,30 @@ compare_eps (const ExportedPath *a,
     return g_strcmp0 (a->path, b->path);
   else
     return b->level - a->level;
+}
+
+/* This differs from g_file_test (path, G_FILE_TEST_IS_DIR) which
+   returns true if the path is a symlink to a dir */
+static gboolean
+path_is_dir (const char *path)
+{
+  struct stat s;
+
+  if (lstat (path, &s) != 0)
+    return FALSE;
+
+  return S_ISDIR (s.st_mode);
+}
+
+static gboolean
+path_is_symlink (const char *path)
+{
+  struct stat s;
+
+  if (lstat (path, &s) != 0)
+    return FALSE;
+
+  return S_ISLNK (s.st_mode);
 }
 
 static void
@@ -2470,7 +2496,7 @@ exports_add_bwrap_args (FlatpakExports *exports,
              dir on the tmpfs, or if there is a pre-existing dir
              we can mount the path on. */
           if (path_needs_creation (keys, n_keys, exports->hash, path) ||
-              g_file_test (path, G_FILE_TEST_IS_DIR))
+              path_is_dir (path))
             add_args (argv_array, "--tmpfs", path, NULL);
         }
       else
@@ -2589,6 +2615,13 @@ exports_path_hide (FlatpakExports *exports,
   ep->level = 0;
   ep->mode = MAX (old_mode, FAKE_MODE_HIDDEN);
   g_hash_table_replace (exports->hash, ep->path, ep);
+
+  if (path_is_symlink (path))
+    {
+      g_autofree char *resolved = flatpak_resolve_link (path, NULL);
+      if (resolved)
+        exports_path_hide (exports, resolved);
+    }
 }
 
 static gboolean
