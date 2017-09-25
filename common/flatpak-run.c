@@ -2560,7 +2560,7 @@ flatpak_exports_path_is_visible (FlatpakExports *exports,
 
   path = canonical = flatpak_canonicalize_filename (path);
 
-  parts = g_strsplit (path, "/", -1);
+  parts = g_strsplit (path+1, "/", -1);
 
   /* A path is visible in the sandbox if no parent
    * path element that is mapped in the sandbox is
@@ -2581,10 +2581,21 @@ flatpak_exports_path_is_visible (FlatpakExports *exports,
           if (S_ISLNK (st.st_mode))
             {
               g_autofree char *resolved = flatpak_resolve_link (path_builder->str, NULL);
+              g_autoptr(GString) path2_builder = NULL;
+              int j;
+
               if (resolved == NULL)
                 return FALSE;
+              path2_builder = g_string_new (resolved);
 
-              return flatpak_exports_path_is_visible (exports, resolved);
+              for (j = i + 1; parts[j] != NULL; j++)
+                {
+                  g_string_append (path2_builder, "/");
+                  g_string_append (path2_builder, parts[j]);
+                }
+
+
+              return flatpak_exports_path_is_visible (exports, path2_builder->str);
             }
         }
       else if (parts[i+1] == NULL)
