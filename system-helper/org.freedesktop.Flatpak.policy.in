@@ -98,6 +98,21 @@
     </defaults>
   </action>
 
+  <action id="org.freedesktop.Flatpak.modify-repo">
+    <!-- SECURITY:
+          - Normal users do not need authentication to modify the
+            OSTree repository
+     -->
+    <description>Update system repository</description>
+    <message>Authentication is required to update the system repository</message>
+    <icon_name>package-x-generic</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
   <action id="org.freedesktop.Flatpak.install-bundle">
     <description>Install bundle</description>
     <message>Authentication is required to install software</message>

@@ -111,6 +111,12 @@
       <arg type='ay' name='summary_sig_path' direction='in'/>
     </method>
 
+    <method name="RemoveLocalRef">
+      <arg type='s' name='remote' direction='in'/>
+      <arg type='s' name='ref' direction='in'/>
+      <arg type='s' name='installation' direction='in'/>
+    </method>
+
   </interface>
 
 </node>

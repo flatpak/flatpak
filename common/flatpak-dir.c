@@ -6974,10 +6974,36 @@ flatpak_dir_remove_ref (FlatpakDir   *self,
                         GCancellable *cancellable,
                         GError      **error)
 {
-  if (!ostree_repo_set_ref_immediate (self->repo, remote_name, ref, NULL, cancellable, error))
+  if (flatpak_dir_use_system_helper (self, NULL))
+    {
+      const char *installation = flatpak_dir_get_id (self);
+      FlatpakSystemHelper *system_helper = flatpak_dir_get_system_helper (self);
+
+      /* If we don't have the system helper, we'll have to try and just remove
+       * the ref as an unprivileged user, which might fail later */
+      if (system_helper)
+        {
+          if (!flatpak_system_helper_call_remove_local_ref_sync (system_helper,
+                                                                 remote_name,
+                                                                 ref,
+                                                                 installation ? installation : "",
+                                                                 cancellable,
+                                                                 error))
+            return FALSE;
+        }
+
+      return TRUE;
+    }
+
+  if (!ostree_repo_set_ref_immediate (self->repo,
+                                      remote_name,
+                                      ref,
+                                      NULL,
+                                      cancellable,
+                                      error))
     return FALSE;
 
-  return TRUE;
+  return flatpak_dir_prune (self, cancellable, error);
 }
 
 gboolean
@@ -7031,58 +7057,6 @@ flatpak_dir_cleanup_removed (FlatpakDir   *self,
   ret = TRUE;
 out:
   return ret;
-}
-
-static GHashTable *
-filter_out_deployed_refs (FlatpakDir *self,
-                          GHashTable *local_refs)
-{
-  GHashTable *undeployed_refs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  g_autoptr(GVariant) deploy_data = NULL;
-  GHashTableIter hash_iter;
-  gpointer key;
-
-  g_hash_table_iter_init (&hash_iter, local_refs);
-  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
-    {
-      g_autoptr(GVariant) deploy_data = flatpak_dir_get_deploy_data (self, key, NULL, NULL);
-
-      if (!deploy_data)
-        g_hash_table_add (undeployed_refs, g_strdup (key));
-    }
-
-  return undeployed_refs;
-}
-
-gboolean
-flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
-                                     GCancellable *cancellable,
-                                     GError      **error)
-{
-  g_autoptr(GHashTable) local_refs = NULL;
-  g_autoptr(GHashTable) undeployed_refs = NULL;
-  GHashTableIter hash_iter;
-  gpointer key;
-
-  if (!ostree_repo_list_refs (self->repo, NULL, &local_refs, cancellable, error))
-    return FALSE;
-
-  undeployed_refs = filter_out_deployed_refs (self, local_refs);
-  g_hash_table_iter_init (&hash_iter, undeployed_refs);
-
-  while (g_hash_table_iter_next (&hash_iter, &key, NULL))
-    {
-      g_autofree gchar *remote = NULL;
-      g_autofree gchar *ref = NULL;
-
-      if (!ostree_parse_refspec (key, &remote, &ref, error))
-        return FALSE;
-
-      if (!flatpak_dir_remove_ref (self, remote, ref, cancellable, error))
-        return FALSE;
-    }
-
-  return TRUE;
 }
 
 gboolean
@@ -8053,6 +8027,101 @@ flatpak_dir_find_installed_ref (FlatpakDir   *self,
   g_set_error (error, FLATPAK_ERROR, FLATPAK_ERROR_NOT_INSTALLED,
                _("%s %s not installed"), opt_name ? opt_name : "*unspecified*", opt_branch ? opt_branch : "master");
   return NULL;
+}
+
+/* Given a list of refs in local_refspecs, remove any refs that have already
+ * been deployed and return a new GPtrArray containing only the undeployed
+ * refs. This is used by flatpak_dir_cleanup_undeployed_refs to determine
+ * which undeployed refs need to be removed from the local repository.
+ *
+ * Returns: (transfer-full): A #GPtrArray
+ */
+static GPtrArray *
+filter_out_deployed_refs (FlatpakDir *self,
+                          GPtrArray  *local_refspecs,
+                          GError    **error)
+{
+  g_autoptr(GPtrArray) undeployed_refs = g_ptr_array_new_full (local_refspecs->len, g_free);
+  gsize i;
+
+  for (i = 0; i < local_refspecs->len; ++i)
+    {
+      const gchar *refspec = g_ptr_array_index (local_refspecs, i);
+      g_autofree gchar *ref = NULL;
+      g_autoptr(GVariant) deploy_data = NULL;
+
+      if (!ostree_parse_refspec (refspec, NULL, &ref, error))
+        return FALSE;
+
+      deploy_data = flatpak_dir_get_deploy_data (self, ref, NULL, NULL);
+
+      if (!deploy_data)
+        g_ptr_array_add (undeployed_refs, g_strdup (refspec));
+    }
+
+  return g_steal_pointer (&undeployed_refs);
+}
+
+/**
+ * flatpak_dir_cleanup_undeployed_refs:
+ *
+ * Find all flatpak refs in the local repository which have not been deloyed
+ * in the dir and remove them from the repository. You might want to call this
+ * function if you pulled refs into the dir but then decided that you did
+ * not want to deploy them for some reason. Note that this does not prune
+ * objects bound to the cleaned up refs from the underlying OSTree repository,
+ * you should consider using flatpak_dir_prune to do that.
+ *
+ * @self: a #FlatpakDir
+ * @cancellable: (allow-none): a #GCancellable
+ * @error: (allow-none): a #GError
+ *
+ * Since: 0.10.0
+ * Returns: (transfer-full): %TRUE if cleaning up the refs suceeded, %FALSE
+ *                           otherwise
+ */
+gboolean
+flatpak_dir_cleanup_undeployed_refs (FlatpakDir   *self,
+                                     GCancellable *cancellable,
+                                     GError       **error)
+{
+  g_autoptr(GHashTable) local_refspecs = NULL;
+  g_autoptr(GPtrArray)  local_flatpak_refspecs = NULL;
+  g_autoptr(GPtrArray) undeployed_refs = NULL;
+  gsize i = 0;
+
+  if (!ostree_repo_list_refs (self->repo, NULL, &local_refspecs, cancellable, error))
+    return FALSE;
+
+  local_flatpak_refspecs = find_matching_refs (local_refspecs,
+                                               NULL, NULL, NULL,
+                                               FLATPAK_KINDS_APP |
+                                               FLATPAK_KINDS_RUNTIME,
+                                               FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE,
+                                               error);
+
+  if (!local_flatpak_refspecs)
+    return FALSE;
+
+  undeployed_refs = filter_out_deployed_refs (self, local_flatpak_refspecs, error);
+
+  if (!undeployed_refs)
+    return FALSE;
+
+  for (; i < undeployed_refs->len; ++i)
+    {
+      const char *refspec = g_ptr_array_index (undeployed_refs, i);
+      g_autofree gchar *remote = NULL;
+      g_autofree gchar *ref = NULL;
+
+      if (!ostree_parse_refspec (refspec, &remote, &ref, error))
+        return FALSE;
+
+      if (!flatpak_dir_remove_ref (self, remote, ref, cancellable, error))
+        return FALSE;
+    }
+
+  return TRUE;
 }
 
 static FlatpakDir *
