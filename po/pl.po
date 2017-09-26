@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: flatpak\n"
 "Report-Msgid-Bugs-To: https://github.com/flatpak/flatpak/issues\n"
 "POT-Creation-Date: 2017-09-25 17:16+0200\n"
-"PO-Revision-Date: 2017-09-06 18:14+0200\n"
+"PO-Revision-Date: 2017-09-26 11:39+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -340,7 +340,7 @@ msgstr "Usuwa procesy po usunięciu procesu nadrzędnego"
 
 #: app/flatpak-builtins-build.c:52
 msgid "Export application homedir directory to build"
-msgstr ""
+msgstr "Eksportuje katalog domowy programu do budowania"
 
 #: app/flatpak-builtins-build.c:112
 msgid "DIRECTORY [COMMAND [args...]] - Build in directory"
@@ -1990,34 +1990,35 @@ msgid "While trying to apply extra data: "
 msgstr "Podczas zastosowywania dodatkowych danych: "
 
 #: common/flatpak-dir.c:5214
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid deployed ref %s: "
-msgstr "Nieprawidłowy PID %s"
+msgstr "Nieprawidłowe wdrożone odniesienie %s: "
 
 #: common/flatpak-dir.c:5221
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid commit ref %s: "
-msgstr "Nieprawidłowy PID %s"
+msgstr "Nieprawidłowe odniesienie zatwierdzenia %s: "
 
 #: common/flatpak-dir.c:5229
-#, fuzzy, c-format
+#, c-format
 msgid "Deployed ref %s kind does not match commit (%s)"
-msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
+msgstr "Rodzaj wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
 
 #: common/flatpak-dir.c:5237
-#, fuzzy, c-format
+#, c-format
 msgid "Deployed ref %s name does not match commit (%s)"
-msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
+msgstr "Nazwa wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
 
 #: common/flatpak-dir.c:5245
-#, fuzzy, c-format
+#, c-format
 msgid "Deployed ref %s arch does not match commit (%s)"
-msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
+msgstr ""
+"Architektura wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
 
 #: common/flatpak-dir.c:5251
-#, fuzzy, c-format
+#, c-format
 msgid "Deployed ref %s branch does not match commit (%s)"
-msgstr "Wdrożone odniesienie %s nie pasuje do zatwierdzenia (%s)"
+msgstr "Gałąź wdrożonego odniesienia %s nie pasuje do zatwierdzenia (%s)"
 
 #: common/flatpak-dir.c:5257
 #, c-format
@@ -2053,19 +2054,19 @@ msgid "Nothing matches %s"
 msgstr "Nic nie pasuje do %s"
 
 #: common/flatpak-dir.c:7792
-#, fuzzy, c-format
+#, c-format
 msgid "Can't find ref %s%s%s%s%s"
-msgstr "Nie można odnaleźć %s%s%s%s%s w repozytorium %s"
+msgstr "Nie można odnaleźć odniesienia %s%s%s%s%s"
 
 #: common/flatpak-dir.c:7834
-#, fuzzy, c-format
+#, c-format
 msgid "Error searching remote %s: %s"
-msgstr "Błąd: %s %s się nie powiodła: %s\n"
+msgstr "Błąd podczas wyszukiwania repozytorium %s: %s"
 
 #: common/flatpak-dir.c:7879
-#, fuzzy, c-format
+#, c-format
 msgid "Error searching local repository: %s"
-msgstr "Zachowywanie odniesienia w lokalnym repozytorium"
+msgstr "Błąd podczas wyszukiwania lokalnego repozytorium: %s"
 
 #: common/flatpak-dir.c:8000
 #, c-format
