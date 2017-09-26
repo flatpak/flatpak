@@ -1,8 +1,8 @@
-# Brazilian Portuguese translation for flatpak.
+# Spanish translation for flatpak.
 # Copyright (C) 2017 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the flatpak package.
-# Fábio Nogueira <fnogueira@gnome.org>, 2017.
-# Rafael Fontenelle <rafaelff@gnome.org>, 2017.
+# Aitor González Fernández <reimashi@gmail.com>, 2017.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: flatpak master\n"
@@ -10,8 +10,8 @@ msgstr ""
 "POT-Creation-Date: 2017-09-25 17:16+0200\n"
 "PO-Revision-Date: 2017-09-12 17:20+0200\n"
 "Last-Translator: Aitor González Fernández <reimashi@gmail.com>\n"
-"Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
-"Language: es_ES\n"
+"Language-Team: Spanish <gnome-es-list@gnome.org>\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
