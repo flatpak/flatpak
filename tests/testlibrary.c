@@ -377,7 +377,8 @@ test_install_launch_uninstall (void)
   if (bwrap != NULL)
     {
       gint exit_code = 0;
-      char *argv[] = { (char *)bwrap, "--ro-bind", "/", "/", "/bin/true", NULL };
+      char *argv[] = { (char *)bwrap, "--unshare-ipc", "--unshare-net",
+          "--unshare-pid", "--ro-bind", "/", "/", "/bin/true", NULL };
       g_autofree char *argv_str = g_strjoinv (" ", argv);
       g_test_message ("Spawning %s", argv_str);
       g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, NULL, NULL, &exit_code, &error);
