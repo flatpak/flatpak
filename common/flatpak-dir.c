@@ -7597,6 +7597,11 @@ flatpak_dir_remote_list_refs (FlatpakDir       *self,
   return TRUE;
 }
 
+typedef enum {
+  FIND_MATCHING_REFS_FLAGS_NONE = 0,
+  FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE = (1 << 0),
+} FindMatchingRefsFlags;
+
 /* Guarantees to return refs which are decomposable. */
 static GPtrArray *
 find_matching_refs (GHashTable *refs,
@@ -7604,6 +7609,7 @@ find_matching_refs (GHashTable *refs,
                     const char   *opt_branch,
                     const char   *opt_arch,
                     FlatpakKinds  kinds,
+                    FindMatchingRefsFlags flags,
                     GError      **error)
 {
   g_autoptr(GPtrArray) matched_refs = NULL;
@@ -7663,7 +7669,10 @@ find_matching_refs (GHashTable *refs,
       if (opt_branch != NULL && strcmp (opt_branch, parts[3]) != 0)
         continue;
 
-      g_ptr_array_add (matched_refs, g_steal_pointer (&ref));
+      if (flags & FIND_MATCHING_REFS_FLAGS_KEEP_REMOTE)
+        g_ptr_array_add (matched_refs, g_strdup (key));
+      else
+        g_ptr_array_add (matched_refs, g_steal_pointer (&ref));
     }
 
   return g_steal_pointer (&matched_refs);
@@ -7692,8 +7701,13 @@ find_matching_ref (GHashTable *refs,
       g_autoptr(GPtrArray) matched_refs = NULL;
       int j;
 
-      matched_refs = find_matching_refs (refs, name, opt_branch, arches[i],
-                                         kinds, error);
+      matched_refs = find_matching_refs (refs,
+                                         name,
+                                         opt_branch,
+                                         arches[i],
+                                         kinds,
+                                         FIND_MATCHING_REFS_FLAGS_NONE,
+                                         error);
       if (matched_refs == NULL)
         return NULL;
 
@@ -7766,8 +7780,13 @@ flatpak_dir_find_remote_refs (FlatpakDir   *self,
                                      &remote_refs, cancellable, error))
     return NULL;
 
-  matched_refs = find_matching_refs (remote_refs, name, opt_branch,
-                                      opt_arch, kinds, error);
+  matched_refs = find_matching_refs (remote_refs,
+                                     name,
+                                     opt_branch,
+                                     opt_arch,
+                                     kinds,
+                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                     error);
   if (matched_refs == NULL)
     return NULL;
 
@@ -7972,8 +7991,13 @@ flatpak_dir_find_installed_refs (FlatpakDir *self,
   if (local_refs == NULL)
     return NULL;
 
-  matched_refs = find_matching_refs (local_refs, opt_name, opt_branch,
-                                      opt_arch, kinds, error);
+  matched_refs = find_matching_refs (local_refs,
+                                     opt_name,
+                                     opt_branch,
+                                     opt_arch,
+                                     kinds,
+                                     FIND_MATCHING_REFS_FLAGS_NONE,
+                                     error);
   if (matched_refs == NULL)
     return NULL;
 
@@ -8047,10 +8071,11 @@ filter_out_deployed_refs (FlatpakDir *self,
   for (i = 0; i < local_refspecs->len; ++i)
     {
       const gchar *refspec = g_ptr_array_index (local_refspecs, i);
+      g_autofree gchar *remote = NULL;
       g_autofree gchar *ref = NULL;
       g_autoptr(GVariant) deploy_data = NULL;
 
-      if (!ostree_parse_refspec (refspec, NULL, &ref, error))
+      if (!ostree_parse_refspec (refspec, &remote, &ref, error))
         return FALSE;
 
       deploy_data = flatpak_dir_get_deploy_data (self, ref, NULL, NULL);
