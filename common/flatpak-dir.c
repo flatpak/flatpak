@@ -2914,7 +2914,7 @@ flatpak_dir_pull (FlatpakDir          *self,
    * and 2) during the transaction commit objects that not yet have a ref to the
    * could be considered unreachable.
    */
-  if (!flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
+  if (repo == NULL && !flatpak_dir_repo_lock (self, &lock, LOCK_SH, cancellable, error))
     return FALSE;
 
   if (flatpak_dir_get_remote_oci (self, repository))
