@@ -1,3 +1,8 @@
+Major changes in 0.9.98.2
+=========================
+
+ * Fix permission denied when using the system-helper
+
 Major changes in 0.9.98.1
 =========================
 
