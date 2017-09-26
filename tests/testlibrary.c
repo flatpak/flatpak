@@ -39,7 +39,7 @@ test_library_version (void)
 {
   g_autofree char *version = NULL;
 
-  version = g_strdup_printf ("%d.%d.%d",
+  version = g_strdup_printf ("%d.%d.%d" G_STRINGIFY(PACKAGE_EXTRA_VERSION),
                              FLATPAK_MAJOR_VERSION,
                              FLATPAK_MINOR_VERSION,
                              FLATPAK_MICRO_VERSION);

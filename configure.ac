@@ -16,11 +16,12 @@ AC_PREREQ([2.63])
 m4_define([flatpak_major_version], [0])
 m4_define([flatpak_minor_version], [9])
 m4_define([flatpak_micro_version], [98])
+m4_define([flatpak_extra_version], [.1])
 m4_define([flatpak_interface_age], [98])
 m4_define([flatpak_binary_age],
           [m4_eval(10000 * flatpak_major_version + 100 * flatpak_minor_version + flatpak_micro_version)])
 m4_define([flatpak_version],
-          [flatpak_major_version.flatpak_minor_version.flatpak_micro_version])
+          [flatpak_major_version.flatpak_minor_version.flatpak_micro_version()flatpak_extra_version])
 
 AC_INIT([Flatpak],
         [flatpak_version],
@@ -388,6 +389,7 @@ GLIB_TESTS
 FLATPAK_MAJOR_VERSION=flatpak_major_version
 FLATPAK_MINOR_VERSION=flatpak_minor_version
 FLATPAK_MICRO_VERSION=flatpak_micro_version
+FLATPAK_EXTRA_VERSION=flatpak_extra_version
 FLATPAK_INTERFACE_AGE=flatpak_interface_age
 FLATPAK_VERSION=flatpak_version
 AC_SUBST(FLATPAK_MAJOR_VERSION)
@@ -398,6 +400,7 @@ AC_SUBST(FLATPAK_VERSION)
 AC_DEFINE_UNQUOTED([PACKAGE_MAJOR_VERSION], $FLATPAK_MAJOR_VERSION, [Major version])
 AC_DEFINE_UNQUOTED([PACKAGE_MINOR_VERSION], $FLATPAK_MINOR_VERSION, [Minor version])
 AC_DEFINE_UNQUOTED([PACKAGE_MICRO_VERSION], $FLATPAK_MICRO_VERSION, [Micro version])
+AC_DEFINE_UNQUOTED([PACKAGE_EXTRA_VERSION], $FLATPAK_EXTRA_VERSION, [Extra version])
 
 # libtool versioning
 #LT_RELEASE=$FLATPAK_MAJOR_VERSION.$FLATPAK_MINOR_VERSION

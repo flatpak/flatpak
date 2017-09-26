@@ -314,7 +314,7 @@ ${FLATPAK} build-finish --require-version=0.6.10 --command=hello.sh ${DIR}
 ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 DIR=`mktemp -d`
 ${FLATPAK} build-init ${DIR} org.test.NewVersion org.test.Platform org.test.Platform
-${FLATPAK} build-finish --require-version=${VERSION}9 --command=hello.sh ${DIR}
+${FLATPAK} build-finish --require-version=1${VERSION} --command=hello.sh ${DIR}
 ${FLATPAK} build-export ${FL_GPGARGS} repos/test ${DIR}
 
 update_repo
