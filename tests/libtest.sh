@@ -321,7 +321,8 @@ skip_without_bwrap () {
     if [ -z "${FLATPAK_BWRAP:-}" ]; then
         # running installed-tests: assume we know what we're doing
         :
-    elif ! "$FLATPAK_BWRAP" --ro-bind / / /bin/true > bwrap-result 2>&1; then
+    elif ! "$FLATPAK_BWRAP" --unshare-ipc --unshare-net --unshare-pid \
+            --ro-bind / / /bin/true > bwrap-result 2>&1; then
         sed -e 's/^/# /' < bwrap-result
         echo "1..0 # SKIP Cannot run bwrap"
         exit 0
