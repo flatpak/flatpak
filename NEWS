@@ -1,3 +1,9 @@
+Major changes in 0.9.98.1
+=========================
+
+ * run: Fix homedir access if the app has --filesystem=host access
+ * build-update: Fix appstream update in case one arch didn't change
+
 Major changes in 0.9.98
 =======================
 
