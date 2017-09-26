@@ -1,3 +1,26 @@
+Major changes in 0.9.98
+=======================
+
+ * libflatpak now correctly finds metadata for subset installations (like locale data)
+ * flatpak build now supports --appdir which exposes the per-app directory in the
+   user homedir. This is useful when testing builds.
+ * The host fontconfig caches are exposed to the sandbox, next to the fonts in /run/host.
+   This will (pending fontconfig work) allow sharing host fontconfig caches, allowing
+   much faster initial startup for flatpak apps.
+ * flatpak install now supports --no-pull
+ * Added new extension property "locale-subset", which makes the extension point
+   act like a locale extension (i.e. only install the subset configured by the
+   locale).
+ * flatpak remote-add --oci is disabled for now, as this is not up to date with
+   the latest OCI work, and we don't want to break existing deployments if this
+   has to change when this lands.
+ * Parallel installation/updates are now safe because we take a filesystem lock
+   whenever we prune the local ostree repo.
+ * Flatpak run now works when important paths like $HOME, etc, are symlinks.
+ * The ostree min-free-space property is is set to zero by default for the
+   flatpak repos. This was causing a lot of problems for people, but the feature
+   is still there if you manually enable it.
+
 Major changes in 0.9.12
 =======================
 

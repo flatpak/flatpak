@@ -1524,15 +1524,14 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
                          GCancellable *cancellable,
                          GError      **error)
 {
-  gboolean ret = FALSE;
-
   g_autoptr(GFile) repodir = NULL;
   g_autoptr(OstreeRepo) repo = NULL;
+  gboolean use_helper = FALSE;
 
   if (self->repo == NULL)
     {
       if (!flatpak_dir_ensure_path (self, cancellable, error))
-        goto out;
+        return FALSE;
 
       repodir = g_file_get_child (self->basedir, "repo");
       if (self->no_system_helper || self->user || getuid () == 0)
@@ -1545,16 +1544,17 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
           g_autofree char *cache_path = NULL;
 
           repo = system_ostree_repo_new (repodir);
+          use_helper = TRUE;
 
           cache_dir = flatpak_ensure_user_cache_dir_location (error);
           if (cache_dir == NULL)
-            goto out;
+            return FALSE;
 
           cache_path = g_file_get_path (cache_dir);
           if (!ostree_repo_set_cache_dir (repo,
                                           AT_FDCWD, cache_path,
                                           cancellable, error))
-            goto out;
+            return FALSE;
         }
 
       if (!g_file_query_exists (repodir, cancellable))
@@ -1570,7 +1570,7 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
           if (!ostree_repo_create (repo, mode, cancellable, error))
             {
               flatpak_rm_rf (repodir, cancellable, NULL);
-              goto out;
+              return FALSE;
             }
 
           /* Create .changes file early to avoid polling non-existing file in monitor */
@@ -1584,7 +1584,28 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
 
               repopath = g_file_get_path (repodir);
               g_prefix_error (error, _("While opening repository %s: "), repopath);
-              goto out;
+              return FALSE;
+            }
+        }
+
+      /* Reset min-free-space-percent to 0, this keeps being a problem for a lot of people */
+      if (!use_helper)
+        {
+          GKeyFile *orig_config = NULL;
+          g_autofree char *orig_min_free_space_percent = NULL;
+
+          orig_config = ostree_repo_get_config (repo);
+          orig_min_free_space_percent = g_key_file_get_value (orig_config, "core", "min-free-space-percent", NULL);
+          if (orig_min_free_space_percent == NULL)
+            {
+              GKeyFile *config = ostree_repo_copy_config (repo);
+
+              g_key_file_set_string (config, "core", "min-free-space-percent", "0");
+              if (!ostree_repo_write_config (repo, config, error))
+                return FALSE;
+
+              if (!ostree_repo_reload_config (repo, cancellable, error))
+                return FALSE;
             }
         }
 
@@ -1593,9 +1614,7 @@ flatpak_dir_ensure_repo (FlatpakDir   *self,
       self->repo = g_object_ref (repo);
     }
 
-  ret = TRUE;
-out:
-  return ret;
+  return TRUE;
 }
 
 gboolean
@@ -2877,7 +2896,9 @@ flatpak_dir_pull (FlatpakDir          *self,
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
+#ifdef FLATPAK_ENABLE_P2P
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
+#endif
   const OstreeRepoFinderResult * const *results;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
@@ -2930,9 +2951,9 @@ flatpak_dir_pull (FlatpakDir          *self,
     }
   else
     {
+#ifdef FLATPAK_ENABLE_P2P
       g_autofree char *collection_id = NULL;
 
-#ifdef FLATPAK_ENABLE_P2P
       if (!repo_get_remote_collection_id (self->repo, repository, &collection_id, NULL))
         collection_id = NULL;
 

@@ -2593,7 +2593,6 @@ flatpak_summary_match_subrefs (GVariant   *summary,
                                const char *ref)
 {
   g_autoptr(GVariant) refs = NULL;
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (summary, 1);
   GPtrArray *res = g_ptr_array_new ();
   gsize n, i;
   g_auto(GStrv) parts = NULL;
@@ -3823,7 +3822,6 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
   g_autoptr(GHashTable) arches = NULL;  /* (element-type utf8 utf8) */
   GHashTableIter iter;
   gpointer key;
-  gboolean skip_commit = FALSE;
   const char *collection_id;
 
   arches = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -3874,6 +3872,7 @@ flatpak_repo_generate_appstream (OstreeRepo   *repo,
       g_autofree char *branch = NULL;
       g_autoptr(FlatpakXml) appstream_root = NULL;
       g_autoptr(GBytes) xml_data = NULL;
+      gboolean skip_commit = FALSE;
 
       if (g_mkdtemp_full (tmpdir, 0755) == NULL)
         return flatpak_fail (error, "Can't create temporary directory");
