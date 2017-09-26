@@ -3639,10 +3639,6 @@ add_font_path_args (GPtrArray *argv_array)
 static void
 add_icon_path_args (GPtrArray *argv_array)
 {
-  g_autoptr(GFile) home = NULL;
-  g_autoptr(GFile) user_font1 = NULL;
-  g_autoptr(GFile) user_font2 = NULL;
-
   if (g_file_test ("/usr/share/icons", G_FILE_TEST_IS_DIR))
     {
       add_args (argv_array,

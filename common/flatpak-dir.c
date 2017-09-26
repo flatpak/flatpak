@@ -2896,7 +2896,9 @@ flatpak_dir_pull (FlatpakDir          *self,
   g_auto(GLnxConsoleRef) console = { 0, };
   g_autoptr(OstreeAsyncProgress) console_progress = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
+#ifdef FLATPAK_ENABLE_P2P
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
+#endif
   const OstreeRepoFinderResult * const *results;
   g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
 
@@ -2949,9 +2951,9 @@ flatpak_dir_pull (FlatpakDir          *self,
     }
   else
     {
+#ifdef FLATPAK_ENABLE_P2P
       g_autofree char *collection_id = NULL;
 
-#ifdef FLATPAK_ENABLE_P2P
       if (!repo_get_remote_collection_id (self->repo, repository, &collection_id, NULL))
         collection_id = NULL;
 

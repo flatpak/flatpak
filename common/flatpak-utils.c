@@ -2593,7 +2593,6 @@ flatpak_summary_match_subrefs (GVariant   *summary,
                                const char *ref)
 {
   g_autoptr(GVariant) refs = NULL;
-  g_autoptr(GVariant) metadata = g_variant_get_child_value (summary, 1);
   GPtrArray *res = g_ptr_array_new ();
   gsize n, i;
   g_auto(GStrv) parts = NULL;
