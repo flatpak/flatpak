@@ -148,7 +148,13 @@ mkdir_p_at_internal (int              dfd,
           g_assert (!did_recurse);
 
           lastslash = strrchr (path, '/');
-          g_assert (lastslash != NULL);
+          if (lastslash == NULL)
+            {
+              /* This can happen if @dfd was deleted between being opened and
+               * passed to mkdir_p_at_internal(). */
+              return glnx_throw_errno_prefix (error, "mkdir(%s)", path);
+            }
+
           /* Note we can mutate the buffer as we dup'd it */
           *lastslash = '\0';
 
@@ -187,6 +193,9 @@ mkdir_p_at_internal (int              dfd,
  * directory fd @dfd.
  *
  * See also glnx_ensure_dir() for a non-recursive version.
+ *
+ * This will return %G_IO_ERROR_NOT_FOUND if @dfd has been deleted since being
+ * opened. It may return other errors from mkdirat() in other situations.
  */
 gboolean
 glnx_shutil_mkdir_p_at (int                   dfd,
