@@ -2623,15 +2623,16 @@ do_export_path (FlatpakExports *exports,
                 gint mode)
 {
   ExportedPath *old_ep = g_hash_table_lookup (exports->hash, path);
-  gint old_mode = 0;
   ExportedPath *ep;
-
-  if (old_ep != NULL)
-    old_mode = old_ep->mode;
 
   ep = g_new0 (ExportedPath, 1);
   ep->path = g_strdup (path);
-  ep->mode = MAX (old_mode, mode);
+
+  if (old_ep != NULL)
+    ep->mode = MAX (old_ep->mode, mode);
+  else
+    ep->mode = mode;
+
   g_hash_table_replace (exports->hash, ep->path, ep);
 }
 
@@ -2639,7 +2640,7 @@ do_export_path (FlatpakExports *exports,
 /* We use level to avoid infinite recursion */
 static gboolean
 _exports_path_expose (FlatpakExports *exports,
-                      FlatpakFilesystemMode mode,
+                      int mode,
                       const char *path,
                       int level)
 {
