@@ -369,11 +369,11 @@ flatpak_builtin_build (int argc, char **argv, GCancellable *cancellable, GError 
   flatpak_context_allow_host_fs (app_context);
   flatpak_context_merge (app_context, arg_context);
 
-  envp = flatpak_run_get_minimal_env (TRUE);
+  envp = flatpak_run_get_minimal_env (TRUE, FALSE);
   envp = flatpak_run_apply_env_vars (envp, app_context);
 
   if (!custom_usr && !(is_extension && !is_app_extension) &&
-      !flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, &runtime_extensions, cancellable, error))
+      !flatpak_run_add_extension_args (argv_array, NULL, &envp, runtime_metakey, runtime_ref, FALSE, &runtime_extensions, cancellable, error))
     return FALSE;
 
   if (!flatpak_run_add_app_info_args (argv_array,

@@ -4960,7 +4960,7 @@ apply_extra_data (FlatpakDir          *self,
 
   app_context = flatpak_context_new ();
 
-  envp = flatpak_run_get_minimal_env (FALSE);
+  envp = flatpak_run_get_minimal_env (FALSE, FALSE);
   if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp, NULL,
                                          FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
                                          FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
