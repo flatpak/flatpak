@@ -2056,7 +2056,9 @@ flatpak_installation_list_installed_related_refs_sync (FlatpakInstallation *self
  * pulled a flatpak ref using flatpak_installation_install_full() and
  * specified %FLATPAK_INSTALL_FLAGS_NO_DEPLOY but then decided not to
  * deploy the ref later on and want to remove the local ref to prevent it
- * from taking up disk space.
+ * from taking up disk space. Note that this will not remove the objects
+ * referred to by @ref from the underlying OSTree repo, you should use
+ * flatpak_installation_prune_local_repo() to do that.
  *
  * Returns: %TRUE on success
  */
@@ -2084,8 +2086,11 @@ flatpak_installation_remove_local_ref_sync (FlatpakInstallation *self,
  * you pulled a flatpak refs using flatpak_installation_install_full() and
  * specified %FLATPAK_INSTALL_FLAGS_NO_DEPLOY but then decided not to
  * deploy the refs later on and want to remove the local refs to prevent them
- * from taking up disk space.
+ * from taking up disk space. Note that this will not remove the objects
+ * referred to by @ref from the underlying OSTree repo, you should use
+ * flatpak_installation_prune_local_repo() to do that.
  *
+ * Since: 0.10.0
  * Returns: %TRUE on success
  */
 gboolean
@@ -2096,4 +2101,25 @@ flatpak_installation_cleanup_local_refs_sync (FlatpakInstallation *self,
   g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
 
   return flatpak_dir_cleanup_undeployed_refs (dir, cancellable, error);
+}
+
+/**
+ * flatpak_installation_prune_local_repo
+ * @self: a #FlatpakInstallation
+ * @cancellable: (nullable): a #GCancellable
+ * @error: return location for a #GError
+ *
+ * Remove all orphaned OSTree objects from the underlying OSTree repo in
+ * @installation.
+ *
+ * Returns: %TRUE on success
+ */
+gboolean
+flatpak_installation_prune_local_repo (FlatpakInstallation *self,
+                                       GCancellable        *cancellable,
+                                       GError             **error)
+{
+  g_autoptr(FlatpakDir) dir = flatpak_installation_get_dir (self);
+
+  return flatpak_dir_prune (dir, cancellable, error);
 }
