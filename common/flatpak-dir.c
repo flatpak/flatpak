@@ -1682,7 +1682,7 @@ flatpak_dir_deploy_appstream (FlatpakDir          *self,
   glnx_fd_close int dfd = -1;
   g_autoptr(GFileInfo) file_info = NULL;
   g_autofree char *tmpname = g_strdup (".active-XXXXXX");
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
 
   /* Keep a shared repo lock to avoid prunes removing objects we're relying on
    * while we do the checkout. This could happen if the ref changes after we
@@ -1841,7 +1841,7 @@ flatpak_dir_update_appstream (FlatpakDir          *self,
 
   if (flatpak_dir_use_system_helper (self, NULL))
     {
-      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      g_auto(GLnxLockFile) child_repo_lock = { 0, };
       FlatpakSystemHelper *system_helper;
       gboolean is_oci;
       g_autoptr(GFile) child_repo_file = NULL;
@@ -2900,7 +2900,7 @@ flatpak_dir_pull (FlatpakDir          *self,
   g_auto(OstreeRepoFinderResultv) allocated_results = NULL;
 #endif
   const OstreeRepoFinderResult * const *results;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
 
   /* If @opt_results is set, @opt_rev must be. */
   g_return_val_if_fail (opt_results == NULL || opt_rev != NULL, FALSE);
@@ -3199,7 +3199,7 @@ flatpak_dir_pull_untrusted_local (FlatpakDir          *self,
   g_autoptr(GVariant) new_commit = NULL;
   g_autoptr(GVariant) extra_data_sources = NULL;
   g_autoptr(GPtrArray) subdirs_arg = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
   gboolean ret = FALSE;
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
@@ -5020,7 +5020,7 @@ flatpak_dir_deploy (FlatpakDir          *self,
   gboolean created_extra_data = FALSE;
   g_autoptr(GVariant) commit_metadata = NULL;
   GVariantBuilder metadata_builder;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
 
   if (!flatpak_dir_ensure_repo (self, cancellable, error))
     return FALSE;
@@ -5392,7 +5392,7 @@ flatpak_dir_deploy_install (FlatpakDir   *self,
                             GCancellable *cancellable,
                             GError      **error)
 {
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GFile) deploy_base = NULL;
   g_autoptr(GFile) old_deploy_dir = NULL;
   gboolean created_deploy_base = FALSE;
@@ -5465,7 +5465,7 @@ flatpak_dir_deploy_update (FlatpakDir   *self,
                            GError      **error)
 {
   g_autoptr(GVariant) old_deploy_data = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
   g_autofree const char **old_subpaths = NULL;
   g_autofree char *old_active = NULL;
   const char *old_origin;
@@ -5700,7 +5700,7 @@ flatpak_dir_install (FlatpakDir          *self,
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
-      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      g_auto(GLnxLockFile) child_repo_lock = { 0, };
       const char *installation = flatpak_dir_get_id (self);
       const char *empty_subpaths[] = {NULL};
       const char **subpaths;
@@ -6319,7 +6319,7 @@ flatpak_dir_update (FlatpakDir          *self,
     {
       const char *installation = flatpak_dir_get_id (self);
       g_autoptr(OstreeRepo) child_repo = NULL;
-      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      g_auto(GLnxLockFile) child_repo_lock = { 0, };
       FlatpakSystemHelper *system_helper;
       g_autofree char *child_repo_path = NULL;
       FlatpakHelperDeployFlags helper_flags = 0;
@@ -6500,7 +6500,7 @@ flatpak_dir_uninstall (FlatpakDir          *self,
   gboolean is_app;
   const char *name;
   g_auto(GStrv) parts = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
   g_autoptr(GVariant) deploy_data = NULL;
   gboolean keep_ref = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_KEEP_REF;
   gboolean force_remove = flags & FLATPAK_HELPER_UNINSTALL_FLAGS_FORCE_REMOVE;
@@ -7044,7 +7044,7 @@ flatpak_dir_prune (FlatpakDir   *self,
   g_autofree char *formatted_freed_size = NULL;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GError) lock_error = NULL;
-  g_auto(GLnxLockFile) lock = GLNX_LOCK_FILE_INIT;
+  g_auto(GLnxLockFile) lock = { 0, };
 
   if (error == NULL)
     error = &local_error;
@@ -9136,7 +9136,7 @@ flatpak_dir_fetch_remote_repo_metadata (FlatpakDir    *self,
   if (flatpak_dir_use_system_helper (self, NULL))
     {
       g_autoptr(OstreeRepo) child_repo = NULL;
-      g_auto(GLnxLockFile) child_repo_lock = GLNX_LOCK_FILE_INIT;
+      g_auto(GLnxLockFile) child_repo_lock = { 0, };
       const char *installation = flatpak_dir_get_id (self);
       const char *subpaths[] = {NULL};
       g_autofree char *child_repo_path = NULL;
