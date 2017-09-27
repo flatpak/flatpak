@@ -4845,6 +4845,9 @@ flatpak_run_app (const char     *app_ref,
 {
   g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
   g_autoptr(GFile) app_files = NULL;
+  g_autoptr(GFile) etc = NULL;
+  g_autoptr(GFile) ld_so_cache = NULL;
+  g_autoptr(GFile) ld_so_conf = NULL;
   g_autoptr(GFile) runtime_files = NULL;
   g_autoptr(GFile) app_id_dir = NULL;
   g_autofree char *default_runtime = NULL;
@@ -4998,6 +5001,24 @@ flatpak_run_app (const char     *app_ref,
 
   if (!flatpak_run_add_extension_args (argv_array, &envp, runtime_metakey, runtime_ref, cancellable, error))
     return FALSE;
+
+  if (app_files != NULL) {
+     etc = g_file_get_child (app_files, "etc");
+     if (etc) {
+       ld_so_cache = g_file_get_child (etc, "ld.so.cache");
+       if (g_file_query_exists (ld_so_cache, NULL)) {
+         add_args (argv_array,
+                   "--bind", flatpak_file_get_path_cached (ld_so_cache), "/etc/ld.so.cache",
+                   NULL);
+       }
+       ld_so_conf = g_file_get_child (etc, "ld.so.conf");
+       if (g_file_query_exists (ld_so_conf, NULL)) {
+         add_args (argv_array,
+                   "--bind", flatpak_file_get_path_cached (ld_so_conf), "/etc/ld.so.conf",
+                   NULL);
+       }
+     }
+  }
 
   add_document_portal_args (argv_array, app_ref_parts[1], &doc_mount_path);
 
