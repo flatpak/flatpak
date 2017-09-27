@@ -8071,11 +8071,10 @@ filter_out_deployed_refs (FlatpakDir *self,
   for (i = 0; i < local_refspecs->len; ++i)
     {
       const gchar *refspec = g_ptr_array_index (local_refspecs, i);
-      g_autofree gchar *remote = NULL;
       g_autofree gchar *ref = NULL;
       g_autoptr(GVariant) deploy_data = NULL;
 
-      if (!ostree_parse_refspec (refspec, &remote, &ref, error))
+      if (!ostree_parse_refspec (refspec, NULL, &ref, error))
         return FALSE;
 
       deploy_data = flatpak_dir_get_deploy_data (self, ref, NULL, NULL);
