@@ -4829,50 +4829,52 @@ child_setup (gpointer user_data)
     fcntl (g_array_index (fd_array, int, i), F_SETFD, 0);
 }
 
-static gboolean
-apply_extra_data (FlatpakDir          *self,
-                  GFile               *checkoutdir,
-                  GCancellable        *cancellable,
-                  GError             **error)
+static GKeyFile*
+get_metakey (GFile         *checkoutdir,
+             GCancellable  *cancellable,
+             GError       **error)
 {
+  g_autoptr(GKeyFile) metakey = NULL;
   g_autoptr(GFile) metadata = NULL;
   g_autofree char *metadata_contents = NULL;
   gsize metadata_size;
-  g_autoptr(GKeyFile) metakey = NULL;
-  g_autofree char *id = NULL;
-  g_autofree char *runtime = NULL;
-  g_autofree char *runtime_ref = NULL;
-  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
-  g_autoptr(GFile) app_files = NULL;
-  g_autoptr(GFile) apply_extra_file = NULL;
-  g_autoptr(GFile) app_export_file = NULL;
-  g_autoptr(GFile) extra_export_file = NULL;
-  g_autoptr(GFile) extra_files = NULL;
-  g_autoptr(GFile) runtime_files = NULL;
-  g_autoptr(GPtrArray) argv_array = NULL;
-  g_auto(GStrv) runtime_ref_parts = NULL;
-  g_autoptr(FlatpakContext) app_context = NULL;
-  g_autoptr(GArray) fd_array = NULL;
-  g_auto(GStrv) envp = NULL;
-  int exit_status;
-  const char *group = FLATPAK_METADATA_GROUP_APPLICATION;
-  g_autoptr(GError) local_error = NULL;
-
-  apply_extra_file = g_file_resolve_relative_path (checkoutdir, "files/bin/apply_extra");
-  if (!g_file_query_exists (apply_extra_file, cancellable))
-    return TRUE;
 
   metadata = g_file_get_child (checkoutdir, "metadata");
 
   if (!g_file_load_contents (metadata, cancellable, &metadata_contents, &metadata_size, NULL, error))
-    return FALSE;
+    return NULL;
 
   metakey = g_key_file_new ();
-  if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error))
-    return FALSE;
+  if (!g_key_file_load_from_data (metakey, metadata_contents, metadata_size, 0, error)) {
+    g_key_file_free (metakey);
+    return NULL;
+  }
+  return g_steal_pointer (&metakey);
+}
+
+static gboolean
+get_execution_env (FlatpakDir          *self,
+                   GPtrArray           *argv_array,
+                   GArray              *fd_array,
+                   GStrv               *envp,
+                   GFile               *checkoutdir,
+                   GKeyFile            *metakey,
+                   GCancellable        *cancellable,
+                   GError             **error)
+{
+  g_autofree char *id = NULL;
+  g_autofree char *runtime = NULL;
+  g_autofree char *runtime_ref = NULL;
+  g_autoptr(FlatpakDeploy) runtime_deploy = NULL;
+  g_autoptr(GFile) runtime_files = NULL;
+  g_auto(GStrv) runtime_ref_parts = NULL;
+  g_autoptr(FlatpakContext) app_context = NULL;
+  const char *group = FLATPAK_METADATA_GROUP_APPLICATION;
+  g_autoptr(GError) local_error = NULL;
 
   id = g_key_file_get_string (metakey, group, FLATPAK_METADATA_KEY_NAME,
                               &local_error);
+
   if (id == NULL)
     {
       group = FLATPAK_METADATA_GROUP_RUNTIME;
@@ -4906,27 +4908,11 @@ apply_extra_data (FlatpakDir          *self,
       runtime_files = flatpak_deploy_get_files (runtime_deploy);
     }
 
-  app_files = g_file_get_child (checkoutdir, "files");
-  app_export_file = g_file_get_child (checkoutdir, "export");
-  extra_files = g_file_get_child (app_files, "extra");
-  extra_export_file = g_file_get_child (extra_files, "export");
-
-  argv_array = g_ptr_array_new_with_free_func (g_free);
-  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
-  g_array_set_clear_func (fd_array, clear_fd);
-  g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
-
   if (runtime_files)
     add_args (argv_array,
               "--ro-bind", flatpak_file_get_path_cached (runtime_files), "/usr",
             "--lock-file", "/usr/.ref",
               NULL);
-
-  add_args (argv_array,
-            "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
-            "--bind", flatpak_file_get_path_cached (extra_files), "/app/extra",
-            "--chdir", "/app/extra",
-            NULL);
 
   if (!flatpak_run_setup_base_argv (argv_array, fd_array, runtime_files, NULL, runtime_ref_parts[2],
                                     FLATPAK_RUN_FLAG_NO_SESSION_HELPER,
@@ -4935,14 +4921,138 @@ apply_extra_data (FlatpakDir          *self,
 
   app_context = flatpak_context_new ();
 
-  envp = flatpak_run_get_minimal_env (FALSE);
-  if (!flatpak_run_add_environment_args (argv_array, fd_array, &envp, NULL,
+  if (!flatpak_run_add_environment_args (argv_array, fd_array, envp, NULL,
                                          FLATPAK_RUN_FLAG_NO_SESSION_BUS_PROXY |
                                          FLATPAK_RUN_FLAG_NO_SYSTEM_BUS_PROXY |
                                          FLATPAK_RUN_FLAG_NO_A11Y_BUS_PROXY,
                                          id,
                                          app_context, NULL, NULL, cancellable, error))
     return FALSE;
+
+  return TRUE;
+}
+
+static gboolean
+refresh_ldconfig (FlatpakDir          *self,
+                  GFile               *checkoutdir,
+                  char const          *full_ref,
+                  GCancellable        *cancellable,
+                  GError             **error) {
+  g_autoptr(GPtrArray) argv_array = NULL;
+  g_autoptr(GArray) fd_array = NULL;
+  g_autoptr(GFile) app_files = NULL;
+  g_autoptr(GFile) etc = NULL;
+  g_autoptr(GFile) ld_so_conf_file = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+  g_auto(GStrv) envp = NULL;
+  int exit_status;
+
+  ld_so_conf_file = g_file_resolve_relative_path (checkoutdir, "files/etc/ld.so.conf");
+  if (!g_file_query_exists (ld_so_conf_file, cancellable))
+    return TRUE;
+
+  app_files = g_file_get_child (checkoutdir, "files");
+  etc = g_file_get_child (app_files, "etc");
+
+  argv_array = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
+
+  add_args (argv_array,
+            "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
+            "--bind", flatpak_file_get_path_cached (etc), "/app/etc",
+            NULL);
+
+  envp = flatpak_run_get_minimal_env (FALSE);
+
+  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
+  g_array_set_clear_func (fd_array, clear_fd);
+
+  metakey = get_metakey(checkoutdir, cancellable, error);
+
+  if (!get_execution_env (self, argv_array, fd_array, &envp, checkoutdir, metakey,
+                          cancellable, error)) {
+    return FALSE;
+  }
+
+  if (!flatpak_run_add_extension_args (argv_array, &envp, metakey, full_ref, cancellable, error)) {
+    return FALSE;
+  }
+
+  g_ptr_array_add (argv_array, g_strdup ("/sbin/ldconfig"));
+  g_ptr_array_add (argv_array, g_strdup ("-C"));
+  g_ptr_array_add (argv_array, g_strdup ("/app/etc/ld.so.cache"));
+  g_ptr_array_add (argv_array, g_strdup ("-f"));
+  g_ptr_array_add (argv_array, g_strdup ("/app/etc/ld.so.conf"));
+
+  g_ptr_array_add (argv_array, NULL);
+
+  g_debug ("Running /sbin/ldconfig ");
+
+  if (!g_spawn_sync (NULL,
+                     (char **) argv_array->pdata,
+                     envp,
+                     G_SPAWN_SEARCH_PATH,
+                     child_setup, fd_array,
+                     NULL, NULL,
+                     &exit_status,
+                     error))
+    return FALSE;
+
+  if (exit_status != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   _("apply_extra script failed, exit status %d"), exit_status);
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
+static gboolean
+apply_extra_data (FlatpakDir          *self,
+                  GFile               *checkoutdir,
+                  GCancellable        *cancellable,
+                  GError             **error)
+{
+  g_autoptr(GFile) extra_export_file = NULL;
+  g_autoptr(GPtrArray) argv_array = NULL;
+  g_autoptr(GFile) app_files = NULL;
+  g_autoptr(GFile) extra_files = NULL;
+  g_auto(GStrv) envp = NULL;
+  g_autoptr(GArray) fd_array = NULL;
+  g_autoptr(GFile) app_export_file = NULL;
+  g_autoptr(GFile) apply_extra_file = NULL;
+  g_autoptr(GKeyFile) metakey = NULL;
+  int exit_status;
+
+  apply_extra_file = g_file_resolve_relative_path (checkoutdir, "files/bin/apply_extra");
+  if (!g_file_query_exists (apply_extra_file, cancellable))
+    return TRUE;
+
+  argv_array = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (argv_array, g_strdup (flatpak_get_bwrap ()));
+
+  app_files = g_file_get_child (checkoutdir, "files");
+  extra_files = g_file_get_child (app_files, "extra");
+  extra_export_file = g_file_get_child (extra_files, "export");
+  app_export_file = g_file_get_child (checkoutdir, "export");
+
+  add_args (argv_array,
+            "--ro-bind", flatpak_file_get_path_cached (app_files), "/app",
+            "--bind", flatpak_file_get_path_cached (extra_files), "/app/extra",
+            "--chdir", "/app/extra",
+            NULL);
+
+  envp = flatpak_run_get_minimal_env (FALSE);
+
+  fd_array = g_array_new (FALSE, TRUE, sizeof (int));
+  g_array_set_clear_func (fd_array, clear_fd);
+
+  metakey = get_metakey(checkoutdir, cancellable, error);
+
+  if (!get_execution_env (self, argv_array, fd_array, &envp, checkoutdir, metakey, cancellable, error)) {
+    return FALSE;
+  }
 
   g_ptr_array_add (argv_array, g_strdup ("/app/bin/apply_extra"));
 
@@ -5170,6 +5280,9 @@ flatpak_dir_deploy (FlatpakDir          *self,
             }
         }
     }
+
+  if (!refresh_ldconfig (self, checkoutdir, ref, cancellable, error))
+    return FALSE;
 
   /* Extract any extra data */
   extradir = g_file_resolve_relative_path (checkoutdir, "files/extra");
