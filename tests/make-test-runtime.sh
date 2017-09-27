@@ -25,6 +25,7 @@ mkdir -p ${DIR}/usr/bin
 mkdir -p ${DIR}/usr/lib
 ln -s ../lib ${DIR}/usr/lib64
 ln -s ../lib ${DIR}/usr/lib32
+cp `which ldconfig` ${DIR}/usr/bin
 T=`mktemp`
 for i in $@; do
     I=`which $i`

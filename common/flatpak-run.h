@@ -159,10 +159,12 @@ FlatpakExports *flatpak_exports_from_context (FlatpakContext *context,
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FlatpakExports, flatpak_exports_free);
 
 gboolean  flatpak_run_add_extension_args (GPtrArray    *argv_array,
+                                          GArray       *fd_array,
                                           char       ***envp_p,
                                           GKeyFile     *metakey,
                                           const char   *full_ref,
-					  char        **extensions_out,
+                                          gboolean      use_ld_so_cache,
+                                          char        **extensions_out,
                                           GCancellable *cancellable,
                                           GError      **error);
 gboolean flatpak_run_add_environment_args (GPtrArray      *argv_array,
@@ -176,8 +178,8 @@ gboolean flatpak_run_add_environment_args (GPtrArray      *argv_array,
                                            FlatpakExports **exports_out,
                                            GCancellable *cancellable,
                                            GError      **error);
-char **  flatpak_run_get_minimal_env (gboolean devel);
-char **  flatpak_run_apply_env_default (char **envp);
+char **  flatpak_run_get_minimal_env (gboolean devel, gboolean use_ld_so_cache);
+char **  flatpak_run_apply_env_default (char **envp, gboolean use_ld_so_cache);
 char **  flatpak_run_apply_env_appid (char **envp,
                                       GFile *app_dir);
 char **  flatpak_run_apply_env_vars (char          **envp,
