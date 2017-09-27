@@ -1,4 +1,3 @@
-
 <p align="center">
   <img src="https://github.com/flatpak/flatpak/blob/master/flatpak.png?raw=true" alt="Flatpak icon"/>
 </p>
