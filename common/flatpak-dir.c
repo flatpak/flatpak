@@ -7020,7 +7020,7 @@ flatpak_dir_remove_ref (FlatpakDir   *self,
                                       error))
     return FALSE;
 
-  return flatpak_dir_prune (self, cancellable, error);
+  return TRUE;
 }
 
 gboolean
